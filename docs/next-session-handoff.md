@@ -1,190 +1,181 @@
-# Session handoff — DDC Workbench is live; the physics (closed-loop) session is next (2026-07-23)
+# Session handoff — closed-loop physics is live; polish + public decision next (2026-07-24)
 
-> **Lifecycle:** written 2026-07-23, superseding the "PR-2 DDC Workbench is
-> next" handoff — that whole arc shipped (PRs **#421–#424**, all merged) and its
-> sections are removed. This file sets up the **physics session**: closing the
-> loop (zone-temp-as-state + a time step) and psychro tuning on the DDC
-> Workbench. Retire it when the loop is closed (the FBE program stabilizes the
-> space on its own) and the psychro feel is tuned — or the physics direction is
-> dropped. Durable design home: **`docs/air-side-sim.md`** (*Horizon* section).
+> **Lifecycle:** written 2026-07-24, superseding the "physics (closed-loop)
+> session is next" handoff — that whole arc shipped (**PR #425**, merged) and its
+> sections are removed. This file sets up the **polish arc**: fix the browser
+> lag, clean up the look, then decide whether the DDC Workbench goes public.
+> Retire it when the page **graduates from hidden** (or the owner parks the
+> polish arc). Durable design home: **`docs/air-side-sim.md`** (*Horizon*).
 > This file is only "where we are + next action."
 
 ## Read this first
 
-**Every claim here is a hypothesis. The repo is the truth.** This line is
-owner-active and react-and-evolve: the owner wants to **commission the physics by
-hand/feel** — drive the unit, confirm it responds correctly, tune the *response
-feel* — before finalizing. So this session's model is an **iterable structure to
-get in front of him early on the LAN preview**, not a spec to implement blind.
-The predecessor arc's one real trap was a plan sketch with the IO param-binding
-backwards (see *Corrections*). Read `docs/air-side-sim.md` before acting.
+**Every claim here is a hypothesis. The repo is the truth.** The predecessor
+brief handed the build lane a **dimensionally wrong** Euler formula
+(`(Q_gain − Q_cool)/C_zone × dt` with loads in Btu/**hour** and `dt` in
+**seconds** — missing the `/3600`); the lane caught it and fixed it, but a lane
+that trusted the brief would have shipped a zone that integrated ~3600× too
+fast. Tell every lane the brief is a hypothesis, correcting it is wanted, and
+the orchestrator — not the lane — decides on a discrepancy. **The verification
+that mattered was driving the running page, not CI** (green proved nothing
+broke; the drive caught a frozen-on-arrival default that read as broken — §
+Corrections).
 
 ## Where things stand
 
-`main` @ `de93ece`, **v3.73.0**, clean tree. No open PRs. (Line numbers below
-cite `de93ece`, the commit they were taken at — deliberate, not stale.)
+`main` @ `3cd2538`, **v3.73.0**, clean tree. No open PRs. (Line numbers below
+cite `3cd2538`, the commit they were taken at — deliberate, not stale.)
 Counts: **40 education lessons · 34 content quizzes + 7 field drills · 31 tools ·
-8 simulators** — the 8th, `html/simulators/ddc-workbench.html`, is the **hidden**
-Workbench (`eleventyExcludeFromCollections` + `noindex`, out of nav / search /
-sitemap / landing / `tests/pages.js` / README).
+8 simulators** — the 8th, `html/simulators/ddc-workbench.html`, is still the
+**hidden** Workbench (`eleventyExcludeFromCollections: true` L5 + `noindex: true`
+L6; out of nav / search / sitemap / landing / `tests/pages.js` / README).
 
-Shipped this arc (all merged):
-- **#420** — the DX fan-coil DDC-graphic mockup (the depiction).
-- **#421** — the FBE editor wire-visibility fix.
-- **#422** — extracted the drag-wire editor into `html/scripts/fbe-editor.js`
-  (`window.FBEEditor.createEditor`) + fixed codebase-issues **#196**; v3.72.1 →
-  **3.73.0**.
-- **#423** — the **DDC Workbench**: `git mv fcu-ddc.html → ddc-workbench.html`,
-  two tabs (Unit | Wiresheet), a host-owned 10 Hz tick loop, a generic binding
-  driver, the FCU unit plug-in, 3 sample programs (`cool-2stage` default,
-  `cool-1stage`, `cool-2stage-fanon`).
-- **#424** — the verdict pill reads idle (neutral), not a red fault, when the
-  program satisfies the space.
+**Shipped this arc — PR #425 (merged `3cd2538`), three commits:**
+- `a8574a6` — **closed the loop**: `plant.zoneT` is now an integrated real zone
+  temperature; the coil solve reads the *actual* zone, the program reads a
+  *sensed* value, and a **sensor override** (`plant.override.spaceTemp`, forced
+  via a box+toggle) lets you hand the program a wrong number while the real zone
+  drifts away — the real-vs-sensed commissioning teaching moment. Hybrid gain
+  `Q_gain = UA_ENV*(T_oa − zoneT) + Q_internal` (envelope + a live load knob, plus
+  an OA-temp control). `Q_cool` via `Psychro.computeProcess(...).qSens` (magnitude,
+  sensible-only) to the **post-fan** `datT`. A speed slider (1–60×) scales one
+  `dtSim` that drives **both** the zone integrator and `FBE.tick`. RH-ready seam
+  at `zoneInletState()` (`:1169`).
+- `1b9bac2` — **working-baseline retune** (orchestrator, from driving the page):
+  `C_ZONE` 800→**200** (`:1060`), default OA 90→**80** (`:1063` region). The
+  as-built defaults left arrival frozen/creeping the wrong way; retuned so stage 1
+  pulls the zone to setpoint and cycles.
+- `f9f2576` — **first-order coil/DAT response lag** (`COIL_TAU=30` `:1064`;
+  `coilLeaveTarget` vs lagged `plant.coilLeaveT` at `:1196`–`:1222`): DAT ramps
+  instead of stepping, cooling ramps in, and residual cooling persists after the
+  compressor stops. Verified by driving at 1× (max 0.2 °F/500ms step).
 
-**What the Workbench does today** (`ddc-workbench.html` @ `de93ece`): an FBE
-control program drives the FCU each tick. `hostTick()` (`:793`, fired by
-`setInterval(…, 100)` at `:1578`) runs the binding driver → `unit.update(plant,
-dt)` → `unit.renderUnit(plant)` → repaint. In AUTO the program's Y1 / Y2 /
-fan-enable / fan-speed outputs drive the unit; in HAND you drive them. **The loop
-is OPEN:** `zoneT = plant.sensors['space-temp']` (`:1024`) is exogenous — set by
-the space-temp slider (`:1224`) or presets (`:1185`), NOT computed. The comment
-at `:732` / `:1011` says so outright.
+**All physics constants are labelled `TUNE BY FEEL` (`:1047`–`:1068`):** `C_ZONE`
+200, `UA_ENV` 300 (`:1061`), `COIL_TAU` 30, `SPEED_DEF` 20 (`:1065`),
+`MAX_DT_SIM` 5 (`:1068`). These are tune-in-place — **no code change needed to
+recommission the feel.**
 
-## Corrections to the previous draft — do not rediscover these
+## Corrections carried out of the physics build — do not rediscover
 
-1. **IO param binding is block→plant, NOT plant→block.** The prior handoff's PR-2
-   sketch (and the plan) wrote the driver as `block.params.value =
-   plant.params[key]` each tick (plant→block). As **built and shipped** it is the
-   reverse — `plant.params[p.plantKey] = blk.params.value`
-   (`ddc-workbench.html:774`, comment `:766-773`, @ `de93ece`): the **setpoint
-   and deadband live in the FBE program's `const` blocks** (the program's own
-   config) and the driver READS them into `plant.params`. That is what makes
-   editing the setpoint const on the wiresheet actually change staging (verified
-   live during #423 verification). A future plant-side setpoint *schedule* would
-   seed the block at load and keep this read for display — **do not flip the
-   direction back.**
-2. **The `!fanOn` verdict split (#424) is intentional — don't collapse it.**
-   `renderUnit`'s verdict branches fan-off two ways (`ddc-workbench.html:1122` @
-   `de93ece`): stage energized + fan off = red no-airflow fault; no stage called
-   + fan off = neutral "No cooling call — fan off (idle)". A refactor of
-   `renderUnit` must preserve both.
-3. **The shell carries NO fcu identifier; `unit.syncControls`
-   (`fcuSyncControls`, `:1506`) owns fcu control sync.** The seam is real — no
-   `fcu` / `fan` / `stage` id appears before the `UNIT: FCU` banner (`:937`). The
-   shell walks `unit.points` generically so a future AHU is a config swap; keep
-   it that way.
+1. **Delivered cooling is `computeProcess(...).qSens` to `datT`, NOT
+   `cfm × 1.08 × (zoneT − coilLeaveT)`.** The engine has no `1.08` constant; it
+   works from live specific volume (`psychro-engine.js` `computeProcess`
+   ~`:199`). And it must measure to the **post-fan** `datT` (the fan's 0.6 °F
+   re-enters the zone), not `coilLeaveT`, or cooling is over-counted. This is how
+   the shipped code does it (`:1222` onward).
+2. **The Euler step needs `/3600`** (Btu/**hour** loads, `dt` in **seconds**) —
+   shipped at `:1220`-area. The predecessor brief dropped it.
+3. **"Recovery in a few seconds at 20×" was unachievable** at any realistic zone
+   time constant — a real zone moves in minutes. The speed slider (up to ~50×
+   effective; see minor item) is how you fast-forward; 1× is real building time.
 
-## The work, in order — the physics (closed-loop) session
+## The work, in order — the polish arc
 
-**Owner decision (2026-07-21, reaffirmed 2026-07-22): the session after the FBE
-build is pure sim physics — close the loop and tune the psychro feel.** He wants
-to **commission by hand** (drive the unit, confirm it responds right, tune the
-*feel*) before finalizing — so build the model as an iterable structure and get
-it on the LAN preview early; don't finalize blind.
+**Owner plan (2026-07-24): lag → cleanup → maybe public. Deliberate pace —**
+*"Most of my adds to the site have been public so quick, it's nice to take my
+time with one."* Feel-tuning may continue along the way; the constants above are
+tune-in-place.
 
-### 1. Close the loop — zone temp becomes a state
+### 1. Fix the browser lag (owner's first task)
 
-Today `zoneT` is exogenous (`:1024`, written from the slider `:1224` / presets
-`:1185`). Closing the loop = **integrating `zoneT` each `hostTick`** from a zone
-heat balance, so the FBE staging program stabilizes the space instead of you
-hand-holding it. The pieces, none of which exist today:
+**Owner-observed 2026-07-24:** intermittent browser lag, "nothing crazy,"
+noticeable mainly through the gutter animations, and it **settles once the page
+has been loaded a little.** Owner is on a 12th-gen i7 and worries about low-end
+field laptops.
 
-- **Zone thermal capacitance** `C_zone` (Btu/°F) — bigger = slower/smoother.
-- **Heat-gain model** `Q_gain` (Btu/h) — the load pushing zone temp UP. Simplest:
-  one adjustable "load" knob. Richer: outdoor-temp-driven (adds an OA-temp point).
-- **Sensible cooling removed** `Q_cool` (Btu/h) — the zone heat SINK. ⚠️ Derive it
-  from the **air side actually delivered** (`cfm × 1.08 × (zoneT − coilLeaveT)`),
-  **NOT** from the fixed `STAGE_QSENS` constant (`:950`). The model already
-  computes `cfm` (`:1044`) and `coilLeaveT` (`:1048`, clamped at `COIL_FLOOR`), and
-  at reduced airflow the delivered sensible is LESS than nameplate
-  `STAGE_QSENS[stage]`. Using the constant would double-count and decouple fan
-  speed from the loop.
-- **Integration:** `zoneT += (Q_gain − Q_cool) / C_zone × dt_sim`, each tick.
+- **⚠️ Cause is a HYPOTHESIS, not measured:** likely the gutter `schematic-bg`
+  draw-in animations + the workbench's own rAF loops (fan blade, chevron travel)
+  + the 10 Hz physics `setInterval` all competing on first paint. "Settles after
+  load" is consistent with the `schematic-bg` draw-in completing. **Profile it
+  first** (DevTools performance trace on a throttled CPU) before choosing a fix —
+  don't assume the cause.
+- **Levers (owner's steer + options):** force **fullscreen-from-start** (the
+  fullscreen tool mode drops the gutter motifs entirely — owner floated this);
+  or gate the workbench rAF loops on `document.hidden` / an IntersectionObserver;
+  or lean harder on the `prefers-reduced-motion` path. The gutter
+  `schematic-bg` is already hidden below 1240px and on reduced-motion.
 
-### 2. ⚠️ The time-scaling decision — the load-bearing open question
+### 2. Cleanup — make it look nicer (visual, NOT a logic rewrite)
 
-`hostTick` fires at **10 Hz wall-clock** (`DT = 0.1s`, `:738`, `:1578`). Building
-thermal dynamics move over **minutes** — a 1:1 integration would take real
-minutes to see the space move (a dead sim). So the session must pick a
-**sim-time-vs-wall-time** scheme:
-- **Time compression** — each 0.1s tick advances N sim-seconds (e.g. 1 tick = 30
-  sim-s → a 10-minute recovery plays in ~2 wall-seconds). One constant.
-- **Separate slower thermal integrator** — keep 10 Hz for animation, integrate the
-  zone on a coarser sim clock.
+Two owner-named problems:
 
-This is the plan's **"quasi-static vs tick" decision** (`air-side-sim.md`
-*Horizon*). **It is an owner-feel call** — the response *feel* is exactly what he
-wants to commission by hand. Bring a first compression factor to the LAN preview
-and tune it live.
+- **Text extending outside boxes.** ⚠️ **Locations UNVERIFIED** — owner-observed,
+  not yet pinpointed. Sweep with **full-page screenshots** of the page in both
+  themes and both unit systems (the driver pattern used this session:
+  `colorScheme` context + read the built page on a throwaway high port).
+  `npm run screenshots` (`tests/screenshot-diagrams.mjs`) covers *diagram SVGs*,
+  which is a subset — the workbench UI overflow needs whole-page shots.
+- **Jumbled / messy sample-program layout** — the "uploaded WPT that lands all
+  jumbled" feeling that makes the control logic hard to verify. **Grounded:** the
+  FBE sample programs (`FCU_PROGRAMS` `:1664`) place blocks by **explicit `x/y`
+  coordinates** (e.g. `space-temp` at `x:20,y:20`, `:1667`), so tidying is
+  primarily **repositioning those coordinates** so wires don't cross/overlap.
+  `html/scripts/fbe-editor.js` also has layout-related logic (grep `layout` — a
+  few hits) worth a look, but the block placement itself is data. **Owner wants
+  to review the existing programs first** and is interested in that review.
 
-### 3. What the space-temp slider BECOMES
+**Explicitly declined this arc — do not carry as open work:**
+- **Rewriting the FBE programs from scratch** — owner deferred: *"more function
+  block work on a Friday night after doing it for real all week isn't
+  appealing."* Cleanup = tidy layout + fix overflow, not re-author logic.
+- **Feel-tuning as a blocking task** — it's ongoing/owner-driven, tune-in-place,
+  no code.
+- **Future AHU + economizer** (the OA-temp point is already there for it) and
+  **zone-RH modelling** (the `zoneInletState` seam is in) — backlog,
+  `air-side-sim.md`.
 
-Once the loop closes, the slider (`:1224`) is no longer the live driver. It
-becomes one of: an **initial condition**, a **disturbance injection** (bump the
-load), or a **load proxy**. Decide with the owner — HAND/AUTO still applies (in
-HAND you override actuators; the zone still integrates).
+### 3. Evaluate going public (graduate from hidden) — only after 1 + 2
 
-### 4. Psychro tuning (the deferred item rides here)
-
-Cooling is quasi-static via `Psychro.invertProcess` (`:1047`). The deferred
-"tune the psychro feel" work rides along — make the ΔT / DAT response read right
-as the loop settles.
-
-**Explicitly declined / deferred — do NOT carry as open work here:**
-visible-sensor glyphs, zone thermographics, selectable unit type (backlog,
-`air-side-sim.md`); the limited **mobile** view; the upper-left graphic
-composition (owner-parked "fix 1"); **graduating the page from hidden** (its own
-ship-time task — `contrast-sweep` both themes, `PAGES`, sitemap / nav / README,
-version bump, damage-stakes-note question — see `air-side-sim.md` *Ship-time
-gates*).
+Its own ship task, **gated on the owner's call** — and on an open scope decision
+(below). When it happens, the ship gates (`air-side-sim.md` *Ship-time gates*):
+the blocking `contrast-sweep` in **both themes**, add to `tests/pages.js` +
+sitemap/nav/README, a version bump, and the damage-stakes-note question. Flip
+`eleventyExcludeFromCollections`/`noindex` off (`:5`-`:6`).
 
 ## Decisions waiting on the owner
 
-- **Time-scaling scheme + factor** (§2) — the feel call; blocks nothing but shapes
-  everything. Bring a first cut to the LAN preview.
-- **Gain-model shape** — fixed adjustable load vs outdoor-temp-driven (the latter
-  adds an OA-temp point).
-- **What the space-temp slider becomes** (§3).
-- **Latent / humidity as a state?** — today `RA_RH` is a fixed assumption;
-  modeling zone humidity is a stretch. Owner's call whether it's in scope.
-- **codebase-issues #197** — `.fbe-palette-btn:focus-visible` sits outside the
-  consolidated FOCUS INDICATORS block (behaviour-correct; a deferred consolidation
-  cleanup, not physics).
+- **Launch scope — FCU-only vs. build more units first?** Owner undecided
+  (*"I'm not sure if I want to launch with just FCU or build more"*). Blocks the
+  go-public timing, nothing else. The shell is unit-generic (the seam held —
+  no `fcu`/`fan`/`stage` id leaks into the shell), so a second unit is additive.
+- **Minor: the speed slider's top end is dead.** `MAX_DT_SIM = 5` (`:1068`) caps
+  the effective clock at 50×, but the slider goes to 60× — so ~51–60× all feel
+  identical. Cosmetic; lift `MAX_DT_SIM` to 6 (still Euler-stable) or cap the
+  slider at 50 whenever it's touched. Not blocking.
 
 ## Process notes that earned their keep
 
-- **One lane → one worktree → one branch → one draft PR; owner reviews on GitHub
-  and merges; never `gh pr merge` without an explicit "merge it."** #423 shipped
-  as a draft the orchestrator verified independently — **driving the running
-  page** (arrival cooling, the Y1/Y2 staging ladder with hysteresis, the
-  setpoint-edit-propagation test through the wiresheet, HAND fan-cutoff) — before
-  showing the owner. Tell every lane the brief is a hypothesis; the orchestrator
-  decides on discrepancies.
-- **The verification that mattered was driving the app, not the test suite.** CI
-  green proves nothing *broke*; the runtime drive proved the sim *works*. For the
-  physics session especially, verify by **watching the zone settle**, not by
-  asserting a number.
-- **A fresh worktree has no `node_modules`** → `ln -s
-  /home/ehill/controlsfreak.dev/node_modules node_modules` (Playwright browsers
-  live in a shared user cache). **Port 8000 is squatted** — copy
-  `playwright.config.js` to a throwaway on a unique high port with
-  `reuseExistingServer:false`, run **foreground**, delete before committing.
-- **LAN preview for owner review:** serve the built `_site` bound to all
-  interfaces on a high port (`python3 -m http.server <port> --directory _site
-  --bind 0.0.0.0`), give him `http://192.168.8.123:<port>/simulators/ddc-workbench.html`;
-  firewall the port (`sudo firewall-cmd --zone=FedoraServer --add-port=<port>/tcp`,
-  a root step) if his device can't reach it. Ephemeral — dies with the session.
-- **Concurrent sessions share the primary tree** — `git worktree add`, never
-  `checkout` / branch-switch in the primary. Other sessions' worktrees may be
-  present — leave them alone.
+- **Drive the running page to verify — CI green ≠ works.** The frozen-arrival
+  tuning passed CI and the lane's own smoke; only sampling DOM readouts over wall
+  time caught it. For this page, verify by **watching the zone move / DAT ramp**,
+  not by asserting a number.
+- **One lane → one worktree → one branch → one draft PR; orchestrator drives the
+  page and verifies before showing the owner; never `gh pr merge` without an
+  explicit "merge it."** #425 was built by a lane, retuned + lag-fixed by the
+  orchestrator on the same branch, verified by driving, then merged on the
+  owner's explicit go-ahead.
+- **Fresh worktree has no `node_modules`** → `ln -s
+  /home/ehill/controlsfreak.dev/node_modules node_modules`. Serve the built
+  `_site` on a **unique high port** (8000–8099 are held); Playwright headless
+  needs `colorScheme: 'dark'` on the context and an init-script forcing
+  `document.hidden = false` or the `setInterval` won't tick.
+- **⚠️ `pkill -f "http.server <port>"` self-matches** — the pkill's own shell
+  command line contains the pattern, so it kills itself (exit 144). Use the
+  bracket trick (`[h]ttp.server`) or just serve on a fresh port. **Foreground
+  `sleep` is also blocked** in this environment (exit 144) — use `curl --retry`
+  or a background job, not `sleep`.
+- **LAN preview for owner review:** `python3 -m http.server <port> --directory
+  _site --bind 0.0.0.0`, give `http://192.168.8.123:<port>/simulators/ddc-workbench.html`;
+  if unreachable, the firewall port is the fix (a **root** step:
+  `sudo firewall-cmd --zone=FedoraServer --add-port=<port>/tcp`). Ephemeral.
 
 ## One passing note
 
-The Workbench is the flagship-in-progress, and the physics session is where it
-becomes genuinely novel: **write (or load) an FBE control program and watch it
-hold a real-feeling zone** — control logic a BMS programmer can verify, driving a
-live thermal model. Honest readiness: the *FBE-drives-the-unit* half is **done
-and verified**; the hard remaining half is **building zone thermal dynamics from
-scratch** (a capacitance + a gain model + the air-side heat sink) and **picking a
-time-scaling that feels right** — genuinely the hard part, which is why it earns
-its own session. Design home: **`docs/air-side-sim.md`** (*Horizon*).
+The Workbench is now genuinely what it set out to be: **write (or load) an FBE
+control program and watch it hold a real-feeling zone** — control logic a BMS
+programmer can verify, driving a live thermal model, with a real-vs-sensed
+override that teaches a commissioning hazard. The physics is **done and
+verified**. What's left is not more physics — it's **polish** (lag, overflow,
+program legibility) and a **product decision** (FCU-only vs. more, then public).
+The owner is deliberately taking his time here, and that's the right call for
+the flagship. Design home: **`docs/air-side-sim.md`** (*Horizon*).

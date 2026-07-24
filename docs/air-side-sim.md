@@ -113,6 +113,17 @@ tiles** · short **fan-heat/calibration callout** · **improved fan animation**
   the AHU" and the hub's "show different units."
 
 ### Horizon — dynamic, FBE-driven control (ambitious, coupled)
+
+> **Status (2026-07-24): SHIPPED — this increment is built and merged (PR #425,
+> `main` @ `3cd2538`).** The closed loop, the time-step, zone-temp-as-state, the
+> hybrid gain, and a real-vs-sensed sensor override are live on the hidden
+> `ddc-workbench.html`; a coil/DAT response lag followed. The prose below is the
+> original design reasoning (now largely realized). What remains is **polish +
+> the go-public decision**, tracked in `docs/next-session-handoff.md` (2026-07-24):
+> browser lag → cleanup (overflow + jumbled sample-program layout; program
+> *rewrite* deferred) → maybe public; open scope decision is FCU-only vs. more
+> units. Feel constants are tune-in-place (`TUNE BY FEEL` block).
+
 The unit runs a **closed-loop control strategy** — zone temp becomes driven
 state and the equipment operates on its own, not just manual knobs. Per the owner
 (2026-07-21), that control strategy should be an **FBE program from the gate**,
