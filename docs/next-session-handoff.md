@@ -24,7 +24,11 @@ Corrections).
 ## Where things stand
 
 `main` @ `3cd2538`, **v3.73.0**, clean tree. No open PRs. (Line numbers below
-cite `3cd2538`, the commit they were taken at — deliberate, not stale.)
+cite `3cd2538`, the commit they were taken at — deliberate, not stale.
+**Re-verified 2026-07-24 at `a62db0a`**: every `ddc-workbench.html` cite in this
+file still resolves, because `3cd2538..a62db0a` touches only `docs/` — confirm
+with `git diff --name-only 3cd2538 HEAD` before trusting them past the next
+code commit.)
 Counts: **40 education lessons · 34 content quizzes + 7 field drills · 31 tools ·
 8 simulators** — the 8th, `html/simulators/ddc-workbench.html`, is still the
 **hidden** Workbench (`eleventyExcludeFromCollections: true` L5 + `noindex: true`
@@ -64,7 +68,13 @@ recommission the feel.**
    re-enters the zone), not `coilLeaveT`, or cooling is over-counted. This is how
    the shipped code does it (`:1222` onward).
 2. **The Euler step needs `/3600`** (Btu/**hour** loads, `dt` in **seconds**) —
-   shipped at `:1220`-area. The predecessor brief dropped it.
+   shipped at **`:1253`** (`plant.zoneT += (qGain - qCool) / C_ZONE * (dt /
+   3600);`). The predecessor brief dropped it. *(Cite corrected 2026-07-24 —
+   this said `:1220`-area, which is the **coil-lag** Euler step,
+   `plant.coilLeaveT += (coilLeaveTarget - plant.coilLeaveT) * Math.min(1, dt /
+   COIL_TAU)`. That one correctly has **no** `/3600` — `dt/COIL_TAU` is a
+   dimensionless ratio of seconds to seconds — so the old cite pointed a reader
+   straight at what looks like a counterexample.)*
 3. **"Recovery in a few seconds at 20×" was unachievable** at any realistic zone
    time constant — a real zone moves in minutes. The speed slider (up to ~50×
    effective; see minor item) is how you fast-forward; 1× is real building time.
@@ -86,14 +96,38 @@ field laptops.
 - **⚠️ Cause is a HYPOTHESIS, not measured:** likely the gutter `schematic-bg`
   draw-in animations + the workbench's own rAF loops (fan blade, chevron travel)
   + the 10 Hz physics `setInterval` all competing on first paint. "Settles after
-  load" is consistent with the `schematic-bg` draw-in completing. **Profile it
-  first** (DevTools performance trace on a throttled CPU) before choosing a fix —
-  don't assume the cause.
-- **Levers (owner's steer + options):** force **fullscreen-from-start** (the
-  fullscreen tool mode drops the gutter motifs entirely — owner floated this);
-  or gate the workbench rAF loops on `document.hidden` / an IntersectionObserver;
-  or lean harder on the `prefers-reduced-motion` path. The gutter
-  `schematic-bg` is already hidden below 1240px and on reduced-motion.
+  load" is consistent with the `schematic-bg` draw-in completing — that draw-in
+  IS one-shot (`schematic-bg.js:44` adds `.is-drawn` on first viewport entry and
+  unobserves), so the hypothesis is at least shaped right. **Profile it first**
+  (DevTools performance trace on a throttled CPU) before choosing a fix — don't
+  assume the cause.
+- **Levers (owner's steer + options) — two of these were corrected on
+  2026-07-24 by `/verify-handoff`; read the corrections before spending effort:**
+  - **Fullscreen-from-start** (owner floated this). ⚠️ **It does NOT drop the
+    gutter motifs** — that rationale was wrong. Measured by driving the built
+    page at 1920px: after entering fullscreen both `.schematic-bg` elements stay
+    `display: block` / `visibility: visible` / `opacity: 1`, 340×1080, still in
+    the viewport. They gain only `inert` + `data-fs-inert` (tab/AT containment,
+    codebase-issues #163) and are *covered* by the z-300/z-400 overlay.
+    `styles.css` has exactly two `body.has-fullscreen-tool` rules — `overflow:
+    hidden` (`:1822`) and `main { z-index: 400 }` (`:1830`); nothing hides the
+    motifs. Fullscreen may still be worth doing on framing grounds, but do not
+    count on it as the perf fix.
+  - **Gating the workbench rAF loops on `document.hidden`** is a near-no-op:
+    browsers already suspend rAF on a hidden tab, and the physics tick is
+    **already** gated — `window.setInterval(function () { if (!document.hidden)
+    hostTick(); }, 100);` (`:1885`).
+  - **The grounded lever instead — idle-gate the two rAF loops.** Both run
+    unconditionally forever once started (fan blade `:1532`–`:1548`, chevrons
+    `:1625`–`:1635`); each writes transforms every frame even when
+    `pl.anim.fanFrac === 0` (fan off), so an idle unit still burns a full 60 fps
+    of DOM writes. `place()` is cheap per-frame (the `getPointAtLength` samples
+    are precomputed into a table at `:1572`), so the cost is the write volume,
+    not the geometry. Bail the frame — or stop and restart the loop — when
+    `fanFrac` is 0.
+  - Or lean harder on the `prefers-reduced-motion` path. The gutter
+    `schematic-bg` is already hidden below 1240px (`styles.css:467`) and snapped
+    to drawn state on reduced-motion.
 
 ### 2. Cleanup — make it look nicer (visual, NOT a logic rewrite)
 
