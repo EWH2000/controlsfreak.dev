@@ -241,6 +241,7 @@
     })();
     const LEGACY = GUTTER_VARIANT === 'v0';
     const RATE_GATED = GUTTER_VARIANT === 'v2';
+    const GUTTER_STATIC = GUTTER_VARIANT === 'v3';
 
     // Global tuning — one velocity, one spacing, applied uniformly to
     // every annotated path. Tuned by eye on the d1 diagram and then
@@ -668,6 +669,12 @@
         visibleFlowEls.add(el);
         const pool = poolsByEl.get(el);
         if (!pool || !pool.particles.length) return;
+        // V3: gutter pools are still built and placed, but never ticked.
+        // They stay out of visiblePools entirely, so hasWork() reports no
+        // work and the rAF loop suspends outright on a page with no
+        // content animation — which is why v3 reaches ~0% rather than the
+        // ~20% floor every keep-animating lever plateaus at.
+        if (pool.gutter && GUTTER_STATIC) return;
         if (visiblePools.indexOf(pool) === -1) visiblePools.push(pool);
     }
 
@@ -836,6 +843,13 @@
         if (gutterHidden(el)) return;
         const length = el.getTotalLength();
         if (!isFinite(length) || length < 1) return;
+        // V3 silences gutter AUTO-fire (interval clamp below) — without
+        // it the 144 gutter pulse paths keep the loop alive and v3 never
+        // reaches idle. Note what this is NOT: pulses are never
+        // rate-limited anywhere, and an explicit FlowEngine.pulse() on a
+        // gutter path still fires at full speed under v3, since the path
+        // stays registered in pulsePaths.
+        const silenced = GUTTER_STATIC && inGutter(el);
 
         // Default pulse color: element's stroke attribute (handles
         // `var(--name)` literally — the browser resolves it at fill
@@ -850,6 +864,7 @@
 
         let intervalMs = parseFloat(el.getAttribute('data-pulse-interval'));
         if (!isFinite(intervalMs) || intervalMs < 0) intervalMs = PULSE_INTERVAL_DEFAULT;
+        if (silenced) intervalMs = 0;   // 0 is the engine's existing "no auto-fire"
 
         // Stagger initial firing across the first interval window so
         // motifs don't all pulse together on page load.
