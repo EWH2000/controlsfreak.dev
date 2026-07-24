@@ -183,6 +183,42 @@ noindex: true
         .fcu-fanen label { display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; }
         .fcu-fanen input { width: auto; margin: 0; }
 
+        /* Sensor override — the real-vs-sensed control. A bordered block so it
+           reads as its own instrument; the amber "forcing" state marks the
+           hazard (a deliberately wrong reading fed to the program). */
+        .fcu-override {
+            margin-top: 1.25rem;
+            padding: 0.7rem 0.85rem;
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--border);
+            background: var(--surface-2);
+        }
+        .fcu-override.is-forcing { border-left-color: var(--amber); }
+        .fcu-ovr-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .fcu-ovr-input { width: 6rem; font-family: var(--mono); }
+        .fcu-ovr-unit {
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+        .fcu-override.is-forcing #fcu-ovr-toggle {
+            border-color: var(--amber);
+            color: var(--amber-ink);
+        }
+        p.fcu-ovr-state {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            line-height: 1.5;
+            color: var(--amber-ink);
+            margin-top: 0.5rem;
+            min-height: 1.1rem;
+        }
+
         /* ── DDC WORKBENCH SHELL (ddcw-*) ── unit-agnostic chrome. The two
            tab panes reuse the shared .tabs / .tab-btn / .tab-pane and the
            .fbe-* wiresheet classes from styles.css; only the persistent
@@ -362,10 +398,11 @@ noindex: true
                 program. The <strong>Unit</strong> tab is the supervisory screen
                 a tech reads; the <strong>Wiresheet</strong> tab is the control
                 program running it. In <strong>AUTO</strong> the program owns the
-                outputs — nudge the space temperature and watch it stage the
-                compressor. Switch to <strong>HAND</strong> to drive the outputs
-                yourself. The zone is an input you nudge, not a simulated load —
-                the loop stays open.
+                outputs — it reads the zone and stages the compressor to hold
+                setpoint. Switch to <strong>HAND</strong> to drive the outputs
+                yourself. The zone is a live thermal model: the coil pulls it
+                down while envelope and internal gains push it up, so the program
+                closes the loop on its own.
             </p>
 
             <!-- ── Tabs: Unit graphic | Wiresheet (FBE) ── the shell is
@@ -607,18 +644,34 @@ noindex: true
                 <div class="fcu-knob-grid">
                     <div class="slider-field">
                         <div class="slider-head">
-                            <label id="fcu-zone-lbl" for="fcu-zone-slider">Space temp (sensor — always live)</label>
-                            <span class="slider-val" id="fcu-zone-val">76 °F</span>
-                        </div>
-                        <input type="range" id="fcu-zone-slider" min="70" max="84" step="1" value="76">
-                    </div>
-
-                    <div class="slider-field">
-                        <div class="slider-head">
                             <label id="fcu-fan-lbl" for="fcu-fan-slider">Supply-fan speed (HAND)</label>
                             <span class="slider-val" id="fcu-fan-sval">100%</span>
                         </div>
                         <input type="range" id="fcu-fan-slider" class="ddcw-tracked" min="0" max="100" step="5" value="100">
+                    </div>
+
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label for="fcu-speed-slider">Sim speed (× real time)</label>
+                            <span class="slider-val" id="fcu-speed-val">20×</span>
+                        </div>
+                        <input type="range" id="fcu-speed-slider" min="1" max="60" step="1" value="20">
+                    </div>
+
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label for="fcu-oa-slider">Outdoor air</label>
+                            <span class="slider-val" id="fcu-oa-val">90 °F</span>
+                        </div>
+                        <input type="range" id="fcu-oa-slider" min="55" max="110" step="1" value="90">
+                    </div>
+
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label for="fcu-load-slider">Internal load</label>
+                            <span class="slider-val" id="fcu-load-val">3000 Btu/h</span>
+                        </div>
+                        <input type="range" id="fcu-load-slider" min="0" max="10000" step="250" value="3000">
                     </div>
                 </div>
 
@@ -628,6 +681,31 @@ noindex: true
                         Fan enable — G command (HAND)
                     </label>
                 </div>
+
+                <!-- Sensor override — the real-vs-sensed teaching moment. The
+                     box shows what the PROGRAM reads; the readout shows the
+                     ACTUAL integrated zone. Forcing them apart is the lesson. -->
+                <div class="fcu-override" id="fcu-override">
+                    <div class="slider-head">
+                        <label class="field-label" for="fcu-ovr-input">Space-temp sensor (what the program reads)</label>
+                        <span class="slider-val" id="fcu-zone-val">zone 76.0&nbsp;°F</span>
+                    </div>
+                    <div class="fcu-ovr-row">
+                        <button type="button" class="copy-btn" id="fcu-ovr-toggle" aria-pressed="false">Force sensor</button>
+                        <input type="number" id="fcu-ovr-input" class="ps-input fcu-ovr-input" step="0.5" value="76.0" disabled>
+                        <span class="fcu-ovr-unit" id="fcu-ovr-unit" aria-hidden="true">°F</span>
+                    </div>
+                    <p class="fcu-ovr-state" id="fcu-ovr-state" role="status" aria-live="polite"></p>
+                </div>
+
+                <p class="ref-note">
+                    Forcing the sensor is what a stuck or mis-scaled input does in
+                    the field: the program keeps staging on the number it is
+                    handed while the real space drifts the other way. Trust the
+                    graphic reading over a thermometer on the wall and you chase a
+                    fault that was never in the equipment. Release the override and
+                    the program sees the room again.
+                </p>
             </div>
 
             <p class="ref-note">
@@ -728,8 +806,9 @@ noindex: true
     //
     // Binding contract (load-bearing invariant): a point's id === the seed
     // FBE-block id in every program === the IO block the programs author.
-    // The loop stays OPEN this increment — space temp is a hand-nudged
-    // sensor, there is NO zone thermal dynamics.
+    // The loop is CLOSED: the unit integrates a real zone temperature from a
+    // heat balance, the program reads the sensed value each tick, and the two
+    // run on one shared, speed-scaled sim clock (dtSim).
     (function () {
         'use strict';
 
@@ -741,6 +820,11 @@ noindex: true
         let unit, plant, graph;
         let byId  = {};
         let mode  = 'auto';                     // 'auto' | 'hand'
+        // Sim clock (generic — the unit sets the default + clamp at init). One
+        // speed-scaled dtSim drives BOTH the binding/FBE.tick and the unit
+        // integrator, so control timers and the plant share one clock.
+        let simSpeed  = 1;                      // × real time (host-clock multiplier)
+        let simMaxDt  = 5;                      // s — per-tick sim-time clamp
         let editor = null, editorBuilt = false, wiresheetVisible = false;
         let programKey = null;                  // current sample key, or null = custom
         let suppressCustom = false;             // true while WE load a program
@@ -791,8 +875,14 @@ noindex: true
 
         // ── host tick loop (the SOLE ticker) ────────────────────────────────
         function hostTick() {
-            bindingTick(DT);
-            unit.update(plant, DT);
+            // Compress the wall tick by the speed slider, then clamp so a
+            // fast clock (or a tab-refocus hitch) can't destabilize the
+            // forward-Euler integrator. The SAME dtSim goes to the binding
+            // (→ FBE.tick) and to the unit integrator — one shared clock.
+            let dtSim = DT * simSpeed;
+            if (dtSim > simMaxDt) dtSim = simMaxDt;
+            bindingTick(dtSim);
+            unit.update(plant, dtSim);
             unit.renderUnit(plant);
             unit.syncControls(plant, mode);
             renderStatusbar();
@@ -954,17 +1044,55 @@ noindex: true
         const COIL_FLOOR  = 34;                  // °F leaving-air clamp (freeze floor)
         const P           = P_STD;               // psia (from psychro-engine)
 
+        // ══ TUNE BY FEEL — PLACEHOLDER zone-thermal constants ══════════════
+        // First-cut guesses for the closed-loop zone model. The owner
+        // commissions these live on the preview — they are meant to be
+        // trivially findable and changed, so DON'T agonize over them. Internal
+        // model is IP (Btu/h, °F); the zone is one lumped-capacitance node.
+        //   Sizing intent: on a 90 °F day the total gain (~7.2 kBtu/h) sits
+        //   just above stage 1 (7 kBtu/h) so the ladder climbs to stage 2
+        //   (13.5 kBtu/h), which over-cools and cycles back — the staging
+        //   ladder stays exercised. Drop T_OA or the load knob and stage 1
+        //   holds on its own.
+        const C_ZONE      = 800;                 // Btu/°F — lumped zone capacitance (bigger = slower)
+        const UA_ENV      = 300;                 // Btu/(h·°F) — envelope conductance to outdoor air
+        const Q_INT_DEF   = 3000;                // Btu/h — default internal sensible gain (load knob)
+        const T_OA_DEF    = 90;                  // °F — default outdoor-air temp (design day)
+        const SPEED_DEF   = 20;                  // × — default sim-clock multiplier (1× ≈ real time)
+        const SPEED_MIN   = 1;                   // × — slowest (watch a 5 s ON-delay in real seconds)
+        const SPEED_MAX   = 60;                  // × — fastest (fast-forward a slow recovery)
+        const MAX_DT_SIM  = 5;                   // s — per-tick sim-time clamp (forward-Euler safety)
+        // ═══════════════════════════════════════════════════════════════════
+
+        // Live commissioning knobs — start at the placeholders above; the OA
+        // and load sliders write these, the speed slider writes the shell's
+        // simSpeed via the host hook.
+        let tOa       = T_OA_DEF;                // °F — outdoor-air temp (envelope driver)
+        let qInternal = Q_INT_DEF;               // Btu/h — internal sensible gain
+
         // Air colour downstream of the coil, set by renderUnit and read by the
         // chevron loop (upstream is always --blue-cool). Under reduced motion,
         // refreshFrozenAir re-tints the frozen chevrons on each render.
         let downstreamColor = 'var(--blue)';
         let refreshFrozenAir = null;
 
-        const zoneSlider  = document.getElementById('fcu-zone-slider');
         const fanSlider   = document.getElementById('fcu-fan-slider');
         const fanenToggle = document.getElementById('fcu-fanen-toggle');
-        const zoneValLbl  = document.getElementById('fcu-zone-val');
+        const zoneValLbl  = document.getElementById('fcu-zone-val');   // actual zone readout
         const fanValLbl   = document.getElementById('fcu-fan-sval');
+        // Sensor-override controls (real-vs-sensed teaching moment).
+        const ovrField    = document.getElementById('fcu-override');
+        const ovrToggle   = document.getElementById('fcu-ovr-toggle');
+        const ovrInput    = document.getElementById('fcu-ovr-input');
+        const ovrUnit     = document.getElementById('fcu-ovr-unit');
+        const ovrState    = document.getElementById('fcu-ovr-state');
+        // Environment / clock knobs (live in both AUTO and HAND).
+        const speedSlider = document.getElementById('fcu-speed-slider');
+        const speedValLbl = document.getElementById('fcu-speed-val');
+        const oaSlider    = document.getElementById('fcu-oa-slider');
+        const oaValLbl    = document.getElementById('fcu-oa-val');
+        const loadSlider  = document.getElementById('fcu-load-slider');
+        const loadValLbl  = document.getElementById('fcu-load-val');
         const fanBlade    = document.getElementById('fcu-fan-blade');
         const compDot     = document.getElementById('fcu-comp-dot');
         const verdictEl   = document.getElementById('fcu-verdict');
@@ -1005,10 +1133,11 @@ noindex: true
 
         // ── plant — the FCU's data-driven IO surface (unit-specific keys) ──
         function fcuCreatePlant() {
-            // Arrival: space temp 76 °F with SP 72 / deadband 3 puts the
-            // cool-2stage program on Y1 (fan on, ΔT visible) the moment the
-            // loop starts — so the page shows the program running the unit
-            // immediately. The loop is OPEN: space-temp is exogenous.
+            // Arrival: zone 76 °F with SP 72 / deadband 3 puts the cool-2stage
+            // program on Y1 (fan on, ΔT visible) the moment the loop starts —
+            // so the page shows the program running the unit immediately. The
+            // loop is CLOSED: zoneT is the integrated truth; space-temp is the
+            // sensed value the program reads (= zoneT unless overridden).
             return {
                 sensors:    { 'space-temp': 76, 'dat': 55 },
                 actuators:  { 'fan-speed': 100, 'fan-enable': true, 'y1': true, 'y2': false },
@@ -1016,12 +1145,29 @@ noindex: true
                 conditions: { fault: 'none' },   // none | lowCharge | airflow (observe-only)
                 derived:    {},
                 anim:       { fanFrac: 1 },
+                // ── closed-loop thermal state ──
+                zoneT:      76,                  // °F — the integrated REAL zone temp (truth)
+                // zoneW:   0.0094,              // lb/lb — future latent state; NOT integrated
+                //                                  this session (see the RH-ready seam in fcuUpdate)
+                override:   { spaceTemp: { active: false, value: 76 } },
+                simSec:     0,                   // accumulated sim-seconds (clock readout hook)
             };
         }
 
-        // ── physics — reads `plant`, not the DOM (renderUnit does the paint) ──
+        // ── coil inlet (RH-ready seam) ── built from the ACTUAL zone air in
+        // ONE place. Today RH is a fixed assumption (RA_RH). When a latent zone
+        // state (plant.zoneW) lands, swap this body to
+        // Psychro.buildState(t, plant.zoneW, P) — with RA_RH derived from zoneW
+        // — and add the matching Euler line for zoneW on qLat below. One
+        // call-site changes.
+        function zoneInletState(t) {
+            return Psychro.solveState('rh', t, RA_RH, P);
+        }
+
+        // ── physics — reads `plant`, not the DOM (renderUnit does the paint).
+        //    `dt` is the shared, speed-scaled, clamped sim step (seconds). ──
         function fcuUpdate(plant, dt) {
-            const zoneT  = plant.sensors['space-temp'];   // °F
+            const zoneT  = plant.zoneT;                   // °F — the REAL zone temp (truth)
             const fanPct = plant.actuators['fan-speed'];  // %
             const d = plant.derived;
 
@@ -1036,28 +1182,67 @@ noindex: true
             const fanOn = !!plant.actuators['fan-enable'] && fanPct > 0;
             const fault = plant.conditions.fault;
             const capActive = stage > 0 && fanOn && fault === 'none';
+            const cfm = Math.max(50, NOMINAL_CFM * fanFrac);
 
-            // Coil leaving-air temp via the shared psychro solver.
-            const inlet = Psychro.solveState('rh', zoneT, RA_RH, P);
+            // Coil leaving-air state via the shared psychro solver, on the
+            // ACTUAL return air (never the sensed value).
+            const inlet = zoneInletState(zoneT);
             let coilLeaveT;
+            let leavingW = inlet.ok ? inlet.W : 0;
             if (fanOn && inlet.ok) {
-                const cfm   = Math.max(50, NOMINAL_CFM * fanFrac);
                 const qSens = capActive ? STAGE_QSENS[stage] : 0;
                 const qLat  = capActive ? STAGE_QLAT[stage]  : 0;
                 const leaving = Psychro.invertProcess(inlet, { type: 'cool', cfm: cfm, qSens: qSens, qLat: qLat });
-                coilLeaveT = leaving.ok ? leaving.tdb : zoneT;
+                if (leaving.ok) { coilLeaveT = leaving.tdb; leavingW = leaving.W; }
+                else coilLeaveT = zoneT;
                 if (coilLeaveT < COIL_FLOOR) coilLeaveT = COIL_FLOOR;
             } else {
                 coilLeaveT = zoneT;   // no airflow — nothing crosses the coil
             }
             // Discharge sensor sits after the fan (draw-through pickup).
             const datT = fanOn ? coilLeaveT + FAN_HEAT : zoneT;
-
-            // The DAT sensor reports the computed discharge temp — fed back
-            // into the program's `dat` AI next tick (a discharge low-limit hook).
+            // Fed back into the program's `dat` AI next tick (a discharge
+            // low-limit hook).
             plant.sensors['dat'] = datT;
 
-            d.eatT = zoneT;
+            // ── zone heat balance (forward-Euler, pid-engine idiom) ──────────
+            // Q_cool = sensible heat the SUPPLY air removes from the zone,
+            // measured to the POST-FAN datT so the fan's FAN_HEAT (draw-through)
+            // re-enters the zone. computeProcess returns qSens = mDot·cp·(datT −
+            // zoneT), negative when cooling; heat removed = −qSens. So fan-only
+            // (datT above zoneT) falls out NEGATIVE — the fan motor heat lands
+            // as a real zone load, no special case.
+            let qCool = 0;
+            if (inlet.ok) {
+                const supply = Psychro.buildState(datT, leavingW, P);
+                if (supply.ok) {
+                    const proc = Psychro.computeProcess({ inlet: inlet, outlet: supply, type: 'cool' }, cfm);
+                    if (isFinite(proc.qSens)) qCool = -proc.qSens;   // Btu/h (<0 = fan-heat gain)
+                }
+            }
+            // Envelope (negative feedback toward OA — adds damping) + internal.
+            const qGain = UA_ENV * (tOa - zoneT) + qInternal;        // Btu/h
+            if (isFinite(dt)) {
+                // pv += dt · net / C  (tau ↔ C_ZONE). Loads are Btu/HOUR and
+                // C_ZONE is Btu/°F, so net/C is °F/h; dt is sim-SECONDS, hence
+                // the /3600. A second state (zoneW on qLat) integrates on this
+                // exact line — see zoneInletState.
+                plant.zoneT += (qGain - qCool) / C_ZONE * (dt / 3600);
+                plant.simSec += dt;
+                // Wide safety clamp — the envelope term already bounds zoneT;
+                // this only catches a pathological knob combination.
+                if (plant.zoneT < 40)  plant.zoneT = 40;
+                if (plant.zoneT > 120) plant.zoneT = 120;
+            }
+
+            // Program-visible sensor = the value the CONTROLLER reads. Normally
+            // the real zone; a forced override hands the program a wrong number
+            // while the real zone keeps integrating on actual physics.
+            plant.sensors['space-temp'] = plant.override.spaceTemp.active
+                ? plant.override.spaceTemp.value
+                : plant.zoneT;
+
+            d.eatT = zoneT;                  // actual return air (= zone temp)
             d.coilLeaveT = coilLeaveT;
             d.datT = datT;
             d.stage = stage;
@@ -1066,6 +1251,10 @@ noindex: true
             d.capActive = capActive;
             d.setp = plant.params['cooling-setpoint'];
             d.fault = fault;
+            d.qCool = qCool;                 // Btu/h (signed)
+            d.qGain = qGain;                 // Btu/h
+            d.sensedT = plant.sensors['space-temp'];
+            d.overrideActive = plant.override.spaceTemp.active;
             plant.anim.fanFrac = fanOn ? fanFrac : 0;
         }
 
@@ -1139,8 +1328,22 @@ noindex: true
             verdictEl.className = 'status-pill fcu-verdict ' + cls;
             verdictEl.textContent = txt;
 
-            // Space-temp readout mirrors the sensor (display units).
-            zoneValLbl.textContent = eatN.toFixed(0) + ' ' + tSuffix();
+            // ── sensor override display — the real-vs-sensed split ──
+            // The zone readout is the ACTUAL zone (eatN). The override box
+            // shows what the program READS: it mirrors the live zone when off
+            // (read-only) and holds the forced value when on. Forcing surfaces
+            // the drift on the state line so the wrong-number hazard is plain.
+            zoneValLbl.textContent = 'zone ' + eatN.toFixed(1) + ' ' + tSuffix();
+            ovrUnit.textContent = tSuffix();
+            if (!d.overrideActive) {
+                ovrInput.value = eatN.toFixed(1);
+                ovrState.textContent = '';
+            } else {
+                const sensedN = dispTempNum(d.sensedT);
+                ovrState.textContent = 'Program reads ' + sensedN.toFixed(1) + ' ' + tSuffix()
+                    + ' — zone is actually ' + eatN.toFixed(1) + ' ' + tSuffix()
+                    + '. The controller is staging on the forced value.';
+            }
         }
 
         // ── hand controls — AUTO tracks the program (read-only); HAND drives ──
@@ -1160,6 +1363,23 @@ noindex: true
                 b.setAttribute('aria-pressed', on ? 'true' : 'false');
             });
             fanValLbl.textContent = plant.actuators['fan-speed'] + '%';
+
+            // ── sensor override — independent of HAND/AUTO (a forced sensor
+            // fools the program in either mode). The box is editable only while
+            // forcing; renderUnit fills it with the live zone when released.
+            const forcing = plant.override.spaceTemp.active;
+            ovrToggle.classList.toggle('active', forcing);
+            ovrToggle.setAttribute('aria-pressed', forcing ? 'true' : 'false');
+            ovrToggle.textContent = forcing ? 'Release' : 'Force sensor';
+            ovrInput.disabled = !forcing;
+            ovrField.classList.toggle('is-forcing', forcing);
+
+            // ── environment / clock readouts (these sliders are always live —
+            // they set the world, not the unit's outputs). Read FROM the knob
+            // state, never write the slider value (would fight a drag).
+            speedValLbl.textContent = Math.round(simSpeed) + '×';
+            oaValLbl.textContent    = dispTempNum(tOa).toFixed(0) + ' ' + tSuffix();
+            loadValLbl.textContent  = Math.round(qInternal) + ' Btu/h';
         }
 
         // The graphic is a viewBox SVG at width:100% — it auto-scales into its
@@ -1182,8 +1402,12 @@ noindex: true
                     const s = SCENARIOS[e.currentTarget.getAttribute('data-preset')];
                     if (!s) return;
                     host.setMode('hand');
-                    pl.sensors['space-temp'] = s.zone;   zoneSlider.value = String(s.zone);
-                    pl.actuators['fan-speed'] = s.fan;   fanSlider.value  = String(s.fan);
+                    // Seed the zone as an INITIAL CONDITION — the loop carries
+                    // it from here; a preset never jams the sensed value.
+                    pl.zoneT = s.zone;
+                    pl.override.spaceTemp.active = false;   // a preset is a clean start
+                    pl.override.spaceTemp.value  = s.zone;
+                    pl.actuators['fan-speed'] = s.fan;   fanSlider.value = String(s.fan);
                     pl.actuators.y1 = s.stage >= 1;
                     pl.actuators.y2 = s.stage >= 2;
                     pl.actuators['fan-enable'] = s.fan > 0;   // scenarios run the fan
@@ -1218,10 +1442,64 @@ noindex: true
                 host.requestRender();
             });
 
-            // Space-temp slider — the exogenous sensor, ALWAYS live (open loop).
-            zoneSlider.addEventListener('input', function () {
-                const v = parseFloat(zoneSlider.value);
-                if (isFinite(v)) pl.sensors['space-temp'] = v;
+            // ── Sensor override — force the value the PROGRAM reads. Toggling
+            // on seeds the box from the current actual zone; the real zone
+            // keeps integrating regardless. The numeric box is display-unit-
+            // aware (°F internally, °C when the site is in metric). ──
+            function toDisplayTemp(f) {
+                const U = window.Units;
+                return U.current() === 'us' ? f : U.display.temp(f);
+            }
+            function fromDisplayTemp(disp) {
+                const U = window.Units;
+                return U.current() === 'us' ? disp : U.toCanonical.temp(disp);
+            }
+            ovrToggle.addEventListener('click', function () {
+                const ov = pl.override.spaceTemp;
+                ov.active = !ov.active;
+                if (ov.active) {
+                    ov.value = pl.zoneT;                   // start the force from the truth
+                    ovrInput.value = toDisplayTemp(pl.zoneT).toFixed(1);
+                }
+                host.requestRender();
+                if (ov.active) ovrInput.focus();
+            });
+            ovrInput.addEventListener('input', function () {
+                if (!pl.override.spaceTemp.active) return;
+                const disp = parseFloat(ovrInput.value);
+                if (!isFinite(disp)) return;               // validate-and-mute: ignore junk mid-type
+                pl.override.spaceTemp.value = fromDisplayTemp(disp);
+                host.requestRender();
+            });
+            // Re-express the forced value in the current display units when the
+            // site unit toggle flips — the render loop leaves the box alone
+            // while forcing (so it can't clobber typing), so do it on the event.
+            document.addEventListener('unitschange', function () {
+                if (pl.override.spaceTemp.active) {
+                    ovrInput.value = toDisplayTemp(pl.override.spaceTemp.value).toFixed(1);
+                }
+            });
+
+            // ── Sim-clock speed (× real time) — always live; scales the whole
+            // workbench clock through the host hook (binding + integrator). ──
+            speedSlider.addEventListener('input', function () {
+                const v = parseFloat(speedSlider.value);
+                if (isFinite(v)) host.setSpeed(v);
+                host.requestRender();
+            });
+
+            // ── Outdoor-air temp (envelope driver) — °F-native slider, always
+            // live; the readout converts for display. ──
+            oaSlider.addEventListener('input', function () {
+                const v = parseFloat(oaSlider.value);
+                if (isFinite(v)) tOa = v;
+                host.requestRender();
+            });
+
+            // ── Internal sensible load (Btu/h) — always live. ──
+            loadSlider.addEventListener('input', function () {
+                const v = parseFloat(loadSlider.value);
+                if (isFinite(v)) qInternal = v;
                 host.requestRender();
             });
         }
@@ -1500,6 +1778,8 @@ noindex: true
             points: FCU_POINTS,
             programs: FCU_PROGRAMS,
             defaultProgram: 'cool-2stage',
+            speedDefault: SPEED_DEF,             // sim-clock prefs the shell reads
+            maxDtSim: MAX_DT_SIM,
             createPlant: fcuCreatePlant,
             update: fcuUpdate,
             renderUnit: fcuRenderUnit,
@@ -1513,6 +1793,9 @@ noindex: true
         // ── shell init ─────────────────────────────────────────────────────
         unit = fcuUnit;
         plant = unit.createPlant();
+        // The unit declares its sim-clock preferences (generic contract).
+        if (isFinite(unit.speedDefault)) simSpeed = unit.speedDefault;
+        if (isFinite(unit.maxDtSim))     simMaxDt = unit.maxDtSim;
         programKey = unit.defaultProgram;
         graph = FBE.makeGraph(unit.programs[programKey]);
         reindex(graph);
@@ -1521,6 +1804,7 @@ noindex: true
         unit.wireControls(plant, {
             getMode: function () { return mode; },
             setMode: setMode,
+            setSpeed: function (v) { if (isFinite(v)) simSpeed = v; },
             requestRender: requestRender,
         });
         unit.initAnim(plant);
