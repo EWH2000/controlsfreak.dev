@@ -1061,6 +1061,7 @@ noindex: true
         const UA_ENV      = 300;                 // Btu/(h·°F) — envelope conductance to outdoor air
         const Q_INT_DEF   = 3000;                // Btu/h — default internal sensible gain (load knob)
         const T_OA_DEF    = 80;                  // °F — default outdoor-air temp (moderate day)
+        const COIL_TAU    = 30;                  // s — coil thermal + DAT sensor/filter response (bigger = slower ramp)
         const SPEED_DEF   = 20;                  // × — default sim-clock multiplier (1× ≈ real time)
         const SPEED_MIN   = 1;                   // × — slowest (watch a 5 s ON-delay in real seconds)
         const SPEED_MAX   = 60;                  // × — fastest (fast-forward a slow recovery)
@@ -1152,6 +1153,8 @@ noindex: true
                 zoneT:      76,                  // °F — the integrated REAL zone temp (truth)
                 // zoneW:   0.0094,              // lb/lb — future latent state; NOT integrated
                 //                                  this session (see the RH-ready seam in fcuUpdate)
+                coilLeaveT: undefined,           // °F — first-order-lagged coil leaving-air; seeded to
+                //                                  its quasi-static target on the first tick (no page-load ramp)
                 override:   { spaceTemp: { active: false, value: 76 } },
                 simSec:     0,                   // accumulated sim-seconds (clock readout hook)
             };
@@ -1187,22 +1190,39 @@ noindex: true
             const capActive = stage > 0 && fanOn && fault === 'none';
             const cfm = Math.max(50, NOMINAL_CFM * fanFrac);
 
-            // Coil leaving-air state via the shared psychro solver, on the
-            // ACTUAL return air (never the sensed value).
+            // Coil leaving-air TARGET (quasi-static) via the shared psychro
+            // solver, on the ACTUAL return air (never the sensed value).
             const inlet = zoneInletState(zoneT);
-            let coilLeaveT;
+            let coilLeaveTarget;
             let leavingW = inlet.ok ? inlet.W : 0;
             if (fanOn && inlet.ok) {
                 const qSens = capActive ? STAGE_QSENS[stage] : 0;
                 const qLat  = capActive ? STAGE_QLAT[stage]  : 0;
                 const leaving = Psychro.invertProcess(inlet, { type: 'cool', cfm: cfm, qSens: qSens, qLat: qLat });
-                if (leaving.ok) { coilLeaveT = leaving.tdb; leavingW = leaving.W; }
-                else coilLeaveT = zoneT;
-                if (coilLeaveT < COIL_FLOOR) coilLeaveT = COIL_FLOOR;
+                if (leaving.ok) { coilLeaveTarget = leaving.tdb; leavingW = leaving.W; }
+                else coilLeaveTarget = zoneT;
+                if (coilLeaveTarget < COIL_FLOOR) coilLeaveTarget = COIL_FLOOR;
             } else {
-                coilLeaveT = zoneT;   // no airflow — nothing crosses the coil
+                coilLeaveTarget = zoneT;   // no airflow — nothing crosses the coil
             }
-            // Discharge sensor sits after the fan (draw-through pickup).
+
+            // First-order lag on the coil leaving-air temp (forward-Euler, same
+            // idiom as the zone). The coil metal + refrigerant have thermal mass
+            // and the DAT sensor/AI filters besides, so the leaving temp RAMPS to
+            // its target instead of stepping — and when the compressor stops the
+            // cold coil keeps cooling briefly (residual cooling) as the target
+            // jumps back to zoneT. Seed to the target on the first tick so
+            // arrival is already at steady state; the Math.min(1, …) guards
+            // against overshoot when dt is large. Runs every tick (even fan-off)
+            // so plant.coilLeaveT stays continuous.
+            if (!isFinite(plant.coilLeaveT)) plant.coilLeaveT = coilLeaveTarget;
+            if (isFinite(dt)) {
+                plant.coilLeaveT += (coilLeaveTarget - plant.coilLeaveT) * Math.min(1, dt / COIL_TAU);
+            }
+            const coilLeaveT = plant.coilLeaveT;   // the lagged value drives datT + Q_cool
+
+            // Discharge sensor sits after the fan (draw-through pickup), off the
+            // LAGGED coil temp so the delivered cooling ramps in too.
             const datT = fanOn ? coilLeaveT + FAN_HEAT : zoneT;
             // Fed back into the program's `dat` AI next tick (a discharge
             // low-limit hook).
