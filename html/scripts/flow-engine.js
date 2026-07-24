@@ -240,6 +240,7 @@
         }
     })();
     const LEGACY = GUTTER_VARIANT === 'v0';
+    const RATE_GATED = GUTTER_VARIANT === 'v2';
 
     // Global tuning — one velocity, one spacing, applied uniformly to
     // every annotated path. Tuned by eye on the d1 diagram and then
@@ -291,6 +292,7 @@
     let looping = false;        // rAF loop currently scheduled (#113 — suspends when idle)
     let lastFrameT = null;      // last rAF timestamp; reset whenever the loop suspends
     let lastReapT = 0;          // last full-`pools` stale sweep (#198)
+    let gutterAccum = 0;        // V2 only: dt banked since the last gutter advance
 
     // The gutter collage's own CSS hides it below this width — keep in
     // sync with the .schematic-bg media query in styles.css.
@@ -310,6 +312,15 @@
     // case is a 90° corner falling midway between two samples, where
     // the chord cuts ~0.35 u off the vertex for ~2 frames.
     const TABLE_STEP = 1;
+
+    // V2 only: how often gutter flow pools advance. Particles cover the
+    // same ground at the same average speed — they take one 1.5-unit
+    // step instead of three 0.5-unit ones. Applies to the gutter's FLOW
+    // pools and nothing else: pulses are never rate-limited (a gutter
+    // pulse path is 32-85px at 220 px/s, so a gated head would advance
+    // ~15px per frame against a ~20px comet and read as disconnected
+    // blinks), and content diagrams keep full frame rate.
+    const GUTTER_TICK_S = 1 / 20;   // seconds between gutter advances
 
     // True if `el` sits inside the gutter collage. Build-time only —
     // never called per frame (pools carry the answer as `pool.gutter`).
@@ -481,6 +492,21 @@
         lastFrameT = t;
         const delta = VELOCITY * dt;
 
+        // V2 gutter rate gate. Bank dt and spend it in one step every
+        // ~50ms, so the average velocity is unchanged and no time is
+        // lost — a skipped frame is deferred travel, not dropped travel.
+        // gutterDelta === delta for every other variant.
+        let gutterDelta = delta;
+        if (RATE_GATED) {
+            gutterAccum += dt;
+            if (gutterAccum < GUTTER_TICK_S) {
+                gutterDelta = 0;
+            } else {
+                gutterDelta = VELOCITY * gutterAccum;
+                gutterAccum = 0;
+            }
+        }
+
         // Iterate backwards so an in-flight splice of a stale pool (its
         // annotated element was removed from the DOM) doesn't skip the
         // next pool. Offscreen pools aren't in `visiblePools` at all —
@@ -493,10 +519,12 @@
                 removePool(pool);
                 continue;
             }
+            const step = pool.gutter ? gutterDelta : delta;
+            if (step === 0) continue;
             const len = pool.length;
             for (let i = 0; i < pool.particles.length; i++) {
                 const part = pool.particles[i];
-                part.offset += delta;
+                part.offset += step;
                 if (part.offset >= len) part.offset -= len;
                 setPos(pool, part);
             }
