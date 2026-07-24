@@ -76,6 +76,20 @@
 // `data-flow-reverse="true"` and the engine walks it from end to
 // start instead of rewriting the path.
 //
+// Per-path geometry caching: `data-flow-static="true"` opts one path
+// into the sampled point table (see "Idle cost" below) — the same
+// treatment the gutter gets unconditionally. It is an assertion by the
+// page, not a hint: *every* mutation of this path's `d` is followed by
+// a FlowEngine.refreshPath() call on it. Pages that hold to that get
+// the cheaper per-frame read; pages that can't must NOT set it. The
+// live counter-example is simulators/hydronic-loop-builder.html, which
+// rewrites `d` on every pointermove and only refreshes on pointer-UP —
+// its particles track the dragged pipe *because* the read is live, and
+// a table there would strand them on the pre-drag route until release.
+// simulators/refrigerant-loop.html is the opposite case and a ready
+// candidate: its one geometry swap (the cycle re-route) calls
+// refreshPath on each element immediately after setting `d`.
+//
 // Per-path density: `data-flow-density="<float>"` is an optional
 // multiplier on baseline particle spacing. Default 1.0 (= baseline
 // SPACING). Lower values space particles farther apart on that path
@@ -183,34 +197,43 @@
 // ~41% of a CPU core, continuously, at idle. Three mechanisms below
 // cut the per-frame work; each is measured, not assumed:
 //
-//   1. Point table (gutter-scoped). setPos() called getPointAtLength()
-//      per particle per frame. Gutter geometry is server-rendered and
-//      static, so gutter pools sample the path ONCE at build into a
-//      flat table and interpolate between samples. Content pools keep
-//      the live read — hydronic-loop-builder rewrites path `d` on
-//      every pointermove and only calls refreshPath() on pointer-UP,
-//      so its particles track the pipe mid-drag *because* the read is
-//      live. Never widen this cache past the gutter without giving
-//      those pages an opt-in.
-//   2. Cheaper writes. `circle.cx.baseVal.value = n` skips the number→
-//      string→attribute-parse round trip setAttribute() pays, and
-//      reflects into getAttribute('cx') (measured 4.1× cheaper than
-//      setAttribute with a raw float, 2.1× vs. a rounded one). Values
-//      are rounded to 0.1 user units and re-written only when that
-//      rounded value CHANGED — most gutter runs are axis-aligned, so
-//      one of the two coordinates is constant and its write vanishes.
-//   3. visiblePools. The frame loop walked all ~360 pools every frame
-//      to ask each whether it was visible. The IntersectionObserver
-//      already knows, so it now maintains a `visiblePools` array and
-//      the loop iterates only that. The full-`pools` !isConnected
-//      sweep still runs — on a slow cadence — because it is the ONLY
-//      reap path for detached elements and hydronic-loop-builder
-//      documents relying on it.
+// The gutter is not the only consumer, and on a public page it is
+// often not the main one: simulators/refrigerant-loop.html idles with
+// 78 particles on CONTENT paths, and hiding its gutter changes nothing
+// measurable. So of the three mechanisms below, only the first is
+// scoped — the other two apply to EVERY pool, because content diagrams
+// are where a visitor actually pays.
 //
-// Every lever plateaus around 20%: a style/layout pass over a document
-// holding ~1,800 gutter SVG nodes costs that much per frame no matter
-// how little moved. Zero is not reachable with engine tricks; it needs
-// the gutter to stop animating (see the variant flag below).
+//   1. Point table — the one scoped mechanism. setPos() called
+//      getPointAtLength() per particle per frame. Gutter geometry is
+//      server-rendered and static, so gutter pools sample the path
+//      ONCE at build into a flat table and interpolate between
+//      samples; a content path opts in with data-flow-static (above).
+//      The scope exists for exactly one page: hydronic-loop-builder
+//      rewrites `d` on every pointermove and only calls refreshPath()
+//      on pointer-UP, so its particles track the pipe mid-drag
+//      *because* the read is live.
+//   2. Cheaper writes, EVERY pool. `circle.cx.baseVal.value = n` skips
+//      the number→string→attribute-parse round trip setAttribute()
+//      pays, and reflects into getAttribute('cx') (measured 4.1×
+//      cheaper than setAttribute with a raw float, 2.1× vs. a rounded
+//      one). Values round to 0.1 user units and re-write only when
+//      that rounded value CHANGED — an axis-aligned run has one
+//      constant coordinate, whose write then vanishes.
+//   3. visiblePools, EVERY pool. The frame loop walked all ~360 pools
+//      every frame to ask each whether it was visible. The
+//      IntersectionObserver already knows, so it now maintains a
+//      `visiblePools` array and the loop iterates only that; a
+//      zero-particle pool never joins it at all. The full-`pools`
+//      !isConnected sweep still runs — on a slow cadence — because it
+//      is the ONLY reap path for detached elements and
+//      hydronic-loop-builder documents relying on it.
+//
+// Cheaper writes are not free writes: each one still dirties style and
+// layout for its subtree, so the per-frame floor is set by how many
+// particles move, not by how cheaply each move is issued. That is why
+// the engine-side levers plateau — going lower means moving fewer
+// particles (see the variant flag below), not writing them faster.
 // ──────────────────────────────────────────────────────────────────────
 
 (function () {
@@ -623,11 +646,14 @@
         pool.reverse = reverse;
         pool.particles = [];
         pool.gutter = inGutter(el);
-        // Cache geometry for gutter pools only, and rebuild it here —
+        // Cache geometry for the gutter (always static) and for any path
+        // that opts in with data-flow-static. Rebuilt here on purpose:
         // refreshPath() re-runs this function, which is how a page that
-        // mutates `d` gets a fresh table. Content pools keep the live
-        // read (header note: mid-drag pipe tracking depends on it).
-        pool.table = (!LEGACY && pool.gutter) ? buildTable(el, length) : null;
+        // mutates `d` gets a fresh table. Everything else keeps the live
+        // read — see the data-flow-static note in the header.
+        pool.table = (!LEGACY && (pool.gutter || el.getAttribute('data-flow-static') === 'true'))
+            ? buildTable(el, length)
+            : null;
 
         for (let i = 0; i < count; i++) {
             const circle = document.createElementNS(SVG_NS, 'circle');
