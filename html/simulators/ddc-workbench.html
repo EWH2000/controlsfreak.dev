@@ -661,9 +661,9 @@ noindex: true
                     <div class="slider-field">
                         <div class="slider-head">
                             <label for="fcu-oa-slider">Outdoor air</label>
-                            <span class="slider-val" id="fcu-oa-val">90 °F</span>
+                            <span class="slider-val" id="fcu-oa-val">80 °F</span>
                         </div>
-                        <input type="range" id="fcu-oa-slider" min="55" max="110" step="1" value="90">
+                        <input type="range" id="fcu-oa-slider" min="55" max="110" step="1" value="80">
                     </div>
 
                     <div class="slider-field">
@@ -1049,15 +1049,18 @@ noindex: true
         // commissions these live on the preview — they are meant to be
         // trivially findable and changed, so DON'T agonize over them. Internal
         // model is IP (Btu/h, °F); the zone is one lumped-capacitance node.
-        //   Sizing intent: on a 90 °F day the total gain (~7.2 kBtu/h) sits
-        //   just above stage 1 (7 kBtu/h) so the ladder climbs to stage 2
-        //   (13.5 kBtu/h), which over-cools and cycles back — the staging
-        //   ladder stays exercised. Drop T_OA or the load knob and stage 1
-        //   holds on its own.
-        const C_ZONE      = 800;                 // Btu/°F — lumped zone capacitance (bigger = slower)
+        //   Sizing intent (default 80 °F day): total gain (~4.2 kBtu/h) sits
+        //   below stage 1 (~6.7 kBtu/h delivered), so stage 1 pulls the zone
+        //   down to setpoint and cycles on the deadband — the "it's working"
+        //   baseline. Crank T_OA or the load knob past stage-1 capacity and the
+        //   ladder climbs to stage 2 (13.5 kBtu/h), over-cools, and cycles the
+        //   ladder — the strained "can't-keep-up" story. C_ZONE sets the pace:
+        //   ~200 gives a ~13 min zone time constant, so at 20× a recovery plays
+        //   in ~40 s and at 60× in ~15 s; at 1× it runs in real building time.
+        const C_ZONE      = 200;                 // Btu/°F — lumped zone capacitance (bigger = slower)
         const UA_ENV      = 300;                 // Btu/(h·°F) — envelope conductance to outdoor air
         const Q_INT_DEF   = 3000;                // Btu/h — default internal sensible gain (load knob)
-        const T_OA_DEF    = 90;                  // °F — default outdoor-air temp (design day)
+        const T_OA_DEF    = 80;                  // °F — default outdoor-air temp (moderate day)
         const SPEED_DEF   = 20;                  // × — default sim-clock multiplier (1× ≈ real time)
         const SPEED_MIN   = 1;                   // × — slowest (watch a 5 s ON-delay in real seconds)
         const SPEED_MAX   = 60;                  // × — fastest (fast-forward a slow recovery)
