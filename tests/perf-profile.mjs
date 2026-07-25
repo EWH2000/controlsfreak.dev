@@ -365,10 +365,20 @@ const MANIFEST = [
         assert: async (page) => (await page.locator('#tab-wiresheet').evaluate((el) => el.classList.contains('active'))
             ? null : 'the wiresheet pane never became active — the tab click did not take'),
         scrollTo: '#tab-wiresheet',
-        motionSel: '.fcu-chevron',
         why: 'Same page, one click away from the row above. The pair is a controlled '
             + 'experiment — identical load, identical chrome, one tab swap — so the '
-            + 'DIFFERENCE BETWEEN THESE TWO ROWS is what a wiresheet-side change moved.',
+            + 'DIFFERENCE BETWEEN THESE TWO ROWS is what a wiresheet-side change moved. '
+            + 'NO motionSel, deliberately — same reason as the FBE row below, reached by '
+            + 'a different route. The obvious pick, .fcu-chevron, is WRONG here: every '
+            + 'chevron lives in #fcu-flow inside #tab-unit, the pane this row makes '
+            + 'display:none. It reads alive today only because the chevron rAF loop keeps '
+            + 'writing transforms into a hidden pane — i.e. it certifies liveness of the '
+            + 'pane this row is not about. Once that loop is idle-gated the same selector '
+            + 'reads 0 and prints "expected moving", calling a CORRECT idle gate a broken '
+            + 'animation. Repointing it at the wiresheet pane fails too: nothing inside '
+            + '#tab-wiresheet changes within PROBE_MS (verified — only 2 .fbe-block-val '
+            + 'nodes move, and not until ~4s). This row is watched via CPU, STRUCTURAL '
+            + 'and the gutter scope.',
     },
     {
         id: 'refrigerant-loop',
