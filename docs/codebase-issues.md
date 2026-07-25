@@ -7889,36 +7889,122 @@ whatever geometry spec comes out of the workbench re-layout should assert the
 **relationship** (`pitch ≥ blockWidth + threshold − pinInset`) rather than
 hard-coding 171.6, and `BLOCK_W` should come from a measured rect.
 
-### 209. FBE inspector: deleting an actuator IO block strands its plant actuator *(open — 2026-07-25)*
+### 209. Actuator points have no relinquish path — implement 3-slot priority arbitration *(open — 2026-07-25 · design decided 2026-07-25)*
 
-`ddc-workbench.html`'s binding tick does `blk = byId[p.id]; if (!blk) continue;`
-— no else-branch, no default. So **any actuator point whose block is absent
-from the running graph freezes at its last commanded value**, and
-`fbe-editor.js`'s inspector carries a "Delete block" button for any selected
-block. Proved: load `cool-2stage` at 80 °F, switch to `cool-1stage`, select the
-unwired `y2` block and delete it → `plant.actuators.y2` stays `true` for the
-rest of the session, with the unit graphic showing a compressor the program is
-no longer commanding.
+**Originally filed as "deleting an actuator IO block strands its plant
+actuator." That is one symptom of three; the owner reframed it, correctly, as
+the EBO/BACnet failure it actually is** — a level stops writing, its value
+persists because nothing relinquishes it, and downstream logic keeps consuming
+a command nobody is issuing.
 
-This is the *general* form of the mechanism the `cool-1stage` orphan `y2` block
-relies on — that block is load-bearing (it is what forces stage 2 off after a
-switch from `cool-2stage`) and **nothing defends it.**
+Pointed out in the same breath, and it settles the design: `bacnet-basics.html`
+already teaches this exact failure — *"Forgetting to release an override is the
+most common way priority-array logic goes wrong in the field."* **The site
+teaches the defect its own simulator implements.**
 
-**Related, same reachability:** every const is editable through a bare
-`<input type="number">` with no `min` / `max` / `step`, storing
-`isFinite(n) ? n : 0`. So `cooling-setpoint`, `deadband`, `sep` and `hundred`
-all accept negatives and arbitrary magnitudes, and `hundred` feeds the
-fan-speed AO with no clamp — `1e9` or `−500` goes straight into
-`plant.actuators['fan-speed']`.
+**Mechanism.** `plant.actuators` is the single source of truth for the physics,
+the unit graphic and the point row. The binding tick populates it AUTO-only:
 
-**At stake:** a teaching sim can be driven into a state where the graphic
-contradicts the program, which inverts the lesson. Mitigated today only by the
-page being hidden (`eleventyExcludeFromCollections` + `noindex`), so no linked
-visitor reaches it. **Options.** (a) Default the actuator in the else-branch
-(`p.kind === 'bo' ? false : 0`) — closes it, at the cost of the `cool-1stage`
-teaching accident, which would then need an explicit block. (b) Clamp the const
-inputs. (c) Accept both while the page stays hidden, and revisit before it goes
-public. **This should be settled before the workbench is published.**
+```js
+blk = byId[p.id];
+if (!blk) continue;                 // ← no else: the key keeps its last value
+v = blk.in ? blk.in.IN : undefined;
+if (v === undefined) continue;
+plant.actuators[p.plantKey] = (p.kind === 'bo') ? (v === true) : v;
+```
+
+`fbe-engine.js` already fills an undriven input (`v = pin.kind === 'bool' ?
+false : 0`) before this runs, so **deleting a wire is safe** — the block is
+still present and commands off. **Only deleting the block freezes.**
+
+**Three instances of the one defect.** The first was the filed one; the other
+two were found while designing the fix, and neither would have been closed by
+the one-line `else` branch originally proposed:
+
+1. **Block deleted** (inspector's "Delete block", two clicks from a loaded
+   program) → the point holds its last command forever.
+2. **HAND does not take the point, it inherits it.** Entering HAND leaves
+   `plant.actuators` holding whatever AUTO last wrote until a control is moved.
+3. **Leaving HAND does not release HAND.** `setMode` only flips button classes
+   and `aria-pressed`; it relinquishes nothing. If the program has no block for
+   that point, the HAND value persists into AUTO.
+
+This is also the general form of the mechanism `cool-1stage`'s orphan `y2`
+block relies on: that unwired block is load-bearing — the engine fills its `IN`
+with `false`, which is the only thing forcing stage 2 off after a switch down
+from `cool-2stage` — and nothing defends it.
+
+## The decided design
+
+**Three real BACnet slots, not a bespoke tier scheme.** The vocabulary already
+exists on this site in two places — the `#priority-array` section of
+`education/bacnet-basics.html` and the `tools/bacnet-priority.html` resolver —
+so the simulator uses three of the real sixteen rather than inventing its own:
+
+| Tier | Slot |
+|---|---|
+| Override | **8 — Manual Operator** |
+| Program | **16** — "the slot the BMS's normal sequence writes from" |
+| Fallback | **`Relinquish_Default`** |
+
+The lesson's own summary — *"slot 8 beats slot 16, and a null at slot 8 lets
+slot 16 take over"* — becomes literally what the simulator does. **Copy
+constraint:** the sim must say it *uses* three of the sixteen slots, never that
+there are three.
+
+**Owner verdicts, 2026-07-25 — these four are CLOSED.**
+
+- **(a) What relinquishes slot 16?** *"If the block is there, even not
+  connected, it sends out as off. If there's no block associated with it, then
+  it goes to default."* Block present ⇒ slot 16 is writing (off, via the
+  engine's existing fill). Block absent ⇒ slot 16 is null ⇒ `Relinquish_Default`.
+  No engine change needed. **And it is to be surfaced as a teaching
+  opportunity, not merely fixed.**
+- **(b) How does the user release slot 8?** *"A null checkbox next to the
+  override"* — faithful to how real systems present it, and it makes the
+  lesson's key point (*"writing null releases; it doesn't overwrite"*) a
+  physical control rather than prose.
+- **(c) The sensor override stays separate and basic.** It forces the value the
+  *program reads* — an input override, not a command priority. It resembles
+  slot 8 and is a different mechanism; conflating them would teach something
+  false. Little to no rework.
+- **(d) Visibility.** A **"points not following program:"** window rather than
+  per-point chrome on every row. The owner notes this may change once he can
+  look at it built — treat the window as the starting shape, not the final one.
+
+## Consequences of (a) and (b) that still need a call
+
+- **(d) is load-bearing for (a), not cosmetic.** "Commanded off at slot 16" and
+  "relinquished to `Relinquish_Default`" will often resolve to the *same
+  displayed number* (both `false`, or both `0` for the fan AO). Without the
+  window, the distinction (a) exists to teach is invisible. The window should
+  therefore name *which* reason a point is off-program — override active vs
+  slot 16 null — not merely list the point.
+- **Each point needs a `Relinquish_Default` value.** `FCU_POINTS` has no such
+  field today. `y1` / `y2` / `fan-enable` → `false`; `fan-speed` → needs a
+  decision (0, or a minimum). It is a real BACnet property, so the field name
+  should say so.
+- **(b) may make the AUTO / HAND toggle redundant.** In BACnet terms there is
+  no "HAND mode" — there is only whether slot 8 is null. Today `mode` gates
+  three things: the program write, the enable state of the HAND controls, and
+  the slider mirroring. Under arbitration, the program always writes slot 16
+  and the override is simply present or null, so the mode buttons collapse into
+  the checkbox. That is more faithful and less chrome, **but it removes
+  existing UI and should be signed off explicitly rather than assumed.**
+- **Small interaction detail for the checkbox:** when null is checked, does the
+  slider/toggle grey out, or show the resolved value? And does unchecking
+  immediately write the control's current position to slot 8, or arm it?
+
+**Scope.** No longer a bug fix — it touches the binding tick, `setMode`, the
+HAND handlers, `FCU_POINTS`, and adds a UI surface. **Sequenced after #211 /
+#212**, which are contained. Do **not** ship the one-line `else` as a stopgap;
+it would be ripped out. **One trigger overrides that:** if the workbench goes
+public before this lands, put the one-liner in first — a graphic showing a
+compressor nobody commanded is not something to publish.
+
+**Cross-links owed when it ships:** `education/bacnet-basics.html`
+(`#priority-array`) and `tools/bacnet-priority.html`. The window is effectively
+a three-slot instance of that resolver, so the two should present consistently.
 
 ### 210. Stale comment in `ddc-workbench.html` claims the fan-off fault needs a HAND override *(open — 2026-07-25)*
 
@@ -8032,3 +8118,36 @@ baseline with nothing attached telling them so.
 tell. **Action:** either annotate the row with the two observations and the
 open question, or resolve the precondition difference. The annotation is cheap
 and stops the record from decaying further.
+
+### 215. FBE inspector accepts unbounded const values straight into the plant *(open — 2026-07-25)*
+
+Split out of #209 on 2026-07-25 — same file, unrelated mechanism, and #209
+became a design arc while this stayed a small robustness question.
+
+`fbe-editor.js`'s inspector builds a bare `<input type="number">` for every
+const param with **no `min` / `max` / `step`**, storing
+`b.params[p.name] = isFinite(n) ? n : 0`. `isFinite` already rejects `NaN` and
+`Infinity`, so the exposure is *finite but absurd* values. `cooling-setpoint`,
+`deadband`, `sep` and `hundred` all accept negatives and arbitrary magnitudes,
+and `hundred` feeds the fan-speed AO with no clamp anywhere downstream —
+`plant.actuators['fan-speed']` is consumed directly by the physics.
+
+**The question that decides this has not been measured:** can an absurd value
+drive the forward-Euler integrator into a state it cannot recover from without
+a page reload? There is a `dt` clamp on the host tick; there is no *value*
+clamp. That is the difference between:
+
+- *silly input, silly output* — harmless, arguably instructive, leave it; and
+- *the sim is dead until reload* — a real bug that a visitor would read as the
+  page being broken.
+
+**Measure before choosing.** It needs a browser (the physics lives in the page,
+not in a separately-loadable engine), so it is a few minutes rather than a
+guess. Do not clamp on suspicion — an unnecessary clamp removes exploration
+from a teaching tool, and letting a student type a wrong number and watch the
+consequence is part of the point.
+
+**Related:** `deadband` is the same input path that produces #202-era D6
+behaviour (a negative deadband erases hysteresis into a bare comparator, which
+is a *better* teaching hook than the failure originally claimed for it, and an
+argument for leaving that particular const unclamped).

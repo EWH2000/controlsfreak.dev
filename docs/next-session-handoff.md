@@ -668,8 +668,11 @@ allows.
   adversarial verification turned up: **#207** (the guard's symlink blind spot
   and its `cwd` scan scope), **#208** (rem/px coupling — the 171.6px threshold
   is not a constant and `cool-1stage` breaks at enlarged text), **#209**
-  (deleting an actuator IO block strands its plant actuator; unbounded const
-  inputs), **#210** (the stale HAND-override comment), **#211** (the badge
+  (actuator points have no relinquish path — **reframed by the owner as the
+  EBO/BACnet failure it is, and its design decided 2026-07-25**: three real
+  slots, 8 / 16 / `Relinquish_Default`, with a null checkbox and a "points not
+  following program" window), **#215** (unbounded const inputs, split out of
+  #209), **#210** (the stale HAND-override comment), **#211** (the badge
   caption overflow — the owner's original bug — plus the dead presentation
   font-sizes), **#212** (`updateChips` ignores units), **#213** (`pid-tuner`'s
   perf residual) and **#214** (the untrustworthy profiler baseline). Two
