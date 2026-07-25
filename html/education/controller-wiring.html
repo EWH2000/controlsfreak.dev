@@ -323,12 +323,20 @@ keywords: 24vac com transformer dead short 4-20ma loop wiring fuse polarity
                 <circle class="term" cx="470" cy="44" r="4.5"/>
                 <circle class="term" cx="470" cy="68" r="4.5"/>
 
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes wire geometry — this page ships no JavaScript
+                     at all. A future geometry write must refresh in the same breath, or
+                     the page must opt out via the `flowGeometryLive` frontmatter
+                     (flowStaticGuard, .eleventy.js). -->
                 <!-- POWER feeds + the two distribution buses -->
                 <!-- hot feed (animated): xfmr 24~ -> 24V~ -->
-                <path id="cwl-cap-feed" data-flow="current" class="wire w-cur" d="M 470 44 H 178 V 70 H 150" fill="none"/>
+                <path id="cwl-cap-feed" data-flow="current" data-flow-static="true" class="wire w-cur" d="M 470 44 H 178 V 70 H 150" fill="none"/>
                 <polygon class="arrow-cur" points="300,39 300,49 290,44"/>
                 <!-- hot bus (animated): 24V~ down the spine -->
-                <path id="cwl-cap-hot" data-flow="current" class="wire w-cur" d="M 150 70 H 200 V 460 H 150" fill="none"/>
+                <path id="cwl-cap-hot" data-flow="current" data-flow-static="true" class="wire w-cur" d="M 150 70 H 200 V 460 H 150" fill="none"/>
                 <polygon class="arrow-cur" points="195,300 205,300 200,310"/>
                 <!-- common feed + common bus (blue) -->
                 <path class="wire w-com" d="M 470 68 H 200 V 110 H 150"/>
@@ -347,7 +355,7 @@ keywords: 24vac com transformer dead short 4-20ma loop wiring fuse polarity
                 <text class="lbl" x="560" y="270" text-anchor="middle">4&ndash;20 mA XMTR</text>
                 <text class="lbl-dim" x="560" y="285" text-anchor="middle">DC loop-powered</text>
                 <path class="wire w-loop" d="M 150 135 H 214 V 264 H 480"/>
-                <path id="cwl-cap-loop" data-flow="current" class="wire w-loop" d="M 480 286 H 360 V 270 H 150" fill="none"/>
+                <path id="cwl-cap-loop" data-flow="current" data-flow-static="true" class="wire w-loop" d="M 480 286 H 360 V 270 H 150" fill="none"/>
                 <polygon class="arrow-loop" points="250,265 240,270 250,275"/>
 
                 <!-- dry contact on BI1 -->

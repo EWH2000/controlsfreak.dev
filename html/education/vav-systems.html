@@ -195,39 +195,47 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
                 <text x="71" y="146" font-size="14" fill="var(--text-bright)" text-anchor="middle">AHU</text>
                 <text x="71" y="164" font-size="11" fill="var(--text-dim)" text-anchor="middle">coils + fan</text>
 
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes duct geometry — the box-walker widget is page
+                     math over HTML readouts. A future geometry write must refresh in the
+                     same breath, or the page must opt out via the `flowGeometryLive`
+                     frontmatter (flowStaticGuard, .eleventy.js). -->
                 <!-- Supply trunk (animated, full density) -->
-                <path id="vav-d1-trunk" data-flow="air" d="M126 150 H520" fill="none" stroke="var(--blue)" stroke-width="4"/>
+                <path id="vav-d1-trunk" data-flow="air" data-flow-static="true" d="M126 150 H520" fill="none" stroke="var(--blue)" stroke-width="4"/>
                 <text x="240" y="140" font-size="13" fill="var(--text)">one cold trunk</text>
                 <polygon points="500,145 500,155 510,150" fill="var(--blue)"/>
 
                 <!-- Branch 1 -->
-                <path id="vav-d1-br1" data-flow="air" data-flow-density="0.35" d="M200 150 V196" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="vav-d1-br1" data-flow="air" data-flow-static="true" data-flow-density="0.35" d="M200 150 V196" fill="none" stroke="var(--blue)" stroke-width="3"/>
                 <rect x="182" y="196" width="36" height="20" fill="var(--surface)" stroke="var(--text)"/>
                 <line x1="192" y1="212" x2="208" y2="200" stroke="var(--text)" stroke-width="2"/>
-                <path id="vav-d1-dr1" data-flow="air" data-flow-density="0.35" d="M200 216 V256" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="vav-d1-dr1" data-flow="air" data-flow-static="true" data-flow-density="0.35" d="M200 216 V256" fill="none" stroke="var(--blue)" stroke-width="3"/>
                 <rect x="165" y="256" width="70" height="36" fill="none" stroke="var(--border)"/>
                 <text x="200" y="278" font-size="12" fill="var(--text)" text-anchor="middle">zone</text>
                 <text x="172" y="209" font-size="12" fill="var(--text)" text-anchor="end">VAV box</text>
 
                 <!-- Branch 2 -->
-                <path id="vav-d1-br2" data-flow="air" data-flow-density="0.35" d="M320 150 V196" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="vav-d1-br2" data-flow="air" data-flow-static="true" data-flow-density="0.35" d="M320 150 V196" fill="none" stroke="var(--blue)" stroke-width="3"/>
                 <rect x="302" y="196" width="36" height="20" fill="var(--surface)" stroke="var(--text)"/>
                 <line x1="312" y1="212" x2="328" y2="200" stroke="var(--text)" stroke-width="2"/>
-                <path id="vav-d1-dr2" data-flow="air" data-flow-density="0.35" d="M320 216 V256" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="vav-d1-dr2" data-flow="air" data-flow-static="true" data-flow-density="0.35" d="M320 216 V256" fill="none" stroke="var(--blue)" stroke-width="3"/>
                 <rect x="285" y="256" width="70" height="36" fill="none" stroke="var(--border)"/>
                 <text x="320" y="278" font-size="12" fill="var(--text)" text-anchor="middle">zone</text>
 
                 <!-- Branch 3 -->
-                <path id="vav-d1-br3" data-flow="air" data-flow-density="0.35" d="M440 150 V196" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="vav-d1-br3" data-flow="air" data-flow-static="true" data-flow-density="0.35" d="M440 150 V196" fill="none" stroke="var(--blue)" stroke-width="3"/>
                 <rect x="422" y="196" width="36" height="20" fill="var(--surface)" stroke="var(--text)"/>
                 <line x1="432" y1="212" x2="448" y2="200" stroke="var(--text)" stroke-width="2"/>
-                <path id="vav-d1-dr3" data-flow="air" data-flow-density="0.35" d="M440 216 V256" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="vav-d1-dr3" data-flow="air" data-flow-static="true" data-flow-density="0.35" d="M440 216 V256" fill="none" stroke="var(--blue)" stroke-width="3"/>
                 <rect x="405" y="256" width="70" height="36" fill="none" stroke="var(--border)"/>
                 <text x="440" y="278" font-size="12" fill="var(--text)" text-anchor="middle">zone</text>
                 <text x="497" y="210" font-size="13" fill="var(--text-dim)">… ×30</text>
 
                 <!-- Return path (animated, lighter) -->
-                <path id="vav-d1-ret" data-flow="air" data-flow-density="0.6" d="M460 316 H71 V184" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="vav-d1-ret" data-flow="air" data-flow-static="true" data-flow-density="0.6" d="M460 316 H71 V184" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
                 <line x1="200" y1="292" x2="200" y2="316" stroke="var(--blue-cool)" stroke-width="2"/>
                 <line x1="320" y1="292" x2="320" y2="316" stroke="var(--blue-cool)" stroke-width="2"/>
                 <line x1="440" y1="292" x2="440" y2="316" stroke="var(--blue-cool)" stroke-width="2"/>
@@ -289,7 +297,7 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
                 <text x="220" y="66" font-size="13" fill="var(--text-bright)" text-anchor="middle">box controller</text>
 
                 <!-- Air path through the box (animated) -->
-                <path id="vav-d2-air" data-flow="air" d="M20 180 H520" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="vav-d2-air" data-flow="air" data-flow-static="true" d="M20 180 H520" fill="none" stroke="var(--blue)" stroke-width="3"/>
                 <polygon points="30,175 30,185 40,180" fill="var(--blue)"/>
                 <polygon points="495,175 495,185 505,180" fill="var(--blue)"/>
 
@@ -316,8 +324,8 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
                 <rect x="316" y="152" width="40" height="56" fill="none" stroke="var(--heat)"/>
                 <line x1="322" y1="152" x2="336" y2="208" stroke="var(--heat)" stroke-width="1"/>
                 <line x1="334" y1="152" x2="348" y2="208" stroke="var(--heat)" stroke-width="1"/>
-                <path id="vav-d2-hws" data-flow="supply" d="M326 252 V214" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
-                <path id="vav-d2-hwr" data-flow="return" d="M346 214 V252" fill="none" stroke="var(--blue-cool)" stroke-width="2.5" stroke-dasharray="7 4"/>
+                <path id="vav-d2-hws" data-flow="supply" data-flow-static="true" d="M326 252 V214" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+                <path id="vav-d2-hwr" data-flow="return" data-flow-static="true" d="M346 214 V252" fill="none" stroke="var(--blue-cool)" stroke-width="2.5" stroke-dasharray="7 4"/>
                 <text x="336" y="270" font-size="11" fill="var(--text-dim)" text-anchor="middle">hot water</text>
                 <text x="336" y="140" font-size="12" fill="var(--text)" text-anchor="middle">reheat coil</text>
 

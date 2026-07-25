@@ -214,15 +214,24 @@ keywords: primary secondary direct reverse return delta t gpm pump loop
 
                 <!-- piping: supply (solid, --blue) — out the boiler top, along the supply main.
                      data-flow="supply" hooks flow-engine.js; path/line drawing order matches flow direction. -->
-                <path id="d1-supply-main" data-flow="supply" d="M75 160 V85 H600" fill="none" stroke="var(--blue)" stroke-width="3"/>
-                <line id="d1-load1-supply" data-flow="supply" x1="240" y1="85" x2="240" y2="160" stroke="var(--blue)" stroke-width="3"/>
-                <line id="d1-load2-supply" data-flow="supply" x1="420" y1="85" x2="420" y2="160" stroke="var(--blue)" stroke-width="3"/>
-                <line id="d1-load3-supply" data-flow="supply" x1="600" y1="85" x2="600" y2="160" stroke="var(--blue)" stroke-width="3"/>
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes pipe geometry — the pump blades spin via a CSS
+                     transform on <rect> elements, and the d3 widget's data-flow-density
+                     writes already refresh the paths they touch. A future geometry write
+                     must refresh in the same breath, or the page must opt out via the
+                     `flowGeometryLive` frontmatter (flowStaticGuard, .eleventy.js). -->
+                <path id="d1-supply-main" data-flow="supply" data-flow-static="true" d="M75 160 V85 H600" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d1-load1-supply" data-flow="supply" data-flow-static="true" x1="240" y1="85" x2="240" y2="160" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d1-load2-supply" data-flow="supply" data-flow-static="true" x1="420" y1="85" x2="420" y2="160" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d1-load3-supply" data-flow="supply" data-flow-static="true" x1="600" y1="85" x2="600" y2="160" stroke="var(--blue)" stroke-width="3"/>
                 <!-- piping: return (dashed, --blue-cool) — out the load bottoms, along the return main, back into the boiler bottom -->
-                <line id="d1-load1-return" data-flow="return" x1="240" y1="215" x2="240" y2="300" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="d1-load2-return" data-flow="return" x1="420" y1="215" x2="420" y2="300" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="d1-load3-return" data-flow="return" x1="600" y1="215" x2="600" y2="300" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="d1-return-main" data-flow="return" d="M600 300 H75 V235" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d1-load1-return" data-flow="return" data-flow-static="true" x1="240" y1="215" x2="240" y2="300" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d1-load2-return" data-flow="return" data-flow-static="true" x1="420" y1="215" x2="420" y2="300" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d1-load3-return" data-flow="return" data-flow-static="true" x1="600" y1="215" x2="600" y2="300" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d1-return-main" data-flow="return" data-flow-static="true" d="M600 300 H75 V235" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- flow arrows -->
                 <g id="d1-flow-arrows">
@@ -293,16 +302,16 @@ keywords: primary secondary direct reverse return delta t gpm pump loop
 
                 <!-- piping: supply (solid, --blue) — out the boiler top, along the supply main.
                      data-flow="supply" hooks flow-engine.js; path/line drawing order matches flow direction. -->
-                <path id="d2-supply-main" data-flow="supply" d="M75 160 V85 H600" fill="none" stroke="var(--blue)" stroke-width="3"/>
-                <line id="d2-load1-supply" data-flow="supply" x1="240" y1="85" x2="240" y2="160" stroke="var(--blue)" stroke-width="3"/>
-                <line id="d2-load2-supply" data-flow="supply" x1="420" y1="85" x2="420" y2="160" stroke="var(--blue)" stroke-width="3"/>
-                <line id="d2-load3-supply" data-flow="supply" x1="600" y1="85" x2="600" y2="160" stroke="var(--blue)" stroke-width="3"/>
+                <path id="d2-supply-main" data-flow="supply" data-flow-static="true" d="M75 160 V85 H600" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d2-load1-supply" data-flow="supply" data-flow-static="true" x1="240" y1="85" x2="240" y2="160" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d2-load2-supply" data-flow="supply" data-flow-static="true" x1="420" y1="85" x2="420" y2="160" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d2-load3-supply" data-flow="supply" data-flow-static="true" x1="600" y1="85" x2="600" y2="160" stroke="var(--blue)" stroke-width="3"/>
                 <!-- piping: return (dashed, --blue-cool) — the collector runs WITH the supply past every load, then doubles back to the boiler -->
-                <line id="d2-load1-return" data-flow="return" x1="240" y1="215" x2="240" y2="295" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="d2-load2-return" data-flow="return" x1="420" y1="215" x2="420" y2="295" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="d2-load3-return" data-flow="return" x1="600" y1="215" x2="600" y2="295" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="d2-return-collector" data-flow="return" d="M240 295 H665" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="d2-return-main" data-flow="return" d="M665 295 V325 H75 V235" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d2-load1-return" data-flow="return" data-flow-static="true" x1="240" y1="215" x2="240" y2="295" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d2-load2-return" data-flow="return" data-flow-static="true" x1="420" y1="215" x2="420" y2="295" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d2-load3-return" data-flow="return" data-flow-static="true" x1="600" y1="215" x2="600" y2="295" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d2-return-collector" data-flow="return" data-flow-static="true" d="M240 295 H665" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d2-return-main" data-flow="return" data-flow-static="true" d="M665 295 V325 H75 V235" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- flow arrows -->
                 <g id="d2-flow-arrows">
@@ -396,20 +405,20 @@ keywords: primary secondary direct reverse return delta t gpm pump loop
 
                 <!-- ── PRIMARY loop piping — solid + --blue all the way around (it's a short loop; it stays hot).
                      data-flow="supply" carries the whole loop; constant flow at baseline density. -->
-                <path id="d3-primary-loop" data-flow="supply" d="M90 130 V60 H280 V270 H90 V200" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="d3-primary-loop" data-flow="supply" data-flow-static="true" d="M90 130 V60 H280 V270 H90 V200" fill="none" stroke="var(--blue)" stroke-width="3"/>
                 <!-- ── BRIDGE: upper = hot injection (solid --blue), lower = return to primary (dashed --blue-cool).
                      data-flow-density="0.4" encodes the worked-example ratio (~40 GPM diverted into a ~100 GPM
                      system) so the bridge reads as visibly sparser than either loop — that's the pedagogical
                      point of twin-T, and the injection-pump slider will mutate this attribute live. -->
-                <line id="d3-inject-pipe" data-flow="supply" data-flow-density="0.2" x1="280" y1="150" x2="440" y2="150" stroke="var(--blue)" stroke-width="3"/>
-                <line id="d3-bridge-return" data-flow="return" data-flow-density="0.2" x1="440" y1="190" x2="280" y2="190" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d3-inject-pipe" data-flow="supply" data-flow-static="true" data-flow-density="0.2" x1="280" y1="150" x2="440" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d3-bridge-return" data-flow="return" data-flow-static="true" data-flow-density="0.2" x1="440" y1="190" x2="280" y2="190" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
                 <!-- ── SYSTEM loop piping: supply main + risers solid --blue, return main + risers dashed --blue-cool ── -->
-                <path id="d3-system-supply" data-flow="supply" d="M440 250 V90 H760" fill="none" stroke="var(--blue)" stroke-width="3"/>
-                <line id="d3-load-a-supply" data-flow="supply" x1="540" y1="90" x2="540" y2="150" stroke="var(--blue)" stroke-width="3"/>
-                <line id="d3-load-b-supply" data-flow="supply" x1="680" y1="90" x2="680" y2="150" stroke="var(--blue)" stroke-width="3"/>
-                <line id="d3-load-a-return" data-flow="return" x1="540" y1="205" x2="540" y2="250" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="d3-load-b-return" data-flow="return" x1="680" y1="205" x2="680" y2="250" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="d3-system-return" data-flow="return" d="M760 90 V250 H440" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d3-system-supply" data-flow="supply" data-flow-static="true" d="M440 250 V90 H760" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d3-load-a-supply" data-flow="supply" data-flow-static="true" x1="540" y1="90" x2="540" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d3-load-b-supply" data-flow="supply" data-flow-static="true" x1="680" y1="90" x2="680" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d3-load-a-return" data-flow="return" data-flow-static="true" x1="540" y1="205" x2="540" y2="250" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d3-load-b-return" data-flow="return" data-flow-static="true" x1="680" y1="205" x2="680" y2="250" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d3-system-return" data-flow="return" data-flow-static="true" d="M760 90 V250 H440" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- flow arrows. The data-d3-arrow tags drive page-level
                      recoloring so primary-loop and system-supply arrows
