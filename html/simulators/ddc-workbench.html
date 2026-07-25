@@ -1075,10 +1075,13 @@ noindex: true
         let qInternal = Q_INT_DEF;               // Btu/h — internal sensible gain
 
         // Air colour downstream of the coil, set by renderUnit and read by the
-        // chevron loop (upstream is always --blue-cool). Under reduced motion,
-        // refreshFrozenAir re-tints the frozen chevrons on each render.
+        // chevron loop (upstream is always --blue-cool).
         let downstreamColor = 'var(--blue)';
-        let refreshFrozenAir = null;
+        // Set by fcuInitAnim; renderUnit calls it on every paint. Starts or
+        // suspends the animation loop to match the current state, and re-tints
+        // the chevrons whenever the loop is suspended (frozen air still has to
+        // follow downstreamColor).
+        let fcuAnimSync = null;
 
         const fanSlider   = document.getElementById('fcu-fan-slider');
         const fanenToggle = document.getElementById('fcu-fanen-toggle');
@@ -1322,7 +1325,12 @@ noindex: true
             const cooling = d.capActive && dtN >= 3;
             downstreamColor = cooling ? 'var(--blue)' : 'var(--text-dim)';
             out.datG.setAttribute('fill', cooling ? 'var(--text-bright)' : 'var(--text-dim)');
-            if (refreshFrozenAir) refreshFrozenAir();
+            // Sole resume/suspend vector for the animation loop. renderUnit runs
+            // on every hostTick (10 Hz while visible) and synchronously on every
+            // control interaction via requestRender, so this one call covers the
+            // fan cycling on, a tab switch back to Unit, the tab being un-hidden,
+            // and any preset / slider change — no extra listeners needed.
+            if (fcuAnimSync) fcuAnimSync();
 
             // Verdict — a fault or an off state outranks the mode readout.
             // Fan-off splits two ways: with a stage energized it's a genuine
@@ -1527,28 +1535,43 @@ noindex: true
             });
         }
 
-        // ── page-local animations (rAF; read plant.anim.fanFrac) ────────────
+        // ── page-local animations (one rAF loop; reads plant.anim.fanFrac) ──
+        // The fan blade and the air chevrons share ONE self-suspending rAF
+        // loop rather than running one apiece forever. House idiom:
+        // flow-engine.js:285-303 (#113) — hasWork() / `looping` / startLoop().
+        // The loop only runs while there is genuinely something to see: motion
+        // is allowed, the fan is turning, the Unit pane is the one on screen,
+        // and the tab is not hidden. The fan and chevron LOGIC stay separate
+        // (each contributes a step(dt) closure); only the scheduling merges, so
+        // there is one dt computation and one rAF callback per frame.
         function fcuInitAnim(pl) {
+            // Computed once for both consumers — this used to be evaluated
+            // twice, once per loop.
+            const reduce = !!(window.matchMedia
+                && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+            // Pull the pane's state rather than mirroring a flag out of
+            // showTab: `switchTab` (ui.js) is what actually toggles .active, so
+            // a mirrored flag would be a second source of truth that can
+            // silently desync from the class the CSS keys off.
+            const unitPane = document.getElementById('tab-unit');
+
+            const steps = [];     // per-frame step(dt) closures
+            const statics = [];   // repaints for the suspended state
+
             // Fan-blade spin — speed tracks fan fraction; still when off.
-            (function () {
-                if (!fanBlade) return;
-                const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-                if (reduce) return;
+            // No static counterpart: a suspended blade correctly holds its last
+            // angle, and under reduced motion it is never written at all. A
+            // stopped fan is still.
+            if (fanBlade && !reduce) {
                 const BASE = 360 / 0.8;   // deg/sec at 100%
                 let angle = 0;
-                let lastT = null;
-                const frame = function (t) {
-                    if (lastT === null) lastT = t;
-                    const dt = Math.min(0.1, (t - lastT) / 1000);
-                    lastT = t;
+                steps.push(function (dt) {
                     angle = (angle + BASE * (pl.anim.fanFrac || 0) * dt) % 360;
                     fanBlade.style.transform = 'rotate(' + angle.toFixed(2) + 'deg)';
-                    requestAnimationFrame(frame);
-                };
-                requestAnimationFrame(frame);
-            })();
+                });
+            }
 
-            // Airflow chevrons — page-local rAF (no flow-engine). One invisible
+            // Airflow chevrons — page-local (no flow-engine). One invisible
             // centerline is the getPointAtLength source; chevrons march it,
             // speed scales with fan fraction (0% = frozen), and each recolors at
             // the coil's leaving edge so the ΔT shows in the air itself.
@@ -1557,9 +1580,6 @@ noindex: true
                 const centerline = document.getElementById('fcu-centerline');
                 const layer = document.getElementById('fcu-flow');
                 if (!centerline || !layer) return;
-
-                const reduce = window.matchMedia
-                    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
                 const SPACING = 46;         // px between chevrons along the centerline
                 const BASE_SPEED = 0.05;    // loops/sec at 100% fan (× fanFrac)
@@ -1614,26 +1634,82 @@ noindex: true
                     if (color !== m.color) { m.el.style.stroke = color; m.color = color; }
                 }
 
-                if (reduce) {
-                    refreshFrozenAir = function () {
-                        chevrons.forEach(function (m) { place(m, 0); });
-                    };
-                    refreshFrozenAir();
-                    return;
-                }
-
                 let travel = 0;
-                let lastT = null;
-                function frame(t) {
-                    if (lastT === null) lastT = t;
-                    const dt = Math.min(0.1, (t - lastT) / 1000);
-                    lastT = t;
+                let paintedTravel = null;
+                let paintedColor = null;
+
+                // Static repaint for the suspended state — the loop can stop
+                // now, so a frozen stream still has to be placed and tinted.
+                //
+                // Colour is the job that makes this necessary: place() derives
+                // each stroke from downstreamColor, which renderUnit rewrites,
+                // so chevrons frozen on the Wiresheet tab must re-tint when the
+                // compressor cycles behind it. Repaint from the CURRENT travel,
+                // never from 0, or a suspended stream would snap back to its
+                // starting positions on a colour change.
+                //
+                // Placement rides along: chevrons are created above with a `d`
+                // but no `transform`, so something has to lay them on the
+                // centerline before the first frame or they sit at the SVG
+                // origin. animSync()'s paintStatic() branch already covers the
+                // gate-closed cold start (verified by removing this call — the
+                // chevrons still place correctly); the unconditional call here
+                // additionally closes the one-frame gap on the gate-OPEN path,
+                // where startLoop only places them on the next rAF tick.
+                const paint = function () {
+                    if (paintedTravel === travel && paintedColor === downstreamColor) return;
+                    paintedTravel = travel;
+                    paintedColor = downstreamColor;
+                    chevrons.forEach(function (m) { place(m, travel); });
+                };
+                statics.push(paint);
+                paint();
+
+                if (reduce) return;
+
+                steps.push(function (dt) {
                     travel = (travel + BASE_SPEED * (pl.anim.fanFrac || 0) * dt) % 1;
                     chevrons.forEach(function (m) { place(m, travel); });
-                    requestAnimationFrame(frame);
-                }
-                requestAnimationFrame(frame);
+                });
             })();
+
+            let looping = false;
+            let lastT = null;
+
+            // Under reduced motion nothing pushes a step, so `steps.length` is
+            // the reduced-motion gate too — no second matchMedia read.
+            function hasWork() {
+                if (!steps.length) return false;
+                if (!((pl.anim.fanFrac || 0) > 0)) return false;
+                if (unitPane && !unitPane.classList.contains('active')) return false;
+                return !document.hidden;
+            }
+
+            function startLoop() {
+                if (looping || !hasWork()) return;
+                looping = true;
+                lastT = null;   // a long suspension must not bill its gap as dt
+                requestAnimationFrame(frame);
+            }
+
+            function frame(t) {
+                if (!hasWork()) { looping = false; return; }
+                if (lastT === null) lastT = t;
+                const dt = Math.min(0.1, (t - lastT) / 1000);
+                lastT = t;
+                for (let i = 0; i < steps.length; i++) steps[i](dt);
+                requestAnimationFrame(frame);
+            }
+
+            function paintStatic() {
+                for (let i = 0; i < statics.length; i++) statics[i]();
+            }
+
+            fcuAnimSync = function () {
+                if (hasWork()) startLoop();
+                else paintStatic();
+            };
+            fcuAnimSync();
         }
 
         // ── FCU IO points ── point id === seed FBE-block id === the IO block
