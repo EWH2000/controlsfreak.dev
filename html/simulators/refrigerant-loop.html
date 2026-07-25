@@ -674,9 +674,23 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                     <!-- ── HIGH-SIDE pipes — hot-gas --rl-hot discharge into the
                          condenser, warm-liquid --rl-liq out of it (the coil's
                          serpentine gradient bridges the two states). ── -->
-                    <path id="rl-discharge" data-flow="supply" d="M 120 193 V 85 H 200" fill="none"
+                    <!-- data-flow-static on every flow element on this page is
+                         an ASSERTION, not a hint (flow-engine.js header): the
+                         engine caches a sampled point table per path instead of
+                         calling getPointAtLength() per particle per frame, and
+                         it is only correct while EVERY mutation of that path's
+                         `d` is followed immediately by FlowEngine.refreshPath()
+                         on it. This page holds to that — applyCycleVisuals() is
+                         the ONLY `d` write on a flow path (the cycle re-route),
+                         and it refreshes each element inside the same loop
+                         iteration. The air lanes never move at all. If a future
+                         change writes `d` anywhere else here, either refresh in
+                         the same breath or drop this attribute — see
+                         hydronic-loop-builder.html for the page that cannot
+                         have it (mid-drag `d` rewrites, refresh on pointer-up). -->
+                    <path id="rl-discharge" data-flow="supply" data-flow-static="true" d="M 120 193 V 85 H 200" fill="none"
                           stroke="var(--rl-hot)" stroke-width="3"/>
-                    <path id="rl-liquid"    data-flow="supply" d="M 520 85 H 600 V 195" fill="none"
+                    <path id="rl-liquid"    data-flow="supply" data-flow-static="true" d="M 520 85 H 600 V 195" fill="none"
                           stroke="var(--rl-liq)" stroke-width="3"/>
 
                     <!-- ── LOW-SIDE pipes — cold-mix --blue-cool expansion into
@@ -692,9 +706,9 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                          both modes, and their strokes draw the valve's
                          interior passages themselves (see the REVERSING
                          VALVE note above — the body paints first). ── -->
-                    <path id="rl-expansion" data-flow="return" d="M 600 235 V 345 H 520" fill="none"
+                    <path id="rl-expansion" data-flow="return" data-flow-static="true" d="M 600 235 V 345 H 520" fill="none"
                           stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                    <path id="rl-suction"   data-flow="return" d="M 200 345 H 162 V 152 H 152 V 256 H 120 V 237" fill="none"
+                    <path id="rl-suction"   data-flow="return" data-flow-static="true" d="M 200 345 H 162 V 152 H 152 V 256 H 120 V 237" fill="none"
                           stroke="var(--blue)" stroke-width="3" stroke-dasharray="9 5"/>
 
                     <!-- Direction arrows — one per leg so direction reads under
@@ -815,26 +829,26 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                          shared air-duct rule in styles.css). -->
                     <g>
                         <!-- Condenser face: outdoor air rises — in (dim) from below, out (warmed) above. -->
-                        <path id="rl-air-c-in-a"  data-flow="air" d="M 260 200 V 85" fill="none"
+                        <path id="rl-air-c-in-a"  data-flow="air" data-flow-static="true" d="M 260 200 V 85" fill="none"
                               stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
-                        <path id="rl-air-c-out-a" data-flow="air" d="M 260 85 V 25" fill="none"
+                        <path id="rl-air-c-out-a" data-flow="air" data-flow-static="true" d="M 260 85 V 25" fill="none"
                               stroke="var(--heat)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
-                        <path id="rl-air-c-in-b"  data-flow="air" d="M 460 200 V 85" fill="none"
+                        <path id="rl-air-c-in-b"  data-flow="air" data-flow-static="true" d="M 460 200 V 85" fill="none"
                               stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
-                        <path id="rl-air-c-out-b" data-flow="air" d="M 460 85 V 25" fill="none"
+                        <path id="rl-air-c-out-b" data-flow="air" data-flow-static="true" d="M 460 85 V 25" fill="none"
                               stroke="var(--heat)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
                         <g id="rl-air-c-heads" fill="var(--heat)" opacity="0.6">
                             <polygon points="260,18 255,28 265,28"/>
                             <polygon points="460,18 455,28 465,28"/>
                         </g>
                         <!-- Evaporator face: indoor air drops — in (dim) from above, out (cooled) below. -->
-                        <path id="rl-air-e-in-a"  data-flow="air" d="M 260 230 V 345" fill="none"
+                        <path id="rl-air-e-in-a"  data-flow="air" data-flow-static="true" d="M 260 230 V 345" fill="none"
                               stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
-                        <path id="rl-air-e-out-a" data-flow="air" d="M 260 345 V 430" fill="none"
+                        <path id="rl-air-e-out-a" data-flow="air" data-flow-static="true" d="M 260 345 V 430" fill="none"
                               stroke="var(--blue-cool)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.75"/>
-                        <path id="rl-air-e-in-b"  data-flow="air" d="M 460 230 V 345" fill="none"
+                        <path id="rl-air-e-in-b"  data-flow="air" data-flow-static="true" d="M 460 230 V 345" fill="none"
                               stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
-                        <path id="rl-air-e-out-b" data-flow="air" d="M 460 345 V 430" fill="none"
+                        <path id="rl-air-e-out-b" data-flow="air" data-flow-static="true" d="M 460 345 V 430" fill="none"
                               stroke="var(--blue-cool)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.75"/>
                         <g id="rl-air-e-heads" fill="var(--blue-cool)" opacity="0.75">
                             <polygon points="260,438 255,428 265,428"/>
@@ -945,10 +959,10 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                          cooling bar's group, a re-routed run would paint
                          underneath the other bar's face rect. The markup ds
                          are the COOLING state (pinned by the engine spec). -->
-                    <path id="rl-coil-cond" data-flow="supply" fill="none"
+                    <path id="rl-coil-cond" data-flow="supply" data-flow-static="true" fill="none"
                           stroke="url(#rl-grad-cond)" stroke-width="1.5"
                           d="M 200 85 H 220 V 67 H 248 V 103 H 276 V 67 H 304 V 103 H 332 V 67 H 360 V 103 H 388 V 67 H 416 V 103 H 444 V 67 H 472 V 103 H 500 V 85 H 520"/>
-                    <path id="rl-coil-evap" data-flow="return" fill="none"
+                    <path id="rl-coil-evap" data-flow="return" data-flow-static="true" fill="none"
                           stroke="url(#rl-grad-evap)" stroke-width="1.5"
                           d="M 520 345 H 500 V 327 H 472 V 363 H 444 V 327 H 416 V 363 H 388 V 327 H 360 V 363 H 332 V 327 H 304 V 363 H 276 V 327 H 248 V 363 H 220 V 345 H 200"/>
 
