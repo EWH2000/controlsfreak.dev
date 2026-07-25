@@ -190,6 +190,15 @@ Frontmatter:
   from JS and is the standing page that must never carry the flag — so
   it would pass vacuously. On simulators the call stays a per-page
   judgement.
+  The guard reads a page's own `rawInput`, which stops at an
+  `{% include %}` tag — so it **also walks `html/_includes` on disk** and
+  holds every partial to the same rule, regardless of which page pulls
+  one in. A partial has no frontmatter and so no `flowGeometryLive`; the
+  escape hatch there is an `EXEMPT_INCLUDES` entry in `.eleventy.js` with
+  a written reason. `schematic-bg.njk` is the only one, and for the
+  opposite reason — flow-engine tables the gutter unconditionally, so its
+  motifs need no opt-in. An exempt name that stops resolving to a real
+  file fails the build rather than decaying into a silent pass.
 
 Blocks: `head` (optional — inline `<style>` or head-loaded script;
 Turnstile on `contact.html` is the only current head-script example);
