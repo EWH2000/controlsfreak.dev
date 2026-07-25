@@ -7187,3 +7187,204 @@ that block; don't scatter a one-off rule"). Behaviour is correct; this is a
 placement/consolidation cleanup, not a bug. Deferred out of PR-1 to keep that
 behaviour-preserving refactor tight. Fold the rule into the `FOCUS INDICATORS`
 block in a later `styles.css` pass.
+
+Per the orchestrator, not appended to `docs/codebase-issues.md` here — several PRs appending at that file's tail would conflict. Text for the single batched commit:
+
+```markdown
+### 198. Gutter collage costs ~44% of a CPU core at idle on every page
+
+**Status:** fixed (PR #427).
+
+`schematic-bg.njk` renders 120 motif SVGs into the gutters of all 135
+pages: ~360 `[data-flow]` paths, 144 `[data-pulse]` paths, 552 particle
+circles. `flow-engine.js` ticked every visible pool every frame, so a
+page with no animation of its own still paid for the chrome.
+
+Measured (headless Chromium, 1920x1080, 6s window after a 3s settle,
+median of 3, precondition + liveness asserted): `tools/signal-scaling`
+idled at **44% of a core at 1x CPU and 97% at 4x**, doing **46 layout
+passes per rendered frame** — ~5% and 0 layouts/frame with the gutter
+`display:none`. After the fix: **34% / 73%**, and **3 layouts per
+frame**. On `simulators/refrigerant-loop.html` the page is main-thread-
+bound so CPU% is pinned near 98% either way; frame rate goes **20.9 ->
+24.1 at 4x** and layouts/frame **125.5 -> 81.2**.
+
+Three mechanisms shipped, measured individually rather than assumed: a
+point table replacing per-frame `getPointAtLength()` (gutter, plus an
+opt-in `data-flow-static`), `cx.baseVal.value` writes with 0.1-unit
+rounding and unchanged-axis skipping (4.1x cheaper than `setAttribute`
+with a raw float), and a `visiblePools` array replacing the
+~360-pool-per-frame visibility scan.
+
+Three findings worth keeping:
+
+- **A cheaper write is not a free write.** Each one still dirties style
+  and layout for its subtree, so the per-frame floor is set by how many
+  particles move, not by how cheaply each move is issued. Engine-side
+  levers that keep the gutter animating plateau around 20-24% of a
+  core; only stopping it outright reaches ~0%, because the rAF loop
+  then suspends and no per-frame style/layout pass happens at all.
+  Stopping it was rejected on UX grounds -- a background that suddenly
+  goes still reads as broken.
+- **On a saturated page, CPU% inverts the sign of a result.** Removing
+  work can raise measured CPU while frame rate climbs, because the page
+  had been dropping frames. Prefer **layouts per rendered frame**: under
+  host contention fps swung 31.5 -> 58.7 while layouts/frame held to
+  within 1.4%. Contention costs frames, not work-per-frame.
+- **Any perf measurement must assert its own precondition.** A disabled
+  animation reads exactly like a brilliant optimization, and a `<style>`
+  injected via `addInitScript` is discarded when the real document
+  parses -- so the "gutter off" arm silently measured a live gutter
+  until the computed `display` was asserted in-page. Likewise, compare
+  particle positions by ELEMENT IDENTITY and filter to the flow radius:
+  pulse circles churn in the same layer, and an index-based comparison
+  reported a nearly-still gutter as 552/562 moved when the truth was
+  44/552.
+
+**Open follow-up:** `data-flow-static="true"` is implemented but set on
+no page. `simulators/refrigerant-loop.html` satisfies its contract
+(every `d` mutation is followed by `refreshPath`) and measures 24.5 ->
+37.9 fps at 4x CPU with it on, layouts/frame 81.5 -> 3.8.
+`simulators/hydronic-loop-builder.html` must NOT get it -- it rewrites
+`d` on every `pointermove` and refreshes only on pointer-up, so its
+particles track the dragged pipe because the read is live.
+
+**Context for whoever reads this next:** the gutter's `[data-flow]`
+paths are expected to be retired by a future static-"print" background,
+at which point the gutter stops being an engine consumer at all. The
+durable value of this work is the CONTENT diagrams -- the education
+lessons and the simulators -- not the collage that motivated it.
+```
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+https://claude.ai/code/session_01LmBziFvEW678CX6zCaCQxx
+
+### 199. DDC Workbench: page-local rAF loops ran forever; three idle-gate deferrals *(addressed 2026-07-24)*
+
+*Severity: low · Category: perf · Confidence: high* — `html/simulators/ddc-workbench.html:1538-1707 (merged loop), :1325 (animSync hook); house idiom at html/scripts/flow-engine.js:285-303`
+
+The workbench's fan-blade and air-chevron animations each ran their own `requestAnimationFrame` loop that checked `prefers-reduced-motion` once before starting and then re-scheduled unconditionally. Both kept writing every frame when `plant.anim.fanFrac === 0` (fan off — visually static) and when the Wiresheet tab put `#tab-unit` under `display: none` (`styles.css:1339-1340`), i.e. 60 fps of transform writes into an invisible subtree.
+
+**Resolution (2026-07-24):** merged into one self-suspending loop on the `flow-engine.js:285-303` idiom — one `hasWork()` / `looping` / `startLoop()`, one `dt` per frame, with the fan and chevron logic kept separate as `step(dt)` closures. Gate: `!reduce` ∧ `fanFrac > 0` ∧ `#tab-unit.active` ∧ `!document.hidden`, pulling the pane state from the DOM rather than mirroring a flag out of `showTab` (`switchTab` in `ui.js` is the real owner of `.active`). Resume rides the existing render path — `fcuRenderUnit` → `fcuAnimSync()` — so no new listeners, which also makes the #110 background-tab trap structurally unreachable. Measured (% of one core, 6 s window, median of 3, gutter hidden): HAND fan-off 15.6% → 7.5%, Wiresheet 13.3% → 7.2%, reduced motion 8.9% → 6.7%; arrival unchanged at ~25% because that is genuine visible motion. Covered by the new `tests/ddc-workbench.spec.js`.
+
+Three things were deliberately **not** done, each with a revisit trigger:
+
+**(a) `simulators/refrigerant-loop.html` left alone.** Its page-local rAF re-schedules unconditionally at `:2593`, gated only by `reduceMotion` at `:2825` — cosmetically the same shape as this fix, but measured as negligible: that loop writes only three attributes per frame (two gauge needles and one orbit transform). Its real idle cost is flow-engine on its content pools (suppressing flow-particle writes moved it 51.8% → 32.3%, style 638 ms → 89 ms, layout 568 ms → 24 ms), which is a different lane's territory. It is a **public** page, unlike this one. *Revisit trigger:* the flow-engine content-pool work lands and the page still profiles hot, or its rAF grows past cosmetic writes.
+
+**(b) No viewport gate on `.fcu-graphic`.** The loop suspends on the tab and the fan but keeps running while the graphic is scrolled off screen. `flow-engine.js` has the prior art (IntersectionObserver → `visibleFlowEls` → `hasWork()`). Not added here because the graphic is the top of a tall page and the measured win did not justify a third gating axis. *Revisit trigger:* the profiler shows meaningful scroll-away cost.
+
+**(c) No shared idle-gate helper.** Four hand-rolled gates now exist, with four genuinely different predicates: `flow-engine.js:285-303` (rAF, IO-visibility + pending pulses), `fbe-editor.js:613-772` (setInterval, `document.hidden` + a desktop media query + `visibilitychange`), `simulators/controller-wiring.html:1146-1169` (setInterval drift, `reduceMotion` + `visibilitychange`), and now this one (rAF, reduced-motion + fan state + tab pane + `document.hidden`). The house rule is extract on the second *identical* instance; these are not identical, and a new file under `html/scripts/` would be a shared script — making the version bump cache-bust-load-bearing and obliging a site-wide sweep, disproportionate for one hidden page. A `// house idiom: flow-engine.js:285-303 (#113)` pointer is in the code instead. *Revisit trigger:* a fifth consumer, or any of the four drifting from its documented predicate.
+
+### 200. Idle animation cost regresses silently — nothing measured it until now *(instrumented 2026-07-24)*
+
+*Severity: medium · Category: perf · Confidence: high* — `tests/perf-profile.mjs`
+
+**Defect class.** A page's *idle* cost — what it burns while the user does nothing — is invisible to every check this repo runs. `npm test` asserts behaviour, contrast, and page structure; nothing has ever measured an animation loop's steady-state cost. So a loop can start doing more work per frame, stop suspending when it should, or run in a backgrounded tab, and the suite stays green.
+
+**The instances.** Four, all of this shape:
+
+- **#70** — `schematic-bg` inlines ~360 stroked SVG elements plus 120 wrappers into *every* page DOM. Caught by a doc audit, *deferred* 2026-05-23 — still shipped, and still the dominant idle cost on the site: the control page `tools/signal-scaling.html` (no rAF, no `setInterval`, no `setTimeout` of its own) idles at **43.6% of a core** at 1920×1080, and at **0.13%** at 1100×900 where `.schematic-bg` is `display: none`.
+- **#109** — `controller-wiring`'s cosmetic-drift `setInterval` never paused on tab-hide (fixed 2026-06-16).
+- **#110** — `function-block-editor`'s sim loop spun in a backgrounded tab on initial load, because `visibilitychange` only fires on a transition (fixed 2026-06-16).
+- **#113** — `flow-engine`'s rAF loop re-scheduled forever even with zero animatable work (fixed 2026-06-16).
+
+**Why it kept happening.** Every one was found by *hand* — a doc audit, a code read, somebody noticing a warm laptop. Every fix landed and **left no instrument behind**, so the next regression started from zero. The three 2026-06-16 fixes were found in one sitting and none of them produced a way to notice the fourth.
+
+**Resolution (2026-07-24): instrumented, not gated.** `npm run perf-profile` (`tests/perf-profile.mjs`) measures fps, CPU relative to a no-animation control page, layout/style work per rendered frame, and a population liveness count, over a hand-picked manifest (**not** the sitemap — `ddc-workbench` is absent from `sitemap.xml`, so a sitemap walker would omit the page this exists for). Baseline, tolerances, and every caveat are pinned in the script header.
+
+**Owner ruling, 2026-07-24 — report-only, NOT a CI gate.** CPU numbers are machine-dependent, and a threshold over a machine-dependent number flakes. A flaky gate gets muted, and a muted gate is worse than no gate because it launders the regression it was installed to catch. Recorded here so the next reader finds the decision rather than relitigating it.
+
+**Trigger for running it.** Before merging any PR that touches an animation loop, a rAF/`setInterval` gate, `schematic-bg`, or an animation rule in `styles.css`.
+
+**Pinned in the script header, because each cost real measurement time:**
+
+- **CPU% inverts on a saturated page.** On `refrigerant-loop`, hiding the gutter took CPU **55.5% → 65.0%** while fps went **26 → 57** — removing work raised CPU because the freed thread rendered the frames it had been dropping. Rank by fps, never by CPU alone.
+- **A disabled animation reads exactly like a brilliant optimisation.** `contain: strict` on the gutter motifs "improved" the control from ~420 to ~3 ms/s purely by collapsing the elements so IntersectionObserver suspended the loop. Hence the mandatory liveness probe — population-level, because sampling one particle produced a false `frozen` on `refrigerant-loop`.
+- **Time is noisy on this host; work counts are not.** `TaskDuration/s` spreads 16–40% run to run while layouts *per frame* hold to 1.4%.
+- **DOM-diff liveness has a floor.** An animation whose output has *converged* writes identical DOM forever and is indistinguishable from a stopped one — `function-block-editor`'s canned econ sheet is exactly that (16 elements, one distinct DOM state across 10 s). Its manifest entry declares no `motionSel` and says why.
+
+**Follow-on.** #70 stays open on its own terms — this entry does not close it. What changed is that its cost is now a number anyone can reproduce in one command rather than an assertion inside a deferred issue.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+https://claude.ai/code/session_01LmBziFvEW678CX6zCaCQxx
+
+Not written to `docs/codebase-issues.md` per the lane brief — reproduced here for the
+owner to file.
+
+### 201. PR #427's engine surface landed undocumented in the two records that claim to be exhaustive
+
+Both findings are pre-existing on `main`, unrelated to this PR's diff, and were hit
+while working from those records.
+
+**(a) `data-flow-static` is absent from the friction file's engine-attribute list.**
+`docs/site-ideas-and-friction.md` opens that section with *"**Three opt-in
+attributes** on annotated paths. New surface bubbles up to this list first so the
+engine's API doesn't grow ad-hoc — `flow-engine.js` is a small file and the cost of an
+unrecorded attribute is that the next page invents its own variant."* There are now
+four (`data-flow`, `data-flow-reverse`, `data-flow-density`, `data-flow-static`), and
+`grep -c data-flow-static docs/site-ideas-and-friction.md` returns **0**. The
+paragraph below it has the same problem: *"**Two methods** on `window.FlowEngine`"*
+lists `init` and `refreshPath`, while the engine exports four — `setPathColor` and
+`pulse` are also missing. Note both counts are stale in the falsifiable-by-append way
+CLAUDE.md's *write claims that can't go stale* rule is about; naming the set instead
+of counting it would have survived.
+
+**(b) `tests/perf-profile.mjs`'s BASELINE block predates the optimisation it now
+measures.** It records capture at commit `12b5df3` on `feat/perf-profile-script`,
+parent `a62db0a` — i.e. before `fix/gutter-idle-cpu` merged, since #427 (`a6d81e2`)
+landed *after* #428 (`9e31090`). The gutter point table then cut layouts/frame
+site-wide, so on pristine `main` the script reports **every** row over tolerance,
+including its own control:
+
+```
+signal-scaling   [CTRL]  baseline  46.88 lay/frame  →  measured  3.77  (drift -91.96%, over ±8%)
+refrigerant-loop         baseline 127.08 lay/frame  →  measured 81.02  (drift -36.24%, over ±8%)
+```
+
+A report that is red by default on unmodified `main` decays exactly the way the
+script's own header warns about. It needs a re-baseline against current `main`, not a
+tolerance change — the header already says which, and says to record the date,
+commit, and machine.
+
+### 202. Education lesson diagrams never opted into the point table — the lesson archetype still runs ~50 layouts/frame *(open — 2026-07-24)*
+
+The 2026-07-24 perf arc gave `flow-engine.js` a cached point table and
+opted in the gutter (unconditionally, #198) and
+`simulators/refrigerant-loop.html` (via `data-flow-static`, #201). Nothing
+opted in the **education lessons**, which are the widest consumer of
+in-content particle flow — roughly forty pages drive `[data-flow]`
+diagrams.
+
+The cost shows up plainly in `npm run perf-profile`. Post-arc, every row
+sits between 2 and 5 layouts per rendered frame except one:
+
+    education/hydronic-loops.html    ~51 layouts/frame
+    everything else                  2 - 5 layouts/frame
+
+That row went 97.5 → ~51 from the arc's other work, a ~48% improvement,
+while pages whose paths are tabled went ~46 → ~3, a ~93% improvement. The
+gap is the un-tabled content pools calling `getPointAtLength()` per
+particle per frame — the exact cost #198 removed everywhere else.
+
+**Why it wasn't done in the arc:** `data-flow-static` is an assertion that
+*every* mutation of a path's `d` is followed by `FlowEngine.refreshPath()`.
+Verifying that for one page (refrigerant-loop) took a full audit plus a
+negative control. Doing it for forty lessons is its own piece of work and
+was deliberately not folded into a perf arc already spanning four PRs.
+
+**What it needs.** Most lesson diagrams are almost certainly static — a
+lesson SVG is drawn once and never re-pathed — which would make this a
+near-mechanical sweep with a large payoff. But that must be *verified per
+page*, not assumed: the failure mode is silent and visual (particles
+stranded on pre-mutation geometry), and it is exactly why the attribute is
+opt-in rather than default. `simulators/hydronic-loop-builder.html` is the
+standing counter-example of a page that must never set it.
+
+Suggested approach: grep every `nav: education` page for `d` mutations on
+`[data-flow]` elements; the pages with none are safe and can be swept in
+one PR. Verify with the same technique used for #201 — sample particle
+positions against live path geometry after every state change, and include
+a negative control (stub `refreshPath` to a no-op and confirm the check
+goes red) so the verification is known to be able to fail.

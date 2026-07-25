@@ -4811,7 +4811,7 @@ kind of catch that costs an afternoon next time.
   state-dependent widgets should either reserve for the longest
   state or accept the same reflow.
 
-**Engine attribute conventions.** Three opt-in attributes on
+**Engine attribute conventions.** The opt-in attributes on
 annotated paths. New surface bubbles up to this list first so the
 engine's API doesn't grow ad-hoc — `flow-engine.js` is a small
 file and the cost of an unrecorded attribute is that the next
@@ -4881,7 +4881,23 @@ alongside it:
   Keeping that translation outside `flow-engine.js` preserves the
   rule that the engine knows only paths, particles, and time.
 
-**Engine public API.** Two methods on `window.FlowEngine`, named
+- `data-flow-static="true"` *(added 2026-07-24, perf arc PR #427)* —
+  optional, default false. Asserts that this path's geometry is
+  stable between `refreshPath()` calls, which lets the engine
+  cache a sampled point table instead of calling
+  `getPointAtLength()` per particle per frame. It is an
+  ASSERTION BY THE PAGE, not a hint: *every* mutation of the
+  path's `d` must be followed by `FlowEngine.refreshPath(el)`.
+  The gutter gets this treatment unconditionally (its geometry is
+  fixed by construction). The live counter-example is
+  `simulators/hydronic-loop-builder.html`, which rewrites `d` on
+  every pointermove and refreshes only on pointer-up — its
+  particles track the dragged pipe *because* the read is live, so
+  it must never set this. `simulators/refrigerant-loop.html` is
+  the opposite case and does set it: its one geometry swap calls
+  `refreshPath` immediately after writing `d`.
+
+**Engine public API.** The methods on `window.FlowEngine`, named
 to keep extension predictable without the surface growing ad-hoc:
 - `init()` — scan the document, build particle pools for every
   annotated element, start the rAF loop. Idempotent for
@@ -4893,6 +4909,18 @@ to keep extension predictable without the surface growing ad-hoc:
   `data-flow-density` (or any future engine attribute) so the
   engine picks up the change live. No-op under reduced motion,
   since `init()` never built any pools to refresh.
+- `setPathColor(el, color)` *(recorded 2026-07-24 — shipped
+  earlier without bubbling up here)* — recolour one element's
+  existing particles in place, no pool rebuild and so no
+  one-frame stutter. For pages driving particle fill from state
+  the engine knows nothing about; `simulators/refrigerant-loop.html`
+  uses it to keep the dots on a pipe tracking that pipe's stroke
+  as the cycle changes. Idempotent; no-op under reduced motion.
+- `pulse(el)` *(recorded 2026-07-24 — same)* — fire a single
+  pulse on a `data-pulse` element immediately, bypassing both its
+  auto-fire interval and the viewport gate. The primitive a
+  wired-up function-block editor would call on a signal update.
+  No-op under reduced motion or for unregistered elements.
 
 The refresh path is explicit rather than a MutationObserver inside
 the engine. The page already knows when it just changed an
@@ -4903,6 +4931,15 @@ any other code touched the attribute. Explicit beats observed
 when the page already knows what it did. New methods (if a future
 engine extension needs one) bubble to this list before
 implementation, same as new attributes.
+
+That rule is social, not enforced, and it has already failed once:
+`setPathColor`, `pulse` and `data-flow-static` all shipped and
+reached production before landing here, caught only by a pre-merge
+review during the 2026-07-24 perf arc (codebase-issues #201).
+Nothing in the build or the suite checks this list against
+`flow-engine.js`, so a reader should treat it as a good-faith
+record rather than a guarantee — grep the engine's public return
+object when it matters.
 
 ### Load piping — Education page *(shipped 2026-05-14)*
 *One question: what does the connection between a load and a

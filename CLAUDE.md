@@ -185,7 +185,8 @@ frontmatter). `<lastmod>` comes from the `gitLastmod` filter
 (`git log -1 --format=%cd --date=short`), falls back to build date.
 A new page with `canonical` is picked up automatically — but **update
 the `PAGES` array in `tests/pages.js`** (the shared page manifest that
-`smoke.spec.js` and `responsive.spec.js` both `require`; the drift test
+`smoke.spec.js`, `responsive.spec.js` and `contrast-sweep.spec.js` all
+`require`; the drift test
 checks it against the built sitemap). CI uses `fetch-depth: 0` so dates
 resolve.
 
@@ -853,7 +854,8 @@ section headers).
    art) trips it too — that's expected; add the phrase to the spec's
    `NON_PAGE_NAMES` set rather than reword around it.
 4. Add the page's URL to the `PAGES` array in `tests/pages.js` (the
-   shared manifest `smoke.spec.js` + `responsive.spec.js` require; the
+   shared manifest `smoke.spec.js` + `responsive.spec.js` +
+   `contrast-sweep.spec.js` require; the
    sitemap is automatic — see *Sitemap* — but the drift test fails
    until `PAGES` is updated).
 5. Retire the page's `[future: …]` markers: grep
@@ -976,7 +978,8 @@ inline `margin-top` (see *Design system*).
    / `isPartOf` JSON-LD off those keys. Field drills with broader
    scope (multiple paired lessons) omit both — no single parent.
 6. Add the new URL to `PAGES` in `tests/pages.js` (the shared manifest
-   `smoke.spec.js` + `responsive.spec.js` require); consider a
+   `smoke.spec.js` + `responsive.spec.js` + `contrast-sweep.spec.js`
+   require); consider a
    behavioral spot-check for any new format the engine hasn't
    exercised yet.
 7. Add the quiz/drill to `README.md`'s Practice groups and bump its

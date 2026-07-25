@@ -233,8 +233,40 @@
 // BASELINE — MEASURED, NOT GUESSED
 // ---------------------------------------------------------------------------
 //
-// Captured 2026-07-24 at commit 12b5df3 (branch feat/perf-profile-script,
-// parent a62db0a), on `command.home.arpa` — Fedora 44, and NOT an idle
+// RE-BASELINED 2026-07-24 at commit 5b9c457, after the whole perf arc landed
+// (#427 flow-engine point table, #429 refrigerant-loop opt-in, #426 workbench
+// idle gate). The original capture was taken at 12b5df3 — BEFORE any of them
+// merged — so on current main every row read 90-96% under baseline and the
+// report was red by default, including its own control. A report that is red
+// when nothing is wrong decays exactly the way this header warns about, so
+// the values below are the post-arc state: THREE full runs, mean of the three.
+//
+// THE TOLERANCE REGIME CHANGED WITH THEM, and this is the part worth reading.
+// ±8% was derived when layouts/frame read ~46. It now reads ~2-5 on every row
+// but hydronic-loops, and at that magnitude the same ABSOLUTE jitter is a huge
+// percentage. Observed across the three re-baseline runs:
+//
+//     control      3.42 / 2.97 / 2.68      wiresheet   2.55 / 2.09 / 3.84
+//     ddc unit     2.20 / 2.44 / 1.87      refrig      4.05 / 4.38 / 5.72
+//     fbe          4.59 / 3.71 / 3.08      home        4.54 / 4.11 / 2.57
+//     hydronic    52.02 / 49.75 / 50.79
+//
+// A pure percentage prints drift on nearly every run at those magnitudes. So
+// the structural check now fires only when a row exceeds the percentage AND
+// moves more than TOL_LAYOUTS_ABS in absolute terms.
+//
+// HOW THE FLOOR WAS SET, INCLUDING THE MISTAKE. It was first derived from two
+// runs, which gave a max low-row spread of 0.88 and a floor of 1.0. A third
+// run immediately falsified that — four rows flagged, worst deviation from
+// the mean 1.17 (home) — so the floor went to 2.0. This is the same error the
+// arc had already documented for the CPU column ("run it twice" understates
+// the spread), applied to the CPU column and then not to this one. If a
+// FOURTH run flags a row that nothing else explains, widen the floor and add
+// the observation here; do not treat it as a regression. Two data points
+// cannot characterise noise on a machine this contended.
+//
+// Original capture (kept for provenance) was on `command.home.arpa` — Fedora
+// 44, and NOT an idle
 // machine: it runs the household service stack (caddy, several rootless
 // podman apps, clickhouse, kafka, goflow2, grafana, pmcd) continuously, plus
 // three sibling agent lanes of this same arc during capture. Load average
@@ -442,14 +474,23 @@ const MANIFEST = [
 // ---------------------------------------------------------------------------
 
 const BASELINE = {
-    'signal-scaling':                { deltaTask: 0.0, fps: 60.1, layoutsPerFrame: 46.88 },
-    'ddc-workbench-unit':            { deltaTask: 97.3, fps: 57.5, layoutsPerFrame: 50.97 },
-    'ddc-workbench-wiresheet':       { deltaTask: -1.2, fps: 46.3, layoutsPerFrame: 43.18 },
-    'refrigerant-loop':              { deltaTask: 174.0, fps: 45.6, layoutsPerFrame: 127.08 },
-    'function-block-editor':         { deltaTask: -30.2, fps: 47.2, layoutsPerFrame: 45.64 },
-    'hydronic-loops':                { deltaTask: 173.5, fps: 58.3, layoutsPerFrame: 97.51 },
-    'home':                          { deltaTask: -36.2, fps: 45.2, layoutsPerFrame: 46.54 },
-    'signal-scaling-reduced-motion': { deltaTask: -409.9, fps: 59.8, layoutsPerFrame: 0.00 },
+    'signal-scaling':                { deltaTask: 0.0, fps: 59.7, layoutsPerFrame: 2.87 },
+    'ddc-workbench-unit':            { deltaTask: 89.4, fps: 58.6, layoutsPerFrame: 2.23 },
+    // Two rows carry their own wider absolute floor. Both animate
+    // CONVERGENTLY and event-driven rather than steady-state, so their
+    // per-frame layout count is genuinely unstable run to run — not noise in
+    // the instrument. Observed across four re-baseline runs:
+    //   wiresheet  2.55 / 2.09 / 3.84 / 5.23   (range 3.14)
+    //   fbe        4.59 / 3.71 / 3.08 / 1.00   (range 3.59)
+    // Widening the GLOBAL floor to cover them would blind every steady-state
+    // row, which is where this column earns its keep. If either settles down
+    // later, tighten it back and say so here.
+    'ddc-workbench-wiresheet':       { deltaTask: 18.8, fps: 53.1, layoutsPerFrame: 3.43, tolLayoutsAbs: 4.0 },
+    'refrigerant-loop':              { deltaTask: 97.3, fps: 47.3, layoutsPerFrame: 4.44 },
+    'function-block-editor':         { deltaTask: -35.2, fps: 46.8, layoutsPerFrame: 3.10, tolLayoutsAbs: 4.0 },
+    'hydronic-loops':                { deltaTask: 164.5, fps: 59.6, layoutsPerFrame: 50.97 },
+    'home':                          { deltaTask: -51.2, fps: 46.3, layoutsPerFrame: 3.79 },
+    'signal-scaling-reduced-motion': { deltaTask: -321.1, fps: 60.1, layoutsPerFrame: 0.00 },
 };
 
 // Worst observed range across three full runs was 99.6 ms/s and 6.6%; both
@@ -457,6 +498,7 @@ const BASELINE = {
 // the header. fps carries no tolerance on purpose — see the same section.
 const TOL_DELTA_TASK_MS_PER_S = 110;   // CPU column, absolute ms/s
 const TOL_LAYOUTS_PCT = 8;             // structural column, % of baseline
+const TOL_LAYOUTS_ABS = 2.0;           // ...and an absolute floor, see below
 
 // ---------------------------------------------------------------------------
 // Measurement
@@ -795,8 +837,14 @@ async function main() {
         r.driftLayoutsPct = r.baseLayoutsPerFrame
             ? ((r.perFrame.LayoutCount - r.baseLayoutsPerFrame) / r.baseLayoutsPerFrame) * 100
             : NaN;
+        // Tolerance is percentage OR an absolute floor, whichever is looser.
+        // The percentage alone was derived when this column read ~46; after
+        // the 2026-07-24 arc most rows read ~2-4, where the SAME absolute
+        // jitter is 15-24% and would print drift on every run. See BASELINE.
+        const absTol = typeof base.tolLayoutsAbs === 'number' ? base.tolLayoutsAbs : TOL_LAYOUTS_ABS;
         r.layoutsOverTolerance = Number.isFinite(r.driftLayoutsPct)
-            && Math.abs(r.driftLayoutsPct) > TOL_LAYOUTS_PCT;
+            && Math.abs(r.driftLayoutsPct) > TOL_LAYOUTS_PCT
+            && Math.abs(r.perFrame.LayoutCount - r.baseLayoutsPerFrame) > absTol;
     }
 
     if (asJson) {
@@ -808,7 +856,7 @@ async function main() {
             fpsWindowMs: FPS_WINDOW_MS,
             probeMs: PROBE_MS,
             reps: REPS,
-            tolerance: { deltaTaskMsPerS: TOL_DELTA_TASK_MS_PER_S, layoutsPct: TOL_LAYOUTS_PCT },
+            tolerance: { deltaTaskMsPerS: TOL_DELTA_TASK_MS_PER_S, layoutsPct: TOL_LAYOUTS_PCT, layoutsAbs: TOL_LAYOUTS_ABS },
             units: {
                 fps: 'rendered frames per second — THE RANKING SIGNAL; CPU% inverts on a saturated page',
                 perSecond_TaskDuration: 'ms of main-thread work per second of wall clock (1000 = one core)',
@@ -877,7 +925,8 @@ async function main() {
             + `${r.layoutsOverTolerance ? '  << over tolerance' : ''}`,
         );
     }
-    console.log(`\n  tolerance ±${TOL_LAYOUTS_PCT}% of baseline.`);
+    console.log(`\n  tolerance ±${TOL_LAYOUTS_PCT}% of baseline AND ±${TOL_LAYOUTS_ABS.toFixed(1)} absolute —`
+        + ` both must be exceeded. Most rows now sit near 3, where percentage alone is noise.`);
 
     // ── Liveness ───────────────────────────────────────────────────────────
     console.log('\n══ LIVENESS — moved/total animated elements, population not sample ══');
