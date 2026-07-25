@@ -249,11 +249,41 @@
 //     control      3.42 / 2.97 / 2.68      wiresheet   2.55 / 2.09 / 3.84
 //     ddc unit     2.20 / 2.44 / 1.87      refrig      4.05 / 4.38 / 5.72
 //     fbe          4.59 / 3.71 / 3.08      home        4.54 / 4.11 / 2.57
-//     hydronic    52.02 / 49.75 / 50.79
+//     hydronic    52.02 / 49.75 / 50.79   ← PRE-#202; superseded, see below
 //
 // A pure percentage prints drift on nearly every run at those magnitudes. So
 // the structural check now fires only when a row exceeds the percentage AND
 // moves more than TOL_LAYOUTS_ABS in absolute terms.
+//
+// HYDRONIC-LOOPS RE-BASELINED 2026-07-25 — THIS ROW ONLY, on branch
+// `issue-202/education-flow-static` off `db88b7a`. codebase-issues #202
+// swept `data-flow-static="true"` onto all 197 content flow paths across the
+// 15 education lessons that carry them, so the row that was the ONE outlier
+// in the block above now sits with everything else. It was the only page left
+// calling getPointAtLength() per particle per frame; the sweep is why it
+// moved, and the move is the point of the change rather than a surprise.
+// Measured with the same settings as the 2026-07-24 capture, on the same
+// machine, three full runs, mean of the three:
+//
+//     layouts/frame   4.69 / 2.62 / 4.75   → mean 4.02   (was 50.97)
+//     Δ control       97.4 / 60.3 / 104.5  → mean 87.4   (was 164.5)
+//     fps             60.1 / 58.1 /  58.7  → mean 59.0   (was 59.6)
+//
+// A BEFORE run on the same server, same session, immediately prior to the
+// sweep measured 49.87 layouts/frame — so the delta is this branch's, not the
+// recorded baseline's. Liveness was byte-identical before and after (main
+// 46/160 · gutter 47/552), which is what rules out the caveat-3 artefact:
+// the loop is still animating the same population, it is just no longer
+// re-reading the geometry it already knows.
+//
+// NO TOLERANCE CHANGED, and the arithmetic for that is worth keeping. The
+// three samples spread 2.13 in absolute terms, which LOOKS wider than the
+// ±2.0 floor — but the floor is measured against the mean, and the worst
+// deviation from 4.02 is 1.40, inside it. The CPU column's worst deviation
+// from its mean is 27.1 ms/s against ±110. So this row now behaves like the
+// other low rows the floor was designed for. If a fourth run flags it,
+// widen the floor and record the observation per the note below — do not
+// quietly nudge the baseline to meet the run.
 //
 // HOW THE FLOOR WAS SET, INCLUDING THE MISTAKE. It was first derived from two
 // runs, which gave a max low-row spread of 0.88 and a floor of 1.0. A third
@@ -488,7 +518,10 @@ const BASELINE = {
     'ddc-workbench-wiresheet':       { deltaTask: 18.8, fps: 53.1, layoutsPerFrame: 3.43, tolLayoutsAbs: 4.0 },
     'refrigerant-loop':              { deltaTask: 97.3, fps: 47.3, layoutsPerFrame: 4.44 },
     'function-block-editor':         { deltaTask: -35.2, fps: 46.8, layoutsPerFrame: 3.10, tolLayoutsAbs: 4.0 },
-    'hydronic-loops':                { deltaTask: 164.5, fps: 59.6, layoutsPerFrame: 50.97 },
+    // Re-baselined 2026-07-25 for the #202 education point-table sweep —
+    // this row only. Three-run samples + why it moved are in the BASELINE
+    // section of the header.
+    'hydronic-loops':                { deltaTask: 87.4, fps: 59.0, layoutsPerFrame: 4.02 },
     'home':                          { deltaTask: -51.2, fps: 46.3, layoutsPerFrame: 3.79 },
     'signal-scaling-reduced-motion': { deltaTask: -321.1, fps: 60.1, layoutsPerFrame: 0.00 },
 };
