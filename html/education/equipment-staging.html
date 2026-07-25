@@ -229,21 +229,29 @@ keywords: lead lag stage up down rotation runtime hysteresis
                 <title id="es-fig-title">Three identical pumps piped in parallel</title>
                 <desc id="es-fig-desc">Three pumps drawn side by side between a common suction header running along the bottom and a common discharge header running along the top. Each pump draws water from the suction header and delivers it into the discharge header through a check valve. The discharge header carries the combined flow out to the building system; the suction header collects the water returning from the system.</desc>
 
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes pipe geometry — the staging widgets build HTML
+                     cells and bars. A future geometry write must refresh in the same
+                     breath, or the page must opt out via the `flowGeometryLive`
+                     frontmatter (flowStaticGuard, .eleventy.js). -->
                 <!-- piping: supply / discharge side (solid, --blue) -->
-                <line id="es-fig-disch-header" data-flow="supply" x1="178.5" y1="56" x2="540" y2="56" stroke="var(--blue)" stroke-width="3"/>
-                <path id="es-fig-to-system" data-flow="supply" d="M540 56 H 568 V 30" fill="none" stroke="var(--blue)" stroke-width="3"/>
-                <line id="es-fig-p1-disch" data-flow="supply" x1="180" y1="97" x2="180" y2="56" stroke="var(--blue)" stroke-width="3"/>
-                <line id="es-fig-p2-disch" data-flow="supply" x1="330" y1="97" x2="330" y2="56" stroke="var(--blue)" stroke-width="3"/>
-                <line id="es-fig-p3-disch" data-flow="supply" x1="480" y1="97" x2="480" y2="56" stroke="var(--blue)" stroke-width="3"/>
+                <line id="es-fig-disch-header" data-flow="supply" data-flow-static="true" x1="178.5" y1="56" x2="540" y2="56" stroke="var(--blue)" stroke-width="3"/>
+                <path id="es-fig-to-system" data-flow="supply" data-flow-static="true" d="M540 56 H 568 V 30" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <line id="es-fig-p1-disch" data-flow="supply" data-flow-static="true" x1="180" y1="97" x2="180" y2="56" stroke="var(--blue)" stroke-width="3"/>
+                <line id="es-fig-p2-disch" data-flow="supply" data-flow-static="true" x1="330" y1="97" x2="330" y2="56" stroke="var(--blue)" stroke-width="3"/>
+                <line id="es-fig-p3-disch" data-flow="supply" data-flow-static="true" x1="480" y1="97" x2="480" y2="56" stroke="var(--blue)" stroke-width="3"/>
 
                 <!-- piping: return / suction side (dashed, --blue-cool). The
                      suction header and the from-system drop are drawn left-to-
                      right but carry flow the other way, so they walk reversed. -->
-                <line id="es-fig-suct-header" data-flow="return" data-flow-reverse="true" x1="178.5" y1="182" x2="540" y2="182" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="es-fig-from-system" data-flow="return" data-flow-reverse="true" d="M540 182 H 568 V 206" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="es-fig-p1-suct" data-flow="return" x1="180" y1="182" x2="180" y2="141" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="es-fig-p2-suct" data-flow="return" x1="330" y1="182" x2="330" y2="141" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="es-fig-p3-suct" data-flow="return" x1="480" y1="182" x2="480" y2="141" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="es-fig-suct-header" data-flow="return" data-flow-static="true" data-flow-reverse="true" x1="178.5" y1="182" x2="540" y2="182" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="es-fig-from-system" data-flow="return" data-flow-static="true" data-flow-reverse="true" d="M540 182 H 568 V 206" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="es-fig-p1-suct" data-flow="return" data-flow-static="true" x1="180" y1="182" x2="180" y2="141" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="es-fig-p2-suct" data-flow="return" data-flow-static="true" x1="330" y1="182" x2="330" y2="141" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="es-fig-p3-suct" data-flow="return" data-flow-static="true" x1="480" y1="182" x2="480" y2="141" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- system-connection arrowheads -->
                 <polygon points="563,36 568,25 573,36" fill="var(--blue)"/>

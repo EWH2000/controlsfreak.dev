@@ -309,31 +309,39 @@ keywords: air balancing TAB testing adjusting balancing K-factor flow ring flow 
                 <text x="59" y="94" font-size="12" fill="var(--text-bright)" text-anchor="middle">supply</text>
                 <text x="59" y="110" font-size="12" fill="var(--text-dim)" text-anchor="middle">fan</text>
 
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes duct geometry — this page's whole script is one
+                     FlowEngine.init() call and it carries no widget. A future geometry
+                     write must refresh in the same breath, or the page must opt out via
+                     the `flowGeometryLive` frontmatter (flowStaticGuard, .eleventy.js). -->
                 <!-- supply trunk -->
-                <path id="ab-d2-trunk" data-flow="air" d="M102 97 H505" fill="none" stroke="var(--blue)" stroke-width="4"/>
+                <path id="ab-d2-trunk" data-flow="air" data-flow-static="true" d="M102 97 H505" fill="none" stroke="var(--blue)" stroke-width="4"/>
                 <polygon points="497,92 497,102 507,97" fill="var(--blue)"/>
 
                 <!-- four terminal drops + zones -->
-                <path id="ab-d2-dr1" data-flow="air" data-flow-density="0.4" d="M170 97 V138" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="ab-d2-dr1" data-flow="air" data-flow-static="true" data-flow-density="0.4" d="M170 97 V138" fill="none" stroke="var(--blue)" stroke-width="3"/>
                 <rect x="150" y="138" width="40" height="18" fill="var(--surface)" stroke="var(--text)"/>
                 <rect x="146" y="176" width="48" height="26" fill="none" stroke="var(--border)"/>
                 <text x="170" y="193" font-size="10" fill="var(--text-dim)" text-anchor="middle">zone</text>
                 <text x="170" y="222" font-size="12" fill="var(--text-bright)" text-anchor="middle">100 %</text>
 
-                <path id="ab-d2-dr2" data-flow="air" data-flow-density="0.4" d="M270 97 V138" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="ab-d2-dr2" data-flow="air" data-flow-static="true" data-flow-density="0.4" d="M270 97 V138" fill="none" stroke="var(--blue)" stroke-width="3"/>
                 <rect x="250" y="138" width="40" height="18" fill="var(--surface)" stroke="var(--text)"/>
                 <rect x="246" y="176" width="48" height="26" fill="none" stroke="var(--border)"/>
                 <text x="270" y="193" font-size="10" fill="var(--text-dim)" text-anchor="middle">zone</text>
                 <text x="270" y="222" font-size="12" fill="var(--text-bright)" text-anchor="middle">100 %</text>
 
-                <path id="ab-d2-dr3" data-flow="air" data-flow-density="0.4" d="M370 97 V138" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="ab-d2-dr3" data-flow="air" data-flow-static="true" data-flow-density="0.4" d="M370 97 V138" fill="none" stroke="var(--blue)" stroke-width="3"/>
                 <rect x="350" y="138" width="40" height="18" fill="var(--surface)" stroke="var(--text)"/>
                 <rect x="346" y="176" width="48" height="26" fill="none" stroke="var(--border)"/>
                 <text x="370" y="193" font-size="10" fill="var(--text-dim)" text-anchor="middle">zone</text>
                 <text x="370" y="222" font-size="12" fill="var(--text-bright)" text-anchor="middle">100 %</text>
 
                 <!-- index terminal (far end) -->
-                <path id="ab-d2-dr4" data-flow="air" data-flow-density="0.4" d="M460 97 V138" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="ab-d2-dr4" data-flow="air" data-flow-static="true" data-flow-density="0.4" d="M460 97 V138" fill="none" stroke="var(--blue)" stroke-width="3"/>
                 <rect x="440" y="138" width="40" height="18" fill="var(--surface)" stroke="var(--teal)" stroke-width="2"/>
                 <rect x="436" y="176" width="48" height="26" fill="none" stroke="var(--teal)" stroke-width="1.5"/>
                 <text x="460" y="193" font-size="10" fill="var(--text-dim)" text-anchor="middle">zone</text>

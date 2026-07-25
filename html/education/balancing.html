@@ -238,29 +238,37 @@ keywords: gpm delta p flow circuit setter proportional balance valve tab
                 <title id="bal-riser-title">Four-story hydronic riser with calibrated balancing valves at every branch</title>
                 <desc id="bal-riser-desc">A simplified four-story building riser. The pump sits in the basement at the bottom center. A supply main rises up the left side of the building; a return main descends down the right side; both terminate at the pump. Four horizontal branches tap off between the two risers — one per floor, labelled Floor 1 at the bottom (closest to the pump) through Floor 4 at the top (farthest). Each branch carries a coil and a calibrated balance valve sized and trimmed at commissioning. Floor 1 is hydraulically the nearest load and will naturally take more flow than design unless its balance valve is throttled; Floor 4 is the farthest and most vulnerable to losing flow when system pressure drops.</desc>
 
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes pipe geometry — the three-valve widget is all
+                     HTML readouts, bars and LEDs. A future geometry write must refresh
+                     in the same breath, or the page must opt out via the
+                     `flowGeometryLive` frontmatter (flowStaticGuard, .eleventy.js). -->
                 <!-- piping: supply (solid, --blue) -->
-                <path id="bal-riser-supply" data-flow="supply" d="M200 460 V60" fill="none" stroke="var(--blue)" stroke-width="3"/>
-                <line id="bal-riser-pump-to-supply" data-flow="supply" x1="385" y1="460" x2="200" y2="460" stroke="var(--blue)" stroke-width="3"/>
+                <path id="bal-riser-supply" data-flow="supply" data-flow-static="true" d="M200 460 V60" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <line id="bal-riser-pump-to-supply" data-flow="supply" data-flow-static="true" x1="385" y1="460" x2="200" y2="460" stroke="var(--blue)" stroke-width="3"/>
 
                 <!-- Branch supply legs (left of valve), one per floor -->
-                <line id="bal-riser-f4-sup-a" data-flow="supply" x1="200" y1="100" x2="248" y2="100" stroke="var(--blue)" stroke-width="3"/>
-                <line id="bal-riser-f4-sup-b" data-flow="supply" x1="272" y1="100" x2="340" y2="100" stroke="var(--blue)" stroke-width="3"/>
-                <line id="bal-riser-f3-sup-a" data-flow="supply" x1="200" y1="190" x2="248" y2="190" stroke="var(--blue)" stroke-width="3"/>
-                <line id="bal-riser-f3-sup-b" data-flow="supply" x1="272" y1="190" x2="340" y2="190" stroke="var(--blue)" stroke-width="3"/>
-                <line id="bal-riser-f2-sup-a" data-flow="supply" x1="200" y1="280" x2="248" y2="280" stroke="var(--blue)" stroke-width="3"/>
-                <line id="bal-riser-f2-sup-b" data-flow="supply" x1="272" y1="280" x2="340" y2="280" stroke="var(--blue)" stroke-width="3"/>
-                <line id="bal-riser-f1-sup-a" data-flow="supply" x1="200" y1="370" x2="248" y2="370" stroke="var(--blue)" stroke-width="3"/>
-                <line id="bal-riser-f1-sup-b" data-flow="supply" x1="272" y1="370" x2="340" y2="370" stroke="var(--blue)" stroke-width="3"/>
+                <line id="bal-riser-f4-sup-a" data-flow="supply" data-flow-static="true" x1="200" y1="100" x2="248" y2="100" stroke="var(--blue)" stroke-width="3"/>
+                <line id="bal-riser-f4-sup-b" data-flow="supply" data-flow-static="true" x1="272" y1="100" x2="340" y2="100" stroke="var(--blue)" stroke-width="3"/>
+                <line id="bal-riser-f3-sup-a" data-flow="supply" data-flow-static="true" x1="200" y1="190" x2="248" y2="190" stroke="var(--blue)" stroke-width="3"/>
+                <line id="bal-riser-f3-sup-b" data-flow="supply" data-flow-static="true" x1="272" y1="190" x2="340" y2="190" stroke="var(--blue)" stroke-width="3"/>
+                <line id="bal-riser-f2-sup-a" data-flow="supply" data-flow-static="true" x1="200" y1="280" x2="248" y2="280" stroke="var(--blue)" stroke-width="3"/>
+                <line id="bal-riser-f2-sup-b" data-flow="supply" data-flow-static="true" x1="272" y1="280" x2="340" y2="280" stroke="var(--blue)" stroke-width="3"/>
+                <line id="bal-riser-f1-sup-a" data-flow="supply" data-flow-static="true" x1="200" y1="370" x2="248" y2="370" stroke="var(--blue)" stroke-width="3"/>
+                <line id="bal-riser-f1-sup-b" data-flow="supply" data-flow-static="true" x1="272" y1="370" x2="340" y2="370" stroke="var(--blue)" stroke-width="3"/>
 
                 <!-- piping: return (dashed, --blue-cool) -->
-                <path id="bal-riser-return" data-flow="return" d="M600 60 V460" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="bal-riser-pump-to-return" data-flow="return" x1="600" y1="460" x2="415" y2="460" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="bal-riser-return" data-flow="return" data-flow-static="true" d="M600 60 V460" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="bal-riser-pump-to-return" data-flow="return" data-flow-static="true" x1="600" y1="460" x2="415" y2="460" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- Branch return legs, one per floor -->
-                <line id="bal-riser-f4-ret" data-flow="return" x1="460" y1="100" x2="600" y2="100" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="bal-riser-f3-ret" data-flow="return" x1="460" y1="190" x2="600" y2="190" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="bal-riser-f2-ret" data-flow="return" x1="460" y1="280" x2="600" y2="280" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="bal-riser-f1-ret" data-flow="return" x1="460" y1="370" x2="600" y2="370" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="bal-riser-f4-ret" data-flow="return" data-flow-static="true" x1="460" y1="100" x2="600" y2="100" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="bal-riser-f3-ret" data-flow="return" data-flow-static="true" x1="460" y1="190" x2="600" y2="190" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="bal-riser-f2-ret" data-flow="return" data-flow-static="true" x1="460" y1="280" x2="600" y2="280" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="bal-riser-f1-ret" data-flow="return" data-flow-static="true" x1="460" y1="370" x2="600" y2="370" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- flow arrows: riser direction cues + per-branch -->
                 <g id="bal-riser-arrows">

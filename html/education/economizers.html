@@ -120,13 +120,23 @@ keywords: economizer free cooling changeover dry bulb enthalpy high limit lockou
                 <title id="eco-d1-title">The damper assembly modulating for free cooling</title>
                 <desc id="eco-d1-desc">The same mixing box as the Air Handlers lesson, now economizing. The outside-air damper is driving open and carries most of the flow; the return-air damper is closing down; the exhaust and relief damper is opening to match so the extra outside air can leave the building. A mixed-air temperature sensor on the leaving duct feeds the economizer loop, and one control signal modulates all three dampers together.</desc>
 
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes duct geometry — the changeover widget writes
+                     HTML readouts, and psychro-engine.js is pure moist-air math. The
+                     data-pulse wire below is unaffected either way: pulses always read
+                     geometry live. A future geometry write must refresh in the same
+                     breath, or the page must opt out via the `flowGeometryLive`
+                     frontmatter (flowStaticGuard, .eleventy.js). -->
                 <!-- ducts. Same geometry as the air-handlers mixing box; the
                      densities now encode free cooling — OA carries most of
                      the flow, RA is throttled down. -->
-                <path id="eco-d1-ra" data-flow="air" data-flow-density="0.4" d="M490 150 H370" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
-                <path id="eco-d1-oa" data-flow="air" d="M10 225 H150" fill="none" stroke="var(--teal)" stroke-width="3"/>
-                <path id="eco-d1-ea" data-flow="air" d="M260 100 V15" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="eco-d1-ma" data-flow="air" d="M260 300 V385" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="eco-d1-ra" data-flow="air" data-flow-static="true" data-flow-density="0.4" d="M490 150 H370" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="eco-d1-oa" data-flow="air" data-flow-static="true" d="M10 225 H150" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <path id="eco-d1-ea" data-flow="air" data-flow-static="true" d="M260 100 V15" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="eco-d1-ma" data-flow="air" data-flow-static="true" d="M260 300 V385" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
 
                 <!-- econ loop signal wire: MA-T sensor → the damper actuators -->
                 <path id="eco-d1-sig" data-pulse="signal" data-pulse-interval="6000" d="M312 340 H470 V212" fill="none" stroke="var(--amber)" stroke-width="2"/>

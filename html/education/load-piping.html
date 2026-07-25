@@ -216,13 +216,23 @@ keywords: 2-way 3-way valve coil bypass diverting mixing tee
                 <title id="lp-2w-title">Two-way valve at the load</title>
                 <desc id="lp-2w-desc">A short section of supply main runs along the top of the diagram; a return main runs along the bottom. A single coil sits in the middle, tapped off the supply main by a vertical riser. A two-way modulating valve sits in the supply riser above the coil; the coil's return drops straight down into the return main. When the valve modulates closed, flow through the coil — and therefore through this branch of the system loop — drops; nothing diverts around it.</desc>
 
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes pipe geometry — the closing widget shows and
+                     hides branches by recoloring particles through
+                     FlowEngine.setPathColor, which never rebuilds a pool. A future
+                     geometry write must refresh in the same breath, or the page must opt
+                     out via the `flowGeometryLive` frontmatter (flowStaticGuard,
+                     .eleventy.js). -->
                 <!-- piping: supply (solid, --blue) -->
-                <path id="lp-2w-supply-main" data-flow="supply" d="M40 70 H620" fill="none" stroke="var(--blue)" stroke-width="3"/>
-                <line id="lp-2w-coil-supply-top" data-flow="supply" x1="330" y1="70" x2="330" y2="125" stroke="var(--blue)" stroke-width="3"/>
-                <line id="lp-2w-coil-supply-bot" data-flow="supply" x1="330" y1="155" x2="330" y2="170" stroke="var(--blue)" stroke-width="3"/>
+                <path id="lp-2w-supply-main" data-flow="supply" data-flow-static="true" d="M40 70 H620" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-2w-coil-supply-top" data-flow="supply" data-flow-static="true" x1="330" y1="70" x2="330" y2="125" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-2w-coil-supply-bot" data-flow="supply" data-flow-static="true" x1="330" y1="155" x2="330" y2="170" stroke="var(--blue)" stroke-width="3"/>
                 <!-- piping: return (dashed, --blue-cool) -->
-                <line id="lp-2w-coil-out" data-flow="return" x1="330" y1="235" x2="330" y2="270" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="lp-2w-return-main" data-flow="return" d="M620 270 H40" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-2w-coil-out" data-flow="return" data-flow-static="true" x1="330" y1="235" x2="330" y2="270" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="lp-2w-return-main" data-flow="return" data-flow-static="true" d="M620 270 H40" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- flow arrows -->
                 <g id="lp-2w-flow-arrows">
@@ -280,16 +290,16 @@ keywords: 2-way 3-way valve coil bypass diverting mixing tee
                 <desc id="lp-3wm-desc">A supply main runs along the top; a return main along the bottom. A coil sits tapped off the supply main on the left side. A bypass branch runs from the supply main down to a three-way mixing valve at the bottom; the coil's outlet also feeds into that valve. The mixing valve combines coil return water with bypass supply water in variable proportions and sends the result to the return main. As the valve modulates, the coil sees more or less flow, but the total flow leaving through the return is constant.</desc>
 
                 <!-- piping: supply (solid, --blue) -->
-                <path id="lp-3wm-supply-main" data-flow="supply" d="M40 70 H620" fill="none" stroke="var(--blue)" stroke-width="3"/>
-                <line id="lp-3wm-coil-supply" data-flow="supply" x1="250" y1="70" x2="250" y2="140" stroke="var(--blue)" stroke-width="3"/>
-                <line id="lp-3wm-bypass-down" data-flow="supply" x1="410" y1="70" x2="410" y2="290" stroke="var(--blue)" stroke-width="3"/>
-                <line id="lp-3wm-bypass-cross" data-flow="supply" x1="410" y1="290" x2="345" y2="290" stroke="var(--blue)" stroke-width="3"/>
+                <path id="lp-3wm-supply-main" data-flow="supply" data-flow-static="true" d="M40 70 H620" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-3wm-coil-supply" data-flow="supply" data-flow-static="true" x1="250" y1="70" x2="250" y2="140" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-3wm-bypass-down" data-flow="supply" data-flow-static="true" x1="410" y1="70" x2="410" y2="290" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-3wm-bypass-cross" data-flow="supply" data-flow-static="true" x1="410" y1="290" x2="345" y2="290" stroke="var(--blue)" stroke-width="3"/>
 
                 <!-- piping: return (dashed, --blue-cool) -->
-                <line id="lp-3wm-coil-out-v" data-flow="return" x1="250" y1="220" x2="250" y2="290" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="lp-3wm-coil-out-h" data-flow="return" x1="250" y1="290" x2="315" y2="290" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="lp-3wm-valve-out" data-flow="return" x1="330" y1="305" x2="330" y2="320" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="lp-3wm-return-main" data-flow="return" d="M620 320 H40" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-3wm-coil-out-v" data-flow="return" data-flow-static="true" x1="250" y1="220" x2="250" y2="290" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-3wm-coil-out-h" data-flow="return" data-flow-static="true" x1="250" y1="290" x2="315" y2="290" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-3wm-valve-out" data-flow="return" data-flow-static="true" x1="330" y1="305" x2="330" y2="320" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="lp-3wm-return-main" data-flow="return" data-flow-static="true" d="M620 320 H40" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- flow arrows -->
                 <g id="lp-3wm-flow-arrows">
@@ -339,11 +349,11 @@ keywords: 2-way 3-way valve coil bypass diverting mixing tee
                 <desc id="lp-3wd-desc">Same supply-and-return mains as before, but now a three-way diverting valve sits at the top of the supply riser, just below the supply main. The valve splits incoming supply between two outlets: one feeds the coil below it; the other feeds a bypass branch that runs over to a parallel down-pipe. The coil's outlet and the bypass meet at a passive tee on the return side, and the combined flow continues to the return main. As the valve modulates, the coil sees more or less flow, but the total flow leaving through the return is constant.</desc>
 
                 <!-- piping: supply (solid, --blue) -->
-                <path id="lp-3wd-supply-main" data-flow="supply" d="M40 70 H620" fill="none" stroke="var(--blue)" stroke-width="3"/>
-                <line id="lp-3wd-valve-in" data-flow="supply" x1="250" y1="70" x2="250" y2="115" stroke="var(--blue)" stroke-width="3"/>
-                <line id="lp-3wd-coil-supply" data-flow="supply" x1="250" y1="145" x2="250" y2="170" stroke="var(--blue)" stroke-width="3"/>
-                <line id="lp-3wd-bypass-cross" data-flow="supply" x1="265" y1="130" x2="410" y2="130" stroke="var(--blue)" stroke-width="3"/>
-                <line id="lp-3wd-bypass-down" data-flow="supply" x1="410" y1="130" x2="410" y2="310" stroke="var(--blue)" stroke-width="3"/>
+                <path id="lp-3wd-supply-main" data-flow="supply" data-flow-static="true" d="M40 70 H620" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-3wd-valve-in" data-flow="supply" data-flow-static="true" x1="250" y1="70" x2="250" y2="115" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-3wd-coil-supply" data-flow="supply" data-flow-static="true" x1="250" y1="145" x2="250" y2="170" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-3wd-bypass-cross" data-flow="supply" data-flow-static="true" x1="265" y1="130" x2="410" y2="130" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-3wd-bypass-down" data-flow="supply" data-flow-static="true" x1="410" y1="130" x2="410" y2="310" stroke="var(--blue)" stroke-width="3"/>
 
                 <!-- piping: return (dashed, --blue-cool). The horizontal at y=310 is split into two
                      segments because TWO flows converge at the tee at (330, 310): coil-out arrives
@@ -352,11 +362,11 @@ keywords: 2-way 3-way valve coil bypass diverting mixing tee
                      direction, so a single line here would animate both halves the wrong way for
                      one of them; the colour split is also pedagogically right (bypass water is still
                      hot supply until it mixes at the tee). -->
-                <line id="lp-3wd-coil-out-v" data-flow="return" x1="250" y1="250" x2="250" y2="310" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="lp-3wd-coil-to-tee" data-flow="return" x1="250" y1="310" x2="330" y2="310" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <line id="lp-3wd-bypass-to-tee" data-flow="supply" x1="410" y1="310" x2="330" y2="310" stroke="var(--blue)" stroke-width="3"/>
-                <line id="lp-3wd-tee-out" data-flow="return" x1="330" y1="310" x2="330" y2="325" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="lp-3wd-return-main" data-flow="return" d="M620 325 H40" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-3wd-coil-out-v" data-flow="return" data-flow-static="true" x1="250" y1="250" x2="250" y2="310" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-3wd-coil-to-tee" data-flow="return" data-flow-static="true" x1="250" y1="310" x2="330" y2="310" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-3wd-bypass-to-tee" data-flow="supply" data-flow-static="true" x1="410" y1="310" x2="330" y2="310" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-3wd-tee-out" data-flow="return" data-flow-static="true" x1="330" y1="310" x2="330" y2="325" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="lp-3wd-return-main" data-flow="return" data-flow-static="true" d="M620 325 H40" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- flow arrows -->
                 <g id="lp-3wd-flow-arrows">
@@ -436,30 +446,30 @@ keywords: 2-way 3-way valve coil bypass diverting mixing tee
                 <desc id="lp-tt-desc">The same twin-T configuration from the Hydronic Loops lesson, redrawn with the two system-side loads opened up. The boiler primary loop sits on the left with its own pump; the bridge runs across the middle with an injection pump; the system loop runs around the right with a system pump and two loads. Load A is built around a two-way modulating valve in the supply leg; Load B is built around a three-way diverting valve at the supply inlet with a bypass branch around the coil. At the far end of the system loop, opposite the pump, a minimum-flow bypass sits in the supply-to-return crossover and keeps a guaranteed minimum flow through the system pump when the two-way loads throttle down, protecting it against dead-heading on the variable-flow (two-way) side. If all loads on the system were wired like Load A, the system's total flow would vary with demand. If all loads were wired like Load B, the system's total flow would stay constant.</desc>
 
                 <!-- ── PRIMARY loop piping (solid + --blue) ── -->
-                <path id="lp-tt-primary-loop" data-flow="supply" d="M90 130 V60 H280 V270 H90 V200" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="lp-tt-primary-loop" data-flow="supply" data-flow-static="true" d="M90 130 V60 H280 V270 H90 V200" fill="none" stroke="var(--blue)" stroke-width="3"/>
 
                 <!-- ── BRIDGE: upper = hot injection (solid --blue), lower = return to primary (dashed --blue-cool) ── -->
-                <line id="lp-tt-inject-pipe" data-flow="supply" x1="280" y1="150" x2="440" y2="150" stroke="var(--blue)" stroke-width="3"/>
-                <line id="lp-tt-bridge-return" data-flow="return" x1="440" y1="190" x2="280" y2="190" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-tt-inject-pipe" data-flow="supply" data-flow-static="true" x1="280" y1="150" x2="440" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-tt-bridge-return" data-flow="return" data-flow-static="true" x1="440" y1="190" x2="280" y2="190" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- ── SYSTEM loop piping ── -->
-                <path id="lp-tt-system-supply" data-flow="supply" d="M440 250 V90 H760" fill="none" stroke="var(--blue)" stroke-width="3"/>
-                <path id="lp-tt-system-return" data-flow="return" d="M760 90 V250 H440" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="lp-tt-system-supply" data-flow="supply" data-flow-static="true" d="M440 250 V90 H760" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="lp-tt-system-return" data-flow="return" data-flow-static="true" d="M760 90 V250 H440" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- ── LOAD A (2-way) piping: supply riser split by valve, single return riser ── -->
-                <line id="lp-tt-load-a-supply-top" data-flow="supply" x1="540" y1="90" x2="540" y2="110" stroke="var(--blue)" stroke-width="3"/>
-                <line id="lp-tt-load-a-supply-bot" data-flow="supply" x1="540" y1="140" x2="540" y2="150" stroke="var(--blue)" stroke-width="3"/>
-                <line id="lp-tt-load-a-return" data-flow="return" x1="540" y1="205" x2="540" y2="250" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-tt-load-a-supply-top" data-flow="supply" data-flow-static="true" x1="540" y1="90" x2="540" y2="110" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-tt-load-a-supply-bot" data-flow="supply" data-flow-static="true" x1="540" y1="140" x2="540" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-tt-load-a-return" data-flow="return" data-flow-static="true" x1="540" y1="205" x2="540" y2="250" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- ── LOAD B (3-way diverting) piping: supply tap → 3-way → coil; bypass right → down →
                      joins coil-return at a tee at (680, 225). Bypass segments are SUPPLY colour (hot
                      water hasn't lost heat); below the tee the combined line is RETURN colour. ── -->
-                <line id="lp-tt-load-b-supply-top" data-flow="supply" x1="680" y1="90" x2="680" y2="110" stroke="var(--blue)" stroke-width="3"/>
-                <line id="lp-tt-load-b-coil-supply" data-flow="supply" x1="680" y1="135" x2="680" y2="150" stroke="var(--blue)" stroke-width="3"/>
-                <line id="lp-tt-load-b-bypass-h" data-flow="supply" x1="695" y1="122" x2="720" y2="122" stroke="var(--blue)" stroke-width="3"/>
-                <line id="lp-tt-load-b-bypass-v" data-flow="supply" x1="720" y1="122" x2="720" y2="225" stroke="var(--blue)" stroke-width="3"/>
-                <line id="lp-tt-load-b-bypass-cross" data-flow="supply" x1="720" y1="225" x2="680" y2="225" stroke="var(--blue)" stroke-width="3"/>
-                <line id="lp-tt-load-b-coil-return" data-flow="return" x1="680" y1="205" x2="680" y2="250" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-tt-load-b-supply-top" data-flow="supply" data-flow-static="true" x1="680" y1="90" x2="680" y2="110" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-tt-load-b-coil-supply" data-flow="supply" data-flow-static="true" x1="680" y1="135" x2="680" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-tt-load-b-bypass-h" data-flow="supply" data-flow-static="true" x1="695" y1="122" x2="720" y2="122" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-tt-load-b-bypass-v" data-flow="supply" data-flow-static="true" x1="720" y1="122" x2="720" y2="225" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-tt-load-b-bypass-cross" data-flow="supply" data-flow-static="true" x1="720" y1="225" x2="680" y2="225" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-tt-load-b-coil-return" data-flow="return" data-flow-static="true" x1="680" y1="205" x2="680" y2="250" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- flow arrows -->
                 <g id="lp-tt-flow-arrows">
@@ -628,29 +638,29 @@ keywords: 2-way 3-way valve coil bypass diverting mixing tee
                             <desc id="lp-w-svg-desc">A simplified hydronic loop: a system pump at the bottom left pushes water up into a supply main running across the top. Three loads (A, B, C) tap off the supply main with bowtie two-way valves, drop through coils, and return into a return main running back along the bottom to the pump. At the far right end, opposite the pump, a min-flow bypass connects the supply main to the return main through a single bowtie valve. When the bypass valve is open and the building loads are throttled down, a controlled trickle of water shortcuts the loads and protects the pump from dead-heading.</desc>
 
                             <!-- piping: supply main (solid, --blue) -->
-                            <path id="lp-w-svg-supply" data-flow="supply" d="M40 50 H 540" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                            <path id="lp-w-svg-supply" data-flow="supply" data-flow-static="true" d="M40 50 H 540" fill="none" stroke="var(--blue)" stroke-width="3"/>
                             <!-- piping: return main (dashed, --blue-cool); drawn right-to-left so engine particles walk that direction -->
-                            <path id="lp-w-svg-return" data-flow="return" d="M540 210 H 40" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                            <path id="lp-w-svg-return" data-flow="return" data-flow-static="true" d="M540 210 H 40" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
                             <!-- pump-side vertical link (the pump body covers this; not animated) -->
                             <line id="lp-w-svg-pump-leg" x1="40" y1="50" x2="40" y2="210" stroke="var(--blue)" stroke-width="3"/>
 
                             <!-- Load A risers -->
-                            <line id="lp-w-svg-load-a-sup-top" data-flow="supply" x1="170" y1="50"  x2="170" y2="110" stroke="var(--blue)" stroke-width="3"/>
-                            <line id="lp-w-svg-load-a-sup-bot" data-flow="supply" x1="170" y1="130" x2="170" y2="150" stroke="var(--blue)" stroke-width="3"/>
-                            <line id="lp-w-svg-load-a-ret"     data-flow="return" x1="170" y1="190" x2="170" y2="210" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                            <line id="lp-w-svg-load-a-sup-top" data-flow="supply" data-flow-static="true" x1="170" y1="50"  x2="170" y2="110" stroke="var(--blue)" stroke-width="3"/>
+                            <line id="lp-w-svg-load-a-sup-bot" data-flow="supply" data-flow-static="true" x1="170" y1="130" x2="170" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                            <line id="lp-w-svg-load-a-ret"     data-flow="return" data-flow-static="true" x1="170" y1="190" x2="170" y2="210" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
                             <!-- Load B risers -->
-                            <line id="lp-w-svg-load-b-sup-top" data-flow="supply" x1="290" y1="50"  x2="290" y2="110" stroke="var(--blue)" stroke-width="3"/>
-                            <line id="lp-w-svg-load-b-sup-bot" data-flow="supply" x1="290" y1="130" x2="290" y2="150" stroke="var(--blue)" stroke-width="3"/>
-                            <line id="lp-w-svg-load-b-ret"     data-flow="return" x1="290" y1="190" x2="290" y2="210" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                            <line id="lp-w-svg-load-b-sup-top" data-flow="supply" data-flow-static="true" x1="290" y1="50"  x2="290" y2="110" stroke="var(--blue)" stroke-width="3"/>
+                            <line id="lp-w-svg-load-b-sup-bot" data-flow="supply" data-flow-static="true" x1="290" y1="130" x2="290" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                            <line id="lp-w-svg-load-b-ret"     data-flow="return" data-flow-static="true" x1="290" y1="190" x2="290" y2="210" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
                             <!-- Load C risers -->
-                            <line id="lp-w-svg-load-c-sup-top" data-flow="supply" x1="410" y1="50"  x2="410" y2="110" stroke="var(--blue)" stroke-width="3"/>
-                            <line id="lp-w-svg-load-c-sup-bot" data-flow="supply" x1="410" y1="130" x2="410" y2="150" stroke="var(--blue)" stroke-width="3"/>
-                            <line id="lp-w-svg-load-c-ret"     data-flow="return" x1="410" y1="190" x2="410" y2="210" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                            <line id="lp-w-svg-load-c-sup-top" data-flow="supply" data-flow-static="true" x1="410" y1="50"  x2="410" y2="110" stroke="var(--blue)" stroke-width="3"/>
+                            <line id="lp-w-svg-load-c-sup-bot" data-flow="supply" data-flow-static="true" x1="410" y1="130" x2="410" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                            <line id="lp-w-svg-load-c-ret"     data-flow="return" data-flow-static="true" x1="410" y1="190" x2="410" y2="210" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
 
                             <!-- MIN-FLOW bypass leg (grouped; particles toggled via setPathColor from the IIFE) -->
                             <g id="lp-w-bypass-leg">
-                                <line id="lp-w-svg-bypass-up"   data-flow="supply" x1="520" y1="50"  x2="520" y2="110" stroke="var(--blue)" stroke-width="3"/>
-                                <line id="lp-w-svg-bypass-down" data-flow="supply" x1="520" y1="130" x2="520" y2="210" stroke="var(--blue)" stroke-width="3"/>
+                                <line id="lp-w-svg-bypass-up"   data-flow="supply" data-flow-static="true" x1="520" y1="50"  x2="520" y2="110" stroke="var(--blue)" stroke-width="3"/>
+                                <line id="lp-w-svg-bypass-down" data-flow="supply" data-flow-static="true" x1="520" y1="130" x2="520" y2="210" stroke="var(--blue)" stroke-width="3"/>
                             </g>
 
                             <!-- Static directional arrows — read under reduced-motion too -->

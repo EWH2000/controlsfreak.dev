@@ -200,16 +200,24 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 <text x="71" y="146" font-size="14" fill="var(--text-bright)" text-anchor="middle">AHU</text>
                 <text x="71" y="164" font-size="11" fill="var(--text-dim)" text-anchor="middle">supply fan · VFD</text>
 
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes duct geometry — the static-loop widget is page
+                     math over HTML readouts. A future geometry write must refresh in the
+                     same breath, or the page must opt out via the `flowGeometryLive`
+                     frontmatter (flowStaticGuard, .eleventy.js). -->
                 <!-- Supply trunk (animated, full density) -->
-                <path id="ds-d1-trunk" data-flow="air" d="M126 150 H510" fill="none" stroke="var(--blue)" stroke-width="4"/>
+                <path id="ds-d1-trunk" data-flow="air" data-flow-static="true" d="M126 150 H510" fill="none" stroke="var(--blue)" stroke-width="4"/>
                 <polygon points="490,145 490,155 500,150" fill="var(--blue)"/>
 
                 <!-- Three box branches -->
-                <path id="ds-d1-br1" data-flow="air" data-flow-density="0.35" d="M190 150 V190" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="ds-d1-br1" data-flow="air" data-flow-static="true" data-flow-density="0.35" d="M190 150 V190" fill="none" stroke="var(--blue)" stroke-width="3"/>
                 <rect x="176" y="190" width="28" height="16" fill="var(--surface)" stroke="var(--text)"/>
-                <path id="ds-d1-br2" data-flow="air" data-flow-density="0.35" d="M290 150 V190" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="ds-d1-br2" data-flow="air" data-flow-static="true" data-flow-density="0.35" d="M290 150 V190" fill="none" stroke="var(--blue)" stroke-width="3"/>
                 <rect x="276" y="190" width="28" height="16" fill="var(--surface)" stroke="var(--text)"/>
-                <path id="ds-d1-br3" data-flow="air" data-flow-density="0.35" d="M450 150 V190" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="ds-d1-br3" data-flow="air" data-flow-static="true" data-flow-density="0.35" d="M450 150 V190" fill="none" stroke="var(--blue)" stroke-width="3"/>
                 <rect x="436" y="190" width="28" height="16" fill="var(--surface)" stroke="var(--text)"/>
                 <text x="240" y="224" font-size="12" fill="var(--text)">VAV boxes</text>
                 <text x="480" y="224" font-size="13" fill="var(--text-dim)">… ×30</text>
@@ -414,12 +422,12 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                     minimum flow. The gauges cannot tell the two apart.</desc>
 
                 <!-- Design afternoon: the river -->
-                <path id="ds-d3-full" data-flow="air" d="M40 100 H420" fill="none" stroke="var(--blue)" stroke-width="5"/>
+                <path id="ds-d3-full" data-flow="air" data-flow-static="true" d="M40 100 H420" fill="none" stroke="var(--blue)" stroke-width="5"/>
                 <polygon points="402,94 402,106 414,100" fill="var(--blue)"/>
                 <text x="40" y="82" font-size="13" fill="var(--text)">design afternoon — the river</text>
 
                 <!-- Mild evening: the trickle -->
-                <path id="ds-d3-min" data-flow="air" data-flow-density="0.15" d="M40 200 H420" fill="none" stroke="var(--blue)" stroke-width="5"/>
+                <path id="ds-d3-min" data-flow="air" data-flow-static="true" data-flow-density="0.15" d="M40 200 H420" fill="none" stroke="var(--blue)" stroke-width="5"/>
                 <polygon points="402,194 402,206 414,200" fill="var(--blue)"/>
                 <text x="40" y="182" font-size="13" fill="var(--text)">mild evening — the trickle</text>
 

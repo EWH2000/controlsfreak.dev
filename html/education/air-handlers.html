@@ -177,15 +177,23 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
                 <title id="ah-d1-title">The air path through an air handler</title>
                 <desc id="ah-d1-desc">Air leaves the space through a return duct that runs above the air handler. Before the mixing box, an exhaust and relief branch carries part of the return air out of the building. The rest drops into the mixing box, where outside air enters through an intake. The mixed air passes through a filter, a heating coil, and a cooling coil, and the supply fan pushes it back out through the supply duct to the space.</desc>
 
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes duct geometry — the D4 damper blade turns via a
+                     CSS transform on a <rect>. A future geometry write must refresh in
+                     the same breath, or the page must opt out via the `flowGeometryLive`
+                     frontmatter (flowStaticGuard, .eleventy.js). -->
                 <!-- ducts. data-flow="air" hooks flow-engine.js; particle color
                      follows each duct's stroke. Density 0.5 on the OA and EA
                      branches is the minimum-outside-air encoding — those ducts
                      carry a fraction of the return-side flow. -->
-                <path id="ah-d1-ra" data-flow="air" d="M470 170 V140 H100 V260" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
-                <path id="ah-d1-ea" data-flow="air" data-flow-density="0.5" d="M170 140 V55 H60" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="ah-d1-oa" data-flow="air" data-flow-density="0.5" d="M5 230 V310 H40" fill="none" stroke="var(--teal)" stroke-width="3"/>
-                <path id="ah-d1-ma" data-flow="air" d="M130 310 H265" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
-                <path id="ah-d1-sa" data-flow="air" d="M305 310 H470 V250" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="ah-d1-ra" data-flow="air" data-flow-static="true" d="M470 170 V140 H100 V260" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="ah-d1-ea" data-flow="air" data-flow-static="true" data-flow-density="0.5" d="M170 140 V55 H60" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="ah-d1-oa" data-flow="air" data-flow-static="true" data-flow-density="0.5" d="M5 230 V310 H40" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <path id="ah-d1-ma" data-flow="air" data-flow-static="true" d="M130 310 H265" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="ah-d1-sa" data-flow="air" data-flow-static="true" d="M305 310 H470 V250" fill="none" stroke="var(--blue)" stroke-width="3"/>
 
                 <!-- flow arrows (static — carry direction for reduced-motion / print) -->
                 <g id="ah-d1-flow-arrows">
@@ -279,10 +287,10 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
                 <desc id="ah-d2-desc">A mixing box chamber with three damper sets. Return air enters from the right through a mostly-open damper. Outside air enters from the left through a damper held at its minimum position. An exhaust and relief damper at the top is cracked open to let the matching amount of air leave. The three streams blend in the chamber and the mixed air leaves through the bottom toward the filter.</desc>
 
                 <!-- ducts -->
-                <path id="ah-d2-ra" data-flow="air" d="M490 150 H370" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
-                <path id="ah-d2-oa" data-flow="air" data-flow-density="0.5" d="M10 225 H150" fill="none" stroke="var(--teal)" stroke-width="3"/>
-                <path id="ah-d2-ea" data-flow="air" data-flow-density="0.5" d="M260 100 V15" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="ah-d2-ma" data-flow="air" d="M260 300 V385" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="ah-d2-ra" data-flow="air" data-flow-static="true" d="M490 150 H370" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="ah-d2-oa" data-flow="air" data-flow-static="true" data-flow-density="0.5" d="M10 225 H150" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <path id="ah-d2-ea" data-flow="air" data-flow-static="true" data-flow-density="0.5" d="M260 100 V15" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="ah-d2-ma" data-flow="air" data-flow-static="true" d="M260 300 V385" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
 
                 <!-- flow arrows -->
                 <g id="ah-d2-flow-arrows">
@@ -360,15 +368,15 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
                 <desc id="ah-d3-desc">A slice of the air-handler casing. Mixed air enters from the left and passes through a filter rack with a differential-pressure sensor tapped across it, then a heating coil, then a cooling coil with a drain pan and condensate line underneath. Each coil has water supply and return piping stubs below the casing. The air leaves the slice as supply air on the right.</desc>
 
                 <!-- air path: mixed air up to the cooling coil, supply air after it -->
-                <path id="ah-d3-ma" data-flow="air" d="M10 210 H295" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
-                <path id="ah-d3-sa" data-flow="air" d="M375 210 H510" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="ah-d3-ma" data-flow="air" data-flow-static="true" d="M10 210 H295" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="ah-d3-sa" data-flow="air" data-flow-static="true" d="M375 210 H510" fill="none" stroke="var(--blue)" stroke-width="3"/>
 
                 <!-- coil water stubs — the water register inside an air diagram:
                      the coil is a hydronic load (load-piping.html). -->
-                <path id="ah-d3-hws" data-flow="supply" d="M202 355 V280" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
-                <path id="ah-d3-hwr" data-flow="return" d="M222 280 V355" fill="none" stroke="var(--blue-cool)" stroke-width="2.5" stroke-dasharray="7 4"/>
-                <path id="ah-d3-chws" data-flow="supply" d="M307 355 V280" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
-                <path id="ah-d3-chwr" data-flow="return" d="M327 280 V355" fill="none" stroke="var(--blue-cool)" stroke-width="2.5" stroke-dasharray="7 4"/>
+                <path id="ah-d3-hws" data-flow="supply" data-flow-static="true" d="M202 355 V280" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+                <path id="ah-d3-hwr" data-flow="return" data-flow-static="true" d="M222 280 V355" fill="none" stroke="var(--blue-cool)" stroke-width="2.5" stroke-dasharray="7 4"/>
+                <path id="ah-d3-chws" data-flow="supply" data-flow-static="true" d="M307 355 V280" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+                <path id="ah-d3-chwr" data-flow="return" data-flow-static="true" d="M327 280 V355" fill="none" stroke="var(--blue-cool)" stroke-width="2.5" stroke-dasharray="7 4"/>
 
                 <!-- flow arrows -->
                 <g id="ah-d3-flow-arrows">
@@ -447,8 +455,8 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
                 <desc id="ah-d4-desc">A slice of the air-handler casing containing the supply fan. Conditioned air arrives from the coils on the left; the fan pulls it through and pushes it out to the supply duct on the right. A VFD above the casing drives the fan motor over a control wire.</desc>
 
                 <!-- air path in / out of the fan -->
-                <path id="ah-d4-in" data-flow="air" d="M10 190 H132" fill="none" stroke="var(--blue)" stroke-width="3"/>
-                <path id="ah-d4-out" data-flow="air" d="M208 190 H460" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="ah-d4-in" data-flow="air" data-flow-static="true" d="M10 190 H132" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="ah-d4-out" data-flow="air" data-flow-static="true" d="M208 190 H460" fill="none" stroke="var(--blue)" stroke-width="3"/>
 
                 <!-- VFD control wire — electrical register; discrete signal pulse -->
                 <path id="ah-d4-sig" data-pulse="signal" data-pulse-interval="6000" d="M88 74 V132 H170 V152" fill="none" stroke="var(--amber)" stroke-width="2"/>
