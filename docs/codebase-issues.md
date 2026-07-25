@@ -7572,7 +7572,7 @@ floor below is not a fourth round; it is the guard's permanent shape.
 
 ---
 
-### 203. `flowStaticGuard`'s comment mask is inert on the current tree, and its header says otherwise *(open — 2026-07-25)*
+### 203. `flowStaticGuard`'s comment mask is inert on the current tree, and two records credit it anyway *(open — 2026-07-25)*
 
 Found while verifying the #202 mask reorder (round 3); **logged, not
 fixed**, because #202 was a declared stop and this is a documentation-
@@ -7621,3 +7621,126 @@ future readers will trust about this guard's reasoning.
 designated explanation for a guard that has now needed three adversarial
 rounds, and a reader who trusts the masking paragraph will mis-model what
 the scan can and cannot see.
+
+**Widened 2026-07-25 — a second instance, same family.** Found by a
+verification pass over PR #430's own body, which credited the mask for a
+number the mask has no hand in. Its round-3 test plan explained the gutter
+exemption's offender count this way:
+
+> reports **15 of 15** unflagged elements — 15, not the 17 a naive grep
+> counts, because two of the hits are inside `{# … #}` blocks, **which is
+> the comment mask working**.
+
+**Measured directly on `html/_includes/schematic-bg.njk`: the element count
+is 15 with masking and 15 without.** The two extra grep hits (lines 18 and
+147) are prose inside `{# … #}` blocks, and `scan()` drops them for exactly
+the reason the paragraph above already establishes — neither parses as an
+element start tag. It is the start-tag parse that yields 15, not the mask.
+The PR-body sentence was corrected in the same pass that logged this.
+
+Both instances are the same defect: **a claim about the mask that outruns
+what the mask does.** That is why this entry widened rather than spawning a
+sibling — the header's reasoning had already been copied into a second
+record before anyone measured it, so whichever option above is taken, the
+remedy has to reach the header *and* leave the header hard to re-copy
+wrongly. See **#204** for the separate finding about what the `//` pass
+does and does not blank; that one is a live coverage gap rather than a
+stale justification, which is why it is filed on its own.
+
+### 204. `flowStaticGuard`'s `//` mask is line-anchored — round 3 closed one shape of the comment-pairing hole and opened another *(open — 2026-07-25)*
+
+Found by a verification pass over PR #430's body, after #202's stop was
+declared. Both directions below are **measured on head `4905b78`**, and
+**neither is fixed** — this is the record, not a fourth round. Filed apart
+from #203 because that one is a stale explanation with nothing operational
+behind it, while (a) here is a live coverage gap in a build guard.
+
+`maskComments` blanks JS line comments with a **line-anchored** test
+(`.eleventy.js:338`):
+
+```js
+.map((line) => (line.trimStart().startsWith("//") ? blank(line) : line))
+```
+
+Round 3 moved that pass to run **first**, ahead of the `<!-- -->` / `{# #}`
+/ `/* */` passes, so a stray `/*` in one `//` comment could no longer pair
+with a `*/` in a later one. That was a real fix. It is also exactly as wide
+as the test above, which is narrower than the mechanism it was fixing — the
+same shape round 3 itself named as the reason there *was* a round 3.
+
+**(a) Over-masking — the silent direction, still open.** The round-3
+construction still reproduces when the two strays sit in comments that
+**trail** other markup instead of starting their lines:
+
+```html
+<script>// ratio is length /* width</script>
+<svg><path id="zz-h" data-flow="supply" d="M0 0 H50"/></svg>
+<script>// divide by 2 */ done</script>
+```
+
+On a `nav: education` page that builds **exit 0, 137 files**, and
+`grep -o '<path id="zz-h"[^>]*>' _site/education/zz-h3b.html` returns the
+unflagged path. The line pass never fires — the line starts with `<script>`,
+not `//` — so the `/* … */` pass pairs the strays and blanks the diagram out
+of the scan. The **line-start** twin of the same construction does go RED as
+PR #430 claims: exit **1**, `1 of 1 data-flow elements lack
+data-flow-static="true"`. So what round 3 closed is one shape of the hole,
+not the hole.
+
+This is the **over**-blanking direction, which is the dangerous one: the
+guard hides a real offender rather than inventing a phantom one, so it fails
+by shipping. It is correspondingly hard to reach by accident — it needs an
+unbalanced `/*` inside one trailing `//` comment, a matching `*/` inside a
+later trailing `//` comment, and an unflagged `data-flow` path between them.
+Nothing on the tree is anywhere near it: the differential scan reports
+**zero of 145** scanned files where masking changes the verdict at all.
+
+**(b) Under-masking — the loud direction, opened by the reorder, never
+probed.** `/* css */ // js` on **one line** now behaves differently than it
+did before round 3. Old order: the `/* */` pass blanked the block first,
+leaving a line that *then* started with `//`, so the trailing comment was
+masked too. New order: the line pass runs first, sees a line starting with
+`/*`, and leaves the trailing `// …` **unmasked**. Measured both ways on a
+constructed line — old order blanks it, new order does not.
+
+Affected files today: **zero**. `grep -rlE '\*/[[:space:]]*//' html/`
+returns nothing. And the failure mode is the safe one — an unmasked comment
+yields a *phantom* offender and a loud build break, never a shipped path.
+
+The point is not the risk, which is currently nil. It is that the guard
+header justifies the reorder as *"Safe on this tree by positive search"*,
+and that search covers **one direction only**: it looks for `//` lines
+carrying delimiters, never for delimited comments carrying `//`. A
+one-directional probe offered as the safety argument for a two-directional
+change is the same defect shape as #203 — a claim outrunning what was
+measured.
+
+(A smaller note on that same header sentence: the search it cites is written
+as running over `html/`, where it returns **4** hits — all in `styles.css`,
+`quiz-engine.js` and `refrigerant-loop-engine.js`. The header's *prose*
+scopes the claim to `.njk` / `.html`, and restricted that way it is correct
+at **0** hits, so the claim holds and only the pasted command is looser than
+the sentence around it.)
+
+**Options.** (a) Mask `//` from its first occurrence to end-of-line instead
+of whole-line-if-it-starts-with, which closes (a) and — provided the
+delimited passes still run afterwards — (b) as well. This needs real care
+rather than a one-line edit: `//` appears inside every `https://` URL on the
+page, so a naive first-occurrence rule would blank the remainder of any line
+carrying a link and trade a narrow over-masking hole for a wide one. It is a
+change to a guard that has already needed three adversarial rounds, so it
+wants its own PR and its own reproduction pass. (b) Accept both directions
+and amend the header to say the `//` pass is line-anchored and the positive
+search is one-directional. Cheap, honest, no behaviour change;
+**recommended**, and it pairs naturally with #203's option (a) — both are
+accuracy fixes to the same paragraph and should ship together. (c) Replace
+the four-pass mask with a single tokenizing pass that tracks comment state.
+Most correct, most blast radius, and hard to justify for a mask whose
+measured effect on the real tree is zero.
+
+**At stake:** nothing today, in either direction, and that is the honest
+framing rather than a hedge. (a) is the one worth weighing, because it fails
+silently — but reaching it takes a construction no page has ever had. What
+is actually at stake is what was at stake in #203: this header is the
+designated explanation for the guard, and a reader who trusts it will
+believe the comment-pairing hole is closed when it is closed for one shape.
