@@ -233,38 +233,24 @@
 // layout for its subtree, so the per-frame floor is set by how many
 // particles move, not by how cheaply each move is issued. That is why
 // the engine-side levers plateau — going lower means moving fewer
-// particles (see the variant flag below), not writing them faster.
+// particles, not writing them faster. Two levers that WOULD have gone
+// lower were measured and rejected: rate-gating the gutter to ~20fps
+// bought the flagship simulator nothing (its cost is content pools plus
+// gutter PULSE paths, and a pulse can never be rate-gated — the comet
+// would read as disconnected blinks), and freezing the gutter outright
+// measured best of all but is a visible change: a background that
+// suddenly stops moving reads as broken to a returning visitor.
+//
+// Where this is headed: the gutter's [data-flow] paths are expected to
+// be retired by a future static-"print" background, at which point the
+// gutter stops being an engine consumer at all. So the durable value of
+// the work above is the CONTENT diagrams — the education lessons and
+// the simulators — not the collage that motivated it. Weigh future
+// engine changes on what they do for a page's own diagrams.
 // ──────────────────────────────────────────────────────────────────────
 
 (function () {
     'use strict';
-
-    // ── ⚠ TEMPORARY REVIEW SCAFFOLDING — PR-1 (fix/gutter-idle-cpu) ──
-    // Three gutter-performance variants behind a URL query param so the
-    // owner can A/B them from the running page. The merge-ready version
-    // keeps ONE variant and deletes this block, every `GUTTER_VARIANT`
-    // read, and the `v0` legacy path.
-    //
-    //   ?gutter=v0   original engine, unchanged — the A/B baseline
-    //   ?gutter=v1   (default) point table + cheap writes + visiblePools
-    //   ?gutter=v2   V1 + gutter flow pools tick at ~20fps (1.5 u/step)
-    //   ?gutter=v3   gutter motion off: particles placed once, gutter
-    //                pulses silenced; the one-shot draw-in reveal stays
-    //
-    // Read ONCE here, at script evaluation — not per frame, and not
-    // re-read on history navigation.
-    const GUTTER_VARIANT = (function () {
-        const fallback = 'v1';
-        try {
-            const q = new URLSearchParams(window.location.search).get('gutter');
-            return (q === 'v0' || q === 'v1' || q === 'v2' || q === 'v3') ? q : fallback;
-        } catch (e) {
-            return fallback;
-        }
-    })();
-    const LEGACY = GUTTER_VARIANT === 'v0';
-    const RATE_GATED = GUTTER_VARIANT === 'v2';
-    const GUTTER_STATIC = GUTTER_VARIANT === 'v3';
 
     // Global tuning — one velocity, one spacing, applied uniformly to
     // every annotated path. Tuned by eye on the d1 diagram and then
@@ -305,9 +291,9 @@
     const visiblePulseEls = new Set();
     const visibleFlowEls = new Set();
     // Derived from visibleFlowEls: the pools the frame loop actually
-    // ticks — visible AND particle-bearing (and, under v3, non-gutter).
-    // The IO callback and buildPoolForEl are the only writers; every
-    // removal path goes through removePool.
+    // ticks — visible AND particle-bearing. The IO callback and
+    // buildPoolForEl are the only writers; every removal path goes
+    // through removePool.
     const visiblePools = [];
     let pulseIO = null;
     let flowIO = null;
@@ -316,7 +302,6 @@
     let looping = false;        // rAF loop currently scheduled (#113 — suspends when idle)
     let lastFrameT = null;      // last rAF timestamp; reset whenever the loop suspends
     let lastReapT = 0;          // last full-`pools` stale sweep (#198)
-    let gutterAccum = 0;        // V2 only: dt banked since the last gutter advance
 
     // The gutter collage's own CSS hides it below this width — keep in
     // sync with the .schematic-bg media query in styles.css.
@@ -336,15 +321,6 @@
     // case is a 90° corner falling midway between two samples, where
     // the chord cuts ~0.35 u off the vertex for ~2 frames.
     const TABLE_STEP = 1;
-
-    // V2 only: how often gutter flow pools advance. Particles cover the
-    // same ground at the same average speed — they take one 1.5-unit
-    // step instead of three 0.5-unit ones. Applies to the gutter's FLOW
-    // pools and nothing else: pulses are never rate-limited (a gutter
-    // pulse path is 32-85px at 220 px/s, so a gated head would advance
-    // ~15px per frame against a ~20px comet and read as disconnected
-    // blinks), and content diagrams keep full frame rate.
-    const GUTTER_TICK_S = 1 / 20;   // seconds between gutter advances
 
     // True if `el` sits inside the gutter collage. Build-time only —
     // never called per frame (pools carry the answer as `pool.gutter`).
@@ -516,21 +492,6 @@
         lastFrameT = t;
         const delta = VELOCITY * dt;
 
-        // V2 gutter rate gate. Bank dt and spend it in one step every
-        // ~50ms, so the average velocity is unchanged and no time is
-        // lost — a skipped frame is deferred travel, not dropped travel.
-        // gutterDelta === delta for every other variant.
-        let gutterDelta = delta;
-        if (RATE_GATED) {
-            gutterAccum += dt;
-            if (gutterAccum < GUTTER_TICK_S) {
-                gutterDelta = 0;
-            } else {
-                gutterDelta = VELOCITY * gutterAccum;
-                gutterAccum = 0;
-            }
-        }
-
         // Iterate backwards so an in-flight splice of a stale pool (its
         // annotated element was removed from the DOM) doesn't skip the
         // next pool. Offscreen pools aren't in `visiblePools` at all —
@@ -543,12 +504,10 @@
                 removePool(pool);
                 continue;
             }
-            const step = pool.gutter ? gutterDelta : delta;
-            if (step === 0) continue;
             const len = pool.length;
             for (let i = 0; i < pool.particles.length; i++) {
                 const part = pool.particles[i];
-                part.offset += step;
+                part.offset += delta;
                 if (part.offset >= len) part.offset -= len;
                 setPos(pool, part);
             }
@@ -651,7 +610,7 @@
         // refreshPath() re-runs this function, which is how a page that
         // mutates `d` gets a fresh table. Everything else keeps the live
         // read — see the data-flow-static note in the header.
-        pool.table = (!LEGACY && (pool.gutter || el.getAttribute('data-flow-static') === 'true'))
+        pool.table = (pool.gutter || el.getAttribute('data-flow-static') === 'true')
             ? buildTable(el, length)
             : null;
 
@@ -689,18 +648,12 @@
 
     // ── VISIBILITY BOOKKEEPING ─────────────────────────────────────
     // visibleFlowEls stays the source of truth; visiblePools is the
-    // iteration list derived from it. Under v3 gutter pools are never
-    // added, so hasWork() reports no work and the loop stays suspended.
+    // iteration list derived from it — a zero-particle pool has nothing
+    // to tick and never joins.
     function markPoolVisible(el) {
         visibleFlowEls.add(el);
         const pool = poolsByEl.get(el);
         if (!pool || !pool.particles.length) return;
-        // V3: gutter pools are still built and placed, but never ticked.
-        // They stay out of visiblePools entirely, so hasWork() reports no
-        // work and the rAF loop suspends outright on a page with no
-        // content animation — which is why v3 reaches ~0% rather than the
-        // ~20% floor every keep-animating lever plateaus at.
-        if (pool.gutter && GUTTER_STATIC) return;
         if (visiblePools.indexOf(pool) === -1) visiblePools.push(pool);
     }
 
@@ -834,11 +787,6 @@
             return;
         }
         const pt = pool.el.getPointAtLength(d);
-        if (LEGACY) {
-            part.circle.setAttribute('cx', pt.x);
-            part.circle.setAttribute('cy', pt.y);
-            return;
-        }
         writePos(part, pt.x, pt.y);
     }
 
@@ -869,13 +817,6 @@
         if (gutterHidden(el)) return;
         const length = el.getTotalLength();
         if (!isFinite(length) || length < 1) return;
-        // V3 silences gutter AUTO-fire (interval clamp below) — without
-        // it the 144 gutter pulse paths keep the loop alive and v3 never
-        // reaches idle. Note what this is NOT: pulses are never
-        // rate-limited anywhere, and an explicit FlowEngine.pulse() on a
-        // gutter path still fires at full speed under v3, since the path
-        // stays registered in pulsePaths.
-        const silenced = GUTTER_STATIC && inGutter(el);
 
         // Default pulse color: element's stroke attribute (handles
         // `var(--name)` literally — the browser resolves it at fill
@@ -890,7 +831,6 @@
 
         let intervalMs = parseFloat(el.getAttribute('data-pulse-interval'));
         if (!isFinite(intervalMs) || intervalMs < 0) intervalMs = PULSE_INTERVAL_DEFAULT;
-        if (silenced) intervalMs = 0;   // 0 is the engine's existing "no auto-fire"
 
         // Stagger initial firing across the first interval window so
         // motifs don't all pulse together on page load.
