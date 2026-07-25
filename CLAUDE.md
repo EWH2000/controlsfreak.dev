@@ -170,6 +170,26 @@ Frontmatter:
   `navCategoryGuard` collection fails the build otherwise. Keep it equal
   to the page's `navCard()` `category` on the section landing. See
   *Search index & nav menus → Cascading category dropdowns*.
+- `flowGeometryLive` — optional, **education pages only**. Every
+  `data-flow` element in a `nav: education` page must carry
+  `data-flow-static="true"` (`flowStaticGuard` in `.eleventy.js` fails
+  the build otherwise); `flowGeometryLive: true` is the opt-out.
+  `data-flow-static` is an **assertion**, not a hint: *this path's `d`
+  never changes after the engine samples it unless
+  `FlowEngine.refreshPath()` is called for it.* Where that holds, the
+  engine samples the path once instead of calling `getPointAtLength()`
+  per particle per frame — worth ~50 → ~4 layouts per rendered frame on
+  a lesson diagram. Where it doesn't, particles animate along **stale
+  geometry**, which is silent and purely visual: counts, colours and
+  movement all still assert green. So set the opt-out on a lesson whose
+  flow path gets re-pathed without an immediate refresh (a page that
+  refreshes in the same breath keeps the flag — that's
+  `simulators/refrigerant-loop.html`). No lesson needs it today. The
+  guard deliberately does **not** reach simulators: a markup scan can't
+  see `simulators/hydronic-loop-builder.html`, which builds its paths
+  from JS and is the standing page that must never carry the flag — so
+  it would pass vacuously. On simulators the call stays a per-page
+  judgement.
 
 Blocks: `head` (optional — inline `<style>` or head-loaded script;
 Turnstile on `contact.html` is the only current head-script example);
@@ -893,7 +913,11 @@ fails the build if a `nav: education` page is missing from it
 (codebase-issues #93, #157). **Follow-on paragraph spacing is
 automatic** — the shared lesson-prose-rhythm rule handles it off the
 `nav: education` frontmatter, so body prose is plain `<p>` with no
-inline `margin-top` (see *Design system*).
+inline `margin-top` (see *Design system*). **A lesson with an animated
+diagram puts `data-flow-static="true"` next to every `data-flow`** —
+the build fails without it (`flowStaticGuard`); read the assertion it
+makes under *Templating → `flowGeometryLive`* before reaching for the
+opt-out.
 
 **Adding a new quiz / drill** follows a similar shape under
 `html/practice/`:
