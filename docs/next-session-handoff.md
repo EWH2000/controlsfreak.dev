@@ -598,9 +598,23 @@ way this session:
   service uses (`~/.config/containers/systemd/*.container`, linger enabled, starts
   at boot) is the house answer, and it makes the preview reapable and restartable
   instead of orphaned.
-- **`controlsfreak.dev` is documented as "not run locally — dev only; deployed to
-  Cloudflare"** (`~/CLAUDE.md`). A hub tile for it would be the first exception,
-  so the note needs updating in the same change — and it is worth deciding
-  whether the tile serves a **built `_site`** (static, cheap, stale until
-  rebuilt) or a **live `eleventy --serve`** (fresh, but a permanently running node
-  process, which is how the 2d-old stray on `:41573` came to exist).
+- **The `~/CLAUDE.md` wording is RESOLVED — there was never a contradiction.** The
+  producing session read "**Not run locally** — dev only… don't expect a local
+  service or hub tile" as blocking a preview tile. The owner corrected that,
+  2026-07-25: *"I run locally as 'hosted locally for public use'. The local server
+  would still be dev only in the way it would only be used for dev work
+  (previewing/testing/etc)."* The note meant *no household-facing service*; a dev
+  preview was always fine. `~/CLAUDE.md` is updated — **that file is not
+  version-controlled, so there is no commit to cite**: its subproject line now
+  reads "not hosted locally for public use", and a new **two-senses convention**
+  at the bottom separates *hosted locally for public use* (quadlet, a port in
+  *What's running*, hub tile, linger, Caddy-proxied) from *run locally for dev*
+  (ephemeral, scratch port, absent from the table), and states that giving a dev
+  preview a hub tile does **not** promote it or create an uptime expectation. That
+  convention also carries §12's reaping guidance, since it is where a future
+  session will look before starting a long-lived server.
+- **The one real design question left:** does the tile serve a **built `_site`**
+  (static, cheap, stale until rebuilt) or a **live `eleventy --serve`** (always
+  fresh, but a permanently running node process — exactly how the 2-day-old stray
+  on `:41573` came to exist)? If the answer is "live", the quadlet pattern is what
+  keeps it reapable.
