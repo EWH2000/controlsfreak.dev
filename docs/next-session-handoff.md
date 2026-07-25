@@ -1,215 +1,242 @@
-# Session handoff — closed-loop physics is live; polish + public decision next (2026-07-24)
+# Session handoff — site-wide animation perf shipped; background rework is next (2026-07-24)
 
-> **Lifecycle:** written 2026-07-24, superseding the "physics (closed-loop)
-> session is next" handoff — that whole arc shipped (**PR #425**, merged) and its
-> sections are removed. This file sets up the **polish arc**: fix the browser
-> lag, clean up the look, then decide whether the DDC Workbench goes public.
-> Retire it when the page **graduates from hidden** (or the owner parks the
-> polish arc). Durable design home: **`docs/air-side-sim.md`** (*Horizon*).
-> This file is only "where we are + next action."
+> **Lifecycle:** written 2026-07-24, superseding the "polish arc" handoff.
+> That file's entire **§1 Fix the browser lag** is done and its section is
+> removed — along with the framing that put it on the DDC Workbench, which was
+> wrong (see *Corrections*). Its §2 (cleanup) and §3 (go-public) were **not**
+> touched by this arc and are carried forward below, verbatim in substance.
+> Retire this file when the **static-print background ships** (or the owner
+> parks it). Durable design home for the sim: **`docs/air-side-sim.md`**.
 
 ## Read this first
 
 **Every claim here is a hypothesis. The repo is the truth.** The predecessor
-brief handed the build lane a **dimensionally wrong** Euler formula
-(`(Q_gain − Q_cool)/C_zone × dt` with loads in Btu/**hour** and `dt` in
-**seconds** — missing the `/3600`); the lane caught it and fixed it, but a lane
-that trusted the brief would have shipped a zone that integrated ~3600× too
-fast. Tell every lane the brief is a hypothesis, correcting it is wanted, and
-the orchestrator — not the lane — decides on a discrepancy. **The verification
-that mattered was driving the running page, not CI** (green proved nothing
-broke; the drive caught a frozen-on-arrival default that read as broken — §
-Corrections).
+brief's headline task was scoped to one page; measurement showed the defect
+was site-wide chrome costing ~40% of a CPU core on **all 135 pages**, and that
+the page it blamed was not even an outlier. Three of its mechanism claims did
+not reproduce. Tell every lane the brief is a hypothesis, that correcting it
+is wanted, and that the orchestrator — not the lane — decides on a
+discrepancy.
+
+**The measurement discipline below is not optional.** Two separate experiments
+this session produced confident numbers that were *inverted* or *vacuous*
+until a precondition and a liveness check were asserted. Read *Process notes*
+before taking a single measurement.
 
 ## Where things stand
 
-`main` @ `3cd2538`, **v3.73.0**, clean tree. No open PRs. (Line numbers below
-cite `3cd2538`, the commit they were taken at — deliberate, not stale.
-**Re-verified 2026-07-24 at `a62db0a`**: every `ddc-workbench.html` cite in this
-file still resolves, because `3cd2538..a62db0a` touches only `docs/` — confirm
-with `git diff --name-only 3cd2538 HEAD` before trusting them past the next
-code commit.)
-Counts: **40 education lessons · 34 content quizzes + 7 field drills · 31 tools ·
-8 simulators** — the 8th, `html/simulators/ddc-workbench.html`, is still the
-**hidden** Workbench (`eleventyExcludeFromCollections: true` L5 + `noindex: true`
-L6; out of nav / search / sitemap / landing / `tests/pages.js` / README).
+`main` @ `6c02ce1`, **v3.74.1**, clean tree, **zero open PRs**, remote is
+`main` only. (Line numbers below cite `6c02ce1`, the commit they were taken
+at — deliberate, not stale. Several moved during this arc: `FCU_PROGRAMS` was
+`:1664`, it is now `:1740`.)
+Counts: **40 education lessons · 34 content quizzes + 7 field drills ·
+31 tools · 8 simulators** — the 8th is still the hidden
+`html/simulators/ddc-workbench.html` (`eleventyExcludeFromCollections: true`
+L5, `noindex: true` L6; out of nav / search / sitemap / `tests/pages.js` /
+README).
 
-**Shipped this arc — PR #425 (merged `3cd2538`), three commits:**
-- `a8574a6` — **closed the loop**: `plant.zoneT` is now an integrated real zone
-  temperature; the coil solve reads the *actual* zone, the program reads a
-  *sensed* value, and a **sensor override** (`plant.override.spaceTemp`, forced
-  via a box+toggle) lets you hand the program a wrong number while the real zone
-  drifts away — the real-vs-sensed commissioning teaching moment. Hybrid gain
-  `Q_gain = UA_ENV*(T_oa − zoneT) + Q_internal` (envelope + a live load knob, plus
-  an OA-temp control). `Q_cool` via `Psychro.computeProcess(...).qSens` (magnitude,
-  sensible-only) to the **post-fan** `datT`. A speed slider (1–60×) scales one
-  `dtSim` that drives **both** the zone integrator and `FBE.tick`. RH-ready seam
-  at `zoneInletState()` (`:1169`).
-- `1b9bac2` — **working-baseline retune** (orchestrator, from driving the page):
-  `C_ZONE` 800→**200** (`:1060`), default OA 90→**80** (`:1063` region). The
-  as-built defaults left arrival frozen/creeping the wrong way; retuned so stage 1
-  pulls the zone to setpoint and cycles.
-- `f9f2576` — **first-order coil/DAT response lag** (`COIL_TAU=30` `:1064`;
-  `coilLeaveTarget` vs lagged `plant.coilLeaveT` at `:1196`–`:1222`): DAT ramps
-  instead of stepping, cooling ramps in, and residual cooling persists after the
-  compressor stops. Verified by driving at 1× (max 0.2 °F/500ms step).
+**Shipped this arc — four PRs plus a closeout commit:**
 
-**All physics constants are labelled `TUNE BY FEEL` (`:1047`–`:1068`):** `C_ZONE`
-200, `UA_ENV` 300 (`:1061`), `COIL_TAU` 30, `SPEED_DEF` 20 (`:1065`),
-`MAX_DT_SIM` 5 (`:1068`). These are tune-in-place — **no code change needed to
-recommission the feel.**
+- **#427** `flow-engine: cut per-frame cost` — a runtime-built sampled point
+  table replaces per-particle `getPointAtLength()`, plus cheaper writes,
+  a `visiblePools` array instead of a ~360-pool per-frame scan, and the
+  `data-flow-static="true"` opt-in. Carried the **3.74.0 minor bump**, which
+  was load-bearing: `flow-engine.js` is served immutable with
+  `?v={{ site.version }}`, so merging unbumped would have stranded returning
+  visitors on the cached old engine.
+- **#429** `refrigerant: opt the loop's flow paths into the point table` —
+  `data-flow-static` on all 14 `[data-flow]` elements. @4× CPU: **24.9 → 38.0
+  fps**, layouts/frame **81.7 → 4.0**.
+- **#426** `ddc: idle-gate the workbench's own rAF loops` — the fan-blade and
+  chevron loops merged into one self-suspending loop
+  (`flow-engine.js:285-303` idiom). Gated states drop to the page's floor;
+  arrival is unchanged **by design** (that is genuine visible motion).
+- **#428** `tests: report-only idle-animation profiler` — `npm run
+  perf-profile` (`tests/perf-profile.mjs`). Report-only by owner ruling
+  (2026-07-24): CPU numbers are machine-dependent and a threshold would flake.
+- **`6c02ce1`** closeout — profiler re-baseline, `codebase-issues` **#198–#202**
+  batched from the PR bodies, and two doc drifts fixed.
 
-## Corrections carried out of the physics build — do not rediscover
+**Verified in production**, not just in CI — `tools/signal-scaling`:
 
-1. **Delivered cooling is `computeProcess(...).qSens` to `datT`, NOT
-   `cfm × 1.08 × (zoneT − coilLeaveT)`.** The engine has no `1.08` constant; it
-   works from live specific volume (`psychro-engine.js` `computeProcess`
-   ~`:199`). And it must measure to the **post-fan** `datT` (the fan's 0.6 °F
-   re-enters the zone), not `coilLeaveT`, or cooling is over-counted. This is how
-   the shipped code does it (`:1222` onward).
-2. **The Euler step needs `/3600`** (Btu/**hour** loads, `dt` in **seconds**) —
-   shipped at **`:1253`** (`plant.zoneT += (qGain - qCool) / C_ZONE * (dt /
-   3600);`). The predecessor brief dropped it. *(Cite corrected 2026-07-24 —
-   this said `:1220`-area, which is the **coil-lag** Euler step,
-   `plant.coilLeaveT += (coilLeaveTarget - plant.coilLeaveT) * Math.min(1, dt /
-   COIL_TAU)`. That one correctly has **no** `/3600` — `dt/COIL_TAU` is a
-   dimensionless ratio of seconds to seconds — so the old cite pointed a reader
-   straight at what looks like a counterexample.)*
-3. **"Recovery in a few seconds at 20×" was unachievable** at any realistic zone
-   time constant — a real zone moves in minutes. The speed slider (up to ~50×
-   effective; see minor item) is how you fast-forward; 1× is real building time.
+| | before arc | live now |
+|---|---|---|
+| layouts / rendered frame | 46.47 | **3.03** |
+| gutter particles moving | 44/552 | **44/552** |
 
-## The work, in order — the polish arc
+A 15× cut in layout work per frame on every page, with the gutter animating
+identically. Nothing looks different; that was the requirement.
 
-**Owner plan (2026-07-24): lag → cleanup → maybe public. Deliberate pace —**
-*"Most of my adds to the site have been public so quick, it's nice to take my
-time with one."* Feel-tuning may continue along the way; the constants above are
-tune-in-place.
+## Corrections to the previous draft — do not rediscover these
 
-### 1. Fix the browser lag (owner's first task)
+1. **The lag was NOT a DDC Workbench defect.** It was the site-wide
+   `.schematic-bg` gutter. `tools/signal-scaling.html` — a plain calculator
+   with zero animation of its own — idled at **41.7% of a core**, and **0.1%**
+   with the gutter hidden. The workbench was **#3 of 84** pages by weight
+   (3.5% above #4) and had *lower* idle CPU than the public
+   `simulators/refrigerant-loop.html`. Both "unusually heavy page" and
+   "workbench-specific" were false.
+2. **"Ceiling is ~10-15%, don't chase zero" was wrong.** That was measured
+   from levers that *keep animating*. A fully suspended loop reaches **0.4%**,
+   because with no visible flow pool and no auto-firing pulse path there is no
+   per-frame style/layout pass at all.
+3. **CSS cannot fix this class.** `contain` and `content-visibility` on the
+   motifs did nothing; `visibility:hidden` (ticking, zero painting) still cost
+   full price. Paint was never the cost — it was script + forced style/layout.
+4. **`refrigerant-loop.html:2593` is NOT the same defect as the workbench's.**
+   That loop writes *three attributes per frame* and is negligible. Its real
+   cost was `flow-engine` on its content pools, fixed by #427/#429.
+5. **`tests/pages.js` is required by THREE specs**, not two —
+   `contrast-sweep.spec.js:128` as well as `smoke` and `responsive`. CLAUDE.md
+   said two in three places; fixed in `6c02ce1`.
 
-**Owner-observed 2026-07-24:** intermittent browser lag, "nothing crazy,"
-noticeable mainly through the gutter animations, and it **settles once the page
-has been loaded a little.** Owner is on a 12th-gen i7 and worries about low-end
-field laptops.
+## The work, in order
 
-- **⚠️ Cause is a HYPOTHESIS, not measured:** likely the gutter `schematic-bg`
-  draw-in animations + the workbench's own rAF loops (fan blade, chevron travel)
-  + the 10 Hz physics `setInterval` all competing on first paint. "Settles after
-  load" is consistent with the `schematic-bg` draw-in completing — that draw-in
-  IS one-shot (`schematic-bg.js:44` adds `.is-drawn` on first viewport entry and
-  unobserves), so the hypothesis is at least shaped right. **Profile it first**
-  (DevTools performance trace on a throttled CPU) before choosing a fix — don't
-  assume the cause.
-- **Levers (owner's steer + options) — two of these were corrected on
-  2026-07-24 by `/verify-handoff`; read the corrections before spending effort:**
-  - **Fullscreen-from-start** (owner floated this). ⚠️ **It does NOT drop the
-    gutter motifs** — that rationale was wrong. Measured by driving the built
-    page at 1920px: after entering fullscreen both `.schematic-bg` elements stay
-    `display: block` / `visibility: visible` / `opacity: 1`, 340×1080, still in
-    the viewport. They gain only `inert` + `data-fs-inert` (tab/AT containment,
-    codebase-issues #163) and are *covered* by the z-300/z-400 overlay.
-    `styles.css` has exactly two `body.has-fullscreen-tool` rules — `overflow:
-    hidden` (`:1822`) and `main { z-index: 400 }` (`:1830`); nothing hides the
-    motifs. Fullscreen may still be worth doing on framing grounds, but do not
-    count on it as the perf fix.
-  - **Gating the workbench rAF loops on `document.hidden`** is a near-no-op:
-    browsers already suspend rAF on a hidden tab, and the physics tick is
-    **already** gated — `window.setInterval(function () { if (!document.hidden)
-    hostTick(); }, 100);` (`:1885`).
-  - **The grounded lever instead — idle-gate the two rAF loops.** Both run
-    unconditionally forever once started (fan blade `:1532`–`:1548`, chevrons
-    `:1625`–`:1635`); each writes transforms every frame even when
-    `pl.anim.fanFrac === 0` (fan off), so an idle unit still burns a full 60 fps
-    of DOM writes. `place()` is cheap per-frame (the `getPointAtLength` samples
-    are precomputed into a table at `:1572`), so the cost is the write volume,
-    not the geometry. Bail the frame — or stop and restart the loop — when
-    `fanFrac` is 0.
-  - Or lean harder on the `prefers-reduced-motion` path. The gutter
-    `schematic-bg` is already hidden below 1240px (`styles.css:467`) and snapped
-    to drawn state on reduced-motion.
+### 1. Background rework — static building "prints"
 
-### 2. Cleanup — make it look nicer (visual, NOT a logic rewrite)
+**Owner decision (2026-07-24): replace the 120 animated gutter motifs with
+static *prints* on the blueprint graticule that is already there** — a uniform
+office building, mirrored left/right so the two gutters read as opposite
+wings, with a small tile pool plus labels for a sense of place.
 
-Two owner-named problems:
+**Owner explicitly REJECTED shipping a merely-static gutter** (the V3 variant
+of #427, measured best of the three): *a background that suddenly stops moving
+would read as broken to returning visitors.* So **keeping the scroll draw-in
+is load-bearing**, not decorative — it is what keeps the page from reading
+dead.
 
-- **Text extending outside boxes.** ⚠️ **Locations UNVERIFIED** — owner-observed,
-  not yet pinpointed. Sweep with **full-page screenshots** of the page in both
-  themes and both unit systems (the driver pattern used this session:
-  `colorScheme` context + read the built page on a throwaway high port).
-  `npm run screenshots` (`tests/screenshot-diagrams.mjs`) covers *diagram SVGs*,
-  which is a subset — the workbench UI overflow needs whole-page shots.
-- **Jumbled / messy sample-program layout** — the "uploaded WPT that lands all
-  jumbled" feeling that makes the control logic hard to verify. **Grounded:** the
-  FBE sample programs (`FCU_PROGRAMS` `:1664`) place blocks by **explicit `x/y`
-  coordinates** (e.g. `space-temp` at `x:20,y:20`, `:1667`), so tidying is
-  primarily **repositioning those coordinates** so wires don't cross/overlap.
-  `html/scripts/fbe-editor.js` also has layout-related logic (grep `layout` — a
-  few hits) worth a look, but the block placement itself is data. **Owner wants
-  to review the existing programs first** and is interested in that review.
+Architecture is **settled and spike-verified** (all measured in Chromium this
+session):
 
-**Explicitly declined this arc — do not carry as open work:**
-- **Rewriting the FBE programs from scratch** — owner deferred: *"more function
-  block work on a Friday night after doing it for real all week isn't
-  appealing."* Cleanup = tidy layout + fix overflow, not re-author logic.
-- **Feel-tuning as a blocking task** — it's ongoing/owner-driven, tune-in-place,
-  no code.
-- **Future AHU + economizer** (the OA-temp point is already there for it) and
-  **zone-RH modelling** (the `zoneInletState` seam is in) — backlog,
-  `air-side-sim.md`.
+- **`<symbol>` + `<use>`.** `<use>` content stays out of the light DOM —
+  measured **22 elements for 4 tiles + 4 labels**, against **120 `sbg-motif`
+  wrappers and ~1,677 nodes** in the gutters today (`_site/tools/signal-scaling.html`).
+  The 120× inline repetition exists *only* because `flow-engine` reads geometry
+  via `getTotalLength()`/`getPointAtLength()`, which do not pierce `<use>`
+  shadow trees (`html/_includes/schematic-bg.njk:10-12` says so). Going static
+  removes that constraint entirely.
+- **Mirror** the right gutter with `<g transform="translate(W,0) scale(-1,1)">`.
+- **⚠️ Labels MUST live outside the mirror transform** or the text reverses.
+- **⚠️ GOVERNING RULE — per-instance variation must be an INHERITED CSS
+  property set on the `<use>`.** Simple selectors *do* reach shadow content but
+  apply **uniformly to every instance**; descendant selectors rooted in the
+  light DOM do **not** cross the boundary at all. Verified both directions.
+- **⚠️ The current draw-in rule FAILS through `<use>`.**
+  `html/styles.css:454` is `.sbg-motif.is-drawn [data-sbg-stroke]` — a
+  descendant selector, so it never applies. Use
+  `stroke-dashoffset: var(--sbg-dash)` *inside* the symbol with `.is-drawn`
+  setting `--sbg-dash: 0` on the `<use>`. The `transition` must be declared
+  **inside** the symbol (`transition` is not inherited).
+- **UNVERIFIED —** that the draw-in **animates rather than snaps** when
+  `--sbg-dash` changes. The spike used `transition: none` to isolate the state
+  change, so per-instance switching is proven and the *animation* is not.
+  Low risk (`stroke-dashoffset` is normally animatable; only its input
+  changes) but confirm on the first real tile.
+- **Repetition is authentic here.** Real drawing sets repeat typical floors —
+  land the repeat on a floor line and it reads as *levels*, not tiling.
 
-### 3. Evaluate going public (graduate from hidden) — only after 1 + 2
+**Owner owns the artwork** (he builds equipment graphics professionally).
+Build the tiling / mirroring / labelling frame with **stubbed tiles** so he
+drops art into a working frame rather than starting cold.
 
-Its own ship task, **gated on the owner's call** — and on an open scope decision
-(below). When it happens, the ship gates (`air-side-sim.md` *Ship-time gates*):
-the blocking `contrast-sweep` in **both themes**, add to `tests/pages.js` +
-sitemap/nav/README, a version bump, and the damage-stakes-note question. Flip
-`eleventyExcludeFromCollections`/`noindex` off (`:5`-`:6`).
+**⚠️ Static is not automatically free.** The win is DOM nodes and per-frame
+work, **not transfer bytes** — the page gzips to **13.0 KB** because the
+repetition compresses almost perfectly. A hand-inlined dense print would spend
+the win back.
+
+**Open, and it drives everything else:** does the print **tile, crop, or
+repeat with a deliberate seam**, and is it **one drawing across both gutters
+or two sheets**? Not yet answered.
+
+### 2. `codebase-issues` #202 — opt the education lessons into the point table
+
+Post-arc, every `npm run perf-profile` row sits at 2–5 layouts/frame **except
+`education/hydronic-loops.html` at ~51**, because the ~40 lessons — the widest
+consumer of in-content particle flow — were never opted in. Tabled pages
+improved ~93%; that one improved ~48%. Verified: `grep -c data-flow-static
+html/education/hydronic-loops.html` → **0**.
+
+**ASSUMPTION —** that this is near-mechanical. Lesson SVGs are *probably* drawn
+once and never re-pathed, but `data-flow-static` is an **assertion** that every
+`d` mutation is followed by `refreshPath()`, and the failure mode is silent and
+visual (particles stranded on pre-mutation geometry). **Verify per page.**
+`simulators/hydronic-loop-builder.html` is the standing counter-example that
+must never set it.
+
+**Use the negative control that #429 used:** stub `refreshPath` to a no-op and
+confirm the check goes red. Without it you cannot tell a passing check from a
+vacuous one.
+
+### 3. DDC Workbench polish — items 2 and 3, still open
+
+Confirmed untouched: `git log 12b5df3..HEAD -- html/simulators/ddc-workbench.html`
+returns only the idle-gate commit.
+
+- **Text extending outside boxes. ⚠️ Locations still UNVERIFIED** —
+  owner-observed, never pinpointed. Sweep with **full-page** screenshots in
+  both themes and both unit systems; `npm run screenshots` covers *diagram
+  SVGs* only, a subset.
+- **Jumbled sample-program layout.** Grounded: `FCU_PROGRAMS`
+  (`html/simulators/ddc-workbench.html:1740`) places blocks by **explicit
+  `x`/`y`**, so tidying is repositioning data, not rewriting logic. Note there
+  are **three** programs, not one — `space-temp` at `x:20,y:20` appears at
+  `:1743`, `:1793` and `:1823`. **Owner wants to review the existing programs
+  first.**
+- **Then** the go-public decision (ship gates in `docs/air-side-sim.md`
+  *Ship-time gates*; flip `eleventyExcludeFromCollections`/`noindex` at L5–L6).
+
+**Explicitly declined — do not carry as open work:** rewriting the FBE programs
+from scratch (owner deferred — *"more function block work on a Friday night
+after doing it for real all week isn't appealing"*); feel-tuning as a blocking
+task (ongoing, tune-in-place, no code).
 
 ## Decisions waiting on the owner
 
-- **Launch scope — FCU-only vs. build more units first?** Owner undecided
-  (*"I'm not sure if I want to launch with just FCU or build more"*). Blocks the
-  go-public timing, nothing else. The shell is unit-generic (the seam held —
-  no `fcu`/`fan`/`stage` id leaks into the shell), so a second unit is additive.
-- **Minor: the speed slider's top end is dead.** `MAX_DT_SIM = 5` (`:1068`) caps
-  the effective clock at 50×, but the slider goes to 60× — so ~51–60× all feel
-  identical. Cosmetic; lift `MAX_DT_SIM` to 6 (still Euler-stable) or cap the
-  slider at 50 whenever it's touched. Not blocking.
+- **Print topology** — tile / crop / seam, and one drawing or two. Blocks the
+  background rework's frame; nothing else.
+- **Launch scope — FCU-only vs. build more units first?** Still undecided from
+  the previous arc. Blocks go-public timing only. The shell is unit-generic, so
+  a second unit is additive.
 
 ## Process notes that earned their keep
 
-- **Drive the running page to verify — CI green ≠ works.** The frozen-arrival
-  tuning passed CI and the lane's own smoke; only sampling DOM readouts over wall
-  time caught it. For this page, verify by **watching the zone move / DAT ramp**,
-  not by asserting a number.
-- **One lane → one worktree → one branch → one draft PR; orchestrator drives the
-  page and verifies before showing the owner; never `gh pr merge` without an
-  explicit "merge it."** #425 was built by a lane, retuned + lag-fixed by the
-  orchestrator on the same branch, verified by driving, then merged on the
-  owner's explicit go-ahead.
-- **Fresh worktree has no `node_modules`** → `ln -s
-  /home/ehill/controlsfreak.dev/node_modules node_modules`. Serve the built
-  `_site` on a **unique high port** (8000–8099 are held); Playwright headless
-  needs `colorScheme: 'dark'` on the context and an init-script forcing
-  `document.hidden = false` or the `setInterval` won't tick.
-- **⚠️ `pkill -f "http.server <port>"` self-matches** — the pkill's own shell
-  command line contains the pattern, so it kills itself (exit 144). Use the
-  bracket trick (`[h]ttp.server`) or just serve on a fresh port. **Foreground
-  `sleep` is also blocked** in this environment (exit 144) — use `curl --retry`
-  or a background job, not `sleep`.
-- **LAN preview for owner review:** `python3 -m http.server <port> --directory
-  _site --bind 0.0.0.0`, give `http://192.168.8.123:<port>/simulators/ddc-workbench.html`;
-  if unreachable, the firewall port is the fix (a **root** step:
-  `sudo firewall-cmd --zone=FedoraServer --add-port=<port>/tcp`). Ephemeral.
+- **⚠️ CPU% INVERTS on a saturated page.** Removing work took
+  `refrigerant-loop` from **55.5% → 65.0% CPU** *while fps went 26 → 57* — the
+  freed thread rendered frames it had been dropping. **Rank by fps.** Read
+  **layouts per rendered frame** as the load-independent detector: across runs
+  where fps ranged 31.5–58.7, layouts/frame held to 1.4%.
+- **⚠️ Assert the PRECONDITION, not just the outcome.** A `<style>` injected
+  via `addInitScript` can be discarded when the real document parses — a lane's
+  first three runs read 49% where the truth was 15.6%. Use
+  `page.addStyleTag()` *after* `goto` and assert `getComputedStyle(...)`.
+- **⚠️ Liveness probes: population, by ELEMENT IDENTITY.** Index comparison
+  misaligns when in-flight pulse circles churn in the same layer; filter to
+  `circle[r="3"]` so the gutter total reads exactly **552**. And a
+  `contain: strict` experiment read a spectacular **0.3%** purely because size
+  containment collapsed the motifs, IntersectionObserver reported nothing
+  visible, and the loop suspended — **a disabled animation reads exactly like
+  a brilliant optimisation.**
+- **Two runs cannot characterise noise on this box.** A layouts/frame tolerance
+  derived from two runs was falsified by a third, and two rows still flagged on
+  a fourth because they animate convergently rather than steady-state (they now
+  carry a per-row floor). The full derivation, including the wrong first
+  answer, is in `tests/perf-profile.mjs`'s BASELINE header.
+- **Adversarial verification pays.** The pre-merge review raised 8 findings;
+  **5 did not survive refutation.** The 3 that did were all real, and one
+  (a liveness probe watching a `display:none` pane) would have made the new
+  profiler declare this arc's own fix a broken animation.
+- **`ln -s <repo>/node_modules node_modules` in a fresh worktree** was faster
+  and worked across all five lanes — no `npm ci` needed.
+- **Ports 8000–8099 are occupied** on this box. Serve on 9400+. `pkill -f
+  "http.server <port>"` **self-matches** — use the bracket trick
+  (`[h]ttp.server`). Foreground `sleep` is blocked.
 
 ## One passing note
 
-The Workbench is now genuinely what it set out to be: **write (or load) an FBE
-control program and watch it hold a real-feeling zone** — control logic a BMS
-programmer can verify, driving a live thermal model, with a real-vs-sensed
-override that teaches a commissioning hazard. The physics is **done and
-verified**. What's left is not more physics — it's **polish** (lag, overflow,
-program legibility) and a **product decision** (FCU-only vs. more, then public).
-The owner is deliberately taking his time here, and that's the right call for
-the flagship. Design home: **`docs/air-side-sim.md`** (*Horizon*).
+The site got materially faster everywhere and nobody can see it, which is the
+best possible outcome for chrome. The flagship still saturates under CPU
+throttle, so **#202 is the highest-leverage next perf item** — but the
+owner-directed background rework is the one that retires this whole defect
+class, because a static gutter cannot regress into an animation loop. The
+frame for it is specified and the traps are written down; what it needs now is
+drawings.
