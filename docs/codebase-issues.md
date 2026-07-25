@@ -7348,7 +7348,7 @@ script's own header warns about. It needs a re-baseline against current `main`, 
 tolerance change — the header already says which, and says to record the date,
 commit, and machine.
 
-### 202. Education lesson diagrams never opted into the point table — the lesson archetype still runs ~50 layouts/frame *(open — 2026-07-24)*
+### 202. Education lesson diagrams never opted into the point table — the lesson archetype still runs ~50 layouts/frame *(addressed 2026-07-25)*
 
 The 2026-07-24 perf arc gave `flow-engine.js` a cached point table and
 opted in the gutter (unconditionally, #198) and
@@ -7388,3 +7388,89 @@ one PR. Verify with the same technique used for #201 — sample particle
 positions against live path geometry after every state change, and include
 a negative control (stub `refreshPath` to a no-op and confirm the check
 goes red) so the verification is known to be able to fail.
+
+**Resolution (2026-07-25).** Swept, and the assertion is now pinned at
+build time rather than by memory.
+
+**Population.** Not "roughly forty pages" — only **15** of the 41
+education lessons carry a `data-flow` element at all, and they carry
+**197** between them (load-piping 50, hydronic-loops 26, air-handlers and
+air-unit-identification 17 each, balancing 16, vav-systems and
+pump-control 11 each, equipment-staging 10, building-pressure 9,
+dedicated-outdoor-air 8, duct-static-control 6, air-balancing 5,
+economizers / refrigerant-cycle-basics / controller-wiring 4/4/3). All
+197 now carry `data-flow-static="true"`. A naive `grep -c data-flow`
+over-counts on 12 of the 15 — HTML comments above the diagrams, one CSS
+block comment, JS `//` prose — and two lessons with no flow paths mention
+the attribute only to say so, so every count here is from the live DOM or
+a comment-masked scan.
+
+**Per-page verification, then a guard.** Each page was audited for any
+write to a flow path's geometry before a single attribute was added; none
+exists — no `setAttribute('d')` anywhere under `html/education/`. The
+near-misses were resolved individually rather than waved past: the fan and
+damper blades on hydronic-loops / air-handlers spin via a **CSS
+transform** on `<rect>` elements, which cannot invalidate a table because
+`getPointAtLength()` returns path-LOCAL user space — exactly the space
+`buildTable` samples; pump-control's `setAttribute('points')` / `cx` / `cy`
+writes and building-pressure's needle `transform` target **different SVGs
+that hold no `data-flow` element**; load-piping and refrigerant-cycle-basics
+hide and recolour branches through `FlowEngine.setPathColor`, which
+repaints existing particles and never rebuilds a pool; and hydronic-loops'
+`data-flow-density` writes already call `refreshPath`, which re-runs
+`buildPoolForEl` and therefore rebuilds `pool.table` from current geometry
+— so that path stays correct *with* the flag and gets cheaper (the table
+cache hits on the unchanged geometry key).
+
+**`flowStaticGuard` in `.eleventy.js`** now fails the build when a
+`nav: education` page has a `data-flow` element without
+`data-flow-static="true"`, with `flowGeometryLive: true` frontmatter as
+the documented opt-out (no lesson needs it today). It reads
+`item.rawInput` — a collection callback cannot see rendered output, since
+`item.templateContent` / `item.content` throw *"Tried to use
+templateContent too early"* at that point in the build — and masks HTML /
+CSS / JS comments first. Pre-render source is the right surface twice
+over: every education `data-flow` attribute is literal in the page file,
+and the gutter's own `data-flow` elements live in `schematic-bg.njk`,
+which a page's `rawInput` never shows, so the scan sees content paths only
+and the already-tabled gutter stays out of it by construction.
+
+**The guard deliberately does not reach simulators, and that is a
+finding, not an omission.** A markup scan is structurally blind to
+`simulators/hydronic-loop-builder.html` — it creates its flow paths from
+JS and rewrites `d` on every `pointermove`, refreshing only on
+pointer-up — so its source contains zero `data-flow=` attributes and a
+rule of this shape would pass it **vacuously**. Silent false assurance
+about the one page that must never carry the flag is worse than no rule,
+so on simulators the call stays a per-page judgement.
+
+**Measured (this machine, 1920×1080, reps=3, BEFORE and AFTER back to
+back in one session):**
+
+    education/hydronic-loops.html   layouts/frame  49.87 → 4.69
+                                    Δ control      +147.6 → +97.4 ms/s
+                                    fps              59.9 → 60.1
+                                    liveness      main 46/160 · gutter 47/552 (unchanged)
+
+Liveness being byte-identical is what rules out the caveat-3 artefact the
+profiler warns about: the same population is still animating, it just no
+longer re-reads geometry it already knows. `tests/perf-profile.mjs`'s
+BASELINE was re-based for that row only (three-run mean 4.02
+layouts/frame), with the three samples and the reason recorded in its
+header; no tolerance was widened.
+
+**Controls, both run.** The guard is not vacuous: removing the attribute
+from one element of `controller-wiring.html` fails the build with
+`1 of 3 data-flow elements lack data-flow-static="true"`. And #429's
+control mechanism was reproduced as far as it transfers — **it does not
+transfer literally**, because no education page writes `d`, so there is no
+page-driven geometry change to stub the refresh out of. The harness
+supplied one instead: with `FlowEngine.refreshPath` stubbed to a no-op and
+`d1-supply-main`'s `d` shifted 220 units, the 32 particles on that path
+stranded **220 u from the live route and 0.2 u from the stale one** — the
+same inversion #429 measured, which proves the table really is frozen and
+that the measurement can see the failure it is looking for. Un-stubbing
+and calling `refreshPath` put every particle back within 0.2 u.
+`tests/flow-engine.spec.js` gained a committed twin of the positive half
+(`education flow particles sit ON their tabled path`), so unlike #429 this
+one leaves an instrument behind — the gap #200 is about.
