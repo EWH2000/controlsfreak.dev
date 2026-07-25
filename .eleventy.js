@@ -162,6 +162,135 @@ module.exports = function(eleventyConfig) {
         return [];
     });
 
+    // Build-time guard: every literal `data-flow` element in a
+    // `nav: education` page's own source must carry
+    // `data-flow-static="true"`, unless the page declares
+    // `flowGeometryLive: true` in its frontmatter.
+    //
+    // WHY THE FLAG MATTERS, AND WHY A GUARD RATHER THAN A SPEC.
+    // `data-flow-static="true"` opts one path into flow-engine's sampled
+    // point table: the engine samples the path ONCE at pool-build time and
+    // interpolates, instead of calling getPointAtLength() per particle per
+    // frame. On education/hydronic-loops.html that was the difference
+    // between ~50 and ~4 layouts per rendered frame. It is an ASSERTION,
+    // not a hint (flow-engine.js header): "this path's `d` never changes
+    // after the engine samples it, unless FlowEngine.refreshPath() is
+    // called for it." Set it where that is FALSE and the particles animate
+    // along stale geometry — beside the pipe instead of on it. That failure
+    // is silent and purely visual: particle counts, colours and movement
+    // all still read correct, so every existing assertion stays green while
+    // the diagram is wrong. Nothing in `npm test` can see it, which is why
+    // the invariant is pinned here, at build time, off the markup itself.
+    //
+    // THE OPT-OUT is `flowGeometryLive: true` — a page-level declaration
+    // that a flow path here has its geometry rewritten WITHOUT an immediate
+    // refresh, so its particles must keep the live read. (A page that
+    // rewrites `d` and calls refreshPath in the same breath does NOT need
+    // the opt-out; simulators/refrigerant-loop.html is that case and
+    // carries the flag.) No education page needs it today. It exists so a
+    // future lesson with a dragged or re-routed pipe declares that in one
+    // line, instead of quietly dropping the attribute and leaving the next
+    // reader to guess whether that was deliberate.
+    //
+    // HOW IT READS MARKUP. A collection callback CANNOT see rendered
+    // output: `item.templateContent` / `item.content` throw "Tried to use
+    // templateContent too early" at this point in the build (verified on
+    // 11ty 3.1.5). `item.rawInput` IS available — the page's own template
+    // source, frontmatter stripped, pre-render. Pre-render is the right
+    // surface here twice over: every education `data-flow` attribute is
+    // literal in the page file, and the gutter collage's `data-flow`
+    // elements live in _includes/schematic-bg.njk, which a page's rawInput
+    // never shows. So the scan sees CONTENT paths only — and the gutter,
+    // which flow-engine tables unconditionally with no opt-in, stays out of
+    // it by construction rather than by an exclusion list.
+    //
+    // COMMENTS ARE MASKED FIRST. Most of these pages mention `data-flow=`
+    // in prose — HTML comments above the diagrams, a CSS block comment, JS
+    // `//` lines — and two education pages with NO flow paths mention it
+    // only to say they have none. An unmasked scan counts all of those and
+    // reports offenders that do not exist.
+    //
+    // SCOPE IS `nav: education` ONLY, DELIBERATELY — it does not reach
+    // simulators, and must not be extended there as-is. A MARKUP scan is
+    // structurally blind to the standing counter-example:
+    // simulators/hydronic-loop-builder.html creates its flow paths from JS
+    // and rewrites `d` on every pointermove, refreshing only on pointer-up,
+    // so its source contains zero `data-flow=` attributes and a rule of
+    // this shape would pass it VACUOUSLY. Silent false assurance about the
+    // one page that must never carry the flag is worse than no rule. On
+    // simulators the call stays a per-page judgement made by reading the
+    // page's geometry writes.
+    //
+    // DIRECTION: this enforces "an education flow path carries the flag."
+    // It cannot enforce the converse — that a page carrying the flag is
+    // entitled to it — since that is a claim about runtime behaviour. What
+    // it can also check is internal consistency with the opt-out, so it
+    // does, in both directions. Mirrors educationSequenceGuard: accumulate
+    // every offender, throw once, contribute no pages.
+    eleventyConfig.addCollection("flowStaticGuard", (collectionApi) => {
+        // Blank a comment to spaces rather than deleting it, so the
+        // surrounding markup keeps its shape.
+        const blank = (m) => m.replace(/[^\n]/g, " ");
+        const maskComments = (src) => src
+            .replace(/<!--[\s\S]*?-->/g, blank)      // HTML comments
+            .replace(/\/\*[\s\S]*?\*\//g, blank)     // CSS block comments in {% block head %}
+            .split("\n")
+            .map((line) => (line.trimStart().startsWith("//") ? blank(line) : line))
+            .join("\n");
+        const offenders = [];
+        collectionApi.getAll()
+            .filter((item) => item.data.nav === "education")
+            .forEach((item) => {
+                if (typeof item.rawInput !== "string") {
+                    // Anti-vacuity: an 11ty upgrade that stops exposing
+                    // rawInput would otherwise disarm this guard silently.
+                    offenders.push(`  ${item.inputPath} — no rawInput to scan; this guard cannot see the page`);
+                    return;
+                }
+                // One element start tag; the capture is its attribute text,
+                // with quoted values consumed whole so a `>` inside one
+                // can't end the tag early.
+                const tag = /<[a-zA-Z][\w:.-]*((?:"[^"]*"|'[^']*'|[^>"'])*)>/g;
+                const src = maskComments(item.rawInput);
+                const optedOut = item.data.flowGeometryLive === true;
+                let flow = 0;
+                let flagged = 0;
+                let match = tag.exec(src);
+                while (match !== null) {
+                    const attrs = match[1];
+                    if (/\sdata-flow\s*=/.test(attrs)) {
+                        flow++;
+                        // The engine string-compares against "true"
+                        // (flow-engine.js buildPoolForEl), so any other
+                        // value is a silent no-opt-in, not a looser yes.
+                        if (/\sdata-flow-static\s*=\s*"true"/.test(attrs)) flagged++;
+                        else if (/\sdata-flow-static\s*=/.test(attrs)) {
+                            offenders.push(`  ${item.inputPath} — data-flow-static must be exactly "true"; the engine string-compares`);
+                        }
+                    }
+                    match = tag.exec(src);
+                }
+                if (!optedOut && flow > flagged) {
+                    offenders.push(`  ${item.inputPath} — ${flow - flagged} of ${flow} data-flow elements lack data-flow-static="true"`);
+                }
+                if (optedOut && flagged) {
+                    offenders.push(`  ${item.inputPath} — flowGeometryLive: true, but ${flagged} data-flow elements carry data-flow-static`);
+                }
+                if (optedOut && !flow) {
+                    offenders.push(`  ${item.inputPath} — flowGeometryLive: true, but the page has no data-flow element`);
+                }
+            });
+        if (offenders.length) {
+            throw new Error(
+                `data-flow-static="true" is required on every education flow ` +
+                `path — opt out with \`flowGeometryLive: true\` frontmatter ` +
+                `(CLAUDE.md "Templating"; the assertion it makes is in the ` +
+                `flow-engine.js header):\n${offenders.join("\n")}`
+            );
+        }
+        return [];
+    });
+
     // Build-time guard: every CONTENT quiz must appear in the quizOrder
     // curriculum list, and every slug in that list must be claimed by a
     // real practice page. Without this a new quiz silently gets no
