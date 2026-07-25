@@ -84,13 +84,21 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
                 <text x="95" y="70" font-size="11" fill="var(--text-bright)" text-anchor="middle">return + min OA</text>
                 <text x="95" y="87" font-size="10" fill="var(--text-dim)" text-anchor="middle">blended in the box</text>
 
-                <path id="doas-d1-ma" data-flow="air" d="M170 73 H210" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes duct geometry — this page's whole script is one
+                     FlowEngine.init() call; it mutates no DOM at all. A future geometry
+                     write must refresh in the same breath, or the page must opt out via
+                     the `flowGeometryLive` frontmatter (flowStaticGuard, .eleventy.js). -->
+                <path id="doas-d1-ma" data-flow="air" data-flow-static="true" d="M170 73 H210" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
                 <polygon points="208,68 208,78 216,73" fill="var(--blue-cool)"/>
 
                 <rect x="217" y="48" width="80" height="50" fill="var(--surface)" stroke="var(--blue)"/>
                 <text x="257" y="77" font-size="12" fill="var(--text-bright)" text-anchor="middle">coil</text>
 
-                <path id="doas-d1-sa1" data-flow="air" d="M297 73 H470" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="doas-d1-sa1" data-flow="air" data-flow-static="true" d="M297 73 H470" fill="none" stroke="var(--blue)" stroke-width="3"/>
                 <polygon points="468,68 468,78 476,73" fill="var(--blue)"/>
 
                 <rect x="478" y="40" width="140" height="66" fill="var(--surface)" stroke="var(--text-dim)"/>
@@ -106,14 +114,14 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
                 <text x="80" y="222" font-size="11" fill="var(--text-bright)" text-anchor="middle">100% outdoor</text>
                 <text x="80" y="239" font-size="11" fill="var(--text-bright)" text-anchor="middle">air</text>
 
-                <path id="doas-d1-oa" data-flow="air" d="M140 225 H178" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <path id="doas-d1-oa" data-flow="air" data-flow-static="true" d="M140 225 H178" fill="none" stroke="var(--teal)" stroke-width="3"/>
                 <polygon points="176,220 176,230 184,225" fill="var(--teal)"/>
 
                 <rect x="185" y="200" width="150" height="50" fill="var(--surface)" stroke="var(--blue)"/>
                 <text x="260" y="222" font-size="12" fill="var(--text-bright)" text-anchor="middle">DOAS unit</text>
                 <text x="260" y="239" font-size="10" fill="var(--text-dim)" text-anchor="middle">deep coil + reheat</text>
 
-                <path id="doas-d1-sa2" data-flow="air" d="M335 225 H472" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="doas-d1-sa2" data-flow="air" data-flow-static="true" d="M335 225 H472" fill="none" stroke="var(--blue)" stroke-width="3"/>
                 <polygon points="470,220 470,230 478,225" fill="var(--blue)"/>
                 <text x="403" y="216" font-size="10" fill="var(--text-dim)" text-anchor="middle">neutral, dry supply</text>
 
@@ -321,22 +329,22 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
                     that handles the space's sensible heating and cooling.</desc>
 
                 <!-- Return duct (zones back to the wheel, along the top) -->
-                <path id="doas-d3-ra" data-flow="air" d="M470 120 H92 V150" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="doas-d3-ra" data-flow="air" data-flow-static="true" d="M470 120 H92 V150" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
                 <polygon points="300,115 291,120 300,125" fill="var(--blue-cool)"/>
                 <text x="300" y="108" font-size="12" fill="var(--text)" text-anchor="middle">← return air from the zones</text>
 
                 <!-- Exhaust out (dashed) -->
-                <path id="doas-d3-ea" data-flow="air" data-flow-density="0.6" d="M66 150 V70 H24" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="doas-d3-ea" data-flow="air" data-flow-static="true" data-flow-density="0.6" d="M66 150 V70 H24" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
                 <polygon points="34,65 25,70 34,75" fill="var(--text-dim)"/>
                 <text x="70" y="60" font-size="12" fill="var(--text)" text-anchor="start">exhaust ↑</text>
 
                 <!-- Outdoor-air intake (label sits in the -30 left margin) -->
-                <path id="doas-d3-oa" data-flow="air" d="M-28 300 H40" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <path id="doas-d3-oa" data-flow="air" data-flow-static="true" d="M-28 300 H40" fill="none" stroke="var(--teal)" stroke-width="3"/>
                 <polygon points="30,295 40,300 30,305" fill="var(--teal)"/>
                 <text x="-28" y="290" font-size="11" fill="var(--text)" text-anchor="start">outdoor air</text>
 
                 <!-- Supply out to zones — straight into the zone block -->
-                <path id="doas-d3-sa" data-flow="air" d="M420 300 H468" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="doas-d3-sa" data-flow="air" data-flow-static="true" d="M420 300 H468" fill="none" stroke="var(--blue)" stroke-width="3"/>
                 <polygon points="460,295 470,300 460,305" fill="var(--blue)"/>
 
                 <!-- Casing -->

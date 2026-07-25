@@ -6,6 +6,17 @@
 // under html/scripts/. No bundler, no transpile.
 
 const { execFileSync } = require("child_process");
+const fs = require("fs");
+const path = require("path");
+
+// 11ty's input + includes directories, hoisted out of the `dir` object
+// returned at the bottom of this file so flowStaticGuard's on-disk scan
+// splits pages from partials on the same directories 11ty itself uses —
+// it is how the scan knows which `.html` is a page (the `nav: education`
+// arm owns those) and which is an include, and it keys the
+// EXEMPT_TEMPLATES path. Two literals would drift; one can't.
+const INPUT_DIR = "html";
+const INCLUDES_DIR = "_includes";
 
 module.exports = function(eleventyConfig) {
     // .html files run through Nunjucks so signal-scaling.html →
@@ -157,6 +168,319 @@ module.exports = function(eleventyConfig) {
             throw new Error(
                 `educationSequence must list every nav:education lesson ` +
                 `(html/_data/educationSequence.js header invariant):\n${offenders.join("\n")}`
+            );
+        }
+        return [];
+    });
+
+    // Build-time guard: every literal `data-flow` element in a
+    // `nav: education` page's own source must carry
+    // `data-flow-static="true"`, unless the page declares
+    // `flowGeometryLive: true` in its frontmatter.
+    //
+    // WHY THE FLAG MATTERS, AND WHY A GUARD RATHER THAN A SPEC.
+    // `data-flow-static="true"` opts one path into flow-engine's sampled
+    // point table: the engine samples the path ONCE at pool-build time and
+    // interpolates, instead of calling getPointAtLength() per particle per
+    // frame. On education/hydronic-loops.html that was the difference
+    // between ~50 and ~4 layouts per rendered frame. It is an ASSERTION,
+    // not a hint (flow-engine.js header): "this path's `d` never changes
+    // after the engine samples it, unless FlowEngine.refreshPath() is
+    // called for it." Set it where that is FALSE and the particles animate
+    // along stale geometry — beside the pipe instead of on it. That failure
+    // is silent and purely visual: particle counts, colours and movement
+    // all still read correct, so every existing assertion stays green while
+    // the diagram is wrong. Nothing in `npm test` can see it, which is why
+    // the invariant is pinned here, at build time, off the markup itself.
+    //
+    // THE OPT-OUT is `flowGeometryLive: true` — a page-level declaration
+    // that a flow path here has its geometry rewritten WITHOUT an immediate
+    // refresh, so its particles must keep the live read. (A page that
+    // rewrites `d` and calls refreshPath in the same breath does NOT need
+    // the opt-out; simulators/refrigerant-loop.html is that case and
+    // carries the flag.) No education page needs it today. It exists so a
+    // future lesson with a dragged or re-routed pipe declares that in one
+    // line, instead of quietly dropping the attribute and leaving the next
+    // reader to guess whether that was deliberate.
+    //
+    // HOW IT READS MARKUP. A collection callback CANNOT see rendered
+    // output: `item.templateContent` / `item.content` throw "Tried to use
+    // templateContent too early" at this point in the build (verified on
+    // 11ty 3.1.5). `item.rawInput` IS available — the page's own template
+    // source, frontmatter stripped, pre-render. Every education
+    // `data-flow` attribute is literal in the page file, so pre-render
+    // reaches all of them.
+    //
+    // TEMPLATES ARE SCANNED SEPARATELY, because rawInput is the page's OWN
+    // source and stops at the `{% include %}` tag. That hole was proved by
+    // construction (2026-07-25): an `_includes` partial holding
+    // `<path data-flow="supply" d="…"/>`, plus a `nav: education` page
+    // whose entire body was `{% include %}` of it, built clean and shipped
+    // an unflagged content flow path. An include's markup can land on any
+    // page, so it must carry the flag wherever it lands, independently of
+    // which page pulls it in.
+    //
+    // THE SCAN ROOT IS THE WORKING DIRECTORY, NOT `html/_includes`. A first
+    // cut walked the includes directory alone; that was narrowed, not
+    // closed. Nunjucks' loader resolves an include name against BOTH the
+    // includes dir and the working dir —
+    // `@11ty/eleventy/src/Engines/Nunjucks.js#getFileSystemDirs()` returns
+    // `[includesDir, TemplatePath.getWorkingDir()]` — so a partial parked
+    // anywhere else reaches an education page completely unscanned. Proved
+    // by construction (2026-07-25) with `partials/zz-root.njk` at the repo
+    // root: exit 0, and the page shipped the unflagged path. The walk is
+    // therefore rooted at `process.cwd()`, which is the same call
+    // `getWorkingDir()` makes, so the guard and the loader cannot disagree
+    // about where an include may live.
+    //
+    // WHICH FILES: every `.njk` under the root, plus every `.html` that is
+    // NOT an 11ty page — i.e. outside the input dir, or inside `_includes`.
+    // Extension alone is not enough in either direction. Restricting to
+    // `.njk` leaves the identical hole one extension away (`partials/
+    // zz-root.html` reproduced it — the loader does not care about the
+    // extension). Taking every `.html` would drag the input dir's pages in
+    // and silently extend PAGE SCOPE to simulators, which the note below
+    // forbids. So `.html` pages under `html/` stay with the `nav: education`
+    // arm above, and everything else a loader could pull in is scanned.
+    // `node_modules` / `_site` / `.git` / `.claude` are skipped: the first
+    // two are not source, and the last two carry whole copies of the tree
+    // (worktrees, build output) that would report phantom offenders.
+    //
+    // An include has no frontmatter and therefore no `flowGeometryLive`
+    // opt-out; one that genuinely needs the live read earns an
+    // EXEMPT_TEMPLATES entry with a written reason.
+    // `html/_includes/schematic-bg.njk` is the sole entry today, and for the
+    // opposite reason: flow-engine tables the gutter unconditionally
+    // (`pool.gutter` in buildPoolForEl), so its motifs need no opt-in and
+    // adding one would misstate why they are cached. Entries are keyed on
+    // the path relative to the scan root, NOT the basename — a basename key
+    // hands its pass to any file that merely shares the name, proved with
+    // `html/_includes/zzsub/schematic-bg.njk` shipping an unflagged path
+    // through the gutter's exemption (2026-07-25). Each exempt path must
+    // resolve to a real scanned file, so an exemption that stops matching
+    // becomes an offender instead of decaying into a silent permanent pass
+    // — same discipline as the contrast sweep's ALLOWLIST. That arm doubles
+    // as the walk's anti-vacuity probe for the includes tree: it can only
+    // pass if the walk actually reached `html/_includes/`.
+    //
+    // A fail-closed "declare your includes" rule was considered and does
+    // NOT work: 15 of the 15 flow-bearing lessons already carry
+    // `{% from "related-links.njk" import relatedLinks %}`, so a rule that
+    // fires on any macro call fires on every page it is meant to protect.
+    //
+    // COMMENTS ARE MASKED FIRST. Most of these pages mention `data-flow=`
+    // in prose — HTML comments above the diagrams, a CSS block comment, JS
+    // `//` lines — and two education pages with NO flow paths mention it
+    // only to say they have none. `{# … #}` Nunjucks comments are masked
+    // too: Nunjucks strips them before render, so their contents never
+    // ship (schematic-bg.njk and page.njk both document the attribute
+    // inside one). An unmasked scan counts all of those and reports
+    // offenders that do not exist.
+    //
+    // ATTRIBUTES ARE PARSED, NOT SUBSTRING-PROBED. The first cut tested
+    // each tag's attribute text for `/\sdata-flow\s*=/`, which is wrong in
+    // both directions: it MISSED a valueless `data-flow` — flow-engine
+    // selects on `[data-flow]` and getAttribute returns "", which falls
+    // through to SUPPLY_FILL, so `<path data-flow d="…"/>` animated on a
+    // lesson while never being asked for the flag — and it would fire on a
+    // `data-flow=` sitting inside some other attribute's quoted value.
+    // attrsOf() walks name/value pairs instead, which also makes the
+    // `data-flow-static` read quote-agnostic.
+    //
+    // PAGE SCOPE IS `nav: education` ONLY, DELIBERATELY (the template
+    // scan above is separate and unconditional) — it does not reach
+    // simulators, and must not be extended there as-is. A MARKUP scan is
+    // structurally blind to the standing counter-example:
+    // simulators/hydronic-loop-builder.html creates its flow paths from JS
+    // and rewrites `d` on every pointermove, refreshing only on pointer-up,
+    // so its source contains zero `data-flow=` attributes and a rule of
+    // this shape would pass it VACUOUSLY. Silent false assurance about the
+    // one page that must never carry the flag is worse than no rule. On
+    // simulators the call stays a per-page judgement made by reading the
+    // page's geometry writes.
+    //
+    // THAT BLIND SPOT IS THE GUARD'S FLOOR, and widening the file coverage
+    // does not raise it: an attribute that is not LITERAL in any scanned
+    // file cannot be caught by a scan of files. The JS-created paths above
+    // are one form; `_data`-supplied markup and a templated attribute name
+    // (`{% set fa = "data-flow" %}<path {{ fa }}="supply" …/>`, which builds
+    // clean) are the others. This is structural, not a gap to close — read
+    // the scan as "no LITERAL unflagged education flow path ships", never
+    // as "no unflagged flow path ships."
+    //
+    // DIRECTION: this enforces "an education flow path carries the flag."
+    // It cannot enforce the converse — that a page carrying the flag is
+    // entitled to it — since that is a claim about runtime behaviour. What
+    // it can also check is internal consistency with the opt-out, so it
+    // does, in both directions. Mirrors educationSequenceGuard: accumulate
+    // every offender, throw once, contribute no pages.
+    eleventyConfig.addCollection("flowStaticGuard", (collectionApi) => {
+        // Blank a comment to spaces rather than deleting it, so the
+        // surrounding markup keeps its shape.
+        const blank = (m) => m.replace(/[^\n]/g, " ");
+        // LINE COMMENTS ARE BLANKED FIRST, and the order is load-bearing.
+        // The delimited passes are non-greedy `open … close` scans that do
+        // not know a delimiter is itself inside a line comment, so running
+        // one before the `//` pass lets a stray opener in one `//` line pair
+        // with a stray closer in a LATER one and blank everything between —
+        // including a diagram. Proved on a `nav: education` page
+        // (2026-07-25): `// ratio is length /* width` … an unflagged
+        // `data-flow` path … `// divide by 2 */ done` built clean at exit 0
+        // and shipped the path. Blanking `//` lines first removes both
+        // strays before anything can pair them, and closes the same hole for
+        // `-->` and `#}` (identical shape, not separately reproduced).
+        // Safe on this tree by positive search: no `.njk` / `.html` file has
+        // a `//` line containing `-->`, `#}`, `*/` or `/*`
+        // (`grep -rnE '^[[:space:]]*//.*(-->|#\}|\*/|/\*)'` over html/),
+        // so the reorder cannot change masking on any file that exists.
+        const maskComments = (src) => src
+            .split("\n")
+            .map((line) => (line.trimStart().startsWith("//") ? blank(line) : line))
+            .join("\n")
+            .replace(/<!--[\s\S]*?-->/g, blank)      // HTML comments
+            .replace(/\{#[\s\S]*?#\}/g, blank)       // Nunjucks comments — stripped before render
+            .replace(/\/\*[\s\S]*?\*\//g, blank);    // CSS block comments in {% block head %}
+        const offenders = [];
+
+        // One start tag's attribute text → a name → value map. Names are
+        // matched positionally (name, optional `= value` with the value
+        // consumed whole), so a `data-flow` mentioned inside another
+        // attribute's quoted value can't register as an attribute, and a
+        // valueless attribute reads as "" — the same thing getAttribute
+        // returns for it in the browser.
+        const attrsOf = (text) => {
+            const attr = /([a-zA-Z_:][-\w:.]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+            const out = new Map();
+            let m = attr.exec(text);
+            while (m !== null) {
+                const v = m[2] !== undefined ? m[2]
+                    : m[3] !== undefined ? m[3]
+                    : m[4];
+                out.set(m[1].toLowerCase(), v === undefined ? "" : v);
+                m = attr.exec(text);
+            }
+            return out;
+        };
+
+        // Count one template's `data-flow` elements and how many of them
+        // carry the flag; report any whose flag is present but not exactly
+        // "true". `label` is what an offender line names.
+        const scan = (src, label) => {
+            // One element start tag; the capture is its attribute text,
+            // with quoted values consumed whole so a `>` inside one
+            // can't end the tag early.
+            const tag = /<[a-zA-Z][\w:.-]*((?:"[^"]*"|'[^']*'|[^>"'])*)>/g;
+            let flow = 0;
+            let flagged = 0;
+            let match = tag.exec(src);
+            while (match !== null) {
+                const attrs = attrsOf(match[1]);
+                if (attrs.has("data-flow")) {
+                    flow++;
+                    // The engine string-compares against "true"
+                    // (flow-engine.js buildPoolForEl), so any other
+                    // value is a silent no-opt-in, not a looser yes.
+                    if (attrs.get("data-flow-static") === "true") flagged++;
+                    else if (attrs.has("data-flow-static")) {
+                        offenders.push(`  ${label} — data-flow-static must be exactly "true"; the engine string-compares`);
+                    }
+                }
+                match = tag.exec(src);
+            }
+            return { flow, flagged };
+        };
+
+        collectionApi.getAll()
+            .filter((item) => item.data.nav === "education")
+            .forEach((item) => {
+                if (typeof item.rawInput !== "string") {
+                    // Anti-vacuity: an 11ty upgrade that stops exposing
+                    // rawInput would otherwise disarm this guard silently.
+                    offenders.push(`  ${item.inputPath} — no rawInput to scan; this guard cannot see the page`);
+                    return;
+                }
+                const optedOut = item.data.flowGeometryLive === true;
+                const { flow, flagged } = scan(maskComments(item.rawInput), item.inputPath);
+                if (!optedOut && flow > flagged) {
+                    offenders.push(`  ${item.inputPath} — ${flow - flagged} of ${flow} data-flow elements lack data-flow-static="true"`);
+                }
+                if (optedOut && flagged) {
+                    offenders.push(`  ${item.inputPath} — flowGeometryLive: true, but ${flagged} data-flow elements carry data-flow-static`);
+                }
+                if (optedOut && !flow) {
+                    offenders.push(`  ${item.inputPath} — flowGeometryLive: true, but the page has no data-flow element`);
+                }
+            });
+
+        // Every template a Nunjucks include could reach — the surface a
+        // page's rawInput cannot show. Exempt by PATH RELATIVE TO THE SCAN
+        // ROOT, so an exemption names one file rather than every file that
+        // happens to share its basename; each entry carries its reason
+        // above. Moving an exempt partial re-points its entry by hand,
+        // which is the intended friction.
+        const EXEMPT_TEMPLATES = new Set([`${INPUT_DIR}/${INCLUDES_DIR}/schematic-bg.njk`]);
+        // Not source, or a whole second copy of the tree.
+        const SKIP_DIRS = new Set(["node_modules", "_site", ".git", ".claude"]);
+        const pagesPrefix = `${INPUT_DIR}/`;
+        const includesPrefix = `${INPUT_DIR}/${INCLUDES_DIR}/`;
+        // `.html` inside the input dir but outside `_includes` is an 11ty
+        // PAGE — the `nav: education` arm above owns it, deliberately.
+        const isScannable = (rel) => {
+            if (rel.endsWith(".njk")) return true;
+            if (!rel.endsWith(".html")) return false;
+            return !rel.startsWith(pagesPrefix) || rel.startsWith(includesPrefix);
+        };
+        const scanRoot = process.cwd();
+        const exemptSeen = new Set();
+        let templatesScanned = 0;
+        const walkTemplates = (dir) => {
+            fs.readdirSync(dir, { withFileTypes: true }).forEach((entry) => {
+                if (SKIP_DIRS.has(entry.name)) return;
+                const full = path.join(dir, entry.name);
+                // Dirent type tests do not follow symlinks, so a symlinked
+                // directory is skipped rather than walked — no cycles, and
+                // no crash on the `node_modules` symlink an agent worktree
+                // uses (it is skipped by name anyway).
+                if (entry.isDirectory()) {
+                    walkTemplates(full);
+                    return;
+                }
+                if (!entry.isFile()) return;
+                const rel = path.relative(scanRoot, full).split(path.sep).join("/");
+                if (!isScannable(rel)) return;
+                templatesScanned++;
+                if (EXEMPT_TEMPLATES.has(rel)) {
+                    exemptSeen.add(rel);
+                    return;
+                }
+                const { flow, flagged } = scan(maskComments(fs.readFileSync(full, "utf8")), rel);
+                if (flow > flagged) {
+                    offenders.push(`  ${rel} — ${flow - flagged} of ${flow} data-flow elements lack data-flow-static="true"; a template reaches its host page without that page's source ever showing it`);
+                }
+            });
+        };
+        walkTemplates(scanRoot);
+        // This guard must never be able to pass because it found nothing to
+        // look at. The exempt-path arm below is the stronger probe — it can
+        // only pass if the walk reached html/_includes/ — but the count
+        // keeps a floor under an empty EXEMPT_TEMPLATES.
+        if (!templatesScanned) {
+            offenders.push(`  ${scanRoot} — no templates found; this guard cannot see the template tree`);
+        }
+        EXEMPT_TEMPLATES.forEach((rel) => {
+            if (!exemptSeen.has(rel)) {
+                offenders.push(`  ${rel} — exempt template no longer exists at that path; drop the exemption or re-point it`);
+            }
+        });
+
+        if (offenders.length) {
+            throw new Error(
+                `data-flow-static="true" is required on every education flow ` +
+                `path and on every template flow path — opt out with ` +
+                `\`flowGeometryLive: true\` frontmatter (pages) or an ` +
+                `EXEMPT_TEMPLATES entry (partials) (CLAUDE.md "Templating"; ` +
+                `the assertion it makes is in the flow-engine.js ` +
+                `header):\n${offenders.join("\n")}`
             );
         }
         return [];
@@ -634,10 +958,10 @@ module.exports = function(eleventyConfig) {
 
     return {
         dir: {
-            input: "html",
+            input: INPUT_DIR,
             output: "_site",
-            includes: "_includes",
-            layouts: "_includes/layouts"
+            includes: INCLUDES_DIR,
+            layouts: `${INCLUDES_DIR}/layouts`
         },
         htmlTemplateEngine: "njk",
         markdownTemplateEngine: "njk"

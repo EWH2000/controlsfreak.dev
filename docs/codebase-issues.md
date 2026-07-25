@@ -7313,7 +7313,7 @@ https://claude.ai/code/session_01LmBziFvEW678CX6zCaCQxx
 Not written to `docs/codebase-issues.md` per the lane brief — reproduced here for the
 owner to file.
 
-### 201. PR #427's engine surface landed undocumented in the two records that claim to be exhaustive
+### 201. PR #427's engine surface landed undocumented in the two records that claim to be exhaustive *(addressed 2026-07-24 · `6c02ce1`)*
 
 Both findings are pre-existing on `main`, unrelated to this PR's diff, and were hit
 while working from those records.
@@ -7348,7 +7348,21 @@ script's own header warns about. It needs a re-baseline against current `main`, 
 tolerance change — the header already says which, and says to record the date,
 commit, and machine.
 
-### 202. Education lesson diagrams never opted into the point table — the lesson archetype still runs ~50 layouts/frame *(open — 2026-07-24)*
+**Resolution (2026-07-24, commit `6c02ce1`).** Both closed, but the heading never
+picked up a disposition marker, so a later lane read the item as still open and
+recorded the friction-file gap as unpaid debt. (a) `data-flow-static` was added to
+the friction file's attribute list, `setPathColor` / `pulse` to the method list, and
+both intros were de-enumerated — "**Three opt-in attributes**" → "The opt-in
+attributes", "**Two methods**" → "The methods" — so neither count can go stale by
+append again. (b) `tests/perf-profile.mjs` was re-baselined at commit `5b9c457`
+with the date, commit and machine recorded in its BASELINE block.
+
+Note the entry (a) restored still described `data-flow-static` as *"optional, default
+false"* and knew nothing about the build guard that later made it mandatory on
+education pages; that is a **separate, newer** gap, paid in PR #430 rather than
+re-opening this item.
+
+### 202. Education lesson diagrams never opted into the point table — the lesson archetype still runs ~50 layouts/frame *(addressed 2026-07-25)*
 
 The 2026-07-24 perf arc gave `flow-engine.js` a cached point table and
 opted in the gutter (unconditionally, #198) and
@@ -7388,3 +7402,345 @@ one PR. Verify with the same technique used for #201 — sample particle
 positions against live path geometry after every state change, and include
 a negative control (stub `refreshPath` to a no-op and confirm the check
 goes red) so the verification is known to be able to fail.
+
+**Resolution (2026-07-25).** Swept, and the assertion is now pinned at
+build time rather than by memory.
+
+**Population.** Not "roughly forty pages" — only **15** of the 41
+education lessons carry a `data-flow` element at all, and they carry
+**197** between them (load-piping 50, hydronic-loops 26, air-handlers and
+air-unit-identification 17 each, balancing 16, vav-systems and
+pump-control 11 each, equipment-staging 10, building-pressure 9,
+dedicated-outdoor-air 8, duct-static-control 6, air-balancing 5,
+economizers / refrigerant-cycle-basics / controller-wiring 4/4/3). All
+197 now carry `data-flow-static="true"`. A naive `grep -c data-flow`
+over-counts on 12 of the 15 — HTML comments above the diagrams, one CSS
+block comment, JS `//` prose — and two lessons with no flow paths mention
+the attribute only to say so, so every count here is from the live DOM or
+a comment-masked scan.
+
+**Per-page verification, then a guard.** Each page was audited for any
+write to a flow path's geometry before a single attribute was added; none
+exists — no `setAttribute('d')` anywhere under `html/education/`. The
+near-misses were resolved individually rather than waved past: the fan and
+damper blades on hydronic-loops / air-handlers spin via a **CSS
+transform** on `<rect>` elements, which cannot invalidate a table because
+`getPointAtLength()` returns path-LOCAL user space — exactly the space
+`buildTable` samples; pump-control's `setAttribute('points')` / `cx` / `cy`
+writes and building-pressure's needle `transform` target **different SVGs
+that hold no `data-flow` element**; load-piping and refrigerant-cycle-basics
+hide and recolour branches through `FlowEngine.setPathColor`, which
+repaints existing particles and never rebuilds a pool; and hydronic-loops'
+`data-flow-density` writes already call `refreshPath`, which re-runs
+`buildPoolForEl` and therefore rebuilds `pool.table` from current geometry
+— so that path stays correct *with* the flag and gets cheaper (the table
+cache hits on the unchanged geometry key).
+
+**`flowStaticGuard` in `.eleventy.js`** now fails the build when a
+`nav: education` page has a `data-flow` element without
+`data-flow-static="true"`, with `flowGeometryLive: true` frontmatter as
+the documented opt-out (no lesson needs it today). It reads
+`item.rawInput` — a collection callback cannot see rendered output, since
+`item.templateContent` / `item.content` throw *"Tried to use
+templateContent too early"* at that point in the build — and masks HTML /
+CSS / JS / Nunjucks comments first. Every education `data-flow` attribute
+is literal in the page file, so pre-render source reaches all of them.
+
+**Two holes in the first cut, both found in review and both proved by
+construction before being closed.** (1) `rawInput` is the page's OWN
+source and stops at an `{% include %}` tag, so a partial carrying a flow
+path was never checked: an `_includes` file holding
+`<path data-flow="supply" d="…"/>` plus a `nav: education` page whose
+entire body was `{% include %}` of it built clean at 137 files, exit 0,
+and shipped the unflagged path. The guard now also walks templates on
+disk and holds every partial to the same rule regardless of which page
+includes it, with `html/_includes/schematic-bg.njk` the sole
+`EXEMPT_TEMPLATES` entry —
+the gutter is tabled unconditionally via `pool.gutter`, so an opt-in there
+would misstate why it is cached — and each exempt path must resolve to a
+real scanned file, so a stale exemption fails rather than passing
+silently. A fail-closed *declare your includes* rule was the obvious
+alternative and does not work: all 15 flow-bearing lessons already
+`{% from "related-links.njk" import relatedLinks %}`, so a rule firing on
+any macro call fires on every page it protects. (2) The element test
+required `data-flow` to carry an `=`, while `flow-engine.js` selects on
+`[data-flow]` — so a valueless `<path data-flow d="…"/>` built clean and
+animated (`getAttribute` returns `""`, which falls through to
+`SUPPLY_FILL`). The substring probe is now a real attribute parse, which
+also drops a latent false positive on a `data-flow=` sitting inside
+another attribute's quoted value.
+
+**The guard deliberately does not reach simulators, and that is a
+finding, not an omission.** A markup scan is structurally blind to
+`simulators/hydronic-loop-builder.html` — it creates its flow paths from
+JS and rewrites `d` on every `pointermove`, refreshing only on
+pointer-up — so its source contains zero `data-flow=` attributes and a
+rule of this shape would pass it **vacuously**. Silent false assurance
+about the one page that must never carry the flag is worse than no rule,
+so on simulators the call stays a per-page judgement.
+
+**Measured (this machine, 1920×1080, reps=3, BEFORE and AFTER back to
+back in one session):**
+
+    education/hydronic-loops.html   layouts/frame  49.87 → 4.69
+                                    Δ control      +147.6 → +97.4 ms/s
+                                    fps              59.9 → 60.1
+                                    liveness      main 46/160 · gutter 47/552 (unchanged)
+
+Liveness being byte-identical is what rules out the caveat-3 artefact the
+profiler warns about: the same population is still animating, it just no
+longer re-reads geometry it already knows. `tests/perf-profile.mjs`'s
+BASELINE was re-based for that row only (three-run mean 4.02
+layouts/frame), with the three samples and the reason recorded in its
+header; no tolerance was widened.
+
+**Controls, both run.** The guard is not vacuous: removing the attribute
+from one element of `controller-wiring.html` fails the build with
+`1 of 3 data-flow elements lack data-flow-static="true"`. And #429's
+control mechanism was reproduced as far as it transfers — **it does not
+transfer literally**, because no education page writes `d`, so there is no
+page-driven geometry change to stub the refresh out of. The harness
+supplied one instead: with `FlowEngine.refreshPath` stubbed to a no-op and
+`d1-supply-main`'s `d` shifted 220 units, the 32 particles on that path
+stranded **220 u from the live route and 0.2 u from the stale one** — the
+same inversion #429 measured, which proves the table really is frozen and
+that the measurement can see the failure it is looking for. Un-stubbing
+and calling `refreshPath` put every particle back within 0.2 u.
+`tests/flow-engine.spec.js` gained a committed twin of the positive half
+(`education flow particles sit ON their tabled path`), so unlike #429 this
+one leaves an instrument behind — the gap #200 is about.
+
+Each of the two review holes above got the same treatment before it was
+called closed — build the scaffolding, confirm the check goes **red** and
+names the offender, then confirm it goes green when the flag is added:
+an unflagged `data-flow` in an include (red, names the partial) → flagged
+(green, 137 files); a valueless `data-flow` on a lesson (red, names the
+page) → real tree (green, 136 files). The exemption's own anti-vacuity
+was proved the same way: an unexempted copy of `schematic-bg.njk` reports
+15 unflagged elements, and renaming the exempt file reports
+`exempt include "schematic-bg.njk" no longer exists` alongside the 15.
+Three shapes were checked against the new attribute parse for
+over-reach — `data-flow-static='true'` (single-quoted) passes,
+`aria-label="write data-flow=supply on the pipe"` is correctly ignored,
+`data-flow-static="TRUE"` fails with the exact-value message.
+
+**A third adversarial round (2026-07-25) found three more, all proved by
+construction and all closed on this PR.** The pattern in all three: the
+previous round's remedy was *narrower than the mechanism it was fixing*.
+
+1. **The includes walk was narrowed, not closed.** Nunjucks resolves an
+   include name against the **working directory** as well as the includes
+   dir — `Engines/Nunjucks.js#getFileSystemDirs()` returns
+   `[includesDir, TemplatePath.getWorkingDir()]` — so `partials/zz-root.njk`
+   at the repo root reached a `nav: education` page completely unscanned:
+   exit 0, 137 files, unflagged path shipped. Fixed by rooting the walk at
+   `process.cwd()` (the same call the loader makes). **Restricting it to
+   `.njk` would have repeated the same mistake**: `partials/zz-root.html`
+   reproduced the hole one extension away, because the loader does not care
+   about the extension. So the rule is *every `.njk`, plus every `.html`
+   that is not an 11ty page* — `.html` under `html/` outside `_includes`
+   stays with the `nav: education` arm, which is what keeps the widened
+   scan from silently extending page scope to simulators.
+2. **The exemption was keyed on basename**, so
+   `html/_includes/zzsub/schematic-bg.njk` inherited the gutter's pass and
+   shipped an unflagged path at exit 0 — and neither anti-vacuity arm
+   fired, since either file satisfied both. Now keyed on the path relative
+   to the scan root. Proved both ways: the shadowing copy is reported, and
+   *moving* the real `schematic-bg.njk` reports its 15 unflagged gutter
+   elements **and** `exempt template no longer exists at that path` in the
+   same run.
+3. **The comment mask ran `/* … */` before blanking `//` lines**, so a
+   stray `/*` in one `//` comment paired with a `*/` in a later one and
+   blanked everything between — including a diagram. Proved on a lesson:
+   `// ratio is length /* width` … unflagged `data-flow` path …
+   `// divide by 2 */ done` → exit 0, 137 files, path shipped. Blanking
+   `//` lines first removes both strays before anything can pair them, and
+   closes the identical shape for `-->` and `#}`.
+
+Each was proved **red before green** against the same construction, and
+the reorder was shown neutral on the real tree two ways: a positive search
+(`grep -rnE '^[[:space:]]*//.*(-->|#\}|\*/|/\*)'` over `html/` — no hits)
+and a differential scan of all 145 `.njk` / `.html` files comparing
+old-order vs new-order verdicts (zero differences). Full suite green
+(783 passed, 1 skipped); real tree builds clean at 136 files.
+
+**Declared stop.** Two rounds had already proved the guard's core job
+works — a brand-new `nav: education` page with an unflagged `data-flow`
+path fails the build — and what remained were edge cases each requiring
+someone to deliberately do something nobody does today. The structural
+floor below is not a fourth round; it is the guard's permanent shape.
+
+---
+
+### 203. `flowStaticGuard`'s comment mask is inert on the current tree, and two records credit it anyway *(open — 2026-07-25)*
+
+Found while verifying the #202 mask reorder (round 3); **logged, not
+fixed**, because #202 was a declared stop and this is a documentation-
+accuracy call the owner should make rather than a defect in shipped
+behaviour.
+
+`flowStaticGuard` masks HTML / Nunjucks / CSS-block / JS-line comments
+before scanning, and its header justifies that at length:
+
+> COMMENTS ARE MASKED FIRST. Most of these pages mention `data-flow=` in
+> prose … An unmasked scan counts all of those and reports offenders that
+> do not exist.
+
+**Measured: masking changes the guard's verdict on zero of 145 scanned
+`.njk` / `.html` files.** Replacing `maskComments` with the identity
+function still builds clean at 136 files. A differential scan
+(`scan(raw)` vs `scan(masked)` per file) reports no file where the flow /
+flagged counts differ, and 4 files that mention `data-flow` but yield zero
+elements either way.
+
+The reason is that the justification is **stale, not wrong-in-principle**:
+it was true of the guard's *first* cut, which substring-probed for
+`/\sdata-flow\s*=/`. The later "ATTRIBUTES ARE PARSED, NOT
+SUBSTRING-PROBED" upgrade — a separate fix, in the same PR — made prose
+mentions harmless, because `scan()` only counts things that parse as an
+element start tag and a sentence about `data-flow=` has no `<`. Nobody
+re-checked whether that upgrade obsoleted the masking paragraph's
+reasoning. Classic: two correct fixes, one stale explanation between them.
+
+The mask is not *useless* — it is live insurance against a comment that
+contains a full example start tag (`<!-- <path data-flow="supply"
+d="…"/> -->`), which would otherwise be counted as a real element. None
+exists today. So the code is defensible and the comment overstates it.
+
+**Options.** (a) Keep the mask, rewrite the header to say what it actually
+defends — a commented-out markup example, not prose — and note the
+attribute parse is what neutralized the prose case. Cheap, honest, no
+behaviour change; recommended. (b) Drop the mask entirely as dead weight
+and let a future commented example fail loudly. Rejected on the face of
+it: a phantom offender on a comment is a confusing build break, and the
+`//`-line pass is what the round-3 ordering fix hardened. (c) Leave it —
+costs nothing today, but leaves a measured-false claim in the one file
+future readers will trust about this guard's reasoning.
+
+**At stake:** nothing operational. It matters because this header is the
+designated explanation for a guard that has now needed three adversarial
+rounds, and a reader who trusts the masking paragraph will mis-model what
+the scan can and cannot see.
+
+**Widened 2026-07-25 — a second instance, same family.** Found by a
+verification pass over PR #430's own body, which credited the mask for a
+number the mask has no hand in. Its round-3 test plan explained the gutter
+exemption's offender count this way:
+
+> reports **15 of 15** unflagged elements — 15, not the 17 a naive grep
+> counts, because two of the hits are inside `{# … #}` blocks, **which is
+> the comment mask working**.
+
+**Measured directly on `html/_includes/schematic-bg.njk`: the element count
+is 15 with masking and 15 without.** The two extra grep hits (lines 18 and
+147) are prose inside `{# … #}` blocks, and `scan()` drops them for exactly
+the reason the paragraph above already establishes — neither parses as an
+element start tag. It is the start-tag parse that yields 15, not the mask.
+The PR-body sentence was corrected in the same pass that logged this.
+
+Both instances are the same defect: **a claim about the mask that outruns
+what the mask does.** That is why this entry widened rather than spawning a
+sibling — the header's reasoning had already been copied into a second
+record before anyone measured it, so whichever option above is taken, the
+remedy has to reach the header *and* leave the header hard to re-copy
+wrongly. See **#204** for the separate finding about what the `//` pass
+does and does not blank; that one is a live coverage gap rather than a
+stale justification, which is why it is filed on its own.
+
+### 204. `flowStaticGuard`'s `//` mask is line-anchored — round 3 closed one shape of the comment-pairing hole and opened another *(open — 2026-07-25)*
+
+Found by a verification pass over PR #430's body, after #202's stop was
+declared. Both directions below are **measured on head `4905b78`**, and
+**neither is fixed** — this is the record, not a fourth round. Filed apart
+from #203 because that one is a stale explanation with nothing operational
+behind it, while (a) here is a live coverage gap in a build guard.
+
+`maskComments` blanks JS line comments with a **line-anchored** test
+(`.eleventy.js:338`):
+
+```js
+.map((line) => (line.trimStart().startsWith("//") ? blank(line) : line))
+```
+
+Round 3 moved that pass to run **first**, ahead of the `<!-- -->` / `{# #}`
+/ `/* */` passes, so a stray `/*` in one `//` comment could no longer pair
+with a `*/` in a later one. That was a real fix. It is also exactly as wide
+as the test above, which is narrower than the mechanism it was fixing — the
+same shape round 3 itself named as the reason there *was* a round 3.
+
+**(a) Over-masking — the silent direction, still open.** The round-3
+construction still reproduces when the two strays sit in comments that
+**trail** other markup instead of starting their lines:
+
+```html
+<script>// ratio is length /* width</script>
+<svg><path id="zz-h" data-flow="supply" d="M0 0 H50"/></svg>
+<script>// divide by 2 */ done</script>
+```
+
+On a `nav: education` page that builds **exit 0, 137 files**, and
+`grep -o '<path id="zz-h"[^>]*>' _site/education/zz-h3b.html` returns the
+unflagged path. The line pass never fires — the line starts with `<script>`,
+not `//` — so the `/* … */` pass pairs the strays and blanks the diagram out
+of the scan. The **line-start** twin of the same construction does go RED as
+PR #430 claims: exit **1**, `1 of 1 data-flow elements lack
+data-flow-static="true"`. So what round 3 closed is one shape of the hole,
+not the hole.
+
+This is the **over**-blanking direction, which is the dangerous one: the
+guard hides a real offender rather than inventing a phantom one, so it fails
+by shipping. It is correspondingly hard to reach by accident — it needs an
+unbalanced `/*` inside one trailing `//` comment, a matching `*/` inside a
+later trailing `//` comment, and an unflagged `data-flow` path between them.
+Nothing on the tree is anywhere near it: the differential scan reports
+**zero of 145** scanned files where masking changes the verdict at all.
+
+**(b) Under-masking — the loud direction, opened by the reorder, never
+probed.** `/* css */ // js` on **one line** now behaves differently than it
+did before round 3. Old order: the `/* */` pass blanked the block first,
+leaving a line that *then* started with `//`, so the trailing comment was
+masked too. New order: the line pass runs first, sees a line starting with
+`/*`, and leaves the trailing `// …` **unmasked**. Measured both ways on a
+constructed line — old order blanks it, new order does not.
+
+Affected files today: **zero**. `grep -rlE '\*/[[:space:]]*//' html/`
+returns nothing. And the failure mode is the safe one — an unmasked comment
+yields a *phantom* offender and a loud build break, never a shipped path.
+
+The point is not the risk, which is currently nil. It is that the guard
+header justifies the reorder as *"Safe on this tree by positive search"*,
+and that search covers **one direction only**: it looks for `//` lines
+carrying delimiters, never for delimited comments carrying `//`. A
+one-directional probe offered as the safety argument for a two-directional
+change is the same defect shape as #203 — a claim outrunning what was
+measured.
+
+(A smaller note on that same header sentence: the search it cites is written
+as running over `html/`, where it returns **4** hits — all in `styles.css`,
+`quiz-engine.js` and `refrigerant-loop-engine.js`. The header's *prose*
+scopes the claim to `.njk` / `.html`, and restricted that way it is correct
+at **0** hits, so the claim holds and only the pasted command is looser than
+the sentence around it.)
+
+**Options.** (a) Mask `//` from its first occurrence to end-of-line instead
+of whole-line-if-it-starts-with, which closes (a) and — provided the
+delimited passes still run afterwards — (b) as well. This needs real care
+rather than a one-line edit: `//` appears inside every `https://` URL on the
+page, so a naive first-occurrence rule would blank the remainder of any line
+carrying a link and trade a narrow over-masking hole for a wide one. It is a
+change to a guard that has already needed three adversarial rounds, so it
+wants its own PR and its own reproduction pass. (b) Accept both directions
+and amend the header to say the `//` pass is line-anchored and the positive
+search is one-directional. Cheap, honest, no behaviour change;
+**recommended**, and it pairs naturally with #203's option (a) — both are
+accuracy fixes to the same paragraph and should ship together. (c) Replace
+the four-pass mask with a single tokenizing pass that tracks comment state.
+Most correct, most blast radius, and hard to justify for a mask whose
+measured effect on the real tree is zero.
+
+**At stake:** nothing today, in either direction, and that is the honest
+framing rather than a hedge. (a) is the one worth weighing, because it fails
+silently — but reaching it takes a construction no page has ever had. What
+is actually at stake is what was at stake in #203: this header is the
+designated explanation for the guard, and a reader who trusts it will
+believe the comment-pairing hole is closed when it is closed for one shape.

@@ -4881,10 +4881,13 @@ alongside it:
   Keeping that translation outside `flow-engine.js` preserves the
   rule that the engine knows only paths, particles, and time.
 
-- `data-flow-static="true"` *(added 2026-07-24, perf arc PR #427)* —
-  optional, default false. Asserts that this path's geometry is
-  stable between `refreshPath()` calls, which lets the engine
-  cache a sampled point table instead of calling
+- `data-flow-static="true"` *(added 2026-07-24, perf arc PR #427;
+  made mandatory on education pages 2026-07-25, PR #430)* —
+  optional to the ENGINE, default false, but **required by the
+  build on `nav: education` pages and on every `_includes`
+  partial** (see the guard below). Asserts that this path's
+  geometry is stable between `refreshPath()` calls, which lets the
+  engine cache a sampled point table instead of calling
   `getPointAtLength()` per particle per frame. It is an
   ASSERTION BY THE PAGE, not a hint: *every* mutation of the
   path's `d` must be followed by `FlowEngine.refreshPath(el)`.
@@ -4896,6 +4899,49 @@ alongside it:
   it must never set this. `simulators/refrigerant-loop.html` is
   the opposite case and does set it: its one geometry swap calls
   `refreshPath` immediately after writing `d`.
+
+  **The assertion is pinned at build time, not by memory.**
+  `flowStaticGuard` in `.eleventy.js` fails the build if any
+  `data-flow` element on a `nav: education` page, or in any
+  template a Nunjucks include could reach (the walk is rooted at
+  the working directory, since the loader resolves include names
+  against it as well as against `_includes`), lacks the flag.
+  Getting the assertion
+  wrong is silent and purely visual — particles animate along
+  stale geometry, beside the pipe instead of on it, while counts,
+  colours and movement all still read correct — so nothing in
+  `npm test` can see it and the invariant has to live in the
+  build. Two escape hatches, both deliberate and both written
+  down where they are used:
+    - **Pages** opt out with `flowGeometryLive: true` frontmatter
+      — the declaration that a flow path here is re-pathed
+      *without* an immediate refresh, so its particles must keep
+      the live read. No lesson needs it today. It exists so a
+      future lesson with a dragged or re-routed pipe says so in
+      one line instead of quietly dropping the attribute.
+    - **Partials** have no frontmatter, so they opt out through
+      an `EXEMPT_TEMPLATES` entry in `.eleventy.js` with a written
+      reason, keyed on the path relative to the scan root.
+      `html/_includes/schematic-bg.njk` is the only one, and for
+      the opposite reason — the gutter is tabled unconditionally,
+      so an opt-in there would misstate why it is cached.
+
+  Scope limits worth knowing before extending it: the guard
+  reaches **education pages and partials only**. It must not be
+  pointed at simulators as-is — a markup scan is structurally
+  blind to `simulators/hydronic-loop-builder.html`, which builds
+  its paths from JS, so the one page that must never carry the
+  flag would pass vacuously, and silent false assurance about
+  that page is worse than no rule. It also enforces only one
+  direction: *a flow path carries the flag*. The converse — that
+  a page carrying the flag is entitled to it — is a claim about
+  runtime behaviour that no markup scan can settle, and stays a
+  per-page judgement made by reading the page's geometry writes.
+  The opt-out granularity is a known open question: it is
+  per-PAGE, while the property it describes is per-ELEMENT, so a
+  future lesson with twenty static runs and one re-routed path
+  cannot express itself and would have to drop the flag on all
+  twenty. Nothing needs it yet; raise it when something does.
 
 **Engine public API.** The methods on `window.FlowEngine`, named
 to keep extension predictable without the surface growing ad-hoc:

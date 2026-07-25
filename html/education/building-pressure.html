@@ -181,16 +181,25 @@ keywords: building pressure static relief exhaust fan power exhaust barometric d
                 <title id="bp-d1-title">The building as an air ledger</title>
                 <desc id="bp-d1-desc">A building drawn as a box with an air handler on its left wall. Outside air enters the air handler — the only deliberate deposit. Three withdrawals leave the building: relief air back out through the unit, exhaust fans on the roof, and exfiltration through the gaps around a door on the right wall. Supply and return ducts circulate inside the building without crossing the envelope. A gauge in the middle marks the building pressure as the residual of the ledger.</desc>
 
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes duct geometry — the ledger widget's one
+                     transform write moves the needle inside the separate gauge SVG,
+                     which holds no data-flow element. A future geometry write must
+                     refresh in the same breath, or the page must opt out via the
+                     `flowGeometryLive` frontmatter (flowStaticGuard, .eleventy.js). -->
                 <!-- ledger flows. data-flow="air" hooks flow-engine.js; particle
                      color follows each duct's stroke. Densities: OA carries the
                      deliberate deposit, relief / exhaust carry fractions. -->
-                <path id="bp-d1-oa" data-flow="air" d="M5 240 H80" fill="none" stroke="var(--teal)" stroke-width="3"/>
-                <path id="bp-d1-rel" data-flow="air" data-flow-density="0.5" d="M80 150 V68 H20" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="bp-d1-ef" data-flow="air" data-flow-density="0.5" d="M350 100 V52" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="bp-d1-oa" data-flow="air" data-flow-static="true" d="M5 240 H80" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <path id="bp-d1-rel" data-flow="air" data-flow-static="true" data-flow-density="0.5" d="M80 150 V68 H20" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="bp-d1-ef" data-flow="air" data-flow-static="true" data-flow-density="0.5" d="M350 100 V52" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- interior circulation: supply / return — inside the envelope -->
-                <path id="bp-d1-sa" data-flow="air" d="M150 240 H230" fill="none" stroke="var(--blue)" stroke-width="3"/>
-                <path id="bp-d1-ra" data-flow="air" d="M230 180 H150" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="bp-d1-sa" data-flow="air" data-flow-static="true" d="M150 240 H230" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="bp-d1-ra" data-flow="air" data-flow-static="true" d="M230 180 H150" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
 
                 <!-- flow arrows (static — carry direction for reduced-motion / print) -->
                 <g id="bp-d1-flow-arrows">
@@ -283,7 +292,7 @@ keywords: building pressure static relief exhaust fan power exhaust barometric d
                 <!-- ── row 1 · barometric ── -->
                 <line x1="360" y1="30" x2="360" y2="70" stroke="var(--text-dim)" stroke-width="3"/>
                 <line x1="360" y1="110" x2="360" y2="150" stroke="var(--text-dim)" stroke-width="3"/>
-                <path id="bp-d2-baro-flow" data-flow="air" data-flow-density="0.4" d="M300 90 H420" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="bp-d2-baro-flow" data-flow="air" data-flow-static="true" data-flow-density="0.4" d="M300 90 H420" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
                 <polygon points="410,85 419,90 410,95" fill="var(--text-dim)"/>
                 <g id="bp-d2-baro-blades">
                     <circle cx="358" cy="72" r="2" fill="var(--text-bright)"/>
@@ -305,7 +314,7 @@ keywords: building pressure static relief exhaust fan power exhaust barometric d
                 <!-- ── row 2 · power exhaust ── -->
                 <line x1="360" y1="180" x2="360" y2="220" stroke="var(--text-dim)" stroke-width="3"/>
                 <line x1="360" y1="260" x2="360" y2="300" stroke="var(--text-dim)" stroke-width="3"/>
-                <path id="bp-d2-pe-flow" data-flow="air" data-flow-density="0.6" d="M300 240 H420" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="bp-d2-pe-flow" data-flow="air" data-flow-static="true" data-flow-density="0.6" d="M300 240 H420" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
                 <polygon points="410,235 419,240 410,245" fill="var(--text-dim)"/>
                 <g id="bp-d2-pe-fan">
                     <circle cx="360" cy="240" r="16" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
@@ -319,8 +328,8 @@ keywords: building pressure static relief exhaust fan power exhaust barometric d
                 <line x1="20" y1="312" x2="520" y2="312" stroke="var(--border)" stroke-width="1"/>
 
                 <!-- ── row 3 · return / relief fan ── -->
-                <path id="bp-d2-rf-duct" data-flow="air" d="M40 400 H500" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
-                <path id="bp-d2-rf-branch" data-flow="air" data-flow-density="0.4" d="M300 400 V352 H430" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="bp-d2-rf-duct" data-flow="air" data-flow-static="true" d="M40 400 H500" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="bp-d2-rf-branch" data-flow="air" data-flow-static="true" data-flow-density="0.4" d="M300 400 V352 H430" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
                 <g id="bp-d2-rf-arrows">
                     <polygon points="100,395 109,400 100,405" fill="var(--blue-cool)"/>
                     <polygon points="450,395 459,400 450,405" fill="var(--blue-cool)"/>

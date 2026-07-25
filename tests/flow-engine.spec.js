@@ -279,3 +279,71 @@ test('gutter particles animate too (#198 — the movement twin)', async ({ page 
     const movers = a.filter((p, i) => Math.hypot(b[i][0] - p[0], b[i][1] - p[1]) > 0.5).length;
     expect(movers, 'on-screen gutter particles moved → the gutter is live').toBe(a.length);
 });
+
+// ── Education content pools, now tabled too (codebase-issues #202) ──
+// The gutter twin above pins the point table for paths the engine tables
+// unconditionally. #202 opted the education lessons in via
+// `data-flow-static="true"`, so the same correctness risk now applies to
+// in-content diagrams: a wrong or stale table strands particles beside
+// the pipe, and counts / colours / movement all still assert green while
+// it does. `flowStaticGuard` (.eleventy.js) pins that the ATTRIBUTE is
+// present; this pins that the resulting geometry is right.
+//
+// Measured by sampling each element's LIVE geometry with
+// getPointAtLength — not the gutter test's closed-form segment
+// projection, which had to skip `<path>` motifs because corners have no
+// segment test. Lesson diagrams are mostly orthogonal `<path>` runs, so
+// skipping them would skip the subject. The cost is a quantisation
+// floor: a 0.5-unit sample pitch puts a point that is exactly ON the
+// geometry up to 0.25 units from its nearest sample, so the threshold
+// covers that plus the engine's own 0.1-unit coordinate rounding.
+const SAMPLE_PITCH = 0.5;
+
+test('education flow particles sit ON their tabled path (#202)', async ({ page }) => {
+    await page.goto('/education/hydronic-loops.html');
+    await expect(page.locator('main g.flow-particles circle').first()).toBeAttached();
+
+    const probe = await page.evaluate((pitch) => {
+        const distTo = (el, x, y) => {
+            const len = el.getTotalLength();
+            const n = Math.max(1, Math.ceil(len / pitch));
+            let best = Infinity;
+            for (let i = 0; i <= n; i++) {
+                const p = el.getPointAtLength((i / n) * len);
+                const d = Math.hypot(p.x - x, p.y - y);
+                if (d < best) best = d;
+            }
+            return best;
+        };
+        const flows = Array.from(document.querySelectorAll('main [data-flow]'));
+        let checked = 0;
+        let maxDist = 0;
+        document.querySelectorAll('main svg.flow-active').forEach((svg) => {
+            const mine = flows.filter((el) => el.ownerSVGElement === svg);
+            if (!mine.length) return;
+            svg.querySelectorAll('g.flow-particles circle[r="3"]').forEach((c) => {
+                const x = c.cx.baseVal.value;
+                const y = c.cy.baseVal.value;
+                let best = Infinity;
+                mine.forEach((el) => { best = Math.min(best, distTo(el, x, y)); });
+                checked++;
+                if (best > maxDist) maxDist = best;
+            });
+        });
+        return {
+            checked,
+            maxDist,
+            flow: flows.length,
+            tabled: flows.filter((el) => el.getAttribute('data-flow-static') === 'true').length,
+        };
+    }, SAMPLE_PITCH);
+
+    // Anti-vacuity, both halves: the page must still HAVE content flow
+    // paths, and they must still be opted in. If the flag is ever
+    // dropped here this test would otherwise keep passing on the live
+    // read and quietly stop testing the table.
+    expect(probe.flow, 'the page still has content flow paths').toBeGreaterThan(0);
+    expect(probe.tabled, 'and every one is still opted into the point table').toBe(probe.flow);
+    expect(probe.checked, 'a meaningful number of particles were measured').toBeGreaterThan(50);
+    expect(probe.maxDist, 'every particle is on one of its own SVG flow paths').toBeLessThan(0.3);
+});

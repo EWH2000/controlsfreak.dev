@@ -117,19 +117,28 @@ keywords: compressor condenser evaporator txv psig cycle refrigeration head pres
                 <title id="rc-cycle-title">The four-component vapor-compression cycle</title>
                 <desc id="rc-cycle-desc">A closed rectangular loop. A compressor sits on the left side as a labeled circle; a condenser spans the top as a labeled rectangle with arrows above showing heat rejected to outdoor air; a metering device sits on the right side as a small labeled diamond; an evaporator spans the bottom as a labeled rectangle with arrows below showing heat absorbed from indoor air. Refrigerant flows clockwise around the loop, leaving the compressor upward into the condenser and returning along the bottom from the evaporator. The upper half of the loop — discharge line up from the compressor, through the condenser, liquid line down to the metering device — is the high-pressure, hot side, drawn in orange. The lower half — expansion line down from the metering device, across the evaporator, suction line back up to the compressor — is the low-pressure, cool side, drawn in muted blue. The four pipe segments carry labels for the refrigerant state along each one: hot vapor on the discharge, warm liquid on the liquid line, cold mix on the expansion line, cool vapor on the suction line. A small dashed line through the middle of the loop marks the equator between high side and low side.</desc>
 
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes pipe geometry — the page only recolors particles
+                     through FlowEngine.setPathColor, which never rebuilds a pool. A
+                     future geometry write must refresh in the same breath, or the page
+                     must opt out via the `flowGeometryLive` frontmatter
+                     (flowStaticGuard, .eleventy.js). -->
                 <!-- ── HIGH-SIDE pipes (orange / --heat) ── -->
-                <path id="rc-discharge" data-flow="supply" d="M 120 193 V 85 H 200" fill="none"
+                <path id="rc-discharge" data-flow="supply" data-flow-static="true" d="M 120 193 V 85 H 200" fill="none"
                       stroke="var(--heat)" stroke-width="3"/>
-                <path id="rc-liquid"    data-flow="supply" d="M 520 85 H 600 V 195" fill="none"
+                <path id="rc-liquid"    data-flow="supply" data-flow-static="true" d="M 520 85 H 600 V 195" fill="none"
                       stroke="var(--heat)" stroke-width="3"/>
 
                 <!-- ── LOW-SIDE pipes (cool / --blue-cool). data-flow="return" gives the
                      engine blue-cool particles automatically; stroke-dasharray is the
                      reduced-motion / print fallback (the screen+animation override in
                      styles.css drops the dashes once the engine adds .flow-active). ── -->
-                <path id="rc-expansion" data-flow="return" d="M 600 235 V 345 H 520" fill="none"
+                <path id="rc-expansion" data-flow="return" data-flow-static="true" d="M 600 235 V 345 H 520" fill="none"
                       stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
-                <path id="rc-suction"   data-flow="return" d="M 200 345 H 120 V 237" fill="none"
+                <path id="rc-suction"   data-flow="return" data-flow-static="true" d="M 200 345 H 120 V 237" fill="none"
                       stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
 
                 <!-- Direction arrows. One per leg per segment so the loop direction
