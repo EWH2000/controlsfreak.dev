@@ -76,6 +76,20 @@
 // `data-flow-reverse="true"` and the engine walks it from end to
 // start instead of rewriting the path.
 //
+// Per-path geometry caching: `data-flow-static="true"` opts one path
+// into the sampled point table (see "Idle cost" below) — the same
+// treatment the gutter gets unconditionally. It is an assertion by the
+// page, not a hint: *every* mutation of this path's `d` is followed by
+// a FlowEngine.refreshPath() call on it. Pages that hold to that get
+// the cheaper per-frame read; pages that can't must NOT set it. The
+// live counter-example is simulators/hydronic-loop-builder.html, which
+// rewrites `d` on every pointermove and only refreshes on pointer-UP —
+// its particles track the dragged pipe *because* the read is live, and
+// a table there would strand them on the pre-drag route until release.
+// simulators/refrigerant-loop.html is the opposite case and a ready
+// candidate: its one geometry swap (the cycle re-route) calls
+// refreshPath on each element immediately after setting `d`.
+//
 // Per-path density: `data-flow-density="<float>"` is an optional
 // multiplier on baseline particle spacing. Default 1.0 (= baseline
 // SPACING). Lower values space particles farther apart on that path
@@ -175,6 +189,64 @@
 // What's NOT here: anything page-specific. No per-diagram tuning, no
 // hooks for play/pause UI, no speed coupling to a slider. Add those
 // on the page that needs them; keep the engine boring.
+//
+// ── Idle cost (codebase-issues #198) ───────────────────────────────
+// The gutter collage is the engine's dominant consumer: 120 motif
+// SVGs contribute ~360 flow pools / ~557 particles on EVERY page, so
+// a plain calculator page with no animation of its own still paid
+// ~41% of a CPU core, continuously, at idle. Three mechanisms below
+// cut the per-frame work; each is measured, not assumed:
+//
+// The gutter is not the only consumer, and on a public page it is
+// often not the main one: simulators/refrigerant-loop.html idles with
+// 78 particles on CONTENT paths, and hiding its gutter changes nothing
+// measurable. So of the three mechanisms below, only the first is
+// scoped — the other two apply to EVERY pool, because content diagrams
+// are where a visitor actually pays.
+//
+//   1. Point table — the one scoped mechanism. setPos() called
+//      getPointAtLength() per particle per frame. Gutter geometry is
+//      server-rendered and static, so gutter pools sample the path
+//      ONCE at build into a flat table and interpolate between
+//      samples; a content path opts in with data-flow-static (above).
+//      The scope exists for exactly one page: hydronic-loop-builder
+//      rewrites `d` on every pointermove and only calls refreshPath()
+//      on pointer-UP, so its particles track the pipe mid-drag
+//      *because* the read is live.
+//   2. Cheaper writes, EVERY pool. `circle.cx.baseVal.value = n` skips
+//      the number→string→attribute-parse round trip setAttribute()
+//      pays, and reflects into getAttribute('cx') (measured 4.1×
+//      cheaper than setAttribute with a raw float, 2.1× vs. a rounded
+//      one). Values round to 0.1 user units and re-write only when
+//      that rounded value CHANGED — an axis-aligned run has one
+//      constant coordinate, whose write then vanishes.
+//   3. visiblePools, EVERY pool. The frame loop walked all ~360 pools
+//      every frame to ask each whether it was visible. The
+//      IntersectionObserver already knows, so it now maintains a
+//      `visiblePools` array and the loop iterates only that; a
+//      zero-particle pool never joins it at all. The full-`pools`
+//      !isConnected sweep still runs — on a slow cadence — because it
+//      is the ONLY reap path for detached elements and
+//      hydronic-loop-builder documents relying on it.
+//
+// Cheaper writes are not free writes: each one still dirties style and
+// layout for its subtree, so the per-frame floor is set by how many
+// particles move, not by how cheaply each move is issued. That is why
+// the engine-side levers plateau — going lower means moving fewer
+// particles, not writing them faster. Two levers that WOULD have gone
+// lower were measured and rejected: rate-gating the gutter to ~20fps
+// bought the flagship simulator nothing (its cost is content pools plus
+// gutter PULSE paths, and a pulse can never be rate-gated — the comet
+// would read as disconnected blinks), and freezing the gutter outright
+// measured best of all but is a visible change: a background that
+// suddenly stops moving reads as broken to a returning visitor.
+//
+// Where this is headed: the gutter's [data-flow] paths are expected to
+// be retired by a future static-"print" background, at which point the
+// gutter stops being an engine consumer at all. So the durable value of
+// the work above is the CONTENT diagrams — the education lessons and
+// the simulators — not the collage that motivated it. Weigh future
+// engine changes on what they do for a page's own diagrams.
 // ──────────────────────────────────────────────────────────────────────
 
 (function () {
@@ -218,23 +290,123 @@
     const activePulses = [];        // [{ el, length, speed, headOffset, circles: [...] }]
     const visiblePulseEls = new Set();
     const visibleFlowEls = new Set();
+    // Derived from visibleFlowEls: the pools the frame loop actually
+    // ticks — visible AND particle-bearing. The IO callback and
+    // buildPoolForEl are the only writers; every removal path goes
+    // through removePool.
+    const visiblePools = [];
     let pulseIO = null;
     let flowIO = null;
     let gutterMql = null;
     let frameStarted = false;   // engine initialized (reduced-motion gate); set once
     let looping = false;        // rAF loop currently scheduled (#113 — suspends when idle)
     let lastFrameT = null;      // last rAF timestamp; reset whenever the loop suspends
+    let lastReapT = 0;          // last full-`pools` stale sweep (#198)
 
     // The gutter collage's own CSS hides it below this width — keep in
     // sync with the .schematic-bg media query in styles.css.
     const GUTTER_MQ = '(min-width: 1240px)';
+
+    // Stale-pool reap cadence. The frame loop catches a detached VISIBLE
+    // pool the same frame (it iterates those anyway); everything else —
+    // including the orphans hydronic-loop-builder's renderAll() leaves
+    // behind — is caught by this amortized full-`pools` sweep. It stays
+    // the only reap path for detached elements, so the interval is a
+    // latency knob, never an on/off switch.
+    const REAP_INTERVAL = 500;      // ms
+
+    // Point-table sampling pitch, in path user units. Particles advance
+    // ~0.5 u/frame, so a nearest-sample lookup would visibly step —
+    // positions interpolate between samples instead. At 1 u the worst
+    // case is a 90° corner falling midway between two samples, where
+    // the chord cuts ~0.35 u off the vertex for ~2 frames.
+    const TABLE_STEP = 1;
+
+    // True if `el` sits inside the gutter collage. Build-time only —
+    // never called per frame (pools carry the answer as `pool.gutter`).
+    function inGutter(el) {
+        return !!(el.closest && el.closest('.schematic-bg'));
+    }
 
     // True while `el` sits inside the gutter collage AND the gutter is
     // hidden — i.e. building/keeping a pool for it would animate
     // circles that can never paint.
     function gutterHidden(el) {
         if (!gutterMql || gutterMql.matches) return false;
-        return !!(el.closest && el.closest('.schematic-bg'));
+        return inGutter(el);
+    }
+
+    // ── POINT TABLE ────────────────────────────────────────────────
+    // Sampled positions along one path, so the frame loop interpolates
+    // instead of calling getPointAtLength() per particle per frame.
+    // Gutter pools get a table unconditionally (their geometry is fixed
+    // by construction); a content path opts in with data-flow-static.
+    // See that note in the header for the assertion opting in makes, and
+    // for why hydronic-loop-builder must never set it.
+    //
+    // The gutter renders 120 motifs from SIX distinct bodies, so the
+    // ~1,800 gutter geometry elements collapse to ~90 distinct shapes.
+    // Tables are immutable and keyed on the geometry attributes, so one
+    // table serves every repeat — which is what makes a 1-unit pitch
+    // affordable. A geometry mutation produces a different key and
+    // therefore a different table, so the cache cannot go stale. The
+    // gutter's motif vocabulary bounds the bulk of it; an opt-in content
+    // path contributes its own shapes on top.
+    const tableCache = new Map();
+    const PT = { x: 0, y: 0 };      // scratch — reused, never escapes
+
+    function geometryKey(el, length) {
+        const tag = el.tagName;
+        const parts = [tag, Math.round(length * 100)];
+        if (tag === 'line') {
+            parts.push(el.getAttribute('x1'), el.getAttribute('y1'),
+                       el.getAttribute('x2'), el.getAttribute('y2'));
+        } else if (el.hasAttribute('d')) {
+            parts.push(el.getAttribute('d'));
+        } else if (el.hasAttribute('points')) {
+            parts.push(el.getAttribute('points'));
+        } else {
+            return null;            // unshareable shape — build a private table
+        }
+        return parts.join('|');
+    }
+
+    function samplePath(el, length) {
+        const n = Math.max(1, Math.ceil(length / TABLE_STEP));
+        const step = length / n;
+        const xs = new Float64Array(n + 1);
+        const ys = new Float64Array(n + 1);
+        for (let i = 0; i <= n; i++) {
+            const pt = el.getPointAtLength(i * step);
+            xs[i] = pt.x;
+            ys[i] = pt.y;
+        }
+        return { n: n, step: step, xs: xs, ys: ys };
+    }
+
+    function buildTable(el, length) {
+        const key = geometryKey(el, length);
+        if (key === null) return samplePath(el, length);
+        let table = tableCache.get(key);
+        if (!table) {
+            table = samplePath(el, length);
+            tableCache.set(key, table);
+        }
+        return table;
+    }
+
+    // Linear interpolation between the two bracketing samples. `d` is
+    // clamped into [0, length]: offsets are always in [0, length) and
+    // the reversed read yields (0, length], so the top clamp only ever
+    // fires on the exact endpoint.
+    function tablePoint(table, d) {
+        const f = d / table.step;
+        let i = f | 0;
+        if (i < 0) i = 0;
+        else if (i >= table.n) i = table.n - 1;
+        const t = f - i;
+        PT.x = table.xs[i] + (table.xs[i + 1] - table.xs[i]) * t;
+        PT.y = table.ys[i] + (table.ys[i + 1] - table.ys[i]) * t;
     }
 
     function init() {
@@ -282,16 +454,15 @@
     // init/buildGutterPools) restarts it. `frameStarted` stays the
     // initialized-once gate firePulse/refreshPath/setPathColor check;
     // `looping` separately tracks whether the rAF loop is scheduled.
+    // `visiblePools` is maintained to hold exactly the pools the old
+    // full-`pools` scan would have selected, so this stays equivalent.
+    // The pulse arm reads `visiblePulseEls.size` rather than walking
+    // pulsePaths: pulseIO.observe() is called ONLY for intervalMs > 0
+    // (see buildPulsePathFor), so membership already implies it.
     function hasWork() {
         if (activePulses.length) return true;
-        for (let p = 0; p < pools.length; p++) {
-            if (pools[p].particles.length && visibleFlowEls.has(pools[p].el)) return true;
-        }
-        let work = false;
-        pulsePaths.forEach(function (cfg, el) {
-            if (cfg.intervalMs > 0 && visiblePulseEls.has(el)) work = true;
-        });
-        return work;
+        if (visiblePools.length) return true;
+        return visiblePulseEls.size > 0;
     }
 
     function startLoop() {
@@ -300,6 +471,19 @@
         looping = true;
         lastFrameT = null;
         requestAnimationFrame(frame);
+    }
+
+    // Amortized reaper over the FULL pool list. The frame loop only
+    // walks visible pools now, so this is what retires a pool whose
+    // element was detached while offscreen — the case
+    // hydronic-loop-builder's renderAll() creates and documents
+    // relying on (codebase-issues #112).
+    function reapStalePools(t) {
+        if (t - lastReapT < REAP_INTERVAL) return;
+        lastReapT = t;
+        for (let p = pools.length - 1; p >= 0; p--) {
+            if (!pools[p].el.isConnected) removePool(pools[p]);
+        }
     }
 
     function frame(t) {
@@ -313,20 +497,16 @@
 
         // Iterate backwards so an in-flight splice of a stale pool (its
         // annotated element was removed from the DOM) doesn't skip the
-        // next pool. No current page mutates SVG geometry like this —
-        // recording the guard so a future animated widget can't leak a
-        // detached-element reference here.
-        for (let p = pools.length - 1; p >= 0; p--) {
-            const pool = pools[p];
+        // next pool. Offscreen pools aren't in `visiblePools` at all —
+        // the particles placed at build time freeze until the path
+        // scrolls back into the viewport (audit #31: ticking everything
+        // cost ~100% of the idle main thread).
+        for (let p = visiblePools.length - 1; p >= 0; p--) {
+            const pool = visiblePools[p];
             if (!pool.el.isConnected) {
-                removePool(pool, p);
+                removePool(pool);
                 continue;
             }
-            // Offscreen pools don't tick — the particles placed at build
-            // time freeze until the path scrolls back into the viewport
-            // (audit #31: ticking everything cost ~100% of the idle main
-            // thread).
-            if (!visibleFlowEls.has(pool.el)) continue;
             const len = pool.length;
             for (let i = 0; i < pool.particles.length; i++) {
                 const part = pool.particles[i];
@@ -336,6 +516,7 @@
             }
         }
 
+        reapStalePools(t);
         tickPulses(dt);
 
         // Suspend when nothing can animate; a resume path restarts us.
@@ -419,20 +600,31 @@
                 pool.particles[i].circle.remove();
             }
         } else {
-            pool = { el: el, length: length, reverse: reverse, particles: [] };
+            pool = { el: el, length: length, reverse: reverse, particles: [], gutter: false, table: null };
             poolsByEl.set(el, pool);
             pools.push(pool);
         }
         pool.length = length;
         pool.reverse = reverse;
         pool.particles = [];
+        pool.gutter = inGutter(el);
+        // Cache geometry for the gutter (always static) and for any path
+        // that opts in with data-flow-static. Rebuilt here on purpose:
+        // refreshPath() re-runs this function, which is how a page that
+        // mutates `d` gets a fresh table. Everything else keeps the live
+        // read — see the data-flow-static note in the header.
+        pool.table = (pool.gutter || el.getAttribute('data-flow-static') === 'true')
+            ? buildTable(el, length)
+            : null;
 
         for (let i = 0; i < count; i++) {
             const circle = document.createElementNS(SVG_NS, 'circle');
             circle.setAttribute('r', RADIUS);
             circle.setAttribute('fill', fill);
             layer.appendChild(circle);
-            pool.particles.push({ circle: circle, offset: i * step });
+            // lx / ly are the last coordinates written, so an unchanged
+            // axis can skip its write. Undefined until the first place.
+            pool.particles.push({ circle: circle, offset: i * step, lx: NaN, ly: NaN });
         }
 
         // Place each particle at its initial position so the first
@@ -441,19 +633,56 @@
         placeAll(pool);
 
         // Tick only while visible — same IO pattern as the pulse gate.
+        // A pool with zero particles has nothing to tick, so it skips IO
+        // registration entirely (~96 of the gutter's ~360 pools). This
+        // sits AFTER ensureParticleLayer on purpose: that call is what
+        // adds `flow-active`, which six specs and styles.css pin.
+        if (!count) {
+            markPoolHidden(el);
+            if (flowIO) flowIO.unobserve(el);
+            return;
+        }
         ensureFlowIO();
         if (flowIO) flowIO.observe(el);
+        // A rebuild of an already-visible pool gets no fresh IO callback
+        // (observe() on an observed target is a no-op), so re-derive.
+        if (visibleFlowEls.has(el)) markPoolVisible(el);
     }
 
-    // Remove one pool (by reference + its index in `pools`): circles,
-    // lookup entries, IO registration. Shared by the stale-element
-    // splice in the frame loop and the gutter teardown.
-    function removePool(pool, index) {
+    // ── VISIBILITY BOOKKEEPING ─────────────────────────────────────
+    // visibleFlowEls stays the source of truth; visiblePools is the
+    // iteration list derived from it — a zero-particle pool has nothing
+    // to tick and never joins.
+    function markPoolVisible(el) {
+        visibleFlowEls.add(el);
+        const pool = poolsByEl.get(el);
+        if (!pool || !pool.particles.length) return;
+        if (visiblePools.indexOf(pool) === -1) visiblePools.push(pool);
+    }
+
+    function markPoolHidden(el) {
+        visibleFlowEls.delete(el);
+        const pool = poolsByEl.get(el);
+        if (!pool) return;
+        const i = visiblePools.indexOf(pool);
+        if (i !== -1) visiblePools.splice(i, 1);
+    }
+
+    // Remove one pool: circles, lookup entries, IO registration. Shared
+    // by the stale-element splice in the frame loop, the amortized
+    // reaper, and the gutter teardown.
+    function removePool(pool) {
+        const index = pools.indexOf(pool);
+        if (index === -1) return;
         for (let i = 0; i < pool.particles.length; i++) {
             pool.particles[i].circle.remove();
         }
+        // Drop from visiblePools BEFORE the poolsByEl delete — the
+        // lookup is how markPoolHidden finds the pool. Missing this is
+        // codebase-issues #112 all over again: a torn-down pool the
+        // frame loop still holds a reference to.
+        markPoolHidden(pool.el);
         poolsByEl.delete(pool.el);
-        visibleFlowEls.delete(pool.el);
         if (flowIO) flowIO.unobserve(pool.el);
         pools.splice(index, 1);
     }
@@ -468,8 +697,8 @@
     function teardownGutterPools() {
         for (let p = pools.length - 1; p >= 0; p--) {
             const pool = pools[p];
-            if (!(pool.el.closest && pool.el.closest('.schematic-bg'))) continue;
-            removePool(pool, p);
+            if (!pool.gutter) continue;
+            removePool(pool);
         }
         // #112: also retire in-flight pulses on gutter motifs and drop their
         // pulsePaths + pulseIO registrations. Teardown previously handled
@@ -522,8 +751,8 @@
             let appeared = false;
             for (let i = 0; i < entries.length; i++) {
                 const e = entries[i];
-                if (e.isIntersecting) { visibleFlowEls.add(e.target); appeared = true; }
-                else visibleFlowEls.delete(e.target);
+                if (e.isIntersecting) { markPoolVisible(e.target); appeared = true; }
+                else markPoolHidden(e.target);
             }
             if (appeared) startLoop();   // #113: resume the loop if it had suspended
         }, { rootMargin: '120px 0px' });
@@ -555,9 +784,26 @@
 
     function setPos(pool, part) {
         const d = pool.reverse ? (pool.length - part.offset) : part.offset;
+        if (pool.table) {
+            tablePoint(pool.table, d);
+            writePos(part, PT.x, PT.y);
+            return;
+        }
         const pt = pool.el.getPointAtLength(d);
-        part.circle.setAttribute('cx', pt.x);
-        part.circle.setAttribute('cy', pt.y);
+        writePos(part, pt.x, pt.y);
+    }
+
+    // `cx.baseVal.value = n` reflects into getAttribute('cx') (verified
+    // in Chromium) while skipping the number→string→attribute-parse
+    // round trip setAttribute pays. Coordinates round to 0.1 user units
+    // — subpixel at every rendered scale — and an axis whose rounded
+    // value is unchanged skips its write entirely, which is most of the
+    // gutter, where runs are axis-aligned.
+    function writePos(part, x, y) {
+        const rx = Math.round(x * 10) / 10;
+        const ry = Math.round(y * 10) / 10;
+        if (rx !== part.lx) { part.circle.cx.baseVal.value = rx; part.lx = rx; }
+        if (ry !== part.ly) { part.circle.cy.baseVal.value = ry; part.ly = ry; }
     }
 
     // ── PULSE MODE ─────────────────────────────────────────────────
