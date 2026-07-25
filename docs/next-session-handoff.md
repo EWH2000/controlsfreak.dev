@@ -1,10 +1,44 @@
-# Session handoff — INDEPENDENT VERIFICATION REQUESTED (2026-07-25)
+# Session handoff — VERIFICATION PASS COMPLETE (2026-07-25)
 
 > **Lifecycle:** written 2026-07-25, superseding the 2026-07-24 "static-print
 > background is next" handoff. That arc was **parked by the owner** — see
 > *§0 What changed*. This file's job is different from a normal handoff: it is a
 > **verification request**, not a work brief. Retire it when the owner has
 > merged or closed PR #430 and ruled on the DDC Workbench decisions.
+>
+> ## ✅ THE REQUESTED VERIFICATION RAN — 2026-07-25, at `b80111e` / PR head `702b616`
+>
+> **82 claims extracted: 45 VERIFIED · 7 CORRECTED · 25 PARTIAL · 5
+> UNVERIFIABLE.** Six independent lanes, each followed by an adversarial
+> refutation stage over its own corrections. Of **31 proposed corrections, 26
+> survived refutation and 7 were themselves wrong** (23% — close to the 7-of-19
+> rate this repo measured before, and the reason the refutation stage exists).
+>
+> **Headline: the WORK is sound; the RECORD of the work was not.** Nothing found
+> makes PR #430 wrong — the sweep's substance is confirmed (197 paths flagged,
+> all correct, no unrefreshed geometry write anywhere). What failed was the
+> description: 26 real errors, concentrated in numbers that were never written to
+> a repo artifact.
+>
+> **Full ledger in §14.** Corrections are also applied inline below, marked
+> **⚠️ CORRECTED**. Claims verified as written carry no marker.
+>
+> **Three findings that bear on a pending decision — read before ruling:**
+> 1. **C12 is wrong in a way that would ship a bad fix** (§6, decision #4).
+> 2. **D6's second half is false** (§7, decision #5) — a shipped page's failure
+>    mode is not what this file says.
+> 3. **C15's two candidate layouts have no coordinates**, so their headline
+>    numbers are unfalsifiable (§6). You are being asked to choose between two
+>    layouts that do not exist yet.
+>
+> **And one thing this file was RIGHT about, against a browser that said
+> otherwise:** §8's arithmetic. A lane measured the page and "corrected" E1–E4;
+> the refutation stage found the lane had measured under headless Chromium's
+> `hinting=full` glyph quantization, while this box's fontconfig
+> (`/etc/fonts/conf.d/10-hinting-slight.conf`) selects `hintslight` — which is
+> what a *headed* browser uses. Under `slight`, §8's numbers reproduce **to three
+> decimals**. **The owed confirming sweep is now done and the bug is real** — see
+> §14.
 
 ## 0 — Read this first
 
@@ -72,16 +106,30 @@ The owner scoped the next session (this one) explicitly, 2026-07-25:
 
 | | |
 |---|---|
-| `main` | **`db88b7a`** — clean tree, `package.json` **3.74.1** |
-| Open PR | **#430**, branch `issue-202/education-flow-static`, head **`702b616`** |
-| PR state | **draft**, 11 commits, `+1228 / −215` across 24 files |
+| `main` | ✅ **NOW `ab8720b`** — PR #430 **MERGED by the owner 2026-07-25**. `package.json` **3.74.2** (lockfile agrees). `git diff --name-only 702b616 ab8720b -- ':(exclude)docs/'` is **empty**, so main's code tree is byte-identical to the CI-validated PR head — the suite was not re-run on main for that reason. A clean `rm -rf _site && npm run build` on merged main exits **0**, writes 136 files, and `flowStaticGuard` passes; built output stamps `?v=3.74.2` and shows 197 flagged education content paths against `41 × 360` gutter paths (= 14,957 total, confirming the A2 correction's arithmetic). |
+| ~~Open PR~~ | ~~#430~~ — merged as `ab8720b`; branch auto-deleted on merge, along with three others from earlier merges (`fix/ddcw-idle-raf-gating`, `fix/gutter-idle-cpu`, `fix/rl-flow-static-optin`) |
+| Historical (pre-merge) | `main` was `b80111e`; PR #430 head was `702b616`, draft, 11 commits, `+1228 / −215` across 24 files |
 | PR CI | GitHub Actions `test` **pass**; `Workers Builds: controlsfreak` **pass** |
 | Branch version | **3.74.2** (patch bump, both `package.json` and `package-lock.json`) |
 
 ⚠️ **The working tree at `/home/ehill/controlsfreak.dev` is shared with other
 live sessions, and this branch is checked out in a `.claude/worktrees/` worktree.
-Never `git checkout` in the shared tree.** Read branch content with
-`gh pr diff 430`, or
+Never `git checkout` in the shared tree.**
+
+> ⚠️ **CORRECTED — that worktree is a TRAP, do not read it.**
+> `.claude/worktrees/wf_c5ad8caf-414-5` is on branch
+> `issue-202/education-flow-static` but sits at **`8e0c2f1`**, a stale
+> pre-rewrite tip that is **neither an ancestor nor a descendant** of the real PR
+> head `702b616` (the branch was rewritten; `8e0c2f1` and `da92029` share a
+> commit message and differ in content). A session that follows the sentence
+> above would verify the wrong content while believing it was reading PR #430.
+> **Use the `git archive` recipe below, or `git worktree add --detach <scratch>
+> 702b616`.** Also note `_site` inside any shared worktree may carry orphaned
+> output from another lane's build (Eleventy never prunes) — one such phantom,
+> `_site/education/zzverify-scratch.html` with an unflagged `data-flow` path, was
+> present during this pass.
+
+Read branch content with `gh pr diff 430`, or
 `git fetch origin issue-202/education-flow-static && git archive origin/issue-202/education-flow-static | tar -x -C <scratch>`.
 
 ⚠️ **`npm test` cannot run as-is on this box.** `playwright.config.js`'s
@@ -107,9 +155,17 @@ session did not state:
    work on current client hardware is a substantially smaller share. The
    **ratio** (326.3 vs 0.3) is what travels; the absolute number is not.
 2. **It strengthens the owner's decision to park the gutter work, rather than
-   weakening it.** The worst idle cost measured anywhere in this arc was taken on
-   2012 silicon and still held ~60 fps. A modern machine has more headroom, not
-   less.
+   weakening it.** ⚠️ **CORRECTED (S6): "the worst idle cost … still held ~60 fps"
+   is FALSE.** That holds for the plain-calculator control (signal-scaling, 326.3
+   ms/s at ~60 fps) and for hydronic-loops (164.5 at 59.6 fps). The **actual worst
+   measurement is `refrigerant-loop` as shipped: 55.5% CPU at 26 fps** — visibly
+   saturated — and codebase-issues #198 records it worse still, "pinned near 98%
+   either way" at **20.9–24.1 fps**. So **pages on this site DO drop frames**, and
+   they are the simulators — which is precisely §11's own "on some pages the motion
+   is the content" caveat. Scope the sentence to *the gutter's cost on a page with
+   headroom*; the unscoped version would let a session conclude nothing on the
+   site drops frames. The parking decision still stands on the owner's grounds,
+   but not on this one.
 3. **A CPU-throttle sweep on this box is harsher than intended.** The producing
    session proposed 4×/6× throttling to model "a 2018 jobsite laptop." 4× on an
    FX-6300 lands well below any laptop a tech would actually carry, so that test
@@ -193,9 +249,17 @@ Read this before deciding where to spend effort.
    34.4px clearance against a 36px test (fails by 1.6px), and `cool-1stage`'s
    **175px** passes by only 3.4px.
 2. **The full-page screenshot sweep for text-overflow was never run.** It is
-   owed, in **both themes and both unit systems**. `npm run screenshots` covers
-   only the `DIAGRAM_SELECTOR` class list — a subset that does not include the
-   unit graphic's badges.
+   owed, in **both themes and both unit systems**.
+   ⚠️ **CORRECTED (S19) — the gap is worse than stated, and the stated fix would
+   not work.** `npm run screenshots` is a **sitemap walker**
+   (`tests/screenshot-diagrams.mjs:48` — `fetch(BASE + '/sitemap.xml')`), and
+   `ddc-workbench` is deliberately **absent from the sitemap**
+   (`grep -c ddc-workbench _site/sitemap.xml` → **0**). So the script **never
+   visits the page at all**, and adding `svg.fcu-svg` to `DIAGRAM_SELECTOR` would
+   change nothing. The owed sweep needs its own driver or a hand-picked manifest,
+   exactly as `tests/perf-profile.mjs` already does for the same reason.
+   ✅ **Partially discharged during this pass**: the badge band was captured at
+   `deviceScaleFactor 3` at 1600px and 700px. **The bug is real** — see §14.
 3. **The `ddc-workbench-unit` profiler baseline still does not reproduce.** It
    flagged over-tolerance on 2 of 2 runs (4.34 and 4.67 layouts/frame against a
    recorded 2.23 whose own capture samples were 2.20 / 2.44 / 1.87). Noise
@@ -214,9 +278,28 @@ Read this before deciding where to spend effort.
 
 - **A1.** 15 education pages carry `[data-flow]` elements, holding **197** flow
   paths total, and all 197 carry `data-flow-static="true"` on the branch.
-- **A2.** **19** pages site-wide carry `[data-flow]`; the non-education ones
-  needed no change. Two education pages mention `data-flow=` in prose only, to
-  say they have none: `coil-selection.html` and `vfds.html`.
+- **A2.** ⚠️ **CORRECTED — "19" is wrong and matches no metric.** **17** pages
+  carry `[data-flow]` elements in source (15 education + `simulators/pid-tuner.html`
+  + `simulators/refrigerant-loop.html`); an 18th, `hydronic-loop-builder.html`,
+  creates them only at runtime. Site-wide source total is **230 elements, 211
+  flagged** on the branch. Every alternative metric was tried — `grep -rl`, the
+  whitespace-anchored form, `.html`-only, runtime-inclusive, mention-only — and
+  **nothing reaches 19**; the figure appears in no commit body and no PR body, so
+  it is handoff-only. **The number that actually matters is different again: at
+  RENDER time all ~134 built pages carry `[data-flow]`**, because
+  `_includes/schematic-bg.njk` injects **360** gutter flow paths into every page.
+  So this PR's 197 content paths are ~0.4% of the site's flow-path population —
+  which is the quantitative backing for the "gutter burns ~40% of a core on every
+  page" finding. The prose-only sub-claim IS verified (`coil-selection.html:18`,
+  `vfds.html:18`, both zero elements) — though site-wide the prose-only set is
+  three files, not two (`_includes/layouts/page.njk:80`), and both education
+  mentions sit in **CSS** block comments, which `maskComments` does strip.
+  ⚠️ "The non-education ones needed no change" is true for *correctness* but
+  understates a perf residual: **`simulators/pid-tuner.html` is a safe, unclaimed
+  opt-in candidate** — 4 flow paths with literal static `d`, zero geometry writes,
+  and it already calls `refreshPath` on every path when it mutates density
+  (`:755`, `:803-804`). It is the one page still paying `getPointAtLength()` per
+  particle per frame on geometry that never moves.
 - **A3.** None of the 15 pages mutates a flow path's `d` without an immediate
   `FlowEngine.refreshPath()`. Claimed evidence: the only geometry writes under
   `html/education/` are `pump-control`'s `setAttribute('points')` + `cx`/`cy`
@@ -242,9 +325,15 @@ Read this before deciding where to spend effort.
   rules out a suspended loop reading as an optimisation. (46/160 is the correct
   partial: the other diagrams are off screen and IntersectionObserver freezes
   them.)
-- **A7.** No other profiler row moved beyond its own REP SPR. A review lane
-  independently reproduced on different hardware: main **50.48** → branch
-  **3.90**, liveness identical on both.
+- **A7.** ⚠️ **UNVERIFIABLE — and this is the file's own worst instance of the
+  pattern it warns about.** The pair **50.48 → 3.90** appears in **no file on the
+  branch, no commit body, and no part of the PR body.** This handoff is its only
+  carrier. CLAUDE.md warns "PR bodies are not a reliable debt ledger"; this is one
+  step worse — not even a PR body holds it, and re-running the profiler would
+  produce a third pair rather than confirm these two. **Either land the numbers in
+  `tests/perf-profile.mjs` / the PR body, or strike the claim.** The first
+  sentence ("no other row moved beyond its rep spread") IS in the PR body, but
+  with no per-row table behind it to check.
 - **A8.** `tests/perf-profile.mjs` re-based the `hydronic-loops` row **only**
   (50.97 → 4.02 layouts/frame), with three capture samples recorded and **no
   tolerance widened**. The superseded 2026-07-24 spread line is annotated, not
@@ -275,9 +364,12 @@ Read this before deciding where to spend effort.
   **path relative to the scan root** (an earlier revision keyed on basename,
   which let any same-named file inherit the pass). The gutter is exempt because
   `pool.gutter` tables it unconditionally.
-- **B5.** Two anti-vacuity arms: an empty scan reports itself, and an exempt path
-  that stops resolving becomes an offender. Proved end-to-end by moving the real
-  gutter partial — **both arms fire in one run**.
+- **B5.** ⚠️ **CORRECTED — "both arms fire in one run" is not what was proved.**
+  The gutter-move run proves the **exempt-resolution** arm plus the moved partial
+  being caught as an ordinary offender — two *messages*, one arm. **The
+  empty-scan arm (`.eleventy.js:467-469`) is unproven and cannot be triggered by
+  any single-file move.** The PR body states this correctly; the handoff
+  compressed "both messages" into "both anti-vacuity arms."
 - **B6.** The guard does **not** reach simulators, deliberately.
   `hydronic-loop-builder.html` creates its flow paths from JS and contains zero
   `data-flow=` attributes, so a markup rule would pass it vacuously — *silent
@@ -372,14 +464,34 @@ Subject: `html/simulators/ddc-workbench.html`, hidden
   ≥1184px viewport, against an 896px sheet ⇒ **58–178px off-screen at every
   supported width**, and that is the Y1 / Y2 / fan-enable output column the
   page's own prose at `:738-743` sends the reader to.
-- **C12. ⚠️ The same router bug is live on the PUBLIC page.** Five of seven
-  sheets on `html/simulators/function-block-editor.html` have sub-threshold hops
-  (econ, tstat-cool, tstat-heat, reset, proof); only freeze and pid are clean.
-  Lowering the threshold **36 → 20px** fixes the public page completely
-  (tstat-cool/heat 3/11 → 11/11 forward, econ 4/5 → 5/5, reset 4/6 → 6/6, zero
-  new crossings) and does **nothing** for the workbench. Going to 14px makes the
-  workbench *worse* (16/24 forward but crossings 8 → 14). **Separate bug,
-  separately worth fixing — not the workbench's fix.**
+- **C12. ⚠️ CORRECTED — HIGH. Three of seven sub-claims are wrong, and acting on
+  this as written would ship a threshold change believing all seven sheets were
+  clean.** The bug IS live on the public page and the five named sheets do have
+  sub-threshold hops. But:
+  - ❌ **"20px fixes the public page completely" is FALSE.** `proof` stays at
+    **2/7 forward at 20px** — and at 16px and at 14px. Its hops are 145, 142,
+    142, 149 and 140px; the threshold would have to fall to **≤4.4px**. So 20px
+    fixes **four** of the five sheets.
+  - ❌ **`proof` is probably not a defect at all.** `function-block-editor.html:287-290`
+    documents its layout as deliberate — the chain alternates top/bottom rows so
+    "every link gets a long visible vertical run instead of a near-zero horizontal
+    stub" — and it measures **0px hidden, 1 crossing**. It is the one sheet
+    already designed around the fallback route.
+  - ❌ **"does nothing for the workbench" is too strong.** At 20px the branch
+    split is unchanged (6/24), but the fallback **stub shortens**, moving every
+    leg into the column gutter: `cool-2stage` occlusion drops **2204.5 → 1481px**
+    (33 → 16 pairs), `fanon` 2369 → 1622px, while crossings rise **8 → 18**. **A
+    shared-threshold change is NOT workbench-neutral and needs a visual check
+    there too.**
+  - ⚠️ The 14px crossing figure is **13** (`cool-2stage`) and **15** (`fanon`),
+    not 14 — and at 14px occlusion *improves* (2204 → 1312px, 33 → 11 pairs), so
+    "worse" holds only on the crossings metric that **C7 itself declares is not
+    the defect.** That tension is worth resolving before ruling on decision #4.
+  - ✅ Better than claimed in one respect: 36 → 20px does not merely add "zero new
+    crossings" — it **removes 8**, as tstat-cool and tstat-heat each go 4 → 0.
+  - 📐 **Record the crossing convention next to any crossing number.** These are
+    *intersection points*, not wire pairs; the two conventions coincide at 36px
+    and 14px, which is exactly why a correct figure looks wrong at 20px.
 - **C13.** The palette's own drop grid uses a **150px x-pitch**
   (`fbe-editor.js:136-139`), so a visitor building a sheet by hand gets the
   buried-wire shape by default.
@@ -434,11 +546,24 @@ them.
 - **D5.** The comment at `:1730-1739` heads all three programs but is accurate
   for **`cool-2stage` only** — `cool-1stage` has one latch, no OR, no AND and no
   Y2 logic, and "fan enabled on the cooling call" is false in `fanon`.
-- **D6.** `deadband` is a user-editable const feeding an ADD with no `limit`
-  block: at **0** the make and break points collapse and the strict comparators
-  leave a zero-width band (chatter at tick rate); at **negative** the make point
-  falls below the break point and the set-dominant latch holds Y1 **on
-  permanently**.
+- **D6. ⚠️ CORRECTED — HIGH. First half verified; SECOND HALF IS FALSE.** The
+  `deadband = 0` analysis is exactly right. But a **negative** deadband does
+  **not** hold Y1 on permanently — it **erases the hysteresis entirely** and turns
+  stage 1 into a bare `temp > SP + deadband` comparator. At `deadband = -2` the
+  make point is 70 and the break point 72, so set-dominance forces Y1 ON *inside
+  the 70–72 overlap* — but **below 70, `gt1` is false while `lt1` is still true,
+  so the latch resets and Y1 goes OFF.** Measured with the real engine in a Node
+  `vm`: Y1 off at 60 / 50 / 40 / 0 / **−50 °F**; **0 mismatches over 20,000 random
+  ticks** against a bare comparator; 399/400 dither flips at the make point; Y1
+  OFF on 3,273 of 5,000 random-walk ticks. Restricting to the reachable sensor
+  domain does not rescue it either — `FCU_POINTS` clamps `space-temp` to a 70
+  minimum and `sr1` already resets at exactly 70.
+  **The real failure mode is the `deadband = 0` case relocated: zero hysteresis
+  and chatter at tick rate, not a stuck output.** That is also the *better*
+  teaching hook — it shows set-dominance in the overlap band converting hysteresis
+  into a bare threshold. Corollary the brief misses: a negative `deadband` also
+  breaks the `or1`/`and1` redundancy (see D2), and at exactly `t = SP + deadband`
+  the "provably redundant" `or1` actively **masks** the `sr1` reset.
 - **D7.** `sep` and `hundred` are **not** in `FCU_POINTS` (`:1720-1728`) while
   `cooling-setpoint` and `deadband` are — so two of four tuning numbers appear on
   the IO chip strip and two are reachable only by selecting a block.
@@ -511,7 +636,10 @@ allows.
 
 ## 10 — Owner decisions pending (do not pre-empt any of these)
 
-1. **Merge or close PR #430** — after this verification pass.
+1. ~~**Merge or close PR #430**~~ — ✅ **MERGED 2026-07-25** as `ab8720b`, after
+   the verification pass. Post-merge cleanup done: strays reaped (§12), worktrees
+   pruned, `_site` rebuilt clean, and the owed `codebase-issues` entries paid
+   (§11).
 2. **`flowGeometryLive` granularity** — page-scope as built, or per-element? (B7)
 3. **`#204` header amendment** — ride along on #430, or ship separately? (B8)
 4. **Wiresheet layout: 7-column vs 6-column.** (C15)
@@ -533,15 +661,50 @@ allows.
   `refrigerant-loop` or the workbench and the thing being taught stops.
 - **The DDC Workbench buildout is the live thread** the owner was interrupted
   from when a small amount of lag sent the session down the perf path.
-- **Owed once #430 merges:** `codebase-issues` entries for C12 (the public
-  page's router bug) and C13 (the palette drop grid). Held only to avoid
-  conflicting with #430's own edits to that file.
+- ✅ **PAID 2026-07-25, once #430 merged.** C12 landed as `codebase-issues`
+  **#205** (with the three verification corrections folded in — 20px fixes four
+  of five sheets not five, `proof` is deliberate, and a threshold change is not
+  workbench-neutral) and C13 as **#206**. The same pass logged the defects
+  adversarial verification turned up: **#207** (the guard's symlink blind spot
+  and its `cwd` scan scope), **#208** (rem/px coupling — the 171.6px threshold
+  is not a constant and `cool-1stage` breaks at enlarged text), **#209**
+  (deleting an actuator IO block strands its plant actuator; unbounded const
+  inputs), **#210** (the stale HAND-override comment), **#211** (the badge
+  caption overflow — the owner's original bug — plus the dead presentation
+  font-sizes), **#212** (`updateChips` ignores units), **#213** (`pid-tuner`'s
+  perf residual) and **#214** (the untrustworthy profiler baseline). Two
+  existing entries were amended in place where verification disproved a number:
+  **#203**'s "145 scanned files" (the guard scans **52**) and **#202**'s
+  Resolution note (`12 of 15` holds only for `data-flow=` *with* the equals
+  sign; the pasted command gives 15 of 15).
 
-## 12 — Cleanup: host process hygiene (mandate item 2)
+## 12 — Cleanup: host process hygiene (mandate item 2) — ✅ DONE 2026-07-25
 
-**Nine stale servers are running, the oldest for 8+ days.** They are leftovers
-from previous Claude sessions on this box, not services. PIDs will have changed
-by the time you read this — **match on the pattern, not the numbers**:
+> **All nine were reaped 2026-07-25.** Every stray port (`8761`, `8768`, `8793`,
+> `8794`, `8931`, `9137`, `9402`, `9500`, `41573`) released; the household stack
+> verified intact afterwards (80, 443, 3000, 8000–8006, 8080, 8123, 9090 still
+> listening, all eight containers healthy, hub answering 200). Orphaned
+> `.claude/worktrees/` worktrees from this arc were removed, and the stale
+> pre-rewrite branch archived as `archive/issue-202-pre-rewrite` — its unique
+> content is only superseded drafts of comments (verified), but the ref is kept
+> rather than discarded.
+>
+> ⚠️ **One correction to item 3 below, learned by doing it wrong.**
+> `pkill -f 'http\.server'` **matched the invoking shell's own command line**
+> (which carried the pattern as an argument) and killed it mid-run. The wrapper
+> trap cuts both ways: `-f` matches *any* process whose cmdline contains the
+> string, including the process doing the killing. **Collect PIDs first and kill
+> by PID**, filtered to real interpreters:
+> `pgrep -a -f 'http\.server|eleventy' | awk '$2 ~ /(^|\/)(python3|node|npm)$/ {print $1}'`
+> then `kill -TERM` those, escalating to `-KILL` only for survivors.
+>
+> The broader ask at the end of this section — *what launches these and why
+> nothing reaps them* — is **still open**, and is the strongest argument for the
+> quadlet pattern in the `~/caddy` preview brief.
+
+**Nine stale servers were running, the oldest for 8+ days.** They were leftovers
+from previous Claude sessions on this box, not services. PIDs change — **match on
+the pattern, not the numbers**:
 
 ```
 pgrep -af 'http\.server|eleventy'
@@ -618,3 +781,258 @@ way this session:
   fresh, but a permanently running node process — exactly how the 2-day-old stray
   on `:41573` came to exist)? If the answer is "live", the quadlet pattern is what
   keeps it reapable.
+
+## 14 — Verification results (2026-07-25)
+
+Six lanes over `main` @ `b80111e` and PR head `702b616`, each followed by an
+adversarial refutation stage. **82 claims: 45 VERIFIED · 7 CORRECTED · 25
+PARTIAL · 5 UNVERIFIABLE.** Of **31 corrections, 26 held and 7 were refuted.**
+
+### 14.1 — The refutation stage earned its place: 7 corrections were wrong
+
+**E1–E4 (all four refuted).** A lane ran a browser against §8 and reported the
+arithmetic as substantially overstated (DAT 93.82 units, not 102; EAT "does not
+read as broken"). The refutation found the lane had measured under **headless
+Chromium's default `hinting=full`**, which rounds the web font's glyph advance to
+an integer CSS pixel. This box's fontconfig
+(`/etc/fonts/conf.d/10-hinting-slight.conf`) selects `hintslight` — which headless
+overrides and **a headed browser does not**. Under `--font-render-hinting=slight`,
+`DAT · DISCHARGE` measures **101.87–101.98 units at every viewport from 400 to
+1600px**, and forcing integer SVG scale under the lane's own flags gives exactly
+**102.000 / 6.00 per edge / 13.33%**. **§8's numbers are right to three decimals,
+for all three captions.** E4's "invariant to viewBox scale" is correct *as
+geometry*; the variation the lane saw is non-monotonic rasterizer noise (97.90 at
+one scale, *below* the geometric 102), not a desktop-vs-phone gradient. Design
+any fix against **~102 units as a FLOOR**, and verify under both render paths.
+
+**✅ THE OWED SWEEP IS DONE AND THE BUG IS REAL.** Captures at
+`deviceScaleFactor 3`: at 1600px all three captions' first and last glyphs sit
+**on** the frame stroke; at 700px **all three plainly break their frames** —
+EAT's leading `E` and DAT's leading `D` are outside the left border. Artifacts:
+`scratchpad/badges-vw{1600,700}.png`, `scratchpad/refute-etext/badges-hint-{full,slight}.png`.
+
+**F3 (refuted).** The residual 72 nodes are **not** pulses in flight — they are 72
+`<g class="flow-particles">` layers, one per gutter SVG holding ≥1 `[data-flow]`
+element (`ensureParticleLayer()` at `flow-engine.js:593` runs *before* the
+`if (!count)` return at `:637`). 552 + 72 = 624 exactly, deterministic structure.
+Two independent kills: pulses come in bundles of 5 and 72 is not a multiple of 5.
+**F3 stands as written**, and the live count is **≥ 2,234 drifting upward**, not
+"about 2,230" — the lane's rewrite pointed the error the wrong way.
+
+**F4 (refuted on both limbs).** `#426` touches only `ddc-workbench.html` and
+`#429` only `refrigerant-loop.html`, so neither can move `signal-scaling`'s
+number — the whole-arc delta on that page **is** #427's delta. And the 326.3/0.3
+pair is not unrecorded: `perf-profile.mjs:493` pins the gap as
+`deltaTask: -321.1`, re-derivable in one command.
+
+**S18 (refuted).** Restates a limitation §3 exists to disclose. Should be
+VERIFIED. The refuter went further: `wirePath()` works on pin centres, so C2's
+offsets imply `135.8 − 0.2 + 36 = 171.6px` — the brief's own separately-stated
+figure, which **corroborates** C2.
+
+### 14.2 — Corrections that held (beyond those applied inline)
+
+- **A3 (MEDIUM).** Conclusion **confirmed** — `setAttribute('d')` appears **zero
+  times** anywhere under `html/education/`, and SMIL / CSS `d:` / education
+  `@keyframes` all return empty on positive searches. But the inventory presented
+  as exhaustive **misses six writes**: `pump-control.html:813` and `vfds.html:931`
+  (`transform` on a `<g>` of fan blades), `air-handlers.html:640`,
+  `hydronic-loops.html:679-681` (`style.transform` on `<rect>`), and
+  `analog-sensing.html:302-303,305` (`cx`, `x2` — the brief listed only `x1`). All
+  harmless. **The information was already in the repo** —
+  `hydronic-loops.html:222` documents its own case in a source comment — which is
+  a recurrence of self-catch #3's pattern, not a new one.
+- **A6 (LOW).** The pair `46/160 · 47/552` and the IntersectionObserver rationale
+  are fully verified. **"On all three after-runs" is supported nowhere** — every
+  artifact states liveness once, as before-vs-after. Strike as unrecorded.
+- **B2 (LOW).** `flow-engine.js:616` is correct on **main**; on the branch the
+  string compare is at **`:625`** (this PR adds 15 lines above it).
+- **C5 (LOW).** "Exactly 68px into the intervening column **at any pitch**" holds
+  for 5 of the 6 forward wires; the sixth (`hundred.O → fan-speed.IN`) spans four
+  non-uniform hops and lands at **63.0px**. Cause is pitch **non-uniformity**, not
+  hop count. Still buried — the substantive point survives.
+- **C8 (LOW).** `.fbe-wire-sel` is `styles.css:`**`4220`**; `:4219` is
+  `.fbe-wire-hit`. Everything else exact.
+- **C11 (LOW).** Both canvas widths and the 58–178px range are **exact**. The
+  plateau begins at a **1120px** layout viewport, not 1184 (`main`'s `max-width:
+  1120px` is border-box, so 1184 = 1120 + 64 is a content-box misreading). Scope:
+  **fullscreen is NOT clipped at any supported width** — `onFullscreenChange`
+  (`fbe-editor.js:689-701`) grows `INNER_W`, and the fullscreen canvas is
+  ~958px even at the 1000px gate.
+- **D2 (MEDIUM).** Redundancy confirmed. But "earn their keep only if `sep` went
+  to zero or negative" is wrong twice: at **`sep = 0` they are still fully
+  redundant** (0 mismatches / 50,000 ticks) — only `sep < 0` breaks it; and a
+  **negative `deadband`** also breaks it at the single point `t = SP + deadband`.
+  Correct condition: **`deadband >= 0 AND sep >= 0`**. The 7 → 6 rank figure holds
+  **only if the removal rewires** `sr1.Q → y1.IN`/`fan-enable.IN` and
+  `sr2.Q → y2.IN`; deleting without rewiring gives 5.
+- **D4 (LOW).** Both halves hold. The undriven-bool default is
+  `fbe-engine.js:`**`465`**, not `:463`.
+- **D5 (LOW).** The comment occupies **`:1731-1739`** (`:1730` is blank).
+  Substance fully correct. Note only `:1733` is accurate for all three programs.
+- **D9 (MEDIUM).** Substance holds, scoping is wrong in a way that would send a
+  fix to the wrong place: **`cool-2stage` does this identically** (its fan-enable
+  also comes off `or1.Q`) — the one program where it *cannot* happen is
+  `cool-2stage-fanon`. And `:1396` is the **HAND slider's value label**
+  (`#fcu-fan-sval`); the unit graphic and point row gate on `fanOn` and print
+  `'OFF'` (`:1309-1311`).
+- **F2 (MEDIUM).** Holds, and matters: **nothing in the repo implements
+  `<symbol>`/`<use>` for the gutter** — `schematic-bg.njk:10` documents the
+  opposite. F2 is a claim about an **unshipped spike** for the parked static-print
+  background. As written it reads as a property of the shipped gutter.
+  (Sub-nit: `<use href>` *does* appear elsewhere — 18 in `refrigerant-loop.html` —
+  so don't paste "nothing in the repo uses `<use>`".)
+- **S3 (LOW).** "Must live at the repo root" is over-strong: an out-of-tree config
+  works if `require`, `testDir` **and** `webServer.cwd` are absolute.
+- **S8 / S9 (LOW).** The script's actual claim is narrower than the brief's:
+  `perf-profile.mjs:771` names the **Δ-control column** as "the only
+  machine-portable number in the report". The header argues layouts/frame is
+  independent of **load on one machine**, never of the machine. The advice is fine;
+  don't attribute it to the script.
+- **S12 (LOW).** The `.html`-partial hole is currently **prophylactic** —
+  `find html/_includes -name '*.html'` is empty; all 11 scanned templates are
+  `.njk`.
+- **S20 (MEDIUM).** The 4.34 / 4.67 observations live **only in this file** — not
+  even in `db88b7a`'s body. And `perf-profile.mjs`'s own protocol for a flagging
+  row ("widen the floor and add the observation here") **was applied to
+  `hydronic-loops` and not to `ddc-workbench-unit`**, so the next reader of that
+  file finds an untrustworthy baseline with no note attached.
+- **S7 (UNVERIFIABLE, material addition).** `perf-profile.mjs:207-213` already
+  **refuses** CPU throttling on stronger grounds than the multiplier: Chromium's
+  `Emulation.setCPUThrottlingRate` "does not slow tasks down; it idles the
+  scheduler BETWEEN them … throttling can make a page look CHEAPER, the same sign
+  error as the saturation inversion." So "re-derive the multiplier" must first
+  overcome a documented objection about the metric's **direction**.
+
+### 14.3 — Real defects found that this file does not claim
+
+1. **⚠️ `flowStaticGuard` is blind to symlinks — SILENT direction, same as
+   #204(a).** `walkTemplates` uses `entry.isDirectory()` / `entry.isFile()`
+   (`.eleventy.js:440-446`), which do not follow symlinks, so a symlinked template
+   **file** and a symlinked **directory** are both skipped. Proved by construction
+   at `702b616`: a root-level `zzlinkfile.njk` symlinked outside the tree holding
+   one unflagged `data-flow` path, included by a `nav: education` page → **build
+   exit 0, 137 files, no offender, unflagged path shipped.** This is the same hole
+   the guard's own header calls out as the reason the scan root is `process.cwd()`
+   — defeated by a symlink instead of by a directory or an extension. The comment
+   at `:441-444` frames the symlink skip purely as a benefit and never as a
+   coverage gap. **Worth a header sentence and an entry.**
+2. **Root-font fragility invalidates C2's threshold as a constant, and breaks the
+   one sheet C4 calls clean.** Everything about the block is rem-sized while every
+   coordinate is a px literal, so pin separation = `8.6·F − 2` and the forward
+   threshold = **`8.6·F + 34`** (171.6 only at F=16). **`cool-1stage`'s 175px pitch
+   fails as soon as F ≥ 16.40px.** MEASURED: forcing the root font, `cool-1stage`
+   goes from **0/11 fallback wires at 16px to 7/11 at 20px** — and Chrome's
+   built-in "Large" setting *is* 20px while the site sets no `html` font-size. A
+   user with enlarged text sees the buried-wire shape on the sheet the brief calls
+   clean. C15's geometry spec should assert the **relationship**, not 171.6, and
+   derive `BLOCK_W` from a measured rect (`fbe-editor.js:90`'s literal 136 also
+   under-restricts the drag clamp at `:526` at any non-16px root).
+3. **Actuator freeze on block delete.** `ddc-workbench.html:869-870` is
+   `blk = byId[p.id]; if (!blk) continue;` — no else-branch. Any deleted actuator
+   IO block **strands its plant actuator at its last commanded value**, and
+   `fbe-editor.js:498` puts a "Delete block" button in the inspector. Proved:
+   load `cool-2stage` at 80 °F, switch to `cool-1stage`, delete the unwired Y2
+   block → `plant.actuators.y2` frozen `true` for the session, with the unit
+   graphic showing a compressor the program is no longer commanding. This is the
+   general form of the mechanism **D4 depends on** — D4 is load-bearing and
+   nothing defends it.
+4. **Stale/false code comment at `ddc-workbench.html:1336-1340`,** falsified by
+   D10's own measurement: it says fan-off with a stage energized is "**only
+   reachable by a HAND override**". Measured — loading `cool-2stage-fanon` and
+   toggling the `fanon` bi to false fires the `:1343` alarm **in AUTO**, no
+   override. The comment predates the `fanon` program.
+5. **Every const is editable through an unbounded `<input type="number">`**
+   (`fbe-editor.js:479-494` — no `min`/`max`/`step`), and `hundred` feeds the
+   fan-speed AO with no clamp, so `1e9` or `−500` goes straight into
+   `plant.actuators['fan-speed']` (`:871`). This is E7's "unbounded const values"
+   made concrete, and it is the same path D6 uses.
+6. **`#203`'s "145 scanned files" conflates two populations.** The guard scans
+   **52** files (41 `nav: education` pages + 11 `.njk` templates, one exempt) —
+   measured by instrumenting the config (`templatesScanned = 11`). 145 is the full
+   `.html`+`.njk` population under `html/`, i.e. the hand-run differential's
+   scope. Both give 0 verdict changes so the conclusion is untouched, **but this is
+   a file whose whole point is that a claim about the guard must not outrun the
+   guard**, and it overstates the guard's reach by ~2.8×.
+7. **`#202`'s Resolution note (`codebase-issues.md:7416-7418`)** says a naive
+   `grep -c data-flow` over-counts on "12 of the 15". For the command **as
+   written** (no `=`) it is **15 of 15**; 12 is reproducible only for
+   `data-flow=`. Number right, pasted command looser than the number — the same
+   defect shape #204 flags for the guard header's own pasted grep.
+8. **The guard scans all of `cwd`, skipping only four literal dir names**
+   (`.eleventy.js:422`). `npx eleventy --output=_site_probe` makes it fail with
+   ~130 phantom offenders (360 gutter elements per built page). Fails **loudly**,
+   so low severity — but it makes `--output` overrides and side-by-side build
+   comparisons unusable. A `_site*` prefix test or scanning `INPUT_DIR` closes it.
+9. **E6 is confirmed and narrower than the brief's framing suggests** — the page
+   converts units correctly nearly everywhere (SVG readouts `:1128-1134`, HTML
+   mirror, OA readout `:1412`, sensor override `:1480-1512` with a `unitschange`
+   listener). `updateChips` is the **single** missed path. Consequence: in metric,
+   two HTML surfaces on the same page disagree — the mirror reads **24.4 °C**
+   while the chip strip directly below reads **75.9 °F**.
+10. **The `<symbol>`/`<use>` gutter collapse is still BLOCKED**, and F2–F4 read as
+    if it were cleared. `codebase-issues` #70 blocks it on `getTotalLength()` /
+    `getPointAtLength()` not piercing `<use>` shadow trees, with revisit trigger 3
+    = "flow-engine moves off `getTotalLength()`". **That trigger has NOT fired** —
+    #427 moved the calls off the per-frame path, but `flow-engine.js` still calls
+    both at init (`:380`, `:568`, `:792`, `:821`, `:947`). `<use>` becomes viable
+    only if the gutter **also** goes static, which is the parked item.
+11. **`E5` design cost the brief doesn't draw out:** the dead `font-size="12"` on
+    `fcu-zone-sp` renders at 14 — **+16.7%**, not ~8% — so the deliberate
+    zone-temp-loud / setpoint-quiet hierarchy inside the ZONE box is **flattened**.
+    `Δ` is also the widest glyph in its caption (6.801 vs 6.273); adding U+0394 to
+    the mono subset is a **cross-page** decision, since the same glyph appears in
+    this page's HTML mirror at `:600` and in prose elsewhere.
+
+### 14.4 — Bearing directly on the pending decisions in §10
+
+- **Decision #4 (7-col vs 6-col).** ⚠️ **C15's headline numbers are not
+  reproducible from this file.** "0px hidden / 3 crossings" (7×175) and "~269px
+  hidden" (6×152) both depend on a y/row re-assignment the brief never publishes;
+  with the shipped rows and a pure x re-columning the figures are **1171.8px / 16
+  crossings** and **1316.8px / 12 crossings**. That is a **gap, not a
+  refutation** — but you are being asked to choose between two layouts whose
+  coordinates do not exist yet. Two further constraints the brief omits: **6×152
+  does not fit from the shipped `x0 = 20`** (right edge 916 > 900; needs `x0 ≤ 4`),
+  and **"fits fullscreen" for the 7-col option is only true above ~1238px** — at
+  the 1000px gate a 1196px sheet still scrolls ~238px. C15's normal-flow figures
+  *do* cross-validate exactly (1196 − 837.6 = 358.4; 1196 − 717.6 = 478.4).
+- **Decision #4, second constraint.** C15's spec as worded ("assert every wire
+  takes the forward branch" across both `FCU_PROGRAMS` and `EXAMPLES`) is
+  **unimplementable** — `proof` can never satisfy it and per its own source
+  comment should not. Use **"no segment passes behind a non-endpoint block"**
+  instead: it passes `proof` today and is the assertion that actually encodes the
+  defect.
+- **Decision #5 (program design).** D1 is verified — **and the page already
+  documents it**, at `:1734`: `// Y2 ON temp > 77 (Y1-on + sep)  Y2 OFF temp < 75
+  (Y1-on)`. So this is a question about the **design**, not about undocumented
+  behaviour. D2's redundancy is confirmed but its boundary condition is corrected
+  (see 14.2), and D6's negative-deadband hook is a **different and better** lesson
+  than the one this file described.
+- **Not a blocker for merging #430.** The sweep's substance is confirmed end to
+  end: 197 paths, all flagged, zero unrefreshed geometry writes, no page wrongly
+  flagged. B8's live hole reproduces exactly as described (exit 0, 137 files). The
+  errors were in the *record*, not the code — plus the new symlink gap (14.3 #1),
+  which is a robustness item, not a regression.
+
+### 14.5 — Process note for the "lessons learned" mandate
+
+The §2 register named two patterns. This pass adds a third, and it is the most
+expensive one:
+
+**A measurement is not a verification if you don't control the measurement's
+configuration.** The E-lane ran a real browser against real markup and produced
+four confident, internally-consistent, wrong corrections — because headless
+Chromium's default glyph quantization differs from the path a headed browser
+takes. It looked *more* authoritative than the arithmetic it overturned. The
+refutation stage caught it only by asking "what would make this measurement
+disagree with that one," then finding
+`/etc/fonts/conf.d/10-hinting-slight.conf`. **When a browser contradicts
+arithmetic, suspect the browser's configuration before the arithmetic** — and
+record the render path next to any px figure, the same way a crossing count needs
+its convention recorded (14.2, C12).
+
+Two of the seven refuted corrections (F3, F4) failed the same way in miniature: a
+lane attributed a residual to a plausible transient mechanism without checking
+whether the number was divisible by that mechanism's quantum. 72 is not a multiple
+of 5.

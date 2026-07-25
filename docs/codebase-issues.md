@@ -7413,11 +7413,20 @@ air-unit-identification 17 each, balancing 16, vav-systems and
 pump-control 11 each, equipment-staging 10, building-pressure 9,
 dedicated-outdoor-air 8, duct-static-control 6, air-balancing 5,
 economizers / refrigerant-cycle-basics / controller-wiring 4/4/3). All
-197 now carry `data-flow-static="true"`. A naive `grep -c data-flow`
+197 now carry `data-flow-static="true"`. A naive `grep -c data-flow=`
 over-counts on 12 of the 15 — HTML comments above the diagrams, one CSS
 block comment, JS `//` prose — and two lessons with no flow paths mention
 the attribute only to say so, so every count here is from the live DOM or
 a comment-masked scan.
+
+> **Amendment (2026-07-25).** The `=` above was added: the figure **12 of 15**
+> is reproducible only for `data-flow=` *with* the equals sign (`balancing`,
+> `equipment-staging` and `pump-control` are the three where every
+> `data-flow=` hit is real markup). For the command as originally pasted —
+> `grep -c data-flow`, no `=` — it is **15 of 15**, since every flow-bearing
+> lesson has at least one `data-flow` mention inside a comment. Number right,
+> pasted command looser than the number: the same defect shape #204 flags for
+> the guard header's own pasted grep.
 
 **Per-page verification, then a guard.** Each page was audited for any
 write to a flow path's geometry before a single attribute was added; none
@@ -7593,6 +7602,18 @@ function still builds clean at 136 files. A differential scan
 flagged counts differ, and 4 files that mention `data-flow` but yield zero
 elements either way.
 
+> **Amendment (2026-07-25, adversarial verification of #430).** The
+> conclusion is unaffected — the verdict changes on zero files under either
+> population — but **"145 scanned files" overstates what the guard looks at by
+> ~2.8×.** The guard scans **52** files: the `nav: education` pages plus the
+> `.njk` templates reachable from the scan root (one of them exempt), measured
+> by instrumenting the config (`templatesScanned = 11`, all `.njk`). 145 is the
+> full `.html` + `.njk` population under `html/` — the scope of the *hand-run
+> differential*, not of the guard. Worth correcting precisely here, because
+> this entry's whole point is that a claim about the guard must not outrun the
+> guard, and the sentence reproduced the defect it documents. See also #207,
+> which found the walk skips symlinked templates entirely.
+
 The reason is that the justification is **stale, not wrong-in-principle**:
 it was true of the guard's *first* cut, which substring-probed for
 `/\sdata-flow\s*=/`. The later "ATTRIBUTES ARE PARSED, NOT
@@ -7744,3 +7765,270 @@ silently — but reaching it takes a construction no page has ever had. What
 is actually at stake is what was at stake in #203: this header is the
 designated explanation for the guard, and a reader who trusts it will
 believe the comment-pairing hole is closed when it is closed for one shape.
+
+### 205. Function-block editor's wire router buries wires on the PUBLIC page too *(open — 2026-07-25)*
+
+Held until #430 merged (it edits this file). Found while diagnosing the DDC
+Workbench layout complaint; the same router defect is live on
+`html/simulators/function-block-editor.html`, which IS in the sitemap and IS
+linked.
+
+`wirePath` (`html/scripts/fbe-editor.js`) takes its clean single-elbow forward
+route only when `b.x >= a.x + 2 * stub` (`stub = 18`, so a 36px test). Below
+that it falls back to a route whose vertical legs sit at `a.x + stub` and
+`b.x - stub` — inside the blocks when the pitch is tight. Five of the seven
+public sheets have sub-threshold hops: `econ`, `tstat-cool`, `tstat-heat`,
+`reset`, `proof`. `freeze` and `pid` are clean.
+
+**Measured, and this corrects the first pass at it.** Lowering the threshold
+36 → 20px fixes **four** of the five: `tstat-cool` / `tstat-heat` go 3/11 →
+11/11 forward, `econ` 4/5 → 5/5, `reset` 4/6 → 6/6, and it *removes* 8
+crossings rather than merely adding none (tstat-cool and tstat-heat each 4 → 0,
+because their crossings were artefacts of the fallback route's shared
+mid-height horizontal).
+
+- **`proof` is almost certainly not a defect and should not be "fixed".** Its
+  hops are 145 / 142 / 142 / 149 / 140px, so it stays 2/7 forward at 20px, at
+  16px and at 14px — the threshold would have to fall to **≤4.4px**. And
+  `function-block-editor.html:287-290` documents its layout as deliberate: the
+  chain alternates top and bottom rows so "every link gets a long visible
+  vertical run instead of a near-zero horizontal stub." It measures **0px
+  hidden behind non-endpoint blocks, 1 crossing** — the one sheet already laid
+  out around the fallback route.
+- **A threshold change is NOT workbench-neutral.** Shrinking `stub` moves the
+  fallback legs, so even where the branch split does not change the occlusion
+  does: at 20px the workbench's split stays 6/24 but `cool-2stage` occlusion
+  drops 2204.5 → 1481px (33 → 16 buried pairs) while crossings rise 8 → 18.
+  **Any PR touching `stub` must be eyeballed on `ddc-workbench` as well.**
+- **Record the crossing convention next to any crossing number.** The figures
+  above are *intersection points*, not wire pairs. The two conventions coincide
+  at 36px and 14px and diverge at 20px, which is exactly how a correct figure
+  comes to look wrong.
+
+**At stake:** a public, linked simulator draws wires behind blocks on most of
+its examples. **Action:** fold the threshold decision into the DDC Workbench
+re-layout work rather than shipping it standalone, since the two share the
+router and a standalone change would need the workbench re-verified twice.
+
+### 206. FBE palette drop grid seeds the buried-wire shape by default *(open — 2026-07-25)*
+
+Held until #430 merged. `fbe-editor.js` places dropped blocks on a grid with a
+**150px x-pitch** — below the 171.6px a clean forward elbow needs at a 16px
+root font (see #208 for why that number is not a constant). So a visitor who
+builds a sheet by hand from the palette gets wires routed behind blocks
+immediately, with no way to know the spacing is the cause.
+
+**At stake:** the failure looks like the tool being broken rather than the
+spacing being tight, on the one path where the user authored the layout
+themselves. **Options.** (a) Raise the drop pitch above the threshold —
+smallest change, but it widens hand-built sheets. (b) Derive the drop pitch
+from the same expression the router uses, so the two cannot drift. (c) Leave
+it and fix the router instead (see #205). (b) is the one that stops this
+recurring.
+
+### 207. `flowStaticGuard`'s template walk has two scope holes — one silent, one loud *(open — 2026-07-25)*
+
+Found by adversarial verification of PR #430, after the guard had already
+survived three hardening rounds. Same family as #203 / #204.
+
+**(a) Blind to symlinks — SILENT direction, the dangerous one.**
+`walkTemplates` (`.eleventy.js`) tests `entry.isDirectory()` / `entry.isFile()`,
+neither of which follows a symlink, so **a symlinked template file and a
+symlinked directory are both skipped entirely.** Proved by construction: a
+root-level `zzlinkfile.njk` symlinked to a file outside the tree holding one
+unflagged `data-flow` path, included by a `nav: education` page → **build exit
+0, no offender reported, unflagged path shipped to `_site`.** This is precisely
+the hole the guard's own header calls out as the reason the scan root is
+`process.cwd()` ("a partial parked anywhere else reaches an education page
+completely unscanned") — defeated by a symlink instead of by a directory or an
+extension. The comment beside the symlink skip frames it purely as a benefit
+("no cycles, and no crash on the node_modules symlink an agent worktree uses")
+and never as a coverage gap.
+
+**(b) Scans all of `cwd`, skipping only four literal directory names — LOUD.**
+`SKIP_DIRS` is `{node_modules, _site, .git, .claude}`, so any in-tree build
+output or tree copy not named exactly `_site` is scanned as source.
+`npx @11ty/eleventy --output=_site_probe` makes the guard fail with ~130
+phantom offenders of the form "`_site_probe/404.html` — 360 of 360 data-flow
+elements lack `data-flow-static="true"`" (360 = the gutter count the exempt
+partial injects into every built page). It fails loudly so nothing ships, but
+it makes `--output` overrides and side-by-side build comparisons unusable, and
+the offender wall buries any real line.
+
+**At stake:** (a) is a guard that can pass a genuine offender; (b) is a
+diagnostic workflow the guard blocks. **Options.** For (a): follow symlinks
+with a `fs.stat` (accepting cycle risk), or resolve and cycle-guard, or accept
+and say so in the header — but the header currently implies coverage it does
+not have, so *some* change is owed. For (b): test a `_site*` prefix, or scan
+`INPUT_DIR` instead of `cwd` — though note the header argues `cwd` is
+deliberate, so this is a scope decision, not a bug fix. Pairs naturally with
+#203's and #204's header-accuracy fixes; all four are the same paragraph.
+
+### 208. FBE block geometry is rem-sized while every coordinate is a px literal *(open — 2026-07-25)*
+
+The 171.6px column pitch a clean forward elbow needs **is not a constant.**
+`.fbe-block` is `8.5rem`, the pin dot `0.62rem`, its margins `0.36rem` — all
+scale with the root font — while every block coordinate in `FCU_PROGRAMS` and
+`EXAMPLES` is a px literal. Generalised: pin-centre separation is `8.6·F − 2`,
+so the forward threshold is **`8.6·F + 34`** (171.6 only at F = 16).
+
+**Consequence, measured rather than derived:** `cool-1stage`'s 175px pitch —
+the one sheet with clean routing — **fails as soon as F ≥ 16.40px.** Forcing
+the root font, it goes from **0/11 fallback-route wires at 16px to 7/11 at
+20px** (and 7/11 at 24px). **Chrome's built-in "Large" text setting is 20px**,
+and the site sets no `html` font-size, so a visitor with enlarged text sees the
+buried-wire shape on the sheet that is otherwise fine.
+
+The same coupling bites `fbe-editor.js`'s `const BLOCK_W = 136; // matches
+.fbe-block width`, which feeds the drag clamp `clamp(origX + dx, 0, INNER_W -
+BLOCK_W)` — under-restricting by `(8.5·F − 136)px` at any non-16px root.
+
+**At stake:** an accessibility-adjacent rendering failure that no test can see,
+plus a hard-coded width that silently disagrees with its own CSS. **Action:**
+whatever geometry spec comes out of the workbench re-layout should assert the
+**relationship** (`pitch ≥ blockWidth + threshold − pinInset`) rather than
+hard-coding 171.6, and `BLOCK_W` should come from a measured rect.
+
+### 209. FBE inspector: deleting an actuator IO block strands its plant actuator *(open — 2026-07-25)*
+
+`ddc-workbench.html`'s binding tick does `blk = byId[p.id]; if (!blk) continue;`
+— no else-branch, no default. So **any actuator point whose block is absent
+from the running graph freezes at its last commanded value**, and
+`fbe-editor.js`'s inspector carries a "Delete block" button for any selected
+block. Proved: load `cool-2stage` at 80 °F, switch to `cool-1stage`, select the
+unwired `y2` block and delete it → `plant.actuators.y2` stays `true` for the
+rest of the session, with the unit graphic showing a compressor the program is
+no longer commanding.
+
+This is the *general* form of the mechanism the `cool-1stage` orphan `y2` block
+relies on — that block is load-bearing (it is what forces stage 2 off after a
+switch from `cool-2stage`) and **nothing defends it.**
+
+**Related, same reachability:** every const is editable through a bare
+`<input type="number">` with no `min` / `max` / `step`, storing
+`isFinite(n) ? n : 0`. So `cooling-setpoint`, `deadband`, `sep` and `hundred`
+all accept negatives and arbitrary magnitudes, and `hundred` feeds the
+fan-speed AO with no clamp — `1e9` or `−500` goes straight into
+`plant.actuators['fan-speed']`.
+
+**At stake:** a teaching sim can be driven into a state where the graphic
+contradicts the program, which inverts the lesson. Mitigated today only by the
+page being hidden (`eleventyExcludeFromCollections` + `noindex`), so no linked
+visitor reaches it. **Options.** (a) Default the actuator in the else-branch
+(`p.kind === 'bo' ? false : 0`) — closes it, at the cost of the `cool-1stage`
+teaching accident, which would then need an explicit block. (b) Clamp the const
+inputs. (c) Accept both while the page stays hidden, and revisit before it goes
+public. **This should be settled before the workbench is published.**
+
+### 210. Stale comment in `ddc-workbench.html` claims the fan-off fault needs a HAND override *(open — 2026-07-25)*
+
+The comment above the unit-graphic alarm reads: "Fan-off splits two ways: with
+a stage energized it's a genuine no-airflow fault (**only reachable by a HAND
+override** — in AUTO the auto-fan runs the fan for any cooling call)."
+
+**Measured false.** Loading `cool-2stage-fanon` and toggling its `fanon` block
+to false drives `fan-enable` false with Y1/Y2 still commanded, **in AUTO**,
+firing the alarm with no override involved. The same state is reachable on
+either two-stage sheet by deleting the `or1 → fan-enable` wire in the
+inspector. The comment appears to predate the `fanon` program.
+
+**At stake:** small but exactly the defect family #201 / #203 are about — an
+in-repo record that a reader will trust about what an alarm means. **Action:**
+fix in the same pass as anything else in this file.
+
+### 211. FCU unit-graphic badge captions overflow their frames *(open — 2026-07-25)*
+
+**This is the originally reported bug**, now confirmed by capture rather than
+arithmetic. `DAT · DISCHARGE` needs ~102 user units of advance in a 90-unit
+box (~6 units past *each* edge, ~13% over); `EAT · ENTERING` ~95.2 in 86;
+`ΔT ACROSS COIL` ~95.2 in 96, fitting by only ~0.4 per side. SVG `<text>` does
+not wrap, and there is no `clip-path`, `textLength` or `lengthAdjust` anywhere
+in the file, so the overflow always paints outside the frame.
+
+Screenshots at `deviceScaleFactor 3`: at a 1600px viewport all three captions'
+first and last glyphs sit **on** the frame stroke; at 700px all three plainly
+**break** their frames.
+
+**Two measurement traps to carry, or the next person will "correct" this
+wrongly.** (1) **Headless Chromium quantizes glyph advances to integer CSS
+pixels** (behaves as `--font-render-hinting=full`), while this box's fontconfig
+selects `hintslight` — which is what a *headed* browser uses. A headless
+measurement reports ~93.8 units where the geometry is 102, and ~113.9 at a
+narrower scale. Measure under `--font-render-hinting=slight` or at integer SVG
+scale, and treat **~102 as a floor**. (2) `Δ` (U+0394) is outside the
+`unicode-range` on every IBM Plex Mono `@font-face` rule, so it renders from
+the platform's generic monospace and is the widest glyph in its caption.
+
+**Also in this file, same fix pass:** `.fcu-pt-val { font-size: 14px }` beats a
+presentation attribute in the cascade, so the authored `font-size="13"` on the
+EAT / ΔT / DAT readouts and `"12"` on the zone setpoint are **dead**. The
+setpoint was authored one step quieter than the zone temp above it and now
+renders identically, flattening that hierarchy; its `fill` attribute still
+works, so only the size half of the treatment was lost.
+
+**Options.** (a) Shorten the captions. (b) Widen the rects — note each frame's
+`stroke-width: 1` straddles its nominal edge by 0.5 units, so sizing purely
+from `getComputedTextLength()` vs the rect `width` is off by ~1 unit total.
+(c) Reduce the caption font-size. (d) Add U+0394 to the mono subset — but that
+is a **cross-page** decision, since the same glyph appears in this page's HTML
+mirror readout and in prose elsewhere.
+
+### 212. `updateChips` ignores the unit system — metric shows Fahrenheit numbers labelled °F *(open — 2026-07-25)*
+
+`FCU_POINTS` hard-codes `unit: '°F'` and `updateChips` reads the raw canonical
+Fahrenheit value with no `Units` call, so **with the site in metric the IO chip
+strip shows Fahrenheit numbers under a °F label.**
+
+Worth stating precisely, because the framing matters: **the page converts
+correctly nearly everywhere else** — the SVG readouts, the HTML mirror
+readouts, the OA readout and the sensor-override box (which even carries a
+`unitschange` listener) all handle it. `updateChips` is the **single** missed
+path. The visible consequence is two HTML surfaces on the same page
+disagreeing: the mirror reads **24.4 °C** while the chip strip directly below
+reads **75.9 °F**.
+
+**At stake:** a correctness bug on a hidden page, so nothing user-facing yet —
+but it must be closed before the workbench is published. **Action:** a narrow
+fix on that one path, not a retrofit.
+
+### 213. `simulators/pid-tuner.html` still pays live path reads on static geometry *(open — 2026-07-25)*
+
+Surfaced while verifying #202's sweep. `pid-tuner.html` carries four
+`[data-flow]` paths, all `class="pid-eq-flow"` with hard-coded literal `d`
+values, and a positive search for geometry writes
+(`setAttribute('d'|'points'|'x1'…)`, `.style.transform`) returns **nothing** on
+those elements. It already does the right thing around its engine attributes:
+it writes `data-flow-density` and calls
+`scene.querySelectorAll('[data-flow]').forEach(p => FlowEngine.refreshPath(p))`.
+
+So it is a **safe, unclaimed candidate for `data-flow-static="true"`** — the
+one remaining page paying `getPointAtLength()` per particle per frame on
+geometry that never moves. #202's "the non-education pages needed no change" is
+true for *correctness* and understates this as a perf residual.
+
+Note `flowStaticGuard` deliberately excludes simulators (a markup rule would
+pass `hydronic-loop-builder.html` vacuously), so this is a scope decision
+rather than an oversight — but it belongs recorded as a residual, not as "no
+change needed."
+
+### 214. `ddc-workbench-unit`'s profiler baseline is known-untrustworthy and carries no note *(open — 2026-07-25)*
+
+`tests/perf-profile.mjs`'s baseline for that row records 2.23 layouts/frame
+(capture samples 2.20 / 2.44 / 1.87), and it has since flagged over-tolerance
+on both subsequent runs (4.34 and 4.67). Noise explains the magnitude but not
+the inverted ordering against the control, and the baseline was captured at the
+idle-gate merge, so a missing gate is not the explanation. Most likely a
+page-state precondition difference. **Unresolved.**
+
+The upkeep problem is the point: the script's own protocol says "if a fourth
+run flags a row that nothing else explains, widen the floor and add the
+observation here." That protocol **was** followed for the `hydronic-loops` row
+re-based in #430 (three samples, full provenance note) and **was not** followed
+for this one — and the two flagging observations live only in a session handoff,
+not in the script. So the next reader of that file finds an untrustworthy
+baseline with nothing attached telling them so.
+
+**At stake:** a DRIFT reading on that row means nothing today and no one can
+tell. **Action:** either annotate the row with the two observations and the
+open question, or resolve the precondition difference. The annotation is cheap
+and stops the record from decaying further.
