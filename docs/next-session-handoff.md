@@ -10,6 +10,15 @@
 
 ## Read this first
 
+> **Verified 2026-07-24 (`/verify-handoff`, at `d38664d`).** 47 factual claims
+> extracted: **38 verified · 5 corrected · 4 unverifiable** (owner decisions and
+> pre-arc measurements whose scaffolding was stripped in `1bc11a3`). Every
+> correction is marked inline where it lands, and one **new** finding — the
+> profiler's `ddc-workbench-unit` baseline does not reproduce — is in *Process
+> notes*. The `<use>` architecture in item 1 was re-spiked from scratch and
+> holds in **every** particular, including the one the draft flagged
+> UNVERIFIED, which is now resolved.
+
 **Every claim here is a hypothesis. The repo is the truth.** The predecessor
 brief's headline task was scoped to one page; measurement showed the defect
 was site-wide chrome costing ~40% of a CPU core on **all 135 pages**, and that
@@ -25,10 +34,17 @@ before taking a single measurement.
 
 ## Where things stand
 
-`main` @ `6c02ce1`, **v3.74.1**, clean tree, **zero open PRs**, remote is
-`main` only. (Line numbers below cite `6c02ce1`, the commit they were taken
-at — deliberate, not stale. Several moved during this arc: `FCU_PROGRAMS` was
-`:1664`, it is now `:1740`.)
+`main` @ `d38664d`, **v3.74.1**, clean tree, **zero open PRs**. (Line numbers
+below cite `6c02ce1`, the commit they were taken at — deliberate, not stale;
+`d38664d` touches this file only, so every cite still resolves. Several moved
+during this arc: `FCU_PROGRAMS` was `:1664`, it is now `:1740`.)
+
+**The remote is NOT `main` only** — four merged arc branches survive next to
+`origin/main`: `feat/perf-profile-script`, `fix/ddcw-idle-raf-gating`,
+`fix/gutter-idle-cpu`, `fix/rl-flow-static-optin`. All four verify as
+`git branch -r --merged origin/main`, so no open work is hiding, but the
+auto-delete-on-merge did not fire for this arc. *(corrected 2026-07-24
+/verify-handoff)*
 Counts: **40 education lessons · 34 content quizzes + 7 field drills ·
 31 tools · 8 simulators** — the 8th is still the hidden
 `html/simulators/ddc-workbench.html` (`eleventyExcludeFromCollections: true`
@@ -48,8 +64,12 @@ README).
   `data-flow-static` on all 14 `[data-flow]` elements. @4× CPU: **24.9 → 38.0
   fps**, layouts/frame **81.7 → 4.0**.
 - **#426** `ddc: idle-gate the workbench's own rAF loops` — the fan-blade and
-  chevron loops merged into one self-suspending loop
-  (`flow-engine.js:285-303` idiom). Gated states drop to the page's floor;
+  chevron loops merged into one self-suspending loop (the
+  **`flow-engine.js:462-475` + `:521-523`** idiom — `hasWork()` / `startLoop()`
+  and the `if (!hasWork()) { looping = false; … return; }` at the tail of
+  `frame()`. The earlier cite `:285-303` is only the module-state block where
+  `looping` is *declared*, not the idiom — corrected 2026-07-24
+  /verify-handoff). Gated states drop to the page's floor;
   arrival is unchanged **by design** (that is genuine visible motion).
 - **#428** `tests: report-only idle-animation profiler` — `npm run
   perf-profile` (`tests/perf-profile.mjs`). Report-only by owner ruling
@@ -66,6 +86,13 @@ README).
 
 A 15× cut in layout work per frame on every page, with the gutter animating
 identically. Nothing looks different; that was the requirement.
+
+**Re-measured against production 2026-07-24** (`CF_BASE_URL=https://controlsfreak.dev
+node tests/perf-profile.mjs --only=signal-scaling --reps=3`): **3.52
+layouts/frame · gutter 44/552 exactly**. The 15× cut and the identical
+animation both hold. **Do not quote `3.03` to three significant figures** —
+it is one sample, and the same control read 2.45 and 3.93 in two local runs
+the same day. Read this row as "about 3", and read the *ratio*, not the digits.
 
 ## Corrections to the previous draft — do not rediscover these
 
@@ -108,9 +135,22 @@ dead.
 Architecture is **settled and spike-verified** (all measured in Chromium this
 session):
 
-- **`<symbol>` + `<use>`.** `<use>` content stays out of the light DOM —
-  measured **22 elements for 4 tiles + 4 labels**, against **120 `sbg-motif`
-  wrappers and ~1,677 nodes** in the gutters today (`_site/tools/signal-scaling.html`).
+- **`<symbol>` + `<use>`.** `<use>` content stays out of the light DOM
+  (re-verified: a light-DOM `querySelectorAll` finds the `<symbol>` source and
+  **zero** instance content). A 4-tile + 4-label frame is **8 light-DOM
+  elements**, plus the one-time `<symbol>` defs — call it ~20 either way —
+  against **120 `sbg-motif` wrappers** and, in the gutters today
+  (`_site/tools/signal-scaling.html`):
+  - **1,610 static markup nodes** — the authoritative figure, counted with
+    JavaScript disabled. *(The earlier `~1,677` was a live count with the 552
+    known particles subtracted; corrected 2026-07-24 /verify-handoff.)*
+  - **2,234 live nodes** — 1,610 markup + **624 injected at runtime** by
+    `flow-engine` (552 flow particles + ~72 pulse circles in flight).
+
+  Carry **both** numbers, because they are two different wins: moving to
+  `<use>` removes markup nodes, and **going static removes all 624 injected
+  ones as well**.
+
   The 120× inline repetition exists *only* because `flow-engine` reads geometry
   via `getTotalLength()`/`getPointAtLength()`, which do not pierce `<use>`
   shadow trees (`html/_includes/schematic-bg.njk:10-12` says so). Going static
@@ -127,11 +167,19 @@ session):
   `stroke-dashoffset: var(--sbg-dash)` *inside* the symbol with `.is-drawn`
   setting `--sbg-dash: 0` on the `<use>`. The `transition` must be declared
   **inside** the symbol (`transition` is not inherited).
-- **UNVERIFIED —** that the draw-in **animates rather than snaps** when
-  `--sbg-dash` changes. The spike used `transition: none` to isolate the state
-  change, so per-instance switching is proven and the *animation* is not.
-  Low risk (`stroke-dashoffset` is normally animatable; only its input
-  changes) but confirm on the first real tile.
+- **RESOLVED — the draw-in ANIMATES, it does not snap.** *(was UNVERIFIED;
+  settled 2026-07-24 /verify-handoff.)* Flipping `--sbg-dash` 600 → 0 on the
+  `<use>`, with `stroke-dashoffset: var(--sbg-dash)` and the `transition`
+  declared inside the `<symbol>`, produced **four distinct intermediate
+  frames** (t = +80 / 350 / 900 / 1800 ms), none byte-equal to either endpoint
+  reference until it landed on the fully-drawn one. The architecture works
+  end to end; nothing here needs confirming on the first real tile.
+  - **⚠️ Verify this class of thing by PIXELS, never by the animation API.**
+    `document.getAnimations()` reports **nothing** for the transition and
+    `useEl.shadowRoot` is `null` — the `<use>` shadow tree is not exposed. An
+    API-based check reads as a confident false negative here. Screenshot the
+    element at several offsets and compare buffers against a fully-drawn and a
+    fully-hidden reference instance of the same geometry.
 - **Repetition is authentic here.** Real drawing sets repeat typical floors —
   land the repeat on a floor line and it reads as *levels*, not tiling.
 
@@ -170,7 +218,11 @@ vacuous one.
 ### 3. DDC Workbench polish — items 2 and 3, still open
 
 Confirmed untouched: `git log 12b5df3..HEAD -- html/simulators/ddc-workbench.html`
-returns only the idle-gate commit.
+returns only the idle-gate commit (`fe30f8e`).
+
+⚠️ Before reading any profiler number on this page, see the
+**`ddc-workbench-unit` baseline** note in *Process notes* — that row flags on
+every run and the reason is not yet settled.
 
 - **Text extending outside boxes. ⚠️ Locations still UNVERIFIED** —
   owner-observed, never pinpointed. Sweep with **full-page** screenshots in
@@ -227,9 +279,32 @@ task (ongoing, tune-in-place, no code).
   profiler declare this arc's own fix a broken animation.
 - **`ln -s <repo>/node_modules node_modules` in a fresh worktree** was faster
   and worked across all five lanes — no `npm ci` needed.
-- **Ports 8000–8099 are occupied** on this box. Serve on 9400+. `pkill -f
+- **Serve on 9400+.** (Precisely: `8000`–`8006`, `8080` and `8099` are
+  listening — the household stack, not the whole 8000–8099 range as earlier
+  stated. 9400+ is still the right habit; it needs no checking.) `pkill -f
   "http.server <port>"` **self-matches** — use the bracket trick
   (`[h]ttp.server`). Foreground `sleep` is blocked.
+- **⚠️ The profiler's `ddc-workbench-unit` STRUCTURAL baseline does not
+  reproduce — treat that one row as an unreliable gauge until someone looks.**
+  *(new observation, 2026-07-24 /verify-handoff.)* It flagged `<< over
+  tolerance` on **2 of 2** runs: **4.34** layouts/frame on a full manifest run
+  and **4.67** on an isolated 5-rep run, against a recorded baseline of
+  **2.23** whose own three capture samples were 2.20 / 2.44 / 1.87. The
+  control drifted outside its own recorded range in both runs too (2.45 and
+  3.93 vs. a recorded 2.68–3.42), so this box is noisier now than at capture —
+  **but the ORDERING inverted, and a scalar noise term cannot do that.** At
+  capture the animation-heavy workbench sat *below* the plain-calculator
+  control; in both my runs it sits ~1.2–1.8× *above* it, which is the
+  physically sensible direction. Most likely the baseline was captured with the
+  Unit pane's own loops already gated (a **precondition** difference — the very
+  trap two notes up), in which case the baseline is wrong rather than the page
+  regressed. `tests/perf-profile.mjs`'s BASELINE header has a protocol for a
+  fourth flagging run ("widen the floor … do not treat it as a regression"),
+  but that protocol presumes noise, and the inversion is the part noise does
+  not explain. **Resolve which it is before trusting a DRIFT reading on this
+  row.** The `hydronic-loops` row that item 2 depends on is unaffected and
+  rock-solid: 49.74 measured against a 50.97 baseline, capture samples
+  52.02 / 49.75 / 50.79.
 
 ## One passing note
 
