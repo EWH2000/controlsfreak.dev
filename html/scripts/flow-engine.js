@@ -86,9 +86,18 @@
 // rewrites `d` on every pointermove and only refreshes on pointer-UP —
 // its particles track the dragged pipe *because* the read is live, and
 // a table there would strand them on the pre-drag route until release.
-// simulators/refrigerant-loop.html is the opposite case and a ready
-// candidate: its one geometry swap (the cycle re-route) calls
-// refreshPath on each element immediately after setting `d`.
+// simulators/refrigerant-loop.html is the opposite case and carries
+// the flag on all 14 of its flow paths (PR #429): its one geometry
+// swap (the cycle re-route) calls refreshPath on each element
+// immediately after setting `d`.
+//
+// On education pages the flag is not optional — .eleventy.js's
+// flowStaticGuard fails the build if a `nav: education` page, or any
+// html/_includes partial, carries a `data-flow` element without it.
+// A lesson whose geometry really is rewritten live declares
+// `flowGeometryLive: true` in its frontmatter; a partial that needs
+// the same gets an EXEMPT_INCLUDES entry. Simulators are deliberately
+// out of the guard's scope — see its header for why.
 //
 // Per-path density: `data-flow-density="<float>"` is an optional
 // multiplier on baseline particle spacing. Default 1.0 (= baseline

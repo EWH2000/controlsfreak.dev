@@ -7313,7 +7313,7 @@ https://claude.ai/code/session_01LmBziFvEW678CX6zCaCQxx
 Not written to `docs/codebase-issues.md` per the lane brief — reproduced here for the
 owner to file.
 
-### 201. PR #427's engine surface landed undocumented in the two records that claim to be exhaustive
+### 201. PR #427's engine surface landed undocumented in the two records that claim to be exhaustive *(addressed 2026-07-24 · `6c02ce1`)*
 
 Both findings are pre-existing on `main`, unrelated to this PR's diff, and were hit
 while working from those records.
@@ -7347,6 +7347,20 @@ A report that is red by default on unmodified `main` decays exactly the way the
 script's own header warns about. It needs a re-baseline against current `main`, not a
 tolerance change — the header already says which, and says to record the date,
 commit, and machine.
+
+**Resolution (2026-07-24, commit `6c02ce1`).** Both closed, but the heading never
+picked up a disposition marker, so a later lane read the item as still open and
+recorded the friction-file gap as unpaid debt. (a) `data-flow-static` was added to
+the friction file's attribute list, `setPathColor` / `pulse` to the method list, and
+both intros were de-enumerated — "**Three opt-in attributes**" → "The opt-in
+attributes", "**Two methods**" → "The methods" — so neither count can go stale by
+append again. (b) `tests/perf-profile.mjs` was re-baselined at commit `5b9c457`
+with the date, commit and machine recorded in its BASELINE block.
+
+Note the entry (a) restored still described `data-flow-static` as *"optional, default
+false"* and knew nothing about the build guard that later made it mandatory on
+education pages; that is a **separate, newer** gap, paid in PR #430 rather than
+re-opening this item.
 
 ### 202. Education lesson diagrams never opted into the point table — the lesson archetype still runs ~50 layouts/frame *(addressed 2026-07-25)*
 
@@ -7429,11 +7443,31 @@ the documented opt-out (no lesson needs it today). It reads
 `item.rawInput` — a collection callback cannot see rendered output, since
 `item.templateContent` / `item.content` throw *"Tried to use
 templateContent too early"* at that point in the build — and masks HTML /
-CSS / JS comments first. Pre-render source is the right surface twice
-over: every education `data-flow` attribute is literal in the page file,
-and the gutter's own `data-flow` elements live in `schematic-bg.njk`,
-which a page's `rawInput` never shows, so the scan sees content paths only
-and the already-tabled gutter stays out of it by construction.
+CSS / JS / Nunjucks comments first. Every education `data-flow` attribute
+is literal in the page file, so pre-render source reaches all of them.
+
+**Two holes in the first cut, both found in review and both proved by
+construction before being closed.** (1) `rawInput` is the page's OWN
+source and stops at an `{% include %}` tag, so a partial carrying a flow
+path was never checked: an `_includes` file holding
+`<path data-flow="supply" d="…"/>` plus a `nav: education` page whose
+entire body was `{% include %}` of it built clean at 137 files, exit 0,
+and shipped the unflagged path. The guard now also walks `html/_includes`
+on disk and holds every partial to the same rule regardless of which page
+includes it, with `schematic-bg.njk` the sole `EXEMPT_INCLUDES` entry —
+the gutter is tabled unconditionally via `pool.gutter`, so an opt-in there
+would misstate why it is cached — and each exempt name must resolve to a
+real scanned file, so a stale exemption fails rather than passing
+silently. A fail-closed *declare your includes* rule was the obvious
+alternative and does not work: all 15 flow-bearing lessons already
+`{% from "related-links.njk" import relatedLinks %}`, so a rule firing on
+any macro call fires on every page it protects. (2) The element test
+required `data-flow` to carry an `=`, while `flow-engine.js` selects on
+`[data-flow]` — so a valueless `<path data-flow d="…"/>` built clean and
+animated (`getAttribute` returns `""`, which falls through to
+`SUPPLY_FILL`). The substring probe is now a real attribute parse, which
+also drops a latent false positive on a `data-flow=` sitting inside
+another attribute's quoted value.
 
 **The guard deliberately does not reach simulators, and that is a
 finding, not an omission.** A markup scan is structurally blind to
@@ -7474,3 +7508,17 @@ and calling `refreshPath` put every particle back within 0.2 u.
 `tests/flow-engine.spec.js` gained a committed twin of the positive half
 (`education flow particles sit ON their tabled path`), so unlike #429 this
 one leaves an instrument behind — the gap #200 is about.
+
+Each of the two review holes above got the same treatment before it was
+called closed — build the scaffolding, confirm the check goes **red** and
+names the offender, then confirm it goes green when the flag is added:
+an unflagged `data-flow` in an include (red, names the partial) → flagged
+(green, 137 files); a valueless `data-flow` on a lesson (red, names the
+page) → real tree (green, 136 files). The exemption's own anti-vacuity
+was proved the same way: an unexempted copy of `schematic-bg.njk` reports
+15 unflagged elements, and renaming the exempt file reports
+`exempt include "schematic-bg.njk" no longer exists` alongside the 15.
+Three shapes were checked against the new attribute parse for
+over-reach — `data-flow-static='true'` (single-quoted) passes,
+`aria-label="write data-flow=supply on the pipe"` is correctly ignored,
+`data-flow-static="TRUE"` fails with the exact-value message.
