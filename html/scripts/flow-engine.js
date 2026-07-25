@@ -339,16 +339,19 @@
     // ── POINT TABLE ────────────────────────────────────────────────
     // Sampled positions along one path, so the frame loop interpolates
     // instead of calling getPointAtLength() per particle per frame.
-    // GUTTER POOLS ONLY — see the idle-cost note in the header for why
-    // widening this would break the two simulators that mutate `d`.
+    // Gutter pools get a table unconditionally (their geometry is fixed
+    // by construction); a content path opts in with data-flow-static.
+    // See that note in the header for the assertion opting in makes, and
+    // for why hydronic-loop-builder must never set it.
     //
     // The gutter renders 120 motifs from SIX distinct bodies, so the
     // ~1,800 gutter geometry elements collapse to ~90 distinct shapes.
     // Tables are immutable and keyed on the geometry attributes, so one
     // table serves every repeat — which is what makes a 1-unit pitch
     // affordable. A geometry mutation produces a different key and
-    // therefore a different table, so the cache cannot go stale; it is
-    // bounded by the gutter's fixed motif vocabulary.
+    // therefore a different table, so the cache cannot go stale. The
+    // gutter's motif vocabulary bounds the bulk of it; an opt-in content
+    // path contributes its own shapes on top.
     const tableCache = new Map();
     const PT = { x: 0, y: 0 };      // scratch — reused, never escapes
 
