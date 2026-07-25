@@ -1199,13 +1199,36 @@ re-submit); add `--dry-run` to print the URL list without POSTing.
   real overlaps that font rendering surfaces. Script:
   `tests/screenshot-diagrams.mjs`; add a class to its
   `DIAGRAM_SELECTOR` when a new diagram family lands.
+- **Idle-animation profiler:** `npm run perf-profile` reports what
+  each page costs while the user does nothing — frame rate, CPU
+  relative to a no-animation control page, layout/style work per
+  rendered frame, and a population liveness count. **Report-only and
+  deliberately NOT in `test.yml`** (owner ruling 2026-07-24: CPU
+  numbers are machine-dependent and a threshold over them flakes; a
+  muted gate is worse than none). Run it **before merging any PR that
+  touches an animation loop, a rAF/setInterval gate, `schematic-bg`,
+  or an animation rule in `styles.css`** — idle cost has regressed
+  silently four times through a green `npm test` (codebase-issues
+  #70 / #109 / #110 / #113, history in #200). Needs a server on the
+  built site; 8000-8099 are occupied on this box, so:
+  `npm run build && python3 -m http.server 9401 --directory _site &`
+  then `CF_BASE_URL=http://127.0.0.1:9401 npm run perf-profile`.
+  Flags: `--json`, `--only=<id>`, `--reps=N`, `--viewport=WxH`,
+  `--list`. Script: `tests/perf-profile.mjs`; its header pins the
+  measured baseline, how each tolerance was derived, and the caveats —
+  above all that **CPU% INVERTS on a saturated page** (removing work
+  frees the thread to render the frames it was dropping, so CPU rises
+  while fps improves), which is why fps and not CPU is the ranking
+  signal. It walks a **hand-picked manifest, not the sitemap**:
+  `ddc-workbench` is absent from `sitemap.xml`, and a sitemap walker
+  would skip the very page the profiler exists for.
 - **Fedora Chromium deps:** Playwright's bundled headless Chromium
   isn't statically linked, and `npx playwright install-deps` only
   knows Debian/Ubuntu. On Fedora 44 the runtime set is:
   `sudo dnf install atk at-spi2-atk alsa-lib mesa-libgbm
-  libXcomposite libXdamage libXfixes libXrandr`. If `npm test` or
-  `npm run screenshots` fails with `error while loading shared
-  libraries`, this is the missing piece.
+  libXcomposite libXdamage libXfixes libXrandr`. If `npm test`,
+  `npm run screenshots`, or `npm run perf-profile` fails with
+  `error while loading shared libraries`, this is the missing piece.
 
 ## About the user
 
