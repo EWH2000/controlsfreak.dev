@@ -7452,11 +7452,12 @@ source and stops at an `{% include %}` tag, so a partial carrying a flow
 path was never checked: an `_includes` file holding
 `<path data-flow="supply" d="…"/>` plus a `nav: education` page whose
 entire body was `{% include %}` of it built clean at 137 files, exit 0,
-and shipped the unflagged path. The guard now also walks `html/_includes`
-on disk and holds every partial to the same rule regardless of which page
-includes it, with `schematic-bg.njk` the sole `EXEMPT_INCLUDES` entry —
+and shipped the unflagged path. The guard now also walks templates on
+disk and holds every partial to the same rule regardless of which page
+includes it, with `html/_includes/schematic-bg.njk` the sole
+`EXEMPT_TEMPLATES` entry —
 the gutter is tabled unconditionally via `pool.gutter`, so an opt-in there
-would misstate why it is cached — and each exempt name must resolve to a
+would misstate why it is cached — and each exempt path must resolve to a
 real scanned file, so a stale exemption fails rather than passing
 silently. A fail-closed *declare your includes* rule was the obvious
 alternative and does not work: all 15 flow-bearing lessons already
@@ -7522,3 +7523,101 @@ Three shapes were checked against the new attribute parse for
 over-reach — `data-flow-static='true'` (single-quoted) passes,
 `aria-label="write data-flow=supply on the pipe"` is correctly ignored,
 `data-flow-static="TRUE"` fails with the exact-value message.
+
+**A third adversarial round (2026-07-25) found three more, all proved by
+construction and all closed on this PR.** The pattern in all three: the
+previous round's remedy was *narrower than the mechanism it was fixing*.
+
+1. **The includes walk was narrowed, not closed.** Nunjucks resolves an
+   include name against the **working directory** as well as the includes
+   dir — `Engines/Nunjucks.js#getFileSystemDirs()` returns
+   `[includesDir, TemplatePath.getWorkingDir()]` — so `partials/zz-root.njk`
+   at the repo root reached a `nav: education` page completely unscanned:
+   exit 0, 137 files, unflagged path shipped. Fixed by rooting the walk at
+   `process.cwd()` (the same call the loader makes). **Restricting it to
+   `.njk` would have repeated the same mistake**: `partials/zz-root.html`
+   reproduced the hole one extension away, because the loader does not care
+   about the extension. So the rule is *every `.njk`, plus every `.html`
+   that is not an 11ty page* — `.html` under `html/` outside `_includes`
+   stays with the `nav: education` arm, which is what keeps the widened
+   scan from silently extending page scope to simulators.
+2. **The exemption was keyed on basename**, so
+   `html/_includes/zzsub/schematic-bg.njk` inherited the gutter's pass and
+   shipped an unflagged path at exit 0 — and neither anti-vacuity arm
+   fired, since either file satisfied both. Now keyed on the path relative
+   to the scan root. Proved both ways: the shadowing copy is reported, and
+   *moving* the real `schematic-bg.njk` reports its 15 unflagged gutter
+   elements **and** `exempt template no longer exists at that path` in the
+   same run.
+3. **The comment mask ran `/* … */` before blanking `//` lines**, so a
+   stray `/*` in one `//` comment paired with a `*/` in a later one and
+   blanked everything between — including a diagram. Proved on a lesson:
+   `// ratio is length /* width` … unflagged `data-flow` path …
+   `// divide by 2 */ done` → exit 0, 137 files, path shipped. Blanking
+   `//` lines first removes both strays before anything can pair them, and
+   closes the identical shape for `-->` and `#}`.
+
+Each was proved **red before green** against the same construction, and
+the reorder was shown neutral on the real tree two ways: a positive search
+(`grep -rnE '^[[:space:]]*//.*(-->|#\}|\*/|/\*)'` over `html/` — no hits)
+and a differential scan of all 145 `.njk` / `.html` files comparing
+old-order vs new-order verdicts (zero differences). Full suite green
+(783 passed, 1 skipped); real tree builds clean at 136 files.
+
+**Declared stop.** Two rounds had already proved the guard's core job
+works — a brand-new `nav: education` page with an unflagged `data-flow`
+path fails the build — and what remained were edge cases each requiring
+someone to deliberately do something nobody does today. The structural
+floor below is not a fourth round; it is the guard's permanent shape.
+
+---
+
+### 203. `flowStaticGuard`'s comment mask is inert on the current tree, and its header says otherwise *(open — 2026-07-25)*
+
+Found while verifying the #202 mask reorder (round 3); **logged, not
+fixed**, because #202 was a declared stop and this is a documentation-
+accuracy call the owner should make rather than a defect in shipped
+behaviour.
+
+`flowStaticGuard` masks HTML / Nunjucks / CSS-block / JS-line comments
+before scanning, and its header justifies that at length:
+
+> COMMENTS ARE MASKED FIRST. Most of these pages mention `data-flow=` in
+> prose … An unmasked scan counts all of those and reports offenders that
+> do not exist.
+
+**Measured: masking changes the guard's verdict on zero of 145 scanned
+`.njk` / `.html` files.** Replacing `maskComments` with the identity
+function still builds clean at 136 files. A differential scan
+(`scan(raw)` vs `scan(masked)` per file) reports no file where the flow /
+flagged counts differ, and 4 files that mention `data-flow` but yield zero
+elements either way.
+
+The reason is that the justification is **stale, not wrong-in-principle**:
+it was true of the guard's *first* cut, which substring-probed for
+`/\sdata-flow\s*=/`. The later "ATTRIBUTES ARE PARSED, NOT
+SUBSTRING-PROBED" upgrade — a separate fix, in the same PR — made prose
+mentions harmless, because `scan()` only counts things that parse as an
+element start tag and a sentence about `data-flow=` has no `<`. Nobody
+re-checked whether that upgrade obsoleted the masking paragraph's
+reasoning. Classic: two correct fixes, one stale explanation between them.
+
+The mask is not *useless* — it is live insurance against a comment that
+contains a full example start tag (`<!-- <path data-flow="supply"
+d="…"/> -->`), which would otherwise be counted as a real element. None
+exists today. So the code is defensible and the comment overstates it.
+
+**Options.** (a) Keep the mask, rewrite the header to say what it actually
+defends — a commented-out markup example, not prose — and note the
+attribute parse is what neutralized the prose case. Cheap, honest, no
+behaviour change; recommended. (b) Drop the mask entirely as dead weight
+and let a future commented example fail loudly. Rejected on the face of
+it: a phantom offender on a comment is a confusing build break, and the
+`//`-line pass is what the round-3 ordering fix hardened. (c) Leave it —
+costs nothing today, but leaves a measured-false claim in the one file
+future readers will trust about this guard's reasoning.
+
+**At stake:** nothing operational. It matters because this header is the
+designated explanation for a guard that has now needed three adversarial
+rounds, and a reader who trusts the masking paragraph will mis-model what
+the scan can and cannot see.

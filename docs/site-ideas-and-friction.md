@@ -4903,7 +4903,10 @@ alongside it:
   **The assertion is pinned at build time, not by memory.**
   `flowStaticGuard` in `.eleventy.js` fails the build if any
   `data-flow` element on a `nav: education` page, or in any
-  `html/_includes` partial, lacks the flag. Getting the assertion
+  template a Nunjucks include could reach (the walk is rooted at
+  the working directory, since the loader resolves include names
+  against it as well as against `_includes`), lacks the flag.
+  Getting the assertion
   wrong is silent and purely visual — particles animate along
   stale geometry, beside the pipe instead of on it, while counts,
   colours and movement all still read correct — so nothing in
@@ -4917,10 +4920,11 @@ alongside it:
       future lesson with a dragged or re-routed pipe says so in
       one line instead of quietly dropping the attribute.
     - **Partials** have no frontmatter, so they opt out through
-      an `EXEMPT_INCLUDES` entry in `.eleventy.js` with a written
-      reason. `schematic-bg.njk` is the only one, and for the
-      opposite reason — the gutter is tabled unconditionally, so
-      an opt-in there would misstate why it is cached.
+      an `EXEMPT_TEMPLATES` entry in `.eleventy.js` with a written
+      reason, keyed on the path relative to the scan root.
+      `html/_includes/schematic-bg.njk` is the only one, and for
+      the opposite reason — the gutter is tabled unconditionally,
+      so an opt-in there would misstate why it is cached.
 
   Scope limits worth knowing before extending it: the guard
   reaches **education pages and partials only**. It must not be
