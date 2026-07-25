@@ -41,10 +41,32 @@ extract the claims in §4–§9 and bucket each as VERIFIED / CORRECTED /
 UNVERIFIABLE. Everything needed is in the repo; you do not need the producing
 session.
 
-**Out of scope, per the owner:** he can see the producing session in the app but
-not on his computer after reattaching tmux. He explicitly chose to route around
-that rather than debug it — *"another verification lets us skip dealing with
-that."* **Do not investigate session visibility or tmux.**
+**The tmux question is CLOSED — do not re-investigate.** The producing session
+appeared missing on his terminal because `tmux a` attached him to
+`AirSimScope-5` (created Jul 20, a plain `bash` pane on pts/1) while the Claude
+session was window `0:claude` in `WebDev-0` on pts/2. Both sessions were marked
+attached, so `tmux a` picked the most-recently-used one. `tmux a -t WebDev-0`
+reaches it directly. Nothing was wrong.
+
+## 0b — This session's mandate is four things, not one
+
+The owner scoped the next session (this one) explicitly, 2026-07-25:
+
+> *"next session… will be dedicated to verification, cleanup, lessons learned,
+> and getting me back on track."*
+
+1. **Verification** — §2–§9 below. The reason the freeze exists. Do this first;
+   the rest is worthless if a claim collapses.
+2. **Cleanup** — host process hygiene, see §12. Deferred deliberately: *"The ol
+   AMD6300 can handle it a little longer."* He also wants a **deeper look at
+   background processes and how the server is hosted on this box**, which is
+   broader than reaping strays.
+3. **Lessons learned** — §2 is the raw material. The two patterns worth
+   generalising are named there: *a stated remedy is narrower than its mechanism
+   more often than it is wrong*, and *a later fix can silently obsolete an
+   earlier fix's justification*. Both produced real false records this arc.
+4. **Getting back on track** — the DDC Workbench buildout (§10, §11), which is
+   the thread a small amount of browser lag interrupted.
 
 ## 1 — Exact state to pin against
 
@@ -71,6 +93,33 @@ directory) on a 9400+ port, and delete it after. Ports `8000`–`8006`, `8080`,
 
 ⚠️ **`sudo` is unavailable to the agent.** If a step needs root, stop and hand
 the owner the exact commands.
+
+### ⚠️ Read every CPU number in this file against the host that produced it
+
+`command.home.arpa` is an **AMD FX-6300** — a 2012 Piledriver, 6 cores (3
+modules), 3.5 GHz, 27 GB RAM. Single-thread performance is a fraction of a
+modern desktop or laptop core. **Every browser measurement in this arc ran
+headless Chromium on that CPU**, which has three consequences the producing
+session did not state:
+
+1. **Absolute CPU figures overstate what a real visitor pays.** F4's
+   "326.3 ms/s ≈ a third of a core" is a third of an *FX-6300* core. The same
+   work on current client hardware is a substantially smaller share. The
+   **ratio** (326.3 vs 0.3) is what travels; the absolute number is not.
+2. **It strengthens the owner's decision to park the gutter work, rather than
+   weakening it.** The worst idle cost measured anywhere in this arc was taken on
+   2012 silicon and still held ~60 fps. A modern machine has more headroom, not
+   less.
+3. **A CPU-throttle sweep on this box is harsher than intended.** The producing
+   session proposed 4×/6× throttling to model "a 2018 jobsite laptop." 4× on an
+   FX-6300 lands well below any laptop a tech would actually carry, so that test
+   as specified would measure a machine nobody owns. Re-derive the multiplier
+   from a target device, or drop the test.
+
+`tests/perf-profile.mjs`'s own header already warns that CPU numbers are
+machine-dependent and do not travel. This is the concrete reason. The
+**layouts-per-rendered-frame** column is the load-independent detector and is the
+one that survives the hardware — prefer it, and rank by fps, never by CPU.
 
 ## 2 — The self-catch register: where the producing session was wrong
 
@@ -487,3 +536,71 @@ allows.
 - **Owed once #430 merges:** `codebase-issues` entries for C12 (the public
   page's router bug) and C13 (the palette drop grid). Held only to avoid
   conflicting with #430's own edits to that file.
+
+## 12 — Cleanup: host process hygiene (mandate item 2)
+
+**Nine stale servers are running, the oldest for 8+ days.** They are leftovers
+from previous Claude sessions on this box, not services. PIDs will have changed
+by the time you read this — **match on the pattern, not the numbers**:
+
+```
+pgrep -af 'http\.server|eleventy'
+```
+
+Ports seen 2026-07-25: `8761`, `8768`, `8793`, `8794`, `8931`, `9137`, `9402`,
+`9500`, plus an `eleventy --serve` on `41573`. Ages ranged 14h to **8d 14h**.
+
+Three things to know before reaping them:
+
+1. **`8794` and `9500` are bound to `0.0.0.0`.** They have been serving `_site`
+   builds out of scratch worktrees under `.claude/` to the whole LAN for a
+   day-plus. Nothing sensitive in a static build, but it is not intended, and it
+   is the strongest argument for fixing the pattern rather than just the
+   instances.
+2. **This is the root cause of the recurring port-collision friction.** It is why
+   `npm test` cannot bind `:8000` and why every lane in this arc had to probe
+   `ss -ltn` before choosing a port. The collisions are self-inflicted
+   accumulation, not a crowded box.
+3. ⚠️ **Kill the server, not the wrapper.** The producing session got this wrong
+   in front of the owner: the PIDs from a `ps | grep claude` listing are the
+   `/bin/bash -c … eval '…'` wrappers. Killing those leaves the real `python3` /
+   `node` children alive and reparented to init. Target the `http.server` /
+   `eleventy` processes themselves, then confirm `pgrep -af` comes back empty.
+
+**Do not blind-kill by port range.** Ports `8000`–`8006`, `8080`, `8099`,
+`8123`, `9090` are the household stack (rootless podman quadlets, grafana,
+clickhouse, cockpit) — see `~/CLAUDE.md`. A `pgrep` on `http.server|eleventy`
+does not match them, which is why that is the safe discriminator.
+
+**Owner's broader ask, larger than reaping strays:** *"we can take a deeper look
+at background processes and how we host the server on this box."* Worth treating
+as its own scoped piece of work rather than folding into the cleanup — the
+question is what launches these, why nothing reaps them, and whether the
+`nohup … &` idiom the lanes use should be replaced with something that dies with
+its session.
+
+## 13 — New idea from the owner: local preview on the service dash
+
+> *"I may want to add a local preview to my custom service dash so it's more
+> streamlined."*
+
+The dash is the **home hub / launcher page at `~/caddy/`** (http://command.home.arpa),
+which has **its own CLAUDE.md** — so this is a cross-project change and the hub
+repo's conventions govern, not this one's. Scoped but not started; no design
+decisions made.
+
+Two things worth raising with him before building anything, both learned the hard
+way this session:
+
+- **A long-lived preview server is the exact thing §12 is cleaning up.** A hub
+  tile pointing at an ad-hoc `python3 -m http.server` recreates the stray-process
+  problem by design. The rootless-podman-quadlet pattern that every other hub
+  service uses (`~/.config/containers/systemd/*.container`, linger enabled, starts
+  at boot) is the house answer, and it makes the preview reapable and restartable
+  instead of orphaned.
+- **`controlsfreak.dev` is documented as "not run locally — dev only; deployed to
+  Cloudflare"** (`~/CLAUDE.md`). A hub tile for it would be the first exception,
+  so the note needs updating in the same change — and it is worth deciding
+  whether the tile serves a **built `_site`** (static, cheap, stale until
+  rebuilt) or a **live `eleventy --serve`** (fresh, but a permanently running node
+  process, which is how the 2d-old stray on `:41573` came to exist).
