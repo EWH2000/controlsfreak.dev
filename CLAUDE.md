@@ -191,14 +191,29 @@ Frontmatter:
   it would pass vacuously. On simulators the call stays a per-page
   judgement.
   The guard reads a page's own `rawInput`, which stops at an
-  `{% include %}` tag — so it **also walks `html/_includes` on disk** and
-  holds every partial to the same rule, regardless of which page pulls
-  one in. A partial has no frontmatter and so no `flowGeometryLive`; the
-  escape hatch there is an `EXEMPT_INCLUDES` entry in `.eleventy.js` with
-  a written reason. `schematic-bg.njk` is the only one, and for the
+  `{% include %}` tag — so it **also walks the working directory on disk**
+  and holds every partial to the same rule, regardless of which page pulls
+  one in. The scan root is `process.cwd()`, not `html/_includes`, because
+  Nunjucks resolves an include name against **both** the includes dir and
+  the working dir (`getFileSystemDirs()`), so a partial parked anywhere —
+  `partials/foo.njk` at the repo root — reaches a lesson too. It scans
+  every `.njk`, plus every `.html` that is *not* an 11ty page (outside
+  `html/`, or inside `_includes`); `.html` pages stay with the
+  `nav: education` arm, which is what keeps the scan from silently
+  extending page scope to simulators. `node_modules` / `_site` / `.git` /
+  `.claude` are skipped. A partial has no frontmatter and so no
+  `flowGeometryLive`; the escape hatch there is an `EXEMPT_TEMPLATES` entry
+  in `.eleventy.js` with a written reason, **keyed on the path relative to
+  the scan root** — a basename key hands its pass to every file sharing the
+  name. `html/_includes/schematic-bg.njk` is the only one, and for the
   opposite reason — flow-engine tables the gutter unconditionally, so its
-  motifs need no opt-in. An exempt name that stops resolving to a real
-  file fails the build rather than decaying into a silent pass.
+  motifs need no opt-in. An exempt path that stops resolving to a real
+  file fails the build rather than decaying into a silent pass, which
+  doubles as the walk's anti-vacuity probe.
+  **The guard's floor:** it can only see attributes that are LITERAL in a
+  scanned file. JS-created paths, `_data`-supplied markup and a templated
+  attribute name all pass. Read it as *no literal unflagged education flow
+  path ships*, never as *no unflagged flow path ships*.
 
 Blocks: `head` (optional — inline `<style>` or head-loaded script;
 Turnstile on `contact.html` is the only current head-script example);

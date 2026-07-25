@@ -11,8 +11,10 @@ const path = require("path");
 
 // 11ty's input + includes directories, hoisted out of the `dir` object
 // returned at the bottom of this file so flowStaticGuard's on-disk scan
-// of the includes tree reads the same directory 11ty resolves
-// `{% include %}` against. Two literals would drift; one can't.
+// splits pages from partials on the same directories 11ty itself uses —
+// it is how the scan knows which `.html` is a page (the `nav: education`
+// arm owns those) and which is an include, and it keys the
+// EXEMPT_TEMPLATES path. Two literals would drift; one can't.
 const INPUT_DIR = "html";
 const INCLUDES_DIR = "_includes";
 
@@ -209,24 +211,57 @@ module.exports = function(eleventyConfig) {
     // `data-flow` attribute is literal in the page file, so pre-render
     // reaches all of them.
     //
-    // THE INCLUDES TREE IS SCANNED SEPARATELY, because rawInput is the
-    // page's OWN source and stops at the `{% include %}` tag. That hole was
-    // proved by construction (2026-07-25): an `_includes` partial holding
+    // TEMPLATES ARE SCANNED SEPARATELY, because rawInput is the page's OWN
+    // source and stops at the `{% include %}` tag. That hole was proved by
+    // construction (2026-07-25): an `_includes` partial holding
     // `<path data-flow="supply" d="…"/>`, plus a `nav: education` page
     // whose entire body was `{% include %}` of it, built clean and shipped
-    // an unflagged content flow path. So `html/_includes` is walked on
-    // disk and held to the same rule, independently of which page pulls a
-    // partial in — an include's markup can land on any page, so it must
-    // carry the flag wherever it lands. An include has no frontmatter and
-    // therefore no `flowGeometryLive` opt-out; one that genuinely needs the
-    // live read earns an EXEMPT_INCLUDES entry with a written reason.
-    // `schematic-bg.njk` is the sole entry today, and for the opposite
-    // reason: flow-engine tables the gutter unconditionally (`pool.gutter`
-    // in buildPoolForEl), so its motifs need no opt-in and adding one would
-    // misstate why they are cached. Each exempt name must resolve to a real
-    // scanned file, so an exemption that stops matching becomes an offender
-    // instead of decaying into a silent permanent pass — same discipline as
-    // the contrast sweep's ALLOWLIST.
+    // an unflagged content flow path. An include's markup can land on any
+    // page, so it must carry the flag wherever it lands, independently of
+    // which page pulls it in.
+    //
+    // THE SCAN ROOT IS THE WORKING DIRECTORY, NOT `html/_includes`. A first
+    // cut walked the includes directory alone; that was narrowed, not
+    // closed. Nunjucks' loader resolves an include name against BOTH the
+    // includes dir and the working dir —
+    // `@11ty/eleventy/src/Engines/Nunjucks.js#getFileSystemDirs()` returns
+    // `[includesDir, TemplatePath.getWorkingDir()]` — so a partial parked
+    // anywhere else reaches an education page completely unscanned. Proved
+    // by construction (2026-07-25) with `partials/zz-root.njk` at the repo
+    // root: exit 0, and the page shipped the unflagged path. The walk is
+    // therefore rooted at `process.cwd()`, which is the same call
+    // `getWorkingDir()` makes, so the guard and the loader cannot disagree
+    // about where an include may live.
+    //
+    // WHICH FILES: every `.njk` under the root, plus every `.html` that is
+    // NOT an 11ty page — i.e. outside the input dir, or inside `_includes`.
+    // Extension alone is not enough in either direction. Restricting to
+    // `.njk` leaves the identical hole one extension away (`partials/
+    // zz-root.html` reproduced it — the loader does not care about the
+    // extension). Taking every `.html` would drag the input dir's pages in
+    // and silently extend PAGE SCOPE to simulators, which the note below
+    // forbids. So `.html` pages under `html/` stay with the `nav: education`
+    // arm above, and everything else a loader could pull in is scanned.
+    // `node_modules` / `_site` / `.git` / `.claude` are skipped: the first
+    // two are not source, and the last two carry whole copies of the tree
+    // (worktrees, build output) that would report phantom offenders.
+    //
+    // An include has no frontmatter and therefore no `flowGeometryLive`
+    // opt-out; one that genuinely needs the live read earns an
+    // EXEMPT_TEMPLATES entry with a written reason.
+    // `html/_includes/schematic-bg.njk` is the sole entry today, and for the
+    // opposite reason: flow-engine tables the gutter unconditionally
+    // (`pool.gutter` in buildPoolForEl), so its motifs need no opt-in and
+    // adding one would misstate why they are cached. Entries are keyed on
+    // the path relative to the scan root, NOT the basename — a basename key
+    // hands its pass to any file that merely shares the name, proved with
+    // `html/_includes/zzsub/schematic-bg.njk` shipping an unflagged path
+    // through the gutter's exemption (2026-07-25). Each exempt path must
+    // resolve to a real scanned file, so an exemption that stops matching
+    // becomes an offender instead of decaying into a silent permanent pass
+    // — same discipline as the contrast sweep's ALLOWLIST. That arm doubles
+    // as the walk's anti-vacuity probe for the includes tree: it can only
+    // pass if the walk actually reached `html/_includes/`.
     //
     // A fail-closed "declare your includes" rule was considered and does
     // NOT work: 15 of the 15 flow-bearing lessons already carry
@@ -252,7 +287,7 @@ module.exports = function(eleventyConfig) {
     // attrsOf() walks name/value pairs instead, which also makes the
     // `data-flow-static` read quote-agnostic.
     //
-    // PAGE SCOPE IS `nav: education` ONLY, DELIBERATELY (the includes
+    // PAGE SCOPE IS `nav: education` ONLY, DELIBERATELY (the template
     // scan above is separate and unconditional) — it does not reach
     // simulators, and must not be extended there as-is. A MARKUP scan is
     // structurally blind to the standing counter-example:
@@ -264,6 +299,15 @@ module.exports = function(eleventyConfig) {
     // simulators the call stays a per-page judgement made by reading the
     // page's geometry writes.
     //
+    // THAT BLIND SPOT IS THE GUARD'S FLOOR, and widening the file coverage
+    // does not raise it: an attribute that is not LITERAL in any scanned
+    // file cannot be caught by a scan of files. The JS-created paths above
+    // are one form; `_data`-supplied markup and a templated attribute name
+    // (`{% set fa = "data-flow" %}<path {{ fa }}="supply" …/>`, which builds
+    // clean) are the others. This is structural, not a gap to close — read
+    // the scan as "no LITERAL unflagged education flow path ships", never
+    // as "no unflagged flow path ships."
+    //
     // DIRECTION: this enforces "an education flow path carries the flag."
     // It cannot enforce the converse — that a page carrying the flag is
     // entitled to it — since that is a claim about runtime behaviour. What
@@ -274,13 +318,28 @@ module.exports = function(eleventyConfig) {
         // Blank a comment to spaces rather than deleting it, so the
         // surrounding markup keeps its shape.
         const blank = (m) => m.replace(/[^\n]/g, " ");
+        // LINE COMMENTS ARE BLANKED FIRST, and the order is load-bearing.
+        // The delimited passes are non-greedy `open … close` scans that do
+        // not know a delimiter is itself inside a line comment, so running
+        // one before the `//` pass lets a stray opener in one `//` line pair
+        // with a stray closer in a LATER one and blank everything between —
+        // including a diagram. Proved on a `nav: education` page
+        // (2026-07-25): `// ratio is length /* width` … an unflagged
+        // `data-flow` path … `// divide by 2 */ done` built clean at exit 0
+        // and shipped the path. Blanking `//` lines first removes both
+        // strays before anything can pair them, and closes the same hole for
+        // `-->` and `#}` (identical shape, not separately reproduced).
+        // Safe on this tree by positive search: no `.njk` / `.html` file has
+        // a `//` line containing `-->`, `#}`, `*/` or `/*`
+        // (`grep -rnE '^[[:space:]]*//.*(-->|#\}|\*/|/\*)'` over html/),
+        // so the reorder cannot change masking on any file that exists.
         const maskComments = (src) => src
-            .replace(/<!--[\s\S]*?-->/g, blank)      // HTML comments
-            .replace(/\{#[\s\S]*?#\}/g, blank)       // Nunjucks comments — stripped before render
-            .replace(/\/\*[\s\S]*?\*\//g, blank)     // CSS block comments in {% block head %}
             .split("\n")
             .map((line) => (line.trimStart().startsWith("//") ? blank(line) : line))
-            .join("\n");
+            .join("\n")
+            .replace(/<!--[\s\S]*?-->/g, blank)      // HTML comments
+            .replace(/\{#[\s\S]*?#\}/g, blank)       // Nunjucks comments — stripped before render
+            .replace(/\/\*[\s\S]*?\*\//g, blank);    // CSS block comments in {% block head %}
         const offenders = [];
 
         // One start tag's attribute text → a name → value map. Names are
@@ -353,51 +412,73 @@ module.exports = function(eleventyConfig) {
                 }
             });
 
-        // The includes tree — the surface a page's rawInput cannot show.
-        // Exempt by FILENAME, so a partial moved between subdirectories
-        // keeps its exemption; each entry carries its reason above.
-        const EXEMPT_INCLUDES = new Set(["schematic-bg.njk"]);
-        const includesRoot = path.join(__dirname, INPUT_DIR, INCLUDES_DIR);
+        // Every template a Nunjucks include could reach — the surface a
+        // page's rawInput cannot show. Exempt by PATH RELATIVE TO THE SCAN
+        // ROOT, so an exemption names one file rather than every file that
+        // happens to share its basename; each entry carries its reason
+        // above. Moving an exempt partial re-points its entry by hand,
+        // which is the intended friction.
+        const EXEMPT_TEMPLATES = new Set([`${INPUT_DIR}/${INCLUDES_DIR}/schematic-bg.njk`]);
+        // Not source, or a whole second copy of the tree.
+        const SKIP_DIRS = new Set(["node_modules", "_site", ".git", ".claude"]);
+        const pagesPrefix = `${INPUT_DIR}/`;
+        const includesPrefix = `${INPUT_DIR}/${INCLUDES_DIR}/`;
+        // `.html` inside the input dir but outside `_includes` is an 11ty
+        // PAGE — the `nav: education` arm above owns it, deliberately.
+        const isScannable = (rel) => {
+            if (rel.endsWith(".njk")) return true;
+            if (!rel.endsWith(".html")) return false;
+            return !rel.startsWith(pagesPrefix) || rel.startsWith(includesPrefix);
+        };
+        const scanRoot = process.cwd();
         const exemptSeen = new Set();
-        let includesScanned = 0;
-        const walkIncludes = (dir) => {
+        let templatesScanned = 0;
+        const walkTemplates = (dir) => {
             fs.readdirSync(dir, { withFileTypes: true }).forEach((entry) => {
+                if (SKIP_DIRS.has(entry.name)) return;
                 const full = path.join(dir, entry.name);
+                // Dirent type tests do not follow symlinks, so a symlinked
+                // directory is skipped rather than walked — no cycles, and
+                // no crash on the `node_modules` symlink an agent worktree
+                // uses (it is skipped by name anyway).
                 if (entry.isDirectory()) {
-                    walkIncludes(full);
+                    walkTemplates(full);
                     return;
                 }
-                includesScanned++;
-                if (EXEMPT_INCLUDES.has(entry.name)) {
-                    exemptSeen.add(entry.name);
+                if (!entry.isFile()) return;
+                const rel = path.relative(scanRoot, full).split(path.sep).join("/");
+                if (!isScannable(rel)) return;
+                templatesScanned++;
+                if (EXEMPT_TEMPLATES.has(rel)) {
+                    exemptSeen.add(rel);
                     return;
                 }
-                const label = `${INPUT_DIR}/${INCLUDES_DIR}/${path.relative(includesRoot, full)}`;
-                const { flow, flagged } = scan(maskComments(fs.readFileSync(full, "utf8")), label);
+                const { flow, flagged } = scan(maskComments(fs.readFileSync(full, "utf8")), rel);
                 if (flow > flagged) {
-                    offenders.push(`  ${label} — ${flow - flagged} of ${flow} data-flow elements lack data-flow-static="true"; an include reaches its host page without that page's source ever showing it`);
+                    offenders.push(`  ${rel} — ${flow - flagged} of ${flow} data-flow elements lack data-flow-static="true"; a template reaches its host page without that page's source ever showing it`);
                 }
             });
         };
-        // A missing includes directory throws out of readdirSync and fails
-        // the build, which is the right direction — this guard must never
-        // be able to pass because it found nothing to look at.
-        walkIncludes(includesRoot);
-        if (!includesScanned) {
-            offenders.push(`  ${INPUT_DIR}/${INCLUDES_DIR} — no templates found; this guard cannot see the includes tree`);
+        walkTemplates(scanRoot);
+        // This guard must never be able to pass because it found nothing to
+        // look at. The exempt-path arm below is the stronger probe — it can
+        // only pass if the walk reached html/_includes/ — but the count
+        // keeps a floor under an empty EXEMPT_TEMPLATES.
+        if (!templatesScanned) {
+            offenders.push(`  ${scanRoot} — no templates found; this guard cannot see the template tree`);
         }
-        EXEMPT_INCLUDES.forEach((name) => {
-            if (!exemptSeen.has(name)) {
-                offenders.push(`  ${INPUT_DIR}/${INCLUDES_DIR} — exempt include "${name}" no longer exists; drop the exemption or re-point it`);
+        EXEMPT_TEMPLATES.forEach((rel) => {
+            if (!exemptSeen.has(rel)) {
+                offenders.push(`  ${rel} — exempt template no longer exists at that path; drop the exemption or re-point it`);
             }
         });
 
         if (offenders.length) {
             throw new Error(
                 `data-flow-static="true" is required on every education flow ` +
-                `path and on every _includes flow path — opt out with ` +
+                `path and on every template flow path — opt out with ` +
                 `\`flowGeometryLive: true\` frontmatter (pages) or an ` +
-                `EXEMPT_INCLUDES entry (partials) (CLAUDE.md "Templating"; ` +
+                `EXEMPT_TEMPLATES entry (partials) (CLAUDE.md "Templating"; ` +
                 `the assertion it makes is in the flow-engine.js ` +
                 `header):\n${offenders.join("\n")}`
             );
