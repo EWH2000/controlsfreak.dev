@@ -252,7 +252,8 @@ module.exports = function(eleventyConfig) {
     // attrsOf() walks name/value pairs instead, which also makes the
     // `data-flow-static` read quote-agnostic.
     //
-    // SCOPE IS `nav: education` ONLY, DELIBERATELY — it does not reach
+    // PAGE SCOPE IS `nav: education` ONLY, DELIBERATELY (the includes
+    // scan above is separate and unconditional) — it does not reach
     // simulators, and must not be extended there as-is. A MARKUP scan is
     // structurally blind to the standing counter-example:
     // simulators/hydronic-loop-builder.html creates its flow paths from JS
