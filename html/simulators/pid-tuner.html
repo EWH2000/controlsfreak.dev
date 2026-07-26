@@ -178,6 +178,27 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
                     <!-- Process scenes — only the active one is shown -->
                     <div class="pid-eq-scene-host">
 
+                        <!-- data-flow-static on every .pid-eq-flow path below is
+                             an ASSERTION, not a hint (flow-engine.js header): the
+                             engine caches a sampled point table per path instead
+                             of calling getPointAtLength() per particle per frame,
+                             and it is only correct while EVERY mutation of that
+                             path's `d` is followed immediately by
+                             FlowEngine.refreshPath() on it. These four `d`
+                             attributes are literal and nothing writes them —
+                             updateScene() moves the actuator fill and the fan
+                             transform, never the flow track. The only engine
+                             attribute that does change is data-flow-density
+                             (the coarse three-band output→flow cue), and both
+                             writers refresh in the same breath: the preset
+                             change and the band change each call refreshPath()
+                             on every [data-flow] in the active scene. If a
+                             future change writes `d` here, refresh in the same
+                             breath or drop this attribute — see
+                             hydronic-loop-builder.html for the page that cannot
+                             have it (mid-drag `d` rewrites, refresh on
+                             pointer-up). -->
+
                         <!-- FAST · supply fan VFD · duct static. One AO, one
                              actuator: the VFD ramps the fan, the duct-static
                              sensor reports back. (The old VAV-damper framing
@@ -185,7 +206,7 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
                              no real config does that; audit-2026-06 #50.) -->
                         <svg class="pid-eq-scene hidden" id="pid-eq-scene-fast" viewBox="0 0 360 120" role="presentation">
                             <rect class="pid-eq-duct" x="6" y="40" width="348" height="40"/>
-                            <path class="pid-eq-flow" data-flow="supply" data-flow-density="0.6" d="M10,60 L350,60"/>
+                            <path class="pid-eq-flow" data-flow="supply" data-flow-static="true" data-flow-density="0.6" d="M10,60 L350,60"/>
                             <path class="pid-eq-wire" d="M50,8 L50,34"/>
                             <svg class="widget-fan" x="24" y="34" width="52" height="52" viewBox="0 0 100 100">
                                 <circle cx="50" cy="50" r="46" fill="none" stroke="var(--border)" stroke-width="3"/>
@@ -209,7 +230,7 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
                             <path class="pid-eq-pipe" d="M8,60 L94,60"/>
                             <path class="pid-eq-pipe" d="M124,60 L182,60"/>
                             <path class="pid-eq-pipe" d="M248,60 L334,60"/>
-                            <path class="pid-eq-flow" data-flow="supply" data-flow-density="0.6" d="M8,60 L334,60"/>
+                            <path class="pid-eq-flow" data-flow="supply" data-flow-static="true" data-flow-density="0.6" d="M8,60 L334,60"/>
                             <path class="pid-eq-wire" d="M0,9 L109,9 L109,16"/>
                             <rect class="pid-eq-act-track" x="103" y="16" width="12" height="22"/>
                             <rect class="pid-eq-act-fill" id="pid-eq-med-valve" x="103" y="38" width="12" height="0" data-y="16" data-h="22"/>
@@ -227,7 +248,7 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
                         <svg class="pid-eq-scene hidden" id="pid-eq-scene-slow" viewBox="0 0 360 120" role="presentation">
                             <path class="pid-eq-pipe" d="M8,60 L94,60"/>
                             <path class="pid-eq-pipe" d="M124,60 L188,60"/>
-                            <path class="pid-eq-flow" data-flow="supply" data-flow-density="0.5" d="M8,60 L250,60"/>
+                            <path class="pid-eq-flow" data-flow="supply" data-flow-static="true" data-flow-density="0.5" d="M8,60 L250,60"/>
                             <path class="pid-eq-wire" d="M0,9 L109,9 L109,16"/>
                             <rect class="pid-eq-act-track" x="103" y="16" width="12" height="22"/>
                             <rect class="pid-eq-act-fill" id="pid-eq-slow-valve" x="103" y="38" width="12" height="0" data-y="16" data-h="22"/>
@@ -248,7 +269,7 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
                             <path class="pid-eq-pipe" d="M8,60 L52,60"/>
                             <path class="pid-eq-pipe" d="M82,60 L96,60"/>
                             <path class="pid-eq-duct" d="M120,52 L330,52 M120,68 L330,68"/>
-                            <path class="pid-eq-flow" data-flow="supply" data-flow-density="0.6" d="M8,60 L336,60"/>
+                            <path class="pid-eq-flow" data-flow="supply" data-flow-static="true" data-flow-density="0.6" d="M8,60 L336,60"/>
                             <path class="pid-eq-wire" d="M0,9 L67,9 L67,16"/>
                             <rect class="pid-eq-act-track" x="61" y="16" width="12" height="22"/>
                             <rect class="pid-eq-act-fill" id="pid-eq-vhigh-valve" x="61" y="38" width="12" height="0" data-y="16" data-h="22"/>
