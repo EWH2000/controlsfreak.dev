@@ -8163,8 +8163,11 @@ the zone setpoint in this pass).
   at 8px on a device face the captions need it, and it is how the owner draws
   these boxes in the field. 600 rather than 700 because **no 700 mono face
   ships** (see #216); naming 600 says what renders instead of leaning on
-  weight-matching. Monospace is fixed-advance across weights, so the advances
-  above are unchanged by it (measured).
+  weight-matching. *(Overtaken 2026-07-26 by #216's resolution: the owner
+  ruled the nine 700s were intent and the real face now ships, so
+  `.fcu-pt-cap` asks for 700 and gets it — see #216.)* Monospace is
+  fixed-advance across weights, so the advances above are unchanged by it
+  (measured, re-confirmed with the 700 face loaded).
 - **The six dead `font-size` attributes on the EAT / ΔT / DAT readouts are
   gone**, rather than promoted to real rules — they were requesting 13px where
   the class gives 14px, a step nobody asked for.
@@ -8324,7 +8327,7 @@ behaviour (a negative deadband erases hysteresis into a bare comparator, which
 is a *better* teaching hook than the failure originally claimed for it, and an
 argument for leaving that particular const unclamped).
 
-### 216. Nine rules request a mono weight the site does not ship *(open — 2026-07-26)*
+### 216. Nine rules request a mono weight the site does not ship *(addressed 2026-07-26)*
 
 Surfaced while writing the weight comment for #211. `styles.css` loads IBM Plex
 Mono as four static instances — **400 / 400-italic / 500 / 600, and nothing
@@ -8364,3 +8367,22 @@ file, and the reason the mono was pinned to four instances was weight. (c) Leave
 it and rely on the resolution behaviour. **(a) is the obvious call** unless the
 owner actually wants heavier mono values somewhere, which is what (b) is really
 asking. Not fixed inline because it spans six files outside the #211 pass.
+
+**Resolution — (b), owner ruling 2026-07-26: the nine 700s were intent.** He
+wants genuinely bold small sensor labels, so the fix was not to rewrite the
+rules down to what shipped but to ship the face the rules already ask for.
+`html/assets/fonts/ibm-plex-mono-latin-700.woff2` — same gstatic producer run
+as the four shipped instances, latin subset, a true Bold (usWeightClass 700),
+coverage delta vs the 600 face empty — plus a fifth `@font-face` block in
+`styles.css` mirroring the 600 block verbatim; new filename per the
+immutable-by-name rule, `?v=` cache bust covered by the version bump.
+Re-measured on the built site: 700 vs 600 now diffs (1363 px at 24px, 348 at
+8px, against a live 500-vs-600 control) where it measured 0 above, and
+advances are byte-identical across 400/500/600/700, so no box geometry moved.
+`.fcu-pt-cap` follows to 700 in the same PR — its 600 existed only because no
+700 shipped (#211), and that argument inverted the moment the face landed;
+its rationale comment and measured numbers are updated (76.13 / 76.13 / 81.56
+user units at both weights, boxes 86 / 96 / 90). The #211(d) Δ rider (U+0394
+into the mono subset) was **offered, not taken**: adding Δ only at 700 would
+render it inconsistently across weights, so it stays a live cross-page
+decision.
