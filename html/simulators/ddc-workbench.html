@@ -40,6 +40,18 @@ noindex: true
         .fcu-pt-cap {
             font-family: var(--mono);
             font-size: 8px;
+            /* 600, not 700 — and NOT because 700 was too heavy. There is no
+               700 mono face on this site: styles.css loads IBM Plex Mono at
+               400 / 400-italic / 500 / 600 only, so a request for 700 is
+               resolved by the UA down to the 600 file anyway. Naming 600
+               says what actually renders and does not lean on weight-matching
+               behaviour. Weight is load-bearing here rather than decorative:
+               at 8px on a device face the captions need it to stay legible,
+               which is how the owner draws these boxes in the field. Advance
+               is unchanged (monospace is fixed-advance across weights) —
+               measured, the three badge captions still come to 76.13 / 76.13
+               / 81.56 against boxes of 86 / 96 / 90. */
+            font-weight: 600;
             letter-spacing: 0.08em;
             fill: var(--text-dim);
             text-anchor: middle;
