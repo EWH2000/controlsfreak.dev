@@ -239,6 +239,17 @@ noindex: true
             margin-top: 0.35rem;
         }
         label.ddcw-null input { width: auto; margin: 0; }
+        /* Touch-target floor (page-local): the stage / fan-enable NULL
+           boxes sit inside .field, so the shared TOUCH-TARGET FLOOR's
+           `.field input` rule (styles.css) already floors their
+           checkboxes at 44px — but the fan NULL box lives in a
+           .slider-field no shared selector reaches (measured 13px on
+           touch). Same declaration here so all three NULL rows measure
+           alike (WCAG 2.5.5); the label is flex + align-items:center,
+           so the row centers around the taller hit box. */
+        @media (hover: none) {
+            label.ddcw-null input { min-height: 44px; }
+        }
 
         /* Sensor override — the real-vs-sensed control. A bordered block so it
            reads as its own instrument; the amber "forcing" state marks the
@@ -333,13 +344,36 @@ noindex: true
            or a released point resting on Relinquish_Default. Mono at chip
            scale; the label is the quiet element, entries the loud ones.
            Amber left rule = the same "operator is holding something"
-           register as the sensor-override box. Hidden when empty. */
+           register as the sensor-override box. Collapses via .is-empty
+           when empty (rule below). */
         .ddcw-offprog {
             margin: -0.4rem 0 1.1rem;
             padding: 0.5rem 0.65rem;
             border: 1px solid var(--border);
             border-left: 3px solid var(--amber);
             background: var(--surface-2);
+        }
+        /* Empty = visually gone but STILL RENDERED (the sr-only collapse
+           recipe), never the hidden attribute / display:none: a live
+           region only announces mutations made while it is IN the
+           accessibility tree, and a region that enters the tree already
+           populated announces nothing — which silenced the window's
+           primary teaching event (the box is hidden whenever empty, so
+           every first hand-take / first release-to-default landed on
+           the empty→non-empty edge). The second selector out-specifies
+           the fullscreen margin/padding retune further down, so the
+           collapse holds on both surfaces. */
+        .ddcw-offprog.is-empty,
+        .tool-card.is-fullscreen .ddcw-offprog.is-empty {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            margin: 0;
+            border: 0;
+            padding: 0;
+            overflow: hidden;
+            clip-path: inset(50%);
+            white-space: nowrap;
         }
         .ddcw-offprog-lbl {
             font-family: var(--mono);
@@ -534,8 +568,11 @@ noindex: true
                  unit.points: every actuator point whose resolved command is
                  NOT the sequence at slot 16 — a hand value held in slot 8, or
                  a released point resting on Relinquish_Default. Outside both
-                 panes so it stays in view on either tab. -->
-            <div class="ddcw-offprog" id="ddcw-offprog" role="status" aria-live="polite" hidden>
+                 panes so it stays in view on either tab. Empty = the
+                 .is-empty collapse, NEVER the hidden attribute: the live
+                 region must stay in the accessibility tree while empty or
+                 the first entry announces nothing (see the CSS rule). -->
+            <div class="ddcw-offprog is-empty" id="ddcw-offprog" role="status" aria-live="polite">
                 <span class="ddcw-offprog-lbl">Points not following the program:</span>
                 <ul class="ddcw-offprog-list" id="ddcw-offprog-list"></ul>
             </div>
@@ -738,9 +775,15 @@ noindex: true
                         <button type="button" class="copy-btn ddcw-tracked" id="fcu-stage-2" data-stage="2" aria-pressed="false">Stage 2</button>
                     </div>
                     <!-- ONE control, TWO points: the stage group commands y1
-                         AND y2, so its NULL box releases both slots together. -->
+                         AND y2, so its NULL box releases both slots together.
+                         All three NULL boxes share the visible caption; each
+                         aria-label keeps that caption as a prefix and appends
+                         WHICH point the box releases, so a screen reader's
+                         forms-mode listing doesn't read three identical
+                         checkboxes. -->
                     <label class="ddcw-null" for="fcu-null-stage">
-                        <input type="checkbox" id="fcu-null-stage" checked>
+                        <input type="checkbox" id="fcu-null-stage" checked
+                            aria-label="NULL — released — compressor stage Y1/Y2 (slot 8)">
                         NULL — released
                     </label>
                 </div>
@@ -753,7 +796,8 @@ noindex: true
                         </div>
                         <input type="range" id="fcu-fan-slider" class="ddcw-tracked" min="0" max="100" step="5" value="100">
                         <label class="ddcw-null" for="fcu-null-fan">
-                            <input type="checkbox" id="fcu-null-fan" checked>
+                            <input type="checkbox" id="fcu-null-fan" checked
+                                aria-label="NULL — released — supply-fan speed (slot 8)">
                             NULL — released
                         </label>
                     </div>
@@ -789,7 +833,8 @@ noindex: true
                         Fan enable — G command (slot 8 — Manual Operator)
                     </label>
                     <label class="ddcw-null" for="fcu-null-fanen">
-                        <input type="checkbox" id="fcu-null-fanen" checked>
+                        <input type="checkbox" id="fcu-null-fanen" checked
+                            aria-label="NULL — released — fan enable (slot 8)">
                         NULL — released
                     </label>
                 </div>
@@ -1168,7 +1213,12 @@ noindex: true
                 li.textContent = t;
                 list.appendChild(li);
             });
-            box.hidden = entries.length === 0;
+            // .is-empty, not the hidden attribute: the region must STAY
+            // in the accessibility tree while empty — a live region that
+            // enters the tree already populated announces nothing, and
+            // the empty→first-entry edge is exactly the event this
+            // window exists to announce.
+            box.classList.toggle('is-empty', entries.length === 0);
         }
         function syncProgramSelect() {
             const sel = document.getElementById('ddcw-program');

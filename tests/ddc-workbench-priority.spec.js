@@ -22,6 +22,11 @@
 //   • scenario presets are operator writes (slot 8) — the NULL boxes
 //     re-sync unchecked from slot state, and no AUTO/HAND mode chrome
 //     exists anywhere (Variant A collapsed the mode into the boxes);
+//   • the off-program window is a live region that STAYS in the
+//     accessibility tree while empty (.is-empty sr-only collapse, not
+//     the hidden attribute) — a region that enters the tree already
+//     populated announces nothing, and the empty→first-entry edge is
+//     the announcement that matters;
 //   • the compressor readout on the graphic can never disagree with
 //     the Y1/Y2 chips — both surfaces render from the same resolved
 //     plant.actuators, and a MutationObserver holds them to it across
@@ -67,17 +72,19 @@ function waitForChip(page, name, want) {
     }, [name, want]);
 }
 
+// "Empty" is the .is-empty collapse class, not the hidden attribute —
+// the box stays in the accessibility tree while empty (see header).
 function offprogState(page) {
     return page.evaluate(() => {
         const box = document.getElementById('ddcw-offprog');
-        return { hidden: box.hidden, text: box.textContent };
+        return { empty: box.classList.contains('is-empty'), text: box.textContent };
     });
 }
 
 function waitForOffprogEntry(page, substr) {
     return page.waitForFunction((s) => {
         const box = document.getElementById('ddcw-offprog');
-        return !box.hidden && box.textContent.includes(s);
+        return !box.classList.contains('is-empty') && box.textContent.includes(s);
     }, substr);
 }
 
@@ -97,7 +104,7 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
         // Arrival: cool-2stage stages Y1 on the warm zone — slot 16 is
         // commanding, so the off-program window has nothing to say.
         await waitForChip(page, 'Y1', 'ON');
-        expect((await offprogState(page)).hidden).toBe(true);
+        expect((await offprogState(page)).empty).toBe(true);
 
         await deleteBlock(page, 'y1');
 
@@ -109,7 +116,7 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
         // Pin the REASON, not just presence: slot-16-NULL wording plus
         // the Relinquish_Default value, in one entry.
         const w = await offprogState(page);
-        expect(w.hidden).toBe(false);
+        expect(w.empty).toBe(false);
         expect(w.text).toContain('slot 16 is NULL');
         expect(w.text).toContain('Relinquish_Default (OFF)');
     });
@@ -140,9 +147,46 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
         await waitForChip(page, 'Fan', '100 %');
         await page.waitForFunction(() => {
             const box = document.getElementById('ddcw-offprog');
-            return box.hidden || !box.textContent.includes('Fan — commanded');
+            return box.classList.contains('is-empty')
+                || !box.textContent.includes('Fan — commanded');
         });
         expect(await page.locator('#fcu-null-fan').isChecked()).toBe(true);
+    });
+
+    test('the off-program window stays an ACTIVE live region while empty (a11y contract)', async ({ page }) => {
+        await page.goto(URL);
+        await waitForChip(page, 'Y1', 'ON');
+
+        // Empty on arrival — but the region must STAY in the
+        // accessibility tree: a live region that enters the tree
+        // already populated announces nothing, so the empty state
+        // collapses via .is-empty (the sr-only recipe), never the
+        // hidden attribute / display:none. That in-tree contract is
+        // what makes the FIRST hand-take announce — the window's
+        // primary teaching event.
+        const a11y = await page.evaluate(() => {
+            const box = document.getElementById('ddcw-offprog');
+            const cs = getComputedStyle(box);
+            const r = box.getBoundingClientRect();
+            return {
+                empty: box.classList.contains('is-empty'),
+                hiddenAttr: box.hidden,
+                display: cs.display,
+                visibility: cs.visibility,
+                role: box.getAttribute('role'),
+                w: r.width,
+                h: r.height,
+            };
+        });
+        expect(a11y.empty).toBe(true);
+        expect(a11y.hiddenAttr).toBe(false);
+        expect(a11y.display).not.toBe('none');
+        expect(a11y.visibility).toBe('visible');
+        expect(a11y.role).toBe('status');
+        // …and while empty it must not paint: the collapse is the
+        // sr-only recipe, so the visual footprint is at most 1px.
+        expect(a11y.w).toBeLessThanOrEqual(1);
+        expect(a11y.h).toBeLessThanOrEqual(1);
     });
 
     test('D4: slot 16 commanding OFF (unwired block) is NOT off-program; slot 16 NULL (cleared) IS', async ({ page }) => {
@@ -165,7 +209,7 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
         await page.selectOption('#ddcw-program', 'cool-1stage');
         await waitForChip(page, 'Y2', 'OFF');
         await page.waitForFunction(() => (
-            document.getElementById('ddcw-offprog').hidden === true
+            document.getElementById('ddcw-offprog').classList.contains('is-empty')
         ));
         // The block really is on the sheet — that presence is what
         // keeps slot 16 written.
@@ -195,7 +239,7 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
         for (const id of ['#fcu-null-stage', '#fcu-null-fan', '#fcu-null-fanen']) {
             expect(await page.locator(id).isChecked()).toBe(true);
         }
-        expect((await offprogState(page)).hidden).toBe(true);
+        expect((await offprogState(page)).empty).toBe(true);
 
         // A preset is an operator write: slot 8 on every output it
         // touches. The NULL boxes mirror slot state on the next paint —
@@ -208,7 +252,7 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
         ));
         await page.waitForFunction(() => {
             const box = document.getElementById('ddcw-offprog');
-            if (box.hidden) return false;
+            if (box.classList.contains('is-empty')) return false;
             const t = box.textContent;
             return (t.match(/slot 8 \(Manual Operator\)/g) || []).length === 4
                 && t.includes('Fan —') && t.includes('Fan En —')
