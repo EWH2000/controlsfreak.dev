@@ -5,13 +5,15 @@
 // ⚠ STATUS (measured 2026-07-26, STUB = 10): this spec is the
 // placement harness for the wiresheet-relayout lane and joins CI only
 // with the relayout merge.
-//   - WORKBENCH: EXPECTED RED at today's FCU_PROGRAMS coordinates.
-//     The 145–150 px column pitch leaves adjacent-column wires only
-//     9.4–14.4 px of pin-to-pin margin (< 2·STUB), so they route the
-//     5-segment fallback and bury; the space-temp fan-out and the
-//     sr1↔sr2 cross-wires bury through intermediate blocks even when
-//     routed forward. Margin ≥ 24 px needs column pitch ≥ 160 px at a
-//     16 px root font (margin = pitch − 135.6).
+//   - WORKBENCH: GREEN since the candidate-A relayout (#205) — 8
+//     topological columns at a 175 px pitch on a 1401×480 canvas
+//     (margin = pitch − 135.6 = 39.4 px at a 16 px root font), rows
+//     hand-placed so every mid-gap vertical and horizontal lane
+//     clears the intermediate blocks. Before that relayout the
+//     shipped 145–150 px pitch left adjacent-column wires only
+//     9.4–14.4 px of margin (< 2·STUB): 5-segment fallbacks that
+//     buried, plus the space-temp fan-out and sr1↔sr2 cross-wires
+//     burying through intermediate blocks even when routed forward.
 //   - PUBLIC: fully GREEN on all seven sheets — forward-routing +
 //     margin are the #205 routing verification at STUB = 10 (proof
 //     stays on the fallback by design, self-verified below), and the
@@ -107,9 +109,10 @@ function loadLiteral(fileRelPath, literalName) {
     return vm.runInNewContext(m[0] + '\n' + literalName + ';', {});
 }
 
-// The two consumer surfaces. Canvas bounds: both editors mount at the
-// 900×480 default today (neither page passes canvasSize); the
-// relayout lane updates the workbench entry when its canvas grows.
+// The two consumer surfaces. Canvas bounds: the public editor mounts
+// at the 900×480 default; the workbench passes canvasSize 1401×480
+// (candidate-A relayout, #205 — 8 columns at a 175px pitch) and these
+// bounds must match that call.
 const SURFACES = {
     'function-block-editor': {
         file: 'html/simulators/function-block-editor.html',
@@ -119,7 +122,7 @@ const SURFACES = {
     'ddc-workbench': {
         file: 'html/simulators/ddc-workbench.html',
         literal: 'FCU_PROGRAMS',
-        canvas: { w: 900, h: 480 },
+        canvas: { w: 1401, h: 480 },
     },
 };
 const REGISTRIES = {};
@@ -339,7 +342,7 @@ test.describe('fbe-geometry: layer B — public sim page (GREEN = #205 verified)
     }
 });
 
-test.describe('fbe-geometry: layer B — ddc-workbench (EXPECTED RED until relayout)', () => {
+test.describe('fbe-geometry: layer B — ddc-workbench (GREEN = #205 relayout verified)', () => {
 
     for (const key of Object.keys(REGISTRIES['ddc-workbench'])) {
         test('program "' + key + '": no burial, forward routing, margins', async ({ page }) => {

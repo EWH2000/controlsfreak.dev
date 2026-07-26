@@ -1301,6 +1301,11 @@ noindex: true
                 },
                 examples: unit.programs,
                 initialGraph: graph,            // share the already-running graph
+                // Candidate-A canvas (#205): 8 columns at a 175px pitch —
+                // last column right edge (1245 + 136) + the 20px left
+                // margin. Height stays the 480 default; every sheet's
+                // bottom row clears it.
+                canvasSize: { w: 1401, h: 480 },
                 autoloop: false,                // the HOST drives ticks
                 keyScope: document.getElementById('tab-wiresheet'),
                 onChange: onGraphChange,
@@ -2162,29 +2167,40 @@ noindex: true
         // verdict logic in fcuRenderUnit).
         const FCU_PROGRAMS = {
             'cool-2stage': {
+                // Candidate-A layout (#205): 8 topological columns at a
+                // 175px pitch (x = 20 + 175·col), one column per link of
+                // the longest dependency chain (cooling-setpoint → y1on →
+                // y2on → gt2 → sr2 → and1 → select → fan-speed). Rows are
+                // chosen so every multi-column wire's mid-gap vertical and
+                // its two horizontal lanes clear every intermediate block
+                // (space-temp fans out from column 0 through the empty
+                // c1/c2 mid-gap; the y1on→gt1/lt2 pair crosses column 2
+                // above y2on; cs→lt1 crosses below gt1's column top).
+                // Shared blocks sit at identical coordinates on the
+                // fanon variant so the two sheets diff cleanly.
                 blocks: [
-                    { id: 'space-temp',       type: 'ai',    x: 20,  y: 20,  params: { value: 76 } },
-                    { id: 'cooling-setpoint', type: 'const', x: 20,  y: 115, params: { value: 72 } },
-                    { id: 'deadband',         type: 'const', x: 20,  y: 210, params: { value: 3 } },
-                    { id: 'sep',              type: 'const', x: 20,  y: 305, params: { value: 2 } },
-                    { id: 'y1on',             type: 'add',   x: 170, y: 40 },
-                    { id: 'y2on',             type: 'add',   x: 170, y: 150 },
-                    { id: 'hundred',          type: 'const', x: 170, y: 280, params: { value: 100 } },
-                    { id: 'dat',              type: 'ai',    x: 170, y: 380, params: { value: 55 } },
-                    { id: 'gt1',              type: 'gt',    x: 320, y: 20 },
-                    { id: 'lt1',              type: 'lt',    x: 320, y: 115 },
-                    { id: 'gt2',              type: 'gt',    x: 320, y: 215 },
-                    { id: 'lt2',              type: 'lt',    x: 320, y: 315 },
-                    { id: 'sr1',              type: 'sr',    x: 470, y: 80 },
-                    { id: 'sr2',              type: 'sr',    x: 470, y: 240 },
-                    { id: 'low',              type: 'const', x: 470, y: 380, params: { value: 60 } },
-                    { id: 'or1',              type: 'or',    x: 615, y: 80 },
-                    { id: 'and1',             type: 'and',   x: 615, y: 240 },
-                    { id: 'select',           type: 'select', x: 615, y: 380 },
-                    { id: 'y1',               type: 'bo',    x: 760, y: 20 },
-                    { id: 'fan-enable',       type: 'bo',    x: 760, y: 115 },
-                    { id: 'y2',               type: 'bo',    x: 760, y: 215 },
-                    { id: 'fan-speed',        type: 'ao',    x: 760, y: 315 },
+                    { id: 'space-temp',       type: 'ai',    x: 20,   y: 20,  params: { value: 76 } },
+                    { id: 'cooling-setpoint', type: 'const', x: 20,   y: 125, params: { value: 72 } },
+                    { id: 'deadband',         type: 'const', x: 20,   y: 220, params: { value: 3 } },
+                    { id: 'sep',              type: 'const', x: 20,   y: 315, params: { value: 2 } },
+                    { id: 'y1on',             type: 'add',   x: 195,  y: 65 },
+                    { id: 'y2on',             type: 'add',   x: 370,  y: 178 },
+                    { id: 'hundred',          type: 'const', x: 895,  y: 388, params: { value: 100 } },
+                    { id: 'dat',              type: 'ai',    x: 195,  y: 380, params: { value: 55 } },
+                    { id: 'gt1',              type: 'gt',    x: 545,  y: 20 },
+                    { id: 'lt1',              type: 'lt',    x: 545,  y: 350 },
+                    { id: 'gt2',              type: 'gt',    x: 545,  y: 240 },
+                    { id: 'lt2',              type: 'lt',    x: 545,  y: 115 },
+                    { id: 'sr1',              type: 'sr',    x: 720,  y: 20 },
+                    { id: 'sr2',              type: 'sr',    x: 720,  y: 220 },
+                    { id: 'low',              type: 'const', x: 895,  y: 304, params: { value: 60 } },
+                    { id: 'or1',              type: 'or',    x: 895,  y: 50 },
+                    { id: 'and1',             type: 'and',   x: 895,  y: 195 },
+                    { id: 'select',           type: 'select', x: 1070, y: 300 },
+                    { id: 'y1',               type: 'bo',    x: 1070, y: 20 },
+                    { id: 'fan-enable',       type: 'bo',    x: 1070, y: 110 },
+                    { id: 'y2',               type: 'bo',    x: 1070, y: 200 },
+                    { id: 'fan-speed',        type: 'ao',    x: 1245, y: 300 },
                 ],
                 wires: [
                     { from: ['cooling-setpoint', 'O'], to: ['y1on', 'A'] },
@@ -2217,20 +2233,28 @@ noindex: true
                 ],
             },
             'cool-1stage': {
+                // Candidate-A layout (#205): R = 5, so five columns at the
+                // same 175px pitch (x = 20 + 175·col) along the chain
+                // cooling-setpoint → y1on → gt1 → sr1 → y1. lt1 sits in
+                // column 1 (its inputs are both column-0 sources), which
+                // keeps space-temp → gt1.A a straight run at y 57 and the
+                // whole sheet free of mid-block crossings. hundred aligns
+                // exactly with fan-speed.IN so the constant-100 reference
+                // reads as one uninterrupted line into the AO.
                 blocks: [
                     { id: 'space-temp',       type: 'ai',    x: 20,  y: 20,  params: { value: 76 } },
-                    { id: 'cooling-setpoint', type: 'const', x: 20,  y: 130, params: { value: 72 } },
-                    { id: 'deadband',         type: 'const', x: 20,  y: 240, params: { value: 3 } },
-                    { id: 'dat',              type: 'ai',    x: 20,  y: 350, params: { value: 55 } },
-                    { id: 'y1on',             type: 'add',   x: 195, y: 120 },
-                    { id: 'hundred',          type: 'const', x: 195, y: 300, params: { value: 100 } },
-                    { id: 'gt1',              type: 'gt',    x: 370, y: 40 },
-                    { id: 'lt1',              type: 'lt',    x: 370, y: 200 },
+                    { id: 'cooling-setpoint', type: 'const', x: 20,  y: 125, params: { value: 72 } },
+                    { id: 'deadband',         type: 'const', x: 20,  y: 220, params: { value: 3 } },
+                    { id: 'dat',              type: 'ai',    x: 195, y: 380, params: { value: 55 } },
+                    { id: 'y1on',             type: 'add',   x: 195, y: 230 },
+                    { id: 'hundred',          type: 'const', x: 545, y: 330, params: { value: 100 } },
+                    { id: 'gt1',              type: 'gt',    x: 370, y: 20 },
+                    { id: 'lt1',              type: 'lt',    x: 195, y: 115 },
                     { id: 'sr1',              type: 'sr',    x: 545, y: 120 },
                     { id: 'y1',               type: 'bo',    x: 720, y: 20 },
-                    { id: 'fan-enable',       type: 'bo',    x: 720, y: 130 },
-                    { id: 'y2',               type: 'bo',    x: 720, y: 240 },
-                    { id: 'fan-speed',        type: 'ao',    x: 720, y: 350 },
+                    { id: 'fan-enable',       type: 'bo',    x: 720, y: 110 },
+                    { id: 'y2',               type: 'bo',    x: 720, y: 220 },
+                    { id: 'fan-speed',        type: 'ao',    x: 720, y: 330 },
                 ],
                 wires: [
                     { from: ['cooling-setpoint', 'O'], to: ['y1on', 'A'] },
@@ -2247,30 +2271,37 @@ noindex: true
                 ],
             },
             'cool-2stage-fanon': {
+                // Candidate-A layout (#205): identical coordinates to
+                // cool-2stage for every shared block (see the layout note
+                // there), so flipping between the two sheets reads as one
+                // diff: fanon appears in the latch column at y 130, in the
+                // slot the base sheet leaves open, and its wire crosses
+                // column 5 through the or1/and1 gap (or1 tops out at
+                // y 140, fan-enable.IN sits at y 147).
                 blocks: [
-                    { id: 'space-temp',       type: 'ai',    x: 20,  y: 20,  params: { value: 76 } },
-                    { id: 'cooling-setpoint', type: 'const', x: 20,  y: 115, params: { value: 72 } },
-                    { id: 'deadband',         type: 'const', x: 20,  y: 210, params: { value: 3 } },
-                    { id: 'sep',              type: 'const', x: 20,  y: 305, params: { value: 2 } },
-                    { id: 'y1on',             type: 'add',   x: 170, y: 40 },
-                    { id: 'y2on',             type: 'add',   x: 170, y: 150 },
-                    { id: 'hundred',          type: 'const', x: 170, y: 280, params: { value: 100 } },
-                    { id: 'dat',              type: 'ai',    x: 170, y: 380, params: { value: 55 } },
-                    { id: 'gt1',              type: 'gt',    x: 320, y: 20 },
-                    { id: 'lt1',              type: 'lt',    x: 320, y: 115 },
-                    { id: 'gt2',              type: 'gt',    x: 320, y: 215 },
-                    { id: 'lt2',              type: 'lt',    x: 320, y: 315 },
-                    { id: 'sr1',              type: 'sr',    x: 470, y: 80 },
-                    { id: 'sr2',              type: 'sr',    x: 470, y: 240 },
-                    { id: 'low',              type: 'const', x: 470, y: 380, params: { value: 60 } },
-                    { id: 'or1',              type: 'or',    x: 615, y: 80 },
-                    { id: 'and1',             type: 'and',   x: 615, y: 240 },
-                    { id: 'fanon',            type: 'bi',    x: 615, y: 380, params: { state: true } },
-                    { id: 'select',           type: 'select', x: 615, y: 440 },
-                    { id: 'y1',               type: 'bo',    x: 760, y: 20 },
-                    { id: 'fan-enable',       type: 'bo',    x: 760, y: 115 },
-                    { id: 'y2',               type: 'bo',    x: 760, y: 215 },
-                    { id: 'fan-speed',        type: 'ao',    x: 760, y: 315 },
+                    { id: 'space-temp',       type: 'ai',    x: 20,   y: 20,  params: { value: 76 } },
+                    { id: 'cooling-setpoint', type: 'const', x: 20,   y: 125, params: { value: 72 } },
+                    { id: 'deadband',         type: 'const', x: 20,   y: 220, params: { value: 3 } },
+                    { id: 'sep',              type: 'const', x: 20,   y: 315, params: { value: 2 } },
+                    { id: 'y1on',             type: 'add',   x: 195,  y: 65 },
+                    { id: 'y2on',             type: 'add',   x: 370,  y: 178 },
+                    { id: 'hundred',          type: 'const', x: 895,  y: 388, params: { value: 100 } },
+                    { id: 'dat',              type: 'ai',    x: 195,  y: 380, params: { value: 55 } },
+                    { id: 'gt1',              type: 'gt',    x: 545,  y: 20 },
+                    { id: 'lt1',              type: 'lt',    x: 545,  y: 350 },
+                    { id: 'gt2',              type: 'gt',    x: 545,  y: 240 },
+                    { id: 'lt2',              type: 'lt',    x: 545,  y: 115 },
+                    { id: 'sr1',              type: 'sr',    x: 720,  y: 20 },
+                    { id: 'sr2',              type: 'sr',    x: 720,  y: 220 },
+                    { id: 'low',              type: 'const', x: 895,  y: 304, params: { value: 60 } },
+                    { id: 'or1',              type: 'or',    x: 895,  y: 50 },
+                    { id: 'and1',             type: 'and',   x: 895,  y: 195 },
+                    { id: 'fanon',            type: 'bi',    x: 720,  y: 130, params: { state: true } },
+                    { id: 'select',           type: 'select', x: 1070, y: 300 },
+                    { id: 'y1',               type: 'bo',    x: 1070, y: 20 },
+                    { id: 'fan-enable',       type: 'bo',    x: 1070, y: 110 },
+                    { id: 'y2',               type: 'bo',    x: 1070, y: 200 },
+                    { id: 'fan-speed',        type: 'ao',    x: 1245, y: 300 },
                 ],
                 wires: [
                     { from: ['cooling-setpoint', 'O'], to: ['y1on', 'A'] },
