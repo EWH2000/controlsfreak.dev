@@ -4206,11 +4206,16 @@ p.ref-note.compact {
     height: 30rem;
     overflow: auto;
 }
+/* 900×480 is the no-JS default; fbe-editor.js inline-sizes this div
+   (and the wire layer below) when a host passes canvasSize. */
 .fbe-canvas-inner {
     position: relative;
     width: 900px;
     height: 480px;
 }
+/* Must match .fbe-canvas-inner — same no-JS default, same JS inline
+   override. A size mismatch letterboxes every wire (the SVG viewBox
+   is the canvas coordinate space). */
 .fbe-wire-layer {
     position: absolute;
     top: 0;

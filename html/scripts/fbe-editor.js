@@ -33,6 +33,16 @@
 //   examples           { key → graph literal }; page-owned, passed in.
 //   initialExampleKey  load this example on construction (e.g. 'econ').
 //   initialGraph       …or seed from a graph literal instead.
+//   canvasSize         { w, h } — canvas content bounds in px (default
+//                      900×480, the styles.css no-JS size on
+//                      .fbe-canvas-inner / .fbe-wire-layer). When
+//                      passed, the module inline-sizes the inner div at
+//                      construction AND the wire layer on every render;
+//                      without the wire-layer inline size the
+//                      stylesheet's fixed 900×480 letterboxes every
+//                      wire on a non-default canvas (the SVG renders at
+//                      900×480 with a larger viewBox, so all wire
+//                      geometry draws scaled down and offset).
 //   dt                 tick step in seconds (default 0.1 = 10 Hz).
 //   autoloop           true (default): the module owns a setInterval and
 //                      the #110 idle-gating (no ticks below the desktop
@@ -85,8 +95,11 @@ const FBEEditor = (function () {
 
         // INNER_W / INNER_H grow when the user enters fullscreen so blocks
         // can be dragged into the new space; they never shrink back below
-        // 900×480 so blocks placed off-screen stay reachable after exit.
-        let INNER_W = 900, INNER_H = 480;      // canvas content bounds
+        // their construction size (900×480, or the host's canvasSize) so
+        // blocks placed off-screen stay reachable after exit.
+        const canvasSize = cfg.canvasSize || null;
+        let INNER_W = canvasSize && canvasSize.w ? canvasSize.w : 900;
+        let INNER_H = canvasSize && canvasSize.h ? canvasSize.h : 480;
         const BLOCK_W = 136;                   // matches .fbe-block width
 
         // ── editor state ────────────────────────────────────────────
@@ -153,6 +166,14 @@ const FBEEditor = (function () {
             svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svg.setAttribute('class', 'fbe-wire-layer');
             svg.setAttribute('viewBox', '0 0 ' + INNER_W + ' ' + INNER_H);
+            // Inline-size the layer to the canvas bounds. The stylesheet
+            // fixes .fbe-wire-layer at the 900×480 default, and an SVG
+            // rendered at that size with a non-900×480 viewBox
+            // letterboxes: every wire draws scaled down and offset from
+            // the blocks. A no-op at the default size; load-bearing for
+            // any host-passed canvasSize.
+            svg.style.width  = INNER_W + 'px';
+            svg.style.height = INNER_H + 'px';
             // Redundant to the block-value readouts; an unnamed dynamic
             // SVG is noise for AT (audit-2026-06 polish).
             svg.setAttribute('aria-hidden', 'true');
@@ -765,6 +786,13 @@ const FBEEditor = (function () {
         }
 
         // ── construction ────────────────────────────────────────────
+        // A host-supplied canvas size inline-sizes the inner div up
+        // front (the stylesheet's 900×480 is only the no-JS default);
+        // renderAll() sizes the wire layer to match on every rebuild.
+        if (canvasSize) {
+            inner.style.width  = INNER_W + 'px';
+            inner.style.height = INNER_H + 'px';
+        }
         buildPalette();
         canvasEl.addEventListener('click', onCanvasClick);
         keyScope.addEventListener('keydown', onKeyDown);
