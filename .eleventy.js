@@ -258,6 +258,24 @@ module.exports = function(eleventyConfig) {
     // `--output` overrides and side-by-side build comparisons unusable and
     // buried any real offender line (codebase-issues #207(b)).
     //
+    // DOCUMENTED LIMITATION — SYMLINKED TEMPLATES ARE NOT SCANNED, so read
+    // the paragraphs above as coverage of what `readdirSync` reports as a
+    // real file or a real directory, NOT as coverage of the working
+    // directory. The walk tests `entry.isDirectory()` / `entry.isFile()` and
+    // neither follows a symlink, so a symlinked template FILE and a symlinked
+    // template DIRECTORY are both skipped in silence. That is this scan
+    // root's own hole reached by another route: proved by construction
+    // (2026-07-25) with a root-level `zzlinkfile.njk` symlinked to a file
+    // outside the tree holding one unflagged `data-flow` path — included by a
+    // `nav: education` page, the build exited 0 and shipped the path.
+    // NAMED AND ACCEPTED rather than fixed (codebase-issues #207(a)):
+    // following symlinks means resolving and cycle-guarding a guard that has
+    // already needed three adversarial rounds, to close a route nothing on
+    // this tree uses. The point of writing it down is that the guard's own
+    // argument for rooting at `process.cwd()` is "a partial parked anywhere
+    // else reaches an education page completely unscanned" — a reader is
+    // owed the one way a partial can still do exactly that.
+    //
     // An include has no frontmatter and therefore no `flowGeometryLive`
     // opt-out; one that genuinely needs the live read earns an
     // EXEMPT_TEMPLATES entry with a written reason.
@@ -341,10 +359,43 @@ module.exports = function(eleventyConfig) {
         // and shipped the path. Blanking `//` lines first removes both
         // strays before anything can pair them, and closes the same hole for
         // `-->` and `#}` (identical shape, not separately reproduced).
-        // Safe on this tree by positive search: no `.njk` / `.html` file has
-        // a `//` line containing `-->`, `#}`, `*/` or `/*`
-        // (`grep -rnE '^[[:space:]]*//.*(-->|#\}|\*/|/\*)'` over html/),
-        // so the reorder cannot change masking on any file that exists.
+        //
+        // WHAT THAT DEFENDS, EXACTLY — the `//` pass is LINE-ANCHORED
+        // (`trimStart().startsWith("//")`), so the pairing defence above
+        // holds for `//` comments that START their line and for nothing
+        // else. Put the same two strays in `//` comments that TRAIL other
+        // markup and the pass never fires — the line starts with `<script>`,
+        // not `//` — so the `/* … */` pass pairs them and blanks the diagram
+        // between them out of the scan. Measured against this mask
+        // (2026-07-26): the line-start construction leaves the path visible
+        // to scan(), the trailing twin does not. That is the OVER-masking
+        // direction and it fails SILENTLY, hiding a real offender rather
+        // than inventing a phantom one (codebase-issues #204(a)). Nothing on
+        // this tree is near it — it needs an unbalanced `/*` inside one
+        // trailing `//` comment, a `*/` inside a later one, and an unflagged
+        // `data-flow` path between them.
+        //
+        // AND THE POSITIVE SEARCH BELOW IS ONE-DIRECTIONAL. It looks for
+        // `//` lines carrying delimiters; it never looks for delimited
+        // comments carrying `//`. The reorder moved that second shape too:
+        // `/* css */ // js` on ONE line used to be fully masked (the `/* */`
+        // pass ran first, leaving a line that then started with `//`) and
+        // now leaves the trailing `// …` unmasked, so an example start tag
+        // inside it would be counted. Measured the same way, same date. That
+        // direction is the SAFE one — an unmasked comment yields a phantom
+        // offender and a loud break, never a shipped path — and it reaches
+        // zero files today (codebase-issues #204(b)).
+        //
+        // SO THE CLAIM IS: safe on this tree by search, in both directions —
+        // no `.njk` / `.html` file under html/ has a `//` line containing
+        // `-->`, `#}`, `*/` or `/*`, and none has a `*/` followed by `//`
+        // (`grep -rnE --include='*.njk' --include='*.html'
+        // '^[[:space:]]*//.*(-->|#\}|\*/|/\*)' html/` and
+        // `grep -rnE --include='*.njk' --include='*.html' '\*/[[:space:]]*//'
+        // html/`, both 0 on 2026-07-26; the include filters matter, since the
+        // unrestricted form also reads .css / .js and returns 4). What that
+        // buys is that the reorder cannot change masking on any file that
+        // EXISTS. It is not a claim that the comment-pairing hole is closed.
         const maskComments = (src) => src
             .split("\n")
             .map((line) => (line.trimStart().startsWith("//") ? blank(line) : line))
@@ -459,7 +510,12 @@ module.exports = function(eleventyConfig) {
                 // Dirent type tests do not follow symlinks, so a symlinked
                 // directory is skipped rather than walked — no cycles, and
                 // no crash on the `node_modules` symlink an agent worktree
-                // uses (it is skipped by name anyway).
+                // uses (it is skipped by name anyway). That is a benefit AND
+                // a COVERAGE GAP, in both entry kinds: a symlinked template
+                // file falls through `isFile()` below just as silently, so
+                // neither is scanned. Accepted, not fixed — the header's
+                // DOCUMENTED LIMITATION note carries the reproduction and the
+                // reasoning (codebase-issues #207(a)).
                 if (entry.isDirectory()) {
                     walkTemplates(full);
                     return;
