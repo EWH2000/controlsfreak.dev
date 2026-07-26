@@ -1191,6 +1191,24 @@ re-submit); add `--dry-run` to print the URL list without POSTing.
 
 - **Preview:** `npm run dev` (`eleventy --serve --port=8000`, live
   reload).
+- **LAN preview of the built site:** `npm run publish:preview` (add
+  `-- --build` for a clean rebuild first) rsyncs `_site/` into the
+  home server's hub docroot, where a rootless Caddy serves it at
+  `https://cfdev.home.arpa/`. **Owner's box only** — it is a home-lab
+  convenience, not part of the deploy path, and it no-ops nowhere
+  else (the destination guard refuses any path not ending
+  `/caddy/dashboard/cfdev`). It publishes a **snapshot, not a
+  server**: nothing watches, so every build you want to see needs
+  another publish. It also can't exercise the Worker — clean-URL
+  301s, the legacy tool redirects and `POST /api/contact` are all
+  Worker behaviour and simply absent. `_built.txt` at the docroot
+  carries the publish time plus git provenance (commit, ref, dirty
+  flag, drift vs `origin/main`), which is what distinguishes a stale
+  preview from one built off unmerged work. Rationale, SELinux traps
+  and the Caddy vhost live in the box's own (un-version-controlled)
+  `~/caddy/CLAUDE.md` §*Site preview (Controls Freak)*; the script
+  header in `.github/scripts/publish-preview.mjs` is the durable
+  copy.
 - **Tests:** `npm test` (Chromium only). `playwright.config.js` has
   a `webServer` block that builds and serves `_site/`, so a fresh
   checkout needs no second terminal; a running `npm run dev` on

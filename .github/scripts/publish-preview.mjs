@@ -12,9 +12,22 @@
 // HOW IT WORKS
 //   The hub (Caddy, ~/caddy) serves ~/caddy/dashboard/cfdev/ as a static site
 //   at https://cfdev.home.arpa/. We rsync -a --delete _site/ into it, then drop
-//   a _built.txt timestamp at its root (readable at
+//   a _built.txt stamp at its root (readable at
 //   https://cfdev.home.arpa/_built.txt) so you can tell at a glance which build
-//   is live.
+//   is live. The stamp carries the publish time AND git provenance — commit,
+//   ref, whether the tree was dirty, and drift against origin/main:
+//
+//       built:   2026-07-26T02:52:39.152Z
+//       commit:  3f330a4
+//       ref:     (detached)
+//       tree:    clean
+//       origin:  even with origin/main
+//       source:  rebuilt from this tree in this run (--build)
+//
+//   The timestamp alone can't distinguish "stale, republish it" from "built off
+//   an unmerged branch, so it shows work that is nowhere else" — different
+//   problems, different fixes. Nothing parses this file; it's for a human with
+//   curl, so it stays keyed plain text rather than JSON.
 //
 //   SELINUX — WHY PLAIN `-a` AND NOTHING FANCIER. ~/caddy/dashboard is labeled
 //   container_file_t, and files created underneath it inherit that label
@@ -85,6 +98,67 @@ function die(...lines) {
     process.exit(1);
 }
 
+// --- git provenance for the stamp --------------------------------------------
+// A timestamp alone answers "how old is this?" but not "is this what's on
+// main?" — and those are different questions with different fixes. A stale
+// preview needs a republish; a preview built off an unmerged branch or a dirty
+// tree is showing work that exists nowhere else, and reading it as the site is
+// how you end up reviewing a change that never shipped.
+//
+// BEST-EFFORT BY CONSTRUCTION. Every git call is wrapped: a publish must never
+// fail because git is missing, the tree isn't a checkout, or origin/main isn't
+// fetched. Unknowns are reported as unknown, never guessed.
+//
+// --no-optional-locks because other agent sessions share this repo — a plain
+// `git status` takes the index lock to refresh it, and this is a read.
+function git(...args) {
+    const r = spawnSync('git', ['--no-optional-locks', ...args], { cwd: ROOT, encoding: 'utf8' });
+    if (r.status !== 0) throw new Error(r.stderr || `git ${args[0]} exited ${r.status}`);
+    return r.stdout.trim();
+}
+
+function gitProvenance() {
+    let head;
+    try {
+        head = git('rev-parse', '--short', 'HEAD');
+    } catch {
+        return ['commit:  unknown — not a git checkout, or git unavailable'];
+    }
+    const lines = [`commit:  ${head}`];
+
+    // --abbrev-ref prints the literal "HEAD" on a detached checkout, which is
+    // the normal state for the throwaway worktrees these publishes run from.
+    try {
+        const ref = git('rev-parse', '--abbrev-ref', 'HEAD');
+        lines.push(`ref:     ${ref === 'HEAD' ? '(detached)' : ref}`);
+    } catch { /* leave it off rather than assert a branch */ }
+
+    // Modified and untracked counted SEPARATELY, not summed. Untracked files
+    // matter — an untracked page is in the build and in no commit — but a tree
+    // that always says DIRTY because of routine scratch files teaches you to
+    // ignore the line, and then it signals nothing.
+    try {
+        const st = git('status', '--porcelain').split('\n').filter(Boolean);
+        const untracked = st.filter((l) => l.startsWith('??')).length;
+        const modified = st.length - untracked;
+        const parts = [modified && `${modified} modified`, untracked && `${untracked} untracked`].filter(Boolean);
+        lines.push(`tree:    ${parts.length ? `DIRTY — ${parts.join(', ')}` : 'clean'}`);
+    } catch { /* ditto */ }
+
+    // `--left-right --count A...B` prints "<left> <right>": commits reachable
+    // from A but not B, then B but not A. With origin/main on the left that is
+    // behind-then-ahead, in that order.
+    try {
+        const [behind, ahead] = git('rev-list', '--left-right', '--count', 'origin/main...HEAD')
+            .split(/\s+/).map(Number);
+        const drift = [ahead && `ahead ${ahead}`, behind && `behind ${behind}`].filter(Boolean).join(', ');
+        lines.push(`origin:  ${drift ? `${drift} of origin/main` : 'even with origin/main'}`);
+    } catch {
+        lines.push('origin:  unknown — no origin/main ref (fetch it to compare)');
+    }
+    return lines;
+}
+
 // Every file under dir, recursively. Used for the source sanity guard and the
 // final count — small enough tree (a few hundred files) that this is cheap.
 function walk(dir) {
@@ -110,6 +184,11 @@ if (!DEST.endsWith(DEST_SUFFIX)) {
     );
 }
 if (DEST !== resolve(ROOT, '../caddy/dashboard/cfdev')) log(`non-default destination: ${DEST}`);
+
+// Captured BEFORE the build, so `commit:` names the tree eleventy is about to
+// read. Without --build it can only describe the checkout as it stands now,
+// which the `source:` line in the stamp says out loud.
+const provenance = gitProvenance();
 
 // --- optional clean rebuild --------------------------------------------------
 if (build) {
@@ -159,7 +238,12 @@ if (existsSync(DEST)) {
         );
     }
     if (existing.includes(MARKER)) {
-        log(`replacing build from ${readFileSync(join(DEST, MARKER), 'utf8').trim()}`);
+        // First line only — the stamp is multi-line now (timestamp + git
+        // provenance), and this is a one-line "what am I about to replace".
+        // An empty marker is a reachable state, not a bug: the ownership
+        // guard's own advice for adopting a docroot is `touch _built.txt`.
+        const [was] = readFileSync(join(DEST, MARKER), 'utf8').trim().split('\n');
+        log(`replacing build from ${was.replace(/^built:\s*/, '') || '(unstamped)'}`);
     }
 } else {
     mkdirSync(DEST, { recursive: true });
@@ -173,7 +257,14 @@ if (sync.error) die(`rsync failed to start: ${sync.error.message}`, 'is rsync in
 if (sync.status !== 0) die(`rsync exited ${sync.status} — the destination may be half-written`);
 
 const stamp = new Date().toISOString();
-writeFileSync(join(DEST, MARKER), `${stamp}\n`);
+const stampBody = [
+    `built:   ${stamp}`,
+    ...provenance,
+    build
+        ? 'source:  rebuilt from this tree in this run (--build)'
+        : 'source:  existing _site, reused as found — `commit:` describes the checkout, not necessarily these bytes',
+].join('\n') + '\n';
+writeFileSync(join(DEST, MARKER), stampBody);
 
 // --- post-check: SELinux label ----------------------------------------------
 // Warn only. Match container_file_t generically — the MCS categories
@@ -195,7 +286,7 @@ if (lsZ.status === 0) {
 const published = walk(DEST);
 const bytes = published.reduce((sum, f) => sum + statSync(f).size, 0);
 log(`published ${published.length} files, ${(bytes / 1024 / 1024).toFixed(1)} MB`);
-log(`${MARKER}: ${stamp}`);
+for (const line of stampBody.trimEnd().split('\n')) log(`${MARKER}  ${line}`);
 log(`live at ${LIVE_URL}  (also ${LIVE_URL}${MARKER})`);
 log('SNAPSHOT, not a server — republish after every build you want to see.');
 log('hub → Advanced tab → "Controls Freak (site)".');
