@@ -119,7 +119,9 @@ tiles** · short **fan-heat/calibration callout** · **improved fan animation**
 > hybrid gain, and a real-vs-sensed sensor override are live on the hidden
 > `ddc-workbench.html`; a coil/DAT response lag followed. The prose below is the
 > original design reasoning (now largely realized). What remains is **polish +
-> the go-public decision**, tracked in `docs/next-session-handoff.md` (2026-07-24):
+> the go-public decision**, tracked in `docs/next-session-handoff.md` (the
+> rolling brief — the 2026-07-24 and 2026-07-25 editions this line used to cite
+> are archived under `docs/audits/`):
 > browser lag → cleanup (overflow + jumbled sample-program layout; program
 > *rewrite* deferred) → maybe public; open scope decision is FCU-only vs. more
 > units. Feel constants are tune-in-place (`TUNE BY FEEL` block).
@@ -214,8 +216,12 @@ round fattened the ducts and cleared label overlaps.
 > deadband live in the FBE program's `const` blocks and are read INTO the plant,
 > so editing the setpoint on the wiresheet changes staging (the reverse of an
 > early plan sketch; it's what makes the wiresheet-editable-setpoint behaviour
-> work). **The immediate next increment is the physics session (closed-loop
-> dynamics + psychro tuning) — see *Horizon* and `docs/next-session-handoff.md`.**
+> work). ~~The immediate next increment is the physics session (closed-loop
+> dynamics + psychro tuning).~~ **Superseded 2026-07-26: that increment
+> SHIPPED** — PR #425, `ddc: close the thermal loop — integrated zone temp +
+> sensor override`, merged 2026-07-24. The next increment is the **polish arc**,
+> not more physics; see the status block near the top of this file and
+> `docs/next-session-handoff.md`.
 
 **ALL the FBE work in one focused session** (owner: "get the bouncing out of the
 way"), so the session *after* is pure sim physics. The FCU sim is reframed as the

@@ -7146,10 +7146,15 @@ cleaner design keeps the render cache in a side map keyed by wire id (or on
 the element itself), decoupled from `graph.wires`. Larger refactor than the
 bug fix; logged for a decision, not urgent.
 
-**Good moment to act:** the FCU "DDC Workbench" session (see
-`docs/next-session-handoff.md`) plans to embed/extract this editor into a
-shared module — if the editor code is being extracted anyway, that's the
-natural point to decouple the cache.
+**Good moment to act:** the FCU "DDC Workbench" session plans to embed/extract
+this editor into a shared module — if the editor code is being extracted anyway,
+that's the natural point to decouple the cache.
+
+> *Historical, and it played out exactly this way* — the ride-along happened in
+> PR #422 and the Resolution below records it. The original text cited
+> `docs/next-session-handoff.md` for the extraction plan; that edition is now
+> archived under `docs/audits/`, so the citation is dropped rather than
+> repointed (the plan it described is finished).
 
 Related: #111 (the `refreshValues` micro-optimization this cache serves),
 PR #421 (the narrow fix + regression guard).
