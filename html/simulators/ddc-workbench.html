@@ -1374,7 +1374,8 @@ noindex: true
         const ovrInput    = document.getElementById('fcu-ovr-input');
         const ovrUnit     = document.getElementById('fcu-ovr-unit');
         const ovrState    = document.getElementById('fcu-ovr-state');
-        // Environment / clock knobs (live in both AUTO and HAND).
+        // Environment / clock knobs — sim inputs, not BACnet points:
+        // no priority array, live regardless of any slot state.
         const speedSlider = document.getElementById('fcu-speed-slider');
         const speedValLbl = document.getElementById('fcu-speed-val');
         const oaSlider    = document.getElementById('fcu-oa-slider');
@@ -2332,7 +2333,7 @@ noindex: true
         });
 
         syncProgramSelect();
-        hostTick();                              // initial paint — AUTO, cooling on arrival
+        hostTick();                              // initial paint — sequence commanding, cooling on arrival
         window.setInterval(function () { if (!document.hidden) hostTick(); }, 100);
     })();
 </script>

@@ -56,8 +56,9 @@ test.describe('DDC Workbench — air animation idle gate', () => {
         await page.goto(URL);
         await waitForChevrons(page);
 
-        // Arrival: the page lands in AUTO with cooling called, so the air
-        // should genuinely be moving.
+        // Arrival: the sequence owns every output (all NULL boxes
+        // released) with cooling called, so the air should genuinely
+        // be moving.
         const a0 = await chevron(page);
         await page.waitForTimeout(400);
         const a1 = await chevron(page);
