@@ -12,14 +12,14 @@
 //     sr1↔sr2 cross-wires bury through intermediate blocks even when
 //     routed forward. Margin ≥ 24 px needs column pitch ≥ 160 px at a
 //     16 px root font (margin = pitch − 135.6).
-//   - PUBLIC: forward-routing + margin are GREEN on all seven sheets —
-//     that is the #205 routing verification at STUB = 10 (proof stays
-//     on the fallback by design, self-verified below). NO-BURIAL is
-//     RED on three sheets at today's authored coordinates — freeze
+//   - PUBLIC: fully GREEN on all seven sheets — forward-routing +
+//     margin are the #205 routing verification at STUB = 10 (proof
+//     stays on the fallback by design, self-verified below), and the
+//     three shipped authored-coordinate burials — freeze
 //     (latch.Q→alarm.IN behind INV), tstat-cool and tstat-heat
-//     (temp.O→under.A behind HI, clipping LO) — pre-existing shipped
-//     defects the relayout lane also owns; econ / pid / proof / reset
-//     are fully green.
+//     (temp.O→under.A behind HI, clipping LO) — were cleared by
+//     coordinate nudges in this lane (inv → the fz/fan top row; temp →
+//     atop the hi/lo column with hi dropped to y 120).
 //
 // Two layers:
 //

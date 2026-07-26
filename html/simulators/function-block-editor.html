@@ -175,11 +175,15 @@ keywords: wiresheet logic block and or pid wire program sequence
         // them, so the literals are never mutated.
         const EXAMPLES = {
             freeze: {
+                // Layout: inv shares the top row (y 40) with fz and fan
+                // so the latch.Q → alarm.IN elbow — whose vertical drop
+                // falls inside inv's column — passes beneath the block
+                // instead of through it.
                 blocks: [
                     { id: 'fz',    type: 'bi',  x: 20,  y: 40,  params: { state: false } },
                     { id: 'rst',   type: 'bi',  x: 20,  y: 200, params: { state: false } },
                     { id: 'latch', type: 'sr',  x: 210, y: 90 },
-                    { id: 'inv',   type: 'not', x: 420, y: 70 },
+                    { id: 'inv',   type: 'not', x: 420, y: 40 },
                     { id: 'fan',   type: 'bo',  x: 620, y: 40 },
                     { id: 'alarm', type: 'bo',  x: 620, y: 200 },
                 ],
@@ -209,11 +213,17 @@ keywords: wiresheet logic block and or pid wire program sequence
                 ],
             },
             'tstat-cool': {
+                // Layout: temp sits atop the hi/lo column, not in the
+                // input column — from x 20 its temp → under elbow would
+                // drop through hi and lo; from x 190 the drop lands in
+                // the clear seam between the hi/lo and over/under
+                // columns. hi starts at y 120 so temp clears it at
+                // larger root fonts too.
                 blocks: [
-                    { id: 'temp',  type: 'ai',    x: 20,  y: 20,  params: { value: 72 } },
+                    { id: 'temp',  type: 'ai',    x: 190, y: 20,  params: { value: 72 } },
                     { id: 'sp',    type: 'const', x: 20,  y: 170, params: { value: 74 } },
                     { id: 'db',    type: 'const', x: 20,  y: 320, params: { value: 1 } },
-                    { id: 'hi',    type: 'add',   x: 190, y: 80 },
+                    { id: 'hi',    type: 'add',   x: 190, y: 120 },
                     { id: 'lo',    type: 'sub',   x: 190, y: 260 },
                     { id: 'over',  type: 'gt',    x: 360, y: 20 },
                     { id: 'under', type: 'lt',    x: 360, y: 230 },
@@ -235,11 +245,12 @@ keywords: wiresheet logic block and or pid wire program sequence
                 ],
             },
             'tstat-heat': {
+                // Layout matches tstat-cool — see the note there.
                 blocks: [
-                    { id: 'temp',  type: 'ai',    x: 20,  y: 20,  params: { value: 68 } },
+                    { id: 'temp',  type: 'ai',    x: 190, y: 20,  params: { value: 68 } },
                     { id: 'sp',    type: 'const', x: 20,  y: 170, params: { value: 70 } },
                     { id: 'db',    type: 'const', x: 20,  y: 320, params: { value: 1 } },
-                    { id: 'hi',    type: 'add',   x: 190, y: 80 },
+                    { id: 'hi',    type: 'add',   x: 190, y: 120 },
                     { id: 'lo',    type: 'sub',   x: 190, y: 260 },
                     { id: 'over',  type: 'gt',    x: 360, y: 20 },
                     { id: 'under', type: 'lt',    x: 360, y: 230 },
