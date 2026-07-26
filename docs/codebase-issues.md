@@ -8246,3 +8246,40 @@ file, and the reason the mono was pinned to four instances was weight. (c) Leave
 it and rely on the resolution behaviour. **(a) is the obvious call** unless the
 owner actually wants heavier mono values somewhere, which is what (b) is really
 asking. Not fixed inline because it spans six files outside the #211 pass.
+
+### 217. Preamble counts Relinquish_Default as one of "three of the sixteen slots" — the sibling tool teaches "not slot 17" *(open — 2026-07-26 · needs owner ruling)*
+
+`html/simulators/ddc-workbench.html` (preamble) and the
+`html/scripts/point-arbitration.js` header both say the workbench commands
+each output "using three of the sixteen slots: 8 (Manual Operator) …, 16 …,
+and Relinquish_Default when both are NULL." Only two of the sixteen slots are
+ever written; Relinquish_Default is a separate writable property — and the
+companion page this one links to, `html/tools/bacnet-priority.html`, teaches
+exactly that distinction twice ("it is not \"slot 17\"", in the resolution
+prose and in the FAQ). So the two surfaces currently disagree about whether
+Relinquish_Default is a slot.
+
+Not fixed on the PR because the phrasing is inside the decided design's copy
+constraint (owner, 2026-07-26): *the sim USES three of the sixteen slots —
+never say there are only three*, with Relinquish_Default listed as the third.
+A minimal repair that keeps the mandated three-part shape but stops calling
+Relinquish_Default a slot: enumerate **commands**, not slots — e.g. "through a
+real BACnet priority array, on three levels: slot 8 (Manual Operator) for
+your hand, slot 16 for the sequence, and the Relinquish_Default fallback when
+both are NULL." Same three items, no "slot 17" implication. Needs the owner
+to pick: keep the locked wording as-is, or take the repair (three files:
+page preamble, `point-arbitration.js` header, and the "three-slot" shorthand
+in `tests/ddc-workbench-priority.spec.js`'s header).
+
+### 218. Shell `formatPointValue` closes over helpers defined inside the UNIT: FCU banner *(open — 2026-07-26 · note for the shell extraction)*
+
+`formatPointValue` (shell statusbar section of
+`html/simulators/ddc-workbench.html`) calls `dispTempNum` / `tSuffix` /
+`dSuffix`, which are defined inside the UNIT: FCU banner further down the
+IIFE. Pre-existing (`updateChips` on main already did it) and not a
+genericity defect — the helpers are generic `window.Units` wrappers with no
+FCU knowledge — but the off-program window added a second shell consumer, so
+the coupling deepened. When the shell is extracted to its own script
+(phases 5-8 lane), the three helpers must move to the shell section (or fold
+into `formatPointValue`) or the extraction breaks on an invisible closure
+edge. No change warranted before then.
