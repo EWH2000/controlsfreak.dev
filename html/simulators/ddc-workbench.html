@@ -535,10 +535,11 @@ noindex: true
                 program. The <strong>Unit</strong> tab is the supervisory screen
                 a tech reads; the <strong>Wiresheet</strong> tab is the control
                 program running it. The workbench commands each output through
-                a real BACnet priority array, using three of the sixteen slots:
-                <strong>8 (Manual Operator)</strong> for your hand,
-                <strong>16</strong> for the sequence, and
-                <strong>Relinquish_Default</strong> when both are NULL. The zone
+                a real BACnet priority array, on three levels:
+                <strong>slot 8 (Manual Operator)</strong> for your hand,
+                <strong>slot 16</strong> for the sequence, and the
+                <strong>Relinquish_Default</strong> fallback when both are
+                NULL. The zone
                 is a live thermal model: the coil pulls it down while envelope
                 and internal gains push it up, so the program closes the loop
                 on its own.

@@ -8447,7 +8447,7 @@ into the mono subset) was **offered, not taken**: adding Δ only at 700 would
 render it inconsistently across weights, so it stays a live cross-page
 decision.
 
-### 217. Preamble counts Relinquish_Default as one of "three of the sixteen slots" — the sibling tool teaches "not slot 17" *(open — 2026-07-26 · needs owner ruling)*
+### 217. Preamble counts Relinquish_Default as one of "three of the sixteen slots" — the sibling tool teaches "not slot 17" *(resolved — 2026-07-26)*
 
 `html/simulators/ddc-workbench.html` (preamble) and the
 `html/scripts/point-arbitration.js` header both say the workbench commands
@@ -8470,6 +8470,17 @@ both are NULL." Same three items, no "slot 17" implication. Needs the owner
 to pick: keep the locked wording as-is, or take the repair (three files:
 page preamble, `point-arbitration.js` header, and the "three-slot" shorthand
 in `tests/ddc-workbench-priority.spec.js`'s header).
+
+**Resolution (2026-07-26 — owner took the repair, program-rewrite lane).**
+The "on three levels" wording landed verbatim in all three files: the page
+preamble now reads "on three levels: slot 8 (Manual Operator) for your hand,
+slot 16 for the sequence, and the Relinquish_Default fallback when both are
+NULL"; the `point-arbitration.js` header enumerates the same three levels and
+says outright that only the two slots are ever written and Relinquish_Default
+is a property, not a "slot 17" (naming the `tools/bacnet-priority` lesson it
+now agrees with); the spec header's shorthand became "three-level". The
+mandated three-part shape survives — three items, none of them a
+seventeenth slot.
 
 ### 218. Shell `formatPointValue` closes over helpers defined inside the UNIT: FCU banner *(open — 2026-07-26 · note for the shell extraction)*
 

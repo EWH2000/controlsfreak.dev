@@ -1,9 +1,10 @@
-// DDC Workbench — the three-slot priority arbitration (#209).
+// DDC Workbench — the three-level priority arbitration (#209).
 //
 // Every actuator point on the workbench owns a real 16-slot BACnet
 // priority array (/scripts/point-arbitration.js): the sequence writes
 // slot 16, the hand controls write slot 8 (Manual Operator), and the
-// point rests on Relinquish_Default when both are NULL. The
+// point falls to the Relinquish_Default fallback — a property, not a
+// third slot — when both are NULL. The
 // engine-direct spec (point-arbitration.spec.js) proves the resolver;
 // this spec pins the PAGE behaviors built on top of it:
 //

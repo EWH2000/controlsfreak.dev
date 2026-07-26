@@ -54,11 +54,13 @@
 // Values are stored typed and resolve() never coerces: false stays
 // false, 0 stays 0, and neither ever becomes undefined or "".
 //
-// The DDC Workbench uses three of the sixteen slots per actuator
-// point — 8 (Manual Operator), 16 (the sequence), and the
-// Relinquish_Default fallback — but the array underneath is the full
-// sixteen, which is why resolve() scans rather than special-casing
-// those two numbers.
+// The DDC Workbench commands each actuator point on three levels —
+// slot 8 (Manual Operator), slot 16 (the sequence), and the
+// Relinquish_Default fallback when both are NULL. Only the two slots
+// are ever written; Relinquish_Default is a separate property, not a
+// "slot 17" (the distinction tools/bacnet-priority teaches). The
+// array underneath is the full sixteen, which is why resolve() scans
+// rather than special-casing those two numbers.
 //
 // Consumers: simulators/ddc-workbench.html.
 // Tests: tests/point-arbitration.spec.js (pure-Node vm loader).
