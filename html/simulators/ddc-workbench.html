@@ -64,6 +64,20 @@ noindex: true
             text-anchor: middle;
         }
         .fcu-dt-val { fill: var(--blue); }
+        /* The zone setpoint sits one size step below the zone temp it answers
+           to — a reference value under a measurement. It has to be a CLASS:
+           the same declaration as an SVG presentation ATTRIBUTE was inert,
+           because .fcu-pt-val's own font-size wins and any CSS rule beats a
+           presentation attribute (codebase-issues #211). Single-class
+           specificity, same as .fcu-dt-val above, so SOURCE ORDER is what
+           makes either of them land — keep both below .fcu-pt-val.
+           The step is size only. The dead attribute pair also dimmed the value
+           to var(--text-dim); that half is deliberately not restored. It would
+           paint an active setpoint at the same ink as its own caption,
+           inverting the value-loud / caption-quiet hierarchy this block is
+           built on, and on a device face a greyed point reads as
+           out-of-service rather than as secondary. */
+        .fcu-sp-val { font-size: 12px; }
         .fcu-badge { fill: var(--surface-2); stroke: var(--border); stroke-width: 1; }
         .fcu-badge-dt { stroke: var(--blue); }
         .fcu-zone-label,
@@ -533,18 +547,7 @@ noindex: true
                         <text class="fcu-pt-cap" x="623" y="150">ZONE TEMP</text>
                         <text class="fcu-pt-val" id="fcu-zone-t" x="623" y="170">76.0 °F</text>
                         <text class="fcu-pt-cap" x="623" y="205">SETPOINT</text>
-                        <!-- // user to verify: BOTH attributes below are INERT.
-                             .fcu-pt-val sets font-size 14px AND fill
-                             var(--text-bright), and a class rule beats a
-                             presentation attribute — so the setpoint was
-                             authored one step quieter than the zone temp above
-                             it and renders identically to it. Restoring that
-                             hierarchy needs a real class (the route
-                             .fcu-dt-val already takes), which changes the
-                             composed graphic — held for the owner.
-                             codebase-issues #211. -->
-                        <text class="fcu-pt-val" id="fcu-zone-sp" x="623" y="225"
-                              font-size="12" fill="var(--text-dim)">72.0 °F</text>
+                        <text class="fcu-pt-val fcu-sp-val" id="fcu-zone-sp" x="623" y="225">72.0 °F</text>
                     </g>
 
                     <!-- ── FCU cabinet ── -->

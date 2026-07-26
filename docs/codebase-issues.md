@@ -8022,7 +8022,7 @@ inspector. The comment appears to predate the `fanon` program.
 in-repo record that a reader will trust about what an alarm means. **Action:**
 fix in the same pass as anything else in this file.
 
-### 211. FCU unit-graphic badge captions overflow their frames *(open — 2026-07-25)*
+### 211. FCU unit-graphic badge captions overflow their frames *(addressed 2026-07-26)*
 
 **This is the originally reported bug**, now confirmed by capture rather than
 arithmetic. `DAT · DISCHARGE` needs ~102 user units of advance in a 90-unit
@@ -8047,10 +8047,19 @@ the platform's generic monospace and is the widest glyph in its caption.
 
 **Also in this file, same fix pass:** `.fcu-pt-val { font-size: 14px }` beats a
 presentation attribute in the cascade, so the authored `font-size="13"` on the
-EAT / ΔT / DAT readouts and `"12"` on the zone setpoint are **dead**. The
-setpoint was authored one step quieter than the zone temp above it and now
-renders identically, flattening that hierarchy; its `fill` attribute still
-works, so only the size half of the treatment was lost.
+EAT / ΔT / DAT readouts and `"12"` on the zone setpoint are **dead**.
+
+⚠️ **CORRECTION (2026-07-26).** This entry originally added "its `fill`
+attribute still works, so only the size half of the treatment was lost." That
+is wrong, and wrong in the direction that mattered: `.fcu-pt-val` sets
+`fill: var(--text-bright)` as well as `font-size`, so the setpoint's
+`fill="var(--text-dim)"` was **equally dead** and *both* halves of the
+treatment were lost. Same mechanism as the size half — one rule, two
+declarations, both beating their attribute twins. The lesson is narrower than
+"CSS beats attributes": having established that for one property, the entry
+still asserted the sibling property survived, without re-reading the rule it
+had just cited. **Check the whole rule body, not the one declaration you came
+for.**
 
 **Options.** (a) Shorten the captions. (b) Widen the rects — note each frame's
 `stroke-width: 1` straddles its nominal edge by 0.5 units, so sizing purely
@@ -8059,7 +8068,38 @@ from `getComputedTextLength()` vs the rect `width` is off by ~1 unit total.
 is a **cross-page** decision, since the same glyph appears in this page's HTML
 mirror readout and in prose elsewhere.
 
-### 212. `updateChips` ignores the unit system — metric shows Fahrenheit numbers labelled °F *(open — 2026-07-25)*
+**Resolution — (c), plus the dead attributes removed** (PRs #432 / #433, and
+the zone setpoint in this pass).
+
+- **Captions: 10px → 8px at weight 600.** Owner call: shrink the type rather
+  than shorten the captions or widen the badges, because it keeps the
+  abbreviation-plus-gloss shape that teaches what EAT/DAT mean, leaves the
+  composition untouched, and buys ~3 characters of headroom per badge for more
+  complex unit types. At 8px the three captions measure 76.2 / 76.2 / 81.6
+  against boxes of 86 / 96 / 90. Weight 600 is load-bearing, not decorative —
+  at 8px on a device face the captions need it, and it is how the owner draws
+  these boxes in the field. 600 rather than 700 because **no 700 mono face
+  ships** (see #216); naming 600 says what renders instead of leaning on
+  weight-matching. Monospace is fixed-advance across weights, so the advances
+  above are unchanged by it (measured).
+- **The six dead `font-size` attributes on the EAT / ΔT / DAT readouts are
+  gone**, rather than promoted to real rules — they were requesting 13px where
+  the class gives 14px, a step nobody asked for.
+- **The zone setpoint's hierarchy is restored as SIZE ONLY**, via a real class
+  `.fcu-sp-val { font-size: 12px }` ordered after `.fcu-pt-val` (single-class
+  specificity, so source order is what makes it land — the same route
+  `.fcu-dt-val` already takes). The dim `fill` half is **deliberately not
+  restored**: `var(--text-dim)` would paint an active setpoint at the same ink
+  as its own caption, inverting the value-loud / caption-quiet hierarchy that
+  block is built on, and on a device face a greyed point reads as
+  *out of service* rather than as *secondary*. Verified rendered: zone temp
+  14px, setpoint 12px, both `--text-bright`; the 12px string measures 53.5
+  units centred in a 150-unit frame.
+
+Option (d) is untaken and remains a live cross-page question — `Δ` still
+renders from the platform monospace.
+
+### 212. `updateChips` ignores the unit system — metric shows Fahrenheit numbers labelled °F *(addressed 2026-07-26)*
 
 `FCU_POINTS` hard-codes `unit: '°F'` and `updateChips` reads the raw canonical
 Fahrenheit value with no `Units` call, so **with the site in metric the IO chip
@@ -8076,6 +8116,15 @@ reads **75.9 °F**.
 **At stake:** a correctness bug on a hidden page, so nothing user-facing yet —
 but it must be closed before the workbench is published. **Action:** a narrow
 fix on that one path, not a retrofit.
+
+**Resolution (PR #432).** The narrow fix, as scoped. `FCU_POINTS` entries gained
+a `conv` field naming the conversion each point needs (`temp` for absolute
+temperatures, `deltaTemp` for the deadband, absent for the unitless `%` points),
+and `updateChips`'s numeric branch dispatches on it — `dispTempNum` + `tSuffix`
+for `temp`, `Units.display.deltaTemp` + `dSuffix` for `deltaTemp`, plain
+rounding otherwise. Both surfaces now read 24.4 °C together. Four points carry
+`conv`. The whole page is one IIFE, so the chip painter reaches the existing
+converters by name with nothing hoisted or re-exported.
 
 ### 213. `simulators/pid-tuner.html` still pays live path reads on static geometry *(open — 2026-07-25)*
 
@@ -8151,3 +8200,44 @@ consequence is part of the point.
 behaviour (a negative deadband erases hysteresis into a bare comparator, which
 is a *better* teaching hook than the failure originally claimed for it, and an
 argument for leaving that particular const unclamped).
+
+### 216. Nine rules request a mono weight the site does not ship *(open — 2026-07-26)*
+
+Surfaced while writing the weight comment for #211. `styles.css` loads IBM Plex
+Mono as four static instances — **400 / 400-italic / 500 / 600, and nothing
+heavier** (the sans is variable and covers 300–700; the mono is not). Nine rules
+ask for `font-weight: 700` on a `var(--mono)` element:
+
+    html/styles.css:3154            .quiz-results-headline
+    html/styles.css:4041            .lcd .v
+    html/education/coil-selection.html:80          .csel-lever-flow
+    html/education/psychrometrics-basics.html:48   .pool-w-status .lbl
+    html/simulators/controller-wiring.html:133     .cw-readout
+    html/simulators/ddc-workbench.html:59          .fcu-pt-val
+    html/simulators/ddc-workbench.html:171         .fcu-point-val
+    html/simulators/refrigerant-loop.html:163      .rl-gauge-val
+    html/tools/bacnet-priority.html:130            .bpri-pv
+
+**Measured, not assumed** — this is the part worth carrying, because the two
+plausible outcomes have opposite consequences. Rendering the same string to a
+canvas at each weight and diffing pixels: **700 vs 600 = 0 differing pixels**,
+while the control **500 vs 600 = 595 differing pixels**. So the UA resolves the
+request down to the 600 file and does **not** synthesize bold, and the control
+proves the diff can see a real weight difference (a bare "0 pixels differ" with
+no control would equally well mean the measurement was broken).
+
+**So nothing renders wrong today.** This is a truth-in-code item, not a bug: the
+CSS names a weight that cannot happen, and the next person to touch one of those
+rules will reason from 700. It also means **mono captions and mono values now
+render at the same weight** wherever a 600 caption sits under a "700" value — on
+the FCU badges the caption/value distinction rests entirely on size (8 vs 14)
+and fill, which is still a strong separation, but it is not the separation the
+stylesheet claims.
+
+**Options.** (a) Rewrite the nine to `600`, matching what #211 already did for
+`.fcu-pt-cap` — honest, zero visual change, nine files touched. (b) Subset and
+ship a mono 700 face — a real visual change on nine surfaces plus another font
+file, and the reason the mono was pinned to four instances was weight. (c) Leave
+it and rely on the resolution behaviour. **(a) is the obvious call** unless the
+owner actually wants heavier mono values somewhere, which is what (b) is really
+asking. Not fixed inline because it spans six files outside the #211 pass.
