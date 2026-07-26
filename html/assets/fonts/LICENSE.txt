@@ -13,6 +13,8 @@ Full license text: https://openfontlicense.org/open-font-license-official-text/
   Source: https://github.com/RedHatOfficial/Overpass
 
 Files are the latin woff2 subsets as served by Google Fonts
-(fonts.gstatic.com) on 2026-06-10, renamed for stable self-hosting.
+(fonts.gstatic.com) on 2026-06-10, renamed for stable self-hosting
+(ibm-plex-mono-latin-700.woff2 fetched the same way on 2026-07-26 —
+same producer and coverage as its siblings).
 If a file is ever re-subset or updated, RENAME it — the Cloudflare
 Worker serves /assets/fonts/* as immutable.

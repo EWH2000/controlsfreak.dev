@@ -34,24 +34,31 @@ noindex: true
            call): it keeps the abbreviation-plus-gloss shape that teaches what
            EAT/DAT mean, leaves the composition untouched, and buys ~3 extra
            characters per badge as headroom for more complex unit types. At 8px
-           the three captions measure 76.2 / 76.2 / 81.6 against 86 / 96 / 90.
+           the three captions measure 76.2 / 76.2 / 81.6 against 86 / 96 / 90
+           (re-measured 2026-07-26 with the real 700 face below — identical
+           numbers at 600 and 700, since mono advances are weight-invariant).
            Do not raise this without re-checking those three against their
            badge widths. */
         .fcu-pt-cap {
             font-family: var(--mono);
             font-size: 8px;
-            /* 600, not 700 — and NOT because 700 was too heavy. There is no
-               700 mono face on this site: styles.css loads IBM Plex Mono at
-               400 / 400-italic / 500 / 600 only, so a request for 700 is
-               resolved by the UA down to the 600 file anyway. Naming 600
-               says what actually renders and does not lean on weight-matching
-               behaviour. Weight is load-bearing here rather than decorative:
-               at 8px on a device face the captions need it to stay legible,
-               which is how the owner draws these boxes in the field. Advance
-               is unchanged (monospace is fixed-advance across weights) —
-               measured, the three badge captions still come to 76.13 / 76.13
-               / 81.56 against boxes of 86 / 96 / 90. */
-            font-weight: 600;
+            /* 700 — and it is REAL now. This rule said 600 only because no
+               700 mono face shipped and naming 600 described what actually
+               rendered; since #216 (2026-07-26) styles.css loads a true IBM
+               Plex Mono Bold, so the rule asks for the weight the owner
+               actually wants — genuinely bold small sensor labels, which is
+               how he draws these boxes in the field. Weight is load-bearing
+               here rather than decorative: at 8px on a device face the
+               captions need it to stay legible. Advance is unchanged
+               (monospace is fixed-advance across weights — every glyph in
+               the 700 face carries the same 0.6 em advance as the 600's) —
+               re-measured 2026-07-26 with the Bold loaded: the three badge
+               captions come to 76.13 / 76.13 / 81.56 at BOTH 600 and 700,
+               against boxes of 86 / 96 / 90. That zero delta is a real zero,
+               not a dead harness: the same probe moved a proportional
+               control (Overpass, same string and size, 400 → 700) by +2.69
+               units. */
+            font-weight: 700;
             letter-spacing: 0.08em;
             fill: var(--text-dim);
             text-anchor: middle;

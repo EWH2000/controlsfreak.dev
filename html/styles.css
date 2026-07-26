@@ -44,7 +44,9 @@
    Δ / ≈ / → always came from system fallbacks and still do. The
    unicode-range is Google's latin subset range, kept so fallback
    behavior matches exactly. Overpass ships as one variable file
-   covering weights 300–700; IBM Plex Mono as four static instances.
+   covering weights 300–700; IBM Plex Mono as five static instances
+   (the 700 landed 2026-07-26 — until then the site's font-weight:700
+   mono rules silently resolved to the 600 file; see #216).
    FONT FILES ARE IMMUTABLE BY NAME — if a font is ever re-subset,
    rename the file (the Worker serves /assets/fonts/* with
    max-age=31536000, immutable). */
@@ -86,6 +88,14 @@
     font-weight: 600;
     font-display: swap;
     src: url(/assets/fonts/ibm-plex-mono-latin-600.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: 'IBM Plex Mono';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url(/assets/fonts/ibm-plex-mono-latin-700.woff2) format('woff2');
     unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 

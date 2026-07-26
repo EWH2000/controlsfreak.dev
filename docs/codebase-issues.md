@@ -7673,7 +7673,7 @@ wrongly. See **#204** for the separate finding about what the `//` pass
 does and does not blank; that one is a live coverage gap rather than a
 stale justification, which is why it is filed on its own.
 
-### 204. `flowStaticGuard`'s `//` mask is line-anchored — round 3 closed one shape of the comment-pairing hole and opened another *(open — 2026-07-25)*
+### 204. `flowStaticGuard`'s `//` mask is line-anchored — round 3 closed one shape of the comment-pairing hole and opened another *(option (b) shipped 2026-07-26 — both directions documented; (a) still uncorrected by choice)*
 
 Found by a verification pass over PR #430's body, after #202's stop was
 declared. Both directions below are **measured on head `4905b78`**, and
@@ -7771,6 +7771,43 @@ is actually at stake is what was at stake in #203: this header is the
 designated explanation for the guard, and a reader who trusts it will
 believe the comment-pairing hole is closed when it is closed for one shape.
 
+**Option (b) shipped 2026-07-26 — header amended, no behaviour change.** The
+mask's comment in `.eleventy.js` now says the `//` pass is line-anchored and
+therefore defends line-start `//` comments only; names the trailing-comment
+construction as the over-masking direction that fails silently; names the
+`/* css */ // js` reorder consequence as the under-masking direction that
+fails loudly; and states the positive search as the two-directional search it
+now is, so the claim stops at *the reorder cannot change masking on any file
+that exists*.
+
+Re-measured on this branch against the mask itself (a 20-line replica of
+`maskComments`, so no page scaffolding was needed): the **line-start**
+construction leaves the `data-flow` path visible to `scan()`, the **trailing**
+twin blanks it away, and `/* css */ //` leaves the trailing comment unmasked.
+All three match what this entry recorded on `4905b78`.
+
+The smaller note above is also settled: the header's pasted `grep` now carries
+`--include='*.njk' --include='*.html'`, so the command and the sentence around
+it have the same scope (0 hits, where the unrestricted form read `.css` /
+`.js` and returned 4).
+
+**Two things this did NOT do, recorded so the next reader is not misled.**
+(1) **The pending ride-along call resolved as ALONE.** This entry recommended
+shipping (b) together with #203's option (a); it shipped without it. #203 is
+untouched and stays open. (2) Relatedly, this entry's *"both are accuracy
+fixes to the same paragraph"* is **loose** — they are two different comment
+blocks in `.eleventy.js`: #203's target is the `COMMENTS ARE MASKED FIRST`
+rationale in the guard's header prose, while (b)'s target is the
+`LINE COMMENTS ARE BLANKED FIRST` ordering note inside the collection body.
+Adjacent in subject, not the same text, which is why one could ship without
+the other.
+
+**What remains open** is (a) itself — the line-anchored mask is unchanged, so
+the silent over-masking construction still reproduces. It is now *declared*
+rather than *hidden*, which was the whole of option (b). Option (a) — masking
+`//` from first occurrence to end of line, with the `https://` trap handled —
+stays available and still wants its own PR and its own reproduction pass.
+
 ### 205. Function-block editor's wire router buries wires on the PUBLIC page too *(open — 2026-07-25)*
 
 Held until #430 merged (it edits this file). Found while diagnosing the DDC
@@ -7831,7 +7868,7 @@ from the same expression the router uses, so the two cannot drift. (c) Leave
 it and fix the router instead (see #205). (b) is the one that stops this
 recurring.
 
-### 207. `flowStaticGuard`'s template walk has two scope holes — one silent, one loud *(open — 2026-07-25)*
+### 207. `flowStaticGuard`'s template walk has two scope holes — one silent, one loud *(2026-07-26 — (b) fixed, (a) documented and accepted)*
 
 Found by adversarial verification of PR #430, after the guard had already
 survived three hardening rounds. Same family as #203 / #204.
@@ -7868,6 +7905,47 @@ not have, so *some* change is owed. For (b): test a `_site*` prefix, or scan
 `INPUT_DIR` instead of `cwd` — though note the header argues `cwd` is
 deliberate, so this is a scope decision, not a bug fix. Pairs naturally with
 #203's and #204's header-accuracy fixes; all four are the same paragraph.
+
+**Disposition 2026-07-26 — (b) fixed, (a) documented.**
+
+**(b) FIXED — the skip tests a `_site` PREFIX on directories.** The three
+other names stay exact, and the prefix is deliberately restricted to
+directories: a *file* named `_site…` (a `_sitemap.njk` partial, say) is real
+source and must stay in scope. Verified in both directions on this branch:
+
+- **before** — `npx @11ty/eleventy --output=_site_probe` run twice (the first
+  run passes, since the output dir does not exist yet when the collection is
+  computed): exit **1**, **134** unique phantom offenders, each `360 of 360`.
+  That confirms this entry's "~130" from the other side of the fix.
+- **after** — same command against the same on-disk `_site_probe`: exit **0**,
+  zero offender lines. `npm run build` exit 0, 136 files.
+- **anti-vacuity** — a root-level `partials/zz-probe.njk` carrying one
+  unflagged `data-flow` path is still reported under the override (exit 1), so
+  the walk was narrowed to build output and not to nothing. The exempt-path arm
+  passing is the standing second probe: it can only pass if the walk reached
+  `html/_includes/`.
+
+The header's WHICH FILES paragraph now documents the prefix and why it is a
+prefix. Note this took option one of the two offered — `cwd` is still the scan
+root, so the entry's point that scanning `INPUT_DIR` would be a *scope
+decision* is untouched and unmade.
+
+**(a) DOCUMENTED, NOT FIXED — and that is the choice, not an oversight.** The
+walk still tests `entry.isDirectory()` / `entry.isFile()`, so a symlinked
+template file and a symlinked template directory are both skipped in silence.
+What changed is that the guard no longer implies coverage it does not have:
+a `DOCUMENTED LIMITATION` note in the header carries the `zzlinkfile.njk`
+reproduction and says the paragraphs above describe coverage of *what
+`readdirSync` reports as a real file or a real directory*, not of the working
+directory; and the comment beside the symlink skip now frames it as a benefit
+**and** a coverage gap in both entry kinds, instead of purely as a benefit.
+
+The reason for accepting: following symlinks means resolving and cycle-guarding
+a guard that has already needed three adversarial rounds, to close a route
+nothing on this tree uses. This entry's own framing — "the header currently
+implies coverage it does not have, so *some* change is owed" — is what was
+paid. **The hole itself stays open** and an owner who wants it closed should
+read this as option three of the three offered, taken knowingly.
 
 ### 208. FBE block geometry is rem-sized while every coordinate is a px literal *(open — 2026-07-25)*
 
@@ -8145,8 +8223,11 @@ the zone setpoint in this pass).
   at 8px on a device face the captions need it, and it is how the owner draws
   these boxes in the field. 600 rather than 700 because **no 700 mono face
   ships** (see #216); naming 600 says what renders instead of leaning on
-  weight-matching. Monospace is fixed-advance across weights, so the advances
-  above are unchanged by it (measured).
+  weight-matching. *(Overtaken 2026-07-26 by #216's resolution: the owner
+  ruled the nine 700s were intent and the real face now ships, so
+  `.fcu-pt-cap` asks for 700 and gets it — see #216.)* Monospace is
+  fixed-advance across weights, so the advances above are unchanged by it
+  (measured, re-confirmed with the 700 face loaded).
 - **The six dead `font-size` attributes on the EAT / ΔT / DAT readouts are
   gone**, rather than promoted to real rules — they were requesting 13px where
   the class gives 14px, a step nobody asked for.
@@ -8191,7 +8272,7 @@ rounding otherwise. Both surfaces now read 24.4 °C together. Four points carry
 `conv`. The whole page is one IIFE, so the chip painter reaches the existing
 converters by name with nothing hoisted or re-exported.
 
-### 213. `simulators/pid-tuner.html` still pays live path reads on static geometry *(open — 2026-07-25)*
+### 213. `simulators/pid-tuner.html` still pays live path reads on static geometry *(addressed 2026-07-26)*
 
 Surfaced while verifying #202's sweep. `pid-tuner.html` carries four
 `[data-flow]` paths, all `class="pid-eq-flow"` with hard-coded literal `d`
@@ -8211,7 +8292,27 @@ pass `hydronic-loop-builder.html` vacuously), so this is a scope decision
 rather than an oversight — but it belongs recorded as a residual, not as "no
 change needed."
 
-### 214. `ddc-workbench-unit`'s profiler baseline is known-untrustworthy and carries no note *(open — 2026-07-25)*
+**Resolution (PR #436).** The four `.pid-eq-flow` paths took
+`data-flow-static="true"`, and the `.pid-eq-scene-host` carries the assertion
+comment that makes the claim auditable rather than implicit — the same shape
+`refrigerant-loop.html` uses. The assertion holds on two counts: the four `d`
+attributes are literal and nothing writes them (`updateScene` moves the
+actuator fill's `y`/`height` and the fan's `transform`, never the flow track,
+and a positive search for `setAttribute('d'|'points')` / `.style.transform`
+returns nothing on the page), and the one engine attribute that *does* change —
+`data-flow-density`, the coarse three-band output→flow cue — is refreshed in the
+same breath by both of its writers, the preset change and the band change.
+Measured in a headless dark-theme run against the built site: with the flag,
+**zero** `getPointAtLength()` calls on those paths over a 2 s idle window;
+with it removed at runtime on the same page and the pool refreshed, **630** in
+the same window (one visible path, 5 particles, 60 fps). Liveness held
+throughout — particles traced 28.3–29.6 user units/s across four scenarios
+(baseline, after the page's own density band change, after an Equipment preset
+switch, and after that scene's band change), console clean. The page-level
+`FlowEngine.init()` idempotence and the hidden-scene pools are untouched; this
+is an attribute-only change.
+
+### 214. `ddc-workbench-unit`'s profiler baseline is known-untrustworthy and carries no note *(annotated 2026-07-26 — the precondition question stays open)*
 
 `tests/perf-profile.mjs`'s baseline for that row records 2.23 layouts/frame
 (capture samples 2.20 / 2.44 / 1.87), and it has since flagged over-tolerance
@@ -8232,6 +8333,26 @@ baseline with nothing attached telling them so.
 tell. **Action:** either annotate the row with the two observations and the
 open question, or resolve the precondition difference. The annotation is cheap
 and stops the record from decaying further.
+
+**Annotated 2026-07-26 — the first action, not the second.** The two
+observations and the open question now sit in `tests/perf-profile.mjs` beside
+the `ddc-workbench-unit` BASELINE row: the capture samples and the two
+flagging runs (4.34, 4.67); that noise at this magnitude explains the size of
+the gap but not its ordering, since the recorded 2.23 sits *below* the
+control's 2.87 while both later runs sit above it; that a missing idle gate is
+ruled out by the capture being taken at the #426 merge; and that a page-state
+precondition difference is the remaining candidate, unresolved. A pointer
+paragraph in the header's BASELINE section sends a reader from the protocol
+sentence to the row.
+
+**No tolerance was widened, deliberately.** The protocol's other half — widen
+the floor — needs three fresh runs on a characterised machine, which this pass
+did not do; widening around a baseline nobody trusts would hide the question
+instead of answering it. **This entry therefore stays OPEN**, and what remains
+open is exactly the precondition question: what differed between the capture
+state of `/simulators/ddc-workbench.html` (Unit) and the two later runs. Answer
+that and the row can be re-baselined properly; until then a red number there is
+uninterpretable and now says so in the file.
 
 ### 215. FBE inspector accepts unbounded const values straight into the plant *(open — 2026-07-25)*
 
@@ -8266,7 +8387,7 @@ behaviour (a negative deadband erases hysteresis into a bare comparator, which
 is a *better* teaching hook than the failure originally claimed for it, and an
 argument for leaving that particular const unclamped).
 
-### 216. Nine rules request a mono weight the site does not ship *(open — 2026-07-26)*
+### 216. Nine rules request a mono weight the site does not ship *(addressed 2026-07-26)*
 
 Surfaced while writing the weight comment for #211. `styles.css` loads IBM Plex
 Mono as four static instances — **400 / 400-italic / 500 / 600, and nothing
@@ -8306,6 +8427,25 @@ file, and the reason the mono was pinned to four instances was weight. (c) Leave
 it and rely on the resolution behaviour. **(a) is the obvious call** unless the
 owner actually wants heavier mono values somewhere, which is what (b) is really
 asking. Not fixed inline because it spans six files outside the #211 pass.
+
+**Resolution — (b), owner ruling 2026-07-26: the nine 700s were intent.** He
+wants genuinely bold small sensor labels, so the fix was not to rewrite the
+rules down to what shipped but to ship the face the rules already ask for.
+`html/assets/fonts/ibm-plex-mono-latin-700.woff2` — same gstatic producer run
+as the four shipped instances, latin subset, a true Bold (usWeightClass 700),
+coverage delta vs the 600 face empty — plus a fifth `@font-face` block in
+`styles.css` mirroring the 600 block verbatim; new filename per the
+immutable-by-name rule, `?v=` cache bust covered by the version bump.
+Re-measured on the built site: 700 vs 600 now diffs (1363 px at 24px, 348 at
+8px, against a live 500-vs-600 control) where it measured 0 above, and
+advances are byte-identical across 400/500/600/700, so no box geometry moved.
+`.fcu-pt-cap` follows to 700 in the same PR — its 600 existed only because no
+700 shipped (#211), and that argument inverted the moment the face landed;
+its rationale comment and measured numbers are updated (76.13 / 76.13 / 81.56
+user units at both weights, boxes 86 / 96 / 90). The #211(d) Δ rider (U+0394
+into the mono subset) was **offered, not taken**: adding Δ only at 700 would
+render it inconsistently across weights, so it stays a live cross-page
+decision.
 
 ### 217. Preamble counts Relinquish_Default as one of "three of the sixteen slots" — the sibling tool teaches "not slot 17" *(open — 2026-07-26 · needs owner ruling)*
 
