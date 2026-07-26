@@ -8209,7 +8209,7 @@ rounding otherwise. Both surfaces now read 24.4 °C together. Four points carry
 `conv`. The whole page is one IIFE, so the chip painter reaches the existing
 converters by name with nothing hoisted or re-exported.
 
-### 213. `simulators/pid-tuner.html` still pays live path reads on static geometry *(open — 2026-07-25)*
+### 213. `simulators/pid-tuner.html` still pays live path reads on static geometry *(addressed 2026-07-26)*
 
 Surfaced while verifying #202's sweep. `pid-tuner.html` carries four
 `[data-flow]` paths, all `class="pid-eq-flow"` with hard-coded literal `d`
@@ -8228,6 +8228,26 @@ Note `flowStaticGuard` deliberately excludes simulators (a markup rule would
 pass `hydronic-loop-builder.html` vacuously), so this is a scope decision
 rather than an oversight — but it belongs recorded as a residual, not as "no
 change needed."
+
+**Resolution (PR #436).** The four `.pid-eq-flow` paths took
+`data-flow-static="true"`, and the `.pid-eq-scene-host` carries the assertion
+comment that makes the claim auditable rather than implicit — the same shape
+`refrigerant-loop.html` uses. The assertion holds on two counts: the four `d`
+attributes are literal and nothing writes them (`updateScene` moves the
+actuator fill's `y`/`height` and the fan's `transform`, never the flow track,
+and a positive search for `setAttribute('d'|'points')` / `.style.transform`
+returns nothing on the page), and the one engine attribute that *does* change —
+`data-flow-density`, the coarse three-band output→flow cue — is refreshed in the
+same breath by both of its writers, the preset change and the band change.
+Measured in a headless dark-theme run against the built site: with the flag,
+**zero** `getPointAtLength()` calls on those paths over a 2 s idle window;
+with it removed at runtime on the same page and the pool refreshed, **630** in
+the same window (one visible path, 5 particles, 60 fps). Liveness held
+throughout — particles traced 28.3–29.6 user units/s across four scenarios
+(baseline, after the page's own density band change, after an Equipment preset
+switch, and after that scene's band change), console clean. The page-level
+`FlowEngine.init()` idempotence and the hidden-scene pools are untouched; this
+is an attribute-only change.
 
 ### 214. `ddc-workbench-unit`'s profiler baseline is known-untrustworthy and carries no note *(annotated 2026-07-26 — the precondition question stays open)*
 
