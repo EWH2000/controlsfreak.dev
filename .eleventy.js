@@ -242,9 +242,21 @@ module.exports = function(eleventyConfig) {
     // and silently extend PAGE SCOPE to simulators, which the note below
     // forbids. So `.html` pages under `html/` stay with the `nav: education`
     // arm above, and everything else a loader could pull in is scanned.
-    // `node_modules` / `_site` / `.git` / `.claude` are skipped: the first
-    // two are not source, and the last two carry whole copies of the tree
-    // (worktrees, build output) that would report phantom offenders.
+    // `node_modules` / `.git` / `.claude` are skipped by EXACT NAME, and any
+    // directory whose name STARTS WITH `_site` by PREFIX: none of them is
+    // source, and the last three carry whole copies of the tree (worktrees,
+    // build output) that would report phantom offenders.
+    //
+    // THE PREFIX, NOT A FOURTH LITERAL, is what keeps an `--output=` override
+    // usable. `npx @11ty/eleventy --output=_site_probe` lands a full build
+    // inside the scan root under a name a literal `_site` never matches, and
+    // the NEXT build scans it: 134 phantom offenders, each of the form
+    // "`_site_probe/404.html` — 360 of 360 data-flow elements lack
+    // data-flow-static" (360 = the gutter count the exempt partial injects
+    // into every rendered page). Measured 2026-07-26 at both behaviours.
+    // It failed LOUDLY, so nothing could ship through it — but it made
+    // `--output` overrides and side-by-side build comparisons unusable and
+    // buried any real offender line (codebase-issues #207(b)).
     //
     // An include has no frontmatter and therefore no `flowGeometryLive`
     // opt-out; one that genuinely needs the live read earns an
@@ -419,8 +431,15 @@ module.exports = function(eleventyConfig) {
         // above. Moving an exempt partial re-points its entry by hand,
         // which is the intended friction.
         const EXEMPT_TEMPLATES = new Set([`${INPUT_DIR}/${INCLUDES_DIR}/schematic-bg.njk`]);
-        // Not source, or a whole second copy of the tree.
-        const SKIP_DIRS = new Set(["node_modules", "_site", ".git", ".claude"]);
+        // Not source, or a whole second copy of the tree. Three exact names
+        // plus a `_site` PREFIX on directories — see the WHICH FILES note in
+        // the header for why the prefix rather than a fourth literal, and
+        // codebase-issues #207(b) for what the literal cost. The prefix is
+        // tested on directories only: a FILE named `_site…` (a `_sitemap.njk`
+        // partial, say) is real source and must stay in scope.
+        const SKIP_DIRS = new Set(["node_modules", ".git", ".claude"]);
+        const isSkippedDir = (entry) => SKIP_DIRS.has(entry.name)
+            || (entry.isDirectory() && entry.name.startsWith("_site"));
         const pagesPrefix = `${INPUT_DIR}/`;
         const includesPrefix = `${INPUT_DIR}/${INCLUDES_DIR}/`;
         // `.html` inside the input dir but outside `_includes` is an 11ty
@@ -435,7 +454,7 @@ module.exports = function(eleventyConfig) {
         let templatesScanned = 0;
         const walkTemplates = (dir) => {
             fs.readdirSync(dir, { withFileTypes: true }).forEach((entry) => {
-                if (SKIP_DIRS.has(entry.name)) return;
+                if (isSkippedDir(entry)) return;
                 const full = path.join(dir, entry.name);
                 // Dirent type tests do not follow symlinks, so a symlinked
                 // directory is skipped rather than walked — no cycles, and
