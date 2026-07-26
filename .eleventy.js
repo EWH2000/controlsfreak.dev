@@ -242,9 +242,39 @@ module.exports = function(eleventyConfig) {
     // and silently extend PAGE SCOPE to simulators, which the note below
     // forbids. So `.html` pages under `html/` stay with the `nav: education`
     // arm above, and everything else a loader could pull in is scanned.
-    // `node_modules` / `_site` / `.git` / `.claude` are skipped: the first
-    // two are not source, and the last two carry whole copies of the tree
-    // (worktrees, build output) that would report phantom offenders.
+    // `node_modules` / `.git` / `.claude` are skipped by EXACT NAME, and any
+    // directory whose name STARTS WITH `_site` by PREFIX: none of them is
+    // source, and the last three carry whole copies of the tree (worktrees,
+    // build output) that would report phantom offenders.
+    //
+    // THE PREFIX, NOT A FOURTH LITERAL, is what keeps an `--output=` override
+    // usable. `npx @11ty/eleventy --output=_site_probe` lands a full build
+    // inside the scan root under a name a literal `_site` never matches, and
+    // the NEXT build scans it: 134 phantom offenders, each of the form
+    // "`_site_probe/404.html` — 360 of 360 data-flow elements lack
+    // data-flow-static" (360 = the gutter count the exempt partial injects
+    // into every rendered page). Measured 2026-07-26 at both behaviours.
+    // It failed LOUDLY, so nothing could ship through it — but it made
+    // `--output` overrides and side-by-side build comparisons unusable and
+    // buried any real offender line (codebase-issues #207(b)).
+    //
+    // DOCUMENTED LIMITATION — SYMLINKED TEMPLATES ARE NOT SCANNED, so read
+    // the paragraphs above as coverage of what `readdirSync` reports as a
+    // real file or a real directory, NOT as coverage of the working
+    // directory. The walk tests `entry.isDirectory()` / `entry.isFile()` and
+    // neither follows a symlink, so a symlinked template FILE and a symlinked
+    // template DIRECTORY are both skipped in silence. That is this scan
+    // root's own hole reached by another route: proved by construction
+    // (2026-07-25) with a root-level `zzlinkfile.njk` symlinked to a file
+    // outside the tree holding one unflagged `data-flow` path — included by a
+    // `nav: education` page, the build exited 0 and shipped the path.
+    // NAMED AND ACCEPTED rather than fixed (codebase-issues #207(a)):
+    // following symlinks means resolving and cycle-guarding a guard that has
+    // already needed three adversarial rounds, to close a route nothing on
+    // this tree uses. The point of writing it down is that the guard's own
+    // argument for rooting at `process.cwd()` is "a partial parked anywhere
+    // else reaches an education page completely unscanned" — a reader is
+    // owed the one way a partial can still do exactly that.
     //
     // An include has no frontmatter and therefore no `flowGeometryLive`
     // opt-out; one that genuinely needs the live read earns an
@@ -329,10 +359,43 @@ module.exports = function(eleventyConfig) {
         // and shipped the path. Blanking `//` lines first removes both
         // strays before anything can pair them, and closes the same hole for
         // `-->` and `#}` (identical shape, not separately reproduced).
-        // Safe on this tree by positive search: no `.njk` / `.html` file has
-        // a `//` line containing `-->`, `#}`, `*/` or `/*`
-        // (`grep -rnE '^[[:space:]]*//.*(-->|#\}|\*/|/\*)'` over html/),
-        // so the reorder cannot change masking on any file that exists.
+        //
+        // WHAT THAT DEFENDS, EXACTLY — the `//` pass is LINE-ANCHORED
+        // (`trimStart().startsWith("//")`), so the pairing defence above
+        // holds for `//` comments that START their line and for nothing
+        // else. Put the same two strays in `//` comments that TRAIL other
+        // markup and the pass never fires — the line starts with `<script>`,
+        // not `//` — so the `/* … */` pass pairs them and blanks the diagram
+        // between them out of the scan. Measured against this mask
+        // (2026-07-26): the line-start construction leaves the path visible
+        // to scan(), the trailing twin does not. That is the OVER-masking
+        // direction and it fails SILENTLY, hiding a real offender rather
+        // than inventing a phantom one (codebase-issues #204(a)). Nothing on
+        // this tree is near it — it needs an unbalanced `/*` inside one
+        // trailing `//` comment, a `*/` inside a later one, and an unflagged
+        // `data-flow` path between them.
+        //
+        // AND THE POSITIVE SEARCH BELOW IS ONE-DIRECTIONAL. It looks for
+        // `//` lines carrying delimiters; it never looks for delimited
+        // comments carrying `//`. The reorder moved that second shape too:
+        // `/* css */ // js` on ONE line used to be fully masked (the `/* */`
+        // pass ran first, leaving a line that then started with `//`) and
+        // now leaves the trailing `// …` unmasked, so an example start tag
+        // inside it would be counted. Measured the same way, same date. That
+        // direction is the SAFE one — an unmasked comment yields a phantom
+        // offender and a loud break, never a shipped path — and it reaches
+        // zero files today (codebase-issues #204(b)).
+        //
+        // SO THE CLAIM IS: safe on this tree by search, in both directions —
+        // no `.njk` / `.html` file under html/ has a `//` line containing
+        // `-->`, `#}`, `*/` or `/*`, and none has a `*/` followed by `//`
+        // (`grep -rnE --include='*.njk' --include='*.html'
+        // '^[[:space:]]*//.*(-->|#\}|\*/|/\*)' html/` and
+        // `grep -rnE --include='*.njk' --include='*.html' '\*/[[:space:]]*//'
+        // html/`, both 0 on 2026-07-26; the include filters matter, since the
+        // unrestricted form also reads .css / .js and returns 4). What that
+        // buys is that the reorder cannot change masking on any file that
+        // EXISTS. It is not a claim that the comment-pairing hole is closed.
         const maskComments = (src) => src
             .split("\n")
             .map((line) => (line.trimStart().startsWith("//") ? blank(line) : line))
@@ -419,8 +482,15 @@ module.exports = function(eleventyConfig) {
         // above. Moving an exempt partial re-points its entry by hand,
         // which is the intended friction.
         const EXEMPT_TEMPLATES = new Set([`${INPUT_DIR}/${INCLUDES_DIR}/schematic-bg.njk`]);
-        // Not source, or a whole second copy of the tree.
-        const SKIP_DIRS = new Set(["node_modules", "_site", ".git", ".claude"]);
+        // Not source, or a whole second copy of the tree. Three exact names
+        // plus a `_site` PREFIX on directories — see the WHICH FILES note in
+        // the header for why the prefix rather than a fourth literal, and
+        // codebase-issues #207(b) for what the literal cost. The prefix is
+        // tested on directories only: a FILE named `_site…` (a `_sitemap.njk`
+        // partial, say) is real source and must stay in scope.
+        const SKIP_DIRS = new Set(["node_modules", ".git", ".claude"]);
+        const isSkippedDir = (entry) => SKIP_DIRS.has(entry.name)
+            || (entry.isDirectory() && entry.name.startsWith("_site"));
         const pagesPrefix = `${INPUT_DIR}/`;
         const includesPrefix = `${INPUT_DIR}/${INCLUDES_DIR}/`;
         // `.html` inside the input dir but outside `_includes` is an 11ty
@@ -435,12 +505,17 @@ module.exports = function(eleventyConfig) {
         let templatesScanned = 0;
         const walkTemplates = (dir) => {
             fs.readdirSync(dir, { withFileTypes: true }).forEach((entry) => {
-                if (SKIP_DIRS.has(entry.name)) return;
+                if (isSkippedDir(entry)) return;
                 const full = path.join(dir, entry.name);
                 // Dirent type tests do not follow symlinks, so a symlinked
                 // directory is skipped rather than walked — no cycles, and
                 // no crash on the `node_modules` symlink an agent worktree
-                // uses (it is skipped by name anyway).
+                // uses (it is skipped by name anyway). That is a benefit AND
+                // a COVERAGE GAP, in both entry kinds: a symlinked template
+                // file falls through `isFile()` below just as silently, so
+                // neither is scanned. Accepted, not fixed — the header's
+                // DOCUMENTED LIMITATION note carries the reproduction and the
+                // reasoning (codebase-issues #207(a)).
                 if (entry.isDirectory()) {
                     walkTemplates(full);
                     return;

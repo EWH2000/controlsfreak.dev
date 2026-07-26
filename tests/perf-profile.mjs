@@ -295,6 +295,14 @@
 // the observation here; do not treat it as a regression. Two data points
 // cannot characterise noise on a machine this contended.
 //
+// ONE ROW HAS ALREADY TRIPPED THAT PROTOCOL AND IS DELIBERATELY NOT WIDENED:
+// `ddc-workbench-unit`. Its observations sit on the BASELINE row itself
+// rather than here, because that is where a reader holding a red number is
+// looking; codebase-issues #214 carries the same record. Read that comment
+// before acting on a drift there — the row's baseline is not trusted, and
+// widening its floor without a measurement session would hide the open
+// question rather than settle it.
+//
 // Original capture (kept for provenance) was on `command.home.arpa` — Fedora
 // 44, and NOT an idle
 // machine: it runs the household service stack (caddy, several rootless
@@ -505,6 +513,32 @@ const MANIFEST = [
 
 const BASELINE = {
     'signal-scaling':                { deltaTask: 0.0, fps: 59.7, layoutsPerFrame: 2.87 },
+    // KNOWN-UNTRUSTWORTHY BASELINE — a DRIFT on this row means nothing until
+    // the question below is answered, so do not read one as a regression
+    // (codebase-issues #214). Two observations, recorded here because the
+    // protocol says they belong next to the row they haunt:
+    //
+    //   1. 2.23 came from capture samples 2.20 / 2.44 / 1.87, and the row has
+    //      flagged over-tolerance on BOTH runs since — 4.34 and 4.67
+    //      layouts/frame.
+    //   2. Noise at this magnitude explains the SIZE of that gap and not its
+    //      ORDERING: the recorded 2.23 sits BELOW the control's 2.87, i.e.
+    //      the most animation-heavy page on the site doing less structural
+    //      work per frame than a plain calculator, while both later runs sit
+    //      above it.
+    //
+    // A missing idle gate is RULED OUT — the capture was taken at the #426
+    // idle-gate merge, not before it. The remaining candidate is a page-state
+    // precondition difference between the capture and the later runs, and
+    // WHICH precondition is unresolved and open.
+    //
+    // NOT WIDENED, DELIBERATELY. The protocol in the header has two halves —
+    // widen the floor AND record the observation — and the widen half needs a
+    // measurement session (three fresh runs, characterised machine) that the
+    // pass writing this did not do. Widening a tolerance around a baseline
+    // nobody trusts hides the question instead of answering it, which is the
+    // decay the RE-BASELINING note warns about. So the observation lands and
+    // the numbers stay exactly where they were.
     'ddc-workbench-unit':            { deltaTask: 89.4, fps: 58.6, layoutsPerFrame: 2.23 },
     // Two rows carry their own wider absolute floor. Both animate
     // CONVERGENTLY and event-driven rather than steady-state, so their

@@ -7673,7 +7673,7 @@ wrongly. See **#204** for the separate finding about what the `//` pass
 does and does not blank; that one is a live coverage gap rather than a
 stale justification, which is why it is filed on its own.
 
-### 204. `flowStaticGuard`'s `//` mask is line-anchored — round 3 closed one shape of the comment-pairing hole and opened another *(open — 2026-07-25)*
+### 204. `flowStaticGuard`'s `//` mask is line-anchored — round 3 closed one shape of the comment-pairing hole and opened another *(option (b) shipped 2026-07-26 — both directions documented; (a) still uncorrected by choice)*
 
 Found by a verification pass over PR #430's body, after #202's stop was
 declared. Both directions below are **measured on head `4905b78`**, and
@@ -7771,6 +7771,43 @@ is actually at stake is what was at stake in #203: this header is the
 designated explanation for the guard, and a reader who trusts it will
 believe the comment-pairing hole is closed when it is closed for one shape.
 
+**Option (b) shipped 2026-07-26 — header amended, no behaviour change.** The
+mask's comment in `.eleventy.js` now says the `//` pass is line-anchored and
+therefore defends line-start `//` comments only; names the trailing-comment
+construction as the over-masking direction that fails silently; names the
+`/* css */ // js` reorder consequence as the under-masking direction that
+fails loudly; and states the positive search as the two-directional search it
+now is, so the claim stops at *the reorder cannot change masking on any file
+that exists*.
+
+Re-measured on this branch against the mask itself (a 20-line replica of
+`maskComments`, so no page scaffolding was needed): the **line-start**
+construction leaves the `data-flow` path visible to `scan()`, the **trailing**
+twin blanks it away, and `/* css */ //` leaves the trailing comment unmasked.
+All three match what this entry recorded on `4905b78`.
+
+The smaller note above is also settled: the header's pasted `grep` now carries
+`--include='*.njk' --include='*.html'`, so the command and the sentence around
+it have the same scope (0 hits, where the unrestricted form read `.css` /
+`.js` and returned 4).
+
+**Two things this did NOT do, recorded so the next reader is not misled.**
+(1) **The pending ride-along call resolved as ALONE.** This entry recommended
+shipping (b) together with #203's option (a); it shipped without it. #203 is
+untouched and stays open. (2) Relatedly, this entry's *"both are accuracy
+fixes to the same paragraph"* is **loose** — they are two different comment
+blocks in `.eleventy.js`: #203's target is the `COMMENTS ARE MASKED FIRST`
+rationale in the guard's header prose, while (b)'s target is the
+`LINE COMMENTS ARE BLANKED FIRST` ordering note inside the collection body.
+Adjacent in subject, not the same text, which is why one could ship without
+the other.
+
+**What remains open** is (a) itself — the line-anchored mask is unchanged, so
+the silent over-masking construction still reproduces. It is now *declared*
+rather than *hidden*, which was the whole of option (b). Option (a) — masking
+`//` from first occurrence to end of line, with the `https://` trap handled —
+stays available and still wants its own PR and its own reproduction pass.
+
 ### 205. Function-block editor's wire router buries wires on the PUBLIC page too *(open — 2026-07-25)*
 
 Held until #430 merged (it edits this file). Found while diagnosing the DDC
@@ -7831,7 +7868,7 @@ from the same expression the router uses, so the two cannot drift. (c) Leave
 it and fix the router instead (see #205). (b) is the one that stops this
 recurring.
 
-### 207. `flowStaticGuard`'s template walk has two scope holes — one silent, one loud *(open — 2026-07-25)*
+### 207. `flowStaticGuard`'s template walk has two scope holes — one silent, one loud *(2026-07-26 — (b) fixed, (a) documented and accepted)*
 
 Found by adversarial verification of PR #430, after the guard had already
 survived three hardening rounds. Same family as #203 / #204.
@@ -7868,6 +7905,47 @@ not have, so *some* change is owed. For (b): test a `_site*` prefix, or scan
 `INPUT_DIR` instead of `cwd` — though note the header argues `cwd` is
 deliberate, so this is a scope decision, not a bug fix. Pairs naturally with
 #203's and #204's header-accuracy fixes; all four are the same paragraph.
+
+**Disposition 2026-07-26 — (b) fixed, (a) documented.**
+
+**(b) FIXED — the skip tests a `_site` PREFIX on directories.** The three
+other names stay exact, and the prefix is deliberately restricted to
+directories: a *file* named `_site…` (a `_sitemap.njk` partial, say) is real
+source and must stay in scope. Verified in both directions on this branch:
+
+- **before** — `npx @11ty/eleventy --output=_site_probe` run twice (the first
+  run passes, since the output dir does not exist yet when the collection is
+  computed): exit **1**, **134** unique phantom offenders, each `360 of 360`.
+  That confirms this entry's "~130" from the other side of the fix.
+- **after** — same command against the same on-disk `_site_probe`: exit **0**,
+  zero offender lines. `npm run build` exit 0, 136 files.
+- **anti-vacuity** — a root-level `partials/zz-probe.njk` carrying one
+  unflagged `data-flow` path is still reported under the override (exit 1), so
+  the walk was narrowed to build output and not to nothing. The exempt-path arm
+  passing is the standing second probe: it can only pass if the walk reached
+  `html/_includes/`.
+
+The header's WHICH FILES paragraph now documents the prefix and why it is a
+prefix. Note this took option one of the two offered — `cwd` is still the scan
+root, so the entry's point that scanning `INPUT_DIR` would be a *scope
+decision* is untouched and unmade.
+
+**(a) DOCUMENTED, NOT FIXED — and that is the choice, not an oversight.** The
+walk still tests `entry.isDirectory()` / `entry.isFile()`, so a symlinked
+template file and a symlinked template directory are both skipped in silence.
+What changed is that the guard no longer implies coverage it does not have:
+a `DOCUMENTED LIMITATION` note in the header carries the `zzlinkfile.njk`
+reproduction and says the paragraphs above describe coverage of *what
+`readdirSync` reports as a real file or a real directory*, not of the working
+directory; and the comment beside the symlink skip now frames it as a benefit
+**and** a coverage gap in both entry kinds, instead of purely as a benefit.
+
+The reason for accepting: following symlinks means resolving and cycle-guarding
+a guard that has already needed three adversarial rounds, to close a route
+nothing on this tree uses. This entry's own framing — "the header currently
+implies coverage it does not have, so *some* change is owed" — is what was
+paid. **The hole itself stays open** and an owner who wants it closed should
+read this as option three of the three offered, taken knowingly.
 
 ### 208. FBE block geometry is rem-sized while every coordinate is a px literal *(open — 2026-07-25)*
 
@@ -8171,7 +8249,7 @@ switch, and after that scene's band change), console clean. The page-level
 `FlowEngine.init()` idempotence and the hidden-scene pools are untouched; this
 is an attribute-only change.
 
-### 214. `ddc-workbench-unit`'s profiler baseline is known-untrustworthy and carries no note *(open — 2026-07-25)*
+### 214. `ddc-workbench-unit`'s profiler baseline is known-untrustworthy and carries no note *(annotated 2026-07-26 — the precondition question stays open)*
 
 `tests/perf-profile.mjs`'s baseline for that row records 2.23 layouts/frame
 (capture samples 2.20 / 2.44 / 1.87), and it has since flagged over-tolerance
@@ -8192,6 +8270,26 @@ baseline with nothing attached telling them so.
 tell. **Action:** either annotate the row with the two observations and the
 open question, or resolve the precondition difference. The annotation is cheap
 and stops the record from decaying further.
+
+**Annotated 2026-07-26 — the first action, not the second.** The two
+observations and the open question now sit in `tests/perf-profile.mjs` beside
+the `ddc-workbench-unit` BASELINE row: the capture samples and the two
+flagging runs (4.34, 4.67); that noise at this magnitude explains the size of
+the gap but not its ordering, since the recorded 2.23 sits *below* the
+control's 2.87 while both later runs sit above it; that a missing idle gate is
+ruled out by the capture being taken at the #426 merge; and that a page-state
+precondition difference is the remaining candidate, unresolved. A pointer
+paragraph in the header's BASELINE section sends a reader from the protocol
+sentence to the row.
+
+**No tolerance was widened, deliberately.** The protocol's other half — widen
+the floor — needs three fresh runs on a characterised machine, which this pass
+did not do; widening around a baseline nobody trusts would hide the question
+instead of answering it. **This entry therefore stays OPEN**, and what remains
+open is exactly the precondition question: what differed between the capture
+state of `/simulators/ddc-workbench.html` (Unit) and the two later runs. Answer
+that and the row can be re-baselined properly; until then a red number there is
+uninterpretable and now says so in the file.
 
 ### 215. FBE inspector accepts unbounded const values straight into the plant *(open — 2026-07-25)*
 
