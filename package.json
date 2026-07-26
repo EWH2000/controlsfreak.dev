@@ -6,6 +6,7 @@
   "scripts": {
     "build": "eleventy",
     "dev": "eleventy --serve --port=8000",
+    "publish:preview": "node .github/scripts/publish-preview.mjs",
     "test": "playwright test",
     "screenshots": "node tests/screenshot-diagrams.mjs",
     "perf-profile": "node tests/perf-profile.mjs",
