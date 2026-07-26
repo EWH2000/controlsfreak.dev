@@ -8151,7 +8151,7 @@ pass `hydronic-loop-builder.html` vacuously), so this is a scope decision
 rather than an oversight — but it belongs recorded as a residual, not as "no
 change needed."
 
-### 214. `ddc-workbench-unit`'s profiler baseline is known-untrustworthy and carries no note *(open — 2026-07-25)*
+### 214. `ddc-workbench-unit`'s profiler baseline is known-untrustworthy and carries no note *(annotated 2026-07-26 — the precondition question stays open)*
 
 `tests/perf-profile.mjs`'s baseline for that row records 2.23 layouts/frame
 (capture samples 2.20 / 2.44 / 1.87), and it has since flagged over-tolerance
@@ -8172,6 +8172,26 @@ baseline with nothing attached telling them so.
 tell. **Action:** either annotate the row with the two observations and the
 open question, or resolve the precondition difference. The annotation is cheap
 and stops the record from decaying further.
+
+**Annotated 2026-07-26 — the first action, not the second.** The two
+observations and the open question now sit in `tests/perf-profile.mjs` beside
+the `ddc-workbench-unit` BASELINE row: the capture samples and the two
+flagging runs (4.34, 4.67); that noise at this magnitude explains the size of
+the gap but not its ordering, since the recorded 2.23 sits *below* the
+control's 2.87 while both later runs sit above it; that a missing idle gate is
+ruled out by the capture being taken at the #426 merge; and that a page-state
+precondition difference is the remaining candidate, unresolved. A pointer
+paragraph in the header's BASELINE section sends a reader from the protocol
+sentence to the row.
+
+**No tolerance was widened, deliberately.** The protocol's other half — widen
+the floor — needs three fresh runs on a characterised machine, which this pass
+did not do; widening around a baseline nobody trusts would hide the question
+instead of answering it. **This entry therefore stays OPEN**, and what remains
+open is exactly the precondition question: what differed between the capture
+state of `/simulators/ddc-workbench.html` (Unit) and the two later runs. Answer
+that and the row can be re-baselined properly; until then a red number there is
+uninterpretable and now says so in the file.
 
 ### 215. FBE inspector accepts unbounded const values straight into the plant *(open — 2026-07-25)*
 
