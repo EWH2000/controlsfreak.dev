@@ -893,6 +893,21 @@ noindex: true
             </div>
 
             <p class="ref-note">
+                Read the setpoint label knowing which convention the program
+                uses. Here the label is the cut-out: stage 1 makes at setpoint
+                plus deadband and breaks at setpoint — trace y1on into gt1 and
+                lt1 on the wiresheet — so the zone rides the deadband
+                <em>above</em> the number on the graphic. Other sequences
+                center the band on the setpoint instead, and neither is wrong:
+                the commissioning question is which side of the deadband you
+                want for this application. One field wrinkle worth knowing —
+                some block libraries fix which side of the comparator the
+                deadband lives on, and you end up expressing a greater-than as
+                a NOT wrapped around a less-than to put the band where the
+                sequence needs it.
+            </p>
+
+            <p class="ref-note">
                 Directional only — the coil effect is a rough sensible split
                 (a ~1.5-ton DX fan coil, nominal 600 CFM), and the fault
                 presets zero the coil's work outright to make the tell obvious.
@@ -924,6 +939,16 @@ noindex: true
                     on the left, logic in the middle, outputs (Y1 / Y2 / fan) on
                     the right. Pick a sample above, or wire your own — it runs on
                     the unit every tick.
+                </p>
+
+                <p class="ddcw-sheet-note">
+                    Worth a look on the single-stage sample: its speed reference
+                    stays parked at full speed even while the unit is off — the
+                    classic graphic-reading nitpick. Nothing is broken: an AO
+                    shows the command, not the state, and the fan-enable BO is
+                    what actually stops the motor. The staged samples move the
+                    reference with the staging call; this one deliberately
+                    leaves it standing.
                 </p>
 
                 <div class="desktop-only-sim">
@@ -2092,25 +2117,48 @@ noindex: true
         ];
 
         // ── FCU sample programs (FBE graph literals; keys = editor examples) ──
-        // Staging (SP=72, deadband=3, stage-2 separation=2):
+        // The library is deliberately a mixed bag (owner ruling 2026-07-26):
+        // alongside the reference sequence it keeps imperfect programs on
+        // purpose — each flaw is a state a tech meets in the field, and the
+        // page's notes point at the flaws rather than away from them.
+        //
+        // Shared staging spine (SP=72, deadband=3, stage-2 separation=2):
         //   Y1 ON  temp > SP+deadband = 75    Y1 OFF  temp < SP = 72
         //   Y2 ON  temp > 77 (Y1-on + sep)    Y2 OFF  temp < 75 (Y1-on)
-        // Two SR latches give per-stage hysteresis (no chatter); OR/AND make
-        // Y1 the any-cooling call and Y2 = Y1·stage-2. Fan enabled on the
-        // cooling call; the 2-stage sheets stage the speed reference through
-        // a select (low const at stage 1, hundred at stage 2, and1.Q the
-        // selector) while cool-1stage keeps a const 100 (fan-enable BO gates
-        // the fan physically either way). `dat` AI is seeded but unwired — a
-        // discharge low-limit is the teaching hook.
+        // Per-stage SR latches give the hysteresis (no chatter). The setpoint
+        // is the CUT-OUT — stage 1 makes at SP+deadband and breaks at SP, so
+        // the zone rides the band above the label (the Unit-tab note owns
+        // that convention story). `dat` AI is seeded but unwired on every
+        // sheet — a discharge low-limit is the standing teaching hook.
         //
-        // cool-1stage keeps a y2 bo block with nothing wired into it. Under
-        // arbitration that block is NOT a load-bearing crutch: an unwired
-        // input evaluates false (fbe-engine), so the sequence explicitly
-        // commands y2 OFF at slot 16 every tick — the "slot 16 commands
-        // off" teaching state, distinct from DELETING the block, which
-        // releases slot 16 and drops y2 to Relinquish_Default (also off,
-        // but the off-program window then says so). Whether the orphan
-        // stays or goes is the program-redesign lane's call.
+        // cool-2stage — the reference sequence. OR/AND make Y1 the
+        // any-cooling call and Y2 = Y1·stage-2; the fan is enabled on the
+        // cooling call, and the speed reference is STAGED through the
+        // select (low const at stage 1 and parked at idle, hundred at
+        // stage 2, and1.Q the selector). The fan-enable BO gates the motor
+        // physically.
+        //
+        // cool-1stage — the honest single-speed baseline: one latch, no
+        // second stage, speed reference a bare const 100 wired straight to
+        // the AO. That reference is deliberately UNINTERRUPTED — it reads
+        // full speed while the unit is off, the classic graphic-reading
+        // nitpick (an AO shows the command, not the state; fan-enable is
+        // what stops the motor). The sheet also KEEPS a y2 bo block with
+        // nothing wired into it (owner ruling: stays). Under arbitration
+        // that block is NOT a load-bearing crutch: an unwired input
+        // evaluates false (fbe-engine), so the sequence explicitly commands
+        // y2 OFF at slot 16 every tick — the "slot 16 commands off"
+        // teaching state, distinct from DELETING the block, which releases
+        // slot 16 and drops y2 to Relinquish_Default (also off, but the
+        // off-program window then says so). The D4 program-switch test in
+        // tests/ddc-workbench-priority.spec.js pins this distinction on
+        // exactly this block.
+        //
+        // cool-2stage-fanon — cool-2stage with fan-enable recut to a
+        // `fanon` bi source held TRUE: continuous fan, same staging, same
+        // staged speed reference. Toggling `fanon` false under an active
+        // cooling call is one of the taught no-airflow faults (see the
+        // verdict logic in fcuRenderUnit).
         const FCU_PROGRAMS = {
             'cool-2stage': {
                 blocks: [
