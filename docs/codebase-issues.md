@@ -7972,7 +7972,7 @@ whatever geometry spec comes out of the workbench re-layout should assert the
 **relationship** (`pitch ≥ blockWidth + threshold − pinInset`) rather than
 hard-coding 171.6, and `BLOCK_W` should come from a measured rect.
 
-### 209. Actuator points have no relinquish path — implement 3-slot priority arbitration *(open — 2026-07-25 · design decided 2026-07-25)*
+### 209. Actuator points have no relinquish path — implement 3-slot priority arbitration *(addressed 2026-07-26)*
 
 **Originally filed as "deleting an actuator IO block strands its plant
 actuator." That is one symptom of three; the owner reframed it, correctly, as
@@ -8089,7 +8089,56 @@ compressor nobody commanded is not something to publish.
 (`#priority-array`) and `tools/bacnet-priority.html`. The window is effectively
 a three-slot instance of that resolver, so the two should present consistently.
 
-### 210. Stale comment in `ddc-workbench.html` claims the fan-off fault needs a HAND override *(open — 2026-07-25)*
+## Resolution (2026-07-26 — `1f09ed7` / `f116901` / `44bef34`, plus `c4bce7f` a11y and `e1574a6` comment purge)
+
+Shipped as designed, with every open call above decided by the owner on
+2026-07-26.
+
+- **`html/scripts/point-arbitration.js`** — `PriorityArray`, a real sparse
+  16-slot arbitration core (create / set / release / resolve), a shared classic
+  script with no DOM and no unit knowledge, so it runs Node-direct in
+  `tests/point-arbitration.spec.js` and the browser page reaches it by name.
+- **Unconditional slot-16 binding.** The binding tick writes slot 16 every tick
+  a block exists for the point (a present-but-unwired block still evaluates —
+  the engine fills undriven inputs `false`/`0` — so the sequence commands off,
+  exactly verdict (a)), and writes slot 16 **NULL** when the block is absent →
+  the point falls to `Relinquish_Default`. That closes instance 1; instances 2
+  and 3 died with the mode itself (below).
+- **AUTO / HAND collapsed** (the consequence flagged above, signed off
+  explicitly): the mode buttons and `mode` state are deleted outright; each
+  hand control carries a **NULL checkbox** (checked = slot 8 released = the
+  default state). **Bumpless:** while checked the control is disabled and
+  tracks the resolved value; unchecking writes the control's current (resolved)
+  position to slot 8, and subsequent moves keep writing slot 8.
+- **`relinquishDefault` is a required field on every actuator point config**
+  (named for the real BACnet property): `fan-speed` → **0** (owner call),
+  `y1` / `y2` / `fan-enable` → `false`. It comes only from `unit.points` — no
+  fallback table, no per-id branch in shell code — per the AHU-ready unit
+  contract.
+- **The (d) window shipped** as the starting shape: an aria-live
+  "points not following program" box that names *which* reason each point is
+  off-program — commanded by slot 8 (Manual Operator) vs slot 16 NULL →
+  holding `Relinquish_Default` — rendering from `unit.points` through
+  `formatPointValue`, vocabulary matched to `tools/bacnet-priority.html`
+  (never "slot 17" — the residual copy question on the *preamble* is #217).
+- **Slot state deliberately survives program switch / editor Reset / Clear** —
+  a priority array lives on the point, not in the program, and the months-old
+  stale override IS the lesson. The code comments say so in both places so
+  nobody "fixes" it.
+- **The sensor override is untouched** (verdict (c)) — it stays a unit-local
+  input-override mechanism, not a command priority.
+- Behaviors pinned in `tests/ddc-workbench-priority.spec.js` (browser) and
+  `tests/point-arbitration.spec.js` (Node-direct); the existing
+  `tests/ddc-workbench.spec.js` set updated where the mode collapse moved its
+  fixtures.
+
+The cross-links owed to `education/bacnet-basics.html` and
+`tools/bacnet-priority.html` are **deferred to the go-public pass** — the
+workbench is still live-but-hidden, and inbound links from two indexed pages
+would advertise it early. That debt now rides the graduation checklist, not
+this entry.
+
+### 210. Stale comment in `ddc-workbench.html` claims the fan-off fault needs a HAND override *(addressed 2026-07-26)*
 
 The comment above the unit-graphic alarm reads: "Fan-off splits two ways: with
 a stage energized it's a genuine no-airflow fault (**only reachable by a HAND
@@ -8104,6 +8153,17 @@ inspector. The comment appears to predate the `fanon` program.
 **At stake:** small but exactly the defect family #201 / #203 are about — an
 in-repo record that a reader will trust about what an alarm means. **Action:**
 fix in the same pass as anything else in this file.
+
+**Resolution (2026-07-26 — `f116901`, sweep in `e1574a6`).** Rewritten in the
+#209 pass. The comment now enumerates the routes actually measured — the
+`fanon` source toggled false in `cool-2stage-fanon`, a deleted
+`or1 → fan-enable` wire (an unwired input evaluates false, so the *sequence*
+commands the fan off), or a slot-8 fan-enable override held OFF under an
+active cooling call — with no "only reachable by a HAND override" claim, which
+became doubly false once #209 deleted HAND as a mode. `e1574a6` then purged
+the stale AUTO/HAND vocabulary from the three other comments that still
+asserted the mode exists; grep for AUTO/HAND/setMode now returns only the
+priority spec header's deliberate mentions, which document the deletion.
 
 ### 211. FCU unit-graphic badge captions overflow their frames *(addressed 2026-07-26)*
 
@@ -8386,3 +8446,40 @@ user units at both weights, boxes 86 / 96 / 90). The #211(d) Δ rider (U+0394
 into the mono subset) was **offered, not taken**: adding Δ only at 700 would
 render it inconsistently across weights, so it stays a live cross-page
 decision.
+
+### 217. Preamble counts Relinquish_Default as one of "three of the sixteen slots" — the sibling tool teaches "not slot 17" *(open — 2026-07-26 · needs owner ruling)*
+
+`html/simulators/ddc-workbench.html` (preamble) and the
+`html/scripts/point-arbitration.js` header both say the workbench commands
+each output "using three of the sixteen slots: 8 (Manual Operator) …, 16 …,
+and Relinquish_Default when both are NULL." Only two of the sixteen slots are
+ever written; Relinquish_Default is a separate writable property — and the
+companion page this one links to, `html/tools/bacnet-priority.html`, teaches
+exactly that distinction twice ("it is not \"slot 17\"", in the resolution
+prose and in the FAQ). So the two surfaces currently disagree about whether
+Relinquish_Default is a slot.
+
+Not fixed on the PR because the phrasing is inside the decided design's copy
+constraint (owner, 2026-07-26): *the sim USES three of the sixteen slots —
+never say there are only three*, with Relinquish_Default listed as the third.
+A minimal repair that keeps the mandated three-part shape but stops calling
+Relinquish_Default a slot: enumerate **commands**, not slots — e.g. "through a
+real BACnet priority array, on three levels: slot 8 (Manual Operator) for
+your hand, slot 16 for the sequence, and the Relinquish_Default fallback when
+both are NULL." Same three items, no "slot 17" implication. Needs the owner
+to pick: keep the locked wording as-is, or take the repair (three files:
+page preamble, `point-arbitration.js` header, and the "three-slot" shorthand
+in `tests/ddc-workbench-priority.spec.js`'s header).
+
+### 218. Shell `formatPointValue` closes over helpers defined inside the UNIT: FCU banner *(open — 2026-07-26 · note for the shell extraction)*
+
+`formatPointValue` (shell statusbar section of
+`html/simulators/ddc-workbench.html`) calls `dispTempNum` / `tSuffix` /
+`dSuffix`, which are defined inside the UNIT: FCU banner further down the
+IIFE. Pre-existing (`updateChips` on main already did it) and not a
+genericity defect — the helpers are generic `window.Units` wrappers with no
+FCU knowledge — but the off-program window added a second shell consumer, so
+the coupling deepened. When the shell is extracted to its own script
+(phases 5-8 lane), the three helpers must move to the shell section (or fold
+into `formatPointValue`) or the extraction breaks on an invisible closure
+edge. No change warranted before then.
