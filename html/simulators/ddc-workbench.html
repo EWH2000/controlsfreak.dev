@@ -24,9 +24,22 @@ noindex: true
         /* On-graphic point labels — the DDC feel. Mono, small; the value
            is the loud element, the caption the quiet one (the site scan
            hierarchy). SVG text is out of the contrast-sweep's scope. */
+        /* 8px, not 10 (codebase-issues #211). At 10px the badge captions
+           overflowed their frames: advance is fontSize x 0.68 (Plex Mono's
+           0.6 em plus the 0.08 em tracking below), so `DAT · DISCHARGE` at 15
+           chars needed 102 user units in a 90-unit badge and `EAT · ENTERING`
+           95.2 in 86 — ink outside the frame on every render, since SVG text
+           does not wrap and nothing here clips. Shrinking the type rather than
+           shortening the captions or widening the badges is deliberate (owner
+           call): it keeps the abbreviation-plus-gloss shape that teaches what
+           EAT/DAT mean, leaves the composition untouched, and buys ~3 extra
+           characters per badge as headroom for more complex unit types. At 8px
+           the three captions measure 76.2 / 76.2 / 81.6 against 86 / 96 / 90.
+           Do not raise this without re-checking those three against their
+           badge widths. */
         .fcu-pt-cap {
             font-family: var(--mono);
-            font-size: 10px;
+            font-size: 8px;
             letter-spacing: 0.08em;
             fill: var(--text-dim);
             text-anchor: middle;
@@ -508,6 +521,16 @@ noindex: true
                         <text class="fcu-pt-cap" x="623" y="150">ZONE TEMP</text>
                         <text class="fcu-pt-val" id="fcu-zone-t" x="623" y="170">76.0 °F</text>
                         <text class="fcu-pt-cap" x="623" y="205">SETPOINT</text>
+                        <!-- // user to verify: BOTH attributes below are INERT.
+                             .fcu-pt-val sets font-size 14px AND fill
+                             var(--text-bright), and a class rule beats a
+                             presentation attribute — so the setpoint was
+                             authored one step quieter than the zone temp above
+                             it and renders identically to it. Restoring that
+                             hierarchy needs a real class (the route
+                             .fcu-dt-val already takes), which changes the
+                             composed graphic — held for the owner.
+                             codebase-issues #211. -->
                         <text class="fcu-pt-val" id="fcu-zone-sp" x="623" y="225"
                               font-size="12" fill="var(--text-dim)">72.0 °F</text>
                     </g>
@@ -544,7 +567,7 @@ noindex: true
                         <circle cx="410" cy="298" r="4" fill="var(--text-bright)"/>
                         <text class="fcu-glyph-label" x="410" y="356" font-size="11"
                               font-weight="600" fill="var(--text-bright)">SUPPLY FAN</text>
-                        <text class="fcu-pt-cap" id="fcu-fan-v" x="410" y="248" font-size="10">100% · ON</text>
+                        <text class="fcu-pt-cap" id="fcu-fan-v" x="410" y="248">100% · ON</text>
                     </a>
 
                     <!-- ── Floating point badges — EAT / ΔT / DAT ──
@@ -556,15 +579,15 @@ noindex: true
                     <g id="fcu-badges">
                         <rect class="fcu-badge" x="96" y="188" width="86" height="40"/>
                         <text class="fcu-pt-cap" x="139" y="204">EAT · ENTERING</text>
-                        <text class="fcu-pt-val" id="fcu-eat" x="139" y="222" font-size="13">76.0 °F</text>
+                        <text class="fcu-pt-val" id="fcu-eat" x="139" y="222">76.0 °F</text>
 
                         <rect class="fcu-badge fcu-badge-dt" x="196" y="188" width="96" height="40"/>
                         <text class="fcu-pt-cap" x="244" y="204">ΔT ACROSS COIL</text>
-                        <text class="fcu-pt-val fcu-dt-val" id="fcu-dt" x="244" y="222" font-size="13">20.4 °F</text>
+                        <text class="fcu-pt-val fcu-dt-val" id="fcu-dt" x="244" y="222">20.4 °F</text>
 
                         <rect class="fcu-badge" x="370" y="188" width="90" height="40"/>
                         <text class="fcu-pt-cap" x="415" y="204">DAT · DISCHARGE</text>
-                        <text class="fcu-pt-val" id="fcu-dat" x="415" y="222" font-size="13">56.6 °F</text>
+                        <text class="fcu-pt-val" id="fcu-dat" x="415" y="222">56.6 °F</text>
                     </g>
 
                     <!-- Air chevrons — populated by the page script; last of
@@ -577,11 +600,11 @@ noindex: true
                          compressor isn't in the air path), drawn last so its
                          LED and label stay legible over any chevron. -->
                     <g id="fcu-comp">
-                        <text class="fcu-pt-cap" x="256" y="313" font-size="9">COMPRESSOR</text>
+                        <text class="fcu-pt-cap" x="256" y="313">COMPRESSOR</text>
                         <circle id="fcu-comp-dot" cx="212" cy="326" r="5"
                                 fill="var(--accent)" stroke="var(--border)" stroke-width="1"/>
                         <text class="fcu-pt-cap" id="fcu-comp-v" x="226" y="330"
-                              font-size="10" text-anchor="start">STG 2 · ON</text>
+                              text-anchor="start">STG 2 · ON</text>
                     </g>
                 </svg>
             </div>
@@ -923,11 +946,33 @@ noindex: true
                     txt = on ? 'ON' : 'OFF';
                     cls = on ? 'on' : 'off';
                 } else {
+                    // Convert at the display boundary (codebase-issues #212).
+                    // The plant is canonical IP throughout, and this strip used
+                    // to print the raw Fahrenheit number under a hard-coded '°F'
+                    // label — so in metric it disagreed with the .fcu-point-val
+                    // mirror directly above it (24.4 °C vs 75.9 °F, same value).
+                    // Reuses the page's own dispTempNum / tSuffix / dSuffix
+                    // rather than a second conversion path, so the strip and the
+                    // graphic can't drift. p.conv distinguishes an absolute temp
+                    // from a delta; see FCU_POINTS for why `unit` can't.
                     const n = Number(raw);
-                    const num = isFinite(n)
-                        ? (p.kind === 'ao' ? String(Math.round(n)) : String(Math.round(n * 10) / 10))
-                        : '—';
-                    txt = num + (p.unit ? ' ' + p.unit : '');
+                    let num, lbl = p.unit;
+                    if (!isFinite(n)) {
+                        num = '—';
+                    } else if (p.conv === 'temp') {
+                        num = dispTempNum(n).toFixed(1);
+                        lbl = tSuffix();
+                    } else if (p.conv === 'deltaTemp') {
+                        const U = window.Units;
+                        const d = U.current() === 'us' ? n : U.display.deltaTemp(n);
+                        num = (Math.round(d * 10) / 10).toFixed(1);
+                        lbl = dSuffix();
+                    } else {
+                        num = p.kind === 'ao'
+                            ? String(Math.round(n))
+                            : String(Math.round(n * 10) / 10);
+                    }
+                    txt = num + (lbl ? ' ' + lbl : '');
                 }
                 el.textContent = txt;
                 el.className = 'ddcw-chip-val' + (cls ? ' ' + cls : '');
@@ -1718,14 +1763,21 @@ noindex: true
         // dir:'param'. min/max/step mirror the hand-control ranges (informational
         // here — the programs place their own blocks, so no `seed` field).
         const FCU_POINTS = [
-            { id: 'space-temp',       kind: 'ai',    dir: 'sensor',   plantKey: 'space-temp',       name: 'Space',    unit: '°F', min: 70, max: 84, step: 1 },
-            { id: 'dat',              kind: 'ai',    dir: 'sensor',   plantKey: 'dat',              name: 'DAT',      unit: '°F' },
+            // `conv` drives the chip strip's unit conversion (updateChips).
+            // `unit` CANNOT stand in for it: `deadband` is a DELTA temperature
+            // that also carries '°F', and running a delta through the absolute
+            // formula prints -16.1 °C for a 3 °F deadband. Points with no `conv`
+            // are unitless-or-already-universal (%) and pass through. The `unit`
+            // strings stay as the US labels; the metric label comes from
+            // Units.suffix at the display boundary.
+            { id: 'space-temp',       kind: 'ai',    dir: 'sensor',   plantKey: 'space-temp',       name: 'Space',    unit: '°F', conv: 'temp',      min: 70, max: 84, step: 1 },
+            { id: 'dat',              kind: 'ai',    dir: 'sensor',   plantKey: 'dat',              name: 'DAT',      unit: '°F', conv: 'temp' },
             { id: 'fan-speed',        kind: 'ao',    dir: 'actuator', plantKey: 'fan-speed',        name: 'Fan',      unit: '%', min: 0, max: 100, step: 5 },
             { id: 'fan-enable',       kind: 'bo',    dir: 'actuator', plantKey: 'fan-enable',       name: 'Fan En' },
             { id: 'y1',               kind: 'bo',    dir: 'actuator', plantKey: 'y1',               name: 'Y1' },
             { id: 'y2',               kind: 'bo',    dir: 'actuator', plantKey: 'y2',               name: 'Y2' },
-            { id: 'cooling-setpoint', kind: 'param', dir: 'param',    plantKey: 'cooling-setpoint', name: 'Cool SP',  unit: '°F' },
-            { id: 'deadband',         kind: 'param', dir: 'param',    plantKey: 'deadband',         name: 'Deadband', unit: '°F' },
+            { id: 'cooling-setpoint', kind: 'param', dir: 'param',    plantKey: 'cooling-setpoint', name: 'Cool SP',  unit: '°F', conv: 'temp' },
+            { id: 'deadband',         kind: 'param', dir: 'param',    plantKey: 'deadband',         name: 'Deadband', unit: '°F', conv: 'deltaTemp' },
         ];
 
         // ── FCU sample programs (FBE graph literals; keys = editor examples) ──
