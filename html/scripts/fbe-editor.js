@@ -100,7 +100,12 @@ const FBEEditor = (function () {
         const canvasSize = cfg.canvasSize || null;
         let INNER_W = canvasSize && canvasSize.w ? canvasSize.w : 900;
         let INNER_H = canvasSize && canvasSize.h ? canvasSize.h : 480;
-        const BLOCK_W = 136;                   // matches .fbe-block width
+        // True .fbe-block width, re-measured from a rendered block in
+        // renderAll(). 136 is the documented fallback — 8.5rem at a 16px
+        // root font (#208) — used until a block renders, and kept when a
+        // block measures 0 wide (hidden pane / display:none, e.g. the
+        // workbench's lazy tab, where getBoundingClientRect is all-zero).
+        let blockW = 136;
         // Forward-route threshold stub — see wirePath(). Measured
         // 2026-07: STUB = 10 (forward threshold 20px; was 18 → 36px)
         // fixes econ / tstat-cool / tstat-heat / reset on the public
@@ -154,11 +159,26 @@ const FBEEditor = (function () {
 
         function addBlock(type) {
             const id = 'b' + (++blockSeq);
-            // Drop new blocks into a tidy 5×4 grid; the cycle wraps after
-            // 20, so further blocks may overlap and need a drag.
+            // Drop new blocks into a tidy grid whose column pitch comes
+            // from the router's own forward condition (#206, #208), so
+            // two adjacent drops wired left→right route as the clean
+            // 3-segment elbow, never the buried 5-segment fallback.
+            // wirePath() goes forward when the target in-pin sits at
+            // least 2·STUB right of the source out-pin. Pin-dot centres
+            // sit 0.05rem − 1px outside each block edge (0.36rem margin
+            // pull minus the 0.31rem half-dot, less the 1px block
+            // border), so one block's in-pin → out-pin span is
+            // blockW + 2·(0.05F − 1) = blockW + 0.1F − 2 at root font
+            // F px — bounded by blockW + 2 for any root font below 40px.
+            // pitchX = blockW + 2·STUB + 2 therefore clears the forward
+            // threshold at any plausible font size. The cycle wraps
+            // after cols·4 drops, so further blocks may overlap and
+            // need a drag.
             const n = dropSeq++;
-            const x = 40 + (n % 5) * 150;
-            const y = 40 + Math.floor((n % 20) / 5) * 120;
+            const pitchX = Math.ceil(blockW + 2 * STUB + 2);
+            const cols = Math.max(1, Math.floor((INNER_W - 80) / pitchX));
+            const x = 40 + (n % cols) * pitchX;
+            const y = 40 + Math.floor((n % (cols * 4)) / cols) * 120;
             graph.blocks.push(engine.createBlock(type, id, x, y));
             renderAll();
             select({ kind: 'block', id });
@@ -189,6 +209,16 @@ const FBEEditor = (function () {
             inner.appendChild(svg);
 
             graph.blocks.forEach(renderBlock);
+            // Re-measure the true block width — .fbe-block is 8.5rem, so
+            // the 136 fallback only holds at a 16px root font (#208). A
+            // hidden sheet (display:none — the workbench's lazy tab)
+            // measures 0, which would poison the drag clamp and the drop
+            // grid; keep the fallback (or the last good measurement)
+            // until a visible render.
+            if (graph.blocks.length) {
+                const w = els[graph.blocks[0].id].getBoundingClientRect().width;
+                if (w > 0) blockW = w;
+            }
             ensureWireIds();
             graph.wires.forEach(createWireEls);
             drawWires();
@@ -552,7 +582,7 @@ const FBEEditor = (function () {
             function move(ev) {
                 const dx = ev.clientX - startX, dy = ev.clientY - startY;
                 if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
-                b.x = clamp(origX + dx, 0, INNER_W - BLOCK_W);
+                b.x = clamp(origX + dx, 0, INNER_W - blockW);
                 b.y = clamp(origY + dy, 0, INNER_H - 40);
                 el.style.left = b.x + 'px';
                 el.style.top = b.y + 'px';
@@ -702,6 +732,7 @@ const FBEEditor = (function () {
         function clearCanvas() {
             graph = { blocks: [], wires: [] };
             selected = null;
+            dropSeq = 0;   // restart the drop grid at the top-left
             renderAll();
             setStatus(running ? 'Running' : 'Paused');
             emitChange();
