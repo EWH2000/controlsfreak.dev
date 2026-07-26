@@ -5,15 +5,18 @@
 // ⚠ STATUS (measured 2026-07-26, STUB = 10): this spec is the
 // placement harness for the wiresheet-relayout lane and joins CI only
 // with the relayout merge.
-//   - WORKBENCH: GREEN since the candidate-A relayout (#205) — 8
-//     topological columns at a 175 px pitch on a 1401×480 canvas
-//     (margin = pitch − 135.6 = 39.4 px at a 16 px root font), rows
-//     hand-placed so every mid-gap vertical and horizontal lane
-//     clears the intermediate blocks. Before that relayout the
-//     shipped 145–150 px pitch left adjacent-column wires only
-//     9.4–14.4 px of margin (< 2·STUB): 5-segment fallbacks that
-//     buried, plus the space-temp fan-out and sr1↔sr2 cross-wires
-//     burying through intermediate blocks even when routed forward.
+//   - WORKBENCH: candidate B (#205) — the 900×480 no-new-canvas
+//     squeeze. Six columns at a uniform 150 px pitch (the most that
+//     physically fit: 7 × 136 px of block alone is 952 px), so the
+//     adjacent-column margin is 14.4 px < 2·STUB and the 2-stage
+//     sheets ride the 5-segment fallback on nearly every wire. The
+//     forward-branch and margin assertions below are therefore RED
+//     on the 2-stage sheets BY DESIGN — that red is the honest cost
+//     record of keeping the default canvas; only the no-burial
+//     assertion is expected green (rows are placed so nothing
+//     buries; the fallbacks live in the inter-column gutters).
+//     cool-1stage is untouched from candidate A (its 175 px pitch
+//     already fit 900) and stays fully green.
 //   - PUBLIC: fully GREEN on all seven sheets — forward-routing +
 //     margin are the #205 routing verification at STUB = 10 (proof
 //     stays on the fallback by design, self-verified below), and the
@@ -109,10 +112,9 @@ function loadLiteral(fileRelPath, literalName) {
     return vm.runInNewContext(m[0] + '\n' + literalName + ';', {});
 }
 
-// The two consumer surfaces. Canvas bounds: the public editor mounts
-// at the 900×480 default; the workbench passes canvasSize 1401×480
-// (candidate-A relayout, #205 — 8 columns at a 175px pitch) and these
-// bounds must match that call.
+// The two consumer surfaces. Canvas bounds: BOTH pages mount at the
+// 900×480 default under candidate B (#205) — the workbench passes no
+// canvasSize and the programs squeeze into the default.
 const SURFACES = {
     'function-block-editor': {
         file: 'html/simulators/function-block-editor.html',
@@ -122,7 +124,7 @@ const SURFACES = {
     'ddc-workbench': {
         file: 'html/simulators/ddc-workbench.html',
         literal: 'FCU_PROGRAMS',
-        canvas: { w: 1401, h: 480 },
+        canvas: { w: 900, h: 480 },
     },
 };
 const REGISTRIES = {};

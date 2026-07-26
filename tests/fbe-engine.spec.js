@@ -679,13 +679,13 @@ test.describe('fbe-engine: FCU sample programs (workbench page)', () => {
     // C14: the workbench's FCU_PROGRAMS registry shipped with no
     // validity coverage at all — these graphs get the same sweep the
     // sim page's EXAMPLES get. Bounds are the workbench's CURRENT
-    // canvas: ddc-workbench.html passes canvasSize 1401×480 (the
-    // candidate-A relayout, #205) and these bounds must match that
-    // createEditor call.
+    // canvas: under candidate B (#205) ddc-workbench.html passes no
+    // canvasSize, so the editor mounts at the 900×480 default and
+    // these bounds must match it.
     test('every FCU program wires existing blocks through compatible pins', () => {
         const FCU_PROGRAMS = sweepLiteral(
             'html/simulators/ddc-workbench.html', 'FCU_PROGRAMS',
-            { w: 1401, h: 480 });
+            { w: 900, h: 480 });
 
         // Pin the registry's key set so the sweep's reach is explicit —
         // a new sample program must be added here to count as covered.
