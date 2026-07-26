@@ -8494,3 +8494,21 @@ the coupling deepened. When the shell is extracted to its own script
 (phases 5-8 lane), the three helpers must move to the shell section (or fold
 into `formatPointValue`) or the extraction breaks on an invisible closure
 edge. No change warranted before then.
+
+### 219. Workbench static placeholders describe a state the staged programs never resolve to *(open — 2026-07-26 · cosmetic)*
+
+The FCU graphic's authored SVG text and its mobile mirror ship with
+`100% · ON` / `STG 2 · ON` / `Stage 2 · ON` / DAT `56.6 °F` / ΔT `20.4 °F`,
+the fan slider ships `value="100"`, and the plant seed sets
+`'fan-speed': 100` — all describing a full-speed stage-2 snapshot. Since the
+#205 rewrite staged the fan reference (arrival resolves stage 1 at 60 %),
+none of those placeholders match any state the shipped programs produce; the
+`Stage 2` text never matched the zone-76 arrival (stage 1) even before the
+rewrite. Invisible in practice: the init script calls `hostTick()`
+synchronously at end-of-body, so the placeholders are repainted before the
+first frame, and the seed actuator value is overwritten by `bindingTick`
+before `unit.update` ever reads it. Worth truing up to the arrival state
+(60 % · ON, Stage 1) whenever the statics are next touched — a no-JS render
+is the only surface that can ever show them, and the sim is JS-only anyway.
+Found by the #205 adversarial verify; deliberately not fixed on that branch
+to keep the candidate diff reviewable.
