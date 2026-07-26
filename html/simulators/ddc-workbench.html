@@ -2097,9 +2097,11 @@ noindex: true
         //   Y2 ON  temp > 77 (Y1-on + sep)    Y2 OFF  temp < 75 (Y1-on)
         // Two SR latches give per-stage hysteresis (no chatter); OR/AND make
         // Y1 the any-cooling call and Y2 = Y1·stage-2. Fan enabled on the
-        // cooling call; fan-speed is a const 100 (fan-enable BO gates the fan
-        // physically). `dat` AI is seeded but unwired — a discharge low-limit
-        // is the teaching hook.
+        // cooling call; the 2-stage sheets stage the speed reference through
+        // a select (low const at stage 1, hundred at stage 2, and1.Q the
+        // selector) while cool-1stage keeps a const 100 (fan-enable BO gates
+        // the fan physically either way). `dat` AI is seeded but unwired — a
+        // discharge low-limit is the teaching hook.
         //
         // cool-1stage keeps a y2 bo block with nothing wired into it. Under
         // arbitration that block is NOT a load-bearing crutch: an unwired
@@ -2126,8 +2128,10 @@ noindex: true
                     { id: 'lt2',              type: 'lt',    x: 320, y: 315 },
                     { id: 'sr1',              type: 'sr',    x: 470, y: 80 },
                     { id: 'sr2',              type: 'sr',    x: 470, y: 240 },
+                    { id: 'low',              type: 'const', x: 470, y: 380, params: { value: 60 } },
                     { id: 'or1',              type: 'or',    x: 615, y: 80 },
                     { id: 'and1',             type: 'and',   x: 615, y: 240 },
+                    { id: 'select',           type: 'select', x: 615, y: 380 },
                     { id: 'y1',               type: 'bo',    x: 760, y: 20 },
                     { id: 'fan-enable',       type: 'bo',    x: 760, y: 115 },
                     { id: 'y2',               type: 'bo',    x: 760, y: 215 },
@@ -2157,7 +2161,10 @@ noindex: true
                     { from: ['or1', 'Q'],              to: ['y1', 'IN'] },
                     { from: ['or1', 'Q'],              to: ['fan-enable', 'IN'] },
                     { from: ['and1', 'Q'],             to: ['y2', 'IN'] },
-                    { from: ['hundred', 'O'],          to: ['fan-speed', 'IN'] },
+                    { from: ['and1', 'Q'],             to: ['select', 'SEL'] },
+                    { from: ['low', 'O'],              to: ['select', 'IN0'] },
+                    { from: ['hundred', 'O'],          to: ['select', 'IN1'] },
+                    { from: ['select', 'O'],           to: ['fan-speed', 'IN'] },
                 ],
             },
             'cool-1stage': {
@@ -2206,9 +2213,11 @@ noindex: true
                     { id: 'lt2',              type: 'lt',    x: 320, y: 315 },
                     { id: 'sr1',              type: 'sr',    x: 470, y: 80 },
                     { id: 'sr2',              type: 'sr',    x: 470, y: 240 },
+                    { id: 'low',              type: 'const', x: 470, y: 380, params: { value: 60 } },
                     { id: 'or1',              type: 'or',    x: 615, y: 80 },
                     { id: 'and1',             type: 'and',   x: 615, y: 240 },
                     { id: 'fanon',            type: 'bi',    x: 615, y: 380, params: { state: true } },
+                    { id: 'select',           type: 'select', x: 615, y: 440 },
                     { id: 'y1',               type: 'bo',    x: 760, y: 20 },
                     { id: 'fan-enable',       type: 'bo',    x: 760, y: 115 },
                     { id: 'y2',               type: 'bo',    x: 760, y: 215 },
@@ -2237,8 +2246,11 @@ noindex: true
                     { from: ['sr2', 'Q'],              to: ['and1', 'B'] },
                     { from: ['or1', 'Q'],              to: ['y1', 'IN'] },
                     { from: ['and1', 'Q'],             to: ['y2', 'IN'] },
+                    { from: ['and1', 'Q'],             to: ['select', 'SEL'] },
+                    { from: ['low', 'O'],              to: ['select', 'IN0'] },
+                    { from: ['hundred', 'O'],          to: ['select', 'IN1'] },
                     { from: ['fanon', 'O'],            to: ['fan-enable', 'IN'] },
-                    { from: ['hundred', 'O'],          to: ['fan-speed', 'IN'] },
+                    { from: ['select', 'O'],           to: ['fan-speed', 'IN'] },
                 ],
             },
         };
