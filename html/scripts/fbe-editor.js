@@ -101,6 +101,15 @@ const FBEEditor = (function () {
         let INNER_W = canvasSize && canvasSize.w ? canvasSize.w : 900;
         let INNER_H = canvasSize && canvasSize.h ? canvasSize.h : 480;
         const BLOCK_W = 136;                   // matches .fbe-block width
+        // Forward-route threshold stub — see wirePath(). Measured
+        // 2026-07: STUB = 10 (forward threshold 20px; was 18 → 36px)
+        // fixes econ / tstat-cool / tstat-heat / reset on the public
+        // page (tstat crossings 4 → 0 each) and leaves proof on the
+        // 5-segment fallback BY DESIGN (see the proof example's layout
+        // comment, function-block-editor.html:287). Any change here must
+        // be eyeballed on BOTH consumer pages (#205); crossing counts
+        // are intersection POINTS, not wire pairs.
+        const STUB = 10;
 
         // ── editor state ────────────────────────────────────────────
         let graph    = { blocks: [], wires: [] };
@@ -298,13 +307,12 @@ const FBEEditor = (function () {
         // right, traverse at the mid height, and re-enter the target from its
         // left, so the wire never doubles back across its own block.
         function wirePath(a, b) {
-            const stub = 18;
-            if (b.x >= a.x + 2 * stub) {
+            if (b.x >= a.x + 2 * STUB) {
                 const mx = (a.x + b.x) / 2;
                 return 'M ' + a.x + ' ' + a.y + ' H ' + mx + ' V ' + b.y + ' H ' + b.x;
             }
-            const ax2 = a.x + stub;
-            const bx2 = b.x - stub;
+            const ax2 = a.x + STUB;
+            const bx2 = b.x - STUB;
             const my = (a.y + b.y) / 2;
             return 'M ' + a.x + ' ' + a.y + ' H ' + ax2 + ' V ' + my +
                    ' H ' + bx2 + ' V ' + b.y + ' H ' + b.x;
