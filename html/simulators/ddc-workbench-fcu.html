@@ -840,6 +840,21 @@ noindex: true
                     leaves it standing.
                 </p>
 
+                <p class="ddcw-sheet-note">
+                    On the 2-stage + safeties sample the stages answer to more
+                    than the thermostat: a latched DAT low-limit cuts Y1 and Y2
+                    when discharge air drops below the trip constant and holds
+                    them off until it recovers past the clear constant, a
+                    minimum off-time keeps a dropped stage from short-cycling
+                    straight back in, and one AND merges those permits into the
+                    stage commands. The fan is deliberately outside that path —
+                    it keeps following the cooling call, so air keeps moving
+                    across the coil while the lockout recovers. Force the fan
+                    slow under a heavy call and watch the safety act; the same
+                    move on the default sample is the freeze dive it exists to
+                    answer.
+                </p>
+
                 <div class="desktop-only-sim">
                     <h2 class="dos-label">Desktop tool</h2>
                     <p>
@@ -929,8 +944,12 @@ noindex: true
         // Per-stage SR latches give the hysteresis (no chatter). The setpoint
         // is the CUT-OUT — stage 1 makes at SP+deadband and breaks at SP, so
         // the zone rides the band above the label (the Unit-tab note owns
-        // that convention story). `dat` AI is seeded but unwired on every
-        // sheet — a discharge low-limit is the standing teaching hook.
+        // that convention story). `dat` AI is seeded on every sheet;
+        // cool-2stage-safeties is the sheet that wires it — on the sheets
+        // that leave it unwired, the discharge low-limit is the standing
+        // teaching hook, and the DEFAULT sheet stays unprotected on purpose
+        // (its freeze dive under a slow fan is the first half of the
+        // lesson the safeties sheet answers).
         //
         // cool-2stage — the reference sequence. OR/AND make Y1 the
         // any-cooling call and Y2 = Y1·stage-2; the fan is enabled on the
@@ -960,6 +979,45 @@ noindex: true
         // staged speed reference. Toggling `fanon` false under an active
         // cooling call is one of the taught no-airflow faults (see the
         // verdict logic in fcuRenderUnit).
+        //
+        // cool-2stage-safeties — the protected sequence (owner ruling
+        // 2026-07-26, authored last against the post-arbitration idiom).
+        // Same staging spine, plus:
+        //   • a latched DAT low-limit: okrun is an SR whose polarity is
+        //     "OK to run" — datok (dat > hilim 52) SETS it, datlow
+        //     (dat < lowlim 42) RESETS it. Trip cuts the stages; the
+        //     latch re-arms only when DAT recovers above the clear
+        //     constant. Set-dominance is safe here: the two comparators
+        //     can never be true together. 42 echoes the site-wide
+        //     freeze-watch line (coilLeaveT <= 42 in fcuRenderUnit).
+        //   • a minimum off-time on the stages: tonoff (TON, pt 120 s)
+        //     times the OFF state of the stage command (notrun inverts
+        //     y1gate, fed back), and offok = "min-off elapsed OR already
+        //     running" — the OR is what keeps a RUNNING stage permitted
+        //     while the timer sits reset. On a fresh sheet the timer
+        //     starts at zero, so stages hold off ~2 sim-minutes on a
+        //     program download — the anti-short-cycle power-up delay a
+        //     real board exhibits.
+        //   • ONE merged permit: permit = AND(okrun, offok) — the ruled
+        //     merged-permit shape — gating y1gate = AND(or1, permit) and
+        //     y2gate = AND(sr2, permit). sr2 alone is the stage-2 call
+        //     (sr2 can never be set while sr1 is clear: its cut-out 75
+        //     sits above sr1's 72), which is what lets the permit AND
+        //     replace the base sheet's and1 outright.
+        //   • THE FAN RIDES THROUGH: fan-enable stays on or1 (the
+        //     cooling call) and the speed reference stays staged on the
+        //     CALL (select.SEL = sr2.Q) — during a lockout the air keeps
+        //     moving and warms the coil back toward the clear point.
+        // Layout: candidate-A columns (x = 20 + 175·col, R = 8). Rows are
+        // hand-placed against the geometry invariants; the min-off
+        // feedback loop is a true cycle, so its three return wires ride
+        // the 5-segment fallback BY DESIGN (see FALLBACK_BY_DESIGN in
+        // tests/fbe-geometry.spec.js). The blocks array deliberately
+        // lists the cycle members (notrun → tonoff → offok → permit →
+        // y1gate → y2gate → y1 / y2) in dependency order at the END:
+        // Kahn's sort appends cycle-locked blocks in declaration order,
+        // so this ordering leaves ONLY y1gate's feedback reads on the
+        // one-tick delay and a trip cuts the stages in the same tick.
         const FCU_PROGRAMS = {
             'cool-2stage': {
                 // Candidate-A layout (#205): 8 topological columns at a
@@ -1128,14 +1186,99 @@ noindex: true
                     { from: ['select', 'O'],           to: ['fan-speed', 'IN'] },
                 ],
             },
+            'cool-2stage-safeties': {
+                // Layout + semantics documented in the registry header
+                // above. Acyclic blocks first in column order; the
+                // min-off cycle members last, in dependency order (the
+                // Kahn leftover-order note above is load-bearing).
+                blocks: [
+                    { id: 'sep',              type: 'const', x: 20,   y: 75,  params: { value: 2 } },
+                    { id: 'space-temp',       type: 'ai',    x: 20,   y: 180, params: { value: 76 } },
+                    { id: 'cooling-setpoint', type: 'const', x: 20,   y: 265, params: { value: 72 } },
+                    { id: 'deadband',         type: 'const', x: 20,   y: 350, params: { value: 3 } },
+                    { id: 'hilim',            type: 'const', x: 195,  y: 30,  params: { value: 52 } },
+                    { id: 'y1on',             type: 'add',   x: 195,  y: 120 },
+                    { id: 'lt1',              type: 'lt',    x: 195,  y: 222 },
+                    { id: 'dat',              type: 'ai',    x: 195,  y: 322, params: { value: 55 } },
+                    { id: 'lowlim',           type: 'const', x: 195,  y: 405, params: { value: 42 } },
+                    { id: 'y2on',             type: 'add',   x: 370,  y: 60 },
+                    { id: 'datok',            type: 'gt',    x: 370,  y: 280 },
+                    { id: 'datlow',           type: 'lt',    x: 370,  y: 380 },
+                    { id: 'gt2',              type: 'gt',    x: 545,  y: 15 },
+                    { id: 'gt1',              type: 'gt',    x: 545,  y: 120 },
+                    { id: 'lt2',              type: 'lt',    x: 545,  y: 220 },
+                    { id: 'okrun',            type: 'sr',    x: 545,  y: 320 },
+                    { id: 'sr2',              type: 'sr',    x: 720,  y: 240 },
+                    { id: 'sr1',              type: 'sr',    x: 720,  y: 365 },
+                    { id: 'or1',              type: 'or',    x: 895,  y: 0 },
+                    { id: 'low',              type: 'const', x: 895,  y: 100, params: { value: 60 } },
+                    { id: 'hundred',          type: 'const', x: 895,  y: 400, params: { value: 100 } },
+                    { id: 'fan-enable',       type: 'bo',    x: 1070, y: 15 },
+                    { id: 'select',           type: 'select', x: 1070, y: 240 },
+                    { id: 'fan-speed',        type: 'ao',    x: 1245, y: 340 },
+                    // ── the min-off cycle, in dependency order ──
+                    { id: 'notrun',           type: 'not',   x: 1245, y: 255 },
+                    { id: 'tonoff',           type: 'ton',   x: 720,  y: 140, params: { pt: 120 } },
+                    { id: 'offok',            type: 'or',    x: 720,  y: 25 },
+                    { id: 'permit',           type: 'and',   x: 895,  y: 300 },
+                    { id: 'y1gate',           type: 'and',   x: 1070, y: 355 },
+                    { id: 'y2gate',           type: 'and',   x: 1070, y: 140 },
+                    { id: 'y1',               type: 'bo',    x: 1245, y: 55 },
+                    { id: 'y2',               type: 'bo',    x: 1245, y: 140 },
+                ],
+                wires: [
+                    { from: ['cooling-setpoint', 'O'], to: ['y1on', 'A'] },
+                    { from: ['deadband', 'O'],         to: ['y1on', 'B'] },
+                    { from: ['y1on', 'O'],             to: ['y2on', 'A'] },
+                    { from: ['sep', 'O'],              to: ['y2on', 'B'] },
+                    { from: ['space-temp', 'O'],       to: ['gt1', 'A'] },
+                    { from: ['y1on', 'O'],             to: ['gt1', 'B'] },
+                    { from: ['space-temp', 'O'],       to: ['lt1', 'A'] },
+                    { from: ['cooling-setpoint', 'O'], to: ['lt1', 'B'] },
+                    { from: ['space-temp', 'O'],       to: ['gt2', 'A'] },
+                    { from: ['y2on', 'O'],             to: ['gt2', 'B'] },
+                    { from: ['space-temp', 'O'],       to: ['lt2', 'A'] },
+                    { from: ['y1on', 'O'],             to: ['lt2', 'B'] },
+                    { from: ['gt1', 'Q'],              to: ['sr1', 'S'] },
+                    { from: ['lt1', 'Q'],              to: ['sr1', 'R'] },
+                    { from: ['gt2', 'Q'],              to: ['sr2', 'S'] },
+                    { from: ['lt2', 'Q'],              to: ['sr2', 'R'] },
+                    { from: ['sr1', 'Q'],              to: ['or1', 'A'] },
+                    { from: ['sr2', 'Q'],              to: ['or1', 'B'] },
+                    { from: ['sr2', 'Q'],              to: ['select', 'SEL'] },
+                    { from: ['sr2', 'Q'],              to: ['y2gate', 'A'] },
+                    { from: ['or1', 'Q'],              to: ['fan-enable', 'IN'] },
+                    { from: ['or1', 'Q'],              to: ['y1gate', 'A'] },
+                    { from: ['low', 'O'],              to: ['select', 'IN0'] },
+                    { from: ['hundred', 'O'],          to: ['select', 'IN1'] },
+                    { from: ['select', 'O'],           to: ['fan-speed', 'IN'] },
+                    { from: ['dat', 'O'],              to: ['datlow', 'A'] },
+                    { from: ['lowlim', 'O'],           to: ['datlow', 'B'] },
+                    { from: ['dat', 'O'],              to: ['datok', 'A'] },
+                    { from: ['hilim', 'O'],            to: ['datok', 'B'] },
+                    { from: ['datok', 'Q'],            to: ['okrun', 'S'] },
+                    { from: ['datlow', 'Q'],           to: ['okrun', 'R'] },
+                    { from: ['okrun', 'Q'],            to: ['permit', 'A'] },
+                    { from: ['offok', 'Q'],            to: ['permit', 'B'] },
+                    { from: ['tonoff', 'Q'],           to: ['offok', 'A'] },
+                    { from: ['y1gate', 'Q'],           to: ['offok', 'B'] },
+                    { from: ['y1gate', 'Q'],           to: ['notrun', 'IN'] },
+                    { from: ['notrun', 'Q'],           to: ['tonoff', 'IN'] },
+                    { from: ['permit', 'Q'],           to: ['y1gate', 'B'] },
+                    { from: ['permit', 'Q'],           to: ['y2gate', 'B'] },
+                    { from: ['y1gate', 'Q'],           to: ['y1', 'IN'] },
+                    { from: ['y2gate', 'Q'],           to: ['y2', 'IN'] },
+                ],
+            },
         };
 
         DDCWShell.createWorkbench(DDCWFcuUnit.create({
             programs: FCU_PROGRAMS,
             programLabels: {
-                'cool-2stage':       '2-stage cooling',
-                'cool-1stage':       '1-stage cooling',
-                'cool-2stage-fanon': '2-stage, continuous fan',
+                'cool-2stage':          '2-stage cooling',
+                'cool-1stage':          '1-stage cooling',
+                'cool-2stage-fanon':    '2-stage, continuous fan',
+                'cool-2stage-safeties': '2-stage + safeties',
             },
             defaultProgram: 'cool-2stage',
             // Candidate-A canvas (#205): 8 columns at a 175px pitch — last

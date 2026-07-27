@@ -139,6 +139,18 @@ for (const [key, s] of Object.entries(SURFACES)) {
 // this entry's deletion.
 const FALLBACK_BY_DESIGN = {
     'function-block-editor': { proof: '*' },
+    // cool-2stage-safeties: the minimum-off-time subsystem is a TRUE
+    // CYCLE (y1gate → notrun → tonoff → offok → permit → y1gate — the
+    // ruled "TON timing the off state, fed back into the stage permit"
+    // shape), and a cycle cannot be drawn all-forward on a left-to-right
+    // sheet: at least one wire's target sits left of its source, which
+    // IS the 5-segment fallback. Three return wires ride it by
+    // construction (y1gate.Q→offok.B, notrun.Q→tonoff.IN,
+    // tonoff.Q→offok.A); every other wire — including the cycle's
+    // forward tap y1gate.Q→notrun.IN — routes as the 3-segment elbow,
+    // and the no-burial invariant still applies to all 41 wires.
+    // Self-verified below like `proof`.
+    'ddc-workbench-fcu': { 'cool-2stage-safeties': '*' },
 };
 
 // ── path parsing + collision math (pure functions) ──────────────────
