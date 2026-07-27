@@ -108,6 +108,22 @@ test.describe('ddcw-shell: vm smoke (the loadability claim)', () => {
             .toBe('-16.1 °C');
     });
 
+    test('deltaTemp stays pure 5/9 for NEGATIVE deltas (the signed coil ΔT)', () => {
+        // The workbench's coil ΔT went signed (leaving minus entering,
+        // negative while cooling — owner ruling 2026-07-27), so the
+        // delta path must scale a negative value with NO offset: −18 °F
+        // of delta is exactly −10 °C of delta, never a torched
+        // absolute-formula number. Both modes pinned.
+        const stub = unitsStub();
+        const Shell = loadShell({ window: { Units: stub.Units } });
+
+        expect(Shell.formatPointValue({ kind: 'ai', conv: 'deltaTemp', unit: '°F' }, -18))
+            .toBe('-18.0 Δ°F');
+        stub.setMode('metric');
+        expect(Shell.formatPointValue({ kind: 'ai', conv: 'deltaTemp', unit: '°F' }, -18))
+            .toBe('-10.0 Δ°C');
+    });
+
     test('grep proof: no FCU identifier outside comment prose', () => {
         // The shell's unit-agnostic boundary, made mechanical: every
         // line mentioning the FCU prefix must be a full-line comment

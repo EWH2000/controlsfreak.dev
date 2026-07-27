@@ -19,7 +19,8 @@
 // any of their values. Every row asserts a DIRECTION, an ORDERING, a
 // CLAMP BAND, or a CONTRACT SHAPE — the things a retune must preserve
 // for the page to still teach what it teaches:
-//   more fan → smaller ΔT; stage 2 outcools stage 1; a fault collapses
+//   more fan → shallower ΔT (signed: closer to zero); stage 2 outcools
+//   stage 1; a fault collapses
 //   the ΔT; the coil never leaves below a freeze floor or above the
 //   zone; the override splits sensed from truth; the programs bind
 //   the points they claim to.
@@ -77,10 +78,18 @@ function quasi(Unit, mutate) {
     return plant;
 }
 
-// Coil ΔT the page's verdict logic reasons about: actual return air
-// minus the coil leaving temp (fan heat excluded — that is DAT's job).
+// Coil ΔT the page's verdict logic reasons about — SIGNED, leaving
+// minus entering (owner ruling 2026-07-27: negative while cooling; the
+// sign says which way the coil drives the air). Coil-only here — fan
+// heat excluded, that is DAT's job; displayDt below includes it.
 function coilDt(plant) {
-    return plant.derived.eatT - plant.derived.coilLeaveT;
+    return plant.derived.coilLeaveT - plant.derived.eatT;
+}
+
+// The signed pair the BADGE computes from: DAT (post-fan) minus the
+// entering air (= rat = zoneT) — the display convention itself.
+function displayDt(plant) {
+    return plant.derived.datT - plant.derived.eatT;
 }
 
 // Trajectory run: integrate a mutated fresh plant N steps of dt sim-s.
@@ -195,10 +204,12 @@ test.describe('ddcw-fcu-unit: headless loading', () => {
 
 test.describe('ddcw-fcu-unit: coil physics (quasi-static)', () => {
 
-    test('more fan → smaller coil ΔT at a fixed stage (monotone, both stages)', () => {
+    test('more fan → shallower coil ΔT at a fixed stage (monotone, both stages)', () => {
         // The page's core lesson: the same load spread over more air is
-        // a shallower ΔT. Fan values stay above the floor-clamp region
-        // so the ordering is strict.
+        // a shallower ΔT. Signed convention: cooling is negative, so
+        // "shallower" is CLOSER TO ZERO — starved airflow is the most
+        // negative. Fan values stay above the floor-clamp region so the
+        // ordering is strict.
         const Unit = loadUnit();
         [1, 2].forEach((stage) => {
             const dts = [40, 70, 100].map((fan) => coilDt(quasi(Unit, (pl) => {
@@ -206,13 +217,13 @@ test.describe('ddcw-fcu-unit: coil physics (quasi-static)', () => {
                 pl.actuators.y1 = stage >= 1;
                 pl.actuators.y2 = stage >= 2;
             })));
-            expect(dts[0], 'stage ' + stage + ' 40% vs 70%').toBeGreaterThan(dts[1]);
-            expect(dts[1], 'stage ' + stage + ' 70% vs 100%').toBeGreaterThan(dts[2]);
-            expect(dts[2], 'stage ' + stage + ' ΔT at 100%').toBeGreaterThan(0);
+            expect(dts[0], 'stage ' + stage + ' 40% vs 70%').toBeLessThan(dts[1]);
+            expect(dts[1], 'stage ' + stage + ' 70% vs 100%').toBeLessThan(dts[2]);
+            expect(dts[2], 'stage ' + stage + ' ΔT at 100% stays negative').toBeLessThan(0);
         });
     });
 
-    test('stage 2 pulls a deeper ΔT than stage 1 at the same fan', () => {
+    test('stage 2 pulls a deeper (more negative) ΔT than stage 1 at the same fan', () => {
         const Unit = loadUnit();
         [70, 100].forEach((fan) => {
             const at = (stage) => coilDt(quasi(Unit, (pl) => {
@@ -220,7 +231,7 @@ test.describe('ddcw-fcu-unit: coil physics (quasi-static)', () => {
                 pl.actuators.y1 = true;
                 pl.actuators.y2 = stage === 2;
             }));
-            expect(at(2), fan + '% fan').toBeGreaterThan(at(1));
+            expect(at(2), fan + '% fan').toBeLessThan(at(1));
         });
     });
 
@@ -230,7 +241,7 @@ test.describe('ddcw-fcu-unit: coil physics (quasi-static)', () => {
         // EXACTLY (zero load through the psych solver is an identity).
         const Unit = loadUnit();
         const healthy = quasi(Unit, (pl) => { pl.actuators.y1 = true; pl.actuators.y2 = true; });
-        expect(coilDt(healthy)).toBeGreaterThan(3);
+        expect(coilDt(healthy)).toBeLessThan(-3);
         ['lowCharge', 'airflow'].forEach((fault) => {
             const p = quasi(Unit, (pl) => {
                 pl.actuators.y1 = true;
@@ -252,6 +263,31 @@ test.describe('ddcw-fcu-unit: coil physics (quasi-static)', () => {
         expect(coilDt(p)).toBeCloseTo(0, 6);
         expect(p.derived.datT).toBeGreaterThan(p.zoneT);
         expect(p.derived.qCool).toBeLessThan(0);
+    });
+
+    test('displayed ΔT (DAT − RAT) is signed: negative cooling, ~zero at rest, magnitude shrinks with airflow', () => {
+        // The badge convention itself, on the pair the render arithmetic
+        // uses: DAT (post-fan) minus the entering air. Three rows:
+        //   • cooling stages on → the delta is genuinely NEGATIVE;
+        //   • fan off → the delta is exactly zero (both sensors read
+        //     the zone: no air moves, nothing crosses the coil);
+        //   • magnitude shrinks as airflow rises (|ΔT| strictly
+        //     decreasing 40% → 70% → 100%).
+        const Unit = loadUnit();
+
+        const cooling = quasi(Unit, (pl) => { pl.actuators.y1 = true; pl.actuators.y2 = true; });
+        expect(displayDt(cooling)).toBeLessThan(-3);
+
+        const off = quasi(Unit, (pl) => { pl.actuators['fan-enable'] = false; });
+        expect(displayDt(off)).toBeCloseTo(0, 6);
+
+        const mags = [40, 70, 100].map((fan) => Math.abs(displayDt(quasi(Unit, (pl) => {
+            pl.actuators['fan-speed'] = fan;
+            pl.actuators.y1 = true;
+            pl.actuators.y2 = true;
+        }))));
+        expect(mags[0], '|ΔT| 40% vs 70%').toBeGreaterThan(mags[1]);
+        expect(mags[1], '|ΔT| 70% vs 100%').toBeGreaterThan(mags[2]);
     });
 
     test('fan-enable false gates everything even with stages called', () => {
