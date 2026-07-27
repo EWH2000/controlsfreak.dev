@@ -8566,7 +8566,7 @@ now agrees with); the spec header's shorthand became "three-level". The
 mandated three-part shape survives — three items, none of them a
 seventeenth slot.
 
-### 218. Shell `formatPointValue` closes over helpers defined inside the UNIT: FCU banner *(open — 2026-07-26 · note for the shell extraction)*
+### 218. Shell `formatPointValue` closes over helpers defined inside the UNIT: FCU banner *(closed 2026-07-26 — shell-extraction PR)*
 
 `formatPointValue` (shell statusbar section of
 `html/simulators/ddc-workbench.html`) calls `dispTempNum` / `tSuffix` /
@@ -8578,6 +8578,14 @@ the coupling deepened. When the shell is extracted to its own script
 (phases 5-8 lane), the three helpers must move to the shell section (or fold
 into `formatPointValue`) or the extraction breaks on an invisible closure
 edge. No change warranted before then.
+
+*Disposition (2026-07-26):* the `refactor/ddcw-shell-extraction` branch did
+exactly this — `dispTempNum` / `tSuffix` / `dSuffix` now live in
+`html/scripts/ddcw-shell.js` as `DDCWShell` statics (the shell header cites
+this entry) and the unit delegates through them. No commit carries a
+`(#218)` suffix (the extraction commits predate the disposition), so this
+note is the ledger link. Closed on the extraction PR itself — this doc
+edit rides the same merge, so the status is true the moment it lands.
 
 ### 219. Workbench static placeholders describe a state the staged programs never resolve to *(open — 2026-07-26 · cosmetic)*
 
@@ -8596,3 +8604,40 @@ before `unit.update` ever reads it. Worth truing up to the arrival state
 is the only surface that can ever show them, and the sim is JS-only anyway.
 Found by the #205 adversarial verify; deliberately not fixed on that branch
 to keep the candidate diff reviewable.
+
+### 220. Shell-extraction residue the AHU page must inherit consciously *(open — 2026-07-26 · carry into the AHU brief)*
+
+Two deliberate leftovers from the `refactor/ddcw-shell-extraction` branch,
+verified sound there but invisible to the next lane unless recorded here (a
+PR body is not a durable debt ledger):
+
+- **Two `ddcw-*` control-pattern rules stay page-inline** in
+  `html/simulators/ddc-workbench.html`'s head block — `label.ddcw-null` and
+  the `.fcu-controls .ddcw-tracked` disabled dimming (the block's comment
+  explains the split). The justification is real: `.fcu-fanen label` and
+  `label.ddcw-null` are both specificity (0,1,1), so graduating the latter
+  to `styles.css` (earlier in the cascade) would flip the fan-enable NULL
+  box from its own line back to inline-flex. Consequence: the AHU page must
+  duplicate these two rules (or rename/re-specify them for its own control
+  markup) — its brief should say which.
+- **The sim-clock bounds mirror is now cross-file:** `SPEED_MIN` /
+  `SPEED_MAX` in `html/scripts/ddcw-fcu-unit.js` are referenced by no code
+  and mirror the speed-slider markup bounds `min="1" max="60"` in the page.
+  Pre-existing duplication on main (both halves then lived in one file);
+  the extraction split them across files, weakening the mirror. When the
+  AHU page copies the slider pattern, either wire the bounds from the
+  constants or carry the mirror knowingly.
+
+### 221. Workbench program `<select>` ships empty; options build at boot *(recorded 2026-07-26 — by design, no action)*
+
+The one behavioral delta the shell-extraction verification found, recorded
+so a future audit doesn't flag it as a regression. Base shipped the four
+`<option>`s as static markup; the branch ships an empty
+`<select id="ddcw-program">` and `DDCWShell.buildProgramPicker()` builds
+identical options (values, labels, order, disabled `Custom (edited)` last)
+from the unit contract at boot. Deliberate: the picker is now derived from
+`unit.programs` / `unit.programLabels`, so a second unit page cannot drift
+from its own program set. The only reachable difference is a no-JS render
+(empty select vs a list that controls nothing) and a pre-tick paint during
+incremental render — the same accepted class as #219's static placeholders,
+on a page that is wholly JS-driven, noindex, and excluded from collections.
