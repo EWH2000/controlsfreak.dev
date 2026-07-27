@@ -8697,3 +8697,92 @@ unit-dependence); noticed while flipping the sign, deliberately not fixed
 in that lane (scope). Fix candidate: derive the verdict from the CANONICAL
 delta (`d.datT - d.eatT`) against an IP constant, keeping `dtN` for paint
 only — one line each in the gate and the ladder.
+
+### 225. The "2-stage + safeties" sheet has no airflow proof, so its DAT low-limit goes blind with the fan off *(noticed 2026-07-27, prose audit — deferred to the pre-live program sweep)*
+
+The sheet is presented as the protected sequence, but its only external
+inputs are `space-temp` and `dat` (`fan-enable` / `fan-speed` are outputs).
+Nothing reads fan status, current, or DP. Combined with
+`ddcw-fcu-unit.js:242` — `const datT = fanOn ? coilLeaveT + FAN_HEAT : zoneT;`
+— a fan commanded off makes the discharge probe report room temperature, so
+the low limit does not merely fail to trip: it goes blind and self-clears.
+Simulated with `dat` held at 76, the sheet commands
+`{y1:true, y2:true, okrun:true, permit:true}`, driving both compressors into
+dead air — the condition the page's own top verdict line paints red.
+
+On real gear the fan-proof interlock is first in a DX sequence and the low
+limit sits behind it; a reader who learns the ladder in the other order will
+trust a discharge limit to protect a coil it cannot see. Field nuance for
+whoever writes the fix: a real probe would sit cold and drift up rather than
+jump to room temp, so reality goes blind slowly — but it still goes blind.
+
+**Owner decision 2026-07-27: defer.** Not a merge blocker for #443. The AHU
+programs land next and carry more of this class, so both get swept together
+before the page goes public. Fix is expected to be prose (name the missing
+interlock as a deliberate scope boundary), not a rewire — but the sweep may
+conclude otherwise once the AHU sequences exist. Full writeup:
+`docs/audits/2026-07-ddcw-prose/findings.md` §1.
+
+### 226. The safeties lockout is two protections stacked, and the sheet note describes only one *(noticed 2026-07-27, prose audit — deferred to the pre-live program sweep)*
+
+A DAT low-limit trip is itself a full stop of `y1gate`, so it arms the
+min-off TON at the same instant it cuts the stages. Measured closed-loop
+against the real unit module (fan forced to 25% at slot 8, otherwise
+defaults): `okrun` returns true 10.5 sim-seconds after the trip, but the
+stages do not restart for 120.0 sim-seconds. Of the lockout a reader
+watches, roughly 11 s is the low limit and roughly 110 s is the off-timer.
+
+The reader-facing note says the limit "holds them off until it recovers past
+the clear constant," which predicts the stages return at the clear point.
+The page separately instructs the reader to force the fan slow and watch the
+safety act — so anyone who follows that instruction and times the recovery
+concludes the clear constant is wrong.
+
+Related and unmentioned in the same note: on program load the TON starts at
+`et=0`, so selecting this sample holds the stages off for a full 120 sim-s
+while the verdict paints amber "Compressor off — fan only." The default
+sample arrives running, so picking safeties *stops a running unit and keeps
+it stopped* — six real seconds at the default 20x clock, two real minutes at
+1x. Defensible (a real board serves a min-off on power-up too) but currently
+unexplained.
+
+**Owner decision 2026-07-27: defer** to the same pre-live sweep as #225.
+Writeup: `docs/audits/2026-07-ddcw-prose/findings.md` §2 and §5.
+
+### 227. FCU graphic a11y: a live region inside a hidden pane, and `role="img"` over five focusable descendants *(noticed 2026-07-27, prose audit — open)*
+
+Two findings from the same audit, both on the FCU workbench graphic, neither
+a program issue and so outside #225/#226's deferral.
+
+(a) **The safety annunciation is silent on the Wiresheet tab.**
+`#fcu-verdict` carries `aria-live="polite"` but sits inside
+`<div id="tab-unit" class="tab-pane">`, and `styles.css:1349` is
+`.tab-pane { display: none; }` — a live region in a `display:none` subtree
+is not in the accessibility tree. The new "DAT low-limit annunciator latched"
+branch therefore announces nothing while the Wiresheet is up, which is
+exactly where a reader sits studying the program it belongs to. Nothing else
+carries it: `renderOffProgram` early-returns on slot 16 and `updateChips`
+writes plain spans. ⚠️ Do NOT fix by moving the pill —
+`.tool-card.is-fullscreen #tab-unit.active` declares a `grid-template-areas`
+with a `verdict` row and `.fcu-verdict { grid-area: verdict; }` only resolves
+while the pill is a grid child of that pane. Strip `aria-live` from the pill
+and add a persistent `sr-only` mirror outside both panes; the house shape
+already exists at `pid-tuner.html:339` (`#pid-sr-status`).
+
+(b) **`role="img"` now wraps five focusable elements** — two `.fcu-link`
+drill-downs and three `role="button"` sensor groups. `img` is a
+presentational-children role. The in-file comment still calls this "the
+education idiom," which is a static-diagram idiom:
+`grep -c tabindex html/education/*.html` returns zero across every lesson.
+⚠️ The naive `role="group"` swap is worse than the problem — `img` is what
+currently prunes the subtree, so swapping un-hides all 19 `<text>` nodes,
+every one already duplicated in the `.fcu-points` mirror that exists
+*because* the graphic is an image. Two honest paths: pair the swap with
+`aria-hidden` on the mirrored content, or keep `role="img"` and move the
+activation affordance to real HTML buttons outside the SVG. Owner decision
+either way; the stale comment needs correcting regardless.
+
+Smaller a11y items from the same audit (glyph names announce as objects not
+actions; "far wall" has no referent; `aria-label` on two bare `<div>`s where
+naming is prohibited; the verdict `textContent` rewritten unguarded at 10 Hz)
+are itemised in `docs/audits/2026-07-ddcw-prose/findings.md`.

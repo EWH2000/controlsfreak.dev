@@ -944,11 +944,15 @@ noindex: true
             </p>
 
             <p class="fcu-note">
-                The ΔT badge is signed: leaving minus entering (DAT − RAT),
-                so a coil that cools the air reads negative, and a coil that
-                heats it reads positive under the same convention. The sign
-                is information, not clutter — it tells you which way the coil
-                is driving the air, before you ask how hard.
+                The ΔT badge is signed: leaving minus entering, so a coil
+                that cools the air reads negative, and a coil that heats it
+                reads positive under the same convention. This cabinet takes
+                its coil air straight off the return, so entering is RAT and
+                the badge is DAT − RAT; where a coil takes in mixed air,
+                entering is the mixed-air temperature and the rule is
+                unchanged. The sign is information, not clutter — it tells
+                you which way the coil is driving the air, before you ask
+                how hard.
             </p>
 
             </div><!-- #tab-unit -->
@@ -986,12 +990,16 @@ noindex: true
                     minimum off-time keeps a stopped unit from restaging
                     straight back in, and one AND merges those permits into the
                     stage commands. Note what that off-timer watches: the
-                    sequence's own stop, nothing else — a hand forcing stages
-                    at slot 8 outranks the whole permit chain, so a forced
-                    restage never sees it. That gap is field-real: plenty of
-                    programs protect the normal stop yet short-cycle the moment
-                    an operator forces things, and the authors who try to catch
-                    every forced path do not always succeed.
+                    sequence's own stop, nothing else. Force the stages off at
+                    slot 8 and the compressor stops while the program carries
+                    on asking for cooling — the permit chain never sees a stop,
+                    so the timer sits at zero and the unit restarts the moment
+                    you release. Nothing is broken; the sequence is guarding
+                    the stop it knows about. That is the habit worth taking off
+                    this page: when you force a point, know what your override
+                    is doing to the logic underneath it. The program is still
+                    running on its own view of the machine, and you have just
+                    changed the machine without telling it.
                     The fan is deliberately outside the permit path —
                     it keeps following the cooling call, so air keeps moving
                     across the coil while the lockout recovers. Force the fan
