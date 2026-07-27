@@ -85,8 +85,9 @@ const DDCWFcuUnit = (function () {
     // the display boundary via window.Units. Cooling capacity is a
     // per-stage SENSIBLE + latent load fed to Psychro.invertProcess,
     // which solves the leaving-air state — so lower fan speed (less air
-    // over the same load) genuinely raises the coil ΔT, and a fault that
-    // zeroes the load collapses it.
+    // over the same load) genuinely deepens the coil ΔT (more negative,
+    // displayed signed as leaving minus entering), and a fault that
+    // zeroes the load collapses it toward zero.
     const NOMINAL_CFM = 600;                 // CFM at 100% fan
     const STAGE_QSENS = { 1: 7000, 2: 13500 };   // Btu/h sensible
     const STAGE_QLAT  = { 1: 1500, 2: 3000 };    // Btu/h latent
@@ -433,7 +434,10 @@ const DDCWFcuUnit = (function () {
     // ── paint — reads plant.derived; owns the DOM (graphic + verdict).
     // The displayed ΔT is the arithmetic of the displayed EAT / DAT so
     // the on-screen math closes (the metric worked-example rounding
-    // policy). ──
+    // policy). It is SIGNED — leaving minus entering (DAT − RAT), so a
+    // cooling coil reads NEGATIVE (owner ruling 2026-07-27: the sign
+    // tells you which way the coil drives the air, and the convention
+    // survives a unit that heats; |ΔT| was considered and rejected). ──
     function fcuRenderUnit(plant) {
         const d = plant.derived;
         if (d.invalid) {
@@ -442,11 +446,12 @@ const DDCWFcuUnit = (function () {
             verdictEl.textContent = 'Enter a value.';
             return;
         }
-        // Displayed values — ΔT reconciles from the displayed operands.
+        // Displayed values — ΔT reconciles from the displayed operands,
+        // signed: leaving minus entering (negative while cooling).
         const eatN = dispTempNum(d.eatT);
         const datN = dispTempNum(d.datT);
         const spN  = dispTempNum(d.setp);
-        const dtN  = Math.round((eatN - datN) * 10) / 10;
+        const dtN  = Math.round((datN - eatN) * 10) / 10;
 
         setBoth(out.eat, eatN.toFixed(1) + ' ' + tSuffix());
         setBoth(out.dat, datN.toFixed(1) + ' ' + tSuffix());
@@ -470,8 +475,9 @@ const DDCWFcuUnit = (function () {
                         : (d.stage > 0 && d.fanOn) ? 'var(--red)' : 'var(--text-dim)');
 
         // Downstream air colour follows whether the coil is actually
-        // cooling; the chevron stream reads it to recolor air past the coil.
-        const cooling = d.capActive && dtN >= 3;
+        // cooling; the chevron stream reads it to recolor air past the
+        // coil. ΔT is signed, so a clear cooling delta is ≤ −3.
+        const cooling = d.capActive && dtN <= -3;
         downstreamColor = cooling ? 'var(--blue)' : 'var(--text-dim)';
         out.datG.setAttribute('fill', cooling ? 'var(--text-bright)' : 'var(--text-dim)');
         // Sole resume/suspend vector for the animation loop. renderUnit runs
@@ -513,7 +519,9 @@ const DDCWFcuUnit = (function () {
             cls = 'error'; txt = 'No ΔT across coil — low charge, not cooling';
         } else if (d.fault === 'airflow') {
             cls = 'error'; txt = 'No ΔT across coil — airflow fault, not cooling';
-        } else if (dtN < 3) {
+        } else if (dtN > -3) {
+            // Signed ΔT: cooling drives it negative, so "no meaningful
+            // cooling delta" is anything ABOVE the −3 line.
             cls = 'error'; txt = 'No ΔT across coil — compressor not cooling';
         } else if (d.coilLeaveT <= 42) {
             cls = 'warn';  txt = 'Cooling — but ΔT is high / airflow low (coil-freeze watch)';

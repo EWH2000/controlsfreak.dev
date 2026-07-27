@@ -19,6 +19,10 @@
 // responsive.spec.js and contrast-sweep.spec.js, all of which would pull the
 // page back into the crawl-facing surface. Naming the URL directly here keeps
 // the coverage without un-hiding the page.
+//
+// Also here: the signed coil-ΔT read of the arrival state (leaving minus
+// entering, negative while cooling — owner ruling 2026-07-27), because this
+// is the spec that already drives the built Unit tab.
 
 const { test, expect } = require('@playwright/test');
 
@@ -95,5 +99,34 @@ test.describe('DDC Workbench — air animation idle gate', () => {
             'no chevron sits at the SVG origin').toBe(0);
         expect(new Set(pts.map((p) => p.x.toFixed(1))).size,
             'chevrons are spread along the centerline').toBeGreaterThan(2);
+    });
+});
+
+test.describe('DDC Workbench — signed coil ΔT (leaving minus entering)', () => {
+    test('arrival cooling paints a NEGATIVE ΔT that reconciles from the displayed EAT / DAT', async ({ page }) => {
+        // Owner ruling 2026-07-27: ΔT = DAT − RAT, negative while
+        // cooling — the sign says which way the coil drives the air.
+        // Arrival state is a live cooling call (zone 76 over SP 72), so
+        // once the verdict settles on the cooling line the badge must
+        // read clearly negative, the mobile mirror must agree, and the
+        // on-screen arithmetic must close (metric worked-example
+        // rounding policy: the delta IS displayed DAT minus displayed
+        // EAT, not the unrounded canonical value).
+        await page.goto(URL);
+        await page.waitForFunction(() =>
+            document.getElementById('fcu-verdict').textContent
+                .includes('Cooling — clear ΔT across the coil'));
+
+        const vals = await page.evaluate(() => ({
+            eat: document.getElementById('fcu-eat').textContent,
+            dat: document.getElementById('fcu-dat').textContent,
+            dt: document.getElementById('fcu-dt').textContent,
+            dtR: document.getElementById('fcu-dt-r').textContent,
+        }));
+        expect(vals.dt, 'badge and mirror agree').toBe(vals.dtR);
+        const dt = parseFloat(vals.dt);
+        expect(dt, 'cooling ΔT is clearly negative').toBeLessThan(-3);
+        // The displayed delta is the arithmetic of the displayed pair.
+        expect(dt).toBeCloseTo(parseFloat(vals.dat) - parseFloat(vals.eat), 1);
     });
 });

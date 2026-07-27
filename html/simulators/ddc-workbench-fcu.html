@@ -547,7 +547,7 @@ noindex: true
                      role="img" aria-labelledby="fcu-title fcu-desc"
                      font-family="var(--mono)">
                     <title id="fcu-title">A DX fan coil serving one zone, as a DDC supervisory graphic</title>
-                    <desc id="fcu-desc">A recirculating direct-expansion fan coil serving one zone, drawn as a DDC supervisory graphic. Return air leaves the zone on the right, travels along the top return duct, drops down the left side, and enters the fan coil cabinet. Inside the cabinet the air crosses a DX cooling coil and then a supply fan, which pushes it up the supply riser and back out through the supply duct into the zone. Directional chevrons march along the ducts and continue across the coil and fan to show the airflow. Floating point labels report the entering-air temperature at the coil, the discharge-air temperature after the fan, and the temperature difference across the coil. The zone box shows the zone temperature and its cooling setpoint; separate labels show the supply-fan status and speed and the compressor stage. The DX coil and the supply fan are drawn as the two sub-devices the graphic can drill into. The sensing devices are drawn where they physically live: a space-temperature wall plate mounted inside the zone on its far wall, a return-air insertion probe penetrating the underside of the top return duct partway along its run, and a discharge-air insertion probe penetrating the supply duct downstream of the fan — each activatable to flag its matching live-value chip in the statusbar.</desc>
+                    <desc id="fcu-desc">A recirculating direct-expansion fan coil serving one zone, drawn as a DDC supervisory graphic. Return air leaves the zone on the right, travels along the top return duct, drops down the left side, and enters the fan coil cabinet. Inside the cabinet the air crosses a DX cooling coil and then a supply fan, which pushes it up the supply riser and back out through the supply duct into the zone. Directional chevrons march along the ducts and continue across the coil and fan to show the airflow. Floating point labels report the entering-air temperature at the coil, the discharge-air temperature after the fan, and the signed temperature difference across the coil, leaving minus entering, which reads negative while the coil cools the air. The zone box shows the zone temperature and its cooling setpoint; separate labels show the supply-fan status and speed and the compressor stage. The DX coil and the supply fan are drawn as the two sub-devices the graphic can drill into. The sensing devices are drawn where they physically live: a space-temperature wall plate mounted inside the zone on its far wall, a return-air insertion probe penetrating the underside of the top return duct partway along its run, and a discharge-air insertion probe penetrating the supply duct downstream of the fan — each activatable to flag its matching live-value chip in the statusbar.</desc>
 
                     <!-- ── Ductwork — exterior runs only ──────────────────
                          Return duct body: from the zone face, along the top,
@@ -636,7 +636,10 @@ noindex: true
                          inlet, ΔT just past the coil, DAT over the supply fan.
                          Kept clear of the fattened return duct (bottom y173),
                          the cabinet (top y250) and the supply run. The ΔT badge
-                         is the headline: it collapses toward zero on a fault. -->
+                         is the headline: it collapses toward zero on a fault.
+                         ΔT is SIGNED — leaving minus entering (DAT − RAT), so
+                         cooling reads negative (owner ruling 2026-07-27); the
+                         static seed reconciles from the static EAT / DAT. -->
                     <g id="fcu-badges">
                         <rect class="fcu-badge" x="96" y="188" width="86" height="40"/>
                         <text class="fcu-pt-cap" x="139" y="204">EAT · ENTERING</text>
@@ -644,7 +647,7 @@ noindex: true
 
                         <rect class="fcu-badge fcu-badge-dt" x="196" y="188" width="96" height="40"/>
                         <text class="fcu-pt-cap" x="244" y="204">ΔT ACROSS COIL</text>
-                        <text class="fcu-pt-val fcu-dt-val" id="fcu-dt" x="244" y="222">20.4 °F</text>
+                        <text class="fcu-pt-val fcu-dt-val" id="fcu-dt" x="244" y="222">-19.4 °F</text>
 
                         <rect class="fcu-badge" x="370" y="188" width="90" height="40"/>
                         <text class="fcu-pt-cap" x="415" y="204">DAT · DISCHARGE</text>
@@ -755,7 +758,7 @@ noindex: true
                 </div>
                 <div class="fcu-point">
                     <span class="fcu-point-cap">ΔT across coil</span>
-                    <span class="fcu-point-val accent" id="fcu-dt-r">20.4 °F</span>
+                    <span class="fcu-point-val accent" id="fcu-dt-r">-19.4 °F</span>
                 </div>
                 <div class="fcu-point">
                     <span class="fcu-point-cap">Zone / setpoint</span>
@@ -940,6 +943,14 @@ noindex: true
                 point reports leaving-coil temperature.
             </p>
 
+            <p class="fcu-note">
+                The ΔT badge is signed: leaving minus entering (DAT − RAT),
+                so a coil that cools the air reads negative, and a coil that
+                heats it reads positive under the same convention. The sign
+                is information, not clutter — it tells you which way the coil
+                is driving the air, before you ask how hard.
+            </p>
+
             </div><!-- #tab-unit -->
 
             <!-- ══ TAB: WIRESHEET ══ the shared Function-Block Editor
@@ -974,7 +985,14 @@ noindex: true
                     them off until it recovers past the clear constant, a
                     minimum off-time keeps a stopped unit from restaging
                     straight back in, and one AND merges those permits into the
-                    stage commands. The fan is deliberately outside that path —
+                    stage commands. Note what that off-timer watches: the
+                    sequence's own stop, nothing else — a hand forcing stages
+                    at slot 8 outranks the whole permit chain, so a forced
+                    restage never sees it. That gap is field-real: plenty of
+                    programs protect the normal stop yet short-cycle the moment
+                    an operator forces things, and the authors who try to catch
+                    every forced path do not always succeed.
+                    The fan is deliberately outside the permit path —
                     it keeps following the cooling call, so air keeps moving
                     across the coil while the lockout recovers. Force the fan
                     slow under a heavy call and watch the safety act; the same

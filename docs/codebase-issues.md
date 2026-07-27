@@ -8681,3 +8681,19 @@ the bottom band of a full-height sheet never appears on the contact sheet.
 A review pass that trusts the matrix alone can miss a defect below the
 fold. Fix candidates: shoot the `.fbe-canvas-inner` node with the canvas
 temporarily un-clipped, or scale the shot to the inner's full bounds.
+
+### 224. Workbench verdict/chevron ΔT thresholds compare DISPLAY-unit values against a fixed 3 *(noticed 2026-07-27, signed-ΔT lane)*
+
+`fcuRenderUnit` computes `dtN` from the DISPLAYED operands (correct — the
+metric worked-example rounding policy) and then compares it against the
+literal 3 for both the chevron recolor gate and the "No ΔT across coil —
+compressor not cooling" verdict branch (now `dtN <= -3` / `dtN > -3`
+under the signed convention; same shape before the sign flip). In US
+units that line is 3 °F; in metric the SAME literal reads as 3 °C ≈
+5.4 °F — so a metric viewer sees the no-ΔT verdict (and un-tinted
+downstream air) for real deltas between 3 °F and 5.4 °F that a US viewer
+sees as healthy cooling. Pre-existing (the unsigned code had the same
+unit-dependence); noticed while flipping the sign, deliberately not fixed
+in that lane (scope). Fix candidate: derive the verdict from the CANONICAL
+delta (`d.datT - d.eatT`) against an IP constant, keeping `dtN` for paint
+only — one line each in the gate and the ladder.
