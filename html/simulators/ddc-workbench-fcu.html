@@ -147,6 +147,60 @@ noindex: true
             outline-offset: 2px;
         }
 
+        /* ── Sensor glyphs (visible sensors) ── the physical sensing
+           devices drawn where they actually live: a wall plate in the
+           zone (space-temp) and an insertion probe in the discharge
+           duct (dat). Click / Enter / Space pulses the matching
+           statusbar chip (.ddcw-chip-hilite below, via the shell's
+           highlightChip hook). ddcw-* names because the concept is
+           shell-shared — any unit graphic may carry glyphs — but the
+           rules sit PAGE-INLINE for the mockup round and GRADUATE to
+           styles.css (the DDC WORKBENCH SHELL section) when the AHU
+           page lands, same as the rest of the shell chrome: graduating
+           now would cost a cache-bust version bump per placement
+           retune. Hover/focus lift to the accent mirrors .fcu-link —
+           same affordance family, and the glyphs are the future
+           drill-down seam. */
+        .ddcw-sensor { cursor: pointer; }
+        .ddcw-sensor-hit { fill: transparent; stroke: none; }
+        .ddcw-sensor-body {
+            fill: var(--surface);
+            stroke: var(--text-dim);
+            stroke-width: 1.5;
+            transition: stroke 0.15s;
+        }
+        .ddcw-sensor-stem,
+        .ddcw-sensor-slot {
+            fill: none;
+            stroke: var(--text-dim);
+            stroke-width: 1.5;
+            stroke-linecap: butt;
+            transition: stroke 0.15s;
+        }
+        .ddcw-sensor:hover .ddcw-sensor-body,
+        .ddcw-sensor:focus-visible .ddcw-sensor-body,
+        .ddcw-sensor:hover .ddcw-sensor-stem,
+        .ddcw-sensor:focus-visible .ddcw-sensor-stem,
+        .ddcw-sensor:hover .ddcw-sensor-slot,
+        .ddcw-sensor:focus-visible .ddcw-sensor-slot {
+            stroke: var(--accent);
+        }
+        .ddcw-sensor:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        /* Chip pulse — highlightChip (ddcw-shell.js) holds the class
+           ~1.2 s; the transition eases it in and back out. Transient
+           only: nothing animates while idle (this page's idle cost is
+           profiled — tests/perf-profile.mjs). Inset ring, not a
+           floating shadow — the AX-sharp seam idiom. */
+        .ddcw-chip { transition: border-color 0.3s, box-shadow 0.3s; }
+        .ddcw-chip.ddcw-chip-hilite {
+            border-color: var(--accent);
+            box-shadow: inset 0 0 0 1px var(--accent);
+        }
+
         /* Supply-fan spin — a 5-blade impeller group; speed tracks fan
            fraction, still when off. Reduced motion freezes it (the per-blade
            positions are presentation-attribute transforms, unaffected). */
@@ -493,7 +547,7 @@ noindex: true
                      role="img" aria-labelledby="fcu-title fcu-desc"
                      font-family="var(--mono)">
                     <title id="fcu-title">A DX fan coil serving one zone, as a DDC supervisory graphic</title>
-                    <desc id="fcu-desc">A recirculating direct-expansion fan coil serving one zone, drawn as a DDC supervisory graphic. Return air leaves the zone on the right, travels along the top return duct, drops down the left side, and enters the fan coil cabinet. Inside the cabinet the air crosses a DX cooling coil and then a supply fan, which pushes it up the supply riser and back out through the supply duct into the zone. Directional chevrons march along the ducts and continue across the coil and fan to show the airflow. Floating point labels report the entering-air temperature at the coil, the discharge-air temperature after the fan, and the temperature difference across the coil. The zone box shows the zone temperature and its cooling setpoint; separate labels show the supply-fan status and speed and the compressor stage. The DX coil and the supply fan are drawn as the two sub-devices the graphic can drill into.</desc>
+                    <desc id="fcu-desc">A recirculating direct-expansion fan coil serving one zone, drawn as a DDC supervisory graphic. Return air leaves the zone on the right, travels along the top return duct, drops down the left side, and enters the fan coil cabinet. Inside the cabinet the air crosses a DX cooling coil and then a supply fan, which pushes it up the supply riser and back out through the supply duct into the zone. Directional chevrons march along the ducts and continue across the coil and fan to show the airflow. Floating point labels report the entering-air temperature at the coil, the discharge-air temperature after the fan, and the temperature difference across the coil. The zone box shows the zone temperature and its cooling setpoint; separate labels show the supply-fan status and speed and the compressor stage. The DX coil and the supply fan are drawn as the two sub-devices the graphic can drill into. The sensing devices are drawn where they physically live: a space-temperature wall plate mounted inside the zone on its far wall, a return-air insertion probe penetrating the underside of the top return duct partway along its run, and a discharge-air insertion probe penetrating the supply duct downstream of the fan — each activatable to flag its matching live-value chip in the statusbar.</desc>
 
                     <!-- ── Ductwork — exterior runs only ──────────────────
                          Return duct body: from the zone face, along the top,
@@ -612,6 +666,79 @@ noindex: true
                                 fill="var(--accent)" stroke="var(--border)" stroke-width="1"/>
                         <text class="fcu-pt-cap" id="fcu-comp-v" x="226" y="330"
                               text-anchor="start">STG 2 · ON</text>
+                    </g>
+
+                    <!-- ── Sensor devices — WHERE each sensed point lives ──
+                         One glyph per AI point in FCU_POINTS with a physical
+                         home on this drawing (space-temp, rat, dat), keyed by
+                         data-point to the point id; click / Enter / Space
+                         pulses the matching statusbar chip (the shell's
+                         highlightChip hook — the shell binds .ddcw-sensor
+                         generically). Drawn last so the devices stay
+                         legible over the chevron stream.
+                         GLYPH VOCABULARY (schematic, software register):
+                         wall plate = space/zone sensor on the room
+                         boundary; insertion probe = duct temp. Reserved
+                         names for later units, deliberately NOT drawn
+                         here: shielded OSA head (this FCU has no OAT
+                         point — outdoor air is a sim knob, not a BACnet
+                         point), averaging element (AHU mixed-air),
+                         pressure tap, flow station.
+                         FUTURE SEAM: a glyph later becomes a drill-down
+                         link into a meter-and-sensor sim (the .fcu-link
+                         idiom) — keep the one-group-per-device shape. -->
+                    <g id="fcu-sensors">
+                        <!-- RAT insertion probe — penetrates the BOTTOM wall
+                             of the top return run (y 173) at x 342: upstream
+                             of the coil, reading the real air the zone sends
+                             back — the visible entering-air measurement
+                             behind the EAT badge and the coil ΔT. Head hangs
+                             in the free band between the return duct and the
+                             badge row (tops y 188), in the x gap between the
+                             ΔT badge (ends x 292) and the DAT badge (starts
+                             x 370), clear of the static flow arrow
+                             (x 320-328); the stem tip reaches the airstream
+                             near the duct centerline (y 150). -->
+                        <g class="ddcw-sensor" id="fcu-sensor-rat" data-point="rat"
+                           tabindex="0" role="button">
+                            <title>Return-air temperature sensor — insertion probe in the return duct</title>
+                            <rect class="ddcw-sensor-hit" x="328" y="150" width="28" height="44"/>
+                            <line class="ddcw-sensor-stem" x1="342" y1="154" x2="342" y2="173"/>
+                            <rect class="ddcw-sensor-body" x="336" y="173" width="12" height="10"/>
+                        </g>
+                        <!-- DAT insertion probe — penetrates the TOP wall of
+                             the horizontal discharge run (y 195) at x 492:
+                             downstream of the coil AND the fan (the
+                             draw-through pickup the fan-heat note owns),
+                             past the riser elbow. Head sits in the free band
+                             between the return duct (bottom wall y 173) and
+                             the supply wall, clear of the SUPPLY label
+                             (x >= 508) and the DAT badge (x <= 460); the
+                             stem tip reaches the airstream near the duct
+                             centerline (y 218). -->
+                        <g class="ddcw-sensor" id="fcu-sensor-dat" data-point="dat"
+                           tabindex="0" role="button">
+                            <title>Discharge-air temperature sensor — insertion probe in the supply duct</title>
+                            <rect class="ddcw-sensor-hit" x="478" y="174" width="28" height="44"/>
+                            <line class="ddcw-sensor-stem" x1="492" y1="195" x2="492" y2="214"/>
+                            <rect class="ddcw-sensor-body" x="486" y="185" width="12" height="10"/>
+                        </g>
+                        <!-- Space-temp wall plate — mounted INSIDE the zone,
+                             flush on its right wall (x 698) at thermostat
+                             height (mid-wall), on the side away from the
+                             unit's duct connections: a wall stat lives on
+                             the room boundary, never on the equipment.
+                             Clear of the readout column (values end
+                             x ~657). Slots = the vent grille. -->
+                        <g class="ddcw-sensor" id="fcu-sensor-space-temp" data-point="space-temp"
+                           tabindex="0" role="button">
+                            <title>Space temperature sensor — wall plate in the zone</title>
+                            <rect class="ddcw-sensor-hit" x="666" y="156" width="34" height="44"/>
+                            <rect class="ddcw-sensor-body" x="683" y="166" width="14" height="24"/>
+                            <line class="ddcw-sensor-slot" x1="686.5" y1="173" x2="693.5" y2="173"/>
+                            <line class="ddcw-sensor-slot" x1="686.5" y1="178" x2="693.5" y2="178"/>
+                            <line class="ddcw-sensor-slot" x1="686.5" y1="183" x2="693.5" y2="183"/>
+                        </g>
                     </g>
                 </svg>
             </div>

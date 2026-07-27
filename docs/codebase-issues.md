@@ -8656,6 +8656,22 @@ re-baseline pass (idle box, several reps) before anyone reads that flag as
 a real regression; the profiler's own header already names fps as the
 ranking signal.
 
+**Follow-on (2026-07-27, sensors PR #444 — recorded so the numbers are
+not re-litigated):** the same box pushed two more report-only excursions
+on the visible-sensors branch, both host-load noise, neither a
+regression. The Unit-tab `dCTRL` read +105.0 ms/s in the lane run
+(inside the ±110 tolerance) and +111.8 ms/s (468.2 vs control 356.4) on
+a single-rep adversarial re-run under load — nominally past tolerance,
+with rep spread measured at 17+ ms/s on this box. The wiresheet row's
+apparent fps drop (59.4 → 51.8, then 52.8) recovered to 58.4 on an
+isolated re-run. Mechanism check closes it: the branch diff adds no
+persistent animation — the chip-highlight hook's sole timer is a
+self-clearing one-shot `setTimeout`, the glyph/chip effects are
+event-driven CSS transitions, no rAF or interval — and liveness held
+26/26. Same disposition as the entry above: fps is the ranking signal,
+tolerances under-absorb this box under load, and the re-baseline pass
+is where these numbers get settled.
+
 ### 223. screenshot-wiresheets: canvas-element shots clip a scrolling sheet *(noticed 2026-07-27)*
 
 The matrix rig screenshots `surface.canvas` (`.fbe-canvas`), which is a

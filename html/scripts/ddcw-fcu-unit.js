@@ -48,7 +48,11 @@
 // BINDING INVARIANT (shared with the shell): a point's id === the seed
 // FBE-block id in every program === the IO block the programs author.
 // The sample programs live in the page; their block ids must match
-// POINTS ids exactly, or the binding driver skips the point.
+// POINTS ids exactly, or the binding driver skips the point. One
+// deliberate gap: a DISPLAY-ONLY sensor may ship before any sheet
+// authors its block — the driver's skip makes that safe (chip live,
+// sheets untouched). `rat` is the standing case, exempted by name in
+// tests/ddcw-fcu-unit.spec.js until a program consumes it.
 //
 // Display: internal model is canonical IP (°F, Btu/h); everything
 // converts at the display boundary through the shell's Units statics
@@ -150,7 +154,7 @@ const DDCWFcuUnit = (function () {
         // every tick (they match what cool-2stage commands on arrival,
         // so nothing visibly changes hands).
         return {
-            sensors:    { 'space-temp': 76, 'dat': 55 },
+            sensors:    { 'space-temp': 76, 'dat': 55, 'rat': 76 },   // rat = zoneT on arrival (a return probe reads the zone's own air)
             actuators:  { 'fan-speed': 100, 'fan-enable': true, 'y1': true, 'y2': false },
             params:     { 'cooling-setpoint': 72, 'deadband': 3 },
             conditions: { fault: 'none' },   // none | lowCharge | airflow (observe-only)
@@ -284,7 +288,26 @@ const DDCWFcuUnit = (function () {
             ? plant.override.spaceTemp.value
             : plant.zoneT;
 
-        d.eatT = zoneT;                  // actual return air (= zone temp)
+        // Return-air temp AI — a probe in the return duct measures the
+        // REAL air the zone sends back, so it reads the TRUTH
+        // (plant.zoneT), NEVER the sensed/overridable value above. The
+        // split is deliberate: when the wall-stat override forces a
+        // lie, the RAT chip visibly disagrees with the Space chip —
+        // the real-vs-sensed commissioning moment, from the plant
+        // side. (No program consumes it yet; the binding driver skips
+        // an unauthored point — see the header's BINDING INVARIANT.)
+        plant.sensors['rat'] = plant.zoneT;
+
+        // Entering air for the DISPLAY — the same post-integration
+        // sample as sensors['rat'] above, because the EAT badge and the
+        // RAT chip are one measurement and must round identically every
+        // tick. (The pre-step local `zoneT` drifts up to ~0.06 °F from
+        // the probe inside one 5-sim-s step — enough to split the last
+        // displayed digit at a rounding boundary. The physics above
+        // deliberately keeps the tick-START zoneT: that is the Euler
+        // evaluation point; only the display samples tick-END state,
+        // like every other chip.)
+        d.eatT = plant.zoneT;            // actual return air (= zone temp)
         d.coilLeaveT = coilLeaveT;
         d.datT = datT;
         d.stage = stage;
@@ -321,6 +344,9 @@ const DDCWFcuUnit = (function () {
         // strings stay as the US labels; the metric label comes from
         // Units.suffix at the display boundary.
         { id: 'space-temp',       kind: 'ai',    dir: 'sensor',   plantKey: 'space-temp',       name: 'Space',    unit: '°F', conv: 'temp',      min: 70, max: 84, step: 1 },
+        // rat sits next to dat so the chip strip reads entering →
+        // leaving side by side (the pair the coil ΔT is made of).
+        { id: 'rat',              kind: 'ai',    dir: 'sensor',   plantKey: 'rat',              name: 'RAT',      unit: '°F', conv: 'temp' },
         { id: 'dat',              kind: 'ai',    dir: 'sensor',   plantKey: 'dat',              name: 'DAT',      unit: '°F', conv: 'temp' },
         { id: 'fan-speed',        kind: 'ao',    dir: 'actuator', plantKey: 'fan-speed',        name: 'Fan',      unit: '%', min: 0, max: 100, step: 5, relinquishDefault: 0 },
         { id: 'fan-enable',       kind: 'bo',    dir: 'actuator', plantKey: 'fan-enable',       name: 'Fan En',   relinquishDefault: false },

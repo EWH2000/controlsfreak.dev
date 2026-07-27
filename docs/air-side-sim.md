@@ -51,6 +51,14 @@ Shipped across:
 - **PR #424** — the verdict pill reads idle (neutral), not a red fault, when the
   program satisfies the space (auto-fan cycles the fan off).
 
+- **In flight (2026-07-27, PR stacked on #443):** Phase 6 **visible sensors** —
+  a wall-plate glyph (space-temp, on the zone's far wall at thermostat height)
+  and an insertion-probe glyph (dat, penetrating the discharge duct after the
+  fan) on the unit graphic; click / Enter / Space pulses the matching IO chip
+  via the shell's new `highlightChip` host hook. Mockup-first: glyph CSS stays
+  page-inline until the AHU page graduates it. Branch
+  `feat/ddcw-visible-sensors`.
+
 Still quasi-static via `Psychro.invertProcess`. **The react-baseline / reference
 point, not a surfaced page.**
 
