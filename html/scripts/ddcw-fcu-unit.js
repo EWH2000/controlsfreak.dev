@@ -1,6 +1,6 @@
 // ──────────────────────────────────────────────────────────────────────
 // ddcw-fcu-unit.js — the DX FAN COIL unit for the DDC Workbench: the
-// unit-specific half extracted from simulators/ddc-workbench.html.
+// unit-specific half extracted from simulators/ddc-workbench-fcu.html.
 // Physics (a closed-loop lumped-capacitance zone on a two-stage DX
 // coil), the FCU point list, and the fcu-* graphic + hand controls —
 // everything the shell (/scripts/ddcw-shell.js) reaches only through
@@ -56,12 +56,12 @@
 // so the graphic, the readout grid, the chip strip and the off-program
 // window all share ONE conversion path.
 //
-// Consumers: simulators/ddc-workbench.html (assembles the unit object
-// and calls DDCWShell.createWorkbench).
+// Consumers: simulators/ddc-workbench-fcu.html (assembles the unit
+// object and calls DDCWShell.createWorkbench).
 // Tests: tests/ddcw-fcu-unit.spec.js pins the physics invariants
 // engine-direct (directions, orderings, clamp bands, contract shapes —
-// never feel-constant values); tests/ddc-workbench.spec.js +
-// tests/ddc-workbench-priority.spec.js drive the built page; the
+// never feel-constant values); tests/ddc-workbench-fcu.spec.js +
+// tests/ddc-workbench-fcu-priority.spec.js drive the built page; the
 // program literals this unit runs are swept engine-direct by
 // tests/fbe-engine.spec.js and tests/fbe-geometry.spec.js (both load
 // FCU_PROGRAMS from the page file).

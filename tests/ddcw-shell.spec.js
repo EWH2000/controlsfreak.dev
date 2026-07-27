@@ -4,7 +4,7 @@
 // the `page` fixture is just unused.
 //
 // What this file pins is the shell's OWN header claims, the ones a
-// second unit page (ddc-workbench-ahu.html) will lean on:
+// second unit page (the AHU workbench) will lean on:
 //
 //   1. "The FACTORY touches the DOM; the FILE does not" — the source
 //      loads in a bare vm (no window, no document) without throwing,
@@ -19,8 +19,8 @@
 //      so the unit-agnostic boundary can't erode silently.
 //
 // The full behavioral surface (binding, arbitration, statusbar, the
-// editor mount) is covered on the built page by ddc-workbench.spec.js
-// and ddc-workbench-priority.spec.js.
+// editor mount) is covered on the built page by
+// ddc-workbench-fcu.spec.js and ddc-workbench-fcu-priority.spec.js.
 
 const fs   = require('node:fs');
 const path = require('node:path');

@@ -59,11 +59,11 @@ function loadFBE() {
 // hand-copied twin to drift).
 function loadPrograms() {
     const src = fs.readFileSync(
-        path.join(__dirname, '..', 'html', 'simulators', 'ddc-workbench.html'),
+        path.join(__dirname, '..', 'html', 'simulators', 'ddc-workbench-fcu.html'),
         'utf8',
     );
     const m = src.match(/const FCU_PROGRAMS = \{[\s\S]*?\n {8}\};/);
-    if (!m) throw new Error('FCU_PROGRAMS literal not found in ddc-workbench.html');
+    if (!m) throw new Error('FCU_PROGRAMS literal not found in ddc-workbench-fcu.html');
     return vm.runInNewContext(m[0] + '\nFCU_PROGRAMS;', {});
 }
 

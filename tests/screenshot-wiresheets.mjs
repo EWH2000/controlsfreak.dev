@@ -20,7 +20,7 @@
 //
 // The matrix (full run = 7+3 sheets × 2 themes × 2 fonts × 3 modes):
 //   page/sheet   public function-block-editor × its 7 EXAMPLES;
-//                ddc-workbench × each FCU_PROGRAMS key. Keys are pinned
+//                ddc-workbench-fcu × each FCU_PROGRAMS key. Keys are pinned
 //                here (not extracted) — a renamed example makes the run
 //                fail loudly on the chip/option lookup, which is fine
 //                for a review rig.
@@ -44,7 +44,7 @@
 //
 // Flags (all optional, combinable):
 //   --page=public|workbench   one consumer page only (aliases accepted:
-//                             function-block-editor / fbe, ddc-workbench / ddcw)
+//                             function-block-editor / fbe, ddc-workbench-fcu / ddcw)
 //   --sheet=a,b,c             only these sheet keys (matched on either page)
 //   --only-defective          the five formerly-defective public sheets
 //                             (freeze / econ / tstat-cool / tstat-heat /
@@ -88,11 +88,11 @@ const PAGES = {
         },
     },
     'workbench': {
-        path: '/simulators/ddc-workbench.html',
+        path: '/simulators/ddc-workbench-fcu.html',
         canvas: '#ddcw-fbe-canvas',
         inner: '#ddcw-fbe-inner',
-        aliases: ['workbench', 'ddc-workbench', 'ddcw'],
-        // FCU_PROGRAMS keys (ddc-workbench.html).
+        aliases: ['workbench', 'ddc-workbench-fcu', 'ddcw'],
+        // FCU_PROGRAMS keys (ddc-workbench-fcu.html).
         sheets: ['cool-2stage', 'cool-1stage', 'cool-2stage-fanon'],
         async loadSheet(page, key) {
             // The editor lazy-mounts on first Wiresheet open …

@@ -1289,7 +1289,7 @@ re-submit); add `--dry-run` to print the URL list without POSTing.
   frees the thread to render the frames it was dropping, so CPU rises
   while fps improves), which is why fps and not CPU is the ranking
   signal. It walks a **hand-picked manifest, not the sitemap**:
-  `ddc-workbench` is absent from `sitemap.xml`, and a sitemap walker
+  `ddc-workbench-fcu` is absent from `sitemap.xml`, and a sitemap walker
   would skip the very page the profiler exists for.
 - **Fedora Chromium deps:** Playwright's bundled headless Chromium
   isn't statically linked, and `npx playwright install-deps` only

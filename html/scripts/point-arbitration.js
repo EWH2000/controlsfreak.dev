@@ -62,7 +62,7 @@
 // array underneath is the full sixteen, which is why resolve() scans
 // rather than special-casing those two numbers.
 //
-// Consumers: simulators/ddc-workbench.html.
+// Consumers: simulators/ddc-workbench-fcu.html.
 // Tests: tests/point-arbitration.spec.js (pure-Node vm loader).
 // ──────────────────────────────────────────────────────────────────────
 

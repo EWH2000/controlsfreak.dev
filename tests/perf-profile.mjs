@@ -160,11 +160,11 @@
 //    fail independently: `main` (in-content flow-engine particles), `gutter`
 //    (`.schematic-bg`), and `page` (a per-entry `motionSel` covering
 //    page-local rAF work that moves a transform or a path rather than a
-//    flow-engine circle — ddc-workbench's marching air chevrons are why this
-//    scope exists; without it that page's liveness would report only whether
-//    the gutter was alive). The counts are themselves a better regression
-//    signal than any boolean: a population that changes size is a change in
-//    what the page animates.
+//    flow-engine circle — ddc-workbench-fcu's marching air chevrons are why
+//    this scope exists; without it that page's liveness would report only
+//    whether the gutter was alive). The counts are themselves a better
+//    regression signal than any boolean: a population that changes size is a
+//    change in what the page animates.
 //
 //    A PARTIAL COUNT IS USUALLY CORRECT, NOT A FAULT. hydronic-loops reports
 //    `main 46/160 · gutter 47/552` when scrolled to its first diagram: the
@@ -217,12 +217,12 @@
 // ---------------------------------------------------------------------------
 //
 // `tests/screenshot-diagrams.mjs` walks `/sitemap.xml`, and that is right for
-// what it does. It is wrong here: `simulators/ddc-workbench.html` is
+// what it does. It is wrong here: `simulators/ddc-workbench-fcu.html` is
 // deliberately absent from the sitemap (it ships live-but-hidden) and it is
 // the most animation-heavy page on the site — the page this whole performance
 // arc exists to fix. A sitemap-driven profiler would omit it. Verified at the
-// time of writing: `grep -c ddc-workbench _site/sitemap.xml` returns 0 while
-// `_site/simulators/ddc-workbench.html` exists.
+// time of writing: `grep -c ddc-workbench-fcu _site/sitemap.xml` returns 0
+// while `_site/simulators/ddc-workbench-fcu.html` exists.
 //
 // The manifest is small on purpose. Each row earns its place with a `why`
 // string that prints with the report, so a reader can tell a control from a
@@ -296,7 +296,7 @@
 // cannot characterise noise on a machine this contended.
 //
 // ONE ROW HAS ALREADY TRIPPED THAT PROTOCOL AND IS DELIBERATELY NOT WIDENED:
-// `ddc-workbench-unit`. Its observations sit on the BASELINE row itself
+// `ddc-workbench-fcu-unit`. Its observations sit on the BASELINE row itself
 // rather than here, because that is where a reader holding a red number is
 // looking; codebase-issues #214 carries the same record. Read that comment
 // before acting on a drift there — the row's baseline is not trusted, and
@@ -416,9 +416,9 @@ const MANIFEST = [
             + 'almost all of it the .schematic-bg gutter. Every delta below subtracts it.',
     },
     {
-        id: 'ddc-workbench-unit',
-        path: '/simulators/ddc-workbench.html',
-        label: 'simulators/ddc-workbench.html (Unit)',
+        id: 'ddc-workbench-fcu-unit',
+        path: '/simulators/ddc-workbench-fcu.html',
+        label: 'simulators/ddc-workbench-fcu.html (Unit)',
         motion: 'moving',
         scrollTo: '#tab-unit',
         motionSel: '.fcu-chevron',
@@ -427,9 +427,9 @@ const MANIFEST = [
             + 'manifest reaches it — a sitemap walker would skip the whole point.',
     },
     {
-        id: 'ddc-workbench-wiresheet',
-        path: '/simulators/ddc-workbench.html',
-        label: 'simulators/ddc-workbench.html (Wiresheet)',
+        id: 'ddc-workbench-fcu-wiresheet',
+        path: '/simulators/ddc-workbench-fcu.html',
+        label: 'simulators/ddc-workbench-fcu.html (Wiresheet)',
         motion: 'moving',
         action: async (page) => { await page.click('.tabs.tabs-flush [data-tab="wiresheet"]'); },
         assert: async (page) => (await page.locator('#tab-wiresheet').evaluate((el) => el.classList.contains('active'))
@@ -539,7 +539,7 @@ const BASELINE = {
     // nobody trusts hides the question instead of answering it, which is the
     // decay the RE-BASELINING note warns about. So the observation lands and
     // the numbers stay exactly where they were.
-    'ddc-workbench-unit':            { deltaTask: 89.4, fps: 58.6, layoutsPerFrame: 2.23 },
+    'ddc-workbench-fcu-unit':        { deltaTask: 89.4, fps: 58.6, layoutsPerFrame: 2.23 },
     // Two rows carry their own wider absolute floor. Both animate
     // CONVERGENTLY and event-driven rather than steady-state, so their
     // per-frame layout count is genuinely unstable run to run — not noise in
@@ -549,7 +549,7 @@ const BASELINE = {
     // Widening the GLOBAL floor to cover them would blind every steady-state
     // row, which is where this column earns its keep. If either settles down
     // later, tighten it back and say so here.
-    'ddc-workbench-wiresheet':       { deltaTask: 18.8, fps: 53.1, layoutsPerFrame: 3.43, tolLayoutsAbs: 4.0 },
+    'ddc-workbench-fcu-wiresheet':   { deltaTask: 18.8, fps: 53.1, layoutsPerFrame: 3.43, tolLayoutsAbs: 4.0 },
     'refrigerant-loop':              { deltaTask: 97.3, fps: 47.3, layoutsPerFrame: 4.44 },
     'function-block-editor':         { deltaTask: -35.2, fps: 46.8, layoutsPerFrame: 3.10, tolLayoutsAbs: 4.0 },
     // Re-baselined 2026-07-25 for the #202 education point-table sweep —
@@ -593,7 +593,7 @@ const sleep = (page, ms) => page.evaluate((n) => new Promise((r) => setTimeout(r
 //   gutter — `.schematic-bg` particles
 //   page   — a per-entry `motionSel`, covering page-local rAF work that moves
 //            a transform / path / dash offset rather than a flow-engine
-//            circle. ddc-workbench's marching air chevrons are why this
+//            circle. ddc-workbench-fcu's marching air chevrons are why this
 //            exists: without it that page's liveness would report only
 //            whether the GUTTER was alive, which says nothing about the page
 //            this arc is here to fix.

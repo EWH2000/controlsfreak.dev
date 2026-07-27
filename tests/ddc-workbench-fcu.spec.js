@@ -1,4 +1,4 @@
-// DDC Workbench — the air animation's idle gate.
+// DDC Workbench (FCU) — the air animation's idle gate.
 //
 // The page runs ONE self-suspending rAF loop for the fan blade and the air
 // chevrons (house idiom: flow-engine.js:285-303, codebase-issues #113). It
@@ -22,7 +22,7 @@
 
 const { test, expect } = require('@playwright/test');
 
-const URL = '/simulators/ddc-workbench.html';
+const URL = '/simulators/ddc-workbench-fcu.html';
 
 const CHEVRON = '#fcu-flow .fcu-chevron';
 

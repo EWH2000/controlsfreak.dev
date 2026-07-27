@@ -4503,8 +4503,8 @@ p.tool-preamble.tight { margin-bottom: 0.85rem; }
  * /scripts/ddcw-shell.js against the fixed ddcw-* markup skeleton (the
  * MARKUP CONTRACT in its header); the tab panes reuse the shared
  * .tabs / .tab-btn / .tab-pane and the .fbe-* wiresheet section above.
- * Lifted here from simulators/ddc-workbench.html's head block when the
- * shell JS moved to /scripts/ddcw-shell.js, so a second unit page
+ * Lifted here from simulators/ddc-workbench-fcu.html's head block when
+ * the shell JS moved to /scripts/ddcw-shell.js, so a second unit page
  * reads one source — same precedent as the FBE section above. The
  * unit-specific rules (fcu-*) stay page-inline, and so do two ddcw-*
  * control-pattern rules whose cascade is coupled to unit markup:
