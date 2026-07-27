@@ -109,7 +109,9 @@
 //       host hooks are the ONLY way unit code touches the command
 //       store — arbitration stays shell code, controls stay unit code:
 //       host.writeSlot8(pointId, v) / host.releaseSlot8(pointId) /
-//       host.slot8(pointId) / host.setSpeed(v) / host.requestRender().
+//       host.slot8(pointId) / host.setSpeed(v) / host.requestRender() /
+//       host.highlightChip(pointId) (pulse a point's statusbar chip —
+//       see the sensor-glyph note in the markup contract below).
 //   initAnim(plant)      start the unit's own animation machinery.
 //   onResize(plant, isFullscreen)  reflow hook on the fullscreen edge.
 //
@@ -128,6 +130,14 @@
 //   `#tab-wiresheet [data-fbe-action]` · `.tool-card` (fullscreen
 //   event target). Chrome CSS: the DDC WORKBENCH SHELL section of
 //   styles.css.
+//   OPTIONAL sensor glyphs: a unit graphic may mark where a sensed
+//   point's physical device lives with
+//   `<g class="ddcw-sensor" data-point="<point-id>" tabindex="0"
+//   role="button">` groups (native SVG <title> = the accessible
+//   name). The shell binds them generically at boot — click or
+//   keyboard activation (Enter / Space) pulses that point's
+//   statusbar chip via highlightChip. data-point must equal a
+//   unit.points id; an unknown id no-ops. Zero glyphs is fine.
 //
 // Command arbitration: every actuator point owns a real 16-slot
 // priority array (window.PriorityArray). The sequence writes slot 16,
@@ -402,6 +412,36 @@ const DDCWShell = (function () {
             // window exists to announce.
             box.classList.toggle('is-empty', entries.length === 0);
         }
+        // ── sensor-glyph chip pulse ── highlightChip(pointId) marks a
+        // point's statusbar chip for a beat, so activating a sensor
+        // glyph on the unit graphic shows WHICH chip that physical
+        // device feeds. Unit-agnostic: pointId resolves through
+        // chipVals (built from unit.points); an unknown id no-ops.
+        // Mechanism is one temporary CSS class + a CSS transition
+        // (.ddcw-chip-hilite — page-inline for now, see the page's
+        // head block) and a one-shot timeout — deliberately no rAF
+        // loop and no interval: this page's idle cost is profiled
+        // (tests/perf-profile.mjs), and the pulse must cost nothing
+        // while nobody is clicking. A re-trigger restarts the hold;
+        // a second glyph steals the mark from the first.
+        const HILITE_MS = 1200;
+        let hiliteTimer = null;
+        let hiliteChip = null;
+        function highlightChip(pointId) {
+            const val = chipVals[pointId];
+            if (!val || !val.parentNode) return;
+            const chip = val.parentNode;
+            if (hiliteChip && hiliteChip !== chip) hiliteChip.classList.remove('ddcw-chip-hilite');
+            if (hiliteTimer !== null) window.clearTimeout(hiliteTimer);
+            chip.classList.add('ddcw-chip-hilite');
+            hiliteChip = chip;
+            hiliteTimer = window.setTimeout(function () {
+                chip.classList.remove('ddcw-chip-hilite');
+                hiliteChip = null;
+                hiliteTimer = null;
+            }, HILITE_MS);
+        }
+
         function syncProgramSelect() {
             const sel = document.getElementById('ddcw-program');
             const want = programKey || 'custom';
@@ -526,6 +566,22 @@ const DDCWShell = (function () {
         reindex(graph);
         initChips();
         buildProgramPicker();
+        // Sensor glyphs — bound here, not in unit code, so a second unit
+        // page gets the behavior from its markup alone (see the markup
+        // contract). The pointId comes from the markup's data-point, so
+        // nothing here names a unit's points. keydown, not keyup, and
+        // preventDefault on Space so it can't scroll the page under the
+        // pulse.
+        document.querySelectorAll('.ddcw-sensor[data-point]').forEach(function (g) {
+            g.addEventListener('click', function () {
+                highlightChip(g.getAttribute('data-point'));
+            });
+            g.addEventListener('keydown', function (e) {
+                if (e.key !== 'Enter' && e.key !== ' ') return;
+                e.preventDefault();
+                highlightChip(g.getAttribute('data-point'));
+            });
+        });
         // Host hooks — the ONLY way unit code touches the cmd store, so
         // arbitration stays shell code and controls stay unit code.
         // slot8() returns the slot-8 value, or null when released.
@@ -535,6 +591,10 @@ const DDCWShell = (function () {
             slot8:        function (pointId) { return cmd[pointId].slots[8]; },
             setSpeed:     function (v) { if (isFinite(v)) simSpeed = v; },
             requestRender: requestRender,
+            // The chip pulse, exposed to unit code too — the seam a
+            // future drill-down (a glyph becoming a link into a
+            // meter-and-sensor sim) can call on the way out.
+            highlightChip: highlightChip,
         };
         // The sync context — deliberately an extensible OBJECT, not a mode
         // string: a future shell-side signal (occupancy, alarm, a second
