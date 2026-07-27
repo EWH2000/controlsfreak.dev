@@ -146,9 +146,12 @@
 // page, simulators/ddc-workbench-ahu.html (the AHU unit).
 //
 // Consumers: simulators/ddc-workbench.html.
-// Tests: tests/ddc-workbench.spec.js + tests/ddc-workbench-priority.spec.js
-// drive the built page; tests/point-arbitration.spec.js proves the
-// arbitration core engine-direct.
+// Tests: tests/ddcw-shell.spec.js pins this header's own claims
+// engine-direct (bare-vm loadability, formatPointValue's conv paths,
+// the grep proof); tests/ddc-workbench.spec.js +
+// tests/ddc-workbench-priority.spec.js drive the built page;
+// tests/point-arbitration.spec.js proves the arbitration core
+// engine-direct.
 // ──────────────────────────────────────────────────────────────────────
 
 'use strict';

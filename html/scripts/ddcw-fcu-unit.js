@@ -58,10 +58,13 @@
 //
 // Consumers: simulators/ddc-workbench.html (assembles the unit object
 // and calls DDCWShell.createWorkbench).
-// Tests: tests/ddc-workbench.spec.js + tests/ddc-workbench-priority.spec.js
-// drive the built page; the program literals this unit runs are swept
-// engine-direct by tests/fbe-engine.spec.js and tests/fbe-geometry.spec.js
-// (both load FCU_PROGRAMS from the page file).
+// Tests: tests/ddcw-fcu-unit.spec.js pins the physics invariants
+// engine-direct (directions, orderings, clamp bands, contract shapes —
+// never feel-constant values); tests/ddc-workbench.spec.js +
+// tests/ddc-workbench-priority.spec.js drive the built page; the
+// program literals this unit runs are swept engine-direct by
+// tests/fbe-engine.spec.js and tests/fbe-geometry.spec.js (both load
+// FCU_PROGRAMS from the page file).
 // ──────────────────────────────────────────────────────────────────────
 
 'use strict';
