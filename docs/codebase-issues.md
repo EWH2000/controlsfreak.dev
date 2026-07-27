@@ -7808,7 +7808,7 @@ rather than *hidden*, which was the whole of option (b). Option (a) — masking
 `//` from first occurrence to end of line, with the `https://` trap handled —
 stays available and still wants its own PR and its own reproduction pass.
 
-### 205. Function-block editor's wire router buries wires on the PUBLIC page too *(open — 2026-07-25)*
+### 205. Function-block editor's wire router buries wires on the PUBLIC page too *(resolved 2026-07-26)*
 
 Held until #430 merged (it edits this file). Found while diagnosing the DDC
 Workbench layout complaint; the same router defect is live on
@@ -7852,7 +7852,45 @@ its examples. **Action:** fold the threshold decision into the DDC Workbench
 re-layout work rather than shipping it standalone, since the two share the
 router and a standalone change would need the workbench re-verified twice.
 
-### 206. FBE palette drop grid seeds the buried-wire shape by default *(open — 2026-07-25)*
+**Resolution (2026-07-26 — the PR-4 relayout: `101b311` / `535c178` /
+`ffc8d55`).** Exactly the folded shape this entry asked for, in three
+measured steps:
+
+- **STUB 36 → 20px** (`101b311` — stub 18 → 10, now a named `STUB` const).
+  Measured on the built page, new routing vs the old stub over the same pin
+  centres: `econ` 4/5 → **5/5** forward, `tstat-cool` / `tstat-heat`
+  3/11 → **11/11** each with crossings **4 → 0** each, `reset` 4/6 → **6/6**;
+  `freeze` / `pid` unchanged (already clean). `proof` untouched by design —
+  routing identical old vs new, keeping its 5 deliberate fallback runs and
+  single crossing, exactly as this entry predicted. Per this entry's own
+  convention note: every crossing figure here counts **intersection points,
+  not wire pairs**.
+- **The three authored burials nudged clear** (`535c178`) — the pre-existing
+  coordinate defects the retune could not reach (verified identical
+  before/after the threshold change): `freeze`'s inv to (420,40); both tstat
+  sheets' temp to (190,20) + hi to (190,120), landing the temp → under drop
+  on the clear seam between the hi/lo and over/under columns. All seven
+  public sheets now green on every `fbe-geometry.spec.js` assertion.
+- **The workbench re-laid to candidate A** (`ffc8d55` — owner-picked
+  2026-07-26 after a side-by-side against candidate B): canvas **1401×480**,
+  one topological column per link of the longest dependency chain (R=8 on
+  the 2-stage sheets) at a uniform 175px pitch — **zero burials, all-forward
+  routing (27/27), min margin 39.4px** across all three FCU sheets at the
+  16px root font. **Candidate B's honest numbers** (branch `candidate-b`,
+  preserved for the record): the same zero burials at F=16 inside the
+  default 900×480, but **26 of 27 wires route backwards** (min margin
+  **−135.6px**, two wires wrapping a full block-width the wrong way), and at
+  a 20px root font it degrades ~9× worse than A (71 burials / 1320px buried
+  on `cool-2stage` vs A's 39 / 142px — the px-literal residual now tracked
+  in #208). A's one cost: 563px of in-flow horizontal scroll (fullscreen at
+  1456×900 clears it to 0; B's in-flow scroll was 62px, not zero).
+
+**Deferred, with its follow-up named:** C8 — blocks still paint over wires,
+and selecting a wire only recolours it. If hand-built-sheet feedback ever
+asks for wire tracing, the fix is raising `.fbe-wire-layer`'s z-index on
+wire select, as its own tiny PR.
+
+### 206. FBE palette drop grid seeds the buried-wire shape by default *(resolved 2026-07-26)*
 
 Held until #430 merged. `fbe-editor.js` places dropped blocks on a grid with a
 **150px x-pitch** — below the 171.6px a clean forward elbow needs at a 16px
@@ -7867,6 +7905,19 @@ smallest change, but it widens hand-built sheets. (b) Derive the drop pitch
 from the same expression the router uses, so the two cannot drift. (c) Leave
 it and fix the router instead (see #205). (b) is the one that stops this
 recurring.
+
+**Resolution (2026-07-26 — option (b), `9064da2`).** The drop pitch is now
+derived from the router's own forward condition instead of the magic 150:
+`pitchX = Math.ceil(blockW + 2 * STUB + 2)`, with `blockW` re-measured from
+a rendered block (the #208 clamp fix), so a `STUB` retune moves the drop
+grid with it and the two cannot drift. Pin-dot centres sit 0.05rem − 1px
+outside each block edge, so a block's in-pin → out-pin span is
+`blockW + 0.1F − 2` — bounded by `blockW + 2` for any root font under 40px,
+which is what the `+ 2` clears. Measured pitch: 158px at a 16px root
+(drops at x = 40, 198, 356), 192px at 20px — both sides of the threshold
+with margin. Columns fill the actual canvas width
+(`cols = floor((INNER_W − 80) / pitchX)`), and `clearCanvas()` resets
+`dropSeq` so a cleared sheet drops from the top-left again.
 
 ### 207. `flowStaticGuard`'s template walk has two scope holes — one silent, one loud *(2026-07-26 — (b) fixed, (a) documented and accepted)*
 
@@ -7947,7 +7998,7 @@ implies coverage it does not have, so *some* change is owed" — is what was
 paid. **The hole itself stays open** and an owner who wants it closed should
 read this as option three of the three offered, taken knowingly.
 
-### 208. FBE block geometry is rem-sized while every coordinate is a px literal *(open — 2026-07-25)*
+### 208. FBE block geometry is rem-sized while every coordinate is a px literal *(open — 2026-07-25 · clamp + relationship-spec halves shipped 2026-07-26)*
 
 The 171.6px column pitch a clean forward elbow needs **is not a constant.**
 `.fbe-block` is `8.5rem`, the pin dot `0.62rem`, its margins `0.36rem` — all
@@ -7971,6 +8022,26 @@ plus a hard-coded width that silently disagrees with its own CSS. **Action:**
 whatever geometry spec comes out of the workbench re-layout should assert the
 **relationship** (`pitch ≥ blockWidth + threshold − pinInset`) rather than
 hard-coding 171.6, and `BLOCK_W` should come from a measured rect.
+
+**Update (2026-07-26 — two of the asks shipped; the entry stays OPEN for
+the residual.)** `9064da2`: `BLOCK_W = 136` is gone — `blockW` is
+re-measured in `renderAll()` from a rendered block (measured 136.0 at a
+16px root, 170.0 at 20px; 136 survives only as the fallback when a block
+measures 0 wide in a hidden pane), and the drag clamp uses the measured
+width. `b6f64f0`: `fbe-geometry.spec.js` asserts the **relationship** over
+measured pin centres — forward margin ≥ `2·STUB + 4` per wire, never a
+hard-coded 171.6 — and an F=20 root-font drag test pins the clamp fix (a
+170px block may no longer overhang the canvas the way the old const
+allowed).
+
+**The honest residual, and why this stays open:** the px-literal
+*coordinates* still degrade at a 20px root font. Measured on the shipped
+candidate-A workbench layout: `cool-2stage` goes from 0 burials at F=16 to
+**39 burials / 142px buried at F=20** (sub-5px grazes, but real — and
+candidate B would have been 1320px), `cool-1stage` 13 / 55px. The eventual
+fix is **rem-proportional coordinates** — block x/y scaling with the root
+font the way the blocks themselves already do; nothing short of that closes
+the F ≥ 16.4 class of failure this entry measured.
 
 ### 209. Actuator points have no relinquish path — implement 3-slot priority arbitration *(addressed 2026-07-26)*
 
@@ -8386,6 +8457,19 @@ consequence is part of the point.
 behaviour (a negative deadband erases hysteresis into a bare comparator, which
 is a *better* teaching hook than the failure originally claimed for it, and an
 argument for leaving that particular const unclamped).
+
+**Negative-`sep` measurement (2026-07-26)** — discharging the caveat on
+rulings 2+8's "scope any guarding to `deadband` + fan-speed": swept the real
+engine + the shipped `cool-2stage` literal (vm pattern) with `sep = −4`, so
+y2on (71 °F) sits below y1on (75 °F), space temp 60 → 85 → 60 °F at 0.25°
+steps. **No wedge.** No non-finite output anywhere, and the behaviour is
+legible: the sr2 latch simply trips first (Y1 + fan come on at 71.25 °F via
+`or1`), stage 2 still waits for the sr1 latch at 75.25 °F via `and1` — the
+or1/and1 pair D2 called redundant at `sep ≥ 0` is exactly what keeps the
+staging ordered here — and the down-sweep stages off in reverse, everything
+off at 71 °F. Restoring `sep = +2` at 60 °F recovers nominal thresholds
+(75.25 / 77.25 °F) with no latch state surviving. Legible exploration like
+the rest of the const family; no clamp warranted for `sep`.
 
 ### 216. Nine rules request a mono weight the site does not ship *(addressed 2026-07-26)*
 
