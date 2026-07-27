@@ -8566,7 +8566,7 @@ now agrees with); the spec header's shorthand became "three-level". The
 mandated three-part shape survives — three items, none of them a
 seventeenth slot.
 
-### 218. Shell `formatPointValue` closes over helpers defined inside the UNIT: FCU banner *(addressed 2026-07-26 — shell-extraction branch; close on merge)*
+### 218. Shell `formatPointValue` closes over helpers defined inside the UNIT: FCU banner *(closed 2026-07-26 — shell-extraction PR)*
 
 `formatPointValue` (shell statusbar section of
 `html/simulators/ddc-workbench.html`) calls `dispTempNum` / `tSuffix` /
@@ -8584,7 +8584,8 @@ exactly this — `dispTempNum` / `tSuffix` / `dSuffix` now live in
 `html/scripts/ddcw-shell.js` as `DDCWShell` statics (the shell header cites
 this entry) and the unit delegates through them. No commit carries a
 `(#218)` suffix (the extraction commits predate the disposition), so this
-note is the ledger link. Close when the branch merges.
+note is the ledger link. Closed on the extraction PR itself — this doc
+edit rides the same merge, so the status is true the moment it lands.
 
 ### 219. Workbench static placeholders describe a state the staged programs never resolve to *(open — 2026-07-26 · cosmetic)*
 
