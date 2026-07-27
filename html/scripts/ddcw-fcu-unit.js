@@ -298,7 +298,16 @@ const DDCWFcuUnit = (function () {
         // an unauthored point — see the header's BINDING INVARIANT.)
         plant.sensors['rat'] = plant.zoneT;
 
-        d.eatT = zoneT;                  // actual return air (= zone temp)
+        // Entering air for the DISPLAY — the same post-integration
+        // sample as sensors['rat'] above, because the EAT badge and the
+        // RAT chip are one measurement and must round identically every
+        // tick. (The pre-step local `zoneT` drifts up to ~0.06 °F from
+        // the probe inside one 5-sim-s step — enough to split the last
+        // displayed digit at a rounding boundary. The physics above
+        // deliberately keeps the tick-START zoneT: that is the Euler
+        // evaluation point; only the display samples tick-END state,
+        // like every other chip.)
+        d.eatT = plant.zoneT;            // actual return air (= zone temp)
         d.coilLeaveT = coilLeaveT;
         d.datT = datT;
         d.stage = stage;
