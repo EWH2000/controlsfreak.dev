@@ -442,6 +442,24 @@ test.describe('ddcw-fcu-unit: zone trajectory (integration)', () => {
         expect(pl.zoneT).toBe(z0);
         expect(pl.simSec).toBe(0);
     });
+
+    test('the displayed EAT and the return probe are one sample — never split mid-tick', () => {
+        // d.eatT once sampled the tick-START zoneT while sensors['rat']
+        // samples the tick-END truth — up to ~0.06 °F apart inside one
+        // 5-sim-s step, enough to split the last displayed digit of the
+        // EAT badge from the RAT chip at a rounding boundary (review
+        // catch, 2026-07-27). Both now read the post-integration zoneT,
+        // so the two surfaces can never disagree, even transiently.
+        const Unit = loadUnit();
+        const pl = run(Unit, (p) => {
+            p.actuators['fan-enable'] = true;
+            p.actuators['fan-speed'] = 70;
+            p.actuators.y1 = true;
+            p.actuators.y2 = true;
+        }, 20, 5);
+        expect(pl.zoneT).not.toBe(76);                    // the zone genuinely moved
+        expect(pl.derived.eatT).toBe(pl.sensors['rat']);  // one measurement, one number
+    });
 });
 
 test.describe('ddcw-fcu-unit: DAT low-limit annunciator', () => {
