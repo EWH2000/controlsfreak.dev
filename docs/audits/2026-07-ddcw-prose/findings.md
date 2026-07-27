@@ -1,14 +1,27 @@
 # DDC Workbench teaching-prose audit — the open #443/#444/#445 stack
 
-> **Disposition: findings delivered 2026-07-27, NONE applied.** Every item
-> below is a teaching-content judgement on a page under an owner merge gate,
-> and three of them rewrite the owner's own war story. Per the standing
-> fix policy (confirmed bugs get fixed on the branch; improvements and
-> critiques of owner-locked decisions wait for his pick) this whole set
-> waits. Nothing in this document has been committed to a PR branch.
+> **Disposition: owner-dispositioned 2026-07-27.** Three outcomes:
+>
+> - **§1, §2, §5 and the other program-level items — DEFERRED**, by owner
+>   decision, to a single pre-live sweep. Rationale: the AHU programs land
+>   next and carry more of this class, so both get swept together rather than
+>   patched piecemeal now. Not merge blockers for #443. Logged as
+>   `codebase-issues` **#225** and **#226** so the sweep inherits them.
+> - **§3 (the min-off war story) — REFRAMED AND APPLIED** on
+>   `feat/ddcw-signed-coil-dt`. The owner supplied the lesson: *"make sure you
+>   know how your override is affecting the logic"* — better than the original
+>   beat and it drops the "authors don't always succeed" fatalism. Written in
+>   house voice from that direction, mechanism re-verified first.
+> - **§6 (`DAT − RAT` does not survive the AHU) — RESOLVED by the owner's
+>   architecture call:** the AHU will read **MAT** as entering, so the
+>   leaving-minus-entering convention holds unchanged across both units. The
+>   FCU prose was generalized to state the rule rather than the bare identity.
+> - **§7 and §8 (a11y) — still open**, not covered by the program-sweep
+>   deferral. Logged as `codebase-issues` **#227**.
 >
 > Measured at `main` @ `20e12ab`, stack tip `feat/ddcw-signed-coil-dt` @
-> `20ddf39`. Prose quoted from the signeddt worktree.
+> `20ddf39`. Prose quoted from the signeddt worktree as audited — §3 and §6
+> have since been edited, so those quotes are the pre-fix text.
 
 ## Why this audit ran
 
