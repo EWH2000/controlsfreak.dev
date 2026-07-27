@@ -138,11 +138,12 @@
 // NOTHING UNIT-SPECIFIC LIVES HERE. Nothing in this file may key off
 // FCU control ids — or any unit's control ids: the shell speaks only
 // of unit.points, plant keys and the ddcw-* skeleton. Grep-provable:
-// a case-insensitive grep for the FCU prefix over this file returns
-// nothing. Intended consumers, both assembling a unit object and
-// calling createWorkbench: simulators/ddc-workbench.html (the DX fan
-// coil unit, via /scripts/ddcw-fcu-unit.js) and the planned second
-// unit page, simulators/ddc-workbench-ahu.html (the AHU unit).
+// a case-insensitive grep for the FCU prefix over this file hits ONLY
+// this header's contract prose — zero code identifiers. Intended
+// consumers, both assembling a unit object and calling
+// createWorkbench: simulators/ddc-workbench.html (the DX fan coil
+// unit, via /scripts/ddcw-fcu-unit.js) and the planned second unit
+// page, simulators/ddc-workbench-ahu.html (the AHU unit).
 //
 // Consumers: simulators/ddc-workbench.html.
 // Tests: tests/ddc-workbench.spec.js + tests/ddc-workbench-priority.spec.js
@@ -470,8 +471,8 @@ const DDCWShell = (function () {
                 initialGraph: graph,            // share the already-running graph
                 // Canvas bounds come from the unit config — the sheet
                 // layouts and the canvas they were authored to move
-                // together (the FCU page's assembly IIFE documents its
-                // candidate-A numbers where the literals live).
+                // together (the consuming page's assembly IIFE documents
+                // its numbers where the program literals live).
                 canvasSize: unit.canvasSize,
                 autoloop: false,                // the HOST drives ticks
                 keyScope: document.getElementById('tab-wiresheet'),

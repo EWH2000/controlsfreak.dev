@@ -294,122 +294,16 @@ noindex: true
             min-height: 1.1rem;
         }
 
-        /* ── DDC WORKBENCH SHELL (ddcw-*) ── unit-agnostic chrome. The two
-           tab panes reuse the shared .tabs / .tab-btn / .tab-pane and the
-           .fbe-* wiresheet classes from styles.css; only the persistent
-           statusbar (live IO strip + program picker) and the off-program
-           window are drawn here. It carries NO fcu-specific id — the shell
-           speaks only of points and plant. */
-        .ddcw-statusbar {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.6rem 1.25rem;
-            padding: 0.7rem 0 0.85rem;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 1.1rem;
-        }
-        .ddcw-io-strip { display: flex; flex-wrap: wrap; gap: 0.4rem 0.5rem; }
-        .ddcw-chip {
-            display: inline-flex;
-            align-items: baseline;
-            gap: 0.35rem;
-            font-family: var(--mono);
-            font-size: 0.68rem;
-            padding: 0.22rem 0.5rem;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: 3px;
-        }
-        .ddcw-chip-cap {
-            color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
-        .ddcw-chip-val { color: var(--text-bright); font-weight: 700; }
-        .ddcw-chip-val.on { color: var(--accent-ink); }
-        .ddcw-chip-val.off { color: var(--text-dim); }
-        .ddcw-status-right {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 0.5rem 1.1rem;
-        }
-        .ddcw-prog { display: flex; align-items: center; gap: 0.45rem; }
-        .ddcw-prog-lbl {
-            font-family: var(--mono);
-            font-size: 0.68rem;
-            color: var(--text);
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
-        .ddcw-prog select { min-width: 12rem; }
-
-        /* ── Off-program window ── every actuator point whose resolved
-           command is NOT the sequence at slot 16: a hand value in slot 8,
-           or a released point resting on Relinquish_Default. Mono at chip
-           scale; the label is the quiet element, entries the loud ones.
-           Amber left rule = the same "operator is holding something"
-           register as the sensor-override box. Collapses via .is-empty
-           when empty (rule below). */
-        .ddcw-offprog {
-            margin: -0.4rem 0 1.1rem;
-            padding: 0.5rem 0.65rem;
-            border: 1px solid var(--border);
-            border-left: 3px solid var(--amber);
-            background: var(--surface-2);
-        }
-        /* Empty = visually gone but STILL RENDERED (the sr-only collapse
-           recipe), never the hidden attribute / display:none: a live
-           region only announces mutations made while it is IN the
-           accessibility tree, and a region that enters the tree already
-           populated announces nothing — which silenced the window's
-           primary teaching event (the box is hidden whenever empty, so
-           every first hand-take / first release-to-default landed on
-           the empty→non-empty edge). The second selector out-specifies
-           the fullscreen margin/padding retune further down, so the
-           collapse holds on both surfaces. */
-        .ddcw-offprog.is-empty,
-        .tool-card.is-fullscreen .ddcw-offprog.is-empty {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            margin: 0;
-            border: 0;
-            padding: 0;
-            overflow: hidden;
-            clip-path: inset(50%);
-            white-space: nowrap;
-        }
-        .ddcw-offprog-lbl {
-            font-family: var(--mono);
-            font-size: 0.68rem;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
-        .ddcw-offprog-list {
-            list-style: none;
-            margin: 0.3rem 0 0;
-            padding: 0;
-        }
-        .ddcw-offprog-list li {
-            font-family: var(--mono);
-            font-size: 0.72rem;
-            line-height: 1.55;
-            color: var(--text-bright);
-            overflow-wrap: anywhere;
-        }
-
-        /* A short intro line above the wiresheet, tying it to the unit. */
-        p.ddcw-sheet-note {
-            font-family: var(--mono);
-            font-size: 0.78rem;
-            line-height: 1.5;
-            color: var(--text-dim);
-            margin: 0 0 0.25rem;
-        }
+        /* ── DDC WORKBENCH SHELL (ddcw-*) ── graduated to styles.css (the
+           DDC WORKBENCH SHELL section) when the shell JS moved to
+           /scripts/ddcw-shell.js — two pages will draw it next phase, and
+           the house rule keeps only single-page pieces inline. Two ddcw-*
+           control-pattern rules DO stay in this block, by design:
+           label.ddcw-null (above) must be declared after this page's
+           .fcu-fanen label rule to win their specificity tie, and the
+           .ddcw-tracked disabled dimming is scoped under .fcu-controls.
+           Both are unit-control chrome wired to fcu markup, not shell
+           chrome. */
 
         /* ── FULLSCREEN COCKPIT ────────────────────────────────────────────
            The shared mechanism (fullscreen-toggle.js) pins .tool-card to the
@@ -433,27 +327,21 @@ noindex: true
             overflow: hidden;
             padding: 0.4rem 1.25rem 0.9rem;
         }
-        .tool-card.is-fullscreen .tabs.tabs-flush,
-        .tool-card.is-fullscreen .ddcw-statusbar { flex: none; }
-        /* The off-program window is fixed chrome too (it sits between the
-           statusbar and the panes) — keep it compact so the instrument
-           view keeps its canvas. */
-        .tool-card.is-fullscreen .ddcw-offprog {
-            flex: none;
-            margin: -0.6rem 0 0.6rem;
-            padding: 0.35rem 0.65rem;
-        }
+        .tool-card.is-fullscreen .tabs.tabs-flush { flex: none; }
+        /* The statusbar + off-program window are fixed chrome here too —
+           their fullscreen retunes graduated to styles.css with the rest
+           of the ddcw-* shell chrome. */
         .tool-card.is-fullscreen .tab-pane.active {
             flex: 1;
             min-height: 0;
             overflow: auto;
         }
-        /* Reading-only prose is out in the instrument view. */
+        /* Reading-only prose is out in the instrument view (the shell's
+           p.ddcw-sheet-note drops via its graduated rule in styles.css). */
         .tool-card.is-fullscreen .tool-preamble,
         .tool-card.is-fullscreen .subhead,
         .tool-card.is-fullscreen .ref-note,
         .tool-card.is-fullscreen p.fcu-note,
-        .tool-card.is-fullscreen p.ddcw-sheet-note,
         .tool-card.is-fullscreen .fbe-legend { display: none; }
 
         /* Unit pane in fullscreen: graphic left, readouts + controls right
