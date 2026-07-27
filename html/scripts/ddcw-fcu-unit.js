@@ -89,6 +89,23 @@ const DDCWFcuUnit = (function () {
     const RA_RH       = 50;                  // % — assumed return-air RH
     const FAN_HEAT    = 0.6;                 // °F picked up across the fan
     const COIL_FLOOR  = 34;                  // °F leaving-air clamp (freeze floor)
+    // DAT low-limit annunciator thresholds — the unit-side mirror of the
+    // trip/clear constants the cool-2stage-safeties program carries in
+    // its lowlim/hilim const blocks, and the same 42 °F line the
+    // freeze-watch verdict already draws (coilLeaveT <= 42 below). The
+    // unit tracks this as an OBSERVATION of the plant (a low-limit
+    // annunciator on the graphic), independent of which program runs —
+    // which is exactly why the verdict line it feeds must never assert
+    // WHO cut the stages: on an unprotected sheet a dive can over-cool
+    // the zone until the THERMOSTAT cuts the stages while the latch is
+    // still inside its clear lag, and the same branch paints for that
+    // window (~18 sim-s at 1×; measured, not hypothetical). The line
+    // therefore speaks in the annunciator's own observation register —
+    // latched, stages off, fan moving air — true whichever logic
+    // dropped the stages. Only the safeties sheet holds them off for
+    // the whole recovery, and that behavioral contrast is the lesson.
+    const DAT_LOW_TRIP  = 42;                // °F — latches below this
+    const DAT_LOW_CLEAR = 52;                // °F — releases above this
     const P           = P_STD;               // psia (from psychro-engine)
 
     // ══ TUNE BY FEEL — PLACEHOLDER zone-thermal constants ══════════════
@@ -146,6 +163,10 @@ const DDCWFcuUnit = (function () {
             coilLeaveT: undefined,           // °F — first-order-lagged coil leaving-air; seeded to
             //                                  its quasi-static target on the first tick (no page-load ramp)
             override:   { spaceTemp: { active: false, value: 76 } },
+            // DAT low-limit annunciator state (see the DAT_LOW_* consts):
+            // hysteresis-latched on the SENSED discharge temp so the
+            // verdict can report the annunciator.
+            lowLimit:   { latched: false },
             simSec:     0,                   // accumulated sim-seconds (clock readout hook)
         };
     }
@@ -218,6 +239,14 @@ const DDCWFcuUnit = (function () {
         // low-limit hook).
         plant.sensors['dat'] = datT;
 
+        // DAT low-limit annunciator — the same trip/clear hysteresis the
+        // safeties program's latch runs, tracked plant-side so the
+        // verdict can report the state. With the fan off, datT reads the
+        // zone and the latch self-clears — which is also why the fan-off
+        // branches outrank the annunciator line in the verdict ladder.
+        if (datT < DAT_LOW_TRIP) plant.lowLimit.latched = true;
+        else if (datT > DAT_LOW_CLEAR) plant.lowLimit.latched = false;
+
         // ── zone heat balance (forward-Euler, pid-engine idiom) ──────────
         // Q_cool = sensible heat the SUPPLY air removes from the zone,
         // measured to the POST-FAN datT so the fan's FAN_HEAT (draw-through)
@@ -268,6 +297,7 @@ const DDCWFcuUnit = (function () {
         d.qGain = qGain;                 // Btu/h
         d.sensedT = plant.sensors['space-temp'];
         d.overrideActive = plant.override.spaceTemp.active;
+        d.lowLimitLatched = plant.lowLimit.latched;
         plant.anim.fanFrac = fanOn ? fanFrac : 0;
     }
 
@@ -444,11 +474,22 @@ const DDCWFcuUnit = (function () {
         // With no stage called the unit is simply at rest, which is
         // normal operation, not an alarm (previously this whole branch
         // flagged red).
+        // The low-limit annunciator line sits BELOW the fan-off branches
+        // (an active no-airflow hazard is the more urgent diagnosis, and
+        // with the fan off the DAT annunciator self-clears anyway) and
+        // ABOVE the generic compressor-off warn: both read "stages off,
+        // fan running", so the specific observation must win the tie or
+        // it could never surface. Its wording is observation-only — it
+        // reports the annunciator, never who cut the stages (see the
+        // DAT_LOW_* header note for the unprotected-sheet window that
+        // rules out causal phrasing).
         let cls, txt;
         if (!d.fanOn && d.stage > 0) {
             cls = 'error'; txt = 'Fan off with compressor on — no airflow across an active coil';
         } else if (!d.fanOn) {
             cls = '';      txt = 'No cooling call — fan off (idle)';
+        } else if (d.stage === 0 && d.lowLimitLatched) {
+            cls = 'warn';  txt = 'DAT low-limit annunciator latched — stages off, fan moving air';
         } else if (d.stage === 0) {
             cls = 'warn';  txt = 'Compressor off — fan only, no ΔT across the coil';
         } else if (d.fault === 'lowCharge') {

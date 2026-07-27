@@ -408,6 +408,70 @@ test.describe('ddcw-fcu-unit: zone trajectory (integration)', () => {
     });
 });
 
+test.describe('ddcw-fcu-unit: DAT low-limit annunciator', () => {
+
+    // The plant-side hysteresis mirror of the safeties program's
+    // trip/clear pair. Bands, not values: the trip sits at the same
+    // line as the freeze-watch verdict and the clear a recovery band
+    // above it — the rows assert latch BEHAVIOR across the coil-lag
+    // trajectory, which is deterministic physics.
+
+    test('a starved coil latches the annunciator; recovery through the band holds, then clears', () => {
+        const Unit = loadUnit();
+        // Trip: stage 2 on 40% fan starves the coil to the freeze floor
+        // (the same recipe the coil-physics rows use) — DAT dives.
+        const pl = quasi(Unit, (p) => {
+            p.actuators['fan-speed'] = 40;
+            p.actuators.y1 = true;
+            p.actuators.y2 = true;
+        });
+        expect(pl.derived.datT).toBeLessThan(42);
+        expect(pl.derived.lowLimitLatched).toBe(true);
+
+        // Recovery: stages off, fan on — the coil lag ramps DAT back
+        // toward the zone. The latch must HOLD everywhere below the
+        // clear threshold (including the 42–52 band) and release only
+        // above it. Anti-vacuity: the ramp must actually sample the
+        // hold band.
+        pl.actuators.y1 = false;
+        pl.actuators.y2 = false;
+        pl.actuators['fan-speed'] = 100;
+        let sawHoldBand = false;
+        let cleared = false;
+        for (let i = 0; i < 600 && !cleared; i++) {
+            Unit.update(pl, 1);
+            const dat = pl.derived.datT;
+            if (dat > 42 && dat < 52) {
+                sawHoldBand = true;
+                expect(pl.derived.lowLimitLatched, 'held inside the band at ' + dat).toBe(true);
+            }
+            if (pl.derived.lowLimitLatched === false) {
+                cleared = true;
+                expect(dat, 'released only above the clear threshold').toBeGreaterThan(52);
+            }
+        }
+        expect(sawHoldBand, 'the ramp sampled the hysteresis band').toBe(true);
+        expect(cleared, 'the latch eventually cleared').toBe(true);
+    });
+
+    test('fan-off reads the zone, so the annunciator self-clears (the verdict-ladder premise)', () => {
+        // The annunciator verdict line ranks below the fan-off branches
+        // because a stopped fan hands datT the zone temp — the latch
+        // cannot stay latched with no airflow and a warm zone.
+        const Unit = loadUnit();
+        const pl = quasi(Unit, (p) => {
+            p.actuators['fan-speed'] = 40;
+            p.actuators.y1 = true;
+            p.actuators.y2 = true;
+        });
+        expect(pl.derived.lowLimitLatched).toBe(true);
+        pl.actuators['fan-enable'] = false;
+        Unit.update(pl, 0);                    // dt 0: pure re-read, no integration
+        expect(pl.derived.datT).toBe(pl.zoneT);
+        expect(pl.derived.lowLimitLatched).toBe(false);
+    });
+});
+
 test.describe('ddcw-fcu-unit: sensor override', () => {
 
     test('an active override splits the sensed value from the integrating truth', () => {
@@ -434,12 +498,12 @@ test.describe('ddcw-fcu-unit: programs × points (the binding invariant)', () =>
     // point kind → the FBE block type its seed block must carry.
     const KIND_TO_BLOCK = { ai: 'ai', bi: 'bi', ao: 'ao', bo: 'bo', param: 'const' };
 
-    test('all three programs construct, tick, and carry every point with its kind-matched block type', () => {
+    test('every program constructs, ticks, and carries every point with its kind-matched block type', () => {
         // The load-bearing identity: point id === seed FBE-block id in
         // EVERY program. A missing actuator block silently drops the
         // point to Relinquish_Default; a missing sensor block leaves a
         // sequence staging on a literal. Iterates whatever the registry
-        // holds, so a fourth program is swept automatically.
+        // holds, so a new program is swept automatically.
         const Unit = loadUnit();
         const FBE = loadFBE();
         const programs = Object.entries(loadPrograms());
@@ -585,5 +649,93 @@ test.describe('ddcw-fcu-unit: program logic (engine-direct)', () => {
         by.fanon.params.state = false;           // toggling the source off…
         FBE.tick(g, 0.1);
         expect(by['fan-enable'].in.IN).toBe(false);  // …is the taught no-airflow fault
+    });
+
+    // ── cool-2stage-safeties ── the protected sequence. Thresholds are
+    // read from the sheet's own const blocks (lowlim / hilim) and the
+    // TON's own pt param, never copied numbers. Ticks use exact-binary
+    // dt values so timer thresholds can't float-drift.
+
+    test('cool-2stage-safeties: DAT low-limit trips the latch, holds in the band, clears above — fan rides through', () => {
+        const FBE = loadFBE();
+        const { g, by } = mount(FBE, loadPrograms()['cool-2stage-safeties']);
+        const pt = by.tonoff.params.pt;
+        const trip = by.lowlim.params.value;
+        const clear = by.hilim.params.value;
+        expect(clear).toBeGreaterThan(trip);     // hysteresis is real
+
+        // Boot: warm zone calls both stages; one big tick burns the
+        // power-up min-off (TON clamps et at pt) and the stages make
+        // the SAME tick the permit opens (the cycle members are
+        // declared in dependency order — the layout comment in the
+        // page pins that).
+        by['space-temp'].params.value = 78;
+        by.dat.params.value = clear + 3;
+        FBE.tick(g, pt + 1);
+        expect(by.y1.in.IN).toBe(true);
+        expect(by.y2.in.IN).toBe(true);
+        expect(by['fan-enable'].in.IN).toBe(true);
+        expect(by['fan-speed'].in.IN).toBe(by.hundred.params.value);
+
+        // Trip: DAT below the lowlim const cuts BOTH stages that tick.
+        // The fan rides through: fan-enable stays on the cooling call,
+        // and the speed reference stays staged on the CALL (sr2), so
+        // the AO holds the high reference — an AO shows the command.
+        by.dat.params.value = trip - 2;
+        FBE.tick(g, 1);
+        expect(by.y1.in.IN).toBe(false);
+        expect(by.y2.in.IN).toBe(false);
+        expect(by['fan-enable'].in.IN).toBe(true);
+        expect(by['fan-speed'].in.IN).toBe(by.hundred.params.value);
+
+        // Hold: between trip and clear the latch holds the lockout.
+        by.dat.params.value = (trip + clear) / 2;
+        FBE.tick(g, 1);
+        expect(by.y1.in.IN).toBe(false);
+        expect(by['fan-enable'].in.IN).toBe(true);
+
+        // Clear: DAT above hilim re-arms the latch, but the stages have
+        // only been off a few sim-seconds — the min-off TON still holds
+        // them (okrun is back TRUE, offok is not).
+        by.dat.params.value = clear + 3;
+        FBE.tick(g, 1);
+        expect(by.okrun.out.Q).toBe(true);
+        expect(by.y1.in.IN).toBe(false);
+
+        // Burn the min-off: the stages restage.
+        FBE.tick(g, pt);
+        expect(by.y1.in.IN).toBe(true);
+        expect(by.y2.in.IN).toBe(true);
+    });
+
+    test('cool-2stage-safeties: min-off blocks a quick restage after a thermostat stop', () => {
+        const FBE = loadFBE();
+        const { g, by } = mount(FBE, loadPrograms()['cool-2stage-safeties']);
+        const pt = by.tonoff.params.pt;
+
+        by['space-temp'].params.value = 78;
+        by.dat.params.value = by.hilim.params.value + 3;
+        FBE.tick(g, pt + 1);
+        expect(by.y1.in.IN).toBe(true);
+
+        // Zone satisfied: everything breaks — a normal stop, no fault.
+        by['space-temp'].params.value = 71;
+        FBE.tick(g, 1);
+        expect(by.y1.in.IN).toBe(false);
+        expect(by['fan-enable'].in.IN).toBe(false);
+
+        // The call returns seconds later: the latches re-make, the fan
+        // follows the call — but the stages CANNOT restage until the
+        // min-off elapses (the anti-short-cycle behavior the sheet
+        // exists to teach).
+        by['space-temp'].params.value = 78;
+        FBE.tick(g, 1);
+        FBE.tick(g, 1);
+        expect(by.sr1.out.Q).toBe(true);             // the call is back…
+        expect(by['fan-enable'].in.IN).toBe(true);   // …the fan follows it…
+        expect(by.y1.in.IN).toBe(false);             // …the stage waits
+
+        FBE.tick(g, pt);                             // off-time served
+        expect(by.y1.in.IN).toBe(true);
     });
 });

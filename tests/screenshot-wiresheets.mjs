@@ -93,7 +93,7 @@ const PAGES = {
         inner: '#ddcw-fbe-inner',
         aliases: ['workbench', 'ddc-workbench-fcu', 'ddcw'],
         // FCU_PROGRAMS keys (ddc-workbench-fcu.html).
-        sheets: ['cool-2stage', 'cool-1stage', 'cool-2stage-fanon'],
+        sheets: ['cool-2stage', 'cool-1stage', 'cool-2stage-fanon', 'cool-2stage-safeties'],
         async loadSheet(page, key) {
             // The editor lazy-mounts on first Wiresheet open …
             await page.click('.tabs.tabs-flush [data-tab="wiresheet"]');

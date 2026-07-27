@@ -690,7 +690,7 @@ test.describe('fbe-engine: FCU sample programs (workbench page)', () => {
         // Pin the registry's key set so the sweep's reach is explicit —
         // a new sample program must be added here to count as covered.
         expect(Object.keys(FCU_PROGRAMS).sort()).toEqual(
-            ['cool-1stage', 'cool-2stage', 'cool-2stage-fanon'],
+            ['cool-1stage', 'cool-2stage', 'cool-2stage-fanon', 'cool-2stage-safeties'],
         );
     });
 });
