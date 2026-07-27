@@ -8641,3 +8641,27 @@ from its own program set. The only reachable difference is a no-JS render
 (empty select vs a list that controls nothing) and a pre-tick paint during
 incremental render — the same accepted class as #219's static placeholders,
 on a page that is wholly JS-driven, noindex, and excluded from collections.
+
+### 222. perf-profile: the workbench Unit row's layoutsPerFrame tolerance fires on a clean main build *(noticed 2026-07-27, PR #443 gates)*
+
+While recording the report-only before/after for the safeties-program PR,
+the `ddc-workbench-fcu-unit` row read `layoutsPerFrame` 3.73 on a clean
+**origin/main** build and 5.63 on the branch build — both flagged against
+the pinned 2.23 baseline, and the two readings bounced that far apart on an
+identical Unit tab (the branch's new sheet only mounts when selected, and
+fps held 59.8 in both runs). Either the pinned baseline has drifted since
+it was measured or the metric is loads-dependent enough that its ±2.0
+absolute tolerance under-absorbs this box under background load. Worth a
+re-baseline pass (idle box, several reps) before anyone reads that flag as
+a real regression; the profiler's own header already names fps as the
+ranking signal.
+
+### 223. screenshot-wiresheets: canvas-element shots clip a scrolling sheet *(noticed 2026-07-27)*
+
+The matrix rig screenshots `surface.canvas` (`.fbe-canvas`), which is a
+scroll container — in `normal` mode (and even `fs-wide` for the 480-tall
+workbench canvas) the shot captures only the scrolled-into-view region, so
+the bottom band of a full-height sheet never appears on the contact sheet.
+A review pass that trusts the matrix alone can miss a defect below the
+fold. Fix candidates: shoot the `.fbe-canvas-inner` node with the canvas
+temporarily un-clipped, or scale the shot to the inner's full bounds.
