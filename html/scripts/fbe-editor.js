@@ -33,6 +33,16 @@
 //   examples           { key → graph literal }; page-owned, passed in.
 //   initialExampleKey  load this example on construction (e.g. 'econ').
 //   initialGraph       …or seed from a graph literal instead.
+//   canvasSize         { w, h } — canvas content bounds in px (default
+//                      900×480, the styles.css no-JS size on
+//                      .fbe-canvas-inner / .fbe-wire-layer). When
+//                      passed, the module inline-sizes the inner div at
+//                      construction AND the wire layer on every render;
+//                      without the wire-layer inline size the
+//                      stylesheet's fixed 900×480 letterboxes every
+//                      wire on a non-default canvas (the SVG renders at
+//                      900×480 with a larger viewBox, so all wire
+//                      geometry draws scaled down and offset).
 //   dt                 tick step in seconds (default 0.1 = 10 Hz).
 //   autoloop           true (default): the module owns a setInterval and
 //                      the #110 idle-gating (no ticks below the desktop
@@ -85,9 +95,26 @@ const FBEEditor = (function () {
 
         // INNER_W / INNER_H grow when the user enters fullscreen so blocks
         // can be dragged into the new space; they never shrink back below
-        // 900×480 so blocks placed off-screen stay reachable after exit.
-        let INNER_W = 900, INNER_H = 480;      // canvas content bounds
-        const BLOCK_W = 136;                   // matches .fbe-block width
+        // their construction size (900×480, or the host's canvasSize) so
+        // blocks placed off-screen stay reachable after exit.
+        const canvasSize = cfg.canvasSize || null;
+        let INNER_W = canvasSize && canvasSize.w ? canvasSize.w : 900;
+        let INNER_H = canvasSize && canvasSize.h ? canvasSize.h : 480;
+        // True .fbe-block width, re-measured from a rendered block in
+        // renderAll(). 136 is the documented fallback — 8.5rem at a 16px
+        // root font (#208) — used until a block renders, and kept when a
+        // block measures 0 wide (hidden pane / display:none, e.g. the
+        // workbench's lazy tab, where getBoundingClientRect is all-zero).
+        let blockW = 136;
+        // Forward-route threshold stub — see wirePath(). Measured
+        // 2026-07: STUB = 10 (forward threshold 20px; was 18 → 36px)
+        // fixes econ / tstat-cool / tstat-heat / reset on the public
+        // page (tstat crossings 4 → 0 each) and leaves proof on the
+        // 5-segment fallback BY DESIGN (see the proof example's layout
+        // comment, function-block-editor.html:287). Any change here must
+        // be eyeballed on BOTH consumer pages (#205); crossing counts
+        // are intersection POINTS, not wire pairs.
+        const STUB = 10;
 
         // ── editor state ────────────────────────────────────────────
         let graph    = { blocks: [], wires: [] };
@@ -132,11 +159,26 @@ const FBEEditor = (function () {
 
         function addBlock(type) {
             const id = 'b' + (++blockSeq);
-            // Drop new blocks into a tidy 5×4 grid; the cycle wraps after
-            // 20, so further blocks may overlap and need a drag.
+            // Drop new blocks into a tidy grid whose column pitch comes
+            // from the router's own forward condition (#206, #208), so
+            // two adjacent drops wired left→right route as the clean
+            // 3-segment elbow, never the buried 5-segment fallback.
+            // wirePath() goes forward when the target in-pin sits at
+            // least 2·STUB right of the source out-pin. Pin-dot centres
+            // sit 0.05rem − 1px outside each block edge (0.36rem margin
+            // pull minus the 0.31rem half-dot, less the 1px block
+            // border), so one block's in-pin → out-pin span is
+            // blockW + 2·(0.05F − 1) = blockW + 0.1F − 2 at root font
+            // F px — bounded by blockW + 2 for any root font below 40px.
+            // pitchX = blockW + 2·STUB + 2 therefore clears the forward
+            // threshold at any plausible font size. The cycle wraps
+            // after cols·4 drops, so further blocks may overlap and
+            // need a drag.
             const n = dropSeq++;
-            const x = 40 + (n % 5) * 150;
-            const y = 40 + Math.floor((n % 20) / 5) * 120;
+            const pitchX = Math.ceil(blockW + 2 * STUB + 2);
+            const cols = Math.max(1, Math.floor((INNER_W - 80) / pitchX));
+            const x = 40 + (n % cols) * pitchX;
+            const y = 40 + Math.floor((n % (cols * 4)) / cols) * 120;
             graph.blocks.push(engine.createBlock(type, id, x, y));
             renderAll();
             select({ kind: 'block', id });
@@ -153,12 +195,30 @@ const FBEEditor = (function () {
             svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svg.setAttribute('class', 'fbe-wire-layer');
             svg.setAttribute('viewBox', '0 0 ' + INNER_W + ' ' + INNER_H);
+            // Inline-size the layer to the canvas bounds. The stylesheet
+            // fixes .fbe-wire-layer at the 900×480 default, and an SVG
+            // rendered at that size with a non-900×480 viewBox
+            // letterboxes: every wire draws scaled down and offset from
+            // the blocks. A no-op at the default size; load-bearing for
+            // any host-passed canvasSize.
+            svg.style.width  = INNER_W + 'px';
+            svg.style.height = INNER_H + 'px';
             // Redundant to the block-value readouts; an unnamed dynamic
             // SVG is noise for AT (audit-2026-06 polish).
             svg.setAttribute('aria-hidden', 'true');
             inner.appendChild(svg);
 
             graph.blocks.forEach(renderBlock);
+            // Re-measure the true block width — .fbe-block is 8.5rem, so
+            // the 136 fallback only holds at a 16px root font (#208). A
+            // hidden sheet (display:none — the workbench's lazy tab)
+            // measures 0, which would poison the drag clamp and the drop
+            // grid; keep the fallback (or the last good measurement)
+            // until a visible render.
+            if (graph.blocks.length) {
+                const w = els[graph.blocks[0].id].getBoundingClientRect().width;
+                if (w > 0) blockW = w;
+            }
             ensureWireIds();
             graph.wires.forEach(createWireEls);
             drawWires();
@@ -277,13 +337,12 @@ const FBEEditor = (function () {
         // right, traverse at the mid height, and re-enter the target from its
         // left, so the wire never doubles back across its own block.
         function wirePath(a, b) {
-            const stub = 18;
-            if (b.x >= a.x + 2 * stub) {
+            if (b.x >= a.x + 2 * STUB) {
                 const mx = (a.x + b.x) / 2;
                 return 'M ' + a.x + ' ' + a.y + ' H ' + mx + ' V ' + b.y + ' H ' + b.x;
             }
-            const ax2 = a.x + stub;
-            const bx2 = b.x - stub;
+            const ax2 = a.x + STUB;
+            const bx2 = b.x - STUB;
             const my = (a.y + b.y) / 2;
             return 'M ' + a.x + ' ' + a.y + ' H ' + ax2 + ' V ' + my +
                    ' H ' + bx2 + ' V ' + b.y + ' H ' + b.x;
@@ -523,7 +582,7 @@ const FBEEditor = (function () {
             function move(ev) {
                 const dx = ev.clientX - startX, dy = ev.clientY - startY;
                 if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
-                b.x = clamp(origX + dx, 0, INNER_W - BLOCK_W);
+                b.x = clamp(origX + dx, 0, INNER_W - blockW);
                 b.y = clamp(origY + dy, 0, INNER_H - 40);
                 el.style.left = b.x + 'px';
                 el.style.top = b.y + 'px';
@@ -673,6 +732,7 @@ const FBEEditor = (function () {
         function clearCanvas() {
             graph = { blocks: [], wires: [] };
             selected = null;
+            dropSeq = 0;   // restart the drop grid at the top-left
             renderAll();
             setStatus(running ? 'Running' : 'Paused');
             emitChange();
@@ -765,6 +825,13 @@ const FBEEditor = (function () {
         }
 
         // ── construction ────────────────────────────────────────────
+        // A host-supplied canvas size inline-sizes the inner div up
+        // front (the stylesheet's 900×480 is only the no-JS default);
+        // renderAll() sizes the wire layer to match on every rebuild.
+        if (canvasSize) {
+            inner.style.width  = INNER_W + 'px';
+            inner.style.height = INNER_H + 'px';
+        }
         buildPalette();
         canvasEl.addEventListener('click', onCanvasClick);
         keyScope.addEventListener('keydown', onKeyDown);

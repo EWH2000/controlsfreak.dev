@@ -517,25 +517,91 @@ test.describe('fbe-engine: catalog coverage (#123)', () => {
     });
 });
 
+// ── canned-program registries (consumer pages) ──────────────────────
+// The EXAMPLES / FCU_PROGRAMS registries live in each consumer page's
+// inline script, not the engine — extract the object literal from the
+// page source and evaluate it in a vm, so these tests exercise the
+// exact shipped graphs (no hand-copied twin to drift). Both literals
+// sit at 8-space depth; the first `};` back at that depth closes them
+// (everything inside is nested deeper). tests/fbe-geometry.spec.js
+// reuses this loader shape for its placement assertions.
+function loadLiteral(fileRelPath, literalName) {
+    const src = fs.readFileSync(path.join(__dirname, '..', fileRelPath), 'utf8');
+    const m = src.match(
+        new RegExp('const ' + literalName + ' = \\{[\\s\\S]*?\\n {8}\\};'));
+    if (!m) {
+        throw new Error(literalName + ' literal not found in ' + fileRelPath);
+    }
+    return vm.runInNewContext(m[0] + '\n' + literalName + ';', {});
+}
+
+// Graph-validity sweep over every program in a registry: every block
+// type exists, ids are unique, every literal param is declared on its
+// block type, coordinates sit inside the canvas + drag clamp, every
+// wire joins existing blocks through kind-compatible pins, no input
+// pin is fed twice, and the graph constructs and ticks. `bounds` is
+// the canvas the consumer page renders the literal on ({ w, h }); the
+// drag clamp is w − 136 by h − 40 (136 = the 8.5rem block width at
+// the 16px root font the layouts were authored against — the editor
+// re-measures at runtime, this check pins the authored size).
+// Returns the registry so callers can pin its key set.
+function sweepLiteral(filePath, literalName, bounds) {
+    const FBE = loadEngine();
+    const registry = loadLiteral(filePath, literalName);
+    const xMax = bounds.w - 136;
+    const yMax = bounds.h - 40;
+    for (const [name, def] of Object.entries(registry)) {
+        const byId = {};
+        def.blocks.forEach((b) => {
+            const bdef = FBE.BLOCKS[b.type];
+            expect(bdef, name + ': block ' + b.id + " type '" + b.type + "'").toBeTruthy();
+            expect(byId[b.id], name + ': duplicate block id ' + b.id).toBeUndefined();
+            byId[b.id] = b;
+            // Every param in the literal must be declared on the block
+            // type (catches a typo like `preset` for the TON's `pt` —
+            // makeGraph would silently keep it and backfill the default).
+            Object.keys(b.params || {}).forEach((k) => {
+                expect(
+                    (bdef.params || []).some((p) => p.name === k),
+                    name + ': ' + b.id + " undeclared param '" + k + "'",
+                ).toBe(true);
+            });
+            // Inside the canvas and the editor's drag clamp, so the
+            // sheet renders without scrolling at first paint.
+            expect(b.x, name + ': ' + b.id + ' x').toBeGreaterThanOrEqual(0);
+            expect(b.x, name + ': ' + b.id + ' x').toBeLessThanOrEqual(xMax);
+            expect(b.y, name + ': ' + b.id + ' y').toBeGreaterThanOrEqual(0);
+            expect(b.y, name + ': ' + b.id + ' y').toBeLessThanOrEqual(yMax);
+        });
+        const seenTo = new Set();
+        def.wires.forEach((w) => {
+            const label = name + ': ' + w.from.join('.') + ' → ' + w.to.join('.');
+            const src = byId[w.from[0]];
+            const dst = byId[w.to[0]];
+            expect(src, label + ' (unknown source block)').toBeTruthy();
+            expect(dst, label + ' (unknown target block)').toBeTruthy();
+            const op = FBE.BLOCKS[src.type].outputs.find((p) => p.name === w.from[1]);
+            const ip = FBE.BLOCKS[dst.type].inputs.find((p) => p.name === w.to[1]);
+            expect(op, label + ' (not an output pin)').toBeTruthy();
+            expect(ip, label + ' (not an input pin)').toBeTruthy();
+            expect(op.kind, label + ' (pin kind mismatch)').toBe(ip.kind);
+            // The editor enforces one wire per input pin — a shipped
+            // literal must not double-feed an input.
+            const key = w.to.join('.');
+            expect(seenTo.has(key), name + ': input ' + key + ' fed twice').toBe(false);
+            seenTo.add(key);
+        });
+        // And the graph actually constructs and runs.
+        const g = FBE.makeGraph(def);
+        FBE.tick(g, 0.1);
+    }
+    return registry;
+}
+
 test.describe('fbe-engine: canned examples (sim page)', () => {
 
-    // The EXAMPLES registry lives in the sim page's inline script, not
-    // the engine — extract the object literal from the page source and
-    // evaluate it in a vm, so these tests exercise the exact shipped
-    // graphs (no hand-copied twin to drift).
     function loadExamples() {
-        const src = fs.readFileSync(
-            path.join(__dirname, '..', 'html', 'simulators',
-                      'function-block-editor.html'),
-            'utf8',
-        );
-        // The literal sits at 8-space depth; the first `};` back at that
-        // depth closes it (everything inside is nested deeper).
-        const m = src.match(/const EXAMPLES = \{[\s\S]*?\n {8}\};/);
-        if (!m) {
-            throw new Error('EXAMPLES literal not found in function-block-editor.html');
-        }
-        return vm.runInNewContext(m[0] + '\nEXAMPLES;', {});
+        return loadLiteral('html/simulators/function-block-editor.html', 'EXAMPLES');
     }
 
     // Build a runnable graph from an example and hand back the id→block
@@ -548,61 +614,16 @@ test.describe('fbe-engine: canned examples (sim page)', () => {
     }
 
     test('every example wires existing blocks through compatible pins', () => {
-        const FBE = loadEngine();
-        const EXAMPLES = loadExamples();
+        // 900×480 — the sim page mounts the editor at the default canvas.
+        const EXAMPLES = sweepLiteral(
+            'html/simulators/function-block-editor.html', 'EXAMPLES',
+            { w: 900, h: 480 });
 
         // Pin the registry's key set so the sweep's reach is explicit —
         // a new example must be added here to count as covered.
         expect(Object.keys(EXAMPLES).sort()).toEqual(
             ['econ', 'freeze', 'pid', 'proof', 'reset', 'tstat-cool', 'tstat-heat'],
         );
-
-        for (const [name, def] of Object.entries(EXAMPLES)) {
-            const byId = {};
-            def.blocks.forEach((b) => {
-                const bdef = FBE.BLOCKS[b.type];
-                expect(bdef, name + ': block ' + b.id + " type '" + b.type + "'").toBeTruthy();
-                expect(byId[b.id], name + ': duplicate block id ' + b.id).toBeUndefined();
-                byId[b.id] = b;
-                // Every param in the literal must be declared on the block
-                // type (catches a typo like `preset` for the TON's `pt` —
-                // makeGraph would silently keep it and backfill the default).
-                Object.keys(b.params || {}).forEach((k) => {
-                    expect(
-                        (bdef.params || []).some((p) => p.name === k),
-                        name + ': ' + b.id + " undeclared param '" + k + "'",
-                    ).toBe(true);
-                });
-                // Inside the canvas and the editor's drag clamp
-                // (INNER_W 900 − BLOCK_W 136 = 764; INNER_H 480 − 40 = 440),
-                // so the sheet renders without scrolling at first paint.
-                expect(b.x, name + ': ' + b.id + ' x').toBeGreaterThanOrEqual(0);
-                expect(b.x, name + ': ' + b.id + ' x').toBeLessThanOrEqual(764);
-                expect(b.y, name + ': ' + b.id + ' y').toBeGreaterThanOrEqual(0);
-                expect(b.y, name + ': ' + b.id + ' y').toBeLessThanOrEqual(440);
-            });
-            const seenTo = new Set();
-            def.wires.forEach((w) => {
-                const label = name + ': ' + w.from.join('.') + ' → ' + w.to.join('.');
-                const src = byId[w.from[0]];
-                const dst = byId[w.to[0]];
-                expect(src, label + ' (unknown source block)').toBeTruthy();
-                expect(dst, label + ' (unknown target block)').toBeTruthy();
-                const op = FBE.BLOCKS[src.type].outputs.find((p) => p.name === w.from[1]);
-                const ip = FBE.BLOCKS[dst.type].inputs.find((p) => p.name === w.to[1]);
-                expect(op, label + ' (not an output pin)').toBeTruthy();
-                expect(ip, label + ' (not an input pin)').toBeTruthy();
-                expect(op.kind, label + ' (pin kind mismatch)').toBe(ip.kind);
-                // The editor enforces one wire per input pin — a shipped
-                // literal must not double-feed an input.
-                const key = w.to.join('.');
-                expect(seenTo.has(key), name + ': input ' + key + ' fed twice').toBe(false);
-                seenTo.add(key);
-            });
-            // And the graph actually constructs and runs.
-            const g = FBE.makeGraph(def);
-            FBE.tick(g, 0.1);
-        }
     });
 
     test('proof: healthy by default, alarms past the preset, latches, resets', () => {
@@ -650,5 +671,26 @@ test.describe('fbe-engine: canned examples (sim page)', () => {
         expect(at(-20)).toBe(180);            // LIMIT hi holds the ceiling below 0 °F
         expect(at(60)).toBe(140);             // design foot: 139.98 raw → clamped 140
         expect(at(85)).toBe(140);             // LIMIT lo holds the floor above 60 °F
+    });
+});
+
+test.describe('fbe-engine: FCU sample programs (workbench page)', () => {
+
+    // C14: the workbench's FCU_PROGRAMS registry shipped with no
+    // validity coverage at all — these graphs get the same sweep the
+    // sim page's EXAMPLES get. Bounds are the workbench's CURRENT
+    // canvas: ddc-workbench.html passes canvasSize 1401×480 (the
+    // candidate-A relayout, #205) and these bounds must match that
+    // createEditor call.
+    test('every FCU program wires existing blocks through compatible pins', () => {
+        const FCU_PROGRAMS = sweepLiteral(
+            'html/simulators/ddc-workbench.html', 'FCU_PROGRAMS',
+            { w: 1401, h: 480 });
+
+        // Pin the registry's key set so the sweep's reach is explicit —
+        // a new sample program must be added here to count as covered.
+        expect(Object.keys(FCU_PROGRAMS).sort()).toEqual(
+            ['cool-1stage', 'cool-2stage', 'cool-2stage-fanon'],
+        );
     });
 });

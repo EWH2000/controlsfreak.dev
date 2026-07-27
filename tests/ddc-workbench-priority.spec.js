@@ -1,9 +1,10 @@
-// DDC Workbench — the three-slot priority arbitration (#209).
+// DDC Workbench — the three-level priority arbitration (#209).
 //
 // Every actuator point on the workbench owns a real 16-slot BACnet
 // priority array (/scripts/point-arbitration.js): the sequence writes
 // slot 16, the hand controls write slot 8 (Manual Operator), and the
-// point rests on Relinquish_Default when both are NULL. The
+// point falls to the Relinquish_Default fallback — a property, not a
+// third slot — when both are NULL. The
 // engine-direct spec (point-arbitration.spec.js) proves the resolver;
 // this spec pins the PAGE behaviors built on top of it:
 //
@@ -72,6 +73,23 @@ function waitForChip(page, name, want) {
     }, [name, want]);
 }
 
+// The 2-stage programs stage the fan-speed reference through a select
+// (the low const at stage 1 and idle, the hundred const at stage 2),
+// so the sequence value the fan returns to after a hand release
+// depends on the LIVE stage. Y2 and the selector are both and1.Q, and
+// both chips repaint from the same resolved tick — so the stage-true
+// expectation is "Fan shows what Y2 implies", never a fixed number.
+function waitForStagedFan(page) {
+    return page.waitForFunction(() => {
+        const chips = {};
+        document.querySelectorAll('#ddcw-io .ddcw-chip').forEach((c) => {
+            chips[c.querySelector('.ddcw-chip-cap').textContent] =
+                c.querySelector('.ddcw-chip-val').textContent;
+        });
+        return chips['Fan'] === (chips['Y2'] === 'ON' ? '100 %' : '60 %');
+    });
+}
+
 // "Empty" is the .is-empty collapse class, not the hidden attribute —
 // the box stays in the accessibility tree while empty (see header).
 function offprogState(page) {
@@ -123,13 +141,15 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
 
     test('NULL box round-trip: uncheck seeds slot 8 bumplessly, hand drives it, NULL hands it back', async ({ page }) => {
         await page.goto(URL);
-        await waitForChip(page, 'Fan', '100 %');
+        // Arrival is stage 1 (zone 76 stages Y1, not Y2), so the
+        // staged sequence commands the fan at the low reference — 60.
+        await waitForChip(page, 'Fan', '60 %');
 
         // Uncheck NULL: the hand takes over at the point's CURRENT
-        // resolved value (bumpless) — slot 8 opens at 100, not 0.
+        // resolved value (bumpless) — slot 8 opens at 60, not 0.
         await page.locator('#fcu-null-fan').uncheck();
         await waitForOffprogEntry(page,
-            'Fan — commanded by slot 8 (Manual Operator) at 100 %');
+            'Fan — commanded by slot 8 (Manual Operator) at 60 %');
 
         // Drive the (now-enabled) slider to 0 — every move rewrites
         // slot 8, and both surfaces follow.
@@ -141,10 +161,13 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
         await waitForOffprogEntry(page,
             'Fan — commanded by slot 8 (Manual Operator) at 0 % — write NULL to release.');
 
-        // Write NULL back: slot 8 releases, the sequence's slot-16
-        // command (100) returns within a tick, and the entry drops.
+        // Write NULL back: slot 8 releases and the sequence's slot-16
+        // command returns within a tick. The fan sat hand-forced at 0
+        // (no airflow), so the zone has been warming the whole while —
+        // whether it re-crossed the stage-2 threshold during the hold
+        // is host-timing, so assert the STAGED value, not a fixed one.
         await page.locator('#fcu-null-fan').check();
-        await waitForChip(page, 'Fan', '100 %');
+        await waitForStagedFan(page);
         await page.waitForFunction(() => {
             const box = document.getElementById('ddcw-offprog');
             return box.classList.contains('is-empty')
@@ -306,8 +329,10 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
         await deleteBlock(page, 'y1');
         await waitForChip(page, 'Y1', 'OFF');
 
-        // 2 — the fan NULL round-trip (exercises repaints; the
-        // compressor must hold OFF through all of it).
+        // 2 — the fan NULL round-trip (exercises repaints). With y1
+        // deleted the zone is warming unchecked, so the stage — and
+        // with it the staged fan reference — can flip mid-trip:
+        // assert the stage-true value, not a fixed one.
         await page.click('.tabs.tabs-flush [data-tab="unit"]');
         await page.locator('#fcu-null-fan').uncheck();
         await page.locator('#fcu-fan-slider').evaluate((el) => {
@@ -316,7 +341,7 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
         });
         await waitForChip(page, 'Fan', '0 %');
         await page.locator('#fcu-null-fan').check();
-        await waitForChip(page, 'Fan', '100 %');
+        await waitForStagedFan(page);
 
         // 3 — sensor override stages Y2 (y1 still resting on
         // Relinquish_Default: Stage 2 with Y1 OFF is the agreement
