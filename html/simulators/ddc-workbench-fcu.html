@@ -547,7 +547,7 @@ noindex: true
                      role="img" aria-labelledby="fcu-title fcu-desc"
                      font-family="var(--mono)">
                     <title id="fcu-title">A DX fan coil serving one zone, as a DDC supervisory graphic</title>
-                    <desc id="fcu-desc">A recirculating direct-expansion fan coil serving one zone, drawn as a DDC supervisory graphic. Return air leaves the zone on the right, travels along the top return duct, drops down the left side, and enters the fan coil cabinet. Inside the cabinet the air crosses a DX cooling coil and then a supply fan, which pushes it up the supply riser and back out through the supply duct into the zone. Directional chevrons march along the ducts and continue across the coil and fan to show the airflow. Floating point labels report the entering-air temperature at the coil, the discharge-air temperature after the fan, and the temperature difference across the coil. The zone box shows the zone temperature and its cooling setpoint; separate labels show the supply-fan status and speed and the compressor stage. The DX coil and the supply fan are drawn as the two sub-devices the graphic can drill into. The two sensing devices are drawn where they physically live: a space-temperature wall plate mounted inside the zone on its far wall, and a discharge-air insertion probe penetrating the supply duct downstream of the fan — each activatable to flag its matching live-value chip in the statusbar.</desc>
+                    <desc id="fcu-desc">A recirculating direct-expansion fan coil serving one zone, drawn as a DDC supervisory graphic. Return air leaves the zone on the right, travels along the top return duct, drops down the left side, and enters the fan coil cabinet. Inside the cabinet the air crosses a DX cooling coil and then a supply fan, which pushes it up the supply riser and back out through the supply duct into the zone. Directional chevrons march along the ducts and continue across the coil and fan to show the airflow. Floating point labels report the entering-air temperature at the coil, the discharge-air temperature after the fan, and the temperature difference across the coil. The zone box shows the zone temperature and its cooling setpoint; separate labels show the supply-fan status and speed and the compressor stage. The DX coil and the supply fan are drawn as the two sub-devices the graphic can drill into. The sensing devices are drawn where they physically live: a space-temperature wall plate mounted inside the zone on its far wall, a return-air insertion probe penetrating the underside of the top return duct partway along its run, and a discharge-air insertion probe penetrating the supply duct downstream of the fan — each activatable to flag its matching live-value chip in the statusbar.</desc>
 
                     <!-- ── Ductwork — exterior runs only ──────────────────
                          Return duct body: from the zone face, along the top,
@@ -670,7 +670,7 @@ noindex: true
 
                     <!-- ── Sensor devices — WHERE each sensed point lives ──
                          One glyph per AI point in FCU_POINTS with a physical
-                         home on this drawing (space-temp, dat), keyed by
+                         home on this drawing (space-temp, rat, dat), keyed by
                          data-point to the point id; click / Enter / Space
                          pulses the matching statusbar chip (the shell's
                          highlightChip hook — the shell binds .ddcw-sensor
@@ -688,6 +688,24 @@ noindex: true
                          link into a meter-and-sensor sim (the .fcu-link
                          idiom) — keep the one-group-per-device shape. -->
                     <g id="fcu-sensors">
+                        <!-- RAT insertion probe — penetrates the BOTTOM wall
+                             of the top return run (y 173) at x 342: upstream
+                             of the coil, reading the real air the zone sends
+                             back — the visible entering-air measurement
+                             behind the EAT badge and the coil ΔT. Head hangs
+                             in the free band between the return duct and the
+                             badge row (tops y 188), in the x gap between the
+                             ΔT badge (ends x 292) and the DAT badge (starts
+                             x 370), clear of the static flow arrow
+                             (x 320-328); the stem tip reaches the airstream
+                             near the duct centerline (y 150). -->
+                        <g class="ddcw-sensor" id="fcu-sensor-rat" data-point="rat"
+                           tabindex="0" role="button">
+                            <title>Return-air temperature sensor — insertion probe in the return duct</title>
+                            <rect class="ddcw-sensor-hit" x="328" y="150" width="28" height="44"/>
+                            <line class="ddcw-sensor-stem" x1="342" y1="154" x2="342" y2="173"/>
+                            <rect class="ddcw-sensor-body" x="336" y="173" width="12" height="10"/>
+                        </g>
                         <!-- DAT insertion probe — penetrates the TOP wall of
                              the horizontal discharge run (y 195) at x 492:
                              downstream of the coil AND the fan (the

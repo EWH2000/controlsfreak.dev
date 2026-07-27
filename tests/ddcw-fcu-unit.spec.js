@@ -486,10 +486,16 @@ test.describe('ddcw-fcu-unit: sensor override', () => {
         expect(pl.derived.overrideActive).toBe(true);
         expect(pl.derived.sensedT).toBe(60);
         expect(pl.derived.eatT).not.toBe(60);                 // coil sees ACTUAL return air
+        // The return-duct probe measures real air: rat reads the TRUTH
+        // while the override lies to the program — the two chips
+        // visibly disagree (the real-vs-sensed commissioning moment).
+        expect(pl.sensors['rat']).toBe(pl.zoneT);
+        expect(pl.sensors['rat']).not.toBe(60);
 
         pl.override.spaceTemp.active = false;                 // release rejoins them
         Unit.update(pl, 5);
         expect(pl.sensors['space-temp']).toBe(pl.zoneT);
+        expect(pl.sensors['rat']).toBe(pl.zoneT);             // rat never left the truth
     });
 });
 
@@ -497,6 +503,19 @@ test.describe('ddcw-fcu-unit: programs × points (the binding invariant)', () =>
 
     // point kind → the FBE block type its seed block must carry.
     const KIND_TO_BLOCK = { ai: 'ai', bi: 'bi', ao: 'ao', bo: 'bo', param: 'const' };
+
+    // Display-only exception to the seed-block identity: a SENSOR
+    // point may ship before any sheet authors its block — the shell's
+    // binding driver skips an unmatched point, so the chip is live and
+    // the sheets stay untouched. `rat` landed this way on the owner's
+    // mockup round (2026-07-27): the return-air probe + chip precede
+    // any program consuming it, and the ΔT lane owns the sheets next.
+    // The honesty test below keeps this set self-expiring: the moment
+    // any program DOES author a block for an exempted id, the entry
+    // must come out. Sensors only — a skipped actuator would silently
+    // freeze at Relinquish_Default, which is exactly what the sweep
+    // exists to catch.
+    const DISPLAY_ONLY_SENSORS = new Set(['rat']);
 
     test('every program constructs, ticks, and carries every point with its kind-matched block type', () => {
         // The load-bearing identity: point id === seed FBE-block id in
@@ -514,9 +533,31 @@ test.describe('ddcw-fcu-unit: programs × points (the binding invariant)', () =>
             const byId = {};
             def.blocks.forEach((b) => { byId[b.id] = b; });
             Unit.POINTS.forEach((p) => {
+                if (DISPLAY_ONLY_SENSORS.has(p.id)) return;
                 const blk = byId[p.id];
                 expect(blk, name + ': no seed block for point ' + p.id).toBeTruthy();
                 expect(blk.type, name + ': ' + p.id + ' block type').toBe(KIND_TO_BLOCK[p.kind]);
+            });
+        });
+    });
+
+    test('display-only exemptions stay honest: real sensor points, unauthored on every sheet', () => {
+        // Anti-decay, both directions: an exempted id must BE a sensor
+        // point (an actuator exemption would defeat the sweep), and no
+        // shipped sheet may author it — when one does, the point is no
+        // longer display-only and its exemption must be deleted.
+        const Unit = loadUnit();
+        const byPointId = new Map(Unit.POINTS.map((p) => [p.id, p]));
+        const programs = Object.entries(loadPrograms());
+        DISPLAY_ONLY_SENSORS.forEach((id) => {
+            const p = byPointId.get(id);
+            expect(p, id + ' is a real FCU point').toBeTruthy();
+            expect(p.dir, id + ' exemption is sensor-only').toBe('sensor');
+            programs.forEach(([name, def]) => {
+                expect(
+                    def.blocks.some((b) => b.id === id),
+                    name + ' authors ' + id + ' — remove it from DISPLAY_ONLY_SENSORS',
+                ).toBe(false);
             });
         });
     });

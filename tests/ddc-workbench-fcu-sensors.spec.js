@@ -2,7 +2,9 @@
 //
 // Phase 6 of the workbench arc puts a schematic device glyph at each
 // sensed AI point's PHYSICAL home on the unit graphic: a wall plate in
-// the zone for space-temp, an insertion probe in the discharge duct
+// the zone for space-temp, an insertion probe in the return duct for
+// rat (owner mockup round — the displayed coil ΔT had no visible
+// entering-air measurement), an insertion probe in the discharge duct
 // for dat. Activating a glyph (click, Enter, or Space — the
 // role="button" contract) calls the shell's highlightChip hook, which
 // pulses that point's statusbar chip with a temporary CSS class
@@ -17,7 +19,10 @@
 //     then clears on its own;
 //   • keyboard — Enter and Space both fire, and the glyphs sit in the
 //     page's real tab order (the drill-down links precede them in the
-//     SVG, so Tab walks link → link → probe → plate);
+//     SVG, so Tab walks link → link → probes → plate);
+//   • real-vs-sensed — forcing the wall stat splits the chips: Space
+//     shows the lie the program reads, RAT stays on the zone truth
+//     (a return-duct probe measures real air);
 //   • the accessible name — each glyph carries a native SVG <title>;
 //   • id hygiene — the rendered page has no duplicate ids (the glyph
 //     group added ids to a graphic that already had many).
@@ -39,9 +44,10 @@ test.use({ colorScheme: 'dark' });
 const URL = '/simulators/ddc-workbench-fcu.html';
 
 // The sensed AI points that have a physical home on the drawing —
-// mirrors FCU_POINTS (ddcw-fcu-unit.js): the two kind:'ai' sensor
-// points. The chip caption is the point's `name`.
+// mirrors FCU_POINTS (ddcw-fcu-unit.js): every kind:'ai' sensor
+// point. The chip caption is the point's `name`.
 const GLYPHED = [
+    { point: 'rat',        chip: 'RAT' },
     { point: 'dat',        chip: 'DAT' },
     { point: 'space-temp', chip: 'Space' },
 ];
@@ -125,15 +131,53 @@ test.describe('DDC Workbench — visible sensor glyphs', () => {
     test('tab order reaches every glyph (after the in-graphic drill-down links)', async ({ page }) => {
         await page.goto(URL);
         // The graphic's tab sequence is DOM order: coil link → fan link
-        // → the sensors group (probe, then plate). Start from the last
-        // drill-down and walk forward.
+        // → the sensors group (probes in airflow order, then plate).
+        // Start from the last drill-down and walk forward.
         await page.locator('a.fcu-link[href*="vfd-mock"]').focus();
+        await page.keyboard.press('Tab');
+        expect(await page.evaluate(() => document.activeElement.getAttribute('data-point')))
+            .toBe('rat');
         await page.keyboard.press('Tab');
         expect(await page.evaluate(() => document.activeElement.getAttribute('data-point')))
             .toBe('dat');
         await page.keyboard.press('Tab');
         expect(await page.evaluate(() => document.activeElement.getAttribute('data-point')))
             .toBe('space-temp');
+    });
+
+    test('forcing the wall stat splits the chips — Space shows the lie, RAT stays on the truth', async ({ page }) => {
+        // The real-vs-sensed commissioning moment, on the chip strip:
+        // the space-temp override forces the value the PROGRAM reads,
+        // but a return-duct probe measures real air, so the RAT chip
+        // keeps reporting the integrating zone truth and the two chips
+        // visibly disagree. (Engine-direct twin: the sensor-override
+        // rows in ddcw-fcu-unit.spec.js.)
+        await page.goto(URL);
+        await page.click('#fcu-ovr-toggle');
+        await page.fill('#fcu-ovr-input', '60');
+        // Space chip settles on the forced value at the next host tick.
+        await page.waitForFunction(() => {
+            const chips = document.querySelectorAll('#ddcw-io .ddcw-chip');
+            for (const c of chips) {
+                if (c.querySelector('.ddcw-chip-cap').textContent === 'Space') {
+                    return c.querySelector('.ddcw-chip-val').textContent === '60.0 °F';
+                }
+            }
+            return false;
+        });
+        // RAT keeps the truth: the real zone arrived at 76 °F and no
+        // physics here can drag it anywhere near the forced 60.
+        const rat = await page.evaluate(() => {
+            const chips = document.querySelectorAll('#ddcw-io .ddcw-chip');
+            for (const c of chips) {
+                if (c.querySelector('.ddcw-chip-cap').textContent === 'RAT') {
+                    return c.querySelector('.ddcw-chip-val').textContent;
+                }
+            }
+            return null;
+        });
+        expect(rat).not.toBe('60.0 °F');
+        expect(parseFloat(rat)).toBeGreaterThan(65);
     });
 
     test('each glyph exposes an accessible name via a native SVG <title>', async ({ page }) => {
