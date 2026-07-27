@@ -45,12 +45,16 @@
 //              block's interior (rects shrunk 0.5 px to forgive
 //              subpixel touching);
 //        (ii)  FORWARD-BRANCH — every wire routes as the clean
-//              3-segment forward elbow, except sheets listed in
-//              FALLBACK_BY_DESIGN. The allowlist is SELF-VERIFYING:
-//              an allowlisted sheet must still HAVE ≥1 fallback wire,
-//              so re-laying it to route fully forward forces the
-//              exemption's deletion instead of decaying into a silent
-//              permanent pass;
+//              3-segment forward elbow, except exemptions listed in
+//              FALLBACK_BY_DESIGN: '*' exempts a whole sheet, an
+//              ARRAY names the exact wires and every other wire on
+//              that sheet keeps the forward + margin checks. The
+//              allowlist is SELF-VERIFYING either way: a '*' sheet
+//              must still HAVE ≥1 fallback wire, and a named wire
+//              must both EXIST and actually ride the fallback — so a
+//              relayout that routes an exempted surface forward
+//              forces the entry's deletion instead of decaying into
+//              a silent permanent pass;
 //        (iii) RELATIONSHIP MARGIN — every forward-expected wire's
 //              in-pin center sits ≥ 2·STUB + 4 px right of its
 //              out-pin center (STUB read from fbe-editor.js source,
@@ -130,13 +134,17 @@ for (const [key, s] of Object.entries(SURFACES)) {
     REGISTRIES[key] = loadLiteral(s.file, s.literal);
 }
 
-// Sheets whose 5-segment fallback routing is DELIBERATE. The public
-// 'proof' example alternates its chain between the top and bottom
-// rows at tight x-pitch so every link draws a long visible vertical
-// run — see the layout comment at function-block-editor.html:287-292.
-// Never "fix" that sheet to route forward; if the relayout lane ever
-// re-lays it anyway, the self-verification assertion below forces
-// this entry's deletion.
+// Sheets whose 5-segment fallback routing is DELIBERATE. Two forms:
+// '*' exempts the WHOLE sheet from the forward + margin checks — the
+// public 'proof' example alternates its chain between the top and
+// bottom rows at tight x-pitch so every link draws a long visible
+// vertical run (see the layout comment at
+// function-block-editor.html:287-292); an ARRAY names the exact
+// wires (the "out.PIN → in.PIN" labels the assertions print) allowed
+// on the fallback, and every OTHER wire on that sheet keeps the full
+// forward + margin discipline. Never "fix" an exempted surface to
+// route forward; if the relayout lane ever re-lays one anyway, the
+// self-verification assertions below force the entry's deletion.
 const FALLBACK_BY_DESIGN = {
     'function-block-editor': { proof: '*' },
     // cool-2stage-safeties: the minimum-off-time subsystem is a TRUE
@@ -144,13 +152,19 @@ const FALLBACK_BY_DESIGN = {
     // ruled "TON timing the off state, fed back into the stage permit"
     // shape), and a cycle cannot be drawn all-forward on a left-to-right
     // sheet: at least one wire's target sits left of its source, which
-    // IS the 5-segment fallback. Three return wires ride it by
-    // construction (y1gate.Q→offok.B, notrun.Q→tonoff.IN,
-    // tonoff.Q→offok.A); every other wire — including the cycle's
-    // forward tap y1gate.Q→notrun.IN — routes as the 3-segment elbow,
-    // and the no-burial invariant still applies to all 41 wires.
-    // Self-verified below like `proof`.
-    'ddc-workbench-fcu': { 'cool-2stage-safeties': '*' },
+    // IS the 5-segment fallback. Exactly these three return wires ride
+    // it by construction; naming them (rather than '*') holds every
+    // other wire — including the cycle's forward tap y1gate.Q→notrun.IN
+    // — to the 3-segment elbow and the 2·STUB+4 margin, so a relayout
+    // cannot silently grow a fourth fallback or a sub-threshold margin.
+    // The no-burial invariant applies to every wire regardless.
+    'ddc-workbench-fcu': {
+        'cool-2stage-safeties': [
+            'notrun.Q → tonoff.IN',
+            'tonoff.Q → offok.A',
+            'y1gate.Q → offok.B',
+        ],
+    },
 };
 
 // ── path parsing + collision math (pure functions) ──────────────────
@@ -202,12 +216,23 @@ function fmtRect(r) {
 
 // Violation census for one measured sheet. Kept a pure function of
 // the measurement so a red run prints the exact wire/block pairs.
+// allowFallback: '*' (whole sheet may ride the fallback), a Set of
+// wire labels (only those may — non-members keep every check), or
+// falsy (no exemption).
 function sheetViolations(meas, allowFallback) {
-    const v = { burials: [], nonForward: [], margins: [], fallbackCount: 0 };
+    const v = {
+        burials: [], nonForward: [], margins: [], fallbackCount: 0,
+        // Set form only: allowlisted labels seen on the sheet, and
+        // allowlisted wires that measured as the 3-segment forward
+        // elbow (assertSheet requires the latter to stay empty).
+        allowedSeen: new Set(), allowedForward: [],
+    };
     meas.wires.forEach((w) => {
         const label = w.from.join('.') + ' → ' + w.to.join('.');
         const segs = parseSegments(w.d);
         if (segs.length > 3) v.fallbackCount++;
+        const allowed = allowFallback === '*'
+            || (allowFallback instanceof Set && allowFallback.has(label));
         // (i) no-burial — applies to every sheet, allowlisted or not.
         segs.forEach((seg) => {
             for (const [id, rect] of Object.entries(meas.blocks)) {
@@ -218,8 +243,13 @@ function sheetViolations(meas, allowFallback) {
                 }
             }
         });
-        if (!allowFallback) {
-            // (ii) forward-branch everywhere.
+        if (allowed) {
+            if (allowFallback instanceof Set) {
+                v.allowedSeen.add(label);
+                if (segs.length === 3) v.allowedForward.push(label);
+            }
+        } else {
+            // (ii) forward-branch on every non-exempt wire.
             if (segs.length !== 3) {
                 v.nonForward.push(label + ': ' + segs.length
                     + '-segment fallback (in-pin only '
@@ -293,20 +323,36 @@ function assertSheet(pageKey, sheetName, meas) {
         expect(w.in, label + ' (in pin not found)').toBeTruthy();
         expect(w.d, label + ' (no rendered path)').toBeTruthy();
     });
-    const allow = (FALLBACK_BY_DESIGN[pageKey] || {})[sheetName] === '*';
-    const v = sheetViolations(meas, allow);
+    const allow = (FALLBACK_BY_DESIGN[pageKey] || {})[sheetName];
+    const allowSet = Array.isArray(allow) ? new Set(allow) : null;
+    const v = sheetViolations(meas, allowSet || allow);
     expect(v.burials, sheetName + ': buried wire segments').toEqual([]);
-    if (allow) {
-        // Self-verification: an allowlisted sheet must still exercise
-        // the fallback router. If this fires, the sheet was re-laid to
-        // route fully forward — DELETE its FALLBACK_BY_DESIGN entry.
+    if (allow === '*') {
+        // Self-verification: a whole-sheet exemption must still
+        // exercise the fallback router. If this fires, the sheet was
+        // re-laid to route fully forward — DELETE its
+        // FALLBACK_BY_DESIGN entry.
         expect(v.fallbackCount,
             sheetName + ': allowlisted as fallback-by-design but has no '
             + 'fallback wires — delete its FALLBACK_BY_DESIGN entry').toBeGreaterThan(0);
-    } else {
-        expect(v.nonForward, sheetName + ': wires on the 5-segment fallback').toEqual([]);
-        expect(v.margins, sheetName + ': forward margin below 2·STUB + 4').toEqual([]);
+        return;
     }
+    if (allowSet) {
+        // Per-wire self-verification. Every named label must match a
+        // wire on the sheet (a renamed block or pin can't hand its
+        // pass to nothing)…
+        const missing = [...allowSet].filter((l) => !v.allowedSeen.has(l));
+        expect(missing, sheetName
+            + ': FALLBACK_BY_DESIGN entries matching no wire').toEqual([]);
+        // …and each named wire must actually ride the fallback — a
+        // re-laid wire that routes forward forces its entry's
+        // deletion, same discipline as the '*' form.
+        expect(v.allowedForward, sheetName
+            + ': allowlisted wires routing forward — delete their '
+            + 'FALLBACK_BY_DESIGN entries').toEqual([]);
+    }
+    expect(v.nonForward, sheetName + ': wires on the 5-segment fallback').toEqual([]);
+    expect(v.margins, sheetName + ': forward margin below 2·STUB + 4').toEqual([]);
 }
 
 // ── Layer A: pure-Node source checks ────────────────────────────────

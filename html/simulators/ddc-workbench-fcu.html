@@ -845,7 +845,7 @@ noindex: true
                     than the thermostat: a latched DAT low-limit cuts Y1 and Y2
                     when discharge air drops below the trip constant and holds
                     them off until it recovers past the clear constant, a
-                    minimum off-time keeps a dropped stage from short-cycling
+                    minimum off-time keeps a stopped unit from restaging
                     straight back in, and one AND merges those permits into the
                     stage commands. The fan is deliberately outside that path —
                     it keeps following the cooling call, so air keeps moving
@@ -990,11 +990,16 @@ noindex: true
         //     constant. Set-dominance is safe here: the two comparators
         //     can never be true together. 42 echoes the site-wide
         //     freeze-watch line (coilLeaveT <= 42 in fcuRenderUnit).
-        //   • a minimum off-time on the stages: tonoff (TON, pt 120 s)
-        //     times the OFF state of the stage command (notrun inverts
-        //     y1gate, fed back), and offok = "min-off elapsed OR already
+        //   • a minimum off-time on the stage command: tonoff (TON,
+        //     pt 120 s) times the OFF state of y1gate (notrun inverts
+        //     it, fed back), and offok = "min-off elapsed OR already
         //     running" — the OR is what keeps a RUNNING stage permitted
-        //     while the timer sits reset. On a fresh sheet the timer
+        //     while the timer sits reset. Timing y1gate means the TON
+        //     engages only on a FULL stop (y1gate is on while ANY call
+        //     stands): a stage-2-only cycle rides sr2's own hysteresis,
+        //     not this timer — so the page prose claims restage
+        //     protection for a stopped unit, not per stage. On a fresh
+        //     sheet the timer
         //     starts at zero, so stages hold off ~2 sim-minutes on a
         //     program download — the anti-short-cycle power-up delay a
         //     real board exhibits.

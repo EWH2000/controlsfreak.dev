@@ -18,8 +18,10 @@
 //     call — the starved coil dives DAT through the trip line;
 //   • assert the lockout: Y1/Y2 chips drop, Fan En rides through, the
 //     hand-held speed keeps the air moving, and the unit verdict names
-//     the state ("Safety lockout active …" — the ladder line this
-//     program motivates);
+//     the state ("DAT low-limit annunciator latched …" — the ladder
+//     line this program motivates; observation wording by design, the
+//     annunciator is plant-side and must not assert WHO cut the
+//     stages — see the DAT_LOW_* note in ddcw-fcu-unit.js);
 //   • release the fan: at full airflow DAT recovers above the clear
 //     line, the min-off elapses, the stages restage, and the verdict
 //     returns to healthy cooling.
@@ -115,7 +117,7 @@ test.describe('DDC Workbench — 2-stage + safeties program', () => {
                     c.querySelector('.ddcw-chip-val').textContent;
             });
             const verdict = document.getElementById('fcu-verdict').textContent;
-            return verdict.includes('Safety lockout')
+            return verdict.includes('DAT low-limit annunciator latched')
                 && chips['Y1'] === 'OFF'
                 && chips['Y2'] === 'OFF'
                 && chips['Fan En'] === 'ON'

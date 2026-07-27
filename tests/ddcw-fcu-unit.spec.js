@@ -455,7 +455,7 @@ test.describe('ddcw-fcu-unit: DAT low-limit annunciator', () => {
     });
 
     test('fan-off reads the zone, so the annunciator self-clears (the verdict-ladder premise)', () => {
-        // The lockout verdict line ranks below the fan-off branches
+        // The annunciator verdict line ranks below the fan-off branches
         // because a stopped fan hands datT the zone temp — the latch
         // cannot stay latched with no airflow and a warm zone.
         const Unit = loadUnit();
