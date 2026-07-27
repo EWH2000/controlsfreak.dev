@@ -1,6 +1,6 @@
 // Wiresheet PLACEMENT invariants over both FBE consumer pages —
 // /simulators/function-block-editor.html (public) and
-// /simulators/ddc-workbench.html (hidden) — #205 / #206 / #208.
+// /simulators/ddc-workbench-fcu.html (hidden) — #205 / #206 / #208.
 //
 // ⚠ STATUS (measured 2026-07-26, STUB = 10): this spec is the
 // placement harness for the wiresheet-relayout lane and joins CI only
@@ -119,8 +119,8 @@ const SURFACES = {
         literal: 'EXAMPLES',
         canvas: { w: 900, h: 480 },
     },
-    'ddc-workbench': {
-        file: 'html/simulators/ddc-workbench.html',
+    'ddc-workbench-fcu': {
+        file: 'html/simulators/ddc-workbench-fcu.html',
         literal: 'FCU_PROGRAMS',
         canvas: { w: 1401, h: 480 },
     },
@@ -342,12 +342,12 @@ test.describe('fbe-geometry: layer B — public sim page (GREEN = #205 verified)
     }
 });
 
-test.describe('fbe-geometry: layer B — ddc-workbench (GREEN = #205 relayout verified)', () => {
+test.describe('fbe-geometry: layer B — ddc-workbench-fcu (GREEN = #205 relayout verified)', () => {
 
-    for (const key of Object.keys(REGISTRIES['ddc-workbench'])) {
+    for (const key of Object.keys(REGISTRIES['ddc-workbench-fcu'])) {
         test('program "' + key + '": no burial, forward routing, margins', async ({ page }) => {
-            const def = REGISTRIES['ddc-workbench'][key];
-            await page.goto('/simulators/ddc-workbench.html');
+            const def = REGISTRIES['ddc-workbench-fcu'][key];
+            await page.goto('/simulators/ddc-workbench-fcu.html');
             // The editor lazy-mounts on first Wiresheet open …
             await page.click('.tabs.tabs-flush [data-tab="wiresheet"]');
             await expect(page.locator('#ddcw-fbe-inner .fbe-block').first()).toBeVisible();
@@ -361,7 +361,7 @@ test.describe('fbe-geometry: layer B — ddc-workbench (GREEN = #205 relayout ve
             await expect(page.locator('#ddcw-fbe-inner path.fbe-wire'))
                 .toHaveCount(def.wires.length);
             const meas = await measureSheet(page, '#ddcw-fbe-inner', def.wires);
-            assertSheet('ddc-workbench', key, meas);
+            assertSheet('ddc-workbench-fcu', key, meas);
         });
     }
 });

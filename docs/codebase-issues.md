@@ -8383,7 +8383,7 @@ switch, and after that scene's band change), console clean. The page-level
 `FlowEngine.init()` idempotence and the hidden-scene pools are untouched; this
 is an attribute-only change.
 
-### 214. `ddc-workbench-unit`'s profiler baseline is known-untrustworthy and carries no note *(annotated 2026-07-26 — the precondition question stays open)*
+### 214. `ddc-workbench-fcu-unit`'s profiler baseline is known-untrustworthy and carries no note *(annotated 2026-07-26 — the precondition question stays open)*
 
 `tests/perf-profile.mjs`'s baseline for that row records 2.23 layouts/frame
 (capture samples 2.20 / 2.44 / 1.87), and it has since flagged over-tolerance
@@ -8407,7 +8407,7 @@ and stops the record from decaying further.
 
 **Annotated 2026-07-26 — the first action, not the second.** The two
 observations and the open question now sit in `tests/perf-profile.mjs` beside
-the `ddc-workbench-unit` BASELINE row: the capture samples and the two
+the `ddc-workbench-fcu-unit` BASELINE row: the capture samples and the two
 flagging runs (4.34, 4.67); that noise at this magnitude explains the size of
 the gap but not its ordering, since the recorded 2.23 sits *below* the
 control's 2.87 while both later runs sit above it; that a missing idle gate is
@@ -8421,9 +8421,9 @@ the floor — needs three fresh runs on a characterised machine, which this pass
 did not do; widening around a baseline nobody trusts would hide the question
 instead of answering it. **This entry therefore stays OPEN**, and what remains
 open is exactly the precondition question: what differed between the capture
-state of `/simulators/ddc-workbench.html` (Unit) and the two later runs. Answer
-that and the row can be re-baselined properly; until then a red number there is
-uninterpretable and now says so in the file.
+state of `/simulators/ddc-workbench-fcu.html` (Unit) and the two later runs.
+Answer that and the row can be re-baselined properly; until then a red number
+there is uninterpretable and now says so in the file.
 
 ### 215. FBE inspector accepts unbounded const values straight into the plant *(open — 2026-07-25)*
 
@@ -8612,7 +8612,7 @@ verified sound there but invisible to the next lane unless recorded here (a
 PR body is not a durable debt ledger):
 
 - **Two `ddcw-*` control-pattern rules stay page-inline** in
-  `html/simulators/ddc-workbench.html`'s head block — `label.ddcw-null` and
+  `html/simulators/ddc-workbench-fcu.html`'s head block — `label.ddcw-null` and
   the `.fcu-controls .ddcw-tracked` disabled dimming (the block's comment
   explains the split). The justification is real: `.fcu-fanen label` and
   `label.ddcw-null` are both specificity (0,1,1), so graduating the latter

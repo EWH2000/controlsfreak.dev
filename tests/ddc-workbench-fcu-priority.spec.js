@@ -1,4 +1,4 @@
-// DDC Workbench — the three-level priority arbitration (#209).
+// DDC Workbench (FCU) — the three-level priority arbitration (#209).
 //
 // Every actuator point on the workbench owns a real 16-slot BACnet
 // priority array (/scripts/point-arbitration.js): the sequence writes
@@ -49,7 +49,7 @@ const { test, expect } = require('@playwright/test');
 // site's default (dark) so the page under test is the one users see.
 test.use({ colorScheme: 'dark' });
 
-const URL = '/simulators/ddc-workbench.html';
+const URL = '/simulators/ddc-workbench-fcu.html';
 
 // The two off-program reasons, verbatim from the page's renderer —
 // asserting the full entry pins the REASON wording, not mere presence.

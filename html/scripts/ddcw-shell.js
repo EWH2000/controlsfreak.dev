@@ -1,6 +1,6 @@
 // ──────────────────────────────────────────────────────────────────────
 // ddcw-shell.js — the DDC Workbench SHELL: the unit-agnostic half of a
-// workbench page, extracted from simulators/ddc-workbench.html so a
+// workbench page, extracted from simulators/ddc-workbench-fcu.html so a
 // second unit page can share it. One host tick drives everything:
 // binding → FBE program scan → priority arbitration → unit physics →
 // paint. The shell owns the tabs, the persistent statusbar (live IO
@@ -141,15 +141,15 @@
 // a case-insensitive grep for the FCU prefix over this file hits ONLY
 // this header's contract prose — zero code identifiers. Intended
 // consumers, both assembling a unit object and calling
-// createWorkbench: simulators/ddc-workbench.html (the DX fan coil
+// createWorkbench: simulators/ddc-workbench-fcu.html (the DX fan coil
 // unit, via /scripts/ddcw-fcu-unit.js) and the planned second unit
-// page, simulators/ddc-workbench-ahu.html (the AHU unit).
+// page for the AHU (its filename is still an open design call).
 //
-// Consumers: simulators/ddc-workbench.html.
+// Consumers: simulators/ddc-workbench-fcu.html.
 // Tests: tests/ddcw-shell.spec.js pins this header's own claims
 // engine-direct (bare-vm loadability, formatPointValue's conv paths,
-// the grep proof); tests/ddc-workbench.spec.js +
-// tests/ddc-workbench-priority.spec.js drive the built page;
+// the grep proof); tests/ddc-workbench-fcu.spec.js +
+// tests/ddc-workbench-fcu-priority.spec.js drive the built page;
 // tests/point-arbitration.spec.js proves the arbitration core
 // engine-direct.
 // ──────────────────────────────────────────────────────────────────────

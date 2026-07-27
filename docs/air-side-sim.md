@@ -27,7 +27,8 @@ that diagnostic end**, not the point.
 
 ## Current state — Increment 2 (DDC Workbench) shipped, live-but-hidden (2026-07-23)
 
-`html/simulators/ddc-workbench.html` (renamed from `fcu-ddc.html`) — **merged to
+`html/simulators/ddc-workbench-fcu.html` (renamed from `fcu-ddc.html`, then off
+the bare `ddc-workbench` name — that slot is reserved for the AHU) — **merged to
 `main`**, `eleventyExcludeFromCollections` + `noindex` (reachable at its URL, out
 of nav / search / sitemap / landing). Two tabbed views on one runtime: a **Unit**
 view (the DX fan-coil DDC graphic from Increment 1) and a **Wiresheet** view (the
@@ -117,8 +118,8 @@ tiles** · short **fan-heat/calibration callout** · **improved fan animation**
 > **Status (2026-07-24): SHIPPED — this increment is built and merged (PR #425,
 > `main` @ `3cd2538`).** The closed loop, the time-step, zone-temp-as-state, the
 > hybrid gain, and a real-vs-sensed sensor override are live on the hidden
-> `ddc-workbench.html`; a coil/DAT response lag followed. The prose below is the
-> original design reasoning (now largely realized). What remains is **polish +
+> `ddc-workbench-fcu.html`; a coil/DAT response lag followed. The prose below is
+> the original design reasoning (now largely realized). What remains is **polish +
 > the go-public decision**, tracked in `docs/next-session-handoff.md` (the
 > rolling brief — the 2026-07-24 and 2026-07-25 editions this line used to cite
 > are archived under `docs/audits/`):
