@@ -25,18 +25,38 @@ that diagnostic end**, not the point.
   unit; the owner's own fault examples are AHU faults, so the structure grows
   toward OA/mixing → MAT and beyond.
 
-## Current state — Increment 2 (DDC Workbench) shipped, live-but-hidden (2026-07-23)
+## Current state — the full-experience arc is merged, live-but-hidden (2026-07-27)
 
 `html/simulators/ddc-workbench-fcu.html` (renamed from `fcu-ddc.html`, then off
 the bare `ddc-workbench` name — that slot is reserved for the AHU) — **merged to
-`main`**, `eleventyExcludeFromCollections` + `noindex` (reachable at its URL, out
-of nav / search / sitemap / landing). Two tabbed views on one runtime: a **Unit**
-view (the DX fan-coil DDC graphic from Increment 1) and a **Wiresheet** view (the
-Function-Block Editor, lazy-mounted). An **FBE control program drives the unit
-every 10 Hz tick** through a generic binding driver, with **HAND/AUTO** override.
-The default `cool-2stage` program stages Y1/Y2 off space-temp vs a
-wiresheet-editable setpoint. **The loop is still OPEN** — space temp is a
-hand-nudged input; no zone thermal dynamics yet (the physics session, next).
+`main` @ `015a319`**, `eleventyExcludeFromCollections` + `noindex` (reachable at
+its URL, out of nav / search / sitemap / landing). Two tabbed views on one
+runtime: a **Unit** view (the DX fan-coil DDC graphic) and a **Wiresheet** view
+(the Function-Block Editor, lazy-mounted). An **FBE control program drives the
+unit every 10 Hz tick** through a generic binding driver.
+
+**The loop is CLOSED** (PR #425, 2026-07-24): `plant.zoneT` is an integrated
+state driven by a zone heat balance, so the staging program holds the space on
+its own. A 1–60× speed slider scales the one `dtSim` that drives both the zone
+integrator and `FBE.tick`.
+
+**As of the full-experience arc (PRs #436–#445, all merged 2026-07-27):**
+3-slot BACnet priority arbitration replaces HAND/AUTO; the wiresheet is
+relaid-out; the program library is **four** samples including *2-stage +
+safeties* (latched DAT low-limit, full-stop-only min-off); the unit-agnostic
+shell lives in `html/scripts/ddcw-shell.js` with the FCU plug-in in
+`ddcw-fcu-unit.js`; **three sensor glyphs** are drawn on the graphic (RAT and
+DAT insertion probes, a space-temp wall plate), each activatable to highlight
+its chip; and the **coil ΔT badge is signed** — leaving minus entering,
+negative while cooling.
+
+> ⚠️ **Two protections stack on the safeties sheet, and the page's own note
+> describes only one** — a trip is itself a stop, so it arms the min-off TON as
+> it cuts the stages. Logged as codebase-issues **#226**, with **#225** (that
+> sheet carries no airflow proof, so its DAT low-limit goes blind when the fan
+> stops). Both deferred by owner decision to a single pre-live sweep alongside
+> the AHU programs. Read them before touching a sequence here.
+
 Shipped across:
 - **PR #420** — the DX fan-coil DDC-graphic mockup (Increment 1's depiction:
   live points EAT / DAT / ΔT / zone / fan / compressor, chevron airflow, fault
@@ -51,16 +71,22 @@ Shipped across:
 - **PR #424** — the verdict pill reads idle (neutral), not a red fault, when the
   program satisfies the space (auto-fan cycles the fan off).
 
-- **In flight (2026-07-27, PR stacked on #443):** Phase 6 **visible sensors** —
-  a wall-plate glyph (space-temp, on the zone's far wall at thermostat height)
-  and an insertion-probe glyph (dat, penetrating the discharge duct after the
-  fan) on the unit graphic; click / Enter / Space pulses the matching IO chip
-  via the shell's new `highlightChip` host hook. Mockup-first: glyph CSS stays
-  page-inline until the AHU page graduates it. Branch
-  `feat/ddcw-visible-sensors`.
+- **PR #425** — closed-loop physics (the zone integrator + the speed slider).
+- **PRs #436–#442** — the decision round and its sidecars, #209 priority
+  arbitration, a real IBM Plex Mono 700 face, the program rewrite +
+  candidate-A wiresheet relayout, the shell/unit extraction, and the `-fcu`
+  page rename.
+- **PR #443** — the fourth program, *2-stage + safeties*.
+- **PR #444** — Phase 6 **visible sensors**: three glyphs (RAT and DAT
+  insertion probes, a space-temp wall plate), each click / Enter / Space
+  activatable to pulse the matching IO chip via the shell's `highlightChip`
+  host hook. **RAT is a real AI point reading TRUTH zone temp**, so overriding
+  the wall stat splits the two chips — the real-vs-sensed beat. Mockup-first:
+  glyph CSS stays page-inline until the AHU page graduates it.
+- **PR #445** — the signed coil ΔT and the min-off teaching beat.
 
-Still quasi-static via `Psychro.invertProcess`. **The react-baseline / reference
-point, not a surfaced page.**
+**The react-baseline / reference point, not a surfaced page** — graduation is
+Phase 8, after the Phase-7 AHU round.
 
 ## Confirmed decisions (owner)
 
@@ -127,13 +153,18 @@ tiles** · short **fan-heat/calibration callout** · **improved fan animation**
 > `main` @ `3cd2538`).** The closed loop, the time-step, zone-temp-as-state, the
 > hybrid gain, and a real-vs-sensed sensor override are live on the hidden
 > `ddc-workbench-fcu.html`; a coil/DAT response lag followed. The prose below is
-> the original design reasoning (now largely realized). What remains is **polish +
-> the go-public decision**, tracked in `docs/next-session-handoff.md` (the
-> rolling brief — the 2026-07-24 and 2026-07-25 editions this line used to cite
-> are archived under `docs/audits/`):
-> browser lag → cleanup (overflow + jumbled sample-program layout; program
-> *rewrite* deferred) → maybe public; open scope decision is FCU-only vs. more
-> units. Feel constants are tune-in-place (`TUNE BY FEEL` block).
+> the original design reasoning (now largely realized).
+>
+> **Superseded again 2026-07-27 — the polish-arc framing this note used to carry
+> is spent.** The owner replaced it with the **full-experience arc** (full
+> experience BEFORE public), which is now merged in full: arbitration, the
+> wiresheet relayout, the program rewrite (**no longer deferred** — it shipped in
+> #440, and #443 added a fourth sample), visible sensors, and the signed coil ΔT.
+> The FCU-only-vs-more-units scope question is **settled**: two pages sharing an
+> extracted shell, approved at the #441 review. What remains is **Phase 7, the
+> AHU design round** (owner-gated — do not build ahead), then **Phase 8,
+> graduation**. Current brief: `docs/next-session-handoff.md`. Feel constants
+> stay tune-in-place (`TUNE BY FEEL` block).
 
 The unit runs a **closed-loop control strategy** — zone temp becomes driven
 state and the equipment operates on its own, not just manual knobs. Per the owner
