@@ -146,6 +146,38 @@
                                   lighter step computes 4.91:1. Borders/strokes
                                   keep --red (3:1 UI threshold passes). */
     --heat:         #e8884a;   /* warm orange — "heating" on the psychrometric chart's process lines; companion to --blue for cooling */
+    --heat-fill:    #e8884a;   /* = --heat — NEVER FOR TEXT. First member of the -fill
+                                  family; the family rule:
+
+                                    A -fill token is OBJECT PAINT — the paint a drawn
+                                    thing is made of, the mirror of -ink (the paint TYPE
+                                    is made of). It answers WCAG 1.4.11's 3:1 NON-TEXT
+                                    floor, not 1.4.3's 4.5:1 small-text floor, so it may
+                                    run brighter than its base token. Put one in a
+                                    color: declaration and you have shipped 3.1:1 body
+                                    text. Legal in fill / stroke / border-color /
+                                    background; nowhere else. Enforced by
+                                    tests/fill-token-misuse.spec.js.
+
+                                    A -fill twin exists ONLY where the light-theme text
+                                    floor pushed a hue out of its own name — dark yellow
+                                    is olive, dark desaturated orange is brown, but dark
+                                    green is still green and dark blue is still blue.
+                                    --accent (-20.5 L*) and --blue (-22.4 L*) are
+                                    darkened just as hard in light and stay themselves,
+                                    so they get no twin. Do not add one for symmetry: an
+                                    alias token is a drift generator (the -ink family is
+                                    asymmetric for the same reason — there is no
+                                    --heat-ink).
+
+                                  Component identity on the DDC equipment graphics —
+                                  a heating serpentine, a valve body. Dark rides --heat
+                                  unchanged: 6.95:1 on --bg, 5.13:1 on --surface-2, i.e.
+                                  1.7-2.3x the non-text floor, and already the warm
+                                  orange the convention names, so there is nothing to
+                                  fix. Light moves (below). One theme moves and the other
+                                  rides is exactly --blue-ink's shape. codebase-issues
+                                  #230. */
     --teal:         #46b3ac;   /* teal — data/comm traces on the background schematic (BACnet, IP); also outside-air ducts in the education air diagrams */
     --teal-dim:     rgba(70,179,172,0.14);
     --teal-glow:    rgba(70,179,172,0.24);
@@ -160,6 +192,12 @@
     --amber-glow:   rgba(224,169,74,0.26);
     --amber-ink:    #e0a94a;   /* = --amber — dark amber already clears AA (4.86:1);
                                   light needs its own deeper step below */
+    --amber-fill:   #e0a94a;   /* = --amber — NEVER FOR TEXT. Object paint for component
+                                  identity (a modulating damper's frame and blades); see
+                                  the family rule at --heat-fill. Dark rides --amber
+                                  unchanged — 8.58:1 on --bg, 6.33:1 on --surface-2,
+                                  2.1-2.9x the 3:1 non-text floor, and already the bright
+                                  yellow the convention names. Light moves (below). */
     --plum:         #b783c0;   /* plum — logic-signal lines on the background schematic */
     --plum-dim:     rgba(183,131,192,0.14);
     --plum-glow:    rgba(183,131,192,0.26);
@@ -250,6 +288,21 @@
                                   clears AA on light surfaces" claim was true only of the
                                   brighter surfaces. This step reads 4.80:1 there. */
     --heat:         #9c5a14;
+    --heat-fill:    #b85400;   /* NEVER FOR TEXT (family rule at the dark --heat-fill).
+                                  Light --heat is dragged to #9c5a14 by the 4.5:1 text
+                                  floor, which is a dark orange-BROWN — brown is literally
+                                  desaturated orange, so the correction here is CHROMA, not
+                                  lightness: C* 52.7 -> 68.0, L* only 44.8 -> 47.7. Holds
+                                  the dark hue angle exactly (57deg; base --heat drifts
+                                  57 -> 65deg chasing the text floor), which is what a
+                                  reader recognises a colour by. Non-text contrast: 4.88:1
+                                  on --surface, 4.28:1 on --bg, 4.08:1 on the strictest
+                                  light surface #e8ece4 (--bg-2 / --surface-3 / --well) —
+                                  all well over the 3:1 floor. Tuned against #e8ece4 and
+                                  not merely against the white the graphic mostly sits on,
+                                  because --well-painted ducts are a real backdrop in that
+                                  drawing; so the token carries no "only safe on white"
+                                  caveat. */
     --teal:         #377070;
     --teal-dim:     rgba(55,112,112,0.10);
     --teal-glow:    rgba(55,112,112,0.22);
@@ -258,6 +311,28 @@
     --amber-dim:    rgba(131,100,31,0.10);
     --amber-glow:   rgba(131,100,31,0.22);
     --amber-ink:    #7b5e1d;
+    --amber-fill:   #af7b00;   /* NEVER FOR TEXT (family rule at the dark --heat-fill).
+                                  Light --amber is dragged to #83641f by the 4.5:1 text
+                                  floor, which is an OLIVE — yellow only exists bright, so
+                                  the correction here is LIGHTNESS: L* 44.3 -> 55.4 (chroma
+                                  follows, 42.2 -> 62.5). Opposite correction to
+                                  --heat-fill's, which is why the pair's lightness gap
+                                  opens for free: dL* 0.6 -> 7.7, dE76 18.0 -> 26.6 (dark
+                                  is 6.8 / 23.1, so light now separates BETTER than dark).
+                                  That gap is the greyscale, print and protanope budget —
+                                  at dL* 0.6 the light pair really was one colour for a
+                                  protanope. Holds the dark hue angle (79deg; base --amber
+                                  drifts to 83deg). Non-text contrast: 3.71:1 on --surface,
+                                  3.26:1 on --bg, 3.10:1 on the strictest light surface
+                                  #e8ece4 — and that last one is an OPERATIVE ratio, not a
+                                  safety cushion: the relief damper sits bodily inside a
+                                  duct riser painted --well, so a real share of this
+                                  token's paint lands on #e8ece4 (measured on the rendered
+                                  graphic: ~90 % of the amber pixels are on white, ~8 % on
+                                  #e8ece4). The tight one — 0.10 of margin there, deliberate
+                                  (the 2026-07-20 --text-dim retune shipped at 4.60:1
+                                  against 4.50 on the same surface). Do not brighten
+                                  further without re-measuring #e8ece4. */
     --plum:         #8a5e7e;
     --plum-dim:     rgba(138,94,126,0.10);
     --plum-glow:    rgba(138,94,126,0.22);
@@ -307,6 +382,7 @@
         --red-dim:      rgba(196,56,47,0.10);
         --red-text:     #bb352c;
         --heat:         #9c5a14;
+        --heat-fill:    #b85400;   /* kept in sync with the light block above */
         --teal:         #377070;
         --teal-dim:     rgba(55,112,112,0.10);
         --teal-glow:    rgba(55,112,112,0.22);
@@ -315,6 +391,14 @@
         --amber-dim:    rgba(131,100,31,0.10);
         --amber-glow:   rgba(131,100,31,0.22);
         --amber-ink:    #7b5e1d;
+        --amber-fill:   #af7b00;   /* kept in sync with the light block above — and for the
+                                      -fill family that sync is load-bearing rather than
+                                      tidy: :root still applies under @media print, so a
+                                      -fill token missing HERE resolves to the DARK value on
+                                      paper. #e0a94a on white is 2.11:1, under the 3:1
+                                      non-text floor — dampers would print washed out.
+                                      tests/fill-token-misuse.spec.js pins this block
+                                      against the light one. */
         --plum:         #8a5e7e;
         --plum-dim:     rgba(138,94,126,0.10);
         --plum-glow:    rgba(138,94,126,0.22);

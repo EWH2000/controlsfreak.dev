@@ -5914,6 +5914,55 @@ Lower-priority candidates still parked here for completeness:
   European protocols" page at tour-level depth, deeper pages
   following if demand surfaces.
 
+### Hover tooltips on graphic values *(raised 2026-07-28, not scoped — the owner flagged the creep himself)*
+
+Raised while the AHU depiction round added the rail's SP DIFF well: a
+value whose *meaning* takes a sentence could carry that sentence on
+hover instead of in the prose below. Filed rather than built, and the
+owner named the risk in the same breath as the idea. What follows is
+the distinction that makes it decidable later, because the answer
+depends entirely on **which kind of tooltip** — the two are barely the
+same feature.
+
+**A native tooltip is nearly free.** SVG `<title>` (first child of the
+element) and the HTML `title` attribute both get a browser tooltip with
+no JS, no CSS and no focus management. The AHU graphic already uses
+native `<title>` on all five sensor glyphs, so this is an existing
+idiom on the page, not a new one.
+
+**But native is only acceptable as a supplement, never as the carrier.**
+Four limits, all of them structural rather than fixable: it is not
+keyboard-reachable, screen-reader handling of `title` is inconsistent
+across readers, there is no touch equivalent at all, and it cannot be
+styled — so on a page built to a hard-seam design system it arrives
+looking like the operating system. That is fine on the sensor glyphs
+and would be fine on SP DIFF **only** because the same information is
+already in the reading-this-screen prose, in reflowing HTML, for
+everyone. The moment a tooltip is the only place something is said, it
+has failed a reader who cannot hover.
+
+**A custom tooltip that matches the page's look is a real component.**
+Styling it means owning it, and owning it invokes **WCAG 1.4.13
+(Content on Hover or Focus), Level AA**: the content must be
+*hoverable* (the pointer can move onto it without it vanishing),
+*dismissible* (Escape closes it without moving the pointer) and
+*persistent* (it stays until dismissed or the trigger is left).
+Dismissible carries an exception — content that reports an input error,
+or that obscures and replaces nothing, is let off — but neither applies
+to a value gloss floating over the drawing. That is a focus-managed
+widget, and this page is a crowded place to put one — it already has a
+fullscreen mode, tab panes, a command palette, and `:has()`-driven
+hover highlighting that lights an annotation when a glyph is hovered
+or focused. A tooltip triggering off the same hover competes with the
+highlight for the same gesture.
+
+**The creep is not the first tooltip, it is the eleventh.** Once one
+value has one, every value has a case for one — and the honest version
+of "explain the values" is the prose block the page already carries,
+which reflows, translates, prints, and is read the same way by
+everyone. Revisit if a specific value proves genuinely opaque in front
+of a real reader; do not open it as a general affordance.
+
 ---
 
 ## Redesign — dark-industrial two-register language

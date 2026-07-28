@@ -8850,7 +8850,7 @@ unexplained.
 **Owner decision 2026-07-27: defer** to the same pre-live sweep as #225.
 Writeup: `docs/audits/2026-07-ddcw-prose/findings.md` §2 and §5.
 
-### 227. FCU graphic a11y: a live region inside a hidden pane, and `role="img"` over five focusable descendants *(noticed 2026-07-27, prose audit — (a) resolved 2026-07-27, (b) open)*
+### 227. FCU graphic a11y: a live region inside a hidden pane, and `role="img"` over five focusable descendants *(noticed 2026-07-27, prose audit — (a) resolved 2026-07-27, (b) **RULED 2026-07-28**, scheduled to the graphic-wiring lane and not yet implemented)*
 
 Two findings from the same audit, both on the FCU workbench graphic, neither
 a program issue and so outside #225/#226's deferral.
@@ -8911,8 +8911,9 @@ first fails on `expect(aria-live).toBeNull() / Received "polite"`; the
 second on `pill repaints only on a verdict change / Expected <= 0 /
 Received 40`.
 
-**(b) stays open** — owner decision, untouched here, including the stale
-in-file comment it names, so (b) can be dispositioned as one unit.
+**(b) was left open here** — owner decision, untouched by (a), including the
+stale in-file comment it names, so (b) could be dispositioned as one unit.
+**It now has that decision; see the ruling below the finding.**
 
 (b) **`role="img"` now wraps five focusable elements** — two `.fcu-link`
 drill-downs and three `role="button"` sensor groups. `img` is a
@@ -8927,9 +8928,41 @@ every one already duplicated in the `.fcu-points` mirror that exists
 activation affordance to real HTML buttons outside the SVG. Owner decision
 either way; the stale comment needs correcting regardless.
 
+> **RULING ON (b) (2026-07-28) — the second path. `role="img"` STAYS, and
+> the activation affordance moves out of the SVG onto real HTML buttons.**
+>
+> The pruned subtree is the property worth keeping: the graphic is an image
+> with a `<desc>`, and the point mirror beside it already carries every value
+> the drawing paints. The mirror is also what makes this cheap — the chips
+> mirror the graphic one-for-one, so they become the activators and the
+> focusable elements simply come out of the pruned subtree. No `aria-hidden`
+> bookkeeping over 19 duplicated `<text>` nodes, and no window where a swap
+> has landed but the hiding has not.
+>
+> It also settles a second finding from the same audit for free — the one
+> filed in `docs/audits/2026-07-ddcw-prose/findings.md` as *glyph names
+> announce as objects, not actions*. A sensor group carrying `role="button"`
+> inside a presentational-children role announces as the thing it draws
+> rather than the thing it does; a real `<button>` outside the SVG announces
+> as an action because it is one.
+>
+> **NOT IMPLEMENTED IN THE AHU depiction lane, and deliberately so.** The
+> change touches the shipped FCU page and the AHU page that comes after it,
+> and the activators have to be wired to whatever the graphic's click model
+> ends up being — so it rides with the graphic work of the Phase-7 AHU round
+> (`docs/next-session-handoff.md`, that phase's agenda item 2 — the graphic
+> mockup on a hidden page), as one change across both pages rather than two
+> divergent ones.
+> **Scheduled, not done.** The stale in-file comment on the FCU page ("the
+> education idiom") is corrected there, in that lane, with the rest of it.
+>
+> Recorded here so it is not re-litigated: the `role="group"` + `aria-hidden`
+> path is closed.
+
 Smaller a11y items from the same audit (glyph names announce as objects not
-actions; "far wall" has no referent; `aria-label` on two bare `<div>`s where
-naming is prohibited) are itemised in
+actions — **settled by the ruling above**, and scheduled with it; "far wall"
+has no referent; `aria-label` on two bare `<div>`s where naming is
+prohibited) are itemised in
 `docs/audits/2026-07-ddcw-prose/findings.md`. The fourth — the verdict
 `textContent` rewritten unguarded at 10 Hz (item 18) — shipped with (a)
 above; see there for why it could not wait.
@@ -9263,7 +9296,128 @@ Checked and fine: `#ddcw-fbe-status` (`:1027`) is inside `#tab-wiresheet`
 and written only on run / pause / reset — no spam, and its pane is up
 whenever it can change.
 
-### 230. Light theme darkens `--amber` and `--heat` out of the register component identity depends on *(noticed 2026-07-28, AHU round-2 depiction review — open, needs an owner ruling)*
+### 230. Light theme darkens `--amber` and `--heat` out of the register component identity depends on *(noticed 2026-07-28, AHU round-2 depiction review — **RESOLVED 2026-07-28**, owner ruled for separate fill tokens)*
+
+> **RESOLUTION (2026-07-28).** Owner ruled for the candidate fix below:
+> **separate fill tokens**, on the reasoning that *a damper blade is not
+> text* — WCAG **1.4.11** asks 3:1 for non-text contrast, not the 4.5:1
+> small-text floor the `-ink` family is tuned to, so a component-identity
+> FILL may run brighter in light theme than the text token, provided it is
+> never used for type. Shipped as `--amber-fill` / `--heat-fill` in all
+> three token blocks of `html/styles.css` (`:root`, the light block, **and
+> `@media print`**), with the seven consumers in
+> `html/simulators/ddc-workbench-ahu-mockup.html` migrated. Scope is **two
+> tokens, not four**: yellow and orange are the only hues whose common name
+> is lightness/chroma-bound (dark yellow is olive, dark desaturated orange
+> is brown), while `--accent` (−20.5 L\*) and `--blue` (−22.4 L\*) are
+> darkened just as hard in light and stay themselves. No symmetry tokens —
+> the `-ink` family is already asymmetric and an alias token is a drift
+> generator.
+>
+> | token | dark | light | light contrast: `--surface` / `--bg` / `#e8ece4` |
+> |---|---|---|---|
+> | `--amber-fill` | `#e0a94a` (= `--amber`, rides) | `#af7b00` | 3.71 / 3.26 / **3.10** |
+> | `--heat-fill` | `#e8884a` (= `--heat`, rides) | `#b85400` | 4.88 / 4.28 / **4.08** |
+>
+> Dark rides its base deliberately (8.58:1 / 6.95:1 on `--bg`, 2–2.9× the
+> non-text floor) — the same one-theme-moves shape `--amber-ink` and
+> `--blue-ink` already have. Light lifts amber's **lightness** (olive→yellow,
+> L\* 44.3 → 55.4) and heat's **chroma** (brown→orange, C\* 52.7 → 68.0);
+> opposite corrections, which is why the lightness gap opens for free. Both
+> fills hold their **dark-theme hue angle** (79° / 57°) where the base tokens
+> drift to 83° / 65°. Tuned against `#e8ece4` (`--bg-2`/`--surface-3`/`--well`
+> — the strictest light surface) and not merely against the white the graphic
+> mostly sits on, so neither token ships an "only safe on white" caveat. That
+> tuning target is load-bearing rather than conservative: the relief damper
+> sits bodily inside a duct riser painted `--well`, and measured on the
+> rendered graphic ~90 % of the amber pixels land on white but ~8 % land on
+> `#e8ece4`, so `--amber-fill`'s 3.10:1 is a ratio the drawing actually uses.
+>
+> **Measured before → after (light pair):**
+>
+> | metric | before | after | dark, for scale |
+> |---|---|---|---|
+> | ΔE76 amber↔heat | 18.0 | **26.6** | 23.1 |
+> | ΔL\* amber↔heat | **0.6** | **7.7** | 6.8 |
+> | ΔL\* damper↔fixed louver (`--text-dim`) | **0.0** | **11.0** | 8.8 |
+>
+> ΔE now exceeds dark theme's own 23.1, and **the lightness gap was opened** —
+> which is the one part of this entry's original claim that survived scrutiny.
+> It fixes greyscale and print outright, and **protanopia**; it does *not* fix
+> red-green deficiency in general (see the CVD paragraph below — deuteranopia
+> is a wash). It also fixes the drawing's weakest shape distinction: a grey
+> fixed louver beside a modulating damper was ΔL\* **0.0** against
+> `--text-dim` in light and is now 11.0.
+>
+> ⚠️ Do **not** read ΔL\* of the source colours as "the CVD budget" — an
+> earlier draft of this entry did, on the reasoning that a dichromat has only
+> the lightness channel left. That is wrong as stated: every published
+> dichromat transform *rebuilds* the R and G channels, and green alone carries
+> ~71.5 % of luminance, so simulated lightness does not track the source
+> ΔL\*. Measured here, the source pair goes ΔL\* 0.6 → 7.7 while the same pair
+> simulated as deuteranopic goes 2.2 → 5.4 (Viénot-Brettel-Mollon) or
+> 1.6 → 6.2 (Machado). Simulate, then measure; do not extrapolate.
+>
+> **The untested CVD question above is now settled — and the retracted claim
+> turns out to be true for protanopes, and only for them.** Simulating the
+> dichromat transform on the light pair puts protan ΔE at roughly **3–4**,
+> i.e. genuinely one colour for a protanope, in light theme only. The fill
+> tokens take it back to dark theme's own protan level (mid-teens).
+>
+> **Deuteranopia is a wash, and deuteranopia is the more common deficiency.**
+> Every model run puts the deutan pair near **ΔE 7 both before and after**
+> the change — Viénot-Brettel-Mollon 6.8 → 7.1, Machado 2009 (severity 1.0)
+> 7.1 → 7.1 — against a dark-theme deutan figure of ~7.6. So deutan
+> separation was never carried by this colour pair *in any theme*; it is
+> carried by shape and adjacency (a serpentine tube versus a framed damper
+> with blades), which the drawing does provide. This change neither helps nor
+> harms it. Claiming the split "fixes red-green deficiency" overstates it —
+> say *protanopia*.
+>
+> ⚠️ **Do not quote CVD figures to two significant digits.** Three
+> independent implementations of the *same* published VBM matrices produced
+> three different "after" values for the protan pair — 12.2, 22.2 and 16.2 —
+> and the gamma convention (sRGB piecewise vs pure 2.2) accounts for less
+> than 1 ΔE of that spread, so the divergence is in the pipelines, not in the
+> colour science. What reproduces across all of them is the *direction* and
+> the *band*: protan before ≈ 3–4, protan after ≈ dark's own level, deutan
+> ≈ 7 throughout. Quote the band, never a digit pair.
+>
+> **Tritan numbers from the daltonize matrix are unusable** — its tritan
+> branch renders blue *unchanged* and red as *yellow*, which is the protan
+> failure mode, not tritanopia (VBM 1999 defines no tritan transform; that
+> branch is a later bolt-on). Tritanopia is ~1 in 10,000 and the pair is
+> lightness-separated either way, so nothing here turns on it.
+>
+> **Guarded by `tests/fill-token-misuse.spec.js`** (new): a source scan that
+> fails on any `-fill` token reaching a non-paint property, a census asserting
+> every `var(--…-fill)` reference lands in a classified sink (so a fifth sink
+> idiom fails rather than passes), a rendered arm for `fill:` on SVG `<text>`,
+> and a third test pinning the `@media print` duplicate against the light
+> block — a `-fill` token missing from print resolves to the **dark** value on
+> paper (`#e0a94a` on white is **2.11:1**, under the non-text floor). The
+> rendered arm exists because contrast-sweep provably cannot cover this: the
+> consumer page has no `canonical`, so it is absent from `tests/pages.js`, and
+> SVG text is out of that walker's scope. Also new:
+> `tests/ddc-workbench-ahu-mockup.spec.js`, since no spec rendered that page
+> at all.
+>
+> **Not migrated, deliberately:** the round-1 variants (`.ahu-coil-hw`) keep
+> the base tokens — they are the before-half of the comparison the page
+> exists to show. `--heat`'s other consumers (the psychrometric chart's
+> heating process line, `education/psychrometrics-basics.html`) are
+> *process/state* semantics rather than component identity, and one is a
+> `color:` declaration; migrating the chart is a plausible follow-on needing
+> its own backdrop measurement. **Blast radius on existing pages: zero** —
+> every other page renders byte-identically.
+>
+> Version bumped `3.74.6` → `3.75.0`: the `?v=` cache-bust is load-bearing
+> here, because without it a returning visitor resolves `var(--amber-fill)`
+> against the old stylesheet, gets nothing (house no-fallback rule), and sees
+> **unpainted damper strokes**.
+>
+> One finding from the depiction review is spun out rather than fixed here —
+> see **#231** (the two coil serpentines are separated by hue alone).
 
 **This entry supersedes its own first draft, and the correction is the
 useful half.** That draft was titled "`--amber` and `--heat` are one colour
@@ -9336,3 +9490,170 @@ the AHU graphic. Retuning `--heat` itself is the alternative and has a
 genuinely wide blast radius: it also carries the psychrometric chart's
 heating process lines and the education air diagrams. `--red` is not the
 escape hatch; it means alarm site-wide.
+
+### 231. The AHU heating and cooling serpentines are the same drawing, separated by hue alone *(noticed 2026-07-28, spun out of #230's "colour is never the only channel" check — **RESOLVED 2026-07-28**, owner ruled for the real hardware difference)*
+
+> **RESOLUTION (2026-07-28).** Owner's ruling, verbatim: *"draw real hardware
+> difference, but keep it simple, no need for complexity, especially with
+> color being different."* So none of the three options listed below shipped
+> as written — the ruling rejects the whole class they belong to. A different
+> pass count (option 1) or hatched bends (option 3) are **decorations chosen
+> to be different**; a caption (option 2) is a text channel bolted onto a
+> glyph that should say what it is by being drawn as what it is. What shipped
+> is the thing the machine actually has and the hydronic coil actually does
+> not: a **refrigerant distributor** on the DX coil.
+>
+> A DX evaporator is fed through a distributor — a small solid body, narrow
+> at the liquid connection and widening to an outlet face, with fine
+> equal-length feeder tubes fanning out to the coil's circuits — and leaves
+> through a suction connection. Nothing else on an air handler looks like it,
+> and no hydronic coil has one, so the cue is a *fact about the equipment*
+> rather than a mark applied to tell two pictures apart. It is also the
+> **minimum**: colour still carries most of the load, per the ruling, and the
+> shape is the supplement that survives when colour does not.
+>
+> **What shipped** (`html/simulators/ddc-workbench-ahu-mockup.html`, round-2
+> graphic only — the round-1 reference drawings are untouched, as always):
+> a wedge distributor body, three feeder tubes landing on the serpentine's
+> nodes one coil pitch apart, and a short suction stub with a header bar off
+> the serpentine's top end. Fed low, suction high — the arrangement that
+> returns oil, and the one the serpentine's two free ends already implied.
+> Two page-local classes, `.ahu-dist-body` (`fill: var(--surface)` with a
+> `var(--blue)` outline, the same form as `.ahu-valve-body`) and
+> `.ahu-dist-feeder` (`var(--blue)` at stroke-width 1, one step under the
+> serpentine's 1.5, which is the drawn difference between a capillary and a
+> coil tube). **No `html/styles.css` change was needed**, so #230's
+> `3.74.6` → `3.75.0` bump still covers the arc — no second bump owed.
+>
+> ⚠ **The body was drawn SOLID first and that was wrong — caught by looking
+> at the render, not the markup.** On this drawing a solid fill with
+> `stroke: none` is the ARROW idiom (`.ahu-arrow`), and the SVG header rule
+> is explicit: *arrowheads mean airflow and nothing else*. A filled wedge at
+> this size reads as a small block arrow, and it points **upstream**, which
+> is the one thing it must not say. Every component *body* on the drawing is
+> surface-filled and outlined — damper frames, louver frame, valve body,
+> sensor bodies — so the outline is what puts the distributor in the
+> component family instead of the airflow family. The greyscale cue is
+> carried by the **silhouette**, which was never the fill's job; the
+> capture confirms the outlined form separates the coils with hue removed.
+>
+> **Geometry, derived rather than eyeballed.** The station's clear corridor
+> is x486 (the section divider) to x506 (the serpentine's left face) — 20
+> units, spent as 6 clear / 7 cone / 7 feeder run. Measured envelope on the
+> rendered page: **x492–506, y265–322**. Clearances: DX leader at x526 and
+> its anchor at (526,344); HW valve return stub at x466; DX callout frame
+> corner (470,398), 76 below the assembly's lowest ink. A bbox sweep of every
+> drawn element in the round-2 SVG against that envelope returns four hits,
+> all of them explained: the casing and divider **paths** are multi-segment
+> and their bounding boxes over-report (their actual segments are at y250 /
+> y355 and x486); the cooling serpentine touches the envelope's right edge at
+> x506, which is where the feeders and the suction stub are *supposed* to
+> land; and the **invisible mixed-air centerline** ends at (500,302), the
+> cone's outlet-face top vertex. That rail is never painted (`stroke-width:
+> 0`) and already runs straight through the filter and the heating coil, so
+> it is not a new overlap — but the note is in the page, because the reserved
+> chevron layer would sample it.
+>
+> **Guarded** by a new relational assertion in
+> `tests/ddc-workbench-ahu-mockup.spec.js`: the DX link group carries
+> distributor geometry, the heating coil carries none, both coils stand the
+> same height, and the DX group's rendered bbox is **more than 4 units wider**
+> than the heating coil's. That last one is the load-bearing arm — it reads
+> geometry rather than class names, so deleting the distributor and leaving an
+> empty `<g>` behind still fails. The spec's scope note now records why one
+> depiction fact is pinned in a file that deliberately pins none: this is a
+> WCAG 1.4.1 property, not a drawing preference, and it is asserted
+> relationally so a future redraw is free to carry the cue differently.
+>
+> **Prose trued up in the same diff**, because three places explained the
+> colour-coding rule without the qualifier: the SVG header comment (a new
+> COLOUR IS A SUPPLEMENT, NEVER THE ONLY CHANNEL block, listing the shape
+> signature every other glyph already had), the round-2 thesis paragraph, and
+> the reader-facing *Reading this screen* block. The `<desc>` describes the
+> new geometry in the drawing's own neutral register.
+>
+> **Not done, deliberately:** the heating coil is unchanged. Its stubs, ticks
+> and vertical bowtie already read, and the brief's own test — add the minimum
+> that separates them at a glance, then stop — is satisfied by one coil
+> gaining the part it really has.
+>
+> **FEEDER REFINEMENT (2026-07-28, same PR).** Owner's depiction review of the
+> shipped glyph: *"The DX coil distributor looks somewhat janky, I think
+> adding a 4th line for vertical symmetry and maybe changing the straight
+> lines to curves would do wonders."* So the numbers above describe the first
+> cut, not the drawing — **three feeders became four, and the rays became
+> curves.** Four is the symmetric count *and* the truthful one: three forces a
+> tube on the cone's axis, while four puts two above and two below with
+> nothing on it, and real distributors are built in even circuit counts.
+> The landings stay serpentine nodes one coil pitch apart — now
+> **y296 / 309 / 322 / 335**, so the cone's axis moves to **y315.5** and the
+> lowest feeder lands on the serpentine's lower free end, which also stops
+> that end dangling. Each feeder is a quadratic whose control point shares its
+> landing y, so it leaves the cone on the splay and **arrives horizontal**,
+> parallel to the pass it brazes into.
+>
+> **The corridor budget was rebalanced 6 / 7 / 7 → 4 / 5 / 11**, because 7
+> units is 6.5 CSS px at 0.9286 px/unit and no curve reads across it. That is
+> measured, not asserted: a quadratic's bow off its own chord is half its
+> control point's perpendicular distance from that chord, so on the old 7-unit
+> run the outer feeder bows **1.43 units (1.33 px) against a 1-unit stroke** —
+> one stroke width, a fattened line rather than a curve. At 11 it bows **2.22
+> units (2.06 px)**, better than two stroke widths, and the sweep reads; the
+> inner pair sit at 1.14 (1.06 px). That threshold is the reusable finding
+> here — on this drawing a curve needs roughly two stroke widths of bow before
+> it stops reading as a thick straight line, and the run length is what buys
+> it. The cone paid 2 units of length and the clear gap paid 2; the
+> cone's face and tip heights are untouched, so only its taper changed. New
+> **measured envelope: x490–506, y265–335**, and the bbox sweep returns five
+> hits, all explained — the casing and divider paths over-report (real
+> segments at y250 / y355 and x486, so the true clearances are 15.1 / 20 / 4);
+> the invisible `stroke-width: 0` mixed-air rail, which now crosses the top
+> feeder at ~(499,302) instead of ending on the old cone vertex; the DX link
+> box, which the feeders cross at x500 by design; and the serpentine itself at
+> x506, which is where feeders are supposed to land. The relational guard got
+> *stronger* rather than needing an edit — the DX group is now 10 units wider
+> than the heating coil's, against the spec's `> 4`.
+
+Found while verifying that the AHU round-2 graphic
+(`html/simulators/ddc-workbench-ahu-mockup.html`) does not rely on colour as
+its only channel. Every other component glyph clears: the three dampers
+differ in frame aspect and blade orientation, the filter has a different
+media slope and half the stroke weight, the fan and the valve are unique
+shapes, and the relief stream carries a dashed stem so "leaving the
+building" reads without colour. **One pair does not.**
+
+`.ahu-tube.is-heat` and `.ahu-tube.is-cool` are byte-identical serpentines
+differing only by an x-offset — `M430 270 H470 V283 H430 …` versus
+`M506 270 H546 V283 H506 …`. Same 6 passes, same 40-unit width, same 13-unit
+pitch, same 1.5 stroke, same 52×82 link-box. **Nothing but `--heat` versus
+`--blue` distinguishes a heating coil from a cooling coil.** This is
+theme-independent and it is a genuine WCAG 1.4.1 (Use of Colour) concern.
+
+The two mitigations that exist are **station-level, not glyph-level**, and
+the difference matters:
+
+- The **HW valve and its pipe stubs** hang below the heating coil. That is
+  adjacency — it identifies the *station*, not the coil, and it only works
+  for a reader who knows a two-way valve implies hydronic heating.
+- The **callout titles** `HEATING COIL` / `COOLING COIL` are reached by
+  leader lines from elsewhere on the drawing: a text channel at a distance,
+  not on the object. The round-1 variants are actually better here — they
+  carry `HW COIL` / `DX COIL` captions *on* the coils, which round 2 dropped
+  when the callout titles took over the naming job.
+
+Colour-vision-wise the pair is safe (warm versus blue is a large distance
+under every dichromat transform). **The exposure is greyscale and print**,
+where lightness is all that survives: ΔL\* is 5.9 in light after #230's
+`--heat-fill` landed (up from 3.1), but only **1.9 in dark** — dark is the
+worst of the three, though dark never prints, since `@media print` forces
+the light token set.
+
+**Not fixed in #230's PR, deliberately** — that was a colour-token change,
+and every fix here is a depiction decision that belongs with the owner's
+equipment-graphics eye. Cheapest honest options, in order of preference:
+
+1. Give the DX serpentine a different **pass count or pitch**. This is a
+   real distinction rather than a decoration — a 4-row and a 6-row coil
+   genuinely differ that way, so the drawing would be telling the truth.
+2. Restore a short station caption on each coil box (round 1's answer).
+3. Hatch one serpentine's return bends.

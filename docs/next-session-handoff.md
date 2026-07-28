@@ -71,11 +71,17 @@ Then **Phase 8 — graduation** per the plan's tiered checklist.
 
 ## Open, and not covered by the program-sweep deferral
 
-- **`codebase-issues` #227(b) — FCU graphic a11y.** `role="img"` now wraps
-  five focusable descendants; ⚠️ the naive `role="group"` swap is worse
-  than the problem — it un-hides 19 `<text>` nodes already duplicated in the
-  `.fcu-points` mirror. Owner decision; the stale in-file comment it names is
-  deliberately left alone so (b) disposes as one unit.
+- **`codebase-issues` #227(b) — FCU graphic a11y. RULED 2026-07-28, scheduled,
+  not done.** `role="img"` **stays** and the activation affordance moves out of
+  the SVG onto real HTML buttons, with the point-mirror chips as the
+  activators — so the focusable elements simply leave the pruned subtree. The
+  naive `role="group"` swap is **closed**: it un-hides 19 `<text>` nodes
+  already duplicated in the `.fcu-points` mirror. The ruling also settles the
+  *glyph names announce as objects, not actions* finding from the same audit.
+  It rides with **agenda item 2 above** (the graphic work of this round), as
+  one change across the FCU and AHU pages rather than two divergent ones; the
+  stale in-file comment it names is corrected there, with the rest of it. Full
+  ruling in `codebase-issues` #227 — do not re-litigate.
   **(a) is closed** — shipped on `fix/ddcw-pre-ahu-hygiene` as an `.sr-only`
   mirror outside both panes, with prose-audit item 18's signature guard.
 - **`codebase-issues` #229** — `#fcu-ovr-state` is the same unguarded-10 Hz
