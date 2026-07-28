@@ -130,3 +130,83 @@ test.describe('DDC Workbench — signed coil ΔT (leaving minus entering)', () =
         expect(dt).toBeCloseTo(parseFloat(vals.dat) - parseFloat(vals.eat), 1);
     });
 });
+
+test.describe('DDC Workbench — verdict thresholds are unit-invariant (#224)', () => {
+    test('a units flip repaints the numbers and never moves the no-ΔT line', async ({ page }) => {
+        // The verdict ladder and the downstream-air gate used to compare the
+        // DISPLAYED ΔT against a bare −3. That literal is −3 °F for a US
+        // reader and −3 °C ≈ −5.4 °F for a metric one, so between those two
+        // lines the SAME plant state read "Cooling — clear ΔT" in US and
+        // "No ΔT across coil — compressor not cooling" in metric, with the
+        // air past the coil un-tinted to match (codebase-issues #224).
+        //
+        // A unit system is a display choice, so parking the unit inside that
+        // band and flipping the toggle must change the NUMBERS and nothing
+        // else. The band is only reachable on the coil's ramp — steady-state
+        // stage-1 ΔT is ≈ −10 °F — which is what the scripted manoeuvre below
+        // is for: warm the coil fast, then call a stage at 2× and catch it on
+        // the way down (~4 s of usable window).
+        //
+        // The whole manoeuvre runs ~8 s on a quiet box, and this page is the
+        // heaviest in the repo (FBE editor + rAF chevron loop), so the 30 s
+        // default is too tight to be safe under parallel load. Nothing inside
+        // may declare a longer wait than the test's own budget.
+        test.setTimeout(60_000);
+        await page.addInitScript(() => localStorage.setItem('cf_units', 'us'));
+        await page.goto(URL);
+        await page.waitForFunction(() =>
+            document.getElementById('fcu-verdict').textContent.trim().length > 0);
+
+        // The compressor-off scenario writes slot 8 on the stage AND the fan,
+        // so the NULL boxes release themselves and the stage buttons go live.
+        // With the stages off and the fan still running, the coil lag carries
+        // ΔT back up through zero to fan heat alone. The slider's max is 60×
+        // but the unit's 5 s per-tick clamp caps a 10 Hz host at an effective
+        // 50× — the warm-up waits on a condition, not a duration, so the
+        // exact multiple does not matter; the point is "as fast as it goes".
+        await page.locator('#fcu-speed-slider').fill('60');
+        await page.click('[data-preset="compoff"]');
+        await page.waitForFunction(
+            () => parseFloat(document.getElementById('fcu-dt').textContent) > -1,
+            null, { timeout: 20000 });
+
+        // 2× real time, then call stage 1: the coil ramps down through the
+        // band slowly enough to sample by hand.
+        await page.locator('#fcu-speed-slider').fill('2');
+        await page.click('#fcu-stage-1');
+
+        // Park between −3.6 and −5.0 °F: past the real (IP) trip line by a
+        // margin, short of the metric literal's −5.4 °F. ΔT only deepens from
+        // here, so the margin cannot erode while the assertions run.
+        await page.waitForFunction(() => {
+            const v = parseFloat(document.getElementById('fcu-dt').textContent);
+            return isFinite(v) && v <= -3.6 && v >= -5.0;
+        }, null, { timeout: 20000 });
+
+        const read = () => page.evaluate(() => ({
+            dt: document.getElementById('fcu-dt').textContent,
+            verdict: document.getElementById('fcu-verdict').textContent.trim(),
+            pill: document.getElementById('fcu-verdict').className,
+            datFill: document.getElementById('fcu-dat').getAttribute('fill'),
+        }));
+
+        const us = await read();
+        // Anti-vacuity: outside the band both unit systems agree even with
+        // the bug, so the test has to prove it is standing in the band.
+        const usDt = parseFloat(us.dt);
+        expect(usDt, 'parked past the IP trip line').toBeLessThanOrEqual(-3.6);
+        expect(usDt, 'parked short of the metric literal (−5.4 °F)').toBeGreaterThan(-5.4);
+        expect(us.verdict, 'a −4 °F coil is cooling in anybody’s units')
+            .toContain('Cooling — clear ΔT across the coil');
+
+        await page.click('.units-btn[data-units="metric"]');
+        await page.waitForFunction(() =>
+            document.getElementById('fcu-dt').textContent.includes('°C'));
+        const met = await read();
+
+        expect(met.dt, 'the NUMBER is what a units toggle changes').not.toBe(us.dt);
+        expect(met.verdict, 'the verdict is not a unit-dependent reading').toBe(us.verdict);
+        expect(met.pill, 'the pill severity travels with the verdict').toBe(us.pill);
+        expect(met.datFill, 'downstream air stays tinted as cooling air').toBe(us.datFill);
+    });
+});

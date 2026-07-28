@@ -58,7 +58,13 @@
 // converts at the display boundary through the shell's Units statics
 // (DDCWShell.dispTempNum / tSuffix / dSuffix — codebase-issues #218),
 // so the graphic, the readout grid, the chip strip and the off-program
-// window all share ONE conversion path.
+// window all share ONE conversion path. THRESHOLDS STAY ON THE
+// CANONICAL SIDE OF THAT BOUNDARY: a verdict or a paint gate compares
+// a value off `derived` against an IP constant — never a display
+// number against a bare literal, which silently makes the threshold
+// mean °C for half the readers (codebase-issues #224). Display numbers
+// exist to be PAINTED; decisions read the plant. A second unit module
+// inherits this rule.
 //
 // Consumers: simulators/ddc-workbench-fcu.html (assembles the unit
 // object and calls DDCWShell.createWorkbench).
@@ -94,6 +100,28 @@ const DDCWFcuUnit = (function () {
     const RA_RH       = 50;                  // % — assumed return-air RH
     const FAN_HEAT    = 0.6;                 // °F picked up across the fan
     const COIL_FLOOR  = 34;                  // °F leaving-air clamp (freeze floor)
+    // "The coil is doing real work" line — SIGNED (leaving minus
+    // entering, so cooling is negative). It gates BOTH the downstream
+    // air colour and the no-ΔT verdict, and both read it against the
+    // CANONICAL delta below, never the displayed one: the badge number
+    // is display-unit (°C in metric), so a bare −3 there is a −3 °C ≈
+    // −5.4 °F threshold for a metric reader and a healthy 4 °F coil
+    // paints "no ΔT" (codebase-issues #224). The flip side is the
+    // intended one and looks odd until you know why: a metric reader
+    // now sees "Cooling — clear ΔT" beside a −2.0 °C badge, because
+    // the trip is −3 °F ≡ −1.7 °C. That is the house policy's own
+    // shape — the engine computes in IP and converts at the display
+    // boundary — so do not "fix" it back to a °C-looking number.
+    const COOLING_DT_TRIP = -3;              // °F — signed DAT − EAT
+    // The canonical delta those gates compare. Same operand pair the
+    // badge paints (DAT − EAT, fan heat included), straight off
+    // `derived` in °F — no Units round trip, so a units toggle can
+    // move the NUMBER on screen and never the diagnosis. Callable only
+    // AFTER fcuUpdate has filled the bag: `derived.datT` / `.eatT` are
+    // assigned at the end of that function, so calling this from inside
+    // it (or on a pre-first-update plant, whose `derived` is `{}`)
+    // returns NaN.
+    function datDeltaT(d) { return d.datT - d.eatT; }
     // DAT low-limit annunciator thresholds — the unit-side mirror of the
     // trip/clear constants the cool-2stage-safeties program carries in
     // its lowlim/hilim const blocks, and the same 42 °F line the
@@ -484,9 +512,11 @@ const DDCWFcuUnit = (function () {
                         : (d.stage > 0 && d.fanOn) ? 'var(--red)' : 'var(--text-dim)');
 
         // Downstream air colour follows whether the coil is actually
-        // cooling; the chevron stream reads it to recolor air past the
-        // coil. ΔT is signed, so a clear cooling delta is ≤ −3.
-        const cooling = d.capActive && dtN <= -3;
+        // cooling; the chevron stream and the DAT number both read it.
+        // ΔT is signed, so a clear cooling delta is ≤ COOLING_DT_TRIP —
+        // measured on the CANONICAL delta, not the displayed dtN above
+        // (#224; the constant's note carries the why).
+        const cooling = d.capActive && datDeltaT(d) <= COOLING_DT_TRIP;
         downstreamColor = cooling ? 'var(--blue)' : 'var(--text-dim)';
         out.datG.setAttribute('fill', cooling ? 'var(--text-bright)' : 'var(--text-dim)');
         // Sole resume/suspend vector for the animation loop. renderUnit runs
@@ -528,9 +558,13 @@ const DDCWFcuUnit = (function () {
             cls = 'error'; txt = 'No ΔT across coil — low charge, not cooling';
         } else if (d.fault === 'airflow') {
             cls = 'error'; txt = 'No ΔT across coil — airflow fault, not cooling';
-        } else if (dtN > -3) {
+        } else if (datDeltaT(d) > COOLING_DT_TRIP) {
             // Signed ΔT: cooling drives it negative, so "no meaningful
-            // cooling delta" is anything ABOVE the −3 line.
+            // cooling delta" is anything ABOVE the trip line. Canonical
+            // delta, same reason as the chevron gate (#224). Kept as a
+            // `>` test rather than `!(… <= …)`: a non-finite delta must
+            // keep falling THROUGH this branch exactly as it did, and
+            // the negated form would catch it instead.
             cls = 'error'; txt = 'No ΔT across coil — compressor not cooling';
         } else if (d.coilLeaveT <= 42) {
             cls = 'warn';  txt = 'Cooling — but ΔT is high / airflow low (coil-freeze watch)';

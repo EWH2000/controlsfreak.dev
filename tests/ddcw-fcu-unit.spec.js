@@ -834,3 +834,52 @@ test.describe('ddcw-fcu-unit: program logic (engine-direct)', () => {
         expect(by.y1.in.IN).toBe(true);
     });
 });
+
+test.describe('ddcw-fcu-unit: display numbers never gate a decision (#224)', () => {
+
+    test('no display-unit local is compared against anything', () => {
+        // The rule a second unit module copies: a dispTempNum-derived
+        // number exists to be PAINTED. Thresholds live on the canonical
+        // side — an IP constant against a value off `derived` — because a
+        // display number drags the units toggle into the comparison, which
+        // is how a healthy 4 °F coil painted "No ΔT across coil" for a
+        // metric reader while a US reader saw healthy cooling.
+        //
+        // The comparison operand is deliberately UNCONSTRAINED. An earlier
+        // draft anchored it to a numeric literal, which would have passed
+        // the very regression this exists to stop: after the #224 fix the
+        // likeliest way back in is `dtN <= COOLING_DT_TRIP` — right
+        // constant, wrong operand — and a digit-anchored pattern cannot
+        // see it. The `(?<!=)` on the reversed form keeps `=>` from
+        // reading as the `>` operator, so an arrow function returning a
+        // display local is not a false hit.
+        //
+        // Floor: this is a source scan of non-comment lines, so a trailing
+        // `// dtN > -3` on a code line would trip it and a comparison
+        // built by string concatenation would not. Read it as "no literal
+        // display-unit comparison ships".
+        const src = fs.readFileSync(path.join(SCRIPTS, 'ddcw-fcu-unit.js'), 'utf8');
+        const code = src.split('\n').filter((l) => !/^\s*(\/\/|\*)/.test(l));
+
+        // Anti-vacuity 1: the display locals must still exist, or the scan
+        // would pass by having nothing left to look at.
+        expect(code.join('\n'), 'the display locals are still there')
+            .toMatch(/const dtN\s*=/);
+
+        const DISP = '(dtN|eatN|datN|spN|sensedN)';
+        const OPS  = '(<=|>=|<|>|===|!==|==|!=)';
+        const CMP  = new RegExp('\\b' + DISP + '\\s*' + OPS);
+        const REV  = new RegExp('(?<!=)' + OPS + '\\s*' + DISP + '\\b');
+        const hits = (l) => CMP.test(l) || REV.test(l);
+
+        // Anti-vacuity 2: the pattern must still catch the shapes it is
+        // for — both the original bug and the constant-named relapse.
+        expect(hits('        const cooling = d.capActive && dtN <= -3;')).toBe(true);
+        expect(hits('        const cooling = d.capActive && dtN <= COOLING_DT_TRIP;')).toBe(true);
+        expect(hits('        } else if (COOLING_DT_TRIP < dtN) {')).toBe(true);
+        expect(hits('        const pick = (d) => datN;'), 'arrow is not a comparison').toBe(false);
+
+        expect(code.filter(hits),
+            'a display-unit local gates a decision').toEqual([]);
+    });
+});

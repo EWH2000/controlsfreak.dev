@@ -8682,7 +8682,7 @@ A review pass that trusts the matrix alone can miss a defect below the
 fold. Fix candidates: shoot the `.fbe-canvas-inner` node with the canvas
 temporarily un-clipped, or scale the shot to the inner's full bounds.
 
-### 224. Workbench verdict/chevron ΔT thresholds compare DISPLAY-unit values against a fixed 3 *(noticed 2026-07-27, signed-ΔT lane)*
+### 224. Workbench verdict/chevron ΔT thresholds compare DISPLAY-unit values against a fixed 3 *(resolved 2026-07-27)*
 
 `fcuRenderUnit` computes `dtN` from the DISPLAYED operands (correct — the
 metric worked-example rounding policy) and then compares it against the
@@ -8697,6 +8697,46 @@ unit-dependence); noticed while flipping the sign, deliberately not fixed
 in that lane (scope). Fix candidate: derive the verdict from the CANONICAL
 delta (`d.datT - d.eatT`) against an IP constant, keeping `dtN` for paint
 only — one line each in the gate and the ladder.
+
+**Resolved (2026-07-27, `fix/ddcw-pre-ahu-hygiene`) exactly as the fix
+candidate says.** `COOLING_DT_TRIP = -3` (°F, signed) and
+`datDeltaT(d)` join the canonical-threshold shelf in
+`ddcw-fcu-unit.js`'s physics half next to `COIL_FLOOR` / `DAT_LOW_*`,
+and both comparisons keep their original `<=` / `>` shape on the
+canonical operand. The `>` form is deliberate over `!(… <= …)`: a
+non-finite delta must keep falling THROUGH that branch, and the negated
+form would catch it instead.
+
+One under-statement in the entry: `:489` gates two paints, not just the
+chevron stream — `downstreamColor` AND `#fcu-dat`'s `fill`. That is
+what gives the proof a cheap synchronous observable.
+
+Two behaviour deltas, both accepted. In US the trip point moves by at
+most 0.1 °F (`dtN` was the difference of two 0.1-rounded operands; the
+canonical delta is unrounded) — decide on the truth, paint the rounded
+number. In metric a reader now sees "Cooling — clear ΔT" beside a
+−2.0 °C badge, because −3 °F ≡ −1.7 °C. That reads odd and is correct:
+it is the house policy's own shape (engine computes in IP, converts at
+the display boundary), and the constant's comment says so, so nobody
+"fixes" it back.
+
+The freeze-watch branch's `d.coilLeaveT <= 42` was checked and is NOT
+the same bug — `coilLeaveT` is canonical °F off `derived`, never
+through `dispTempNum`. Same for `datT < DAT_LOW_TRIP` / `> DAT_LOW_CLEAR`.
+Do not touch either. `eatN` / `datN` / `spN` / `sensedN` were enumerated
+and are all write-only, so there is no third site.
+
+Two proofs. A Playwright test in `tests/ddc-workbench-fcu.spec.js` parks
+the coil inside the divergent band (−3.6 to −5.0 °F, reachable only on
+the ramp) and flips the units toggle: the number changes, the verdict,
+pill class and DAT fill do not. Pre-patch it fails with
+`Expected "Cooling — clear ΔT across the coil" / Received "No ΔT across
+coil — compressor not cooling"`. Plus a source-scan guard in
+`tests/ddcw-fcu-unit.spec.js` — the mechanical rule the AHU module
+copies. That guard's comparison operand is deliberately unconstrained:
+an earlier draft anchored it to a numeric literal, which would have
+passed the likeliest relapse, `dtN <= COOLING_DT_TRIP` (right constant,
+wrong operand).
 
 ### 225. The "2-stage + safeties" sheet has no airflow proof, so its DAT low-limit goes blind with the fan off *(noticed 2026-07-27, prose audit — deferred to the pre-live program sweep)*
 
