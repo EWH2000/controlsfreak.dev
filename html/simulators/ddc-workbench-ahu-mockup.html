@@ -1,0 +1,1750 @@
+---
+title: AHU Depiction Mockup — controlsfreak.dev
+description: Three side-by-side depictions of one air handler in one operating state, drawn as DDC supervisory graphics, for a composition review before the sim is built.
+nav: simulators
+eleventyExcludeFromCollections: true
+noindex: true
+---
+{% extends "layouts/page.njk" %}
+
+{% block head %}
+    <style>
+        /* ══════════════════════════════════════════════════════════════════
+           AHU DEPICTION MOCKUP — page-scoped rules.
+
+           SOFTWARE REGISTER ONLY. Everything here is BAS front-end chrome:
+           schematic duct strokes, neutral link-box frames, plain live-value
+           text. No equipment register (.device / .lcd / --dev-* / --lcd-*) —
+           a supervisory graphic is a screen, not a hardware face.
+
+           Colour comes only from bare custom properties. Never a literal,
+           never a var(--x, #hex) fallback: if a property is ever removed the
+           consumer should no-op loudly rather than fall back to a stale hex.
+           Every token used here carries a value in BOTH :root (dark) and
+           :root[data-theme="light"], so the drawings theme for free.
+
+           NAMING. Classes are SHARED across the three variants (.ahu-*), ids
+           are NAMESPACED per variant (ahu-a-* / ahu-b-* / ahu-c-*). That is
+           what lets three drawings of the same machine sit on one page
+           without colliding. The .ddcw-sensor* glyph block is the site-wide
+           sensor vocabulary and is deliberately unprefixed — it appears here
+           exactly ONCE and all three variants reach for it.
+
+           STATIC PAGE. This mockup ships no script, so the sensor glyphs are
+           NOT role="button" (a focusable control that cannot be activated is
+           an accessibility defect, not a placeholder). They stay focusable
+           with a native <title>, and the :has() cross-highlight below gives
+           hover and keyboard focus a real, visible result: lighting the
+           readout that glyph feeds. The production page restores
+           role="button" when ddcw-shell.js wiring lands.
+           ══════════════════════════════════════════════════════════════════ */
+
+        /* ── Mockup-page chrome ───────────────────────────────────────── */
+        .ahu-variant-head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 0.4rem 0.9rem;
+        }
+        .ahu-variant-tag {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--accent-ink);
+        }
+        p.ahu-thesis {
+            margin-top: 0.5rem;
+            max-width: 62ch;
+        }
+        .ahu-state-table { margin-top: 0.9rem; }
+
+        /* ── The graphic frame ────────────────────────────────────────── */
+        .ahu-graphic { max-width: 780px; margin: 0.5rem auto 0; }
+        .ahu-svg { display: block; width: 100%; height: auto; }
+
+        /* ── Text scale ───────────────────────────────────────────────────
+           8px is a CEILING for the caption face, not a starting point. Mono
+           advance is fontSize x 0.68 with the 0.08em tracking below (0.6em
+           glyph + 0.08em), i.e. 5.44 units per character at 8px, and mono
+           advance is weight-invariant. SVG text does not wrap and nothing
+           here clips, so a caption wider than its badge paints ink outside
+           the frame. The four badge captions measure 70.7 / 59.8 / 81.6 /
+           81.6 against boxes of 86 / 76 / 100 / 90. Do not raise the size
+           without re-measuring all four.
+
+           The delta glyph falls outside the self-hosted subset's
+           unicode-range and falls back to a system mono face, so its advance
+           is not the 5.44 the rest of that string uses — which is why the
+           delta-T badge carries 100 units for a caption that computes to
+           81.6. */
+        .ahu-pt-cap {
+            font-family: var(--mono);
+            font-size: 8px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            fill: var(--text-dim);
+            text-anchor: middle;
+        }
+        .ahu-pt-val {
+            font-family: var(--mono);
+            font-size: 14px;
+            font-weight: 700;
+            fill: var(--text-bright);
+            text-anchor: middle;
+        }
+        /* Single-class rules, same specificity as .ahu-pt-val — SOURCE ORDER
+           is what makes them land. Keep both below it. */
+        .ahu-dt-val { fill: var(--blue); }
+        /* A reference value under a measurement sits one size step down.
+           Size only: the ink stays bright, because a greyed point on a
+           device face reads as out of service rather than as secondary. */
+        .ahu-sp-val { font-size: 12px; }
+
+        .ahu-station-label {
+            font-family: var(--mono);
+            font-size: 11px;
+            font-weight: 600;
+            fill: var(--text-bright);
+            text-anchor: middle;
+        }
+        .ahu-unit-label {
+            font-family: var(--mono);
+            font-size: 11px;
+            font-weight: 400;
+            fill: var(--text-dim);
+            text-anchor: middle;
+        }
+        .ahu-zone-label {
+            font-family: var(--mono);
+            font-size: 13px;
+            font-weight: 600;
+            fill: var(--text-bright);
+            text-anchor: middle;
+        }
+        /* Variant C only: a COMMANDED OUTPUT is not a MEASUREMENT, so C
+           reads the five commands in the action colour one size step under
+           the four measured badges. --accent-ink rather than --accent
+           because it is the site's purpose token for small accent TEXT
+           (deeper in light, brighter in dark); dots and strokes stay on
+           --accent. */
+        .ahu-cmd-val {
+            font-family: var(--mono);
+            font-size: 12px;
+            font-weight: 700;
+            fill: var(--accent-ink);
+            text-anchor: middle;
+        }
+
+        /* Status lines that read left-to-right OUT of an LED dot or a valve
+           symbol. This has to be set BY ID: .ahu-pt-cap's text-anchor is a
+           CSS declaration and beats the SVG text-anchor ATTRIBUTE, so
+           setting the attribute alone would leave the string centred and
+           drop the dot inside it (the FCU's "ST-dot-2" overlap,
+           ddc-workbench-fcu.html:95-97). */
+        #ahu-a-hw-v,
+        #ahu-a-dx-stg1-v,
+        #ahu-a-dx-stg2-v,
+        #ahu-a-fan-v,
+        #ahu-b-hw-v,
+        #ahu-b-stg1-v,
+        #ahu-b-stg2-v,
+        #ahu-b-proof-v,
+        #ahu-c-stg1-v,
+        #ahu-c-stg2-v,
+        #ahu-c-proof-v { text-anchor: start; }
+
+        /* ── Ductwork ─────────────────────────────────────────────────────
+           A channel with real width: a fattened body stroke in the deepest
+           recessed tone, framed by two crisp 1.5px walls at the centerline's
+           perpendicular offset of 23. Mitered joins and butt caps are what
+           make the elbow corners and the wall butts land exactly.
+
+           Drawn on the EXTERIOR runs only. Inside a casing there is no duct
+           body — the air crosses the open interior over the dampers, filter,
+           coils and fan, and only the flow marks bridge it. Drawing a second
+           duct around the stations is the usual way this idiom goes wrong. */
+        .ahu-duct-body {
+            fill: none;
+            stroke: var(--well);
+            stroke-width: 46;
+            stroke-linejoin: miter;
+            stroke-linecap: butt;
+        }
+        .ahu-duct-wall {
+            fill: none;
+            stroke: var(--border);
+            stroke-width: 1.5;
+        }
+        /* The relief branch is the only run that leaves the building, and
+           the dash is what carries that without colour. It rides the
+           STREAM (a stroked line up the centerline), never the duct WALLS:
+           in mechanical drafting a dashed duct wall means hidden or
+           existing-to-remain, so dashing the structure would collide with a
+           standing convention. */
+        .ahu-relief-stream {
+            fill: none;
+            stroke: var(--text-dim);
+            stroke-width: 2;
+            stroke-dasharray: 9 5;
+            stroke-linecap: butt;
+        }
+        /* Never painted — the getPointAtLength seam a chevron layer would
+           sample. This round ships static arrows only. */
+        .ahu-centerline { fill: none; stroke-width: 0; }
+        .ahu-flow-layer { pointer-events: none; }
+
+        /* ── Structure ────────────────────────────────────────────────── */
+        .ahu-casing { fill: none; stroke: var(--text-dim); stroke-width: 2; }
+        .ahu-divider { fill: none; stroke: var(--border); stroke-width: 1; }
+        .ahu-zone-box { fill: var(--surface); stroke: var(--text-dim); stroke-width: 2; }
+        .ahu-zone-fill { fill: var(--surface); stroke: none; }
+        .ahu-zone-outline { fill: none; stroke: var(--text-dim); stroke-width: 2; }
+
+        /* ── Components ───────────────────────────────────────────────── */
+        .ahu-damper-frame,
+        .ahu-louver-frame {
+            fill: var(--surface);
+            stroke: var(--text-dim);
+            stroke-width: 1.5;
+        }
+        .ahu-damper-blade,
+        .ahu-louver-blade {
+            fill: none;
+            stroke: var(--text-bright);
+            stroke-width: 1.5;
+            stroke-linecap: butt;
+        }
+        .ahu-damper-pivot { fill: var(--text-bright); }
+        .ahu-filter-frame { fill: var(--surface); stroke: var(--text-dim); stroke-width: 2; }
+        .ahu-filter-media { fill: none; stroke: var(--border); stroke-width: 1; }
+        /* Coil IDENTITY lives in the serpentine, never in the frame: the
+           frames are .ahu-link-box drill-down chrome and must stay neutral
+           so the hover/focus lift to --accent reads. That is a deliberate
+           deviation from air-handlers.html, where the coil RECTANGLE is
+           stroked in the coil's colour — do not "fix" it back. */
+        .ahu-coil-hw { fill: none; stroke: var(--heat); stroke-width: 1.5; }
+        .ahu-coil-dx { fill: none; stroke: var(--blue); stroke-width: 1.5; }
+        /* The hot-water valve is commanded 0 %, so the coil is present and
+           idle. At full strength a warm serpentine immediately upstream of a
+           full-strength cool one reads as simultaneous heating and cooling —
+           the one thing on this drawing a technician would call a fault.
+           Opacity rides the SERPENTINE only: the link-box frame keeps full
+           strength so the hover/focus lift still reads, and the hue stays
+           --heat so the coil is still identifiably the warm one. Variant A
+           answers the same problem with a drawn two-way valve instead, which
+           is one of the things this round is comparing. */
+        .ahu-coil-idle { opacity: 0.6; }
+        .ahu-fan-blade { fill: var(--text-dim); }
+        .ahu-fan-hub { fill: var(--text-bright); }
+        .ahu-led { stroke: var(--border); stroke-width: 1; }
+        .ahu-led-on { fill: var(--accent); }
+        .ahu-led-off { fill: var(--text-dim); }
+
+        /* ── Badges ───────────────────────────────────────────────────────
+           Height 40, caption baseline at top + 16, value at top + 34. The
+           delta-T badge takes the blue frame and blue ink because it is the
+           headline of the drawing: it is the number that collapses toward
+           zero when the unit stops doing its job. */
+        .ahu-badge {
+            fill: var(--surface-2);
+            stroke: var(--border);
+            stroke-width: 1;
+            transition: stroke 0.15s, stroke-width 0.15s;
+        }
+        .ahu-badge-dt { stroke: var(--blue); }
+        .ahu-readout text { transition: fill 0.15s; }
+
+        /* ── Sensor → readout cross-highlight, pure CSS ───────────────────
+           Hovering or keyboard-focusing a sensor glyph lights the readout
+           that glyph feeds. :has() correlates the two across the drawing, so
+           the page needs no script at all; each variant is its own .ahu-svg,
+           so one rule set covers all three. Specificity: :has() takes its
+           most specific argument, so these land at (0,4,0) and beat
+           .ahu-badge-dt on the delta-T frame without an override. */
+        .ahu-svg:has([data-point="oat"]:hover) [data-point-target="oat"],
+        .ahu-svg:has([data-point="oat"]:focus-visible) [data-point-target="oat"],
+        .ahu-svg:has([data-point="mat"]:hover) [data-point-target="mat"],
+        .ahu-svg:has([data-point="mat"]:focus-visible) [data-point-target="mat"],
+        .ahu-svg:has([data-point="dat"]:hover) [data-point-target="dat"],
+        .ahu-svg:has([data-point="dat"]:focus-visible) [data-point-target="dat"] {
+            stroke: var(--accent);
+            stroke-width: 2;
+        }
+        .ahu-svg:has([data-point="rat"]:hover) [data-point-target="rat"] text,
+        .ahu-svg:has([data-point="rat"]:focus-visible) [data-point-target="rat"] text,
+        .ahu-svg:has([data-point="space-temp"]:hover) [data-point-target="space-temp"] text,
+        .ahu-svg:has([data-point="space-temp"]:focus-visible) [data-point-target="space-temp"] text {
+            fill: var(--accent-ink);
+        }
+
+        /* ── Drill-downs ──────────────────────────────────────────────────
+           Three real SVG <a> elements: natively focusable, Enter-activable,
+           no JS. The link wraps the box, the geometry AND the label, so the
+           whole component is the target rather than an invisible overlay
+           rect on top of a separately drawn component. */
+        .ahu-link { cursor: pointer; }
+        .ahu-link-box {
+            fill: var(--surface);
+            stroke: var(--text-dim);
+            stroke-width: 2;
+            transition: stroke 0.15s, stroke-width 0.15s;
+        }
+        .ahu-link:hover .ahu-link-box,
+        .ahu-link:focus-visible .ahu-link-box {
+            stroke: var(--accent);
+            stroke-width: 2.5;
+        }
+        .ahu-link:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        /* ── Point readouts under each graphic ────────────────────────────
+           The mobile-legible mirror of the on-graphic labels: SVG text goes
+           unreadable on a phone. Same grid as .fcu-points. */
+        .ahu-points {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.6rem 1rem;
+            margin-top: 1rem;
+        }
+        .ahu-point { display: flex; flex-direction: column; gap: 0.15rem; }
+        .ahu-point-cap {
+            font-family: var(--mono);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-dim);
+        }
+        .ahu-point-val {
+            font-family: var(--mono);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-bright);
+        }
+        .ahu-point-val.accent { color: var(--blue); }
+        .ahu-verdict { margin-top: 1rem; }
+
+        /* ══════════════════════════════════════════════════════════════════
+           SHARED — SENSOR GLYPHS (.ddcw-*). Deliberately UNPREFIXED: this is
+           the site-wide glyph vocabulary, the concept is shell-shared, and
+           the shell binds .ddcw-sensor[data-point] generically. All three
+           variants draw the same five glyphs and reach for these names, so
+           the block appears exactly ONCE on the page.
+
+           No sensor geometry carries an inline fill or stroke attribute.
+           That is load-bearing rather than tidy: the hover/focus lift below
+           is what makes the glyph feel like the drill-down seam it will
+           become, and one inline attribute would freeze that part at the dim
+           ink while its siblings lift to the accent.
+           ══════════════════════════════════════════════════════════════════ */
+        .ddcw-sensor { cursor: pointer; }
+        .ddcw-sensor-hit { fill: transparent; stroke: none; }
+        .ddcw-sensor-body {
+            fill: var(--surface);
+            stroke: var(--text-dim);
+            stroke-width: 1.5;
+            transition: stroke 0.15s;
+        }
+        .ddcw-sensor-stem,
+        .ddcw-sensor-slot {
+            fill: none;
+            stroke: var(--text-dim);
+            stroke-width: 1.5;
+            stroke-linecap: butt;
+            transition: stroke 0.15s;
+        }
+        /* The averaging element's capillary. Round caps and joins are the
+           FLEXIBILITY CUE: this is tubing bent around standoffs, not the
+           mitered sheet-metal geometry everything else on the drawing uses.
+           Weight stays in the 1.5 sensor family — resizing an averaging
+           element changes its pass EXTENTS, never this stroke width and
+           never the pass count, because a scale() would thin the family
+           weight. */
+        .ddcw-sensor-cap {
+            fill: none;
+            stroke: var(--text-dim);
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: stroke 0.15s;
+        }
+        .ddcw-sensor:hover .ddcw-sensor-body,
+        .ddcw-sensor:focus-visible .ddcw-sensor-body,
+        .ddcw-sensor:hover .ddcw-sensor-stem,
+        .ddcw-sensor:focus-visible .ddcw-sensor-stem,
+        .ddcw-sensor:hover .ddcw-sensor-slot,
+        .ddcw-sensor:focus-visible .ddcw-sensor-slot,
+        .ddcw-sensor:hover .ddcw-sensor-cap,
+        .ddcw-sensor:focus-visible .ddcw-sensor-cap {
+            stroke: var(--accent);
+        }
+        .ddcw-sensor:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Simulators · AHU Depiction Mockup</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <h1 class="tool-card-title">Air-handler depiction — three compositions</h1>
+
+        <p class="tool-preamble">A depiction mockup for review, not a working
+            simulator. Every value below is static: there is no physics, no
+            clock and no interaction beyond the three component drill-downs
+            and the sensor glyphs, which light the readout they feed when you
+            hover or tab to them. The three drawings are the same machine in
+            the same operating state, drawn three ways, so the only thing that
+            differs between them is the composition.</p>
+
+        <p>The unit is a single-zone constant-volume air handler with an
+            economizer, a hot-water heating coil, a two-stage DX cooling coil
+            and a draw-through supply fan. It is economizing at full outside
+            air, and free cooling alone is not meeting the load, so the first
+            DX stage has picked up the remainder. Check the picture against
+            these numbers — every damper blade angle, indicator and flow mark
+            is drawn to agree with them.</p>
+
+        <table class="ref-table-dense ahu-state-table">
+            <caption class="sr-only">The operating state drawn in all three variants</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Point</th>
+                    <th scope="col">Value</th>
+                    <th scope="col">How it reads on the drawing</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th scope="row">OAT · outside</th>
+                    <td>62.0 °F</td>
+                    <td>Badge over the intake</td>
+                </tr>
+                <tr>
+                    <th scope="row">RAT · return</th>
+                    <td>75.0 °F</td>
+                    <td>Inline readout at the return probe, not a badge</td>
+                </tr>
+                <tr>
+                    <th scope="row">MAT · mixed</th>
+                    <td>62.0 °F</td>
+                    <td>Badge over the averaging element — equals OAT at 100 % outside air</td>
+                </tr>
+                <tr>
+                    <th scope="row">DAT · discharge</th>
+                    <td>55.0 °F</td>
+                    <td>Badge over the discharge, downstream of the fan</td>
+                </tr>
+                <tr>
+                    <th scope="row">ΔT across coils</th>
+                    <td>-7.0 °F</td>
+                    <td>Signed, DAT − MAT; blue frame and blue ink</td>
+                </tr>
+                <tr>
+                    <th scope="row">OA damper</th>
+                    <td>100 %</td>
+                    <td>Blades parallel to the flow, daylight between them</td>
+                </tr>
+                <tr>
+                    <th scope="row">RA damper</th>
+                    <td>0 %</td>
+                    <td>Blades square across the drop, edge to edge, no gap</td>
+                </tr>
+                <tr>
+                    <th scope="row">Relief damper</th>
+                    <td>100 %</td>
+                    <td>Blades parallel to the upward flow in the stack</td>
+                </tr>
+                <tr>
+                    <th scope="row">HW valve</th>
+                    <td>0 %</td>
+                    <td>Heating coil drawn present and idle, never absent</td>
+                </tr>
+                <tr>
+                    <th scope="row">DX stage 1 / stage 2</th>
+                    <td>ON / OFF</td>
+                    <td>Lit and unlit indicators at the cooling coil</td>
+                </tr>
+                <tr>
+                    <th scope="row">Supply fan</th>
+                    <td>100 % · ON · proven</td>
+                    <td>Lit indicator; the fan sits downstream of both coils</td>
+                </tr>
+                <tr>
+                    <th scope="row">Zone / cooling setpoint</th>
+                    <td>74.0 / 73.0 °F</td>
+                    <td>The unmet degree that justifies stage 1</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         VARIANT A · "Air-path walk"
+         ══════════════════════════════════════════════════════════════════ -->
+    <div class="tool-card">
+        <div class="ahu-variant-head">
+            <h2 class="subhead">Variant A — air-path walk</h2>
+            <span class="ahu-variant-tag">one casing · proportional stations</span>
+        </div>
+        <p class="ahu-thesis">One casing spanning the canvas, with station
+            widths roughly proportional to the real machine: a long mixing box
+            and fan section, a shallow filter rack, a shallow heating coil, a
+            deeper cooling coil. The picture teaches the sequence by its own
+            geometry — reading it left to right is walking the unit.</p>
+
+        <div class="ahu-graphic">
+            <svg class="ahu-svg" id="ahu-a-graphic" viewBox="0 0 840 420"
+                 role="img" aria-labelledby="ahu-a-title ahu-a-desc"
+                 font-family="var(--mono)">
+                <title id="ahu-a-title">An air handler serving one zone, as a DDC supervisory graphic</title>
+                <desc id="ahu-a-desc">A single-zone constant-volume air handler drawn as a DDC supervisory graphic, laid out left to right in air-path order. Outdoor air arrives at the far left and enters through a louvered intake plate set into the outdoor face of the unit casing. A shielded outdoor-air temperature sensor is bracketed to that same face just above the intake: a gabled cap over two shield plates, with the sensing element hanging down through the stack and its tip protruding below the lowest plate. Just inside the casing an outside-air damper fills the intake opening top to bottom; its four blades are tilted nearly parallel to the horizontal airflow with open air between them, and it is annotated OA damper 100 percent. Return air arrives from the zone at the right along a duct that runs across the top of the drawing; a return-air insertion probe penetrates the top wall of that duct partway along its run, and its reading, return-air temperature 75.0 degrees Fahrenheit, is printed above it. Further left a relief branch tees upward out of the top of the drawing through a relief damper drawn with vertical blades, parallel to the upward flow, annotated 100 percent; that branch is marked with an arrowhead below the damper and a dashed stream line and arrowhead above it. Left of the tee the return duct continues and turns down in a short drop that lands on the top of the casing over the mixing station, and a return-air damper sits in that drop with three blades lying flat and edge to edge across the downward flow, sealing the opening, annotated RA damper 0 percent. Directional arrows appear on the return duct between the zone and the relief branch, and on the relief branch; the length of return duct between the relief branch and the drop, and the drop itself, carry no flow arrows, because the return damper is shut. Directional arrows also mark the outdoor-air path at the intake, the mixed-air path across the plenum and the coil bank, and the supply path downstream of the fan. Inside the casing the stations run left to right, separated by section dividers: the mixing box, then a filter rack drawn with media diagonals, then a hot-water heating coil whose serpentine tube is drawn in the warm heating colour, then a direct-expansion cooling coil whose serpentine is drawn in the cool colour, then the supply fan, which sits downstream of both coils. The mixed-air temperature sensor is drawn as an averaging element: its transmitter head sits on the casing top wall downstream of the mixing dampers and upstream of the filter, and one continuous capillary hangs below it in four full-depth vertical passes that span most of the plenum height, ending in a clip at the far end. The heating coil carries a two-way control valve symbol with its actuator, annotated hot-water valve 0 percent. The cooling coil carries two stage indicators, the first lit and reading stage 1 on, the second unlit and reading stage 2 off. The supply fan carries a lit indicator reading supply fan on, 100 percent, proven. Downstream of the fan the supply duct leaves the casing on the right and runs to the zone, and a discharge-air insertion probe penetrates the top wall of that duct. The heating coil, the cooling coil and the supply fan are each drawn as a link into a matching simulator. Four point badges sit in one row above the unit in air-path order: outside-air temperature 62.0 degrees Fahrenheit over the intake; mixed-air temperature 62.0 degrees Fahrenheit over the averaging element; a delta T across the coils of minus 7.0 degrees Fahrenheit, framed and inked in blue, over the coil pair; and discharge-air temperature 55.0 degrees Fahrenheit over the fan. At the right the zone is drawn as a box with a space-temperature wall plate mounted flush on its far interior wall, a zone temperature of 74.0 degrees Fahrenheit and a cooling setpoint of 73.0 degrees Fahrenheit. The unit is tagged AHU-1.</desc>
+
+                <!-- ── 1 · Ductwork, exterior runs only ────────────────────
+                     Body is a fattened stroke (46) in the recessed well tone;
+                     the two walls are its centerline offset by 23. Elbow
+                     corners offset 23 in both axes. No duct body inside the
+                     casing: the air crosses the open interior over the
+                     dampers, filter, coils and fan.
+
+                     RETURN runs right to left at centerline y118 from the
+                     zone face (x754) and turns down at x200 to land on the
+                     casing top (y250). Its top wall is broken between x287
+                     and x333, where the RELIEF branch tees upward: return air
+                     reaches the relief tee first, and whatever is left
+                     continues to the drop. SUPPLY leaves the casing at x690
+                     on centerline y302. -->
+                <path class="ahu-duct-body" d="M754 118 H200 V250"/>
+                <path class="ahu-duct-wall" d="M754 95 H333"/>
+                <path class="ahu-duct-wall" d="M287 95 H177 V250"/>
+                <path class="ahu-duct-wall" d="M754 141 H223 V250"/>
+
+                <path class="ahu-duct-body" d="M310 95 V0"/>
+                <path class="ahu-duct-wall" d="M287 95 V0"/>
+                <path class="ahu-duct-wall" d="M333 95 V0"/>
+
+                <path class="ahu-duct-body" d="M690 302 H754"/>
+                <path class="ahu-duct-wall" d="M690 279 H754"/>
+                <path class="ahu-duct-wall" d="M690 325 H754"/>
+
+                <!-- ── 2 · Duct labels ──────────────────────────────────── -->
+                <text class="ahu-pt-cap" x="470" y="88">RETURN AIR</text>
+                <text class="ahu-pt-cap" x="392" y="30">RELIEF AIR</text>
+                <text class="ahu-pt-cap" x="392" y="50">EA DMPR · 100%</text>
+                <!-- The supply run is short and its upper face carries the
+                     discharge probe, so this one label sits BELOW its run. -->
+                <text class="ahu-pt-cap" x="722" y="344">SUPPLY</text>
+
+                <!-- ── 3 · Invisible centerlines ─────────────────────────── -->
+                <path class="ahu-centerline" id="ahu-a-centerline-oa" d="M18 302 H160"/>
+                <path class="ahu-centerline" id="ahu-a-centerline-ra" d="M754 118 H200 V250"/>
+                <path class="ahu-centerline" id="ahu-a-centerline-ea" d="M310 95 V0"/>
+                <path class="ahu-centerline" id="ahu-a-centerline-ma" d="M160 302 H500"/>
+                <path class="ahu-centerline" id="ahu-a-centerline-sa" d="M552 302 H754"/>
+
+                <!-- ── 4 · Static flow arrows ─────────────────────────────
+                     One stream token per run. Direction survives reduced
+                     motion and print, and this round ships these only.
+
+                     NOTE the deliberate absences: no arrow between the relief
+                     tee (x333) and the drop, and none in the drop, because
+                     the RA damper is commanded shut. At 100% outside air
+                     every cubic foot of return air leaves through the
+                     relief. -->
+                <g id="ahu-a-flow-arrows">
+                    <!-- outdoor air, approaching the intake and passing the damper -->
+                    <polygon points="20,296 32,302 20,308" fill="var(--teal)"/>
+                    <polygon points="44,296 56,302 44,308" fill="var(--teal)"/>
+                    <polygon points="140,296 152,302 140,308" fill="var(--teal)"/>
+                    <!-- return air, zone to relief tee, right to left -->
+                    <polygon points="708,112 700,118 708,124" fill="var(--blue-cool)"/>
+                    <polygon points="560,112 552,118 560,124" fill="var(--blue-cool)"/>
+                    <!-- relief, leaving the building: the dash is the stream cue,
+                         and it rides BOTH legs of the branch, so the "leaving"
+                         mark is present where the air actually leaves. Vertical
+                         arrowheads are 12 x 12, the same as the horizontal ones. -->
+                    <path class="ahu-relief-stream" d="M310 94 V82"/>
+                    <polygon points="304,82 316,82 310,70" fill="var(--text-dim)"/>
+                    <path class="ahu-relief-stream" d="M310 38 V16"/>
+                    <polygon points="304,16 316,16 310,4" fill="var(--text-dim)"/>
+                    <!-- mixed air, across the plenum, the filter and the coil bank -->
+                    <polygon points="232,296 244,302 232,308" fill="var(--blue-cool)"/>
+                    <polygon points="404,296 416,302 404,308" fill="var(--blue-cool)"/>
+                    <polygon points="482,296 494,302 482,308" fill="var(--blue-cool)"/>
+                    <!-- supply air, downstream of the coil bank -->
+                    <polygon points="566,296 578,302 566,308" fill="var(--blue)"/>
+                    <polygon points="672,296 684,302 672,308" fill="var(--blue)"/>
+                    <polygon points="740,296 752,302 740,308" fill="var(--blue)"/>
+                </g>
+
+                <!-- ── 5 · The zone ───────────────────────────────────────
+                     Filled face first, then the outline as a path with two
+                     openings: the return connection (y95 to y141) and the
+                     supply connection (y279 to y325), so the ducts land in
+                     holes rather than butting a solid wall. -->
+                <g id="ahu-a-zone">
+                    <rect class="ahu-zone-fill" x="754" y="92" width="82" height="248"/>
+                    <path class="ahu-zone-outline" d="M754 95 V92 H836 V340 H754 V325 M754 279 V141"/>
+                    <text class="ahu-zone-label" x="795" y="118">ZONE</text>
+                    <g class="ahu-readout" id="ahu-a-readout-space-temp" data-point-target="space-temp">
+                        <text class="ahu-pt-cap" x="795" y="220">ZONE TEMP</text>
+                        <text class="ahu-pt-val" id="ahu-a-zone-t" x="795" y="240">74.0 °F</text>
+                        <text class="ahu-pt-cap" x="795" y="278">COOLING SP</text>
+                        <text class="ahu-pt-val ahu-sp-val" id="ahu-a-zone-sp" x="795" y="298">73.0 °F</text>
+                    </g>
+                </g>
+
+                <!-- ── 6 · Casing, section dividers, unit tag ──────────────
+                     Drawn as a path, not a rect, so the three penetrations
+                     stay open: the intake in the left wall (y262 to y344),
+                     the return drop in the top wall (x177 to x223) and the
+                     supply take-off in the right wall (y279 to y325). -->
+                <g id="ahu-a-cabinet">
+                    <path class="ahu-casing" d="M76 262 V250 H177 M223 250 H690 V279 M690 325 V355 H76 V344"/>
+                    <path class="ahu-divider" d="M348 250 V355 M414 250 V355 M486 250 V355 M566 250 V355"/>
+                    <text class="ahu-unit-label" x="664" y="349">AHU-1</text>
+                </g>
+
+                <!-- ── 7 · Stations, left to right in air-path order ─────── -->
+
+                <!-- Outdoor-air intake: a full-face louvered plate standing
+                     proud of the casing's outdoor wall, filling that wall's
+                     opening (y262 to y344). Fixed rain-louver slats sloping
+                     down and outward, NOT a damper: the modulating device is
+                     the OA damper just inside. The plate's blank upper flange
+                     is the vertical outdoor surface the shielded OSA head
+                     brackets to, which keeps that sensor out of the intake
+                     stream where a solar shield belongs. -->
+                <g id="ahu-a-louver">
+                    <rect class="ahu-louver-frame" x="58" y="262" width="18" height="82"/>
+                    <path class="ahu-louver-blade" d="M61 287 L73 282 M61 299 L73 294 M61 311 L73 306 M61 323 L73 318 M61 335 L73 330"/>
+                </g>
+
+                <!-- OA damper, commanded 100%. Airflow here is horizontal, so
+                     blades parallel to flow is fully open. Two things carry
+                     that read, and neither is frame aspect: the four blades
+                     are TILTED off the axis with clear daylight between them,
+                     and the frame SPANS the whole 82-unit intake opening, so
+                     nothing bypasses the device. Compare the RA damper
+                     below — a sealed plane, no daylight anywhere. -->
+                <g id="ahu-a-oa-damper">
+                    <rect class="ahu-damper-frame" x="96" y="264" width="26" height="78"/>
+                    <path class="ahu-damper-blade" d="M99 272 L119 276 M99 291 L119 295 M99 311 L119 315 M99 330 L119 334"/>
+                </g>
+
+                <!-- RA damper, commanded 0%, sitting in the throat of the
+                     return drop just inside the casing top. Airflow here is
+                     downward, so blades perpendicular to flow is fully shut:
+                     three plates lying flat, running edge to edge with no gap
+                     anywhere in the row. This is the only damper on the
+                     drawing with no daylight through it, and that absence is
+                     the whole read. -->
+                <g id="ahu-a-ra-damper">
+                    <rect class="ahu-damper-frame" x="179" y="256" width="42" height="26"/>
+                    <path class="ahu-damper-blade" d="M179 262 H221 M179 269 H221 M179 276 H221"/>
+                </g>
+
+                <!-- Relief damper, commanded 100%. Airflow here is upward, so
+                     blades parallel to flow (vertical) is fully open, and the
+                     frame fills the 46-unit stack so nothing bypasses it. -->
+                <g id="ahu-a-ea-damper">
+                    <rect class="ahu-damper-frame" x="288" y="38" width="44" height="30"/>
+                    <path class="ahu-damper-blade" d="M295 42 V64 M310 42 V64 M325 42 V64"/>
+                </g>
+
+                <text class="ahu-station-label" x="212" y="374">MIXING BOX</text>
+
+                <!-- Filter rack -->
+                <g id="ahu-a-filter">
+                    <rect class="ahu-filter-frame" x="364" y="262" width="34" height="81"/>
+                    <path class="ahu-filter-media" d="M367 340 L395 276 M367 318 L395 294 M367 296 L395 272"/>
+                </g>
+                <text class="ahu-station-label" x="381" y="374">FILTER</text>
+
+                <!-- Hot-water heating coil, upstream of the cooling coil. The
+                     frame stays the neutral link-box chrome so the hover and
+                     focus lift to the accent reads; the coil's identity is
+                     carried entirely by the serpentine's warm stroke. Its
+                     valve is at 0%: the coil is drawn present and idle, never
+                     absent, and this variant says so with a drawn two-way
+                     valve rather than by dimming the tube. -->
+                <a class="ahu-link" href="/simulators/hydronic-loop-builder.html"
+                   aria-label="Open the hydronic loop builder — the hot-water loop feeding this heating coil">
+                    <title>Open the hydronic loop builder</title>
+                    <rect class="ahu-link-box" id="ahu-a-coil-hw" x="424" y="262" width="52" height="82"/>
+                    <path class="ahu-coil-hw" d="M430 270 H470 V283 H430 V296 H470 V309 H430 V322 H470 V335 H430"/>
+                    <text class="ahu-station-label" x="450" y="374">HW COIL</text>
+                </a>
+
+                <!-- DX cooling coil, downstream of the heating coil, upstream
+                     of the fan. Stage 1 is on. -->
+                <a class="ahu-link" href="/simulators/refrigerant-loop.html"
+                   aria-label="Open the refrigerant-loop simulator — the vapor-compression loop behind this DX coil">
+                    <title>Open the refrigerant-loop simulator</title>
+                    <rect class="ahu-link-box" id="ahu-a-coil-dx" x="500" y="262" width="52" height="82"/>
+                    <path class="ahu-coil-dx" d="M506 270 H546 V283 H506 V296 H546 V309 H506 V322 H546 V335 H506"/>
+                    <text class="ahu-station-label" x="526" y="374">DX COIL</text>
+                </a>
+
+                <!-- Supply fan, downstream of BOTH coils: this is a
+                     draw-through unit, which is why the discharge probe sits
+                     past the fan and picks up its fan heat. Static in this
+                     round. -->
+                <a class="ahu-link" href="/simulators/vfd-mock.html"
+                   aria-label="Open the VFD simulator — the drive spinning this supply fan">
+                    <title>Open the VFD simulator</title>
+                    <circle class="ahu-link-box" id="ahu-a-fan" cx="628" cy="302" r="30"/>
+                    <g class="ahu-fan-blade" id="ahu-a-fan-blade">
+                        <ellipse cx="628" cy="285" rx="5.5" ry="13" transform="rotate(0 628 302) rotate(20 628 285)"/>
+                        <ellipse cx="628" cy="285" rx="5.5" ry="13" transform="rotate(72 628 302) rotate(20 628 285)"/>
+                        <ellipse cx="628" cy="285" rx="5.5" ry="13" transform="rotate(144 628 302) rotate(20 628 285)"/>
+                        <ellipse cx="628" cy="285" rx="5.5" ry="13" transform="rotate(216 628 302) rotate(20 628 285)"/>
+                        <ellipse cx="628" cy="285" rx="5.5" ry="13" transform="rotate(288 628 302) rotate(20 628 285)"/>
+                    </g>
+                    <circle class="ahu-fan-hub" cx="628" cy="302" r="4"/>
+                    <text class="ahu-station-label" x="628" y="374">SUPPLY FAN</text>
+                </a>
+
+                <!-- ── 8 · Point badges ───────────────────────────────────
+                     One row, y170 to y210, in air-path order: OAT over the
+                     intake, MAT over the averaging element, delta T over the
+                     coil pair, DAT over the fan. OAT sits left of the return
+                     drop and the other three right of it, which is not only a
+                     clearance rule: the drop is what turns outdoor air into
+                     mixed air, so it falls exactly where the reading changes
+                     name.
+
+                     Delta T is DAT minus MAT and is SIGNED, so it reads
+                     negative while the unit cools. RAT is deliberately not a
+                     badge; it reports inline at its own probe, because its
+                     job here is to be the number the return brings back. -->
+                <g id="ahu-a-badges">
+                    <rect class="ahu-badge" id="ahu-a-badge-oat" data-point-target="oat" x="78" y="170" width="86" height="40"/>
+                    <text class="ahu-pt-cap" x="121" y="186">OAT · OUTSIDE</text>
+                    <text class="ahu-pt-val" id="ahu-a-oat" x="121" y="204">62.0 °F</text>
+
+                    <rect class="ahu-badge" id="ahu-a-badge-mat" data-point-target="mat" x="246" y="170" width="76" height="40"/>
+                    <text class="ahu-pt-cap" x="284" y="186">MAT · MIXED</text>
+                    <text class="ahu-pt-val" id="ahu-a-mat" x="284" y="204">62.0 °F</text>
+
+                    <rect class="ahu-badge ahu-badge-dt" id="ahu-a-badge-dt" x="404" y="170" width="100" height="40"/>
+                    <text class="ahu-pt-cap" x="454" y="186">ΔT ACROSS COILS</text>
+                    <text class="ahu-pt-val ahu-dt-val" id="ahu-a-dt" x="454" y="204">-7.0 °F</text>
+
+                    <rect class="ahu-badge" id="ahu-a-badge-dat" data-point-target="dat" x="578" y="170" width="90" height="40"/>
+                    <text class="ahu-pt-cap" x="623" y="186">DAT · DISCHARGE</text>
+                    <text class="ahu-pt-val" id="ahu-a-dat" x="623" y="204">55.0 °F</text>
+                </g>
+
+                <!-- ── 9 · Chevron seam, reserved and unpopulated ────────── -->
+                <g id="ahu-a-flow" class="ahu-flow-layer"></g>
+
+                <!-- ── 10 · Supervisory status ────────────────────────────
+                     Commanded positions at the three dampers, the heating
+                     valve with its actuator symbol, the two DX stages and the
+                     fan. Every line names its subject, so no string can read
+                     as belonging to the badge above it. -->
+                <g id="ahu-a-status">
+                    <text class="ahu-pt-cap" x="120" y="232">OA DMPR · 100%</text>
+                    <text class="ahu-pt-cap" x="193" y="296">RA DMPR · 0%</text>
+
+                    <!-- Two-way control valve on the heating coil, with its
+                         actuator, sitting over the coil it serves rather than
+                         over the filter bay. Commanded 0%: the percentage on
+                         the line is the position. -->
+                    <path d="M418 216 L418 226 L428 221 Z M438 216 L438 226 L428 221 Z"
+                          fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <path d="M428 221 V215 M421 215 H435"
+                          fill="none" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text class="ahu-pt-cap" id="ahu-a-hw-v" x="444" y="225">HW VLV · 0%</text>
+
+                    <circle class="ahu-led ahu-led-on" id="ahu-a-dx-stg1-led" cx="466" cy="239" r="5"/>
+                    <text class="ahu-pt-cap" id="ahu-a-dx-stg1-v" x="478" y="243">STG1 ON</text>
+                    <circle class="ahu-led ahu-led-off" id="ahu-a-dx-stg2-led" cx="528" cy="239" r="5"/>
+                    <text class="ahu-pt-cap" id="ahu-a-dx-stg2-v" x="540" y="243">STG2 OFF</text>
+
+                    <circle class="ahu-led ahu-led-on" id="ahu-a-fan-led" cx="562" cy="220" r="5"/>
+                    <text class="ahu-pt-cap" id="ahu-a-fan-v" x="574" y="225">SF · ON · 100% · PROVEN</text>
+
+                    <!-- Return-air temperature reports inline beside its own
+                         probe rather than as a fifth badge. -->
+                    <g class="ahu-readout" id="ahu-a-readout-rat" data-point-target="rat">
+                        <text class="ahu-pt-cap" x="648" y="60">RAT · RETURN</text>
+                        <text class="ahu-pt-val" id="ahu-a-rat" x="648" y="78">75.0 °F</text>
+                    </g>
+                </g>
+
+                <!-- ── 11 · Sensor glyphs, painted last ───────────────────
+                     One group per physical device, drawn where the device
+                     actually lives. Local-frame geometry placed by translate,
+                     so the same numbers work in any composition. -->
+                <g id="ahu-a-sensors">
+
+                    <!-- Outdoor air: a shielded head bracketed to the
+                         casing's outdoor face just above the intake, out of
+                         the intake stream where a solar shield belongs. The
+                         plates stay horizontal in every placement, so the
+                         glyph is translated, never rotated. -->
+                    <g class="ddcw-sensor" id="ahu-a-sensor-oat" data-point="oat"
+                       tabindex="0" transform="translate(58 268)">
+                        <title>Outdoor-air temperature sensor — shielded head on the outside of the intake</title>
+                        <rect class="ddcw-sensor-hit" x="-34" y="-18" width="36" height="36"/>
+                        <line class="ddcw-sensor-stem" x1="0" y1="0" x2="-8" y2="0"/>
+                        <path class="ddcw-sensor-body" d="M-30 -5 L-18 -12 L-6 -5 Z"/>
+                        <path class="ddcw-sensor-slot" d="M-28 0 L-18 -3 L-8 0"/>
+                        <path class="ddcw-sensor-slot" d="M-28 5 L-18 2 L-8 5"/>
+                        <line class="ddcw-sensor-stem" x1="-18" y1="-5" x2="-18" y2="10"/>
+                        <circle class="ddcw-sensor-body" cx="-18" cy="12" r="2.5"/>
+                    </g>
+
+                    <!-- Return air: an insertion probe through the TOP wall
+                         of the return run, upstream of the relief tee, so it
+                         reads what the building actually sends back before
+                         any of it is thrown away. -->
+                    <g class="ddcw-sensor" id="ahu-a-sensor-rat" data-point="rat"
+                       tabindex="0" transform="translate(648 95)">
+                        <title>Return-air temperature sensor — insertion probe in the return duct</title>
+                        <rect class="ddcw-sensor-hit" x="-14" y="-21" width="28" height="44"/>
+                        <line class="ddcw-sensor-stem" x1="0" y1="0" x2="0" y2="19"/>
+                        <rect class="ddcw-sensor-body" x="-6" y="-10" width="12" height="10"/>
+                    </g>
+
+                    <!-- Mixed air: an averaging element, head on the casing
+                         top wall downstream of the mixing dampers and
+                         upstream of the filter, one continuous capillary in
+                         four full-depth vertical passes below it. Vertical
+                         passes because stratification is vertical: a poorly
+                         mixed cold layer runs well below the average, and a
+                         single-point probe parked in it would report one
+                         stratum and lie about the rest. Rounded turns are the
+                         flexibility cue that separates tubing from mitered
+                         sheet metal. -->
+                    <g class="ddcw-sensor" id="ahu-a-sensor-mat" data-point="mat"
+                       tabindex="0" transform="translate(256 250)">
+                        <title>Mixed-air temperature sensor — averaging element strung across the mixed-air plenum</title>
+                        <rect class="ddcw-sensor-hit" x="-16" y="-18" width="32" height="44"/>
+                        <rect class="ddcw-sensor-body" x="-7" y="-14" width="14" height="12"/>
+                        <path class="ddcw-sensor-cap" d="M0 0 V93 Q0 97 4 97 H16 Q20 97 20 93 V12 Q20 8 24 8 H36 Q40 8 40 12 V93 Q40 97 44 97 H56 Q60 97 60 93 V12 Q60 8 64 8 H70"/>
+                        <line class="ddcw-sensor-slot" x1="70" y1="2" x2="70" y2="16"/>
+                    </g>
+
+                    <!-- Discharge air: an insertion probe through the TOP
+                         wall of the supply run, downstream of the fan as well
+                         as the coils, so the reading carries the fan heat the
+                         zone actually gets. -->
+                    <g class="ddcw-sensor" id="ahu-a-sensor-dat" data-point="dat"
+                       tabindex="0" transform="translate(722 279)">
+                        <title>Discharge-air temperature sensor — insertion probe in the supply duct</title>
+                        <rect class="ddcw-sensor-hit" x="-14" y="-21" width="28" height="44"/>
+                        <line class="ddcw-sensor-stem" x1="0" y1="0" x2="0" y2="19"/>
+                        <rect class="ddcw-sensor-body" x="-6" y="-10" width="12" height="10"/>
+                    </g>
+
+                    <!-- Space: a wall plate on the room boundary, on the far
+                         side of the zone from the unit's duct connections.
+                         Slots are the vent grille. -->
+                    <g class="ddcw-sensor" id="ahu-a-sensor-space-temp" data-point="space-temp"
+                       tabindex="0" transform="translate(836 156)">
+                        <title>Space temperature sensor — wall plate in the zone</title>
+                        <rect class="ddcw-sensor-hit" x="-32" y="-22" width="34" height="44"/>
+                        <rect class="ddcw-sensor-body" x="-15" y="-12" width="14" height="24"/>
+                        <line class="ddcw-sensor-slot" x1="-11.5" y1="-5" x2="-4.5" y2="-5"/>
+                        <line class="ddcw-sensor-slot" x1="-11.5" y1="0" x2="-4.5" y2="0"/>
+                        <line class="ddcw-sensor-slot" x1="-11.5" y1="5" x2="-4.5" y2="5"/>
+                    </g>
+
+                </g>
+            </svg>
+        </div>
+
+        <div class="ahu-points">
+            <div class="ahu-point">
+                <span class="ahu-point-cap">OAT · outside</span>
+                <span class="ahu-point-val">62.0 °F</span>
+            </div>
+            <div class="ahu-point">
+                <span class="ahu-point-cap">RAT · return</span>
+                <span class="ahu-point-val">75.0 °F</span>
+            </div>
+            <div class="ahu-point">
+                <span class="ahu-point-cap">MAT · mixed</span>
+                <span class="ahu-point-val">62.0 °F</span>
+            </div>
+            <div class="ahu-point">
+                <span class="ahu-point-cap">DAT · discharge</span>
+                <span class="ahu-point-val">55.0 °F</span>
+            </div>
+            <div class="ahu-point">
+                <span class="ahu-point-cap">ΔT across coils</span>
+                <span class="ahu-point-val accent">-7.0 °F</span>
+            </div>
+            <div class="ahu-point">
+                <span class="ahu-point-cap">Zone / setpoint</span>
+                <span class="ahu-point-val">74.0 / 73.0 °F</span>
+            </div>
+        </div>
+
+        <div class="status-pill ok ahu-verdict">
+            Economizing at 100 % outside air — DX stage 1 is making up the remaining load
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         VARIANT B · "Schematic DDC graphic"
+         ══════════════════════════════════════════════════════════════════ -->
+    <div class="tool-card">
+        <div class="ahu-variant-head">
+            <h2 class="subhead">Variant B — schematic DDC graphic</h2>
+            <span class="ahu-variant-tag">two blocks · three annotation registers</span>
+        </div>
+        <p class="ahu-thesis">Deliberately less proportional than the machine.
+            The economizer section is its own block, joined to the casing by a
+            mixed-air duct run, and the annotation is split into three
+            horizontal registers that never cross: measured temperatures in
+            the badge band, commanded outputs in a rail below it, component
+            names under the casing. Every value gets a lane.</p>
+
+        <div class="ahu-graphic">
+            <svg class="ahu-svg" id="ahu-b-graphic" viewBox="0 0 840 420"
+                 role="img" aria-labelledby="ahu-b-title ahu-b-desc"
+                 font-family="var(--mono)">
+                <title id="ahu-b-title">An air handler serving one zone, as a DDC supervisory graphic</title>
+                <desc id="ahu-b-desc">A single-zone constant-volume air handler drawn as a DDC supervisory graphic, reading left to right. At the far left an outside-air louver is set into the left wall of a mixing box, and a shielded outdoor-air temperature head is bracketed to the outside face of that louver. Just inside the mixing box the outside-air damper stands with its blades nearly parallel to the flow and open air between them, commanded to one hundred percent. Return air arrives from the zone at the right and travels leftward along a duct across the top of the drawing. Partway along that run an insertion probe penetrates the duct's top wall and reports return-air temperature at seventy-five point zero degrees Fahrenheit. Further along, a branch tees upward out of the top of the frame through a relief damper whose blades stand parallel to the vertical flow, commanded to one hundred percent; a dashed line marks that branch as air leaving the building. What remains of the return air continues left and turns down in a short drop into the top of the mixing box, where a return-air damper sits directly under the opening with its three blades flat across it and running wall to wall with no gap, commanded closed. The blend leaves the mixing box through a short mixed-air duct and enters the air-handler casing, which is divided into five bays. The first bay is the mixed-air plenum: an averaging element hangs from a head on the casing roof and runs in four full-depth vertical passes, spaced evenly across the bay, from near the top of the plenum to near its floor. The second bay holds the filter rack. The third holds the hot-water heating coil, drawn as a faint serpentine in the warm colour because its valve is shut, with an unlit indicator above the casing reporting that valve at zero percent. The fourth holds the direct-expansion cooling coil, drawn as a full-strength serpentine in the cool colour, with two indicators above the casing reporting stage one on and stage two off. Downstream of both coils the supply fan is drawn as a five-bladed wheel in the fifth bay, reported running at one hundred percent with its proof made. The supply duct leaves the right end of the casing; an insertion probe penetrates its top wall downstream of the fan, and the duct runs on into the zone box at the right. A wall plate is mounted flush on the zone's right interior wall. Four point badges sit in one row above the unit in air-path order: outdoor-air temperature sixty-two point zero degrees Fahrenheit over the intake, mixed-air temperature sixty-two point zero degrees Fahrenheit over the averaging element, the temperature difference across the coils at minus seven point zero degrees Fahrenheit over the coil pair, drawn with a blue frame and blue figures, and discharge-air temperature fifty-five point zero degrees Fahrenheit over the discharge. The zone box reports a zone temperature of seventy-four point zero degrees Fahrenheit and a cooling setpoint of seventy-three point zero degrees Fahrenheit. The unit is tagged A H U dash one. Static arrows on every run carry the direction of the air: outside air rightward through the louver and damper, return air leftward along the top as far as the relief branch, relief air upward out of the frame, mixed air rightward into the casing and across the plenum, and supply air rightward past the fan and out to the zone. The short leg of return duct beyond the relief branch, and the drop into the mixing box below it, carry no arrow.</desc>
+
+                <!-- ── 1 · Ductwork — exterior runs only ──────────────────
+                     Body = a fattened stroke (46) in the well token; walls =
+                     the plus/minus 23 offsets in the border token.
+                     Half-width 23 throughout, so an elbow corner offsets 23
+                     in BOTH axes: the return's corner (200,118) gives outer
+                     (177,95) and inner (223,141). The return's OUTER wall is
+                     drawn in two segments so the relief tee has a real
+                     opening (283 to 329) instead of a wall painted across
+                     it. -->
+                <path class="ahu-duct-body" d="M752 118 H200 V250"/>
+                <path class="ahu-duct-wall" d="M752 95 H329"/>
+                <path class="ahu-duct-wall" d="M283 95 H177 V250"/>
+                <path class="ahu-duct-wall" d="M752 141 H223 V250"/>
+
+                <path class="ahu-duct-body" d="M306 95 V0"/>
+                <path class="ahu-duct-wall" d="M283 95 V0"/>
+                <path class="ahu-duct-wall" d="M329 95 V0"/>
+                <path class="ahu-relief-stream" d="M306 92 V6"/>
+
+                <path class="ahu-duct-body" d="M244 302 H306"/>
+                <path class="ahu-duct-wall" d="M244 279 H306"/>
+                <path class="ahu-duct-wall" d="M244 325 H306"/>
+
+                <path class="ahu-duct-body" d="M662 302 H752"/>
+                <path class="ahu-duct-wall" d="M662 279 H752"/>
+                <path class="ahu-duct-wall" d="M662 325 H752"/>
+
+                <!-- ── 2 · Duct labels — one per stream ─────────────────── -->
+                <text class="ahu-pt-cap" x="440" y="88">RETURN AIR</text>
+                <text class="ahu-pt-cap" x="392" y="34">EXHAUST · RELIEF</text>
+                <text class="ahu-pt-cap" x="44" y="350">OUTSIDE AIR</text>
+                <text class="ahu-pt-cap" x="275" y="271">MIXED AIR</text>
+                <text class="ahu-pt-cap" x="707" y="344">SUPPLY AIR</text>
+
+                <!-- ── 3 · Invisible centerlines — never painted ──────────
+                     Five streams, each written in FLOW order. `ma` ends and
+                     `sa` begins at the DX coil's leaving face (x 576) — the
+                     recolour boundary. -->
+                <path class="ahu-centerline" id="ahu-b-centerline-oa" d="M46 302 H200"/>
+                <path class="ahu-centerline" id="ahu-b-centerline-ra" d="M752 118 H200 V302"/>
+                <path class="ahu-centerline" id="ahu-b-centerline-ea" d="M306 95 V0"/>
+                <path class="ahu-centerline" id="ahu-b-centerline-ma" d="M200 302 H576"/>
+                <path class="ahu-centerline" id="ahu-b-centerline-sa" d="M576 302 H800"/>
+
+                <!-- ── 4 · Static flow arrows ─────────────────────────────
+                     These are the whole direction story in this round (no
+                     animation), so every stream gets at least one and the
+                     long return run gets two. The interior arrows are what
+                     bridges the open casing — there is no duct body inside a
+                     casing, only air crossing it.
+
+                     Bay dividers at x 448 and x 516 sit in gaps too narrow to
+                     hold both a hairline and an 8-wide arrowhead, so no arrow
+                     is drawn there: the divider already reads as the station
+                     boundary, and the 386 and 577 arrows still bridge the
+                     casing. -->
+                <g id="ahu-b-flow-arrows">
+                    <polygon points="100,296 108,302 100,308" fill="var(--teal)"/>
+                    <polygon points="156,296 164,302 156,308" fill="var(--teal)"/>
+
+                    <polygon points="676,112 668,118 676,124" fill="var(--blue-cool)"/>
+                    <polygon points="478,112 470,118 478,124" fill="var(--blue-cool)"/>
+                    <!-- NO arrow between the relief tee (x 329) and the drop,
+                         and none in the drop itself. The RA damper below is
+                         commanded shut, so at 100% outside air every cubic
+                         foot of return leaves through the relief and that leg
+                         carries nothing. An arrow there would claim flow the
+                         damper forbids — the drawing must not contradict its
+                         own blade angles. -->
+
+                    <polygon points="300,96 312,96 306,88" fill="var(--text-dim)"/>
+                    <polygon points="300,36 312,36 306,28" fill="var(--text-dim)"/>
+
+                    <polygon points="270,296 278,302 270,308" fill="var(--blue-cool)"/>
+                    <polygon points="386,296 394,302 386,308" fill="var(--blue-cool)"/>
+
+                    <polygon points="577,296 585,302 577,308" fill="var(--blue)"/>
+                    <polygon points="672,296 680,302 672,308" fill="var(--blue)"/>
+                    <polygon points="732,296 740,302 732,308" fill="var(--blue)"/>
+                </g>
+
+                <!-- ── 5 · The zone ──────────────────────────────────────── -->
+                <g id="ahu-b-zone">
+                    <rect class="ahu-zone-box" x="752" y="95" width="84" height="241"/>
+                    <text class="ahu-zone-label" x="794" y="126">ZONE</text>
+                    <g class="ahu-readout" data-point-target="space-temp">
+                        <text class="ahu-pt-cap" x="794" y="200">ZONE TEMP</text>
+                        <text class="ahu-pt-val" id="ahu-b-space-temp" x="794" y="220">74.0 °F</text>
+                    </g>
+                    <text class="ahu-pt-cap" x="794" y="250">COOLING SP</text>
+                    <text class="ahu-pt-val ahu-sp-val" id="ahu-b-zone-sp" x="794" y="268">73.0 °F</text>
+                </g>
+
+                <!-- ── 6 · Casings, bay dividers, unit tag ────────────────
+                     TWO blocks: the mixing box (84-244), and the AHU casing
+                     (306-662) whose five bays are the mixed-air plenum
+                     (306-396), the filter (396-448), the hot-water coil
+                     (448-516), the DX coil (516-586, 70 wide) and the supply
+                     fan (586-662). -->
+                <g id="ahu-b-cabinet">
+                    <rect class="ahu-casing" x="84" y="250" width="160" height="105"/>
+                    <rect class="ahu-casing" x="306" y="250" width="356" height="105"/>
+                    <line class="ahu-divider" x1="396" y1="250" x2="396" y2="355"/>
+                    <line class="ahu-divider" x1="448" y1="250" x2="448" y2="355"/>
+                    <line class="ahu-divider" x1="516" y1="250" x2="516" y2="355"/>
+                    <line class="ahu-divider" x1="586" y1="250" x2="586" y2="355"/>
+                    <text class="ahu-unit-label" x="640" y="349">AHU-1</text>
+                </g>
+
+                <!-- ── 7 · Stations, left to right ────────────────────────
+                     BLADE ANGLE CARRIES POSITION and must agree with the
+                     numbers in the command rail: parallel to flow = open,
+                     perpendicular = closed. Where two dampers happen to sit
+                     in ducts at right angles to each other, the tiebreaker is
+                     DAYLIGHT: an open damper shows air between its blades, a
+                     shut one runs wall to wall with none.
+                       OA damper  100% — horizontal flow, blades near-horizontal
+                       RA damper    0% — vertical flow (the drop), blades flat, sealed
+                       Relief     100% — vertical flow, blades vertical -->
+
+                <!-- Outside-air louver, set into the mixing box's left wall
+                     (x 84) so it has a real outdoor face at x 74 for the
+                     shielded head to bracket to. -->
+                <g id="ahu-b-louver">
+                    <rect class="ahu-louver-frame" x="74" y="278" width="20" height="60"/>
+                    <line class="ahu-louver-blade" x1="77" y1="290" x2="91" y2="285"/>
+                    <line class="ahu-louver-blade" x1="77" y1="304" x2="91" y2="299"/>
+                    <line class="ahu-louver-blade" x1="77" y1="318" x2="91" y2="313"/>
+                    <line class="ahu-louver-blade" x1="77" y1="332" x2="91" y2="327"/>
+                </g>
+
+                <!-- OA damper — driven wide open (economizing). -->
+                <g id="ahu-b-oa-damper">
+                    <rect class="ahu-damper-frame" x="118" y="284" width="30" height="36"/>
+                    <line class="ahu-damper-blade" x1="121" y1="293" x2="145" y2="297"/>
+                    <line class="ahu-damper-blade" x1="121" y1="302" x2="145" y2="306"/>
+                    <line class="ahu-damper-blade" x1="121" y1="311" x2="145" y2="315"/>
+                </g>
+
+                <!-- RA damper — inside the mixing box, directly under the
+                     return drop's opening (177-223) and spanning it. Blades
+                     flat across a vertical flow AND running the full width of
+                     the frame with no gap at either end: shut, and visibly
+                     sealed. That absence of daylight is the only thing on
+                     this drawing that distinguishes it from the open OA
+                     damper, since both sets of blades read near-horizontal. -->
+                <g id="ahu-b-ra-damper">
+                    <rect class="ahu-damper-frame" x="182" y="258" width="36" height="30"/>
+                    <line class="ahu-damper-blade" x1="182" y1="266" x2="218" y2="266"/>
+                    <line class="ahu-damper-blade" x1="182" y1="273" x2="218" y2="273"/>
+                    <line class="ahu-damper-blade" x1="182" y1="280" x2="218" y2="280"/>
+                </g>
+
+                <!-- Relief damper — in the stack, blades straight up the flow
+                     = open, to match the outside air coming in. -->
+                <g id="ahu-b-ea-damper">
+                    <rect class="ahu-damper-frame" x="288" y="44" width="36" height="30"/>
+                    <line class="ahu-damper-blade" x1="296" y1="48" x2="296" y2="70"/>
+                    <line class="ahu-damper-blade" x1="306" y1="48" x2="306" y2="70"/>
+                    <line class="ahu-damper-blade" x1="316" y1="48" x2="316" y2="70"/>
+                </g>
+
+                <!-- Filter rack. -->
+                <g id="ahu-b-filter">
+                    <rect class="ahu-filter-frame" x="406" y="262" width="32" height="82"/>
+                    <line class="ahu-filter-media" x1="409" y1="338" x2="435" y2="290"/>
+                    <line class="ahu-filter-media" x1="409" y1="314" x2="435" y2="266"/>
+                </g>
+
+                <!-- Hot-water heating coil — drill-down, and FIRST in the
+                     coil bank. Frame stays neutral link-box chrome; identity
+                     is the heat-token serpentine, dimmed because the valve is
+                     at 0%. -->
+                <a class="ahu-link" id="ahu-b-coil-hw" href="/simulators/hydronic-loop-builder.html"
+                   aria-label="Open the hydronic loop builder — the hot-water loop behind this heating coil">
+                    <title>Open the hydronic loop builder</title>
+                    <rect class="ahu-link-box" x="456" y="262" width="52" height="82"/>
+                    <path class="ahu-coil-hw ahu-coil-idle" d="M462 270 H502 V283 H462 V296 H502 V309 H462 V322 H502 V335 H462"/>
+                    <text class="ahu-station-label" x="482" y="372">HW COIL</text>
+                </a>
+
+                <!-- DX cooling coil — drill-down, downstream of the heating
+                     coil. -->
+                <a class="ahu-link" id="ahu-b-coil-dx" href="/simulators/refrigerant-loop.html"
+                   aria-label="Open the refrigerant-loop simulator — the vapor-compression loop behind this DX coil">
+                    <title>Open the refrigerant-loop simulator</title>
+                    <rect class="ahu-link-box" x="524" y="262" width="52" height="82"/>
+                    <path class="ahu-coil-dx" d="M530 270 H570 V283 H530 V296 H570 V309 H530 V322 H570 V335 H530"/>
+                    <text class="ahu-station-label" x="550" y="372">DX COIL</text>
+                </a>
+
+                <!-- Supply fan — drill-down, and DOWNSTREAM of both coils:
+                     this is a draw-through unit, the fan pulls air across the
+                     bank. Static in this round. -->
+                <a class="ahu-link" id="ahu-b-fan" href="/simulators/vfd-mock.html"
+                   aria-label="Open the VFD simulator — the drive spinning this supply fan">
+                    <title>Open the VFD simulator</title>
+                    <circle class="ahu-link-box" cx="623" cy="302" r="30"/>
+                    <g class="ahu-fan-blade" id="ahu-b-fan-blade">
+                        <ellipse cx="623" cy="285" rx="5.5" ry="13" transform="rotate(0 623 302) rotate(20 623 285)"/>
+                        <ellipse cx="623" cy="285" rx="5.5" ry="13" transform="rotate(72 623 302) rotate(20 623 285)"/>
+                        <ellipse cx="623" cy="285" rx="5.5" ry="13" transform="rotate(144 623 302) rotate(20 623 285)"/>
+                        <ellipse cx="623" cy="285" rx="5.5" ry="13" transform="rotate(216 623 302) rotate(20 623 285)"/>
+                        <ellipse cx="623" cy="285" rx="5.5" ry="13" transform="rotate(288 623 302) rotate(20 623 285)"/>
+                    </g>
+                    <circle class="ahu-fan-hub" cx="623" cy="302" r="4"/>
+                    <text class="ahu-station-label" x="623" y="372">SUPPLY FAN</text>
+                </a>
+
+                <!-- Station names for the two blocks with no drill-down. -->
+                <text class="ahu-station-label" x="164" y="372">MIXING BOX</text>
+                <text class="ahu-station-label" x="422" y="372">FILTER</text>
+
+                <!-- ── 8 · Point badges — the MEASURED register ───────────
+                     One row, one y (170), height 40, caption at +16, value at
+                     +34. Left to right in air-path order, which is also
+                     station order: reading them left to right IS walking the
+                     unit. Each centre sits over the station it reports; the
+                     return drop falls between OAT and MAT, which is exactly
+                     what makes mixed air out of outdoor air.
+                     Gaps 151 / 79 / 74, all clear of the 70-unit floor. -->
+                <g id="ahu-b-badges">
+                    <rect class="ahu-badge" data-point-target="oat" x="74" y="170" width="86" height="40"/>
+                    <text class="ahu-pt-cap" x="117" y="186">OAT · OUTSIDE</text>
+                    <text class="ahu-pt-val" id="ahu-b-oat" x="117" y="204">62.0 °F</text>
+
+                    <rect class="ahu-badge" data-point-target="mat" x="311" y="170" width="76" height="40"/>
+                    <text class="ahu-pt-cap" x="349" y="186">MAT · MIXED</text>
+                    <text class="ahu-pt-val" id="ahu-b-mat" x="349" y="204">62.0 °F</text>
+
+                    <rect class="ahu-badge ahu-badge-dt" x="466" y="170" width="100" height="40"/>
+                    <text class="ahu-pt-cap" x="516" y="186">ΔT ACROSS COILS</text>
+                    <text class="ahu-pt-val ahu-dt-val" id="ahu-b-dt" x="516" y="204">-7.0 °F</text>
+
+                    <rect class="ahu-badge" data-point-target="dat" x="640" y="170" width="90" height="40"/>
+                    <text class="ahu-pt-cap" x="685" y="186">DAT · DISCHARGE</text>
+                    <text class="ahu-pt-val" id="ahu-b-dat" x="685" y="204">55.0 °F</text>
+                </g>
+
+                <!-- ── 9 · Chevron layer — seam only, unpopulated ─────────── -->
+                <g id="ahu-b-flow" class="ahu-flow-layer"></g>
+
+                <!-- ── 10 · Command rail + inline readouts ────────────────
+                     The band between the badge row (ends 210) and the casing
+                     (starts 250) is free, so the commanded outputs and proofs
+                     for the casing's own devices land there, directly above
+                     the device each drives. The two mixing-box dampers are
+                     the exception and deliberately so: the rail cannot reach
+                     them without crossing the return drop's outer wall (177),
+                     so the RA command sits inside the mixing box under its
+                     own blades and the relief command sits up the stack
+                     beside its own. A command that is not above what it
+                     drives is worse than a command out of the rail. -->
+                <g id="ahu-b-status">
+                    <text class="ahu-pt-cap" x="133" y="235">OA DMPR 100%</text>
+                    <text class="ahu-pt-cap" x="200" y="306">RA DMPR 0%</text>
+                    <text class="ahu-pt-cap" x="370" y="59">EA DMPR 100%</text>
+
+                    <circle class="ahu-led ahu-led-off" cx="454" cy="225" r="4"/>
+                    <text class="ahu-pt-cap" id="ahu-b-hw-v" x="464" y="228">HW VLV 0%</text>
+
+                    <circle class="ahu-led ahu-led-on" cx="530" cy="225" r="4"/>
+                    <text class="ahu-pt-cap" id="ahu-b-stg1-v" x="540" y="228">STG1 ON</text>
+                    <circle class="ahu-led ahu-led-off" cx="530" cy="239" r="4"/>
+                    <text class="ahu-pt-cap" id="ahu-b-stg2-v" x="540" y="242">STG2 OFF</text>
+
+                    <text class="ahu-pt-cap" x="623" y="228">SF 100% · ON</text>
+                    <circle class="ahu-led ahu-led-on" cx="601" cy="239" r="4"/>
+                    <text class="ahu-pt-cap" id="ahu-b-proof-v" x="611" y="242">PROVEN</text>
+
+                    <!-- RAT reports inline beside its own probe rather than
+                         as a fifth badge: its job on this drawing is to be
+                         the number the drop brings to the mixing box, which
+                         is a fact about a location. -->
+                    <g class="ahu-readout" data-point-target="rat">
+                        <text class="ahu-pt-cap" x="600" y="54">RAT · RETURN</text>
+                        <text class="ahu-pt-val" id="ahu-b-rat" x="600" y="72">75.0 °F</text>
+                    </g>
+                </g>
+
+                <!-- ── 11 · Sensor devices — WHERE each sensed point lives ─
+                     Drawn LAST so the devices stay legible over duct, air and
+                     text. One group per physical device; a native title is
+                     the accessible name; a transparent hit rect sized around
+                     the HEAD comes before any geometry; geometry carries no
+                     inline fill or stroke. Placement is translate-only on
+                     local-frame geometry — a sensor glyph is never rotated or
+                     scaled. -->
+                <g id="ahu-b-sensors">
+                    <!-- OAT — shielded head bracketed to the OUTDOOR face of
+                         the louver (x 74), mid-height. -->
+                    <g class="ddcw-sensor" id="ahu-b-sensor-oat" data-point="oat"
+                       tabindex="0" transform="translate(74 308)">
+                        <title>Outdoor-air temperature sensor — shielded head on the outside of the intake</title>
+                        <rect class="ddcw-sensor-hit" x="-34" y="-18" width="36" height="36"/>
+                        <line class="ddcw-sensor-stem" x1="0" y1="0" x2="-8" y2="0"/>
+                        <path class="ddcw-sensor-body" d="M-30 -5 L-18 -12 L-6 -5 Z"/>
+                        <path class="ddcw-sensor-slot" d="M-28 0 L-18 -3 L-8 0"/>
+                        <path class="ddcw-sensor-slot" d="M-28 5 L-18 2 L-8 5"/>
+                        <line class="ddcw-sensor-stem" x1="-18" y1="-5" x2="-18" y2="10"/>
+                        <circle class="ddcw-sensor-body" cx="-18" cy="12" r="2.5"/>
+                    </g>
+
+                    <!-- RAT — insertion probe through the TOP wall of the
+                         return run (y 95) at x 600: upstream of the relief
+                         tee, so it reads the real air the zone sends back
+                         before any of it is thrown away. -->
+                    <g class="ddcw-sensor" id="ahu-b-sensor-rat" data-point="rat"
+                       tabindex="0" transform="translate(600 95)">
+                        <title>Return-air temperature sensor — insertion probe in the return duct</title>
+                        <rect class="ddcw-sensor-hit" x="-14" y="-21" width="28" height="44"/>
+                        <line class="ddcw-sensor-stem" x1="0" y1="0" x2="0" y2="19"/>
+                        <rect class="ddcw-sensor-body" x="-6" y="-10" width="12" height="10"/>
+                    </g>
+
+                    <!-- MAT — averaging element, head on the casing roof,
+                         centred in the 90-wide plenum bay (306-396) with ten
+                         units of clearance each side, capillary hanging into
+                         the mixed-air plenum between the mixing box and the
+                         filter. FOUR full-depth vertical passes at 20
+                         spacing, spanning y 258 to 347 — 85% of the 105-unit
+                         plenum height — because mixed air STRATIFIES: a
+                         poorly-mixed cold layer runs 10-20 degrees F below
+                         the average, and a single-point probe in this plenum
+                         would report one stratum and lie about the rest. -->
+                    <g class="ddcw-sensor" id="ahu-b-sensor-mat" data-point="mat"
+                       tabindex="0" transform="translate(316 250)">
+                        <title>Mixed-air temperature sensor — averaging element strung across the mixed-air plenum</title>
+                        <rect class="ddcw-sensor-hit" x="-16" y="-18" width="32" height="44"/>
+                        <rect class="ddcw-sensor-body" x="-7" y="-14" width="14" height="12"/>
+                        <path class="ddcw-sensor-cap" d="M0 0 V93 Q0 97 4 97 H16 Q20 97 20 93 V12 Q20 8 24 8 H36 Q40 8 40 12 V93 Q40 97 44 97 H56 Q60 97 60 93 V12 Q60 8 64 8 H70"/>
+                        <line class="ddcw-sensor-slot" x1="70" y1="2" x2="70" y2="16"/>
+                    </g>
+
+                    <!-- DAT — insertion probe through the TOP wall of the
+                         supply run (y 279) at x 700: downstream of BOTH coils
+                         and downstream of the fan, which is where a
+                         draw-through unit's discharge is actually measured. -->
+                    <g class="ddcw-sensor" id="ahu-b-sensor-dat" data-point="dat"
+                       tabindex="0" transform="translate(700 279)">
+                        <title>Discharge-air temperature sensor — insertion probe in the supply duct</title>
+                        <rect class="ddcw-sensor-hit" x="-14" y="-21" width="28" height="44"/>
+                        <line class="ddcw-sensor-stem" x1="0" y1="0" x2="0" y2="19"/>
+                        <rect class="ddcw-sensor-body" x="-6" y="-10" width="12" height="10"/>
+                    </g>
+
+                    <!-- Space temp — wall plate flush on the zone's RIGHT
+                         interior wall at thermostat height, on the side away
+                         from the unit's duct connections. -->
+                    <g class="ddcw-sensor" id="ahu-b-sensor-space-temp" data-point="space-temp"
+                       tabindex="0" transform="translate(836 158)">
+                        <title>Space temperature sensor — wall plate in the zone</title>
+                        <rect class="ddcw-sensor-hit" x="-32" y="-22" width="34" height="44"/>
+                        <rect class="ddcw-sensor-body" x="-15" y="-12" width="14" height="24"/>
+                        <line class="ddcw-sensor-slot" x1="-11.5" y1="-5" x2="-4.5" y2="-5"/>
+                        <line class="ddcw-sensor-slot" x1="-11.5" y1="0" x2="-4.5" y2="0"/>
+                        <line class="ddcw-sensor-slot" x1="-11.5" y1="5" x2="-4.5" y2="5"/>
+                    </g>
+                </g>
+            </svg>
+        </div>
+
+        <div class="ahu-points">
+            <div class="ahu-point">
+                <span class="ahu-point-cap">OAT · outside</span>
+                <span class="ahu-point-val">62.0 °F</span>
+            </div>
+            <div class="ahu-point">
+                <span class="ahu-point-cap">RAT · return</span>
+                <span class="ahu-point-val">75.0 °F</span>
+            </div>
+            <div class="ahu-point">
+                <span class="ahu-point-cap">MAT · mixed</span>
+                <span class="ahu-point-val">62.0 °F</span>
+            </div>
+            <div class="ahu-point">
+                <span class="ahu-point-cap">DAT · discharge</span>
+                <span class="ahu-point-val">55.0 °F</span>
+            </div>
+            <div class="ahu-point">
+                <span class="ahu-point-cap">ΔT across coils</span>
+                <span class="ahu-point-val accent">-7.0 °F</span>
+            </div>
+            <div class="ahu-point">
+                <span class="ahu-point-cap">Zone / setpoint</span>
+                <span class="ahu-point-val">74.0 / 73.0 °F</span>
+            </div>
+        </div>
+
+        <div class="status-pill ok ahu-verdict">
+            Economizing at 100 % outside air — DX stage 1 is making up the remaining load
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         VARIANT C · "Economizer half"
+         ══════════════════════════════════════════════════════════════════ -->
+    <div class="tool-card">
+        <div class="ahu-variant-head">
+            <h2 class="subhead">Variant C — economizer half</h2>
+            <span class="ahu-variant-tag">compact unit · commanded outputs in the action colour</span>
+        </div>
+        <p class="ahu-thesis">The mixing box takes half the cabinet and the
+            whole machine is pulled left, leaving the right third of the
+            canvas to a long supply run and a large zone. One divider only —
+            the boundary between the economizer and the treatment train — and
+            every commanded output reads in the action colour, one size step
+            under the measured badges, so the drawing can be read as command
+            against actual.</p>
+
+        <div class="ahu-graphic">
+            <svg class="ahu-svg" id="ahu-c-graphic" viewBox="0 0 840 420"
+                 role="img" aria-labelledby="ahu-c-title ahu-c-desc"
+                 font-family="var(--mono)">
+                <title id="ahu-c-title">An air handler serving one zone, as a DDC supervisory graphic</title>
+                <desc id="ahu-c-desc">A single-zone air handler drawn as a DDC supervisory graphic, with the cabinet pulled to the left of the frame and the mixing box taking up half its length. Outdoor air enters at the far left through a weather louver set into the cabinet's left wall; a shielded outdoor-air head, a gabled cap over two shield plates with the sensing element hanging through the stack, is bracketed to the outer face of that louver above the intake stream. Just inside the wall an outside-air damper fills the whole intake opening, its four blades lying horizontal, parallel to the airflow, with clear air between them; the commanded position printed above it reads OA damper 100 percent. Return air leaves the zone on the right, runs leftward along a duct above the cabinet, and reaches a branch that rises out of the top of the drawing. That branch carries a relief damper whose three blades stand vertical, parallel to the upward airflow, with a commanded position of 100 percent printed beside it, and a dashed line runs up the branch above and below the damper to mark the air as leaving the building. Past that branch the return duct continues left and turns down in a short drop onto the cabinet top, over the mixing box. At the top of the mixing box the drop meets a return-air damper that fills the opening: its three blades lie flat across the flow and meet end to end as one unbroken bar, with a pivot dot marking each blade, so there is no daylight through it at all; its commanded position, printed below it inside the chamber, reads 0 percent. Downstream of the dampers the chamber opens into the mixed-air plenum, where an averaging element hangs from a transmitter head on the cabinet roof and makes four full-depth vertical passes across the plenum. A single divider marks the end of the mixing box; past it the air passes in turn through a filter rack, a hot-water heating coil whose serpentine is drawn faint in a warm hue because its valve command reads 0 percent, a direct-expansion cooling coil whose serpentine is drawn at full strength in the cool hue, and a supply fan, before leaving the cabinet on the right through a supply duct that runs to the zone. An insertion probe enters the top of that supply duct downstream of the fan, and another enters the top of the return duct partway along its run, with an inline readout beside it giving return-air temperature 75.0 degrees Fahrenheit. Directional arrows carry the air on every run: outdoor air rightward at the intake and past the damper, return air leftward along the top as far as the relief branch, relief air upward out of the frame, mixed air rightward across the plenum, the filter and the coil bank, and supply air rightward through the supply duct into the zone; no arrow is drawn in the length of return duct past the branch, nor in the drop, nor below the return damper, because that damper is shut. Below the cabinet a lit indicator reads stage 1 on, an unlit indicator reads stage 2 off, and a lit indicator reads fan proof; the fan's commanded speed above the cabinet reads 100 percent and the heating valve's reads 0 percent. The heating coil, the cooling coil and the supply fan are each drawn as a link into a matching simulator. Four badges above the cabinet report, left to right in air-path order, outside-air temperature 62.0 degrees Fahrenheit over the intake, mixed-air temperature 62.0 degrees Fahrenheit over the averaging element, a delta T across the coils of minus 7.0 degrees Fahrenheit between the two coils, framed and inked in blue, and discharge-air temperature 55.0 degrees Fahrenheit over the discharge. The zone box on the right, wider than the ducts that feed it, carries a wall plate mounted flush on its far interior wall and reports a zone temperature of 74.0 degrees Fahrenheit against a cooling setpoint of 73.0 degrees Fahrenheit. The unit is tagged AHU-1.</desc>
+
+                <!-- ── 1 · Duct bodies + walls — EXTERIOR RUNS ONLY ────────
+                     Body is a fattened stroke (46) in the well token; the two
+                     walls are the centerline offset +/-23. No duct body
+                     inside the casing.
+
+                     Return: M700 118 H200 V250 — from the zone face, left
+                     along the top, then a SHORT VERTICAL DROP into the
+                     cabinet top over the mixing station. Elbow corner
+                     (200,118) offsets to (177,95) outer / (223,141) inner.
+                     The outer wall breaks between x 237 and x 283 so the
+                     relief branch tees cleanly off the top of the run — and
+                     it tees close to the drop, because on this composition
+                     the economizer section relieves right where it mixes. -->
+                <path class="ahu-duct-body" d="M700 118 H200 V250"/>
+                <path class="ahu-duct-body" d="M260 95 V0"/>
+                <path class="ahu-duct-body" d="M614 302 H700"/>
+
+                <path class="ahu-duct-wall" d="M700 95 H283"/>
+                <path class="ahu-duct-wall" d="M237 95 H177 V250"/>
+                <path class="ahu-duct-wall" d="M700 141 H223 V250"/>
+                <path class="ahu-duct-wall" d="M237 95 V0"/>
+                <path class="ahu-duct-wall" d="M283 95 V0"/>
+                <path class="ahu-duct-wall" d="M614 279 H700"/>
+                <path class="ahu-duct-wall" d="M614 325 H700"/>
+
+                <!-- ── 2 · Duct labels ───────────────────────────────────── -->
+                <text class="ahu-pt-cap" x="340" y="34">EXHAUST / RELIEF</text>
+                <text class="ahu-pt-cap" x="620" y="84">RETURN AIR</text>
+                <text class="ahu-pt-cap" x="36" y="352">OUTSIDE AIR</text>
+                <!-- SUPPLY AIR reads UNDER its run: above it is the only band
+                     where a duct label would have to straddle the casing wall
+                     to clear the DAT probe head. -->
+                <text class="ahu-pt-cap" x="657" y="344">SUPPLY AIR</text>
+
+                <!-- ── 3 · Invisible centerlines ─────────────────────────── -->
+                <path class="ahu-centerline" id="ahu-c-centerline-oa" d="M20 302 H180"/>
+                <path class="ahu-centerline" id="ahu-c-centerline-ra" d="M700 118 H200 V250"/>
+                <path class="ahu-centerline" id="ahu-c-centerline-ea" d="M260 95 V0"/>
+                <path class="ahu-centerline" id="ahu-c-centerline-ma" d="M180 302 H502"/>
+                <path class="ahu-centerline" id="ahu-c-centerline-sa" d="M502 302 H700"/>
+
+                <!-- ── 4 · Static flow arrows ─────────────────────────────
+                     Nothing between the relief tee and the drop, and nothing
+                     below the return damper: that damper is commanded shut. -->
+                <g id="ahu-c-flow-arrows">
+                    <polygon points="30,296 42,302 30,308" fill="var(--teal)"/>
+                    <polygon points="118,296 130,302 118,308" fill="var(--teal)"/>
+                    <polygon points="150,296 162,302 150,308" fill="var(--teal)"/>
+
+                    <polygon points="600,112 588,118 600,124" fill="var(--blue-cool)"/>
+                    <polygon points="440,112 428,118 440,124" fill="var(--blue-cool)"/>
+
+                    <!-- The dashed stream rides BOTH legs of the relief
+                         branch, so the "leaving the building" cue is present
+                         where the air actually leaves. The dash is on the
+                         STREAM, never on the duct walls: a dashed duct wall
+                         means hidden or existing-to-remain in mechanical
+                         drafting, which is a different claim entirely. -->
+                    <path class="ahu-relief-stream" d="M260 92 V76"/>
+                    <polygon points="254,76 266,76 260,64" fill="var(--text-dim)"/>
+                    <path class="ahu-relief-stream" d="M260 36 V16"/>
+                    <polygon points="254,16 266,16 260,4" fill="var(--text-dim)"/>
+
+                    <polygon points="324,296 336,302 324,308" fill="var(--blue-cool)"/>
+                    <polygon points="389,296 401,302 389,308" fill="var(--blue-cool)"/>
+                    <polygon points="460,296 472,302 460,308" fill="var(--blue-cool)"/>
+
+                    <polygon points="626,296 638,302 626,308" fill="var(--blue)"/>
+                    <polygon points="682,296 694,302 682,308" fill="var(--blue)"/>
+                </g>
+
+                <!-- ── 5 · The zone ──────────────────────────────────────── -->
+                <g id="ahu-c-zone">
+                    <rect class="ahu-zone-fill" x="700" y="92" width="130" height="248"/>
+                    <path class="ahu-zone-outline" d="M700 95 V92 H830 V340 H700 V325 M700 279 V141"/>
+                    <text class="ahu-zone-label" x="765" y="118">ZONE</text>
+                    <g class="ahu-readout" id="ahu-c-zone-readout" data-point-target="space-temp">
+                        <text class="ahu-pt-cap" x="765" y="200">ZONE TEMP</text>
+                        <text class="ahu-pt-val" id="ahu-c-zone-t" x="765" y="220">74.0 °F</text>
+                        <text class="ahu-pt-cap" x="765" y="258">COOLING SP</text>
+                        <text class="ahu-pt-val ahu-sp-val" id="ahu-c-zone-sp" x="765" y="278">73.0 °F</text>
+                    </g>
+                </g>
+
+                <!-- ── 6 · Casing + the one divider + unit tag ────────────
+                     Drawn as three open paths rather than one rect so the
+                     intake opening (y 262-344 in the left wall), the return
+                     opening (x 177-223 in the top wall) and the supply outlet
+                     (y 279-325 in the right wall) are real holes the devices
+                     and ducts land in, not lines drawn across them.
+
+                     ONE divider, at x 344: the boundary between the
+                     economizer and the treatment train. The components and
+                     their labels delimit the downstream stations on their
+                     own, which frees the gaps between them for flow marks —
+                     a bay wall and an arrowhead cannot share 8 units. Mixing
+                     box 74-344 (270 of 540, half the cabinet). -->
+                <g id="ahu-c-cabinet">
+                    <path class="ahu-casing" d="M74 262 V250 H177"/>
+                    <path class="ahu-casing" d="M223 250 H614 V279"/>
+                    <path class="ahu-casing" d="M614 325 V355 H74 V344"/>
+                    <line class="ahu-divider" x1="344" y1="250" x2="344" y2="355"/>
+                    <text class="ahu-station-label" x="209" y="372">MIXING BOX</text>
+                    <text class="ahu-station-label" x="369" y="372">FILTER</text>
+                    <text class="ahu-unit-label" x="585" y="349">AHU-1</text>
+                </g>
+
+                <!-- ── 7 · Stations, left to right ────────────────────────
+                     BLADE CONVENTION — the load-bearing detail of this
+                     variant, and the one thing worth reading the numbers
+                     against.
+
+                     A damper blade drawn in section is a line of CONSTANT
+                     length (its plate width, equal to the blade pitch)
+                     rotating about a FIXED pivot on the duct's cross-section.
+                     Only the ANGLE changes, and the angle carries position:
+                     parallel to flow = open, perpendicular = closed.
+
+                     The consequence is what makes the three dampers here
+                     legible at a glance:
+
+                       OPEN   -> blades sit edge-on with clear air around
+                                 them. (OA: four horizontal plates up a tall
+                                 frame. Relief: three vertical ticks across a
+                                 wide one.)
+                       CLOSED -> blades meet end to end and SEAL the opening,
+                                 no daylight anywhere, with a pivot dot per
+                                 blade so the count stays readable without
+                                 breaking the seal.
+
+                     Open and closed therefore differ by DAYLIGHT, not by
+                     orientation — so they stay distinguishable even where the
+                     two dampers sit in ducts whose flow runs at right angles,
+                     which is exactly the OA-vs-RA case here. -->
+
+                <!-- OA weather louver, set into the cabinet's left wall.
+                     Fixed slats — this is the intake, not a control device. -->
+                <g id="ahu-c-louver">
+                    <rect class="ahu-louver-frame" x="56" y="262" width="18" height="82"/>
+                    <path class="ahu-louver-blade" d="M58 276 L72 270 M58 292 L72 286 M58 308 L72 302 M58 324 L72 318 M58 340 L72 334"/>
+                </g>
+
+                <!-- OA damper — 100 %. Flow is horizontal, so four blades of
+                     pitch 20.5 lie EDGE-ON along the stream, pivots stacked
+                     up the 82-unit face at x 95. The frame fills the whole
+                     intake opening top to bottom, so nothing bypasses the
+                     device, and its along-flow depth is only 26 so the blades
+                     occupy 77% of it — an open damper, not a part-stroke
+                     one. -->
+                <g id="ahu-c-oa-damper">
+                    <rect class="ahu-damper-frame" x="82" y="262" width="26" height="82"/>
+                    <path class="ahu-damper-blade" d="M85 272 H105 M85 293 H105 M85 313 H105 M85 334 H105"/>
+                </g>
+
+                <!-- RA damper — 0 %. Flow through the drop is vertical, so
+                     the three blades sit SQUARE ACROSS it and their ends
+                     meet: one unbroken bar sealing the full 46-unit opening
+                     wall to wall. A pivot dot on each blade keeps the three
+                     countable WITHOUT putting a gap in the seal. The frame is
+                     exactly the drop's inside width and sits in the
+                     penetration, so it reads as the damper filling the return
+                     opening rather than floating below it. -->
+                <g id="ahu-c-ra-damper">
+                    <rect class="ahu-damper-frame" x="177" y="252" width="46" height="22"/>
+                    <path class="ahu-damper-blade" d="M177 263 H223"/>
+                    <circle class="ahu-damper-pivot" cx="184.7" cy="263" r="1.5"/>
+                    <circle class="ahu-damper-pivot" cx="200" cy="263" r="1.5"/>
+                    <circle class="ahu-damper-pivot" cx="215.3" cy="263" r="1.5"/>
+                </g>
+
+                <!-- Relief damper — 100 %, opening in step with the OA damper
+                     (every extra cubic foot admitted has to leave somewhere).
+                     Flow is up the stack, so the three blades stand EDGE-ON
+                     to it: vertical, pitch 15.3, pivots side by side across
+                     the 46-unit face, and the frame fills the stack so
+                     nothing bypasses it. -->
+                <g id="ahu-c-ea-damper">
+                    <rect class="ahu-damper-frame" x="237" y="36" width="46" height="24"/>
+                    <path class="ahu-damper-blade" d="M244.7 40 V56 M260 40 V56 M275.3 40 V56"/>
+                </g>
+
+                <!-- Filter rack — first treatment station past the divider. -->
+                <g id="ahu-c-filter">
+                    <rect class="ahu-filter-frame" x="352" y="262" width="34" height="82"/>
+                    <path class="ahu-filter-media" d="M355 341 L383 266 M355 318 L383 289"/>
+                </g>
+
+                <!-- HW heating coil — BEFORE the cooling coil. Frame stays
+                     the neutral link box so the hover/focus lift reads;
+                     identity lives in the serpentine, drawn faint because the
+                     valve is commanded shut. -->
+                <a class="ahu-link" href="/simulators/hydronic-loop-builder.html"
+                   aria-label="Open the hydronic loop builder — the hot-water loop feeding this heating coil">
+                    <title>Open the hydronic loop builder</title>
+                    <rect class="ahu-link-box" id="ahu-c-coil-hw" x="404" y="262" width="52" height="82"/>
+                    <path class="ahu-coil-hw ahu-coil-idle" d="M410 270 H450 V283 H410 V296 H450 V309 H410 V322 H450 V335 H410"/>
+                    <text class="ahu-station-label" x="430" y="372">HW COIL</text>
+                </a>
+
+                <!-- DX cooling coil — 2 stages, stage 1 energized.
+                     Full-strength cool serpentine: this is the coil doing the
+                     work in this state. -->
+                <a class="ahu-link" href="/simulators/refrigerant-loop.html"
+                   aria-label="Open the refrigerant-loop simulator — the vapor-compression loop behind this DX coil">
+                    <title>Open the refrigerant-loop simulator</title>
+                    <rect class="ahu-link-box" id="ahu-c-coil-dx" x="476" y="262" width="52" height="82"/>
+                    <path class="ahu-coil-dx" d="M482 270 H522 V283 H482 V296 H522 V309 H482 V322 H522 V335 H482"/>
+                    <text class="ahu-station-label" x="502" y="372">DX COIL</text>
+                </a>
+
+                <!-- Supply fan — DRAW-THROUGH: downstream of both coils,
+                     pulling air across them. Static in this round. -->
+                <a class="ahu-link" href="/simulators/vfd-mock.html"
+                   aria-label="Open the VFD simulator — the drive spinning this supply fan">
+                    <title>Open the VFD simulator</title>
+                    <circle class="ahu-link-box" id="ahu-c-fan" cx="573" cy="302" r="30"/>
+                    <g class="ahu-fan-blade" id="ahu-c-fan-blade">
+                        <ellipse cx="573" cy="285" rx="5.5" ry="13" transform="rotate(0 573 302) rotate(20 573 285)"/>
+                        <ellipse cx="573" cy="285" rx="5.5" ry="13" transform="rotate(72 573 302) rotate(20 573 285)"/>
+                        <ellipse cx="573" cy="285" rx="5.5" ry="13" transform="rotate(144 573 302) rotate(20 573 285)"/>
+                        <ellipse cx="573" cy="285" rx="5.5" ry="13" transform="rotate(216 573 302) rotate(20 573 285)"/>
+                        <ellipse cx="573" cy="285" rx="5.5" ry="13" transform="rotate(288 573 302) rotate(20 573 285)"/>
+                    </g>
+                    <circle class="ahu-fan-hub" cx="573" cy="302" r="4"/>
+                    <text class="ahu-station-label" x="573" y="372">SUPPLY FAN</text>
+                </a>
+
+                <!-- ── 8 · Point badges — the reserved band, y 170-210 ────
+                     Air-path order OAT → MAT → ΔT → DAT. OAT sits left of the
+                     return drop's outer wall (x 177), the other three right
+                     of its inner wall (x 223) — the drop is what turns
+                     outdoor air into mixed air, so it falls exactly between
+                     the OAT and MAT badges. Gaps 85 / 82 / 80, all clear of
+                     the 70-unit floor. DAT is anchored to the discharge
+                     probe (x 660) rather than the fan, which is what the
+                     badge actually reports. -->
+                <g id="ahu-c-badges">
+                    <rect class="ahu-badge" data-point-target="oat" x="76" y="170" width="86" height="40"/>
+                    <text class="ahu-pt-cap" x="119" y="186">OAT · OUTSIDE</text>
+                    <text class="ahu-pt-val" id="ahu-c-oat" x="119" y="204">62.0 °F</text>
+
+                    <rect class="ahu-badge" data-point-target="mat" x="247" y="170" width="76" height="40"/>
+                    <text class="ahu-pt-cap" x="285" y="186">MAT · MIXED</text>
+                    <text class="ahu-pt-val" id="ahu-c-mat" x="285" y="204">62.0 °F</text>
+
+                    <rect class="ahu-badge ahu-badge-dt" x="405" y="170" width="100" height="40"/>
+                    <text class="ahu-pt-cap" x="455" y="186">ΔT ACROSS COILS</text>
+                    <text class="ahu-pt-val ahu-dt-val" id="ahu-c-dt" x="455" y="204">-7.0 °F</text>
+
+                    <rect class="ahu-badge" data-point-target="dat" x="585" y="170" width="90" height="40"/>
+                    <text class="ahu-pt-cap" x="630" y="186">DAT · DISCHARGE</text>
+                    <text class="ahu-pt-val" id="ahu-c-dat" x="630" y="204">55.0 °F</text>
+                </g>
+
+                <!-- ── 9 · Chevron layer — the seam, unpopulated ──────────── -->
+                <g id="ahu-c-flow" class="ahu-flow-layer"></g>
+
+                <!-- ── 10 · Supervisory status — commanded outputs + LEDs ──
+                     The five commanded outputs read in the accent-ink token,
+                     one size step under the measured badges: on a front end a
+                     COMMAND is not a MEASUREMENT, and this variant is built
+                     to be read as command-vs-actual. Each sits beside the
+                     device it drives — the OA, HW and fan commands in the
+                     strip between the badge band and the casing, the RA
+                     command inside the mixing chamber next to its own blades,
+                     the relief command up the stack beside its own. -->
+                <g id="ahu-c-status">
+                    <text class="ahu-pt-cap" x="110" y="225">OA DMPR</text>
+                    <text class="ahu-cmd-val" id="ahu-c-oa-cmd" x="110" y="243">100%</text>
+
+                    <text class="ahu-pt-cap" x="200" y="292">RA DMPR</text>
+                    <text class="ahu-cmd-val" id="ahu-c-ra-cmd" x="200" y="310">0%</text>
+
+                    <text class="ahu-pt-cap" x="340" y="58">EA DMPR</text>
+                    <text class="ahu-cmd-val" id="ahu-c-ea-cmd" x="340" y="76">100%</text>
+
+                    <text class="ahu-pt-cap" x="430" y="225">HW VLV</text>
+                    <text class="ahu-cmd-val" id="ahu-c-hw-cmd" x="430" y="243">0%</text>
+
+                    <text class="ahu-pt-cap" x="573" y="225">FAN SPEED</text>
+                    <text class="ahu-cmd-val" id="ahu-c-fan-cmd" x="573" y="243">100%</text>
+
+                    <circle class="ahu-led ahu-led-on" cx="400" cy="386" r="5"/>
+                    <text class="ahu-pt-cap" id="ahu-c-stg1-v" x="412" y="390">STG 1 · ON</text>
+                    <circle class="ahu-led ahu-led-off" cx="486" cy="386" r="5"/>
+                    <text class="ahu-pt-cap" id="ahu-c-stg2-v" x="498" y="390">STG 2 · OFF</text>
+                    <circle class="ahu-led ahu-led-on" cx="578" cy="386" r="5"/>
+                    <text class="ahu-pt-cap" id="ahu-c-proof-v" x="590" y="390">FAN PROOF</text>
+                </g>
+
+                <!-- ── 11 · Sensor glyphs — LAST, so devices stay legible ── -->
+                <g id="ahu-c-sensors">
+                    <!-- OAT — shielded head bracketed to the OUTER face of
+                         the intake louver, above the intake stream where a
+                         solar shield belongs (the teal arrows run the
+                         centerline at y 302, clear below it). Plates stay
+                         horizontal in every placement, so the glyph is never
+                         rotated. -->
+                    <g class="ddcw-sensor" id="ahu-c-sensor-oat" data-point="oat"
+                       tabindex="0" transform="translate(56 280)">
+                        <title>Outdoor-air temperature sensor — shielded head on the outside of the intake</title>
+                        <rect class="ddcw-sensor-hit" x="-34" y="-18" width="36" height="36"/>
+                        <line class="ddcw-sensor-stem" x1="0" y1="0" x2="-8" y2="0"/>
+                        <path class="ddcw-sensor-body" d="M-30 -5 L-18 -12 L-6 -5 Z"/>
+                        <path class="ddcw-sensor-slot" d="M-28 0 L-18 -3 L-8 0"/>
+                        <path class="ddcw-sensor-slot" d="M-28 5 L-18 2 L-8 5"/>
+                        <line class="ddcw-sensor-stem" x1="-18" y1="-5" x2="-18" y2="10"/>
+                        <circle class="ddcw-sensor-body" cx="-18" cy="12" r="2.5"/>
+                    </g>
+
+                    <!-- MAT — averaging element. Head on the cabinet roof at
+                         x 250; one continuous capillary making FOUR
+                         full-depth vertical passes at x 250 / 270 / 290 /
+                         310, spanning y 258-347 (89 of the plenum's 105) on
+                         rounded turns. Mixed air stratifies — a poorly mixed
+                         cold layer runs 10-20 degrees F below the average —
+                         so the glyph's whole job is to read as "crosses every
+                         layer, four stations, top to bottom". It sits
+                         downstream of all three dampers and upstream of the
+                         divider at x 344, which is where mixed air is. -->
+                    <g class="ddcw-sensor" id="ahu-c-sensor-mat" data-point="mat"
+                       tabindex="0" transform="translate(250 250)">
+                        <title>Mixed-air temperature sensor — averaging element strung across the mixed-air plenum</title>
+                        <rect class="ddcw-sensor-hit" x="-16" y="-18" width="32" height="44"/>
+                        <rect class="ddcw-sensor-body" x="-7" y="-14" width="14" height="12"/>
+                        <path class="ddcw-sensor-cap" d="M0 0 V93 Q0 97 4 97 H16 Q20 97 20 93 V12 Q20 8 24 8 H36 Q40 8 40 12 V93 Q40 97 44 97 H56 Q60 97 60 93 V12 Q60 8 64 8 H70"/>
+                        <line class="ddcw-sensor-slot" x1="70" y1="2" x2="70" y2="16"/>
+                    </g>
+
+                    <!-- RAT — insertion probe through the TOP wall of the
+                         return run at x 540: upstream of the relief tee, so
+                         it reads the air the zone actually sends back rather
+                         than what is left after the branch. Reports inline
+                         rather than as a fifth badge. -->
+                    <g class="ddcw-sensor" id="ahu-c-sensor-rat" data-point="rat"
+                       tabindex="0" transform="translate(540 95)">
+                        <title>Return-air temperature sensor — insertion probe in the return duct</title>
+                        <rect class="ddcw-sensor-hit" x="-14" y="-21" width="28" height="44"/>
+                        <line class="ddcw-sensor-stem" x1="0" y1="0" x2="0" y2="19"/>
+                        <rect class="ddcw-sensor-body" x="-6" y="-10" width="12" height="10"/>
+                    </g>
+                    <g class="ahu-readout" id="ahu-c-rat-readout" data-point-target="rat">
+                        <text class="ahu-pt-cap" x="540" y="56">RAT · RETURN</text>
+                        <text class="ahu-pt-val" id="ahu-c-rat" x="540" y="74">75.0 °F</text>
+                    </g>
+
+                    <!-- DAT — insertion probe through the TOP wall of the
+                         supply run at x 660: downstream of BOTH coils and the
+                         fan, which is where discharge air is actually
+                         measured on a draw-through unit. -->
+                    <g class="ddcw-sensor" id="ahu-c-sensor-dat" data-point="dat"
+                       tabindex="0" transform="translate(660 279)">
+                        <title>Discharge-air temperature sensor — insertion probe in the supply duct</title>
+                        <rect class="ddcw-sensor-hit" x="-14" y="-21" width="28" height="44"/>
+                        <line class="ddcw-sensor-stem" x1="0" y1="0" x2="0" y2="19"/>
+                        <rect class="ddcw-sensor-body" x="-6" y="-10" width="12" height="10"/>
+                    </g>
+
+                    <!-- Space temp — wall plate flush on the zone's right
+                         interior wall at thermostat height, on the side away
+                         from the unit's duct connections. -->
+                    <g class="ddcw-sensor" id="ahu-c-sensor-space-temp" data-point="space-temp"
+                       tabindex="0" transform="translate(830 162)">
+                        <title>Space temperature sensor — wall plate in the zone</title>
+                        <rect class="ddcw-sensor-hit" x="-32" y="-22" width="34" height="44"/>
+                        <rect class="ddcw-sensor-body" x="-15" y="-12" width="14" height="24"/>
+                        <line class="ddcw-sensor-slot" x1="-11.5" y1="-5" x2="-4.5" y2="-5"/>
+                        <line class="ddcw-sensor-slot" x1="-11.5" y1="0" x2="-4.5" y2="0"/>
+                        <line class="ddcw-sensor-slot" x1="-11.5" y1="5" x2="-4.5" y2="5"/>
+                    </g>
+                </g>
+            </svg>
+        </div>
+
+        <div class="ahu-points">
+            <div class="ahu-point">
+                <span class="ahu-point-cap">OAT · outside</span>
+                <span class="ahu-point-val">62.0 °F</span>
+            </div>
+            <div class="ahu-point">
+                <span class="ahu-point-cap">RAT · return</span>
+                <span class="ahu-point-val">75.0 °F</span>
+            </div>
+            <div class="ahu-point">
+                <span class="ahu-point-cap">MAT · mixed</span>
+                <span class="ahu-point-val">62.0 °F</span>
+            </div>
+            <div class="ahu-point">
+                <span class="ahu-point-cap">DAT · discharge</span>
+                <span class="ahu-point-val">55.0 °F</span>
+            </div>
+            <div class="ahu-point">
+                <span class="ahu-point-cap">ΔT across coils</span>
+                <span class="ahu-point-val accent">-7.0 °F</span>
+            </div>
+            <div class="ahu-point">
+                <span class="ahu-point-cap">Zone / setpoint</span>
+                <span class="ahu-point-val">74.0 / 73.0 °F</span>
+            </div>
+        </div>
+
+        <div class="status-pill ok ahu-verdict">
+            Economizing at 100 % outside air — DX stage 1 is making up the remaining load
+        </div>
+    </div>
+
+    <a class="back-link" href="/simulators/">← All simulators</a>
+
+</main>
+{% endblock %}
