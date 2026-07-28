@@ -545,11 +545,26 @@ noindex: true
            MEASURED    --text-bright  anything a sensor reports
            COMMANDED   --accent-ink   anything the program writes or holds
            CALCULATED  --blue-ink     values derived from other values
+           A boolean carries a state dot alongside its text, and the dot
+           dims when the value is false (.ahu-state-dot.is-off below).
 
-           ⚠ This split is a reading of the owner's live screenshots, not a
-           rule he has confirmed. It needs his sign-off, and it is wide: it
-           runs through the SVG wells, the colour key, the rail and the point
-           mirror, so reversing it is a four-surface change.
+           ✔ CONFIRMED BY THE OWNER 2026-07-28. It started as a reading of
+           his live screenshots; it is now the rule. It is wide — it runs
+           through the SVG wells, the colour key, the rail and the point
+           mirror — so reversing it is a four-surface change, and it should
+           not be reopened without a matching ruling.
+
+           Worth recording what he measured it against. Another widely used
+           BAS front-end he works in colours the BOX rather than the ink and
+           keys it to the point's TYPE: yellow box for a sensor, grey box
+           for an output, blue box for any digital value. He rates this
+           page's scheme the better of the two, and the reason is what the
+           key is cut on — PROVENANCE, not type. Where a number came from is
+           the question a technician is actually asking of a screen, and
+           "digital" is not a fourth kind of origin: a digital value is
+           still measured, commanded or derived like any other. That is why
+           the boolean rows here keep the same three inks and add a dot
+           instead of taking a colour of their own.
 
            Note --accent-ink is a DIFFERENT value from --accent in both
            themes, so commanded text is a distinguishable step rather than
@@ -2155,11 +2170,40 @@ noindex: true
                              "deadband 2.0" in the rail as a contradiction;
                              it is the control deadband around the ACTIVE
                              setpoint, not the separation between the two.
-                             ⚠ OPEN FOR THE OWNER: keep this gloss, or
-                             relabel the rail row COOL DEADBAND and drop the
-                             paragraph. Do one, not both — two explanations
-                             of one number is worse than either. -->
-                        <p class="ahu-teach-p"><strong>About the deadband.</strong> The 2.0 °F deadband in the parameters is the band around whichever setpoint is active, not the gap between the heating and cooling setpoints. Cooling energises at the cooling setpoint and de-energises 2.0 °F below it, so the unit does not short-cycle on a degree of drift.</p>
+                             The owner's own reason for wanting this
+                             addressed: he has people confuse those two
+                             numbers on real screens all the time.
+
+                             ✔ SETTLED 2026-07-28, and NEITHER of the two
+                             options this comment used to offer was taken.
+                             DEADBAND keeps its label — it is the band around
+                             whichever setpoint is active, which is exactly
+                             what /education/comparators-and-deadband.html
+                             already teaches (SP + deadband and SP − deadband
+                             into two comparators and a latch), so relabelling
+                             the row would put the graphic at odds with the
+                             published lesson. The gloss keeps its paragraph.
+                             What resolved the "two explanations of one
+                             number" objection was the third option: the
+                             SP DIFF row above now shows the other number, so
+                             the paragraph tells two values apart instead of
+                             explaining one twice.
+
+                             ⚠ THE 5.0 °F SEPARATION IS NOT CALLED A
+                             "DIFFERENTIAL" HERE, and that is a checked
+                             decision, not a style preference. Every other use
+                             of that word in site copy — a dozen or so across
+                             education and tools — means a difference between
+                             two MEASURED quantities: pressure across a filter
+                             rack, a differential-pressure status switch,
+                             differential dry-bulb changeover, temperature
+                             across a coil, the differential pressure bypass
+                             valve. A fourth sense on this page would
+                             manufacture the exact confusion the new row
+                             exists to remove. The terse SP DIFF caption is
+                             safe because adjacency and the blue ink define
+                             it; running prose says it plainly instead. -->
+                        <p class="ahu-teach-p"><strong>Setpoints and the deadband.</strong> The setpoint gap and the deadband are easy to read as one number, and they are not. The heating and cooling setpoints sit 5.0 °F apart — 68.0 °F and 73.0 °F — and the SP DIFF well is that gap, 73.0 minus 68.0. Nothing sets it: move either setpoint and it follows, which is why it is inked blue like the ΔT well rather than the green its two neighbours carry. The 2.0 °F deadband is the smaller, separate thing — the band around whichever setpoint is currently active. Cooling energises at the cooling setpoint and de-energises 2.0 °F below it, so the unit does not short-cycle on a degree of drift.</p>
                     </section>
                 </div>
             </div>
@@ -2181,6 +2225,16 @@ noindex: true
                  the gap. Each is reproducible from two other numbers on the
                  screen, which is the same relationship ΔT has to DAT and MAT
                  — hence the same calculated well state.
+
+                 ⚠ DERIVED IS A WELL STATE, NOT A GROUP. UNIT MODE happens to
+                 be derived end to end, but SP DIFF is a calculated row
+                 sitting inside ZONE CONTROL between two parameters, and that
+                 placement is deliberate — adjacency to its operands is what
+                 makes the subtraction readable. So read the blue off the
+                 WELL, never off which panel a row landed in, and do not
+                 "clean this up" by herding the calculated rows into one
+                 group: it would take SP DIFF away from the two numbers it is
+                 the difference of.
 
                  ⚠ THIS IS NOT THE HAND-CONTROL REGION. The rail holds the
                  sequence's CONSTANTS; changing one leaves the program running
@@ -2239,6 +2293,31 @@ noindex: true
                     <div class="ahu-param-row">
                         <span class="ahu-param-lbl">Heating SP</span>
                         <span class="ahu-param-well" id="ahu-p-heat-sp">68.0 °F</span>
+                    </div>
+                    <!-- ⚠ CALCULATED, NOT A PARAMETER — and the blue is the
+                         whole point of the row. Nothing sets this; it falls
+                         out of the two rows immediately above it, exactly
+                         the way ΔT falls out of DAT and MAT. Two wells you
+                         set and one that is their consequence, stacked in
+                         that order, states the relationship before a caption
+                         is read. Owner ruling 2026-07-28.
+
+                         ⚠ DO NOT "TIDY" THIS TO MATCH ITS NEIGHBOURS. The
+                         default .ahu-param-well ink is the commanded green,
+                         so dropping .is-calc is a one-token edit that looks
+                         like consistency and destroys the meaning. The spec
+                         pins it (tests/ddc-workbench-ahu-mockup.spec.js).
+
+                         The caption is SP DIFF, not STPT DIFF: the two rows
+                         it subtracts read COOLING SP and HEATING SP directly
+                         above it, and a second abbreviation for "setpoint"
+                         inside one panel is the confusion this row exists to
+                         remove. The arithmetic (73.0 − 68.0) is in the prose
+                         below the drawing, not squeezed into a mono caption
+                         sized for two words. -->
+                    <div class="ahu-param-row">
+                        <span class="ahu-param-lbl">SP diff</span>
+                        <span class="ahu-param-well is-calc" id="ahu-p-sp-diff">5.0 °F</span>
                     </div>
                     <div class="ahu-param-row">
                         <span class="ahu-param-lbl">Deadband</span>

@@ -8850,7 +8850,7 @@ unexplained.
 **Owner decision 2026-07-27: defer** to the same pre-live sweep as #225.
 Writeup: `docs/audits/2026-07-ddcw-prose/findings.md` §2 and §5.
 
-### 227. FCU graphic a11y: a live region inside a hidden pane, and `role="img"` over five focusable descendants *(noticed 2026-07-27, prose audit — (a) resolved 2026-07-27, (b) open)*
+### 227. FCU graphic a11y: a live region inside a hidden pane, and `role="img"` over five focusable descendants *(noticed 2026-07-27, prose audit — (a) resolved 2026-07-27, (b) **RULED 2026-07-28**, scheduled to the graphic-wiring lane and not yet implemented)*
 
 Two findings from the same audit, both on the FCU workbench graphic, neither
 a program issue and so outside #225/#226's deferral.
@@ -8911,8 +8911,9 @@ first fails on `expect(aria-live).toBeNull() / Received "polite"`; the
 second on `pill repaints only on a verdict change / Expected <= 0 /
 Received 40`.
 
-**(b) stays open** — owner decision, untouched here, including the stale
-in-file comment it names, so (b) can be dispositioned as one unit.
+**(b) was left open here** — owner decision, untouched by (a), including the
+stale in-file comment it names, so (b) could be dispositioned as one unit.
+**It now has that decision; see the ruling below the finding.**
 
 (b) **`role="img"` now wraps five focusable elements** — two `.fcu-link`
 drill-downs and three `role="button"` sensor groups. `img` is a
@@ -8926,6 +8927,35 @@ every one already duplicated in the `.fcu-points` mirror that exists
 `aria-hidden` on the mirrored content, or keep `role="img"` and move the
 activation affordance to real HTML buttons outside the SVG. Owner decision
 either way; the stale comment needs correcting regardless.
+
+> **RULING ON (b) (2026-07-28) — the second path. `role="img"` STAYS, and
+> the activation affordance moves out of the SVG onto real HTML buttons.**
+>
+> The pruned subtree is the property worth keeping: the graphic is an image
+> with a `<desc>`, and the point mirror beside it already carries every value
+> the drawing paints. The mirror is also what makes this cheap — the chips
+> mirror the graphic one-for-one, so they become the activators and the
+> focusable elements simply come out of the pruned subtree. No `aria-hidden`
+> bookkeeping over 19 duplicated `<text>` nodes, and no window where a swap
+> has landed but the hiding has not.
+>
+> It also settles a second finding from the same audit for free — the one
+> filed in `docs/audits/2026-07-ddcw-prose/findings.md` as *glyph names
+> announce as objects, not actions*. A sensor group carrying `role="button"`
+> inside a presentational-children role announces as the thing it draws
+> rather than the thing it does; a real `<button>` outside the SVG announces
+> as an action because it is one.
+>
+> **NOT IMPLEMENTED IN THE AHU depiction lane, and deliberately so.** The
+> change touches the shipped FCU page and the AHU page that comes after it,
+> and the activators have to be wired to whatever the graphic's click model
+> ends up being — so it rides with the **graphic-wiring lane** of the Phase-7
+> AHU round, as one change across both pages rather than two divergent ones.
+> **Scheduled, not done.** The stale in-file comment on the FCU page ("the
+> education idiom") is corrected there, in that lane, with the rest of it.
+>
+> Recorded here so it is not re-litigated: the `role="group"` + `aria-hidden`
+> path is closed.
 
 Smaller a11y items from the same audit (glyph names announce as objects not
 actions; "far wall" has no referent; `aria-label` on two bare `<div>`s where

@@ -230,6 +230,112 @@ test('the two coils are separated by shape, not by hue alone', async ({ page }) 
     expect(shape.bodyPaint.fill, 'the distributor fill must resolve to a real colour').toMatch(/^rgb/);
 });
 
+// The value-well ink rule, confirmed by the owner 2026-07-28: measured =
+// plain bright, commanded-or-held-by-the-program = accent, calculated =
+// blue. The rail's SP DIFF row is the one place that rule is load-BEARING
+// rather than decorative — it sits between two parameter rows it is the
+// difference of, and the blue is what says "nothing sets this" before the
+// caption is read.
+//
+// WHY THIS IS PINNED AND ITS NEIGHBOURS ARE NOT. `.ahu-param-well` defaults
+// to the commanded ink, so `.is-calc` is a single class standing between
+// the intended meaning and a row that merely looks tidy. Deleting it is a
+// one-token edit that reads as consistency — three matching wells under one
+// heading — and silently asserts that the program sets a value it computes.
+// Nothing else in the suite would notice. So this test fails on tidying,
+// which is its whole reason for existing.
+//
+// Asserted BOTH ways round: equal to the ink the drawing already uses for
+// its one calculated value (the ΔT well), and different from the two rows
+// it sits between. The relational form survives a token retune; a hardcoded
+// rgb would have to be re-measured on every theme pass.
+for (const theme of ['dark', 'light']) {
+    test(`SP DIFF reads as calculated, not as a parameter (${theme})`, async ({ browser }) => {
+        const ctx = await open(browser, theme);
+        const page = await ctx.newPage();
+        try {
+            await page.goto(URL, { waitUntil: 'domcontentloaded' });
+            expect(
+                await page.evaluate(() => document.documentElement.getAttribute('data-theme')),
+                'the seeded theme must actually render',
+            ).toBe(theme);
+
+            const rail = await page.evaluate(() => {
+                const pick = (id) => {
+                    const el = document.getElementById(id);
+                    if (!el) return null;
+                    const cs = getComputedStyle(el);
+                    return {
+                        text: el.textContent.trim(),
+                        color: cs.color,
+                        border: cs.borderTopColor,
+                    };
+                };
+                const dt = document.querySelector('#ahu-graphic #ahu-v-dt');
+                return {
+                    cool: pick('ahu-p-cool-sp'),
+                    heat: pick('ahu-p-heat-sp'),
+                    diff: pick('ahu-p-sp-diff'),
+                    // The drawing's own calculated value — the reference ink.
+                    dtFill: dt ? getComputedStyle(dt).fill : null,
+                    // Rendered caption, uppercased by CSS. The row must not
+                    // introduce a second abbreviation for "setpoint" three
+                    // rows below COOLING SP / HEATING SP.
+                    label: getComputedStyle(
+                        document.getElementById('ahu-p-sp-diff').closest('.ahu-param-row')
+                            .querySelector('.ahu-param-lbl'),
+                    ).textTransform,
+                    labelText: document.getElementById('ahu-p-sp-diff')
+                        .closest('.ahu-param-row').querySelector('.ahu-param-lbl')
+                        .textContent.trim(),
+                    // Adjacency carries the meaning, so order is part of the
+                    // claim: the difference sits directly under its operands.
+                    order: Array.from(
+                        document.getElementById('ahu-p-sp-diff').closest('.ahu-param-group')
+                            .querySelectorAll('.ahu-param-well'),
+                    ).map((el) => el.id),
+                };
+            });
+
+            expect(rail.diff, 'the SP DIFF row exists').not.toBeNull();
+
+            // THE ASSERTION THIS TEST EXISTS FOR.
+            expect(rail.diff.color, 'SP DIFF carries the calculated ink, not the parameter ink')
+                .not.toBe(rail.cool.color);
+            expect(rail.diff.color, 'SP DIFF rides the same calculated ink the drawing gives ΔT')
+                .toBe(rail.dtFill);
+            expect(rail.diff.border, 'the calculated well is framed differently too')
+                .not.toBe(rail.cool.border);
+
+            // The two rows it subtracts must stay parameters — if a future
+            // retune flattens all three to one colour the row above still
+            // passes on equality alone, so pin the pair.
+            expect(rail.heat.color, 'HEATING SP stays a parameter').toBe(rail.cool.color);
+            for (const [k, v] of Object.entries({
+                cool: rail.cool.color, diff: rail.diff.color, dt: rail.dtFill,
+            })) {
+                expect(v, `${k} ink must resolve to a real colour, not empty`).toMatch(/^rgb/);
+            }
+
+            // The displayed value must be the arithmetic of the DISPLAYED
+            // operands (the site's rounding policy), not of some unrounded
+            // canonical pair a reader cannot see.
+            const num = (s) => parseFloat(s.replace(/[^\d.\-]/g, ''));
+            expect(
+                +(num(rail.cool.text) - num(rail.heat.text)).toFixed(1),
+                'SP DIFF is exactly what the two rows above it subtract to',
+            ).toBe(num(rail.diff.text));
+
+            expect(rail.order, 'the difference sits directly beneath its operands')
+                .toEqual(['ahu-p-cool-sp', 'ahu-p-heat-sp', 'ahu-p-sp-diff', 'ahu-p-deadband']);
+            expect(rail.labelText, 'one abbreviation for setpoint per panel').toBe('SP diff');
+            expect(rail.label, 'the caption renders in caps like its neighbours').toBe('uppercase');
+        } finally {
+            await ctx.close();
+        }
+    });
+}
+
 test('the sensor glyph count matches the roster', async ({ page }) => {
     await page.goto(URL, { waitUntil: 'domcontentloaded' });
 
