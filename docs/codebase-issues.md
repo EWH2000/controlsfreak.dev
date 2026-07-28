@@ -9293,8 +9293,12 @@ whenever it can change.
 > opposite corrections, which is why the lightness gap opens for free. Both
 > fills hold their **dark-theme hue angle** (79° / 57°) where the base tokens
 > drift to 83° / 65°. Tuned against `#e8ece4` (`--bg-2`/`--surface-3`/`--well`
-> — the strictest light surface), not the white the graphic actually sits on,
-> so neither token ships an "only safe on white" caveat.
+> — the strictest light surface) and not merely against the white the graphic
+> mostly sits on, so neither token ships an "only safe on white" caveat. That
+> tuning target is load-bearing rather than conservative: the relief damper
+> sits bodily inside a duct riser painted `--well`, and measured on the
+> rendered graphic ~90 % of the amber pixels land on white but ~8 % land on
+> `#e8ece4`, so `--amber-fill`'s 3.10:1 is a ratio the drawing actually uses.
 >
 > **Measured before → after (light pair):**
 >
@@ -9305,27 +9309,52 @@ whenever it can change.
 > | ΔL\* damper↔fixed louver (`--text-dim`) | **0.0** | **11.0** | 8.8 |
 >
 > ΔE now exceeds dark theme's own 23.1, and **the lightness gap was opened** —
-> which is the one part of this entry's original claim that survived scrutiny,
-> and it fixes greyscale, print and red-green deficiency in a single move
-> (in that band a dichromat has essentially only the lightness channel left,
-> so ΔL\* *is* the CVD budget). It also fixes the drawing's weakest shape
-> distinction: a grey fixed louver beside a modulating damper was ΔL\* **0.0**
-> against `--text-dim` in light and is now 11.0.
+> which is the one part of this entry's original claim that survived scrutiny.
+> It fixes greyscale and print outright, and **protanopia**; it does *not* fix
+> red-green deficiency in general (see the CVD paragraph below — deuteranopia
+> is a wash). It also fixes the drawing's weakest shape distinction: a grey
+> fixed louver beside a modulating damper was ΔL\* **0.0** against
+> `--text-dim` in light and is now 11.0.
+>
+> ⚠️ Do **not** read ΔL\* of the source colours as "the CVD budget" — an
+> earlier draft of this entry did, on the reasoning that a dichromat has only
+> the lightness channel left. That is wrong as stated: every published
+> dichromat transform *rebuilds* the R and G channels, and green alone carries
+> ~71.5 % of luminance, so simulated lightness does not track the source
+> ΔL\*. Measured here, the source pair goes ΔL\* 0.6 → 7.7 while the same pair
+> simulated as deuteranopic goes 2.2 → 5.4 (Viénot-Brettel-Mollon) or
+> 1.6 → 6.2 (Machado). Simulate, then measure; do not extrapolate.
 >
 > **The untested CVD question above is now settled — and the retracted claim
-> turns out to be true for protanopes.** Simulating the dichromat transform
-> on the light pair puts ΔE at roughly **3–4**, i.e. genuinely one colour for
-> a protanope, in light theme only (dark measures ~12–14 and is fine). The
-> fill tokens take it back to dark's level. ⚠️ Two independent implementations
-> were run and they agree on the direction and the order of magnitude but not
-> the exact digits, so treat these as *approximate*: the widely-copied
-> "daltonize" JS matrices give 2.9 → 14.8, the published Viénot-Brettel-Mollon
-> 1999 matrices give 4.1 → 12.2. Do not quote a single figure to two
-> significant digits. **Tritan numbers from the daltonize matrix are
-> unusable** — its tritan branch renders blue *unchanged* and red as *yellow*,
-> which is the protan failure mode, not tritanopia (VBM 1999 defines no tritan
-> transform; that branch is a later bolt-on). Tritanopia is ~1 in 10,000 and
-> the pair is lightness-separated either way, so nothing here turns on it.
+> turns out to be true for protanopes, and only for them.** Simulating the
+> dichromat transform on the light pair puts protan ΔE at roughly **3–4**,
+> i.e. genuinely one colour for a protanope, in light theme only. The fill
+> tokens take it back to dark theme's own protan level (mid-teens).
+>
+> **Deuteranopia is a wash, and deuteranopia is the more common deficiency.**
+> Every model run puts the deutan pair near **ΔE 7 both before and after**
+> the change — Viénot-Brettel-Mollon 6.8 → 7.1, Machado 2009 (severity 1.0)
+> 7.1 → 7.1 — against a dark-theme deutan figure of ~7.6. So deutan
+> separation was never carried by this colour pair *in any theme*; it is
+> carried by shape and adjacency (a serpentine tube versus a framed damper
+> with blades), which the drawing does provide. This change neither helps nor
+> harms it. Claiming the split "fixes red-green deficiency" overstates it —
+> say *protanopia*.
+>
+> ⚠️ **Do not quote CVD figures to two significant digits.** Three
+> independent implementations of the *same* published VBM matrices produced
+> three different "after" values for the protan pair — 12.2, 22.2 and 16.2 —
+> and the gamma convention (sRGB piecewise vs pure 2.2) accounts for less
+> than 1 ΔE of that spread, so the divergence is in the pipelines, not in the
+> colour science. What reproduces across all of them is the *direction* and
+> the *band*: protan before ≈ 3–4, protan after ≈ dark's own level, deutan
+> ≈ 7 throughout. Quote the band, never a digit pair.
+>
+> **Tritan numbers from the daltonize matrix are unusable** — its tritan
+> branch renders blue *unchanged* and red as *yellow*, which is the protan
+> failure mode, not tritanopia (VBM 1999 defines no tritan transform; that
+> branch is a later bolt-on). Tritanopia is ~1 in 10,000 and the pair is
+> lightness-separated either way, so nothing here turns on it.
 >
 > **Guarded by `tests/fill-token-misuse.spec.js`** (new): a source scan that
 > fails on any `-fill` token reaching a non-paint property, a census asserting

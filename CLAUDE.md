@@ -732,6 +732,26 @@ section headers).
   state-dependent markup no stylesheet can open — the spec force-opens
   the nav dropdowns, tab panes and command palette so those DO get
   measured) are documented in the spec header.
+- **The `-fill` family is object paint, and it is never type.**
+  `--amber-fill` / `--heat-fill` are the mirror of `-ink`: where an
+  `-ink` token is a deeper/brighter step because small TEXT needs one,
+  a `-fill` token is a brighter step because drawn GEOMETRY answers
+  WCAG **1.4.11's 3:1 non-text floor**, not 1.4.3's 4.5:1 small-text
+  floor. Legal in `fill` / `stroke` / `border-color` / `background`;
+  **forbidden in `color:`** — and forbidden on an SVG `<text>`, where
+  `fill:` *is* ink. `tests/fill-token-misuse.spec.js` blocks CI on
+  both: a source scan that classifies every `var(--…-fill)` reference
+  by the property it lands in (an unclassifiable reference fails too,
+  so a new sink idiom can't slip past), plus a rendered arm for the
+  SVG-text case and a test pinning the `@media print` block against
+  the light one — a `-fill` token missing from print falls back to the
+  **dark** value on paper. A twin exists **only** where the light-theme
+  text floor pushed a hue out of its own name (dark yellow is olive,
+  dark desaturated orange is brown); `--accent` and `--blue` are
+  darkened just as hard and stay recognisably themselves, so they get
+  none. **Don't add one for symmetry** — an alias token is a drift
+  generator, the same asymmetry `-ink` has. Rationale and the measured
+  before/after live in `codebase-issues.md` #230.
 - **Focus indicators (`:focus-visible`)** live in one consolidated
   `FOCUS INDICATORS` block in `styles.css` (the browser default
   outline is suppressed elsewhere). When adding a new custom-styled

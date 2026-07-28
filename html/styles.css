@@ -298,9 +298,11 @@
                                   reader recognises a colour by. Non-text contrast: 4.88:1
                                   on --surface, 4.28:1 on --bg, 4.08:1 on the strictest
                                   light surface #e8ece4 (--bg-2 / --surface-3 / --well) —
-                                  all well over the 3:1 floor. Tuned to #e8ece4 rather
-                                  than the white this graphic actually sits on, so the
-                                  token carries no "only safe on white" caveat. */
+                                  all well over the 3:1 floor. Tuned against #e8ece4 and
+                                  not merely against the white the graphic mostly sits on,
+                                  because --well-painted ducts are a real backdrop in that
+                                  drawing; so the token carries no "only safe on white"
+                                  caveat. */
     --teal:         #377070;
     --teal-dim:     rgba(55,112,112,0.10);
     --teal-glow:    rgba(55,112,112,0.22);
@@ -322,7 +324,12 @@
                                   protanope. Holds the dark hue angle (79deg; base --amber
                                   drifts to 83deg). Non-text contrast: 3.71:1 on --surface,
                                   3.26:1 on --bg, 3.10:1 on the strictest light surface
-                                  #e8ece4. The tight one — 0.10 of margin there, deliberate
+                                  #e8ece4 — and that last one is an OPERATIVE ratio, not a
+                                  safety cushion: the relief damper sits bodily inside a
+                                  duct riser painted --well, so a real share of this
+                                  token's paint lands on #e8ece4 (measured on the rendered
+                                  graphic: ~90 % of the amber pixels are on white, ~8 % on
+                                  #e8ece4). The tight one — 0.10 of margin there, deliberate
                                   (the 2026-07-20 --text-dim retune shipped at 4.60:1
                                   against 4.50 on the same surface). Do not brighten
                                   further without re-measuring #e8ece4. */

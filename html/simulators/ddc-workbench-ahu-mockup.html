@@ -804,9 +804,9 @@ noindex: true
            comparison. The rules that would otherwise be repainted by round
            2's identity colours are scoped to .ahu-svg-r1, which those three
            SVGs carry and the round-2 one does not: their dampers, louvers
-           and fans stay neutral line-art, because in round 1 nothing was
-           colour-coded and that IS the comparison. The rest are class names
-           round 2 never uses, so they need no scope.
+           and fans stay neutral line-art, because in round 1 nothing BUT THE
+           COILS was colour-coded and that IS the comparison. The rest are
+           class names round 2 never uses, so they need no scope.
            ══════════════════════════════════════════════════════════════ */
 
         /* The three genuine collisions with round 2. */
@@ -928,6 +928,15 @@ noindex: true
            so the hover/focus lift to --accent reads. That is a deliberate
            deviation from air-handlers.html, where the coil RECTANGLE is
            stroked in the coil's colour — do not "fix" it back. */
+        /* ⚠ These two keep the BASE tokens ON PURPOSE, and that is the one
+           place on this page where the block at the top does not apply. Round
+           1 is the BEFORE-half of the comparison round 2 exists to show, so
+           its serpentines must keep painting what shipped before the -fill
+           split — in light theme that is #9c5a14, the orange-brown, beside
+           round 2's #b85400. Do NOT "fix" these to --heat-fill / a
+           --blue-fill: doing so erases the comparison. Round 2's own coils
+           are .ahu-tube.is-heat / .is-cool, which DO carry the fill token.
+           codebase-issues #230. */
         .ahu-coil-hw { fill: none; stroke: var(--heat); stroke-width: 1.5; }
         .ahu-coil-dx { fill: none; stroke: var(--blue); stroke-width: 1.5; }
         /* The hot-water valve is commanded 0 %, so the coil is present and
