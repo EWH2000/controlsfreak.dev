@@ -412,7 +412,7 @@ const DDCWFcuUnit = (function () {
     // Environment / clock knobs — sim inputs, not BACnet points:
     // no priority array, live regardless of any slot state.
     let speedSlider, speedValLbl, oaSlider, oaValLbl, loadSlider, loadValLbl;
-    let fanBlade, compDot, verdictEl, stageBtns, presetBtns;
+    let fanBlade, compDot, verdictEl, verdictSrEl, stageBtns, presetBtns;
     // On-graphic + readout-grid nodes (kept in one map so renderUnit writes
     // both surfaces from one source).
     let out;
@@ -439,6 +439,14 @@ const DDCWFcuUnit = (function () {
         fanBlade    = document.getElementById('fcu-fan-blade');
         compDot     = document.getElementById('fcu-comp-dot');
         verdictEl   = document.getElementById('fcu-verdict');
+        // Unguarded on purpose, like every other handle in here
+        // (zoneValLbl, ovrUnit …): a guard would make this one the odd
+        // one out. Worth knowing the cost — a null verdictSrEl throws
+        // inside fcuRenderUnit, which takes syncControls, the statusbar
+        // and the 10 Hz paint with it, so the failure mode is a frozen
+        // simulator rather than a loud error. Only reachable via
+        // HTML/JS cache skew (this file is loaded unversioned).
+        verdictSrEl = document.getElementById('fcu-verdict-sr');
         stageBtns   = document.querySelectorAll('#tab-unit [data-stage]');
         presetBtns  = document.querySelectorAll('#tab-unit [data-preset]');
 
@@ -468,6 +476,48 @@ const DDCWFcuUnit = (function () {
         pair[1].textContent = text;
     }
 
+    // ── verdict — ONE writer for the pill and its screen-reader mirror ──
+    // The pill (#fcu-verdict) lives inside #tab-unit, and .tab-pane is
+    // display:none while the Wiresheet is up, so aria-live ON THE PILL is
+    // out of the accessibility tree on exactly the tab where a reader is
+    // studying the program that raised the annunciation. The pill cannot
+    // move either — the fullscreen cockpit places it by `grid-area:
+    // verdict`, which only resolves while it is a grid child of that pane.
+    // So the pill is a mute readout and #fcu-verdict-sr (an .sr-only live
+    // region outside both panes) carries the announcement.
+    // codebase-issues #227a.
+    //
+    // SIGNATURE-GUARDED, the shell's offprogSig idiom (ddcw-shell.js:372):
+    // the host ticks at 10 Hz and repaints the unit every tick, and an
+    // unguarded rewrite of a live region is a screen reader talking over
+    // itself ten times a second (measured before this guard: ~40 mutation
+    // records on the pill in a 2 s steady window). The class rides IN the
+    // signature so a state whose text is unchanged can never skip its
+    // class change.
+    //
+    // Deliberately NOT debounced the way pid-tuner's announceMetrics is:
+    // that page throttles a genuinely-changing metric, this one de-dups
+    // identical writes, and an annunciation must not be delayed. The
+    // residual is boundary chatter — a plant hovering exactly on a verdict
+    // threshold can legitimately flip at up to 10 Hz. Accepted.
+    //
+    // ⚠️ The signature is text-only ON PURPOSE, and that only holds because
+    // no verdict string carries a number or a unit — nothing here has to
+    // re-render on the shell's `unitschange` event (contrast offprogSig,
+    // whose signature deliberately moves with the units toggle). A verdict
+    // line that ever interpolates a temperature MUST fold the unit suffix
+    // into the signature, or a metric toggle would leave a stale °F line
+    // on screen.
+    let verdictSig = null;
+    function setVerdict(cls, txt) {
+        const sig = cls + '|' + txt;
+        if (sig === verdictSig) return;
+        verdictSig = sig;
+        verdictEl.className = 'status-pill fcu-verdict' + (cls ? ' ' + cls : '');
+        verdictEl.textContent = txt;
+        verdictSrEl.textContent = txt;
+    }
+
     // ── paint — reads plant.derived; owns the DOM (graphic + verdict).
     // The displayed ΔT is the arithmetic of the displayed EAT / DAT so
     // the on-screen math closes (the metric worked-example rounding
@@ -479,8 +529,7 @@ const DDCWFcuUnit = (function () {
         const d = plant.derived;
         if (d.invalid) {
             setBoth(out.eat, '—'); setBoth(out.dat, '—'); setBoth(out.dt, '—');
-            verdictEl.className = 'status-pill fcu-verdict';
-            verdictEl.textContent = 'Enter a value.';
+            setVerdict('', 'Enter a value.');
             return;
         }
         // Displayed values — ΔT reconciles from the displayed operands,
@@ -571,8 +620,7 @@ const DDCWFcuUnit = (function () {
         } else {
             cls = 'ok';    txt = 'Cooling — clear ΔT across the coil';
         }
-        verdictEl.className = 'status-pill fcu-verdict ' + cls;
-        verdictEl.textContent = txt;
+        setVerdict(cls, txt);
 
         // ── sensor override display — the real-vs-sensed split ──
         // The zone readout is the ACTUAL zone (eatN). The override box

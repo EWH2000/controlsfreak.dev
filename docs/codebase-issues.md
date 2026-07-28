@@ -8789,7 +8789,7 @@ unexplained.
 **Owner decision 2026-07-27: defer** to the same pre-live sweep as #225.
 Writeup: `docs/audits/2026-07-ddcw-prose/findings.md` §2 and §5.
 
-### 227. FCU graphic a11y: a live region inside a hidden pane, and `role="img"` over five focusable descendants *(noticed 2026-07-27, prose audit — open)*
+### 227. FCU graphic a11y: a live region inside a hidden pane, and `role="img"` over five focusable descendants *(noticed 2026-07-27, prose audit — (a) resolved 2026-07-27, (b) open)*
 
 Two findings from the same audit, both on the FCU workbench graphic, neither
 a program issue and so outside #225/#226's deferral.
@@ -8809,6 +8809,63 @@ while the pill is a grid child of that pane. Strip `aria-live` from the pill
 and add a persistent `sr-only` mirror outside both panes; the house shape
 already exists at `pid-tuner.html:339` (`#pid-sr-status`).
 
+**(a) resolved 2026-07-27 (`fix/ddcw-pre-ahu-hygiene`), exactly as
+prescribed** — and it had to carry prose-audit **item 18** with it, which
+is why that item is no longer listed below. The pill's `aria-live` is
+gone (and no `role="status"` took its place — that would reintroduce the
+same bug), `#fcu-verdict-sr` is an `.sr-only` live region parked beside
+`#ddcw-offprog` outside both panes, and one new writer `setVerdict()` in
+`ddcw-fcu-unit.js` owns both nodes. `html/styles.css` is untouched:
+`.sr-only` already ships at `:1916`, so no cache-bust obligation.
+
+Item 18 is not optional riding cargo here. The verdict was rewritten
+unguarded on every 10 Hz host tick — measured ~40 mutation records on
+`#fcu-verdict` in a 2 s STEADY window (text identical before and after).
+Harmless while the pill was the only writer; a screen reader talking over
+itself ten times a second the moment a live region carries that text. So
+`setVerdict` is signature-guarded on the shell's `offprogSig` idiom, with
+the class riding IN the signature so a class-only change can never be
+skipped. Deliberately not debounced the way pid-tuner's `announceMetrics`
+is — that page throttles a genuinely-changing metric; this one de-dups
+identical writes, and an annunciation must not be delayed. Residual,
+accepted: a plant hovering exactly on a verdict threshold can legitimately
+flip at up to 10 Hz.
+
+Two notes for whoever reads the code:
+
+- The mirror ships empty in MARKUP only. The shell's boot paint
+  (`hostTick`, `ddcw-shell.js:657`, called once before the 10 Hz interval
+  starts) fills it, so a reader landing on the page hears the current
+  verdict once — intended, and NOT the off-program window's
+  empty-and-in-tree contract.
+- The text-only signature is safe only because no verdict string carries
+  a number or a unit, so nothing has to re-render on `unitschange`
+  (contrast `offprogSig`, whose signature deliberately moves with the
+  toggle). Every branch was read to confirm it. A verdict line that ever
+  interpolates a temperature must fold the unit suffix into the
+  signature.
+
+Pinned by two tests in `tests/ddc-workbench-fcu.spec.js`. Pre-patch the
+first fails on `expect(aria-live).toBeNull() / Received "polite"`; the
+second on `pill repaints only on a verdict change / Expected <= 0 /
+Received 40`.
+
+**(b) stays open** — owner decision, untouched here, including the stale
+in-file comment it names, so (b) can be dispositioned as one unit.
+
+(b) **`role="img"` now wraps five focusable elements** — two `.fcu-link`
+drill-downs and three `role="button"` sensor groups. `img` is a
+presentational-children role. The in-file comment still calls this "the
+education idiom," which is a static-diagram idiom:
+`grep -c tabindex html/education/*.html` returns zero across every lesson.
+⚠️ The naive `role="group"` swap is worse than the problem — `img` is what
+currently prunes the subtree, so swapping un-hides all 19 `<text>` nodes,
+every one already duplicated in the `.fcu-points` mirror that exists
+*because* the graphic is an image. Two honest paths: pair the swap with
+`aria-hidden` on the mirrored content, or keep `role="img"` and move the
+activation affordance to real HTML buttons outside the SVG. Owner decision
+either way; the stale comment needs correcting regardless.
+
 (b) **`role="img"` now wraps five focusable elements** — two `.fcu-link`
 drill-downs and three `role="button"` sensor groups. `img` is a
 presentational-children role. The in-file comment still calls this "the
@@ -8824,5 +8881,44 @@ either way; the stale comment needs correcting regardless.
 
 Smaller a11y items from the same audit (glyph names announce as objects not
 actions; "far wall" has no referent; `aria-label` on two bare `<div>`s where
-naming is prohibited; the verdict `textContent` rewritten unguarded at 10 Hz)
-are itemised in `docs/audits/2026-07-ddcw-prose/findings.md`.
+naming is prohibited) are itemised in
+`docs/audits/2026-07-ddcw-prose/findings.md`. The fourth — the verdict
+`textContent` rewritten unguarded at 10 Hz (item 18) — shipped with (a)
+above; see there for why it could not wait.
+
+### 229. `#fcu-ovr-state` is a live region rewritten on every 10 Hz host tick *(noticed 2026-07-27)*
+
+Same defect as prose-audit item 18, on a different element, found while
+fixing #227(a) and deliberately not bundled into it — a distinct element
+with a distinct trigger.
+
+`html/simulators/ddc-workbench-fcu.html:880` carries `role="status"
+aria-live="polite"`, and `fcuRenderUnit` rewrites its `textContent` every
+tick. Measured with a `MutationObserver` over 2 s windows:
+
+```
+override OFF (arrival):  {"n":0}
+override ON:             {"n":20}
+```
+
+The zero is not a reprieve. With the override off the write is `''` onto
+an already-empty node, which produces no mutation records; with it ON the
+line interpolates the live, drifting zone temperature — *"Program reads
+75.7 °F — zone is actually 75.5 °F."* — so it genuinely announces ten
+times a second, on a string that changes almost every time. The
+`setVerdict` signature-guard idiom from #227(a) fixes it in about three
+lines, but note the signature here MUST include the unit suffix (unlike
+the verdict's, whose strings carry no numbers), or a metric toggle would
+leave a stale °F line on screen.
+
+It sits inside `#tab-unit` as well, so it has #227(a)'s hidden-pane
+problem too — benignly, since the only control that changes it is in the
+same pane, which is why the mirror is not obviously warranted here.
+
+Logging it matters more after #227(a) than before: the page now carries
+one signature-guarded live region and its unguarded twin sixty lines
+away, which invites a reader to copy the idiom without the measurement.
+
+Checked and fine: `#ddcw-fbe-status` (`:1027`) is inside `#tab-wiresheet`
+and written only on run / pause / reset — no spam, and its pane is up
+whenever it can change.

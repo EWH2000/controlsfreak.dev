@@ -210,3 +210,121 @@ test.describe('DDC Workbench — verdict thresholds are unit-invariant (#224)', 
         expect(met.datFill, 'downstream air stays tinted as cooling air').toBe(us.datFill);
     });
 });
+
+test.describe('DDC Workbench — the verdict annunciation reaches a screen reader', () => {
+    // codebase-issues #227a. #fcu-verdict used to carry aria-live while
+    // sitting inside #tab-unit, and styles.css is
+    // `.tab-pane { display: none; }` — a live region in a display:none
+    // subtree is not in the accessibility tree, so the DAT low-limit
+    // annunciation announced NOTHING while the Wiresheet was up, which is
+    // exactly where a reader sits studying the program that raised it.
+    //
+    // The pill cannot simply move out: .tool-card.is-fullscreen
+    // #tab-unit.active places it by `grid-area: verdict`, which only
+    // resolves while it is a grid child of that pane. So the pill is a mute
+    // readout and #fcu-verdict-sr — an .sr-only live region outside both
+    // panes — carries the announcement. These two tests pin both halves of
+    // that split, because nothing else on the page can see either one.
+
+    test('the pill is mute and the out-of-pane mirror carries the announcement', async ({ page }) => {
+        await page.goto(URL);
+        await page.waitForFunction(() => document.getElementById('fcu-verdict')
+            .textContent.includes('Cooling — clear ΔT across the coil'));
+
+        // The pill must not claim to announce from inside a hidden pane —
+        // role="status" would reintroduce the same bug, so pin both.
+        const pill = page.locator('#fcu-verdict');
+        expect(await pill.getAttribute('aria-live')).toBeNull();
+        expect(await pill.getAttribute('role')).toBeNull();
+
+        // The mirror is a real live region, and it is NOT inside a tab pane.
+        const sr = page.locator('#fcu-verdict-sr');
+        await expect(sr).toHaveAttribute('aria-live', 'polite');
+        await expect(sr).toHaveClass(/\bsr-only\b/);
+        expect(await sr.evaluate((el) => !!el.closest('.tab-pane'))).toBe(false);
+
+        // Switch to the Wiresheet: the Unit pane goes display:none and the
+        // pill stops rendering, while the mirror stays in the tree.
+        await page.click('.tab-btn[data-tab="wiresheet"]');
+        const state = await page.evaluate(() => {
+            const srEl = document.getElementById('fcu-verdict-sr');
+            const cs = getComputedStyle(srEl);
+            return {
+                pane: getComputedStyle(document.getElementById('tab-unit')).display,
+                pillRendered: document.getElementById('fcu-verdict').checkVisibility(),
+                srDisplay: cs.display,
+                srVisibility: cs.visibility,
+            };
+        });
+        expect(state.pane).toBe('none');
+        expect(state.pillRendered).toBe(false);
+        expect(state.srDisplay).not.toBe('none');
+        expect(state.srVisibility).toBe('visible');
+
+        // …and it still tracks a verdict change driven from the statusbar —
+        // the only unit control reachable on this tab. Downloading the
+        // safeties sheet holds the stages off for its power-up min-off, so
+        // the verdict leaves the cooling line on its own.
+        await page.selectOption('#ddcw-program', 'cool-2stage-safeties');
+        await page.waitForFunction(() => document.getElementById('fcu-verdict-sr')
+            .textContent.includes('Compressor off'));
+
+        // Mirror and pill never diverge.
+        const both = await page.evaluate(() => ({
+            pill: document.getElementById('fcu-verdict').textContent.trim(),
+            sr: document.getElementById('fcu-verdict-sr').textContent.trim(),
+        }));
+        expect(both.sr).toBe(both.pill);
+    });
+
+    test('the verdict repaints on a state change, not on every 10 Hz host tick', async ({ page }) => {
+        // prose-audit item 18. The shell ticks at 10 Hz (ddcw-shell.js) and
+        // repaints the unit every tick; the verdict write used to be
+        // unguarded. Harmless while the pill was the only writer — a screen
+        // reader talking over itself ten times a second once the mirror
+        // above is live. Measured before the setVerdict guard: ~40 mutation
+        // records on #fcu-verdict in a 2 s steady window.
+        //
+        // The mirror is observed CONDITIONALLY and asserted separately, so
+        // that on a build without the guard this test reports the pill's
+        // mutation count — the defect it is actually about — instead of
+        // dying on a MutationObserver over a null mirror.
+        await page.goto(URL);
+        await page.waitForFunction(() => document.getElementById('fcu-verdict')
+            .textContent.includes('Cooling — clear ΔT across the coil'));
+
+        const seen = await page.evaluate(() => new Promise((resolve) => {
+            const pillEl = document.getElementById('fcu-verdict');
+            const srEl = document.getElementById('fcu-verdict-sr');
+            const opts = {
+                childList: true, characterData: true, subtree: true,
+                attributes: true, attributeFilter: ['class'],
+            };
+            let pillN = 0;
+            let srN = 0;
+            const moPill = new MutationObserver((recs) => { pillN += recs.length; });
+            const moSr = new MutationObserver((recs) => { srN += recs.length; });
+            const before = pillEl.textContent.trim();
+            moPill.observe(pillEl, opts);
+            if (srEl) moSr.observe(srEl, opts);
+            window.setTimeout(() => {
+                moPill.disconnect();
+                moSr.disconnect();
+                resolve({ pillN, srN, srPresent: !!srEl, before,
+                    after: pillEl.textContent.trim() });
+            }, 2000);
+        }));
+
+        // Guard the guard: the zone is a live thermal model, so if it
+        // genuinely crossed a verdict boundary inside the window one
+        // repaint is legitimate (2 records on the pill — class + text —
+        // and 1 on the mirror). The tolerance is per state change, never
+        // per tick.
+        const changed = seen.before !== seen.after;
+        expect(seen.pillN, 'pill repaints only on a verdict change')
+            .toBeLessThanOrEqual(changed ? 2 : 0);
+        expect(seen.srPresent, 'the sr-only mirror exists to be guarded').toBe(true);
+        expect(seen.srN, 'live region repaints only on a verdict change')
+            .toBeLessThanOrEqual(changed ? 1 : 0);
+    });
+});
