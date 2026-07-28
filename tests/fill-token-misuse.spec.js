@@ -129,6 +129,17 @@ function strip(src) {
 }
 const lineOf = (src, idx) => src.slice(0, idx).split('\n').length;
 
+// `#rrggbb` -> the `rgb(r, g, b)` form getComputedStyle returns, so a token's
+// DECLARED value can be checked against what it actually RESOLVED to. Returns
+// null for any other notation, which the caller treats as "not checkable"
+// rather than as a failure.
+const hexToRgb = (h) => {
+    const m = /^#([0-9a-f]{6})$/i.exec(String(h).trim());
+    if (!m) return null;
+    const n = parseInt(m[1], 16);
+    return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
+};
+
 // The four sinks a token value can reach. Each captures the PROPERTY the
 // token lands in, so the verdict is "is this property object paint",
 // never "does this file look suspicious".
@@ -245,7 +256,17 @@ test('no rendered element paints TEXT with a -fill token', async ({ browser }) =
         .filter((f) => f.startsWith(path.join(ROOT, 'html') + path.sep))
         .filter((f) => path.extname(f) === '.html')
         .filter((f) => !f.includes(`${path.sep}_includes${path.sep}`))
-        .filter((f) => FILL_TOKEN.test(strip(fs.readFileSync(f, 'utf8'))) || (FILL_TOKEN.lastIndex = 0))
+        // FILL_TOKEN carries /g, so `.test()` ADVANCES lastIndex on a match and
+        // the next file gets searched from that offset. Reset unconditionally,
+        // BEFORE the test — resetting only on the false branch (which is where
+        // the engine already resets it) is exactly backwards, and silently
+        // drops any later file whose only match sits before the leaked offset.
+        // Measured on two synthetic consumers: the stateful form returned one
+        // of them, this form returns both.
+        .filter((f) => {
+            FILL_TOKEN.lastIndex = 0;
+            return FILL_TOKEN.test(strip(fs.readFileSync(f, 'utf8')));
+        })
         .map((f) => '/' + path.relative(path.join(ROOT, 'html'), f).split(path.sep).join('/'));
     expect(consumers.length, 'sanity: at least one page consumes a -fill token').toBeGreaterThanOrEqual(1);
 
@@ -285,14 +306,30 @@ test('no rendered element paints TEXT with a -fill token', async ({ browser }) =
                             }
                         }
                     }
+                    // A FRESH element per token. Reusing one <span> and
+                    // reassigning `style.color` reads STALE: Chromium does not
+                    // re-resolve the computed value without a style recalc, and
+                    // under `reducedMotion: 'reduce'` (set above) this page has
+                    // no animation left to force one. Every token after the
+                    // first then resolves to the FIRST token's colour, they
+                    // collapse into one Set entry, and every token but one
+                    // becomes INVISIBLE to the scan below — which is the whole
+                    // arm. Measured on this page: the reused probe returned 1 of
+                    // 2 colours under 'reduce' and 2 of 2 under 'no-preference';
+                    // a `void probe.offsetWidth` nudge did NOT fix it, a fresh
+                    // element did. The per-token floor below is what keeps this
+                    // from regressing silently.
                     const values = new Set();
-                    const probe = document.createElement('span');
-                    document.body.appendChild(probe);
-                    for (const [name] of tokens) {
+                    const probes = [];
+                    for (const [name, declared] of tokens) {
+                        const probe = document.createElement('span');
                         probe.style.color = `var(${name})`;
-                        values.add(getComputedStyle(probe).color);
+                        document.body.appendChild(probe);
+                        const resolved = getComputedStyle(probe).color;
+                        probe.remove();
+                        values.add(resolved);
+                        probes.push({ name, declared, resolved });
                     }
-                    probe.remove();
 
                     const hasOwnText = (el) => [...el.childNodes]
                         .some((n) => n.nodeType === 3 && /\S/.test(n.nodeValue));
@@ -307,12 +344,28 @@ test('no rendered element paints TEXT with a -fill token', async ({ browser }) =
                             hits.push(`${el.tagName.toLowerCase()}.${el.getAttribute('class') || ''}`);
                         }
                     }
-                    return { tokenCount: tokens.size, resolved: [...values], painted, hits };
+                    return { tokenCount: tokens.size, resolved: [...values], probes, painted, hits };
                 });
                 // A token that resolves to nothing would make every comparison
                 // vacuously false — the same green no-op the source floors guard.
                 expect(res.tokenCount, `sanity: ${url} declares -fill tokens`).toBeGreaterThanOrEqual(1);
+                expect(res.probes.length, `sanity: ${url} (${theme}) probed every -fill token`).toBe(res.tokenCount);
                 expect(res.resolved.every((v) => /^rgb/.test(v)), `sanity: -fill tokens resolve on ${url} (${theme})`).toBe(true);
+
+                // Per-token known-answer, and the floor that makes the stale-probe
+                // bug above non-recurrent: each token must resolve to ITS OWN
+                // declared value, not a neighbour's. Checked per token rather than
+                // by counting distinct colours, so it stays correct if two -fill
+                // tokens ever legitimately carry the same value.
+                const checkable = res.probes.filter((p) => hexToRgb(p.declared) !== null);
+                expect(checkable.length, `sanity: ${url} (${theme}) has a hex-declared -fill token to check`)
+                    .toBeGreaterThanOrEqual(1);
+                expect(
+                    checkable
+                        .filter((p) => p.resolved !== hexToRgb(p.declared))
+                        .map((p) => `${p.name} declared ${p.declared} but the probe resolved ${p.resolved}`),
+                    `every -fill token must resolve to its own value on ${url} (${theme})`,
+                ).toEqual([]);
                 expect(res.painted, `sanity: ${url} (${theme}) paints geometry with a -fill token`).toBeGreaterThanOrEqual(1);
                 offenders.push(...res.hits.map((h) => `${url} (${theme}) — ${h}`));
             }
