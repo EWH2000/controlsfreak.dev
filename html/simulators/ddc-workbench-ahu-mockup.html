@@ -243,71 +243,68 @@ noindex: true
            this drawing, it must NOT use amber: use the accent ring, or a
            dedicated hand-marker glyph.
 
-           ⚠ OPEN FOR THE OWNER — LIGHT THEME DARKENS BOTH IDENTITY HUES.
-           See codebase-issues #230, which carries the full measurement.
-           Do NOT restate the earlier "they are one colour in light theme"
-           claim: it was derived from the luminance ratio between the two
-           tokens (1.02:1 light) and is false. Contrast ratio measures
-           luminance, not hue. In CIE Lab the two stay clearly distinct:
-               light  --amber #83641f  vs  --heat #9c5a14
+           ⚠ THE IDENTITY PAINT IS --amber-fill / --heat-fill, NOT --amber /
+           --heat. Resolved 2026-07-28 (owner's ruling on codebase-issues
+           #230): a damper blade is not text, so component-identity paint
+           answers WCAG 1.4.11's 3:1 NON-TEXT floor rather than the 4.5:1
+           small-text floor. --amber and --heat are text colours elsewhere
+           on the site, so light theme drags them to #83641f (an olive) and
+           #9c5a14 (an orange-brown) — out of the register this drawing's
+           colour code is written in. The -fill twins may run brighter
+           because they never paint type:
+               light  --amber-fill #af7b00  vs  --heat-fill #b85400
+                      dE76 26.6, dL* 7.7, hue 79deg vs 57deg
+               (was)  --amber     #83641f  vs  --heat     #9c5a14
                       dE76 18.0, dL* 0.6, hue 83deg vs 65deg
-               dark   --amber #e0a94a  vs  --heat #e8884a
+               dark   unchanged — both -fill tokens ride their base
                       dE76 23.1, dL* 6.8, hue 79deg vs 57deg
-           What IS true: both light tokens are darkened to clear the 4.5:1
-           small-text floor (they are text colours elsewhere, and land at
-           4.84:1 / 4.74:1 on --bg with almost no headroom), so neither
-           reads as the bright yellow / orange the identity convention
-           leans on, and the pair's separation drops from 23.1 to 18.0. On
-           the drawing the three dampers, the HW serpentine and the valve
-           read as one warm family at a glance and want a beat longer to
-           separate — a DEGRADATION of the one-second colour scan that is
-           this round's thesis, not a failure of it. At dL* 0.6 the light
-           pair does lose the lightness cue, so greyscale print falls back
-           on hue alone. Not fixable inside this component: both are :root
-           tokens, --heat also carries the psychrometric chart's heating
-           process lines and the education air diagrams, and --red means
-           alarm site-wide so it is not the escape hatch. The key's swatch
-           order (below) puts blue between the two, which stops them
-           sitting cheek by jowl — an adjacency mitigation only.
+           Light now separates BETTER than dark, and the fills hold their
+           dark hue angles instead of drifting. The lightness gap is the
+           part that matters most: at dL* 0.6 greyscale, print and a
+           protanope all had hue alone to go on, and hue is the channel a
+           protanope has lost. dL* 7.7 restores the lightness cue for all
+           three at once. The same move fixes the drawing's weakest shape
+           distinction — a grey fixed louver beside a modulating damper was
+           dL* 0.0 against --text-dim in light and is now 11.0.
 
-           ⚠ In light theme --amber is a dark ochre, not a bright yellow.
-           It reads unmistakably gold-brown on white and is clearly not
-           grey. Do NOT "fix" the token itself toward yellow — --amber is
-           used for text elsewhere and yellow fails the small-text floor on
-           white. #230's candidate fix is the other move: a SEPARATE
-           fill-only token, which answers to WCAG 1.4.11's 3:1 non-text
-           bar rather than 4.5:1 and so may run brighter. That needs the
-           owner's ruling, and it must never be used for text.
+           ⚠ Do NOT "fix" --amber or --heat themselves toward yellow /
+           orange. They are used for TEXT elsewhere and would fail the
+           small-text floor on white. The split is the fix.
+
+           ⚠ Do NOT use a -fill token for text — not here, not anywhere.
+           --amber-fill is 3.10:1 on the strictest light surface, which is
+           fine for a stroke and an AA failure for type.
+           tests/fill-token-misuse.spec.js enforces this.
            ══════════════════════════════════════════════════════════════ */
         .ahu-damper-frame {
             fill: var(--surface);
-            stroke: var(--amber);
+            stroke: var(--amber-fill);
             stroke-width: 1.5;
         }
         /* One step heavier than the frame so the colour carries at render
            scale — at 0.89 CSS px per unit a 1.5 blade is a 1.3px line. */
         .ahu-damper-blade {
             fill: none;
-            stroke: var(--amber);
+            stroke: var(--amber-fill);
             stroke-width: 2;
         }
 
         /* Coil serpentines. The identity lives in the TUBE, never in the
            link box — see the drill-down block below. */
         .ahu-tube { fill: none; stroke-width: 1.5; }
-        .ahu-tube.is-heat { stroke: var(--heat); }
+        .ahu-tube.is-heat { stroke: var(--heat-fill); }
         .ahu-tube.is-cool { stroke: var(--blue); }
 
         /* The hot-water control valve — same warm identity as the coil it
            serves, because it is that coil's device. */
         .ahu-valve-body {
             fill: var(--surface);
-            stroke: var(--heat);
+            stroke: var(--heat-fill);
             stroke-width: 1.5;
         }
         .ahu-valve-line {
             fill: none;
-            stroke: var(--heat);
+            stroke: var(--heat-fill);
             stroke-width: 1.5;
         }
 
@@ -727,18 +724,18 @@ noindex: true
             flex: none;
         }
         /* ⚠ COOLING SITS BETWEEN FAN AND HEATING IN THE KEY, DELIBERATELY.
-           In light theme --amber and --heat are two dark warm hues at very
-           nearly the same lightness (the measurement is written out in the
-           identity-colour block above, and in codebase-issues #230), and a
-           legend is the one place they would sit cheek by jowl. Putting
-           blue between them costs nothing and buys separation. It is an
-           ADJACENCY mitigation only — it does not undo the darkening of
-           the two hues, which is the part that needs the owner. Do not
-           "tidy" the order back to air-path sequence. */
-        .ahu-key-swatch.is-damper  { border-color: var(--amber); }
+           A legend is the one place the two warm identity hues would sit
+           cheek by jowl, and putting blue between them costs nothing and
+           buys separation. This was introduced when the two were nearly
+           isoluminant in light theme; the -fill tokens have since opened
+           that gap (dL* 0.6 -> 7.7 — see the identity-colour block above),
+           so the order is now belt-and-suspenders rather than load-bearing.
+           Keep it: it still costs nothing. Do not "tidy" the order back to
+           air-path sequence. */
+        .ahu-key-swatch.is-damper  { border-color: var(--amber-fill); }
         .ahu-key-swatch.is-fan     { border-color: var(--accent); }
         .ahu-key-swatch.is-cooling { border-color: var(--blue); }
-        .ahu-key-swatch.is-heating { border-color: var(--heat); }
+        .ahu-key-swatch.is-heating { border-color: var(--heat-fill); }
         /* Miniature wells — the value-state half of the key. */
         .ahu-key-well {
             font-family: var(--mono);
