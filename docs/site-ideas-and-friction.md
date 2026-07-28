@@ -5943,14 +5943,17 @@ has failed a reader who cannot hover.
 
 **A custom tooltip that matches the page's look is a real component.**
 Styling it means owning it, and owning it invokes **WCAG 1.4.13
-(Content on Hover or Focus)**: the content must be *hoverable* (the
-pointer can move onto it without it vanishing), *dismissible* (Escape
-closes it without moving the pointer) and *persistent* (it stays until
-dismissed or the trigger is left). That is a focus-managed widget, and
-this page is a crowded place to put one — it already has a fullscreen
-mode, tab panes, a command palette, and `:has()`-driven hover
-highlighting that lights an annotation when a glyph is hovered or
-focused. A tooltip triggering off the same hover competes with the
+(Content on Hover or Focus), Level AA**: the content must be
+*hoverable* (the pointer can move onto it without it vanishing),
+*dismissible* (Escape closes it without moving the pointer) and
+*persistent* (it stays until dismissed or the trigger is left).
+Dismissible carries an exception — content that reports an input error,
+or that obscures and replaces nothing, is let off — but neither applies
+to a value gloss floating over the drawing. That is a focus-managed
+widget, and this page is a crowded place to put one — it already has a
+fullscreen mode, tab panes, a command palette, and `:has()`-driven
+hover highlighting that lights an annotation when a glyph is hovered
+or focused. A tooltip triggering off the same hover competes with the
 highlight for the same gesture.
 
 **The creep is not the first tooltip, it is the eleventh.** Once one

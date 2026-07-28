@@ -8949,8 +8949,10 @@ either way; the stale comment needs correcting regardless.
 > **NOT IMPLEMENTED IN THE AHU depiction lane, and deliberately so.** The
 > change touches the shipped FCU page and the AHU page that comes after it,
 > and the activators have to be wired to whatever the graphic's click model
-> ends up being — so it rides with the **graphic-wiring lane** of the Phase-7
-> AHU round, as one change across both pages rather than two divergent ones.
+> ends up being — so it rides with the graphic work of the Phase-7 AHU round
+> (`docs/next-session-handoff.md`, that phase's agenda item 2 — the graphic
+> mockup on a hidden page), as one change across both pages rather than two
+> divergent ones.
 > **Scheduled, not done.** The stale in-file comment on the FCU page ("the
 > education idiom") is corrected there, in that lane, with the rest of it.
 >
@@ -8958,8 +8960,9 @@ either way; the stale comment needs correcting regardless.
 > path is closed.
 
 Smaller a11y items from the same audit (glyph names announce as objects not
-actions; "far wall" has no referent; `aria-label` on two bare `<div>`s where
-naming is prohibited) are itemised in
+actions — **settled by the ruling above**, and scheduled with it; "far wall"
+has no referent; `aria-label` on two bare `<div>`s where naming is
+prohibited) are itemised in
 `docs/audits/2026-07-ddcw-prose/findings.md`. The fourth — the verdict
 `textContent` rewritten unguarded at 10 Hz (item 18) — shipped with (a)
 above; see there for why it could not wait.

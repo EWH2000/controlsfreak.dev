@@ -2176,13 +2176,31 @@ noindex: true
 
                              ✔ SETTLED 2026-07-28, and NEITHER of the two
                              options this comment used to offer was taken.
-                             DEADBAND keeps its label — it is the band around
-                             whichever setpoint is active, which is exactly
-                             what /education/comparators-and-deadband.html
-                             already teaches (SP + deadband and SP − deadband
-                             into two comparators and a latch), so relabelling
-                             the row would put the graphic at odds with the
-                             published lesson. The gloss keeps its paragraph.
+                             DEADBAND keeps its label — it is a band owned by
+                             whichever setpoint is currently active, NOT the
+                             separation between the two, and that is the same
+                             distinction /education/comparators-and-deadband.html
+                             draws, so relabelling the row would put the
+                             graphic at odds with the published lesson. The
+                             gloss keeps its paragraph.
+
+                             ⚠ SHARED LABEL AND CONCEPT, NOT SHARED
+                             ARITHMETIC — do not "reconcile" the two pages.
+                             The lesson builds its band SYMMETRICALLY, with
+                             the DB constant as HALF the width (SP + DB and
+                             SP − DB into two comparators and a latch: SP 74,
+                             DB 1, edges 75 and 73). This unit uses the FULL
+                             width hung on one side — cooling energises at the
+                             73.0 setpoint and drops out 2.0 below it. That is
+                             the very full-vs-half split the lesson itself
+                             calls out, and it is why the prose below says the
+                             band BELONGS TO the active setpoint rather than
+                             sitting "around" it. Making this page symmetric
+                             to match the worked sheet would put the cooling
+                             pickup at 75.0 and kill the cooling call the
+                             whole screen is drawn around — space 74.0 would
+                             have no call, the lit DX stage would be wrong,
+                             and all four <desc> blocks would go with it.
                              What resolved the "two explanations of one
                              number" objection was the third option: the
                              SP DIFF row above now shows the other number, so
@@ -2191,19 +2209,27 @@ noindex: true
 
                              ⚠ THE 5.0 °F SEPARATION IS NOT CALLED A
                              "DIFFERENTIAL" HERE, and that is a checked
-                             decision, not a style preference. Every other use
-                             of that word in site copy — a dozen or so across
-                             education and tools — means a difference between
-                             two MEASURED quantities: pressure across a filter
-                             rack, a differential-pressure status switch,
-                             differential dry-bulb changeover, temperature
-                             across a coil, the differential pressure bypass
-                             valve. A fourth sense on this page would
+                             decision, not a style preference. Nearly every
+                             use of that word in site copy — a couple of dozen
+                             across education, tools and the quiz banks —
+                             means a difference between two MEASURED
+                             quantities: pressure across a filter rack, a
+                             differential-pressure status switch, differential
+                             dry-bulb changeover, temperature across a coil,
+                             the differential pressure bypass valve. The two
+                             that do not — /education/status-and-proof.html
+                             and its paired quiz, "let the switch's built-in
+                             differential do its job" — mean a switch's
+                             trip-to-reset spread, i.e. its DEADBAND. That
+                             makes the case stronger rather than weaker: the
+                             one non-measurement sense already on the site
+                             means the very thing the 5.0 is being told apart
+                             from. A further sense on this page would
                              manufacture the exact confusion the new row
                              exists to remove. The terse SP DIFF caption is
                              safe because adjacency and the blue ink define
                              it; running prose says it plainly instead. -->
-                        <p class="ahu-teach-p"><strong>Setpoints and the deadband.</strong> The setpoint gap and the deadband are easy to read as one number, and they are not. The heating and cooling setpoints sit 5.0 °F apart — 68.0 °F and 73.0 °F — and the SP DIFF well is that gap, 73.0 minus 68.0. Nothing sets it: move either setpoint and it follows, which is why it is inked blue like the ΔT well rather than the green its two neighbours carry. The 2.0 °F deadband is the smaller, separate thing — the band around whichever setpoint is currently active. Cooling energises at the cooling setpoint and de-energises 2.0 °F below it, so the unit does not short-cycle on a degree of drift.</p>
+                        <p class="ahu-teach-p"><strong>Setpoints and the deadband.</strong> The separation between the two setpoints and the deadband are easy to read as one number, and they are not. The cooling and heating setpoints sit 5.0 °F apart — 73.0 °F and 68.0 °F — and the SP DIFF well is that separation, 73.0 minus 68.0. Nothing sets it: move either setpoint and it follows, which is why it is inked blue like the ΔT well rather than the green its two neighbours carry. The 2.0 °F deadband is the smaller, separate thing, and it belongs to whichever setpoint is currently active rather than to the pair: cooling energises at the cooling setpoint and de-energises 2.0 °F below it, so the unit does not short-cycle on a degree of drift.</p>
                     </section>
                 </div>
             </div>
