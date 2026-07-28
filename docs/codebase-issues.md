@@ -9262,3 +9262,77 @@ away, which invites a reader to copy the idiom without the measurement.
 Checked and fine: `#ddcw-fbe-status` (`:1027`) is inside `#tab-wiresheet`
 and written only on run / pause / reset — no spam, and its pane is up
 whenever it can change.
+
+### 230. Light theme darkens `--amber` and `--heat` out of the register component identity depends on *(noticed 2026-07-28, AHU round-2 depiction review — open, needs an owner ruling)*
+
+**This entry supersedes its own first draft, and the correction is the
+useful half.** That draft was titled "`--amber` and `--heat` are one colour
+in light theme" and it was measurably wrong. It reasoned from the WCAG
+**contrast ratio** between the two tokens — 1.02:1 light, 1.23:1 dark — but
+contrast ratio is a ratio of *relative luminance* and nothing else. Two
+colours of equal luminance and different hue return 1.0:1 and are still
+plainly different colours; the metric answers "can I read text of one on the
+other," which is not the question a colour-coded damper asks. The question
+needs a perceptual distance. Measured in CIE Lab (sRGB, D65) straight from
+the two `:root` blocks in `styles.css`:
+
+| theme | `--amber` | `--heat` | ΔE76 | ΔL\* | hue angle | vs `--accent` |
+|---|---|---|---|---|---|---|
+| dark  | `#e0a94a` | `#e8884a` | 23.1 | 6.8 | 79° vs 57° | ΔE 53.7 |
+| light | `#83641f` | `#9c5a14` | **18.0** | **0.6** | 83° vs 65° | ΔE 43.8 |
+
+ΔE76 in the teens is comfortably inside "clearly different colours" (the
+rule of thumb is ~2 at a glance, ~10 unmistakable), and the `--accent`
+column is there for scale — the amber/heat gap is roughly 40 % of the gap to
+the green nobody would call ambiguous. **Both tokens stay distinguishable in
+both themes. Nothing here is a WCAG failure and no anchor is broken.**
+
+**The real finding is weaker and still worth a ruling: light theme moves
+both tokens out of the register the identity convention is written in.**
+The cause is that `--amber` and `--heat` are also **text** colours:
+`color: var(--amber)` at `styles.css:2186`, `:2554`, `:2869`, `:3179` and in
+`simulators/vfd-mock.html:146`; `color: var(--heat)` in
+`education/psychrometrics-basics.html:56` and
+`tools/psychrometric-chart.html:422` — so on a white surface they have to
+clear the 4.5:1 small-text floor, and they only just do:
+
+| theme | `--amber` on `--bg` | `--heat` on `--bg` |
+|---|---|---|
+| dark  | 8.58:1 | 6.95:1 |
+| light | **4.84:1** | **4.74:1** |
+
+Dark carries 1.5–1.9× of headroom over the floor and can afford to be
+bright. Light has about a third of a point and cannot, so `--amber` lands at
+a dark olive and `--heat` at a dark orange-brown. Neither reads as the
+bright yellow / orange the component-identity convention leans on, and their
+separation drops from ΔE 23.1 to 18.0 at the same time. The property the
+AHU round-2 graphic (`html/simulators/ddc-workbench-ahu-mockup.html`) is
+built on — find every damper in about a second, before reading a word — is
+**degraded in light theme, not destroyed**: three amber dampers, a `--heat`
+serpentine and a `--heat` valve read as one warm family at a glance and want
+a beat longer to separate. Shape and the colour key's swatch order (blue
+parked between the two) both still work.
+
+One narrower piece of the original claim does survive, scoped honestly: at
+ΔL\* 0.6 the light pair really is near-identical in **lightness**, so a
+greyscale print or a luminance-only rendering loses the cue and leaves hue
+carrying it alone. Whether that also collapses for a red-green-deficient
+reader is *plausible but untested here* — 18° of hue separation in the
+yellow-orange band is where deuteranopia is weakest — and it should be
+simulated rather than asserted before anyone spends a token on it.
+
+**Candidate fix, not implemented — it needs the ruling.** The 4.5:1 floor is
+what forced the darkening, and it applies to **text**. A damper body or a
+coil serpentine is a **graphic object**: WCAG 1.4.11 non-text contrast asks
+3:1 against adjacent colours, not 4.5:1. So a light-theme component *fill*
+could legitimately run brighter than the text token does, restoring the
+yellow-for-damper reading without violating anything — **provided it is
+never used for text.** That is the whole risk in the idea, and it is the
+same trap the `-ink` family exists to keep straight. Per the standing rule
+(*name the ink token, don't fudge the colour*) this wants a real token —
+`--amber-fill` / `--heat-fill`, defined in both `:root` blocks with a
+comment pinning the never-for-text constraint — and not a page-local hex in
+the AHU graphic. Retuning `--heat` itself is the alternative and has a
+genuinely wide blast radius: it also carries the psychrometric chart's
+heating process lines and the education air diagrams. `--red` is not the
+escape hatch; it means alarm site-wide.
