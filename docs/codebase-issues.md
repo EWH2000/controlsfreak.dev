@@ -9263,7 +9263,99 @@ Checked and fine: `#ddcw-fbe-status` (`:1027`) is inside `#tab-wiresheet`
 and written only on run / pause / reset — no spam, and its pane is up
 whenever it can change.
 
-### 230. Light theme darkens `--amber` and `--heat` out of the register component identity depends on *(noticed 2026-07-28, AHU round-2 depiction review — open, needs an owner ruling)*
+### 230. Light theme darkens `--amber` and `--heat` out of the register component identity depends on *(noticed 2026-07-28, AHU round-2 depiction review — **RESOLVED 2026-07-28**, owner ruled for separate fill tokens)*
+
+> **RESOLUTION (2026-07-28).** Owner ruled for the candidate fix below:
+> **separate fill tokens**, on the reasoning that *a damper blade is not
+> text* — WCAG **1.4.11** asks 3:1 for non-text contrast, not the 4.5:1
+> small-text floor the `-ink` family is tuned to, so a component-identity
+> FILL may run brighter in light theme than the text token, provided it is
+> never used for type. Shipped as `--amber-fill` / `--heat-fill` in all
+> three token blocks of `html/styles.css` (`:root`, the light block, **and
+> `@media print`**), with the seven consumers in
+> `html/simulators/ddc-workbench-ahu-mockup.html` migrated. Scope is **two
+> tokens, not four**: yellow and orange are the only hues whose common name
+> is lightness/chroma-bound (dark yellow is olive, dark desaturated orange
+> is brown), while `--accent` (−20.5 L\*) and `--blue` (−22.4 L\*) are
+> darkened just as hard in light and stay themselves. No symmetry tokens —
+> the `-ink` family is already asymmetric and an alias token is a drift
+> generator.
+>
+> | token | dark | light | light contrast: `--surface` / `--bg` / `#e8ece4` |
+> |---|---|---|---|
+> | `--amber-fill` | `#e0a94a` (= `--amber`, rides) | `#af7b00` | 3.71 / 3.26 / **3.10** |
+> | `--heat-fill` | `#e8884a` (= `--heat`, rides) | `#b85400` | 4.88 / 4.28 / **4.08** |
+>
+> Dark rides its base deliberately (8.58:1 / 6.95:1 on `--bg`, 2–2.9× the
+> non-text floor) — the same one-theme-moves shape `--amber-ink` and
+> `--blue-ink` already have. Light lifts amber's **lightness** (olive→yellow,
+> L\* 44.3 → 55.4) and heat's **chroma** (brown→orange, C\* 52.7 → 68.0);
+> opposite corrections, which is why the lightness gap opens for free. Both
+> fills hold their **dark-theme hue angle** (79° / 57°) where the base tokens
+> drift to 83° / 65°. Tuned against `#e8ece4` (`--bg-2`/`--surface-3`/`--well`
+> — the strictest light surface), not the white the graphic actually sits on,
+> so neither token ships an "only safe on white" caveat.
+>
+> **Measured before → after (light pair):**
+>
+> | metric | before | after | dark, for scale |
+> |---|---|---|---|
+> | ΔE76 amber↔heat | 18.0 | **26.6** | 23.1 |
+> | ΔL\* amber↔heat | **0.6** | **7.7** | 6.8 |
+> | ΔL\* damper↔fixed louver (`--text-dim`) | **0.0** | **11.0** | 8.8 |
+>
+> ΔE now exceeds dark theme's own 23.1, and **the lightness gap was opened** —
+> which is the one part of this entry's original claim that survived scrutiny,
+> and it fixes greyscale, print and red-green deficiency in a single move
+> (in that band a dichromat has essentially only the lightness channel left,
+> so ΔL\* *is* the CVD budget). It also fixes the drawing's weakest shape
+> distinction: a grey fixed louver beside a modulating damper was ΔL\* **0.0**
+> against `--text-dim` in light and is now 11.0.
+>
+> **The untested CVD question above is now settled — and the retracted claim
+> turns out to be true for protanopes.** Simulating the dichromat transform
+> on the light pair puts ΔE at roughly **3–4**, i.e. genuinely one colour for
+> a protanope, in light theme only (dark measures ~12–14 and is fine). The
+> fill tokens take it back to dark's level. ⚠️ Two independent implementations
+> were run and they agree on the direction and the order of magnitude but not
+> the exact digits, so treat these as *approximate*: the widely-copied
+> "daltonize" JS matrices give 2.9 → 14.8, the published Viénot-Brettel-Mollon
+> 1999 matrices give 4.1 → 12.2. Do not quote a single figure to two
+> significant digits. **Tritan numbers from the daltonize matrix are
+> unusable** — its tritan branch renders blue *unchanged* and red as *yellow*,
+> which is the protan failure mode, not tritanopia (VBM 1999 defines no tritan
+> transform; that branch is a later bolt-on). Tritanopia is ~1 in 10,000 and
+> the pair is lightness-separated either way, so nothing here turns on it.
+>
+> **Guarded by `tests/fill-token-misuse.spec.js`** (new): a source scan that
+> fails on any `-fill` token reaching a non-paint property, a census asserting
+> every `var(--…-fill)` reference lands in a classified sink (so a fifth sink
+> idiom fails rather than passes), a rendered arm for `fill:` on SVG `<text>`,
+> and a third test pinning the `@media print` duplicate against the light
+> block — a `-fill` token missing from print resolves to the **dark** value on
+> paper (`#e0a94a` on white is **2.11:1**, under the non-text floor). The
+> rendered arm exists because contrast-sweep provably cannot cover this: the
+> consumer page has no `canonical`, so it is absent from `tests/pages.js`, and
+> SVG text is out of that walker's scope. Also new:
+> `tests/ddc-workbench-ahu-mockup.spec.js`, since no spec rendered that page
+> at all.
+>
+> **Not migrated, deliberately:** the round-1 variants (`.ahu-coil-hw`) keep
+> the base tokens — they are the before-half of the comparison the page
+> exists to show. `--heat`'s other consumers (the psychrometric chart's
+> heating process line, `education/psychrometrics-basics.html`) are
+> *process/state* semantics rather than component identity, and one is a
+> `color:` declaration; migrating the chart is a plausible follow-on needing
+> its own backdrop measurement. **Blast radius on existing pages: zero** —
+> every other page renders byte-identically.
+>
+> Version bumped `3.74.6` → `3.75.0`: the `?v=` cache-bust is load-bearing
+> here, because without it a returning visitor resolves `var(--amber-fill)`
+> against the old stylesheet, gets nothing (house no-fallback rule), and sees
+> **unpainted damper strokes**.
+>
+> One finding from the depiction review is spun out rather than fixed here —
+> see **#231** (the two coil serpentines are separated by hue alone).
 
 **This entry supersedes its own first draft, and the correction is the
 useful half.** That draft was titled "`--amber` and `--heat` are one colour
@@ -9336,3 +9428,49 @@ the AHU graphic. Retuning `--heat` itself is the alternative and has a
 genuinely wide blast radius: it also carries the psychrometric chart's
 heating process lines and the education air diagrams. `--red` is not the
 escape hatch; it means alarm site-wide.
+
+### 231. The AHU heating and cooling serpentines are the same drawing, separated by hue alone *(noticed 2026-07-28, spun out of #230's "colour is never the only channel" check — open, depiction decision)*
+
+Found while verifying that the AHU round-2 graphic
+(`html/simulators/ddc-workbench-ahu-mockup.html`) does not rely on colour as
+its only channel. Every other component glyph clears: the three dampers
+differ in frame aspect and blade orientation, the filter has a different
+media slope and half the stroke weight, the fan and the valve are unique
+shapes, and the relief stream carries a dashed stem so "leaving the
+building" reads without colour. **One pair does not.**
+
+`.ahu-tube.is-heat` and `.ahu-tube.is-cool` are byte-identical serpentines
+differing only by an x-offset — `M430 270 H470 V283 H430 …` versus
+`M506 270 H546 V283 H506 …`. Same 6 passes, same 40-unit width, same 13-unit
+pitch, same 1.5 stroke, same 52×82 link-box. **Nothing but `--heat` versus
+`--blue` distinguishes a heating coil from a cooling coil.** This is
+theme-independent and it is a genuine WCAG 1.4.1 (Use of Colour) concern.
+
+The two mitigations that exist are **station-level, not glyph-level**, and
+the difference matters:
+
+- The **HW valve and its pipe stubs** hang below the heating coil. That is
+  adjacency — it identifies the *station*, not the coil, and it only works
+  for a reader who knows a two-way valve implies hydronic heating.
+- The **callout titles** `HEATING COIL` / `COOLING COIL` are reached by
+  leader lines from elsewhere on the drawing: a text channel at a distance,
+  not on the object. The round-1 variants are actually better here — they
+  carry `HW COIL` / `DX COIL` captions *on* the coils, which round 2 dropped
+  when the callout titles took over the naming job.
+
+Colour-vision-wise the pair is safe (warm versus blue is a large distance
+under every dichromat transform). **The exposure is greyscale and print**,
+where lightness is all that survives: ΔL\* is 5.9 in light after #230's
+`--heat-fill` landed (up from 3.1), but only **1.9 in dark** — dark is the
+worst of the three, though dark never prints, since `@media print` forces
+the light token set.
+
+**Not fixed in #230's PR, deliberately** — that was a colour-token change,
+and every fix here is a depiction decision that belongs with the owner's
+equipment-graphics eye. Cheapest honest options, in order of preference:
+
+1. Give the DX serpentine a different **pass count or pitch**. This is a
+   real distinction rather than a decoration — a 4-row and a 6-row coil
+   genuinely differ that way, so the drawing would be telling the truth.
+2. Restore a short station caption on each coil box (round 1's answer).
+3. Hatch one serpentine's return bends.
