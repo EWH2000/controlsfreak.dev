@@ -526,6 +526,33 @@ noindex: true
                 <ul class="ddcw-offprog-list" id="ddcw-offprog-list"></ul>
             </div>
 
+            <!-- Screen-reader mirror of the unit verdict pill. The pill itself
+                 (#fcu-verdict, in the Unit pane) CANNOT carry aria-live:
+                 .tab-pane is display:none, and a live region inside a
+                 display:none subtree is not in the accessibility tree — so the
+                 annunciation would be silent while the Wiresheet is up, which
+                 is exactly where a reader sits studying the program that raised
+                 it (codebase-issues #227a). The pill cannot move out here
+                 either: .tool-card.is-fullscreen #tab-unit.active places it by
+                 `grid-area: verdict`, which only resolves while it is a grid
+                 child of that pane. So the pill stays put and silent and this
+                 node — outside both panes, in the tree on either tab — carries
+                 the announcement. Written by setVerdict() in
+                 scripts/ddcw-fcu-unit.js, signature-guarded so the 10 Hz host
+                 tick cannot spam it. Element shape from pid-tuner.html's
+                 #pid-sr-status.
+                 Empty in MARKUP only, not on arrival: the shell's boot paint
+                 (DDCWShell's hostTick, called once before the 10 Hz interval
+                 starts) fills it, so a reader landing on the page hears the
+                 current verdict once. That is the intended arrival behaviour —
+                 it is NOT the off-program window's empty-and-in-tree contract
+                 above, which stays empty until a point actually goes
+                 off-program.
+                 Known and accepted: with the Unit tab up the verdict string is
+                 in the accessibility tree twice — here and as the pill. Same
+                 shape pid-tuner ships (audit-2026-06 #7). -->
+            <p class="sr-only" id="fcu-verdict-sr" aria-live="polite"></p>
+
             <!-- ══ TAB: UNIT ══ the DDC supervisory graphic + readouts +
                  hand controls. -->
             <div id="tab-unit" class="tab-pane active">
@@ -774,7 +801,12 @@ noindex: true
                 </div>
             </div>
 
-            <div class="status-pill ok fcu-verdict" id="fcu-verdict" aria-live="polite">
+            <!-- No aria-live here, and no role="status" either: this pill is
+                 inside #tab-unit, which is display:none whenever the Wiresheet
+                 is up, so a live region on it announces nothing on that tab
+                 (codebase-issues #227a). The announcement rides on the
+                 #fcu-verdict-sr mirror above, outside both panes. -->
+            <div class="status-pill ok fcu-verdict" id="fcu-verdict">
                 Cooling — clear ΔT across the coil
             </div>
 

@@ -243,33 +243,41 @@ noindex: true
            this drawing, it must NOT use amber: use the accent ring, or a
            dedicated hand-marker glyph.
 
-           ⚠ OPEN FOR THE OWNER — --amber AND --heat COLLIDE IN LIGHT THEME,
-           AND IT IS WORSE THAN "HARD TO TELL APART". Measured from the two
-           token blocks:
+           ⚠ OPEN FOR THE OWNER — LIGHT THEME DARKENS BOTH IDENTITY HUES.
+           See codebase-issues #230, which carries the full measurement.
+           Do NOT restate the earlier "they are one colour in light theme"
+           claim: it was derived from the luminance ratio between the two
+           tokens (1.02:1 light) and is false. Contrast ratio measures
+           luminance, not hue. In CIE Lab the two stay clearly distinct:
                light  --amber #83641f  vs  --heat #9c5a14
-                      dE76 18.0, dL* 0.6, luminance ratio 1.02:1
+                      dE76 18.0, dL* 0.6, hue 83deg vs 65deg
                dark   --amber #e0a94a  vs  --heat #e8884a
-                      dE76 23.1, dL* 6.8, luminance ratio 1.23:1
-           Light loses the lightness cue ENTIRELY: the two identity colours
-           separate on hue alone, so they are one colour in greyscale, in
-           print, and to a red-green-deficient reader. On the drawing the
-           three dampers, the HW serpentine and the valve are all one warm
-           family at the same L*, and a one-second colour scan is this
-           round's whole thesis. Shape still separates them at page scale,
-           so this is a degradation rather than a failure — but it is NOT
-           fixable inside this component: both are :root tokens, --heat also
-           carries the psychrometric chart's heating process lines and the
-           education air diagrams, and --red means alarm site-wide so it is
-           not the escape hatch. It needs an owner ruling on a deeper light
-           --heat, or on moving the damper identity off --amber. The key's
-           swatch order (below) puts blue between the two, which stops them
-           sitting cheek by jowl — that is an adjacency mitigation only and
-           it does not make them identifiable.
+                      dE76 23.1, dL* 6.8, hue 79deg vs 57deg
+           What IS true: both light tokens are darkened to clear the 4.5:1
+           small-text floor (they are text colours elsewhere, and land at
+           4.84:1 / 4.74:1 on --bg with almost no headroom), so neither
+           reads as the bright yellow / orange the identity convention
+           leans on, and the pair's separation drops from 23.1 to 18.0. On
+           the drawing the three dampers, the HW serpentine and the valve
+           read as one warm family at a glance and want a beat longer to
+           separate — a DEGRADATION of the one-second colour scan that is
+           this round's thesis, not a failure of it. At dL* 0.6 the light
+           pair does lose the lightness cue, so greyscale print falls back
+           on hue alone. Not fixable inside this component: both are :root
+           tokens, --heat also carries the psychrometric chart's heating
+           process lines and the education air diagrams, and --red means
+           alarm site-wide so it is not the escape hatch. The key's swatch
+           order (below) puts blue between the two, which stops them
+           sitting cheek by jowl — an adjacency mitigation only.
 
            ⚠ In light theme --amber is a dark ochre, not a bright yellow.
-           That is correct — it reads unmistakably gold-brown on white and is
-           clearly not grey. Do not "fix" it toward yellow; yellow fails
-           contrast on white.
+           It reads unmistakably gold-brown on white and is clearly not
+           grey. Do NOT "fix" the token itself toward yellow — --amber is
+           used for text elsewhere and yellow fails the small-text floor on
+           white. #230's candidate fix is the other move: a SEPARATE
+           fill-only token, which answers to WCAG 1.4.11's 3:1 non-text
+           bar rather than 4.5:1 and so may run brighter. That needs the
+           owner's ruling, and it must never be used for text.
            ══════════════════════════════════════════════════════════════ */
         .ahu-damper-frame {
             fill: var(--surface);
@@ -719,13 +727,14 @@ noindex: true
             flex: none;
         }
         /* ⚠ COOLING SITS BETWEEN FAN AND HEATING IN THE KEY, DELIBERATELY.
-           In light theme --amber and --heat are two dark warm browns at the
-           same lightness (the measured collision is written out in the
-           identity-colour block above), and a legend is the one place they
-           would sit cheek by jowl. Putting blue between them costs nothing
-           and buys separation. It is an ADJACENCY mitigation only — it does
-           not make the two identifiable, which is the part that needs the
-           owner. Do not "tidy" the order back to air-path sequence. */
+           In light theme --amber and --heat are two dark warm hues at very
+           nearly the same lightness (the measurement is written out in the
+           identity-colour block above, and in codebase-issues #230), and a
+           legend is the one place they would sit cheek by jowl. Putting
+           blue between them costs nothing and buys separation. It is an
+           ADJACENCY mitigation only — it does not undo the darkening of
+           the two hues, which is the part that needs the owner. Do not
+           "tidy" the order back to air-path sequence. */
         .ahu-key-swatch.is-damper  { border-color: var(--amber); }
         .ahu-key-swatch.is-fan     { border-color: var(--accent); }
         .ahu-key-swatch.is-cooling { border-color: var(--blue); }

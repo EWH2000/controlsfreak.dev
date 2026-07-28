@@ -71,19 +71,29 @@ Then **Phase 8 — graduation** per the plan's tiered checklist.
 
 ## Open, and not covered by the program-sweep deferral
 
-- **`codebase-issues` #227 — FCU graphic a11y.** Two findings. (a) `#fcu-verdict`
-  carries `aria-live` but sits inside a `display:none` tab pane, so the safety
-  annunciation is silent to a screen reader on the Wiresheet tab — exactly
-  where you sit studying the program. ⚠️ Do **not** fix by moving the pill; the
-  fullscreen grid resolves `grid-area: verdict` only while it is a grid child
-  of that pane. Strip `aria-live` and add an `sr-only` mirror outside both
-  panes (house shape exists at `pid-tuner.html:339`). (b) `role="img"` now
-  wraps five focusable descendants; ⚠️ the naive `role="group"` swap is worse
+- **`codebase-issues` #227(b) — FCU graphic a11y.** `role="img"` now wraps
+  five focusable descendants; ⚠️ the naive `role="group"` swap is worse
   than the problem — it un-hides 19 `<text>` nodes already duplicated in the
-  `.fcu-points` mirror.
-- **`codebase-issues` #224** — verdict/chevron ΔT thresholds compare
-  display-unit values against a bare `-3`, so between −3 and −5.4 °F a metric
-  viewer reads "No ΔT across coil" while a US viewer sees healthy cooling.
+  `.fcu-points` mirror. Owner decision; the stale in-file comment it names is
+  deliberately left alone so (b) disposes as one unit.
+  **(a) is closed** — shipped on `fix/ddcw-pre-ahu-hygiene` as an `.sr-only`
+  mirror outside both panes, with prose-audit item 18's signature guard.
+- **`codebase-issues` #229** — `#fcu-ovr-state` is the same unguarded-10 Hz
+  live region on a different element, and unlike the verdict it announces a
+  drifting number. Found while fixing #227(a); deliberately not bundled.
+  ⚠️ Its signature MUST include the unit suffix (the verdict's need not).
+- ~~**`codebase-issues` #224**~~ — **closed** on `fix/ddcw-pre-ahu-hygiene`:
+  `COOLING_DT_TRIP` (°F) plus a canonical `datDeltaT(d)` on the physics-half
+  threshold shelf. The rule the AHU inherits is written into the file header
+  and pinned by a source-scan guard in `tests/ddcw-fcu-unit.spec.js`.
+- ~~**`codebase-issues` #223**~~ — **closed** on the same branch: the wiresheet
+  review rig un-clips the canvas before shooting, so the matrix stops cropping
+  tall/wide sheets. Pinned by `fbe-geometry.spec.js` layer C.
+- **`codebase-issues` #228 — engine standardisation** (owner direction, not
+  this arc). Air mixing has three disagreeing forms across four call sites and
+  `psychro-engine.js` has no mixing helper. It rises the moment the AHU lands,
+  because an AHU has a mixing box — that page should call a helper rather than
+  become the fifth implementation.
 - **`codebase-issues` #222 gates the "perf-profile clean" checklist item** —
   the flagged `layoutsPerFrame` row fires on a clean `main` build too, so it is
   not attributable to any one PR and the item cannot be satisfied as written

@@ -19,6 +19,18 @@
 > - **§7 and §8 (a11y) — still open**, not covered by the program-sweep
 >   deferral. Logged as `codebase-issues` **#227**.
 >
+> **Update 2026-07-27 (`fix/ddcw-pre-ahu-hygiene`): §7 and item 18 SHIPPED.**
+> #227 split — (a) closed, (b) still an owner decision. The pill lost its
+> `aria-live`, `#fcu-verdict-sr` (an `.sr-only` live region outside both
+> panes) carries the announcement, and one signature-guarded writer
+> `setVerdict()` owns both. Item 18 could not be left behind: measured
+> ~40 mutation records on the pill in a 2 s steady window, which is a
+> screen reader talking over itself ten times a second the moment a live
+> region carries that text. Full record at `codebase-issues` #227(a). One
+> adjacent element found and NOT bundled — `#fcu-ovr-state` has the same
+> unguarded-10 Hz defect and does announce a drifting number; logged as
+> `codebase-issues` **#229**.
+>
 > Measured at `main` @ `20e12ab`, stack tip `feat/ddcw-signed-coil-dt` @
 > `20ddf39`. Prose quoted from the signeddt worktree as audited — §3 and §6
 > have since been edited, so those quotes are the pre-fix text.
@@ -170,7 +182,9 @@ graphic and in the mirror, so the equation names a term the reader cannot see.
 
 ### 7. The safety annunciation is silent to screen readers on the Wiresheet tab
 
-`:777` · **WRONG** — the only WRONG in the set
+`:777` · **WRONG** — the only WRONG in the set · **FIXED 2026-07-27**
+(`fix/ddcw-pre-ahu-hygiene`), exactly as prescribed below — see
+`codebase-issues` #227(a)
 
 `#fcu-verdict` carries `aria-live="polite"` but sits inside
 `<div id="tab-unit" class="tab-pane">`, and `styles.css:1349` is
@@ -225,7 +239,7 @@ the SVG. Either way the stale comment must be corrected.
 | 15 | `:998` | NIT | "watch **the safety** act" — definite article on a DX fan coil, where the real protections are the hardwired LP switch and manufacturer freeze sensing. "the low-limit" costs nothing and removes the hierarchy claim. |
 | 16 | `:150` | NIT | CSS comment still enumerates two sensing devices; three ship. `e70fc28` rewrote the reader-facing desc and skipped the comment. |
 | 17 | `sensors.spec.js` | NIT | Test named "exposes an accessible name via a native SVG `<title>`" only does a DOM-presence check. Note: `toHaveAccessibleName` would **not** catch the pruning risk in item 8 — Playwright's accname implementation does not model ancestor `role="img"` pruning. |
-| 18 | `ddcw-fcu-unit.js:540` | NIT | Verdict `textContent` rewritten unguarded at 10 Hz; the sibling `offprogSig` pattern in `ddcw-shell.js:372` exists precisely to avoid that. Becomes load-bearing once item 7's mirror lands. |
+| 18 | `ddcw-fcu-unit.js:540` | NIT | ~~Verdict `textContent` rewritten unguarded at 10 Hz~~ — **SHIPPED 2026-07-27** with §7, because item 7's mirror is exactly what made it load-bearing. `setVerdict()` now carries the `offprogSig` signature guard (`ddcw-shell.js:372`), class included in the signature. Measured before: ~40 mutation records in a 2 s steady window; after: 0. |
 | 19 | `:507`, `:1023` | NIT | `aria-label` on a bare `<div>` (maps to `generic`, naming prohibited, attribute dropped). Two instances; fix both or neither. |
 
 ## Killed by refutation — do not re-raise
