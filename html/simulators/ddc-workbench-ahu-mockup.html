@@ -737,9 +737,11 @@ noindex: true
             padding: 0.12rem 0.5rem;
             white-space: nowrap;
         }
-        /* Derived rows — reproducible from two other numbers on the screen,
-           which is the same relationship ΔT has to DAT and MAT, hence the
-           same state. */
+        /* Derived rows — they fall out of other numbers on the screen rather
+           than being set by anyone, which is the same relationship ΔT has to
+           DAT and MAT, hence the same state. CALL carries the stage latch's
+           memory on top of that, so it is not a bare comparison of two live
+           wells — see the rail comment below the drawing. */
         .ahu-param-well.is-calc { border-color: var(--blue); color: var(--blue-ink); }
 
         /* ══════════════════════════════════════════════════════════════════
@@ -1185,7 +1187,7 @@ noindex: true
             the well's ink says where the number came from: plain bright for
             something a sensor measures, green for something the program
             commands or holds, blue in a blue-framed well for something
-            calculated from two other numbers on the screen. Booleans carry
+            calculated from other numbers on the screen. Booleans carry
             a state dot inside the well, and a false one goes dim.</p>
 
         <p class="ahu-thesis"><strong>The values that belong to no device
@@ -1392,10 +1394,12 @@ noindex: true
 
                      The cooling setpoint appears here AND in the rail's ZONE CONTROL
                      group. That is the one permitted duplication on this component,
-                     because space-against-setpoint is the comparison that explains why
-                     the unit is running at all. Live, all THREE copies must be written
-                     from one source in the same call: #ahu-v-cool-sp (this well),
-                     #ahu-p-cool-sp (the rail) and #ahu-r-cool-sp (the mirror). -->
+                     because that setpoint is the stage's break point — the stage makes
+                     at SP + deadband and breaks at SP — so space-against-setpoint is
+                     what tells a reader how close the call is to dropping out. Live,
+                     all THREE copies must be written from one source in the same
+                     call: #ahu-v-cool-sp (this well), #ahu-p-cool-sp (the rail) and
+                     #ahu-r-cool-sp (the mirror). -->
                 <g id="ahu-zone" data-callout-for="space-temp">
                     <rect class="ahu-zone-face" x="754" y="92" width="82" height="248"/>
                     <path class="ahu-zone-outline" d="M754 95 V92 H836 V340 H754 V325 M754 279 V141"/>
@@ -2163,13 +2167,14 @@ noindex: true
 
                         <p class="ahu-teach-p"><strong>How to read it.</strong> Every device the program can read or write carries its own colour — dampers amber, the fan green, the heating coil warm, the cooling coil blue — so you can find a device before you read a word. Colour is never the only channel, though: each device is also drawn as the thing it is, which is why the cooling coil carries the small wedge-shaped refrigerant distributor and feeder tubes that no hydronic coil has, and the heating coil carries a two-way valve on the pipes below it. A component drawn in plain grey has no point on it. Values sit in bordered wells tied to their device by a leader line: a green value is something the program is <strong>commanding</strong>, a plain value is something a sensor is <strong>measuring</strong>, and a blue value is <strong>calculated</strong> from the others.</p>
 
-                        <p class="ahu-teach-p"><strong>What the sequence is doing.</strong> The unit has a cooling call, and the 74.0 °F space reading is not on its own the reason for it: the space rose past the 75.0 °F make point, the stage latched on there, and it stays made until the space falls back to the 73.0 °F setpoint. So 74.0 on the way down still calls, where 74.0 on the way up would not. Outdoor air is 62.0 °F — below the 65.0 °F economizer lockout — so the program has driven the outside-air damper wide open and closed the return damper. Every cubic foot of supply air is outdoor air, which is why the mixed-air temperature reads the same as the outdoor-air temperature. Free cooling alone is not closing the gap, so the first stage of mechanical cooling has picked up the rest and the air leaves 7.0 °F colder than it arrived, at a 55.0 °F discharge. Read the ΔT well: it is discharge minus mixed air — the fan sits downstream of both coils on a draw-through unit, so that span covers the fan as well — and it goes negative whenever the unit is removing heat. When a unit stops doing its job, that is the number that collapses toward zero. The sequence itself is worked through on the <a href="/education/economizers.html">economizers lesson</a>.</p>
+                        <p class="ahu-teach-p"><strong>What the sequence is doing.</strong> The unit has a cooling call, and the 74.0 °F space reading is not on its own the reason for it: the space rose past the 75.0 °F make point, the stage latched on there, and it stays made until the space falls back to the 73.0 °F setpoint. So 74.0 falling from above 75.0 still calls, where 74.0 rising from below 73.0 would not. Outdoor air is 62.0 °F — below the 65.0 °F economizer lockout — so the program has driven the outside-air damper wide open and closed the return damper. Every cubic foot of supply air is outdoor air, which is why the mixed-air temperature reads the same as the outdoor-air temperature. Free cooling alone is not closing the gap, so the first stage of mechanical cooling has picked up the rest and the air leaves 7.0 °F colder than it arrived, at a 55.0 °F discharge. Read the ΔT well: it is discharge minus mixed air — the fan sits downstream of both coils on a draw-through unit, so that span covers the fan as well — and it goes negative whenever the unit is removing heat. When a unit stops doing its job, that is the number that collapses toward zero. The sequence itself is worked through on the <a href="/education/economizers.html">economizers lesson</a>.</p>
 
                         <!-- The deadband gloss. Heating 68.0 and cooling
                              73.0 are 5.0 apart, so a reader can take
                              "deadband 2.0" in the rail as a contradiction;
-                             it is the control deadband around the ACTIVE
-                             setpoint, not the separation between the two.
+                             it is the control deadband belonging to the
+                             ACTIVE setpoint, not the separation between the
+                             two.
                              The owner's own reason for wanting this
                              addressed: he has people confuse those two
                              numbers on real screens all the time.
@@ -2236,8 +2241,8 @@ noindex: true
                              ⚠ THE 5.0 °F SEPARATION IS NOT CALLED A
                              "DIFFERENTIAL" HERE, and that is a checked
                              decision, not a style preference. Nearly every
-                             use of that word in site copy — a couple of dozen
-                             across education, tools and the quiz banks —
+                             use of that word in site copy — across the
+                             lessons, the hydronics hub and the quiz banks —
                              means a difference between two MEASURED
                              quantities: pressure across a filter rack, a
                              differential-pressure status switch, differential
@@ -2255,7 +2260,7 @@ noindex: true
                              exists to remove. The terse SP DIFF caption is
                              safe because adjacency and the blue ink define
                              it; running prose says it plainly instead. -->
-                        <p class="ahu-teach-p"><strong>Setpoints and the deadband.</strong> The separation between the two setpoints and the deadband are easy to read as one number, and they are not. The cooling and heating setpoints sit 5.0 °F apart — 73.0 °F and 68.0 °F — and the SP DIFF well is that separation, 73.0 minus 68.0. Nothing sets it: move either setpoint and it follows, which is why it is inked blue like the ΔT well rather than the green its two neighbours carry. The 2.0 °F deadband is the smaller, separate thing, and it belongs to whichever setpoint is currently active rather than to the pair. On the cooling side it sits <em>above</em> the setpoint: the stage makes at 73.0 plus 2.0, or 75.0 °F, and breaks back at 73.0 °F. The setpoint is the cut-out, so the zone rides the band above the number on the screen and a degree of drift cannot short-cycle the compressor. That is also why a space of 74.0 °F can sit under a lit stage — between the two edges the call is held by a <a href="/education/comparators-and-deadband.html">latch</a>, not by a comparison against the setpoint.</p>
+                        <p class="ahu-teach-p"><strong>Setpoints and the deadband.</strong> The separation between the two setpoints and the deadband are easy to read as one number, and they are not. The cooling and heating setpoints sit 5.0 °F apart — 73.0 °F and 68.0 °F — and the SP DIFF well is that separation, 73.0 minus 68.0. Nothing sets it: move either setpoint and it follows, which is why it is inked blue like the ΔT well rather than the green its two neighbours carry. The 2.0 °F deadband is the smaller, separate thing, and it belongs to whichever setpoint is currently active rather than to the pair. On the cooling side it sits <em>above</em> the setpoint: the stage makes at 73.0 plus 2.0, or 75.0 °F, and breaks back at 73.0 °F. Here the setpoint is the cut-out, so the zone rides the band above the number on the screen and a degree of drift cannot short-cycle the compressor. That is also why a space of 74.0 °F can sit under a lit stage — between the two edges the call is held by a <a href="/education/comparators-and-deadband.html">latch</a>, not by a comparison against the setpoint.</p>
                     </section>
                 </div>
             </div>
@@ -2410,10 +2415,12 @@ noindex: true
              mirrored.
 
              ⚠ The cooling setpoint is the ONE permitted duplication on this
-             component (the zone box and the rail both carry it, because
-             space-against-setpoint is the comparison that explains why the
-             unit is running at all). Live, #ahu-v-cool-sp, #ahu-p-cool-sp and
-             #ahu-r-cool-sp must all be written in the same call. -->
+             component (the zone box and the rail both carry it, because that
+             setpoint is the stage's break point — the stage makes at
+             SP + deadband and breaks at SP — so space-against-setpoint tells
+             a reader how close the call is to dropping out). Live,
+             #ahu-v-cool-sp, #ahu-p-cool-sp and #ahu-r-cool-sp must all be
+             written in the same call. -->
         <section aria-labelledby="ahu-points-h">
             <h3 class="subhead" id="ahu-points-h">Live points</h3>
             <div class="ahu-points">
@@ -2576,7 +2583,7 @@ noindex: true
                 <tr>
                     <th scope="row">Zone / cooling setpoint</th>
                     <td>74.0 / 73.0 °F</td>
-                    <td>Two wells inside the zone box itself — the unmet degree that justifies stage 1</td>
+                    <td>Two wells inside the zone box itself — the space sits between the 75.0 °F make point and the 73.0 °F break point, so stage 1 is still made on its latch</td>
                 </tr>
             </tbody>
         </table>
