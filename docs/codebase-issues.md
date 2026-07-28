@@ -9543,6 +9543,43 @@ escape hatch; it means alarm site-wide.
 > and vertical bowtie already read, and the brief's own test — add the minimum
 > that separates them at a glance, then stop — is satisfied by one coil
 > gaining the part it really has.
+>
+> **FEEDER REFINEMENT (2026-07-28, same PR).** Owner's depiction review of the
+> shipped glyph: *"The DX coil distributor looks somewhat janky, I think
+> adding a 4th line for vertical symmetry and maybe changing the straight
+> lines to curves would do wonders."* So the numbers above describe the first
+> cut, not the drawing — **three feeders became four, and the rays became
+> curves.** Four is the symmetric count *and* the truthful one: three forces a
+> tube on the cone's axis, while four puts two above and two below with
+> nothing on it, and real distributors are built in even circuit counts.
+> The landings stay serpentine nodes one coil pitch apart — now
+> **y296 / 309 / 322 / 335**, so the cone's axis moves to **y315.5** and the
+> lowest feeder lands on the serpentine's lower free end, which also stops
+> that end dangling. Each feeder is a quadratic whose control point shares its
+> landing y, so it leaves the cone on the splay and **arrives horizontal**,
+> parallel to the pass it brazes into.
+>
+> **The corridor budget was rebalanced 6 / 7 / 7 → 4 / 5 / 11**, because 7
+> units is 6.5 CSS px at 0.9286 px/unit and no curve reads across it. That is
+> measured, not asserted: a quadratic's bow off its own chord is half its
+> control point's perpendicular distance from that chord, so on the old 7-unit
+> run the outer feeder bows **1.43 units (1.33 px) against a 1-unit stroke** —
+> one stroke width, a fattened line rather than a curve. At 11 it bows **2.22
+> units (2.06 px)**, better than two stroke widths, and the sweep reads; the
+> inner pair sit at 1.14 (1.06 px). That threshold is the reusable finding
+> here — on this drawing a curve needs roughly two stroke widths of bow before
+> it stops reading as a thick straight line, and the run length is what buys
+> it. The cone paid 2 units of length and the clear gap paid 2; the
+> cone's face and tip heights are untouched, so only its taper changed. New
+> **measured envelope: x490–506, y265–335**, and the bbox sweep returns five
+> hits, all explained — the casing and divider paths over-report (real
+> segments at y250 / y355 and x486, so the true clearances are 15.1 / 20 / 4);
+> the invisible `stroke-width: 0` mixed-air rail, which now crosses the top
+> feeder at ~(499,302) instead of ending on the old cone vertex; the DX link
+> box, which the feeders cross at x500 by design; and the serpentine itself at
+> x506, which is where feeders are supposed to land. The relational guard got
+> *stronger* rather than needing an edit — the DX group is now 10 units wider
+> than the heating coil's, against the spec's `> 4`.
 
 Found while verifying that the AHU round-2 graphic
 (`html/simulators/ddc-workbench-ahu-mockup.html`) does not rely on colour as
