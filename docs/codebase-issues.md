@@ -8786,3 +8786,33 @@ Smaller a11y items from the same audit (glyph names announce as objects not
 actions; "far wall" has no referent; `aria-label` on two bare `<div>`s where
 naming is prohibited; the verdict `textContent` rewritten unguarded at 10 Hz)
 are itemised in `docs/audits/2026-07-ddcw-prose/findings.md`.
+
+### 228. `--amber` and `--heat` are one colour in light theme *(noticed 2026-07-28, AHU round-2 depiction review — open, needs an owner ruling)*
+
+Measured straight from the two `:root` blocks in `styles.css`:
+
+| theme | `--amber` | `--heat` | ΔE76 | ΔL\* | luminance ratio |
+|---|---|---|---|---|---|
+| light | `#83641f` | `#9c5a14` | **18.0** | **0.6** | **1.02:1** |
+| dark  | `#e0a94a` | `#e8884a` | 23.1 | 6.8 | 1.23:1 |
+
+Dark is fine. **Light loses the lightness cue entirely** — the two separate
+on hue alone, so they are the same colour in greyscale, in print, and to a
+red-green-deficient reader. Anything that colour-codes a heating device and a
+damper on one surface loses the distinction there.
+
+Surfaced by the AHU round-2 graphic
+(`html/simulators/ddc-workbench-ahu-mockup.html`), whose whole thesis is
+finding a device by colour before reading a word: three amber dampers, a
+`--heat` serpentine and a `--heat` valve all render as one warm family at the
+same L\*. Shape still separates them at page scale, so it is a degradation
+rather than a failure, and the component mitigates the worst case by putting
+blue between the two swatches in its colour key — but that is an ADJACENCY
+fix, not an identifiability one.
+
+**Not fixable inside the component**: both are `:root` tokens, and `--heat`
+also carries the psychrometric chart's heating process lines and the
+education air diagrams, so a retune has a real blast radius. `--red` is not
+the escape hatch — it means alarm site-wide. The two candidate moves are a
+deeper / redder light `--heat`, or moving the damper identity off `--amber`
+(which costs the trade-conventional yellow-for-damper reading). Owner call.
