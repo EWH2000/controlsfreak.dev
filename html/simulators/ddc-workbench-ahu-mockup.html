@@ -2163,7 +2163,7 @@ noindex: true
 
                         <p class="ahu-teach-p"><strong>How to read it.</strong> Every device the program can read or write carries its own colour — dampers amber, the fan green, the heating coil warm, the cooling coil blue — so you can find a device before you read a word. Colour is never the only channel, though: each device is also drawn as the thing it is, which is why the cooling coil carries the small wedge-shaped refrigerant distributor and feeder tubes that no hydronic coil has, and the heating coil carries a two-way valve on the pipes below it. A component drawn in plain grey has no point on it. Values sit in bordered wells tied to their device by a leader line: a green value is something the program is <strong>commanding</strong>, a plain value is something a sensor is <strong>measuring</strong>, and a blue value is <strong>calculated</strong> from the others.</p>
 
-                        <p class="ahu-teach-p"><strong>What the sequence is doing.</strong> The space is 74.0 °F against a 73.0 °F cooling setpoint, so the unit has a cooling call. Outdoor air is 62.0 °F — below the 65.0 °F economizer lockout — so the program has driven the outside-air damper wide open and closed the return damper. Every cubic foot of supply air is outdoor air, which is why the mixed-air temperature reads the same as the outdoor-air temperature. Free cooling alone is not closing the gap, so the first stage of mechanical cooling has picked up the rest and the air leaves 7.0 °F colder than it arrived, at a 55.0 °F discharge. Read the ΔT well: it is discharge minus mixed air — the fan sits downstream of both coils on a draw-through unit, so that span covers the fan as well — and it goes negative whenever the unit is removing heat. When a unit stops doing its job, that is the number that collapses toward zero. The sequence itself is worked through on the <a href="/education/economizers.html">economizers lesson</a>.</p>
+                        <p class="ahu-teach-p"><strong>What the sequence is doing.</strong> The unit has a cooling call, and the 74.0 °F space reading is not on its own the reason for it: the space rose past the 75.0 °F make point, the stage latched on there, and it stays made until the space falls back to the 73.0 °F setpoint. So 74.0 on the way down still calls, where 74.0 on the way up would not. Outdoor air is 62.0 °F — below the 65.0 °F economizer lockout — so the program has driven the outside-air damper wide open and closed the return damper. Every cubic foot of supply air is outdoor air, which is why the mixed-air temperature reads the same as the outdoor-air temperature. Free cooling alone is not closing the gap, so the first stage of mechanical cooling has picked up the rest and the air leaves 7.0 °F colder than it arrived, at a 55.0 °F discharge. Read the ΔT well: it is discharge minus mixed air — the fan sits downstream of both coils on a draw-through unit, so that span covers the fan as well — and it goes negative whenever the unit is removing heat. When a unit stops doing its job, that is the number that collapses toward zero. The sequence itself is worked through on the <a href="/education/economizers.html">economizers lesson</a>.</p>
 
                         <!-- The deadband gloss. Heating 68.0 and cooling
                              73.0 are 5.0 apart, so a reader can take
@@ -2184,23 +2184,49 @@ noindex: true
                              graphic at odds with the published lesson. The
                              gloss keeps its paragraph.
 
+                             ⚠ THE SETPOINT IS THE CUT-OUT. Cooling makes at
+                             SP + deadband = 75.0 and breaks at SP = 73.0, so
+                             the zone rides the band ABOVE the number on the
+                             screen. Owner ruling 2026-07-28, and it is the
+                             convention the shipped FCU already carries and
+                             states in its own unit note — the two workbench
+                             components read as one house rule, not as two
+                             local choices. An earlier draft of this component
+                             had it the other way round (energise AT the
+                             setpoint, drop out 2.0 BELOW it); that is wrong
+                             and must not come back.
+
                              ⚠ SHARED LABEL AND CONCEPT, NOT SHARED
                              ARITHMETIC — do not "reconcile" the two pages.
                              The lesson builds its band SYMMETRICALLY, with
                              the DB constant as HALF the width (SP + DB and
                              SP − DB into two comparators and a latch: SP 74,
-                             DB 1, edges 75 and 73). This unit uses the FULL
-                             width hung on one side — cooling energises at the
-                             73.0 setpoint and drops out 2.0 below it. That is
+                             DB 1, edges 75 and 73). This unit hangs the FULL
+                             width on ONE side of the active setpoint. That is
                              the very full-vs-half split the lesson itself
                              calls out, and it is why the prose below says the
                              band BELONGS TO the active setpoint rather than
-                             sitting "around" it. Making this page symmetric
-                             to match the worked sheet would put the cooling
-                             pickup at 75.0 and kill the cooling call the
-                             whole screen is drawn around — space 74.0 would
-                             have no call, the lit DX stage would be wrong,
-                             and all four <desc> blocks would go with it.
+                             sitting "around" it.
+
+                             ⚠ AND THE TWO LAND ON THE SAME PAIR OF EDGES BY
+                             COINCIDENCE — lesson SP 74 with a half-width 1,
+                             this unit SP 73 with a full-width 2, both giving
+                             75 and 73. Matching edges out of different
+                             arithmetic is a trap rather than a reconciliation:
+                             move either setpoint or either constant and the
+                             two part company. Read the edges off each page's
+                             own numbers, never off the other's.
+
+                             ⚠ THE DEPICTED STATE IS A LATCHED MID-BAND ONE,
+                             AND IT IS VALID. Space 74.0 under a lit stage 1
+                             is NOT "74.0 is above 73.0, therefore a call" —
+                             at 74.0 rising there would be no call at all. The
+                             space passed 75.0, the stage's latch set, and
+                             nothing breaks it until 73.0. So do not "fix" the
+                             space temperature, the lit stage or any <desc> to
+                             close the apparent gap: the gap IS the deadband,
+                             and the prose below is what has to carry it.
+
                              What resolved the "two explanations of one
                              number" objection was the third option: the
                              SP DIFF row above now shows the other number, so
@@ -2229,7 +2255,7 @@ noindex: true
                              exists to remove. The terse SP DIFF caption is
                              safe because adjacency and the blue ink define
                              it; running prose says it plainly instead. -->
-                        <p class="ahu-teach-p"><strong>Setpoints and the deadband.</strong> The separation between the two setpoints and the deadband are easy to read as one number, and they are not. The cooling and heating setpoints sit 5.0 °F apart — 73.0 °F and 68.0 °F — and the SP DIFF well is that separation, 73.0 minus 68.0. Nothing sets it: move either setpoint and it follows, which is why it is inked blue like the ΔT well rather than the green its two neighbours carry. The 2.0 °F deadband is the smaller, separate thing, and it belongs to whichever setpoint is currently active rather than to the pair: cooling energises at the cooling setpoint and de-energises 2.0 °F below it, so the unit does not short-cycle on a degree of drift.</p>
+                        <p class="ahu-teach-p"><strong>Setpoints and the deadband.</strong> The separation between the two setpoints and the deadband are easy to read as one number, and they are not. The cooling and heating setpoints sit 5.0 °F apart — 73.0 °F and 68.0 °F — and the SP DIFF well is that separation, 73.0 minus 68.0. Nothing sets it: move either setpoint and it follows, which is why it is inked blue like the ΔT well rather than the green its two neighbours carry. The 2.0 °F deadband is the smaller, separate thing, and it belongs to whichever setpoint is currently active rather than to the pair. On the cooling side it sits <em>above</em> the setpoint: the stage makes at 73.0 plus 2.0, or 75.0 °F, and breaks back at 73.0 °F. The setpoint is the cut-out, so the zone rides the band above the number on the screen and a degree of drift cannot short-cycle the compressor. That is also why a space of 74.0 °F can sit under a lit stage — between the two edges the call is held by a <a href="/education/comparators-and-deadband.html">latch</a>, not by a comparison against the setpoint.</p>
                     </section>
                 </div>
             </div>
@@ -2245,12 +2271,22 @@ noindex: true
                  state, and every row in UNIT MODE is arithmetic on numbers
                  already on the screen. That derived group is where the
                  drawing teaches: ECONOMIZER — ENABLED because OAT 62.0 is
-                 below the 65.0 lockout; CALL — COOLING because space 74.0 is
-                 above the 73.0 cooling setpoint; MECH COOLING — STAGE 1 is
-                 what the sequence added when free cooling alone did not close
-                 the gap. Each is reproducible from two other numbers on the
-                 screen, which is the same relationship ΔT has to DAT and MAT
-                 — hence the same calculated well state.
+                 below the 65.0 lockout; CALL — COOLING because the space
+                 climbed past the 75.0 make point (cooling SP 73.0 + deadband
+                 2.0) and has not yet fallen to the 73.0 break point, so the
+                 call is latched at the 74.0 now on the screen; MECH COOLING —
+                 STAGE 1 is what the sequence added when free cooling alone
+                 did not close the gap. Each falls out of other numbers on the
+                 screen rather than being set by anyone, which is the same
+                 relationship ΔT has to DAT and MAT — hence the same
+                 calculated well state.
+
+                 ⚠ CALL is the one derived row that is not a bare comparison
+                 of live wells: it carries a latch's memory as well, so a
+                 reader checking it against space-versus-setpoint alone finds
+                 74.0 sitting under the 75.0 make point and reads the row as
+                 wrong. It is not — the deadband paragraph in the teaching
+                 block below the drawing is where that is answered.
 
                  ⚠ DERIVED IS A WELL STATE, NOT A GROUP. UNIT MODE happens to
                  be derived end to end, but SP DIFF is a calculated row
