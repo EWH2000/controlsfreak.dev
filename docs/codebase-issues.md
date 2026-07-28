@@ -6065,7 +6065,12 @@ remain in `## Recently addressed` at their numerical position:
 - **#65. `clamp()` is defined twice — once in `fbe-engine.js`, once
   in the editor page IIFE.** Trigger: a third caller appears,
   promoting `clamp` to `FBE.util.clamp(...)` or a shared
-  `html/scripts/util.js`.
+  `html/scripts/util.js`. **Trigger fired — folded into #228
+  (2026-07-27):** the 2026-07-27 duplication sweep counted seven
+  definitions, six byte-identical. #65's own cited path is also stale
+  (the editor page moved to `html/simulators/` and its IIFE was
+  extracted to `html/scripts/fbe-editor.js`). Schedule it with #228's
+  utility layer rather than on its own.
 - **#67. Function-block editor — type-mismatch on wire creation
   doesn't cancel pending.** Behavior is intentional (saves the user
   re-clicking the source pin); recorded so a future "fix" PR doesn't
@@ -8672,7 +8677,7 @@ event-driven CSS transitions, no rAF or interval — and liveness held
 tolerances under-absorb this box under load, and the re-baseline pass
 is where these numbers get settled.
 
-### 223. screenshot-wiresheets: canvas-element shots clip a scrolling sheet *(noticed 2026-07-27)*
+### 223. screenshot-wiresheets: canvas-element shots clip a scrolling sheet *(resolved 2026-07-27)*
 
 The matrix rig screenshots `surface.canvas` (`.fbe-canvas`), which is a
 scroll container — in `normal` mode (and even `fs-wide` for the 480-tall
@@ -8682,7 +8687,63 @@ A review pass that trusts the matrix alone can miss a defect below the
 fold. Fix candidates: shoot the `.fbe-canvas-inner` node with the canvas
 temporarily un-clipped, or scale the shot to the inner's full bounds.
 
-### 224. Workbench verdict/chevron ΔT thresholds compare DISPLAY-unit values against a fixed 3 *(noticed 2026-07-27, signed-ΔT lane)*
+**Resolved (2026-07-27, `fix/ddcw-pre-ahu-hygiene`).** Two corrections to
+the framing above, both measured before the fix:
+
+- **The vertical loss is the small one.** In `normal` mode the vertical
+  clip is 2 px at a 16 px root font and 0 px at 20 px (`30rem` = 600 px
+  there). The HORIZONTAL clip is 563–653 px — about 40 % of the 1401 px
+  workbench sheet, four whole columns. On `cool-2stage-safeties`, 16 of
+  32 blocks sat outside the `normal` shot and 12 of 32 outside `fs`.
+- **`fs` clips too, and worse than `fs-wide`**, and the public page is
+  affected as well (`proof` / `fs` loses an 88 px band including a
+  block). Of the 66 combinations measured, all but one lost something
+  (`workbench / cool-1stage · dark · F=20 · fs-wide` is the one that
+  fits) — so "every combination" would have been an overstatement, but
+  only just.
+
+Candidate (a) as written here — shoot the inner **with the canvas
+temporarily un-clipped** — was close: the un-clip is the load-bearing
+half and is exactly what shipped. What did not survive is shooting the
+*inner*. In fullscreen the inner is `width/height: 100%` of the canvas,
+so before the canvas grows it is smaller than the sheet; only
+`canvas.scrollWidth/scrollHeight` is the sheet. Once the canvas IS
+grown the inner re-resolves to match (measured 1238×392 → 1401×480), so
+either node would then work — the canvas is chosen because it carries
+the border and is one node instead of two. Candidate (b) alone is
+wrong: content an ancestor clips is never painted, so no clip rectangle
+or scale can recover it.
+
+The fix is `unclipForShot()` in `tests/screenshot-wiresheets.mjs`, run
+in the page before each shot: measure `scrollWidth/Height` while still
+clipped, walk every ancestor to `overflow: visible`, hide sticky/fixed
+page chrome with `visibility: hidden` (the sticky nav otherwise paints
+over the top band — `main` is a `z-index: 1` stacking context, so no
+z-index on the canvas can beat it), then grow the canvas to the content
+bounds. Two rAFs after: `reducedMotion: 'reduce'` turns on the
+`transition-duration: 0.01ms !important` kill switch, and with the
+initial `transition-property: all` every inline style write becomes a
+real transition, so the new size is not readable until a frame ticks.
+A `shotBoxDefects()` guard then throws rather than write a
+plausible-looking crop, retrying one frame first so a timing race
+cannot discard a ten-minute run, and the contact sheet writes in a
+`finally` so a partial run still yields a readable index. The caption
+now carries the shot size and the crop that WOULD have applied, which
+is how the fs / fs-wide "does the wide canvas fit?" question stays
+answerable.
+
+Pinned by `tests/fbe-geometry.spec.js` layer C (3 tests, in CI), which
+extracts the helper from the rig source rather than re-deriving it. Its
+three probes are picked so that deleting any of the helper's three
+steps goes red — in particular the ancestor un-clip, which a
+`getBoundingClientRect` probe is blind to (layout boxes do not know
+they are being paint-clipped), so it is asserted by re-reading each
+ancestor's computed `overflow`. Verified by mutation: deleting the
+ancestor walk, deleting the chrome-hide loop, and reverting the helper
+entirely each fail all three tests with a message that names the
+defect.
+
+### 224. Workbench verdict/chevron ΔT thresholds compare DISPLAY-unit values against a fixed 3 *(resolved 2026-07-27)*
 
 `fcuRenderUnit` computes `dtN` from the DISPLAYED operands (correct — the
 metric worked-example rounding policy) and then compares it against the
@@ -8697,6 +8758,46 @@ unit-dependence); noticed while flipping the sign, deliberately not fixed
 in that lane (scope). Fix candidate: derive the verdict from the CANONICAL
 delta (`d.datT - d.eatT`) against an IP constant, keeping `dtN` for paint
 only — one line each in the gate and the ladder.
+
+**Resolved (2026-07-27, `fix/ddcw-pre-ahu-hygiene`) exactly as the fix
+candidate says.** `COOLING_DT_TRIP = -3` (°F, signed) and
+`datDeltaT(d)` join the canonical-threshold shelf in
+`ddcw-fcu-unit.js`'s physics half next to `COIL_FLOOR` / `DAT_LOW_*`,
+and both comparisons keep their original `<=` / `>` shape on the
+canonical operand. The `>` form is deliberate over `!(… <= …)`: a
+non-finite delta must keep falling THROUGH that branch, and the negated
+form would catch it instead.
+
+One under-statement in the entry: `:489` gates two paints, not just the
+chevron stream — `downstreamColor` AND `#fcu-dat`'s `fill`. That is
+what gives the proof a cheap synchronous observable.
+
+Two behaviour deltas, both accepted. In US the trip point moves by at
+most 0.1 °F (`dtN` was the difference of two 0.1-rounded operands; the
+canonical delta is unrounded) — decide on the truth, paint the rounded
+number. In metric a reader now sees "Cooling — clear ΔT" beside a
+−2.0 °C badge, because −3 °F ≡ −1.7 °C. That reads odd and is correct:
+it is the house policy's own shape (engine computes in IP, converts at
+the display boundary), and the constant's comment says so, so nobody
+"fixes" it back.
+
+The freeze-watch branch's `d.coilLeaveT <= 42` was checked and is NOT
+the same bug — `coilLeaveT` is canonical °F off `derived`, never
+through `dispTempNum`. Same for `datT < DAT_LOW_TRIP` / `> DAT_LOW_CLEAR`.
+Do not touch either. `eatN` / `datN` / `spN` / `sensedN` were enumerated
+and are all write-only, so there is no third site.
+
+Two proofs. A Playwright test in `tests/ddc-workbench-fcu.spec.js` parks
+the coil inside the divergent band (−3.6 to −5.0 °F, reachable only on
+the ramp) and flips the units toggle: the number changes, the verdict,
+pill class and DAT fill do not. Pre-patch it fails with
+`Expected "Cooling — clear ΔT across the coil" / Received "No ΔT across
+coil — compressor not cooling"`. Plus a source-scan guard in
+`tests/ddcw-fcu-unit.spec.js` — the mechanical rule the AHU module
+copies. That guard's comparison operand is deliberately unconstrained:
+an earlier draft anchored it to a numeric literal, which would have
+passed the likeliest relapse, `dtN <= COOLING_DT_TRIP` (right constant,
+wrong operand).
 
 ### 225. The "2-stage + safeties" sheet has no airflow proof, so its DAT low-limit goes blind with the fan off *(noticed 2026-07-27, prose audit — deferred to the pre-live program sweep)*
 
@@ -8749,7 +8850,7 @@ unexplained.
 **Owner decision 2026-07-27: defer** to the same pre-live sweep as #225.
 Writeup: `docs/audits/2026-07-ddcw-prose/findings.md` §2 and §5.
 
-### 227. FCU graphic a11y: a live region inside a hidden pane, and `role="img"` over five focusable descendants *(noticed 2026-07-27, prose audit — open)*
+### 227. FCU graphic a11y: a live region inside a hidden pane, and `role="img"` over five focusable descendants *(noticed 2026-07-27, prose audit — (a) resolved 2026-07-27, (b) open)*
 
 Two findings from the same audit, both on the FCU workbench graphic, neither
 a program issue and so outside #225/#226's deferral.
@@ -8769,6 +8870,50 @@ while the pill is a grid child of that pane. Strip `aria-live` from the pill
 and add a persistent `sr-only` mirror outside both panes; the house shape
 already exists at `pid-tuner.html:339` (`#pid-sr-status`).
 
+**(a) resolved 2026-07-27 (`fix/ddcw-pre-ahu-hygiene`), exactly as
+prescribed** — and it had to carry prose-audit **item 18** with it, which
+is why that item is no longer listed below. The pill's `aria-live` is
+gone (and no `role="status"` took its place — that would reintroduce the
+same bug), `#fcu-verdict-sr` is an `.sr-only` live region parked beside
+`#ddcw-offprog` outside both panes, and one new writer `setVerdict()` in
+`ddcw-fcu-unit.js` owns both nodes. `html/styles.css` is untouched:
+`.sr-only` already ships at `:1916`, so no cache-bust obligation.
+
+Item 18 is not optional riding cargo here. The verdict was rewritten
+unguarded on every 10 Hz host tick — measured ~40 mutation records on
+`#fcu-verdict` in a 2 s STEADY window (text identical before and after).
+Harmless while the pill was the only writer; a screen reader talking over
+itself ten times a second the moment a live region carries that text. So
+`setVerdict` is signature-guarded on the shell's `offprogSig` idiom, with
+the class riding IN the signature so a class-only change can never be
+skipped. Deliberately not debounced the way pid-tuner's `announceMetrics`
+is — that page throttles a genuinely-changing metric; this one de-dups
+identical writes, and an annunciation must not be delayed. Residual,
+accepted: a plant hovering exactly on a verdict threshold can legitimately
+flip at up to 10 Hz.
+
+Two notes for whoever reads the code:
+
+- The mirror ships empty in MARKUP only. The shell's boot paint
+  (`hostTick`, `ddcw-shell.js:657`, called once before the 10 Hz interval
+  starts) fills it, so a reader landing on the page hears the current
+  verdict once — intended, and NOT the off-program window's
+  empty-and-in-tree contract.
+- The text-only signature is safe only because no verdict string carries
+  a number or a unit, so nothing has to re-render on `unitschange`
+  (contrast `offprogSig`, whose signature deliberately moves with the
+  toggle). Every branch was read to confirm it. A verdict line that ever
+  interpolates a temperature must fold the unit suffix into the
+  signature.
+
+Pinned by two tests in `tests/ddc-workbench-fcu.spec.js`. Pre-patch the
+first fails on `expect(aria-live).toBeNull() / Received "polite"`; the
+second on `pill repaints only on a verdict change / Expected <= 0 /
+Received 40`.
+
+**(b) stays open** — owner decision, untouched here, including the stale
+in-file comment it names, so (b) can be dispositioned as one unit.
+
 (b) **`role="img"` now wraps five focusable elements** — two `.fcu-link`
 drill-downs and three `role="button"` sensor groups. `img` is a
 presentational-children role. The in-file comment still calls this "the
@@ -8784,5 +8929,336 @@ either way; the stale comment needs correcting regardless.
 
 Smaller a11y items from the same audit (glyph names announce as objects not
 actions; "far wall" has no referent; `aria-label` on two bare `<div>`s where
-naming is prohibited; the verdict `textContent` rewritten unguarded at 10 Hz)
-are itemised in `docs/audits/2026-07-ddcw-prose/findings.md`.
+naming is prohibited) are itemised in
+`docs/audits/2026-07-ddcw-prose/findings.md`. The fourth — the verdict
+`textContent` rewritten unguarded at 10 Hz (item 18) — shipped with (a)
+above; see there for why it could not wait.
+
+### 228. Engineering math is re-implemented per page — air mixing carries three disagreeing forms and no shared helper exists *(noticed 2026-07-27, owner direction — scheduled separately, not this arc)*
+
+Owner direction, 2026-07-27: *"The air mixing disagreeing seems like an
+issue I'd like to fix, with all these things using it, it may be good to
+standardise some engines. Not part of this arc, but should be
+documented."* This entry is that record — a duplication sweep over
+`html/tools/`, `html/education/`, `html/simulators/` and `html/scripts/`
+with **no code changed**, so the work can be scheduled on its own.
+
+The sweep turned up three different things that look alike in a grep, and
+most of the value here is in keeping them apart:
+
+- **(a) Duplicated implementations that can silently diverge** — the real
+  defect class, and the only one worth a shared helper.
+- **(b) Deliberate pedagogical restatement** — a lesson or a methodology
+  note printing the formula it is teaching. Showing the arithmetic *is*
+  the page. Not a defect; a future sweep must not "fix" these.
+- **(c) Deliberately different arithmetic for a page-specific reason** —
+  a tool whose displayed math has to close on its own *displayed*
+  operands, or whose inverse solve constrains the form it can use. These
+  want a shared helper **family**, not a naive collapse onto one
+  function.
+
+#### The part that actually produces different numbers: air mixing
+
+Four call sites, three forms, and no helper anywhere:
+
+- **Mass-weight `W` and `h`, then recover dry-bulb by inverting
+  `h = (0.240 + 0.444·W)·T + 1061·W`** — the exact form.
+  `html/tools/air-mixing.html:546-549` and
+  `html/tools/psychrometric-chart.html:672-675` (the comment above each
+  spells the inversion out, near-identically).
+- **Linear blend on `T` and `W`** — `html/tools/economizer-ratio.html:535-537`.
+- **Linear blend on `T` only** — `html/tools/coil-freeze-risk.html:451-458`
+  (in integer tenths, see (c) below), and the same
+  `frac·OA + (1 − frac)·RA` inside the air-handlers lesson widget at
+  `html/education/air-handlers.html:718-720`.
+
+`html/scripts/psychro-engine.js` has **no mixing helper at all** —
+`grep -n 'mix' html/scripts/psychro-engine.js` returns exactly one hit
+and it is a comment. That comment (`:44-45`) already names air-mixing,
+coil-sizing and economizer-ratio as the engine's "candidate second
+consumers", so the gap is documented and simply never closed.
+
+Measured against the engine loaded in a `vm` (the
+`tests/psychro-engine.spec.js` pattern) — OA 35 °F / 80 % RH, RA
+75 °F / 50 % RH, 50 % OA, sea level:
+
+| form | DB | WB | RH | h |
+|---|---|---|---|---|
+| exact — air-mixing, psych chart | 55.1 °F | 49.7 °F | 68.8 % | 20.09 |
+| linear-T — economizer-ratio, coil-freeze-risk | 55.0 °F | 49.7 °F | 69.0 % | 20.06 |
+
+The gap is **0.06–0.13 °F of dry-bulb** across the realistic OA/RA band
+(largest on warm humid mixes, and it changes sign on hot dry ones) and
+about 0.2 points of RH — small, but visible at the one-decimal precision
+the tools print. The exact form is the right one: `h` and `W` mix
+linearly with mass, `T` does not, because `cp` carries `W`.
+
+**A bigger divergence sits underneath the formula, and it is about the
+input.** The same "% OA" figure is a **mass** fraction on three surfaces
+and a **volumetric** one on air-mixing's flow tab, which converts
+`CFM ÷ v` per stream at `html/tools/air-mixing.html:527`. air-mixing is
+the page that gets this right and says so — its inputs are labelled
+"Mass fraction (%)" (`:236`, `:261`, `:286`), the tab note at `:310-312`
+sends CFM readings to the other tab, and its FAQ frontmatter (`:13-14`)
+states the rule outright. The other three surfaces say only "% OA" /
+"Outdoor air (%)". Same field numbers on a design-day cold morning
+(OA 0 °F / 60 %, RA 70 °F / 30 %, 30 % OA): **49.1 °F** on a mass basis
+versus **46.9 °F** on a volumetric one — a **2.2 °F** spread, an order of
+magnitude past the formula disagreement, and invisible to a reader who
+assumes "% OA" means one thing site-wide.
+
+#### What is deliberate and must survive any fix
+
+The `cp = 0.240 + 0.444·W` line reads like a five-way duplication in a
+grep. It is not. Outside the engine there are exactly **two executable
+copies** — `air-mixing.html:549` and `psychrometric-chart.html:675`, both
+the inverted mixing form above. The rest are **prose**: `<code>` blocks in
+`coil-sizing.html:189` and `:308`, `air-mixing.html:213-214`, and the
+methodology note at `psychrometric-chart.html:476` / `:480`. Those pages
+teach the formula and then call the shared engine; the restatement is the
+content. Leave them.
+
+Same call on the affinity-law cube: `affinity-laws.html:296-298`
+computes `r`, `r²` and `r³` inline, and the pump-control widget
+recomputes the **cube alone** twice — `(r * r * r * 100).toFixed(0)` at
+`education/pump-control.html:784` and `Math.round(r * r * r * 100)` at
+`:915`. `education/vfds.html:308-313` is a **static markup table** of the
+same numbers — teaching, not a third implementation.
+
+#### Category (c): forms that differ on purpose
+
+Two of the mixing sites cannot simply adopt the exact form:
+
+- `economizer-ratio.html:493` **solves** `% OA` from the linear dry-bulb
+  relation `(MA − RA) ÷ (OA − RA)`, then rebuilds the mixed state at
+  `:535-537` with the matching linear blend so the reported MA dry-bulb
+  equals the setpoint the user asked for. Swap in the enthalpy inversion
+  and the tool's own headline stops closing on its own answer. A shared
+  helper has to offer the inverse, not just the forward direction.
+- `coil-freeze-risk.html:451-458` blends in integer tenths and rounds once
+  with ties away from zero, under a comment saying so — the metric
+  worked-example rounding policy (the displayed result must be the
+  arithmetic of the *displayed* operands). That constraint is real and
+  belongs in the helper's contract, not in a per-page reimplementation.
+
+#### Constants of the same class that disagree
+
+- **Fan heat.** `html/scripts/ddcw-fcu-unit.js:95` uses `FAN_HEAT = 0.6`
+  °F; the air-handlers lesson widget uses `FAN_HEAT = 1` at
+  `html/education/air-handlers.html:664` (with the lesson prose and
+  `simulators/ddc-workbench-fcu.html:940` both teaching the concept). Two
+  surfaces modelling the same draw-through pickup, 40 % apart. Neither is
+  wrong in isolation; nothing ties them.
+- **Freeze thresholds** are close but independent: `FREEZE_AT = 38`
+  (`air-handlers.html:665`), the freezestat default `value="38"`
+  (`coil-freeze-risk.html:119`, with `sp = us ? 38 : 3.3` at `:478`), and
+  the workbench's `COIL_FLOOR = 34` / `DAT_LOW_TRIP = 42`
+  (`ddcw-fcu-unit.js:96`, `:112-113`). Different jobs, so not a defect —
+  recorded so the next reader does not re-derive that.
+
+#### The rest of the sweep
+
+- **Round-duct area.** `ductArea(diaIn)` already exists at
+  `html/scripts/duct-engine.js:83` and is advertised in the engine header
+  (`:23`) — and `html/tools/airflow.html:323` and
+  `html/tools/duct-traverse.html:345` each reimplement it inline, with a
+  **byte-identical trailing comment** (`// (dia/12)/2 squared × π, in ft²`),
+  the clearest copy-paste in the sweep. The rectangular twin
+  `(w / 12) * (h / 12)` is duplicated the same way (`airflow.html:330`,
+  `duct-traverse.html:352`) — but note the asymmetry: `duct-engine.js`
+  has **no** rectangular-area function, and its header API list
+  (`:17-31`) confirms it. Adopting the round one is a `<script src>`;
+  the rect one needs a new export plus a header update. Neither tool
+  loads `duct-engine.js` today; `duct-sizer.html` is its only consumer.
+  Both pages are IIFE-wrapped, so the engine's top-level `DUCT_*` consts
+  will not collide — the cost is +6.4 KB on two pages.
+- **The mixing INVERSE is already copy-pasted inside one file.**
+  `(MA − RA) ÷ (OA − RA)` is written twice in `economizer-ratio.html` —
+  `:328` (dry-bulb tab) and `:493` (enthalpy tab) — with the displayed
+  formula string duplicated at `:365` / `:512` and near-identical
+  three-branch feasibility blocks at `:372-377` / `:519-527`. This is
+  the cheapest evidence for the claim in category (c) below that the
+  helper family has to offer the inverse: the inverse is already a
+  maintenance burden, and it has not even left the file yet.
+- **Mass flow from airflow.** `mDot = cfm * 60 / v` appears at
+  `psychro-engine.js:206` and `:244`, and again inline at
+  `html/tools/coil-sizing.html:501` — on a page that already loads the
+  engine.
+- **`cp` inside the engine itself.** `0.240 + 0.444 * inlet.W` is written
+  three times in `psychro-engine.js` (`:208`, `:215`, `:245`), and the
+  enthalpy relation once forward (`:87`) and twice inverted (`:156`,
+  `:249`). Contained, but it is the same defect one level down.
+- **`clamp(x, lo, hi)`** — **#65's revisit trigger has fired, three
+  callers over.** That entry deferred the fix in 2026-05-22 explicitly
+  "until a third caller appears". `grep -rnE '(const|let|function)\s+clamp\b' html/`
+  now returns **seven** definitions — six byte-identical, plus a seventh
+  that differs only in parameter names:
+
+  | site | form |
+  |---|---|
+  | `html/scripts/fbe-engine.js:54` | `const clamp = (x, lo, hi) => …` |
+  | `html/scripts/fbe-editor.js:602` | `function clamp(x, lo, hi) { … }` |
+  | `html/scripts/hydronic-engine.js:81` | `const clamp = (x, lo, hi) => …` |
+  | `html/scripts/refrigerant-loop-engine.js:125` | `const clamp = (x, lo, hi) => …` |
+  | `html/simulators/hydronic-loop-builder.html:507` | `const clamp = (x, lo, hi) => …` |
+  | `html/simulators/controller-wiring.html:1117` | `function clamp(x, lo, hi) { … }` |
+  | `html/index.html:693` | `const clamp = (x, a, b) => …` (params renamed) |
+
+  The count matters twice: it is the evidence that #65's trigger fired,
+  and an extraction scoped to the four sites an earlier pass listed
+  would leave three behind. **#65's own text has drifted** too — it
+  cites `html/tools/function-block-editor.html:897`, but the page moved
+  to `html/simulators/` and its IIFE was extracted to
+  `html/scripts/fbe-editor.js`. Fold #65 into this entry rather than
+  fixing it separately.
+- **`F2C` / `C2F`** — `units.js:47-48` (closure-private),
+  `thermistor-data.js:72`, `thermistor-calculator.html:373-374`, and a
+  snapped variant using `/ 1.8` instead of `* 5 / 9` at
+  `coil-freeze-risk.html:377`. The duplication has a cause worth naming:
+  `window.Units` deliberately exposes only *display-boundary* converters
+  (`Units.toCanonical.temp` is `isUS() ? x : C2F(x)` — state-dependent),
+  so a page needing an unconditional F→C has nothing to call.
+- **`q = 500 · GPM · ΔT`** — `hydronic-engine.js:89` (`K_BTU = 500`, its
+  comment already pointing at waterside-load) and
+  `waterside-load.html:184` (`const K = us ? 500 : 4.187`). Two
+  implementations of one constant, no shared consumer.
+- **`q = 1.08 · CFM · ΔT`** — `airside-load.html:310` holds it in a
+  `{ us, metric }` table; `equipment-airflow.html:501-502`, `:510`, `:531`
+  inline the literal.
+- **`V = 4005 · √VP`** — `airflow.html:334` and `duct-traverse.html:364` /
+  `:392`, each with its own copy of the constant.
+- **`tidy` / `snap`.** `const tidy = (n, dp) => parseFloat(n.toFixed(dp)).toString();`
+  is **byte-identical in 14 tool pages** (affinity-laws, airflow,
+  airside-load, coil-freeze-risk, duct-sizer, duct-traverse,
+  electrical-quick-calc, equipment-airflow, minimum-outdoor-air,
+  transformer-sizing, valve-authority, valve-cv, voltage-drop,
+  waterside-load), and `const snap = (n, dp) => parseFloat(tidy(n, dp));`
+  byte-identical in three of them (coil-freeze-risk, duct-sizer,
+  minimum-outdoor-air). Formatting, not physics — but it is the same
+  shape as #152's `rewriteInput`, which reached eight copies before
+  extraction.
+
+#### What is already right — the models the fix should copy
+
+- **Refrigerant P-T.** `tools/refrigerant-pt.html:319-326` loads
+  `refrigerant-data.js` + `refrigerant-loop-engine.js` and calls
+  `RefrigLoop.satTempAtP` / `pressAtSatTemp`, with a comment stating
+  "one interpolation source shared". The simulator uses the same engine.
+  This is the target shape.
+- **ASHRAE 62.1 ventilation.** One implementation in
+  `tools/minimum-outdoor-air.html`; `education/air-balancing.html:158`,
+  `:372` and `education/dedicated-outdoor-air.html:162` link to it
+  instead of restating the math.
+- **The economizers lesson** computes enthalpy from the shared
+  primitives (`education/economizers.html:447`, `:470-481`) rather than
+  inlining them — proof the engine reaches education pages fine.
+- **`thermistor-calculator.html:379`** carries an explicit "kept in step
+  with thermistor-data.js's `roundR`" comment. A hand-maintained mirror
+  is worse than a call, but a *labelled* mirror is far better than a
+  silent one, and the label is what makes it findable.
+
+#### Why this is not a one-afternoon extraction
+
+1. `ui.js`'s header says outright that "anything that does real
+   computation" does not live there, and `psychro-engine.js`'s header
+   splits flat ASHRAE primitives from the namespaced `Psychro.*`
+   combinators on a stated rationale. A mixing helper, a `ductArea`
+   re-use and a `clamp`/`tidy` utility land in three different homes; one
+   of them (a `html/scripts/util.js`) does not exist yet and #65 already
+   named it as a candidate.
+2. The forward form alone does not serve economizer-ratio (it needs the
+   inverse) or coil-freeze-risk (it needs displayed-operand arithmetic).
+3. Any page adopting an engine gains a `<script src>` and the engine
+   gains consumers — so the change is a `package.json.version` bump for
+   cache-busting, and a broad one.
+4. Several pages carry a `typeof` engine-load guard already
+   (codebase-issues #139 idiom — `if (typeof Psychro === 'undefined')` at
+   `coil-sizing.html:442`); new consumers need the same.
+
+#### Recommended action (for the lane that picks this up)
+
+Sequence by blast radius, smallest first. This is one entry covering
+four independently-shippable workstreams, so it is a checklist rather
+than a paragraph — the free wins can land and be marked without falsely
+closing the mixing hold:
+
+- [ ] **Free wins, no numbers move:** `ductArea` in airflow +
+  duct-traverse (load `duct-engine.js`), `mDot` in coil-sizing, the
+  three internal `cp` repeats in `psychro-engine.js`. The rect-area twin
+  rides along but is NOT free — `duct-engine.js` has no rectangular
+  function yet.
+- [ ] **Then the utility layer:** `clamp` (all seven sites) + `tidy` +
+  `snap` + an unconditional `F2C`/`C2F` into a new
+  `html/scripts/util.js` (or onto `Units` for the temperature pair),
+  **closing #65**.
+- [ ] **Then the real one:** a `Psychro.mixStreams(states, weights, opts)`
+  helper — exact form, explicit `basis: 'mass' | 'volumetric'` (define
+  what volumetric MEANS before pinning any number against it), plus the
+  inverse economizer-ratio needs — with the four call sites migrated and
+  a vm spec in `tests/psychro-engine.spec.js` pinning that all four agree
+  to the displayed precision.
+- [ ] **Decide the "% OA" basis question.** A copy fix on three pages
+  regardless of whether the helper lands, and the larger of the two
+  divergences.
+- [ ] **Owner call, separately:** whether `FAN_HEAT` should agree across
+  the FCU unit module and the air-handlers lesson widget, or whether the
+  lesson's round `1 °F` is a teaching choice worth keeping.
+
+A cross-page agreement spec is the natural gate for the mixing work, but
+write it in the direction the tools actually run: `economizer-ratio.html`
+has **no `% OA` input** on either tab — both take a mixed-air *setpoint*
+(`er-db-ma`, `er-h-ma`) and *output* the percentage, and when the mix is
+in range `ratio = pct/100` exactly, so its MA dry-bulb readout is the
+user's own setpoint echoed back. Type OA/RA + an MA setpoint into
+economizer-ratio, read `#er-h-pct`, then type the same OA/RA + that
+percentage into air-mixing's fraction tab and assert air-mixing's MA
+dry-bulb equals the setpoint. That fails today by 0.1 °F, for the right
+reason.
+
+**Priority:** MEDIUM. Nothing here is user-visibly wrong today — the two
+mixing forms differ by about a tenth of a degree, and the "% OA" basis
+gap is a documentation defect before it is a math one. It rises the
+moment the AHU workbench round lands, because an AHU has a mixing box:
+that page will need mixing math, and it should call a helper rather than
+become the fifth implementation.
+
+**Not this arc** (owner, 2026-07-27). Recorded here so the AHU brief can
+cite it.
+
+
+### 229. `#fcu-ovr-state` is a live region rewritten on every 10 Hz host tick *(noticed 2026-07-27)*
+
+Same defect as prose-audit item 18, on a different element, found while
+fixing #227(a) and deliberately not bundled into it — a distinct element
+with a distinct trigger.
+
+`html/simulators/ddc-workbench-fcu.html:880` carries `role="status"
+aria-live="polite"`, and `fcuRenderUnit` rewrites its `textContent` every
+tick. Measured with a `MutationObserver` over 2 s windows:
+
+```
+override OFF (arrival):  {"n":0}
+override ON:             {"n":20}
+```
+
+The zero is not a reprieve. With the override off the write is `''` onto
+an already-empty node, which produces no mutation records; with it ON the
+line interpolates the live, drifting zone temperature — *"Program reads
+75.7 °F — zone is actually 75.5 °F."* — so it genuinely announces ten
+times a second, on a string that changes almost every time. The
+`setVerdict` signature-guard idiom from #227(a) fixes it in about three
+lines, but note the signature here MUST include the unit suffix (unlike
+the verdict's, whose strings carry no numbers), or a metric toggle would
+leave a stale °F line on screen.
+
+It sits inside `#tab-unit` as well, so it has #227(a)'s hidden-pane
+problem too — benignly, since the only control that changes it is in the
+same pane, which is why the mirror is not obviously warranted here.
+
+Logging it matters more after #227(a) than before: the page now carries
+one signature-guarded live region and its unguarded twin sixty lines
+away, which invites a reader to copy the idiom without the measurement.
+
+Checked and fine: `#ddcw-fbe-status` (`:1027`) is inside `#tab-wiresheet`
+and written only on run / pause / reset — no spam, and its pane is up
+whenever it can change.

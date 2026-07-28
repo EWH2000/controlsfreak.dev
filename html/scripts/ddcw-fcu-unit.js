@@ -58,7 +58,13 @@
 // converts at the display boundary through the shell's Units statics
 // (DDCWShell.dispTempNum / tSuffix / dSuffix — codebase-issues #218),
 // so the graphic, the readout grid, the chip strip and the off-program
-// window all share ONE conversion path.
+// window all share ONE conversion path. THRESHOLDS STAY ON THE
+// CANONICAL SIDE OF THAT BOUNDARY: a verdict or a paint gate compares
+// a value off `derived` against an IP constant — never a display
+// number against a bare literal, which silently makes the threshold
+// mean °C for half the readers (codebase-issues #224). Display numbers
+// exist to be PAINTED; decisions read the plant. A second unit module
+// inherits this rule.
 //
 // Consumers: simulators/ddc-workbench-fcu.html (assembles the unit
 // object and calls DDCWShell.createWorkbench).
@@ -94,6 +100,28 @@ const DDCWFcuUnit = (function () {
     const RA_RH       = 50;                  // % — assumed return-air RH
     const FAN_HEAT    = 0.6;                 // °F picked up across the fan
     const COIL_FLOOR  = 34;                  // °F leaving-air clamp (freeze floor)
+    // "The coil is doing real work" line — SIGNED (leaving minus
+    // entering, so cooling is negative). It gates BOTH the downstream
+    // air colour and the no-ΔT verdict, and both read it against the
+    // CANONICAL delta below, never the displayed one: the badge number
+    // is display-unit (°C in metric), so a bare −3 there is a −3 °C ≈
+    // −5.4 °F threshold for a metric reader and a healthy 4 °F coil
+    // paints "no ΔT" (codebase-issues #224). The flip side is the
+    // intended one and looks odd until you know why: a metric reader
+    // now sees "Cooling — clear ΔT" beside a −2.0 °C badge, because
+    // the trip is −3 °F ≡ −1.7 °C. That is the house policy's own
+    // shape — the engine computes in IP and converts at the display
+    // boundary — so do not "fix" it back to a °C-looking number.
+    const COOLING_DT_TRIP = -3;              // °F — signed DAT − EAT
+    // The canonical delta those gates compare. Same operand pair the
+    // badge paints (DAT − EAT, fan heat included), straight off
+    // `derived` in °F — no Units round trip, so a units toggle can
+    // move the NUMBER on screen and never the diagnosis. Callable only
+    // AFTER fcuUpdate has filled the bag: `derived.datT` / `.eatT` are
+    // assigned at the end of that function, so calling this from inside
+    // it (or on a pre-first-update plant, whose `derived` is `{}`)
+    // returns NaN.
+    function datDeltaT(d) { return d.datT - d.eatT; }
     // DAT low-limit annunciator thresholds — the unit-side mirror of the
     // trip/clear constants the cool-2stage-safeties program carries in
     // its lowlim/hilim const blocks, and the same 42 °F line the
@@ -384,7 +412,7 @@ const DDCWFcuUnit = (function () {
     // Environment / clock knobs — sim inputs, not BACnet points:
     // no priority array, live regardless of any slot state.
     let speedSlider, speedValLbl, oaSlider, oaValLbl, loadSlider, loadValLbl;
-    let fanBlade, compDot, verdictEl, stageBtns, presetBtns;
+    let fanBlade, compDot, verdictEl, verdictSrEl, stageBtns, presetBtns;
     // On-graphic + readout-grid nodes (kept in one map so renderUnit writes
     // both surfaces from one source).
     let out;
@@ -411,6 +439,14 @@ const DDCWFcuUnit = (function () {
         fanBlade    = document.getElementById('fcu-fan-blade');
         compDot     = document.getElementById('fcu-comp-dot');
         verdictEl   = document.getElementById('fcu-verdict');
+        // Unguarded on purpose, like every other handle in here
+        // (zoneValLbl, ovrUnit …): a guard would make this one the odd
+        // one out. Worth knowing the cost — a null verdictSrEl throws
+        // inside fcuRenderUnit, which takes syncControls, the statusbar
+        // and the 10 Hz paint with it, so the failure mode is a frozen
+        // simulator rather than a loud error. Only reachable via
+        // HTML/JS cache skew (this file is loaded unversioned).
+        verdictSrEl = document.getElementById('fcu-verdict-sr');
         stageBtns   = document.querySelectorAll('#tab-unit [data-stage]');
         presetBtns  = document.querySelectorAll('#tab-unit [data-preset]');
 
@@ -440,6 +476,48 @@ const DDCWFcuUnit = (function () {
         pair[1].textContent = text;
     }
 
+    // ── verdict — ONE writer for the pill and its screen-reader mirror ──
+    // The pill (#fcu-verdict) lives inside #tab-unit, and .tab-pane is
+    // display:none while the Wiresheet is up, so aria-live ON THE PILL is
+    // out of the accessibility tree on exactly the tab where a reader is
+    // studying the program that raised the annunciation. The pill cannot
+    // move either — the fullscreen cockpit places it by `grid-area:
+    // verdict`, which only resolves while it is a grid child of that pane.
+    // So the pill is a mute readout and #fcu-verdict-sr (an .sr-only live
+    // region outside both panes) carries the announcement.
+    // codebase-issues #227a.
+    //
+    // SIGNATURE-GUARDED, the shell's offprogSig idiom (ddcw-shell.js:372):
+    // the host ticks at 10 Hz and repaints the unit every tick, and an
+    // unguarded rewrite of a live region is a screen reader talking over
+    // itself ten times a second (measured before this guard: ~40 mutation
+    // records on the pill in a 2 s steady window). The class rides IN the
+    // signature so a state whose text is unchanged can never skip its
+    // class change.
+    //
+    // Deliberately NOT debounced the way pid-tuner's announceMetrics is:
+    // that page throttles a genuinely-changing metric, this one de-dups
+    // identical writes, and an annunciation must not be delayed. The
+    // residual is boundary chatter — a plant hovering exactly on a verdict
+    // threshold can legitimately flip at up to 10 Hz. Accepted.
+    //
+    // ⚠️ The signature is text-only ON PURPOSE, and that only holds because
+    // no verdict string carries a number or a unit — nothing here has to
+    // re-render on the shell's `unitschange` event (contrast offprogSig,
+    // whose signature deliberately moves with the units toggle). A verdict
+    // line that ever interpolates a temperature MUST fold the unit suffix
+    // into the signature, or a metric toggle would leave a stale °F line
+    // on screen.
+    let verdictSig = null;
+    function setVerdict(cls, txt) {
+        const sig = cls + '|' + txt;
+        if (sig === verdictSig) return;
+        verdictSig = sig;
+        verdictEl.className = 'status-pill fcu-verdict' + (cls ? ' ' + cls : '');
+        verdictEl.textContent = txt;
+        verdictSrEl.textContent = txt;
+    }
+
     // ── paint — reads plant.derived; owns the DOM (graphic + verdict).
     // The displayed ΔT is the arithmetic of the displayed EAT / DAT so
     // the on-screen math closes (the metric worked-example rounding
@@ -451,8 +529,7 @@ const DDCWFcuUnit = (function () {
         const d = plant.derived;
         if (d.invalid) {
             setBoth(out.eat, '—'); setBoth(out.dat, '—'); setBoth(out.dt, '—');
-            verdictEl.className = 'status-pill fcu-verdict';
-            verdictEl.textContent = 'Enter a value.';
+            setVerdict('', 'Enter a value.');
             return;
         }
         // Displayed values — ΔT reconciles from the displayed operands,
@@ -484,9 +561,11 @@ const DDCWFcuUnit = (function () {
                         : (d.stage > 0 && d.fanOn) ? 'var(--red)' : 'var(--text-dim)');
 
         // Downstream air colour follows whether the coil is actually
-        // cooling; the chevron stream reads it to recolor air past the
-        // coil. ΔT is signed, so a clear cooling delta is ≤ −3.
-        const cooling = d.capActive && dtN <= -3;
+        // cooling; the chevron stream and the DAT number both read it.
+        // ΔT is signed, so a clear cooling delta is ≤ COOLING_DT_TRIP —
+        // measured on the CANONICAL delta, not the displayed dtN above
+        // (#224; the constant's note carries the why).
+        const cooling = d.capActive && datDeltaT(d) <= COOLING_DT_TRIP;
         downstreamColor = cooling ? 'var(--blue)' : 'var(--text-dim)';
         out.datG.setAttribute('fill', cooling ? 'var(--text-bright)' : 'var(--text-dim)');
         // Sole resume/suspend vector for the animation loop. renderUnit runs
@@ -528,17 +607,20 @@ const DDCWFcuUnit = (function () {
             cls = 'error'; txt = 'No ΔT across coil — low charge, not cooling';
         } else if (d.fault === 'airflow') {
             cls = 'error'; txt = 'No ΔT across coil — airflow fault, not cooling';
-        } else if (dtN > -3) {
+        } else if (datDeltaT(d) > COOLING_DT_TRIP) {
             // Signed ΔT: cooling drives it negative, so "no meaningful
-            // cooling delta" is anything ABOVE the −3 line.
+            // cooling delta" is anything ABOVE the trip line. Canonical
+            // delta, same reason as the chevron gate (#224). Kept as a
+            // `>` test rather than `!(… <= …)`: a non-finite delta must
+            // keep falling THROUGH this branch exactly as it did, and
+            // the negated form would catch it instead.
             cls = 'error'; txt = 'No ΔT across coil — compressor not cooling';
         } else if (d.coilLeaveT <= 42) {
             cls = 'warn';  txt = 'Cooling — but ΔT is high / airflow low (coil-freeze watch)';
         } else {
             cls = 'ok';    txt = 'Cooling — clear ΔT across the coil';
         }
-        verdictEl.className = 'status-pill fcu-verdict ' + cls;
-        verdictEl.textContent = txt;
+        setVerdict(cls, txt);
 
         // ── sensor override display — the real-vs-sensed split ──
         // The zone readout is the ACTUAL zone (eatN). The override box
