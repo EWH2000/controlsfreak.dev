@@ -9458,7 +9458,91 @@ genuinely wide blast radius: it also carries the psychrometric chart's
 heating process lines and the education air diagrams. `--red` is not the
 escape hatch; it means alarm site-wide.
 
-### 231. The AHU heating and cooling serpentines are the same drawing, separated by hue alone *(noticed 2026-07-28, spun out of #230's "colour is never the only channel" check — open, depiction decision)*
+### 231. The AHU heating and cooling serpentines are the same drawing, separated by hue alone *(noticed 2026-07-28, spun out of #230's "colour is never the only channel" check — **RESOLVED 2026-07-28**, owner ruled for the real hardware difference)*
+
+> **RESOLUTION (2026-07-28).** Owner's ruling, verbatim: *"draw real hardware
+> difference, but keep it simple, no need for complexity, especially with
+> color being different."* So none of the three options listed below shipped
+> as written — the ruling rejects the whole class they belong to. A different
+> pass count (option 1) or hatched bends (option 3) are **decorations chosen
+> to be different**; a caption (option 2) is a text channel bolted onto a
+> glyph that should say what it is by being drawn as what it is. What shipped
+> is the thing the machine actually has and the hydronic coil actually does
+> not: a **refrigerant distributor** on the DX coil.
+>
+> A DX evaporator is fed through a distributor — a small solid body, narrow
+> at the liquid connection and widening to an outlet face, with fine
+> equal-length feeder tubes fanning out to the coil's circuits — and leaves
+> through a suction connection. Nothing else on an air handler looks like it,
+> and no hydronic coil has one, so the cue is a *fact about the equipment*
+> rather than a mark applied to tell two pictures apart. It is also the
+> **minimum**: colour still carries most of the load, per the ruling, and the
+> shape is the supplement that survives when colour does not.
+>
+> **What shipped** (`html/simulators/ddc-workbench-ahu-mockup.html`, round-2
+> graphic only — the round-1 reference drawings are untouched, as always):
+> a wedge distributor body, three feeder tubes landing on the serpentine's
+> nodes one coil pitch apart, and a short suction stub with a header bar off
+> the serpentine's top end. Fed low, suction high — the arrangement that
+> returns oil, and the one the serpentine's two free ends already implied.
+> Two page-local classes, `.ahu-dist-body` (`fill: var(--surface)` with a
+> `var(--blue)` outline, the same form as `.ahu-valve-body`) and
+> `.ahu-dist-feeder` (`var(--blue)` at stroke-width 1, one step under the
+> serpentine's 1.5, which is the drawn difference between a capillary and a
+> coil tube). **No `html/styles.css` change was needed**, so #230's
+> `3.74.6` → `3.75.0` bump still covers the arc — no second bump owed.
+>
+> ⚠ **The body was drawn SOLID first and that was wrong — caught by looking
+> at the render, not the markup.** On this drawing a solid fill with
+> `stroke: none` is the ARROW idiom (`.ahu-arrow`), and the SVG header rule
+> is explicit: *arrowheads mean airflow and nothing else*. A filled wedge at
+> this size reads as a small block arrow, and it points **upstream**, which
+> is the one thing it must not say. Every component *body* on the drawing is
+> surface-filled and outlined — damper frames, louver frame, valve body,
+> sensor bodies — so the outline is what puts the distributor in the
+> component family instead of the airflow family. The greyscale cue is
+> carried by the **silhouette**, which was never the fill's job; the
+> capture confirms the outlined form separates the coils with hue removed.
+>
+> **Geometry, derived rather than eyeballed.** The station's clear corridor
+> is x486 (the section divider) to x506 (the serpentine's left face) — 20
+> units, spent as 6 clear / 7 cone / 7 feeder run. Measured envelope on the
+> rendered page: **x492–506, y265–322**. Clearances: DX leader at x526 and
+> its anchor at (526,344); HW valve return stub at x466; DX callout frame
+> corner (470,398), 76 below the assembly's lowest ink. A bbox sweep of every
+> drawn element in the round-2 SVG against that envelope returns four hits,
+> all of them explained: the casing and divider **paths** are multi-segment
+> and their bounding boxes over-report (their actual segments are at y250 /
+> y355 and x486); the cooling serpentine touches the envelope's right edge at
+> x506, which is where the feeders and the suction stub are *supposed* to
+> land; and the **invisible mixed-air centerline** ends at (500,302), the
+> cone's outlet-face top vertex. That rail is never painted (`stroke-width:
+> 0`) and already runs straight through the filter and the heating coil, so
+> it is not a new overlap — but the note is in the page, because the reserved
+> chevron layer would sample it.
+>
+> **Guarded** by a new relational assertion in
+> `tests/ddc-workbench-ahu-mockup.spec.js`: the DX link group carries
+> distributor geometry, the heating coil carries none, both coils stand the
+> same height, and the DX group's rendered bbox is **more than 4 units wider**
+> than the heating coil's. That last one is the load-bearing arm — it reads
+> geometry rather than class names, so deleting the distributor and leaving an
+> empty `<g>` behind still fails. The spec's scope note now records why one
+> depiction fact is pinned in a file that deliberately pins none: this is a
+> WCAG 1.4.1 property, not a drawing preference, and it is asserted
+> relationally so a future redraw is free to carry the cue differently.
+>
+> **Prose trued up in the same diff**, because three places explained the
+> colour-coding rule without the qualifier: the SVG header comment (a new
+> COLOUR IS A SUPPLEMENT, NEVER THE ONLY CHANNEL block, listing the shape
+> signature every other glyph already had), the round-2 thesis paragraph, and
+> the reader-facing *Reading this screen* block. The `<desc>` describes the
+> new geometry in the drawing's own neutral register.
+>
+> **Not done, deliberately:** the heating coil is unchanged. Its stubs, ticks
+> and vertical bowtie already read, and the brief's own test — add the minimum
+> that separates them at a glance, then stop — is satisfied by one coil
+> gaining the part it really has.
 
 Found while verifying that the AHU round-2 graphic
 (`html/simulators/ddc-workbench-ahu-mockup.html`) does not rely on colour as

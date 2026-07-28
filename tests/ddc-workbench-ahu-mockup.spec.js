@@ -19,6 +19,13 @@
 // page still RENDERS, in BOTH themes, with its identity colours resolving
 // to the tokens the colour code claims — the things that break silently.
 //
+// ONE DEPICTION FACT IS PINNED, and only because it is a WCAG 1.4.1
+// property rather than a drawing preference: the heating and cooling
+// coils must not be separated by hue alone (#231). It is asserted
+// relationally — the DX coil's silhouette is wider than the heating
+// coil's — so a future revision is free to redraw the cue, and only
+// deleting it fails.
+//
 // The identity-colour rows are the reason this landed with the -fill
 // tokens: `--amber-fill` / `--heat-fill` are the paint the drawing's
 // whole "find a device before you read a word" thesis rests on, and per
@@ -150,6 +157,78 @@ for (const theme of ['dark', 'light']) {
         }
     });
 }
+
+// codebase-issues #231. The two serpentines are the same drawing at a
+// 76-unit offset, so before the DX coil got its refrigerant distributor
+// the ONLY thing separating a heating coil from a cooling one was
+// `--heat-fill` versus `--blue` — dead in greyscale, dead on paper, dead
+// for a protanope. This is the one depiction fact the spec pins, and it
+// is pinned RELATIONALLY rather than by coordinate, per the scope note at
+// the top: what must hold is that the DX coil's drawn silhouette is not a
+// translate of the heating coil's, not that the cone sits at x492.
+test('the two coils are separated by shape, not by hue alone', async ({ page }) => {
+    await page.goto(URL, { waitUntil: 'domcontentloaded' });
+
+    const shape = await page.evaluate((sel) => {
+        const svg = document.querySelector(sel);
+        const linkOf = (id) => svg.querySelector(`#${id}`).closest('a');
+        const dx = linkOf('ahu-coil-dx');
+        const hw = linkOf('ahu-coil-hw');
+        const box = (el) => {
+            const b = el.getBBox();
+            return { w: +b.width.toFixed(2), h: +b.height.toFixed(2) };
+        };
+        const paintOf = (el) => {
+            const cs = getComputedStyle(el);
+            return { fill: cs.fill, stroke: cs.stroke };
+        };
+        const body = dx.querySelector('.ahu-dist-body');
+        return {
+            dxBody: dx.querySelectorAll('.ahu-dist-body').length,
+            dxFeeder: dx.querySelectorAll('.ahu-dist-feeder').length,
+            // The heating coil must NOT sprout one "for symmetry" — a
+            // hydronic coil has no distributor and the cue dies if both
+            // carry it.
+            hwDistributor: hw.querySelectorAll('.ahu-dist-body, .ahu-dist-feeder').length,
+            dxLink: box(dx),
+            hwLink: box(hw),
+            bodyPaint: paintOf(body),
+            feederPaint: paintOf(dx.querySelector('.ahu-dist-feeder')),
+            coolTube: getComputedStyle(svg.querySelector('.ahu-tube.is-cool')).stroke,
+        };
+    }, R2);
+
+    expect(shape.dxBody, 'the DX coil carries a distributor body').toBeGreaterThan(0);
+    expect(shape.dxFeeder, 'the DX coil carries feeder tubes').toBeGreaterThan(0);
+    expect(shape.hwDistributor, 'the hydronic coil carries no distributor').toBe(0);
+
+    // The load-bearing assertion: rendered geometry, not class names. The
+    // two link groups are the same 52x82 box around the same serpentine,
+    // so if the distributor is deleted these widths go equal again and
+    // this fails — which a class-presence check alone would not catch if
+    // someone left an empty <g> behind.
+    expect(shape.dxLink.h, 'both coils stand the same height').toBe(shape.hwLink.h);
+    expect(
+        shape.dxLink.w,
+        'the DX coil is visibly wider than the heating coil — its refrigerant connections',
+    ).toBeGreaterThan(shape.hwLink.w + 4);
+
+    // The distributor is part of the cooling coil, so it wears that coil's
+    // identity token — and per the house no-fallback rule a mistyped one
+    // resolves to empty and the part silently stops being drawn.
+    expect(shape.bodyPaint.stroke, 'the distributor body is outlined in the cooling identity colour')
+        .toBe(shape.coolTube);
+    expect(shape.feederPaint.stroke, 'feeder tubes carry the cooling identity colour')
+        .toBe(shape.coolTube);
+
+    // The body is a surface-filled OUTLINE, not a solid. On this drawing a
+    // solid fill with stroke:none is the arrow idiom, and a filled wedge
+    // reads as a block arrow pointing upstream — so this row is what
+    // catches a well-meaning "make it pop" fill later.
+    expect(shape.bodyPaint.fill, 'the distributor body is not a solid in the identity colour')
+        .not.toBe(shape.coolTube);
+    expect(shape.bodyPaint.fill, 'the distributor fill must resolve to a real colour').toMatch(/^rgb/);
+});
 
 test('the sensor glyph count matches the roster', async ({ page }) => {
     await page.goto(URL, { waitUntil: 'domcontentloaded' });

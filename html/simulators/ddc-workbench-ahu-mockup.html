@@ -290,10 +290,40 @@ noindex: true
         }
 
         /* Coil serpentines. The identity lives in the TUBE, never in the
-           link box — see the drill-down block below. */
+           link box — see the drill-down block below.
+           ⚠ The two serpentines are the SAME drawing on purpose: a coil is
+           a coil, and a heating and a cooling serpentine really do look
+           alike. What separates them is not the tube but the DX coil's
+           DISTRIBUTOR below — hue alone would not survive greyscale, print
+           or a protanope. codebase-issues #231. */
         .ahu-tube { fill: none; stroke-width: 1.5; }
         .ahu-tube.is-heat { stroke: var(--heat-fill); }
         .ahu-tube.is-cool { stroke: var(--blue); }
+
+        /* The DX coil's refrigerant distributor — the component signature
+           that tells a direct-expansion coil from a hydronic one with the
+           colour turned off. It carries the cooling coil's own identity
+           token because it IS part of that coil.
+           ⚠ SURFACE-FILLED WITH A COLOURED OUTLINE, exactly like the HW
+           valve body, and NOT a solid fill. This was drawn solid first and
+           it was wrong: on this drawing a solid fill with stroke:none is
+           the ARROW idiom (.ahu-arrow), the header's "arrowheads mean
+           airflow and nothing else" rule is explicit, and a filled wedge
+           the size of this one reads as a small block arrow pointing
+           UPSTREAM. Every component BODY here is surface-filled and
+           outlined — damper frames, louver frame, valve body, sensor
+           bodies — so the outline is what puts the distributor in the
+           component family instead of the airflow family. The silhouette
+           still carries greyscale; that was never the fill's job. */
+        .ahu-dist-body {
+            fill: var(--surface);
+            stroke: var(--blue);
+            stroke-width: 1.5;
+        }
+        /* Feeder tubes are genuinely thin — one step under the serpentine's
+           1.5, which is the drawn difference between a capillary and a coil
+           tube. */
+        .ahu-dist-feeder { fill: none; stroke: var(--blue); stroke-width: 1; }
 
         /* The hot-water control valve — same warm identity as the coil it
            serves, because it is that coil's device. */
@@ -1117,7 +1147,12 @@ noindex: true
             standing right beside the amber outside-air damper: the drawing
             itself says which one the program can move. The colour says what
             a device <em>is</em>, never what it is doing, so an idle heating
-            coil is still fully warm.</p>
+            coil is still fully warm. Colour is a supplement though, never
+            the only channel: every component is also drawn as the thing it
+            is, which is why the cooling coil carries the refrigerant
+            distributor feeding its circuits and the heating coil carries a
+            two-way valve on its pipes. Turn the colour off and the drawing
+            still reads.</p>
 
         <p class="ahu-thesis"><strong>Leader lines replaced the badge
             band.</strong> Round 1 put every value in one reserved
@@ -1181,6 +1216,15 @@ noindex: true
                       beside the amber OA damper, so the drawing itself says which one
                       the program can move.
 
+                 COLOUR IS A SUPPLEMENT, NEVER THE ONLY CHANNEL. Every glyph here also
+                 differs in SHAPE — damper frame aspect and blade angle, filter media
+                 slope and stroke weight, the fan's blades, the HW valve's vertical
+                 bowtie, the relief stream's dash. The two coil serpentines were the
+                 one pair that did not, and the DX coil's refrigerant distributor is
+                 what closed it (codebase-issues #231). A component identified by hue
+                 alone is gone in greyscale, gone on paper and gone for a protanope, so
+                 a component gets its shape signature BEFORE it gets a colour.
+
                  IDENTITY COLOUR IS CONSTANT — IT DOES NOT TRACK STATE. A damper at 0 %
                  is still amber; the heating coil with its valve shut is still warm. The
                  colour says what the device IS, the well says what it is DOING. If
@@ -1222,7 +1266,7 @@ noindex: true
                  role="img" aria-labelledby="ahu-title ahu-desc"
                  font-family="var(--mono)">
                 <title id="ahu-title">An air handler serving one zone, as a DDC supervisory graphic</title>
-                <desc id="ahu-desc">A single-zone constant-volume air handler drawn as a DDC supervisory graphic, laid out left to right in air-path order. Outdoor air arrives at the far left, marked by a block arrow, and enters through a fixed louvered intake plate set into the outdoor face of the unit casing; the louver and its slats are drawn in neutral grey line-art. A shielded outdoor-air temperature sensor is bracketed to that same outdoor face at the top of the intake plate: a wide solid roof slab with a shallow gable, then three thick tapering shield plates stacked below it and separated by hairline seams, with the sensing element running down the axis through the stack and its tip protruding below the lowest plate as an open bulb. Just inside the casing an outside-air damper is drawn in amber in a tall narrow frame that spans the full height of the intake opening, top to bottom, with three horizontal blades parallel to the horizontal airflow and standing clear of the frame ends. Return air arrives from the zone at the right, marked by a block arrow at the zone face, and runs leftward along a duct across the top of the drawing; a return-air insertion probe penetrates the top wall of that duct partway along its run, its head sitting above the duct and its stem reaching in toward the centerline. Further left a relief branch tees upward out of the top of the drawing through an amber relief damper drawn with three vertical blades, parallel to the upward flow, and above that damper a short dashed stem and a block arrow mark air leaving the building. Left of the tee the return duct continues and turns down in a short drop that lands on the top of the casing over the mixing box; an amber return-air damper sits in the throat of that drop in a short wide frame, its three horizontal blades running edge to edge across the downward flow. No flow arrow is drawn on the length of return duct between the relief branch and the drop, and none in the drop. Inside the casing the stations run left to right, separated by thin section dividers: the mixing box, then a filter rack drawn in neutral grey with three media diagonals, then a hot-water heating coil whose serpentine tube is drawn in the warm heating colour, then a direct-expansion cooling coil whose serpentine is drawn in the cool blue, then the supply fan, whose five blades are filled green around a bright hub. A two-way hot-water control valve with its actuator stem and bar sits on a pair of pipe stubs that pass down through the casing floor beneath the heating coil, drawn in the same warm colour as that coil; each stub ends in a short cross tick marking where the piping continues on to the plant. The mixed-air temperature sensor is drawn as an averaging element: its transmitter head sits on the casing top wall downstream of the mixing dampers and upstream of the filter, and one continuous capillary hangs below it in four full-depth vertical passes that span most of the plenum height, ending in a short clip at the far end. Downstream of the fan the supply duct leaves the casing on the right and runs to the zone, marked by a block arrow at the zone face, and a discharge-air insertion probe penetrates the top wall of that run just clear of the casing. The heating coil, the cooling coil and the supply fan are each drawn as a link into a matching simulator. The casing is tagged AHU-1, and the mixing box and filter stations carry captions beneath them. Nine titled callout boxes stand in the open space around the unit, each tied to its device by a thin leader line that ends in a small dot on that device's outline. Relief damper, tied to the relief damper: command 100 percent. Return damper, tied to the return-air damper in the drop: command 0 percent. Return air, tied to the return-air probe head: return-air temperature 75.0 degrees Fahrenheit. Outside air, tied to the outside-air damper: outdoor-air temperature 62.0 degrees Fahrenheit, and damper 100 percent. Mixed air, tied to the averaging element head: mixed-air temperature 62.0 degrees Fahrenheit. Heating coil, tied to the hot-water valve body: valve 0 percent. Cooling coil, tied to the cooling coil: stage 1 on, marked with a lit dot in its well, and stage 2 off, marked with an unlit dot and dimmed text. Supply fan, tied to the fan: speed 100 percent, status on with a lit dot, and proof made with a lit dot. Discharge air, tied to the discharge probe head: discharge-air temperature 55.0 degrees Fahrenheit, and a delta T of minus 7.0 degrees Fahrenheit carried in a blue-framed well. At the right the zone is drawn as a box with a space-temperature wall plate mounted flush on its far interior wall; the zone box carries two wells of its own, space temperature 74.0 degrees Fahrenheit and cooling setpoint 73.0 degrees Fahrenheit.</desc>
+                <desc id="ahu-desc">A single-zone constant-volume air handler drawn as a DDC supervisory graphic, laid out left to right in air-path order. Outdoor air arrives at the far left, marked by a block arrow, and enters through a fixed louvered intake plate set into the outdoor face of the unit casing; the louver and its slats are drawn in neutral grey line-art. A shielded outdoor-air temperature sensor is bracketed to that same outdoor face at the top of the intake plate: a wide solid roof slab with a shallow gable, then three thick tapering shield plates stacked below it and separated by hairline seams, with the sensing element running down the axis through the stack and its tip protruding below the lowest plate as an open bulb. Just inside the casing an outside-air damper is drawn in amber in a tall narrow frame that spans the full height of the intake opening, top to bottom, with three horizontal blades parallel to the horizontal airflow and standing clear of the frame ends. Return air arrives from the zone at the right, marked by a block arrow at the zone face, and runs leftward along a duct across the top of the drawing; a return-air insertion probe penetrates the top wall of that duct partway along its run, its head sitting above the duct and its stem reaching in toward the centerline. Further left a relief branch tees upward out of the top of the drawing through an amber relief damper drawn with three vertical blades, parallel to the upward flow, and above that damper a short dashed stem and a block arrow mark air leaving the building. Left of the tee the return duct continues and turns down in a short drop that lands on the top of the casing over the mixing box; an amber return-air damper sits in the throat of that drop in a short wide frame, its three horizontal blades running edge to edge across the downward flow. No flow arrow is drawn on the length of return duct between the relief branch and the drop, and none in the drop. Inside the casing the stations run left to right, separated by thin section dividers: the mixing box, then a filter rack drawn in neutral grey with three media diagonals, then a hot-water heating coil whose serpentine tube is drawn in the warm heating colour, then a direct-expansion cooling coil whose serpentine is drawn in the cool blue, then the supply fan, whose five blades are filled green around a bright hub. The cooling coil carries its refrigerant connections on the entering-air face, drawn in that same blue: off the lower left corner of the coil a wedge-shaped distributor body sits clear of the section divider, outlined in blue and filled with the panel behind it, narrow at its outboard end and widening toward the coil, and three fine feeder tubes fan from its wide face into the coil, one coil pitch apart, meeting the serpentine where its passes turn. Above them a short horizontal suction stub leaves the top of the serpentine and ends in a short vertical header bar. The heating coil has neither, and no other station on the unit carries a distributor. A two-way hot-water control valve with its actuator stem and bar sits on a pair of pipe stubs that pass down through the casing floor beneath the heating coil, drawn in the same warm colour as that coil; each stub ends in a short cross tick marking where the piping continues on to the plant. The mixed-air temperature sensor is drawn as an averaging element: its transmitter head sits on the casing top wall downstream of the mixing dampers and upstream of the filter, and one continuous capillary hangs below it in four full-depth vertical passes that span most of the plenum height, ending in a short clip at the far end. Downstream of the fan the supply duct leaves the casing on the right and runs to the zone, marked by a block arrow at the zone face, and a discharge-air insertion probe penetrates the top wall of that run just clear of the casing. The heating coil, the cooling coil and the supply fan are each drawn as a link into a matching simulator. The casing is tagged AHU-1, and the mixing box and filter stations carry captions beneath them. Nine titled callout boxes stand in the open space around the unit, each tied to its device by a thin leader line that ends in a small dot on that device's outline. Relief damper, tied to the relief damper: command 100 percent. Return damper, tied to the return-air damper in the drop: command 0 percent. Return air, tied to the return-air probe head: return-air temperature 75.0 degrees Fahrenheit. Outside air, tied to the outside-air damper: outdoor-air temperature 62.0 degrees Fahrenheit, and damper 100 percent. Mixed air, tied to the averaging element head: mixed-air temperature 62.0 degrees Fahrenheit. Heating coil, tied to the hot-water valve body: valve 0 percent. Cooling coil, tied to the cooling coil: stage 1 on, marked with a lit dot in its well, and stage 2 off, marked with an unlit dot and dimmed text. Supply fan, tied to the fan: speed 100 percent, status on with a lit dot, and proof made with a lit dot. Discharge air, tied to the discharge probe head: discharge-air temperature 55.0 degrees Fahrenheit, and a delta T of minus 7.0 degrees Fahrenheit carried in a blue-framed well. At the right the zone is drawn as a box with a space-temperature wall plate mounted flush on its far interior wall; the zone box carries two wells of its own, space temperature 74.0 degrees Fahrenheit and cooling setpoint 73.0 degrees Fahrenheit.</desc>
 
                 <!-- ══ 1 · DUCTWORK — exterior runs only ═══════════════════════════
                      Three coincident paths per run: a fattened BODY stroke (46) in the
@@ -1530,13 +1574,66 @@ noindex: true
 
                 <!-- DX cooling coil, downstream of the heating coil and upstream of
                      the fan. Stage 1 is on; the stage states ride in the callout's
-                     wells, not on the coil. -->
+                     wells, not on the coil.
+
+                     ⚠ THE DISTRIBUTOR IS WHAT MAKES THIS COIL A DX COIL WITHOUT
+                     COLOUR. The two serpentines are the same drawing at a 76-unit
+                     offset — same six passes, same 13 pitch, same 1.5 stroke — so
+                     before this the ONLY thing separating a heating coil from a
+                     cooling one was --heat-fill versus --blue. That fails in
+                     greyscale, on paper (ΔL* between the pair is 1.9 in dark) and
+                     for a protanope, and it was the one glyph pair on the drawing
+                     with no shape signature: the dampers differ in frame aspect and
+                     blade angle, the filter in media slope and stroke weight, the
+                     fan and the HW valve are unique outlines. codebase-issues #231.
+
+                     A refrigerant distributor is the signature: no hydronic coil has
+                     one, and nothing else on an air handler looks like it. Drawn as
+                     the real part — a wedge body, narrow at the liquid connection
+                     and widening to the outlet face, with fine feeder tubes fanning
+                     to the coil's circuits. FED LOW, SUCTION HIGH, which is the
+                     arrangement that returns oil; the serpentine's two free ends sit
+                     at x506 y335 and y270, so the drawn tube already lands that way.
+
+                     GEOMETRY, DERIVED — the station's clear corridor is x486 (the
+                     section divider) to x506 (the serpentine's left face), 20 units,
+                     and the whole assembly lives in it:
+                         6  clear to the divider   (cone starts x492)
+                         7  cone                   (x492-499, face 16 tall)
+                         7  feeder run             (x499-506)
+                     Feeders land on serpentine NODES at y296 / 309 / 322 — one coil
+                     pitch apart, which is what real circuit spacing looks like — and
+                     the fan is symmetric (dy -10 / 0 / +10) about the cone's y309
+                     axis. MEASURED ENVELOPE ON THE RENDERED PAGE: x492-506, y265-322.
+                     Clearances from it: divider x486 (6), HW valve return stub x466
+                     (26), DX leader x526 and its anchor (526,344) — 20 — and the DX
+                     callout frame corner (470,398), 76 below the lowest ink.
+
+                     The suction stub and the feeders cross the link box's left edge at
+                     x500 ON PURPOSE: that rect is the coil's frame as well as the
+                     drill-down affordance, and pipe entering a coil frame is what the
+                     machine does. The only other thing the envelope touches is the
+                     INVISIBLE mixed-air centerline, which ends at (500,302) — the
+                     cone's outlet-face top vertex. That rail is never painted and
+                     already runs straight through the filter and the HW coil, so this
+                     is not a new overlap; but if the reserved chevron layer is ever
+                     populated, check the last chevron on the MA run.
+
+                     RE-DERIVE THIS BLOCK IF THE SERPENTINE OR THE DIVIDER MOVES. -->
                 <a class="ahu-link" href="/simulators/refrigerant-loop.html"
                    aria-label="Open the refrigerant-loop simulator — the vapor-compression loop behind this DX coil">
                     <title>Open the refrigerant-loop simulator</title>
                     <rect class="ahu-link-box" id="ahu-coil-dx" x="500" y="262" width="52" height="82"/>
                     <path class="ahu-tube is-cool"
                           d="M506 270 H546 V283 H506 V296 H546 V309 H506 V322 H546 V335 H506"/>
+                    <g id="ahu-dx-refrig">
+                        <path class="ahu-tube is-cool" id="ahu-dx-suction"
+                              d="M506 270 H495 M495 265 V275"/>
+                        <path class="ahu-dist-feeder" id="ahu-dx-feeder"
+                              d="M499 306 L506 296 M499 309 H506 M499 312 L506 322"/>
+                        <path class="ahu-dist-body" id="ahu-dx-distributor"
+                              d="M492 307 V311 L499 317 V301 Z"/>
+                    </g>
                 </a>
 
                 <!-- Supply fan, downstream of BOTH coils: this is a draw-through unit,
@@ -2012,7 +2109,7 @@ noindex: true
 
                         <p class="ahu-teach-p"><strong>What this screen is.</strong> The supervisory graphic for a single-zone air handler — the screen a technician opens to see what the unit is doing right now. Air runs left to right: outdoor air at the intake, return air down from the zone, the two streams blending in the mixing box, then the filter, the heating coil, the cooling coil and the supply fan.</p>
 
-                        <p class="ahu-teach-p"><strong>How to read it.</strong> Every device the program can read or write carries its own colour — dampers amber, the fan green, the heating coil warm, the cooling coil blue — so you can find a device before you read a word. A component drawn in plain grey has no point on it. Values sit in bordered wells tied to their device by a leader line: a green value is something the program is <strong>commanding</strong>, a plain value is something a sensor is <strong>measuring</strong>, and a blue value is <strong>calculated</strong> from the others.</p>
+                        <p class="ahu-teach-p"><strong>How to read it.</strong> Every device the program can read or write carries its own colour — dampers amber, the fan green, the heating coil warm, the cooling coil blue — so you can find a device before you read a word. Colour is never the only channel, though: each device is also drawn as the thing it is, which is why the cooling coil carries the small wedge-shaped refrigerant distributor and feeder tubes that no hydronic coil has, and the heating coil carries a two-way valve on the pipes below it. A component drawn in plain grey has no point on it. Values sit in bordered wells tied to their device by a leader line: a green value is something the program is <strong>commanding</strong>, a plain value is something a sensor is <strong>measuring</strong>, and a blue value is <strong>calculated</strong> from the others.</p>
 
                         <p class="ahu-teach-p"><strong>What the sequence is doing.</strong> The space is 74.0 °F against a 73.0 °F cooling setpoint, so the unit has a cooling call. Outdoor air is 62.0 °F — below the 65.0 °F economizer lockout — so the program has driven the outside-air damper wide open and closed the return damper. Every cubic foot of supply air is outdoor air, which is why the mixed-air temperature reads the same as the outdoor-air temperature. Free cooling alone is not closing the gap, so the first stage of mechanical cooling has picked up the rest and the air leaves 7.0 °F colder than it arrived, at a 55.0 °F discharge. Read the ΔT well: it is discharge minus mixed air — the fan sits downstream of both coils on a draw-through unit, so that span covers the fan as well — and it goes negative whenever the unit is removing heat. When a unit stops doing its job, that is the number that collapses toward zero. The sequence itself is worked through on the <a href="/education/economizers.html">economizers lesson</a>.</p>
 
