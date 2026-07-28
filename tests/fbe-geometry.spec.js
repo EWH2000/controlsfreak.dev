@@ -480,3 +480,257 @@ test.describe('fbe-geometry: layer B — drag clamp at a 20 px root font (#208)'
         expect(res.right).toBeLessThanOrEqual(res.innerW + 0.5);
     });
 });
+
+// ── Layer C: the review rig captures the WHOLE sheet (#223) ─────────
+//
+// tests/screenshot-wiresheets.mjs screenshots .fbe-canvas — a SCROLL
+// container — so an unprepared element shot captures only the band that
+// is scrolled into view and drops the rest of the sheet without saying
+// so. The rig's unclipForShot() is the fix, and this is where its
+// invariant is asserted, because the rig's own header defers here ("a
+// screenshot can't assert, and the geometry invariants already live in
+// fbe-geometry.spec.js").
+//
+// The helper is EXTRACTED FROM THE RIG SOURCE and evaluated in the page,
+// never re-derived — same posture, and same reason, as extractWirePath()
+// above: a spec that reimplements the thing it checks checks nothing.
+// Extraction also sidesteps the rig being an ESM entry point that
+// launches a browser at import time.
+//
+// SCOPE, stated so nobody reads more into a green run than is there:
+// what is pinned is the HELPER. The rig's SEQUENCING around it — the
+// two-rAF settle, the shotBoxDefects guard, the caption plumbing — is
+// re-implemented below rather than extracted, so deleting the rig's own
+// frame wait leaves this layer green. The three probes are chosen so
+// that deleting any of the helper's THREE steps goes red: the size
+// write (assertion 1), the ancestor un-clip (assertion 2 — and only
+// that one, because a getBoundingClientRect probe is blind to paint
+// clipping), and the chrome hide (assertion 4).
+
+const RIG_SRC = fs.readFileSync(
+    path.join(__dirname, 'screenshot-wiresheets.mjs'), 'utf8');
+
+// unclipForShot sits at top level in the rig, so the first `\n}` at
+// column 0 closes it. null (not a throw) so a missing helper fails only
+// layer C, with a message that names the defect.
+const UNCLIP_SRC = (() => {
+    const m = RIG_SRC.match(/^function unclipForShot\(sel\) \{[\s\S]*?\n\}/m);
+    return m ? m[0] : null;
+})();
+
+// Apply the extracted helper, then wait the two frames the rig waits.
+// Load-bearing: reducedMotion (forced below, because the rig forces it)
+// turns on styles.css's kill switch, which sets
+// `transition-duration: 0.01ms !important` on `*`; with the initial
+// `transition-property: all` every inline style write becomes a real
+// transition, and the canvas reports its OLD size until a frame ticks.
+async function applyUnclip(page, canvasSel) {
+    if (!UNCLIP_SRC) {
+        throw new Error('unclipForShot() not found in '
+            + 'tests/screenshot-wiresheets.mjs — the wiresheet review rig is '
+            + 'shooting .fbe-canvas unprepared, so every matrix shot is '
+            + 'cropped at the scroll fold (#223)');
+    }
+    const res = await page.evaluate('(() => { ' + UNCLIP_SRC
+        + '\n return unclipForShot(' + JSON.stringify(canvasSel) + '); })()');
+    await page.evaluate(() => new Promise((r) =>
+        requestAnimationFrame(() => requestAnimationFrame(r))));
+    return res;
+}
+
+// What must be inside the shot (blocks + the SVG wire layer, which is
+// sized to the whole canvas coordinate space); which ancestors would
+// still PAINT-clip it (rects cannot see that, so it has to be read off
+// computed style); what would paint OVER it; and how much the container
+// is currently scrolled away from showing.
+function inspectShotBox(page, canvasSel, innerSel) {
+    return page.evaluate(({ canvasSel, innerSel }) => {
+        const el = document.querySelector(canvasSel);
+        const inner = document.querySelector(innerSel);
+        const box = el.getBoundingClientRect();
+        const name = (n) => n.tagName.toLowerCase()
+            + '.' + (String(n.className || '').split(' ')[0] || '');
+        const nodes = Array.from(inner.querySelectorAll('.fbe-block'));
+        const svg = inner.querySelector('svg');
+        if (svg) nodes.push(svg);
+        const outside = [];
+        nodes.forEach((n) => {
+            const r = n.getBoundingClientRect();
+            if (r.left < box.left - 0.5 || r.top < box.top - 0.5
+                || r.right > box.right + 0.5 || r.bottom > box.bottom + 0.5) {
+                outside.push((n.dataset && n.dataset.id) || n.tagName.toLowerCase());
+            }
+        });
+        // Paint clipping is invisible to every rect above. An ancestor
+        // whose computed overflow is not `visible` cuts the PNG at its
+        // own edge while every block still reports an in-box rect.
+        const clippingAncestors = [];
+        for (let p = el.parentElement; p; p = p.parentElement) {
+            const cs = getComputedStyle(p);
+            if (cs.overflowX !== 'visible' || cs.overflowY !== 'visible') {
+                clippingAncestors.push(name(p));
+            }
+        }
+        const covering = [];
+        let hiddenChrome = 0;
+        document.querySelectorAll('body *').forEach((n) => {
+            if (n === el || n.contains(el) || el.contains(n)) return;
+            const cs = getComputedStyle(n);
+            if (cs.position !== 'fixed' && cs.position !== 'sticky') return;
+            if (cs.display === 'none') return;
+            if (cs.visibility === 'hidden') { hiddenChrome += 1; return; }
+            const r = n.getBoundingClientRect();
+            if (!r.width || !r.height) return;
+            if (r.right > box.left && r.left < box.right
+                && r.bottom > box.top && r.top < box.bottom) {
+                covering.push(name(n));
+            }
+        });
+        return {
+            outside,
+            covering,
+            clippingAncestors,
+            hiddenChrome,
+            box: { w: Math.round(box.width), h: Math.round(box.height) },
+            clipped: {
+                x: Math.max(0, el.scrollWidth - el.clientWidth),
+                y: Math.max(0, el.scrollHeight - el.clientHeight),
+            },
+        };
+    }, { canvasSel, innerSel });
+}
+
+// Block rects in canvas-inner coordinates — the un-clip must not RE-LAY
+// the layout it is photographing.
+function blockLayout(page, innerSel) {
+    return page.evaluate((sel) => {
+        const inner = document.querySelector(sel);
+        const base = inner.getBoundingClientRect();
+        return Array.from(inner.querySelectorAll('.fbe-block')).map((b) => {
+            const r = b.getBoundingClientRect();
+            return [b.dataset.id, Math.round(r.left - base.left),
+                Math.round(r.top - base.top), Math.round(r.width), Math.round(r.height)];
+        });
+    }, innerSel);
+}
+
+test.describe('fbe-geometry: layer C — the review rig captures the whole sheet (#223)', () => {
+
+    // The rig forces reduced motion; forcing it here too is what makes
+    // this spec exercise the transition trap the frame wait exists for.
+    test.use({ reducedMotion: 'reduce', viewport: { width: 1280, height: 800 } });
+
+    // Both consumer surfaces, and both directions of the clip: the
+    // workbench's 1401 px canvas overflows HORIZONTALLY in the in-flow
+    // card (563 px at F=16), and a full-height sheet overflows
+    // VERTICALLY in fullscreen, where the canvas is only 392 px tall at
+    // 1280×800 (88 px lost, on BOTH pages).
+    const CASES = [
+        { key: 'ddc-workbench-fcu', sheet: 'cool-2stage-safeties', fullscreen: false },
+        { key: 'ddc-workbench-fcu', sheet: 'cool-2stage-safeties', fullscreen: true },
+        { key: 'function-block-editor', sheet: 'proof', fullscreen: true },
+    ];
+
+    const SEL = {
+        'function-block-editor': { canvas: '#fbe-canvas', inner: '#fbe-inner' },
+        'ddc-workbench-fcu': { canvas: '#ddcw-fbe-canvas', inner: '#ddcw-fbe-inner' },
+    };
+
+    // Same load sequence the rig uses (screenshot-wiresheets.mjs).
+    async function openSheet(page, key, sheet) {
+        if (key === 'function-block-editor') {
+            await page.goto('/simulators/function-block-editor.html');
+            await page.click('[data-example="' + sheet + '"]');
+        } else {
+            await page.goto('/simulators/ddc-workbench-fcu.html');
+            await page.click('.tabs.tabs-flush [data-tab="wiresheet"]');
+            await expect(page.locator('#ddcw-fbe-inner .fbe-block').first()).toBeVisible();
+            await page.evaluate((k) => {
+                const sel = document.getElementById('ddcw-program');
+                sel.value = k;
+                sel.dispatchEvent(new Event('change', { bubbles: true }));
+            }, sheet);
+        }
+        const def = REGISTRIES[key][sheet];
+        await expect(page.locator(SEL[key].inner + ' path.fbe-wire'))
+            .toHaveCount(def.wires.length);
+    }
+
+    for (const c of CASES) {
+        const label = c.key + ' "' + c.sheet + '"'
+            + (c.fullscreen ? ' (fullscreen)' : ' (in-flow card)')
+            + ': the un-clipped shot box holds the whole sheet';
+
+        test(label, async ({ page }) => {
+            const { canvas, inner } = SEL[c.key];
+            await openSheet(page, c.key, c.sheet);
+            if (c.fullscreen) {
+                await page.click('.tool-card-fullscreen-btn');
+                await expect(page.locator('.tool-card.is-fullscreen')).toBeVisible();
+                await page.evaluate(() => new Promise((r) =>
+                    requestAnimationFrame(() => requestAnimationFrame(r))));
+            }
+
+            // ANTI-VACUITY. This case only proves something if the shot
+            // target is genuinely clipped to start with — in BOTH senses:
+            // scrolled-away content (the rects), and an ancestor that
+            // would paint-cut the PNG even once the box is grown. A
+            // relayout that removes either must delete or re-pick this
+            // case, not inherit a silent pass.
+            const pre = await inspectShotBox(page, canvas, inner);
+            expect(pre.clipped.x + pre.clipped.y,
+                'sheet no longer overflows .fbe-canvas — this case can no longer '
+                + 'demonstrate the #223 crop; re-pick it').toBeGreaterThan(0);
+            expect(pre.outside.length,
+                'no node falls outside the UN-prepared shot box — this case can no '
+                + 'longer demonstrate the #223 crop; re-pick it').toBeGreaterThan(0);
+            expect(pre.clippingAncestors.length,
+                'no ancestor paint-clips the canvas — the un-clip walk would be '
+                + 'a no-op and this case could not detect its removal').toBeGreaterThan(0);
+
+            const before = await blockLayout(page, inner);
+            const res = await applyUnclip(page, canvas);
+            // Playwright scrolls the target into view before shooting, so
+            // the chrome question has to be asked from the same scroll
+            // position the shot is taken from.
+            await page.locator(canvas).scrollIntoViewIfNeeded();
+            const post = await inspectShotBox(page, canvas, inner);
+
+            // 1. The box Playwright is about to photograph is the size
+            //    the helper reported (this is the assertion the missing
+            //    frame wait breaks — it reads the pre-transition size).
+            expect(post.box).toEqual({ w: res.shot.w, h: res.shot.h });
+            // 2. No ancestor still paint-clips it. This is the assertion
+            //    that covers the un-clip WALK: rects are blind to it, so
+            //    without this line the walk could be deleted outright and
+            //    every other assertion here would still pass while the
+            //    PNG came out cut at the .tool-card edge.
+            expect(post.clippingAncestors,
+                'an ancestor still clips the shot box').toEqual([]);
+            // 3. It contains every block AND the whole wire layer.
+            expect(post.outside,
+                'still outside the shot box after un-clipping').toEqual([]);
+            // 4. Nothing sticky/fixed paints over it, AND the chrome-hide
+            //    step actually ran. <main> is a z-index:1 stacking context
+            //    and .site-nav is sticky at z-index 100, so no z-index on
+            //    the canvas can win — measured: the nav covered the top
+            //    76 px, one whole row. `covering` alone is not enough
+            //    coverage: at some viewport/scroll combinations the nav
+            //    does not geometrically intersect, and the assertion would
+            //    pass with the whole loop deleted. hiddenChrome is what
+            //    pins that the loop ran.
+            expect(post.covering,
+                'page chrome painting over the shot').toEqual([]);
+            expect(post.hiddenChrome,
+                'the chrome-hide step did nothing — sticky/fixed page chrome '
+                + 'is still visible and can paint over the grown canvas')
+                .toBeGreaterThan(0);
+            // 5. The un-clip did not RE-LAY the sheet. A picture of a
+            //    layout no visitor ever sees is worse than a cropped one.
+            expect(await blockLayout(page, inner)).toEqual(before);
+            // 6. The crop the contact-sheet caption reports is the crop
+            //    that actually existed.
+            expect(res.clipped).toEqual(pre.clipped);
+        });
+    }
+});

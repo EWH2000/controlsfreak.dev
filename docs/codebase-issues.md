@@ -8672,7 +8672,7 @@ event-driven CSS transitions, no rAF or interval — and liveness held
 tolerances under-absorb this box under load, and the re-baseline pass
 is where these numbers get settled.
 
-### 223. screenshot-wiresheets: canvas-element shots clip a scrolling sheet *(noticed 2026-07-27)*
+### 223. screenshot-wiresheets: canvas-element shots clip a scrolling sheet *(resolved 2026-07-27)*
 
 The matrix rig screenshots `surface.canvas` (`.fbe-canvas`), which is a
 scroll container — in `normal` mode (and even `fs-wide` for the 480-tall
@@ -8681,6 +8681,62 @@ the bottom band of a full-height sheet never appears on the contact sheet.
 A review pass that trusts the matrix alone can miss a defect below the
 fold. Fix candidates: shoot the `.fbe-canvas-inner` node with the canvas
 temporarily un-clipped, or scale the shot to the inner's full bounds.
+
+**Resolved (2026-07-27, `fix/ddcw-pre-ahu-hygiene`).** Two corrections to
+the framing above, both measured before the fix:
+
+- **The vertical loss is the small one.** In `normal` mode the vertical
+  clip is 2 px at a 16 px root font and 0 px at 20 px (`30rem` = 600 px
+  there). The HORIZONTAL clip is 563–653 px — about 40 % of the 1401 px
+  workbench sheet, four whole columns. On `cool-2stage-safeties`, 16 of
+  32 blocks sat outside the `normal` shot and 12 of 32 outside `fs`.
+- **`fs` clips too, and worse than `fs-wide`**, and the public page is
+  affected as well (`proof` / `fs` loses an 88 px band including a
+  block). Of the 66 combinations measured, all but one lost something
+  (`workbench / cool-1stage · dark · F=20 · fs-wide` is the one that
+  fits) — so "every combination" would have been an overstatement, but
+  only just.
+
+Candidate (a) as written here — shoot the inner **with the canvas
+temporarily un-clipped** — was close: the un-clip is the load-bearing
+half and is exactly what shipped. What did not survive is shooting the
+*inner*. In fullscreen the inner is `width/height: 100%` of the canvas,
+so before the canvas grows it is smaller than the sheet; only
+`canvas.scrollWidth/scrollHeight` is the sheet. Once the canvas IS
+grown the inner re-resolves to match (measured 1238×392 → 1401×480), so
+either node would then work — the canvas is chosen because it carries
+the border and is one node instead of two. Candidate (b) alone is
+wrong: content an ancestor clips is never painted, so no clip rectangle
+or scale can recover it.
+
+The fix is `unclipForShot()` in `tests/screenshot-wiresheets.mjs`, run
+in the page before each shot: measure `scrollWidth/Height` while still
+clipped, walk every ancestor to `overflow: visible`, hide sticky/fixed
+page chrome with `visibility: hidden` (the sticky nav otherwise paints
+over the top band — `main` is a `z-index: 1` stacking context, so no
+z-index on the canvas can beat it), then grow the canvas to the content
+bounds. Two rAFs after: `reducedMotion: 'reduce'` turns on the
+`transition-duration: 0.01ms !important` kill switch, and with the
+initial `transition-property: all` every inline style write becomes a
+real transition, so the new size is not readable until a frame ticks.
+A `shotBoxDefects()` guard then throws rather than write a
+plausible-looking crop, retrying one frame first so a timing race
+cannot discard a ten-minute run, and the contact sheet writes in a
+`finally` so a partial run still yields a readable index. The caption
+now carries the shot size and the crop that WOULD have applied, which
+is how the fs / fs-wide "does the wide canvas fit?" question stays
+answerable.
+
+Pinned by `tests/fbe-geometry.spec.js` layer C (3 tests, in CI), which
+extracts the helper from the rig source rather than re-deriving it. Its
+three probes are picked so that deleting any of the helper's three
+steps goes red — in particular the ancestor un-clip, which a
+`getBoundingClientRect` probe is blind to (layout boxes do not know
+they are being paint-clipped), so it is asserted by re-reading each
+ancestor's computed `overflow`. Verified by mutation: deleting the
+ancestor walk, deleting the chrome-hide loop, and reverting the helper
+entirely each fail all three tests with a message that names the
+defect.
 
 ### 224. Workbench verdict/chevron ΔT thresholds compare DISPLAY-unit values against a fixed 3 *(resolved 2026-07-27)*
 

@@ -1,6 +1,6 @@
 // Dev tool — the wiresheet layout review matrix (#205). Screenshots the
-// .fbe-canvas of every shipped sheet on BOTH FBE consumer pages across
-// theme × root-font × display-mode, and writes a contact-sheet
+// WHOLE .fbe-canvas of every shipped sheet on BOTH FBE consumer pages
+// across theme × root-font × display-mode, and writes a contact-sheet
 // index.html, so the owner can eyeball layout candidates in one pass
 // instead of hand-driving two pages through twelve states per sheet.
 //
@@ -41,6 +41,21 @@
 //                            comfortably in.
 //   reducedMotion 'reduce' on every context, so the marching-dash wire
 //                animation can't smear a frame.
+//   full sheet   every shot is the WHOLE sheet, not the on-screen crop.
+//                .fbe-canvas is a scroll container, so an unprepared
+//                element screenshot silently drops everything past the
+//                scroll fold (#223) — measured on the workbench's
+//                cool-2stage-safeties at 1280×800 / F=16 / normal, that
+//                was 563 px of a 1401 px sheet and 16 whole blocks.
+//                unclipForShot() below grows the shot target to the
+//                content bounds first, and the contact-sheet caption
+//                carries the crop that WOULD have applied — so the
+//                fs / fs-wide "does the wide canvas fit?" question is
+//                answered by a number instead of by whether the picture
+//                happens to look cut off. Of the 66 combinations
+//                measured while writing this, all but one lost
+//                something (workbench / cool-1stage · dark · F=20 ·
+//                fs-wide is the one that fits).
 //
 // Flags (all optional, combinable):
 //   --page=public|workbench   one consumer page only (aliases accepted:
@@ -163,6 +178,111 @@ function resolveSheets(pageKey) {
 
 // ── capture ──────────────────────────────────────────────────────────
 
+// Grow the shot target to the whole sheet. Runs IN THE PAGE
+// (page.evaluate), so it must stay self-contained — no closures.
+//
+// .fbe-canvas is a SCROLL container (overflow:auto on a fixed height),
+// so a plain element screenshot of it captures the client box and
+// silently drops whatever is scrolled out of view (#223). Three things
+// have to give way, in this order — each was measured, and each has a
+// failure mode that looks like a page bug rather than a rig bug:
+//
+//   1. MEASURE FIRST, while the container is still clipped.
+//      scrollWidth / scrollHeight are the honest content extent: they
+//      include absolutely-positioned blocks that stick out past
+//      .fbe-canvas-inner. That matters in fullscreen, where the inner
+//      is height:100% of the canvas and the bottom row of a tall sheet
+//      lives OUTSIDE it — so the inner's own box is not the sheet.
+//   2. UN-CLIP THE CONTAINER AND EVERY ANCESTOR. .tool-card is
+//      overflow:hidden AND carries the finished fadeUp transform, which
+//      makes it a containing block that clips even a position:fixed
+//      descendant; body picks up overflow:hidden while a card is
+//      fullscreen. Walking to <html> covers all of it in one rule.
+//      This step is INVISIBLE to a getBoundingClientRect probe — layout
+//      boxes do not know they are being paint-clipped — which is why
+//      shotBoxDefects() below re-reads the ancestors' computed overflow
+//      rather than trusting node rects alone.
+//   3. HIDE THE STICKY / FIXED PAGE CHROME. .site-nav is sticky at
+//      z-index 100 and <main> is a z-index:1 stacking context, so once
+//      Playwright scrolls the grown canvas into view the nav paints
+//      over its top band (measured: 76 px at a 20 px root font, in
+//      `normal` mode — a whole row of blocks). No z-index on the canvas
+//      can beat that from inside main, so hide the chrome instead.
+//      visibility:hidden, not display:none: it must not reflow the
+//      layout being photographed. Ancestors and descendants of the
+//      canvas are skipped — in fullscreen .tool-card.is-fullscreen is
+//      itself fixed, and visibility inherits.
+//
+// Nothing is restored; the context is thrown away after the shot.
+//
+// Returns { shot, clipped } — the CSS box the PNG will be cut from, and
+// how much of it was off-screen before. (The PNG can come out 1 px
+// larger on a fractional box: Playwright rounds out to the enclosing
+// integer rect.) The contact sheet prints `clipped`, which is what
+// keeps the fs / fs-wide fit question answerable now that every shot
+// shows the whole sheet.
+function unclipForShot(sel) {
+    const el = document.querySelector(sel);
+    const cs = getComputedStyle(el);
+    const borderX = parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth);
+    const borderY = parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+    const clipped = {
+        x: Math.max(0, el.scrollWidth - el.clientWidth),
+        y: Math.max(0, el.scrollHeight - el.clientHeight),
+    };
+    const shot = { w: el.scrollWidth + borderX, h: el.scrollHeight + borderY };
+
+    for (let p = el.parentElement; p; p = p.parentElement) {
+        p.style.overflow = 'visible';
+    }
+    for (const n of document.querySelectorAll('body *')) {
+        if (n === el || n.contains(el) || el.contains(n)) continue;
+        const pos = getComputedStyle(n).position;
+        if (pos === 'fixed' || pos === 'sticky') n.style.visibility = 'hidden';
+    }
+    el.scrollLeft = 0;
+    el.scrollTop = 0;
+    el.style.overflow = 'visible';
+    el.style.width = shot.w + 'px';
+    el.style.height = shot.h + 'px';
+    return { shot, clipped };
+}
+
+// What unclipForShot() has to have achieved, checked two independent
+// ways because neither one alone can see the whole defect:
+//
+//   outside  — nodes whose LAYOUT BOX falls outside the shot box: every
+//              .fbe-block plus the SVG wire layer, which is sized to the
+//              full canvas coordinate space and is therefore the
+//              strictest single node. Catches a size write that did not
+//              land (the frame-wait race).
+//   clipping — ancestors still computing a non-visible overflow. This is
+//              the one that matters: rects are blind to paint clipping,
+//              so deleting the ancestor walk above leaves `outside` at 0
+//              while the PNG is visibly cut at the .tool-card edge.
+//
+// Also runs IN THE PAGE, so it takes ONE packed argument (page.evaluate
+// passes a single serializable value) and closes over nothing.
+function shotBoxDefects(sels) {
+    const el = document.querySelector(sels[0]);
+    const box = el.getBoundingClientRect();
+    const inner = document.querySelector(sels[1]);
+    const nodes = Array.from(inner.querySelectorAll('.fbe-block'));
+    const svg = inner.querySelector('svg');
+    if (svg) nodes.push(svg);
+    const outside = nodes.filter((n) => {
+        const r = n.getBoundingClientRect();
+        return r.left < box.left - 0.5 || r.top < box.top - 0.5
+            || r.right > box.right + 0.5 || r.bottom > box.bottom + 0.5;
+    }).length;
+    let clipping = 0;
+    for (let p = el.parentElement; p; p = p.parentElement) {
+        const cs = getComputedStyle(p);
+        if (cs.overflowX !== 'visible' || cs.overflowY !== 'visible') clipping += 1;
+    }
+    return { outside: outside, clipping: clipping };
+}
+
 async function shoot(browser, outDir, pageKey, sheet, theme, font, modeKey) {
     const surface = PAGES[pageKey];
     const mode = MODES[modeKey];
@@ -210,11 +330,42 @@ async function shoot(browser, outDir, pageKey, sheet, theme, font, modeKey) {
                 requestAnimationFrame(() => requestAnimationFrame(r))));
         }
 
+        // Grow the scroll container to the whole sheet before the shot.
+        const { shot, clipped } = await page.evaluate(unclipForShot, surface.canvas);
+        // Two rAFs, same as the fullscreen transition above — and for a
+        // sharper reason. reducedMotion 'reduce' turns on the styles.css
+        // kill switch, which sets `transition-duration: 0.01ms !important`
+        // on `*`; with the initial `transition-property: all` that makes
+        // EVERY inline style write a real transition, so the new size is
+        // not readable (and the box not repainted) until a frame ticks.
+        // Measured: without this wait the canvas reports its OLD height
+        // straight after the write, and the guard below fires spuriously.
+        const settle = () => page.evaluate(() => new Promise((r) =>
+            requestAnimationFrame(() => requestAnimationFrame(r))));
+        await settle();
+        // Loud failure over a plausible-looking crop — the same posture as
+        // the empty-canvas guard above. #223 was invisible precisely
+        // because a cropped sheet still looks like a sheet. `clipping`
+        // is the half that can actually see a crop; `outside` catches a
+        // size write that never landed. That one is a TIMING race, so
+        // give it a second frame before throwing away a ten-minute run.
+        let defects = await page.evaluate(shotBoxDefects, [surface.canvas, surface.inner]);
+        if (defects.outside > 0 || defects.clipping > 0) {
+            await settle();
+            defects = await page.evaluate(shotBoxDefects, [surface.canvas, surface.inner]);
+        }
+        if (defects.outside > 0 || defects.clipping > 0) {
+            throw new Error([pageKey, sheet, theme, 'f' + font, modeKey].join('/')
+                + ': after un-clipping, ' + defects.outside + ' node(s) still outside '
+                + 'the shot box and ' + defects.clipping + ' ancestor(s) still clipping '
+                + '— the matrix would be cropped (#223)');
+        }
+
         const name = [pageKey, sheet, theme, 'f' + font, modeKey].join('--') + '.png';
         const out = join(outDir, name);
         await page.locator(surface.canvas).screenshot({ path: out, animations: 'disabled' });
         console.log(out);
-        return name;
+        return { name, shot, clipped };
     } finally {
         await ctx.close();
     }
@@ -233,7 +384,16 @@ function contactSheet(shots, meta) {
     for (const [g, list] of groups) {
         body += '    <h2>' + g + '</h2>\n    <div class="row">\n';
         for (const s of list) {
-            const cap = s.theme + ' · F=' + s.font + ' · ' + s.modeKey;
+            // Every shot is the whole sheet now, so "does the wide canvas
+            // fit at this width?" can no longer be read off the picture —
+            // the caption answers it instead, and answers it in pixels.
+            // The size is the CSS box; the PNG may be a pixel larger where
+            // that box is fractional.
+            const fit = s.clipped.x || s.clipped.y
+                ? 'off-screen ' + s.clipped.x + '×' + s.clipped.y
+                : 'fits';
+            const cap = s.theme + ' · F=' + s.font + ' · ' + s.modeKey
+                + ' · ' + s.shot.w + '×' + s.shot.h + ' · ' + fit;
             body += '        <figure><a href="' + s.file + '"><img src="' + s.file
                 + '" loading="lazy" alt="' + g + ' — ' + cap + '"></a>'
                 + '<figcaption>' + cap + '</figcaption></figure>\n';
@@ -248,12 +408,15 @@ function contactSheet(shots, meta) {
         + '    p.meta { color: #7d8894; }\n'
         + '    .row { display: flex; flex-wrap: wrap; gap: 0.75rem; }\n'
         + '    figure { margin: 0; }\n'
-        + '    figure img { max-width: 320px; display: block; border: 1px solid #333c46; }\n'
+        + '    figure img { max-width: 460px; display: block; border: 1px solid #333c46; }\n'
         + '    figcaption { color: #7d8894; font-size: 12px; padding-top: 2px; }\n'
         + '</style>\n'
         + '<h1>Wiresheet layout matrix (#205)</h1>\n'
         + '<p class="meta">' + meta.stamp + ' · base ' + meta.base + ' · ' + shots.length
-        + ' shots · click any image for full size. proof’s 5-segment fallback is deliberate — do not flag it.</p>\n'
+        + ' shots · click any image for full size. Each shot is the WHOLE sheet, not the'
+        + ' on-screen crop (#223) — the caption’s “off-screen” figure is how much of it a'
+        + ' visitor would have had to scroll for. proof’s 5-segment fallback is deliberate'
+        + ' — do not flag it.</p>\n'
         + body;
 }
 
@@ -290,8 +453,9 @@ async function main() {
                 for (const theme of themes) {
                     for (const font of fonts) {
                         for (const modeKey of modes) {
-                            const file = await shoot(browser, outDir, pageKey, sheet, theme, font, modeKey);
-                            shots.push({ pageKey, sheet, theme, font, modeKey, file });
+                            const cap = await shoot(browser, outDir, pageKey, sheet, theme, font, modeKey);
+                            shots.push({ pageKey, sheet, theme, font, modeKey,
+                                file: cap.name, shot: cap.shot, clipped: cap.clipped });
                         }
                     }
                 }
@@ -299,16 +463,22 @@ async function main() {
         }
     } finally {
         await browser.close();
+        // Write the sheet even on a mid-run throw. A full run is ~10
+        // minutes and the #223 guard can abort it; orphaning every PNG
+        // captured up to that point with no index to read them by would
+        // make the loud failure cost more than the bug it catches.
+        if (shots.length > 0) {
+            const index = join(outDir, 'index.html');
+            await writeFile(index, contactSheet(shots, { stamp, base: BASE }));
+            console.log(index);
+            console.log('\nsaved ' + shots.length + ' shot' + (shots.length === 1 ? '' : 's')
+                + ' → ' + outDir);
+        }
     }
 
     if (shots.length === 0) {
         throw new Error('flag combination selected zero shots — nothing captured');
     }
-    const index = join(outDir, 'index.html');
-    await writeFile(index, contactSheet(shots, { stamp, base: BASE }));
-    console.log(index);
-    console.log('\nsaved ' + shots.length + ' shot' + (shots.length === 1 ? '' : 's')
-        + ' → ' + outDir);
 }
 
 main().catch((err) => {
