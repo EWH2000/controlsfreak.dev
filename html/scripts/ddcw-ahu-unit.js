@@ -11,8 +11,13 @@
 // and no renderUnit / syncControls / wireControls / initAnim /
 // onResize. **The exported object therefore does NOT satisfy
 // DDCWShell.createWorkbench's unit contract**, and handing it to the
-// shell would boot half-way and throw `unit.wireControls is not a
-// function`. No page loads this file, so nothing is broken by that —
+// shell would boot part-way and throw — at ddcw-shell.js:565,
+// `FBE.makeGraph(unit.programs[programKey])`, because there is no
+// `programs` map either, forty-five lines BEFORE the missing
+// `wireControls` would have been reached. (Quoted so a reader who hits
+// the generic TypeError can grep it: the real message names neither
+// this file nor the contract.) No page loads this file, so nothing is
+// broken by that —
 // the file is inert at runtime and reachable only from an
 // engine-direct spec. The graphic, the hand controls and the
 // `create(cfg)` assembly land in the AHU graphic lane; the sample
@@ -22,7 +27,9 @@
 // Loaded as a *classic* script (no type="module"), same convention as
 // /scripts/ddcw-shell.js — see that header for the consuming page's
 // full script order once one exists. Requires /scripts/psychro-engine.js
-// loaded first (Psychro + P_STD are read at load for the `P` constant).
+// loaded first: `P_STD` is read at LOAD for the `P` constant, and
+// `Psychro` plus the bare-name primitive `satHumRatio` are read per
+// tick.
 // The 11ty build copies this file through unchanged, so it is already
 // published at /scripts/ddcw-ahu-unit.js — unreferenced, not hidden.
 //
@@ -114,6 +121,23 @@ const DDCWAhuUnit = (function () {
     // trip on a different sensor in a different place; this roster
     // carries no freezestat point, so nothing here models one.
     const COIL_FLOOR    = 34;                      // °F
+    // Heating-coil leaving-air ceiling — the mirror of COIL_FLOOR, and
+    // the same kind of rough constant. A hot-water coil's leaving air
+    // approaches the entering WATER temperature and cannot pass it, so
+    // starving the fan deepens the heating ΔT only until the air reaches
+    // the water. This roster carries no water-temperature point, so the
+    // ceiling stands in for a design hot-water supply.
+    //
+    // Without it the heating side is unbounded above, because qHeat is a
+    // fixed Btu/h independent of airflow: a step-5 fan slider at 25 %
+    // drove the leaving dry-bulb to 237 °F and the DAT chip past 1100 °F
+    // at the corners. That is outside the psych engine's validity
+    // envelope as well as the machine's — above 212 °F at sea level a
+    // saturation humidity ratio does not exist, satHumRatio returns a
+    // NEGATIVE value, and buildState silently zeroes W, which breaks
+    // this file's own "a heating coil leaves W alone" invariant on the
+    // published bag with no error anywhere.
+    const HW_LEAVE_MAX  = 180;                     // °F — design hot-water supply
     const P             = P_STD;                   // psia (from psychro-engine)
 
     // ══ TUNE BY FEEL — PLACEHOLDER zone-thermal + pacing constants ═════
@@ -123,13 +147,21 @@ const DDCWAhuUnit = (function () {
     //
     //   Sizing intent (default 80 °F day, zone arriving at 76 °F):
     //   envelope + internal gain is ~14 kBtu/h, one DX stage delivers
-    //   ~18 kBtu/h at the zone, so stage 1 pulls the space down and
-    //   cycles on the deadband — the "it's working" arrival. Push the
-    //   OA knob to 95 °F and the gain roughly doubles while the mixed
-    //   air warms, so stage 1 loses and stage 2 only just holds: the
-    //   strained story, reached by dragging one slider. Push the load
-    //   knob past that and the machine visibly cannot keep up. On the
-    //   heating side a 10 °F morning is a ~50 kBtu/h loss against a
+    //   ~18 kBtu/h at the zone, so stage 1 pulls the space down — the
+    //   "it's working" arrival. MEASURED, at the shipped constants, it
+    //   pulls it to a steady 73.1 °F and holds there: inside the
+    //   deadband, but ABOVE its own off point, so stage 1 runs
+    //   continuously rather than cycling. (Bisected on the quasi-static
+    //   balance and confirmed by a 12 h integration; stage 1 crosses the
+    //   72 °F setpoint at about a 78.6 °F day.) Nudging Q_INT_DEF or
+    //   STAGE_QSENS[1] is what buys cycling if the owner wants it — the
+    //   values are feel constants, this sentence is the checkable part.
+    //   Push the OA knob to 95 °F and the gain roughly doubles while the
+    //   mixed air warms, so stage 1 loses (balances at 88.0 °F) and
+    //   stage 2 only just holds (73.9 °F, a hair under the band top):
+    //   the strained story, reached by dragging one slider. Push the
+    //   load knob past that and the machine visibly cannot keep up. On
+    //   the heating side a 10 °F morning is a ~50 kBtu/h loss against a
     //   coil worth ~75 kBtu/h at the zone, so the valve holds the space
     //   at roughly two-thirds open — authority to spare, which is what
     //   makes a modulating valve worth watching.
@@ -139,10 +171,15 @@ const DDCWAhuUnit = (function () {
     //   "no ΔT over the coil" tell are the site's north star, and free
     //   cooling is one drag of the OA knob away.
     //
-    //   C_ZONE sets the pace. With the supply-air term (~2.1 kBtu/h·°F
-    //   at full flow) stacked on UA_ENV, 700 gives a ~13 min zone time
-    //   constant — the same felt pace as the FCU, on a zone three times
-    //   the size.
+    //   C_ZONE sets the pace, and the supply-air term only counts the
+    //   OUTDOOR fraction of it. Recirculated air carries a zone-temp
+    //   change straight back around to the discharge, so it exerts no
+    //   restoring force — the term enters at oaFrac · mDot · cp, not at
+    //   the full ~2.1 kBtu/(h·°F). MEASURED (central-difference on the
+    //   quasi-static balance): 700 gives a ~29 min zone time constant at
+    //   the 20 % minimum damper position the machine arrives at, ~14 min
+    //   at 100 % OA, and 42 min with the fan off. C_ZONE ≈ 310 would put
+    //   the arrival state near 13 min if that is the feel wanted.
     const C_ZONE        = 700;     // Btu/°F — lumped zone capacitance (bigger = slower)
     const UA_ENV        = 1000;    // Btu/(h·°F) — envelope conductance to outdoor air
     const Q_INT_DEF     = 10000;   // Btu/h — default internal sensible gain (load knob)
@@ -338,11 +375,29 @@ const DDCWAhuUnit = (function () {
         // unchanged, so there is no latent term — Psychro.invertProcess
         // handles that itself for type !== 'cool'.
         const hwFrac = Math.max(0, Math.min(1, hwPct / 100));
-        const qHeat  = airflowOn ? hwFrac * HW_QSENS_MAX : 0;
+        let qHeat     = 0;
         let afterHeat = mixState;
-        if (airflowOn && mixState.ok && qHeat > 0) {
-            const heated = Psychro.invertProcess(mixState, { type: 'heat', cfm: cfm, qSens: qHeat });
-            if (heated.ok) afterHeat = heated;
+        if (airflowOn && mixState.ok && hwFrac > 0) {
+            const heated = Psychro.invertProcess(mixState, {
+                type: 'heat', cfm: cfm, qSens: hwFrac * HW_QSENS_MAX,
+            });
+            if (heated.ok) {
+                // Leaving-air ceiling (see HW_LEAVE_MAX). Never below the
+                // entering air: on a day already hotter than the water,
+                // a heating coil does nothing — it does not cool.
+                const leaveMax = Math.max(mixState.tdb, HW_LEAVE_MAX);
+                afterHeat = heated.tdb > leaveMax
+                    ? Psychro.buildState(leaveMax, mixState.W, P)
+                    : heated;
+            }
+            // qHeat is what the AIR actually absorbed, read back off the
+            // leaving state, so the published load and the published
+            // temperatures cannot disagree once the ceiling binds. Below
+            // the ceiling this round-trips to hwFrac · HW_QSENS_MAX
+            // exactly — invertProcess and computeProcess are inverses.
+            const proc = Psychro.computeProcess(
+                { inlet: mixState, outlet: afterHeat, type: 'heat' }, cfm);
+            if (isFinite(proc.qSens)) qHeat = proc.qSens;
         }
 
         // ── 5. DX coil — SECOND, on whatever the HW coil handed it ──
@@ -363,17 +418,45 @@ const DDCWAhuUnit = (function () {
         let coilLeaveTarget = afterHeat.ok ? afterHeat.tdb : zoneT;
         let leavingW        = afterHeat.ok ? afterHeat.W : 0;
         if (airflowOn && afterHeat.ok) {
+            // BOTH clamps below live inside `capActive`, and that is the
+            // load-bearing part. A de-energized DX coil is a passive heat
+            // exchanger: with the clamps outside, a shut valve and two
+            // dead compressors on a design-cold morning painted DAT − MAT
+            // = +55 °F — the plant doing the sequence's freeze protection
+            // for it, and hiding the "someone deleted the min-OA block"
+            // fault the damper note above says must stay showable.
             if (capActive) {
                 const cooled = Psychro.invertProcess(afterHeat, {
                     type: 'cool', cfm: cfm,
                     qSens: STAGE_QSENS[stage], qLat: STAGE_QLAT[stage],
                 });
+                // A failed inversion means the load-per-cfm drove the
+                // solve past bone-dry: a coil that ran out of AIR, not
+                // one that stopped cooling. So fall back to the floor,
+                // not to the entering air — the latter handed a running
+                // coil a zero ΔT, which is this model's own signature for
+                // a FAULTED compressor, and made the ΔT non-monotone in
+                // airflow (one step of the fan slider took DAT from
+                // 35 °F to 78 °F and turned the DX coil into a heater).
                 if (cooled.ok) { coilLeaveTarget = cooled.tdb; leavingW = cooled.W; }
-                else coilLeaveTarget = afterHeat.tdb;
+                else coilLeaveTarget = COIL_FLOOR;
+                // The DX coil's two bounds. FLOOR: an evaporator cannot
+                // drive air below freezing without icing over. CEILING:
+                // a cooling coil cannot leave WARMER than the air it was
+                // handed — which is also what makes the floor harmless on
+                // mixed air that is already below it (the floor raises,
+                // the ceiling puts it straight back).
+                if (coilLeaveTarget < COIL_FLOOR)    coilLeaveTarget = COIL_FLOOR;
+                if (coilLeaveTarget > afterHeat.tdb) coilLeaveTarget = afterHeat.tdb;
+                // Keep the leaving MOISTURE coherent with the clamped
+                // temperature. invertProcess solved W at the unclamped
+                // (colder) point, where saturation holds far less water,
+                // so a clamped coil would publish a 35 °F dry-bulb
+                // against a −54 °F dew point. Nothing prints leavingW
+                // today; a supply-RH or SHR readout would.
+                const wSat = satHumRatio(coilLeaveTarget, P);
+                if (leavingW > wSat) leavingW = wSat;
             }
-            // Raises only, never lowers — a heating-mode target sails
-            // past it untouched.
-            if (coilLeaveTarget < COIL_FLOOR) coilLeaveTarget = COIL_FLOOR;
         } else {
             coilLeaveTarget = zoneT;             // no airflow — nothing crosses either coil
             leavingW = raState.ok ? raState.W : 0;
@@ -435,7 +518,12 @@ const DDCWAhuUnit = (function () {
             const supply = Psychro.buildState(datT, leavingW, P);
             if (supply.ok) {
                 const proc = Psychro.computeProcess({ inlet: raState, outlet: supply, type: 'cool' }, cfm);
-                if (isFinite(proc.qSens)) qCool = -proc.qSens;   // Btu/h (<0 = fan-heat gain)
+                // Btu/h. <0 means the supply air is WARMER than the
+                // return — the heating coil under load, or fan heat
+                // alone when neither coil is loaded. Do not read the
+                // negative sign as "fan heat": at oaT 10 / hw-valve 50 %
+                // the fan contributes ~2 kBtu/h of the −26 kBtu/h.
+                if (isFinite(proc.qSens)) qCool = -proc.qSens;
             }
         }
         // Envelope (negative feedback toward outdoor air — adds damping)
@@ -521,7 +609,7 @@ const DDCWAhuUnit = (function () {
         d.fault       = fault;
         // Loads, Btu/h.
         d.qHeat       = qHeat;
-        d.qCool       = qCool;                   // signed (<0 = the fan is warming the zone)
+        d.qCool       = qCool;                   // signed (<0 = supply warmer than return)
         d.qGain       = qGain;
         // Setpoints, for the readout grid.
         d.coolSetp    = plant.params['cooling-setpoint'];
