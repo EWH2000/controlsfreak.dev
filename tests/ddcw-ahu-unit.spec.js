@@ -29,10 +29,23 @@
 //   mixed air always lands between its two sources; the heating coil
 //   raises dry-bulb and leaves humidity ratio alone; the DX coil
 //   lowers it; ΔT is DAT − MAT and its SIGN says which coil is
-//   working; stage 2 outcools stage 1; the coil never leaves below a
-//   freeze floor; a broken belt keeps the command and loses the proof;
-//   proof makes slowly and breaks at once; an override splits sensed
-//   from truth while the return probe keeps reading truth.
+//   working; stage 2 outcools stage 1; an ENERGIZED coil holds a
+//   freeze floor and a de-energized one invents nothing; a starved
+//   coil pins at that floor rather than quitting; the heating coil
+//   holds a leaving-air ceiling; a broken belt keeps the command and
+//   loses the proof; proof makes slowly and breaks at once; DAT goes
+//   blind the tick the air stops, not on the coil lag; an override
+//   splits sensed from truth while the return probe keeps reading
+//   truth.
+//
+// ANTI-VACUITY IS PART OF THE POLICY. A clamp row that never reaches
+// its clamp is a green row asserting nothing, and this file shipped
+// two of them: the freeze sweep never varied `oaT`, so `afterHeatT`
+// sat near 76 °F and the ceiling could not bind, and the blind-DAT row
+// used a quasi-static probe where the coil target already IS the zone,
+// so it could not tell the branch from its own mutant. Where a row
+// exists to pin a clamp or a branch, it carries a probe proving the
+// sweep got there.
 //
 // The quasi-static probe: a fresh plant leaves coilLeaveT unseeded, so
 // the first update seeds the coil lag directly to its target — and a
@@ -71,6 +84,18 @@ function run(Unit, mutate, steps, dt) {
     const plant = Unit.createPlant();
     if (mutate) mutate(plant);
     for (let i = 0; i < steps; i++) Unit.update(plant, dt);
+    return plant;
+}
+
+// Run until the airflow proof makes, capped. A fixed tick count would
+// be an undeclared assertion that PROOF_MAKE_DELAY is under it — a
+// ceiling on a TUNE BY FEEL constant, which this file promises not to
+// set. A row whose SETUP goes red on a retune points the reader at the
+// wrong thing.
+function runToProof(Unit, mutate) {
+    const plant = Unit.createPlant();
+    if (mutate) mutate(plant);
+    for (let i = 0; i < 600 && !plant.sensors['fan-status']; i++) Unit.update(plant, 1);
     return plant;
 }
 
@@ -317,6 +342,59 @@ test.describe('ddcw-ahu-unit: the coil section (quasi-static)', () => {
         });
     });
 
+    test('the heating coil holds a leaving-air ceiling, and W rides through it too', () => {
+        // The mirror of the DX coil's freeze floor. qHeat is a fixed
+        // Btu/h independent of airflow, so without a ceiling the leaving
+        // dry-bulb rises without bound as the fan starves — past 212 °F,
+        // where a saturation humidity ratio does not exist at sea level,
+        // satHumRatio returns NEGATIVE, and buildState silently zeroes W.
+        // That published a heating coil DRYING the air, breaking the
+        // invariant the row above asserts, with no error anywhere.
+        // Assert the BAND and the conserved quantity, never the value.
+        const Unit = loadUnit();
+        const at = (fan) => quasi(Unit, (pl) => {
+            pl.oaT = 10;
+            pl.zoneT = 68;
+            pl.actuators['hw-valve'] = 100;
+            pl.actuators['fan-speed'] = fan;
+            pl.actuators.y1 = false;
+        }).derived;
+
+        let sawCeilingBind = false;
+        let prev = null;
+        [100, 60, 40, 30, 25, 20, 10, 5].forEach((fan) => {
+            const d = at(fan);
+            const tag = 'fan ' + fan + '%';
+            expect(isFinite(d.afterHeatT), tag + ' finite').toBe(true);
+            expect(d.afterHeatT, tag + ': the coil still heats').toBeGreaterThan(d.matT);
+            // Not a band on HW_LEAVE_MAX — a band on the ENGINE. Above
+            // 212 °F at sea level a saturation humidity ratio does not
+            // exist, so any leaving state up there is outside the math's
+            // validity, whatever the feel constant is retuned to.
+            expect(d.afterHeatT, tag + ': and stays inside the engine’s envelope')
+                .toBeLessThan(212);
+            expect(d.afterHeatW, tag + ': W rides through unchanged').toBeCloseTo(d.matW, 12);
+            expect(d.afterHeatW, tag + ': and is not zeroed').toBeGreaterThan(0);
+            // The published load is what the AIR absorbed, so it cannot
+            // outrun the temperatures once the ceiling binds.
+            expect(d.qHeat, tag + ': the load matches the air path').toBeGreaterThan(0);
+            // Anti-vacuity: less air over a fixed load deepens the rise,
+            // UNTIL the ceiling takes over and it stops. Seeing that
+            // stop is the proof the clamp is doing something.
+            if (prev !== null && d.afterHeatT <= prev + 1e-9) sawCeilingBind = true;
+            prev = d.afterHeatT;
+        });
+        expect(sawCeilingBind, 'the sweep starved the fan past the ceiling').toBe(true);
+
+        // Two flows deep inside the clamped region land on the SAME
+        // leaving temperature — a shared cap, not a per-flow curve — and
+        // the load falls with the air that has to carry it.
+        expect(at(5).afterHeatT, 'the ceiling is a shared cap')
+            .toBeCloseTo(at(10).afterHeatT, 9);
+        expect(at(5).qHeat, 'and the load falls with the airflow')
+            .toBeLessThan(at(10).qHeat);
+    });
+
     test('the DX coil cools whatever the heating coil hands it', () => {
         const Unit = loadUnit();
         const on = quasi(Unit, (pl) => { pl.actuators.y1 = true; });
@@ -345,10 +423,17 @@ test.describe('ddcw-ahu-unit: the coil section (quasi-static)', () => {
 
         // Fan running, neither coil called: the only thing left is fan
         // heat, so the delta is small and POSITIVE — the motor is the
-        // last piece of equipment in the air path.
-        const neither = quasi(Unit, (pl) => { pl.actuators.y1 = false; });
+        // last piece of equipment in the air path. "Small" is asserted
+        // as an ORDERING against a real coil delta, not as a band: in
+        // this probe the fan-only delta IS FAN_HEAT exactly, so a bare
+        // `< 3` would be a ceiling on a TUNE BY FEEL constant whose own
+        // comment argues for raising it (a hot mechanical room), with
+        // 3× headroom.
+        const neither  = quasi(Unit, (pl) => { pl.actuators.y1 = false; });
+        const oneStage = quasi(Unit, (pl) => { pl.actuators.y1 = true; });
         expect(coilDt(neither)).toBeGreaterThan(0);
-        expect(coilDt(neither)).toBeLessThan(3);
+        expect(Math.abs(coilDt(neither)), 'fan heat is small beside a working coil')
+            .toBeLessThan(Math.abs(coilDt(oneStage)));
 
         // No airflow: both sensors read the zone, so the delta is zero.
         const still = quasi(Unit, (pl) => { pl.actuators['fan-enable'] = false; });
@@ -407,28 +492,130 @@ test.describe('ddcw-ahu-unit: the coil section (quasi-static)', () => {
     });
 
     test('the coil holds a freeze floor and never leaves above its entering air while cooling', () => {
-        // Sweep fan × stage × fault. Two clamps close the cooling
-        // model: a floor keeps a starved coil above freezing (COIL_FLOOR
-        // is a rough constant — assert the BAND, not the value), and a
-        // cooling coil can never leave WARMER than the air it was
-        // handed. The 5%-fan extreme also pins solver-failure muting: an
-        // impossible load-per-cfm falls back to no-cooling, never NaN.
+        // Sweep WEATHER × damper × fan × stage × fault. Two clamps close
+        // the cooling model: a floor keeps a starved coil above freezing
+        // (COIL_FLOOR is a rough constant — assert the BAND, not the
+        // value), and a cooling coil can never leave WARMER than the air
+        // it was handed. The 5%-fan extreme also pins solver-failure
+        // muting: an impossible load-per-cfm falls back to the floor,
+        // never to NaN and never to no-cooling.
+        //
+        // The oaT and damper axes are load-bearing, not thoroughness.
+        // Without them afterHeatT is pinned near 76 °F by the default
+        // day, the floor can never bind at stage 0, and the ceiling
+        // assertion passes vacuously — which is exactly how a freeze
+        // clamp that fired on a DE-ENERGIZED coil (inventing up to
+        // 55 °F of rise across two dead coils) shipped green.
         const Unit = loadUnit();
-        [5, 30, 60, 100].forEach((fan) => {
-            [0, 1, 2].forEach((stage) => {
-                ['none', 'low-charge'].forEach((fault) => {
-                    const p = quasi(Unit, (pl) => {
-                        pl.actuators['fan-speed'] = fan;
-                        pl.actuators.y1 = stage >= 1;
-                        pl.actuators.y2 = stage >= 2;
-                        pl.conditions.fault = fault;
+        let sawFloorBind = false;
+        [-10, 10, 35, 55, 80, 95].forEach((oat) => {
+            [0, 50, 100].forEach((damper) => {
+                [5, 30, 60, 100].forEach((fan) => {
+                    [0, 1, 2].forEach((stage) => {
+                        ['none', 'low-charge'].forEach((fault) => {
+                            const p = quasi(Unit, (pl) => {
+                                pl.oaT = oat;
+                                pl.actuators['oa-damper'] = damper;
+                                pl.actuators['fan-speed'] = fan;
+                                pl.actuators.y1 = stage >= 1;
+                                pl.actuators.y2 = stage >= 2;
+                                pl.conditions.fault = fault;
+                            });
+                            const label = 'OAT ' + oat + ' / damper ' + damper
+                                + '% / fan ' + fan + '% / stage ' + stage + ' / ' + fault;
+                            expect(isFinite(p.coilLeaveT), label + ' finite').toBe(true);
+                            // Floor, but only where a coil could hold one:
+                            // handed air already below freezing, a DX coil
+                            // cannot warm it back up.
+                            const floor = Math.min(32, p.derived.afterHeatT);
+                            expect(p.coilLeaveT, label + ' floor').toBeGreaterThanOrEqual(floor - 1e-9);
+                            expect(p.coilLeaveT, label + ' ceiling')
+                                .toBeLessThanOrEqual(p.derived.afterHeatT + 1e-9);
+                            if (p.derived.capActive && p.coilLeaveT >= 32
+                                && p.coilLeaveT < p.derived.afterHeatT - 20) sawFloorBind = true;
+                        });
                     });
-                    const label = fan + '% / stage ' + stage + ' / ' + fault;
-                    expect(isFinite(p.coilLeaveT), label + ' finite').toBe(true);
-                    expect(p.coilLeaveT, label + ' floor').toBeGreaterThanOrEqual(32);
-                    expect(p.coilLeaveT, label + ' ceiling')
-                        .toBeLessThanOrEqual(p.derived.afterHeatT + 1e-9);
                 });
+            });
+        });
+        // Anti-vacuity: the sweep has to REACH a starved running coil,
+        // or the floor half of the row proves nothing.
+        expect(sawFloorBind, 'the sweep reached a starved, energized coil').toBe(true);
+    });
+
+    test('a de-energized coil is passive — no clamp invents heat across it', () => {
+        // The freeze floor belongs to an ENERGIZED evaporator. With the
+        // compressors off (or faulted) the DX coil is a passive heat
+        // exchanger, so the air leaves exactly as it arrived however
+        // cold that is — which is what keeps "someone deleted the
+        // min-OA block on a design-cold morning" demonstrable instead of
+        // silently protected by the plant.
+        const Unit = loadUnit();
+        [['stage 0', (pl) => { pl.actuators.y1 = false; }],
+         ['faulted', (pl) => { pl.actuators.y1 = true; pl.actuators.y2 = true;
+                               pl.conditions.fault = 'low-charge'; }]].forEach(([label, stageMut]) => {
+            [-20, 0, 20].forEach((oat) => {
+                const p = quasi(Unit, (pl) => {
+                    pl.oaT = oat;
+                    pl.actuators['oa-damper'] = 100;      // the deleted min-OA block
+                    pl.actuators['hw-valve'] = 0;
+                    stageMut(pl);
+                });
+                const tag = label + ' at OAT ' + oat;
+                expect(p.derived.capActive, tag + ': nothing is transferring heat').toBe(false);
+                expect(p.derived.coilLeaveT, tag + ': the coil passes the air through')
+                    .toBeCloseTo(p.derived.afterHeatT, 9);
+                expect(coilDt(p), tag + ': the only ΔT is the fan')
+                    .toBeCloseTo(p.derived.datT - p.derived.coilLeaveT, 9);
+            });
+        });
+
+        // …and a partly-open heating valve moves DAT from its very first
+        // percent of stroke, rather than disappearing under a clamp.
+        let prev = null;
+        [0, 10, 20, 30].forEach((hw) => {
+            const p = quasi(Unit, (pl) => {
+                pl.oaT = 20;
+                pl.actuators['oa-damper'] = 100;
+                pl.actuators['hw-valve'] = hw;
+                pl.actuators.y1 = false;
+            });
+            if (prev !== null) {
+                expect(p.derived.datT, 'valve ' + hw + '% is visible at the discharge')
+                    .toBeGreaterThan(prev);
+            }
+            prev = p.derived.datT;
+        });
+    });
+
+    test('a starved DX coil pins at its floor — it does not stop cooling', () => {
+        // The solver-failure path. Below a certain airflow the requested
+        // load per cfm drives the psych inversion past bone-dry and it
+        // returns ok:false. That is a coil that ran out of AIR, and the
+        // fallback has to keep it cold: falling back to the entering air
+        // gave a RUNNING coil a zero ΔT — this model's own signature for
+        // a faulted compressor — and made the ΔT non-monotone in
+        // airflow, so one step of the fan slider flipped the DX coil
+        // into a heater.
+        const Unit = loadUnit();
+        [1, 2].forEach((stage) => {
+            let prev = null;
+            [30, 20, 15, 10, 8, 5, 3].forEach((fan) => {
+                const p = quasi(Unit, (pl) => {
+                    pl.actuators['fan-speed'] = fan;
+                    pl.actuators.y1 = stage >= 1;
+                    pl.actuators.y2 = stage >= 2;
+                });
+                const tag = 'stage ' + stage + ' at fan ' + fan + '%';
+                expect(p.derived.capActive, tag + ': the compressors are still called').toBe(true);
+                expect(coilDt(p), tag + ': the coil is still cooling').toBeLessThan(0);
+                expect(p.derived.qCool, tag + ': and still removing heat').toBeGreaterThan(0);
+                // Less air over the same coil never removes MORE heat.
+                if (prev !== null) {
+                    expect(p.derived.qCool, tag + ': monotone in airflow')
+                        .toBeLessThanOrEqual(prev + 1e-9);
+                }
+                prev = p.derived.qCool;
             });
         });
     });
@@ -462,7 +649,7 @@ test.describe('ddcw-ahu-unit: airflow, proof, and the blind low-limit', () => {
         // fan-status is what the proof switch reports. A belt fault
         // splits the first from the other two.
         const Unit = loadUnit();
-        const pl = run(Unit, null, 30, 1);              // proof has made by now
+        const pl = runToProof(Unit, null);
         expect(pl.sensors['fan-status'], 'healthy run proves airflow').toBe(true);
 
         pl.conditions.fault = 'fan-belt';
@@ -491,6 +678,30 @@ test.describe('ddcw-ahu-unit: airflow, proof, and the blind low-limit', () => {
             expect(pl.sensors['dat'], fault).toBe(pl.zoneT);
             expect(pl.sensors['fan-status'], fault + ': and proof is down').toBe(false);
         });
+    });
+
+    test('DAT goes blind the instant airflow stops, not on the coil lag', () => {
+        // The row above is a QUASI-STATIC probe, and with airflow off
+        // the coil target is already zoneT — so coilLeaveT === zoneT and
+        // `airflowOn ? coilLeaveT + FAN_HEAT : zoneT` returns the same
+        // number as a `coilLeaveT + (airflowOn ? FAN_HEAT : 0)` that had
+        // lost the branch entirely. It pins the fan-heat offset, not the
+        // source. The blindness only shows on a TRAJECTORY, where the
+        // coil metal is still cold when the air stops — and a discharge
+        // low-limit that kept reading the cold coil after airflow
+        // stopped would be the exact inverse of the lesson
+        // (codebase-issues #225).
+        const Unit = loadUnit();
+        const pl = run(Unit, (p) => { p.actuators.y1 = true; p.actuators.y2 = true; }, 200, 1);
+        expect(pl.derived.airflowOn, 'the healthy run is moving air').toBe(true);
+        expect(pl.zoneT - pl.sensors['dat'], 'a real coil delta is showing').toBeGreaterThan(5);
+
+        pl.conditions.fault = 'fan-belt';
+        Unit.update(pl, 1);                              // ONE tick after the belt goes
+        expect(pl.derived.airflowOn).toBe(false);
+        expect(pl.zoneT - pl.coilLeaveT, 'the coil itself is still cold').toBeGreaterThan(5);
+        expect(pl.sensors['dat'] - pl.coilLeaveT, 'DAT is not tracking the coil').toBeGreaterThan(5);
+        expect(Math.abs(pl.sensors['dat'] - pl.zoneT), 'DAT reads the zone').toBeLessThan(0.5);
     });
 
     test('proof makes slowly and breaks at once', () => {
