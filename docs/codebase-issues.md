@@ -9658,3 +9658,28 @@ equipment-graphics eye. Cheapest honest options, in order of preference:
    genuinely differ that way, so the drawing would be telling the truth.
 2. Restore a short station caption on each coil box (round 1's answer).
 3. Hatch one serpentine's return bends.
+
+### 232. `comparators-and-deadband.html` states a metric band delta the displayed operands do not produce *(noticed 2026-07-28, differential-nod review round — open)*
+
+`html/education/comparators-and-deadband.html:419` renders the total band as
+`<span data-us="2 °F" data-metric="1.1 °C">`. The metric worked-example
+rounding policy (audit-2026-06 #53, CLAUDE.md §*Conventions*) says a stated
+delta must be **the arithmetic of the displayed operands**, not of the
+unrounded canonical value. Both displayed derivations give **1.2**:
+
+- the two edges the same paragraph run paints — `75 °F → 23.9 °C` (L404) and
+  `73 °F → 22.7 °C` (L407) — differ by **1.2**;
+- the half-band the preceding sentence paints — `1 °F → 0.6 °C` (L412) —
+  doubles to **1.2**.
+
+`1.1` is the round of the canonical 1.111, which is exactly the form the
+policy exists to prevent: a metric reader who checks the sheet's own numbers
+finds the arithmetic does not close, on the one paragraph whose entire point
+is that the constant is *half* the band.
+
+Fix is `data-metric="1.2 °C"`. **Deliberately not taken in the nod PR** — it
+sits in the untouched half-band paragraph, a different point from that PR's
+diff, and an unexplained `1.1 → 1.2` inside a terminology PR is noise at
+review time. Worth a sweep rather than a one-liner: this is the same defect
+shape wherever a `data-metric` delta was converted from the IP delta instead
+of subtracted from the displayed metric operands, and nothing guards it.
