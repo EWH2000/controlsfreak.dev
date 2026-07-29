@@ -102,6 +102,33 @@ test.describe('psychro-engine: mixStreams contract shape', () => {
             expect(out.error.length, label + ' message is not empty').toBeGreaterThan(0);
         });
     });
+
+    test('a numeric-STRING flow coerces to the same answer as the number', () => {
+        // The guard has always accepted a numeric string (`isFinite`
+        // coerces, the same tolerance solveState carries) — but the
+        // weights run through the engine's only `+=` accumulator over
+        // caller-supplied values, and `0 + '200'` is the string '0200'.
+        // Un-coerced, two DOM-read flows totalled 200800, the weights
+        // summed to ~0.005, and the helper returned 0.30 °F where the
+        // numeric call returns 60.20 — silently, with ok:true. The four
+        // inline air-mixing call sites this helper exists to absorb
+        // (codebase-issues #228) all read `.value` off an input, so
+        // accept-and-coerce is the contract; this row is what pins it.
+        const E = loadEngine();
+        const oa = E.Psychro.solveState('rh', 0, 40, E.P_STD);
+        const ra = E.Psychro.solveState('rh', 75, 50, E.P_STD);
+        const num = E.Psychro.mixStreams([
+            { state: oa, flow: 400 },
+            { state: ra, flow: 1600 },
+        ], E.P_STD);
+        const str = E.Psychro.mixStreams([
+            { state: oa, flow: '400' },
+            { state: ra, flow: '1600' },
+        ], E.P_STD);
+        expect(num.ok && str.ok, 'both forms are accepted').toBe(true);
+        expect(str.tdb, 'and land on the same dry-bulb').toBeCloseTo(num.tdb, 12);
+        expect(str.W, 'and the same humidity ratio').toBeCloseTo(num.W, 14);
+    });
 });
 
 test.describe('psychro-engine: mixStreams invariants', () => {
@@ -216,13 +243,17 @@ test.describe('psychro-engine: mixStreams invariants', () => {
     });
 
     test('a mass basis and a volumetric basis disagree in the documented direction', () => {
-        // The header's load-bearing claim. Specific volume rises with
-        // temperature, so converting CFM to dry-air mass always shifts
-        // weight TOWARD the colder stream — meaning the volumetric mix
-        // never reads cooler than the exact mass mix, whichever stream
-        // is the warm one, and the gap tracks the temperature SPREAD.
-        // Winter is where the spread lives, which is also where the
-        // freeze question lives. Pins the direction and the ordering,
+        // The header's load-bearing claim, and its SCOPE. Specific
+        // volume rises with humidity ratio as well as with temperature,
+        // so "the colder stream is the denser one" holds wherever the
+        // temperature spread dominates the moisture spread — which is
+        // the whole freeze regime the claim is about, and where every
+        // sampled point below sits (all ≥ 15 °F from the return). There
+        // the mass basis shifts weight toward the colder stream and the
+        // volumetric mix never reads cooler. It is NOT a universal, and
+        // the row after this one pins the exception, so a maintainer who
+        // widens the sweep reads a documented boundary rather than a bug
+        // they are tempted to "fix". Pins directions and orderings,
         // never either number.
         const E = loadEngine();
         const ra = E.Psychro.solveState('rh', 75, 50, E.P_STD);
@@ -253,5 +284,19 @@ test.describe('psychro-engine: mixStreams invariants', () => {
             expect(spread[i], 'the gap widens as the streams spread (step ' + i + ')')
                 .toBeGreaterThan(spread[i - 1]);
         }
+
+        // The documented EXCEPTION, pinned so the header's scoping is
+        // falsifiable rather than decorative: within a degree or so of
+        // the return temperature there is no temperature spread left for
+        // the density argument to work on, the moisture spread (OA 40 %
+        // against RA 50 %) takes over, and the sign flips. Measured at
+        // this stock pair the flip lives in a ~1 °F window either side
+        // of 75 and is worth about 1.5e-4 °F — real, and nowhere near
+        // the ~2 °F the freeze regime is about.
+        const nearCross = gapAt(75.75);
+        expect(nearCross, 'the sign really does flip with no spread to work on')
+            .toBeLessThan(0);
+        expect(Math.abs(nearCross), 'but only by a rounding-scale amount')
+            .toBeLessThan(1e-3);
     });
 });

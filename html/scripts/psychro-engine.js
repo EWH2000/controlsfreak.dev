@@ -264,6 +264,19 @@ const Psychro = (function () {
     // result onto the curve, so mixing warm humid air into cold air
     // returns a valid fogging state rather than an impossible one.)
     //
+    // READ "VALID" NARROWLY: in the FOGGING branch it means ON the
+    // curve, not conserving. The dry-bulb is recovered from the
+    // PRE-clamp W and the clamp then drops W without re-solving, and
+    // ∂t/∂W < 0 in that recovery, so the returned dry-bulb runs COLD
+    // and neither h nor W comes back flow-weighted. Measured against a
+    // proper fog solve (h_mix = h_sat(T) + (W_mix − W_sat(T))·(T − 32)):
+    // 0.2 °F at fog onset, −6.7 °F at the extreme corner an AHU mixing
+    // box can reach, −9.5 °F over a full sweep. Outside the fog branch
+    // the function is exact (the enthalpy inversion round-trips to
+    // 3e-14 °F). The error is always cold, hence conservative for a
+    // freeze question, which is why this is a documented bound and not
+    // a re-solve — see codebase-issues #236.
+    //
     // WEIGHT BASIS — this function does not care which basis it is
     // handed. It weights by `flow` and says nothing about units, so
     // THE CALLER OWNS THE CHOICE and owes its reader a statement of
@@ -281,13 +294,24 @@ const Psychro = (function () {
     //     volumetric one lands at 60.2 °F — about 2 °F, inside the
     //     freeze-protection band that decides whether a coil is at
     //     risk. On a 95 °F cooling day the same 20 % split is a 19.3 %
-    //     mass fraction and the two answers sit 0.14 °F apart. Specific
-    //     volume rises with temperature, so the mass basis always
-    //     shifts weight toward the COLDER stream: the volumetric answer
-    //     is never the cooler of the two, whichever stream is the warm
-    //     one, and the gap tracks the SPREAD — nil when the streams
-    //     match, and largest in winter, which is where the freeze
-    //     question lives.
+    //     mass fraction and the two answers sit 0.14 °F apart. The gap
+    //     tracks the SPREAD — nil when the streams match, and largest
+    //     in winter, which is where the freeze question lives.
+    //   • DIRECTION, scoped: specific volume rises with humidity ratio
+    //     as well as with temperature, so "the colder stream is the
+    //     denser one" holds only where the TEMPERATURE spread dominates
+    //     the MOISTURE spread. Throughout that regime — which is the
+    //     whole freeze regime this paragraph is about — the mass basis
+    //     shifts weight toward the colder stream and the volumetric
+    //     answer reads the warmer of the two. It is not a universal: a
+    //     warm DRY stream against a cool HUMID one inverts it (90 °F /
+    //     100 % RH has v = 15.39 against 110 °F / 0 % RH at v = 14.36),
+    //     and so does a pair within a couple of degrees of each other,
+    //     where the moisture spread is all there is. Measured worst
+    //     inversion over a 162-state grid: 0.06 °F. tests/
+    //     psychro-mixstreams.spec.js pins both the dominant direction
+    //     and the near-crossover exception, so this scoping is
+    //     falsifiable rather than decorative.
     //
     // One more property of the recovery, worth knowing before anyone
     // calls it a rounding bug: because cp = 0.240 + 0.444·W, the
@@ -306,14 +330,26 @@ const Psychro = (function () {
             if (!s || !s.state || !s.state.ok) {
                 return { ok: false, error: 'One of the mixed streams has an invalid air state.' };
             }
-            if (!isFinite(s.flow)) return { ok: false, error: 'Enter a numeric flow for every stream.' };
-            if (s.flow < 0)        return { ok: false, error: 'Stream flow can’t be negative.' };
-            total += s.flow;
+            // Coerce ONCE and use the coerced value for both the guard
+            // and the weight — solveState tolerates coercible input the
+            // same way. This is the engine's first `+=` accumulator over
+            // caller-supplied values, and that makes the tolerance
+            // dangerous rather than harmless: `isFinite('200')` is true,
+            // but `0 + '200'` is the STRING '0200', so an un-coerced
+            // accumulator turned two DOM-read flows into a total of
+            // 200800, weights summing to ~0.005, and a silently wrong
+            // dry-bulb returned with ok:true. The four inline air-mixing
+            // call sites this helper is meant to absorb (codebase-issues
+            // #228) all read `.value` off an input.
+            const f = Number(s.flow);
+            if (!isFinite(f)) return { ok: false, error: 'Enter a numeric flow for every stream.' };
+            if (f < 0)        return { ok: false, error: 'Stream flow can’t be negative.' };
+            total += f;
         }
         if (total <= 0) return { ok: false, error: 'Enter a positive total flow.' };
         let W = 0, h = 0;
         for (let i = 0; i < streams.length; i++) {
-            const f = streams[i].flow / total;
+            const f = Number(streams[i].flow) / total;
             W += f * streams[i].state.W;
             h += f * streams[i].state.h;
         }
