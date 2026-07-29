@@ -32,6 +32,7 @@
 //        Psychro.buildState(tdb, W, P)
 //        Psychro.computeProcess(stage, cfm)
 //        Psychro.invertProcess(inlet, opts)
+//        Psychro.mixStreams(streams, P)
 //
 // Why two tiers: the primitives are the unopinionated ASHRAE math any
 // future psych tool will want directly (a coil-sizing calculator wants
@@ -254,5 +255,71 @@ const Psychro = (function () {
         return out;
     }
 
-    return { solveState, buildState, computeProcess, invertProcess };
+    // Mix N air streams into one state. `streams` is [{ state, flow }, …]
+    // — `state` is a solveState / buildState result, `flow` is that
+    // stream's weight. Humidity ratio and enthalpy are the conserved
+    // quantities, so BOTH are weighted by `flow`; the mixed dry-bulb is
+    // then RECOVERED by inverting h = (0.240 + 0.444·W)·T + 1061·W,
+    // never averaged directly. (buildState clamps a super-saturated
+    // result onto the curve, so mixing warm humid air into cold air
+    // returns a valid fogging state rather than an impossible one.)
+    //
+    // WEIGHT BASIS — this function does not care which basis it is
+    // handed. It weights by `flow` and says nothing about units, so
+    // THE CALLER OWNS THE CHOICE and owes its reader a statement of
+    // which one it made:
+    //   • True dry-air MASS flow (lb_da/h, i.e. CFM·60/v) is the EXACT
+    //     basis — mass is what conserves across a mixing box.
+    //   • VOLUMETRIC flow (CFM) is the common field approximation, and
+    //     it is the arithmetic the site's own lessons teach
+    //     (%OA·OAT + %RA·RAT).
+    //   • The two diverge as the streams' specific volumes diverge —
+    //     that is, as their temperatures spread. Measured against this
+    //     engine: 0 °F outdoor air against 75 °F / 50 % RH return air
+    //     at a 20 % VOLUMETRIC outdoor fraction is a 22.8 % MASS
+    //     fraction, so the mass-weighted mix lands at 58.1 °F where the
+    //     volumetric one lands at 60.2 °F — about 2 °F, inside the
+    //     freeze-protection band that decides whether a coil is at
+    //     risk. On a 95 °F cooling day the same 20 % split is a 19.3 %
+    //     mass fraction and the two answers sit 0.14 °F apart. Specific
+    //     volume rises with temperature, so the mass basis always
+    //     shifts weight toward the COLDER stream: the volumetric answer
+    //     is never the cooler of the two, whichever stream is the warm
+    //     one, and the gap tracks the SPREAD — nil when the streams
+    //     match, and largest in winter, which is where the freeze
+    //     question lives.
+    //
+    // One more property of the recovery, worth knowing before anyone
+    // calls it a rounding bug: because cp = 0.240 + 0.444·W, the
+    // recovered dry-bulb is cp-weighted, so it sits a shade off the
+    // plain weighted average of the source dry-bulbs whenever the
+    // streams' moisture differs — 60.2 °F against the plain blend's
+    // 60.0 °F in the case above. That gap is psychrometrically honest,
+    // not an artifact.
+    function mixStreams(streams, P) {
+        if (!Array.isArray(streams) || streams.length < 1) {
+            return { ok: false, error: 'Mix at least one air stream.' };
+        }
+        let total = 0;
+        for (let i = 0; i < streams.length; i++) {
+            const s = streams[i];
+            if (!s || !s.state || !s.state.ok) {
+                return { ok: false, error: 'One of the mixed streams has an invalid air state.' };
+            }
+            if (!isFinite(s.flow)) return { ok: false, error: 'Enter a numeric flow for every stream.' };
+            if (s.flow < 0)        return { ok: false, error: 'Stream flow can’t be negative.' };
+            total += s.flow;
+        }
+        if (total <= 0) return { ok: false, error: 'Enter a positive total flow.' };
+        let W = 0, h = 0;
+        for (let i = 0; i < streams.length; i++) {
+            const f = streams[i].flow / total;
+            W += f * streams[i].state.W;
+            h += f * streams[i].state.h;
+        }
+        const tdb = (h - 1061 * W) / (0.240 + 0.444 * W);
+        return buildState(tdb, W, P);
+    }
+
+    return { solveState, buildState, computeProcess, invertProcess, mixStreams };
 })();
