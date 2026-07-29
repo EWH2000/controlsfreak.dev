@@ -255,27 +255,127 @@ const Psychro = (function () {
         return out;
     }
 
+    // Enthalpy of the SUSPENDED CONDENSATE in a fogging mixture — Btu per
+    // lb of WATER (not per lb of dry air), on the same datum as the
+    // 1061 / 0.444 water-vapour formulation above. Above the ice point the
+    // condensate is liquid; below it, it is ICE, and the enthalpy drops by
+    // the latent heat of fusion, which is why one form cannot cover both.
+    //
+    // Both forms are the ones ASHRAE's own IP wet-bulb relations imply,
+    // and those relations are ALREADY in this file — humRatioFromWetBulb
+    // solves the same adiabatic-saturation balance, once per side of 32 °F:
+    //   • the ≥32 branch's (1093 − 0.556·t*) / (1093 + 0.444·t − t*)
+    //     coefficients fall out of h_w = t − 32 — a 1.0 Btu/(lb·°F)
+    //     liquid specific heat on a 32 °F liquid-water datum;
+    //   • the <32 branch's (1220 − 0.04·t*) / (1220 + 0.444·t − 0.48·t*)
+    //     coefficients fall out of h_w = 0.48·t − 159 — i.e. −143.64
+    //     Btu/lb at 32 °F (the latent heat of fusion) and a 0.48
+    //     Btu/(lb·°F) ice specific heat.
+    // Deriving the constants from those branches rather than quoting a
+    // table is deliberate: it makes a fog solve and a below-freezing
+    // wet-bulb agree BY CONSTRUCTION rather than to three digits.
+    // (ASHRAE Fundamentals Ch. 1, IP thermodynamic wet-bulb relations —
+    // the same source as the rest of this file. Rounded table values,
+    // 143.34 Btu/lb of fusion and a 0.487 ice specific heat, move the
+    // solved fog temperature by 8e-4 °F at the AHU's reachable corner.)
+    const condensateEnthalpy = tF => (tF >= 32 ? tF - 32 : 0.48 * tF - 159);
+
+    // Re-solve the dry-bulb of a FOGGING mixture. `hMix` and `W` are the
+    // flow-weighted mixture enthalpy and humidity ratio; `tdbLow` is the
+    // pre-clamp enthalpy recovery, which is the solve's own lower bound.
+    // Finds the temperature T at which saturated air PLUS the suspended
+    // condensate carries the whole mixture enthalpy:
+    //
+    //     h_mix = h_sat(T) + (W_mix − W_sat(T)) · h_condensate(T)
+    //
+    // Bisection on [tdbLow, the mixture's dew point]. At the lower bound
+    // every bit of the excess moisture is still being counted as vapour,
+    // which overstates the enthalpy the air can hold, so the residual is
+    // negative; at the dew point there is no condensate left at all and it
+    // is positive; and it rises monotonically between them. Returns NaN if
+    // the bracket does not resolve, so the caller falls back rather than
+    // publishing a number from a broken solve.
+    //
+    // The residual JUMPS at 32 °F — crossing upward, the condensate stops
+    // being ice and gains the heat of fusion — so it is monotone but not
+    // continuous. Bisection is fine with that, and the case where the root
+    // falls INSIDE the jump converges on 32 °F exactly, which is the
+    // physically right answer: the mixture sits at the ice point with part
+    // of its condensate frozen and part still liquid.
+    function fogTemp(hMix, W, tdbLow, P) {
+        let lo = tdbLow;
+        let hi = dewPointFromVapPress(vapPressFromHumRatio(W, P));
+        if (!isFinite(lo) || !isFinite(hi) || hi <= lo) return NaN;
+        const residual = T => enthalpy(T, satHumRatio(T, P))
+            + (W - satHumRatio(T, P)) * condensateEnthalpy(T) - hMix;
+        if (!(residual(lo) < 0) || !(residual(hi) > 0)) return NaN;
+        for (let i = 0; i < 80; i++) {
+            const mid = (lo + hi) / 2;
+            if (residual(mid) > 0) hi = mid; else lo = mid;
+        }
+        return (lo + hi) / 2;
+    }
+
     // Mix N air streams into one state. `streams` is [{ state, flow }, …]
     // — `state` is a solveState / buildState result, `flow` is that
     // stream's weight. Humidity ratio and enthalpy are the conserved
     // quantities, so BOTH are weighted by `flow`; the mixed dry-bulb is
     // then RECOVERED by inverting h = (0.240 + 0.444·W)·T + 1061·W,
-    // never averaged directly. (buildState clamps a super-saturated
-    // result onto the curve, so mixing warm humid air into cold air
-    // returns a valid fogging state rather than an impossible one.)
+    // never averaged directly.
     //
-    // READ "VALID" NARROWLY: in the FOGGING branch it means ON the
-    // curve, not conserving. The dry-bulb is recovered from the
-    // PRE-clamp W and the clamp then drops W without re-solving, and
-    // ∂t/∂W < 0 in that recovery, so the returned dry-bulb runs COLD
-    // and neither h nor W comes back flow-weighted. Measured against a
-    // proper fog solve (h_mix = h_sat(T) + (W_mix − W_sat(T))·(T − 32)):
-    // 0.2 °F at fog onset, −6.7 °F at the extreme corner an AHU mixing
-    // box can reach, −9.5 °F over a full sweep. Outside the fog branch
-    // the function is exact (the enthalpy inversion round-trips to
-    // 3e-14 °F). The error is always cold, hence conservative for a
-    // freeze question, which is why this is a documented bound and not
-    // a re-solve — see codebase-issues #236.
+    // Mixing warm humid air into cold air can land the straight line
+    // between the two streams ABOVE the saturation curve, which is fog.
+    // Every result carries the outcome explicitly, in the shape
+    // invertProcess uses for its own `saturated` flag:
+    //
+    //   • `fogging`    — true when the mixture holds more water than
+    //                    saturated air at the mixed temperature can.
+    //   • `condensate` — lb_water / lb_dry-air held in SUSPENSION, i.e.
+    //                    the flow-weighted W minus the W of the returned
+    //                    state. Zero on every clear-of-the-curve result.
+    //
+    // Clear of the curve the function is exact: the enthalpy inversion
+    // round-trips to ~3e-14 °F and `h` / `W` come back flow-weighted.
+    //
+    // IN THE FOGGING BRANCH, `h` IS THE AIR'S ALONE — BY DESIGN, AND IT IS
+    // NOT THE MIXTURE'S. A buildState result structurally cannot represent
+    // suspended water: `h` is the saturated-air enthalpy at the returned
+    // dry-bulb, and the mixture's total enthalpy is
+    //     h + condensate · <the condensate enthalpy at that dry-bulb>
+    // which below freezing is LOWER than `h` (ice carries a negative
+    // enthalpy on this datum). That is why `condensate` is returned rather
+    // than dropped: a caller summing enthalpy across a mixing box can
+    // close its own balance, and one that ignores it loses the water
+    // loudly rather than silently. `tdb` and `W` ARE the mixture's.
+    //
+    // ONE EXCEPTION to that balance, and it is detectable: a fogging
+    // result whose `tdb` is EXACTLY 32 °F sits on the ice-point plateau,
+    // where the condensate is part ice and part liquid and the two fields
+    // cannot say which. Reconstructing the mixture enthalpy there is off
+    // by the frozen fraction, bounded by `condensate` × 143.64 Btu/lb —
+    // MEASURED worst 0.172 Btu/lb_da over a wide sweep, against ~2e-13
+    // everywhere else in the fog branch. The plateau is narrow but real:
+    // at the AHU's own RH assumptions and a 55 % damper it spans about
+    // 1.3 °F of outdoor air (−19.2 to −17.9 °F against an 80 °F zone).
+    // `tdb === 32 && condensate > 0` is the signature; a caller that needs
+    // the split has to model the freezing itself.
+    //
+    // The fog branch RE-SOLVES the dry-bulb (see fogTemp) — owner ruling
+    // 2026-07-29, closing codebase-issues #236. It previously recovered
+    // the dry-bulb from the PRE-clamp W and let buildState drop W onto
+    // the curve without re-solving; since ∂t/∂W < 0 in that recovery the
+    // returned dry-bulb ran COLD. MEASURED corrections: 7.25 °F at the
+    // corner an AHU mixing box can reach (zone 80 °F, 70 % outdoor air,
+    // −20 °F outdoor: 10.42 °F then against 17.67 °F now), 10.25 °F at the
+    // worst AHU-envelope pair the review round found (zone 90, same
+    // damper and weather), and 28.6 °F on a coarse sweep of arbitrary
+    // near-saturated pairs, which is the number a future caller mixing
+    // something other than room air and weather should read.
+    // Every AHU-reachable fog case lands BELOW freezing, which is exactly
+    // why the ice convention above is not optional: at that first corner
+    // the liquid-only form solves to 17.10 °F against the ice form's
+    // 17.67 °F. The 0.57 °F gap is small only because the condensate is
+    // ~10 grains — the per-pound enthalpy gap is 136 Btu/lb_water.
     //
     // WEIGHT BASIS — this function does not care which basis it is
     // handed. It weights by `flow` and says nothing about units, so
@@ -354,7 +454,29 @@ const Psychro = (function () {
             h += f * streams[i].state.h;
         }
         const tdb = (h - 1061 * W) / (0.240 + 0.444 * W);
-        return buildState(tdb, W, P);
+        const Wsat = satHumRatio(tdb, P);
+        // `Wsat > 0` is not paranoia: above the boiling point for the
+        // pressure the saturation formula degenerates NEGATIVE
+        // (codebase-issues #238), which would read as fog on bone-dry air.
+        // Route that to the clear-of-the-curve arm, where buildState's own
+        // clamp handles it exactly as it did before this branch existed.
+        if (!(Wsat > 0) || !(W > Wsat)) {
+            const clear = buildState(tdb, W, P);
+            clear.fogging = false;
+            clear.condensate = 0;
+            return clear;
+        }
+        const tFog = fogTemp(h, W, tdb, P);
+        // Defensive: the bracket is guaranteed by the residual's own signs
+        // whenever Wsat > 0 and W > Wsat, so this arm should be
+        // unreachable. If a future edit breaks that, fall back to the
+        // pre-#236 behaviour — a state ON the curve at the uncorrected
+        // (cold) dry-bulb — rather than publish a broken solve. `fogging`
+        // is still true, because it is.
+        const out = buildState(isFinite(tFog) ? tFog : tdb, W, P);
+        out.fogging = true;
+        out.condensate = W - out.W;
+        return out;
     }
 
     return { solveState, buildState, computeProcess, invertProcess, mixStreams };

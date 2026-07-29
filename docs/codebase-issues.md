@@ -9795,7 +9795,7 @@ with a shape rule the scan can derive (e.g. every local assigned from a
 covered the moment it is written rather than the moment someone remembers to
 add it. The anti-vacuity probes must move with it.
 
-### 236. `Psychro.mixStreams` conserves neither enthalpy nor humidity ratio in the FOGGING branch *(noticed 2026-07-28, AHU physics review round — header scoped in the same PR, the re-solve is the open decision)*
+### 236. `Psychro.mixStreams` conserves neither enthalpy nor humidity ratio in the FOGGING branch *(noticed 2026-07-28, AHU physics review round — **RESOLVED 2026-07-29**, owner ruled for the re-solve, ice-aware)*
 
 `html/scripts/psychro-engine.js` recovers the mixed dry-bulb from the
 **pre-clamp** humidity ratio —
@@ -9835,13 +9835,82 @@ Done in the AHU physics review PR: the header's "returns a valid fogging state
 rather than an impossible one" now says *valid means ON the curve, not
 conserving*, and quotes the measured bound.
 
-Open decision: re-solve the dry-bulb on the saturation curve for the mixture
-enthalpy when the clamp fires (a bisection, ~8 lines), or leave the documented
-bound standing. The re-solve carries a modelling choice with it — the liquid
-enthalpy convention for the entrained water — so it is the owner's call, not a
-mechanical fix. The header already names air-mixing and coil-sizing as
-candidate second callers (#228), and a tool that prints the mixed dry-bulb
-directly would raise the stakes.
+**RESOLVED 2026-07-29 — owner ruled for the re-solve, and ruled that the
+condensate convention must switch at the ice point.** `mixStreams` now
+bisects for the temperature satisfying
+
+```
+h_mix = h_sat(T) + (W_mix − W_sat(T)) · h_condensate(T)
+```
+
+and every result — fogging or not — carries two new fields, in the shape
+`invertProcess` already uses for its own `saturated` flag: `fogging`
+(boolean) and `condensate` (lb_water / lb_dry-air held in suspension).
+
+Three things about the resolution are worth having written down:
+
+1. **The ice convention is not optional, because every AHU-reachable fog case
+   lands below freezing.** Above 32 °F the entrained water is liquid
+   (`h_w = t − 32`); below it, ice. MEASURED at the reachable corner above:
+   the liquid-only form solves to **17.10 °F**, the ice form to
+   **17.67 °F** — 0.57 °F apart, small only because the condensate is
+   ~10 grains, since the per-pound gap is 136 Btu/lb_water.
+   The constants used are **not** quoted from a table: they are the ones
+   ASHRAE's IP wet-bulb relations imply, and those relations are already in
+   this file. `humRatioFromWetBulb`'s two branches solve the same
+   adiabatic-saturation balance, and rearranging their coefficients gives
+   `h_w = t − 32` (from 1093 / 0.556) and `h_ice = 0.48·t − 159` (from
+   1220 / 0.48), i.e. −143.64 Btu/lb of fusion at 32 °F and a 0.48
+   Btu/(lb·°F) ice specific heat. Rounded table values (143.34 and 0.487)
+   move the solved corner by 8e-4 °F. Deriving them this way makes a fog
+   solve and a below-freezing wet-bulb agree by construction, and it means a
+   future retune of one has to argue with the other.
+2. **`h` on a fogging result is the AIR'S, not the mixture's, and that is now
+   stated rather than implied.** A `buildState` result structurally cannot
+   represent suspended water; `tdb` and `W` are the mixture's, `h` is the
+   saturated-air enthalpy at that `tdb`, and the mixture total is
+   `h + condensate · h_condensate(tdb)`. Returning `condensate` is what lets
+   a caller close its own enthalpy balance instead of silently losing the
+   water.
+3. **One documented hole, and it announces itself.** The residual the solve
+   inverts JUMPS at 32 °F by the heat of fusion, so when its root falls inside
+   that jump the bisection lands on 32 °F exactly — physically right (the
+   mixture sits at the ice point with part of its condensate frozen) and not
+   fully describable by two fields, because they do not carry the frozen
+   fraction. Reconstruction there is off by at most `condensate` × 143.64
+   Btu/lb — MEASURED worst **0.172 Btu/lb_da**, against ~2e-13 everywhere
+   else in the fog branch. `tdb === 32 && condensate > 0` is the signature.
+   The plateau is narrow but real: ~1.3 °F of outdoor air (−19.2 to
+   −17.9 °F against an 80 °F zone at a 55 % damper).
+
+Note the table above was measured against the LIQUID form, so the "true"
+column understates the correction now shipped. Under the ice convention the
+same two cases solve to 17.67 °F (a 7.25 °F correction) and 23.89 °F (10.25 °F).
+A coarse sweep of arbitrary near-saturated pairs — not AHU-reachable, but the
+regime a future caller could hand this helper — reaches a 28.6 °F correction
+(−30 °F / 95 % mixed 50/50 into 100 °F / 95 %).
+
+Also measured: the clear-of-the-curve path did **not** move — over a
+131,881-point sweep of stream pairs the recovered dry-bulb matches a hand
+computation exactly, the flow-weighted `h` to 1.4e-14 and `W` exactly.
+
+`tests/psychro-mixstreams.spec.js` grew six rows: the contract shape, the
+conservation check against an independently written reference balance, the
+saturation-curve landing, the re-solve's direction (warmer than the
+uncorrected recovery — a regression makes that difference exactly zero),
+continuity across the 32 °F switch with anti-vacuity probes on both sides,
+and the plateau bound. Reverting the re-solve fails three of them; reverting
+only the ice half of the convention fails two.
+
+Reachable-state consequence, for the record: the AHU's `matT` (and with it
+`datT`, `qCool` and the zone trajectory) warms in the cold-and-open corner —
+up to **8.1 °F** at OAT −30 °F with the damper at 60 %, 6.2 °F at the −20 °F
+/ 70 % corner. 54 of a 96-cell probe grid moved. **Nothing on the default day
+moves at all** (no fog there). The AHU does not carry the condensate forward —
+see #239.
+
+The four inline public consumers of the mixing math (#228) are unaffected
+because they do not call this helper yet; when they do, they inherit the fix.
 
 ### 237. `ddcw-fcu-unit.js` carries the same starved-coil fallback the AHU just fixed, and it is LIVE *(noticed 2026-07-28, AHU physics review round — same defect family, different file)*
 
@@ -9914,3 +9983,38 @@ saturation temperature for the pressure. Every current caller already checks
 `.ok`. Surfaced by the AHU heating coil, which could drive its leaving air past
 1100 °F before this round added `HW_LEAVE_MAX`; the AHU no longer reaches it,
 but the engine is shared and the next caller might.
+
+### 239. The AHU mixing box drops `mixStreams`' fog condensate, so its moisture bookkeeping loses water in the cold-and-open corner *(noticed 2026-07-29, the #236 fix round)*
+
+With #236 resolved, `Psychro.mixStreams` now returns a `condensate` term
+alongside a saturated fogging state. `html/scripts/ddcw-ahu-unit.js` reads
+`mixState.tdb` and `mixState.W` and **ignores `condensate`** — so in the fog
+corner the suspended water simply leaves the model. Concretely:
+
+- `d.matW` is the ON-CURVE humidity ratio, not the flow-weighted mixture's, so
+  the mixing box is not moisture-conserving there;
+- the coil section downstream is handed saturated air and no liquid load, so
+  the DX coil's latent term and the heating coil's "W rides through unchanged"
+  invariant both operate on a mixture that already lost some of its water;
+- the amount is small in absolute terms — ~10 grains / lb_da at the extreme
+  corner (zone 80 °F, 70 % outdoor air, −20 °F outdoor) — but it is a
+  one-directional loss, and it is exactly the regime a freeze question lives
+  in.
+
+**Not a defect in the temperature story, which is what the machine teaches.**
+The AHU is dry-bulb throughout (dry-bulb economizer, dry-bulb staging, dry-bulb
+badges), no point on the roster reports moisture, and the plant has no latent
+zone state yet (`plant.zoneW` is a documented future seam, not a field). So
+nothing published today is wrong because of this — `matW` / `afterHeatW` are
+marked "observability only, no consumer" in the file. The entry exists because
+the moment a consumer appears the loss becomes visible, and because the fix has
+a natural home:
+
+Action, when the latent seam lands (a `zoneW` state, a supply-RH or SHR
+readout, or a coil-condensate readout): decide whether the mixing box carries
+the condensate as a liquid stream into the coil section or declares it drained
+at the mixing box, and say which in the section-3 comment. Today that comment
+says the water is dropped and why; it does not claim the model conserves it.
+Cheapest honest interim if a moisture readout ships first: publish
+`d.matCondensate` beside `d.matW` so a chip can annotate a fogging mixed-air
+state rather than silently under-report it.
