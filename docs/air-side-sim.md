@@ -100,6 +100,24 @@ that file is, exactly:
   spec, and "more outdoor air lowers MAT" is the AHU's first invariant); and
   the mixing box is weighted by **volumetric flow**, stated at the call site
   with the ~2 °F cold-day divergence from a mass basis written down.
+- **Each coil is bounded, and the bounds belong to an ENERGIZED coil.** The DX
+  side holds a freeze floor and an entering-air ceiling *inside* the
+  `capActive` branch — the review round caught the floor firing on a
+  de-energized coil, which invented up to 55 °F of rise across two dead coils
+  on a design-cold morning and quietly did the sequence's freeze protection
+  for it, hiding the "someone deleted the min-OA block" fault the damper model
+  exists to make showable. A starved coil whose psych inversion fails now pins
+  at the floor rather than falling back to no cooling, so the coil ΔT is
+  monotone in airflow. The heating side gained the mirror bound,
+  `HW_LEAVE_MAX` — a hot-water coil approaches the entering water temperature
+  and cannot pass it — which also keeps the leaving state inside the psych
+  engine's own validity envelope (above 212 °F at sea level a saturation
+  humidity ratio does not exist, and the engine was silently zeroing the
+  humidity ratio there). Details and the measured before/after in the file's
+  own comments; the residuals it surfaced are codebase-issues **#236**
+  (`mixStreams` fog branch), **#237** (the FCU carries the same starved-coil
+  fallback, and it is live) and **#238** (`buildState` degenerates quietly
+  above boiling).
 
 What comes next is the AHU's **sample programs**, then the **graphic and
 animation** work, then the FCU ⇄ AHU unit selector. **Phase 8 is graduation** —

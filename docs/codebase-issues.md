@@ -9794,3 +9794,123 @@ with a shape rule the scan can derive (e.g. every local assigned from a
 `dispTempNum(...)` call in the scanned file), so a new display local is
 covered the moment it is written rather than the moment someone remembers to
 add it. The anti-vacuity probes must move with it.
+
+### 236. `Psychro.mixStreams` conserves neither enthalpy nor humidity ratio in the FOGGING branch *(noticed 2026-07-28, AHU physics review round — header scoped in the same PR, the re-solve is the open decision)*
+
+`html/scripts/psychro-engine.js` recovers the mixed dry-bulb from the
+**pre-clamp** humidity ratio —
+
+```js
+const tdb = (h - 1061 * W) / (0.240 + 0.444 * W);
+return buildState(tdb, W, P);
+```
+
+— and `buildState` then drops `W` onto the saturation curve **without
+re-solving the temperature**. Because ∂t/∂W < 0 in that recovery, the returned
+dry-bulb runs **cold**, and the returned state's `h` is rebuilt from the
+clamped pair, so neither conserved quantity comes back flow-weighted.
+
+MEASURED against a proper fog solve (`h_mix = h_sat(T) + (W_mix − W_sat(T)) ·
+(T − 32)`, the standard liquid-water convention):
+
+| case | returned | true | error |
+|---|---|---|---|
+| fog onset (any pair) | — | — | < 0.2 °F |
+| AHU-reachable corner (zone 80 °F, damper 70 %, OAT −20 °F) | 10.42 °F | 17.10 °F | **−6.68 °F** |
+| full sweep worst (OAT −20, zone 90, damper 70 %) | 13.64 °F | 23.13 °F | −9.49 °F |
+| 90 °F/95 % mixed 50/50 into 20 °F/60 % | h 23.73 | h 30.09 | — |
+
+Outside the fog branch the function is exact — the enthalpy inversion
+round-trips to 2.8e-14 °F and the flow-weighted `h` / `W` return to 3.6e-15 / 0.
+
+**Reachable from the AHU mixing box** at its shipped RH assumptions (OA 40 %,
+RA 50 %): with the zone at 72 °F, fog begins at OAT −2 °F with the damper at
+50 % and at +5 °F with it at 70 % — mid-position on a cold day, mixing warm
+moist return air into cold dry outdoor air, which genuinely fogs. Nothing on
+the site prints a fogging MAT today, and the **error direction is cold, hence
+conservative for a freeze question**, which is why this shipped as documented
+rather than re-solved.
+
+Done in the AHU physics review PR: the header's "returns a valid fogging state
+rather than an impossible one" now says *valid means ON the curve, not
+conserving*, and quotes the measured bound.
+
+Open decision: re-solve the dry-bulb on the saturation curve for the mixture
+enthalpy when the clamp fires (a bisection, ~8 lines), or leave the documented
+bound standing. The re-solve carries a modelling choice with it — the liquid
+enthalpy convention for the entrained water — so it is the owner's call, not a
+mechanical fix. The header already names air-mixing and coil-sizing as
+candidate second callers (#228), and a tool that prints the mixed dry-bulb
+directly would raise the stakes.
+
+### 237. `ddcw-fcu-unit.js` carries the same starved-coil fallback the AHU just fixed, and it is LIVE *(noticed 2026-07-28, AHU physics review round — same defect family, different file)*
+
+`html/scripts/ddcw-fcu-unit.js:248`:
+
+```js
+if (leaving.ok) { coilLeaveTarget = leaving.tdb; leavingW = leaving.W; }
+else coilLeaveTarget = zoneT;
+```
+
+When the requested load per CFM drives `Psychro.invertProcess` past bone-dry it
+returns `ok:false`, and the FCU falls back to the **entering air** — a running
+compressor with a zero coil ΔT, which is this model's own signature for a
+FAULTED machine. The AHU shipped the identical shape and it made the coil ΔT
+non-monotone in airflow; the AHU fix pins the starved coil at `COIL_FLOOR`
+instead (bounded by the entering air), which restores monotonicity.
+
+MEASURED on the shipped FCU, quasi-static probe, stage 2:
+
+| fan | coilLeaveT | qCool |
+|---|---|---|
+| 20 % | 34.00 °F | 5,310 Btu/h |
+| 15 % | 34.00 °F | 3,982 |
+| 12 % | 34.00 °F | 3,186 |
+| **10 %** | **76.00 °F** | **−38.5** |
+| 8 % | 76.00 °F | −32.1 |
+
+One step of a step-5 fan slider takes the discharge from 34.6 °F to 76.6 °F and
+turns a running DX coil into a heater. `ddc-workbench-fcu.html` is a shipped
+page, so unlike the AHU this is reachable by a reader today.
+
+Not fixed inline: the AHU branch is the physics half of a different unit, and
+touching the live FCU model wants its own PR (and its own look at the workbench
+graphic, which paints that ΔT). The fix is the AHU's, one line —
+`else coilLeaveTarget = COIL_FLOOR;` — plus the entering-air ceiling that makes
+the floor safe on cold inlet air. Note the FCU's coil inlet is the zone, clamped
+to [40, 120], so the *other* half of the AHU defect (a freeze floor firing on a
+de-energized coil) is unreachable there; only this half carries over.
+
+### 238. `Psychro.buildState` silently returns `W = 0` when the saturation humidity ratio degenerates *(noticed 2026-07-28, AHU physics review round)*
+
+`buildState` opens with
+
+```js
+W = Math.max(0, Math.min(W, satHumRatio(tdb, P)));
+```
+
+Above the boiling point for the given pressure — 212 °F at sea level, lower at
+altitude — `satPress(tdb)` exceeds `P`, so `humRatioFromVapPress = 0.621945 ·
+pw / (P − pw)` goes **negative** and the `Math.min` hands the `Math.max` a
+negative ceiling. The state comes back `ok: true` with `W = 0`, `rh = 0` and
+`tdp = -Infinity`, whatever moisture the caller passed in.
+
+MEASURED: `satHumRatio(211.9, P_STD) = +584.96`, `satHumRatio(212, P_STD) =
+−676.00`, `satHumRatio(500, P_STD) = −0.636`. `buildState(200, 0.006, P_STD)`
+returns W 0.006 / rh 1.22 %; `buildState(250, 0.006, P_STD)` returns W 0 /
+rh 0 / tdp −Infinity.
+
+The negative return is the **formula degenerating, not a bug in the constant** —
+above boiling there is no saturation humidity ratio to return — so the fix is
+not to widen `satHumRatio`. The defect is that a state outside the math's
+validity envelope comes back looking like a perfectly ordinary bone-dry one.
+`dewPointFromVapPress` already handles its own out-of-range end this way
+(#103: return `Infinity` so a caller's `isFinite` guard catches it), and this is
+the same shape of problem with the opposite answer.
+
+Suggested: have `buildState` return `{ ok: false, error: … }` when
+`satHumRatio(tdb, P) < 0`, i.e. when the requested dry-bulb is at or above the
+saturation temperature for the pressure. Every current caller already checks
+`.ok`. Surfaced by the AHU heating coil, which could drive its leaving air past
+1100 °F before this round added `HW_LEAVE_MAX`; the AHU no longer reaches it,
+but the engine is shared and the next caller might.
