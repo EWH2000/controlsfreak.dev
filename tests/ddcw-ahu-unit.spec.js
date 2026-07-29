@@ -47,6 +47,18 @@
 // exists to pin a clamp or a branch, it carries a probe proving the
 // sweep got there.
 //
+// ONE ROW BELOW GUARDS A BEHAVIOUR THE FEEL CONSTANTS PRODUCE, and the
+// distinction is the whole reason it is phrased the way it is. Q_INT_DEF
+// was tuned (owner ruling 2026-07-29) so stage 1 reaches its own off
+// point on the default day instead of holding the space at 100 % duty
+// forever. The VALUE stays unpinned — no row asserts 8,000 Btu/h and no
+// row asserts the balance temperature — but "it cycles" is a teaching
+// claim the file's own comment makes, and a retune that quietly takes it
+// away should not pass. So the row asserts the OUTCOME (an off point is
+// reached, and reached again after a re-make, so duty is under 100 %),
+// which every retune in the tuned direction — less gain, more capacity,
+// any pace — keeps green.
+//
 // The quasi-static probe: a fresh plant leaves coilLeaveT unseeded, so
 // the first update seeds the coil lag directly to its target — and a
 // dt of 0 (which passes the isFinite gates) integrates nothing. One
@@ -97,6 +109,20 @@ function runToProof(Unit, mutate) {
     if (mutate) mutate(plant);
     for (let i = 0; i < 600 && !plant.sensors['fan-status']; i++) Unit.update(plant, 1);
     return plant;
+}
+
+// Stage-1 control, supplied by the SPEC because the AHU program lane has
+// not landed yet. It is the staging convention the FCU's own sample
+// sheets use and the AHU's TUNE BY FEEL block names — the SETPOINT IS
+// THE CUT-OUT: stage 1 makes above `cooling-setpoint + deadband` and
+// breaks below `cooling-setpoint`, with the band read off the plant's own
+// params so a setpoint or deadband retune moves the rule with it.
+function stage1Control(plant) {
+    const sp = plant.params['cooling-setpoint'];
+    const db = plant.params['deadband'];
+    const t  = plant.sensors['space-temp'];
+    if (t > sp + db) plant.actuators.y1 = true;
+    if (t < sp)      plant.actuators.y1 = false;
 }
 
 // The AHU's coil ΔT — SIGNED, leaving minus entering, and entering on
@@ -804,6 +830,58 @@ test.describe('ddcw-ahu-unit: zone trajectory (integration)', () => {
         // the air the coils were handed, so compare against the same
         // tick's afterHeatT rather than a value read a step earlier.
         expect(pl.coilLeaveT).toBeCloseTo(pl.derived.afterHeatT, 9);
+    });
+
+    test('on the default day stage 1 reaches its off point and cycles', () => {
+        // The arrival story the file's TUNE BY FEEL block promises: one DX
+        // stage pulls the space down to its cut-out and CYCLES, rather
+        // than holding it somewhere inside the deadband at 100 % duty —
+        // which is what the shipped tuning did before 2026-07-29 (the
+        // balance sat above the cut-out, so the stage never broke).
+        //
+        // Deliberately NOT a row on Q_INT_DEF or on the balance
+        // temperature: both are feel constants. What is asserted is that
+        // the off point is REACHED, that the stage makes again afterwards
+        // so this is a cycle and not a latch, and that duty is therefore
+        // under 100 %. Every retune in the tuned direction — less internal
+        // gain, more stage capacity, a faster or slower zone — keeps all
+        // three green; only a retune that gives the cycling back up goes
+        // red, which is the point.
+        //
+        // Cap-and-break rather than a fixed run length, for the same
+        // reason runToProof is written that way: a fixed tick count would
+        // be an undeclared ceiling on C_ZONE. The cap is 12 sim-hours
+        // against a measured ~82 sim-minutes to the first re-make at the
+        // shipped tuning (~2.7 h even with the zone capacitance doubled),
+        // and reaching it is the failure.
+        const Unit = loadUnit();
+        const DT = 5;
+        const CAP_TICKS = Math.round(12 * 3600 / DT);
+        const plant = Unit.createPlant();
+        expect(plant.actuators.y1, 'the arrival state has stage 1 running').toBe(true);
+
+        let ticks = 0, onTicks = 0, cutOuts = 0, reMakes = 0;
+        let prev = plant.actuators.y1;
+        for (let i = 0; i < CAP_TICKS; i++) {
+            stage1Control(plant);
+            Unit.update(plant, DT);
+            ticks++;
+            if (plant.actuators.y1) onTicks++;
+            if (plant.actuators.y1 !== prev) {
+                if (plant.actuators.y1) { if (cutOuts > 0) reMakes++; } else cutOuts++;
+                prev = plant.actuators.y1;
+            }
+            if (cutOuts >= 1 && reMakes >= 1) break;
+        }
+        expect(cutOuts, 'stage 1 reached its off point (the zone crossed the cut-out)')
+            .toBeGreaterThanOrEqual(1);
+        expect(reMakes, 'and made again — a cycle, not a latch').toBeGreaterThanOrEqual(1);
+        expect(onTicks / ticks, 'so the duty cycle is not 100 %').toBeLessThan(1);
+        // The zone rode the band rather than diving through it: the
+        // cut-out is the SETPOINT under this convention, so a zone that
+        // ended far below it would mean the stage is not being released.
+        expect(plant.zoneT, 'and the zone is back inside its own band')
+            .toBeGreaterThan(plant.params['cooling-setpoint'] - 1);
     });
 
     test('zoneT safety clamps hold at both ends', () => {

@@ -146,25 +146,39 @@ const DDCWAhuUnit = (function () {
     // DON'T agonize over them. The zone is one lumped-capacitance node.
     //
     //   Sizing intent (default 80 °F day, zone arriving at 76 °F):
-    //   envelope + internal gain is ~14 kBtu/h, one DX stage delivers
+    //   envelope + internal gain is ~12 kBtu/h, one DX stage delivers
     //   ~18 kBtu/h at the zone, so stage 1 pulls the space down — the
-    //   "it's working" arrival. MEASURED, at the shipped constants, it
-    //   pulls it to a steady 73.1 °F and holds there: inside the
-    //   deadband, but ABOVE its own off point, so stage 1 runs
-    //   continuously rather than cycling. (Bisected on the quasi-static
-    //   balance and confirmed by a 12 h integration; stage 1 crosses the
-    //   72 °F setpoint at about a 78.6 °F day.) Nudging Q_INT_DEF or
-    //   STAGE_QSENS[1] is what buys cycling if the owner wants it — the
-    //   values are feel constants, this sentence is the checkable part.
-    //   Push the OA knob to 95 °F and the gain roughly doubles while the
-    //   mixed air warms, so stage 1 loses (balances at 88.0 °F) and
-    //   stage 2 only just holds (73.9 °F, a hair under the band top):
-    //   the strained story, reached by dragging one slider. Push the
-    //   load knob past that and the machine visibly cannot keep up. On
-    //   the heating side a 10 °F morning is a ~50 kBtu/h loss against a
-    //   coil worth ~75 kBtu/h at the zone, so the valve holds the space
-    //   at roughly two-thirds open — authority to spare, which is what
-    //   makes a modulating valve worth watching.
+    //   "it's working" arrival. MEASURED (bisected on the quasi-static
+    //   balance, confirmed by a 12 h integration): stage 1 alone
+    //   balances at 71.7 °F, BELOW the 72 °F cut-out, so it reaches its
+    //   own off point and cycles. That is the arrival the FCU teaches
+    //   and it is what Q_INT_DEF was tuned for — the owner picked the
+    //   internal-gain knob over lifting STAGE_QSENS[1], 2026-07-29.
+    //
+    //   CYCLING IS A JOINT PROPERTY OF THIS BALANCE AND THE SEQUENCE'S
+    //   BAND, so the claim above names the band it assumes: the
+    //   convention the FCU sheets use, where the setpoint IS the cut-out
+    //   — stage 1 makes above cooling-setpoint + deadband (74 °F) and
+    //   breaks below cooling-setpoint (72 °F). Under that rule the
+    //   measured run is ~93 % duty, ten cycles per 12 sim-hours, first
+    //   cut-out ~77 sim-minutes in. The margin is THIN, and that is worth
+    //   knowing before writing those sequences: 71.7 °F clears the cut-out
+    //   by 0.3 °F, so a program that centres its band on the setpoint
+    //   instead (break at 71 °F) gets the never-cycles behaviour back
+    //   without anyone touching a constant. Drop Q_INT_DEF further if a
+    //   fatter margin is wanted — 7,000 → 71.0 °F and ~88 % duty,
+    //   6,000 → 70.3 °F and ~83 %.
+    //
+    //   Push the OA knob to 95 °F and the gain more than doubles
+    //   (27 kBtu/h at a 76 °F zone) while the mixed air warms, so
+    //   stage 1 loses (balances at 86.6 °F) and stage 2 takes over and
+    //   holds (72.5 °F, above its own cut-out, so the ladder pins at
+    //   stage 2): the strained story, reached by dragging one slider.
+    //   Push the load knob past that and the machine visibly cannot keep
+    //   up. On the heating side a 10 °F morning is a ~52 kBtu/h loss at a
+    //   70 °F zone against a coil worth ~74 kBtu/h there, so the valve
+    //   holds the space around three-quarters open — authority to spare,
+    //   which is what makes a modulating valve worth watching.
     //
     //   The default day is deliberately a COOLING day even though the
     //   economizer is the headline feature: the DX ladder and the
@@ -182,7 +196,7 @@ const DDCWAhuUnit = (function () {
     //   the arrival state near 13 min if that is the feel wanted.
     const C_ZONE        = 700;     // Btu/°F — lumped zone capacitance (bigger = slower)
     const UA_ENV        = 1000;    // Btu/(h·°F) — envelope conductance to outdoor air
-    const Q_INT_DEF     = 10000;   // Btu/h — default internal sensible gain (load knob)
+    const Q_INT_DEF     = 8000;    // Btu/h — default internal sensible gain (load knob)
     const T_OA_DEF      = 80;      // °F — default outdoor-air temp (moderate day)
     const COIL_TAU      = 30;      // s — coil thermal + DAT sensor/filter response (bigger = slower ramp)
     // Fan heat, and the reason it is NOT the FCU's 0.6 °F. An FCU sits
@@ -207,8 +221,12 @@ const DDCWAhuUnit = (function () {
         // Arrival: a moderate 80 °F day with the zone at 76 °F, one DX
         // stage running at minimum outdoor air — the machine visibly
         // working, with a real coil ΔT on the graphic from the first
-        // paint. The loop is CLOSED: zoneT is the integrated truth and
-        // space-temp is the sensed value a program reads.
+        // paint, and a stage that pulls the zone to its cut-out and
+        // cycles rather than running flat out (the TUNE BY FEEL block
+        // above carries the measured balance and the band it assumes;
+        // this comment deliberately does not restate the numbers). The
+        // loop is CLOSED: zoneT is the integrated truth and space-temp
+        // is the sensed value a program reads.
         //
         // The seeded actuator values cover the instant before the first
         // bindingTick. Once a program exists the resolver overwrites
@@ -351,6 +369,23 @@ const DDCWAhuUnit = (function () {
         // the freeze-protection band, so it is worth KNOWING; it is not
         // worth buying with a model the rest of the machine cannot pay
         // for.
+        //
+        // FOGGING IS REACHABLE, AND THIS MODEL DROPS THE WATER. Mixing
+        // 50 %-RH return air into cold dry outdoor air lands the mixture
+        // above the saturation curve well inside the knob ranges — at the
+        // shipped RH assumptions, from about −2 °F outdoor at a 50 %
+        // damper against a 72 °F zone, and across a large corner of the
+        // spec's own sweep grid. Psychro.mixStreams re-solves the mixed
+        // dry-bulb on the curve for the mixture enthalpy there and hands
+        // back a `condensate` term (codebase-issues #236). MAT is the
+        // mixture's own temperature; matW is the SATURATED value at it,
+        // and this file DROPS the condensate rather than carrying it
+        // forward (codebase-issues #239) — the coil section downstream
+        // sees saturated air and no liquid load, and neither the latent
+        // balance nor the graphic has anywhere to put a fog. Read a
+        // fogging MAT as "saturated air at this temperature, minus the
+        // mist": for a dry-bulb machine's temperature story that is the
+        // part that matters, and matW has no consumer today.
         //
         // With no airflow the fraction is moot — the casing air came
         // from the return — so the mixed state collapses to the return
