@@ -5965,6 +5965,56 @@ of a real reader; do not open it as a general affordance.
 
 ---
 
+### Mixed air, mass basis vs volume basis *(measured 2026-07-28 — owner ruled the sim's basis; the teaching beat is unbuilt)*
+
+The AHU's mixing box weights **volumetrically** — `%OA × OAT + %RA × RAT`,
+the arithmetic a tech actually does and the form `coil-freeze-risk.html`
+and `air-handlers.html` already teach. Owner's call, made against the
+numbers below. The alternative was a rigorous dry-air **mass** basis,
+which is what the flagship `air-mixing.html` offers and what
+`Psychro.mixStreams()` supports; stacking that on a deliberately crude
+linear damper model is false precision, and it would have put the sim
+visibly at odds with four pages that teach the simple form.
+
+**But the gap is not negligible, and that is the interesting part.**
+Specific volume rises with temperature, so cold outdoor air is denser
+than warm return air and a volumetric percentage understates how much
+outdoor air the mixture actually contains, by mass. Measured through
+the engine at OA 0 °F / 40 % RH against RA 75 °F / 50 % RH, damper at a
+20 % minimum position:
+
+- `v` = 11.594 vs 13.679 ft³/lb — an 18 % spread
+- the true **mass** OA fraction is **22.78 %**, not 20 %
+- MAT lands at **58.13 °F** mass-weighted against **60.00 °F** by the
+  lessons' linear form — **1.87 °F**, and the direction is that hand
+  arithmetic reads *warm*
+
+That is inside the margin the freeze pages are about: `coil-freeze-risk`
+draws its band at 35–38 °F and the stratification figure it teaches is
+10–20 °F, so a systematic ~2 °F optimism on a cold day is the same order
+as the thing being protected against. A third figure worth keeping
+straight: the helper returns **60.20 °F** on the volumetric weights, not
+60.00, because `cp = 0.240 + 0.444·W` makes the enthalpy recovery
+**cp-weighted** whenever the streams' moisture differs. Enthalpy mixing
+and linear-on-dry-bulb mixing are not the same operation even on
+identical weights.
+
+**Candidate teaching beat, not a defect.** "Why your mixed-air hand
+math runs warm on a cold day" is a real thing a tech can carry into a
+mechanical room, it has a number attached, and the site already ships
+every piece needed to state it. Natural homes: the reference column on
+`coil-freeze-risk.html` (where the stakes are), or a note on
+`air-mixing.html` (where both bases exist side by side and the tool can
+show the difference live). Nothing is promised in page copy anywhere —
+this marker is the tracking mechanism.
+
+Related: `codebase-issues` #228 (engine standardisation — the three
+disagreeing inline MAT forms) and #236 (the `mixStreams` fog branch).
+Rewiring the four public consumers onto the shared helper belongs to
+#228, not here.
+
+---
+
 ## Redesign — dark-industrial two-register language
 
 ### Phase 1b — design-language distillation *(shipped 2026-06-06)*
