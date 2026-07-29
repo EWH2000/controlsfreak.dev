@@ -25,30 +25,57 @@ that diagnostic end**, not the point.
   unit; the owner's own fault examples are AHU faults, so the structure grows
   toward OA/mixing → MAT and beyond.
 
-## Current state — the full-experience arc is merged, live-but-hidden (2026-07-27)
+## Current state — Phase 7, the AHU round, is in flight
 
-`html/simulators/ddc-workbench-fcu.html` (renamed from `fcu-ddc.html`, then off
-the bare `ddc-workbench` name — that slot is reserved for the AHU) — **merged to
-`main` @ `015a319`**, `eleventyExcludeFromCollections` + `noindex` (reachable at
-its URL, out of nav / search / sitemap / landing). Two tabbed views on one
-runtime: a **Unit** view (the DX fan-coil DDC graphic) and a **Wiresheet** view
-(the Function-Block Editor, lazy-mounted). An **FBE control program drives the
-unit every 10 Hz tick** through a generic binding driver.
+Two hidden pages carry this line. Both are `noindex` +
+`eleventyExcludeFromCollections` with **no `canonical`**, so both are reachable
+at their URLs and absent from nav / search / sitemap / the landing —
+**crawl-hidden, not undeployed.** They build and ship to Cloudflare on every
+merge.
+
+- **`html/simulators/ddc-workbench-fcu.html`** — the working Workbench, a DX fan
+  coil (renamed from `fcu-ddc.html`, then off the bare `ddc-workbench` name —
+  that slot is reserved for the AHU). Two tabbed views on one runtime: a
+  **Unit** view (the DDC graphic) and a **Wiresheet** view (the Function-Block
+  Editor, lazy-mounted), with an **FBE control program driving the unit every
+  10 Hz tick** through a generic binding driver. The unit-agnostic shell lives
+  in `html/scripts/ddcw-shell.js`, the FCU plug-in in
+  `html/scripts/ddcw-fcu-unit.js`.
+- **`html/simulators/ddc-workbench-ahu-mockup.html`** — the AHU depiction
+  mockup: one machine drawn twice, round two rebuilt on the owner's own
+  production-graphic conventions, with round one's three compositions kept below
+  it as the reference he asked to keep. Drawing and static plausible values
+  only — no physics, no runtime.
+
+> ⚠️ **A hidden page is invisible to the whole test suite.** No `canonical`
+> means no entry in `tests/pages.js`, and that manifest is what the smoke walk,
+> the responsive sweep and the blocking contrast sweep all iterate — so a green
+> run proves *nothing* about such a page. These two escape it only because specs
+> name their URLs directly. Any further hidden page needs its own spec, written
+> by hand.
 
 **The loop is CLOSED** (PR #425, 2026-07-24): `plant.zoneT` is an integrated
 state driven by a zone heat balance, so the staging program holds the space on
 its own. A 1–60× speed slider scales the one `dtSim` that drives both the zone
 integrator and `FBE.tick`.
 
-**As of the full-experience arc (PRs #436–#445, all merged 2026-07-27):**
-3-slot BACnet priority arbitration replaces HAND/AUTO; the wiresheet is
-relaid-out; the program library is **four** samples including *2-stage +
-safeties* (latched DAT low-limit, full-stop-only min-off); the unit-agnostic
-shell lives in `html/scripts/ddcw-shell.js` with the FCU plug-in in
-`ddcw-fcu-unit.js`; **three sensor glyphs** are drawn on the graphic (RAT and
-DAT insertion probes, a space-temp wall plate), each activatable to highlight
-its chip; and the **coil ΔT badge is signed** — leaving minus entering,
-negative while cooling.
+**Where the arc stands.** The depiction increment, the FBE Workbench,
+closed-loop physics and the **full-experience arc** are all merged — the last of
+those bringing 3-slot BACnet priority arbitration in place of HAND/AUTO, a
+relaid-out wiresheet, the *2-stage + safeties* sample program (latched DAT
+low-limit, full-stop-only min-off) into the program library, the shell / unit
+plug-in extraction, sensor glyphs on the graphic (RAT and DAT insertion probes
+and a space-temp wall plate, each activatable to highlight its chip), and a
+**signed** coil ΔT — leaving minus entering, negative while cooling.
+
+**Phase 7 — the AHU round — opened** with a pre-AHU hygiene lane and the
+depiction round (PRs #446–#448), which is what put the mockup page, the
+component-identity `-fill` token family and the DX distributor on the site. What
+comes next is the **AHU unit plug-in and its physics**
+(`html/scripts/ddcw-ahu-unit.js`), then its programs, then the graphic and
+animation work, then the FCU ⇄ AHU unit selector. **Phase 8 is graduation** —
+until then the Workbench is a react-baseline and reference point, not a surfaced
+page.
 
 > ⚠️ **Two protections stack on the safeties sheet, and the page's own note
 > describes only one** — a trip is itself a stop, so it arms the min-off TON as
@@ -57,7 +84,10 @@ negative while cooling.
 > stops). Both deferred by owner decision to a single pre-live sweep alongside
 > the AHU programs. Read them before touching a sequence here.
 
-Shipped across:
+**The FCU line, increment by increment** — a closed record of how the fan-coil
+Workbench got built, kept because the PR is where the reasoning lives. Phase 7
+and later do not extend it; read *Where the arc stands* above for the present.
+
 - **PR #420** — the DX fan-coil DDC-graphic mockup (Increment 1's depiction:
   live points EAT / DAT / ΔT / zone / fan / compressor, chevron airflow, fault
   presets, the "no ΔT over the coil" tell, fullscreen, in-graphic drill-downs).
@@ -70,7 +100,6 @@ Shipped across:
   binding driver, the FCU unit plug-in, 3 sample programs).
 - **PR #424** — the verdict pill reads idle (neutral), not a red fault, when the
   program satisfies the space (auto-fan cycles the fan off).
-
 - **PR #425** — closed-loop physics (the zone integrator + the speed slider).
 - **PRs #436–#442** — the decision round and its sidecars, #209 priority
   arbitration, a real IBM Plex Mono 700 face, the program rewrite +
@@ -85,8 +114,60 @@ Shipped across:
   glyph CSS stays page-inline until the AHU page graduates it.
 - **PR #445** — the signed coil ΔT and the min-off teaching beat.
 
-**The react-baseline / reference point, not a surfaced page** — graduation is
-Phase 8, after the Phase-7 AHU round.
+## The AHU, as designed (owner rulings, 2026-07-27 / 28)
+
+A **single-zone constant-volume air handler**: two stages of DX cooling, a
+**modulating hot-water heating coil**, and a **dry-bulb economizer** with a
+differential enable *and* a fixed high limit — `OAT < RAT` **and**
+`OAT < econ-lockout`. All dry-bulb, so `economizers.html`'s enthalpy contract
+stays unbound while the high limit's *purpose* becomes demonstrable. The supply
+fan is **draw-through**, downstream of both coils, so `DAT` is coil-leaving plus
+fan heat exactly as `air-handlers.html` already teaches. Air path, in the
+canonical site order: OA louver → mixing box → filter → HW coil → DX coil →
+supply fan → supply duct → zone, with the return coming back to the mixing box
+through an EA/relief branch.
+
+The heating coil supersedes the arc plan's cooling-only sketch. It is nearly
+free in physics — `Psychro.invertProcess` already models one (`type !== 'cool'`
+flips the sign and ignores latent, since a heating coil rides humidity ratio
+through unchanged) — and it pays for itself architecturally, because
+`hydronic-loop-builder.html` becomes the HW coil's drill-down spoke alongside
+the FCU's DX coil → `refrigerant-loop.html` and fan → `vfd-mock.html`.
+
+- **The AHU takes the bare `ddc-workbench.html`** at graduation; the FCU keeps
+  `ddc-workbench-fcu.html`. ⚠️ **No legacy redirect** — the bare name used to
+  mean the FCU, so a redirect would land an FCU-seeker on the wrong machine, and
+  the page was never public, so no inbound link exists.
+- **ΔT is `DAT − MAT`.** The AHU reads MAT as entering, so
+  leaving-minus-entering holds unchanged across both units — and now reads
+  **positive in heating**, which is the reason `abs()` was rejected.
+- **`FAN_HEAT` deliberately differs** — `1.0 °F` on the AHU, `0.6 °F` on the
+  FCU. Modelled, not drift: an FCU sits in the zone it conditions, while an AHU
+  typically sits in a mechanical room and picks up casing heat on top of motor
+  work. The reason belongs in the AHU's `TUNE BY FEEL` comment so nobody
+  harmonises the two later.
+- **Two separate setpoints**, heating and cooling, rather than one plus a signed
+  offset — so **overlapping them is reachable**. A unit fighting itself is a
+  real field fault and the site has no interactive demonstration of it.
+- **The statusbar chip strip stays** alongside the graphic's own callouts: two
+  views of the same data for two jobs, since the Wiresheet tab and phone widths
+  need the strip. No shared-shell change, and the FCU page is untouched by the
+  AHU annotation work.
+- **Component identity never rests on hue alone** — the `-fill` token family and
+  the drawn hardware difference between the two serpentines. See
+  `codebase-issues` #230 and #231.
+- **`role="img"` stays on the graphic**, and the activation affordance moves to
+  real HTML buttons outside the SVG with the point-mirror chips as the
+  activators. Ruled at `codebase-issues` #227(b), scheduled to the graphic lane.
+
+New physics it needs: damper command → OA fraction (linear, carrying
+`air-handlers.html`'s caveat that a commanded position is not really a flow
+fraction), a `Psychro.mixStreams()` helper for the mixed-air state, fan-proof
+physics behind a real `bi` point, and a second coil stage in series. Neither
+engine needs a change for this phase — `fbe-engine.js` already ships the
+`select` block the sequence stages through, and the mixing helper is additive
+(three disagreeing inline forms ship today with no shared helper; that is
+`codebase-issues` #228, scheduled on its own).
 
 ## Confirmed decisions (owner)
 
@@ -162,8 +243,8 @@ tiles** · short **fan-heat/calibration callout** · **improved fan animation**
 > #440, and #443 added a fourth sample), visible sensors, and the signed coil ΔT.
 > The FCU-only-vs-more-units scope question is **settled**: two pages sharing an
 > extracted shell, approved at the #441 review. What remains is **Phase 7, the
-> AHU design round** (owner-gated — do not build ahead), then **Phase 8,
-> graduation**. Current brief: `docs/next-session-handoff.md`. Feel constants
+> AHU round** (owner-gated — do not build ahead), then **Phase 8, graduation**;
+> *Current state* and *The AHU, as designed* above carry both. Feel constants
 > stay tune-in-place (`TUNE BY FEEL` block).
 
 The unit runs a **closed-loop control strategy** — zone temp becomes driven
@@ -259,9 +340,10 @@ round fattened the ducts and cleared label overlaps.
 > work). ~~The immediate next increment is the physics session (closed-loop
 > dynamics + psychro tuning).~~ **Superseded 2026-07-26: that increment
 > SHIPPED** — PR #425, `ddc: close the thermal loop — integrated zone temp +
-> sensor override`, merged 2026-07-24. The next increment is the **polish arc**,
-> not more physics; see the status block near the top of this file and
-> `docs/next-session-handoff.md`.
+> sensor override`, merged 2026-07-24. ~~The next increment is the **polish
+> arc**, not more physics.~~ **Superseded again 2026-07-26:** the owner replaced
+> the polish framing with the full-experience arc, and the AHU round followed it.
+> See *Current state* near the top of this file.
 
 **ALL the FBE work in one focused session** (owner: "get the bouncing out of the
 way"), so the session *after* is pure sim physics. The FCU sim is reframed as the
@@ -281,10 +363,12 @@ way"), so the session *after* is pure sim physics. The FCU sim is reframed as th
   onto the FBE I/O blocks.
 - **HAND/AUTO override** on the points (HAND drives by hand, AUTO lets the FBE
   graph drive).
-- **The loop stays OPEN this session** (owner-confirmed): the program runs and
-  drives the unit and you watch the air state react, but **zone temp stays an
-  input you nudge by hand** — closed-loop dynamics + psychro tuning are the
-  SESSION AFTER (see Horizon). A deliberate split, not an oversight.
+- **The loop stayed OPEN for that session** (owner-confirmed): the program ran
+  and drove the unit and you watched the air state react, but **zone temp was an
+  input you nudged by hand** — closed-loop dynamics + psychro tuning were the
+  SESSION AFTER (see Horizon). A deliberate split, not an oversight. *(That
+  session landed as PR #425; the loop has been closed since — see* Current
+  state *above.)*
 - **Reuse the existing FBE stack:** `fbe-engine.js` (tick runtime + block library
   incl. I/O blocks + PID) and `function-block-editor.html` (a working drag-wire
   editor with loadable example programs). ⚠️ The editor's logic is **inline** in

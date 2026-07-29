@@ -480,6 +480,20 @@ section). **Category keys mirror the landing pages' `navCard()`
 
 ### Gotchas
 
+- **A page with no `canonical` is rendered by NO spec, so a green suite
+  proves nothing about it.** `tests/pages.js` is the manifest
+  `smoke.spec.js` / `responsive.spec.js` / `contrast-sweep.spec.js` all
+  walk, and its drift test checks it against the built sitemap — which
+  a `canonical`-less page is deliberately absent from. So the manifest
+  cannot list one without failing that test, and the three sweeps never
+  reach it: no load check, no console-error check, no phone-width
+  overflow check, and **no blocking contrast sweep in either theme**.
+  This is the standing shape of a **hidden page** (`noindex` +
+  `eleventyExcludeFromCollections` + no `canonical`) — the DDC
+  Workbench pages under `html/simulators/`. They are covered only
+  because several specs name their URLs directly. **Any new hidden page
+  needs its own hand-written spec**; the omission from `tests/pages.js`
+  is correct and must not be "fixed."
 - **Inline `<style>` in `{% block head %}` is indented to column 4**
   to match the surrounding head context (which is itself indented to
   column 4 inside the rendered `<head>`). Inner CSS rules sit at

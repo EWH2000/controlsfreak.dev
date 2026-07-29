@@ -7156,10 +7156,10 @@ this editor into a shared module — if the editor code is being extracted anywa
 that's the natural point to decouple the cache.
 
 > *Historical, and it played out exactly this way* — the ride-along happened in
-> PR #422 and the Resolution below records it. The original text cited
-> `docs/next-session-handoff.md` for the extraction plan; that edition is now
-> archived under `docs/audits/`, so the citation is dropped rather than
-> repointed (the plan it described is finished).
+> PR #422 and the Resolution below records it. The original text cited the
+> rolling session-handoff doc for the extraction plan; that edition is archived
+> under `docs/audits/`, so the citation is dropped rather than repointed (the
+> plan it described is finished).
 
 Related: #111 (the `refreshValues` micro-optimization this cache serves),
 PR #421 (the narrow fix + regression guard).
@@ -8949,10 +8949,11 @@ either way; the stale comment needs correcting regardless.
 > **NOT IMPLEMENTED IN THE AHU depiction lane, and deliberately so.** The
 > change touches the shipped FCU page and the AHU page that comes after it,
 > and the activators have to be wired to whatever the graphic's click model
-> ends up being — so it rides with the graphic work of the Phase-7 AHU round
-> (`docs/next-session-handoff.md`, that phase's agenda item 2 — the graphic
-> mockup on a hidden page), as one change across both pages rather than two
-> divergent ones.
+> ends up being — so it rides with **the graphic-and-animation work of the
+> Phase-7 AHU round**: the lane that wires the AHU's sensor glyphs and readouts
+> once the unit plug-in exists. Not the depiction mockup, which is a drawing
+> with no click model to wire against. One change across both pages, rather
+> than two divergent ones.
 > **Scheduled, not done.** The stale in-file comment on the FCU page ("the
 > education idiom") is corrected there, in that lane, with the rest of it.
 >
