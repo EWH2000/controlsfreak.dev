@@ -357,25 +357,36 @@ const DDCWAhuUnit = (function () {
         // Why volumetric: it is the arithmetic every page on this site
         // already teaches — air-handlers.html's worked MAT, the
         // %OA formula economizer-ratio.html prints, and the integer-
-        // tenths blend coil-freeze-risk.html walks — so a reader who
-        // does the sum off the graphic gets the graphic's own answer.
+        // tenths blend coil-freeze-risk.html walks — so CLEAR OF THE
+        // SATURATION CURVE a reader who does the sum off the graphic
+        // gets the graphic's own answer, to within 0.61 °F anywhere in
+        // the space-temp point's 60…90 °F band. (Scoped deliberately:
+        // in the FOG branch the published MAT is not that sum at all —
+        // see the paragraph below, which is the larger effect and the
+        // one that lands in the freeze corner.)
         // Stacking a rigorous mass basis on top of a deliberately crude
         // linear damper model would also be false precision: the
         // damper simplification is worth degrees, the basis question is
-        // worth about two on the coldest day the sliders reach (0 °F
-        // outdoor air at a 20 % volumetric fraction is a 22.8 % mass
-        // fraction — 58.1 °F mass-weighted against 60.2 °F volumetric,
-        // measured against this engine). That divergence lands inside
-        // the freeze-protection band, so it is worth KNOWING; it is not
+        // worth about two in the cold-and-open corner (0 °F outdoor air
+        // at a 20 % volumetric fraction is a 22.8 % mass fraction —
+        // 58.1 °F mass-weighted against 60.2 °F volumetric, measured
+        // against this engine). That divergence lands inside the
+        // freeze-protection band, so it is worth KNOWING; it is not
         // worth buying with a model the rest of the machine cannot pay
-        // for.
+        // for. (Deliberately no claim here about how cold the OA knob
+        // goes — this file declares no range for `oat`, the DOM half
+        // owns that control, and the figure belongs with whatever sets
+        // it. An earlier draft said "the coldest day the sliders
+        // reach (0 °F)", which the fog paragraph below then contradicted
+        // 12 lines later.)
         //
         // FOGGING IS REACHABLE, AND THIS MODEL DROPS THE WATER. Mixing
         // 50 %-RH return air into cold dry outdoor air lands the mixture
         // above the saturation curve well inside the knob ranges — at the
         // shipped RH assumptions, from about −2 °F outdoor at a 50 %
-        // damper against a 72 °F zone, and across a large corner of the
-        // spec's own sweep grid. Psychro.mixStreams re-solves the mixed
+        // damper against a 72 °F zone, or at a plain 0 °F once the damper
+        // is at 50 % or more against a 76 °F zone, and across a large
+        // corner of the spec's own sweep grid. Psychro.mixStreams re-solves the mixed
         // dry-bulb on the curve for the mixture enthalpy there and hands
         // back a `condensate` term (codebase-issues #236). MAT is the
         // mixture's own temperature; matW is the SATURATED value at it,
@@ -386,6 +397,23 @@ const DDCWAhuUnit = (function () {
         // fogging MAT as "saturated air at this temperature, minus the
         // mist": for a dry-bulb machine's temperature story that is the
         // part that matters, and matW has no consumer today.
+        //
+        // AND A FOGGING MAT IS NOT THE %OA BLEND — it reads WARMER, and
+        // by more than the basis question above. The condensing water
+        // releases its latent heat into the air, so once the mixture
+        // crosses the curve the published MAT walks away from
+        // %OA·OAT + %RA·RAT: about 0.5 °F just past the crossing, 2 °F at
+        // 0 °F outdoor with the damper at 60 %, 6.6 °F at the −20 °F /
+        // 70 % corner, and 13.6 °F at the coldest-and-most-open pair the
+        // space-temp band reaches (zone 90 °F, 65 % damper, −30 °F). That
+        // is real psychrometrics, not a modelling slip — but it means the
+        // three pages named above still print the plain blend for inputs
+        // where this model prints the re-solved value, because they do
+        // their mixing inline and have not adopted Psychro.mixStreams yet
+        // (codebase-issues #228). A MAT that a reader's own arithmetic
+        // cannot reproduce needs to SAY it is a fogging mixture, which is
+        // a graphic question, not a physics one — logged as
+        // codebase-issues #240 for the DOM half.
         //
         // With no airflow the fraction is moot — the casing air came
         // from the return — so the mixed state collapses to the return

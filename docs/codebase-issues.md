@@ -10034,3 +10034,42 @@ says the water is dropped and why; it does not claim the model conserves it.
 Cheapest honest interim if a moisture readout ships first: publish
 `d.matCondensate` beside `d.matW` so a chip can annotate a fogging mixed-air
 state rather than silently under-report it.
+
+### 240. A fogging MAT no longer reconciles with the reader's own %OA arithmetic, and the graphic says nothing about it *(noticed 2026-07-29, the #236 fix round's review — a LANE 7.4 graphic question, not a physics one)*
+
+`#236`'s fog re-solve moved the AHU's published `d.matT` off the
+`%OA·OAT + %RA·RAT` blend that `air-handlers.html`, `economizer-ratio.html` and
+`coil-freeze-risk.html` all teach — because the condensing water releases its
+latent heat into the air, so a fogging mixture genuinely lands warmer than the
+straight blend. Measured against `ddcw-ahu-unit.js` as shipped (return 50 % RH,
+outdoor 40 % RH):
+
+| case | plain %OA sum | published `matT` |
+|---|---|---|
+| just past the crossing (zone 76, 60 % damper, 5 °F) | 33.40 °F | 33.75 °F |
+| 0 °F outdoor, 60 % damper, zone 76 | 30.40 °F | 31.94 °F |
+| −20 °F outdoor, 70 % damper, zone 76 | 8.80 °F | 15.36 °F |
+| −30 °F outdoor, 65 % damper, zone 90 | 12.00 °F | 25.56 °F |
+
+Clear of the curve the two still agree to **0.61 °F** anywhere in the
+space-temp point's 60…90 °F band — that residual is the honest cp-weighting the
+engine's own header describes, and it is what the section-3 WEIGHT BASIS
+comment's "a reader who does the sum gets the graphic's own answer" was written
+about. The comment is now scoped to the clear branch and the fog paragraph
+states the divergence with its size, so **nothing in the code is wrong**. The
+open item is what the GRAPHIC does:
+
+The MAT chip lane 7.4 will label off that comment will print a number a
+reader's own arithmetic cannot reproduce, in exactly the freeze corner the
+machine exists to teach — and the same reader can walk to
+`coil-freeze-risk.html` and get the other answer, because the four inline
+consumers of the mixing math have not adopted `Psychro.mixStreams` yet (#228).
+
+Action for the DOM half: decide whether the mixed-air readout carries a fogging
+marker — a saturated/fog pill beside the chip, a note in the drill-in, or the
+condensate value #239 suggests publishing — rather than a bare temperature. A
+silent number is the one option that teaches the wrong thing twice: it looks
+like the site's arithmetic and isn't, and it gives no hook for the (correct,
+teachable) reason why. Cross-check with #228 when the consumer pages adopt the
+helper, since that closes the cross-page disagreement but not the
+reader-arithmetic one.
