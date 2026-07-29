@@ -268,16 +268,28 @@ const Psychro = (function () {
     //     coefficients fall out of h_w = t − 32 — a 1.0 Btu/(lb·°F)
     //     liquid specific heat on a 32 °F liquid-water datum;
     //   • the <32 branch's (1220 − 0.04·t*) / (1220 + 0.444·t − 0.48·t*)
-    //     coefficients fall out of h_w = 0.48·t − 159 — i.e. −143.64
-    //     Btu/lb at 32 °F (the latent heat of fusion) and a 0.48
-    //     Btu/(lb·°F) ice specific heat.
+    //     coefficients give h_w = 0.48·t − 159 — i.e. −143.64 Btu/lb at
+    //     32 °F (the latent heat of fusion) and a 0.48 Btu/(lb·°F) ice
+    //     specific heat.
     // Deriving the constants from those branches rather than quoting a
     // table is deliberate: it makes a fog solve and a below-freezing
     // wet-bulb agree BY CONSTRUCTION rather than to three digits.
-    // (ASHRAE Fundamentals Ch. 1, IP thermodynamic wet-bulb relations —
-    // the same source as the rest of this file. Rounded table values,
-    // 143.34 Btu/lb of fusion and a 0.487 ice specific heat, move the
-    // solved fog temperature by 8e-4 °F at the AHU's reachable corner.)
+    //
+    // ONE CAVEAT if you re-derive it, because it does not close exactly:
+    // the ice branch's DENOMINATOR gives 0.48·t − 159 as above, but its
+    // printed NUMERATOR coefficient of 0.04 gives 0.484·t − 159 — the
+    // exactly-consistent numerator would read 1220 − 0.036·t*. That 0.8 %
+    // split in the ice specific heat is in the published correlation, not
+    // in this file, and the two forms are worth 3e-4 °F on the solve
+    // (17.6676 °F against 17.6673 at the AHU's reachable corner), so the
+    // denominator's 0.48 is taken as the pair. (ASHRAE Fundamentals Ch. 1,
+    // IP thermodynamic wet-bulb relations — the same source as the rest of
+    // this file. The measured fusion enthalpy, 143.34 Btu/lb with a 0.487
+    // ice specific heat, is NOT what 143.64 rounds from — 143.64 is the
+    // artifact of the correlation's own coefficients — and swapping the
+    // measured pair in moves the solved corner by 8e-4 °F. Datum check:
+    // these give h_g(32) = 1075.21 and h_ig(32) = 1218.85 against
+    // ASHRAE's ~1075.1 and ~1218.7.)
     const condensateEnthalpy = tF => (tF >= 32 ? tF - 32 : 0.48 * tF - 159);
 
     // Re-solve the dry-bulb of a FOGGING mixture. `hMix` and `W` are the
@@ -292,16 +304,34 @@ const Psychro = (function () {
     // every bit of the excess moisture is still being counted as vapour,
     // which overstates the enthalpy the air can hold, so the residual is
     // negative; at the dew point there is no condensate left at all and it
-    // is positive; and it rises monotonically between them. Returns NaN if
-    // the bracket does not resolve, so the caller falls back rather than
-    // publishing a number from a broken solve.
+    // is positive; and it rises monotonically on each side of 32 °F.
+    // Returns NaN if the bracket does not resolve, so the caller falls back
+    // rather than publishing a number from a broken solve.
     //
-    // The residual JUMPS at 32 °F — crossing upward, the condensate stops
-    // being ice and gains the heat of fusion — so it is monotone but not
-    // continuous. Bisection is fine with that, and the case where the root
-    // falls INSIDE the jump converges on 32 °F exactly, which is the
-    // physically right answer: the mixture sits at the ice point with part
-    // of its condensate frozen and part still liquid.
+    // THE RESIDUAL JUMPS AT 32 °F, AND `hi` IS WHAT MAKES THAT SAFE — this
+    // is the one line in here a "robustness" edit could break. Crossing
+    // upward, the condensate stops being ice and gains the heat of fusion,
+    // so the step is
+    //     r(32⁺) − r(32⁻) = (W_mix − W_sat(32)) · 143.64
+    // whose SIGN is not fixed: upward when the mixture holds more water
+    // than saturated air at the ice point, DOWNWARD when it holds less.
+    // Downward matters, because a downward step can in principle straddle
+    // zero and hand bisection a second root. What rules that out is the
+    // BRACKET, not monotonicity: the step flips down exactly when
+    // W_mix < W_sat(32), and satHumRatio is monotone, so that same
+    // inequality puts the mixture's dew point BELOW 32 °F — i.e. the
+    // sign-flipping discontinuity sits strictly above `hi` whenever it
+    // flips. So `hi` must stay AT the dew point; widening it past that is
+    // what would let a second root inside the interval.
+    // Where the step is upward it can bracket the root, and bisection then
+    // converges on 32 °F exactly — the physically right answer: the
+    // mixture sits at the ice point with part of its condensate frozen and
+    // part still liquid. (Measured: at the AHU's own reachable corner —
+    // zone 80 °F / 50 % RH against −20 °F / 40 % RH at 70 % outdoor air —
+    // W_mix is 23.45 gr/lb against W_sat(32)'s 26.42, so the residual DROPS
+    // 0.060 Btu/lb_da crossing 32 upward, and the dew point is 29.4 °F.
+    // The sweep in tests/psychro-mixstreams.spec.js finds no disagreement
+    // with an independent bisection over a much wider bracket.)
     function fogTemp(hMix, W, tdbLow, P) {
         let lo = tdbLow;
         let hi = dewPointFromVapPress(vapPressFromHumRatio(W, P));
@@ -352,11 +382,22 @@ const Psychro = (function () {
     // result whose `tdb` is EXACTLY 32 °F sits on the ice-point plateau,
     // where the condensate is part ice and part liquid and the two fields
     // cannot say which. Reconstructing the mixture enthalpy there is off
-    // by the frozen fraction, bounded by `condensate` × 143.64 Btu/lb —
-    // MEASURED worst 0.172 Btu/lb_da over a wide sweep, against ~2e-13
-    // everywhere else in the fog branch. The plateau is narrow but real:
-    // at the AHU's own RH assumptions and a 55 % damper it spans about
-    // 1.3 °F of outdoor air (−19.2 to −17.9 °F against an 80 °F zone).
+    // by the frozen fraction, bounded by `condensate` × 143.64 Btu/lb.
+    // THE BOUND, NOT A MEASURED WORST, IS THE THING TO READ: the plateau's
+    // condensate depends on how far past the curve the caller's streams
+    // sit, so any single measured figure is a figure for one pair of
+    // streams. Measured, with the scope named — 0.29 Btu/lb_da over the
+    // AHU's own band (a 50 %-RH return anywhere in 60…90 °F against a
+    // 40 %-RH outdoor stream at −30 °F and up, any damper; worst at zone
+    // 88.5 °F / −24 °F / 60 %, where the bound itself is 0.33), rising to
+    // 0.67 once return and outdoor RH are free as well (zone 90 °F / 90 %
+    // against −28 °F / 90 % at 70 %). An earlier draft of this comment
+    // published 0.172 as a sweep worst; that is the figure for exactly one
+    // configuration, the 80 °F / 55 % pair the span below describes.
+    // Off the plateau the reconstruction closes to ~6e-13 everywhere.
+    // The plateau is narrow but real: at the AHU's own RH assumptions and a
+    // 55 % damper it spans about 1.3 °F of outdoor air (−19.16 to
+    // −17.88 °F against an 80 °F zone).
     // `tdb === 32 && condensate > 0` is the signature; a caller that needs
     // the split has to model the freezing itself.
     //
@@ -366,11 +407,16 @@ const Psychro = (function () {
     // the curve without re-solving; since ∂t/∂W < 0 in that recovery the
     // returned dry-bulb ran COLD. MEASURED corrections: 7.25 °F at the
     // corner an AHU mixing box can reach (zone 80 °F, 70 % outdoor air,
-    // −20 °F outdoor: 10.42 °F then against 17.67 °F now), 10.25 °F at the
-    // worst AHU-envelope pair the review round found (zone 90, same
-    // damper and weather), and 28.6 °F on a coarse sweep of arbitrary
-    // near-saturated pairs, which is the number a future caller mixing
-    // something other than room air and weather should read.
+    // −20 °F outdoor: 10.42 °F then against 17.67 °F now), and 12.80 °F at
+    // the worst pair inside the AHU's own band (zone 90 °F, 65 % outdoor
+    // air, −30 °F outdoor: 12.75 °F then against 25.56 °F now). Away from
+    // room air and weather it grows without any interesting bound — a
+    // coarse sweep of near-saturated pairs from −40 to 120 °F reaches
+    // 50.1 °F (−40 °F / 99 % at 70 % into 120 °F / 99 %: 12.77 °F then
+    // against 62.85 °F now) — so a caller mixing something else should
+    // read the MECHANISM, not a magnitude: the correction is as large as
+    // the latent heat the condensing water releases, and nothing caps that
+    // but the moisture the streams brought.
     // Every AHU-reachable fog case lands BELOW freezing, which is exactly
     // why the ice convention above is not optional: at that first corner
     // the liquid-only form solves to 17.10 °F against the ice form's

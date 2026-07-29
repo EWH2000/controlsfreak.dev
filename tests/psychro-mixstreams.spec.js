@@ -411,7 +411,12 @@ test.describe('psychro-engine: mixStreams invariants', () => {
     test('the solve is continuous across the 32 °F ice / liquid switch', () => {
         // The condensate convention JUMPS at the ice point — liquid above,
         // ice below, a whole latent heat of fusion apart — so the energy
-        // balance the solve inverts is monotone but discontinuous there.
+        // balance the solve inverts is monotone on each side of 32 °F but
+        // steps across it, by (W_mix − W_sat(32)) × 143.64. That step's
+        // SIGN follows the mixture's own moisture, and it points downward
+        // over part of this very trace; what keeps bisection single-rooted
+        // is the bracket's upper bound sitting at the dew point, which the
+        // fogTemp header derives.
         // The SOLVED TEMPERATURE still has to walk smoothly as the streams
         // are dialled through the crossing, or a slider drag would paint a
         // step change in mixed-air temperature out of nowhere.

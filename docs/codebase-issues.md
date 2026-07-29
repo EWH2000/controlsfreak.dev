@@ -9878,17 +9878,33 @@ Three things about the resolution are worth having written down:
    mixture sits at the ice point with part of its condensate frozen) and not
    fully describable by two fields, because they do not carry the frozen
    fraction. Reconstruction there is off by at most `condensate` × 143.64
-   Btu/lb — MEASURED worst **0.172 Btu/lb_da**, against ~2e-13 everywhere
-   else in the fog branch. `tdb === 32 && condensate > 0` is the signature.
-   The plateau is narrow but real: ~1.3 °F of outdoor air (−19.2 to
-   −17.9 °F against an 80 °F zone at a 55 % damper).
+   Btu/lb, and **the bound is the thing to read, not a measured worst** —
+   the plateau's condensate scales with how far past the curve the streams
+   sit, so a single number is a number for one pair of them. Measured, with
+   the scope named: **0.29 Btu/lb_da** across the AHU's own band (50 %-RH
+   return anywhere in 60…90 °F against 40 %-RH outdoor air at −30 °F and up,
+   any damper — worst at zone 88.5 / −24 °F / 60 %, where the bound is
+   0.33), **0.67** once the two RHs are free as well (zone 90 / 90 % against
+   −28 °F / 90 % at 70 %), against ~6e-13 everywhere else in the fog branch.
+   An earlier draft of both this entry and the engine comment published
+   **0.172** as a sweep worst; that figure is correct only for the 80 °F /
+   55 % pair the plateau span below is measured at, which is 1.7× low inside
+   the AHU band and ~4× low off it (corrected 2026-07-29).
+   `tdb === 32 && condensate > 0` is the signature.
+   The plateau is narrow but real: ~1.3 °F of outdoor air (−19.16 to
+   −17.88 °F against an 80 °F zone at a 55 % damper).
 
 Note the table above was measured against the LIQUID form, so the "true"
 column understates the correction now shipped. Under the ice convention the
 same two cases solve to 17.67 °F (a 7.25 °F correction) and 23.89 °F (10.25 °F).
-A coarse sweep of arbitrary near-saturated pairs — not AHU-reachable, but the
-regime a future caller could hand this helper — reaches a 28.6 °F correction
-(−30 °F / 95 % mixed 50/50 into 100 °F / 95 %).
+The worst pair inside the AHU's own band is neither of those: zone 90 °F at a
+65 % damper against −30 °F outdoor air corrects **12.80 °F** (12.75 → 25.56).
+Off room air and weather the correction has no interesting ceiling — a coarse
+sweep of near-saturated pairs from −40 to 120 °F reaches **50.1 °F** (−40 °F /
+99 % at 70 % into 120 °F / 99 %) — which is why the engine comment now states
+the mechanism rather than a magnitude for a future caller: the correction is as
+large as the latent heat the condensing water releases, and only the moisture
+the streams brought caps that.
 
 Also measured: the clear-of-the-curve path did **not** move — over a
 131,881-point sweep of stream pairs the recovered dry-bulb matches a hand
