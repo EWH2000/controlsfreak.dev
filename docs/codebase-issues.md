@@ -9683,3 +9683,114 @@ diff, and an unexplained `1.1 → 1.2` inside a terminology PR is noise at
 review time. Worth a sweep rather than a one-liner: this is the same defect
 shape wherever a `data-metric` delta was converted from the IP delta instead
 of subtracted from the displayed metric operands, and nothing guards it.
+
+### 233. AHU plant: MAT and the RAT probe are sampled one Euler step apart *(noticed 2026-07-28, shipped knowingly with the AHU physics half — for the graphic lane)*
+
+`html/scripts/ddcw-ahu-unit.js` computes the mixed-air state from the
+**tick-START** `plant.zoneT` — that is the Euler evaluation point, and the
+mixed air is a physics input the coil solution depends on — while
+`plant.sensors['rat']` and `derived.eatT` are both published from the
+**tick-END** `plant.zoneT`, per the FCU's one-sample rule
+(`ddcw-fcu-unit.js:330-339`, the 2026-07-27 review catch).
+
+With the dampers shut, MAT and RAT are the *same air*. Sampled a step apart
+they can differ by the amount the zone moved inside that step — measured on
+this plant at the default tuning, **~0.02 °F per 5-sim-s step**, and larger
+at a bigger `dtSim` or a harder load. At the one-decimal precision every chip
+on the site paints, that is enough to split the last digit at a rounding
+boundary: the graphic can show `MAT 77.5` beside `RAT 77.6` with the dampers
+closed, which reads as a broken sensor.
+
+**What is NOT wrong here.** The FCU's rule is about two surfaces on ONE
+measurement (the EAT badge and the RAT chip), which must never disagree. MAT
+and RAT are two *different* sensors in two different places, so a sub-tenth
+disagreement is not a contradiction — it is the sampling instant. And of the
+two candidate MAT values, the tick-start one is the one worth being right:
+it is the air the coil actually saw, so it is the number `DAT − MAT`
+reconciles against.
+
+**The decision the graphic lane owes**, before it paints both chips:
+
+- (a) **Leave it and say nothing** — the split only appears with the dampers
+  fully shut, and minimum outdoor air keeps them off that stop in normal
+  operation. Cheapest, and it stays a latent surprise.
+- (b) **Re-solve the mix post-integration for DISPLAY only** — one extra
+  `solveState` + `mixStreams` per 10 Hz tick, negligible cost. MAT and RAT
+  then agree exactly at the shut position, but the painted MAT is no longer
+  the value the coil was handed, so `DAT − MAT` stops closing by the same
+  ~0.02 °F. Trades a visible split for an invisible one.
+- (c) **Publish the whole air path from the tick-start sample**, `eatT`
+  included, and drop the one-sample rule on this unit — MAT/RAT agree and
+  `DAT − MAT` closes, but then `eatT` and the RAT chip split instead, which
+  is exactly the defect the FCU rule exists to prevent.
+
+There is no option that makes all three pairs agree with a one-step
+integrator; the call is which pair a reader is most likely to check.
+Recommendation is (a) plus a comment, which is what shipped — the residual is
+documented at the `d.eatT` assignment.
+
+### 234. `SPEED_MIN` / `SPEED_MAX` are declared in the FCU unit and read nowhere *(noticed 2026-07-28, reading the FCU as the AHU's reference)*
+
+`html/scripts/ddcw-fcu-unit.js:163-164` declares
+
+```js
+const SPEED_MIN   = 1;    // × — slowest (watch a 5 s ON-delay in real seconds)
+const SPEED_MAX   = 60;   // × — fastest (fast-forward a slow recovery)
+```
+
+inside the `TUNE BY FEEL` block. Neither is referenced anywhere in the file
+or anywhere else in the repo — the live bounds are hard-coded in the page
+markup, `html/simulators/ddc-workbench-fcu.html:867`
+(`min="1" max="60"`). They agree today by coincidence, not by construction.
+
+At stake: the block's whole premise is that the owner retunes these live and
+the change takes effect. Editing `SPEED_MAX` to 120 changes nothing and gives
+no sign that it changed nothing, which is the worst failure mode a
+"trivially findable and changed" block can have. Its neighbours
+(`SPEED_DEF`, `MAX_DT_SIM`) *are* read, via `create()` → the shell's
+`speedDefault` / `maxDtSim`, so the block reads as uniformly live.
+
+Three ways out, in ascending cost: **delete both** and let the markup own the
+bounds (they are affordances, not model constants); **keep them and have
+`fcuWireControls` write `slider.min` / `slider.max` from them** at bind time,
+which makes the block's premise true; or **keep them and add a spec row** that
+reads the markup attributes and asserts they match. The middle one is the
+only one that makes the constants do work.
+
+The AHU physics half deliberately declares neither — an unread constant is
+exactly the trap this entry describes, and the AHU's sim-clock prefs land
+with its shell-contract half instead.
+
+### 235. The #224 display-unit guard is bound by path and by local name to the FCU, so a second unit module ships that rule unguarded *(noticed 2026-07-28, AHU physics lane)*
+
+`tests/ddcw-fcu-unit.spec.js:838-885` is the source scan that enforces
+codebase-issues #224 — *a display-unit local exists to be PAINTED; thresholds
+compare a value off `derived` against an IP constant*. It is a good test, with
+anti-vacuity probes in both directions. It is also **doubly hard-wired to one
+file**:
+
+- it reads a literal path — `fs.readFileSync(path.join(SCRIPTS,
+  'ddcw-fcu-unit.js'))` (`:861`);
+- and its `DISP` group is a hard-coded alternation of the FCU's own local
+  names — `(dtN|eatN|datN|spN|sensedN)` (`:869`).
+
+`ddcw-fcu-unit.js`'s header says the rule is inherited: *"A second unit module
+inherits this rule."* Nothing enforces that inheritance. The AHU's graphic
+half will paint a MAT badge, a ΔT badge and a discharge readout through
+`DDCWShell.dispTempNum`, and every one of those locals is invisible to this
+scan — so the exact regression #224 documents (a healthy 4 °F coil painting
+"no ΔT" for a metric reader) can land again on the new unit with a green
+suite.
+
+Note the second binding is the sharper one: even copying the test file and
+changing the path would leave the AHU's own local names uncovered unless the
+alternation is edited too, and a name the alternation misses fails **silently**
+— the anti-vacuity probe only checks that `const dtN =` still exists in the
+*scanned* file.
+
+Action, when the AHU graphic lands: generalise the scan to walk a LIST of unit
+files with a per-file `DISP` set, or — better — replace the name alternation
+with a shape rule the scan can derive (e.g. every local assigned from a
+`dispTempNum(...)` call in the scanned file), so a new display local is
+covered the moment it is written rather than the moment someone remembers to
+add it. The anti-vacuity probes must move with it.
