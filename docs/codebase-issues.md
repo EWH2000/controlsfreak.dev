@@ -10073,3 +10073,129 @@ like the site's arithmetic and isn't, and it gives no hook for the (correct,
 teachable) reason why. Cross-check with #228 when the consumer pages adopt the
 helper, since that closes the cross-page disagreement but not the
 reader-arithmetic one.
+
+### 241. The site defines "deadband" two ways for beginners, and neither surface acknowledges the other *(noticed 2026-07-29, deadband/setpoint-gap terminology sweep — needs an owner decision)*
+
+Two shipped, reader-facing, `canonical`-bearing surfaces use the word for
+different quantities:
+
+- `html/_data/quizzes/surviving-first-months.js:124` (feeds
+  `html/practice/surviving-first-months.html`) — *"Real sequences add a deadband
+  (say `70-74°F`) so heating and cooling don't fight each other"* — names the
+  **separation between the heating and cooling setpoints** a deadband.
+- `html/_data/quizzes/comparators-and-deadband.js:88` (feeds
+  `html/practice/comparators-and-deadband.html`) — teaches the deadband as the
+  band **half each side of one setpoint**: "set at 72 + 1 = 73 °F, reset at
+  72 − 1 = 71 °F … The 2 °F between the two lines is the deadband."
+
+⚠️ **The first quiz is not WRONG.** By VAV convention the region between the
+cooling and heating mode ranges genuinely is called the deadband (the same sense
+`html/education/vav-systems.html:696` uses), and ASHRAE 90.1 reportedly calls
+the heating/cooling gap a "dead band" — *reportedly*: the site cites no 90.1 and
+this entry does not either. The defect is narrower and real: the sentence is
+**undisambiguated** while a sibling surface defines the same word the other way,
+and the undisambiguated one is aimed at readers in their first months on the job
+— the audience least able to notice that two senses are in play.
+
+Note the site already owns the disambiguation.
+`html/education/comparators-and-deadband.html:465-482` sets the senses side by
+side, including "a zone's is the separation held between the heating and cooling
+setpoints," and
+`html/simulators/ddc-workbench-ahu-mockup.html`'s setpoints paragraph is the
+reference implementation of telling the two apart on one screen. Neither of the
+two quiz banks links or nods to it.
+
+**NOT for an agent to fix.** Both quizzes feed pages carrying a `canonical`, so
+this sits in the approval class; and the choice is editorial, not mechanical.
+Two candidate fixes:
+
+1. **A half-clause acknowledging both senses** in the
+   `surviving-first-months.js` explain — the owner's standing "disclose the
+   variation rather than harmonise it" preference, and cheap: the explain
+   already has room, and `comparators-and-deadband.html#deadband` is the natural
+   `learnMore` neighbour.
+2. **Leave it.** The quiz's point is *setpoint ≠ actual*, not terminology, and a
+   terminology aside costs attention on a question that is not about it.
+
+What is **not** a candidate: redefining the word in `surviving-first-months.js`
+to match the comparators lesson. That would put the site at odds with the VAV
+usage it teaches elsewhere, i.e. trade one internal contradiction for a worse
+one.
+
+### 242. The AHU mockup's setpoint prose disagrees with the physics module's shipped defaults *(noticed 2026-07-29, deadband/setpoint-gap terminology sweep — for LANE 7.4)*
+
+`html/simulators/ddc-workbench-ahu-mockup.html` and
+`html/scripts/ddcw-ahu-unit.js` ship different setpoints:
+
+| | mockup | `ddcw-ahu-unit.js` |
+|---|---|---|
+| cooling setpoint | 73.0 °F | 72 (`AHU_POINTS` seed, `'cooling-setpoint': 72`) |
+| heating setpoint | 68.0 °F | 68 |
+| setpoint gap | **5.0 °F** (`#ahu-p-sp-diff`) | **4 °F** |
+| deadband | 2.0 °F | 2 |
+| stage-1 make / break | 75.0 / 73.0 °F | 74 / 72 |
+
+**Harmless today** — the mockup is a static depiction review and the module
+drives nothing on it. It stops being harmless at **lane 7.4**, which wires the
+graphic to the plant: at that point the paragraph describes numbers other than
+the ones on its own screen.
+
+Every figure in the *"Setpoints and the deadband"* paragraph
+(`ddc-workbench-ahu-mockup.html:2268`) is derived from the pair and moves with
+it: the `5.0 °F apart` claim, the `73.0 °F and 68.0 °F` restatement, the
+`73.0 minus 68.0` arithmetic for the SP DIFF well, and the
+`73.0 plus 2.0, or 75.0 °F` make / `73.0 °F` break pair. **One figure does more
+than move — it collapses.** The paragraph's closer, *"a space of 74.0 °F can sit
+under a lit stage,"* only teaches its point while 74.0 sits strictly between the
+edges; against the module's 72/2 it *is* the make point, so the "between the two
+edges the call is held by a latch" illustration loses its example. The same
+74.0-under-a-lit-stage argument is load-bearing in the *"What the sequence is
+doing"* paragraph (`:2170`) and in the reference table (`:2591`).
+
+Surfaces keyed to the cooling setpoint, all of which move together: the round-2
+zone well `#ahu-v-cool-sp` (`:1414`), the rail param well `#ahu-p-cool-sp`
+(`:2363`), the calculated `#ahu-p-sp-diff` (`:2392`), the point-table row
+`#ahu-r-cool-sp` (`:2501`), the reference-table cell (`:2590`), the three
+round-one compositions' zone wells (`#ahu-a-zone-sp` / `#ahu-b-zone-sp` /
+`#ahu-c-zone-sp`) and their `.ahu-point-val` twins, and **four SVG `<desc>`
+nodes** that spell the value out in prose (`ahu-desc`, `ahu-a-desc`,
+`ahu-b-desc`, `ahu-c-desc` — two of them in words, "seventy-three point zero").
+The mockup's own comment at `:2422` already pins the cooling setpoint as "the
+ONE permitted duplication on this page" and lists three of these ids as
+must-agree; that list does not reach the `<desc>` nodes or the round-one
+compositions.
+
+Action for lane 7.4: pick one pair and true up whichever side loses. Note the
+gap is not free either way — `ddcw-ahu-unit.js:250` documents 68 as "4 °F clear
+of cooling," and the module's measured cycling arrival (`:153-170`) is stated
+against the 72 cut-out, so moving the module means re-measuring that claim,
+while moving the mockup means touching every surface above.
+
+### 243. `oat` declares no range, but comments in the same file state figures at temperatures no declared range reaches *(noticed 2026-07-29, deadband/setpoint-gap terminology sweep — for LANE 7.4)*
+
+`html/scripts/ddcw-ahu-unit.js`'s `AHU_POINTS` roster gives `space-temp`
+`min: 60, max: 90, step: 1` and gives **`oat` no `min` / `max` / `step` at
+all** — the outdoor-air knob's range is the DOM half's, not this file's. The
+file knows this: the WEIGHT BASIS comment (`:376-381`) deliberately withdrew an
+earlier "the coldest day the sliders reach (0 °F)" claim and says why.
+
+The withdrawal did not reach the paragraphs below it, which still quote
+OAT-indexed figures as if a range existed: fogging lands "well inside the knob
+ranges … from about −2 °F outdoor," "a plain 0 °F once the damper is at 50 %,"
+"6.6 °F at the −20 °F / 70 % corner," and "13.6 °F at the coldest-and-most-open
+pair the space-temp band reaches (zone 90 °F, 65 % damper, −30 °F)" (`:383-408`;
+the same figures appear in #240's table). The `space-temp` half of that last
+pair is anchored — 90 °F is the declared max — and the OAT half is not.
+
+So the numbers are real (measured against the engine) but the **reachability
+claim around them is not yet ownable by this file**: nothing here says −30 °F is
+a state a reader can drive to. For scale, the shipped sibling knob is nowhere
+near it — `ddc-workbench-fcu.html:875` runs its outdoor-air slider **55…110 °F**
+— and the AHU has no page, so today the answer is "no range at all."
+
+Action for the DOM half in lane 7.4: declare the AHU's outdoor-air range (in the
+roster if it belongs to the unit, in the slider if it belongs to the page), then
+either re-scope these figures to it or re-word them the way `:376-381` already
+models — state the measured divergence and let whatever sets the range own the
+"how cold can it get" claim. If the range lands short of −30 °F, the extreme
+corner figures become illustrative-only and should say so.

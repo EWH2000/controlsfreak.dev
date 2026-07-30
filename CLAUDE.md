@@ -462,6 +462,28 @@ section). **Category keys mirror the landing pages' `navCard()`
   a pun on it), and only where it genuinely fits. Applies to page
   copy, meta descriptions, nav/search blurbs, and code comments
   alike; grep `plain.english` before shipping a content sweep.
+- **"Deadband" has two legitimate senses — disambiguate wherever both
+  are in play.** Not a ban. **House usage on the DDC Workbench:**
+  `deadband` is the **per-setpoint hysteresis** — the AHU ships heating
+  68 / cooling 72 / deadband 2, so cooling makes at CSP + db = 74 and
+  breaks at CSP = 72 (the setpoint is the CUT-OUT). The **separation
+  between the heating and cooling setpoints** is the **setpoint gap**
+  (the `SP DIFF` well), and per the 2026-07-28 terminology ruling it is
+  not called a *differential* in reader-facing prose either. **The
+  other sense is right in its own context:** in VAV the region between
+  the cooling and heating mode ranges genuinely *is* the deadband —
+  `education/vav-systems.html` uses it that way and stays. (ASHRAE 90.1
+  reportedly calls the heating/cooling gap a "dead band"; that is
+  UNVERIFIED and the site cites no 90.1 — don't add a citation you
+  can't check.) So on any surface carrying both quantities, say which
+  you mean: the reference implementation is
+  `simulators/ddc-workbench-ahu-mockup.html`'s setpoints paragraph
+  (*"The separation between the two setpoints and the deadband are easy
+  to read as one number, and they are not"*), and
+  `education/comparators-and-deadband.html` is the canonical
+  disambiguation to link. The trap is live — an agent conflated the gap
+  with the deadband while writing the note about it, six days after the
+  ruling.
 - **Damage-stakes scope note** (owner decision, 2026-07-11): any tool
   whose output, acted on directly, can damage equipment (burst coil,
   cracked heat exchanger, slugged compressor, burned motor, cooked
@@ -1176,9 +1198,32 @@ The standard loop is branch → edit → commit → push → open PR (shapes
 under *Git conventions*). Stage specific file lists, not
 `git add -A` / `git add .`.
 
-- **Never merge by default.** `gh pr merge` only on explicit request
-  ("merge it," "go ahead and merge"). The user merges on GitHub
-  after review.
+- **Merge approval is scoped to the LIVE site** (owner amendment,
+  2026-07-29). Where a change reaches a page on the live site, the old
+  rule stands: `gh pr merge` only on explicit request ("merge it," "go
+  ahead and merge"), the user reviews on GitHub. Everywhere else the
+  default **flips from ask to merge** — a mergeable PR left open is now
+  the thing to avoid (*"I don't want PRs to pile up … I just want our
+  git work as clean as possible"*). **The operational test is
+  `sitemap.xml`**: it is generated from `canonical` frontmatter, so the
+  sitemap *is* the definition of "live." Per changed file, ask whether
+  any page in the sitemap reaches it.
+  - *Merge freely:* a hidden page's own HTML; a script ONLY hidden
+    pages load (`ddcw-shell.js`, `ddcw-fcu-unit.js`,
+    `ddcw-ahu-unit.js`); anything under `tests/` or `docs/`; plus
+    `CLAUDE.md` and `README.md`.
+  - *Needs approval:* `styles.css`, the site-wide scripts
+    `layouts/page.njk` loads, anything in `_includes/`,
+    `.eleventy.js`, `src/worker.js`, a `package.json` version bump,
+    and any page carrying a `canonical`.
+  - ⚠️ **The trap is SHARED code — "the PR is about a hidden page" is
+    NOT the test.** PR #452 was about the hidden AHU but modified
+    `html/scripts/psychro-engine.js`, which **eight pages load and
+    seven of those are live**: even a purely additive function ships
+    new bytes to all seven, and a parse error there breaks all seven.
+  - The boundary **moves at graduation** — the day the workbench gains
+    a `canonical` it enters the sitemap and every merge-freely row
+    flips for it.
 - **Log caught issues.** Code-quality issues noticed in passing —
   *even if unrelated to the current task* — get appended to
   `codebase-issues.md` under *Open*. Don't silently fix inline

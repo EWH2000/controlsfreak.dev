@@ -769,6 +769,11 @@ const DDCWAhuUnit = (function () {
         // fault unreachable by construction.
         { id: 'cooling-setpoint', kind: 'param', dir: 'param',    plantKey: 'cooling-setpoint', name: 'Cool SP',   unit: '°F', conv: 'temp' },
         { id: 'heating-setpoint', kind: 'param', dir: 'param',    plantKey: 'heating-setpoint', name: 'Heat SP',   unit: '°F', conv: 'temp' },
+        // PER-SETPOINT hysteresis, NOT the gap between the two above:
+        // cooling makes at cooling-setpoint + this and breaks at
+        // cooling-setpoint. The heating/cooling separation is the
+        // SETPOINT GAP (the graphic's SP DIFF well) — nothing sets it,
+        // it follows whichever setpoint moves, and it is not a param.
         { id: 'deadband',         kind: 'param', dir: 'param',    plantKey: 'deadband',         name: 'Deadband',  unit: '°F', conv: 'deltaTemp' },
         { id: 'min-oa-pos',       kind: 'param', dir: 'param',    plantKey: 'min-oa-pos',       name: 'Min OA',    unit: '%' },
         // Fixed dry-bulb high limit, above the differential enable
