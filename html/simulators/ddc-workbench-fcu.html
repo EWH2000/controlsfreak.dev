@@ -820,7 +820,8 @@ noindex: true
                         <button type="button" class="copy-btn" data-preset="healthy" aria-pressed="false">Healthy cooling</button>
                         <button type="button" class="copy-btn" data-preset="compoff" aria-pressed="false">Compressor off</button>
                         <button type="button" class="copy-btn fcu-preset-fault" data-preset="lowcharge" aria-pressed="false">Low charge</button>
-                        <button type="button" class="copy-btn fcu-preset-fault" data-preset="airflow" aria-pressed="false">Airflow fault</button>
+                        <button type="button" class="copy-btn fcu-preset-fault" data-preset="blocked" aria-pressed="false">Blocked coil</button>
+                        <button type="button" class="copy-btn fcu-preset-fault" data-preset="belt" aria-pressed="false">Broken belt</button>
                     </div>
                 </div>
 
@@ -1016,12 +1017,48 @@ noindex: true
 
                 <p class="ddcw-sheet-note">
                     On the 2-stage + safeties sample the stages answer to more
-                    than the thermostat: a latched DAT low-limit cuts Y1 and Y2
-                    when discharge air drops below the trip constant and holds
-                    them off until it recovers past the clear constant, a
-                    minimum off-time keeps a stopped unit from restaging
-                    straight back in, and one AND merges those permits into the
-                    stage commands. Note what that off-timer watches: the
+                    than the thermostat. Airflow proof comes first: a
+                    fan-status BI feeds an AND ahead of the permit, so no
+                    compressor may start — and a running one is dropped — the
+                    moment the proof switch reports no air moving. Behind that
+                    sits a latched DAT low-limit that cuts Y1 and Y2 when
+                    discharge air falls below the trip constant, and a minimum
+                    off-time that keeps a stopped unit from restaging straight
+                    back in. One AND merges those permits into the stage
+                    commands.
+                </p>
+
+                <p class="ddcw-sheet-note">
+                    Why proof has to come first: a discharge sensor sitting in
+                    still air reads the room, not the coil. Stop the air and
+                    the low limit does not merely fail to trip — it goes blind,
+                    reporting a comfortable number while the coil behind it
+                    could be anything at all. Break the belt from the scenario
+                    row and watch it: the fan command stays on, the blades
+                    stop, the DAT chip climbs to the space temperature, and the
+                    stages drop on the proof interlock rather than on a
+                    discharge reading nobody should trust. Command, status and
+                    proof are three different claims —
+                    <a href="/education/status-and-proof.html">Status &amp; Proof</a>
+                    works through the difference.
+                </p>
+
+                <p class="ddcw-sheet-note">
+                    Watch the recovery order, because two protections are
+                    stacked and they clear in series. A low-limit trip is
+                    itself a full stop of the stage command, so it arms the
+                    minimum off-timer at the same instant it cuts the stages.
+                    The discharge has to climb past the clear constant
+                    <em>and</em> the off-timer has to expire before anything
+                    restages — so the stages return well after the clear point,
+                    not at it. That timer also starts from zero on a program
+                    download, which is why selecting this sample stops a
+                    running unit and holds it stopped for a spell: a real board
+                    serves a minimum off on power-up too.
+                </p>
+
+                <p class="ddcw-sheet-note">
+                    Note what that off-timer watches: the
                     sequence's own stop, nothing else. Force the stages off at
                     slot 8 and the compressor stops while the program carries
                     on asking for cooling — the permit chain never sees a stop,
@@ -1034,7 +1071,9 @@ noindex: true
                     changed the machine without telling it.
                     The fan is deliberately outside the permit path —
                     it keeps following the cooling call, so air keeps moving
-                    across the coil while the lockout recovers. Force the fan
+                    across the coil while the lockout recovers. It has to be:
+                    gate the fan on the proof its own airflow produces and
+                    nothing could ever start. Force the fan
                     slow under a heavy call and watch the safety act; the same
                     move on the default sample is the freeze dive it exists to
                     answer.
@@ -1129,9 +1168,13 @@ noindex: true
         // Per-stage SR latches give the hysteresis (no chatter). The setpoint
         // is the CUT-OUT — stage 1 makes at SP+deadband and breaks at SP, so
         // the zone rides the band above the label (the Unit-tab note owns
-        // that convention story). `dat` AI is seeded on every sheet;
-        // cool-2stage-safeties is the sheet that wires it — on the sheets
-        // that leave it unwired, the discharge low-limit is the standing
+        // that convention story). The `dat` AI and the `fan-status` BI are
+        // both seeded on EVERY sheet and wired only by
+        // cool-2stage-safeties — the point roster is the binding contract,
+        // so a sheet that omits a point's block silently drops it (and the
+        // program-binding sweep in tests/ddcw-fcu-unit.spec.js fails on
+        // exactly that). On the sheets
+        // that leave them unwired, the discharge low-limit is the standing
         // teaching hook, and the DEFAULT sheet stays unprotected on purpose
         // (its freeze dive under a slow fan is the first half of the
         // lesson the safeties sheet answers).
@@ -1168,6 +1211,19 @@ noindex: true
         // cool-2stage-safeties — the protected sequence (owner ruling
         // 2026-07-26, authored last against the post-arbitration idiom).
         // Same staging spine, plus:
+        //   • an AIRFLOW-PROOF interlock, and it sits FIRST: coilok =
+        //     AND(okrun, fan-status) gates the permit, so no stage runs
+        //     without proof and a running stage drops the tick proof
+        //     does. That ordering is the field's and it is the point —
+        //     a discharge probe in still air reads the ZONE, so a low
+        //     limit behind no proof goes blind rather than tripping
+        //     (codebase-issues #225). Note what is deliberately NOT
+        //     gated: fan-enable stays on the cooling call, because a fan
+        //     gated on the proof its own airflow makes could never
+        //     start. okrun itself can still self-clear on a blind
+        //     reading — the latch has no way to know the probe is lying
+        //     — but the interlock ahead of it means that stale clear
+        //     cannot command anything.
         //   • a latched DAT low-limit: okrun is an SR whose polarity is
         //     "OK to run" — datok (dat > hilim 52) SETS it, datlow
         //     (dat < lowlim 42) RESETS it. Trip cuts the stages; the
@@ -1188,8 +1244,10 @@ noindex: true
         //     starts at zero, so stages hold off ~2 sim-minutes on a
         //     program download — the anti-short-cycle power-up delay a
         //     real board exhibits.
-        //   • ONE merged permit: permit = AND(okrun, offok) — the ruled
-        //     merged-permit shape — gating y1gate = AND(or1, permit) and
+        //   • ONE merged permit: permit = AND(coilok, offok) — the ruled
+        //     merged-permit shape, with coilok standing in for bare
+        //     okrun so the proof term rides the same merge — gating
+        //     y1gate = AND(or1, permit) and
         //     y2gate = AND(sr2, permit). sr2 alone is the stage-2 call
         //     (sr2 can never be set while sr1 is clear: its cut-out 75
         //     sits above sr1's 72), which is what lets the permit AND
@@ -1230,6 +1288,11 @@ noindex: true
                     { id: 'y2on',             type: 'add',   x: 370,  y: 178 },
                     { id: 'hundred',          type: 'const', x: 895,  y: 388, params: { value: 100 } },
                     { id: 'dat',              type: 'ai',    x: 195,  y: 380, params: { value: 55 } },
+                    // Airflow proof, seeded but UNWIRED on this sheet —
+                    // the same convention `dat` follows. The proof
+                    // interlock is the safeties sheet's lesson; here the
+                    // point is simply available to wire.
+                    { id: 'fan-status',       type: 'bi',    x: 195,  y: 470, params: { state: false } },
                     { id: 'gt1',              type: 'gt',    x: 545,  y: 20 },
                     { id: 'lt1',              type: 'lt',    x: 545,  y: 350 },
                     { id: 'gt2',              type: 'gt',    x: 545,  y: 240 },
@@ -1289,6 +1352,11 @@ noindex: true
                     { id: 'cooling-setpoint', type: 'const', x: 20,  y: 125, params: { value: 72 } },
                     { id: 'deadband',         type: 'const', x: 20,  y: 220, params: { value: 3 } },
                     { id: 'dat',              type: 'ai',    x: 195, y: 380, params: { value: 55 } },
+                    // Airflow proof, seeded but UNWIRED on this sheet —
+                    // the same convention `dat` follows. The proof
+                    // interlock is the safeties sheet's lesson; here the
+                    // point is simply available to wire.
+                    { id: 'fan-status',       type: 'bi',    x: 195, y: 470, params: { state: false } },
                     { id: 'y1on',             type: 'add',   x: 195, y: 230 },
                     { id: 'hundred',          type: 'const', x: 545, y: 330, params: { value: 100 } },
                     { id: 'gt1',              type: 'gt',    x: 370, y: 20 },
@@ -1330,6 +1398,11 @@ noindex: true
                     { id: 'y2on',             type: 'add',   x: 370,  y: 178 },
                     { id: 'hundred',          type: 'const', x: 895,  y: 388, params: { value: 100 } },
                     { id: 'dat',              type: 'ai',    x: 195,  y: 380, params: { value: 55 } },
+                    // Airflow proof, seeded but UNWIRED on this sheet —
+                    // the same convention `dat` follows. The proof
+                    // interlock is the safeties sheet's lesson; here the
+                    // point is simply available to wire.
+                    { id: 'fan-status',       type: 'bi',    x: 195,  y: 470, params: { state: false } },
                     { id: 'gt1',              type: 'gt',    x: 545,  y: 20 },
                     { id: 'lt1',              type: 'lt',    x: 545,  y: 350 },
                     { id: 'gt2',              type: 'gt',    x: 545,  y: 240 },
@@ -1398,8 +1471,18 @@ noindex: true
                     { id: 'gt1',              type: 'gt',    x: 545,  y: 120 },
                     { id: 'lt2',              type: 'lt',    x: 545,  y: 220 },
                     { id: 'okrun',            type: 'sr',    x: 545,  y: 320 },
+                    // Airflow proof. Placed under okrun because it is the
+                    // low limit's partner, not a staging input: the two
+                    // together are what say "this coil is safe to load".
+                    { id: 'fan-status',       type: 'bi',    x: 545,  y: 430, params: { state: false } },
                     { id: 'sr2',              type: 'sr',    x: 720,  y: 240 },
-                    { id: 'sr1',              type: 'sr',    x: 720,  y: 365 },
+                    // coilok = okrun AND fan-status — the fan-proof
+                    // interlock, sitting AHEAD of the low limit's own
+                    // permit (see the registry header). sr1 moved down to
+                    // the band the taller canvas opened to make room for
+                    // it; column 720 had no free slot at the old height.
+                    { id: 'coilok',           type: 'and',   x: 720,  y: 340 },
+                    { id: 'sr1',              type: 'sr',    x: 720,  y: 450 },
                     { id: 'or1',              type: 'or',    x: 895,  y: 0 },
                     { id: 'low',              type: 'const', x: 895,  y: 100, params: { value: 60 } },
                     { id: 'hundred',          type: 'const', x: 895,  y: 400, params: { value: 100 } },
@@ -1448,7 +1531,9 @@ noindex: true
                     { from: ['hilim', 'O'],            to: ['datok', 'B'] },
                     { from: ['datok', 'Q'],            to: ['okrun', 'S'] },
                     { from: ['datlow', 'Q'],           to: ['okrun', 'R'] },
-                    { from: ['okrun', 'Q'],            to: ['permit', 'A'] },
+                    { from: ['okrun', 'Q'],            to: ['coilok', 'A'] },
+                    { from: ['fan-status', 'O'],       to: ['coilok', 'B'] },
+                    { from: ['coilok', 'Q'],           to: ['permit', 'A'] },
                     { from: ['offok', 'Q'],            to: ['permit', 'B'] },
                     { from: ['tonoff', 'Q'],           to: ['offok', 'A'] },
                     { from: ['y1gate', 'Q'],           to: ['offok', 'B'] },
@@ -1472,11 +1557,29 @@ noindex: true
             },
             defaultProgram: 'cool-2stage',
             // Candidate-A canvas (#205): 8 columns at a 175px pitch — last
-            // column right edge (1245 + 136) + the 20px left margin. Height
-            // stays the 480 default; every sheet's bottom row clears it.
+            // column right edge (1245 + 136) + the 20px left margin.
             // Lives beside the program literals because the sheet layouts
             // and the canvas they were authored to move together.
-            canvasSize: { w: 1401, h: 480 },
+            //
+            // HEIGHT was the 480 default until the proof interlock landed.
+            // Column 720 on cool-2stage-safeties was solid — four 89.7px
+            // blocks with 10–35px gaps — and the new AND has to sit
+            // BETWEEN okrun (545) and permit (895), which is the only
+            // x-window the router's 2·STUB+4 margin leaves. Nothing else
+            // fits there, and the width is fixed by the 8-column pitch, so
+            // the room had to come from below. The canvas already scrolls
+            // (the pane is ~838×478 against a 1401px sheet), so this trades
+            // a horizontal-only scroll for both axes on the one sheet that
+            // needs it; the other three simply leave the band empty.
+            //
+            // 540 is the MINIMUM that works, and it is minimum because the
+            // height is not free: measured on the Wiresheet row of
+            // `npm run perf-profile`, h 560 cost ~4 fps against h 540 with
+            // the identical sheet. 540 is set by sr1 (y 450 + 89.7), and
+            // sr1 sits at 450 because its R-pin wire has to clear
+            // fan-status below okrun. Raising this further is a real cost,
+            // not a free margin — re-measure if a later sheet needs more.
+            canvasSize: { w: 1401, h: 540 },
         }));
     })();
 </script>
