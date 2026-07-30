@@ -342,12 +342,14 @@ test.describe('DDC Workbench — the blocked-condenser scenario is wired end to 
         // the drift the #246 rename could have introduced, so it gets a
         // row.
         //
-        // The second half is the LESSON. This fault is the one that
-        // points off the drawing, and it only teaches that if the indoor
-        // side genuinely still reads healthy — fan commanded, proof
-        // made, blades turning — while the coil does nothing. A model
-        // that quietly dropped the air here would make the verdict a
-        // lie, and the reader would learn the opposite diagnostic.
+        // The second half is the LESSON, and it is a PAIRING: the air
+        // side reads healthy — fan commanded, proof made, chevrons
+        // marching — while the compressor annunciator goes red. Both
+        // halves are load-bearing. A model that quietly dropped the air
+        // here would make the verdict a lie and teach the opposite
+        // diagnostic; a compressor LED that stayed green would leave the
+        // reader nothing on the drawing to pair the clean air side
+        // against.
         test.setTimeout(60_000);
         await page.goto(URL);
         await page.waitForFunction(() =>
@@ -374,7 +376,10 @@ test.describe('DDC Workbench — the blocked-condenser scenario is wired end to 
             label: document.querySelector('[data-preset="condenser"]').textContent.trim(),
             chips: Array.from(document.querySelectorAll('.ddcw-chip')).map((c) => c.textContent.trim()),
             dt: document.getElementById('fcu-dt').textContent,
-            chevrons: document.querySelectorAll('#fcu-flow .fcu-chevron').length,
+            // The token, not the resolved colour: the module writes
+            // `var(--red)` literally, and the two themes resolve it to
+            // different rgb triples.
+            compDot: document.getElementById('fcu-comp-dot').getAttribute('fill'),
         }));
 
         expect(read.label, 'the button names the condenser, not a coil').toBe('Blocked condenser');
@@ -388,12 +393,33 @@ test.describe('DDC Workbench — the blocked-condenser scenario is wired end to 
         expect(chip('Fan En'), 'the fan is still enabled').toContain('ON');
         expect(chip('Y1'), 'stage 1 is still called').toContain('ON');
         expect(chip('Y2'), 'stage 2 is still called').toContain('ON');
-        expect(read.chevrons, 'air is still drawn moving').toBeGreaterThan(4);
 
-        // …and the coil is doing nothing. Anything past fan heat would
-        // mean the capacity gate did not close.
+        // Motion, not population. The chevron COUNT is fixed at init
+        // from the centerline length and never changes — a stopped
+        // stream has exactly as many nodes as a running one, so counting
+        // them would stay green through the very regression this half
+        // exists to catch (indoor air quietly dropped under a
+        // refrigeration-side fault). Sample the leading chevron's
+        // transform twice instead, the idiom the idle-gate rows above
+        // already use.
+        const m0 = await chevron(page);
+        await page.waitForTimeout(600);
+        const m1 = await chevron(page);
+        expect(m1, 'the air is still drawn moving').not.toBe(m0);
+
+        // The one thing on the drawing that IS wrong, and the half of
+        // the tell the page's note now names: the compressor annunciator
+        // goes red — energized, producing nothing. A clean air side
+        // under a red compressor is what puts the fault on the
+        // refrigeration circuit.
+        expect(read.compDot, 'the compressor reads energized-but-not-producing')
+            .toBe('var(--red)');
+
+        // …and the coil is doing nothing. The `> -1` half is asserted by
+        // the waitForFunction above (it fails the row on timeout); this
+        // is the upper bound, which nothing else covers — anything past
+        // fan heat would mean the capacity gate did not close.
         const dt = parseFloat(read.dt);
-        expect(dt, 'the coil ΔT collapsed').toBeGreaterThan(-1);
-        expect(dt, 'and did not invert into a heating delta').toBeLessThan(2);
+        expect(dt, 'the ΔT did not invert into a heating delta').toBeLessThan(2);
     });
 });

@@ -214,8 +214,13 @@ const DDCWFcuUnit = (function () {
             // airflow untouched. It was briefly `blocked-coil`, which
             // taught the diagnostic backwards: read bare, a blocked coil
             // on a fan coil is the evaporator, and that failure cuts cfm
-            // and DRIVES ΔT UP rather than to zero. Owner ruled the
-            // label wrong, not the physics (codebase-issues #246).
+            // and drives the coil ΔT FURTHER NEGATIVE — a bigger split
+            // across the air that still gets through — rather than to
+            // zero. (Signed ΔT throughout this module: cooling is
+            // negative, so "further negative" is more cooling per pound
+            // of air, not less. See the verdict ladder's note.) Owner
+            // ruled the label wrong, not the physics
+            // (codebase-issues #246).
             conditions: { fault: 'none' },   // none | low-charge | blocked-condenser | fan-belt (observe-only)
             derived:    {},
             anim:       { fanFrac: 1 },
