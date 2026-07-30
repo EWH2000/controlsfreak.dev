@@ -115,15 +115,21 @@ module.exports = [
         tags: ['sensors', 'thermistors']
     },
 
-    // ── Controls: setpoint ≠ actual ───────────────────────
+    // ── Controls: reading a term in context ───────────────
     {
-        type: 'tf',
-        id: 'setpoint-vs-actual',
-        prompt: 'A space-temperature setpoint of <code>72°F</code> means the controller will drive the room to <em>exactly</em> <code>72°F</code>.',
-        answer: false,
-        explain: 'The setpoint is a <em>target</em> the controller tries to maintain, not the value the room will sit at. Real sequences add a deadband (say <code>70-74°F</code>) so heating and cooling don\'t fight each other; the PID loop has a steady-state offset proportional to the load; and the sensor itself has noise. A space-temp reading of <code>73.5°F</code> at a <code>72°F</code> setpoint isn\'t a fault — it\'s a system doing its job. Setpoint chasers (techs trying to drive the actual to within <code>0.1°F</code> of setpoint) are usually fighting deadband and PID behavior, not solving anything.',
-        learnMore: { href: '/education/pid-basics.html', label: 'PID Basics' },
-        tags: ['controls', 'pid']
+        type: 'gotcha',
+        id: 'read-the-term-in-context',
+        prompt: 'First week on an unfamiliar job. Three documents describe the same zone, all written by people who knew what they meant. How do you read <em>deadband</em> here?',
+        snippet: '<pre class="quiz-snippet">SPEC §3.2     "Zone shall hold a 4 °F (2.2 °C) deadband."\nPOINT LIST    HTG-SP 70.0 °F (21.1 °C) · CLG-SP 74.0 °F (23.3 °C)\nCONTROLLER    CLG STAGE 1 · DEADBAND 2.0 °F (1.1 °C)</pre>',
+        choices: [
+            { id: 'a', text: 'Take the spec\'s number — a deadband is the separation between the heating and cooling setpoints, so the zone floats from 70 to 74 °F (21.1 to 23.3 °C) with neither mode called.' },
+            { id: 'b', text: 'Take the controller\'s number — a deadband is the hysteresis a single switching point carries so it can\'t chatter, 2 °F (1.1 °C) wide on the stage-1 call.' },
+            { id: 'c', text: 'Flag it back to the engineer — 4 °F (2.2 °C) and 2 °F (1.1 °C) can\'t both be the deadband, so one of the two documents has a typo in it.' },
+            { id: 'd', text: 'Neither number is wrong and neither one is the whole story. Find out what this system means by the word — read the values each one sits between before you touch a setpoint.', correct: true }
+        ],
+        explain: 'Both numbers are correct, and they are not measuring the same thing. The spec is using the word the way a zone sequence uses it: the separation between the heating and cooling setpoints, which is exactly the 70 and 74 °F (21.1 and 23.3 °C) on the point list. The controller is using it the way a single comparator uses it: hysteresis on one switching point, so the stage-1 call makes and breaks 2 °F (1.1 °C) apart instead of buzzing on the setpoint. Both senses are standard, and nothing on the job is going to arbitrate between them for you. The habit is bigger than this one word — a term on somebody else\'s prints is a label, and the meaning lives in the numbers underneath it. Find the two values the term sits between, take the reading from those, and say which sense you meant when you write the sequence yourself.',
+        learnMore: { href: '/education/comparators-and-deadband.html#deadband', label: 'Comparators & Deadband — Building the deadband' },
+        tags: ['controls', 'terminology', 'workflow']
     },
 
     // ── Workflow: stuck — when to escalate ────────────────

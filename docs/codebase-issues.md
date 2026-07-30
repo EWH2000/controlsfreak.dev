@@ -10186,7 +10186,7 @@ teachable) reason why. Cross-check with #228 when the consumer pages adopt the
 helper, since that closes the cross-page disagreement but not the
 reader-arithmetic one.
 
-### 241. The site defines "deadband" two ways for beginners, and neither surface acknowledges the other *(noticed 2026-07-29, deadband/setpoint-gap terminology sweep — needs an owner decision)*
+### 241. The site defines "deadband" two ways for beginners, and neither surface acknowledges the other *(noticed 2026-07-29, deadband/setpoint-gap terminology sweep — **RESOLVED 2026-07-30**, owner ruled for a third option: teach the habit, not the definition)*
 
 Two shipped, reader-facing, `canonical`-bearing surfaces use the word for
 different quantities:
@@ -10233,6 +10233,34 @@ What is **not** a candidate: redefining the word in `surviving-first-months.js`
 to match the comparators lesson. That would put the site at odds with the VAV
 usage it teaches elsewhere, i.e. trade one internal contradiction for a worse
 one.
+
+**RESOLVED 2026-07-30 — owner took neither candidate.** His ruling: *"that
+question should be changed on the quiz, instead we should have a question with
+the answer being 'check the context of the situation' … understanding the
+context around the question is important not just with deadbands."* He
+explicitly declined a definitional "what is a deadband" question as too on the
+nose.
+
+So the conflating sentence did not get a disambiguating half-clause; the whole
+question was replaced. `setpoint-vs-actual` (the `tf` that carried it) is out,
+and `read-the-term-in-context` (a `gotcha`) is in, in the same slot — the bank
+still holds ten, so the page's *10-question drill* description and its
+`defaultCount: 10` are untouched and the bank is still unsampled.
+
+The new question shows one zone described by three documents — a spec calling
+for a 4 °F deadband, a point list with 70/74 °F setpoints, and a controller
+carrying a 2 °F DEADBAND on the stage-1 call. Three distractors are each a
+confident single definition (take the spec's, take the controller's, call it a
+typo and escalate); the correct answer is that both senses are in service and
+the reader has to find out which one this system means. `explain` names both
+senses, and `learnMore` points at
+`education/comparators-and-deadband.html#deadband` — the section holding the
+site's canonical disambiguation, which neither quiz bank previously linked.
+
+Deadband is only the worked example; the transferable move (a term on someone
+else's prints is a label, the meaning lives in the numbers underneath it) is the
+payload. `comparators-and-deadband.js` and its lesson were not touched — they
+are correct.
 
 ### 242. The AHU mockup's setpoint prose disagrees with the physics module's shipped defaults *(noticed 2026-07-29, deadband/setpoint-gap terminology sweep — for LANE 7.4)*
 
