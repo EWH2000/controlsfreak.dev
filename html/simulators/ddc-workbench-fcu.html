@@ -1035,10 +1035,14 @@ noindex: true
                     reporting a comfortable number while the coil behind it
                     could be anything at all. Break the belt from the scenario
                     row and watch it: the fan command stays on, the blades
-                    stop, the DAT chip climbs to the space temperature, and the
-                    stages drop on the proof interlock rather than on a
-                    discharge reading nobody should trust. Command, status and
-                    proof are three different claims —
+                    stop, and the DAT chip climbs to the space temperature.
+                    The stages hold, though — a scenario is an operator write,
+                    and this one left Y1 and Y2 at slot 8, where your hand
+                    outranks the sequence. Hand them back with the
+                    <em>NULL — released</em> box under Compressor stage and
+                    they drop on the next tick: on the proof interlock, not on
+                    a discharge reading nobody should trust. Command, status
+                    and proof are three different claims —
                     <a href="/education/status-and-proof.html">Status &amp; Proof</a>
                     works through the difference.
                 </p>

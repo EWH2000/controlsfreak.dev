@@ -146,4 +146,70 @@ test.describe('DDC Workbench — 2-stage + safeties program', () => {
                 .includes('Cooling — clear ΔT across the coil')
         ));
     });
+
+    // The READER'S path, click for click, from the sheet note above the
+    // wiresheet ("Why proof has to come first"). The engine-direct rows
+    // prove the interlock on the graph; this one proves the printed
+    // instruction produces what it promises — which is a different
+    // claim, and the one that went wrong: a scenario writes slot 8, and
+    // slot 8 outranks the sequence at 16, so the stages CANNOT drop
+    // until the reader hands them back. Anything that re-words that
+    // paragraph without re-measuring the page reddens here.
+    test("the note's belt walkthrough: the scenario holds the stages, releasing them lets the interlock act", async ({ page }) => {
+        await page.goto(URL);
+        await waitForChip(page, 'Y1', 'ON');
+
+        // 60× so the proof make-delay and the min-off play out in real
+        // seconds. No assertion below reads either constant.
+        await page.locator('#fcu-speed-slider').evaluate((el) => {
+            el.value = '60';
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+
+        await page.selectOption('#ddcw-program', 'cool-2stage-safeties');
+        await waitForChip(page, 'Y1', 'ON');
+
+        // "Break the belt from the scenario row and watch it: the fan
+        // command stays on, the blades stop, and the DAT chip climbs to
+        // the space temperature."
+        await page.click('[data-preset="belt"]');
+        await waitForChip(page, 'Fan Sts', 'OFF');
+        const held = await chipMap(page);
+        expect(held['Fan En'], 'the fan command stands — the BELT failed').toBe('ON');
+        await page.waitForFunction(() => {
+            const chips = {};
+            document.querySelectorAll('#ddcw-io .ddcw-chip').forEach((c) => {
+                chips[c.querySelector('.ddcw-chip-cap').textContent] =
+                    c.querySelector('.ddcw-chip-val').textContent;
+            });
+            const num = (s) => parseFloat(String(s).replace(/[^\d.\-]/g, ''));
+            // A blind discharge probe reads the room. Band, not a
+            // value: the zone keeps integrating under the dead coil.
+            return Math.abs(num(chips['DAT']) - num(chips['Space'])) < 1;
+        });
+
+        // "The stages hold, though" — slot 8 outranks the sequence, and
+        // the off-program window says so in as many words.
+        expect(held['Y1'], 'the scenario wrote Y1 at slot 8').toBe('ON');
+        expect(held['Y2'], 'the scenario wrote Y2 at slot 8').toBe('ON');
+        const offprog = await page.evaluate(
+            () => document.getElementById('ddcw-offprog').textContent);
+        expect(offprog).toContain('Y1 — commanded by slot 8');
+        expect(offprog).toContain('Y2 — commanded by slot 8');
+
+        // "Hand them back with the NULL — released box under Compressor
+        // stage and they drop on the next tick: on the proof interlock."
+        await page.locator('#fcu-null-stage').check();
+        await waitForChip(page, 'Y1', 'OFF');
+        await waitForChip(page, 'Y2', 'OFF');
+        const dropped = await chipMap(page);
+        expect(dropped['Fan En'], 'the fan is still commanded on').toBe('ON');
+        expect(dropped['Fan Sts'], 'and still proving nothing').toBe('OFF');
+        // The verdict names the PROOF, not a discharge reading — the
+        // whole point of the paragraph.
+        await page.waitForFunction(() => (
+            document.getElementById('fcu-verdict').textContent
+                .includes('airflow proof is down')
+        ));
+    });
 });
