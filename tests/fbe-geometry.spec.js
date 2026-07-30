@@ -126,7 +126,11 @@ const SURFACES = {
     'ddc-workbench-fcu': {
         file: 'html/simulators/ddc-workbench-fcu.html',
         literal: 'FCU_PROGRAMS',
-        canvas: { w: 1401, h: 480 },
+        // h grew 480 → 540 with the fan-proof interlock: column 720 on
+        // cool-2stage-safeties had no free slot for the new AND, and the
+        // router's margin rule pins that AND to that column. The page's
+        // canvasSize call carries the reasoning.
+        canvas: { w: 1401, h: 540 },
     },
 };
 const REGISTRIES = {};
@@ -323,6 +327,21 @@ function assertSheet(pageKey, sheetName, meas) {
         expect(w.in, label + ' (in pin not found)').toBeTruthy();
         expect(w.d, label + ' (no rendered path)').toBeTruthy();
     });
+    // Every block's RENDERED bottom fits the declared canvas. Layer A
+    // checks the authored y against the editor's drag clamp (h − 40),
+    // which is not the same claim: a block is 73–90 px tall, so an
+    // authored y well inside the clamp can still bottom out past the
+    // canvas. Nothing clips when it does (.fbe-canvas scrolls), so the
+    // only symptom is a canvasSize comment that has quietly stopped
+    // being true — which is exactly how `fan-status` shipped at y 470
+    // and bottomed at 543 against h 540. TOLERANCE: 1 px, because the
+    // heights are rem-derived and land fractional (sr1 measures 89.72).
+    const canvasH = SURFACES[pageKey].canvas.h;
+    const overflows = Object.entries(meas.blocks)
+        .filter(([, r]) => r.bottom > canvasH + 1)
+        .map(([id, r]) => id + ' bottoms at ' + r.bottom.toFixed(1)
+            + ' past canvas h ' + canvasH);
+    expect(overflows, sheetName + ': blocks bottoming past the canvas').toEqual([]);
     const allow = (FALLBACK_BY_DESIGN[pageKey] || {})[sheetName];
     const allowSet = Array.isArray(allow) ? new Set(allow) : null;
     const v = sheetViolations(meas, allowSet || allow);

@@ -481,13 +481,21 @@ const DDCWAhuUnit = (function () {
         let coilLeaveTarget = afterHeat.ok ? afterHeat.tdb : zoneT;
         let leavingW        = afterHeat.ok ? afterHeat.W : 0;
         if (airflowOn && afterHeat.ok) {
-            // BOTH clamps below live inside `capActive`, and that is the
-            // load-bearing part. A de-energized DX coil is a passive heat
-            // exchanger: with the clamps outside, a shut valve and two
-            // dead compressors on a design-cold morning painted DAT − MAT
-            // = +55 °F — the plant doing the sequence's freeze protection
-            // for it, and hiding the "someone deleted the min-OA block"
+            // A de-energized DX coil is a passive heat exchanger: run
+            // the freeze floor over one and the plant starts doing the
+            // sequence's protection for it — a shut valve and two dead
+            // compressors on a design-cold morning painted DAT − MAT =
+            // +55 °F, hiding the "someone deleted the min-OA block"
             // fault the damper note above says must stay showable.
+            // MEASURED (2026-07-30), because the earlier wording here
+            // credited the wrong construct: what prevents that is the
+            // FLOOR never applying without the CEILING under it, NOT
+            // the `capActive` nesting. Probed at −20 °F entering with
+            // both compressors off — shipped −20, both clamps hoisted
+            // out of capActive −20, floor hoisted alone 34. Keep the
+            // nesting regardless: it spares a psychro solve every tick
+            // the compressors are off, and ddcw-fcu-unit.js is built to
+            // match it.
             if (capActive) {
                 const cooled = Psychro.invertProcess(afterHeat, {
                     type: 'cool', cfm: cfm,
@@ -546,9 +554,10 @@ const DDCWAhuUnit = (function () {
         // KEEP the fan-off branch. With no air moving, DAT reads the
         // ZONE — which is exactly what makes a discharge low-limit go
         // BLIND the moment the fan stops (codebase-issues #225: the
-        // FCU's safeties sheet carries no airflow proof and its DAT
-        // low-limit inherits that hole). The new fan-status BI is what
-        // a correct sequence interlocks on instead, and this branch is
+        // FCU's safeties sheet SHIPPED without airflow proof and its
+        // DAT low-limit inherited that hole — closed 2026-07-30, both
+        // units carry the interlock now). The fan-status BI is what a
+        // correct sequence interlocks on instead, and this branch is
         // what makes the difference between the two demonstrable.
         const datT = airflowOn ? coilLeaveT + FAN_HEAT : zoneT;
 
@@ -662,8 +671,10 @@ const DDCWAhuUnit = (function () {
         d.hwValvePct  = hwPct;
         d.hwFrac      = hwFrac;
         d.fanPct      = fanPct;
-        // Discrete state — the three airflow facts stay distinct all the
-        // way to the paint layer.
+        // Discrete state — the three airflow facts stay distinct.
+        // `fanStatus` is the third of them and has no consumer today
+        // (the chip paints from plant.sensors), same standing as
+        // `d.matW` above.
         d.stage       = stage;
         d.fanCmd      = fanCmd;
         d.airflowOn   = airflowOn;

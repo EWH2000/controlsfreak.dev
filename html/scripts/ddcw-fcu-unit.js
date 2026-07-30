@@ -163,6 +163,14 @@ const DDCWFcuUnit = (function () {
     const SPEED_MIN   = 1;                   // × — slowest (watch a 5 s ON-delay in real seconds)
     const SPEED_MAX   = 60;                  // × — fastest (fast-forward a slow recovery)
     const MAX_DT_SIM  = 5;                   // s — per-tick sim-time clamp (forward-Euler safety)
+    // Airflow proof make-delay. A real duct-pressure proof switch is
+    // slow to make and fast to break; this is the make side. The break
+    // side is not a constant — loss of airflow drops the switch on the
+    // very next tick, which is the asymmetry the sequence has to be
+    // written around. Same value the AHU carries, and for the same
+    // reason: it is long enough to WATCH at 1× and short enough not to
+    // stall the arrival state at the default 20×.
+    const PROOF_MAKE_DELAY = 8;              // s of continuous airflow before fan-status makes
     // ═══════════════════════════════════════════════════════════════════
 
     // Live commissioning knobs — start at the placeholders above; the OA
@@ -183,10 +191,29 @@ const DDCWFcuUnit = (function () {
         // every tick (they match what cool-2stage commands on arrival,
         // so nothing visibly changes hands).
         return {
-            sensors:    { 'space-temp': 76, 'dat': 55, 'rat': 76 },   // rat = zoneT on arrival (a return probe reads the zone's own air)
+            sensors:    {
+                'space-temp': 76, 'dat': 55, 'rat': 76,   // rat = zoneT on arrival (a return probe reads the zone's own air)
+                'fan-status': false,         // proof has not made yet — it takes airflow plus time
+            },
             actuators:  { 'fan-speed': 100, 'fan-enable': true, 'y1': true, 'y2': false },
             params:     { 'cooling-setpoint': 72, 'deadband': 3 },
-            conditions: { fault: 'none' },   // none | lowCharge | airflow (observe-only)
+            // Fault vocabulary is KEBAB-CASE, matching ddcw-ahu-unit.js:
+            // the two unit modules have to speak one language before a
+            // unit selector puts them behind one picker. That parity is
+            // the whole reason — the site's kebab-case rule governs
+            // element ids and the JS that references them, not an
+            // arbitrary model enum, so it is not what settles this.
+            //
+            // `blocked-coil` and `fan-belt` are DIFFERENT failures in
+            // this model and the names have to keep them apart: under
+            // `blocked-coil` the capacity goes and the AIR KEEPS MOVING
+            // at the commanded cfm (proof stays made), while `fan-belt`
+            // stops the air with the command still standing. The name is
+            // under review — read bare, "blocked coil" reads air-side,
+            // where a real blockage would cut airflow too; it is the
+            // condenser-side blockage that leaves indoor airflow alone.
+            // codebase-issues #246 carries the question.
+            conditions: { fault: 'none' },   // none | low-charge | blocked-coil | fan-belt (observe-only)
             derived:    {},
             anim:       { fanFrac: 1 },
             // ── closed-loop thermal state ──
@@ -195,6 +222,9 @@ const DDCWFcuUnit = (function () {
             //                                  this session (see the RH-ready seam in fcuUpdate)
             coilLeaveT: undefined,           // °F — first-order-lagged coil leaving-air; seeded to
             //                                  its quasi-static target on the first tick (no page-load ramp)
+            // Airflow proof state — `elapsed` is seconds of CONTINUOUS
+            // airflow, reset to zero the instant airflow stops.
+            proof:      { made: false, elapsed: 0 },
             override:   { spaceTemp: { active: false, value: 76 } },
             // DAT low-limit annunciator state (see the DAT_LOW_* consts):
             // hysteresis-latched on the SENSED discharge temp so the
@@ -228,26 +258,86 @@ const DDCWFcuUnit = (function () {
         const fanFrac = fanPct / 100;
         // Y2-implies-Y1 interlock, FCU-local: a Y2 call is always stage 2.
         const stage = plant.actuators.y2 ? 2 : (plant.actuators.y1 ? 1 : 0);
-        // fan-enable is a real BO gate now (not speed>0 alone).
-        const fanOn = !!plant.actuators['fan-enable'] && fanPct > 0;
-        const fault = plant.conditions.fault;
-        const capActive = stage > 0 && fanOn && fault === 'none';
+        // ── airflow gating — three DIFFERENT things, named apart ──
+        // fanCmd is what the sequence asked for (fan-enable is a real BO
+        // gate, not speed>0 alone). airflowOn is whether air actually
+        // moves. fan-status (published below) is PROOF — what a
+        // duct-pressure switch reports back, which lags the truth on the
+        // way up and matches it on the way down. Every line of physics
+        // below gates on airflowOn, never on fanCmd: that gap IS the
+        // belt fault. Only `fan-belt` stops the air; `blocked-coil` is
+        // named separately because it kills the heat transfer while the
+        // air keeps moving.
+        const fanCmd    = !!plant.actuators['fan-enable'] && fanPct > 0;
+        const fault     = plant.conditions.fault;
+        const airflowOn = fanCmd && fault !== 'fan-belt';
+        const capActive = stage > 0 && airflowOn && fault === 'none';
         const cfm = Math.max(50, NOMINAL_CFM * fanFrac);
 
         // Coil leaving-air TARGET (quasi-static) via the shared psychro
         // solver, on the ACTUAL return air (never the sensed value).
         const inlet = zoneInletState(zoneT);
-        let coilLeaveTarget;
+        let coilLeaveTarget = inlet.ok ? inlet.tdb : zoneT;
         let leavingW = inlet.ok ? inlet.W : 0;
-        if (fanOn && inlet.ok) {
-            const qSens = capActive ? STAGE_QSENS[stage] : 0;
-            const qLat  = capActive ? STAGE_QLAT[stage]  : 0;
-            const leaving = Psychro.invertProcess(inlet, { type: 'cool', cfm: cfm, qSens: qSens, qLat: qLat });
-            if (leaving.ok) { coilLeaveTarget = leaving.tdb; leavingW = leaving.W; }
-            else coilLeaveTarget = zoneT;
-            if (coilLeaveTarget < COIL_FLOOR) coilLeaveTarget = COIL_FLOOR;
+        if (airflowOn && inlet.ok) {
+            // The solve and BOTH clamps live inside `capActive`. A
+            // de-energized DX coil is a passive heat exchanger — air
+            // crosses it and comes out where it went in — so a
+            // capacity-free branch must not run the freeze floor over
+            // it. (The AHU learned this the hard way: with the clamps
+            // outside, two dead compressors on a design-cold morning
+            // painted a +55 °F rise.)
+            //
+            // On the FCU this nesting is NOT the only thing preventing
+            // that, and the comment says so rather than overclaiming:
+            // the entering-air CEILING below independently undoes any
+            // lift the floor applies, and the zone balance clamps zoneT
+            // to 40 °F besides, so a sub-floor inlet is not reachable
+            // from the UI at all. Measured by mutation — the spec row
+            // covering this only reddens when the nesting AND the
+            // ceiling both go. It earns its keep for two other reasons:
+            // it spares a psychro solve on every tick the compressor is
+            // off (this page paints at 10 Hz), and it keeps the two unit
+            // modules one shape — on the AHU, where this coil sits
+            // downstream of a hot-water coil, the nesting genuinely is
+            // load-bearing on its own.
+            if (capActive) {
+                const cooled = Psychro.invertProcess(inlet, {
+                    type: 'cool', cfm: cfm,
+                    qSens: STAGE_QSENS[stage], qLat: STAGE_QLAT[stage],
+                });
+                // A failed inversion means the load-per-cfm drove the
+                // solve past bone-dry: a coil that ran out of AIR, not
+                // one that stopped cooling. So fall back to the floor,
+                // not to the entering air — the latter handed a RUNNING
+                // coil a zero ΔT, which is this model's own signature
+                // for a faulted compressor, and made the ΔT non-monotone
+                // in airflow (one step of the fan slider took DAT from
+                // 34 °F to 76 °F and turned the DX coil into a heater —
+                // codebase-issues #237).
+                if (cooled.ok) { coilLeaveTarget = cooled.tdb; leavingW = cooled.W; }
+                else coilLeaveTarget = COIL_FLOOR;
+                // The DX coil's two bounds. FLOOR: an evaporator cannot
+                // drive air below freezing without icing over. CEILING:
+                // a cooling coil cannot leave WARMER than the air it was
+                // handed — which is also what keeps the floor harmless
+                // on entering air already below it (the floor raises,
+                // the ceiling puts it straight back).
+                if (coilLeaveTarget < COIL_FLOOR)   coilLeaveTarget = COIL_FLOOR;
+                if (coilLeaveTarget > inlet.tdb)    coilLeaveTarget = inlet.tdb;
+                // Keep the leaving MOISTURE coherent with the clamped
+                // temperature. invertProcess solved W at the unclamped
+                // (colder) point, where saturation holds far less water,
+                // so a clamped coil would publish a 34 °F dry-bulb
+                // against a far colder dew point. This one is NOT
+                // display-only on the FCU: leavingW feeds the supply
+                // state the zone balance measures qCool from, below.
+                const wSat = satHumRatio(coilLeaveTarget, P);
+                if (leavingW > wSat) leavingW = wSat;
+            }
         } else {
             coilLeaveTarget = zoneT;   // no airflow — nothing crosses the coil
+            leavingW = inlet.ok ? inlet.W : 0;
         }
 
         // First-order lag on the coil leaving-air temp (forward-Euler, same
@@ -267,7 +357,15 @@ const DDCWFcuUnit = (function () {
 
         // Discharge sensor sits after the fan (draw-through pickup), off the
         // LAGGED coil temp so the delivered cooling ramps in too.
-        const datT = fanOn ? coilLeaveT + FAN_HEAT : zoneT;
+        //
+        // KEEP the no-airflow branch. With no air moving, DAT reads the
+        // ZONE — which is exactly what makes a discharge low-limit go
+        // BLIND the moment the air stops (codebase-issues #225). The
+        // fan-status BI is what a correct sequence interlocks on
+        // instead, and this branch is what makes the difference between
+        // the two demonstrable. Note it gates on airflowOn, so a broken
+        // belt blinds the probe while the fan command still stands.
+        const datT = airflowOn ? coilLeaveT + FAN_HEAT : zoneT;
         // Fed back into the program's `dat` AI next tick (a discharge
         // low-limit hook).
         plant.sensors['dat'] = datT;
@@ -279,6 +377,20 @@ const DDCWFcuUnit = (function () {
         // branches outrank the annunciator line in the verdict ladder.
         if (datT < DAT_LOW_TRIP) plant.lowLimit.latched = true;
         else if (datT > DAT_LOW_CLEAR) plant.lowLimit.latched = false;
+
+        // ── airflow proof ──
+        // A duct-pressure proof switch makes SLOW and breaks FAST: it
+        // needs continuous airflow for the make delay, and it drops on
+        // the first tick without. `elapsed` resets to zero on the way
+        // down, so an interrupted run does not bank credit toward the
+        // next make.
+        if (airflowOn) {
+            if (isFinite(dt)) plant.proof.elapsed += dt;
+            if (plant.proof.elapsed >= PROOF_MAKE_DELAY) plant.proof.made = true;
+        } else {
+            plant.proof.elapsed = 0;
+            plant.proof.made = false;
+        }
 
         // ── zone heat balance (forward-Euler, pid-engine idiom) ──────────
         // Q_cool = sensible heat the SUPPLY air removes from the zone,
@@ -327,6 +439,10 @@ const DDCWFcuUnit = (function () {
         // an unauthored point — see the header's BINDING INVARIANT.)
         plant.sensors['rat'] = plant.zoneT;
 
+        // The proof switch is not a measurement of a continuous value,
+        // so there is nothing to override — it reports its own state.
+        plant.sensors['fan-status'] = plant.proof.made;
+
         // Entering air for the DISPLAY — the same post-integration
         // sample as sensors['rat'] above, because the EAT badge and the
         // RAT chip are one measurement and must round identically every
@@ -340,7 +456,19 @@ const DDCWFcuUnit = (function () {
         d.coilLeaveT = coilLeaveT;
         d.datT = datT;
         d.stage = stage;
-        d.fanOn = fanOn;
+        // The three airflow facts stay distinct. There is deliberately
+        // NO `d.fanOn` alias: one key cannot answer both "did the
+        // sequence ask for the fan" and "is air moving", and with a
+        // belt fault live those two diverge — which is the whole
+        // lesson. `fanCmd` and `airflowOn` both have readers in
+        // fcuRenderUnit and each of those picks on purpose; `fanStatus`
+        // has NO consumer today (the Fan Sts chip paints from
+        // plant.sensors, shell-side) and is published for completeness,
+        // the `d.matW` idiom on the AHU. Publishing the trio whole is
+        // what keeps a later readout from reaching for the wrong one.
+        d.fanCmd = fanCmd;
+        d.airflowOn = airflowOn;
+        d.fanStatus = plant.proof.made;
         d.fanPct = fanPct;
         d.capActive = capActive;
         d.setp = plant.params['cooling-setpoint'];
@@ -350,7 +478,10 @@ const DDCWFcuUnit = (function () {
         d.sensedT = plant.sensors['space-temp'];
         d.overrideActive = plant.override.spaceTemp.active;
         d.lowLimitLatched = plant.lowLimit.latched;
-        plant.anim.fanFrac = fanOn ? fanFrac : 0;
+        // The blades follow the AIR, not the command — a broken belt
+        // stops the stream on the graphic while the fan-enable chip
+        // still reads ON.
+        plant.anim.fanFrac = airflowOn ? fanFrac : 0;
     }
 
     // ── FCU IO points ── point id === seed FBE-block id === the IO block
@@ -377,6 +508,13 @@ const DDCWFcuUnit = (function () {
         // leaving side by side (the pair the coil ΔT is made of).
         { id: 'rat',              kind: 'ai',    dir: 'sensor',   plantKey: 'rat',              name: 'RAT',      unit: '°F', conv: 'temp' },
         { id: 'dat',              kind: 'ai',    dir: 'sensor',   plantKey: 'dat',              name: 'DAT',      unit: '°F', conv: 'temp' },
+        // Airflow PROOF, not the fan command — a duct-pressure switch
+        // that makes slowly and breaks at once. A sequence that
+        // interlocks on this rides through a broken belt; one that
+        // assumes the command is the truth does not. No `unit` and no
+        // `conv`: the shared formatter short-circuits a bi to ON / OFF
+        // before it reaches either.
+        { id: 'fan-status',       kind: 'bi',    dir: 'sensor',   plantKey: 'fan-status',       name: 'Fan Sts' },
         { id: 'fan-speed',        kind: 'ao',    dir: 'actuator', plantKey: 'fan-speed',        name: 'Fan',      unit: '%', min: 0, max: 100, step: 5, relinquishDefault: 0 },
         { id: 'fan-enable',       kind: 'bo',    dir: 'actuator', plantKey: 'fan-enable',       name: 'Fan En',   relinquishDefault: false },
         { id: 'y1',               kind: 'bo',    dir: 'actuator', plantKey: 'y1',               name: 'Y1',       relinquishDefault: false },
@@ -546,7 +684,12 @@ const DDCWFcuUnit = (function () {
         out.zsp.textContent = spN.toFixed(1) + ' ' + tSuffix();
         out.zr.textContent  = eatN.toFixed(1) + ' / ' + spN.toFixed(1) + ' ' + tSuffix();
 
-        const fanTxt = d.fanOn ? (d.fanPct + '% · ON') : 'OFF';
+        // The fan readout shows the COMMAND, the peer of the compressor
+        // readout beside it — so under a broken belt the graphic reads
+        // "100% · ON" while the blades stand still and the Fan Sts chip
+        // reads OFF. That disagreement is the tell, not a bug: an output
+        // shows what was asked for, and proof is the separate claim.
+        const fanTxt = d.fanCmd ? (d.fanPct + '% · ON') : 'OFF';
         out.fanG.textContent = fanTxt;
         out.fanR.textContent = fanTxt;
 
@@ -556,9 +699,13 @@ const DDCWFcuUnit = (function () {
 
         // Compressor LED: producing (green), off (dim), or energized but
         // not producing (red — the fault tell).
+        // Energized-but-not-producing reads off the COMMAND pair: a
+        // stage called while the fan was also called. A broken belt now
+        // lands here (both commanded, nothing produced) instead of
+        // falling through to the dim at-rest fill.
         compDot.setAttribute('fill',
             d.capActive ? 'var(--accent)'
-                        : (d.stage > 0 && d.fanOn) ? 'var(--red)' : 'var(--text-dim)');
+                        : (d.stage > 0 && d.fanCmd) ? 'var(--red)' : 'var(--text-dim)');
 
         // Downstream air colour follows whether the coil is actually
         // cooling; the chevron stream and the DAT number both read it.
@@ -594,19 +741,28 @@ const DDCWFcuUnit = (function () {
         // reports the annunciator, never who cut the stages (see the
         // DAT_LOW_* header note for the unprotected-sheet window that
         // rules out causal phrasing).
+        // The airflow branches read `airflowOn` — the PHYSICAL fact —
+        // and use `fanCmd` only to word WHY the air stopped. A broken
+        // belt and a fan nobody asked for are the same hazard to the
+        // coil and two different things to go look at.
         let cls, txt;
-        if (!d.fanOn && d.stage > 0) {
-            cls = 'error'; txt = 'Fan off with compressor on — no airflow across an active coil';
-        } else if (!d.fanOn) {
+        if (!d.airflowOn && d.stage > 0) {
+            cls = 'error';
+            txt = d.fanCmd
+                ? 'Fan commanded on but no air moving — compressor on a dead coil'
+                : 'Fan off with compressor on — no airflow across an active coil';
+        } else if (!d.airflowOn && d.fanCmd) {
+            cls = 'error'; txt = 'Fan commanded on but no air moving — airflow proof is down';
+        } else if (!d.airflowOn) {
             cls = '';      txt = 'No cooling call — fan off (idle)';
         } else if (d.stage === 0 && d.lowLimitLatched) {
             cls = 'warn';  txt = 'DAT low-limit annunciator latched — stages off, fan moving air';
         } else if (d.stage === 0) {
             cls = 'warn';  txt = 'Compressor off — fan only, no ΔT across the coil';
-        } else if (d.fault === 'lowCharge') {
+        } else if (d.fault === 'low-charge') {
             cls = 'error'; txt = 'No ΔT across coil — low charge, not cooling';
-        } else if (d.fault === 'airflow') {
-            cls = 'error'; txt = 'No ΔT across coil — airflow fault, not cooling';
+        } else if (d.fault === 'blocked-coil') {
+            cls = 'error'; txt = 'No ΔT across coil — coil blocked, not cooling';
         } else if (datDeltaT(d) > COOLING_DT_TRIP) {
             // Signed ΔT: cooling drives it negative, so "no meaningful
             // cooling delta" is anything ABOVE the trip line. Canonical
@@ -712,11 +868,20 @@ const DDCWFcuUnit = (function () {
         // scenario touches (the NULL boxes re-sync from slot state on
         // the next paint), so the graphic tells are reachable without
         // wiring a program — and stay put until you release them.
+        // Keys are the button's `data-preset` (DOM-side, always
+        // lowercase); the `fault` value is the PLANT vocabulary
+        // (kebab-case — see fcuCreatePlant). The two are hand-mapped
+        // here on purpose, which is what lets the buttons read as
+        // sentences without pushing that wording into the model.
         const SCENARIOS = {
             healthy:   { zone: 78, fan: 100, stage: 2, fault: 'none' },
             compoff:   { zone: 78, fan: 100, stage: 0, fault: 'none' },
-            lowcharge: { zone: 78, fan: 100, stage: 2, fault: 'lowCharge' },
-            airflow:   { zone: 78, fan: 100, stage: 2, fault: 'airflow' },
+            lowcharge: { zone: 78, fan: 100, stage: 2, fault: 'low-charge' },
+            blocked:   { zone: 78, fan: 100, stage: 2, fault: 'blocked-coil' },
+            // The fan is COMMANDED here — that is the whole point. The
+            // belt is what failed, so the command stands, the air stops
+            // and the proof switch drops.
+            belt:      { zone: 78, fan: 100, stage: 2, fault: 'fan-belt' },
         };
 
         presetBtns.forEach(function (btn) {
