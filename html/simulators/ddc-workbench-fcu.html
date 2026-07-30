@@ -826,7 +826,7 @@ noindex: true
                         <button type="button" class="copy-btn" data-preset="healthy" aria-pressed="false">Healthy cooling</button>
                         <button type="button" class="copy-btn" data-preset="compoff" aria-pressed="false">Compressor off</button>
                         <button type="button" class="copy-btn fcu-preset-fault" data-preset="lowcharge" aria-pressed="false">Low charge</button>
-                        <button type="button" class="copy-btn fcu-preset-fault" data-preset="blocked" aria-pressed="false">Blocked coil</button>
+                        <button type="button" class="copy-btn fcu-preset-fault" data-preset="condenser" aria-pressed="false">Blocked condenser</button>
                         <button type="button" class="copy-btn fcu-preset-fault" data-preset="belt" aria-pressed="false">Broken belt</button>
                     </div>
                 </div>
@@ -971,6 +971,30 @@ noindex: true
                 presets zero the coil's work outright to make the tell obvious.
                 A real no-cooling call has more than one cause; the graphic
                 shows you where to look, not what to fix.
+            </p>
+
+            <p class="ref-note">
+                The blocked-condenser scenario is the one worth sitting with,
+                because the whole air side keeps reading right: the fan is
+                commanded, the proof switch is made, the chevrons keep
+                marching — only their supply-side tint drops from cooled blue
+                to plain grey — and the ΔT badge settles on the small fan-heat
+                offset and nothing more. What the drawing does tell you is the
+                compressor LED, which goes red: energized, and producing
+                nothing. That pairing is the tell. A clean air side under a red
+                compressor puts the failure on the refrigeration circuit, and
+                this cabinet's graphic stops at the DX coil — heat rejection
+                happens past the edge of it, so nothing else on the screen
+                narrows it any further. That is a real habit to build: when the
+                air side reads clean and the coil is doing nothing, stop
+                interrogating the screen and go look at the refrigeration
+                circuit. These readings cannot separate a plugged condenser
+                from a dead compressor, or from the low-charge fault this panel
+                also carries — they only tell you which side to walk to. Open
+                the coil glyph on the graphic and the
+                <a href="/simulators/refrigerant-loop.html">refrigerant-loop
+                simulator</a> is where head pressure, subcooling and superheat
+                sort those apart.
             </p>
 
             <p class="fcu-note">

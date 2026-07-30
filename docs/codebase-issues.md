@@ -10372,7 +10372,7 @@ writes `aria-pressed` on them. Two things are wrong at once:
   scenario button forever, including the one whose state the unit is
   currently in.
 - **It should not be there at all.** `aria-pressed` marks a *toggle*. These
-  are one-shot commands: clicking "Blocked coil" writes slot 8 and sets a
+  are one-shot commands: clicking "Blocked condenser" writes slot 8 and sets a
   fault, it does not enter a mode the button holds. The stage buttons in the
   same panel are the genuine toggle case and they DO maintain
   `aria-pressed` + `.active` in `fcuSyncControls`, which makes the
@@ -10387,7 +10387,7 @@ semantics change on a shared `.copy-btn` idiom wants its own look at whether
 other pages copied the pattern (grep `data-preset` — `refrigerant-loop.html`
 uses `.rl-presets`, worth checking in the same pass).
 
-### 246. The FCU's `blocked-coil` fault names an air-side failure but the model gives it full airflow *(noticed 2026-07-30, FCU proof-sweep review — needs an owner decision)*
+### 246. The FCU's `blocked-coil` fault names an air-side failure but the model gives it full airflow *(noticed 2026-07-30, FCU proof-sweep review — **RESOLVED 2026-07-30**, owner ruled for disposition 1)*
 
 The FCU proof sweep renamed the second capacity fault from `airflow` to
 `blocked-coil` (button "Airflow fault" → "Blocked coil"), because the belt
@@ -10434,3 +10434,120 @@ the field claim as fact and points here; whichever way this goes, the
 verdict string, the button label, the comment, and the
 `tests/ddcw-fcu-unit.spec.js` row titled "a capacity fault is NOT an
 airflow fault" all move together.
+
+**RESOLVED 2026-07-30 — owner ruled for disposition 1, and ruled the
+physics untouched.** The model already computed a condenser-side failure
+(heat rejection gone, indoor airflow untouched); only the label was
+wrong, so nothing in `fcuUpdate` moved. What shipped:
+
+- `html/scripts/ddcw-fcu-unit.js` — the fault key is `blocked-condenser`
+  in the plant enum, the airflow-gating comment, the verdict branch and
+  the `SCENARIOS` map. The `data-preset` key went `blocked` →
+  `condenser`, which names the failed part the way `belt` already did.
+- `html/simulators/ddc-workbench-fcu.html` — button label "Blocked coil"
+  → "Blocked condenser", plus a `.ref-note` under the graphic that says
+  out loud what the scenario teaches and points at the coil glyph's
+  existing drill-down to `simulators/refrigerant-loop.html`.
+- `tests/ddcw-fcu-unit.spec.js` — both rows that sweep the capacity
+  faults, and the "a capacity fault is NOT an airflow fault" comment,
+  which now records WHY the condenser is the right name: a blocked
+  evaporator would restrict the air, which is exactly what that row
+  proves does not happen.
+
+**On the verdict wording.** It reads *"No ΔT across coil — air moving;
+look condenser-side, off this graphic"*, deliberately naming the SIDE
+rather than the part. A blocked condenser is one cause of
+energized-and-not-cooling and the readings on this screen cannot separate
+it from a dead compressor or a plugged metering device — `low-charge`
+already sits in that same space with its own verdict. The scenario button
+tells the reader what was set; the verdict tells them what the screen can
+actually support, which is a direction to walk in. That is also the
+lesson: the AIR side reads perfect — fan commanded, proof made, chevrons
+running — and the coil is still doing nothing, so the failure is
+somewhere this graphic does not draw. **The FCU graphic depicts no
+condenser** (return duct, cabinet, DX coil with its compressor status
+point, supply fan, supply duct, zone), which is why the verdict has to
+say "off this graphic" rather than leave the reader hunting the drawing
+for a part that is not on it. Note what the enumeration deliberately
+includes: the compressor IS annunciated on the drawing, heat rejection is
+not — so the verdict still has to point off-graphic, and the reader who
+goes looking for the refrigeration circuit finds the compressor LED as
+the nearest thing to it.
+
+**Review follow-on, same day.** A verification pass measured the built
+page under the preset and corrected three things the first cut got wrong:
+
+- The `.ref-note` claimed "every reading on this screen stays good" and
+  "nothing on the drawing is wrong". Measurably false — `capActive` is
+  cleared with stage 2 called and the fan commanded, so `#fcu-comp-dot`
+  paints `var(--red)` (its own comment calls that arm "the fault tell"),
+  and the post-coil chevrons drop to `var(--text-dim)`. Both are ON the
+  drawing. The note now names the real, stronger tell: the whole AIR side
+  reads right while the compressor annunciator goes red — energized and
+  producing nothing — and nothing else on the drawing narrows it further
+  because heat rejection is not drawn. It also now names the low-charge
+  scenario alongside the dead compressor, since the screen cannot
+  separate any of them.
+- `tests/ddc-workbench-fcu.spec.js` asserted `chevrons > 4` under the
+  label "air is still drawn moving". The chevron COUNT is fixed at init
+  (26 either way, measured under both `condenser` and `belt`); motion
+  lives in the per-frame `transform`. The row now samples the leading
+  chevron's transform twice, the idiom the idle-gate rows in the same
+  file already use, and additionally pins the red compressor LED by its
+  `var(--red)` token so the page's prose claim has a test behind it.
+- The fault-vocabulary comment said a blocked evaporator "DRIVES ΔT UP",
+  which reads backwards inside a module whose ΔT is signed negative for
+  cooling — the same direction the fault it contrasts against goes. It
+  now says "further negative", with the sign convention stated inline.
+
+### 247. The FCU's `low-charge` verdict names a cause the screen cannot support, one button away from a verdict that deliberately refuses to *(noticed 2026-07-30, #246 review — pre-existing, needs an owner decision)*
+
+Measured on the built page: under `low-charge` and under
+`blocked-condenser` the FCU's entire displayed state is identical. Same
+chip strip (Fan Sts ON, Fan 100 %, Fan En ON, Y1 ON, Y2 ON, Cool SP
+72.0 °F, Deadband 3.0 °F), same ΔT badge settling on the fan-heat offset,
+same red `#fcu-comp-dot`, same greyed downstream chevrons, same chevron
+motion. **The only differing surface in a full DOM sweep was the verdict
+string** (and its screen-reader mirror).
+
+Both verdicts branch on `d.fault` (`ddcw-fcu-unit.js`), which is injected
+ground truth the graphic never renders — the model knows which fault was
+set, the screen does not. The new `blocked-condenser` verdict is written
+to respect that: it names the SIDE ("look condenser-side, off this
+graphic") rather than the part, precisely because these readings cannot
+narrow further. The pre-existing `low-charge` verdict beside it does the
+opposite: *"No ΔT across coil — low charge, not cooling"* states a
+diagnosis from readings that cannot distinguish low charge from a plugged
+condenser, a dead compressor or a plugged metering device.
+
+The asymmetry teaches, by omission, that a front-end could annunciate low
+charge from these points. It is **pre-existing, not a regression from
+#246** — but the #246 wording is what makes it visible, and the page's new
+`.ref-note` now names the limit out loud (it says these readings cannot
+separate a plugged condenser from a dead compressor *or from the
+low-charge fault this panel also carries*), which is the cheap honest
+patch. The verdict string itself was left alone: retuning it is a
+reader-facing content decision on a page whose naming the owner rules on,
+and it was outside #246's scope.
+
+Dispositions, if the owner wants one:
+
+1. **Leave it.** The scenario button already told the reader what was
+   set, so the verdict is arguably narrating the scenario rather than
+   diagnosing from the screen — and the `.ref-note` now discloses the
+   limit for both.
+2. **Rewrite `low-charge` to name what the screen supports**, matching
+   the condenser verdict's discipline — something that reports a coil
+   doing no work under a call and sends the reader to the refrigeration
+   circuit. Costs the low-charge scenario its distinct verdict string,
+   which is what the DOM row in `tests/ddc-workbench-fcu.spec.js` keys
+   the *condenser* scenario on, so the two would need distinguishing some
+   other way (the button label already differs).
+3. **Split the difference** — keep a distinct string but soften the
+   claim, e.g. state the symptom and offer low charge as one candidate
+   rather than the finding.
+
+Whichever way it goes, the `low-charge` verdict string and the
+`.ref-note` sentence naming it move together. No spec asserts the
+low-charge string today — only the condenser one is pinned — so a rewrite
+would want its own DOM row rather than inheriting coverage.
