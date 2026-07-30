@@ -8799,7 +8799,7 @@ an earlier draft anchored it to a numeric literal, which would have
 passed the likeliest relapse, `dtN <= COOLING_DT_TRIP` (right constant,
 wrong operand).
 
-### 225. The "2-stage + safeties" sheet has no airflow proof, so its DAT low-limit goes blind with the fan off *(noticed 2026-07-27, prose audit — deferred to the pre-live program sweep)*
+### 225. The "2-stage + safeties" sheet has no airflow proof, so its DAT low-limit goes blind with the fan off *(noticed 2026-07-27, prose audit — **RESOLVED 2026-07-30**, FCU proof sweep: rewired, not reworded)*
 
 The sheet is presented as the protected sequence, but its only external
 inputs are `space-temp` and `dat` (`fan-enable` / `fan-speed` are outputs).
@@ -8824,7 +8824,53 @@ interlock as a deliberate scope boundary), not a rewire — but the sweep may
 conclude otherwise once the AHU sequences exist. Full writeup:
 `docs/audits/2026-07-ddcw-prose/findings.md` §1.
 
-### 226. The safeties lockout is two protections stacked, and the sheet note describes only one *(noticed 2026-07-27, prose audit — deferred to the pre-live program sweep)*
+**Owner ruling 2026-07-29 supersedes that expectation.** Offered three ways
+out, he chose *add a `fan-status` BI to the FCU* over reframing the flawed
+sheet as a deliberate trap — *"fan status is very universal, getting it on a
+simple model will be good for newcomers"* — plus "some sort of mention of its
+importance." So the sweep concluded the other way: a REWIRE, and the sheet is
+now correct.
+
+**RESOLVED 2026-07-30.** What shipped:
+
+- A `fan-status` BI point (`kind:'bi'`, `dir:'sensor'`) on the FCU roster,
+  fed by a real proof model — `plant.proof` accumulates seconds of
+  *continuous* airflow and makes after `PROOF_MAKE_DELAY`, but drops on the
+  first tick without. Make-slow / break-fast, which is the asymmetry a
+  sequence has to be written around.
+- The plant now names three airflow facts apart: `fanCmd` (what the sequence
+  asked for), `airflowOn` (whether air moves), `fan-status` (what the switch
+  reports). Every line of physics gates on `airflowOn`. `d.fanOn` is gone —
+  one key could not answer two questions once they diverge.
+- A `fan-belt` fault holds the command and stops the air, which is what makes
+  the blind limit demonstrable rather than hypothetical.
+- The sheet gained `coilok = AND(okrun, fan-status)` feeding `permit.A`, so
+  the proof interlock sits AHEAD of the low limit — the field ordering this
+  issue asked for.
+
+**The rewire does NOT stop the latch clearing blindly, and that is
+deliberate.** `okrun` still SETs on a blind 76 °F reading; a latch cannot
+know its probe is lying. What changed is that the stale clear now commands
+nothing. Re-measured on the shipped sheet, same probe as above (fan off,
+`dat` held at room temperature, power-up min-off burned):
+
+| | before | after |
+|---|---|---|
+| `okrun` | true | true |
+| `permit` | true | **false** |
+| `y1` / `y2` | **true / true** | **false / false** |
+
+Gating the SET side as well was considered and does not fit: the router's
+2·STUB+4 margin pins any inserted block to one x-window, and `datok → datarm
+→ okrun → permit → y1gate` needs two blocks in a span that holds one
+(derived in the PR body). The permit gate is also the one that matters —
+gating only the SET would leave a *running* stage untouched when the belt
+goes, which is the headline failure this issue names.
+
+`tests/ddcw-fcu-unit.spec.js` pins both halves in one row, so a future change
+cannot "fix" the latch, break the interlock and still pass.
+
+### 226. The safeties lockout is two protections stacked, and the sheet note describes only one *(noticed 2026-07-27, prose audit — **RESOLVED 2026-07-30**, FCU proof sweep)*
 
 A DAT low-limit trip is itself a full stop of `y1gate`, so it arms the
 min-off TON at the same instant it cuts the stages. Measured closed-loop
@@ -8849,6 +8895,26 @@ unexplained.
 
 **Owner decision 2026-07-27: defer** to the same pre-live sweep as #225.
 Writeup: `docs/audits/2026-07-ddcw-prose/findings.md` §2 and §5.
+
+**RESOLVED 2026-07-30.** The reader-facing note now carries both protections
+and the power-up case, in its own paragraph:
+
+> Watch the recovery order, because two protections are stacked and they
+> clear in series. A low-limit trip is itself a full stop of the stage
+> command, so it arms the minimum off-timer at the same instant it cuts the
+> stages. The discharge has to climb past the clear constant *and* the
+> off-timer has to expire before anything restages — so the stages return
+> well after the clear point, not at it. That timer also starts from zero on
+> a program download, which is why selecting this sample stops a running unit
+> and holds it stopped for a spell: a real board serves a minimum off on
+> power-up too.
+
+The offending clause — "holds them off until it recovers past the clear
+constant" — is gone. Note what the replacement does NOT do: it states the
+ORDERING and never the seconds. The measured 10.5 s / 120.0 s split recorded
+above is a feel constant twice over (both `pt` and the coil lag are tunable),
+so it belongs in this file and in a commit body, not in prose a retune would
+silently falsify — the *write claims that can't go stale* convention.
 
 ### 227. FCU graphic a11y: a live region inside a hidden pane, and `role="img"` over five focusable descendants *(noticed 2026-07-27, prose audit — (a) resolved 2026-07-27, (b) **RULED 2026-07-28**, scheduled to the graphic-wiring lane and not yet implemented)*
 
@@ -9928,7 +9994,7 @@ see #239.
 The four inline public consumers of the mixing math (#228) are unaffected
 because they do not call this helper yet; when they do, they inherit the fix.
 
-### 237. `ddcw-fcu-unit.js` carries the same starved-coil fallback the AHU just fixed, and it is LIVE *(noticed 2026-07-28, AHU physics review round — same defect family, different file)*
+### 237. `ddcw-fcu-unit.js` carries the same starved-coil fallback the AHU just fixed, and it is LIVE *(noticed 2026-07-28, AHU physics review round — **RESOLVED 2026-07-30**, FCU proof sweep)*
 
 `html/scripts/ddcw-fcu-unit.js:248`:
 
@@ -9965,6 +10031,52 @@ graphic, which paints that ΔT). The fix is the AHU's, one line —
 the floor safe on cold inlet air. Note the FCU's coil inlet is the zone, clamped
 to [40, 120], so the *other* half of the AHU defect (a freeze floor firing on a
 de-energized coil) is unreachable there; only this half carries over.
+
+**RESOLVED 2026-07-30.** The AHU's fix was ported rather than re-derived: the
+failed inversion now falls back to `COIL_FLOOR`, and the entering-air CEILING
+(`inlet.tdb` here, not the AHU's `afterHeat.tdb`) plus the `satHumRatio` clamp
+on `leavingW` came with it. The clamp block also moved inside `if (capActive)`,
+matching the AHU's shape.
+
+Re-measured, same quasi-static probe, stage 2:
+
+| fan | before | after |
+|---|---|---|
+| 20 % | 34.60 °F | 34.60 °F |
+| 15 % | 34.60 | 34.60 |
+| 12 % | 34.60 | 34.60 |
+| **10 %** | **76.60** | **34.60** |
+| 8 % | 76.60 | 34.60 |
+| 5 % | 76.60 | 34.60 |
+
+The discharge is monotone in airflow across the whole slider now — it pins at
+the floor while starved and rises with air, and never inverts.
+
+Two corrections to this issue's own text, both found by measuring rather than
+reading:
+
+1. **The cited line had drifted.** `ddcw-fcu-unit.js:248` in the writeup is
+   the floor clamp; the defective fallback was `:247`, and the `datT` line the
+   #225 entry cites as `:242` had moved to `:270`. Line citations in this file
+   decay — quote the code, as the block above does.
+2. **"Only this half carries over" is right about reachability and wrong about
+   what to port.** The de-energized half IS unreachable from the UI (the zone
+   balance clamps `zoneT` ≥ 40 °F), but it is reachable from a spec, and more
+   to the point the *ceiling* is what makes the floor harmless — not the
+   `capActive` nesting. Measured by mutation: the spec row covering this only
+   reddens when the nesting AND the ceiling both go, because either one alone
+   neutralises the other. Both shipped; the reasoning is in the source comment
+   so nobody deletes one believing the other is redundant.
+
+`leavingW` is NOT display-only on the FCU (unlike the AHU, where the comment
+says nothing prints it): it feeds `Psychro.buildState(datT, leavingW, P)`,
+which the zone balance measures `qCool` from. The saturation clamp therefore
+changes real numbers here, not just a hypothetical readout.
+
+Guarded by a new row that sweeps fan 5→100 at 1 % steps and asserts the coil
+ΔT never inverts — non-strict, because the floor's shelf is genuinely flat and
+strictness is the wrong tool there. That shape is why the pre-existing monotone
+row (which sweeps 40/70/100, deliberately clear of the clamp) never saw this.
 
 ### 238. `Psychro.buildState` silently returns `W = 0` when the saturation humidity ratio degenerates *(noticed 2026-07-28, AHU physics review round)*
 
@@ -10202,3 +10314,64 @@ either re-scope these figures to it or re-word them the way `:376-381` already
 models — state the measured divergence and let whatever sets the range own the
 "how cold can it get" claim. If the range lands short of −30 °F, the extreme
 corner figures become illustrative-only and should say so.
+
+### 244. The wiresheet's cost scales with the CANVAS, not just its contents *(noticed 2026-07-30, FCU proof sweep — measured, accepted, unfixed)*
+
+Adding the fan-proof interlock to `cool-2stage-safeties` cost frames on the
+Wiresheet tab, and the split is not where you would guess. Same-machine A/B
+via `npm run perf-profile --only=ddc-workbench-fcu-wiresheet --reps=5`,
+control (`signal-scaling`) steady at 59.6–60.2 fps throughout:
+
+| variant | blocks | canvas h | fps |
+|---|---|---|---|
+| `origin/main` | 32 | 480 | **53.3** |
+| branch blocks, canvas unchanged | 34 | 480 | 48.8 |
+| branch, canvas as shipped | 34 | 540 | **46.3** |
+| branch, first draft | 34 | 560 | 42.7 |
+
+So ~4.5 fps is the two extra blocks and three extra wires — unavoidable, the
+interlock *is* those blocks — and the rest is **canvas height alone, with the
+sheet's contents byte-identical**. That second term is the surprise: the pane
+only shows ~838×478, so the grown region is entirely off-screen, yet it still
+costs. The likely mechanism is `.fbe-wire-layer`, which `fbe-editor.js`
+inline-sizes to the full canvas bounds — a bigger SVG rasters bigger even
+where nothing is drawn — but that was not isolated further.
+
+Shipped at 540 rather than the 560 the first draft used: 540 is the minimum
+that clears the geometry invariants (set by `sr1` at y 450 + 89.7), and the
+20 px bought ~3.6 fps. The page is hidden and noindex and the Wiresheet row
+was already saturated at 53 fps, so the residual ~7 fps was accepted rather
+than chased into a five-block repack of column 720 at ~6 px gaps.
+
+Worth knowing before the next sheet lands: **canvas height is not free
+margin.** If a later sheet needs room, either measure the fps cost the same
+way or find the space inside the existing bounds. And if someone wants the
+underlying fix, sizing the wire layer to the drawn extent (or to the visible
+viewport) rather than to the declared canvas is the thing to look at — it
+would pay back on every sheet, not just this one.
+
+### 245. FCU scenario buttons carry `aria-pressed` but are one-shot actions, and nothing ever updates it *(noticed 2026-07-30, FCU proof sweep — in passing, not fixed)*
+
+`html/simulators/ddc-workbench-fcu.html` renders each scenario button as
+`<button type="button" class="copy-btn" data-preset="…" aria-pressed="false">`,
+and `presetBtns` is read only to bind a click handler — no code path ever
+writes `aria-pressed` on them. Two things are wrong at once:
+
+- **It never changes.** A screen-reader user hears "not pressed" on every
+  scenario button forever, including the one whose state the unit is
+  currently in.
+- **It should not be there at all.** `aria-pressed` marks a *toggle*. These
+  are one-shot commands: clicking "Blocked coil" writes slot 8 and sets a
+  fault, it does not enter a mode the button holds. The stage buttons in the
+  same panel are the genuine toggle case and they DO maintain
+  `aria-pressed` + `.active` in `fcuSyncControls`, which makes the
+  inconsistency visible in one screenful.
+
+Almost certainly the right fix is to **drop the attribute** from the four
+(now five) scenario buttons rather than to start maintaining it — a scenario
+is not a mode, and the closest thing to "current scenario" is a derived
+state no single button owns. Left alone here deliberately: this lane's five
+items are physics and sequence, the buttons are pre-existing, and an a11y
+semantics change on a shared `.copy-btn` idiom wants its own look at whether
+other pages copied the pattern (grep `data-preset` — `refrigerant-loop.html`
+uses `.rl-presets`, worth checking in the same pass).
