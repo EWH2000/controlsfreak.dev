@@ -463,27 +463,28 @@ section). **Category keys mirror the landing pages' `navCard()`
   copy, meta descriptions, nav/search blurbs, and code comments
   alike; grep `plain.english` before shipping a content sweep.
 - **"Deadband" has two legitimate senses — disambiguate wherever both
-  are in play.** Not a ban. **House usage on the DDC Workbench:**
-  `deadband` is the **per-setpoint hysteresis** — the AHU ships heating
-  68 / cooling 72 / deadband 2, so cooling makes at CSP + db = 74 and
-  breaks at CSP = 72 (the setpoint is the CUT-OUT). The **separation
-  between the heating and cooling setpoints** is the **setpoint gap**
-  (the `SP DIFF` well), and per the 2026-07-28 terminology ruling it is
-  not called a *differential* in reader-facing prose either. **The
-  other sense is right in its own context:** in VAV the region between
-  the cooling and heating mode ranges genuinely *is* the deadband —
-  `education/vav-systems.html` uses it that way and stays. (ASHRAE 90.1
-  reportedly calls the heating/cooling gap a "dead band"; that is
-  UNVERIFIED and the site cites no 90.1 — don't add a citation you
-  can't check.) So on any surface carrying both quantities, say which
-  you mean: the reference implementation is
-  `simulators/ddc-workbench-ahu-mockup.html`'s setpoints paragraph
-  (*"The separation between the two setpoints and the deadband are easy
-  to read as one number, and they are not"*), and
-  `education/comparators-and-deadband.html` is the canonical
-  disambiguation to link. The trap is live — an agent conflated the gap
-  with the deadband while writing the note about it, six days after the
-  ruling.
+  are in play.** Not a ban: on any surface carrying both quantities, say
+  which you mean. **House usage on the DDC Workbench:** `deadband` is
+  the **per-setpoint hysteresis** — the AHU module ships heating 68 /
+  cooling 72 / deadband 2, so cooling makes at CSP + db = 74 and breaks
+  at CSP = 72 (the setpoint is the CUT-OUT). The mockup still depicts
+  73 / 68 → makes 75, breaks 73; the two disagree until lane 7.4 trues
+  one up (codebase-issues #242). Its *"Setpoints and the deadband"*
+  paragraph is still the reference implementation for telling the two
+  apart on one screen. The **separation between the heating and cooling
+  setpoints** is named by layer: *setpoint gap* in code comments and the
+  graphic's terse `SP DIFF` caption, spelled out as *the separation
+  between the two setpoints* in running prose, where the short name was
+  deliberately dropped (2026-07-28) because the lessons use bare *gap*
+  for a deadband. On the workbench graphics that separation is likewise
+  **not** called a *differential* — but **that ruling is page-local**:
+  the zone sense of *differential* in the terminology paragraph of
+  `education/comparators-and-deadband.html` (the canonical
+  disambiguation, and the page to link) is correct, disclosing field
+  variation rather than fixing one house name. The other sense is right
+  in its own context too — in VAV the region between the mode ranges
+  genuinely *is* the deadband (`education/vav-systems.html:696`, a model
+  comment).
 - **Damage-stakes scope note** (owner decision, 2026-07-11): any tool
   whose output, acted on directly, can damage equipment (burst coil,
   cracked heat exchanger, slugged compressor, burned motor, cooked
@@ -1199,23 +1200,40 @@ under *Git conventions*). Stage specific file lists, not
 `git add -A` / `git add .`.
 
 - **Merge approval is scoped to the LIVE site** (owner amendment,
-  2026-07-29). Where a change reaches a page on the live site, the old
-  rule stands: `gh pr merge` only on explicit request ("merge it," "go
-  ahead and merge"), the user reviews on GitHub. Everywhere else the
+  2026-07-29). Where a change reaches a page a visitor can land on, the
+  old rule stands: `gh pr merge` only on explicit request ("merge it,"
+  "go ahead and merge"), the user reviews on GitHub. Everywhere else the
   default **flips from ask to merge** — a mergeable PR left open is now
   the thing to avoid (*"I don't want PRs to pile up … I just want our
-  git work as clean as possible"*). **The operational test is
-  `sitemap.xml`**: it is generated from `canonical` frontmatter, so the
-  sitemap *is* the definition of "live." Per changed file, ask whether
-  any page in the sitemap reaches it.
-  - *Merge freely:* a hidden page's own HTML; a script ONLY hidden
-    pages load (`ddcw-shell.js`, `ddcw-fcu-unit.js`,
-    `ddcw-ahu-unit.js`); anything under `tests/` or `docs/`; plus
-    `CLAUDE.md` and `README.md`.
-  - *Needs approval:* `styles.css`, the site-wide scripts
-    `layouts/page.njk` loads, anything in `_includes/`,
-    `.eleventy.js`, `src/worker.js`, a `package.json` version bump,
-    and any page carrying a `canonical`.
+  git work as clean as possible"*). **`sitemap.xml` is the operational
+  PROXY, not the definition.** It is generated from `canonical`
+  frontmatter, so it enumerates what is *indexed*, while everything in
+  `_site/` is *served* — read it as the definition and you classify the
+  404 page as private. The real test is whether a visitor can land on a
+  page **without already knowing its URL**: via the nav, the search
+  index, the sitemap, or the not-found handler. Exactly four built pages
+  carry no `canonical`; re-derive that set from a build rather than
+  trusting this list, because a new hidden page joins it silently.
+  - *Merge freely:* the three genuinely unreachable hidden pages' own
+    HTML — `styleguide.html`, `simulators/ddc-workbench-fcu.html`,
+    `simulators/ddc-workbench-ahu-mockup.html` (no inbound anchor
+    anywhere in `html/`, and `searchPages` filters on `canonical` too,
+    so they are absent from the palette as well as the sitemap); a
+    script ONLY hidden pages load (`ddcw-shell.js`,
+    `ddcw-fcu-unit.js`, `ddcw-ahu-unit.js`); anything under `tests/`
+    or `docs/`; plus `CLAUDE.md` and `README.md`.
+  - *Needs approval:* any page carrying a `canonical`, **plus
+    `html/404.html`** — `wrangler.jsonc` sets
+    `not_found_handling: "404-page"`, so it is served for every
+    unmatched URL and is live-facing despite carrying the exact
+    hidden-page frontmatter shape *Gotchas* describes. This is the one
+    page the proxy answers wrong about. Also `styles.css`, **any script
+    a live page loads** (site-wide from `layouts/page.njk` *or*
+    per-page — see the trap below), anything in `_includes/` or
+    `html/_data/` (a quiz bank or an enum table is not itself a page,
+    but it renders into one — that is the whole basis of #241),
+    `.eleventy.js`, `src/worker.js`, `wrangler.jsonc`, and a
+    `package.json` version bump.
   - ⚠️ **The trap is SHARED code — "the PR is about a hidden page" is
     NOT the test.** PR #452 was about the hidden AHU but modified
     `html/scripts/psychro-engine.js`, which **eight pages load and

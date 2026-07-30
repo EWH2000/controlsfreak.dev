@@ -10158,12 +10158,15 @@ zone well `#ahu-v-cool-sp` (`:1414`), the rail param well `#ahu-p-cool-sp`
 `#ahu-r-cool-sp` (`:2501`), the reference-table cell (`:2590`), the three
 round-one compositions' zone wells (`#ahu-a-zone-sp` / `#ahu-b-zone-sp` /
 `#ahu-c-zone-sp`) and their `.ahu-point-val` twins, and **four SVG `<desc>`
-nodes** that spell the value out in prose (`ahu-desc`, `ahu-a-desc`,
-`ahu-b-desc`, `ahu-c-desc` — two of them in words, "seventy-three point zero").
-The mockup's own comment at `:2422` already pins the cooling setpoint as "the
-ONE permitted duplication on this page" and lists three of these ids as
-must-agree; that list does not reach the `<desc>` nodes or the round-one
-compositions.
+nodes** that spell the value out in prose (`ahu-desc` `:1286`, `ahu-a-desc`
+`:2624`, `ahu-b-desc` `:3035`, `ahu-c-desc` `:3452` — three in numerals, one of
+them in words: `ahu-b-desc`, "seventy-three point zero"). The mockup's own
+comment at `:2422` already pins the cooling setpoint as "the ONE permitted
+duplication on this **component**" and lists three of these ids as must-agree.
+Read that scope literally: it covers the round-2 component only, so the three
+round-one compositions and their `<desc>` nodes (everything below `:2606`) sit
+outside it by design. Its real gap is `ahu-desc` — its OWN component's `<desc>`,
+which carries the value and is not on the must-agree list.
 
 Action for lane 7.4: pick one pair and true up whichever side loses. Note the
 gap is not free either way — `ddcw-ahu-unit.js:250` documents 68 as "4 °F clear
