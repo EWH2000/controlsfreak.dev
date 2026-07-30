@@ -566,8 +566,13 @@ function sweepLiteral(filePath, literalName, bounds) {
                     name + ': ' + b.id + " undeclared param '" + k + "'",
                 ).toBe(true);
             });
-            // Inside the canvas and the editor's drag clamp, so the
-            // sheet renders without scrolling at first paint.
+            // Inside the canvas and the editor's drag clamp, so every
+            // block is REACHABLE — not necessarily visible without
+            // scrolling. The workbench sheets have always been wider
+            // than their pane (1401 px of content in ~838 px), and the
+            // safeties sheet is now taller than it too; the clamp is
+            // what keeps a block from being dragged out of the canvas
+            // entirely, which is the property this pins.
             expect(b.x, name + ': ' + b.id + ' x').toBeGreaterThanOrEqual(0);
             expect(b.x, name + ': ' + b.id + ' x').toBeLessThanOrEqual(xMax);
             expect(b.y, name + ': ' + b.id + ' y').toBeGreaterThanOrEqual(0);
@@ -679,13 +684,14 @@ test.describe('fbe-engine: FCU sample programs (workbench page)', () => {
     // C14: the workbench's FCU_PROGRAMS registry shipped with no
     // validity coverage at all — these graphs get the same sweep the
     // sim page's EXAMPLES get. Bounds are the workbench's CURRENT
-    // canvas: ddc-workbench-fcu.html passes canvasSize 1401×480 (the
-    // candidate-A relayout, #205) and these bounds must match that
-    // createEditor call.
+    // canvas: ddc-workbench-fcu.html passes canvasSize 1401×540 (the
+    // candidate-A relayout at #205, grown in height when the fan-proof
+    // interlock landed — the page's canvasSize call carries the why)
+    // and these bounds must match that createEditor call.
     test('every FCU program wires existing blocks through compatible pins', () => {
         const FCU_PROGRAMS = sweepLiteral(
             'html/simulators/ddc-workbench-fcu.html', 'FCU_PROGRAMS',
-            { w: 1401, h: 480 });
+            { w: 1401, h: 540 });
 
         // Pin the registry's key set so the sweep's reach is explicit —
         // a new sample program must be added here to count as covered.

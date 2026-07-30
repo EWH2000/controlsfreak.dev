@@ -126,7 +126,11 @@ const SURFACES = {
     'ddc-workbench-fcu': {
         file: 'html/simulators/ddc-workbench-fcu.html',
         literal: 'FCU_PROGRAMS',
-        canvas: { w: 1401, h: 480 },
+        // h grew 480 → 540 with the fan-proof interlock: column 720 on
+        // cool-2stage-safeties had no free slot for the new AND, and the
+        // router's margin rule pins that AND to that column. The page's
+        // canvasSize call carries the reasoning.
+        canvas: { w: 1401, h: 540 },
     },
 };
 const REGISTRIES = {};

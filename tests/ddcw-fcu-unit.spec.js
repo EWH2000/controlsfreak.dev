@@ -100,6 +100,18 @@ function run(Unit, mutate, steps, dt) {
     return plant;
 }
 
+// Run until the airflow proof makes, capped. A fixed tick count would
+// be an undeclared assertion that PROOF_MAKE_DELAY is under it — a
+// ceiling on a TUNE BY FEEL constant, which this file promises not to
+// set. A row whose SETUP goes red on a retune points the reader at the
+// wrong thing.
+function runToProof(Unit, mutate) {
+    const plant = Unit.createPlant();
+    if (mutate) mutate(plant);
+    for (let i = 0; i < 600 && !plant.sensors['fan-status']; i++) Unit.update(plant, 1);
+    return plant;
+}
+
 test.describe('ddcw-fcu-unit: point-list contract', () => {
 
     test('every actuator point carries a relinquishDefault of its own kind', () => {
@@ -223,6 +235,74 @@ test.describe('ddcw-fcu-unit: coil physics (quasi-static)', () => {
         });
     });
 
+    test('coil ΔT never INVERTS as airflow falls (the starved-coil fallback, #237)', () => {
+        // The row above sweeps 40/70/100, deliberately clear of the
+        // floor-clamp region so it can assert STRICT ordering — which is
+        // exactly why it never saw #237. Below ~40 % the coil pins at
+        // the freeze floor and the ordering goes FLAT, so strictness is
+        // the wrong tool down there; what must hold everywhere is that
+        // slowing the fan never makes the coil ΔT SHALLOWER.
+        //
+        // The shipped bug: a failed psychro inversion (load-per-cfm past
+        // bone-dry) fell back to the ENTERING air, handing a running
+        // coil a zero ΔT — this model's own signature for a faulted
+        // compressor. One step of the fan slider took DAT from ~34 °F to
+        // ~76 °F and turned a DX coil into a heater. A dense ascending
+        // sweep with a NON-STRICT comparison catches that inversion and
+        // tolerates the floor's flat shelf.
+        const Unit = loadUnit();
+        [1, 2].forEach((stage) => {
+            const fans = [];
+            for (let f = 5; f <= 100; f += 1) fans.push(f);
+            const rows = fans.map((fan) => quasi(Unit, (pl) => {
+                pl.actuators['fan-speed'] = fan;
+                pl.actuators.y1 = stage >= 1;
+                pl.actuators.y2 = stage >= 2;
+            }));
+            for (let i = 1; i < rows.length; i++) {
+                const tag = 'stage ' + stage + ': fan ' + fans[i - 1] + '% → ' + fans[i] + '%';
+                expect(coilDt(rows[i]), tag + ' coil ΔT must not invert')
+                    .toBeGreaterThanOrEqual(coilDt(rows[i - 1]) - 1e-9);
+                expect(rows[i].derived.datT, tag + ' DAT must not fall as the fan speeds up')
+                    .toBeGreaterThanOrEqual(rows[i - 1].derived.datT - 1e-9);
+            }
+            // And the starved end genuinely reaches the clamp — without
+            // this the sweep could pass on a model that never starves.
+            expect(coilDt(rows[0]), 'stage ' + stage + ': the 5% end is a deep, real ΔT')
+                .toBeLessThan(-20);
+        });
+    });
+
+    test('a de-energized coil passes the air through — the clamps stay inside capActive', () => {
+        // The freeze floor belongs to a RUNNING coil. A de-energized DX
+        // coil is a passive heat exchanger: air crosses it and leaves
+        // where it went in. Run the floor over it and the plant starts
+        // doing the sequence's freeze protection for it — the AHU shipped
+        // exactly that and painted a +55 °F rise on dead compressors.
+        // The zone balance clamps zoneT to 40 °F, so this is only
+        // reachable from a spec — which is the point of asserting it.
+        //
+        // ⚠ MEASURED SENSITIVITY, so nobody reads this row as pinning
+        // more than it does: on the FCU the `if (capActive)` nesting and
+        // the entering-air CEILING each prevent this independently, so
+        // this row only reddens when BOTH go (verified by mutation —
+        // hoisting the clamps out of capActive alone leaves it green,
+        // because the ceiling puts the floor's lift straight back).
+        // Keep both anyway: the nesting also spares a psychro solve
+        // every tick the compressor is off, and it keeps this module
+        // structurally parallel to the AHU's, where the coil sits
+        // downstream of a heating coil and the nesting IS load-bearing
+        // on its own.
+        const Unit = loadUnit();
+        const p = quasi(Unit, (pl) => {
+            pl.zoneT = 20;                     // below COIL_FLOOR
+            pl.actuators.y1 = false;
+            pl.actuators.y2 = false;
+        });
+        expect(p.derived.capActive).toBe(false);
+        expect(p.derived.coilLeaveT, 'a dead coil neither heats nor cools').toBeCloseTo(20, 6);
+    });
+
     test('stage 2 pulls a deeper (more negative) ΔT than stage 1 at the same fan', () => {
         const Unit = loadUnit();
         [70, 100].forEach((fan) => {
@@ -235,14 +315,22 @@ test.describe('ddcw-fcu-unit: coil physics (quasi-static)', () => {
         });
     });
 
-    test('lowCharge / airflow faults collapse the coil ΔT to zero', () => {
+    test('low-charge / blocked-coil faults collapse the coil ΔT to zero', () => {
         // The "no ΔT over the coil" diagnostic: an energized-but-faulted
         // compressor moves no heat, so the coil leaves at the zone temp
         // EXACTLY (zero load through the psych solver is an identity).
+        //
+        // ⚠ These two names are the CAPACITY faults, and neither stops
+        // the air — `fan-belt` is the one that does, and it lives in its
+        // own describe below. Note this row cannot tell a real fault
+        // name from a typo on its own (capActive gates on `!== 'none'`,
+        // so any string collapses the ΔT); the vocabulary itself is
+        // pinned by the verdict-ladder + belt rows that DO branch on the
+        // exact value.
         const Unit = loadUnit();
         const healthy = quasi(Unit, (pl) => { pl.actuators.y1 = true; pl.actuators.y2 = true; });
         expect(coilDt(healthy)).toBeLessThan(-3);
-        ['lowCharge', 'airflow'].forEach((fault) => {
+        ['low-charge', 'blocked-coil'].forEach((fault) => {
             const p = quasi(Unit, (pl) => {
                 pl.actuators.y1 = true;
                 pl.actuators.y2 = true;
@@ -299,7 +387,10 @@ test.describe('ddcw-fcu-unit: coil physics (quasi-static)', () => {
             pl.actuators.y1 = true;
             pl.actuators.y2 = true;
         });
-        expect(p.derived.fanOn).toBe(false);
+        // No command and therefore no air: with fan-enable false both
+        // facts agree. They only diverge under a belt fault (below).
+        expect(p.derived.fanCmd).toBe(false);
+        expect(p.derived.airflowOn).toBe(false);
         expect(p.derived.capActive).toBe(false);
         expect(p.derived.datT).toBe(p.zoneT);
         expect(p.anim.fanFrac).toBe(0);
@@ -321,7 +412,7 @@ test.describe('ddcw-fcu-unit: coil physics (quasi-static)', () => {
         const Unit = loadUnit();
         [5, 40, 70, 100].forEach((fan) => {
             [0, 1, 2].forEach((stage) => {
-                ['none', 'lowCharge'].forEach((fault) => {
+                ['none', 'low-charge'].forEach((fault) => {
                     const p = quasi(Unit, (pl) => {
                         pl.actuators['fan-speed'] = fan;
                         pl.actuators.y1 = stage >= 1;
@@ -616,12 +707,21 @@ test.describe('ddcw-fcu-unit: programs × points (the binding invariant)', () =>
         });
     });
 
+    // Program-local `bi` sources: a bi block whose id is deliberately
+    // NOT a point, so the binding driver never writes it and the reader
+    // toggles it by hand (the same idiom as the sim page's sts/rst).
+    // This set exists because `bi` stopped being wholesale-exempt the
+    // day fan-status became a bound point: binding is BY ID, so a typo
+    // (`fan-statud`) would silently degrade a live proof switch into a
+    // hand-toggled constant that reads false forever — a sheet that
+    // looks interlocked and is not.
+    const LOCAL_BI_SOURCES = new Set(['fanon']);
+
     test('every hard-IO block on every sheet is a bound point', () => {
-        // The reverse direction: an ai / ao / bo block whose id is not a
-        // point would render as IO the binding never drives — a dead
-        // actuator or a frozen fake sensor. `bi` blocks are exempt by
-        // design: they are program-local toggle sources (cool-2stage-
-        // fanon's `fanon`), the same idiom as the sim page's sts/rst.
+        // The reverse direction: an ai / ao / bo / bi block whose id is
+        // not a point would render as IO the binding never drives — a
+        // dead actuator or a frozen fake sensor. `bi` is included, with
+        // the declared program-local sources above as the only way out.
         const Unit = loadUnit();
         const pointIds = new Set(Unit.POINTS.map((p) => p.id));
         Object.entries(loadPrograms()).forEach(([name, def]) => {
@@ -631,8 +731,32 @@ test.describe('ddcw-fcu-unit: programs × points (the binding invariant)', () =>
                         pointIds.has(b.id),
                         name + ': ' + b.type + ' block ' + b.id + ' is not an FCU point',
                     ).toBe(true);
+                } else if (b.type === 'bi' && !LOCAL_BI_SOURCES.has(b.id)) {
+                    expect(
+                        pointIds.has(b.id),
+                        name + ': bi block ' + b.id + ' is neither an FCU point nor a'
+                            + ' declared program-local source',
+                    ).toBe(true);
                 }
             });
+        });
+    });
+
+    test('declared program-local bi sources stay honest', () => {
+        // Self-verifying, the DISPLAY_ONLY_SENSORS shape: an entry must
+        // still EXIST on some sheet and must still NOT be a point, so a
+        // source that gets promoted to a real point (or deleted) forces
+        // the set to be edited instead of decaying into a silent
+        // permanent hole in the rule above.
+        const Unit = loadUnit();
+        const pointIds = new Set(Unit.POINTS.map((p) => p.id));
+        const programs = Object.entries(loadPrograms());
+        LOCAL_BI_SOURCES.forEach((id) => {
+            expect(pointIds.has(id), id + ' is a point now — drop it from LOCAL_BI_SOURCES')
+                .toBe(false);
+            const used = programs.some(([, def]) =>
+                def.blocks.some((b) => b.type === 'bi' && b.id === id));
+            expect(used, id + ' is on no sheet — drop it from LOCAL_BI_SOURCES').toBe(true);
         });
     });
 });
@@ -766,6 +890,12 @@ test.describe('ddcw-fcu-unit: program logic (engine-direct)', () => {
         // page pins that).
         by['space-temp'].params.value = 78;
         by.dat.params.value = clear + 3;
+        // Airflow proof is the FIRST permit on this sheet, so every row
+        // that expects a stage has to prove air. Its own behaviour is
+        // pinned by the proof-interlock describe below; here it is
+        // setup, and it is stated rather than assumed because without it
+        // the sheet correctly refuses to stage anything.
+        by['fan-status'].params.state = true;
         FBE.tick(g, pt + 1);
         expect(by.y1.in.IN).toBe(true);
         expect(by.y2.in.IN).toBe(true);
@@ -810,6 +940,7 @@ test.describe('ddcw-fcu-unit: program logic (engine-direct)', () => {
 
         by['space-temp'].params.value = 78;
         by.dat.params.value = by.hilim.params.value + 3;
+        by['fan-status'].params.state = true;    // proof gates every stage — see below
         FBE.tick(g, pt + 1);
         expect(by.y1.in.IN).toBe(true);
 
@@ -832,6 +963,188 @@ test.describe('ddcw-fcu-unit: program logic (engine-direct)', () => {
 
         FBE.tick(g, pt);                             // off-time served
         expect(by.y1.in.IN).toBe(true);
+    });
+
+    test('cool-2stage-safeties: no airflow proof, no stages — even on a blind-healthy DAT (#225)', () => {
+        // The defect this sheet was rewired to answer. With the air
+        // stopped the discharge probe reads the ZONE, so the low limit
+        // sees a comfortable number and its latch happily SETS — the
+        // "goes blind and self-clears" half of #225. Measured before the
+        // fix, the sheet answered {y1:true, y2:true, okrun:true,
+        // permit:true} and drove both compressors into dead air.
+        //
+        // The fix does not stop the latch from clearing blindly — a latch
+        // cannot know its probe is lying — it puts the proof interlock
+        // AHEAD of the latch, so that stale clear commands nothing. Assert
+        // both halves, or a future change could "fix" the latch, break the
+        // interlock, and still pass.
+        const FBE = loadFBE();
+        const { g, by } = mount(FBE, loadPrograms()['cool-2stage-safeties']);
+        by['space-temp'].params.value = 78;              // a heavy cooling call
+        by.dat.params.value = by.hilim.params.value + 3; // the blind, healthy-looking reading
+        by['fan-status'].params.state = false;           // …but no air is moving
+        FBE.tick(g, by.tonoff.params.pt + 1);            // and burn the power-up min-off
+
+        expect(by.okrun.out.Q, 'the latch does clear on the blind reading').toBe(true);
+        expect(by.coilok.out.Q, 'but the proof interlock ahead of it does not').toBe(false);
+        expect(by.permit.out.Q, 'so the merged permit stays shut').toBe(false);
+        expect(by.y1.in.IN, 'and no compressor is commanded into dead air').toBe(false);
+        expect(by.y2.in.IN).toBe(false);
+        // The fan is deliberately OUTSIDE the interlock: gate it on the
+        // proof its own airflow produces and nothing could ever start.
+        expect(by['fan-enable'].in.IN, 'the fan still follows the cooling call').toBe(true);
+    });
+
+    test('cool-2stage-safeties: losing proof drops a running stage the same tick', () => {
+        // The belt fault, driven on the sheet rather than the plant: the
+        // stages are running, proof goes away, and the permit shuts on
+        // the interlock — NOT on a discharge reading, which by then is
+        // blind. This is what makes the belt fault demonstrable.
+        const FBE = loadFBE();
+        const { g, by } = mount(FBE, loadPrograms()['cool-2stage-safeties']);
+        by['space-temp'].params.value = 78;
+        by.dat.params.value = by.hilim.params.value + 3;
+        by['fan-status'].params.state = true;
+        FBE.tick(g, by.tonoff.params.pt + 1);
+        expect(by.y1.in.IN).toBe(true);
+        expect(by.y2.in.IN).toBe(true);
+
+        by['fan-status'].params.state = false;           // the belt goes
+        FBE.tick(g, 1);
+        expect(by.y1.in.IN, 'stage 1 drops on the proof interlock').toBe(false);
+        expect(by.y2.in.IN, 'and so does stage 2').toBe(false);
+        expect(by.okrun.out.Q, 'the low limit never tripped — it could not see').toBe(true);
+        expect(by['fan-enable'].in.IN, 'the fan command still stands').toBe(true);
+    });
+});
+
+test.describe('ddcw-fcu-unit: airflow, proof, and the blind low-limit', () => {
+
+    test('a broken belt keeps the command and loses the airflow', () => {
+        // The three airflow facts stay distinct: fanCmd is what the
+        // sequence asked for, airflowOn is whether air moves, fan-status
+        // is what the proof switch reports. A belt fault splits the
+        // first from the other two — and that split is the whole reason
+        // `d.fanOn` no longer exists.
+        const Unit = loadUnit();
+        const pl = runToProof(Unit, null);
+        expect(pl.sensors['fan-status'], 'a healthy run proves airflow').toBe(true);
+
+        pl.conditions.fault = 'fan-belt';
+        Unit.update(pl, 1);
+        expect(pl.derived.fanCmd, 'the sequence is still calling for the fan').toBe(true);
+        expect(pl.derived.airflowOn, 'but no air moves').toBe(false);
+        expect(pl.sensors['fan-status'], 'and the proof drops').toBe(false);
+        expect(pl.derived.capActive, 'so the coil cannot be producing').toBe(false);
+        expect(pl.anim.fanFrac, 'the blades stop even though the command stands').toBe(0);
+    });
+
+    test('a capacity fault is NOT an airflow fault', () => {
+        // The vocabulary's load-bearing distinction, and the reason the
+        // old `airflow` fault was renamed: blocked-coil and low-charge
+        // kill the heat transfer while the air keeps moving. Only
+        // fan-belt stops the air. A model that conflated them would make
+        // the proof switch drop on a dirty coil.
+        const Unit = loadUnit();
+        ['low-charge', 'blocked-coil'].forEach((fault) => {
+            const pl = runToProof(Unit, null);
+            pl.conditions.fault = fault;
+            Unit.update(pl, 1);
+            expect(pl.derived.airflowOn, fault + ': air still moves').toBe(true);
+            expect(pl.sensors['fan-status'], fault + ': proof stays made').toBe(true);
+            expect(pl.derived.capActive, fault + ': but nothing is produced').toBe(false);
+            expect(pl.anim.fanFrac, fault + ': the blades keep turning')
+                .toBeGreaterThan(0);
+        });
+    });
+
+    test('with the air stopped, DAT reads the zone — the blind-limit case', () => {
+        // KEEP this branch. A discharge low-limit watching DAT goes
+        // BLIND the moment airflow stops, because DAT stops reporting
+        // the coil (codebase-issues #225). fan-status is what a correct
+        // sequence interlocks on instead — and the contrast is only
+        // demonstrable if the plant models the blindness honestly.
+        // Sweep BOTH ways of stopping the air so the row cannot pass for
+        // the wrong reason.
+        const Unit = loadUnit();
+        ['fan-belt', 'none'].forEach((fault) => {
+            const pl = quasi(Unit, (p) => {
+                p.actuators.y2 = true;                 // full cooling called…
+                p.conditions.fault = fault;
+                if (fault === 'none') p.actuators['fan-enable'] = false;   // …and no air either way
+            });
+            expect(pl.derived.airflowOn, fault).toBe(false);
+            expect(pl.derived.datT, fault + ': DAT reads the zone, not the coil').toBe(pl.zoneT);
+            expect(pl.sensors['dat'], fault).toBe(pl.zoneT);
+            expect(pl.sensors['fan-status'], fault + ': and proof is down').toBe(false);
+        });
+    });
+
+    test('DAT goes blind the instant airflow stops, not on the coil lag', () => {
+        // The row above is a QUASI-STATIC probe, and with airflow off
+        // the coil target is already zoneT — so coilLeaveT === zoneT and
+        // `airflowOn ? coilLeaveT + FAN_HEAT : zoneT` returns the same
+        // number as a `coilLeaveT + (airflowOn ? FAN_HEAT : 0)` that had
+        // lost the branch entirely. It pins the fan-heat offset, not the
+        // SOURCE. The blindness only shows on a TRAJECTORY, where the
+        // coil metal is still cold when the air stops — and a discharge
+        // low-limit that kept reading the cold coil after airflow
+        // stopped would be the exact inverse of the lesson (#225).
+        const Unit = loadUnit();
+        const pl = run(Unit, (p) => { p.actuators.y1 = true; p.actuators.y2 = true; }, 200, 1);
+        expect(pl.derived.airflowOn, 'the healthy run is moving air').toBe(true);
+        expect(pl.zoneT - pl.sensors['dat'], 'a real coil delta is showing').toBeGreaterThan(5);
+
+        pl.conditions.fault = 'fan-belt';
+        Unit.update(pl, 1);                              // ONE tick after the belt goes
+        expect(pl.derived.airflowOn).toBe(false);
+        expect(pl.zoneT - pl.coilLeaveT, 'the coil itself is still cold').toBeGreaterThan(5);
+        expect(pl.sensors['dat'] - pl.coilLeaveT, 'DAT is not tracking the coil')
+            .toBeGreaterThan(5);
+        expect(Math.abs(pl.sensors['dat'] - pl.zoneT), 'DAT reads the zone').toBeLessThan(0.5);
+    });
+
+    test('proof makes slowly and breaks at once', () => {
+        // A duct-pressure switch is asymmetric, and the asymmetry is the
+        // whole reason a sequence has to be written around it. Assert the
+        // ORDERING — makes late, breaks on the very next tick — never the
+        // delay's value: PROOF_MAKE_DELAY is a TUNE BY FEEL constant.
+        const Unit = loadUnit();
+        const pl = Unit.createPlant();
+        expect(pl.sensors['fan-status'], 'a fresh plant has not proved anything').toBe(false);
+
+        let ticksToMake = 0;
+        for (let i = 1; i <= 600 && !pl.sensors['fan-status']; i++) {
+            Unit.update(pl, 1);
+            ticksToMake = i;
+        }
+        expect(pl.sensors['fan-status'], 'proof eventually makes').toBe(true);
+        expect(ticksToMake, 'it did not make on the first tick').toBeGreaterThan(1);
+
+        // Break it: one tick, whatever its size.
+        pl.actuators['fan-enable'] = false;
+        Unit.update(pl, 1);
+        expect(pl.sensors['fan-status'], 'proof breaks in a single tick').toBe(false);
+
+        // And an interrupted run banks no credit toward the next make.
+        pl.actuators['fan-enable'] = true;
+        Unit.update(pl, 1);
+        expect(pl.sensors['fan-status'], 'the make delay restarts from zero').toBe(false);
+    });
+
+    test('the proof switch is not overridable — it reports its own state', () => {
+        // The sensor-override bag forces what the PROGRAM READS for a
+        // measured value. A proof switch measures nothing continuous, so
+        // there is nothing to force; it must track the plant even while
+        // the space-temp override is lying.
+        const Unit = loadUnit();
+        const pl = runToProof(Unit, (p) => {
+            p.override.spaceTemp.active = true;
+            p.override.spaceTemp.value = 55;
+        });
+        expect(pl.derived.overrideActive).toBe(true);
+        expect(pl.sensors['space-temp'], 'the program is being lied to').toBe(55);
+        expect(pl.sensors['fan-status'], 'proof still reports the truth').toBe(true);
     });
 });
 
