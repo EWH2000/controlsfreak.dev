@@ -70,10 +70,57 @@ and a space-temp wall plate, each activatable to highlight its chip), and a
 
 **Phase 7 — the AHU round — opened** with a pre-AHU hygiene lane and the
 depiction round (PRs #446–#448), which is what put the mockup page, the
-component-identity `-fill` token family and the DX distributor on the site. What
-comes next is the **AHU unit plug-in and its physics**
-(`html/scripts/ddcw-ahu-unit.js`), then its programs, then the graphic and
-animation work, then the FCU ⇄ AHU unit selector. **Phase 8 is graduation** —
+component-identity `-fill` token family and the DX distributor on the site.
+
+**The AHU's physics half now exists** — `html/scripts/ddcw-ahu-unit.js`, plus
+the shared `Psychro.mixStreams()` helper it is built on and two engine-direct
+specs (`tests/ddcw-ahu-unit.spec.js`, `tests/psychro-mixstreams.spec.js`). What
+that file is, exactly:
+
+- The **17-point roster** the machine is defined by (5 AI, 1 BI, 3 AO, 3 BO,
+  5 params), the plant factory, and the per-tick integrator — mixing box → HW
+  coil → DX coil → draw-through fan, a lagged coil-leaving temp, a fan-proof
+  timer behind the `fan-status` BI, and the lumped-capacitance zone balance.
+  `plantKey === id` throughout.
+- **DOM-free by construction.** It exposes `{ points, createPlant, update }`
+  and nothing else, and its spec loads it in a bare vm context — the load is
+  the proof.
+- ⚠️ **It does NOT satisfy the shell's unit contract**, and that is the point
+  of the lane, not an unfinished edit. There is no `create(cfg)` and no
+  renderUnit / syncControls / wireControls / initAnim / onResize, so
+  `DDCWShell.createWorkbench` would boot half-way and throw. **No page loads
+  the file**; it is inert at runtime and reachable only from its spec. A spec
+  row pins the absence, so the day the graphic lane adds the methods, that row
+  is what notices.
+- **Three deliberate divergences from the FCU** a reader will trip over, each
+  argued in the file: the DX stage count is **additive** rather than
+  Y2-implies-Y1 (a miswired Y2-without-Y1 then delivers half capacity, which
+  is diagnosable); the weather and load knobs live **on the plant** rather
+  than in module scope (the FCU's module-level `let`s cannot be swept from a
+  spec, and "more outdoor air lowers MAT" is the AHU's first invariant); and
+  the mixing box is weighted by **volumetric flow**, stated at the call site
+  with the ~2 °F cold-day divergence from a mass basis written down.
+- **Each coil is bounded, and the bounds belong to an ENERGIZED coil.** The DX
+  side holds a freeze floor and an entering-air ceiling *inside* the
+  `capActive` branch — the review round caught the floor firing on a
+  de-energized coil, which invented up to 55 °F of rise across two dead coils
+  on a design-cold morning and quietly did the sequence's freeze protection
+  for it, hiding the "someone deleted the min-OA block" fault the damper model
+  exists to make showable. A starved coil whose psych inversion fails now pins
+  at the floor rather than falling back to no cooling, so the coil ΔT is
+  monotone in airflow. The heating side gained the mirror bound,
+  `HW_LEAVE_MAX` — a hot-water coil approaches the entering water temperature
+  and cannot pass it — which also keeps the leaving state inside the psych
+  engine's own validity envelope (above 212 °F at sea level a saturation
+  humidity ratio does not exist, and the engine was silently zeroing the
+  humidity ratio there). Details and the measured before/after in the file's
+  own comments; the residuals it surfaced are codebase-issues **#236**
+  (`mixStreams` fog branch), **#237** (the FCU carries the same starved-coil
+  fallback, and it is live) and **#238** (`buildState` degenerates quietly
+  above boiling).
+
+What comes next is the AHU's **sample programs**, then the **graphic and
+animation** work, then the FCU ⇄ AHU unit selector. **Phase 8 is graduation** —
 until then the Workbench is a react-baseline and reference point, not a surfaced
 page.
 
@@ -160,14 +207,22 @@ the FCU's DX coil → `refrigerant-loop.html` and fan → `vfd-mock.html`.
   real HTML buttons outside the SVG with the point-mirror chips as the
   activators. Ruled at `codebase-issues` #227(b), scheduled to the graphic lane.
 
-New physics it needs: damper command → OA fraction (linear, carrying
+The new physics it needed — damper command → OA fraction (linear, carrying
 `air-handlers.html`'s caveat that a commanded position is not really a flow
 fraction), a `Psychro.mixStreams()` helper for the mixed-air state, fan-proof
-physics behind a real `bi` point, and a second coil stage in series. Neither
-engine needs a change for this phase — `fbe-engine.js` already ships the
-`select` block the sequence stages through, and the mixing helper is additive
-(three disagreeing inline forms ship today with no shared helper; that is
-`codebase-issues` #228, scheduled on its own).
+physics behind a real `bi` point, and a second coil stage in series — all
+shipped with the physics half above. Neither engine needed a change:
+`fbe-engine.js` already ships the `select` block the sequence stages through,
+and the mixing helper went in **additively**, with the four existing inline
+call sites deliberately left alone (rewiring them is `codebase-issues` #228,
+scheduled on its own).
+
+Two of those pieces exist to make an existing hole demonstrable rather than to
+model it away. The fan-off branch on DAT is kept — with no air moving, DAT
+reads the ZONE, which is precisely what makes a discharge low-limit go blind
+(`codebase-issues` #225) — and `fan-status` is what a correct sequence
+interlocks on instead. The plant carries **no** minimum-outdoor-air floor of
+its own, so a sequence that loses its min-OA block visibly loses its minimum.
 
 ## Confirmed decisions (owner)
 

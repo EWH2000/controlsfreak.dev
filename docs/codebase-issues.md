@@ -9683,3 +9683,393 @@ diff, and an unexplained `1.1 → 1.2` inside a terminology PR is noise at
 review time. Worth a sweep rather than a one-liner: this is the same defect
 shape wherever a `data-metric` delta was converted from the IP delta instead
 of subtracted from the displayed metric operands, and nothing guards it.
+
+### 233. AHU plant: MAT and the RAT probe are sampled one Euler step apart *(noticed 2026-07-28, shipped knowingly with the AHU physics half — for the graphic lane)*
+
+`html/scripts/ddcw-ahu-unit.js` computes the mixed-air state from the
+**tick-START** `plant.zoneT` — that is the Euler evaluation point, and the
+mixed air is a physics input the coil solution depends on — while
+`plant.sensors['rat']` and `derived.eatT` are both published from the
+**tick-END** `plant.zoneT`, per the FCU's one-sample rule
+(`ddcw-fcu-unit.js:330-339`, the 2026-07-27 review catch).
+
+With the dampers shut, MAT and RAT are the *same air*. Sampled a step apart
+they can differ by the amount the zone moved inside that step — measured on
+this plant at the default tuning, **~0.02 °F per 5-sim-s step**, and larger
+at a bigger `dtSim` or a harder load. At the one-decimal precision every chip
+on the site paints, that is enough to split the last digit at a rounding
+boundary: the graphic can show `MAT 77.5` beside `RAT 77.6` with the dampers
+closed, which reads as a broken sensor.
+
+**What is NOT wrong here.** The FCU's rule is about two surfaces on ONE
+measurement (the EAT badge and the RAT chip), which must never disagree. MAT
+and RAT are two *different* sensors in two different places, so a sub-tenth
+disagreement is not a contradiction — it is the sampling instant. And of the
+two candidate MAT values, the tick-start one is the one worth being right:
+it is the air the coil actually saw, so it is the number `DAT − MAT`
+reconciles against.
+
+**The decision the graphic lane owes**, before it paints both chips:
+
+- (a) **Leave it and say nothing** — the split only appears with the dampers
+  fully shut, and minimum outdoor air keeps them off that stop in normal
+  operation. Cheapest, and it stays a latent surprise.
+- (b) **Re-solve the mix post-integration for DISPLAY only** — one extra
+  `solveState` + `mixStreams` per 10 Hz tick, negligible cost. MAT and RAT
+  then agree exactly at the shut position, but the painted MAT is no longer
+  the value the coil was handed, so `DAT − MAT` stops closing by the same
+  ~0.02 °F. Trades a visible split for an invisible one.
+- (c) **Publish the whole air path from the tick-start sample**, `eatT`
+  included, and drop the one-sample rule on this unit — MAT/RAT agree and
+  `DAT − MAT` closes, but then `eatT` and the RAT chip split instead, which
+  is exactly the defect the FCU rule exists to prevent.
+
+There is no option that makes all three pairs agree with a one-step
+integrator; the call is which pair a reader is most likely to check.
+Recommendation is (a) plus a comment, which is what shipped — the residual is
+documented at the `d.eatT` assignment.
+
+### 234. `SPEED_MIN` / `SPEED_MAX` are declared in the FCU unit and read nowhere *(noticed 2026-07-28, reading the FCU as the AHU's reference)*
+
+`html/scripts/ddcw-fcu-unit.js:163-164` declares
+
+```js
+const SPEED_MIN   = 1;    // × — slowest (watch a 5 s ON-delay in real seconds)
+const SPEED_MAX   = 60;   // × — fastest (fast-forward a slow recovery)
+```
+
+inside the `TUNE BY FEEL` block. Neither is referenced anywhere in the file
+or anywhere else in the repo — the live bounds are hard-coded in the page
+markup, `html/simulators/ddc-workbench-fcu.html:867`
+(`min="1" max="60"`). They agree today by coincidence, not by construction.
+
+At stake: the block's whole premise is that the owner retunes these live and
+the change takes effect. Editing `SPEED_MAX` to 120 changes nothing and gives
+no sign that it changed nothing, which is the worst failure mode a
+"trivially findable and changed" block can have. Its neighbours
+(`SPEED_DEF`, `MAX_DT_SIM`) *are* read, via `create()` → the shell's
+`speedDefault` / `maxDtSim`, so the block reads as uniformly live.
+
+Three ways out, in ascending cost: **delete both** and let the markup own the
+bounds (they are affordances, not model constants); **keep them and have
+`fcuWireControls` write `slider.min` / `slider.max` from them** at bind time,
+which makes the block's premise true; or **keep them and add a spec row** that
+reads the markup attributes and asserts they match. The middle one is the
+only one that makes the constants do work.
+
+The AHU physics half deliberately declares neither — an unread constant is
+exactly the trap this entry describes, and the AHU's sim-clock prefs land
+with its shell-contract half instead.
+
+### 235. The #224 display-unit guard is bound by path and by local name to the FCU, so a second unit module ships that rule unguarded *(noticed 2026-07-28, AHU physics lane)*
+
+`tests/ddcw-fcu-unit.spec.js:838-885` is the source scan that enforces
+codebase-issues #224 — *a display-unit local exists to be PAINTED; thresholds
+compare a value off `derived` against an IP constant*. It is a good test, with
+anti-vacuity probes in both directions. It is also **doubly hard-wired to one
+file**:
+
+- it reads a literal path — `fs.readFileSync(path.join(SCRIPTS,
+  'ddcw-fcu-unit.js'))` (`:861`);
+- and its `DISP` group is a hard-coded alternation of the FCU's own local
+  names — `(dtN|eatN|datN|spN|sensedN)` (`:869`).
+
+`ddcw-fcu-unit.js`'s header says the rule is inherited: *"A second unit module
+inherits this rule."* Nothing enforces that inheritance. The AHU's graphic
+half will paint a MAT badge, a ΔT badge and a discharge readout through
+`DDCWShell.dispTempNum`, and every one of those locals is invisible to this
+scan — so the exact regression #224 documents (a healthy 4 °F coil painting
+"no ΔT" for a metric reader) can land again on the new unit with a green
+suite.
+
+Note the second binding is the sharper one: even copying the test file and
+changing the path would leave the AHU's own local names uncovered unless the
+alternation is edited too, and a name the alternation misses fails **silently**
+— the anti-vacuity probe only checks that `const dtN =` still exists in the
+*scanned* file.
+
+Action, when the AHU graphic lands: generalise the scan to walk a LIST of unit
+files with a per-file `DISP` set, or — better — replace the name alternation
+with a shape rule the scan can derive (e.g. every local assigned from a
+`dispTempNum(...)` call in the scanned file), so a new display local is
+covered the moment it is written rather than the moment someone remembers to
+add it. The anti-vacuity probes must move with it.
+
+### 236. `Psychro.mixStreams` conserves neither enthalpy nor humidity ratio in the FOGGING branch *(noticed 2026-07-28, AHU physics review round — **RESOLVED 2026-07-29**, owner ruled for the re-solve, ice-aware)*
+
+`html/scripts/psychro-engine.js` recovers the mixed dry-bulb from the
+**pre-clamp** humidity ratio —
+
+```js
+const tdb = (h - 1061 * W) / (0.240 + 0.444 * W);
+return buildState(tdb, W, P);
+```
+
+— and `buildState` then drops `W` onto the saturation curve **without
+re-solving the temperature**. Because ∂t/∂W < 0 in that recovery, the returned
+dry-bulb runs **cold**, and the returned state's `h` is rebuilt from the
+clamped pair, so neither conserved quantity comes back flow-weighted.
+
+MEASURED against a proper fog solve (`h_mix = h_sat(T) + (W_mix − W_sat(T)) ·
+(T − 32)`, the standard liquid-water convention):
+
+| case | returned | true | error |
+|---|---|---|---|
+| fog onset (any pair) | — | — | < 0.2 °F |
+| AHU-reachable corner (zone 80 °F, damper 70 %, OAT −20 °F) | 10.42 °F | 17.10 °F | **−6.68 °F** |
+| full sweep worst (OAT −20, zone 90, damper 70 %) | 13.64 °F | 23.13 °F | −9.49 °F |
+| 90 °F/95 % mixed 50/50 into 20 °F/60 % | h 23.73 | h 30.09 | — |
+
+Outside the fog branch the function is exact — the enthalpy inversion
+round-trips to 2.8e-14 °F and the flow-weighted `h` / `W` return to 3.6e-15 / 0.
+
+**Reachable from the AHU mixing box** at its shipped RH assumptions (OA 40 %,
+RA 50 %): with the zone at 72 °F, fog begins at OAT −2 °F with the damper at
+50 % and at +5 °F with it at 70 % — mid-position on a cold day, mixing warm
+moist return air into cold dry outdoor air, which genuinely fogs. Nothing on
+the site prints a fogging MAT today, and the **error direction is cold, hence
+conservative for a freeze question**, which is why this shipped as documented
+rather than re-solved.
+
+Done in the AHU physics review PR: the header's "returns a valid fogging state
+rather than an impossible one" now says *valid means ON the curve, not
+conserving*, and quotes the measured bound.
+
+**RESOLVED 2026-07-29 — owner ruled for the re-solve, and ruled that the
+condensate convention must switch at the ice point.** `mixStreams` now
+bisects for the temperature satisfying
+
+```
+h_mix = h_sat(T) + (W_mix − W_sat(T)) · h_condensate(T)
+```
+
+and every result — fogging or not — carries two new fields, in the shape
+`invertProcess` already uses for its own `saturated` flag: `fogging`
+(boolean) and `condensate` (lb_water / lb_dry-air held in suspension).
+
+Three things about the resolution are worth having written down:
+
+1. **The ice convention is not optional, because every AHU-reachable fog case
+   lands below freezing.** Above 32 °F the entrained water is liquid
+   (`h_w = t − 32`); below it, ice. MEASURED at the reachable corner above:
+   the liquid-only form solves to **17.10 °F**, the ice form to
+   **17.67 °F** — 0.57 °F apart, small only because the condensate is
+   ~10 grains, since the per-pound gap is 136 Btu/lb_water.
+   The constants used are **not** quoted from a table: they are the ones
+   ASHRAE's IP wet-bulb relations imply, and those relations are already in
+   this file. `humRatioFromWetBulb`'s two branches solve the same
+   adiabatic-saturation balance, and rearranging their coefficients gives
+   `h_w = t − 32` (from 1093 / 0.556) and `h_ice = 0.48·t − 159` (from
+   1220 / 0.48), i.e. −143.64 Btu/lb of fusion at 32 °F and a 0.48
+   Btu/(lb·°F) ice specific heat. Rounded table values (143.34 and 0.487)
+   move the solved corner by 8e-4 °F. Deriving them this way makes a fog
+   solve and a below-freezing wet-bulb agree by construction, and it means a
+   future retune of one has to argue with the other.
+2. **`h` on a fogging result is the AIR'S, not the mixture's, and that is now
+   stated rather than implied.** A `buildState` result structurally cannot
+   represent suspended water; `tdb` and `W` are the mixture's, `h` is the
+   saturated-air enthalpy at that `tdb`, and the mixture total is
+   `h + condensate · h_condensate(tdb)`. Returning `condensate` is what lets
+   a caller close its own enthalpy balance instead of silently losing the
+   water.
+3. **One documented hole, and it announces itself.** The residual the solve
+   inverts JUMPS at 32 °F by the heat of fusion, so when its root falls inside
+   that jump the bisection lands on 32 °F exactly — physically right (the
+   mixture sits at the ice point with part of its condensate frozen) and not
+   fully describable by two fields, because they do not carry the frozen
+   fraction. Reconstruction there is off by at most `condensate` × 143.64
+   Btu/lb, and **the bound is the thing to read, not a measured worst** —
+   the plateau's condensate scales with how far past the curve the streams
+   sit, so a single number is a number for one pair of them. Measured, with
+   the scope named: **0.29 Btu/lb_da** across the AHU's own band (50 %-RH
+   return anywhere in 60…90 °F against 40 %-RH outdoor air at −30 °F and up,
+   any damper — worst at zone 88.5 / −24 °F / 60 %, where the bound is
+   0.33), **0.67** once the two RHs are free as well (zone 90 / 90 % against
+   −28 °F / 90 % at 70 %), against ~6e-13 everywhere else in the fog branch.
+   An earlier draft of both this entry and the engine comment published
+   **0.172** as a sweep worst; that figure is correct only for the 80 °F /
+   55 % pair the plateau span below is measured at, which is 1.7× low inside
+   the AHU band and ~4× low off it (corrected 2026-07-29).
+   `tdb === 32 && condensate > 0` is the signature.
+   The plateau is narrow but real: ~1.3 °F of outdoor air (−19.16 to
+   −17.88 °F against an 80 °F zone at a 55 % damper).
+
+Note the table above was measured against the LIQUID form, so the "true"
+column understates the correction now shipped. Under the ice convention the
+same two cases solve to 17.67 °F (a 7.25 °F correction) and 23.89 °F (10.25 °F).
+The worst pair inside the AHU's own band is neither of those: zone 90 °F at a
+65 % damper against −30 °F outdoor air corrects **12.80 °F** (12.75 → 25.56).
+Off room air and weather the correction has no interesting ceiling — a coarse
+sweep of near-saturated pairs from −40 to 120 °F reaches **50.1 °F** (−40 °F /
+99 % at 70 % into 120 °F / 99 %) — which is why the engine comment now states
+the mechanism rather than a magnitude for a future caller: the correction is as
+large as the latent heat the condensing water releases, and only the moisture
+the streams brought caps that.
+
+Also measured: the clear-of-the-curve path did **not** move — over a
+131,881-point sweep of stream pairs the recovered dry-bulb matches a hand
+computation exactly, the flow-weighted `h` to 1.4e-14 and `W` exactly.
+
+`tests/psychro-mixstreams.spec.js` grew six rows: the contract shape, the
+conservation check against an independently written reference balance, the
+saturation-curve landing, the re-solve's direction (warmer than the
+uncorrected recovery — a regression makes that difference exactly zero),
+continuity across the 32 °F switch with anti-vacuity probes on both sides,
+and the plateau bound. Reverting the re-solve fails three of them; reverting
+only the ice half of the convention fails two.
+
+Reachable-state consequence, for the record: the AHU's `matT` (and with it
+`datT`, `qCool` and the zone trajectory) warms in the cold-and-open corner —
+up to **8.1 °F** at OAT −30 °F with the damper at 60 %, 6.2 °F at the −20 °F
+/ 70 % corner. 54 of a 96-cell probe grid moved. **Nothing on the default day
+moves at all** (no fog there). The AHU does not carry the condensate forward —
+see #239.
+
+The four inline public consumers of the mixing math (#228) are unaffected
+because they do not call this helper yet; when they do, they inherit the fix.
+
+### 237. `ddcw-fcu-unit.js` carries the same starved-coil fallback the AHU just fixed, and it is LIVE *(noticed 2026-07-28, AHU physics review round — same defect family, different file)*
+
+`html/scripts/ddcw-fcu-unit.js:248`:
+
+```js
+if (leaving.ok) { coilLeaveTarget = leaving.tdb; leavingW = leaving.W; }
+else coilLeaveTarget = zoneT;
+```
+
+When the requested load per CFM drives `Psychro.invertProcess` past bone-dry it
+returns `ok:false`, and the FCU falls back to the **entering air** — a running
+compressor with a zero coil ΔT, which is this model's own signature for a
+FAULTED machine. The AHU shipped the identical shape and it made the coil ΔT
+non-monotone in airflow; the AHU fix pins the starved coil at `COIL_FLOOR`
+instead (bounded by the entering air), which restores monotonicity.
+
+MEASURED on the shipped FCU, quasi-static probe, stage 2:
+
+| fan | coilLeaveT | qCool |
+|---|---|---|
+| 20 % | 34.00 °F | 5,310 Btu/h |
+| 15 % | 34.00 °F | 3,982 |
+| 12 % | 34.00 °F | 3,186 |
+| **10 %** | **76.00 °F** | **−38.5** |
+| 8 % | 76.00 °F | −32.1 |
+
+One step of a step-5 fan slider takes the discharge from 34.6 °F to 76.6 °F and
+turns a running DX coil into a heater. `ddc-workbench-fcu.html` is a shipped
+page, so unlike the AHU this is reachable by a reader today.
+
+Not fixed inline: the AHU branch is the physics half of a different unit, and
+touching the live FCU model wants its own PR (and its own look at the workbench
+graphic, which paints that ΔT). The fix is the AHU's, one line —
+`else coilLeaveTarget = COIL_FLOOR;` — plus the entering-air ceiling that makes
+the floor safe on cold inlet air. Note the FCU's coil inlet is the zone, clamped
+to [40, 120], so the *other* half of the AHU defect (a freeze floor firing on a
+de-energized coil) is unreachable there; only this half carries over.
+
+### 238. `Psychro.buildState` silently returns `W = 0` when the saturation humidity ratio degenerates *(noticed 2026-07-28, AHU physics review round)*
+
+`buildState` opens with
+
+```js
+W = Math.max(0, Math.min(W, satHumRatio(tdb, P)));
+```
+
+Above the boiling point for the given pressure — 212 °F at sea level, lower at
+altitude — `satPress(tdb)` exceeds `P`, so `humRatioFromVapPress = 0.621945 ·
+pw / (P − pw)` goes **negative** and the `Math.min` hands the `Math.max` a
+negative ceiling. The state comes back `ok: true` with `W = 0`, `rh = 0` and
+`tdp = -Infinity`, whatever moisture the caller passed in.
+
+MEASURED: `satHumRatio(211.9, P_STD) = +584.96`, `satHumRatio(212, P_STD) =
+−676.00`, `satHumRatio(500, P_STD) = −0.636`. `buildState(200, 0.006, P_STD)`
+returns W 0.006 / rh 1.22 %; `buildState(250, 0.006, P_STD)` returns W 0 /
+rh 0 / tdp −Infinity.
+
+The negative return is the **formula degenerating, not a bug in the constant** —
+above boiling there is no saturation humidity ratio to return — so the fix is
+not to widen `satHumRatio`. The defect is that a state outside the math's
+validity envelope comes back looking like a perfectly ordinary bone-dry one.
+`dewPointFromVapPress` already handles its own out-of-range end this way
+(#103: return `Infinity` so a caller's `isFinite` guard catches it), and this is
+the same shape of problem with the opposite answer.
+
+Suggested: have `buildState` return `{ ok: false, error: … }` when
+`satHumRatio(tdb, P) < 0`, i.e. when the requested dry-bulb is at or above the
+saturation temperature for the pressure. Every current caller already checks
+`.ok`. Surfaced by the AHU heating coil, which could drive its leaving air past
+1100 °F before this round added `HW_LEAVE_MAX`; the AHU no longer reaches it,
+but the engine is shared and the next caller might.
+
+### 239. The AHU mixing box drops `mixStreams`' fog condensate, so its moisture bookkeeping loses water in the cold-and-open corner *(noticed 2026-07-29, the #236 fix round)*
+
+With #236 resolved, `Psychro.mixStreams` now returns a `condensate` term
+alongside a saturated fogging state. `html/scripts/ddcw-ahu-unit.js` reads
+`mixState.tdb` and `mixState.W` and **ignores `condensate`** — so in the fog
+corner the suspended water simply leaves the model. Concretely:
+
+- `d.matW` is the ON-CURVE humidity ratio, not the flow-weighted mixture's, so
+  the mixing box is not moisture-conserving there;
+- the coil section downstream is handed saturated air and no liquid load, so
+  the DX coil's latent term and the heating coil's "W rides through unchanged"
+  invariant both operate on a mixture that already lost some of its water;
+- the amount is small in absolute terms — ~10 grains / lb_da at the extreme
+  corner (zone 80 °F, 70 % outdoor air, −20 °F outdoor) — but it is a
+  one-directional loss, and it is exactly the regime a freeze question lives
+  in.
+
+**Not a defect in the temperature story, which is what the machine teaches.**
+The AHU is dry-bulb throughout (dry-bulb economizer, dry-bulb staging, dry-bulb
+badges), no point on the roster reports moisture, and the plant has no latent
+zone state yet (`plant.zoneW` is a documented future seam, not a field). So
+nothing published today is wrong because of this — `matW` / `afterHeatW` are
+marked "observability only, no consumer" in the file. The entry exists because
+the moment a consumer appears the loss becomes visible, and because the fix has
+a natural home:
+
+Action, when the latent seam lands (a `zoneW` state, a supply-RH or SHR
+readout, or a coil-condensate readout): decide whether the mixing box carries
+the condensate as a liquid stream into the coil section or declares it drained
+at the mixing box, and say which in the section-3 comment. Today that comment
+says the water is dropped and why; it does not claim the model conserves it.
+Cheapest honest interim if a moisture readout ships first: publish
+`d.matCondensate` beside `d.matW` so a chip can annotate a fogging mixed-air
+state rather than silently under-report it.
+
+### 240. A fogging MAT no longer reconciles with the reader's own %OA arithmetic, and the graphic says nothing about it *(noticed 2026-07-29, the #236 fix round's review — a LANE 7.4 graphic question, not a physics one)*
+
+`#236`'s fog re-solve moved the AHU's published `d.matT` off the
+`%OA·OAT + %RA·RAT` blend that `air-handlers.html`, `economizer-ratio.html` and
+`coil-freeze-risk.html` all teach — because the condensing water releases its
+latent heat into the air, so a fogging mixture genuinely lands warmer than the
+straight blend. Measured against `ddcw-ahu-unit.js` as shipped (return 50 % RH,
+outdoor 40 % RH):
+
+| case | plain %OA sum | published `matT` |
+|---|---|---|
+| just past the crossing (zone 76, 60 % damper, 5 °F) | 33.40 °F | 33.75 °F |
+| 0 °F outdoor, 60 % damper, zone 76 | 30.40 °F | 31.94 °F |
+| −20 °F outdoor, 70 % damper, zone 76 | 8.80 °F | 15.36 °F |
+| −30 °F outdoor, 65 % damper, zone 90 | 12.00 °F | 25.56 °F |
+
+Clear of the curve the two still agree to **0.61 °F** anywhere in the
+space-temp point's 60…90 °F band — that residual is the honest cp-weighting the
+engine's own header describes, and it is what the section-3 WEIGHT BASIS
+comment's "a reader who does the sum gets the graphic's own answer" was written
+about. The comment is now scoped to the clear branch and the fog paragraph
+states the divergence with its size, so **nothing in the code is wrong**. The
+open item is what the GRAPHIC does:
+
+The MAT chip lane 7.4 will label off that comment will print a number a
+reader's own arithmetic cannot reproduce, in exactly the freeze corner the
+machine exists to teach — and the same reader can walk to
+`coil-freeze-risk.html` and get the other answer, because the four inline
+consumers of the mixing math have not adopted `Psychro.mixStreams` yet (#228).
+
+Action for the DOM half: decide whether the mixed-air readout carries a fogging
+marker — a saturated/fog pill beside the chip, a note in the drill-in, or the
+condensate value #239 suggests publishing — rather than a bare temperature. A
+silent number is the one option that teaches the wrong thing twice: it looks
+like the site's arithmetic and isn't, and it gives no hook for the (correct,
+teachable) reason why. Cross-check with #228 when the consumer pages adopt the
+helper, since that closes the cross-page disagreement but not the
+reader-arithmetic one.
