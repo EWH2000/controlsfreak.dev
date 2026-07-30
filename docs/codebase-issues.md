@@ -10386,3 +10386,51 @@ items are physics and sequence, the buttons are pre-existing, and an a11y
 semantics change on a shared `.copy-btn` idiom wants its own look at whether
 other pages copied the pattern (grep `data-preset` — `refrigerant-loop.html`
 uses `.rl-presets`, worth checking in the same pass).
+
+### 246. The FCU's `blocked-coil` fault names an air-side failure but the model gives it full airflow *(noticed 2026-07-30, FCU proof-sweep review — needs an owner decision)*
+
+The FCU proof sweep renamed the second capacity fault from `airflow` to
+`blocked-coil` (button "Airflow fault" → "Blocked coil"), because the belt
+fault took over the name "airflow". The new name is more honest than the old
+one and still not right.
+
+**What the model does.** `airflowOn = fanCmd && fault !== 'fan-belt'`, so
+under `blocked-coil` the fan runs at the commanded cfm, the proof switch
+stays made, and only `capActive` goes false. The reader sees Fan 100 % · ON,
+Fan Sts ON, the chevron stream running, ΔT 0.0 °F, and the verdict "No ΔT
+across coil — coil blocked, not cooling".
+
+**Why that reads wrong.** Unqualified, "blocked coil" on a fan-coil unit
+reads air-side — a fouled or iced evaporator — and that failure's defining
+symptom is *restricted airflow*: cfm falls, proof can drop, and the ΔT
+across the air that does pass usually goes UP, not to zero. So the page
+teaches the diagnostic backwards for the fault a reader will picture.
+
+**The name that fits the physics as written** is a *condenser*-side
+blockage: a blocked or fouled condenser coil drives head pressure up and
+capacity to nothing while indoor airflow is untouched — exactly the model's
+behaviour. A failed compressor or a metering-device fault fits the same
+shape, but overlaps `low-charge`, which already occupies "energized and not
+cooling".
+
+**Three coherent dispositions, owner's call:**
+
+1. *Qualify the name* — `blocked-condenser`, button "Blocked condenser",
+   verdict naming the condenser. Smallest change, and it makes the model
+   and the label agree without touching physics.
+2. *Rename to the compressor-side failure* — `failed-compressor`, button
+   "Compressor failed". Honest about what the model computes; the
+   distinction from `low-charge` becomes a diagnostic story rather than a
+   physical one.
+3. *Keep the name and make the model honest* — cut cfm under
+   `blocked-coil`, which reverses the ΔT direction and can drop proof. The
+   biggest change, and it hands the page a second airflow fault that
+   competes with the belt for the lesson the belt was added to teach.
+
+Left unchanged in the sweep: it is a reader-facing content decision on a
+page whose naming the owner rules on, and the reviewers who raised it did
+not converge. The source comment in `ddcw-fcu-unit.js` no longer asserts
+the field claim as fact and points here; whichever way this goes, the
+verdict string, the button label, the comment, and the
+`tests/ddcw-fcu-unit.spec.js` row titled "a capacity fault is NOT an
+airflow fault" all move together.

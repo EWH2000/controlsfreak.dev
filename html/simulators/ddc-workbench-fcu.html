@@ -699,13 +699,19 @@ noindex: true
                     </g>
 
                     <!-- ── Sensor devices — WHERE each sensed point lives ──
-                         One glyph per AI point in FCU_POINTS with a physical
-                         home on this drawing (space-temp, rat, dat), keyed by
-                         data-point to the point id; click / Enter / Space
-                         pulses the matching statusbar chip (the shell's
+                         One glyph per TEMPERATURE point in FCU_POINTS with a
+                         physical home on this drawing (space-temp, rat, dat),
+                         keyed by data-point to the point id; click / Enter /
+                         Space pulses the matching statusbar chip (the shell's
                          highlightChip hook — the shell binds .ddcw-sensor
                          generically). Drawn last so the devices stay
                          legible over the chevron stream.
+                         NOT every sensed point: `fan-status` is a duct-
+                         pressure proof switch and reaches no glyph, because
+                         its home is the duct static and the interlock it
+                         feeds is taught on the wiresheet, not here. That is
+                         a scope call, not an oversight — a DP tap on the
+                         supply run is the natural draw if it ever earns one.
                          GLYPH VOCABULARY (schematic, software register):
                          wall plate = space/zone sensor on the room
                          boundary; insertion probe = duct temp. Reserved
@@ -713,7 +719,7 @@ noindex: true
                          here: shielded OSA head (this FCU has no OAT
                          point — outdoor air is a sim knob, not a BACnet
                          point), averaging element (AHU mixed-air),
-                         pressure tap, flow station.
+                         flow station.
                          FUTURE SEAM: a glyph later becomes a drill-down
                          link into a meter-and-sensor sim (the .fcu-link
                          idiom) — keep the one-group-per-device shape. -->

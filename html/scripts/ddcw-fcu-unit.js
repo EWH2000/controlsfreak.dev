@@ -197,14 +197,22 @@ const DDCWFcuUnit = (function () {
             },
             actuators:  { 'fan-speed': 100, 'fan-enable': true, 'y1': true, 'y2': false },
             params:     { 'cooling-setpoint': 72, 'deadband': 3 },
-            // Fault vocabulary is KEBAB-CASE, matching ddcw-ahu-unit.js —
-            // the site's id rule reaches JS string literals, and the two
-            // unit modules have to speak one language before a unit
-            // selector puts them behind one picker. Note `blocked-coil`
-            // and `fan-belt` are DIFFERENT failures and the names have to
-            // keep them apart: a blocked coil stops the heat transfer
-            // while air still moves, a broken belt stops the AIR while
-            // the command stands.
+            // Fault vocabulary is KEBAB-CASE, matching ddcw-ahu-unit.js:
+            // the two unit modules have to speak one language before a
+            // unit selector puts them behind one picker. That parity is
+            // the whole reason — the site's kebab-case rule governs
+            // element ids and the JS that references them, not an
+            // arbitrary model enum, so it is not what settles this.
+            //
+            // `blocked-coil` and `fan-belt` are DIFFERENT failures in
+            // this model and the names have to keep them apart: under
+            // `blocked-coil` the capacity goes and the AIR KEEPS MOVING
+            // at the commanded cfm (proof stays made), while `fan-belt`
+            // stops the air with the command still standing. The name is
+            // under review — read bare, "blocked coil" reads air-side,
+            // where a real blockage would cut airflow too; it is the
+            // condenser-side blockage that leaves indoor airflow alone.
+            // codebase-issues #246 carries the question.
             conditions: { fault: 'none' },   // none | low-charge | blocked-coil | fan-belt (observe-only)
             derived:    {},
             anim:       { fanFrac: 1 },
@@ -448,12 +456,16 @@ const DDCWFcuUnit = (function () {
         d.coilLeaveT = coilLeaveT;
         d.datT = datT;
         d.stage = stage;
-        // The three airflow facts stay distinct all the way to the paint
-        // layer. There is deliberately NO `d.fanOn` alias: one key
-        // cannot answer both "did the sequence ask for the fan" and "is
-        // air moving", and with a belt fault live those two diverge —
-        // which is the whole lesson. Every reader below picks one on
-        // purpose.
+        // The three airflow facts stay distinct. There is deliberately
+        // NO `d.fanOn` alias: one key cannot answer both "did the
+        // sequence ask for the fan" and "is air moving", and with a
+        // belt fault live those two diverge — which is the whole
+        // lesson. `fanCmd` and `airflowOn` both have readers in
+        // fcuRenderUnit and each of those picks on purpose; `fanStatus`
+        // has NO consumer today (the Fan Sts chip paints from
+        // plant.sensors, shell-side) and is published for completeness,
+        // the `d.matW` idiom on the AHU. Publishing the trio whole is
+        // what keeps a later readout from reaching for the wrong one.
         d.fanCmd = fanCmd;
         d.airflowOn = airflowOn;
         d.fanStatus = plant.proof.made;

@@ -288,11 +288,16 @@ test.describe('ddcw-fcu-unit: coil physics (quasi-static)', () => {
         // this row only reddens when BOTH go (verified by mutation —
         // hoisting the clamps out of capActive alone leaves it green,
         // because the ceiling puts the floor's lift straight back).
-        // Keep both anyway: the nesting also spares a psychro solve
-        // every tick the compressor is off, and it keeps this module
-        // structurally parallel to the AHU's, where the coil sits
-        // downstream of a heating coil and the nesting IS load-bearing
-        // on its own.
+        // The AHU measures the SAME way — an earlier draft of this
+        // comment claimed the nesting was load-bearing there on its own
+        // and that is false. Probed on ddcw-ahu-unit.js at −20 °F
+        // entering with both compressors off: shipped −20, both clamps
+        // hoisted out of capActive −20, floor hoisted alone 34. The
+        // entering-air ceiling neutralizes the floor on both modules.
+        // Keep the nesting anyway — it spares a psychro solve every
+        // tick the compressor is off and keeps the two modules
+        // structurally parallel — just not because it is the thing
+        // holding this row up.
         const Unit = loadUnit();
         const p = quasi(Unit, (pl) => {
             pl.zoneT = 20;                     // below COIL_FLOOR
