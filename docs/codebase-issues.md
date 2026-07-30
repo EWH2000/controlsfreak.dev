@@ -10372,7 +10372,7 @@ writes `aria-pressed` on them. Two things are wrong at once:
   scenario button forever, including the one whose state the unit is
   currently in.
 - **It should not be there at all.** `aria-pressed` marks a *toggle*. These
-  are one-shot commands: clicking "Blocked coil" writes slot 8 and sets a
+  are one-shot commands: clicking "Blocked condenser" writes slot 8 and sets a
   fault, it does not enter a mode the button holds. The stage buttons in the
   same panel are the genuine toggle case and they DO maintain
   `aria-pressed` + `.active` in `fcuSyncControls`, which makes the
@@ -10387,7 +10387,7 @@ semantics change on a shared `.copy-btn` idiom wants its own look at whether
 other pages copied the pattern (grep `data-preset` — `refrigerant-loop.html`
 uses `.rl-presets`, worth checking in the same pass).
 
-### 246. The FCU's `blocked-coil` fault names an air-side failure but the model gives it full airflow *(noticed 2026-07-30, FCU proof-sweep review — needs an owner decision)*
+### 246. The FCU's `blocked-coil` fault names an air-side failure but the model gives it full airflow *(noticed 2026-07-30, FCU proof-sweep review — **RESOLVED 2026-07-30**, owner ruled for disposition 1)*
 
 The FCU proof sweep renamed the second capacity fault from `airflow` to
 `blocked-coil` (button "Airflow fault" → "Blocked coil"), because the belt
@@ -10434,3 +10434,37 @@ the field claim as fact and points here; whichever way this goes, the
 verdict string, the button label, the comment, and the
 `tests/ddcw-fcu-unit.spec.js` row titled "a capacity fault is NOT an
 airflow fault" all move together.
+
+**RESOLVED 2026-07-30 — owner ruled for disposition 1, and ruled the
+physics untouched.** The model already computed a condenser-side failure
+(heat rejection gone, indoor airflow untouched); only the label was
+wrong, so nothing in `fcuUpdate` moved. What shipped:
+
+- `html/scripts/ddcw-fcu-unit.js` — the fault key is `blocked-condenser`
+  in the plant enum, the airflow-gating comment, the verdict branch and
+  the `SCENARIOS` map. The `data-preset` key went `blocked` →
+  `condenser`, which names the failed part the way `belt` already did.
+- `html/simulators/ddc-workbench-fcu.html` — button label "Blocked coil"
+  → "Blocked condenser", plus a `.ref-note` under the graphic that says
+  out loud what the scenario teaches and points at the coil glyph's
+  existing drill-down to `simulators/refrigerant-loop.html`.
+- `tests/ddcw-fcu-unit.spec.js` — both rows that sweep the capacity
+  faults, and the "a capacity fault is NOT an airflow fault" comment,
+  which now records WHY the condenser is the right name: a blocked
+  evaporator would restrict the air, which is exactly what that row
+  proves does not happen.
+
+**On the verdict wording.** It reads *"No ΔT across coil — air moving;
+look condenser-side, off this graphic"*, deliberately naming the SIDE
+rather than the part. A blocked condenser is one cause of
+energized-and-not-cooling and the readings on this screen cannot separate
+it from a dead compressor or a plugged metering device — `low-charge`
+already sits in that same space with its own verdict. The scenario button
+tells the reader what was set; the verdict tells them what the screen can
+actually support, which is a direction to walk in. That is also the
+lesson: the indoor side reads perfect — fan commanded, proof made,
+chevrons running — and the coil is still doing nothing, so the failure is
+somewhere this graphic does not draw. **The FCU graphic depicts no
+condenser** (return duct, cabinet, DX coil, supply fan, supply duct,
+zone), which is why the verdict has to say "off this graphic" rather than
+leave the reader hunting the drawing for a part that is not on it.

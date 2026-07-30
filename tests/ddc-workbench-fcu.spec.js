@@ -328,3 +328,72 @@ test.describe('DDC Workbench — the verdict annunciation reaches a screen reade
             .toBeLessThanOrEqual(changed ? 1 : 0);
     });
 });
+
+test.describe('DDC Workbench — the blocked-condenser scenario is wired end to end (#246)', () => {
+    test('the scenario reaches its own verdict, with the indoor side still reading clean', async ({ page }) => {
+        // Three hand-mapped names have to agree for this scenario to work
+        // at all — the button's data-preset, the SCENARIOS key it looks
+        // up, and the plant fault string the verdict ladder branches on
+        // (ddcw-fcu-unit.js). Nothing else pins that chain: the
+        // engine-direct rows in ddcw-fcu-unit.spec.js set
+        // plant.conditions.fault THEMSELVES, so a typo anywhere in the
+        // DOM path would leave them green while the page fell through to
+        // the generic "compressor not cooling" line. That is precisely
+        // the drift the #246 rename could have introduced, so it gets a
+        // row.
+        //
+        // The second half is the LESSON. This fault is the one that
+        // points off the drawing, and it only teaches that if the indoor
+        // side genuinely still reads healthy — fan commanded, proof
+        // made, blades turning — while the coil does nothing. A model
+        // that quietly dropped the air here would make the verdict a
+        // lie, and the reader would learn the opposite diagnostic.
+        test.setTimeout(60_000);
+        await page.goto(URL);
+        await page.waitForFunction(() =>
+            document.getElementById('fcu-verdict').textContent.trim().length > 0);
+
+        await page.locator('#fcu-speed-slider').fill('60');
+        await page.click('[data-preset="condenser"]');
+
+        // Wait on conditions, not durations. The verdict branches on the
+        // fault the instant the preset writes it; the ΔT badge is a
+        // first-order lag off the coil, so it walks up from the cooling
+        // value it was at. Both have to land before the reads below mean
+        // anything.
+        await page.waitForFunction(() =>
+            document.getElementById('fcu-verdict').textContent.includes('condenser-side'),
+        null, { timeout: 30000 });
+        await page.waitForFunction(
+            () => parseFloat(document.getElementById('fcu-dt').textContent) > -1,
+            null, { timeout: 30000 });
+
+        const read = await page.evaluate(() => ({
+            verdict: document.getElementById('fcu-verdict').textContent.trim(),
+            pill: document.getElementById('fcu-verdict').className,
+            label: document.querySelector('[data-preset="condenser"]').textContent.trim(),
+            chips: Array.from(document.querySelectorAll('.ddcw-chip')).map((c) => c.textContent.trim()),
+            dt: document.getElementById('fcu-dt').textContent,
+            chevrons: document.querySelectorAll('#fcu-flow .fcu-chevron').length,
+        }));
+
+        expect(read.label, 'the button names the condenser, not a coil').toBe('Blocked condenser');
+        expect(read.verdict, 'the verdict sends the reader off the graphic')
+            .toBe('No ΔT across coil — air moving; look condenser-side, off this graphic');
+        expect(read.pill, 'a stopped coil under a cooling call is an error state').toContain('error');
+
+        // The indoor side reads clean — that is the whole diagnostic.
+        const chip = (name) => read.chips.find((c) => c.startsWith(name)) || '';
+        expect(chip('Fan Sts'), 'airflow proof stays made').toContain('ON');
+        expect(chip('Fan En'), 'the fan is still enabled').toContain('ON');
+        expect(chip('Y1'), 'stage 1 is still called').toContain('ON');
+        expect(chip('Y2'), 'stage 2 is still called').toContain('ON');
+        expect(read.chevrons, 'air is still drawn moving').toBeGreaterThan(4);
+
+        // …and the coil is doing nothing. Anything past fan heat would
+        // mean the capacity gate did not close.
+        const dt = parseFloat(read.dt);
+        expect(dt, 'the coil ΔT collapsed').toBeGreaterThan(-1);
+        expect(dt, 'and did not invert into a heating delta').toBeLessThan(2);
+    });
+});

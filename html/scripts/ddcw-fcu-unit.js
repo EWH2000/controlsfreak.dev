@@ -204,16 +204,19 @@ const DDCWFcuUnit = (function () {
             // element ids and the JS that references them, not an
             // arbitrary model enum, so it is not what settles this.
             //
-            // `blocked-coil` and `fan-belt` are DIFFERENT failures in
-            // this model and the names have to keep them apart: under
-            // `blocked-coil` the capacity goes and the AIR KEEPS MOVING
-            // at the commanded cfm (proof stays made), while `fan-belt`
-            // stops the air with the command still standing. The name is
-            // under review — read bare, "blocked coil" reads air-side,
-            // where a real blockage would cut airflow too; it is the
-            // condenser-side blockage that leaves indoor airflow alone.
-            // codebase-issues #246 carries the question.
-            conditions: { fault: 'none' },   // none | low-charge | blocked-coil | fan-belt (observe-only)
+            // `blocked-condenser` and `fan-belt` are DIFFERENT failures
+            // in this model and the names have to keep them apart: under
+            // `blocked-condenser` the capacity goes and the AIR KEEPS
+            // MOVING at the commanded cfm (proof stays made), while
+            // `fan-belt` stops the air with the command still standing.
+            // The name says condenser because that is the failure this
+            // arm actually computes — heat rejection gone, indoor
+            // airflow untouched. It was briefly `blocked-coil`, which
+            // taught the diagnostic backwards: read bare, a blocked coil
+            // on a fan coil is the evaporator, and that failure cuts cfm
+            // and DRIVES ΔT UP rather than to zero. Owner ruled the
+            // label wrong, not the physics (codebase-issues #246).
+            conditions: { fault: 'none' },   // none | low-charge | blocked-condenser | fan-belt (observe-only)
             derived:    {},
             anim:       { fanFrac: 1 },
             // ── closed-loop thermal state ──
@@ -265,9 +268,9 @@ const DDCWFcuUnit = (function () {
         // duct-pressure switch reports back, which lags the truth on the
         // way up and matches it on the way down. Every line of physics
         // below gates on airflowOn, never on fanCmd: that gap IS the
-        // belt fault. Only `fan-belt` stops the air; `blocked-coil` is
-        // named separately because it kills the heat transfer while the
-        // air keeps moving.
+        // belt fault. Only `fan-belt` stops the air; `blocked-condenser`
+        // is named separately because it kills the heat transfer while
+        // the air keeps moving.
         const fanCmd    = !!plant.actuators['fan-enable'] && fanPct > 0;
         const fault     = plant.conditions.fault;
         const airflowOn = fanCmd && fault !== 'fan-belt';
@@ -761,8 +764,19 @@ const DDCWFcuUnit = (function () {
             cls = 'warn';  txt = 'Compressor off — fan only, no ΔT across the coil';
         } else if (d.fault === 'low-charge') {
             cls = 'error'; txt = 'No ΔT across coil — low charge, not cooling';
-        } else if (d.fault === 'blocked-coil') {
-            cls = 'error'; txt = 'No ΔT across coil — coil blocked, not cooling';
+        } else if (d.fault === 'blocked-condenser') {
+            // The one verdict that points OFF the drawing, and that is
+            // the lesson: the indoor side reads perfect — fan commanded,
+            // proof made, chevrons running — and there is still no
+            // cooling, so the thing that failed is somewhere this screen
+            // does not draw. The graphic has no condenser on it.
+            // Deliberately "look condenser-side" rather than "condenser
+            // blocked": a blocked condenser is ONE cause of energized-
+            // and-not-cooling, and the readings on this screen cannot
+            // separate it from a dead compressor or a plugged metering
+            // device. Naming the side is what the screen supports;
+            // naming the part is what the scenario button already said.
+            cls = 'error'; txt = 'No ΔT across coil — air moving; look condenser-side, off this graphic';
         } else if (datDeltaT(d) > COOLING_DT_TRIP) {
             // Signed ΔT: cooling drives it negative, so "no meaningful
             // cooling delta" is anything ABOVE the trip line. Canonical
@@ -877,7 +891,9 @@ const DDCWFcuUnit = (function () {
             healthy:   { zone: 78, fan: 100, stage: 2, fault: 'none' },
             compoff:   { zone: 78, fan: 100, stage: 0, fault: 'none' },
             lowcharge: { zone: 78, fan: 100, stage: 2, fault: 'low-charge' },
-            blocked:   { zone: 78, fan: 100, stage: 2, fault: 'blocked-coil' },
+            // `condenser` names the failed PART, the way `belt` below
+            // does — a bare `blocked` said nothing about which coil.
+            condenser: { zone: 78, fan: 100, stage: 2, fault: 'blocked-condenser' },
             // The fan is COMMANDED here — that is the whole point. The
             // belt is what failed, so the command stands, the air stops
             // and the proof switch drops.
