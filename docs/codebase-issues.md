@@ -10350,6 +10350,17 @@ underlying fix, sizing the wire layer to the drawn extent (or to the visible
 viewport) rather than to the declared canvas is the thing to look at — it
 would pay back on every sheet, not just this one.
 
+*Correction (2026-07-30, review round):* "540 … set by `sr1` at y 450 + 89.7"
+was true of the safeties sheet and false of the registry. `fan-status` seeded
+at y 470 on the three unprotected sheets, and a `bi` block renders 73 px tall,
+so it bottomed at **543** — three past the canvas it was declared to fit.
+Nothing clipped (`.fbe-canvas` scrolls, and its `scrollHeight` measured 543),
+so the only casualty was the invariant. Fixed by moving those three seeds to
+y 467; `fbe-geometry.spec.js`'s layer-B `assertSheet` now measures every
+block's **rendered bottom** against the declared canvas h, which is a
+different claim from layer A's authored-`y` drag clamp (`h − 40`) and is the
+one that catches this. Both surfaces measure clean at 540 now.
+
 ### 245. FCU scenario buttons carry `aria-pressed` but are one-shot actions, and nothing ever updates it *(noticed 2026-07-30, FCU proof sweep — in passing, not fixed)*
 
 `html/simulators/ddc-workbench-fcu.html` renders each scenario button as

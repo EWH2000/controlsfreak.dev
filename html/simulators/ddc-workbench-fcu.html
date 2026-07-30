@@ -1296,7 +1296,7 @@ noindex: true
                     // the same convention `dat` follows. The proof
                     // interlock is the safeties sheet's lesson; here the
                     // point is simply available to wire.
-                    { id: 'fan-status',       type: 'bi',    x: 195,  y: 470, params: { state: false } },
+                    { id: 'fan-status',       type: 'bi',    x: 195,  y: 467, params: { state: false } },
                     { id: 'gt1',              type: 'gt',    x: 545,  y: 20 },
                     { id: 'lt1',              type: 'lt',    x: 545,  y: 350 },
                     { id: 'gt2',              type: 'gt',    x: 545,  y: 240 },
@@ -1360,7 +1360,7 @@ noindex: true
                     // the same convention `dat` follows. The proof
                     // interlock is the safeties sheet's lesson; here the
                     // point is simply available to wire.
-                    { id: 'fan-status',       type: 'bi',    x: 195, y: 470, params: { state: false } },
+                    { id: 'fan-status',       type: 'bi',    x: 195, y: 467, params: { state: false } },
                     { id: 'y1on',             type: 'add',   x: 195, y: 230 },
                     { id: 'hundred',          type: 'const', x: 545, y: 330, params: { value: 100 } },
                     { id: 'gt1',              type: 'gt',    x: 370, y: 20 },
@@ -1406,7 +1406,7 @@ noindex: true
                     // the same convention `dat` follows. The proof
                     // interlock is the safeties sheet's lesson; here the
                     // point is simply available to wire.
-                    { id: 'fan-status',       type: 'bi',    x: 195,  y: 470, params: { state: false } },
+                    { id: 'fan-status',       type: 'bi',    x: 195,  y: 467, params: { state: false } },
                     { id: 'gt1',              type: 'gt',    x: 545,  y: 20 },
                     { id: 'lt1',              type: 'lt',    x: 545,  y: 350 },
                     { id: 'gt2',              type: 'gt',    x: 545,  y: 240 },
@@ -1583,6 +1583,16 @@ noindex: true
             // sr1 sits at 450 because its R-pin wire has to clear
             // fan-status below okrun. Raising this further is a real cost,
             // not a free margin — re-measure if a later sheet needs more.
+            //
+            // The bound is the BLOCK BOTTOM, not the authored y, and the
+            // two are 73–90 px apart depending on block type: `fan-status`
+            // first shipped at y 470 on the three unprotected sheets and
+            // bottomed at 543, three past the canvas it is declared to fit
+            // (nothing clipped — .fbe-canvas scrolls — so only the comment
+            // was wrong, which is the failure mode this note exists to
+            // prevent). It sits at 467 now. fbe-geometry.spec.js measures
+            // every block's rendered bottom against this h, so the claim
+            // is checked rather than asserted.
             canvasSize: { w: 1401, h: 540 },
         }));
     })();
