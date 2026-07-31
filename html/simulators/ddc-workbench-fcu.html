@@ -147,59 +147,15 @@ noindex: true
             outline-offset: 2px;
         }
 
-        /* ── Sensor glyphs (visible sensors) ── the physical sensing
-           devices drawn where they actually live: a wall plate in the
-           zone (space-temp) and an insertion probe in the discharge
-           duct (dat). Click / Enter / Space pulses the matching
-           statusbar chip (.ddcw-chip-hilite below, via the shell's
-           highlightChip hook). ddcw-* names because the concept is
-           shell-shared — any unit graphic may carry glyphs — but the
-           rules sit PAGE-INLINE for the mockup round and GRADUATE to
-           styles.css (the DDC WORKBENCH SHELL section) when the AHU
-           page lands, same as the rest of the shell chrome: graduating
-           now would cost a cache-bust version bump per placement
-           retune. Hover/focus lift to the accent mirrors .fcu-link —
-           same affordance family, and the glyphs are the future
-           drill-down seam. */
-        .ddcw-sensor { cursor: pointer; }
-        .ddcw-sensor-hit { fill: transparent; stroke: none; }
-        .ddcw-sensor-body {
-            fill: var(--surface);
-            stroke: var(--text-dim);
-            stroke-width: 1.5;
-            transition: stroke 0.15s;
-        }
-        .ddcw-sensor-stem,
-        .ddcw-sensor-slot {
-            fill: none;
-            stroke: var(--text-dim);
-            stroke-width: 1.5;
-            stroke-linecap: butt;
-            transition: stroke 0.15s;
-        }
-        .ddcw-sensor:hover .ddcw-sensor-body,
-        .ddcw-sensor:focus-visible .ddcw-sensor-body,
-        .ddcw-sensor:hover .ddcw-sensor-stem,
-        .ddcw-sensor:focus-visible .ddcw-sensor-stem,
-        .ddcw-sensor:hover .ddcw-sensor-slot,
-        .ddcw-sensor:focus-visible .ddcw-sensor-slot {
-            stroke: var(--accent);
-        }
-        .ddcw-sensor:focus-visible {
-            outline: 2px solid var(--accent);
-            outline-offset: 2px;
-        }
-
-        /* Chip pulse — highlightChip (ddcw-shell.js) holds the class
-           ~1.2 s; the transition eases it in and back out. Transient
-           only: nothing animates while idle (this page's idle cost is
-           profiled — tests/perf-profile.mjs). Inset ring, not a
-           floating shadow — the AX-sharp seam idiom. */
-        .ddcw-chip { transition: border-color 0.3s, box-shadow 0.3s; }
-        .ddcw-chip.ddcw-chip-hilite {
-            border-color: var(--accent);
-            box-shadow: inset 0 0 0 1px var(--accent);
-        }
+        /* ── Sensor glyphs + the chip pulse ── GRADUATED to styles.css
+           (the DDC WORKBENCH SHELL section) when the AHU page landed,
+           which is exactly the trigger the block that used to sit here
+           named. Two unit pages now draw the same glyph vocabulary, so
+           it reads from one source; the .ddcw-chip transition merged
+           into the existing .ddcw-chip rule there rather than being
+           re-declared. Nothing about the glyphs on THIS page changed —
+           they still carry tabindex + role="button" and the shell binds
+           them generically. */
 
         /* Supply-fan spin — a 5-blade impeller group; speed tracks fan
            fraction, still when off. Reduced motion freezes it (the per-blade
@@ -237,6 +193,33 @@ noindex: true
         }
         .fcu-point-val.accent { color: var(--blue); }
         .fcu-point-val.dim { color: var(--text-dim); }
+
+        /* ── THE ACTIVATION AFFORDANCE (codebase-issues #227b) ─────────────
+           The sensed points' mirror cells are real HTML BUTTONS, because
+           role="img" stays on the SVG and nothing inside it may be
+           focusable. Same rule, same shape and the same reasoning as the
+           AHU page's .ahu-point-btn — the ruling was explicitly ONE change
+           across both pages. */
+        .fcu-point-btn {
+            background: none;
+            border: 1px solid transparent;
+            padding: 0.15rem 0.3rem;
+            margin: -0.15rem -0.3rem;
+            cursor: pointer;
+            font: inherit;
+            color: inherit;
+            text-align: left;
+            transition: border-color 0.15s;
+        }
+        .fcu-point-btn:hover { border-color: var(--border); }
+        .fcu-point-btn:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+        .fcu-point-btn.is-active { border-color: var(--accent); }
+        @media (hover: none) {
+            .fcu-point-btn { min-height: 44px; }
+        }
 
         /* Verdict pill sits tight under the points. */
         .fcu-verdict { margin-top: 1rem; }
@@ -288,8 +271,15 @@ noindex: true
            group's box nulls BOTH y1 and y2 — one control, two points).
            Checked = slot 8 released; the paired control disables and
            tracks the resolved value. Declared AFTER the .fcu-fanen label
-           rule so label.ddcw-null wins their specificity tie and the
-           fan-enable NULL box drops to its own line like its peers. */
+           rule so label.ddcw-null wins their specificity tie.
+           MEASURED 2026-07-30, correcting an earlier reading of that tie
+           (codebase-issues #220): what the order decides is the 0.4rem
+           GAP, not the line break. The wrapper is a `.field`, i.e.
+           `display: flex; flex-direction: column`, so this label is a
+           FLEX ITEM and the page rule's `inline-flex` blockifies to
+           `flex` — the computed display and the geometry are identical
+           either way. The genuinely page-coupled rule is the
+           `.fcu-controls`-scoped `.ddcw-tracked[disabled]` dimming. */
         label.ddcw-null {
             display: flex;
             align-items: center;
@@ -567,8 +557,15 @@ noindex: true
                  speed scales with the fan fraction, and each chevron recolors
                  at the coil's leaving edge so the ΔT shows in the air itself.
                  The DX coil + supply fan glyphs are real SVG <a> drill-downs.
-                 SOFTWARE register throughout; a11y = the education idiom
-                 (role="img" + aria-labelledby → title/desc). -->
+                 SOFTWARE register throughout. a11y: role="img" +
+                 aria-labelledby → title/desc, and NOTHING inside the drawing
+                 is focusable — role="img" prunes the subtree, which is what
+                 keeps ~19 <text> nodes already duplicated in the .fcu-points
+                 mirror from being read out twice. The activation affordance
+                 for the sensor glyphs is therefore the three mirror BUTTONS
+                 below the drawing, not the glyphs themselves (owner ruling on
+                 codebase-issues #227b). The glyphs keep a click handler and
+                 their hover CSS; they carry no tabindex and no role. -->
             <div class="fcu-graphic">
                 <svg class="fcu-svg" id="fcu-graphic" viewBox="0 0 720 380"
                      role="img" aria-labelledby="fcu-title fcu-desc"
@@ -735,8 +732,7 @@ noindex: true
                              x 370), clear of the static flow arrow
                              (x 320-328); the stem tip reaches the airstream
                              near the duct centerline (y 150). -->
-                        <g class="ddcw-sensor" id="fcu-sensor-rat" data-point="rat"
-                           tabindex="0" role="button">
+                        <g class="ddcw-sensor" id="fcu-sensor-rat" data-point="rat">
                             <title>Return-air temperature sensor — insertion probe in the return duct</title>
                             <rect class="ddcw-sensor-hit" x="328" y="150" width="28" height="44"/>
                             <line class="ddcw-sensor-stem" x1="342" y1="154" x2="342" y2="173"/>
@@ -752,8 +748,7 @@ noindex: true
                              (x >= 508) and the DAT badge (x <= 460); the
                              stem tip reaches the airstream near the duct
                              centerline (y 218). -->
-                        <g class="ddcw-sensor" id="fcu-sensor-dat" data-point="dat"
-                           tabindex="0" role="button">
+                        <g class="ddcw-sensor" id="fcu-sensor-dat" data-point="dat">
                             <title>Discharge-air temperature sensor — insertion probe in the supply duct</title>
                             <rect class="ddcw-sensor-hit" x="478" y="174" width="28" height="44"/>
                             <line class="ddcw-sensor-stem" x1="492" y1="195" x2="492" y2="214"/>
@@ -766,8 +761,7 @@ noindex: true
                              the room boundary, never on the equipment.
                              Clear of the readout column (values end
                              x ~657). Slots = the vent grille. -->
-                        <g class="ddcw-sensor" id="fcu-sensor-space-temp" data-point="space-temp"
-                           tabindex="0" role="button">
+                        <g class="ddcw-sensor" id="fcu-sensor-space-temp" data-point="space-temp">
                             <title>Space temperature sensor — wall plate in the zone</title>
                             <rect class="ddcw-sensor-hit" x="666" y="156" width="34" height="44"/>
                             <rect class="ddcw-sensor-body" x="683" y="166" width="14" height="24"/>
@@ -780,23 +774,28 @@ noindex: true
             </div>
 
             <!-- Point readouts (mobile-legible mirror) + the verdict. -->
+            <p class="ref-note">
+                The three points with a sensing device on the drawing are
+                buttons — press one to flag its live-value chip in the
+                statusbar.
+            </p>
             <div class="fcu-points">
-                <div class="fcu-point">
+                <button type="button" class="fcu-point fcu-point-btn" data-point="rat" aria-pressed="false">
                     <span class="fcu-point-cap">EAT · entering</span>
                     <span class="fcu-point-val" id="fcu-eat-r">76.0 °F</span>
-                </div>
-                <div class="fcu-point">
+                </button>
+                <button type="button" class="fcu-point fcu-point-btn" data-point="dat" aria-pressed="false">
                     <span class="fcu-point-cap">DAT · discharge</span>
                     <span class="fcu-point-val" id="fcu-dat-r">56.6 °F</span>
-                </div>
+                </button>
                 <div class="fcu-point">
                     <span class="fcu-point-cap">ΔT across coil</span>
                     <span class="fcu-point-val accent" id="fcu-dt-r">-19.4 °F</span>
                 </div>
-                <div class="fcu-point">
+                <button type="button" class="fcu-point fcu-point-btn" data-point="space-temp" aria-pressed="false">
                     <span class="fcu-point-cap">Zone / setpoint</span>
                     <span class="fcu-point-val" id="fcu-zone-r">76.0 / 72.0 °F</span>
-                </div>
+                </button>
                 <div class="fcu-point">
                     <span class="fcu-point-cap">Supply fan</span>
                     <span class="fcu-point-val" id="fcu-fan-r">100% · ON</span>

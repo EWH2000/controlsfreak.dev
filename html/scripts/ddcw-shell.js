@@ -132,12 +132,21 @@
 //   styles.css.
 //   OPTIONAL sensor glyphs: a unit graphic may mark where a sensed
 //   point's physical device lives with
-//   `<g class="ddcw-sensor" data-point="<point-id>" tabindex="0"
-//   role="button">` groups (native SVG <title> = the accessible
-//   name). The shell binds them generically at boot — click or
-//   keyboard activation (Enter / Space) pulses that point's
-//   statusbar chip via highlightChip. data-point must equal a
-//   unit.points id; an unknown id no-ops. Zero glyphs is fine.
+//   `<g class="ddcw-sensor" data-point="<point-id>">` groups (native
+//   SVG <title> = the accessible name). The shell binds them
+//   generically at boot — a click pulses that point's statusbar chip
+//   via highlightChip. data-point must equal a unit.points id; an
+//   unknown id no-ops. Zero glyphs is fine.
+//   ⚠ FOCUSABILITY IS A PER-PAGE DECISION, NOT PART OF THIS
+//   CONTRACT. A graphic that keeps `role="img"` prunes its own
+//   subtree, so nothing inside it may carry `tabindex` or
+//   `role="button"` — both workbench pages are in that shape (owner
+//   ruling, codebase-issues #227b) and supply the keyboard path as
+//   real HTML buttons OUTSIDE the SVG, in the point mirror. The
+//   keydown binding below stays for a future graphic that drops
+//   role="img" and hides its duplicated text instead; on a page
+//   without tabindex it is simply inert, because the node never
+//   takes focus.
 //
 // Command arbitration: every actuator point owns a real 16-slot
 // priority array (window.PriorityArray). The sequence writes slot 16,
