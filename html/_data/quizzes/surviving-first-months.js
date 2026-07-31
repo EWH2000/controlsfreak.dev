@@ -115,6 +115,17 @@ module.exports = [
         tags: ['sensors', 'thermistors']
     },
 
+    // ── Controls: setpoint ≠ actual ───────────────────────
+    {
+        type: 'tf',
+        id: 'setpoint-vs-actual',
+        prompt: 'A space-temperature setpoint of <code>72°F</code> means the controller will drive the room to <em>exactly</em> <code>72°F</code>.',
+        answer: false,
+        explain: 'The setpoint is a <em>target</em> the controller tries to maintain, not the value the room will sit at. Real sequences add a deadband so heating and cooling don\'t fight each other; the PID loop has a steady-state offset proportional to the load; and the sensor itself has noise. A space-temp reading of <code>73.5°F</code> at a <code>72°F</code> setpoint isn\'t a fault — it\'s a system doing its job. Setpoint chasers (techs trying to drive the actual to within <code>0.1°F</code> of setpoint) are usually fighting deadband and PID behavior, not solving anything.',
+        learnMore: { href: '/education/pid-basics.html', label: 'PID Basics' },
+        tags: ['controls', 'pid']
+    },
+
     // ── Controls: reading a term in context ───────────────
     {
         type: 'gotcha',
