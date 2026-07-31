@@ -558,7 +558,7 @@ const DDCWFcuUnit = (function () {
     // Environment / clock knobs — sim inputs, not BACnet points:
     // no priority array, live regardless of any slot state.
     let speedSlider, speedValLbl, oaSlider, oaValLbl, loadSlider, loadValLbl;
-    let fanBlade, compDot, verdictEl, verdictSrEl, stageBtns, presetBtns;
+    let fanBlade, compDot, verdictEl, verdictSrEl, stageBtns, presetBtns, mirrorBtns;
     // On-graphic + readout-grid nodes (kept in one map so renderUnit writes
     // both surfaces from one source).
     let out;
@@ -595,6 +595,7 @@ const DDCWFcuUnit = (function () {
         verdictSrEl = document.getElementById('fcu-verdict-sr');
         stageBtns   = document.querySelectorAll('#tab-unit [data-stage]');
         presetBtns  = document.querySelectorAll('#tab-unit [data-preset]');
+        mirrorBtns  = document.querySelectorAll('#tab-unit .fcu-point-btn[data-point]');
 
         out = {
             eat:  [document.getElementById('fcu-eat'),   document.getElementById('fcu-eat-r')],
@@ -882,6 +883,29 @@ const DDCWFcuUnit = (function () {
     // shell calls, so it resolves the DOM handles for the whole file. ──
     function fcuWireControls(pl, host) {
         bindDom();
+
+        // ── the sensor-glyph activation affordance (codebase-issues #227b)
+        // The glyphs on the drawing are NOT focusable — role="img" prunes
+        // the subtree and dropping it would un-hide every <text> node the
+        // point mirror already carries — so the keyboard path lives on the
+        // mirror cells, which are real buttons. Pressing one pulses that
+        // point's statusbar chip through the shell's own hook, which is
+        // exactly what a glyph click does. The latch is exclusive and
+        // `aria-pressed` moves in the same iteration as the class, so the
+        // border colour is not the only channel carrying the state.
+        //
+        // The AHU page runs the identical block; the ruling was one change
+        // across both pages rather than two divergent ones.
+        mirrorBtns.forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                host.highlightChip(e.currentTarget.getAttribute('data-point'));
+                mirrorBtns.forEach(function (b) {
+                    const on = b === e.currentTarget;
+                    b.classList.toggle('is-active', on);
+                    b.setAttribute('aria-pressed', String(on));
+                });
+            });
+        });
 
         // Scenarios are operator writes: slot 8 on every output the
         // scenario touches (the NULL boxes re-sync from slot state on
