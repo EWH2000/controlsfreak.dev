@@ -296,13 +296,16 @@ test('no rendered element paints TEXT with a -fill token', async ({ browser }) =
                 const res = await page.evaluate(() => {
                     const cs = getComputedStyle(document.documentElement);
                     const tokens = new Map();
+                    const others = new Set();
                     for (const sheet of document.styleSheets) {
                         let rules;
                         try { rules = sheet.cssRules; } catch (e) { continue; }
                         for (const r of rules) {
                             if (!r.style) continue;
                             for (const p of r.style) {
+                                if (!/^--/.test(p)) continue;
                                 if (/^--[a-z0-9-]*-fill$/.test(p)) tokens.set(p, cs.getPropertyValue(p).trim());
+                                else others.add(p);
                             }
                         }
                     }
@@ -319,16 +322,66 @@ test('no rendered element paints TEXT with a -fill token', async ({ browser }) =
                     // a `void probe.offsetWidth` nudge did NOT fix it, a fresh
                     // element did. The per-token floor below is what keeps this
                     // from regressing silently.
-                    const values = new Set();
-                    const probes = [];
-                    for (const [name, declared] of tokens) {
+                    const resolve = (name) => {
                         const probe = document.createElement('span');
                         probe.style.color = `var(${name})`;
                         document.body.appendChild(probe);
-                        const resolved = getComputedStyle(probe).color;
+                        const out = getComputedStyle(probe).color;
                         probe.remove();
+                        return out;
+                    };
+
+                    // `allValues` is every -fill colour, full stop — the set
+                    // the "these tokens do paint geometry here" floor is
+                    // measured against, and it must NOT be narrowed by the
+                    // attribution filter below or that floor would fail in
+                    // dark theme for the very reason the filter exists.
+                    // `values` is the attributable subset the OFFENDER scan
+                    // uses.
+                    const allValues = new Set();
+                    const values = new Set();
+                    const probes = [];
+                    for (const [name, declared] of tokens) {
+                        const resolved = resolve(name);
+                        allValues.add(resolved);
                         values.add(resolved);
                         probes.push({ name, declared, resolved });
+                    }
+
+                    // ⚠ ATTRIBUTION, NOT DETECTION. This arm's premise is
+                    // "computed colour equals a -fill token's value, so a
+                    // -fill token painted it" — and that inference is only
+                    // sound while the value is UNIQUE to the -fill family.
+                    // It is not, in dark theme: `-fill` tokens exist
+                    // because the LIGHT text floor drags `--amber` and
+                    // `--heat` out of their own register, so in dark both
+                    // twins ride their base and resolve identically. A
+                    // legitimate `color: var(--heat)` on a text node —
+                    // `.status-pill.warn` is one, and it is shared chrome —
+                    // is then indistinguishable from the misuse.
+                    //
+                    // MEASURED, not theorised: the AHU workbench page's
+                    // verdict pill lands in its `warn` state during this
+                    // walk and was reported as an offender on that basis
+                    // alone (2026-07-30). Nothing on that page reaches a
+                    // -fill token from `color:`; the source scan above,
+                    // which reads DECLARATIONS rather than resolved
+                    // values, says so and is the authority there.
+                    //
+                    // So subtract every colour a NON-fill custom property
+                    // also resolves to. What survives is the set this arm
+                    // can honestly attribute. The coverage that drops is
+                    // dark-theme-only and it is not a hole: where the twins
+                    // are the same colour, using the wrong one is not an AA
+                    // regression relative to using the right one. Light
+                    // theme — the theme the whole family exists for, and
+                    // where --amber-fill is 3.10:1 on the strictest
+                    // surface — keeps full coverage, and the floor below
+                    // asserts it.
+                    const shared = new Set();
+                    for (const name of others) {
+                        const v = resolve(name);
+                        if (values.has(v)) { values.delete(v); shared.add(name + ' → ' + v); }
                     }
 
                     const hasOwnText = (el) => [...el.childNodes]
@@ -337,20 +390,45 @@ test('no rendered element paints TEXT with a -fill token', async ({ browser }) =
                     let painted = 0;
                     for (const el of document.querySelectorAll('*')) {
                         const s = getComputedStyle(el);
-                        if (values.has(s.fill) || values.has(s.stroke)) painted++;
+                        if (allValues.has(s.fill) || allValues.has(s.stroke)) painted++;
                         if (!hasOwnText(el)) continue;
                         const isSvgText = el instanceof SVGElement;
                         if (values.has(s.color) || (isSvgText && values.has(s.fill))) {
                             hits.push(`${el.tagName.toLowerCase()}.${el.getAttribute('class') || ''}`);
                         }
                     }
-                    return { tokenCount: tokens.size, resolved: [...values], probes, painted, hits };
+                    return {
+                        tokenCount: tokens.size, resolved: [...values], probes, painted, hits,
+                        shared: [...shared],
+                    };
                 });
                 // A token that resolves to nothing would make every comparison
                 // vacuously false — the same green no-op the source floors guard.
                 expect(res.tokenCount, `sanity: ${url} declares -fill tokens`).toBeGreaterThanOrEqual(1);
                 expect(res.probes.length, `sanity: ${url} (${theme}) probed every -fill token`).toBe(res.tokenCount);
-                expect(res.resolved.every((v) => /^rgb/.test(v)), `sanity: -fill tokens resolve on ${url} (${theme})`).toBe(true);
+                expect(res.probes.every((p) => /^rgb/.test(p.resolved)), `sanity: -fill tokens resolve on ${url} (${theme})`).toBe(true);
+
+                // The attribution floor. In LIGHT theme the twins diverge
+                // by construction, so at least one -fill value must remain
+                // uniquely attributable or this arm has gone vacuous for
+                // the theme it exists to guard. In DARK the twins ride
+                // their bases and a fully-shared set is the expected,
+                // documented outcome — asserted as a shape rather than
+                // left to be discovered.
+                // EVERY token, not merely one: a one-survivor floor would
+                // let per-token attribution erode silently as tokens are
+                // added or retuned, which is the failure mode the
+                // narrowing above makes possible in the first place.
+                // Measured on both walked consumers: survivors === 2 ===
+                // tokenCount, so this passes today and goes red the first
+                // time a single -fill token stops being attributable in
+                // the theme the family exists for.
+                if (theme === 'light') {
+                    expect(res.resolved.length,
+                        `sanity: ${url} (light) — every -fill colour must stay uniquely `
+                        + `attributable; these collide with a non-fill token: ${res.shared.join(', ')}`)
+                        .toBe(res.tokenCount);
+                }
 
                 // Per-token known-answer, and the floor that makes the stale-probe
                 // bug above non-recurrent: each token must resolve to ITS OWN
