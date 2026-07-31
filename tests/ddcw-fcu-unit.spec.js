@@ -320,7 +320,7 @@ test.describe('ddcw-fcu-unit: coil physics (quasi-static)', () => {
         });
     });
 
-    test('low-charge / blocked-coil faults collapse the coil ΔT to zero', () => {
+    test('low-charge / blocked-condenser faults collapse the coil ΔT to zero', () => {
         // The "no ΔT over the coil" diagnostic: an energized-but-faulted
         // compressor moves no heat, so the coil leaves at the zone temp
         // EXACTLY (zero load through the psych solver is an identity).
@@ -335,7 +335,7 @@ test.describe('ddcw-fcu-unit: coil physics (quasi-static)', () => {
         const Unit = loadUnit();
         const healthy = quasi(Unit, (pl) => { pl.actuators.y1 = true; pl.actuators.y2 = true; });
         expect(coilDt(healthy)).toBeLessThan(-3);
-        ['low-charge', 'blocked-coil'].forEach((fault) => {
+        ['low-charge', 'blocked-condenser'].forEach((fault) => {
             const p = quasi(Unit, (pl) => {
                 pl.actuators.y1 = true;
                 pl.actuators.y2 = true;
@@ -1046,12 +1046,17 @@ test.describe('ddcw-fcu-unit: airflow, proof, and the blind low-limit', () => {
 
     test('a capacity fault is NOT an airflow fault', () => {
         // The vocabulary's load-bearing distinction, and the reason the
-        // old `airflow` fault was renamed: blocked-coil and low-charge
-        // kill the heat transfer while the air keeps moving. Only
-        // fan-belt stops the air. A model that conflated them would make
-        // the proof switch drop on a dirty coil.
+        // old `airflow` fault was renamed: blocked-condenser and
+        // low-charge kill the heat transfer while the air keeps moving.
+        // Only fan-belt stops the air. A model that conflated them would
+        // make the proof switch drop on a refrigeration-side failure.
+        //
+        // This is also why the capacity fault is named for the CONDENSER
+        // and not the coil in the cabinet: a blocked evaporator would
+        // restrict the air, which is precisely what this row proves does
+        // NOT happen here (codebase-issues #246).
         const Unit = loadUnit();
-        ['low-charge', 'blocked-coil'].forEach((fault) => {
+        ['low-charge', 'blocked-condenser'].forEach((fault) => {
             const pl = runToProof(Unit, null);
             pl.conditions.fault = fault;
             Unit.update(pl, 1);
