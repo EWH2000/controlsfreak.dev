@@ -10462,3 +10462,25 @@ the field claim as fact and points here; whichever way this goes, the
 verdict string, the button label, the comment, and the
 `tests/ddcw-fcu-unit.spec.js` row titled "a capacity fault is NOT an
 airflow fault" all move together.
+
+### 247. `buildAnswerText` joins the correct choice to `explain` with an unconditional `". "`, so most published FAQPage answers carry a double period *(noticed 2026-07-30, the #241 review round — pre-existing and site-wide, not fixed there)*
+
+`.eleventy.js`'s `buildAnswerText` — the helper behind the `faqPageJsonLd`
+filter that `head.njk` emits on every `nav: practice` page — closes with:
+
+    return answer + (answer && explanation ? ". " : "") + explanation;
+
+The guard covers the *empty* case only, never the case where `answer`
+already ends in terminal punctuation. Every multiple-choice question whose
+correct choice is written as a full sentence therefore publishes
+`…before you touch a setpoint.. Both numbers are correct…` in its
+`acceptedAnswer.text`. Measured 2026-07-30: 6 of the 10 entries on
+`practice/surviving-first-months.html` and 9 of 10 on
+`practice/boolean-logic-latches.html`.
+
+Cosmetic, and only crawlers read it — but it is *published* structured
+data, and the fix is one line: strip a trailing `.`/`!`/`?` from `answer`
+before appending the separator, or make the separator conditional on the
+last character. Left alone in the #241 PR because that PR touches one quiz
+bank and this reaches every practice page's JSON-LD; it wants its own
+branch and its own before/after over the built site.
