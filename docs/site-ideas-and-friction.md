@@ -673,6 +673,23 @@ covers heating, economizing, mechanical cooling and the
 fighting-itself fault. `ddc-workbench-ahu-mockup.html` stays as the
 archival depiction record and was not edited.
 
+**The 2026-07-31 depiction review** (owner, reading the rendered page)
+put the return and relief blades back on the angle they are commanded
+and moved the return damper up into the drop where one actually sits —
+mechanism, measurements and the two guards that now hold it are
+codebase-issues **#253**. It also landed a teaching beat in the
+wiresheet's airflow-proof paragraph, in his own framing: *"a lot of
+times status is the best thing you have, then you have to look at
+delta T and such if you think it's lying."* The page already taught
+that command, status and proof are three different claims; what it
+lacked was the field reality that you rarely get all three, so the
+job is deciding whether to believe the one you have — and the ΔT well
+is how. Scoped to **the AHU page only**: the paired lesson
+(`education/status-and-proof.html`) carries a `canonical` and is
+live-indexed, so widening a depiction PR into it was ruled out.
+Teaching the same habit there is a separate pass, and the lesson is
+where it would land.
+
 Still open on it, in rough priority order:
 * **the program library is one sheet.** `econ-2stage` is the honest
   starter — economizer permit, proof-interlocked staging, a

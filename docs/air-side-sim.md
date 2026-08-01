@@ -180,6 +180,34 @@ then the Workbench is a react-baseline and reference point, not a surfaced page.
 > stops). Both deferred by owner decision to a single pre-live sweep alongside
 > the AHU programs. Read them before touching a sequence here.
 
+### Rulings from the depiction review (2026-07-31)
+
+- **Provenance is about what KIND of point it is, not how the number was
+  derived** (owner, 2026-07-31). This is the general rule for the register
+  colours, not a note about one well. Every commanded value on the drawing is
+  computed by the program — a damper position, a valve position, a stage call
+  and a fan speed are all arithmetic somewhere — so derivation cannot be the
+  test, or the whole screen would go blue. **A command is a command.** Blue /
+  CALCULATED is reserved for a readout that is **not a point at all**: the ΔT
+  well, which is arithmetic on two other numbers already on the screen and
+  exists nowhere in the controller. Audited against the shipped page and it
+  already matches — **9 commanded wells, 1 calculated (ΔT), 6 measured**.
+- **Damper blades draw the commanded angle, and the two vertical-flow sets
+  were rebuilt to make that true** (codebase-issues **#253** carries the
+  mechanism and the measured before/after). The return damper also **moved up
+  into the drop**, above the casing roof, which is where a return damper
+  actually sits and what puts the recirculated air *through* it. The intake
+  damper keeps its mild skew by owner decision — it reads correct at every
+  position, and the half-extent that causes the skew is what seals the intake
+  opening edge to edge.
+- **Status is usually all you get, and the ΔT well is the cross-check** (owner,
+  2026-07-31). The page already taught that command, status and proof are three
+  different claims; what it did not say is that in the field you rarely have all
+  three, so the real work is deciding whether to believe the one you have. That
+  beat shipped in the airflow-proof paragraph of the wiresheet prose, **on this
+  page only** — the paired live lesson (`education/status-and-proof.html`) was
+  deliberately left for a separate pass rather than widened into a depiction PR.
+
 **The FCU line, increment by increment** — a closed record of how the fan-coil
 Workbench got built, kept because the PR is where the reasoning lives. Phase 7
 and later do not extend it; read *Where the arc stands* above for the present.

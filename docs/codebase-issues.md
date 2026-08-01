@@ -10886,3 +10886,83 @@ already in the mirror) and **never** on the `<a>` subtrees. On the AHU that is
 safe as drawn — its three links carry no descendant `<text>`, only an
 `aria-label` — but the FCU's links wrap "DX COIL" / "SUPPLY FAN" text and would
 need excluding explicitly, or they become nameless tab stops.
+
+### 253. Damper blades are drawn on an ellipse, so two of the three showed a position that was not the commanded one *(noticed 2026-07-31, AHU depiction review — **RESOLVED 2026-07-31**, same change)*
+
+`setBlades()` in `html/scripts/ddcw-ahu-unit.js` draws each blade as a line
+through its centre, scaling the half-extents by the open angle:
+
+    const dx = set.openIs === 'h' ? set.hx * Math.sin(a) : set.hx * Math.cos(a);
+    const dy = set.openIs === 'h' ? set.hy * Math.cos(a) : set.hy * Math.sin(a);
+
+Scaling x and y by **different** half-extents walks an ellipse, not a circle, so
+the rendered angle is `atan(tan θ · hy/hx)` and not θ. The drawing is the only
+place a damper position is shown, so a depiction that cannot show it is worth
+nothing — and on two of the three dampers it could not.
+
+**Measured on the shipped build** — middle blade, angle from horizontal, at each
+damper's OWN commanded position (the return rides `1 − oaFrac`, so its column
+headings are not the slider's):
+
+| damper | half-extents | 20 % open | 50 % open | 80 % open | should draw |
+|---|---|---|---|---|---|
+| return | 21 × 3.5 | 3.1° | **9.4°** | 27.2° | 18° / 45° / 72° |
+| relief | 4.5 × 12 | 40.9° | **69.5°** | 83.1° | 18° / 45° / 72° |
+| outside air | 9 × 11.5 | 75.7° | 52.0° | 22.5° | 72° / 45° / 18° |
+
+The two vertical-flow dampers are open when their blades stand VERTICAL, so the
+angle from horizontal rises with the command; the intake damper is open when its
+blades lie horizontal, so its column falls. All three read 0° / 90° exactly at
+the ends.
+
+A commanded half-open return damper rendered at 9.4° is **visually
+indistinguishable from shut**, and only read as more-open-than-shut past 89 %
+travel. Relief skews the other way and reads wide from the first nudge. Both
+ends were always exact, which is why the defect survived review: the extremes
+are right and only the travel between them lies.
+
+**The root cause on the return damper was the blade ARRANGEMENT, not the
+constants.** Its three blades were stacked vertically (`cx` all 200) — the
+layout for a damper in *horizontal* flow — while its flow is downward. Every
+blade therefore had to span the full 42-wide opening to seal, which is what
+forced `hx: 21` against `hy: 3.5` and with it a 6:1 skew. Fixing the numbers
+alone would have unsealed the opening; fixing the arrangement made the honest
+numbers available.
+
+**Fix.** Both vertical-flow sets now sit **side by side across** their opening,
+each chord covering its own share of the width, with **`hx === hy`** so the
+drawn angle is the commanded angle by construction:
+
+* return — `cx [186, 200, 214]`, `cy 223`, `7 × 7`: three chords of 14 tile the
+  42-wide opening (179–221) edge to edge when shut, and stand 14 tall inside the
+  26-tall frame when open.
+* relief — `cx [298, 310, 322]`, `cy 77`, `6 × 6`: three chords of 12 tile the
+  36-wide opening (292–328). Equalising at the old 9-unit spacing would have
+  left 4.5 units of gap at each edge when shut — "air bypasses the damper", the
+  one thing the intake damper's own comment warns against.
+
+Re-measured after: **45.00°** at a commanded 50 % on both, linear at every step,
+with residuals under 0.05° from `toFixed(2)` on the written coordinates.
+
+**The outside-air damper was left as drawn, by owner decision.** Its `hy` is
+half the blade *pitch*, which is what makes a shut stack seal the full-height
+intake opening; the 7° it costs at mid-travel is a lean, not a wrong reading,
+and it reads correct at every position. `tests/ddc-workbench-ahu-page.spec.js`
+now **pins that deviation** rather than leaving it as an absence, so the
+exemption cannot decay in either direction.
+
+**Two things shipped alongside, both found by eye and neither about angles.**
+
+1. *The return damper was in the wrong place.* Its frame sat at y256–282 —
+   **below** the casing roof at y250, i.e. inside the unit — while the drop's
+   throat runs y141 to that roof. It moved to y210–236, inside the drop. The
+   `rc` chevron rail (x200, y118 → 250) now passes through the frame, so the
+   recirculated air visibly goes *through* the damper instead of past where it
+   was drawn. The SVG `<desc>` already claimed it "sits in the throat of that
+   drop" — that sentence became true rather than needing an edit.
+2. *A leader and its anchor dot are separate elements.* Moving the damper moved
+   the `path.ahu-leader`, and left the `circle.ahu-anchor` stranded on the
+   casing roof — silent, drawing-only, and invisible to every existing
+   assertion. A new row walks **all nine** callouts and compares
+   `getPointAtLength(getTotalLength())` against the dot's centre. Both new
+   guards were checked against the pre-fix markup and fail on it.
