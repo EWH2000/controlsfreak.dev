@@ -1,8 +1,8 @@
 // Dev tool — the wiresheet layout review matrix (#205). Screenshots the
-// WHOLE .fbe-canvas of every shipped sheet on BOTH FBE consumer pages
+// WHOLE .fbe-canvas of every shipped sheet on EVERY FBE consumer page
 // across theme × root-font × display-mode, and writes a contact-sheet
 // index.html, so the owner can eyeball layout candidates in one pass
-// instead of hand-driving two pages through twelve states per sheet.
+// instead of hand-driving three pages through twelve states per sheet.
 //
 // NOT a CI spec — same status as screenshot-diagrams.mjs / perf-profile.mjs
 // (report-only tooling; a screenshot can't assert, and the geometry
@@ -18,9 +18,10 @@
 // The contact sheet lists what THIS run produced — a trimmed run writes
 // a trimmed sheet, it never merges into an earlier run's dir.
 //
-// The matrix (full run = 7+3 sheets × 2 themes × 2 fonts × 3 modes):
+// The matrix (full run = 7+4+1 sheets × 2 themes × 2 fonts × 3 modes):
 //   page/sheet   public function-block-editor × its 7 EXAMPLES;
-//                ddc-workbench-fcu × each FCU_PROGRAMS key. Keys are pinned
+//                ddc-workbench-fcu × each FCU_PROGRAMS key; ddc-workbench
+//                (AHU) × its one AHU_PROGRAMS key. Keys are pinned
 //                here (not extracted) — a renamed example makes the run
 //                fail loudly on the chip/option lookup, which is fine
 //                for a review rig.
@@ -58,8 +59,10 @@
 //                fs-wide is the one that fits).
 //
 // Flags (all optional, combinable):
-//   --page=public|workbench   one consumer page only (aliases accepted:
-//                             function-block-editor / fbe, ddc-workbench-fcu / ddcw)
+//   --page=public|workbench|ahu
+//                             one consumer page only (aliases accepted:
+//                             function-block-editor / fbe,
+//                             ddc-workbench-fcu / ddcw, ddc-workbench)
 //   --sheet=a,b,c             only these sheet keys (matched on either page)
 //   --only-defective          the five formerly-defective public sheets
 //                             (freeze / econ / tstat-cool / tstat-heat /
@@ -69,9 +72,9 @@
 //                             fallback is DELIBERATE (see the layout
 //                             comment in function-block-editor.html) —
 //                             it is in the matrix so a relayout can be
-//                             checked for NOT "fixing" it. Workbench
-//                             sheets are excluded; combine with
-//                             --page=workbench if you want those alone.
+//                             checked for NOT "fixing" it. Both workbench
+//                             pages are excluded; combine with
+//                             --page=workbench / --page=ahu for those.
 //   --theme=dark              trim the theme axis (comma-separable)
 //   --font=16                 trim the root-font axis
 //   --mode=normal,fs          trim the mode axis
@@ -109,20 +112,37 @@ const PAGES = {
         aliases: ['workbench', 'ddc-workbench-fcu', 'ddcw'],
         // FCU_PROGRAMS keys (ddc-workbench-fcu.html).
         sheets: ['cool-2stage', 'cool-1stage', 'cool-2stage-fanon', 'cool-2stage-safeties'],
-        async loadSheet(page, key) {
-            // The editor lazy-mounts on first Wiresheet open …
-            await page.click('.tabs.tabs-flush [data-tab="wiresheet"]');
-            await page.waitForSelector('#ddcw-fbe-inner .fbe-block', { state: 'visible' });
-            // … then the program picker listens for change ('custom' is
-            // refused; sample keys load synchronously).
-            await page.evaluate((k) => {
-                const sel = document.getElementById('ddcw-program');
-                sel.value = k;
-                sel.dispatchEvent(new Event('change', { bubbles: true }));
-            }, key);
-        },
+        loadSheet: loadWorkbenchSheet,
+    },
+    // The AHU workbench is the same shell — same tab, same picker, same
+    // canvas ids — so it shares loadWorkbenchSheet and differs only in
+    // its path and its one program key. It was absent from this rig
+    // until the hand-authored-names pass, which is why a "full run"
+    // reviewed 11 of the 12 shipped sheets.
+    'ahu': {
+        path: '/simulators/ddc-workbench.html',
+        canvas: '#ddcw-fbe-canvas',
+        inner: '#ddcw-fbe-inner',
+        aliases: ['ahu', 'ddc-workbench', 'ddcw-ahu'],
+        // AHU_PROGRAMS keys (ddc-workbench.html).
+        sheets: ['econ-2stage'],
+        loadSheet: loadWorkbenchSheet,
     },
 };
+
+// Both workbench pages mount the editor lazily on first Wiresheet open,
+// then switch programs through the picker.
+async function loadWorkbenchSheet(page, key) {
+    await page.click('.tabs.tabs-flush [data-tab="wiresheet"]');
+    await page.waitForSelector('#ddcw-fbe-inner .fbe-block', { state: 'visible' });
+    // The picker listens for change ('custom' is refused; sample keys
+    // load synchronously).
+    await page.evaluate((k) => {
+        const sel = document.getElementById('ddcw-program');
+        sel.value = k;
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+    }, key);
+}
 
 const ONLY_DEFECTIVE = ['freeze', 'econ', 'tstat-cool', 'tstat-heat', 'reset', 'proof'];
 
@@ -159,7 +179,8 @@ function resolvePages() {
     const raw = flagVal('page');
     if (!raw) return Object.keys(PAGES);
     const key = Object.keys(PAGES).find((k) => PAGES[k].aliases.includes(raw));
-    if (!key) throw new Error('--page=' + raw + ': expected one of public / workbench (or an alias)');
+    if (!key) throw new Error('--page=' + raw + ': expected one of '
+            + Object.keys(PAGES).join(' / ') + ' (or an alias)');
     return [key];
 }
 
@@ -435,7 +456,7 @@ async function main() {
     const modes = listFlag('mode', Object.keys(MODES));
     let pageKeys = resolvePages();
     if (args.includes('--only-defective') && !flagVal('page')) {
-        pageKeys = pageKeys.filter((k) => k !== 'workbench');
+        pageKeys = pageKeys.filter((k) => k !== 'workbench' && k !== 'ahu');
     }
 
     const now = new Date();
