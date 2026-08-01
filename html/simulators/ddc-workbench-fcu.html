@@ -153,9 +153,11 @@ noindex: true
            named. Two unit pages now draw the same glyph vocabulary, so
            it reads from one source; the .ddcw-chip transition merged
            into the existing .ddcw-chip rule there rather than being
-           re-declared. Nothing about the glyphs on THIS page changed —
-           they still carry tabindex + role="button" and the shell binds
-           them generically. */
+           re-declared. Nothing about the PAINT of the glyphs on THIS page
+           changed in that move; their a11y shape did, one commit later —
+           #227(b) took the tabindex and the role="button" off all three
+           (see the graphic's own header comment below), and the shell
+           still binds them generically. */
 
         /* Supply-fan spin — a 5-blade impeller group; speed tracks fan
            fraction, still when off. Reduced motion freezes it (the per-blade
