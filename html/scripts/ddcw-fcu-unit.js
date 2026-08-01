@@ -523,7 +523,7 @@ const DDCWFcuUnit = (function () {
         // `conv`: the shared formatter short-circuits a bi to ON / OFF
         // before it reaches either.
         { id: 'fan-status',       kind: 'bi',    dir: 'sensor',   plantKey: 'fan-status',       name: 'Fan Sts' },
-        { id: 'fan-speed',        kind: 'ao',    dir: 'actuator', plantKey: 'fan-speed',        name: 'Fan',      unit: '%', min: 0, max: 100, step: 5, relinquishDefault: 0 },
+        { id: 'fan-speed',        kind: 'ao',    dir: 'actuator', plantKey: 'fan-speed',        name: 'Fan Spd',  unit: '%', min: 0, max: 100, step: 5, relinquishDefault: 0 },
         { id: 'fan-enable',       kind: 'bo',    dir: 'actuator', plantKey: 'fan-enable',       name: 'Fan En',   relinquishDefault: false },
         { id: 'y1',               kind: 'bo',    dir: 'actuator', plantKey: 'y1',               name: 'Y1',       relinquishDefault: false },
         { id: 'y2',               kind: 'bo',    dir: 'actuator', plantKey: 'y2',               name: 'Y2',       relinquishDefault: false },
@@ -769,7 +769,21 @@ const DDCWFcuUnit = (function () {
         } else if (d.stage === 0) {
             cls = 'warn';  txt = 'Compressor off — fan only, no ΔT across the coil';
         } else if (d.fault === 'low-charge') {
-            cls = 'error'; txt = 'No ΔT across coil — low charge, not cooling';
+            // Symptom first, charge as ONE candidate — never the finding.
+            // `d.fault` is injected ground truth the graphic never draws,
+            // so a verdict that reads "low charge" is reporting what the
+            // MODEL knows, not what the SCREEN shows: these readings
+            // cannot separate low charge from a plugged condenser, a dead
+            // compressor or a plugged metering device (they are literally
+            // the same displayed state as the blocked-condenser scenario
+            // one button over — codebase-issues #247). Naming the
+            // instrument that WOULD settle it is the honest close, and it
+            // is the same discipline the condenser branch below applies
+            // by naming the side instead of the part. Owner ruled
+            // disposition 3 on 2026-08-01: keep a distinct string, soften
+            // the claim. Moves with the page's blocked-condenser
+            // `.ref-note`, which names this verdict.
+            cls = 'error'; txt = 'No ΔT across coil — air moving; low charge is one candidate, gauges settle it';
         } else if (d.fault === 'blocked-condenser') {
             // The one verdict that points OFF the drawing, and that is
             // the lesson: the indoor side reads perfect — fan commanded,
