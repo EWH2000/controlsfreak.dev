@@ -424,6 +424,63 @@ test.describe('DDC Workbench — the blocked-condenser scenario is wired end to 
     });
 });
 
+test.describe('DDC Workbench — the fullscreen cockpit keeps its graphic', () => {
+
+    // Same symptom family as the AHU cockpit: fullscreen makes the active
+    // pane the single scroller, the readouts + controls column outruns the
+    // scrollport, and before the sticky pin the graphic scrolled partly out
+    // of view over dead space (246 of 390px left at 1280×720). The graphic
+    // spans all three grid rows, so it pins without any wrapper; `bottom: 0`
+    // rides along because the item is CENTERED (see the page's head block).
+
+    test('scrolled to the bottom, the graphic is still in full view', async ({ page }) => {
+        await page.goto(URL);
+        await page.click('.tool-card-fullscreen-btn');
+        const m = await page.evaluate(() => {
+            const pane = document.querySelector('#tab-unit');
+            pane.scrollTop = pane.scrollHeight;
+            const paneR = pane.getBoundingClientRect();
+            const pinR = document.querySelector('.fcu-graphic').getBoundingClientRect();
+            const visTop = Math.max(pinR.top, paneR.top);
+            const visBot = Math.min(pinR.bottom, paneR.bottom);
+            return {
+                scrollTop: pane.scrollTop,
+                paneClient: pane.clientHeight,
+                paneBottom: paneR.bottom,
+                pinnedHeight: pinR.height,
+                pinnedBottom: pinR.bottom,
+                visible: Math.max(0, visBot - visTop),
+            };
+        });
+
+        // Non-vacuity floor: the pane must actually have scrolled, or the
+        // visibility assertions below pass without testing the pin.
+        expect(m.scrollTop, 'the pane actually scrolled').toBeGreaterThan(0);
+
+        // The graphic is fully visible (it fits the 1280×720 scrollport;
+        // the min() keeps the row honest if a retune ever outgrows it)…
+        expect(m.visible, 'the graphic still fills the view at max scroll')
+            .toBeGreaterThanOrEqual(Math.min(m.pinnedHeight, m.paneClient) - 2);
+
+        // …including its bottom edge — the sticky must yield any overhang
+        // at the end of the travel, never hard-pin the top.
+        expect(m.pinnedBottom, 'the graphic bottom is on-screen')
+            .toBeLessThanOrEqual(m.paneBottom + 2);
+    });
+
+    test('the stacked fallback stays ordinary flow (sticky is off)', async ({ page }) => {
+        // 800px wide trips the one-column @media arm; the override pins
+        // position back to static so the graphic cannot paint over the
+        // points and controls scrolling under it.
+        await page.setViewportSize({ width: 800, height: 720 });
+        await page.goto(URL);
+        await page.click('.tool-card-fullscreen-btn');
+        const pos = await page.evaluate(
+            () => getComputedStyle(document.querySelector('.fcu-graphic')).position);
+        expect(pos, 'one-column fallback must not pin the graphic').toBe('static');
+    });
+});
+
 test.describe('DDC Workbench — the low-charge verdict offers a candidate, not a finding (#247)', () => {
     test('it names the symptom, and stays a different string from the condenser one', async ({ page }) => {
         // #247, owner disposition 3 (2026-08-01). The low-charge and
