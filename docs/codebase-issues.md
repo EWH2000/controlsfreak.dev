@@ -10420,13 +10420,22 @@ else's prints is a label, the meaning lives in the numbers underneath it) is the
 payload. `comparators-and-deadband.js` and its lesson were not touched — they
 are correct.
 
-**Reader-facing copy left alone, flagged for the owner.** The drill's card on
-`practice/index.html` still carries the format pill `'MCQ · TF · Numeric'`; the
-bank now also holds a `gotcha`, so that pill is out of date (the site's own
-convention elsewhere writes `'MCQ · TF · Gotcha · Numeric'`). It sits on a
-`canonical`-bearing page and no spec guards it, so it was not rewritten here.
-The *10-question drill* description and the `'10 Questions'` pill are both
-still true — sampling presents ten.
+**Reader-facing copy: the format pill WAS updated in the same change.** Adding a
+`gotcha` to the bank falsified the drill's format pill on
+`practice/index.html`, which read `'MCQ · TF · Numeric'`. It was rewritten to
+`'MCQ · TF · Gotcha · Numeric'` — the site's own convention elsewhere — in
+`71c4862`, on the same branch, before PR #456 merged. The card now reads
+`['10 Questions', 'MCQ · TF · Gotcha · Numeric', 'Field Sampler', '~ 5 min']`,
+and no `'MCQ · TF · Numeric'` pill survives anywhere on the landing. The
+*10-question drill* description and the `'10 Questions'` pill were always still
+true — sampling presents ten of the eleven.
+
+*(This paragraph originally read "left alone, flagged for the owner", describing
+the pill as outstanding. It was written before `71c4862` landed on the same
+branch and was never trued up, so it merged stale — corrected 2026-07-31 from
+the FBE block-name lane. No spec guards a format pill, which is why the drift
+was silent on both sides: the copy went stale against the bank, then the note
+went stale against the copy.)*
 ### 242. The AHU mockup's setpoint prose disagrees with the physics module's shipped defaults *(noticed 2026-07-29, deadband/setpoint-gap terminology sweep — for LANE 7.4 — **RESOLVED 2026-07-30** — the module won, and the prose was re-derived, not copied)*
 
 **The physics module wins (owner decision, 2026-07-30).** The AHU ships cooling
