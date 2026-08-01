@@ -173,6 +173,29 @@ keywords: wiresheet logic block and or pid wire program sequence
         // Graph literals — block positions chosen so each sheet reads
         // left (sources) to right (outputs). FBE.makeGraph deep-clones
         // them, so the literals are never mutated.
+        //
+        // NAMES. Every block here carries a `name:`, so every head reads
+        // `TAG · Name` rather than the bare type label. The type says
+        // what the block computes; the name says what it IS on this
+        // sheet, which is the half a reader cannot recover from the
+        // picture. Each was written from what the block consumes and
+        // feeds. The head budget is 18 characters counting the ' · '
+        // separator — with the 5-char CONST tag a constant gets 10, which
+        // is why the reset sheet's slope is `Rst Slope` and not `Reset
+        // Slope` — and tests/fbe-block-names.spec.js fails on a head that
+        // clips. A block the visitor drags out of the palette has no name
+        // and heads with its label; the inspector's Name field is how
+        // they author one.
+        //
+        // ⚠ tstat-cool and tstat-heat are near-identical sheets whose
+        // names are deliberately INVERTED, and the inversion is the whole
+        // lesson. Cooling: `hi` (sp + db) is the make point and `over`
+        // SETS the latch — Cool Make / Cool Set. Heating is reverse-acting,
+        // so on that sheet `hi` is the BREAK point and `over` RESETS —
+        // Heat Break / Heat Reset. Copying either sheet's names onto the
+        // other would have a warm space calling for heat. Both sheets show
+        // `A > B` / `A < B` on their comparators, so before names the
+        // inversion was invisible; it is now readable at a glance.
         const EXAMPLES = {
             freeze: {
                 // Layout: inv shares the top row (y 40) with fz and fan
@@ -180,12 +203,12 @@ keywords: wiresheet logic block and or pid wire program sequence
                 // falls inside inv's column — passes beneath the block
                 // instead of through it.
                 blocks: [
-                    { id: 'fz',    type: 'bi',  x: 20,  y: 40,  params: { state: false } },
-                    { id: 'rst',   type: 'bi',  x: 20,  y: 200, params: { state: false } },
-                    { id: 'latch', type: 'sr',  x: 210, y: 90 },
-                    { id: 'inv',   type: 'not', x: 420, y: 40 },
-                    { id: 'fan',   type: 'bo',  x: 620, y: 40 },
-                    { id: 'alarm', type: 'bo',  x: 620, y: 200 },
+                    { id: 'fz',    type: 'bi',  x: 20,  y: 40,  params: { state: false }, name: 'Freezestat' },
+                    { id: 'rst',   type: 'bi',  x: 20,  y: 200, params: { state: false }, name: 'Man Reset' },
+                    { id: 'latch', type: 'sr',  x: 210, y: 90, name: 'Trip Latch' },
+                    { id: 'inv',   type: 'not', x: 420, y: 40, name: 'Fan Permit' },
+                    { id: 'fan',   type: 'bo',  x: 620, y: 40, name: 'Fan Cmd' },
+                    { id: 'alarm', type: 'bo',  x: 620, y: 200, name: 'Frz Alarm' },
                 ],
                 wires: [
                     { from: ['fz', 'O'],     to: ['latch', 'S'] },
@@ -197,12 +220,12 @@ keywords: wiresheet logic block and or pid wire program sequence
             },
             econ: {
                 blocks: [
-                    { id: 'oat',  type: 'ai',    x: 20,  y: 30,  params: { value: 55 } },
-                    { id: 'oasp', type: 'const', x: 20,  y: 170, params: { value: 60 } },
-                    { id: 'cool', type: 'bi',    x: 20,  y: 310, params: { state: true } },
-                    { id: 'cmp',  type: 'lt',    x: 200, y: 60 },
-                    { id: 'gate', type: 'and',   x: 390, y: 180 },
-                    { id: 'econ', type: 'bo',    x: 560, y: 190 },
+                    { id: 'oat',  type: 'ai',    x: 20,  y: 30,  params: { value: 55 }, name: 'OAT' },
+                    { id: 'oasp', type: 'const', x: 20,  y: 170, params: { value: 60 }, name: 'Econ Lock' },
+                    { id: 'cool', type: 'bi',    x: 20,  y: 310, params: { state: true }, name: 'Cool Call' },
+                    { id: 'cmp',  type: 'lt',    x: 200, y: 60, name: 'Lock OK' },
+                    { id: 'gate', type: 'and',   x: 390, y: 180, name: 'Econ Permit' },
+                    { id: 'econ', type: 'bo',    x: 560, y: 190, name: 'Econ Cmd' },
                 ],
                 wires: [
                     { from: ['oat', 'O'],   to: ['cmp', 'A'] },
@@ -220,15 +243,15 @@ keywords: wiresheet logic block and or pid wire program sequence
                 // columns. hi starts at y 120 so temp clears it at
                 // larger root fonts too.
                 blocks: [
-                    { id: 'temp',  type: 'ai',    x: 190, y: 20,  params: { value: 72 } },
-                    { id: 'sp',    type: 'const', x: 20,  y: 170, params: { value: 74 } },
-                    { id: 'db',    type: 'const', x: 20,  y: 320, params: { value: 1 } },
-                    { id: 'hi',    type: 'add',   x: 190, y: 120 },
-                    { id: 'lo',    type: 'sub',   x: 190, y: 260 },
-                    { id: 'over',  type: 'gt',    x: 360, y: 20 },
-                    { id: 'under', type: 'lt',    x: 360, y: 230 },
-                    { id: 'stat',  type: 'sr',    x: 530, y: 120 },
-                    { id: 'cool',  type: 'bo',    x: 710, y: 140 },
+                    { id: 'temp',  type: 'ai',    x: 190, y: 20,  params: { value: 72 }, name: 'Space' },
+                    { id: 'sp',    type: 'const', x: 20,  y: 170, params: { value: 74 }, name: 'Cool SP' },
+                    { id: 'db',    type: 'const', x: 20,  y: 320, params: { value: 1 }, name: 'Deadband' },
+                    { id: 'hi',    type: 'add',   x: 190, y: 120, name: 'Cool Make' },
+                    { id: 'lo',    type: 'sub',   x: 190, y: 260, name: 'Cool Break' },
+                    { id: 'over',  type: 'gt',    x: 360, y: 20, name: 'Cool Set' },
+                    { id: 'under', type: 'lt',    x: 360, y: 230, name: 'Cool Reset' },
+                    { id: 'stat',  type: 'sr',    x: 530, y: 120, name: 'Cool Latch' },
+                    { id: 'cool',  type: 'bo',    x: 710, y: 140, name: 'Cool Cmd' },
                 ],
                 wires: [
                     { from: ['sp', 'O'],     to: ['hi', 'A'] },
@@ -247,15 +270,15 @@ keywords: wiresheet logic block and or pid wire program sequence
             'tstat-heat': {
                 // Layout matches tstat-cool — see the note there.
                 blocks: [
-                    { id: 'temp',  type: 'ai',    x: 190, y: 20,  params: { value: 68 } },
-                    { id: 'sp',    type: 'const', x: 20,  y: 170, params: { value: 70 } },
-                    { id: 'db',    type: 'const', x: 20,  y: 320, params: { value: 1 } },
-                    { id: 'hi',    type: 'add',   x: 190, y: 120 },
-                    { id: 'lo',    type: 'sub',   x: 190, y: 260 },
-                    { id: 'over',  type: 'gt',    x: 360, y: 20 },
-                    { id: 'under', type: 'lt',    x: 360, y: 230 },
-                    { id: 'stat',  type: 'sr',    x: 530, y: 120 },
-                    { id: 'heat',  type: 'bo',    x: 710, y: 140 },
+                    { id: 'temp',  type: 'ai',    x: 190, y: 20,  params: { value: 68 }, name: 'Space' },
+                    { id: 'sp',    type: 'const', x: 20,  y: 170, params: { value: 70 }, name: 'Heat SP' },
+                    { id: 'db',    type: 'const', x: 20,  y: 320, params: { value: 1 }, name: 'Deadband' },
+                    { id: 'hi',    type: 'add',   x: 190, y: 120, name: 'Heat Break' },
+                    { id: 'lo',    type: 'sub',   x: 190, y: 260, name: 'Heat Make' },
+                    { id: 'over',  type: 'gt',    x: 360, y: 20, name: 'Heat Reset' },
+                    { id: 'under', type: 'lt',    x: 360, y: 230, name: 'Heat Set' },
+                    { id: 'stat',  type: 'sr',    x: 530, y: 120, name: 'Heat Latch' },
+                    { id: 'heat',  type: 'bo',    x: 710, y: 140, name: 'Heat Cmd' },
                 ],
                 wires: [
                     { from: ['sp', 'O'],     to: ['hi', 'A'] },
@@ -279,8 +302,10 @@ keywords: wiresheet logic block and or pid wire program sequence
                 // invention, and in the field an output is an output —
                 // the instance NAME carries what it drives. So it heads
                 // 'AO · HW Vlv', matching how the AHU workbench roster
-                // names the same point, and this sheet is the public
-                // editor's one worked demonstration of a named block.
+                // names the same point. It was the first named block on
+                // this page and for a day the only one; every block on
+                // every sheet carries a name now, and this one is left
+                // exactly as the owner approved it.
                 // The fold also collapsed the sheet's two sinks into
                 // one: an unnamed AO used to sit at (510, 60) taking a
                 // second wire off the same OUT pin, which read as one
@@ -288,9 +313,9 @@ keywords: wiresheet logic block and or pid wire program sequence
                 // readout stopped being its own type. One command
                 // signal, one output point (owner, 2026-08-01).
                 blocks: [
-                    { id: 'pv',  type: 'ai',    x: 30,  y: 50,  params: { value: 68 } },
-                    { id: 'sp',  type: 'const', x: 30,  y: 220, params: { value: 72 } },
-                    { id: 'ctl', type: 'pid',   x: 270, y: 120,
+                    { id: 'pv',  type: 'ai',    x: 30,  y: 50,  params: { value: 68 }, name: 'Space' },
+                    { id: 'sp',  type: 'const', x: 30,  y: 220, params: { value: 72 }, name: 'Heat SP' },
+                    { id: 'ctl', type: 'pid',   x: 270, y: 120, name: 'Heat Loop',
                       params: { kc: 5, ti: 45, td: 0, action: 'reverse' } },
                     { id: 'rd',  type: 'ao',    x: 510, y: 230, name: 'HW Vlv' },
                 ],
@@ -311,14 +336,14 @@ keywords: wiresheet logic block and or pid wire program sequence
                 // but every link gets a long visible vertical run
                 // instead of a near-zero horizontal stub.
                 blocks: [
-                    { id: 'cmd',   type: 'bi',  x: 20,  y: 190, params: { state: true } },
-                    { id: 'sts',   type: 'bi',  x: 20,  y: 40,  params: { state: true } },
-                    { id: 'rst',   type: 'bi',  x: 475, y: 360, params: { state: false } },
-                    { id: 'inv',   type: 'not', x: 195, y: 40 },
-                    { id: 'fail',  type: 'and', x: 340, y: 190 },
-                    { id: 'tmr',   type: 'ton', x: 482, y: 40,  params: { pt: 15 } },
-                    { id: 'latch', type: 'sr',  x: 624, y: 190 },
-                    { id: 'alarm', type: 'bo',  x: 764, y: 40 },
+                    { id: 'cmd',   type: 'bi',  x: 20,  y: 190, params: { state: true }, name: 'Fan Cmd' },
+                    { id: 'sts',   type: 'bi',  x: 20,  y: 40,  params: { state: true }, name: 'Fan Sts' },
+                    { id: 'rst',   type: 'bi',  x: 475, y: 360, params: { state: false }, name: 'Man Reset' },
+                    { id: 'inv',   type: 'not', x: 195, y: 40, name: 'No Proof' },
+                    { id: 'fail',  type: 'and', x: 340, y: 190, name: 'Cmd No Flow' },
+                    { id: 'tmr',   type: 'ton', x: 482, y: 40,  params: { pt: 15 }, name: 'Fail Delay' },
+                    { id: 'latch', type: 'sr',  x: 624, y: 190, name: 'Fail Latch' },
+                    { id: 'alarm', type: 'bo',  x: 764, y: 40, name: 'Fan Alarm' },
                 ],
                 wires: [
                     { from: ['cmd', 'O'],    to: ['fail', 'A'] },
@@ -340,13 +365,13 @@ keywords: wiresheet logic block and or pid wire program sequence
                 // hop draws a tall visible elbow rather than a short
                 // block-to-block stub.
                 blocks: [
-                    { id: 'oat',   type: 'ai',    x: 20,  y: 40,  params: { value: 30 } },
-                    { id: 'slope', type: 'const', x: 20,  y: 170, params: { value: -0.667 } },
-                    { id: 'icpt',  type: 'const', x: 20,  y: 300, params: { value: 180 } },
-                    { id: 'scale', type: 'mul',   x: 190, y: 90 },
-                    { id: 'sum',   type: 'add',   x: 365, y: 190 },
-                    { id: 'clamp', type: 'limit', x: 540, y: 90,  params: { lo: 140, hi: 180 } },
-                    { id: 'hwsp',  type: 'ao',    x: 715, y: 190 },
+                    { id: 'oat',   type: 'ai',    x: 20,  y: 40,  params: { value: 30 }, name: 'OAT' },
+                    { id: 'slope', type: 'const', x: 20,  y: 170, params: { value: -0.667 }, name: 'Rst Slope' },
+                    { id: 'icpt',  type: 'const', x: 20,  y: 300, params: { value: 180 }, name: 'Base SP' },
+                    { id: 'scale', type: 'mul',   x: 190, y: 90, name: 'Rst Offset' },
+                    { id: 'sum',   type: 'add',   x: 365, y: 190, name: 'Raw HWSP' },
+                    { id: 'clamp', type: 'limit', x: 540, y: 90,  params: { lo: 140, hi: 180 }, name: 'HWSP Clamp' },
+                    { id: 'hwsp',  type: 'ao',    x: 715, y: 190, name: 'HWSP' },
                 ],
                 wires: [
                     { from: ['oat', 'O'],   to: ['scale', 'A'] },
