@@ -2044,6 +2044,8 @@ input[type="range"]::-moz-range-thumb {
 .psy-pill:focus-visible,
 #th-rt-scroll:focus-visible,
 #fbe-canvas:focus-visible,
+.fbe-insp-row input:focus-visible,
+.fbe-insp-row select:focus-visible,
 .bo-id.bo-copyable:focus-visible,
 .bvid-copyable:focus-visible,
 .bec-id.bec-copyable:focus-visible,
@@ -4360,6 +4362,22 @@ p.ref-note.compact {
     box-shadow: 0 1px 0 var(--bevel-lo);
 }
 .fbe-block-sel { border-color: var(--accent); }
+/* The head carries either the block TYPE's label ("SR LATCH") or, once
+   the instance has a name, `TAG · Name` ("SR · Y1 Latch") on ONE line.
+   nowrap + ellipsis is LOAD-BEARING, not polish. Pins live in
+   .fbe-block-body, after the head in DOM order, so anything that grows
+   the head moves every pin and every wire endpoint below it — and the
+   workbench comparator banks stack ~89.7px blocks on a 90px row pitch
+   with ~0.3px clearance. Measured on the public sheet: a 19-character
+   head wraps and grows its block 72.97 → 88.84px. It has never fired
+   only because the longest type label is 8 characters with no space to
+   break at; a name introduces spaces, so the accident ends here.
+   The budget is 18 characters INCLUDING tag and separator — 8.5rem of
+   block less the 1px borders box-sizing puts inside it, less the
+   0.9rem of padding, over a 0.62rem mono advance at 0.04em tracking;
+   verified in-browser and stable across root fonts 12–32px, since the
+   border term is px and doesn't scale. Past that the name clips with
+   an ellipsis and fbe-editor.js's `title` attribute is the recovery. */
 .fbe-block-head {
     font-family: var(--mono);
     font-size: 0.62rem;
@@ -4371,8 +4389,31 @@ p.ref-note.compact {
     padding: 0.22rem 0.45rem;
     border-radius: 2px 2px 0 0;
     cursor: move;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* --text-dim on --surface-2 measures 4.81:1 dark / 5.04:1 light —
+   over the 4.5:1 small-text floor in both themes (the CLAUDE.md
+   figures are on --surface; this pair sits on the raised header
+   strip). .fbe-block-name deliberately carries NO colour of its own:
+   inheriting the head keeps it --text-bright normally AND --accent
+   when the block is selected, which is what leaves the tag as the
+   only dim part in either state. */
+.fbe-block-tag { color: var(--text-dim); }
+/* The separator is CSS, not a text node: not selectable, and the empty
+   alternative text keeps it out of the accessibility tree, so a screen
+   reader hears "AI OAT" rather than "AI middle dot OAT". The bare
+   `content` above it is the fallback for engines without alt text. */
+.fbe-block-tag::after {
+    content: '·';
+    content: '·' / '';
+    margin: 0 0.3em;
 }
 .fbe-block-sel .fbe-block-head { background: var(--accent-dim); color: var(--accent); }
+/* Selection repaints the whole head accent — the tag gives up its dim
+   step rather than introduce a second ink colour on the accent wash. */
+.fbe-block-sel .fbe-block-head .fbe-block-tag { color: inherit; }
 .fbe-block-body {
     display: flex;
     justify-content: space-between;
@@ -4463,6 +4504,7 @@ p.ref-note.compact {
     margin-bottom: 0.15rem;
 }
 .fbe-insp-row input[type="number"],
+.fbe-insp-row input[type="text"],
 .fbe-insp-row select {
     width: 7rem;
     font-family: var(--mono);
@@ -4473,6 +4515,10 @@ p.ref-note.compact {
     background: var(--surface);
     color: var(--text-bright);
 }
+/* Wider than the numeric fields: a block NAME has an 18-character head
+   budget (tag + separator included), and the field should show what
+   will fit rather than scroll it. */
+.fbe-insp-row input[type="text"] { width: 9.5rem; }
 .fbe-insp-check {
     flex-direction: row;
     align-items: center;
