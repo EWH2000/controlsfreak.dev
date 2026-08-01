@@ -318,6 +318,13 @@ const FBE = (function () {
         },
         ao: {
             // Sink — no outputs. The page reads `.in.IN` to display it.
+            // This is ALSO the display-only sink: a separate 'readout'
+            // type used to sit beside it, structurally identical (one
+            // number input, no outputs, same value strip), and was
+            // folded away 2026-08-01. A display-only output is an
+            // editor invention — in the field an output is an output,
+            // and the instance NAME says what it drives ('HW Vlv',
+            // 'Fan Spd'). Don't reintroduce a type to carry that.
             label: 'ANALOG OUT', tag: 'AO', category: 'I/O',
             inputs: [{ name: 'IN', kind: 'number' }],
             outputs: [],
@@ -326,15 +333,6 @@ const FBE = (function () {
         bo: {
             label: 'BINARY OUT', tag: 'BO', category: 'I/O',
             inputs: [{ name: 'IN', kind: 'bool' }],
-            outputs: [],
-            evaluate: () => ({ out: {} }),
-        },
-        readout: {
-            // 'RDO' is a contraction, not a field term — accepted
-            // because 'VAL' would read as the .fbe-block-val strip
-            // sitting directly under the head on every block.
-            label: 'READOUT', tag: 'RDO', category: 'I/O',
-            inputs: [{ name: 'IN', kind: 'number' }],
             outputs: [],
             evaluate: () => ({ out: {} }),
         },

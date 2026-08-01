@@ -467,11 +467,15 @@ section). **Category keys mirror the landing pages' `navCard()`
   which you mean. **House usage on the DDC Workbench:** `deadband` is
   the **per-setpoint hysteresis** — the AHU module ships heating 68 /
   cooling 72 / deadband 2, so cooling makes at CSP + db = 74 and breaks
-  at CSP = 72 (the setpoint is the CUT-OUT). The mockup still depicts
-  73 / 68 → makes 75, breaks 73; the two disagree until lane 7.4 trues
-  one up (codebase-issues #242). Its *"Setpoints and the deadband"*
-  paragraph is still the reference implementation for telling the two
-  apart on one screen. The **separation between the heating and cooling
+  at CSP = 72 (the setpoint is the CUT-OUT). The live page and the
+  module agree on those figures; the mockup still shows the older
+  73 / 68 → makes 75, breaks 73 **by design** — it was deliberately
+  frozen as the archival depiction record when #242 resolved
+  (2026-07-30, the module won and the live page's prose was re-derived
+  from it rather than copied), so read its numbers as historical, never
+  as the house pair. Its *"Setpoints and the deadband"* paragraph is
+  still the reference implementation for telling the two apart on one
+  screen. The **separation between the heating and cooling
   setpoints** is named by layer: *setpoint gap* in code comments and the
   graphic's terse `SP DIFF` caption, spelled out as *the separation
   between the two setpoints* in running prose, where the short name was

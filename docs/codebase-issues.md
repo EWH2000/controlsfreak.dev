@@ -11171,3 +11171,171 @@ a comment in the TOUCH-TARGET FLOOR block, since the exempting fact lives in the
 changes**: drop the `(hover: none) and (pointer: coarse)` arm, or relax the
 width arm, and the inspector becomes reachable on a touch-primary device, at
 which point the one-line addition to the form-control family is the fix.
+
+### 257. The AHU's chevron painter picks its ink in JS, and one of the five is a `-fill` token *(noticed 2026-07-31, PR #457's depiction review — raised as its fourth depiction guess and never logged at the time — **BLESSED 2026-08-01**, owner ruling: mechanism and depiction both correct, the mapping flagged for a future pass)*
+
+`html/scripts/ddcw-ahu-unit.js:1887` — `strokeChevron(el, band)` maps the band a
+chevron run is carrying to an ink by writing the token straight onto the
+element:
+
+```js
+if (band === 'oa') el.style.stroke = 'var(--teal)';
+else if (band === 'mixed') el.style.stroke = 'var(--blue-cool)';
+else if (band === 'heat') el.style.stroke = 'var(--heat-fill)';
+else if (band === 'cool') el.style.stroke = 'var(--blue)';
+else el.style.stroke = 'var(--text-dim)';
+```
+
+**Five bands, five tokens** — outdoor, mixed-but-unconditioned, heated, cooled,
+and the `off` grey that IS the "no ΔT" tell. `--heat-fill` (`:1890`) is the
+**first and only `-fill` token written from JS anywhere in the repo**: a grep
+for the `.style.<prop> = 'var(--…-fill…)'` form across `html/` and `src/`
+returns exactly that one hit.
+
+**Owner ruling, 2026-08-01: the mechanism is blessed.** JS may SELECT which
+token an element gets. What it must never do is write a **resolved** colour: the
+value written has to stay a `var(--x)` **reference**, because a reference is
+resolved at paint and so re-resolves for free when the theme flips, while a
+resolved `rgb(…)` freezes one theme's colour into an inline style that
+out-specifies every stylesheet and no theme change can reach. That constraint is
+what makes the pattern safe, it is invisible at the call site, and this entry is
+where it is written down. **The depiction is ruled correct as well** —
+`--heat-fill` is the right identity for air the heating coil has just put heat
+into, and it is object paint on a stroked chevron, which is the sink the
+`-fill` family exists for.
+
+**What the guard does here — verified against the spec, not inferred.**
+`tests/fill-token-misuse.spec.js` genuinely covers this reference. Three checks:
+
+- Its `SCAN_EXT` is `new Set(['.css', '.html', '.njk', '.js'])` (`:80`), so the
+  source scan **does** walk `.js` files. The file is in the walk.
+- Its **third sink classifier** is exactly this idiom —
+  `/\.style\.([-a-zA-Z][-a-zA-Z0-9]*)\s*=\s*(['"][^'"]*var\(\s*--[a-z0-9-]*-fill\b[^'"]*['"])/g`.
+  Run over the stripped source it returns one match, `prop=stroke`, at line
+  1890. `stroke` is on the object-paint list, so the reference is **classified
+  and legal**, not merely unnoticed.
+- The census's anti-vacuity assertion is `uses.length === references` — every
+  `var(--…-fill)` reference in the tree must land in *some* classified sink or
+  the test fails. This file carries exactly 1 reference and it classifies, so it
+  passes on the strong arm rather than by being invisible to the scan. (For
+  scale: the two AHU HTML surfaces carry 7 references each.)
+
+The author already knew this: the comments at `:909` and `:1870` state that the
+literals live inside the assignment *precisely* so that a bare `const` holding
+one is never an unclassifiable reference — and the `:909` comment is
+deliberately written without the token syntax it describes, so the scan cannot
+read the note itself as a reference.
+
+**Flagged, not actioned.** Candidate for a future bigger animation / refactor
+pass: move the band→ink mapping out of JS into CSS classes (a `data-band`
+attribute plus five rules), leaving the JS to set the band and the stylesheet to
+own the colour (owner: *"may be easier to refactor during a bigger pass"*). If
+that happens, **all five inks move together** — classing the `-fill` one and
+leaving the other four as inline writes would split one mapping across two
+mechanisms for no benefit. Nothing is wrong today; this is a shape note against
+the day the animation is opened up anyway.
+
+### 258. The FCU and AHU rosters name the same point two different ways, and the flag to log it was never logged *(noticed 2026-07-31, FBE block-name lane §7.6 — **logged retroactively 2026-08-01**, and **RESOLVED** the same day: the FCU renames)*
+
+`html/scripts/ddcw-fcu-unit.js:526` names the fan-speed AO **`Fan`**; the AHU's
+equivalent (`html/scripts/ddcw-ahu-unit.js:833`) names it **`Fan Spd`**. With
+per-instance block heads shipped (PR #458), that divergence surfaces on the
+wiresheet as `AO · Fan` sitting directly beside `BO · Fan En` — the AO reads as
+though it lost a word. It is the odd one out among its own siblings, too: the
+FCU roster runs `Fan Sts` (`:525`) / `Fan` / `Fan En` (`:527`), so the two
+binaries are qualified and the analog is not.
+
+**Owner ruling, 2026-08-01: rename the FCU roster to `Fan Spd`,** matching the
+AHU. A **separate FCU lane** implements it — this is not the one-word edit it
+looks like, which is why the inventory declined to do it inline: the roster
+`name` also drives the chip strip and the off-program window, so the rename has
+a wider blast radius than the wiresheet head and may take a spec update with it.
+
+**This entry is also the record that the flag existed.** The naming inventory's
+§7.6 (now `docs/name-inventory.md`, committed 2026-08-01) ended *"Do not fix
+this inside the naming feature… Log it; let the owner decide"* — and it was
+never logged, because the inventory itself never reached git and went to a
+session scratchpad instead. Both halves are closed here: the inventory is
+committed, and its header carries this ruling as standing correction 2. One
+citation drifted in the meantime — §7.6 cites the FCU name at `:527`, which is
+now `fan-enable`; the `fan-speed` row is `:526`.
+
+### 259. The head-ink contrast arm sampled paint that the page had not finished painting, and fast hardware is what loses *(noticed 2026-08-01, CI triage — **FIXED in the same change**, recorded for the class of trap it is)*
+
+`tests/fbe-block-names.spec.js`'s AA arm navigates the FCU workbench, clicks the
+Wiresheet tab, waits for `.fbe-block-tag` to be **visible**, and then measures
+composited contrast. Playwright's visibility is a non-empty box plus
+`visibility` / `display`; it says nothing about `opacity`. The measurement is a
+paint measurement, so the gate and the quantity were never the same thing.
+
+Paint is not settled there. `.tool-card` carries
+`animation: fadeUp 0.5s <delay> ease both` (`html/styles.css:1188-1191`), whose
+first keyframe is `opacity: 0` (`:1719`); the FCU card resolves to the `0.16s`
+step, a 0.66s window from first render. Sampled inside it, the checker
+composites the ink down onto its own backdrop and the ratio collapses toward
+1.0 — the CI failures read `1.01 / 1.09 / 1.16 / 1.55` against a 4.5 floor, and
+`1.00` exactly is the `opacity: 0` limit, where the composite returns the
+background identically.
+
+**The intuition to discard is that this is slow CI hardware.** It is the
+opposite. The arm reaches the sample at ~1.7-1.9s locally — *past* the window,
+green — and at ~430-930ms on a runner, *inside* it. Slower is safer; a fast
+machine is what loses. Anyone who reads the ratios as a rendering-speed problem
+goes looking in the wrong half of the stack, which is why this entry exists at
+all rather than being a one-line commit note.
+
+**Why the race is narrow rather than constant**, and this part was measured:
+`page.click()`'s actionability check waits for bounding-box stability, and
+`fadeUp` animates `translateY` alongside the opacity — so the click *already*
+absorbs the fade wherever the animation is running (widened to 4s, `click()`
+took 6369ms and returned 209ms after the fade ended). The only way through is
+the **delay** phase, where the card sits stationary at `opacity: 0` and reads as
+stable. That is a 0.16s aperture, which is exactly why it is intermittent, and
+why widening the *duration* alone does not reproduce it — you have to widen the
+**delay**.
+
+**Fix:** a `HEAD_SETTLED` predicate waits for the quantity the checker actually
+composites — cumulative `opacity === 1` up the sample's ancestor chain, plus no
+running animation whose keyframes touch `opacity` / `color` / `backgroundColor`.
+Narrowed to those three properties on purpose: the page runs an infinite
+`fbe-signal-flow` wire animation, and a blanket "no running animations" wait
+would hang on it. The same guard is applied to the selected-state sample. The
+wait is bounded and **falls through to the measurement on timeout** rather than
+throwing — a guard that aborted would be a skip wearing a failure's clothes —
+and `MEASURE_HEAD` now reports the `opacity` it composited, which the arm pins
+at 1, so an un-settled sample names itself instead of arriving disguised as a
+contrast defect.
+
+**Scope, measured rather than assumed:** no other arm in the file needed the
+guard. The rest read `clientHeight`, `scrollWidth - clientWidth` and
+`getBoundingClientRect().height`; `fadeUp` animates only `opacity` and a
+`translateY`, and neither touches a layout metric or the *height* of a rect.
+Sampled at effective opacity 0.030 and again at 1.0, every one of those numbers
+is identical (23 / 0 / 72.97).
+
+**The site-wide sweep already knew this, and that is the real finding.**
+`contrast-sweep.spec.js` is not incidentally safe — it is deliberately safe. Its
+header records the identical discovery in almost these words (*"the first run of
+this walker reported ~20,000 'failures' that were nav dropdowns and reveal
+animations caught in flight"*), and its `settle()` zeroes transitions and walks
+`document.getAnimations()` finishing or cancelling every one before it measures.
+This arm was written as that sweep's stand-in for a page the sweep cannot reach
+(the workbench is hidden, so it is absent from `tests/pages.js`) and inherited
+the measurement but **not the settle**. The lesson was already paid for once;
+what failed was that it lived in another file's header.
+
+**Why this arm waits instead of copying `settle()`:** force-finishing is the
+right move for a one-shot page walk and the wrong one here. `a.finish()` throws
+on an infinite animation, so the sweep falls back to `a.cancel()` — and this
+page runs an infinite `fbe-signal-flow` wire animation while the sim is live.
+The arm does not stop at one sample: it goes on to click a block and measure the
+selected state, so cancelling the page's running animations mid-test changes the
+thing under measurement. A sweep that is finished with the page can afford that;
+an interactive arm cannot.
+
+**The generalisation:** `toBeVisible()` is not a paint gate. Any spec measuring
+a *composited* quantity — colour, contrast, effective opacity — right after a
+reveal has this hole, and the reveal need not be on the element itself; here it
+was six ancestors up, on shared `.tool-card` chrome that every page carries. A
+new spec that measures ink immediately after a tab click, an accordion open or a
+lazily-mounted widget must wait on the composited quantity, not on visibility.

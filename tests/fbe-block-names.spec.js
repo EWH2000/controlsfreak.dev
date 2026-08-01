@@ -5,17 +5,27 @@
 //
 //   1. MECHANISM, on the public editor. A block with no name heads with
 //      its type's full `label`, exactly as it did before names existed;
-//      one named through the inspector heads `TAG · Name` as two spans
-//      with a CSS separator; an over-budget name CLIPS rather than
-//      wraps; clearing the field restores the label; Reset leaves the
-//      name alone (it is authored config, not runtime state). Every
-//      canned example is swept, and the zero-block-height invariant is
-//      asserted at every step — .fbe-block-body sits AFTER the head in
-//      DOM order, so a head that grows by one line moves every pin and
-//      every wire endpoint, and the AHU workbench stacks ~89.72px
-//      blocks on a 90px row pitch — 0.28px of clearance, the tightest
-//      column on any workbench sheet (no FCU column comes within 5px,
-//      so the AHU is the binding case).
+//      one named — through the inspector, or authored into an example
+//      literal — heads `TAG · Name` as two spans with a CSS separator;
+//      an over-budget name CLIPS rather than wraps; clearing the field
+//      restores the label; Reset leaves the name alone (it is authored
+//      config, not runtime state). Every canned example is swept, and
+//      the zero-block-height invariant is asserted at every step —
+//      .fbe-block-body sits AFTER the head in DOM order, so a head that
+//      grows by one line moves every pin and every wire endpoint, and
+//      the AHU workbench stacks ~89.72px blocks on a 90px row pitch —
+//      0.28px of clearance, the tightest column on any workbench sheet
+//      (no FCU column comes within 5px, so the AHU is the binding case).
+//
+//      The canned-example sweep asserts BOTH branches per head rather
+//      than one shape for the whole sheet. It used to assert the single
+//      shape, because nothing on the public editor authored a name; the
+//      readout→AO fold (2026-08-01) gave the heating-PID sheet one
+//      (`rd`, 'AO · HW Vlv'), since after the fold the block's TYPE no
+//      longer says what it drives and only the name can. Which heads
+//      are named is deliberately left open — the sweep requires at
+//      least one of each branch across all sheets, not a fixed set, so
+//      naming more example blocks does not have to come back here.
 //
 //   2. ANTI-DRIFT, on both workbench pages. Point id === FBE block id is
 //      the load-bearing binding invariant, and a point's name already
@@ -100,31 +110,41 @@ function headState(page, id, scope) {
 // Every head on one sheet, reduced to the shape the invariants read.
 function sheetHeads(page, scope) {
     return page.evaluate((sel) =>
-        [...document.querySelectorAll(`${sel} .fbe-block-head`)].map((h) => ({
-            text: h.textContent,
-            spans: h.querySelectorAll('span').length,
-            title: h.getAttribute('title'),
-            headH: h.clientHeight,
-            clipX: h.scrollWidth - h.clientWidth,
-        })), scope || '#fbe-inner');
+        [...document.querySelectorAll(`${sel} .fbe-block-head`)].map((h) => {
+            const tag = h.querySelector('.fbe-block-tag');
+            const name = h.querySelector('.fbe-block-name');
+            return {
+                id: h.closest('.fbe-block').dataset.id,
+                text: h.textContent,
+                tag: tag && tag.textContent,
+                name: name && name.textContent,
+                spans: h.querySelectorAll('span').length,
+                // A nameless head is ONE text node — the pre-names shape;
+                // a named one is ZERO (both halves are spans).
+                textNodes: [...h.childNodes].filter((n) => n.nodeType === 3).length,
+                title: h.getAttribute('title'),
+                headH: h.clientHeight,
+                clipX: h.scrollWidth - h.clientWidth,
+            };
+        }), scope || '#fbe-inner');
 }
 
 test.describe('block names — mechanism (public editor)', () => {
 
-    test('an unnamed block keeps the pre-names head exactly, on every canned example', async ({ page }) => {
+    test('every canned-example head renders its authored shape — label if unnamed, TAG · Name if named', async ({ page }) => {
         const errors = watchErrors(page);
         await page.goto(PUBLIC_URL);
         await expect(page.locator('.fbe-block').first()).toBeVisible();
 
-        const labels = await page.evaluate(() =>
-            Object.values(window.FBE.BLOCKS).map((d) => d.label));
+        const cat = await page.evaluate(() =>
+            Object.values(window.FBE.BLOCKS).map((d) => ({ label: d.label, tag: d.tag })));
+        const labels = cat.map((d) => d.label);
+        const tags = cat.map((d) => d.tag);
         const keys = await page.$$eval('#fbe-examples [data-example]',
             (as) => as.map((a) => a.dataset.example));
         expect(keys.length).toBeGreaterThanOrEqual(5);
 
-        // The sheet the page opens on, then each chip in turn. Nothing on
-        // the public editor authors a name, so every head must still be
-        // its type label as a single text node — no spans, no title.
+        // The sheet the page opens on, then each chip in turn.
         const sheets = [['(initial)', await sheetHeads(page)]];
         for (const key of keys) {
             await page.click(`#fbe-examples [data-example="${key}"]`);
@@ -132,16 +152,52 @@ test.describe('block names — mechanism (public editor)', () => {
             sheets.push([key, await sheetHeads(page)]);
         }
 
+        let unnamedTotal = 0;
+        let namedTotal = 0;
         for (const [key, heads] of sheets) {
             expect(heads.length, `${key}: no blocks rendered`).toBeGreaterThan(0);
-            expect(heads.filter((h) => h.spans !== 0 || h.title !== null),
-                `${key}: a head split into spans or grew a title`).toEqual([]);
+
+            // ── unnamed: the pre-names shape, unchanged ──
+            // The type's full label as ONE text node. No spans, no title.
+            const unnamed = heads.filter((h) => h.name === null);
+            expect(unnamed.filter((h) => h.spans !== 0 || h.title !== null || h.textNodes !== 1)
+                .map((h) => `${h.id}: ${h.text}`),
+                `${key}: an unnamed head split into spans or grew a title`).toEqual([]);
             // …and the text is a real catalog label, not an empty string.
-            heads.forEach((h) => expect(labels, `${key}: head text`).toContain(h.text));
-            // One line each, so one height across the sheet.
+            unnamed.forEach((h) => expect(labels, `${key}/${h.id}: head text`).toContain(h.text));
+
+            // ── named: TAG · Name, two spans and a title ──
+            // The separator is CSS, so there is no text node between them
+            // and `title` is the only place the full string is recoverable.
+            const named = heads.filter((h) => h.name !== null);
+            expect(named.filter((h) => h.spans !== 2 || h.textNodes !== 0)
+                .map((h) => `${h.id}: ${h.text}`),
+                `${key}: a named head is not exactly two spans`).toEqual([]);
+            named.forEach((h) => {
+                expect(tags, `${key}/${h.id}: head tag`).toContain(h.tag);
+                expect(h.name.trim(), `${key}/${h.id}: empty name`).not.toBe('');
+                expect(h.title, `${key}/${h.id}: title`).toBe(h.tag + ' · ' + h.name);
+                // An authored name must FIT — the 18-char head budget. On
+                // the public examples nothing should clip, the same rule
+                // the workbench arm enforces against roster names.
+                expect(h.clipX, `${key}/${h.id}: authored name overran the head budget`).toBe(0);
+            });
+
+            // One line each, so one height across the sheet — and that
+            // holds ACROSS the two branches: a named head must be exactly
+            // as tall as its unnamed neighbours.
             expect([...new Set(heads.map((h) => h.headH))],
                 `${key}: head heights are not uniform — a head wrapped`).toHaveLength(1);
+
+            unnamedTotal += unnamed.length;
+            namedTotal += named.length;
         }
+
+        // Non-vacuity, both ways: the sweep must actually exercise each
+        // branch. Which sheets carry names is left open on purpose — this
+        // is a floor, so naming more example blocks needs no edit here.
+        expect(unnamedTotal, 'no unnamed head anywhere — the label branch went untested').toBeGreaterThan(0);
+        expect(namedTotal, 'no named head anywhere — the TAG · Name branch went untested').toBeGreaterThan(0);
 
         expect(errors).toEqual([]);
     });
@@ -150,11 +206,12 @@ test.describe('block names — mechanism (public editor)', () => {
         await page.goto(PUBLIC_URL);
         const cat = await page.evaluate(() =>
             Object.entries(window.FBE.BLOCKS).map(([t, d]) => [t, d.label, d.tag]));
-        // A floor, not a pin: the catalog is expected to grow and fold
-        // (a readout-type fold is queued), and the real invariants — tag
-        // present, tag short enough — are asserted per entry below. The
-        // floor only keeps a catalog that failed to load from passing
-        // both of those vacuously.
+        // A floor, not a pin: the catalog grows and folds (the 'readout'
+        // type folded into 'ao' on 2026-08-01, taking the count from 28
+        // to 27), and the real invariants — tag present, tag short
+        // enough — are asserted per entry below. The floor only keeps a
+        // catalog that failed to load from passing both of those
+        // vacuously.
         expect(cat.length).toBeGreaterThanOrEqual(20);
         // A missing tag would render `undefined · Name`.
         expect(cat.filter(([, , tag]) => typeof tag !== 'string' || tag === '')).toEqual([]);
@@ -319,7 +376,10 @@ test.describe('block names — mechanism (public editor)', () => {
 
 // contrast-sweep.spec.js walks tests/pages.js, which is the sitemap —
 // so it reaches function-block-editor.html but NOT the two hidden
-// workbench pages, and on the public page no block carries a name yet.
+// workbench pages, and it measures whatever that page paints on load.
+// The public editor opens on the economizer example, where no block
+// carries a name; the one authored name lives on the heating-PID sheet,
+// which the sweep never clicks through to.
 // `.fbe-block-tag` therefore has NO blocking coverage from the site-wide
 // sweep. This is that coverage: the tag is a NEW ink token on a
 // background (--surface-2) the CLAUDE.md --text-dim figures were not
@@ -401,6 +461,11 @@ const MEASURE_HEAD = ({ scope, wantSelected }) => {
         theme: document.documentElement.getAttribute('data-theme'),
         fontSize: parseFloat(getComputedStyle(tag).fontSize),
         selected: head.closest('.fbe-block').classList.contains('fbe-block-sel'),
+        // The compositing factor this sample was taken through. Reported
+        // so the arm can assert it — anything under 1 means the page was
+        // still animating and the ratios below describe a frame no
+        // reader ever sits on. See HEAD_SETTLED.
+        opacity,
         // How many layers the backdrop needed — 1 means nothing
         // translucent was composited, which would make the selected arm
         // below a copy of the unselected one.
@@ -410,6 +475,81 @@ const MEASURE_HEAD = ({ scope, wantSelected }) => {
         name: inkRatio(name),
     };
 };
+
+// ── the measurement has to wait for PAINT, and toBeVisible() does not ──
+// MEASURE_HEAD is a paint measurement, and paint on this page is not
+// settled at the moment the sheet becomes visible. `.tool-card` carries
+// `animation: fadeUp 0.5s <delay> ease both` (styles.css:1188-1191 — the
+// FCU workbench's card resolves to the 0.16s step, so a 0.66s window
+// from first render) and fadeUp's first keyframe is `opacity: 0`
+// (styles.css:1719). Playwright's
+// visibility is a non-empty box plus `visibility`/`display` — it says
+// NOTHING about opacity — so the arm was free to sample mid-ramp, where
+// the ink composites down onto its own backdrop and the ratio collapses
+// toward 1.0.
+//
+// Which is not a CI-hardware story, and reading it as one sends you
+// looking in the wrong place. It is measurement-time versus fade-window:
+// the arm reaches the sample at ~1.7-1.9s on this box (past the window,
+// green) and at ~430-930ms on a CI runner (inside it, red). Slower
+// hardware is SAFER here; a fast one is what loses. Measured on the
+// undoctored local build, 5 of 12 raw samples still landed inside —
+// 1.10 / 1.20 / 1.35 / 1.78 against the 4.81 the settled page reads —
+// so the margin was always thin, CI just spends it.
+//
+// contrast-sweep.spec.js hit this already and settles for it — see its
+// header ("~20,000 'failures' that were nav dropdowns and reveal
+// animations caught in flight") and its `settle()`, which finishes or
+// cancels every running animation before walking. This arm exists
+// BECAUSE that sweep cannot reach a hidden page, and it inherited the
+// measurement without the settle. It does not simply copy `settle()`
+// though: `finish()` throws
+// on an infinite animation and the sweep falls back to `cancel()`, and
+// this page runs an infinite `fbe-signal-flow` while the sim is live.
+// A sweep that is done with the page can cancel its animations; this
+// arm goes on to click a block and measure the SELECTED state, so it
+// waits the reveal out instead of editing it away.
+//
+// Nothing else in this file needs the guard, and that was measured
+// rather than assumed: the other arms read clientHeight, scrollWidth −
+// clientWidth and getBoundingClientRect().height, fadeUp animates only
+// `opacity` and a `translateY`, and neither touches a layout metric or
+// the HEIGHT of a rect. Sampled at effective opacity 0.030 and at 1.0,
+// every one of those numbers is identical (23 / 0 / 72.97).
+const SETTLE_MS = 10000;
+const HEAD_SETTLED = ({ scope, wantSelected }) => {
+    const sel = wantSelected ? '.fbe-block-sel ' : '';
+    const name = document.querySelector(`${scope} ${sel}.fbe-block-name`);
+    if (!name) return false;
+    for (let n = name.closest('.fbe-block-head'); n && n.nodeType === 1; n = n.parentElement) {
+        // The exact quantity MEASURE_HEAD composites, link by link.
+        if (parseFloat(getComputedStyle(n).opacity) < 1) return false;
+        // …and nothing still in flight that could move a number the
+        // measurement reads. Deliberately narrowed to the three paint
+        // properties it consumes rather than "any running animation":
+        // this page runs an INFINITE wire-flow animation while the sim
+        // is live (`fbe-signal-flow`), and a blanket check would either
+        // hang on it or have to special-case it by name.
+        const busy = n.getAnimations().some((a) => a.playState === 'running' && a.effect
+            && a.effect.getKeyframes().some((k) =>
+                'opacity' in k || 'color' in k || 'backgroundColor' in k));
+        if (busy) return false;
+    }
+    return true;
+};
+
+// Settle, then measure REGARDLESS. The catch is load-bearing: a guard
+// that threw on timeout would convert "the page never finished
+// animating" into a skipped measurement wearing a failure's clothes,
+// and a guard that silently returned would let a genuinely bad ink
+// colour pass whenever the settle stalled. Falling through keeps the
+// assertions the only thing that can pass or fail this arm — and
+// MEASURE_HEAD now reports the `opacity` it composited, which the arm
+// pins at 1, so an un-settled sample names itself instead of arriving
+// disguised as a contrast defect.
+async function settleHead(page, opts) {
+    await page.waitForFunction(HEAD_SETTLED, opts, { timeout: SETTLE_MS }).catch(() => {});
+}
 
 test.describe('block names — head ink clears AA in both themes and both states', () => {
 
@@ -421,11 +561,13 @@ test.describe('block names — head ink clears AA in both themes and both states
             await expect(page.locator('.fbe-block-tag').first()).toBeVisible();
 
             const scope = '#ddcw-fbe-inner';
+            await settleHead(page, { scope, wantSelected: false });
             const idle = await page.evaluate(MEASURE_HEAD, { scope, wantSelected: false });
 
             expect(idle.error).toBeUndefined();
             expect(idle.theme).toBe(scheme);
             expect(idle.selected).toBe(false);
+            expect(idle.opacity, 'sampled mid-animation — the ratios below are a frame, not the page').toBe(1);
             // 9.92px at weight 600 is SMALL text under WCAG — the 4.5:1
             // floor applies, not the 3:1 large-text one.
             expect(idle.fontSize).toBeLessThan(18.66);
@@ -448,9 +590,19 @@ test.describe('block names — head ink clears AA in both themes and both states
             await page.click(`${scope} .fbe-block[data-id="${id}"] .fbe-block-head`);
             await expect(page.locator(`${scope} .fbe-block[data-id="${id}"]`)).toHaveClass(/fbe-block-sel/);
 
+            // Same guard on this side. The class landing is a DOM fact
+            // and says nothing about the repaint it triggers, so if the
+            // selected head ever grows a colour/background transition
+            // this arm would race it exactly as the idle one raced the
+            // card fade — and would race it INVISIBLY, since both spans
+            // still resolve to a plausible ratio part-way through a
+            // colour interpolation. Cheap now, and it is the assertion
+            // that would otherwise be written after the next flake.
+            await settleHead(page, { scope, wantSelected: true });
             const picked = await page.evaluate(MEASURE_HEAD, { scope, wantSelected: true });
             expect(picked.error).toBeUndefined();
             expect(picked.selected).toBe(true);
+            expect(picked.opacity, 'sampled mid-animation — the ratios below are a frame, not the page').toBe(1);
             // Non-vacuity for the compositing: the selected backdrop is
             // built from more than one layer, so a walk that stopped at
             // the first opaque ancestor would have measured something
@@ -520,7 +672,10 @@ test.describe('block names — roster is the single source (anti-drift)', () => 
                 // nothing else — so a name on a non-point block means a
                 // second source crept in. (Hand-authored names on the
                 // non-IO logic are a queued follow-up; this assertion is
-                // what that lane will have to update deliberately.)
+                // what that lane will have to update deliberately. The
+                // PUBLIC editor's heating-PID example DOES author one in
+                // its literal — that is a different sheet under a
+                // different scope, and out of this arm's reach.)
                 const strays = rows.filter((r) => r.name !== null && roster[r.id] === undefined);
                 expect(strays, `${key}: named block with no matching point`).toEqual([]);
 

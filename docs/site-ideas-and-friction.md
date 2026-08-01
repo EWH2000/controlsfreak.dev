@@ -4656,6 +4656,42 @@ animations, and frozen dashes would read as the selection dash
 pattern — reduced motion keeps fully solid wires. Selected wires
 opt out (selection owns the dash pattern).
 
+**Per-instance block names *(shipped 2026-08-01, PR #458)*.** Every
+entry in `fbe-engine.js`'s `BLOCKS` catalog gained a short **`tag`**
+(2–5 chars — `AI`, `BO`, `CONST`, `SR`, `A>B`…) alongside its full
+`label`, and every *placed* block can carry a free-text **`name`** set
+in the inspector. The head renders `TAG · Name`, so a sheet reads as
+roles rather than as a grid of anonymous typed boxes — the thing that
+makes a real wiresheet legible. The measured head budget is **18
+characters** (`len(tag) + 3 + len(name)`), and `.fbe-block-head` gained
+`white-space: nowrap` in the same change so an over-budget name can
+never grow its block and break the hand-tuned sheet layouts. Shared
+code: the three consumer sheets are the public editor plus the two
+hidden DDC Workbench pages, so this was never a hidden-page-only
+change. **The names themselves are a separate, still-open lane** — the
+mechanism shipped, the workbench sheets are still unnamed, and the
+design source for authoring them is `docs/name-inventory.md` (committed
+2026-08-01, with three standing corrections in its header). Two rulings
+fell out of the lane: comparator tags went ASCII (`A>=B`, codebase-
+issues #255 option 2) and the inspector's touch-target gap took a
+written exemption rather than a `styles.css` change (#256).
+
+**`[future: font-subset extension]` — the typography lane.** Re-subset
+the **six** self-hosted woff2 files (the five Plex Mono weights plus
+`overpass-latin-var.woff2`), naming the three comparator codepoints
+`≠` (U+2260), `≤` (U+2264) and `≥` (U+2265) explicitly, and widen the
+matching `unicode-range`s so the browser will actually source them from
+the face. `Δ` (U+0394), `≈` (U+2248) and `→` (U+2192) belong in the
+same pass — prose `Δ` renders in the body face, which is why Overpass
+is in scope — but only if named too: they are separate codepoints, not
+fallout of the comparator ones. The fonts are immutable **by name**, so
+this is a rename plus a cache-bust on files *every page* loads, which
+is most of its cost. This is codebase-issues **#255 option 3**, ruled
+**not-now 2026-08-01** — the block-name lane took option 2 instead and
+ASCII'd the tags, leaving the comparator `label`s and every prose `Δ` /
+`≈` / `→` still rendering from a system fallback face. Cosmetic
+everywhere it appears, which is why it waits for a lane of its own.
+
 ### Function-block programming — paired Education page *(shipped 2026-05-22)*
 
 **One question:** *what is function-block programming, and why do
