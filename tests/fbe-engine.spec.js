@@ -700,3 +700,19 @@ test.describe('fbe-engine: FCU sample programs (workbench page)', () => {
         );
     });
 });
+
+test.describe('fbe-engine: AHU sample programs (workbench page)', () => {
+
+    // Same sweep, second workbench. AHU_PROGRAMS shipped with no
+    // validity coverage for the same reason FCU_PROGRAMS had none —
+    // the sweep names its file rather than walking the workbench pages
+    // (#250). Bounds are the page's CURRENT canvasSize call: 1576×980
+    // after the no-burial relayout, and they must match it.
+    test('every AHU program wires existing blocks through compatible pins', () => {
+        const AHU_PROGRAMS = sweepLiteral(
+            'html/simulators/ddc-workbench.html', 'AHU_PROGRAMS',
+            { w: 1576, h: 980 });
+
+        expect(Object.keys(AHU_PROGRAMS).sort()).toEqual(['econ-2stage']);
+    });
+});

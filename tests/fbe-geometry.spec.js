@@ -113,24 +113,39 @@ function loadLiteral(fileRelPath, literalName) {
     return vm.runInNewContext(m[0] + '\n' + literalName + ';', {});
 }
 
-// The two consumer surfaces. Canvas bounds: the public editor mounts
-// at the 900×480 default; the workbench passes canvasSize 1401×480
-// (candidate-A relayout, #205 — 8 columns at a 175px pitch) and these
-// bounds must match that call.
+// The three consumer surfaces. Canvas bounds: the public editor mounts
+// at the 900×480 default; each workbench passes its own canvasSize and
+// these bounds must match that call.
+//
+// `url` is what makes layer B generic over this table. It was inline in
+// each describe until the AHU landed — and the AHU shipped 23 burials
+// through a green suite precisely because adding a row here was not
+// enough to cover a page whose URL nothing named (#250).
 const SURFACES = {
     'function-block-editor': {
         file: 'html/simulators/function-block-editor.html',
+        url: '/simulators/function-block-editor.html',
         literal: 'EXAMPLES',
         canvas: { w: 900, h: 480 },
     },
     'ddc-workbench-fcu': {
         file: 'html/simulators/ddc-workbench-fcu.html',
+        url: '/simulators/ddc-workbench-fcu.html',
         literal: 'FCU_PROGRAMS',
         // h grew 480 → 540 with the fan-proof interlock: column 720 on
         // cool-2stage-safeties had no free slot for the new AND, and the
         // router's margin rule pins that AND to that column. The page's
         // canvasSize call carries the reasoning.
         canvas: { w: 1401, h: 540 },
+    },
+    'ddc-workbench': {
+        file: 'html/simulators/ddc-workbench.html',
+        url: '/simulators/ddc-workbench.html',
+        literal: 'AHU_PROGRAMS',
+        // 9 columns at the 175px pitch. h shrank 1210 → 980 with the
+        // no-burial relayout — the sheet got shorter, not taller, once
+        // the sources moved next to their consumers.
+        canvas: { w: 1576, h: 980 },
     },
 };
 const REGISTRIES = {};
@@ -419,29 +434,35 @@ test.describe('fbe-geometry: layer B — public sim page (GREEN = #205 verified)
     }
 });
 
-test.describe('fbe-geometry: layer B — ddc-workbench-fcu (GREEN = #205 relayout verified)', () => {
+// Both workbench pages mount the same shell, so one loop covers them —
+// keyed off SURFACES[key].url rather than a hard-coded page, which is
+// what stops a new workbench from being registered in SURFACES and
+// still going unmeasured (#250).
+for (const pageKey of ['ddc-workbench-fcu', 'ddc-workbench']) {
+    test.describe('fbe-geometry: layer B — ' + pageKey, () => {
 
-    for (const key of Object.keys(REGISTRIES['ddc-workbench-fcu'])) {
-        test('program "' + key + '": no burial, forward routing, margins', async ({ page }) => {
-            const def = REGISTRIES['ddc-workbench-fcu'][key];
-            await page.goto('/simulators/ddc-workbench-fcu.html');
-            // The editor lazy-mounts on first Wiresheet open …
-            await page.click('.tabs.tabs-flush [data-tab="wiresheet"]');
-            await expect(page.locator('#ddcw-fbe-inner .fbe-block').first()).toBeVisible();
-            // … then select the program under test (the page listens for
-            // change on the picker; 'custom' is refused, sample keys load).
-            await page.evaluate((k) => {
-                const sel = document.getElementById('ddcw-program');
-                sel.value = k;
-                sel.dispatchEvent(new Event('change', { bubbles: true }));
-            }, key);
-            await expect(page.locator('#ddcw-fbe-inner path.fbe-wire'))
-                .toHaveCount(def.wires.length);
-            const meas = await measureSheet(page, '#ddcw-fbe-inner', def.wires);
-            assertSheet('ddc-workbench-fcu', key, meas);
-        });
-    }
-});
+        for (const key of Object.keys(REGISTRIES[pageKey])) {
+            test('program "' + key + '": no burial, forward routing, margins', async ({ page }) => {
+                const def = REGISTRIES[pageKey][key];
+                await page.goto(SURFACES[pageKey].url);
+                // The editor lazy-mounts on first Wiresheet open …
+                await page.click('.tabs.tabs-flush [data-tab="wiresheet"]');
+                await expect(page.locator('#ddcw-fbe-inner .fbe-block').first()).toBeVisible();
+                // … then select the program under test (the page listens for
+                // change on the picker; 'custom' is refused, sample keys load).
+                await page.evaluate((k) => {
+                    const sel = document.getElementById('ddcw-program');
+                    sel.value = k;
+                    sel.dispatchEvent(new Event('change', { bubbles: true }));
+                }, key);
+                await expect(page.locator('#ddcw-fbe-inner path.fbe-wire'))
+                    .toHaveCount(def.wires.length);
+                const meas = await measureSheet(page, '#ddcw-fbe-inner', def.wires);
+                assertSheet(pageKey, key, meas);
+            });
+        }
+    });
+}
 
 test.describe('fbe-geometry: layer B — drag clamp at a 20 px root font (#208)', () => {
 

@@ -657,6 +657,56 @@ light, per-agent throwaway Playwright configs on unique high ports,
 fix-confirmed-bugs-on-branch / judgment-calls-to-the-owner) live in
 project memory, not here.
 
+**Air-side sim — the AHU workbench page shipped 2026-07-30.**
+`/simulators/ddc-workbench.html` — a hidden page (`noindex` +
+`eleventyExcludeFromCollections`, no `canonical`), so it is absent from
+the sitemap, the search index and `tests/pages.js`, and it carries its
+own hand-written spec (`tests/ddc-workbench-ahu-page.spec.js`) in place
+of the smoke / responsive / contrast sweeps. The bare `ddc-workbench`
+name is deliberate and takes NO legacy redirect: it used to mean the
+FCU, so a redirect would land an FCU-seeker on the wrong machine.
+
+It ships the approved round-2 depiction wired to the physics module —
+six chevron rails, blade angles that track the damper command, a
+forced-sensor ring on all five analog inputs, and a verdict ladder that
+covers heating, economizing, mechanical cooling and the
+fighting-itself fault. `ddc-workbench-ahu-mockup.html` stays as the
+archival depiction record and was not edited.
+
+**The 2026-07-31 depiction review** (owner, reading the rendered page)
+put the return and relief blades back on the angle they are commanded
+and moved the return damper up into the drop where one actually sits —
+mechanism, measurements and the two guards that now hold it are
+codebase-issues **#253**. It also landed a teaching beat in the
+wiresheet's airflow-proof paragraph, in his own framing: *"a lot of
+times status is the best thing you have, then you have to look at
+delta T and such if you think it's lying."* The page already taught
+that command, status and proof are three different claims; what it
+lacked was the field reality that you rarely get all three, so the
+job is deciding whether to believe the one you have — and the ΔT well
+is how. Scoped to **the AHU page only**: the paired lesson
+(`education/status-and-proof.html`) carries a `canonical` and is
+live-indexed, so widening a depiction PR into it was ruled out.
+Teaching the same habit there is a separate pass, and the lesson is
+where it would land.
+
+Still open on it, in rough priority order:
+* **the program library is one sheet.** `econ-2stage` is the honest
+  starter — economizer permit, proof-interlocked staging, a
+  proportional heating valve — and every roster point is authored on it
+  so nothing rests at `Relinquish_Default`. A library (an unprotected
+  variant, a mixed-air low limit, a minimum-OA-deleted fault sheet) is
+  a later lane's, and the wiresheet prose already points at the two
+  faults worth building first.
+* **`mat` and `dat` are seeded but UNWIRED** on that sheet — the
+  natural hook for the low limit a second sheet adds.
+* **the graphic's intake block arrow arrives low** (y323 against an
+  opening centred on y303), carried forward from the mockup with its
+  own note: the fix is a composition move, not a nudge.
+* **the fogging marker is ONE candidate** (codebase-issues #240),
+  built cheap and reversible so the owner can redesign it after
+  looking at it.
+
 **The named next flagship: the air-side simulator.** Deliberately
 sequenced after this arc so it inherits field feedback on the
 then-days-old heat-pump mode and enters on a clean board. It is the

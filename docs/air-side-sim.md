@@ -27,8 +27,8 @@ that diagnostic end**, not the point.
 
 ## Current state — Phase 7, the AHU round, is in flight
 
-Two hidden pages carry this line. Both are `noindex` +
-`eleventyExcludeFromCollections` with **no `canonical`**, so both are reachable
+Three hidden pages carry this line. All are `noindex` +
+`eleventyExcludeFromCollections` with **no `canonical`**, so all are reachable
 at their URLs and absent from nav / search / sitemap / the landing —
 **crawl-hidden, not undeployed.** They build and ship to Cloudflare on every
 merge.
@@ -41,11 +41,20 @@ merge.
   10 Hz tick** through a generic binding driver. The unit-agnostic shell lives
   in `html/scripts/ddcw-shell.js`, the FCU plug-in in
   `html/scripts/ddcw-fcu-unit.js`.
+- **`html/simulators/ddc-workbench.html`** — **the AHU Workbench, and it is
+  live at its URL as of 2026-07-30.** Same shell, same two tabs, the AHU plug-in
+  driving it: the approved round-2 depiction as the Unit view, one starter
+  program (`econ-2stage` — economizer permit, 2-stage DX, proportional HW, all
+  six actuators authored) on the Wiresheet, a five-way sensor-override block,
+  and an outdoor-air slider that reaches −20 °F. The bare `ddc-workbench` name
+  was reserved for exactly this.
 - **`html/simulators/ddc-workbench-ahu-mockup.html`** — the AHU depiction
   mockup: one machine drawn twice, round two rebuilt on the owner's own
   production-graphic conventions, with round one's three compositions kept below
   it as the reference he asked to keep. Drawing and static plausible values
-  only — no physics, no runtime.
+  only — no physics, no runtime. **Archival now that the live page exists** —
+  it is the depiction record, and prose derived from its numbers must be
+  re-derived rather than copied (see the setpoint ruling below).
 
 > ⚠️ **A hidden page is invisible to the whole test suite.** No `canonical`
 > means no entry in `tests/pages.js`, and that manifest is what the smoke walk,
@@ -85,13 +94,13 @@ that file is, exactly:
 - **DOM-free by construction.** It exposes `{ points, createPlant, update }`
   and nothing else, and its spec loads it in a bare vm context — the load is
   the proof.
-- ⚠️ **It does NOT satisfy the shell's unit contract**, and that is the point
-  of the lane, not an unfinished edit. There is no `create(cfg)` and no
-  renderUnit / syncControls / wireControls / initAnim / onResize, so
-  `DDCWShell.createWorkbench` would boot half-way and throw. **No page loads
-  the file**; it is inert at runtime and reachable only from its spec. A spec
-  row pins the absence, so the day the graphic lane adds the methods, that row
-  is what notices.
+- **It now satisfies the shell's unit contract** (2026-07-30, the page lane).
+  The DOM half — `create(cfg)`, `renderUnit`, `syncControls`, `wireControls`,
+  `initAnim`, `onResize`, the program registry and the pacing constants — sits
+  under its own banner below the physics, and `ddc-workbench.html` boots the
+  shell against it. The DOM-free load still holds: every `document` read is
+  behind `bindDom()`, which `wireControls` calls as the first unit method the
+  shell invokes, and the bare-vm spec row is what proves it.
 - **Three deliberate divergences from the FCU** a reader will trip over, each
   argued in the file: the DX stage count is **additive** rather than
   Y2-implies-Y1 (a miswired Y2-without-Y1 then delivers half capacity, which
@@ -119,10 +128,50 @@ that file is, exactly:
   fallback, and it is live) and **#238** (`buildState` degenerates quietly
   above boiling).
 
-What comes next is the AHU's **sample programs**, then the **graphic and
-animation** work, then the FCU ⇄ AHU unit selector. **Phase 8 is graduation** —
-until then the Workbench is a react-baseline and reference point, not a surfaced
-page.
+What comes next is a **second AHU sheet** (the natural home for a mixed-air or
+discharge low limit — `mat` and `dat` are seeded on the starter and deliberately
+unwired), then the FCU ⇄ AHU unit selector. **Phase 8 is graduation** — until
+then the Workbench is a react-baseline and reference point, not a surfaced page.
+
+### Rulings that landed with the AHU page (2026-07-30)
+
+- **Setpoints — the PHYSICS MODULE wins (codebase-issues #242).** The AHU ships
+  cooling 72 / heating 68 / deadband 2, so cooling **makes at 74 and breaks at
+  72** (the setpoint is the CUT-OUT) and the separation between the two
+  setpoints is **4 °F**. `ddcw-ahu-unit.js`'s seeds and its measured
+  cycling-arrival comments are correct and are not to be re-measured. The
+  mockup's 73 / 68 depiction stands as an archival record and was **not**
+  edited. Consequence, and it is the trap: any prose carried off the mockup has
+  to be re-derived. Its "a space of 74.0 °F can sit under a lit stage"
+  illustration **collapses** at 72 + 2, because 74 *is* the make point — the
+  live page states **73.0 °F**.
+- **Outdoor-air range (codebase-issues #243).** The AHU's slider is
+  `min="-20" max="110" step="1"`, default 80. The FCU's 55…110 stays. The
+  OAT-indexed figures in the physics comments are scoped to that range: the
+  fogging onset (about −2 °F at a 50 % damper against a 72 °F zone), the 0 °F
+  case and the −20 °F / 70 % corner are all **reachable**; the −30 °F / 65 % /
+  90 °F-zone corner is out of range and reads as an illustration only.
+- **`role="img"` stays on the graphic (codebase-issues #227b), on BOTH pages.**
+  Nothing inside either drawing is focusable — `role="img"` prunes the subtree,
+  which is what keeps ~19 duplicated `<text>` nodes from being read twice — and
+  the activation affordance is real HTML **buttons in the point mirror**. The
+  ruling was one change across both pages, and both shipped in this lane.
+- **All five AI points carry a sensor override** (space-temp, oat, rat, mat,
+  dat). The plant's override map is keyed by sensor point id, and the four
+  missing entries were added in the same lane — `sensedValue` returns truth for
+  a missing key, so four of the five toggles would otherwise have been silently
+  inert.
+- **A fogging MAT gets a marker (codebase-issues #240) — one candidate, built
+  to be looked at.** Wave strokes beside the MAT well plus a real sentence in
+  the mirror, driven off `mixStreams`' own `fogging` flag. It is **suppressed
+  while the MAT sensor is forced**, because the marker is a disclosure about the
+  number in that well and that well paints the SENSED value. The owner may
+  redesign it; a silent bare number is the one option ruled out.
+- **The drawing's fan row is `RUN`, not `STATUS`.** The roster's `fan-status`
+  BI is the PROOF and paints the "Fan Sts" chip, so a drawing row showing the
+  fan COMMAND under the word STATUS put the same name on two disagreeing
+  surfaces — on the one page whose prose teaches that command, status and proof
+  are three different claims.
 
 > ⚠️ **Two protections stack on the safeties sheet, and the page's own note
 > describes only one** — a trip is itself a stop, so it arms the min-off TON as
@@ -130,6 +179,34 @@ page.
 > sheet carries no airflow proof, so its DAT low-limit goes blind when the fan
 > stops). Both deferred by owner decision to a single pre-live sweep alongside
 > the AHU programs. Read them before touching a sequence here.
+
+### Rulings from the depiction review (2026-07-31)
+
+- **Provenance is about what KIND of point it is, not how the number was
+  derived** (owner, 2026-07-31). This is the general rule for the register
+  colours, not a note about one well. Every commanded value on the drawing is
+  computed by the program — a damper position, a valve position, a stage call
+  and a fan speed are all arithmetic somewhere — so derivation cannot be the
+  test, or the whole screen would go blue. **A command is a command.** Blue /
+  CALCULATED is reserved for a readout that is **not a point at all**: the ΔT
+  well, which is arithmetic on two other numbers already on the screen and
+  exists nowhere in the controller. Audited against the shipped page and it
+  already matches — **9 commanded wells, 1 calculated (ΔT), 6 measured**.
+- **Damper blades draw the commanded angle, and the two vertical-flow sets
+  were rebuilt to make that true** (codebase-issues **#253** carries the
+  mechanism and the measured before/after). The return damper also **moved up
+  into the drop**, above the casing roof, which is where a return damper
+  actually sits and what puts the recirculated air *through* it. The intake
+  damper keeps its mild skew by owner decision — it reads correct at every
+  position, and the half-extent that causes the skew is what seals the intake
+  opening edge to edge.
+- **Status is usually all you get, and the ΔT well is the cross-check** (owner,
+  2026-07-31). The page already taught that command, status and proof are three
+  different claims; what it did not say is that in the field you rarely have all
+  three, so the real work is deciding whether to believe the one you have. That
+  beat shipped in the airflow-proof paragraph of the wiresheet prose, **on this
+  page only** — the paired live lesson (`education/status-and-proof.html`) was
+  deliberately left for a separate pass rather than widened into a depiction PR.
 
 **The FCU line, increment by increment** — a closed record of how the fan-coil
 Workbench got built, kept because the PR is where the reasoning lives. Phase 7
