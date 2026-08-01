@@ -226,6 +226,54 @@ const FBEEditor = (function () {
             renderInspector();
         }
 
+        // ── block head ──────────────────────────────────────────────
+        // A block that carries an instance `name` heads as `TAG · Name`
+        // — the type's short tag, then what THIS block does on THIS
+        // sheet ('AI · OAT', 'SR · Y1 Latch'). Two spans, because the
+        // tag paints dimmer than the name; the '·' between them comes
+        // from CSS (::after on the tag) so it is neither selectable nor
+        // announced. A block with no name renders the type's full
+        // `label` as one text node — byte-for-byte what shipped before
+        // names existed, which is what a fresh block off the palette
+        // looks like.
+        //
+        // The whole string also goes on `title`: the head clips with an
+        // ellipsis past ~18 characters (see the styles.css note), and
+        // hover is how a truncated name stays recoverable.
+        function headString(b) {
+            const def = engine.BLOCKS[b.type];
+            return b.name ? def.tag + ' · ' + b.name : def.label;
+        }
+
+        function paintHead(head, b) {
+            const def = engine.BLOCKS[b.type];
+            head.textContent = '';
+            if (!b.name) {
+                head.textContent = def.label;
+                head.removeAttribute('title');
+                return;
+            }
+            const tag = document.createElement('span');
+            tag.className = 'fbe-block-tag';
+            tag.textContent = def.tag;
+            const name = document.createElement('span');
+            name.className = 'fbe-block-name';
+            name.textContent = b.name;
+            head.appendChild(tag);
+            head.appendChild(name);
+            head.title = headString(b);
+        }
+
+        // Repaint one block's head in place — the name-edit path, which
+        // must not re-render the sheet (that would drop the caret out of
+        // the inspector's own input mid-keystroke).
+        function repaintHead(b) {
+            const el = els[b.id];
+            if (!el) return;
+            const head = el.querySelector('.fbe-block-head');
+            if (head) paintHead(head, b);
+        }
+
         function renderBlock(b) {
             const def = engine.BLOCKS[b.type];
             const el = document.createElement('div');
@@ -236,7 +284,7 @@ const FBEEditor = (function () {
 
             const head = document.createElement('div');
             head.className = 'fbe-block-head';
-            head.textContent = def.label;
+            paintHead(head, b);
             el.appendChild(head);
 
             const body = document.createElement('div');
@@ -468,6 +516,12 @@ const FBEEditor = (function () {
         }
 
         // ── inspector ───────────────────────────────────────────────
+        // The Name field's id. Deliberately NOT under the `fbe-p-`
+        // prefix the param rows generate below (`fbe-p-` + the param's
+        // own name), since a name is not a param — and the two prefixes
+        // cannot collide whatever a future block type calls its params.
+        const NAME_INPUT_ID = 'fbe-insp-name';
+
         function renderInspector() {
             inspector.innerHTML = '';
             const title = document.createElement('div');
@@ -495,7 +549,45 @@ const FBEEditor = (function () {
             const b = graph.blocks.find((x) => x.id === selected.id);
             if (!b) { title.textContent = 'Inspector'; return; }
             const def = engine.BLOCKS[b.type];
-            title.textContent = def.label;
+            // The instance's own name leads once it has one — that is
+            // what the user is looking at on the sheet. The type's label
+            // is the fallback, and stays the caption for an unnamed
+            // block.
+            title.textContent = b.name || def.label;
+
+            // ── Name — above the params, because it identifies the
+            // block rather than tuning it. Blank (or all-whitespace)
+            // CLEARS the name: the head falls back to the type label,
+            // which is the only way back out of a name. Names are
+            // authored config, not runtime state, so reset() leaves
+            // them alone (it clears .state / .out / .in only).
+            const nameRow = document.createElement('div');
+            nameRow.className = 'fbe-insp-row';
+            const nameLbl = document.createElement('label');
+            nameLbl.setAttribute('for', NAME_INPUT_ID);
+            nameLbl.textContent = 'Name';
+            const nameField = document.createElement('input');
+            nameField.type = 'text';
+            nameField.id = NAME_INPUT_ID;
+            nameField.value = b.name || '';
+            nameField.placeholder = def.tag;
+            nameField.autocomplete = 'off';
+            nameField.spellcheck = false;
+            // NOT afterParamEdit(): a param edit has to propagate through
+            // the graph while paused, so that helper ticks the engine
+            // 0.1s. Nothing in evaluate() reads a name, so ticking here
+            // would advance TON / TOF / PID state once per keystroke on a
+            // paused sheet. The head repaint and the caption below are a
+            // name edit's whole observable effect.
+            nameField.addEventListener('input', () => {
+                const v = nameField.value.trim();
+                if (v === '') delete b.name; else b.name = v;
+                repaintHead(b);
+                title.textContent = b.name || def.label;
+            });
+            nameRow.appendChild(nameLbl);
+            nameRow.appendChild(nameField);
+            inspector.appendChild(nameRow);
 
             (def.params || []).forEach((p) => {
                 const row = document.createElement('div');
@@ -606,7 +698,11 @@ const FBEEditor = (function () {
             if (dir === 'out') {
                 pending = { block: b.id, pin: pinDef.name, kind: pinDef.kind };
                 highlightTargets(pinDef.kind);
-                setStatus('Wiring from ' + b.id + '.' + pinDef.name +
+                // Name the block the way the sheet does: its instance
+                // name where it has one, its id otherwise. On the
+                // workbench the ids ARE the point ids, so this reads
+                // 'Wiring from OAT.O' rather than 'oat.O'.
+                setStatus('Wiring from ' + (b.name || b.id) + '.' + pinDef.name +
                           ' — click a matching input pin.');
                 return;
             }

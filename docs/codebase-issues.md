@@ -5189,7 +5189,8 @@ The shared rule in `styles.css` sets every form label to 0.7rem
 `--text-dim`, so on control-dense pages the captions you scan FOR are
 the dimmest ink in the block while the values render accent/bright —
 hierarchy inverted for scanning. Not a WCAG fail (5.67:1 dark /
-5.27:1 light), purely a hierarchy question. The refrigerant-loop sim
+5.27:1 light as filed; the light figure is 5.51:1 since the 2026-07-20
+`--text-dim` retune), purely a hierarchy question. The refrigerant-loop sim
 now overrides page-locally (this PR: controls / presets / fullscreen
 view-toggle captions lifted to `--text`) — precedent to reach for if
 the same read recurs elsewhere before any site-wide retune. Affects
@@ -10420,13 +10421,22 @@ else's prints is a label, the meaning lives in the numbers underneath it) is the
 payload. `comparators-and-deadband.js` and its lesson were not touched — they
 are correct.
 
-**Reader-facing copy left alone, flagged for the owner.** The drill's card on
-`practice/index.html` still carries the format pill `'MCQ · TF · Numeric'`; the
-bank now also holds a `gotcha`, so that pill is out of date (the site's own
-convention elsewhere writes `'MCQ · TF · Gotcha · Numeric'`). It sits on a
-`canonical`-bearing page and no spec guards it, so it was not rewritten here.
-The *10-question drill* description and the `'10 Questions'` pill are both
-still true — sampling presents ten.
+**Reader-facing copy: the format pill WAS updated in the same change.** Adding a
+`gotcha` to the bank falsified the drill's format pill on
+`practice/index.html`, which read `'MCQ · TF · Numeric'`. It was rewritten to
+`'MCQ · TF · Gotcha · Numeric'` — the site's own convention elsewhere — in
+`71c4862`, on the same branch, before PR #456 merged. The card now reads
+`['10 Questions', 'MCQ · TF · Gotcha · Numeric', 'Field Sampler', '~ 5 min']`,
+and no `'MCQ · TF · Numeric'` pill survives anywhere on the landing. The
+*10-question drill* description and the `'10 Questions'` pill were always still
+true — sampling presents ten of the eleven.
+
+*(This paragraph originally read "left alone, flagged for the owner", describing
+the pill as outstanding. It was written before `71c4862` landed on the same
+branch and was never trued up, so it merged stale — corrected 2026-07-31 from
+the FBE block-name lane. No spec guards a format pill, which is why the drift
+was silent on both sides: the copy went stale against the bank, then the note
+went stale against the copy.)*
 ### 242. The AHU mockup's setpoint prose disagrees with the physics module's shipped defaults *(noticed 2026-07-29, deadband/setpoint-gap terminology sweep — for LANE 7.4 — **RESOLVED 2026-07-30** — the module won, and the prose was re-derived, not copied)*
 
 **The physics module wins (owner decision, 2026-07-30).** The AHU ships cooling
@@ -11055,3 +11065,109 @@ branch and its own before/after over the built site.
 its own #247 — renumbered to 248 when main was merged in, 2026-07-30, then
 to 254 when PR #457 landed its own 248-253, 2026-07-31. The number is the
 only thing that moved; the finding is unchanged and still unfixed.)*
+
+### 255. `≥`, `≤` and `≠` are not in the bundled mono font, and the block-tag work makes them reachable *(noticed 2026-07-31, FBE block-name lane — RULED 2026-08-01: option 2 taken in the same lane; option 3 stays open as the typography lane)*
+
+The comparator block types `ge` / `le` / `ne` label themselves `A ≥ B`, `A ≤ B`
+and `A ≠ B`, and the `tag` added in this change first carried the same glyphs
+into the block head as `A≥B` / `A≤B` / `A≠B` (the state this was filed on — see
+the ruling below for where the tags landed). **None of those three characters
+exists in the self-hosted mono face.** Verified two independent ways:
+
+- **The cmap.** `html/assets/fonts/ibm-plex-mono-latin-600.woff2` carries **229
+  codepoints, none above U+2215**. U+2265 (`≥`), U+2264 (`≤`) and U+2260 (`≠`)
+  are all ABSENT — as are `Δ` (U+0394), `≈` (U+2248) and `→` (U+2192), which
+  `styles.css`'s own `@font-face` comment already says come from system
+  fallbacks.
+- **The `unicode-range`.** Every `@font-face` in `styles.css` declares Google's
+  latin subset range, whose highest math-adjacent entries are U+2000-206F,
+  U+2122, U+2191, U+2193, U+2212 and U+2215. 2260 / 2264 / 2265 fall outside
+  it, so the browser would not source them from that face even if the file did
+  contain them. This half is the stronger fact: it holds independently of what
+  is in the woff2.
+
+They therefore render from the system monospace — a different typeface, sitting
+directly beside Plex glyphs in the same three-character tag, with a different
+advance (the earlier inventory measured 6.341px against Plex's 6.397px at the
+head's size).
+
+**Pre-existing, and still latent.** The current `label`s already do this, and
+`ge` / `le` / `ne` are used by **zero** blocks across all 188 on the three
+consumer pages — the glyphs only reach a screen when a user drags one of those
+three out of the palette. Nothing regressed here; what changed is that the tag
+work put the same glyphs on a second surface, so the next time someone authors a
+`ge` onto a sheet it lands in two places instead of one.
+
+Options:
+
+1. **Leave it.** The elegant form, correct in every reader's own font stack,
+   and rare enough that nobody has reported it in the editor's lifetime.
+2. **ASCII the tags only** — `A>=B` / `A<=B` / `A!=B` (4 chars, one over the
+   3-char comparator norm, still inside the 18-char head budget). Keeps the
+   `label`s pretty, makes the *head* deterministic. Note `smoke.spec.js` and
+   `fbe-wires.spec.js` match palette buttons by `label`, not `tag`, so this
+   option touches no spec.
+3. **Extend the subset.** Re-generate **six** woff2 files — the five Plex Mono
+   weights plus `overpass-latin-var.woff2` — naming the three comparator
+   codepoints (U+2265, U+2264, U+2260) explicitly in the subset, and widen the
+   matching `unicode-range`s. It can pick up `Δ` (U+0394), `≈` (U+2248) and
+   `→` (U+2192) in the same pass, but only if those three are named too: they
+   are separate codepoints, not fallout of the comparator ones. Overpass is in
+   scope because prose `Δ` renders in the body face, not the mono. The fonts
+   are immutable BY NAME, so this is a rename plus a cache-bust on a file every
+   page loads.
+
+**Owner ruling, 2026-08-01: option 2**, taken in this lane — `ge` / `le` / `ne`
+now tag `A>=B` / `A<=B` / `A!=B` while their `label`s keep the real glyphs. The
+reasoning is scoped to the surface: the head is the one place a fallback face
+lands inside a fixed pixel budget, so it gets the deterministic form; the label
+sits in running palette text where a fallback costs nothing and the typographer's
+glyph is the better read. `fbe-engine.js`'s comparator comment carries the
+constraint, and `fbe-block-names.spec.js` pins every tag to printable ASCII, so
+the next tag author cannot reintroduce the case by hand. (The option text above
+predates that pin — taking option 2 turned out to be worth one spec line, not
+zero.)
+
+**Option 3 stays open** as the site-wide typography lane, unchanged by the
+ruling — `Δ` / `≈` / `→` still come from system fallbacks everywhere they
+appear in prose, and the comparator `label`s still do in the palette. Cosmetic
+in every location.
+
+### 256. The wiresheet inspector's form controls sit outside the TOUCH-TARGET FLOOR block *(noticed 2026-07-31, FBE block-name lane — RULED 2026-08-01: written exemption, no code change; this entry is the record)*
+
+`styles.css`'s consolidated `TOUCH-TARGET FLOOR` block floors the form-control
+family at 44px under `@media (hover: none)`: `.field input`, `.field select`,
+`input.ps-input`, `select.ps-input`. The Function-Block Editor's inspector uses
+none of those classes — its controls are `.fbe-insp-row input[type="number"]`,
+`.fbe-insp-row select` and, as of this change, `.fbe-insp-row input[type="text"]`
+(the Name field). They compute to roughly 27px tall, well under the WCAG 2.5.5
+floor, on a touch device.
+
+**Why it has never surfaced — and the gate is stronger than it first reads.**
+The gate is `@media (max-width: 999px), (hover: none) and (pointer: coarse)`
+(`styles.css`, the `.fbe-live { display: none }` rule near the end of the FBE
+section), and that comma is an **OR**. So a touch-primary device is hidden out
+of the wiresheet at ANY width, not just under 1000px — the "touch tablet in
+landscape at ≥1000px gets the inspector" scenario this entry was first filed on
+**cannot occur**, and `sim-desktop-only.spec.js` pins exactly that case at
+1280×800. `touch-floor.spec.js`'s `hover: none` contexts (412×883, 768×1024) sit
+below the width arm as well, so the inspector is `display: none` in every touch
+context the suite has, twice over.
+
+**The residual exposure is the hover-capable touch screen** — a laptop or 2-in-1
+that reports `hover: hover` / `pointer: fine` from its trackpad while the user
+reaches up and taps the glass. Those devices clear the gate and get 27px
+controls. That is not a `.fbe-insp-*` defect: the site-wide TOUCH-TARGET FLOOR
+is itself scoped `@media (hover: none)`, so **no** control anywhere on the site
+is floored for that device class. Fixing it here would floor one inspector on
+one hidden-ish surface while every nav link, tab and form field on every page
+stayed 27–36px.
+
+**Owner ruling, 2026-08-01: written exemption, no `styles.css` change.** This
+entry IS the record — the "an exemption must be written down" posture the
+contrast sweep's ALLOWLIST takes, kept in the tracker rather than duplicated as
+a comment in the TOUCH-TARGET FLOOR block, since the exempting fact lives in the
+`.fbe-live` gate and not in the floor rule. Revisit **only if that media query
+changes**: drop the `(hover: none) and (pointer: coarse)` arm, or relax the
+width arm, and the inspector becomes reachable on a touch-primary device, at
+which point the one-line addition to the form-control family is the fix.

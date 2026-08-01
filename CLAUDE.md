@@ -485,6 +485,57 @@ section). **Category keys mirror the landing pages' `navCard()`
   in its own context too — in VAV the region between the mode ranges
   genuinely *is* the deadband (`education/vav-systems.html:696`, a model
   comment).
+- **A function-block head is `TAG · Name` — and it must never grow the
+  block.** Every entry in `fbe-engine.js`'s `BLOCKS` catalog carries a
+  short **`tag`** (2–5 chars: `AI`, `BO`, `CONST`, `SR`, `SEL`,
+  `A>B`…) alongside its full **`label`**. The `label` is the type's
+  name and still drives the palette buttons and the inspector caption —
+  **specs match palette buttons by `label` text**, exactly in
+  `tests/fbe-wires.spec.js` (`textContent === label`) and
+  `tests/fbe-block-names.spec.js` (`:text-is()`), by SUBSTRING in
+  `tests/smoke.spec.js` (`{ hasText: … }`). The derived rule is the same
+  under either matcher: a tag is added *beside* a label, never in place
+  of one. The `tag` is what the block HEAD renders, because it is the
+  only form that leaves room for a name. **A tag is ASCII-only** — the
+  head is the one surface where a codepoint outside the bundled mono's
+  subset drags in the visitor's system fallback face, so `ge` / `le` /
+  `ne` tag `A>=B` / `A<=B` / `A!=B` while their labels keep `≥` / `≤` /
+  `≠` (owner ruling 2026-08-01, codebase-issues #255). A block instance
+  may carry an optional top-level **`name`**
+  (`{ id, type, x, y, params, …, name? }`) saying what THIS block does
+  on THIS sheet; the head then reads `TAG · Name`, with the `·` supplied
+  by CSS (`.fbe-block-tag::after`) so it is not selectable. Its alt text
+  is a SPACE, not empty: the tag and name spans are adjacent with no
+  whitespace between them, so an empty alt would delete the only word
+  boundary and a screen reader would hear "AIOAT". Engines that ignore
+  alt text fall back to the bare `content` line and announce the dot —
+  both branches are acceptable, an unbounded string is not. With no
+  `name` the head renders `label` as
+  a single text node, exactly as it did before names existed — which is
+  what a block dragged off the palette looks like until the inspector's
+  **Name** field is filled in. `name` is a **top-level block field,
+  never a param**: `tests/fbe-engine.spec.js`'s literal sweep rejects
+  any key in `params` the block type doesn't declare.
+  **The head budget is 18 characters**, tag and separator included
+  (8.5rem block, 1px borders inside the border-box, 0.62rem mono at
+  0.04em tracking). It was *measured* to hold across root fonts
+  12–32px — one term in it (the border) is px and doesn't scale, so
+  the budget had no right to be root-font-invariant and the
+  measurement is the only reason to believe it is. `.fbe-block-head`
+  is `white-space: nowrap; overflow: hidden; text-overflow: ellipsis`
+  and **that is load-bearing, not polish** — pins live in
+  `.fbe-block-body` AFTER the head in DOM order, so a head that wraps
+  to a second line moves every pin and wire endpoint below it, and the
+  AHU workbench stacks ~89.72px blocks on a 90px row pitch — 0.28px of
+  clearance, the tightest column on any workbench sheet (no FCU column
+  comes within 5px, so the AHU is the binding case). Measured: a
+  19-character head grew its block 72.97 → 88.84px before the rule. **On the workbench pages the
+  names are NOT authored into the program literals** — `ddcw-shell.js`
+  derives them from the point roster (`unit.points[].name`, the same
+  string the statusbar chip and the off-program window print), because
+  point id === FBE block id is the binding invariant and a second copy
+  of the string is a drift generator. `tests/fbe-block-names.spec.js`
+  pins both halves.
 - **Damage-stakes scope note** (owner decision, 2026-07-11): any tool
   whose output, acted on directly, can damage equipment (burst coil,
   cracked heat exchanger, slugged compressor, burned motor, cooked
@@ -841,8 +892,11 @@ section headers).
   values render bright/accent. That inversion looks like a bug and
   isn't: quiet caption + loud value is the intended scan hierarchy, and
   it clears WCAG (measured `--text-dim` on `--surface`: **5.67:1** dark
-  / **5.27:1** light, against a 4.5:1 small-text AA floor). Owner
-  decision 2026-07-20, standing answer to codebase-issues #168:
+  / **5.51:1** light, against a 4.5:1 small-text AA floor — the light
+  figure follows the 2026-07-20 `--text-dim` retune; the
+  `label, .field-label` comment in `styles.css` repeats this pair and
+  `.fbe-block-tag`'s cites it, so recompute both if the token moves).
+  Owner decision 2026-07-20, standing answer to codebase-issues #168:
   **working as designed — do not retune it site-wide** (it would flatten
   the hierarchy on all ~47 label-bearing pages). When a page's
   control block is dense enough that the captions genuinely *are* the
