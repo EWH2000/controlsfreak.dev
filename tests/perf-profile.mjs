@@ -451,6 +451,41 @@ const MANIFEST = [
             + 'and the gutter scope.',
     },
     {
+        id: 'ddc-workbench-ahu-unit',
+        path: '/simulators/ddc-workbench.html',
+        label: 'simulators/ddc-workbench.html (Unit)',
+        motion: 'moving',
+        scrollTo: '#tab-unit',
+        motionSel: '.ahu-chevron',
+        why: 'The AHU workbench — the same shell and the same 10 Hz host tick as the FCU '
+            + 'rows above, over a BIGGER drawing: six chevron rails instead of one (~30 '
+            + 'marks against the FCU\'s ~26), a spinning fan, and a psychrometric solve '
+            + 'per station per tick. It is the natural regression sentinel for the '
+            + 'chevron rewrite, and the pairing with ddc-workbench-fcu-unit is what '
+            + 'separates "the AHU is expensive" from "the shell got more expensive". '
+            + 'Also absent from the sitemap (hidden page), so only this hand-picked '
+            + 'manifest reaches it.',
+    },
+    {
+        id: 'ddc-workbench-ahu-wiresheet',
+        path: '/simulators/ddc-workbench.html',
+        label: 'simulators/ddc-workbench.html (Wiresheet)',
+        motion: 'moving',
+        action: async (page) => { await page.click('.tabs.tabs-flush [data-tab="wiresheet"]'); },
+        assert: async (page) => (await page.locator('#tab-wiresheet').evaluate((el) => el.classList.contains('active'))
+            ? null : 'the wiresheet pane never became active — the tab click did not take'),
+        scrollTo: '#tab-wiresheet',
+        why: 'The AHU half of the same controlled pair the two FCU rows form: identical '
+            + 'load, identical chrome, one tab swap, so the DIFFERENCE between this row '
+            + 'and ddc-workbench-ahu-unit is what a wiresheet-side change moved. Added '
+            + 'when the no-burial relayout took this sheet\'s canvas from 1210 to 980 px '
+            + 'tall — #244 measured cost scaling with the CANVAS rather than its '
+            + 'contents, so a height change is exactly the kind of edit that wants a row '
+            + 'to land on. NO motionSel, for the same reason as the FCU wiresheet row: '
+            + 'the only moving thing on this page is .ahu-chevron, and every chevron '
+            + 'lives inside the pane this row makes display:none.',
+    },
+    {
         id: 'refrigerant-loop',
         path: '/simulators/refrigerant-loop.html',
         label: 'simulators/refrigerant-loop.html',

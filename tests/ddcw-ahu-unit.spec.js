@@ -147,17 +147,38 @@ test.describe('ddcw-ahu-unit: headless loading and scope', () => {
         expect(Array.isArray(Unit.points)).toBe(true);
     });
 
-    test('the shell-contract half is deliberately absent', () => {
-        // This lane ships physics only. The file's header says the
-        // exported object does NOT satisfy DDCWShell.createWorkbench,
-        // and this row is what keeps that statement honest — when the
-        // graphic lane lands the methods, this test fails and the
-        // header note comes out with it.
+    test('the DOM half exists but resolves NOTHING at load', () => {
+        // Replaces the row that pinned the shell-contract half's ABSENCE.
+        // The graphic lane landed it 2026-07-30, so that row fired as
+        // designed and came out with the header note it was keeping
+        // honest. What has to stay true is the SPLIT, not the absence:
+        // the DOM half may reference `document` only when CALLED, never
+        // at module scope, or this file stops being vm-loadable and the
+        // physics surface stops being independently testable.
+        //
+        // The bare context above is the whole assertion — a document read
+        // at load ReferenceErrors before we get here. This row records
+        // what that context is protecting, and names the shell-contract
+        // methods so a MISSING one is as visible as a load failure.
         const Unit = loadUnit();
-        ['create', 'renderUnit', 'syncControls', 'wireControls',
-         'initAnim', 'onResize'].forEach((m) => {
-            expect(Unit[m], m + ' is not this lane').toBeUndefined();
+        expect(typeof Unit.create, 'the unit factory').toBe('function');
+        const unit = Unit.create({
+            programs: { sample: { blocks: [] } },
+            programLabels: { sample: 'Sample' },
+            defaultProgram: 'sample',
+            canvasSize: { w: 100, h: 100 },
         });
+        // Every method DDCWShell.createWorkbench calls, plus the sim-clock
+        // prefs it reads. A missing onResize is the one whose absence is
+        // LATENT — the shell reaches it only on the fullscreen edge — so
+        // it earns a named row rather than trust.
+        ['createPlant', 'update', 'renderUnit', 'syncControls',
+            'wireControls', 'initAnim', 'onResize'].forEach((m) => {
+            expect(typeof unit[m], m).toBe('function');
+        });
+        expect(isFinite(unit.speedDefault), 'speedDefault').toBe(true);
+        expect(isFinite(unit.maxDtSim), 'maxDtSim').toBe(true);
+        expect(unit.points).toBe(Unit.points);
     });
 });
 
@@ -957,13 +978,46 @@ test.describe('ddcw-ahu-unit: sensed vs truth', () => {
         expect(pl.sensors['rat']).toBe(pl.zoneT);
     });
 
-    test('a sensor with no override entry cannot be forced', () => {
-        // The map is keyed by sensor point id and only space-temp
-        // carries an entry today — the structure the controls half
-        // grows into, and the reason the other four read truth.
+    test('every analog input is overridable, and the proof switch is not', () => {
+        // The map is keyed by sensor point id. It carried only space-temp
+        // while this file was physics-only; the controls half grew the
+        // other four on 2026-07-30 (owner decision), because each teaches
+        // a distinct fault and an id with no entry silently reads truth.
+        //
+        // The exclusion is the load-bearing half of this row:
+        // `fan-status` is a proof SWITCH, not a measurement of a
+        // continuous value, so there is nothing to override — and the
+        // publish step routes it around sensedValue() to say so. A future
+        // edit that adds it here would be a category error, not a feature.
         const Unit = loadUnit();
         const plant = Unit.createPlant();
-        expect(Object.keys(plant.override)).toEqual(['space-temp']);
+        const ai = Unit.points
+            .filter((p) => p.kind === 'ai')
+            .map((p) => p.id)
+            .sort();
+        expect(Object.keys(plant.override).sort()).toEqual(ai);
+        expect(plant.override['fan-status'], 'a proof switch reports its own state')
+            .toBeUndefined();
+        // Every entry starts released — a fresh plant tells no lies.
+        Object.keys(plant.override).forEach((k) => {
+            expect(plant.override[k].active, k + ' starts released').toBe(false);
+        });
+    });
+
+    test('forcing any analog input splits it from the truth', () => {
+        // The generalisation of the space-temp row above, walked across
+        // the whole set. The physics reads plant state and never
+        // plant.sensors, so a forced sensor lies to the program and to
+        // nothing else.
+        const Unit = loadUnit();
+        [['rat', 'zoneT'], ['oat', 'oaT'], ['mat', null], ['dat', null]].forEach((row) => {
+            const pl = run(Unit, (p) => { p.override[row[0]].active = true; p.override[row[0]].value = 111; }, 10, 5);
+            expect(pl.sensors[row[0]], row[0] + ' is being forced').toBe(111);
+            if (row[1]) {
+                expect(pl[row[1]], row[0] + ': the plant kept its own truth')
+                    .not.toBe(111);
+            }
+        });
     });
 
     test('the displayed entering-air sample and the return probe are one number', () => {

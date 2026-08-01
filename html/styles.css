@@ -4590,12 +4590,25 @@ p.tool-preamble.tight { margin-bottom: 0.85rem; }
  * Lifted here from simulators/ddc-workbench-fcu.html's head block when
  * the shell JS moved to /scripts/ddcw-shell.js, so a second unit page
  * reads one source — same precedent as the FBE section above. The
- * unit-specific rules (fcu-*) stay page-inline, and so do two ddcw-*
- * control-pattern rules whose cascade is coupled to unit markup:
- * label.ddcw-null must be declared AFTER the page's own .fcu-fanen
- * label rule to win their specificity tie, and the .ddcw-tracked
- * disabled dimming is scoped under .fcu-controls — see the page's
- * head block.
+ * SENSOR-GLYPH vocabulary and the chip pulse joined it when the AHU
+ * page landed (their own comment named that as the trigger); they sit
+ * at the end of this section.
+ *
+ * The unit-specific rules (fcu-* / ahu-*) stay page-inline, and so do
+ * two ddcw-* control-pattern rules whose cascade is coupled to unit
+ * markup — and BOTH WORKBENCH PAGES NOW CARRY THEIR OWN COPY, which is
+ * the resolution codebase-issues #220 anticipated rather than an
+ * oversight. The load-bearing one is the .ddcw-tracked disabled
+ * dimming, scoped under .fcu-controls / .ahu-controls respectively: a
+ * rule scoped to one page reaches none of the other page's controls,
+ * so an unscoped rule here would need both pages re-verified.
+ * label.ddcw-null is the softer case — it must be declared AFTER the
+ * page's own `<container> label` rule to win their specificity tie, but
+ * MEASURED 2026-07-30 the only thing that tie decides is a 0.8px gap:
+ * the fan-enable label is a flex item inside a `.field`, so the
+ * page rule's `inline-flex` blockifies to `flex` and the earlier note's
+ * claim that graduating it would flip the NULL box back onto one line
+ * was wrong. See each page's head block.
  * ────────────────────────────────────────────────────────────────────── */
 .ddcw-statusbar {
     display: flex;
@@ -4618,6 +4631,19 @@ p.tool-preamble.tight { margin-bottom: 0.85rem; }
     background: var(--surface-2);
     border: 1px solid var(--border);
     border-radius: 3px;
+    /* The pulse transition (see .ddcw-chip-hilite below) is merged into
+     * this rule rather than declared after it — a second `.ddcw-chip {}`
+     * block would be a duplicate selector for one property. */
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+/* Chip pulse — highlightChip (ddcw-shell.js) holds the class ~1.2 s; the
+ * transition above eases it in and back out. Transient only: nothing
+ * animates while idle (these pages' idle cost is profiled —
+ * tests/perf-profile.mjs). Inset ring, not a floating shadow — the
+ * AX-sharp seam idiom. */
+.ddcw-chip.ddcw-chip-hilite {
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
 }
 .ddcw-chip-cap {
     color: var(--text-dim);
@@ -4720,6 +4746,95 @@ p.ddcw-sheet-note {
     padding: 0.35rem 0.65rem;
 }
 .tool-card.is-fullscreen p.ddcw-sheet-note { display: none; }
+
+/* ── Sensor glyphs ── the physical sensing devices drawn where they
+   actually live on a unit graphic: a wall plate on the room boundary, an
+   insertion probe in a duct, a shielded head on an outdoor face, an
+   averaging element strung across a plenum. ddcw-* names because the
+   concept is shell-shared — any unit graphic may carry glyphs.
+
+   GRADUATED HERE FROM ddc-workbench-fcu.html WHEN THE AHU PAGE LANDED,
+   which is the trigger that block's own comment named: two unit pages
+   now draw the same vocabulary, and the house rule keeps only
+   single-page pieces inline. The set is the FCU's four classes plus the
+   two the AHU depiction added (-solid, -cap); the FCU page draws neither
+   today and that is fine — one shared vocabulary, drawn from as needed.
+
+   NO GEOMETRY MAY CARRY AN INLINE fill= OR stroke=. That is
+   load-bearing rather than tidy: the hover / focus lift below is what
+   makes a glyph feel like the drill-down seam it will become, and one
+   inline attribute would freeze that part at the dim ink while its
+   siblings lift to the accent.
+
+   ⚠ THE :focus-visible ARMS ARE FOR A FOCUSABLE GLYPH, AND WHETHER A
+   GLYPH IS FOCUSABLE IS A PAGE DECISION. The FCU's glyphs carry
+   tabindex + role="button" and the shell binds them generically. The AHU
+   graphic carries role="img" on the SVG root — which makes its whole
+   subtree presentational, so nothing inside it may be focusable — and
+   moves the activation affordance to real HTML buttons outside the
+   drawing (codebase-issues #227b). Both are correct; these rules serve
+   either. */
+.ddcw-sensor { cursor: pointer; }
+.ddcw-sensor-hit { fill: transparent; stroke: none; }
+.ddcw-sensor-body {
+    fill: var(--surface);
+    stroke: var(--text-dim);
+    stroke-width: 1.5;
+    transition: stroke 0.15s;
+}
+.ddcw-sensor-stem,
+.ddcw-sensor-slot {
+    fill: none;
+    stroke: var(--text-dim);
+    stroke-width: 1.5;
+    stroke-linecap: butt;
+    transition: stroke 0.15s;
+}
+/* SOLID glyph members. The four classes above are OUTLINE forms: -body
+   fills with var(--surface), which on a unit graphic is the panel behind
+   the drawing, so a shape given -body reads as HOLLOW no matter how the
+   drawing spec words it. A radiation shield is a stack of solid discs
+   seen edge-on, and thin open chevrons on a vertical rod read as arrow
+   fletching instead. Reach for -solid whenever a glyph member's
+   SILHOUETTE is the thing being communicated; keep -body for members
+   whose outline is. */
+.ddcw-sensor-solid {
+    fill: var(--text-dim);
+    stroke: none;
+    transition: fill 0.15s;
+}
+.ddcw-sensor:hover .ddcw-sensor-solid,
+.ddcw-sensor:focus-visible .ddcw-sensor-solid {
+    fill: var(--accent);
+}
+/* An averaging element's capillary. Round caps and joins are the
+   FLEXIBILITY CUE: this is tubing bent around standoffs, not the
+   mitered sheet-metal geometry everything else on a unit graphic uses.
+   Weight stays in the 1.5 sensor family — resizing an averaging element
+   changes its pass EXTENTS, never this stroke width and never the pass
+   count, because a scale() would thin the family weight. */
+.ddcw-sensor-cap {
+    fill: none;
+    stroke: var(--text-dim);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.15s;
+}
+.ddcw-sensor:hover .ddcw-sensor-body,
+.ddcw-sensor:focus-visible .ddcw-sensor-body,
+.ddcw-sensor:hover .ddcw-sensor-stem,
+.ddcw-sensor:focus-visible .ddcw-sensor-stem,
+.ddcw-sensor:hover .ddcw-sensor-slot,
+.ddcw-sensor:focus-visible .ddcw-sensor-slot,
+.ddcw-sensor:hover .ddcw-sensor-cap,
+.ddcw-sensor:focus-visible .ddcw-sensor-cap {
+    stroke: var(--accent);
+}
+.ddcw-sensor:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
 
 @media (prefers-reduced-motion: reduce) {
     .widget-fan-blades { transform: none !important; }

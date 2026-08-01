@@ -8610,7 +8610,26 @@ is the only surface that can ever show them, and the sim is JS-only anyway.
 Found by the #205 adversarial verify; deliberately not fixed on that branch
 to keep the candidate diff reviewable.
 
-### 220. Shell-extraction residue the AHU page must inherit consciously *(open — 2026-07-26 · carry into the AHU brief)*
+### 220. Shell-extraction residue the AHU page must inherit consciously *(open — 2026-07-26 · carry into the AHU brief — **RESOLVED 2026-07-30**, AHU page lane)*
+
+**Disposition — option (a), as this entry anticipated.** The AHU page
+(`html/simulators/ddc-workbench.html`) carries its own copy of both rules in its
+`{% block head %}`: `label.ddcw-null` declared AFTER the page's `.ahu-fanen
+label` rule so it wins the (0,1,1) tie, and the `.ddcw-tracked[disabled]`
+dimming scoped under `.ahu-controls`. The `@media (hover: none)` floor came with
+it — the AHU has three NULL boxes in `.slider-field`, which no shared selector
+reaches. Zero risk to the live FCU page, no `styles.css` selector change, no
+re-verification of the FCU's fan-enable row. Option (b) (widening the shared
+selector) stays defensible and stays a separate PR. The `styles.css` section
+header now says BOTH pages carry the duplicate, so the next reader does not
+assume it is FCU-only.
+
+The entry's third item — the `SPEED_MIN` / `SPEED_MAX` mirror — is settled by
+omission on this unit, per #234: `ddcw-ahu-unit.js` declares `SPEED_DEF` and
+`MAX_DT_SIM` (both READ by the shell, so both live) and declares no unread
+bounds constants. The slider's `min` / `max` live in the markup alone, which is
+the only place anything reads them.
+
 
 Two deliberate leftovers from the `refactor/ddcw-shell-extraction` branch,
 verified sound there but invisible to the next lane unless recorded here (a
@@ -8916,7 +8935,29 @@ above is a feel constant twice over (both `pt` and the coil lag are tunable),
 so it belongs in this file and in a commit body, not in prose a retune would
 silently falsify — the *write claims that can't go stale* convention.
 
-### 227. FCU graphic a11y: a live region inside a hidden pane, and `role="img"` over five focusable descendants *(noticed 2026-07-27, prose audit — (a) resolved 2026-07-27, (b) **RULED 2026-07-28**, scheduled to the graphic-wiring lane and not yet implemented)*
+### 227. FCU graphic a11y: a live region inside a hidden pane, and `role="img"` over five focusable descendants *(noticed 2026-07-27, prose audit — (a) resolved 2026-07-27, (b) **RULED 2026-07-28** and **RESOLVED 2026-07-30 on BOTH pages** — the AHU page lane; the FCU half nearly shipped a lane late, see #251)*
+
+**(b) implemented on the AHU page, per the 2026-07-28 ruling.** `role="img"`
+STAYS on `#ahu-graphic` — dropping it to `role="group"` would un-hide roughly
+nineteen duplicated `<text>` nodes to a screen reader, which is worse than the
+defect it fixes. So nothing inside the drawing is focusable: the five sensor
+glyphs carry no `tabindex` and no `role="button"`, and their pure-CSS `:has()`
+link to the annotation they feed is hover-only.
+
+The ACTIVATION affordance moved OUT of the SVG to real HTML buttons — the five
+point-mirror cells for `oat` / `rat` / `mat` / `dat` / `space-temp`. Pressing one
+pulses that point's statusbar chip through the shell's own `highlightChip` hook
+(the FCU's glyph behaviour, unchanged) and LATCHES `.is-hilite` on the annotation
+group, which is what a hover cannot do for a keyboard or touch reader.
+`tests/ddc-workbench-ahu-page.spec.js` pins all three halves: the buttons exist
+and name real roster points, nothing inside the graphic is focusable, and the
+latch follows the press including the zone-box case.
+
+The FCU page is unchanged and keeps its focusable glyphs — the two pages differ
+because their graphics differ, and the graduated `.ddcw-sensor` block in
+`styles.css` serves either. Its `:focus-visible` arms are now documented as
+serving a focusable glyph where a page chooses one.
+
 
 Two findings from the same audit, both on the FCU workbench graphic, neither
 a program issue and so outside #225/#226's deferral.
@@ -9326,7 +9367,7 @@ become the fifth implementation.
 cite it.
 
 
-### 229. `#fcu-ovr-state` is a live region rewritten on every 10 Hz host tick *(noticed 2026-07-27)*
+### 229. `#fcu-ovr-state` is a live region rewritten on every 10 Hz host tick *(noticed 2026-07-27 — still OPEN on the FCU; the AHU's twin `#ahu-ovr-state` shipped guarded 2026-07-30 after reproducing it verbatim, see the note at the end)*
 
 Same defect as prose-audit item 18, on a different element, found while
 fixing #227(a) and deliberately not bundled into it — a distinct element
@@ -9362,6 +9403,16 @@ away, which invites a reader to copy the idiom without the measurement.
 Checked and fine: `#ddcw-fbe-status` (`:1027`) is inside `#tab-wiresheet`
 and written only on run / pause / reset — no spam, and its pane is up
 whenever it can change.
+
+> **AHU half, 2026-07-30 (AHU page lane).** `#ahu-ovr-state` shipped with the
+> identical defect and was caught in review before the page merged: measured 30
+> identical rewrites over 3 s with an override held, 0 with none. It now carries
+> the same signature guard `setVerdict` uses. Note the warning above about the
+> unit suffix is satisfied there **by construction rather than by care** — the
+> string interpolates `dispTempNum(...)` + `tSuffix()`, so guarding on the whole
+> composed string means a units toggle changes the signature and repaints.
+> `tests/ddc-workbench-ahu-page.spec.js` pins zero rewrites while held.
+> **The FCU element is still unguarded**; the fix there is the same three lines.
 
 ### 230. Light theme darkens `--amber` and `--heat` out of the register component identity depends on *(noticed 2026-07-28, AHU round-2 depiction review — **RESOLVED 2026-07-28**, owner ruled for separate fill tokens)*
 
@@ -9750,7 +9801,28 @@ review time. Worth a sweep rather than a one-liner: this is the same defect
 shape wherever a `data-metric` delta was converted from the IP delta instead
 of subtracted from the displayed metric operands, and nothing guards it.
 
-### 233. AHU plant: MAT and the RAT probe are sampled one Euler step apart *(noticed 2026-07-28, shipped knowingly with the AHU physics half — for the graphic lane)*
+### 233. AHU plant: MAT and the RAT probe are sampled one Euler step apart *(noticed 2026-07-28, shipped knowingly with the AHU physics half — for the graphic lane — RE-DISPOSITIONED 2026-07-30 — deferred again, with the reason written down)*
+
+**Deferred again at the graphic lane, and this is the argument rather than a
+shrug.** The AHU page made the split VISIBLE for the first time: the point mirror
+paints MAT and RAT as adjacent cells, so at the shut position a reader really can
+see `MAT 77.5` beside `RAT 77.6` and read it as a broken sensor.
+
+Both candidate fixes MOVE the defect rather than removing it. (b) re-solving the
+mix post-integration for display makes MAT/RAT agree and stops `DAT − MAT`
+closing; (c) publishing the whole air path from the tick-start sample makes both
+of those close and splits `d.eatT` from the RAT chip instead — which is the exact
+defect the FCU's one-sample rule exists to prevent, and which this file's own
+spec row pins. There is no arrangement that makes all three pairs agree with a
+one-step integrator.
+
+`DAT − MAT` is the headline of the drawing and the number the page teaches people
+to read, so it is the pair that must close. The MAT/RAT split is one displayed
+digit, only at the shut position, and only while the zone is moving. A real fix
+is a smaller `dtSim` or a second-order integrator; neither was this lane's call.
+The comment in `ddcw-ahu-unit.js` now carries this reasoning at the point of
+publication.
+
 
 `html/scripts/ddcw-ahu-unit.js` computes the mixed-air state from the
 **tick-START** `plant.zoneT` — that is the Euler evaluation point, and the
@@ -9827,7 +9899,38 @@ The AHU physics half deliberately declares neither — an unread constant is
 exactly the trap this entry describes, and the AHU's sim-clock prefs land
 with its shell-contract half instead.
 
-### 235. The #224 display-unit guard is bound by path and by local name to the FCU, so a second unit module ships that rule unguarded *(noticed 2026-07-28, AHU physics lane)*
+### 235. The #224 display-unit guard is bound by path and by local name to the FCU, so a second unit module ships that rule unguarded *(noticed 2026-07-28, AHU physics lane — **RESOLVED 2026-07-30**, AHU page lane — generalised, not duplicated)*
+
+**Generalised, and it MOVED.** The guard now lives in
+`tests/ddcw-display-units.spec.js` and both bindings are gone:
+
+* **Path → walk.** It enumerates every `ddcw-*-unit.js` under `html/scripts`
+  from the directory rather than naming one, so a third unit is covered the day
+  its file lands.
+* **Name alternation → derived FIXPOINT.** Each file's display-local set is
+  derived FROM THAT FILE: seed from `const X = dispTempNum(…)`, then repeatedly
+  add any `const X = …` whose initializer mentions a name already in the set,
+  until it stops growing. One pass is not enough — `dtN`, the local the original
+  #224 bug used, has no `dispTempNum` call of its own on either unit. A dedicated
+  row pins that second-order reach against a synthetic fixture.
+* **Anti-vacuity moved with it**, as this entry required. The four probe lines
+  became a row that drives the matcher FACTORY against a synthetic name set, so
+  they test the pattern rather than one file's names; the "the locals are still
+  there" probe became a per-file "this file calls `dispTempNum` but no display
+  local was derived" assertion; and a file with no display boundary is SKIPPED
+  with the skip list asserted empty, so a module cannot silently drop out of
+  scope.
+
+**Proved by mutation**, per the lane brief: introducing
+`const probeRelapse = d.capActive && dtN <= COOL_DT_TRIP;` into
+`ddcw-ahu-unit.js` turned the row red and named `ddcw-ahu-unit.js` in the
+failure; reverting it turned it green again. Note the probe used a SECOND-ORDER
+local, so that run also exercised the fixpoint.
+
+Floor unchanged and re-stated in the new header: a source scan of non-comment
+lines, so a trailing `// dtN > -3` on a code line trips it and a comparison built
+by string concatenation does not.
+
 
 `tests/ddcw-fcu-unit.spec.js:838-885` is the source scan that enforces
 codebase-issues #224 — *a display-unit local exists to be PAINTED; thresholds
@@ -10147,7 +10250,35 @@ Cheapest honest interim if a moisture readout ships first: publish
 `d.matCondensate` beside `d.matW` so a chip can annotate a fogging mixed-air
 state rather than silently under-report it.
 
-### 240. A fogging MAT no longer reconciles with the reader's own %OA arithmetic, and the graphic says nothing about it *(noticed 2026-07-29, the #236 fix round's review — a LANE 7.4 graphic question, not a physics one)*
+### 240. A fogging MAT no longer reconciles with the reader's own %OA arithmetic, and the graphic says nothing about it *(noticed 2026-07-29, the #236 fix round's review — a LANE 7.4 graphic question, not a physics one — **ONE CANDIDATE BUILT 2026-07-30, awaiting the owner's eye** — a depiction to look at, not a settled answer)*
+
+**Built as one candidate, deliberately cheap and reversible.** The owner asked
+to SEE this rather than answer it in the abstract, and the one option ruled out
+was a silent bare number — which looks like the site's own %OA arithmetic and is
+not it.
+
+What shipped: a marker beside the MAT readout that appears only in the fog
+branch. Two parts, because the two audiences need different things.
+* On the drawing, `#ahu-fog-mark` — three small wave strokes in the calculated
+  blue, sitting in the 14-unit corridor between the `MAT` row label and its well.
+  GEOMETRY rather than a glyph on purpose: no font-subset risk (Δ already costs
+  this drawing a measurement) and no string width to re-measure.
+* In the point mirror, `#ahu-mat-fog-note` — a real sentence with room to be one,
+  revealed by the same flag: *"Saturated — the mixture is fogging, so this is
+  warmer than the plain outdoor-air blend."* That is the accessible half, since
+  `role="img"` hides everything inside the drawing.
+
+The flag is DERIVED IN THE DOM HALF, not published by the physics: `matW` at or
+above saturation for `matT` is the tell, because `Psychro.mixStreams` re-solves
+the mixed dry-bulb ON the curve in that branch. The physics deliberately drops
+the condensate (#239) and has no consumer for a flag, so the derivation lives
+with the paint.
+
+Reversing it is deleting one CSS block, one `<g>`, one `<span>` and three lines
+of `ahuRenderUnit`. `tests/ddc-workbench-ahu-page.spec.js` asserts absent on an
+ordinary day and present at the cold-and-open corner the shipped
+outdoor-air slider reaches.
+
 
 `#236`'s fog re-solve moved the AHU's published `d.matT` off the
 `%OA·OAT + %RA·RAT` blend that `air-handlers.html`, `economizer-ratio.html` and
@@ -10234,7 +10365,30 @@ to match the comparators lesson. That would put the site at odds with the VAV
 usage it teaches elsewhere, i.e. trade one internal contradiction for a worse
 one.
 
-### 242. The AHU mockup's setpoint prose disagrees with the physics module's shipped defaults *(noticed 2026-07-29, deadband/setpoint-gap terminology sweep — for LANE 7.4)*
+### 242. The AHU mockup's setpoint prose disagrees with the physics module's shipped defaults *(noticed 2026-07-29, deadband/setpoint-gap terminology sweep — for LANE 7.4 — **RESOLVED 2026-07-30** — the module won, and the prose was re-derived, not copied)*
+
+**The physics module wins (owner decision, 2026-07-30).** The AHU ships cooling
+72 / heating 68 / deadband 2, so cooling makes at 74 and breaks at 72 and the
+setpoint separation is 4 °F. `ddcw-ahu-unit.js`'s seeds, its `4 °F clear of
+cooling` comment and its measured cycling-arrival figures are all correct and
+were not touched.
+
+`html/simulators/ddc-workbench-ahu-mockup.html` is UNCHANGED and stays the
+archival depiction record — including its 73/68 prose, which is now historical
+rather than wrong-in-place.
+
+The live page (`html/simulators/ddc-workbench.html`) re-derives rather than
+copies. The collapse this entry predicted is real and was handled: at 72 + 2 the
+make point IS 74, so the mockup's *"a space of 74.0 °F can sit under a lit
+stage"* illustration has no gap left to illustrate. The between-the-edges example
+is **73.0 °F** on the live page. Its rail reads SP DIFF 4.0 and its economizer
+lockout reads 62.0 (the module's seed) rather than the mockup's 65.0.
+
+Two structural changes went with it, because the page is LIVE where the mockup
+was static: the teaching prose states no live value at all, and the only numbers
+in it are named as SHIPPED PROGRAM CONSTANTS — a reader can edit any of them on
+the wiresheet, and the rail beside the drawing is what stays honest.
+
 
 `html/simulators/ddc-workbench-ahu-mockup.html` and
 `html/scripts/ddcw-ahu-unit.js` ship different setpoints:
@@ -10286,7 +10440,31 @@ of cooling," and the module's measured cycling arrival (`:153-170`) is stated
 against the 72 cut-out, so moving the module means re-measuring that claim,
 while moving the mockup means touching every surface above.
 
-### 243. `oat` declares no range, but comments in the same file state figures at temperatures no declared range reaches *(noticed 2026-07-29, deadband/setpoint-gap terminology sweep — for LANE 7.4)*
+### 243. `oat` declares no range, but comments in the same file state figures at temperatures no declared range reaches *(noticed 2026-07-29, deadband/setpoint-gap terminology sweep — for LANE 7.4 — **RESOLVED 2026-07-30**, AHU page lane)*
+
+**The range is the PAGE's, and it is −20…110 °F, step 1, default 80** (owner
+decision 2026-07-30). It lives on `#ahu-oa-slider` in
+`html/simulators/ddc-workbench.html`, not in the roster: an air handler's
+outdoor-air knob is a commissioning control on the page, the way the FCU's is,
+and the roster stays a BACnet point list. The FCU's own 55…110 stays — that unit
+has no economizer and no heating coil, so it needs none of what the cold end
+buys.
+
+Why the cold end: below freezing is where the minimum-outdoor-air position starts
+to matter, where the mixing box can fog, and where a wide-open damper over a
+still coil is a freeze scenario rather than a diagram.
+
+The OAT-indexed figures in `ddcw-ahu-unit.js` (`:383-408`) were re-scoped to it,
+following the model `:376-381` already sets:
+* the fogging onset (~−2 °F at a 50 % damper) and the plain 0 °F case now say
+  they are ordinary drags of one control rather than corners of a sweep grid;
+* the −20 °F / 70 % figure is named as the coldest the shipped slider reaches;
+* the −30 °F / 65 % / zone-90 corner is OUT of range and now says so — kept as an
+  illustration of where the divergence goes, explicitly not a state the machine
+  can be put in.
+The page's slider comment carries the reciprocal note: this control owns the "how
+cold can it get" claim, and the physics file points here.
+
 
 `html/scripts/ddcw-ahu-unit.js`'s `AHU_POINTS` roster gives `space-temp`
 `min: 60, max: 90, step: 1` and gives **`oat` no `min` / `max` / `step` at
@@ -10362,6 +10540,14 @@ different claim from layer A's authored-`y` drag clamp (`h − 40`) and is the
 one that catches this. Both surfaces measure clean at 540 now.
 
 ### 245. FCU scenario buttons carry `aria-pressed` but are one-shot actions, and nothing ever updates it *(noticed 2026-07-30, FCU proof sweep — in passing, not fixed)*
+**Inherited by the AHU page 2026-07-30.** `html/simulators/ddc-workbench.html`'s
+scenario row copies the same shape — six one-shot buttons carrying
+`aria-pressed="false"` that nothing updates. Copied knowingly rather than fixed,
+so the two pages stay one pattern and one fix reaches both; a lane that resolves
+this should sweep both files together. The AHU's STAGE buttons are the
+counter-example on the same page: they are a genuine state group and their
+`aria-pressed` IS maintained by `ahuSyncControls`.
+
 
 `html/simulators/ddc-workbench-fcu.html` renders each scenario button as
 `<button type="button" class="copy-btn" data-preset="…" aria-pressed="false">`,
@@ -10551,3 +10737,232 @@ Whichever way it goes, the `low-charge` verdict string and the
 `.ref-note` sentence naming it move together. No spec asserts the
 low-charge string today — only the condenser one is pinned — so a rewrite
 would want its own DOM row rather than inheriting coverage.
+
+### 248. The AHU mockup still carries an inline copy of the sensor-glyph CSS that graduated to `styles.css` *(noticed 2026-07-30, AHU page lane — deliberately not fixed)*
+
+The `.ddcw-sensor*` glyph vocabulary and the `.ddcw-chip-hilite` pulse graduated
+into the `DDC WORKBENCH SHELL` section of `html/styles.css` when the AHU page
+landed — the trigger the block's own comment named. The copy in
+`html/simulators/ddc-workbench-fcu.html` came out in the same change, so the FCU
+page now reads the shared rules.
+
+`html/simulators/ddc-workbench-ahu-mockup.html` still carries its own copy
+(`:1039-1115`), which is now a **duplicate of a shared block rather than the
+source of one**. It is inert — identical declarations, later in the cascade, same
+result — but it is exactly the shape that drifts: a retune to the shared block
+will not reach the mockup, and the next reader of the mockup will not know which
+copy is authoritative.
+
+**Not fixed on purpose.** The lane brief scoped the mockup as an archival
+depiction record and said not to edit it. The removal is a two-minute change
+whenever someone is in that file for another reason; note that its copy is a
+SUPERSET of the FCU's old one (it added `-solid` and `-cap`), and that superset
+is what graduated, so deleting the inline block loses nothing.
+
+### 249. `fill-token-misuse`'s rendered arm attributes a colour it cannot always attribute *(noticed 2026-07-30, AHU page lane — **FIXED in the same change**, recorded for the coverage it narrows)*
+
+The rendered arm of `tests/fill-token-misuse.spec.js` resolves every `-fill`
+token to an rgb value and flags any text-bearing element whose computed `color`
+(or, on SVG text, `fill`) matches one. The inference is *"this colour equals a
+`-fill` token's value, therefore a `-fill` token painted it"* — and that is only
+sound while the value is UNIQUE to the `-fill` family.
+
+It is not, in dark theme. The family exists because the LIGHT small-text floor
+drags `--amber` and `--heat` out of their own register (#230); in DARK both twins
+ride their base and resolve identically. A legitimate `color: var(--heat)` on a
+text node is then indistinguishable from the misuse — and `.status-pill.warn` is
+exactly that, in shared `styles.css` chrome.
+
+**Surfaced by the AHU page**, whose verdict pill lands in its `warn` state during
+the walk. The page was reported as an offender on colour equality alone; nothing
+on it reaches a `-fill` token from `color:`, and the SOURCE scan — which reads
+declarations rather than resolved values, and is the authority — said so.
+
+**Fix:** the arm now subtracts every colour a NON-`-fill` custom property also
+resolves to, and scans only what is left. A light-theme floor asserts that
+**every** `-fill` colour stays attributable — not merely one, which would let
+per-token attribution erode silently as tokens are added or retuned; measured on
+both walked consumers, survivors === tokenCount === 2. Dark may legitimately go
+fully ambiguous, which is asserted as a shape rather than left to be discovered.
+A separate unsubtracted set keeps the "these tokens do paint geometry here"
+floor honest.
+
+**What that narrows, honestly:** dark-theme coverage of this arm. It is not a
+hole — where the twins are the same colour, using the wrong one is not an AA
+regression relative to using the right one, which is the entire premise of the
+split. If the tokens are ever given distinct DARK values, this filter stops
+firing there on its own and coverage returns without an edit.
+
+### 250. Neither wiresheet guard walked the AHU page, so its starter program shipped 23 buried wires through a green suite *(noticed 2026-07-30, AHU page review — **RESOLVED 2026-07-30**, same change)*
+
+`tests/fbe-geometry.spec.js` blocks CI on a **no-burial** invariant — no wire
+segment may cross a third block's interior — and enforces it for
+`function-block-editor.html` and `ddc-workbench-fcu.html`. `tests/fbe-engine.spec.js`
+sweeps `FCU_PROGRAMS` for graph validity. Neither named
+`html/simulators/ddc-workbench.html`, so `AHU_PROGRAMS` shipped with **zero**
+automated coverage.
+
+Measured in the rendered editor, replicating the spec's own `parseSegments` /
+`segmentEntersRect`: **23 segment hits over 13 wires**, against a tolerance of
+zero on both existing surfaces. The sheet's own layout comment asserted the
+opposite — *"Rows are hand-placed so multi-column wires clear the blocks between
+their endpoints."*
+
+**Two things were wrong, and the second is the durable one.**
+
+1. *The layout.* Relaid out and re-measured: **0 burials, 0 non-forward, 0
+   margin violations**, and the canvas shrank 1210 → 980 (the profiler's
+   Wiresheet row measures height directly). Two rules from `fbe-editor.js`'s
+   `wirePath` made it hand-solvable rather than guesswork, and both are now
+   written into the sheet's comment: an **adjacent-column** wire is always
+   clean, because the router's midpoint and both horizontal legs fall inside
+   the 39px gutter; and over a longer haul the vertical run lands in a gutter
+   iff the two column indices **sum to odd**. So the fix is mostly to SHORTEN
+   hauls — `sep`, `zero`, `hundred`, `min-oa-pos` and the `fan-status` proof
+   moved out of column 0 to sit beside the blocks that read them, which is the
+   FCU's own habit (`hundred` and `low` at x 895, `fanon` at x 720), not a new
+   idea.
+2. *The guard's reach.* `SURFACES` gained a `url` field and layer B now loops
+   over the workbench pages off that table instead of hard-coding one page —
+   the specific reason a `SURFACES` row alone was not enough, and the shape
+   that stops the next workbench from being registered and still unmeasured.
+   `fbe-engine.spec.js` gained a matching `AHU_PROGRAMS` arm.
+
+The engine sweep goes green on registration and catches nothing today (43
+blocks, all types registered; 51 wires, no dangling endpoint, no pin-kind
+mismatch, no input driven twice). It is worth having anyway — it is the arm
+that would catch a hand-edit to the literal.
+
+### 251. `#227(b)`'s FCU half landed a lane late, and the ruling's "one change across both pages" nearly became two divergent ones *(noticed 2026-07-30, AHU page review — **RESOLVED 2026-07-30**, same change)*
+
+The 2026-07-28 ruling on #227(b) is explicit: `role="img"` stays, the activation
+affordance moves to real HTML buttons outside the SVG, **"one change across both
+pages, rather than two divergent ones,"** and *"the stale in-file comment on the
+FCU page ('the education idiom') is corrected there, in that lane, with the rest
+of it."*
+
+The AHU page shipped its half; the FCU page did not. It kept three
+`tabindex="0" role="button"` sensor groups inside a `role="img"` SVG and the
+stale comment, while its build report recorded the item as implemented. Two
+pages under one ruling, in opposite shapes, is exactly what the ruling was
+worded to prevent.
+
+**Fixed in the same change**, and deliberately as the same edit rather than a
+follow-up: the FCU's three glyphs dropped `tabindex` / `role`, its EAT / DAT /
+Zone mirror cells became `.fcu-point-btn` buttons carrying `data-point` +
+`aria-pressed`, and `ddcw-fcu-unit.js` wires them to the same
+`host.highlightChip` hook the glyph click uses. The two keyboard specs moved
+with the affordance — one now pins that nothing inside the graphic is focusable
+(the assertion that HOLDS the ruling's mechanism), the other drives Enter and
+Space from the mirror button.
+
+`ddcw-shell.js`'s markup contract was the third stale surface: it prescribed
+`tabindex="0" role="button"` on `.ddcw-sensor` groups. It now says focusability
+is a **per-page decision** and explains why both current pages said no. The
+keydown binding stays — it is inert on a node that never takes focus, and it is
+what a future graphic that drops `role="img"` would use.
+
+### 252. Chromium does not prune a `role="img"` subtree, so #227(b)'s stated mechanism does not hold in the engine the site is tested in *(noticed 2026-07-30, AHU page review — measurement only, no action taken)*
+
+`#227(b)`'s ruling rests on a mechanism claim: *"`img` is what currently prunes
+the subtree, so swapping un-hides all 19 `<text>` nodes."* Measured on the live
+AHU page with CDP `Accessibility.getFullAXTree`: under the image node there are
+**157 descendant AX nodes, of which only 4 are ignored — 153 are exposed**,
+including `StaticText` for "SPACE TEMP", "76.1 °F", "COOLING SP", "AHU-1",
+"MIXING BOX" and "FILTER". Playwright's `ariaSnapshot` agrees.
+
+So in Chromium the drawing's text is *already* exposed on top of the long
+`<desc>` and the full point mirror. The premise is falsifiable and false here.
+
+**The DECISION is untouched and is not re-opened by this.** It is the owner's,
+it is recorded as settled, and the two halves it actually delivers — a real
+`<button>` announcing as an action, and no focusable node inside a
+presentational-children role — stand on their own regardless of pruning. This
+entry exists so the *argument* is not repeated as fact.
+
+If the verbosity is ever worth acting on, the shape is `aria-hidden="true"` on
+the drawing's text-bearing callout / well `<g>` groups (every value in them is
+already in the mirror) and **never** on the `<a>` subtrees. On the AHU that is
+safe as drawn — its three links carry no descendant `<text>`, only an
+`aria-label` — but the FCU's links wrap "DX COIL" / "SUPPLY FAN" text and would
+need excluding explicitly, or they become nameless tab stops.
+
+### 253. Damper blades are drawn on an ellipse, so two of the three showed a position that was not the commanded one *(noticed 2026-07-31, AHU depiction review — **RESOLVED 2026-07-31**, same change)*
+
+`setBlades()` in `html/scripts/ddcw-ahu-unit.js` draws each blade as a line
+through its centre, scaling the half-extents by the open angle:
+
+    const dx = set.openIs === 'h' ? set.hx * Math.sin(a) : set.hx * Math.cos(a);
+    const dy = set.openIs === 'h' ? set.hy * Math.cos(a) : set.hy * Math.sin(a);
+
+Scaling x and y by **different** half-extents walks an ellipse, not a circle, so
+the rendered angle is `atan(tan θ · hy/hx)` and not θ. The drawing is the only
+place a damper position is shown, so a depiction that cannot show it is worth
+nothing — and on two of the three dampers it could not.
+
+**Measured on the shipped build** — middle blade, angle from horizontal, at each
+damper's OWN commanded position (the return rides `1 − oaFrac`, so its column
+headings are not the slider's):
+
+| damper | half-extents | 20 % open | 50 % open | 80 % open | should draw |
+|---|---|---|---|---|---|
+| return | 21 × 3.5 | 3.1° | **9.4°** | 27.2° | 18° / 45° / 72° |
+| relief | 4.5 × 12 | 40.9° | **69.5°** | 83.1° | 18° / 45° / 72° |
+| outside air | 9 × 11.5 | 75.7° | 52.0° | 22.5° | 72° / 45° / 18° |
+
+The two vertical-flow dampers are open when their blades stand VERTICAL, so the
+angle from horizontal rises with the command; the intake damper is open when its
+blades lie horizontal, so its column falls. All three read 0° / 90° exactly at
+the ends.
+
+A commanded half-open return damper rendered at 9.4° is **visually
+indistinguishable from shut**, and only read as more-open-than-shut past 89 %
+travel. Relief skews the other way and reads wide from the first nudge. Both
+ends were always exact, which is why the defect survived review: the extremes
+are right and only the travel between them lies.
+
+**The root cause on the return damper was the blade ARRANGEMENT, not the
+constants.** Its three blades were stacked vertically (`cx` all 200) — the
+layout for a damper in *horizontal* flow — while its flow is downward. Every
+blade therefore had to span the full 42-wide opening to seal, which is what
+forced `hx: 21` against `hy: 3.5` and with it a 6:1 skew. Fixing the numbers
+alone would have unsealed the opening; fixing the arrangement made the honest
+numbers available.
+
+**Fix.** Both vertical-flow sets now sit **side by side across** their opening,
+each chord covering its own share of the width, with **`hx === hy`** so the
+drawn angle is the commanded angle by construction:
+
+* return — `cx [186, 200, 214]`, `cy 223`, `7 × 7`: three chords of 14 tile the
+  42-wide opening (179–221) edge to edge when shut, and stand 14 tall inside the
+  26-tall frame when open.
+* relief — `cx [298, 310, 322]`, `cy 77`, `6 × 6`: three chords of 12 tile the
+  36-wide opening (292–328). Equalising at the old 9-unit spacing would have
+  left 4.5 units of gap at each edge when shut — "air bypasses the damper", the
+  one thing the intake damper's own comment warns against.
+
+Re-measured after: **45.00°** at a commanded 50 % on both, linear at every step,
+with residuals under 0.05° from `toFixed(2)` on the written coordinates.
+
+**The outside-air damper was left as drawn, by owner decision.** Its `hy` is
+half the blade *pitch*, which is what makes a shut stack seal the full-height
+intake opening; the 7° it costs at mid-travel is a lean, not a wrong reading,
+and it reads correct at every position. `tests/ddc-workbench-ahu-page.spec.js`
+now **pins that deviation** rather than leaving it as an absence, so the
+exemption cannot decay in either direction.
+
+**Two things shipped alongside, both found by eye and neither about angles.**
+
+1. *The return damper was in the wrong place.* Its frame sat at y256–282 —
+   **below** the casing roof at y250, i.e. inside the unit — while the drop's
+   throat runs y141 to that roof. It moved to y210–236, inside the drop. The
+   `rc` chevron rail (x200, y118 → 250) now passes through the frame, so the
+   recirculated air visibly goes *through* the damper instead of past where it
+   was drawn. The SVG `<desc>` already claimed it "sits in the throat of that
+   drop" — that sentence became true rather than needing an edit.
+2. *A leader and its anchor dot are separate elements.* Moving the damper moved
+   the `path.ahu-leader`, and left the `circle.ahu-anchor` stranded on the
+   casing roof — silent, drawing-only, and invisible to every existing
+   assertion. A new row walks **all nine** callouts and compares
+   `getPointAtLength(getTotalLength())` against the dot's centre. Both new
+   guards were checked against the pre-fix markup and fail on it.

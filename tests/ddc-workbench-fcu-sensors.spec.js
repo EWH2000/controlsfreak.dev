@@ -5,8 +5,7 @@
 // the zone for space-temp, an insertion probe in the return duct for
 // rat (owner mockup round — the displayed coil ΔT had no visible
 // entering-air measurement), an insertion probe in the discharge duct
-// for dat. Activating a glyph (click, Enter, or Space — the
-// role="button" contract) calls the shell's highlightChip hook, which
+// for dat. Clicking a glyph calls the shell's highlightChip hook, which
 // pulses that point's statusbar chip with a temporary CSS class
 // (.ddcw-chip-hilite) and a one-shot timeout — no rAF loop, no
 // interval, because this page's idle cost is profiled
@@ -17,9 +16,13 @@
 //     exactly ONE glyph, and no glyph names anything else;
 //   • the pulse — click marks the RIGHT chip, the class appears and
 //     then clears on its own;
-//   • keyboard — Enter and Space both fire, and the glyphs sit in the
-//     page's real tab order (the drill-down links precede them in the
-//     SVG, so Tab walks link → link → probes → plate);
+//   • keyboard — the glyphs themselves are NOT focusable, and the
+//     keyboard path is the point mirror's real HTML buttons outside
+//     the SVG (owner ruling, codebase-issues #227b: role="img" stays,
+//     so nothing inside the drawing may take focus, and the activation
+//     affordance moved to the mirror). Both halves are pinned: nothing
+//     in the graphic is focusable, and each mirror button fires the
+//     same pulse from Enter and from Space;
 //   • real-vs-sensed — forcing the wall stat splits the chips: Space
 //     shows the lie the program reads, RAT stays on the zone truth
 //     (a return-duct probe measures real air);
@@ -112,37 +115,56 @@ test.describe('DDC Workbench — visible sensor glyphs', () => {
         }
     });
 
-    test('keyboard: Enter and Space both fire the pulse from a focused glyph', async ({ page }) => {
+    test('nothing inside the graphic is focusable (#227b keeps role="img")', async ({ page }) => {
         await page.goto(URL);
-        const probe = page.locator(glyphSel('dat'));
+        // The ruling's mechanism: role="img" prunes the subtree, so the
+        // ~19 <text> nodes the mirror already carries are not read twice.
+        // A focusable descendant is what would force the swap away from
+        // it, so this is the assertion that holds the ruling.
+        await expect(page.locator('#fcu-graphic')).toHaveAttribute('role', 'img');
+        expect(await page.locator('#fcu-graphic .ddcw-sensor[tabindex]').count()).toBe(0);
+        expect(await page.locator('#fcu-graphic .ddcw-sensor[role="button"]').count()).toBe(0);
+        // The drill-down links are the deliberate exception, and each is
+        // named — a nameless tab stop is the failure this rules out.
+        const links = page.locator('#fcu-graphic a');
+        const n = await links.count();
+        expect(n).toBeGreaterThan(0);
+        for (let i = 0; i < n; i++) {
+            expect(await links.nth(i).getAttribute('aria-label'), 'link ' + i).toBeTruthy();
+        }
+    });
 
-        await probe.focus();
+    test('keyboard: Enter and Space fire the pulse from the mirror button', async ({ page }) => {
+        await page.goto(URL);
+        const btn = page.locator('.fcu-point-btn[data-point="dat"]');
+
+        await btn.focus();
         await page.keyboard.press('Enter');
         await waitForChipLit(page, 'DAT', true);
         await waitForChipLit(page, 'DAT', false);
 
+        // Space on a real <button> must not scroll the page. Measured as a
+        // DELTA, not against zero: the mirror sits below the fold, so
+        // focusing it legitimately scrolls it into view first.
+        const before = await page.evaluate(() => window.scrollY);
         await page.keyboard.press(' ');
         await waitForChipLit(page, 'DAT', true);
-        // Space on a role="button" must not scroll the page.
-        expect(await page.evaluate(() => window.scrollY)).toBe(0);
+        expect(await page.evaluate(() => window.scrollY)).toBe(before);
         await waitForChipLit(page, 'DAT', false);
     });
 
-    test('tab order reaches every glyph (after the in-graphic drill-down links)', async ({ page }) => {
+    test('every glyphed point has a mirror button, and the latch is exclusive', async ({ page }) => {
         await page.goto(URL);
-        // The graphic's tab sequence is DOM order: coil link → fan link
-        // → the sensors group (probes in airflow order, then plate).
-        // Start from the last drill-down and walk forward.
-        await page.locator('a.fcu-link[href*="vfd-mock"]').focus();
-        await page.keyboard.press('Tab');
-        expect(await page.evaluate(() => document.activeElement.getAttribute('data-point')))
-            .toBe('rat');
-        await page.keyboard.press('Tab');
-        expect(await page.evaluate(() => document.activeElement.getAttribute('data-point')))
-            .toBe('dat');
-        await page.keyboard.press('Tab');
-        expect(await page.evaluate(() => document.activeElement.getAttribute('data-point')))
-            .toBe('space-temp');
+        await expect(page.locator('.fcu-point-btn[data-point]')).toHaveCount(GLYPHED.length);
+        for (const g of GLYPHED) {
+            await page.click(`.fcu-point-btn[data-point="${g.point}"]`);
+            await waitForChipLit(page, g.chip, true);
+            const pressed = await page.evaluate(() => Array.from(
+                document.querySelectorAll('.fcu-point-btn[data-point]'),
+                (b) => b.getAttribute('data-point') + ':' + b.getAttribute('aria-pressed')));
+            expect(pressed.filter((r) => r.endsWith(':true'))).toEqual([g.point + ':true']);
+            await waitForChipLit(page, g.chip, false);
+        }
     });
 
     test('forcing the wall stat splits the chips — Space shows the lie, RAT stays on the truth', async ({ page }) => {
