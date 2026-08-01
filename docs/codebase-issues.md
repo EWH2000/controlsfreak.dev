@@ -11171,3 +11171,91 @@ a comment in the TOUCH-TARGET FLOOR block, since the exempting fact lives in the
 changes**: drop the `(hover: none) and (pointer: coarse)` arm, or relax the
 width arm, and the inspector becomes reachable on a touch-primary device, at
 which point the one-line addition to the form-control family is the fix.
+
+### 257. The AHU's chevron painter picks its ink in JS, and one of the five is a `-fill` token *(noticed 2026-07-31, PR #457's depiction review — raised as its fourth depiction guess and never logged at the time — **BLESSED 2026-08-01**, owner ruling: mechanism and depiction both correct, the mapping flagged for a future pass)*
+
+`html/scripts/ddcw-ahu-unit.js:1887` — `strokeChevron(el, band)` maps the band a
+chevron run is carrying to an ink by writing the token straight onto the
+element:
+
+```js
+if (band === 'oa') el.style.stroke = 'var(--teal)';
+else if (band === 'mixed') el.style.stroke = 'var(--blue-cool)';
+else if (band === 'heat') el.style.stroke = 'var(--heat-fill)';
+else if (band === 'cool') el.style.stroke = 'var(--blue)';
+else el.style.stroke = 'var(--text-dim)';
+```
+
+**Five bands, five tokens** — outdoor, mixed-but-unconditioned, heated, cooled,
+and the `off` grey that IS the "no ΔT" tell. `--heat-fill` (`:1890`) is the
+**first and only `-fill` token written from JS anywhere in the repo**: a grep
+for the `.style.<prop> = 'var(--…-fill…)'` form across `html/` and `src/`
+returns exactly that one hit.
+
+**Owner ruling, 2026-08-01: the mechanism is blessed.** JS may SELECT which
+token an element gets. What it must never do is write a **resolved** colour: the
+value written has to stay a `var(--x)` **reference**, because a reference is
+resolved at paint and so re-resolves for free when the theme flips, while a
+resolved `rgb(…)` freezes one theme's colour into an inline style that
+out-specifies every stylesheet and no theme change can reach. That constraint is
+what makes the pattern safe, it is invisible at the call site, and this entry is
+where it is written down. **The depiction is ruled correct as well** —
+`--heat-fill` is the right identity for air the heating coil has just put heat
+into, and it is object paint on a stroked chevron, which is the sink the
+`-fill` family exists for.
+
+**What the guard does here — verified against the spec, not inferred.**
+`tests/fill-token-misuse.spec.js` genuinely covers this reference. Three checks:
+
+- Its `SCAN_EXT` is `new Set(['.css', '.html', '.njk', '.js'])` (`:80`), so the
+  source scan **does** walk `.js` files. The file is in the walk.
+- Its **third sink classifier** is exactly this idiom —
+  `/\.style\.([-a-zA-Z][-a-zA-Z0-9]*)\s*=\s*(['"][^'"]*var\(\s*--[a-z0-9-]*-fill\b[^'"]*['"])/g`.
+  Run over the stripped source it returns one match, `prop=stroke`, at line
+  1890. `stroke` is on the object-paint list, so the reference is **classified
+  and legal**, not merely unnoticed.
+- The census's anti-vacuity assertion is `uses.length === references` — every
+  `var(--…-fill)` reference in the tree must land in *some* classified sink or
+  the test fails. This file carries exactly 1 reference and it classifies, so it
+  passes on the strong arm rather than by being invisible to the scan. (For
+  scale: the two AHU HTML surfaces carry 7 references each.)
+
+The author already knew this: the comments at `:909` and `:1870` state that the
+literals live inside the assignment *precisely* so that a bare `const` holding
+one is never an unclassifiable reference — and the `:909` comment is
+deliberately written without the token syntax it describes, so the scan cannot
+read the note itself as a reference.
+
+**Flagged, not actioned.** Candidate for a future bigger animation / refactor
+pass: move the band→ink mapping out of JS into CSS classes (a `data-band`
+attribute plus five rules), leaving the JS to set the band and the stylesheet to
+own the colour (owner: *"may be easier to refactor during a bigger pass"*). If
+that happens, **all five inks move together** — classing the `-fill` one and
+leaving the other four as inline writes would split one mapping across two
+mechanisms for no benefit. Nothing is wrong today; this is a shape note against
+the day the animation is opened up anyway.
+
+### 258. The FCU and AHU rosters name the same point two different ways, and the flag to log it was never logged *(noticed 2026-07-31, FBE block-name lane §7.6 — **logged retroactively 2026-08-01**, and **RESOLVED** the same day: the FCU renames)*
+
+`html/scripts/ddcw-fcu-unit.js:526` names the fan-speed AO **`Fan`**; the AHU's
+equivalent (`html/scripts/ddcw-ahu-unit.js:833`) names it **`Fan Spd`**. With
+per-instance block heads shipped (PR #458), that divergence surfaces on the
+wiresheet as `AO · Fan` sitting directly beside `BO · Fan En` — the AO reads as
+though it lost a word. It is the odd one out among its own siblings, too: the
+FCU roster runs `Fan Sts` (`:525`) / `Fan` / `Fan En` (`:527`), so the two
+binaries are qualified and the analog is not.
+
+**Owner ruling, 2026-08-01: rename the FCU roster to `Fan Spd`,** matching the
+AHU. A **separate FCU lane** implements it — this is not the one-word edit it
+looks like, which is why the inventory declined to do it inline: the roster
+`name` also drives the chip strip and the off-program window, so the rename has
+a wider blast radius than the wiresheet head and may take a spec update with it.
+
+**This entry is also the record that the flag existed.** The naming inventory's
+§7.6 (now `docs/name-inventory.md`, committed 2026-08-01) ended *"Do not fix
+this inside the naming feature… Log it; let the owner decide"* — and it was
+never logged, because the inventory itself never reached git and went to a
+session scratchpad instead. Both halves are closed here: the inventory is
+committed, and its header carries this ruling as standing correction 2. One
+citation drifted in the meantime — §7.6 cites the FCU name at `:527`, which is
+now `fan-enable`; the `fan-speed` row is `:526`.
