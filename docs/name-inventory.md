@@ -26,10 +26,12 @@
 > 2. **§7.6 — the FCU `fan-speed` name is ruled.** Owner ruling 2026-08-01:
 >    rename the FCU roster's `fan-speed` from `Fan` to **`Fan Spd`**, matching
 >    the AHU, so the head no longer reads as a truncation beside `BO · Fan En`.
->    A **separate FCU lane** implements it — the roster `name` also drives the
->    chip strip and the off-program window. Logged as codebase-issues **#258**,
->    which is also the record that §7.6's "log it" instruction went uncarried
->    until now.
+>    A **separate FCU lane** implemented it, 2026-08-01 — the roster `name`
+>    also drives the chip strip and the off-program window. Logged as
+>    codebase-issues **#258**, which is also the record that §7.6's "log it"
+>    instruction went uncarried until now. **The body's FCU row 23 still reads
+>    `AO · Fan`, and stays that way** — the body records what was measured on
+>    2026-07-31, and this correction is what supersedes it.
 >
 > 3. **§2a — the `readout` / `RDO` tag question is superseded.** Owner ruling
 >    2026-08-01: the readout **type folds into `ao` entirely** — *"the type is

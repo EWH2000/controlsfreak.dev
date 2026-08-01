@@ -86,7 +86,7 @@ function waitForStagedFan(page) {
             chips[c.querySelector('.ddcw-chip-cap').textContent] =
                 c.querySelector('.ddcw-chip-val').textContent;
         });
-        return chips['Fan'] === (chips['Y2'] === 'ON' ? '100 %' : '60 %');
+        return chips['Fan Spd'] === (chips['Y2'] === 'ON' ? '100 %' : '60 %');
     });
 }
 
@@ -143,13 +143,13 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
         await page.goto(URL);
         // Arrival is stage 1 (zone 76 stages Y1, not Y2), so the
         // staged sequence commands the fan at the low reference — 60.
-        await waitForChip(page, 'Fan', '60 %');
+        await waitForChip(page, 'Fan Spd', '60 %');
 
         // Uncheck NULL: the hand takes over at the point's CURRENT
         // resolved value (bumpless) — slot 8 opens at 60, not 0.
         await page.locator('#fcu-null-fan').uncheck();
         await waitForOffprogEntry(page,
-            'Fan — commanded by slot 8 (Manual Operator) at 60 %');
+            'Fan Spd — commanded by slot 8 (Manual Operator) at 60 %');
 
         // Drive the (now-enabled) slider to 0 — every move rewrites
         // slot 8, and both surfaces follow.
@@ -157,9 +157,9 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
             el.value = '0';
             el.dispatchEvent(new Event('input', { bubbles: true }));
         });
-        await waitForChip(page, 'Fan', '0 %');
+        await waitForChip(page, 'Fan Spd', '0 %');
         await waitForOffprogEntry(page,
-            'Fan — commanded by slot 8 (Manual Operator) at 0 % — write NULL to release.');
+            'Fan Spd — commanded by slot 8 (Manual Operator) at 0 % — write NULL to release.');
 
         // Write NULL back: slot 8 releases and the sequence's slot-16
         // command returns within a tick. The fan sat hand-forced at 0
@@ -171,7 +171,7 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
         await page.waitForFunction(() => {
             const box = document.getElementById('ddcw-offprog');
             return box.classList.contains('is-empty')
-                || !box.textContent.includes('Fan — commanded');
+                || !box.textContent.includes('Fan Spd — commanded');
         });
         expect(await page.locator('#fcu-null-fan').isChecked()).toBe(true);
     });
@@ -278,7 +278,7 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
             if (box.classList.contains('is-empty')) return false;
             const t = box.textContent;
             return (t.match(/slot 8 \(Manual Operator\)/g) || []).length === 4
-                && t.includes('Fan —') && t.includes('Fan En —')
+                && t.includes('Fan Spd —') && t.includes('Fan En —')
                 && t.includes('Y1 —') && t.includes('Y2 —');
         });
     });
@@ -339,7 +339,7 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
             el.value = '0';
             el.dispatchEvent(new Event('input', { bubbles: true }));
         });
-        await waitForChip(page, 'Fan', '0 %');
+        await waitForChip(page, 'Fan Spd', '0 %');
         await page.locator('#fcu-null-fan').check();
         await waitForStagedFan(page);
 

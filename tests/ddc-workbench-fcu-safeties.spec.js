@@ -121,7 +121,7 @@ test.describe('DDC Workbench — 2-stage + safeties program', () => {
                 && chips['Y1'] === 'OFF'
                 && chips['Y2'] === 'OFF'
                 && chips['Fan En'] === 'ON'
-                && chips['Fan'] === '40 %';
+                && chips['Fan Spd'] === '40 %';
         });
 
         // Spot-check the same state through the evaluate seam (typed,
@@ -132,7 +132,7 @@ test.describe('DDC Workbench — 2-stage + safeties program', () => {
         expect(chips['Fan En']).toBe('ON');
         const offprog = await page.evaluate(
             () => document.getElementById('ddcw-offprog').textContent);
-        expect(offprog).toContain('Fan — commanded by slot 8');
+        expect(offprog).toContain('Fan Spd — commanded by slot 8');
         expect(offprog).not.toContain('Y1 —');
         expect(offprog).not.toContain('Y2 —');
 

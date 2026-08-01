@@ -11251,6 +11251,17 @@ looks like, which is why the inventory declined to do it inline: the roster
 `name` also drives the chip strip and the off-program window, so the rename has
 a wider blast radius than the wiresheet head and may take a spec update with it.
 
+**Shipped 2026-08-01.** `:526` now reads `name: 'Fan Spd'`, byte-identical to
+the AHU's. The blast radius was exactly as predicted and no wider: the chip
+strip, the off-program window and the wiresheet block head all derive the name
+from the roster, so no page or script carried a second copy to update — a grep
+for a bare `Fan` literal on the FCU surface comes back empty. It did take specs
+with it, eight assertions across two files that pinned the literal: the chip
+key in `ddc-workbench-fcu-safeties.spec.js` and `ddc-workbench-fcu-priority.spec.js`
+(exact-match keying, so `Fan Spd` stays unambiguous beside `Fan Sts`), and the
+off-program entry text in both. `fbe-block-names.spec.js` needed nothing — its
+anti-drift arm re-reads the roster and compares, which is the whole point of it.
+
 **This entry is also the record that the flag existed.** The naming inventory's
 §7.6 (now `docs/name-inventory.md`, committed 2026-08-01) ended *"Do not fix
 this inside the naming feature… Log it; let the owner decide"* — and it was
