@@ -2506,6 +2506,37 @@ playable one. Personas: the skeptic and the returning power user both
 want substance-first (served by the strip + search); the curious
 browser wants the premise sold (served by the now-playable loop).
 
+### Quiz banks grow past their presented count, one bank at a time *(direction set 2026-07-30 — first bank crossed the same day)*
+*One question: what happens to a drill once a reader has seen every
+question in it?*
+
+Every bank shipped at exactly its `defaultCount` of ten for the
+section's whole life, so a run was the bank and a second run was the
+same run. The direction, owner's ruling: **grow the banks past ten and
+let the engine sample.** `buildQueue()` in `quiz-engine.js` already
+does it — a bank larger than the page's `defaultCount` gets a fresh
+unseeded draw of ten each run, restored to bank order under the default
+`sequential` — so a grown bank starts varying with no code change. The
+sampling is the point, not a side effect: it is what turns a drill into
+something worth re-running.
+
+**Grow it slowly, one bank at a time.** The owner's framing: *"we
+decided to gradually grow question banks and make which 10 you get RNG.
+The idea was to do that to quizzes slowly over time rather than in a big
+batch."* So this is not a project to schedule — it is a standing
+disposition for whenever a good question turns up for a bank that
+already has ten. Adding rather than swapping is the default answer to
+"where does this question go".
+
+`practice/surviving-first-months.js` is the first bank across, at eleven
+(codebase-issues #241, 2026-07-30). Two things to know before growing
+the next one. The **page copy is not automatic**: a drill's `description`
+and its `'10 Questions'` nav-card pill both survive sampling — ten is
+still what a run presents — but a **format** pill (`'MCQ · TF ·
+Numeric'`) is a claim about the bank, and a question in a new format
+falsifies it. And **`defaultCount` stays at 10**; the engine's header
+says it in as many words — grow the bank, don't raise the count.
+
 ### Practice section — quizzes + field drills *(v1 shipped 2026-05-25)*
 *One question: how does someone using the site as a self-paced course
 know what they actually absorbed, and how do techs prepping for

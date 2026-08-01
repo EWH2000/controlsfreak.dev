@@ -10317,7 +10317,7 @@ teachable) reason why. Cross-check with #228 when the consumer pages adopt the
 helper, since that closes the cross-page disagreement but not the
 reader-arithmetic one.
 
-### 241. The site defines "deadband" two ways for beginners, and neither surface acknowledges the other *(noticed 2026-07-29, deadband/setpoint-gap terminology sweep — needs an owner decision)*
+### 241. The site defines "deadband" two ways for beginners, and neither surface acknowledges the other *(noticed 2026-07-29, deadband/setpoint-gap terminology sweep — **RESOLVED 2026-07-30**, owner ruled for a third option: teach the habit, not the definition — then ruled again to keep both questions and let the bank overflow)*
 
 Two shipped, reader-facing, `canonical`-bearing surfaces use the word for
 different quantities:
@@ -10365,6 +10365,68 @@ to match the comparators lesson. That would put the site at odds with the VAV
 usage it teaches elsewhere, i.e. trade one internal contradiction for a worse
 one.
 
+**RESOLVED 2026-07-30 — owner took neither candidate.** His ruling: *"that
+question should be changed on the quiz, instead we should have a question with
+the answer being 'check the context of the situation' … understanding the
+context around the question is important not just with deadbands."* He
+explicitly declined a definitional "what is a deadband" question as too on the
+nose.
+
+So the conflating sentence did not get a disambiguating half-clause; a new
+question was written to carry the habit instead.
+
+**Second owner ruling, same day — KEEP BOTH.** The first cut of this fix
+replaced `setpoint-vs-actual` with the new question. The owner reversed that:
+*"we decided to gradually grow question banks and make which 10 you get RNG.
+The idea was to do that to quizzes slowly over time rather than in a big batch,
+so this is a good candidate."* The bank going to eleven and tripping the
+engine's sampler is therefore the **intended outcome**, not a cost — see the
+direction entry in `site-ideas-and-friction.md` under *Quiz banks grow past
+their presented count, one bank at a time*.
+
+What shipped:
+
+- `setpoint-vs-actual` stays, at its original position, with its `id`, `type`,
+  `prompt`, `answer`, `learnMore` and `tags` untouched. Its `explain` loses
+  exactly one parenthetical — *"Real sequences add a deadband (say `70-74°F`)
+  so heating and cooling don't fight each other"* becomes *"Real sequences add
+  a deadband so heating and cooling don't fight each other"*. That clause was
+  the whole defect: `70-74°F` is a heating/cooling **setpoint pair**, and
+  naming it *a deadband* is the conflation this issue is about. The remaining
+  sentence uses the zone sense of the word without asserting a number for it,
+  which is legitimate and matches what `education/vav-systems.html` teaches.
+- `read-the-term-in-context` (a `gotcha`) is added directly after it. It shows
+  one zone described by three documents — a spec calling for a 4 °F deadband, a
+  point list with 70/74 °F setpoints, and a controller carrying a 2 °F DEADBAND
+  on the stage-1 call. Three distractors are each a confident single definition
+  (take the spec's, take the controller's, call it a typo and escalate); the
+  correct answer is that both senses are in service and the reader has to find
+  out which one this system means. `explain` names both senses, and `learnMore`
+  points at `education/comparators-and-deadband.html#which-sense` — the
+  paragraph holding the site's canonical disambiguation, which no quiz bank
+  previously linked, and which this PR gave that `id` so it could be linked.
+- The bank is therefore **eleven** questions against `defaultCount: 10`, the
+  first shipped bank to overflow its presented count. `buildQueue()` in
+  `quiz-engine.js` samples it: each run draws ten of the eleven with an
+  unseeded Fisher-Yates, then restores bank order within the drawn subset under
+  the default `sequential`. Driven on the built page, eight fresh loads
+  produced seven distinct subsets, every run exactly ten, and all eleven
+  questions reachable across the eight. Nothing about that path is new —
+  `tests/quiz-selection.spec.js` has guarded it since the sampler landed; this
+  is the first real bank to exercise it.
+
+Deadband is only the worked example; the transferable move (a term on someone
+else's prints is a label, the meaning lives in the numbers underneath it) is the
+payload. `comparators-and-deadband.js` and its lesson were not touched — they
+are correct.
+
+**Reader-facing copy left alone, flagged for the owner.** The drill's card on
+`practice/index.html` still carries the format pill `'MCQ · TF · Numeric'`; the
+bank now also holds a `gotcha`, so that pill is out of date (the site's own
+convention elsewhere writes `'MCQ · TF · Gotcha · Numeric'`). It sits on a
+`canonical`-bearing page and no spec guards it, so it was not rewritten here.
+The *10-question drill* description and the `'10 Questions'` pill are both
+still true — sampling presents ten.
 ### 242. The AHU mockup's setpoint prose disagrees with the physics module's shipped defaults *(noticed 2026-07-29, deadband/setpoint-gap terminology sweep — for LANE 7.4 — **RESOLVED 2026-07-30** — the module won, and the prose was re-derived, not copied)*
 
 **The physics module wins (owner decision, 2026-07-30).** The AHU ships cooling
@@ -10967,7 +11029,32 @@ exemption cannot decay in either direction.
    `getPointAtLength(getTotalLength())` against the dot's centre. Both new
    guards were checked against the pre-fix markup and fail on it.
 
----
+### 254. `buildAnswerText` joins the correct choice to `explain` with an unconditional `". "`, so most published FAQPage answers carry a double period *(noticed 2026-07-30, the #241 review round — pre-existing and site-wide, not fixed there)*
+
+`.eleventy.js`'s `buildAnswerText` — the helper behind the `faqPageJsonLd`
+filter that `head.njk` emits on every `nav: practice` page — closes with:
+
+    return answer + (answer && explanation ? ". " : "") + explanation;
+
+The guard covers the *empty* case only, never the case where `answer`
+already ends in terminal punctuation. Every multiple-choice question whose
+correct choice is written as a full sentence therefore publishes
+`…before you touch a setpoint.. Both numbers are correct…` in its
+`acceptedAnswer.text`. Measured 2026-07-30 on the built site: 7 of the 11 entries on
+`practice/surviving-first-months.html` and 9 of 10 on
+`practice/boolean-logic-latches.html`.
+
+Cosmetic, and only crawlers read it — but it is *published* structured
+data, and the fix is one line: strip a trailing `.`/`!`/`?` from `answer`
+before appending the separator, or make the separator conditional on the
+last character. Left alone in the #241 PR because that PR touches one quiz
+bank and this reaches every practice page's JSON-LD; it wants its own
+branch and its own before/after over the built site.
+
+*(Filed as #247 on `fix/issue-241-context-question` before PR #455 merged
+its own #247 — renumbered to 248 when main was merged in, 2026-07-30, then
+to 254 when PR #457 landed its own 248-253, 2026-07-31. The number is the
+only thing that moved; the finding is unchanged and still unfixed.)*
 
 ### 255. `≥`, `≤` and `≠` are not in the bundled mono font, and the block-tag work makes them reachable *(noticed 2026-07-31, FBE block-name lane — logged, deliberately NOT fixed)*
 
@@ -11016,8 +11103,6 @@ Options, none taken:
 
 Wants an owner call on 1 vs 2 vs 3 before anyone acts. The fault is cosmetic in
 all three current locations.
-
----
 
 ### 256. The wiresheet inspector's form controls sit outside the TOUCH-TARGET FLOOR block *(noticed 2026-07-31, FBE block-name lane — pre-existing, not fixed)*
 
