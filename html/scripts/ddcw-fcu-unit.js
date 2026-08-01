@@ -523,7 +523,7 @@ const DDCWFcuUnit = (function () {
         // `conv`: the shared formatter short-circuits a bi to ON / OFF
         // before it reaches either.
         { id: 'fan-status',       kind: 'bi',    dir: 'sensor',   plantKey: 'fan-status',       name: 'Fan Sts' },
-        { id: 'fan-speed',        kind: 'ao',    dir: 'actuator', plantKey: 'fan-speed',        name: 'Fan',      unit: '%', min: 0, max: 100, step: 5, relinquishDefault: 0 },
+        { id: 'fan-speed',        kind: 'ao',    dir: 'actuator', plantKey: 'fan-speed',        name: 'Fan Spd',  unit: '%', min: 0, max: 100, step: 5, relinquishDefault: 0 },
         { id: 'fan-enable',       kind: 'bo',    dir: 'actuator', plantKey: 'fan-enable',       name: 'Fan En',   relinquishDefault: false },
         { id: 'y1',               kind: 'bo',    dir: 'actuator', plantKey: 'y1',               name: 'Y1',       relinquishDefault: false },
         { id: 'y2',               kind: 'bo',    dir: 'actuator', plantKey: 'y2',               name: 'Y2',       relinquishDefault: false },
