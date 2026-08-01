@@ -1068,7 +1068,7 @@ test('function-block editor — examples run, and blocks add and wire up', async
     await page.click('#fbe-clear');
     await expect(page.locator('.fbe-block')).toHaveCount(0);
     await page.locator('.fbe-palette-btn', { hasText: 'CONSTANT' }).click();
-    await page.locator('.fbe-palette-btn', { hasText: 'READOUT' }).click();
+    await page.locator('.fbe-palette-btn', { hasText: 'ANALOG OUT' }).click();
     await expect(page.locator('.fbe-block')).toHaveCount(2);
     await page.locator('.fbe-block[data-id="b1"] .fbe-pin-out').click();
     await page.locator('.fbe-block[data-id="b2"] .fbe-pin-in').click();
@@ -1956,7 +1956,7 @@ test.describe('function-block editor — interactions', () => {
         await page.goto('/simulators/function-block-editor.html');
         await page.click('#fbe-clear');
         await page.locator('.fbe-palette-btn', { hasText: 'CONSTANT' }).click();
-        await page.locator('.fbe-palette-btn', { hasText: 'READOUT' }).click();
+        await page.locator('.fbe-palette-btn', { hasText: 'ANALOG OUT' }).click();
         await page.locator('.fbe-block[data-id="b1"] .fbe-pin-out').click();
         // Pending wire — compatible input pins light up as targets.
         await expect(page.locator('.fbe-pin-target')).toHaveCount(1);
@@ -1970,9 +1970,9 @@ test.describe('function-block editor — interactions', () => {
         const errors = watchErrors(page);
         await page.goto('/simulators/function-block-editor.html');
         await page.click('#fbe-clear');
-        // BINARY IN emits a bool; READOUT consumes a number — incompatible.
+        // BINARY IN emits a bool; ANALOG OUT consumes a number — incompatible.
         await page.locator('.fbe-palette-btn', { hasText: 'BINARY IN' }).click();
-        await page.locator('.fbe-palette-btn', { hasText: 'READOUT' }).click();
+        await page.locator('.fbe-palette-btn', { hasText: 'ANALOG OUT' }).click();
         await page.locator('.fbe-block[data-id="b1"] .fbe-pin-out').click();
         await page.locator('.fbe-block[data-id="b2"] .fbe-pin-in').click();
         await expect(page.locator('.fbe-wire')).toHaveCount(0);
@@ -2011,16 +2011,22 @@ test.describe('function-block editor — interactions', () => {
         expect(errors, 'sim-bar behavioral should log no errors').toEqual([]);
     });
 
-    test('non-AI inspector edit flows to the output — PID gain to zero zeros the readout', async ({ page }) => {
+    test('non-AI inspector edit flows to the output — PID gain to zero zeros the AO', async ({ page }) => {
         const errors = watchErrors(page);
         await page.goto('/simulators/function-block-editor.html');
         await page.click('[data-example="pid"]');
-        // PID example: sp=72, pv=70, kc=4 — output is non-zero on every
-        // tick. Zero the gain via the inspector and the readout collapses.
+        // PID example: sp=72, pv=68, kc=5 — output is non-zero on every
+        // tick. Zero the gain via the inspector and the sink collapses.
+        // The sheet has ONE sink: `rd` (a 'readout' block before that
+        // type folded into AO, hence the id) is the loop's only output,
+        // the second AO having gone with the fold. So the assertion is
+        // on the whole sink side of the sheet, not a sample of it.
         await page.locator('.fbe-block[data-id="ctl"] .fbe-block-head').click();
         await page.fill('#fbe-p-kc', '0');
         await expect(page.locator('.fbe-block[data-id="rd"] .fbe-block-val')).toHaveText('0');
-        await expect(page.locator('.fbe-block[data-id="out"] .fbe-block-val')).toHaveText('0');
+        // Pins that: a second sink reappearing on this sheet must come
+        // back through this test rather than sit unasserted.
+        await expect(page.locator('.fbe-block')).toHaveCount(4);
         expect(errors, 'PID-gain behavioral should log no errors').toEqual([]);
     });
 
@@ -2032,7 +2038,7 @@ test.describe('function-block editor — interactions', () => {
         await page.goto('/simulators/function-block-editor.html');
         await page.click('#fbe-clear');
         await page.locator('.fbe-palette-btn', { hasText: 'CONSTANT' }).click();
-        await page.locator('.fbe-palette-btn', { hasText: 'READOUT' }).click();
+        await page.locator('.fbe-palette-btn', { hasText: 'ANALOG OUT' }).click();
         // Start a wire from the CONSTANT output pin.
         await page.locator('.fbe-block[data-id="b1"] .fbe-pin-out').click();
         await expect(page.locator('.fbe-pin-target')).toHaveCount(1);
@@ -2040,7 +2046,7 @@ test.describe('function-block editor — interactions', () => {
         // the keyboard path — this is where the cancelWire() fix lives.
         await page.locator('.fbe-block[data-id="b1"] .fbe-block-head').click();
         await page.keyboard.press('Delete');
-        // Now click the READOUT input pin. Without the fix, a ghost wire
+        // Now click the ANALOG OUT input pin. Without the fix, a ghost wire
         // would form with a dangling `from` reference.
         await page.locator('.fbe-block[data-id="b2"] .fbe-pin-in').click();
         await expect(page.locator('.fbe-wire')).toHaveCount(0);
