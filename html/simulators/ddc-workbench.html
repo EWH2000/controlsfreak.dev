@@ -1286,29 +1286,45 @@ noindex: true
                     <line class="ahu-damper-blade" id="ahu-oa-blade-3" x1="105.2" y1="315.1" x2="110.8" y2="336.9"/>
                 </g>
 
-                <!-- RA damper, in the throat of the return drop just inside the casing
-                     top. Airflow here is downward, so blades PERPENDICULAR to flow
-                     (horizontal) is fully SHUT: at 0 % the three blades run edge to
-                     edge across the full 42-wide opening with no gap, a sealed plane.
-                     The contrast in frame aspect — short and wide, a horizontal opening
-                     in a vertical duct — not the blade angle, is what separates this
-                     damper from the tall narrow one at the intake. -->
+                <!-- RA damper, IN THE DROP and above the casing roof: the frame spans
+                     y210-236 inside the drop's parallel run (y141 down to the roof at
+                     y250), so the recirculated air passes through it on its way in.
+                     Airflow here is downward, so blades PARALLEL to flow (vertical) is
+                     fully open and blades ACROSS the opening (horizontal) is fully
+                     SHUT.
+                     ⚠ THE BLADES SIT SIDE BY SIDE, NOT STACKED. Downward flow puts
+                     each shaft across the duct's WIDTH, so three chords of 14 tile the
+                     42-wide opening — 179/193, 193/207, 207/221 — and the shut stack
+                     seals it edge to edge with no gap, while an open blade stands 14
+                     tall well inside the 26-tall frame. Stacking them instead makes
+                     every blade span the whole width to seal, which is what forced the
+                     21 × 3.5 half-extents that drew a commanded 50 % as 9.4°. Equal
+                     extents (7 and 7) draw the commanded angle exactly — see
+                     setBlades() in ddcw-ahu-unit.js.
+                     TWO things now separate this damper from the tall narrow one at
+                     the intake: the frame aspect — short and wide, a horizontal
+                     opening in a vertical duct — and the blade arrangement running
+                     across that opening rather than down it. -->
                 <g id="ahu-ra-damper">
-                    <rect class="ahu-damper-frame" x="179" y="256" width="42" height="26"/>
-                    <line class="ahu-damper-blade" id="ahu-ra-blade-1" x1="193.5" y1="258.7" x2="206.5" y2="265.3"/>
-                    <line class="ahu-damper-blade" id="ahu-ra-blade-2" x1="193.5" y1="265.7" x2="206.5" y2="272.3"/>
-                    <line class="ahu-damper-blade" id="ahu-ra-blade-3" x1="193.5" y1="272.7" x2="206.5" y2="279.3"/>
+                    <rect class="ahu-damper-frame" x="179" y="210" width="42" height="26"/>
+                    <line class="ahu-damper-blade" id="ahu-ra-blade-1" x1="183.84" y1="216.34" x2="188.16" y2="229.66"/>
+                    <line class="ahu-damper-blade" id="ahu-ra-blade-2" x1="197.84" y1="216.34" x2="202.16" y2="229.66"/>
+                    <line class="ahu-damper-blade" id="ahu-ra-blade-3" x1="211.84" y1="216.34" x2="216.16" y2="229.66"/>
                 </g>
 
                 <!-- Relief damper. Airflow here is upward, so blades PARALLEL to flow
                      (vertical) is fully open. It sits low in the stack, close to the
                      tee, which is where a relief damper lives and which leaves the top
-                     of the stack for the dashed stem and the block arrow. -->
+                     of the stack for the dashed stem and the block arrow.
+                     Side by side across the 36-wide opening on the same rule as the
+                     return damper: three chords of 12 at 292/304, 304/316, 316/328
+                     seal it edge to edge shut, and equal half-extents (6 and 6) draw
+                     the commanded angle exactly. -->
                 <g id="ahu-ea-damper">
                     <rect class="ahu-damper-frame" x="292" y="62" width="36" height="30"/>
-                    <line class="ahu-damper-blade" id="ahu-ea-blade-1" x1="296.7" y1="73.3" x2="305.3" y2="80.7"/>
-                    <line class="ahu-damper-blade" id="ahu-ea-blade-2" x1="305.7" y1="73.3" x2="314.3" y2="80.7"/>
-                    <line class="ahu-damper-blade" id="ahu-ea-blade-3" x1="314.7" y1="73.3" x2="323.3" y2="80.7"/>
+                    <line class="ahu-damper-blade" id="ahu-ea-blade-1" x1="292.29" y1="75.15" x2="303.71" y2="78.85"/>
+                    <line class="ahu-damper-blade" id="ahu-ea-blade-2" x1="304.29" y1="75.15" x2="315.71" y2="78.85"/>
+                    <line class="ahu-damper-blade" id="ahu-ea-blade-3" x1="316.29" y1="75.15" x2="327.71" y2="78.85"/>
                 </g>
 
                 <!-- Filter rack. NEUTRAL for the same reason as the louver: no point on
@@ -1577,12 +1593,15 @@ noindex: true
                     </g>
 
                     <!-- RETURN DAMPER — right shoulder, long diagonal down through the
-                         drop's left duct wall, then freely through the recessed duct
-                         body it has legitimately entered, to the damper's top edge
-                         inside the throat. One crossing, anchor inside it. -->
+                         drop's left duct wall (x177, crossed at y177.7), then freely
+                         through the recessed duct body it has legitimately entered, to
+                         the damper's top edge at y210. One crossing, anchor inside it.
+                         ⚠ THE PATH AND THE ANCHOR DOT ARE SEPARATE ELEMENTS and both
+                         carry the endpoint — move one without the other and the dot is
+                         left stranded on bare panel. -->
                     <g class="ahu-callout" id="ahu-callout-ra-dmpr">
-                        <path class="ahu-leader" d="M140 120.5 H154 L190 256"/>
-                        <circle class="ahu-anchor" cx="190" cy="256" r="2.5"/>
+                        <path class="ahu-leader" d="M140 120.5 H154 L190 210"/>
+                        <circle class="ahu-anchor" cx="190" cy="210" r="2.5"/>
                         <rect class="ahu-callout-frame" x="40" y="96" width="100" height="49"/>
                         <text class="ahu-callout-title" x="50" y="110">RETURN DAMPER</text>
                         <line class="ahu-callout-rule" x1="50" y1="115" x2="130" y2="115"/>

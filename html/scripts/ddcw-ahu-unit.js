@@ -1038,20 +1038,34 @@ const DDCWAhuUnit = (function () {
         // mix <line> and <path>, and `line[id^=…]` silently drops the half
         // that is not a <line> the day one of these becomes a path.
         blades = {
+            // ⚠ UNEQUAL HALF-EXTENTS ON PURPOSE HERE AND NOWHERE ELSE.
+            // hy is half the blade PITCH so a shut stack seals the intake
+            // opening edge to edge; the cost is the skew setBlades()
+            // describes (a commanded 50 % draws 52°). Owner decision
+            // 2026-07-31: this damper reads correct at every position and
+            // stays as drawn — the seal is worth 7°.
             oa: {
                 els: document.querySelectorAll('[id^="ahu-oa-blade"]'),
                 cx: [108, 108, 108], cy: [280, 303, 326],
                 hx: 9, hy: 11.5, openIs: 'h',
             },
+            // Both vertical-flow sets run hx === hy, so the drawn angle IS
+            // the commanded angle. They can, because their blades sit SIDE
+            // BY SIDE across the opening — the arrangement for downward /
+            // upward flow — and each chord only has to cover its own share
+            // of the width: three 14s tile the return's 42 (179-221) and
+            // three 12s tile the relief's 36 (292-328), edge to edge when
+            // shut. Stacking them instead is what forced the old 21 × 3.5
+            // return set, and with it the 9.4° that a commanded 50 % drew.
             ra: {
                 els: document.querySelectorAll('[id^="ahu-ra-blade"]'),
-                cx: [200, 200, 200], cy: [262, 269, 276],
-                hx: 21, hy: 3.5, openIs: 'v',
+                cx: [186, 200, 214], cy: [223, 223, 223],
+                hx: 7, hy: 7, openIs: 'v',
             },
             ea: {
                 els: document.querySelectorAll('[id^="ahu-ea-blade"]'),
-                cx: [301, 310, 319], cy: [77, 77, 77],
-                hx: 4.5, hy: 12, openIs: 'v',
+                cx: [298, 310, 322], cy: [77, 77, 77],
+                hx: 6, hy: 6, openIs: 'v',
             },
         };
 
@@ -1154,19 +1168,30 @@ const DDCWAhuUnit = (function () {
         ovrState.textContent = txt;
     }
 
-    // ── damper blades — foreshortened, not rotated ────────────────────
-    // A blade turning out of the drawing plane does not swing, it
-    // FORESHORTENS: face-on across the opening when it seals, collapsing
-    // to a short mark when it is edge-on to the viewer. So each blade is a
-    // line through its own centre whose half-extents are (hx, hy) scaled by
-    // the open angle. A plain rotate() would swing the 42-unit return blade
-    // clean out of its 26-tall frame; this fits every damper at both
-    // extremes and reproduces the approved depiction exactly at each
-    // commanded position it was drawn at.
+    // ── damper blades ─────────────────────────────────────────────────
+    // Every section here cuts ACROSS the blade shafts, so a blade swings in
+    // the plane of the drawing: end-on across the opening when it seals,
+    // edge-on down the airstream when it is wide. Each blade is one line
+    // through its own centre whose half-extents (hx, hy) are scaled by the
+    // open angle, which fits every damper at both extremes and reproduces
+    // the approved depiction exactly at each commanded position it was
+    // drawn at.
     //   openIs 'h' — flow is horizontal, so blades PARALLEL to flow
     //                (horizontal) is fully open.
     //   openIs 'v' — flow is vertical, so blades PARALLEL to flow
     //                (vertical) is fully open.
+    //
+    // ⚠ THE DRAWN ANGLE IS THE COMMANDED ANGLE ONLY WHERE hx === hy.
+    // Scaling x and y by different half-extents walks an ELLIPSE rather
+    // than a circle, so the rendered angle is atan(tan θ · hy/hx). Measured
+    // on the shipped build before the two vertical-flow sets were
+    // equalized: a commanded 50 % drew the return blades at 9.4°, which is
+    // indistinguishable from shut and only read as open past 89 % travel,
+    // and the relief blades at 69.5°, which read wide from the first nudge.
+    // A damper on a supervisory graphic exists to show a position, so a
+    // depiction that cannot show it is worth nothing — both are equal now
+    // and linear by construction. The oa set is the one deliberate holdout;
+    // see the note on the blades map.
     function setBlades(set, frac) {
         const a = Math.max(0, Math.min(1, frac)) * Math.PI / 2;
         const dx = set.openIs === 'h' ? set.hx * Math.sin(a) : set.hx * Math.cos(a);

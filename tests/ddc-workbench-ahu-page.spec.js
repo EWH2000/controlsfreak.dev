@@ -376,6 +376,149 @@ test.describe('AHU workbench page: the chevrons', () => {
     });
 });
 
+test.describe('AHU workbench page: the dampers show their position', () => {
+
+    // Angle of a blade line from HORIZONTAL, in degrees. One blade per set is
+    // enough — the animator writes all three from one (dx, dy) pair.
+    const angleOf = (page, id) => page.evaluate((elId) => {
+        const el = document.getElementById(elId);
+        const n = (a) => parseFloat(el.getAttribute(a));
+        return Math.atan2(Math.abs(n('y2') - n('y1')), Math.abs(n('x2') - n('x1')))
+            * 180 / Math.PI;
+    }, id);
+
+    const setDamper = async (page, pct) => {
+        await page.locator('#ahu-oad-slider').fill(String(pct));
+        await page.locator('#ahu-oad-slider').dispatchEvent('input');
+        await settle(page, 250);
+    };
+
+    // The blade coordinates go through toFixed(2), which at these half-extents
+    // is worth up to about 0.05°. 0.1 is that with room; the defect this row
+    // exists for was worth 35°, so nothing useful hides under the tolerance.
+    const QUANT = 0.1;
+
+    test('the return and relief blades draw the angle they are commanded', async ({ page }) => {
+        await open(page);
+        await page.locator('#ahu-null-oad').uncheck();
+        for (const pct of [0, 20, 50, 80, 100]) {
+            await setDamper(page, pct);
+            // Both sets are openIs 'v' — open is VERTICAL — so a blade at
+            // fraction f open stands f × 90° off horizontal. The return damper
+            // rides 1 − the outside-air command (common linkage); relief rides
+            // it directly.
+            const ra = await angleOf(page, 'ahu-ra-blade-2');
+            const ea = await angleOf(page, 'ahu-ea-blade-2');
+            expect(Math.abs(ra - (100 - pct) / 100 * 90),
+                'return blade at a commanded ' + (100 - pct) + ' % open, drawn ' + ra.toFixed(2) + '°')
+                .toBeLessThan(QUANT);
+            expect(Math.abs(ea - pct / 100 * 90),
+                'relief blade at a commanded ' + pct + ' % open, drawn ' + ea.toFixed(2) + '°')
+                .toBeLessThan(QUANT);
+        }
+    });
+
+    test('the intake damper keeps its deliberate skew, and it is bounded', async ({ page }) => {
+        await open(page);
+        await page.locator('#ahu-null-oad').uncheck();
+        // ⚠ THIS ROW ASSERTS A DEVIATION ON PURPOSE. setBlades() scales x and y
+        // by different half-extents, which draws atan(tan θ · hy/hx) rather
+        // than θ. The two vertical-flow sets were equalized because the error
+        // was ruinous there; the oa set keeps 9 × 11.5 by owner decision
+        // (2026-07-31), because hy is half the blade PITCH and dropping it
+        // would stop the shut stack sealing the intake opening edge to edge.
+        // Pinned so the exemption cannot decay into an unnoticed regression in
+        // either direction — a silent "fix" fails here, and so does a retune
+        // that makes the skew worse.
+        await setDamper(page, 50);
+        const oa = await angleOf(page, 'ahu-oa-blade-2');
+        expect(oa, 'a commanded 50 % draws 52°, not 45°').toBeCloseTo(51.96, 1);
+        // The ends stay exact whatever the half-extents are, which is what
+        // keeps the skew a lean rather than a wrong endpoint.
+        await setDamper(page, 0);
+        expect(await angleOf(page, 'ahu-oa-blade-2'), 'shut is edge to edge').toBeCloseTo(90, 1);
+        await setDamper(page, 100);
+        expect(await angleOf(page, 'ahu-oa-blade-2'), 'wide is down the airstream').toBeCloseTo(0, 1);
+    });
+
+    test('a shut damper seals its opening edge to edge, with no gap and no overhang', async ({ page }) => {
+        await open(page);
+        await page.locator('#ahu-null-oad').uncheck();
+        // "Air bypasses the damper" is the one thing a damper must never look
+        // like. Both vertical-flow sets tile their frame width with three
+        // side-by-side chords, so shut is one continuous line across the
+        // opening — read the geometry rather than trusting the constants.
+        const span = (page, prefix) => page.evaluate((p) => {
+            const ls = Array.from(document.querySelectorAll('[id^="' + p + '-blade"]'));
+            const n = (el, a) => parseFloat(el.getAttribute(a));
+            const xs = ls.map((el) => [n(el, 'x1'), n(el, 'x2')].sort((a, b) => a - b));
+            xs.sort((a, b) => a[0] - b[0]);
+            const frame = document.querySelector('#' + p + '-damper .ahu-damper-frame');
+            return {
+                lo: xs[0][0], hi: xs[xs.length - 1][1],
+                gaps: xs.slice(1).map((seg, i) => seg[0] - xs[i][1]),
+                fx: parseFloat(frame.getAttribute('x')),
+                fw: parseFloat(frame.getAttribute('width')),
+            };
+        }, prefix);
+
+        for (const [pct, prefix, who] of [[100, 'ahu-ra', 'return'], [0, 'ahu-ea', 'relief']]) {
+            await setDamper(page, pct);
+            const s = await span(page, prefix);
+            expect(s.lo, who + ' blades start at the frame').toBeCloseTo(s.fx, 1);
+            expect(s.hi, who + ' blades end at the frame').toBeCloseTo(s.fx + s.fw, 1);
+            for (const g of s.gaps) {
+                expect(Math.abs(g), who + ' blades meet with no gap').toBeLessThan(0.02);
+            }
+        }
+    });
+
+    test('the return damper sits in the drop, above the casing roof', async ({ page }) => {
+        await open(page);
+        // The drop's parallel throat runs y141 down to the casing roof at
+        // y250, and this damper belongs IN it — drawn below the roof it is
+        // inside the unit, where a return damper is not. The rc chevron rail
+        // (x200, y118 → 250) then passes through the frame, which is the
+        // recirculated air going through the damper rather than around it.
+        const f = await page.locator('#ahu-ra-damper .ahu-damper-frame');
+        const y = parseFloat(await f.getAttribute('y'));
+        const h = parseFloat(await f.getAttribute('height'));
+        expect(y, 'the frame starts below the duct top wall').toBeGreaterThan(141);
+        expect(y + h, 'the frame ends above the casing roof').toBeLessThan(250);
+    });
+
+    test('every leader ends exactly where its anchor dot sits', async ({ page }) => {
+        await open(page);
+        // ⚠ THE PATH AND THE DOT ARE SEPARATE ELEMENTS, so moving a component
+        // moves the leader and leaves the dot behind — silently, and only on
+        // the drawing. Found by eye when the return damper moved up into the
+        // drop; asserted here so the next move is caught by CI instead.
+        // getPointAtLength on the total length reads the endpoint whatever the
+        // command letters are, which beats parsing `d`.
+        const bad = await page.evaluate(() => {
+            const out = [];
+            document.querySelectorAll('#ahu-callouts .ahu-callout').forEach((g) => {
+                const p = g.querySelector('.ahu-leader');
+                const c = g.querySelector('.ahu-anchor');
+                if (!p || !c) { out.push(g.id + ': missing leader or anchor'); return; }
+                const end = p.getPointAtLength(p.getTotalLength());
+                const dx = end.x - parseFloat(c.getAttribute('cx'));
+                const dy = end.y - parseFloat(c.getAttribute('cy'));
+                if (Math.hypot(dx, dy) > 0.5) {
+                    out.push(g.id + ': leader ends (' + end.x.toFixed(1) + ',' + end.y.toFixed(1)
+                        + ') but the dot sits (' + c.getAttribute('cx') + ',' + c.getAttribute('cy') + ')');
+                }
+            });
+            return out;
+        });
+        expect(bad).toEqual([]);
+        // ...and the sweep is not vacuous: the zone is the one no-leader
+        // exemption, so every OTHER annotation carries exactly one pair.
+        await expect(page.locator('#ahu-callouts .ahu-leader')).toHaveCount(9);
+        await expect(page.locator('#ahu-callouts .ahu-anchor')).toHaveCount(9);
+    });
+});
+
 test.describe('AHU workbench page: the sensor overrides (all five)', () => {
 
     // The plant's override map is keyed by SENSOR POINT ID and already
