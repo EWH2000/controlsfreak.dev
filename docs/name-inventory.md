@@ -4,9 +4,20 @@
 > Authored **2026-07-31** by the FBE block-name lane as the design source for
 > the hand-authored-names follow-up ("PR B"). PR #458 shipped the *mechanism*
 > only — the `tag` catalog, the per-instance `name` field and the `TAG · Name`
-> head; the ~96 names this document invents have **not** landed. It is
-> committed here 2026-08-01, after a docs sweep found it living only in a
-> session scratchpad where the lane that needs it could not reach it.
+> head. It is committed here 2026-08-01, after a docs sweep found it living
+> only in a session scratchpad where the lane that needs it could not reach it.
+>
+> **STATUS — the names LANDED 2026-08-01** (PR B, `feat/hand-authored-block-names`).
+> All 135 `name:` keys are authored across the 12 sheets and every one of the
+> 188 heads now renders `TAG · Name`, measured non-clipping in a real browser.
+> Two rows in §3 were **not** authored as written, both by supersession and
+> both noted in the corrections below: the public `pid` sheet's `out` block no
+> longer exists, and its `rd` keeps the shipped, owner-approved `HW Vlv`
+> instead of `Loop %`. One row was **re-authored**: `dmpout`'s `Occ Dmpr`
+> became **`Proof Dmpr`** per correction 1. Everything else went in verbatim.
+> This document is now the design record, not a plan — the RUNTIME source is
+> the program literals plus the two unit rosters, and
+> `tests/fbe-block-names.spec.js` deliberately does not parse this file.
 >
 > **The body below is unedited and stays that way.** It records what was
 > measured on 2026-07-31, and the measurements — budget, per-sheet tables,
