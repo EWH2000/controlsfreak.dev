@@ -338,6 +338,51 @@ test.describe('AHU workbench page: the controls', () => {
         await expect(page.locator('#ahu-v-fan-proof')).toHaveText('NONE');
         await expect(page.locator('#ahu-v-fan-status')).toHaveCount(0);
     });
+
+    test('no airflow proof shuts the damper as well as both coils', async ({ page }) => {
+        await open(page);
+        // ⚠ HAND EVERY POINT BACK FIRST. A scenario preset writes slot 8 on
+        // all six outputs, so a reading taken straight after one reports the
+        // PRESET and not the sequence — which is what hid this: the damper
+        // select was wired to `occ` while the page's own comments said proof,
+        // and every surface that would have shown it was under manual control.
+        await page.locator('[data-preset="belt"]').click();
+        for (const id of ['#ahu-null-oad', '#ahu-null-hw', '#ahu-null-stage',
+            '#ahu-null-fan', '#ahu-null-fanen']) {
+            await page.locator(id).check();
+        }
+        await settle(page, 3000);
+        await expect(page.locator('#ahu-v-fan-proof')).toHaveText('NONE');
+        // All three interlocked outputs, together — the coils already were,
+        // the damper is what changed.
+        await expect(page.locator('#ahu-v-oa-dmpr'),
+            'a damper open with no air moving is ventilation on paper only')
+            .toHaveText('0 %');
+        await expect(page.locator('#ahu-v-dx-stg1')).toHaveText('OFF');
+        await expect(page.locator('#ahu-v-hw-valve')).toHaveText('0 %');
+    });
+
+    test('an unoccupied unit shuts the damper through the proof, with no second gate', async ({ page }) => {
+        await open(page);
+        // The damper select gates on PROOF ALONE, and this is the row that
+        // says why that is enough: `occ` drives `fan-enable`, so unoccupied →
+        // fan off → proof drops → damper shut. Gating on proof is transitively
+        // stronger than gating on occupancy, which is what let the fix be one
+        // rewire rather than a new AND block on a sheet whose layout is
+        // hand-tuned for the no-burial invariant. If this row ever goes red
+        // the transitive argument has failed and the gate has to become
+        // explicit.
+        await expect(page.locator('#ahu-v-oa-dmpr')).toHaveText('20 %');
+        await page.locator('.tabs.tabs-flush [data-tab="wiresheet"]').click();
+        const occ = page.locator('#ddcw-fbe-inner .fbe-block[data-id="occ"]');
+        await expect(occ).toHaveCount(1);
+        await occ.locator('.fbe-toggle').click();
+        await page.locator('.tabs.tabs-flush [data-tab="unit"]').click();
+        await settle(page, 4000);
+        await expect(page.locator('#ahu-v-fan-run')).toHaveText('OFF');
+        await expect(page.locator('#ahu-v-fan-proof')).toHaveText('NONE');
+        await expect(page.locator('#ahu-v-oa-dmpr')).toHaveText('0 %');
+    });
 });
 
 test.describe('AHU workbench page: the chevrons', () => {

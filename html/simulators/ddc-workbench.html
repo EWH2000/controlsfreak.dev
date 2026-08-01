@@ -2554,12 +2554,23 @@ noindex: true
                     { id: 'sr1',              type: 'sr',    x: 720,  y: 20 },
                     { id: 'sr2',              type: 'sr',    x: 720,  y: 200 },
                     { id: 'heatlim',          type: 'limit', x: 720,  y: 380, params: { lo: 0, hi: 100 } },
-                    { id: 'zero',             type: 'const', x: 720,  y: 600, params: { value: 0 } },
                     // Airflow PROOF. Unlike the FCU's unprotected sheets it
-                    // is WIRED: both coils gate on it. It sits one column
-                    // left of the three permits rather than out in the source
-                    // stack, so each gate reads it over a single-column hop.
-                    { id: 'fan-status',       type: 'bi',    x: 720,  y: 760, params: { state: false } },
+                    // is WIRED, and to FOUR consumers: both coils, and the
+                    // damper's output select. It sits one column left of the
+                    // three permits rather than out in the source stack, so
+                    // each gate reads it over a single-column hop.
+                    // ⚠ THE ROW IS LOAD-BEARING, and y 470 is the one that
+                    // makes the fourth wire free. Its out-pin then lands at
+                    // y 507.1 — dmpout.SEL exactly — so the long haul to
+                    // column 7 is a DEAD STRAIGHT run, crossing column 5 in
+                    // the clear band between hwsel (bottom 486.5) and
+                    // econcall (top 540) with 20+ px either side. At its
+                    // former y 760 that same wire's first leg ran at 797.1
+                    // and drove straight through min-oa-pos. The three
+                    // single-column hops are clean at any row (rule 1), so
+                    // this block is free to sit wherever the long one needs.
+                    { id: 'fan-status',       type: 'bi',    x: 720,  y: 470, params: { state: false } },
+                    { id: 'zero',             type: 'const', x: 720,  y: 600, params: { value: 0 } },
                     { id: 'hundred',          type: 'const', x: 720,  y: 850, params: { value: 100 } },
 
                     // ── column 5 · permits and selection ──
@@ -2637,7 +2648,7 @@ noindex: true
                     { from: ['econcall', 'Q'],         to: ['dmpsel', 'SEL'] },
                     { from: ['min-oa-pos', 'O'],       to: ['dmpsel', 'IN0'] },
                     { from: ['hundred', 'O'],          to: ['dmpsel', 'IN1'] },
-                    { from: ['occ', 'O'],              to: ['dmpout', 'SEL'] },
+                    { from: ['fan-status', 'O'],       to: ['dmpout', 'SEL'] },
                     { from: ['zero', 'O'],             to: ['dmpout', 'IN0'] },
                     { from: ['dmpsel', 'O'],           to: ['dmpout', 'IN1'] },
                     { from: ['dmpout', 'O'],           to: ['oa-damper', 'IN'] },
