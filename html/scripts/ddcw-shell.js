@@ -259,6 +259,39 @@ const DDCWShell = (function () {
         // arrays when the sheet changes.
         const cmd = {};
 
+        // ── roster-named programs ──────────────────────────────────────────
+        // A block on a workbench sheet whose id matches a point id IS that
+        // point (point id === FBE block id is the load-bearing binding
+        // invariant), so its name comes from the ROSTER — the same string
+        // the statusbar chip and the off-program window already print. The
+        // program literals therefore carry no `name:` of their own for an
+        // IO block; duplicating the roster strings into them would be two
+        // sources for one word, and the first rename would break the tie.
+        //
+        // This is derived ONCE, up front, off the pristine `unit.programs`
+        // — not stamped after each FBE.makeGraph(). The editor clones a
+        // program literal itself on every loadExample() (a program switch)
+        // and again on construction, so a post-makeGraph stamp in the shell
+        // would be silently lost on the first re-mount or program change.
+        // Naming the SOURCE the editor clones from covers every path, and
+        // `unit.programs` stays untouched for anything else reading it.
+        // A block the user drops from the palette gets an id like 'b3' and
+        // matches no point, so it stays unnamed — correct: it is not a
+        // point.
+        const programs = {};
+
+        function buildNamedPrograms() {
+            const nameById = {};
+            unit.points.forEach(function (p) { if (p.name) nameById[p.id] = p.name; });
+            Object.keys(unit.programs).forEach(function (key) {
+                const g = JSON.parse(JSON.stringify(unit.programs[key]));
+                g.blocks.forEach(function (b) {
+                    if (nameById[b.id]) b.name = nameById[b.id];
+                });
+                programs[key] = g;
+            });
+        }
+
         // ── generic binding driver (names NO unit point) ───────────────────
         function reindex(g) {
             byId = {};
@@ -489,14 +522,14 @@ const DDCWShell = (function () {
             if (!suppressCustom) programKey = null;
         }
         function loadProgram(key) {
-            if (!unit.programs[key]) return;
+            if (!programs[key]) return;
             programKey = key;
             if (editorBuilt) {
                 suppressCustom = true;
                 editor.loadExample(key);        // replaces graph → onGraphChange recaptures
                 suppressCustom = false;
             } else {
-                graph = FBE.makeGraph(unit.programs[key]);
+                graph = FBE.makeGraph(programs[key]);
                 reindex(graph);
             }
             syncProgramSelect();
@@ -519,7 +552,10 @@ const DDCWShell = (function () {
                     status:    document.getElementById('ddcw-fbe-status'),
                     runButton: document.getElementById('ddcw-fbe-run'),
                 },
-                examples: unit.programs,
+                // The roster-named copies, NOT unit.programs — the editor
+                // re-clones from this registry on every program switch,
+                // so it is what has to carry the names.
+                examples: programs,
                 initialGraph: graph,            // share the already-running graph
                 // Canvas bounds come from the unit config — the sheet
                 // layouts and the canvas they were authored to move
@@ -571,7 +607,11 @@ const DDCWShell = (function () {
         if (isFinite(unit.speedDefault)) simSpeed = unit.speedDefault;
         if (isFinite(unit.maxDtSim))     simMaxDt = unit.maxDtSim;
         programKey = unit.defaultProgram;
-        graph = FBE.makeGraph(unit.programs[programKey]);
+        // Derive the roster-named program registry before the first clone
+        // — everything downstream (this graph, the editor's `examples`,
+        // every later loadProgram) reads `programs`, never `unit.programs`.
+        buildNamedPrograms();
+        graph = FBE.makeGraph(programs[programKey]);
         reindex(graph);
         initChips();
         buildProgramPicker();
