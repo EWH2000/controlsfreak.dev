@@ -2011,18 +2011,22 @@ test.describe('function-block editor — interactions', () => {
         expect(errors, 'sim-bar behavioral should log no errors').toEqual([]);
     });
 
-    test('non-AI inspector edit flows to the output — PID gain to zero zeros both AOs', async ({ page }) => {
+    test('non-AI inspector edit flows to the output — PID gain to zero zeros the AO', async ({ page }) => {
         const errors = watchErrors(page);
         await page.goto('/simulators/function-block-editor.html');
         await page.click('[data-example="pid"]');
         // PID example: sp=72, pv=68, kc=5 — output is non-zero on every
-        // tick. Zero the gain via the inspector and both sinks collapse.
-        // (`rd` was a 'readout' block before that type folded into AO; it
-        // keeps its id, so this assertion is unchanged by the fold.)
+        // tick. Zero the gain via the inspector and the sink collapses.
+        // The sheet has ONE sink: `rd` (a 'readout' block before that
+        // type folded into AO, hence the id) is the loop's only output,
+        // the second AO having gone with the fold. So the assertion is
+        // on the whole sink side of the sheet, not a sample of it.
         await page.locator('.fbe-block[data-id="ctl"] .fbe-block-head').click();
         await page.fill('#fbe-p-kc', '0');
         await expect(page.locator('.fbe-block[data-id="rd"] .fbe-block-val')).toHaveText('0');
-        await expect(page.locator('.fbe-block[data-id="out"] .fbe-block-val')).toHaveText('0');
+        // Pins that: a second sink reappearing on this sheet must come
+        // back through this test rather than sit unasserted.
+        await expect(page.locator('.fbe-block')).toHaveCount(4);
         expect(errors, 'PID-gain behavioral should log no errors').toEqual([]);
     });
 

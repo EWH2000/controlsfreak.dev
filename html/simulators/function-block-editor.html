@@ -281,18 +281,22 @@ keywords: wiresheet logic block and or pid wire program sequence
                 // 'AO · HW Vlv', matching how the AHU workbench roster
                 // names the same point, and this sheet is the public
                 // editor's one worked demonstration of a named block.
+                // The fold also collapsed the sheet's two sinks into
+                // one: an unnamed AO used to sit at (510, 60) taking a
+                // second wire off the same OUT pin, which read as one
+                // loop writing two analog outputs the moment the
+                // readout stopped being its own type. One command
+                // signal, one output point (owner, 2026-08-01).
                 blocks: [
                     { id: 'pv',  type: 'ai',    x: 30,  y: 50,  params: { value: 68 } },
                     { id: 'sp',  type: 'const', x: 30,  y: 220, params: { value: 72 } },
                     { id: 'ctl', type: 'pid',   x: 270, y: 120,
                       params: { kc: 5, ti: 45, td: 0, action: 'reverse' } },
-                    { id: 'out', type: 'ao',    x: 510, y: 60 },
                     { id: 'rd',  type: 'ao',    x: 510, y: 230, name: 'HW Vlv' },
                 ],
                 wires: [
                     { from: ['sp', 'O'],   to: ['ctl', 'SP'] },
                     { from: ['pv', 'O'],   to: ['ctl', 'PV'] },
-                    { from: ['ctl', 'OUT'], to: ['out', 'IN'] },
                     { from: ['ctl', 'OUT'], to: ['rd', 'IN'] },
                 ],
             },
