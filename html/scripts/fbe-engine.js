@@ -143,6 +143,18 @@ const FBE = (function () {
         // head is the only place that says which way the test runs
         // between them. A bare '>' would save two characters and cost
         // that.
+        // The ge / le / ne TAGS are ASCII while their labels keep the
+        // real glyphs, and that asymmetry is deliberate: ≥ / ≤ / ≠ are
+        // absent from the bundled Plex Mono subset AND outside the
+        // unicode-range every @font-face here declares, so a glyph tag
+        // would be sourced from whatever mono the visitor's system
+        // falls back to — a second typeface at a second advance, inside
+        // the one surface on the sheet that is budgeted to the pixel
+        // (18 characters wide, and stacked on a row pitch with 0.28px
+        // of clearance on the AHU workbench). ASCII keeps the head
+        // deterministic; the label renders in running palette text
+        // where a fallback face costs nothing. (Owner ruling
+        // 2026-08-01, codebase-issues #255.)
         gt: {
             label: 'A > B', tag: 'A>B', category: 'Comparator',
             inputs: [{ name: 'A', kind: 'number' }, { name: 'B', kind: 'number' }],
@@ -156,13 +168,13 @@ const FBE = (function () {
             evaluate: (i) => ({ out: { Q: asNum(i.A) < asNum(i.B) } }),
         },
         ge: {
-            label: 'A ≥ B', tag: 'A≥B', category: 'Comparator',
+            label: 'A ≥ B', tag: 'A>=B', category: 'Comparator',
             inputs: [{ name: 'A', kind: 'number' }, { name: 'B', kind: 'number' }],
             outputs: [{ name: 'Q', kind: 'bool' }],
             evaluate: (i) => ({ out: { Q: asNum(i.A) >= asNum(i.B) } }),
         },
         le: {
-            label: 'A ≤ B', tag: 'A≤B', category: 'Comparator',
+            label: 'A ≤ B', tag: 'A<=B', category: 'Comparator',
             inputs: [{ name: 'A', kind: 'number' }, { name: 'B', kind: 'number' }],
             outputs: [{ name: 'Q', kind: 'bool' }],
             evaluate: (i) => ({ out: { Q: asNum(i.A) <= asNum(i.B) } }),
@@ -174,7 +186,7 @@ const FBE = (function () {
             evaluate: (i) => ({ out: { Q: Math.abs(asNum(i.A) - asNum(i.B)) < EPS } }),
         },
         ne: {
-            label: 'A ≠ B', tag: 'A≠B', category: 'Comparator',
+            label: 'A ≠ B', tag: 'A!=B', category: 'Comparator',
             inputs: [{ name: 'A', kind: 'number' }, { name: 'B', kind: 'number' }],
             outputs: [{ name: 'Q', kind: 'bool' }],
             evaluate: (i) => ({ out: { Q: Math.abs(asNum(i.A) - asNum(i.B)) >= EPS } }),
