@@ -401,6 +401,11 @@ const MEASURE_HEAD = ({ scope, wantSelected }) => {
         theme: document.documentElement.getAttribute('data-theme'),
         fontSize: parseFloat(getComputedStyle(tag).fontSize),
         selected: head.closest('.fbe-block').classList.contains('fbe-block-sel'),
+        // The compositing factor this sample was taken through. Reported
+        // so the arm can assert it — anything under 1 means the page was
+        // still animating and the ratios below describe a frame no
+        // reader ever sits on. See HEAD_SETTLED.
+        opacity,
         // How many layers the backdrop needed — 1 means nothing
         // translucent was composited, which would make the selected arm
         // below a copy of the unselected one.
@@ -410,6 +415,81 @@ const MEASURE_HEAD = ({ scope, wantSelected }) => {
         name: inkRatio(name),
     };
 };
+
+// ── the measurement has to wait for PAINT, and toBeVisible() does not ──
+// MEASURE_HEAD is a paint measurement, and paint on this page is not
+// settled at the moment the sheet becomes visible. `.tool-card` carries
+// `animation: fadeUp 0.5s <delay> ease both` (styles.css:1188-1191 — the
+// FCU workbench's card resolves to the 0.16s step, so a 0.66s window
+// from first render) and fadeUp's first keyframe is `opacity: 0`
+// (styles.css:1719). Playwright's
+// visibility is a non-empty box plus `visibility`/`display` — it says
+// NOTHING about opacity — so the arm was free to sample mid-ramp, where
+// the ink composites down onto its own backdrop and the ratio collapses
+// toward 1.0.
+//
+// Which is not a CI-hardware story, and reading it as one sends you
+// looking in the wrong place. It is measurement-time versus fade-window:
+// the arm reaches the sample at ~1.7-1.9s on this box (past the window,
+// green) and at ~430-930ms on a CI runner (inside it, red). Slower
+// hardware is SAFER here; a fast one is what loses. Measured on the
+// undoctored local build, 5 of 12 raw samples still landed inside —
+// 1.10 / 1.20 / 1.35 / 1.78 against the 4.81 the settled page reads —
+// so the margin was always thin, CI just spends it.
+//
+// contrast-sweep.spec.js hit this already and settles for it — see its
+// header ("~20,000 'failures' that were nav dropdowns and reveal
+// animations caught in flight") and its `settle()`, which finishes or
+// cancels every running animation before walking. This arm exists
+// BECAUSE that sweep cannot reach a hidden page, and it inherited the
+// measurement without the settle. It does not simply copy `settle()`
+// though: `finish()` throws
+// on an infinite animation and the sweep falls back to `cancel()`, and
+// this page runs an infinite `fbe-signal-flow` while the sim is live.
+// A sweep that is done with the page can cancel its animations; this
+// arm goes on to click a block and measure the SELECTED state, so it
+// waits the reveal out instead of editing it away.
+//
+// Nothing else in this file needs the guard, and that was measured
+// rather than assumed: the other arms read clientHeight, scrollWidth −
+// clientWidth and getBoundingClientRect().height, fadeUp animates only
+// `opacity` and a `translateY`, and neither touches a layout metric or
+// the HEIGHT of a rect. Sampled at effective opacity 0.030 and at 1.0,
+// every one of those numbers is identical (23 / 0 / 72.97).
+const SETTLE_MS = 10000;
+const HEAD_SETTLED = ({ scope, wantSelected }) => {
+    const sel = wantSelected ? '.fbe-block-sel ' : '';
+    const name = document.querySelector(`${scope} ${sel}.fbe-block-name`);
+    if (!name) return false;
+    for (let n = name.closest('.fbe-block-head'); n && n.nodeType === 1; n = n.parentElement) {
+        // The exact quantity MEASURE_HEAD composites, link by link.
+        if (parseFloat(getComputedStyle(n).opacity) < 1) return false;
+        // …and nothing still in flight that could move a number the
+        // measurement reads. Deliberately narrowed to the three paint
+        // properties it consumes rather than "any running animation":
+        // this page runs an INFINITE wire-flow animation while the sim
+        // is live (`fbe-signal-flow`), and a blanket check would either
+        // hang on it or have to special-case it by name.
+        const busy = n.getAnimations().some((a) => a.playState === 'running' && a.effect
+            && a.effect.getKeyframes().some((k) =>
+                'opacity' in k || 'color' in k || 'backgroundColor' in k));
+        if (busy) return false;
+    }
+    return true;
+};
+
+// Settle, then measure REGARDLESS. The catch is load-bearing: a guard
+// that threw on timeout would convert "the page never finished
+// animating" into a skipped measurement wearing a failure's clothes,
+// and a guard that silently returned would let a genuinely bad ink
+// colour pass whenever the settle stalled. Falling through keeps the
+// assertions the only thing that can pass or fail this arm — and
+// MEASURE_HEAD now reports the `opacity` it composited, which the arm
+// pins at 1, so an un-settled sample names itself instead of arriving
+// disguised as a contrast defect.
+async function settleHead(page, opts) {
+    await page.waitForFunction(HEAD_SETTLED, opts, { timeout: SETTLE_MS }).catch(() => {});
+}
 
 test.describe('block names — head ink clears AA in both themes and both states', () => {
 
@@ -421,11 +501,13 @@ test.describe('block names — head ink clears AA in both themes and both states
             await expect(page.locator('.fbe-block-tag').first()).toBeVisible();
 
             const scope = '#ddcw-fbe-inner';
+            await settleHead(page, { scope, wantSelected: false });
             const idle = await page.evaluate(MEASURE_HEAD, { scope, wantSelected: false });
 
             expect(idle.error).toBeUndefined();
             expect(idle.theme).toBe(scheme);
             expect(idle.selected).toBe(false);
+            expect(idle.opacity, 'sampled mid-animation — the ratios below are a frame, not the page').toBe(1);
             // 9.92px at weight 600 is SMALL text under WCAG — the 4.5:1
             // floor applies, not the 3:1 large-text one.
             expect(idle.fontSize).toBeLessThan(18.66);
@@ -448,9 +530,19 @@ test.describe('block names — head ink clears AA in both themes and both states
             await page.click(`${scope} .fbe-block[data-id="${id}"] .fbe-block-head`);
             await expect(page.locator(`${scope} .fbe-block[data-id="${id}"]`)).toHaveClass(/fbe-block-sel/);
 
+            // Same guard on this side. The class landing is a DOM fact
+            // and says nothing about the repaint it triggers, so if the
+            // selected head ever grows a colour/background transition
+            // this arm would race it exactly as the idle one raced the
+            // card fade — and would race it INVISIBLY, since both spans
+            // still resolve to a plausible ratio part-way through a
+            // colour interpolation. Cheap now, and it is the assertion
+            // that would otherwise be written after the next flake.
+            await settleHead(page, { scope, wantSelected: true });
             const picked = await page.evaluate(MEASURE_HEAD, { scope, wantSelected: true });
             expect(picked.error).toBeUndefined();
             expect(picked.selected).toBe(true);
+            expect(picked.opacity, 'sampled mid-animation — the ratios below are a frame, not the page').toBe(1);
             // Non-vacuity for the compositing: the selected backdrop is
             // built from more than one layer, so a walk that stopped at
             // the first opaque ancestor would have measured something
