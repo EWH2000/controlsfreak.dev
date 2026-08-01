@@ -1444,8 +1444,10 @@ abbr[title] {
 
 /* Form labels are DELIBERATELY the quiet ink: quiet caption + loud value is
    the scan hierarchy this system wants, not an oversight, and it is not a
-   WCAG failure — --text-dim on --surface measures 5.67:1 dark / 5.27:1
-   light against a 4.5:1 small-text AA floor. Standing answer to
+   WCAG failure — --text-dim on --surface measures 5.67:1 dark / 5.51:1
+   light against a 4.5:1 small-text AA floor (the light figure moved with
+   the 2026-07-20 --text-dim retune; recompute it here whenever that token
+   moves, since .fbe-block-tag's note cites this pair). Standing answer to
    codebase-issues #168 (owner, 2026-07-20: working as designed). Do NOT
    "fix" this site-wide; it would flatten the hierarchy on all ~47
    label-bearing pages to solve a non-problem. The escape hatch is
@@ -4367,17 +4369,22 @@ p.ref-note.compact {
    nowrap + ellipsis is LOAD-BEARING, not polish. Pins live in
    .fbe-block-body, after the head in DOM order, so anything that grows
    the head moves every pin and every wire endpoint below it — and the
-   workbench comparator banks stack ~89.7px blocks on a 90px row pitch
-   with ~0.3px clearance. Measured on the public sheet: a 19-character
-   head wraps and grows its block 72.97 → 88.84px. It has never fired
-   only because the longest type label is 8 characters with no space to
-   break at; a name introduces spaces, so the accident ends here.
+   AHU workbench stacks ~89.72px blocks on a 90px row pitch — 0.28px
+   of clearance, the tightest column on any workbench sheet (no FCU
+   column comes within 5px).
+   Measured on the public sheet: a 19-character head wraps and grows
+   its block 72.97 → 88.84px. It had never fired only because every
+   type label happened to fit — the longest are 10 characters
+   ("ANALOG OUT", "BINARY OUT"), and they do have a space to break at,
+   they just never reach the width where it matters. A name is
+   arbitrary length AND arbitrary spaces, so the accident ends here.
    The budget is 18 characters INCLUDING tag and separator — 8.5rem of
    block less the 1px borders box-sizing puts inside it, less the
    0.9rem of padding, over a 0.62rem mono advance at 0.04em tracking;
-   verified in-browser and stable across root fonts 12–32px, since the
-   border term is px and doesn't scale. Past that the name clips with
-   an ellipsis and fbe-editor.js's `title` attribute is the recovery. */
+   measured in-browser at root fonts 12–32px and stable across all of
+   them, which the px border term is a reason to CHECK rather than a
+   reason to expect. Past that the name clips with an ellipsis and
+   fbe-editor.js's `title` attribute is the recovery. */
 .fbe-block-head {
     font-family: var(--mono);
     font-size: 0.62rem;
@@ -4401,13 +4408,19 @@ p.ref-note.compact {
    when the block is selected, which is what leaves the tag as the
    only dim part in either state. */
 .fbe-block-tag { color: var(--text-dim); }
-/* The separator is CSS, not a text node: not selectable, and the empty
-   alternative text keeps it out of the accessibility tree, so a screen
-   reader hears "AI OAT" rather than "AI middle dot OAT". The bare
-   `content` above it is the fallback for engines without alt text. */
+/* The separator is CSS, not a text node, so it is not selectable. Its
+   alternative text is a SPACE, not empty: the tag and the name are
+   adjacent spans with no whitespace between them, so an empty alt
+   deletes the only word boundary and a screen reader (or a copy) gets
+   "AIOAT". A space alt keeps the dot itself unannounced while leaving
+   the boundary — "AI OAT". Two branches ship, both acceptable: an
+   engine honouring alt text reads the space; one that ignores it falls
+   back to the bare `content` declaration above and reads the '·',
+   which is the pre-alt behaviour. The bare line must stay — dropping
+   it costs the separator entirely wherever alt text is unsupported. */
 .fbe-block-tag::after {
     content: '·';
-    content: '·' / '';
+    content: '·' / ' ';
     margin: 0 0.3em;
 }
 .fbe-block-sel .fbe-block-head { background: var(--accent-dim); color: var(--accent); }
