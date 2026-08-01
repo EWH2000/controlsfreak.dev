@@ -121,9 +121,26 @@ module.exports = [
         id: 'setpoint-vs-actual',
         prompt: 'A space-temperature setpoint of <code>72°F</code> means the controller will drive the room to <em>exactly</em> <code>72°F</code>.',
         answer: false,
-        explain: 'The setpoint is a <em>target</em> the controller tries to maintain, not the value the room will sit at. Real sequences add a deadband (say <code>70-74°F</code>) so heating and cooling don\'t fight each other; the PID loop has a steady-state offset proportional to the load; and the sensor itself has noise. A space-temp reading of <code>73.5°F</code> at a <code>72°F</code> setpoint isn\'t a fault — it\'s a system doing its job. Setpoint chasers (techs trying to drive the actual to within <code>0.1°F</code> of setpoint) are usually fighting deadband and PID behavior, not solving anything.',
+        explain: 'The setpoint is a <em>target</em> the controller tries to maintain, not the value the room will sit at. Real sequences add a deadband so heating and cooling don\'t fight each other; the PID loop has a steady-state offset proportional to the load; and the sensor itself has noise. A space-temp reading of <code>73.5°F</code> at a <code>72°F</code> setpoint isn\'t a fault — it\'s a system doing its job. Setpoint chasers (techs trying to drive the actual to within <code>0.1°F</code> of setpoint) are usually fighting deadband and PID behavior, not solving anything.',
         learnMore: { href: '/education/pid-basics.html', label: 'PID Basics' },
         tags: ['controls', 'pid']
+    },
+
+    // ── Controls: reading a term in context ───────────────
+    {
+        type: 'gotcha',
+        id: 'read-the-term-in-context',
+        prompt: 'First week on an unfamiliar job. Three documents describe the same zone, all written by people who knew what they meant. How do you read <em>deadband</em> here?',
+        snippet: '<pre class="quiz-snippet">SPEC §3.2\n  "Zone shall hold a 4 °F\n   (2.2 °C) deadband."\nPOINT LIST\n  HTG-SP  70.0 °F (21.1 °C)\n  CLG-SP  74.0 °F (23.3 °C)\nCONTROLLER\n  CLG STAGE 1\n  DEADBAND  2.0 °F (1.1 °C)</pre>',
+        choices: [
+            { id: 'a', text: 'Take the spec\'s number — a deadband is the separation between the heating and cooling setpoints, so the zone floats from 70 to 74 °F (21.1 to 23.3 °C) with neither mode called.' },
+            { id: 'b', text: 'Take the controller\'s number — a deadband is the hysteresis a single switching point carries so it can\'t chatter, so stage 1 makes and breaks 2 °F (1.1 °C) apart.' },
+            { id: 'c', text: 'Flag it back to the engineer — 4 °F (2.2 °C) and 2 °F (1.1 °C) can\'t both be the deadband, so one of the two documents has a typo in it.' },
+            { id: 'd', text: 'Neither number is wrong — the word carries two meanings here, and only one document shows its edges. Read the values each number sits between, and chase what isn\'t shown.', correct: true }
+        ],
+        explain: 'Both numbers are correct, and they are not measuring the same thing. The spec is using the word the way a zone sequence uses it — the separation between the heating and cooling setpoints — and the point list shows its work: <code>70.0</code> and <code>74.0 °F</code> (21.1 and 23.3 °C) are the two values that 4 °F (2.2 °C) sits between. The controller is using it the way a single comparator uses it: hysteresis on one switching point, so the stage-1 call makes and breaks at two different values instead of buzzing on the setpoint. Now notice what the controller does <em>not</em> give you. A bare <code>DEADBAND 2.0</code> can mean the whole spread or half of it applied each way — vendors split on that, and the same constant buys you a band twice the size depending on which. The values that call actually switches at are not in front of you, so that is the one you go chase: the block\'s documentation, a trend, or the graphic. That is the habit, and it is bigger than this word — a term on somebody else\'s prints is a label, and the meaning lives in the numbers underneath it. When you write the sequence yourself, say which sense you meant.',
+        learnMore: { href: '/education/comparators-and-deadband.html#which-sense', label: 'Comparators & Deadband — reading the convention' },
+        tags: ['controls', 'terminology', 'workflow']
     },
 
     // ── Workflow: stuck — when to escalate ────────────────
