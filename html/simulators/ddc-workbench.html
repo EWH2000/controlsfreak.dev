@@ -2534,6 +2534,21 @@ noindex: true
         // comparator bank (column 3) in the top band and column 2's
         // arithmetic below it — column 2 is crossed by every wire feeding
         // the bank, so it cannot sit level with it.
+        //
+        // NAMES. Every block heads `TAG · Name`, and the two halves come
+        // from two different places on purpose. A POINT-BACKED block
+        // (block id === point id) carries no `name:` here at all — the
+        // shell stamps the roster's name onto it, so the statusbar chip,
+        // the off-program window and the head can never disagree. Every
+        // other block — the arithmetic, the comparators, the latches, the
+        // permits, the free constants — is named IN THIS LITERAL, and
+        // each name was written from what the block consumes and feeds
+        // rather than from its id. Head budget is 18 characters including
+        // the ' · ', so with the 5-char CONST tag a constant gets 10;
+        // tests/fbe-block-names.spec.js fails the build on a head that
+        // clips. Names sharpen a thing the ids leave mute: `gt1`/`lt1` are
+        // Y1 Set / Y1 Reset, and `sep` is the STAGE separation, not the
+        // deadband and not the gap between the two setpoints.
         const AHU_PROGRAMS = {
             'econ-2stage': {
                 blocks: [
@@ -2558,36 +2573,36 @@ noindex: true
                     // below the sensed points because its three consumers are
                     // all far right, and this row is the one clear lane
                     // across columns 1-3.
-                    { id: 'occ',              type: 'bi',    x: 20,   y: 830, params: { state: true } },
+                    { id: 'occ',              type: 'bi',    x: 20,   y: 830, params: { state: true }, name: 'Occupied' },
 
                     // ── column 1 · arithmetic on the setpoints ──
                     // y1on starts BELOW the two source rows it does not
                     // consume: space-temp and cooling-setpoint both run past
                     // this column on their way to the comparator bank.
-                    { id: 'y1on',             type: 'add',   x: 195,  y: 160 },
-                    { id: 'sep',              type: 'const', x: 195,  y: 270, params: { value: 2 } },
-                    { id: 'heaterr',          type: 'sub',   x: 195,  y: 380 },
-                    { id: 'lockok',           type: 'lt',    x: 195,  y: 560 },
-                    { id: 'diffok',           type: 'lt',    x: 195,  y: 670 },
+                    { id: 'y1on',             type: 'add',   x: 195,  y: 160, name: 'Y1 Make' },
+                    { id: 'sep',              type: 'const', x: 195,  y: 270, params: { value: 2 }, name: 'Stg2 Sep' },
+                    { id: 'heaterr',          type: 'sub',   x: 195,  y: 380, name: 'Heat Error' },
+                    { id: 'lockok',           type: 'lt',    x: 195,  y: 560, name: 'Lock OK' },
+                    { id: 'diffok',           type: 'lt',    x: 195,  y: 670, name: 'Diff OK' },
 
                     // ── column 2 · below the bank, because every wire into
                     //    the bank crosses this column ──
-                    { id: 'y2on',             type: 'add',   x: 370,  y: 490 },
-                    { id: 'gain',             type: 'const', x: 370,  y: 600, params: { value: 25 } },
-                    { id: 'econok',           type: 'and',   x: 370,  y: 690 },
+                    { id: 'y2on',             type: 'add',   x: 370,  y: 490, name: 'Y2 Make' },
+                    { id: 'gain',             type: 'const', x: 370,  y: 600, params: { value: 25 }, name: 'Heat Gain' },
+                    { id: 'econok',           type: 'and',   x: 370,  y: 690, name: 'Econ Permit' },
 
                     // ── column 3 · the comparator bank ──
-                    { id: 'gt1',              type: 'gt',    x: 545,  y: 20 },
-                    { id: 'lt1',              type: 'lt',    x: 545,  y: 110 },
-                    { id: 'gt2',              type: 'gt',    x: 545,  y: 200 },
-                    { id: 'lt2',              type: 'lt',    x: 545,  y: 290 },
-                    { id: 'heatraw',          type: 'mul',   x: 545,  y: 380 },
+                    { id: 'gt1',              type: 'gt',    x: 545,  y: 20, name: 'Y1 Set' },
+                    { id: 'lt1',              type: 'lt',    x: 545,  y: 110, name: 'Y1 Reset' },
+                    { id: 'gt2',              type: 'gt',    x: 545,  y: 200, name: 'Y2 Set' },
+                    { id: 'lt2',              type: 'lt',    x: 545,  y: 290, name: 'Y2 Reset' },
+                    { id: 'heatraw',          type: 'mul',   x: 545,  y: 380, name: 'Heat Raw' },
 
                     // ── column 4 · latches, and the constants + proof the
                     //    permits one column right are wired from ──
-                    { id: 'sr1',              type: 'sr',    x: 720,  y: 20 },
-                    { id: 'sr2',              type: 'sr',    x: 720,  y: 200 },
-                    { id: 'heatlim',          type: 'limit', x: 720,  y: 380, params: { lo: 0, hi: 100 } },
+                    { id: 'sr1',              type: 'sr',    x: 720,  y: 20, name: 'Y1 Latch' },
+                    { id: 'sr2',              type: 'sr',    x: 720,  y: 200, name: 'Y2 Latch' },
+                    { id: 'heatlim',          type: 'limit', x: 720,  y: 380, params: { lo: 0, hi: 100 }, name: 'Heat Clamp' },
                     // Airflow PROOF. Unlike the FCU's unprotected sheets it
                     // is WIRED, and to FOUR consumers: both coils, and the
                     // damper's output select. It sits one column left of the
@@ -2604,19 +2619,19 @@ noindex: true
                     // single-column hops are clean at any row (rule 1), so
                     // this block is free to sit wherever the long one needs.
                     { id: 'fan-status',       type: 'bi',    x: 720,  y: 470, params: { state: false } },
-                    { id: 'zero',             type: 'const', x: 720,  y: 600, params: { value: 0 } },
-                    { id: 'hundred',          type: 'const', x: 720,  y: 850, params: { value: 100 } },
+                    { id: 'zero',             type: 'const', x: 720,  y: 600, params: { value: 0 }, name: 'Off Ref' },
+                    { id: 'hundred',          type: 'const', x: 720,  y: 850, params: { value: 100 }, name: 'Full Ref' },
 
                     // ── column 5 · permits and selection ──
-                    { id: 'y1gate',           type: 'and',   x: 895,  y: 20 },
-                    { id: 'y2gate',           type: 'and',   x: 895,  y: 200 },
-                    { id: 'hwsel',            type: 'select', x: 895, y: 380 },
-                    { id: 'econcall',         type: 'and',   x: 895,  y: 540 },
-                    { id: 'fansel',           type: 'select', x: 895, y: 660 },
+                    { id: 'y1gate',           type: 'and',   x: 895,  y: 20, name: 'Y1 Gate' },
+                    { id: 'y2gate',           type: 'and',   x: 895,  y: 200, name: 'Y2 Gate' },
+                    { id: 'hwsel',            type: 'select', x: 895, y: 380, name: 'HW Vlv Sel' },
+                    { id: 'econcall',         type: 'and',   x: 895,  y: 540, name: 'Econ Call' },
+                    { id: 'fansel',           type: 'select', x: 895, y: 660, name: 'Fan Spd Ref' },
                     { id: 'min-oa-pos',       type: 'const', x: 895,  y: 790, params: { value: 20 } },
 
                     // ── column 6 · the damper's economizer select ──
-                    { id: 'dmpsel',           type: 'select', x: 1070, y: 820 },
+                    { id: 'dmpsel',           type: 'select', x: 1070, y: 820, name: 'Econ Dmpr' },
 
                     // ── column 7 · outputs ──
                     { id: 'y1',               type: 'bo',    x: 1245, y: 20 },
@@ -2624,7 +2639,13 @@ noindex: true
                     { id: 'hw-valve',         type: 'ao',    x: 1245, y: 200 },
                     { id: 'fan-enable',       type: 'bo',    x: 1245, y: 290 },
                     { id: 'fan-speed',        type: 'ao',    x: 1245, y: 380 },
-                    { id: 'dmpout',           type: 'select', x: 1245, y: 470 },
+                    // The damper chain is named by what SELECTS at each
+                    // step — Econ Dmpr (economizing picks the position)
+                    // → Proof Dmpr (airflow proof decides whether to use
+                    // it) → the roster's OA Dmpr. Naming this one for
+                    // its selector is also what keeps it distinct from
+                    // the AO it feeds.
+                    { id: 'dmpout',           type: 'select', x: 1245, y: 470, name: 'Proof Dmpr' },
                     { id: 'oa-damper',        type: 'ao',    x: 1420, y: 470 },
                 ],
                 wires: [
