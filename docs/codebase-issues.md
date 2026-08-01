@@ -10966,3 +10966,81 @@ exemption cannot decay in either direction.
    assertion. A new row walks **all nine** callouts and compares
    `getPointAtLength(getTotalLength())` against the dot's centre. Both new
    guards were checked against the pre-fix markup and fail on it.
+
+---
+
+### 255. `≥`, `≤` and `≠` are not in the bundled mono font, and the block-tag work makes them reachable *(noticed 2026-07-31, FBE block-name lane — logged, deliberately NOT fixed)*
+
+The comparator block types `ge` / `le` / `ne` label themselves `A ≥ B`, `A ≤ B`
+and `A ≠ B`, and the `tag` added in this change carries the same glyphs into the
+block head as `A≥B` / `A≤B` / `A≠B`. **None of those three characters exists in
+the self-hosted mono face.** Verified two independent ways:
+
+- **The cmap.** `html/assets/fonts/ibm-plex-mono-latin-600.woff2` carries **229
+  codepoints, none above U+2215**. U+2265 (`≥`), U+2264 (`≤`) and U+2260 (`≠`)
+  are all ABSENT — as are `Δ` (U+0394), `≈` (U+2248) and `→` (U+2192), which
+  `styles.css`'s own `@font-face` comment already says come from system
+  fallbacks.
+- **The `unicode-range`.** Every `@font-face` in `styles.css` declares Google's
+  latin subset range, whose highest math-adjacent entries are U+2000-206F,
+  U+2122, U+2191, U+2193, U+2212 and U+2215. 2260 / 2264 / 2265 fall outside
+  it, so the browser would not source them from that face even if the file did
+  contain them. This half is the stronger fact: it holds independently of what
+  is in the woff2.
+
+They therefore render from the system monospace — a different typeface, sitting
+directly beside Plex glyphs in the same three-character tag, with a different
+advance (the earlier inventory measured 6.341px against Plex's 6.397px at the
+head's size).
+
+**Pre-existing, and still latent.** The current `label`s already do this, and
+`ge` / `le` / `ne` are used by **zero** blocks across all 188 on the three
+consumer pages — the glyphs only reach a screen when a user drags one of those
+three out of the palette. Nothing regressed here; what changed is that the tag
+work put the same glyphs on a second surface, so the next time someone authors a
+`ge` onto a sheet it lands in two places instead of one.
+
+Options, none taken:
+
+1. **Leave it.** The elegant form, correct in every reader's own font stack,
+   and rare enough that nobody has reported it in the editor's lifetime.
+2. **ASCII the tags only** — `A>=B` / `A<=B` / `A!=B` (4 chars, one over the
+   3-char comparator norm, still inside the 18-char head budget). Keeps the
+   `label`s pretty, makes the *head* deterministic. Note `smoke.spec.js` and
+   `fbe-wires.spec.js` match palette buttons by `label`, not `tag`, so this
+   option touches no spec.
+3. **Extend the subset.** Re-generate the five woff2 files with the three
+   codepoints added and widen the `unicode-range`. Fixes `Δ` / `≈` / `→`
+   site-wide at the same time — but the fonts are immutable BY NAME, so it is a
+   rename plus a cache-bust, and the file is shared by every page.
+
+Wants an owner call on 1 vs 2 vs 3 before anyone acts. The fault is cosmetic in
+all three current locations.
+
+---
+
+### 256. The wiresheet inspector's form controls sit outside the TOUCH-TARGET FLOOR block *(noticed 2026-07-31, FBE block-name lane — pre-existing, not fixed)*
+
+`styles.css`'s consolidated `TOUCH-TARGET FLOOR` block floors the form-control
+family at 44px under `@media (hover: none)`: `.field input`, `.field select`,
+`input.ps-input`, `select.ps-input`. The Function-Block Editor's inspector uses
+none of those classes — its controls are `.fbe-insp-row input[type="number"]`,
+`.fbe-insp-row select` and, as of this change, `.fbe-insp-row input[type="text"]`
+(the Name field). They compute to roughly 27px tall, well under the WCAG 2.5.5
+floor, on a touch device.
+
+**Why it has never surfaced, and why that is not quite a defence.** The
+wiresheet is gated to viewports ≥1000px (`sim-desktop-only.spec.js` pins it), and
+`touch-floor.spec.js` runs its `hover: none` contexts at 412×883 and 768×1024 —
+both below the gate, so the inspector is `display: none` in every touch test the
+suite has. A touch tablet in landscape at ≥1000px logical width **does** get the
+sheet, the palette and the inspector, and gets them at desktop density.
+
+Not fixed here because it is pre-existing, applies equally to the two control
+types that already shipped, and adding a `min-height` to a `.fbe-insp-*` selector
+is a `styles.css` change with its own review. The clean fix is one more line in
+the existing form-control-family rule; the open question is whether the ≥1000px
+gate makes the whole surface out of scope for the floor by design, in which case
+the right change is a comment in the TOUCH-TARGET FLOOR block saying so — the
+same "an exemption must be written down" posture the contrast sweep's ALLOWLIST
+takes.

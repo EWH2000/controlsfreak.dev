@@ -485,6 +485,41 @@ section). **Category keys mirror the landing pages' `navCard()`
   in its own context too — in VAV the region between the mode ranges
   genuinely *is* the deadband (`education/vav-systems.html:696`, a model
   comment).
+- **A function-block head is `TAG · Name` — and it must never grow the
+  block.** Every entry in `fbe-engine.js`'s `BLOCKS` catalog carries a
+  short **`tag`** (2–5 chars: `AI`, `BO`, `CONST`, `SR`, `SEL`,
+  `A>B`…) alongside its full **`label`**. The `label` is the type's
+  name and still drives the palette buttons and the inspector caption —
+  **specs match palette buttons by exact `label` text**, so a tag is
+  added *beside* a label, never in place of one. The `tag` is what the
+  block HEAD renders, because it is the only form that leaves room for
+  a name. A block instance may carry an optional top-level **`name`**
+  (`{ id, type, x, y, params, …, name? }`) saying what THIS block does
+  on THIS sheet; the head then reads `TAG · Name`, with the `·` supplied
+  by CSS (`.fbe-block-tag::after`, empty alt text) so it is neither
+  selectable nor announced. With no `name` the head renders `label` as
+  a single text node, exactly as it did before names existed — which is
+  what a block dragged off the palette looks like until the inspector's
+  **Name** field is filled in. `name` is a **top-level block field,
+  never a param**: `tests/fbe-engine.spec.js`'s literal sweep rejects
+  any key in `params` the block type doesn't declare.
+  **The head budget is 18 characters**, tag and separator included
+  (8.5rem block, 1px borders inside the border-box, 0.62rem mono at
+  0.04em tracking; measured, and stable across root fonts 12–32px
+  because the border term is px and doesn't scale). `.fbe-block-head`
+  is `white-space: nowrap; overflow: hidden; text-overflow: ellipsis`
+  and **that is load-bearing, not polish** — pins live in
+  `.fbe-block-body` AFTER the head in DOM order, so a head that wraps
+  to a second line moves every pin and wire endpoint below it, and the
+  workbench comparator banks stack ~89.7px blocks on a 90px row pitch
+  with ~0.3px of clearance. Measured: a 19-character head grew its
+  block 72.97 → 88.84px before the rule. **On the workbench pages the
+  names are NOT authored into the program literals** — `ddcw-shell.js`
+  derives them from the point roster (`unit.points[].name`, the same
+  string the statusbar chip and the off-program window print), because
+  point id === FBE block id is the binding invariant and a second copy
+  of the string is a drift generator. `tests/fbe-block-names.spec.js`
+  pins both halves.
 - **Damage-stakes scope note** (owner decision, 2026-07-11): any tool
   whose output, acted on directly, can damage equipment (burst coil,
   cracked heat exchanger, slugged compressor, burned motor, cooked
