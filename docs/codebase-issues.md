@@ -10758,7 +10758,7 @@ page under the preset and corrected three things the first cut got wrong:
   cooling — the same direction the fault it contrasts against goes. It
   now says "further negative", with the sign convention stated inline.
 
-### 247. The FCU's `low-charge` verdict names a cause the screen cannot support, one button away from a verdict that deliberately refuses to *(noticed 2026-07-30, #246 review — pre-existing, needs an owner decision)*
+### 247. The FCU's `low-charge` verdict names a cause the screen cannot support, one button away from a verdict that deliberately refuses to *(noticed 2026-07-30, #246 review — pre-existing; **RESOLVED 2026-08-01**, owner ruled disposition 3)*
 
 Measured on the built page: under `low-charge` and under
 `blocked-condenser` the FCU's entire displayed state is identical. Same
@@ -10809,6 +10809,28 @@ Whichever way it goes, the `low-charge` verdict string and the
 `.ref-note` sentence naming it move together. No spec asserts the
 low-charge string today — only the condenser one is pinned — so a rewrite
 would want its own DOM row rather than inheriting coverage.
+
+**Resolved 2026-08-01 — owner ruled disposition 3.** The verdict now reads
+*"No ΔT across coil — air moving; low charge is one candidate, gauges
+settle it"*: the symptom is what the screen supports, charge is offered as
+a candidate, and the instrument that would actually settle it is named
+instead of a conclusion. It stays plainly distinct from the condenser
+verdict, so the low-charge scenario keeps its one differing surface. The
+page's blocked-condenser `.ref-note` moved with it — it now says why the
+low-charge verdict hedges (the scenario button knows which fault was set,
+the graphic does not). `tests/ddc-workbench-fcu.spec.js` gained a DOM row
+that pins the new string, asserts the hedge reaches the `.sr-only` mirror
+too, and compares against the condenser verdict **read live** rather than
+a second copy of that literal.
+
+One thing this did NOT reach, deliberately: the AHU carries the same
+claim, at `html/scripts/ddcw-ahu-unit.js` (*"No ΔT across the machine —
+low charge, not cooling"*), and it was out of this lane's scope. It is not
+the identical defect — the AHU's ladder is longer and its `low-charge`
+branch is not one button from a verdict that refuses to name a part — but
+it is the same over-claim from the same injected `d.fault`, and the same
+disposition-3 wording would fit. Worth an owner call the next time someone
+is in that ladder.
 
 ### 248. The AHU mockup still carries an inline copy of the sensor-glyph CSS that graduated to `styles.css` *(noticed 2026-07-30, AHU page lane — deliberately not fixed)*
 

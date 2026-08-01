@@ -423,3 +423,72 @@ test.describe('DDC Workbench — the blocked-condenser scenario is wired end to 
         expect(dt, 'the ΔT did not invert into a heating delta').toBeLessThan(2);
     });
 });
+
+test.describe('DDC Workbench — the low-charge verdict offers a candidate, not a finding (#247)', () => {
+    test('it names the symptom, and stays a different string from the condenser one', async ({ page }) => {
+        // #247, owner disposition 3 (2026-08-01). The low-charge and
+        // blocked-condenser scenarios put the FCU in an IDENTICAL displayed
+        // state — same chips, same ΔT badge, same red compressor dot, same
+        // marching chevrons. A full DOM sweep found the verdict string as
+        // the only differing surface. So the verdict is the one place the
+        // two can be told apart, and it is also the one place the page can
+        // over-claim: the old string read "low charge, not cooling", which
+        // is a diagnosis these readings cannot support.
+        //
+        // Two things get a row, and they pull in opposite directions —
+        // which is why neither can be dropped:
+        //   1. The string is SOFTENED. `one candidate` is the load-bearing
+        //      hedge; a future edit that hardens it back into a finding
+        //      has to walk past this assertion.
+        //   2. The string is still DISTINCT. Softening far enough would
+        //      collapse it into the condenser verdict (disposition 2,
+        //      which the owner did NOT take) and cost the scenario its
+        //      only distinguishing surface.
+        // The distinctness half compares against the condenser verdict
+        // READ LIVE rather than a second copy of that literal — a duplicated
+        // string would go stale the day the condenser wording is retuned,
+        // and the comparison would then prove nothing.
+        test.setTimeout(60_000);
+        await page.goto(URL);
+        await page.waitForFunction(() =>
+            document.getElementById('fcu-verdict').textContent.trim().length > 0);
+
+        await page.locator('#fcu-speed-slider').fill('60');
+        await page.click('[data-preset="lowcharge"]');
+
+        // Wait on the condition, not a duration: the ladder branches on the
+        // fault the instant the preset writes it.
+        await page.waitForFunction(() =>
+            document.getElementById('fcu-verdict').textContent.includes('one candidate'),
+        null, { timeout: 30000 });
+
+        const low = await page.evaluate(() => ({
+            verdict: document.getElementById('fcu-verdict').textContent.trim(),
+            sr: document.getElementById('fcu-verdict-sr').textContent.trim(),
+            pill: document.getElementById('fcu-verdict').className,
+            label: document.querySelector('[data-preset="lowcharge"]').textContent.trim(),
+        }));
+
+        expect(low.label, 'the button still names the scenario').toBe('Low charge');
+        expect(low.verdict, 'the verdict states the symptom and hedges the cause')
+            .toBe('No ΔT across coil — air moving; low charge is one candidate, gauges settle it');
+        expect(low.pill, 'a stopped coil under a cooling call is still an error state')
+            .toContain('error');
+        // The pill is mute; the .sr-only live region is what a screen
+        // reader hears (#227a), so the hedge has to reach both.
+        expect(low.sr, 'the screen-reader mirror carries the same hedge').toBe(low.verdict);
+
+        // …and the same page, one button over, must still say something
+        // else. Same fixture, so this also re-confirms that a second
+        // preset click re-branches the ladder.
+        await page.click('[data-preset="condenser"]');
+        await page.waitForFunction(() =>
+            document.getElementById('fcu-verdict').textContent.includes('condenser-side'),
+        null, { timeout: 30000 });
+        const cond = await page.evaluate(() =>
+            document.getElementById('fcu-verdict').textContent.trim());
+
+        expect(cond, 'the two scenarios do not collapse onto one verdict')
+            .not.toBe(low.verdict);
+    });
+});
