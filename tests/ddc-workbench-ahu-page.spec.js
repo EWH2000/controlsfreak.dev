@@ -915,3 +915,69 @@ test.describe('AHU workbench page: naming and the live regions', () => {
         await expect(row).toHaveText('Open');
     });
 });
+
+test.describe('AHU workbench page: the fullscreen cockpit keeps its console', () => {
+
+    // Fullscreen makes the active pane the single scroller, and the right
+    // column (mirror + presets + sliders) is ~2.4× the scrollport at the
+    // default 1280×720 — so before the sticky pin, scrolling translated the
+    // console up out of view and the rest of the travel ran over dead space
+    // (owner report, 2026-08-01). These rows pin the fix's two contracts:
+    // the console fills the scrollport at max scroll, and its BOTTOM edge
+    // (the verdict pill lives there) lands on-screen — a hard top pin would
+    // satisfy the first and silently break the second, because the built
+    // console is TALLER than the scrollport at this viewport.
+
+    async function measureAtBottom(page, pinnedSel) {
+        return page.evaluate((sel) => {
+            const pane = document.querySelector('#tab-unit');
+            pane.scrollTop = pane.scrollHeight;
+            const paneR = pane.getBoundingClientRect();
+            const pinR = document.querySelector(sel).getBoundingClientRect();
+            const visTop = Math.max(pinR.top, paneR.top);
+            const visBot = Math.min(pinR.bottom, paneR.bottom);
+            return {
+                scrollTop: pane.scrollTop,
+                paneClient: pane.clientHeight,
+                paneBottom: paneR.bottom,
+                pinnedHeight: pinR.height,
+                pinnedBottom: pinR.bottom,
+                visible: Math.max(0, visBot - visTop),
+            };
+        }, pinnedSel);
+    }
+
+    test('scrolled to the bottom, the console still fills the scrollport', async ({ page }) => {
+        await open(page);
+        await page.click('.tool-card-fullscreen-btn');
+        const m = await measureAtBottom(page, '.ahu-console');
+
+        // Non-vacuity floor: the pane must actually have scrolled. If a
+        // future layout change removes the overflow, the visibility
+        // assertions below pass vacuously and this is what says so.
+        expect(m.scrollTop, 'the pane actually scrolled').toBeGreaterThan(0);
+
+        // The console occupies the whole scrollport (or is fully visible,
+        // if a retune ever makes it shorter than the pane) — no dead space.
+        expect(m.visible, 'the console still fills the view at max scroll')
+            .toBeGreaterThanOrEqual(Math.min(m.pinnedHeight, m.paneClient) - 2);
+
+        // And its BOTTOM edge has arrived on-screen: sticky yields the
+        // overhang at the end of the travel instead of hard-pinning the
+        // top, so the verdict pill (bottom of the console) is reachable.
+        expect(m.pinnedBottom, 'the console bottom (verdict) is on-screen')
+            .toBeLessThanOrEqual(m.paneBottom + 2);
+    });
+
+    test('the stacked fallback stays ordinary flow (sticky is off)', async ({ page }) => {
+        // 800px wide trips the one-column @media arm; a sticky console
+        // there would paint over the mirror and controls scrolling under
+        // it, so the override pins position back to static.
+        await page.setViewportSize({ width: 800, height: 720 });
+        await open(page);
+        await page.click('.tool-card-fullscreen-btn');
+        const pos = await page.evaluate(
+            () => getComputedStyle(document.querySelector('.ahu-console')).position);
+        expect(pos, 'one-column fallback must not pin the console').toBe('static');
+    });
+});

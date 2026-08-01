@@ -404,11 +404,28 @@ noindex: true
             gap: 0.6rem 1.5rem;
             align-content: start;
         }
+        /* The graphic is sticky: same dead-space symptom as the AHU cockpit
+           (the readouts + controls column outruns the scrollport — at
+           1280×720 only 246px of the 390px graphic survived a scroll to the
+           bottom, at 1280×620 only 96px). `top: 0` pins it while the right
+           column scrolls; when the graphic is itself taller than the
+           scrollport (squat windows — 429px vs 391px at 1400×560) sticky
+           yields exactly the overhang at the end of the travel, bottom
+           flush with the pane bottom, so every pixel stays reachable with
+           no height cap and no internal scrollbar. `bottom: 0` is the
+           counterpart the AHU console does not need: this item is CENTERED
+           in a column taller than the scrollport, so its natural position
+           can start below the fold at low scroll — the bottom constraint
+           lifts it into view there while leaving the centered look alone
+           whenever it already fits. */
         .tool-card.is-fullscreen .fcu-graphic {
             grid-area: graphic;
             max-width: none;
             margin: 0;
             align-self: center;
+            position: sticky;
+            top: 0;
+            bottom: 0;
         }
         .tool-card.is-fullscreen .fcu-points { grid-area: points; margin: 0; align-content: start; }
         .tool-card.is-fullscreen .fcu-verdict { grid-area: verdict; margin: 0; }
@@ -424,6 +441,10 @@ noindex: true
                     "verdict"
                     "controls";
             }
+            /* One column: the graphic is ordinary flow again. Sticky here
+               would paint it OVER the points and controls scrolling under
+               it. */
+            .tool-card.is-fullscreen .fcu-graphic { position: static; }
         }
     </style>
 {% endblock %}

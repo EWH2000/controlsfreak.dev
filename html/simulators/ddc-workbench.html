@@ -923,7 +923,31 @@ noindex: true
             gap: 0.6rem 1.5rem;
             align-content: start;
         }
-        .tool-card.is-fullscreen .ahu-console { grid-area: console; align-self: start; }
+        /* ⚠ THE CONSOLE IS STICKY, AND TALLER-THAN-SCROLLPORT IS ITS NORMAL
+           CASE, NOT AN EDGE CASE. The pane is the single scroller and the
+           right column (mirror + presets + sliders) is ~2.4× the scrollport
+           at 1280×720, so an unpinned console translated up out of view and
+           the rest of the scroll ran over dead space (owner report,
+           2026-08-01). Sticky pins it — and the built console (497px) is
+           already 15px TALLER than the 482px scrollport at 1280×720, so the
+           overhang handling is load-bearing: deliberately NO height cap and
+           NO internal scrollbar. Sticky may not displace the box past the
+           scrolled content's extent, so at max scroll the offset runs out
+           and the console bottoms out flush with the pane bottom (measured:
+           it rides pinned, then yields exactly the 15px overhang at the end
+           of the travel). Every pixel — the verdict pill lives at the
+           console's bottom — is reachable at some scroll position; the only
+           cost is the drawing's top edge clipping by the overhang until you
+           scroll back up. No `bottom: 0`: align-self: start leaves the
+           console nowhere to be pushed up FROM, so a bottom constraint
+           could never act (the FCU's centered graphic is the page that
+           needs one). */
+        .tool-card.is-fullscreen .ahu-console {
+            grid-area: console;
+            align-self: start;
+            position: sticky;
+            top: 0;
+        }
         .tool-card.is-fullscreen .ahu-mirror { grid-area: points; margin: 0; }
         .tool-card.is-fullscreen .ahu-controls { grid-area: controls; margin-top: 0.5rem; }
 
@@ -936,6 +960,11 @@ noindex: true
                     "points"
                     "controls";
             }
+            /* One column: the console is ordinary flow again. Sticky here
+               would paint it OVER the mirror and controls scrolling under
+               it — a near-viewport-height opaque panel burying the whole
+               right-column content. */
+            .tool-card.is-fullscreen .ahu-console { position: static; }
         }
     </style>
 {% endblock %}
