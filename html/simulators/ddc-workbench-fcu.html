@@ -1326,6 +1326,27 @@ noindex: true
         // Kahn's sort appends cycle-locked blocks in declaration order,
         // so this ordering leaves ONLY y1gate's feedback reads on the
         // one-tick delay and a trip cuts the stages in the same tick.
+        //
+        // NAMES. Every block heads `TAG · Name`, from two sources. A
+        // POINT-BACKED block (block id === point id) carries no `name:`
+        // here — ddcw-shell.js stamps the roster's name onto it, keeping
+        // the head, the statusbar chip and the off-program window on one
+        // string. Everything else is named IN THIS LITERAL, from what the
+        // block consumes and feeds. Head budget is 18 characters counting
+        // the ' · ' (tests/fbe-block-names.spec.js fails on a head that
+        // clips).
+        //
+        // The four sheets deliberately REUSE names: Y1 Make / Y1 Set /
+        // Y1 Reset / Y1 Latch / Stg2 Sep / Low Spd / High Spd / Spd Ref /
+        // Cool Call are the same string wherever the same job is done, so
+        // flipping between programs shows which blocks are the same block
+        // — the diff-reading the shared coordinates already set up. Two
+        // divergences are on purpose and must not be normalised: `hundred`
+        // is High Spd where a select stages it against `low`, and Spd Ref
+        // on cool-1stage where it wires straight to the AO with nothing to
+        // be high relative to; and `sep` is Stg2 Sep — the separation
+        // between the two STAGES, which is neither the per-setpoint
+        // deadband nor the gap between the heating and cooling setpoints.
         const FCU_PROGRAMS = {
             'cool-2stage': {
                 // Candidate-A layout (#205): 8 topological columns at a
@@ -1343,26 +1364,26 @@ noindex: true
                     { id: 'space-temp',       type: 'ai',    x: 20,   y: 20,  params: { value: 76 } },
                     { id: 'cooling-setpoint', type: 'const', x: 20,   y: 125, params: { value: 72 } },
                     { id: 'deadband',         type: 'const', x: 20,   y: 220, params: { value: 3 } },
-                    { id: 'sep',              type: 'const', x: 20,   y: 315, params: { value: 2 } },
-                    { id: 'y1on',             type: 'add',   x: 195,  y: 65 },
-                    { id: 'y2on',             type: 'add',   x: 370,  y: 178 },
-                    { id: 'hundred',          type: 'const', x: 895,  y: 388, params: { value: 100 } },
+                    { id: 'sep',              type: 'const', x: 20,   y: 315, params: { value: 2 }, name: 'Stg2 Sep' },
+                    { id: 'y1on',             type: 'add',   x: 195,  y: 65, name: 'Y1 Make' },
+                    { id: 'y2on',             type: 'add',   x: 370,  y: 178, name: 'Y2 Make' },
+                    { id: 'hundred',          type: 'const', x: 895,  y: 388, params: { value: 100 }, name: 'High Spd' },
                     { id: 'dat',              type: 'ai',    x: 195,  y: 380, params: { value: 55 } },
                     // Airflow proof, seeded but UNWIRED on this sheet —
                     // the same convention `dat` follows. The proof
                     // interlock is the safeties sheet's lesson; here the
                     // point is simply available to wire.
                     { id: 'fan-status',       type: 'bi',    x: 195,  y: 467, params: { state: false } },
-                    { id: 'gt1',              type: 'gt',    x: 545,  y: 20 },
-                    { id: 'lt1',              type: 'lt',    x: 545,  y: 350 },
-                    { id: 'gt2',              type: 'gt',    x: 545,  y: 240 },
-                    { id: 'lt2',              type: 'lt',    x: 545,  y: 115 },
-                    { id: 'sr1',              type: 'sr',    x: 720,  y: 20 },
-                    { id: 'sr2',              type: 'sr',    x: 720,  y: 220 },
-                    { id: 'low',              type: 'const', x: 895,  y: 304, params: { value: 60 } },
-                    { id: 'or1',              type: 'or',    x: 895,  y: 50 },
-                    { id: 'and1',             type: 'and',   x: 895,  y: 195 },
-                    { id: 'select',           type: 'select', x: 1070, y: 300 },
+                    { id: 'gt1',              type: 'gt',    x: 545,  y: 20, name: 'Y1 Set' },
+                    { id: 'lt1',              type: 'lt',    x: 545,  y: 350, name: 'Y1 Reset' },
+                    { id: 'gt2',              type: 'gt',    x: 545,  y: 240, name: 'Y2 Set' },
+                    { id: 'lt2',              type: 'lt',    x: 545,  y: 115, name: 'Y2 Reset' },
+                    { id: 'sr1',              type: 'sr',    x: 720,  y: 20, name: 'Y1 Latch' },
+                    { id: 'sr2',              type: 'sr',    x: 720,  y: 220, name: 'Y2 Latch' },
+                    { id: 'low',              type: 'const', x: 895,  y: 304, params: { value: 60 }, name: 'Low Spd' },
+                    { id: 'or1',              type: 'or',    x: 895,  y: 50, name: 'Cool Call' },
+                    { id: 'and1',             type: 'and',   x: 895,  y: 195, name: 'Stg2 Call' },
+                    { id: 'select',           type: 'select', x: 1070, y: 300, name: 'Spd Ref' },
                     { id: 'y1',               type: 'bo',    x: 1070, y: 20 },
                     { id: 'fan-enable',       type: 'bo',    x: 1070, y: 110 },
                     { id: 'y2',               type: 'bo',    x: 1070, y: 200 },
@@ -1417,11 +1438,11 @@ noindex: true
                     // interlock is the safeties sheet's lesson; here the
                     // point is simply available to wire.
                     { id: 'fan-status',       type: 'bi',    x: 195, y: 467, params: { state: false } },
-                    { id: 'y1on',             type: 'add',   x: 195, y: 230 },
-                    { id: 'hundred',          type: 'const', x: 545, y: 330, params: { value: 100 } },
-                    { id: 'gt1',              type: 'gt',    x: 370, y: 20 },
-                    { id: 'lt1',              type: 'lt',    x: 195, y: 115 },
-                    { id: 'sr1',              type: 'sr',    x: 545, y: 120 },
+                    { id: 'y1on',             type: 'add',   x: 195, y: 230, name: 'Y1 Make' },
+                    { id: 'hundred',          type: 'const', x: 545, y: 330, params: { value: 100 }, name: 'Spd Ref' },
+                    { id: 'gt1',              type: 'gt',    x: 370, y: 20, name: 'Y1 Set' },
+                    { id: 'lt1',              type: 'lt',    x: 195, y: 115, name: 'Y1 Reset' },
+                    { id: 'sr1',              type: 'sr',    x: 545, y: 120, name: 'Y1 Latch' },
                     { id: 'y1',               type: 'bo',    x: 720, y: 20 },
                     { id: 'fan-enable',       type: 'bo',    x: 720, y: 110 },
                     { id: 'y2',               type: 'bo',    x: 720, y: 220 },
@@ -1453,27 +1474,27 @@ noindex: true
                     { id: 'space-temp',       type: 'ai',    x: 20,   y: 20,  params: { value: 76 } },
                     { id: 'cooling-setpoint', type: 'const', x: 20,   y: 125, params: { value: 72 } },
                     { id: 'deadband',         type: 'const', x: 20,   y: 220, params: { value: 3 } },
-                    { id: 'sep',              type: 'const', x: 20,   y: 315, params: { value: 2 } },
-                    { id: 'y1on',             type: 'add',   x: 195,  y: 65 },
-                    { id: 'y2on',             type: 'add',   x: 370,  y: 178 },
-                    { id: 'hundred',          type: 'const', x: 895,  y: 388, params: { value: 100 } },
+                    { id: 'sep',              type: 'const', x: 20,   y: 315, params: { value: 2 }, name: 'Stg2 Sep' },
+                    { id: 'y1on',             type: 'add',   x: 195,  y: 65, name: 'Y1 Make' },
+                    { id: 'y2on',             type: 'add',   x: 370,  y: 178, name: 'Y2 Make' },
+                    { id: 'hundred',          type: 'const', x: 895,  y: 388, params: { value: 100 }, name: 'High Spd' },
                     { id: 'dat',              type: 'ai',    x: 195,  y: 380, params: { value: 55 } },
                     // Airflow proof, seeded but UNWIRED on this sheet —
                     // the same convention `dat` follows. The proof
                     // interlock is the safeties sheet's lesson; here the
                     // point is simply available to wire.
                     { id: 'fan-status',       type: 'bi',    x: 195,  y: 467, params: { state: false } },
-                    { id: 'gt1',              type: 'gt',    x: 545,  y: 20 },
-                    { id: 'lt1',              type: 'lt',    x: 545,  y: 350 },
-                    { id: 'gt2',              type: 'gt',    x: 545,  y: 240 },
-                    { id: 'lt2',              type: 'lt',    x: 545,  y: 115 },
-                    { id: 'sr1',              type: 'sr',    x: 720,  y: 20 },
-                    { id: 'sr2',              type: 'sr',    x: 720,  y: 220 },
-                    { id: 'low',              type: 'const', x: 895,  y: 304, params: { value: 60 } },
-                    { id: 'or1',              type: 'or',    x: 895,  y: 50 },
-                    { id: 'and1',             type: 'and',   x: 895,  y: 195 },
-                    { id: 'fanon',            type: 'bi',    x: 720,  y: 130, params: { state: true } },
-                    { id: 'select',           type: 'select', x: 1070, y: 300 },
+                    { id: 'gt1',              type: 'gt',    x: 545,  y: 20, name: 'Y1 Set' },
+                    { id: 'lt1',              type: 'lt',    x: 545,  y: 350, name: 'Y1 Reset' },
+                    { id: 'gt2',              type: 'gt',    x: 545,  y: 240, name: 'Y2 Set' },
+                    { id: 'lt2',              type: 'lt',    x: 545,  y: 115, name: 'Y2 Reset' },
+                    { id: 'sr1',              type: 'sr',    x: 720,  y: 20, name: 'Y1 Latch' },
+                    { id: 'sr2',              type: 'sr',    x: 720,  y: 220, name: 'Y2 Latch' },
+                    { id: 'low',              type: 'const', x: 895,  y: 304, params: { value: 60 }, name: 'Low Spd' },
+                    { id: 'or1',              type: 'or',    x: 895,  y: 50, name: 'Cool Call' },
+                    { id: 'and1',             type: 'and',   x: 895,  y: 195, name: 'Stg2 Call' },
+                    { id: 'fanon',            type: 'bi',    x: 720,  y: 130, params: { state: true }, name: 'Cont Fan' },
+                    { id: 'select',           type: 'select', x: 1070, y: 300, name: 'Spd Ref' },
                     { id: 'y1',               type: 'bo',    x: 1070, y: 20 },
                     { id: 'fan-enable',       type: 'bo',    x: 1070, y: 110 },
                     { id: 'y2',               type: 'bo',    x: 1070, y: 200 },
@@ -1515,47 +1536,47 @@ noindex: true
                 // min-off cycle members last, in dependency order (the
                 // Kahn leftover-order note above is load-bearing).
                 blocks: [
-                    { id: 'sep',              type: 'const', x: 20,   y: 75,  params: { value: 2 } },
+                    { id: 'sep',              type: 'const', x: 20,   y: 75,  params: { value: 2 }, name: 'Stg2 Sep' },
                     { id: 'space-temp',       type: 'ai',    x: 20,   y: 180, params: { value: 76 } },
                     { id: 'cooling-setpoint', type: 'const', x: 20,   y: 265, params: { value: 72 } },
                     { id: 'deadband',         type: 'const', x: 20,   y: 350, params: { value: 3 } },
-                    { id: 'hilim',            type: 'const', x: 195,  y: 30,  params: { value: 52 } },
-                    { id: 'y1on',             type: 'add',   x: 195,  y: 120 },
-                    { id: 'lt1',              type: 'lt',    x: 195,  y: 222 },
+                    { id: 'hilim',            type: 'const', x: 195,  y: 30,  params: { value: 52 }, name: 'DAT Clear' },
+                    { id: 'y1on',             type: 'add',   x: 195,  y: 120, name: 'Y1 Make' },
+                    { id: 'lt1',              type: 'lt',    x: 195,  y: 222, name: 'Y1 Reset' },
                     { id: 'dat',              type: 'ai',    x: 195,  y: 322, params: { value: 55 } },
-                    { id: 'lowlim',           type: 'const', x: 195,  y: 405, params: { value: 42 } },
-                    { id: 'y2on',             type: 'add',   x: 370,  y: 60 },
-                    { id: 'datok',            type: 'gt',    x: 370,  y: 280 },
-                    { id: 'datlow',           type: 'lt',    x: 370,  y: 380 },
-                    { id: 'gt2',              type: 'gt',    x: 545,  y: 15 },
-                    { id: 'gt1',              type: 'gt',    x: 545,  y: 120 },
-                    { id: 'lt2',              type: 'lt',    x: 545,  y: 220 },
-                    { id: 'okrun',            type: 'sr',    x: 545,  y: 320 },
+                    { id: 'lowlim',           type: 'const', x: 195,  y: 405, params: { value: 42 }, name: 'DAT Trip' },
+                    { id: 'y2on',             type: 'add',   x: 370,  y: 60, name: 'Y2 Make' },
+                    { id: 'datok',            type: 'gt',    x: 370,  y: 280, name: 'DAT OK' },
+                    { id: 'datlow',           type: 'lt',    x: 370,  y: 380, name: 'DAT Low' },
+                    { id: 'gt2',              type: 'gt',    x: 545,  y: 15, name: 'Y2 Set' },
+                    { id: 'gt1',              type: 'gt',    x: 545,  y: 120, name: 'Y1 Set' },
+                    { id: 'lt2',              type: 'lt',    x: 545,  y: 220, name: 'Y2 Reset' },
+                    { id: 'okrun',            type: 'sr',    x: 545,  y: 320, name: 'DAT Run OK' },
                     // Airflow proof. Placed under okrun because it is the
                     // low limit's partner, not a staging input: the two
                     // together are what say "this coil is safe to load".
                     { id: 'fan-status',       type: 'bi',    x: 545,  y: 430, params: { state: false } },
-                    { id: 'sr2',              type: 'sr',    x: 720,  y: 240 },
+                    { id: 'sr2',              type: 'sr',    x: 720,  y: 240, name: 'Y2 Latch' },
                     // coilok = okrun AND fan-status — the fan-proof
                     // interlock, sitting AHEAD of the low limit's own
                     // permit (see the registry header). sr1 moved down to
                     // the band the taller canvas opened to make room for
                     // it; column 720 had no free slot at the old height.
-                    { id: 'coilok',           type: 'and',   x: 720,  y: 340 },
-                    { id: 'sr1',              type: 'sr',    x: 720,  y: 450 },
-                    { id: 'or1',              type: 'or',    x: 895,  y: 0 },
-                    { id: 'low',              type: 'const', x: 895,  y: 100, params: { value: 60 } },
-                    { id: 'hundred',          type: 'const', x: 895,  y: 400, params: { value: 100 } },
+                    { id: 'coilok',           type: 'and',   x: 720,  y: 340, name: 'Coil Safe' },
+                    { id: 'sr1',              type: 'sr',    x: 720,  y: 450, name: 'Y1 Latch' },
+                    { id: 'or1',              type: 'or',    x: 895,  y: 0, name: 'Cool Call' },
+                    { id: 'low',              type: 'const', x: 895,  y: 100, params: { value: 60 }, name: 'Low Spd' },
+                    { id: 'hundred',          type: 'const', x: 895,  y: 400, params: { value: 100 }, name: 'High Spd' },
                     { id: 'fan-enable',       type: 'bo',    x: 1070, y: 15 },
-                    { id: 'select',           type: 'select', x: 1070, y: 240 },
+                    { id: 'select',           type: 'select', x: 1070, y: 240, name: 'Spd Ref' },
                     { id: 'fan-speed',        type: 'ao',    x: 1245, y: 340 },
                     // ── the min-off cycle, in dependency order ──
-                    { id: 'notrun',           type: 'not',   x: 1245, y: 255 },
-                    { id: 'tonoff',           type: 'ton',   x: 720,  y: 140, params: { pt: 120 } },
-                    { id: 'offok',            type: 'or',    x: 720,  y: 25 },
-                    { id: 'permit',           type: 'and',   x: 895,  y: 300 },
-                    { id: 'y1gate',           type: 'and',   x: 1070, y: 355 },
-                    { id: 'y2gate',           type: 'and',   x: 1070, y: 140 },
+                    { id: 'notrun',           type: 'not',   x: 1245, y: 255, name: 'Stage Off' },
+                    { id: 'tonoff',           type: 'ton',   x: 720,  y: 140, params: { pt: 120 }, name: 'Min Off' },
+                    { id: 'offok',            type: 'or',    x: 720,  y: 25, name: 'Cycle OK' },
+                    { id: 'permit',           type: 'and',   x: 895,  y: 300, name: 'Run Permit' },
+                    { id: 'y1gate',           type: 'and',   x: 1070, y: 355, name: 'Y1 Gate' },
+                    { id: 'y2gate',           type: 'and',   x: 1070, y: 140, name: 'Y2 Gate' },
                     { id: 'y1',               type: 'bo',    x: 1245, y: 55 },
                     { id: 'y2',               type: 'bo',    x: 1245, y: 140 },
                 ],
