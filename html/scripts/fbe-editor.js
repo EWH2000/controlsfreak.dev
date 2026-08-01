@@ -573,12 +573,17 @@ const FBEEditor = (function () {
             nameField.placeholder = def.tag;
             nameField.autocomplete = 'off';
             nameField.spellcheck = false;
+            // NOT afterParamEdit(): a param edit has to propagate through
+            // the graph while paused, so that helper ticks the engine
+            // 0.1s. Nothing in evaluate() reads a name, so ticking here
+            // would advance TON / TOF / PID state once per keystroke on a
+            // paused sheet. The head repaint and the caption below are a
+            // name edit's whole observable effect.
             nameField.addEventListener('input', () => {
                 const v = nameField.value.trim();
                 if (v === '') delete b.name; else b.name = v;
                 repaintHead(b);
                 title.textContent = b.name || def.label;
-                afterParamEdit();
             });
             nameRow.appendChild(nameLbl);
             nameRow.appendChild(nameField);
