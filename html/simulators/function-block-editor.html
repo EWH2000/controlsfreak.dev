@@ -274,13 +274,20 @@ keywords: wiresheet logic block and or pid wire program sequence
                 ],
             },
             pid: {
+                // `rd` was a 'readout' block until the type was folded
+                // into AO (2026-08-01): a display-only sink is an editor
+                // invention, and in the field an output is an output —
+                // the instance NAME carries what it drives. So it heads
+                // 'AO · HW Vlv', matching how the AHU workbench roster
+                // names the same point, and this sheet is the public
+                // editor's one worked demonstration of a named block.
                 blocks: [
-                    { id: 'pv',  type: 'ai',      x: 30,  y: 50,  params: { value: 68 } },
-                    { id: 'sp',  type: 'const',   x: 30,  y: 220, params: { value: 72 } },
-                    { id: 'ctl', type: 'pid',     x: 270, y: 120,
+                    { id: 'pv',  type: 'ai',    x: 30,  y: 50,  params: { value: 68 } },
+                    { id: 'sp',  type: 'const', x: 30,  y: 220, params: { value: 72 } },
+                    { id: 'ctl', type: 'pid',   x: 270, y: 120,
                       params: { kc: 5, ti: 45, td: 0, action: 'reverse' } },
-                    { id: 'out', type: 'ao',      x: 510, y: 60 },
-                    { id: 'rd',  type: 'readout', x: 510, y: 230 },
+                    { id: 'out', type: 'ao',    x: 510, y: 60 },
+                    { id: 'rd',  type: 'ao',    x: 510, y: 230, name: 'HW Vlv' },
                 ],
                 wires: [
                     { from: ['sp', 'O'],   to: ['ctl', 'SP'] },
