@@ -10331,8 +10331,40 @@ state may sit outside the fog region the spec forces. Under
 investigation: whether the preview's served bytes carry the marker at
 all, what state the spec actually forces and whether the UI can reach
 it, and where the onset boundary sits with the zone winter-held.
-Findings land here; whether a UI-unreachable marker earns its place is
-the owner's call once they do.
+
+**Findings, same day — measured on the built page, driving the UI
+only.** The preview served the marker (bytes verified on the preview
+and a fresh local build) — not the explanation. The recipe had been
+quoted from the wrong ZONE state: the page spec forces OAT −10 / manual
+damper 60 from page-load defaults, where zone truth is **76 °F** — the
+spec never touches the zone — while a settled winter machine rides the
+heating sawtooth at ~65.7–67.2 °F, and the fog boundary at OAT 0 /
+damper 60 sits at zone ≥ **67.0** — astride the sawtooth. Worse, the
+attempt fights itself: opening the damper saturates the HW coil and
+drags zone truth down (measured 65.7 → 58.7 °F in ~7 sim-min), away
+from the boundary. The operative variable is OAT, not zone warmth —
+the minimum fogging zone collapses with cold (OAT −5 / damper 60 →
+58.0 °F; −10 / 60 → 49.5; −15 / 60 → 41.0; −20 → at the plant's own
+zone floor), so below about −10…−15 °F fog is unconditional and
+permanent. **Fog is unreachable in AUTO:** the economizer call
+requires a latched cooling stage, so winter pins the damper at the
+20 % minimum, and at 20 % no OAT in the slider's −20…110 range fogs at
+any zone 66–80. The only UI path is the slot-8 Manual Operator command
+on the OA damper (its slider is disabled until the NULL box is
+unchecked); scenario presets seize slot-8 manual on every point and
+hold the damper at their own value, so entering through one pins fog
+unreachable until released. **Verified recipe** (end-to-end through
+the UI; persists indefinitely): outdoor air **−15 °F** → uncheck the
+OA-damper NULL box → damper slider **60 %** — the marker appears
+within ~2 s. Two accuracy notes on this entry: the flag is not
+"derived in the DOM half" by a saturation comparison — the shipped
+code forwards `mixStreams`' own `.fogging` boolean (`d.matFogging`;
+the render only gates display on the MAT point not being forced) — and
+the reachability finding sharpens the marker's question rather than
+settling it: the state it flags is precisely an operator forcing the
+damper open in cold weather, so appearing only under a manual command
+is arguably the marker doing its job. The owner's call, with a working
+recipe now in hand.
 
 ### 241. The site defines "deadband" two ways for beginners, and neither surface acknowledges the other *(noticed 2026-07-29, deadband/setpoint-gap terminology sweep — **RESOLVED 2026-07-30**, owner ruled for a third option: teach the habit, not the definition — then ruled again to keep both questions and let the bank overflow)*
 
