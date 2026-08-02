@@ -20,9 +20,10 @@
 // page back into the crawl-facing surface. Naming the URL directly here keeps
 // the coverage without un-hiding the page.
 //
-// Also here: the signed coil-ΔT read of the arrival state (leaving minus
-// entering, negative while cooling — owner ruling 2026-07-27), because this
-// is the spec that already drives the built Unit tab.
+// Also here, for the same reason — this is the spec that already drives the
+// built Unit tab: the signed coil-ΔT read of the arrival state (leaving minus
+// entering, negative while cooling — owner ruling 2026-07-27), and the
+// statusbar unit selector that links this page to the AHU workbench.
 
 const { test, expect } = require('@playwright/test');
 
@@ -547,5 +548,121 @@ test.describe('DDC Workbench — the low-charge verdict offers a candidate, not 
 
         expect(cond, 'the two scenarios do not collapse onto one verdict')
             .not.toBe(low.verdict);
+    });
+});
+
+// ── The unit selector ────────────────────────────────────────────────
+// The statusbar's "which machine am I looking at" pair. Two hidden
+// workbench pages, one plain anchor each way — the ruled design: not
+// tabs, not a JS switch. Nothing else on this site tests a link between
+// two canonical-less pages, and link-integrity.spec.js walks _site for
+// broken FRAGMENTS, not for a page that quietly stops linking its
+// sibling, so these rows are the only thing holding the pair together.
+// The mirror of this describe lives in ddc-workbench-ahu-page.spec.js;
+// each half asserts its own page's state and then follows the link, so
+// neither depends on the other running.
+
+test.describe('DDC Workbench — the unit selector', () => {
+
+    test('the pair sits in the statusbar and marks THIS page current', async ({ page }) => {
+        await page.goto(URL);
+
+        // In the statusbar row, not merely somewhere on the page — that
+        // placement IS the deliverable, and a refactor that floats it
+        // elsewhere should fail here rather than pass quietly.
+        const sel = page.locator('#ddcw-statusbar .ddcw-unit-sel');
+        await expect(sel).toHaveCount(1);
+
+        // The visible caption is the landmark's accessible name, so the
+        // word "Unit" is not written twice.
+        await expect(sel).toHaveAttribute('aria-labelledby', 'ddcw-unit-sel-lbl');
+        await expect(page.locator('#ddcw-unit-sel-lbl')).toHaveText('Unit');
+
+        // FCU then AHU, in that order, on BOTH pages — a selector that
+        // reorders itself per page makes the reader re-find the target.
+        const links = sel.locator('a.ddcw-unit-link');
+        await expect(links).toHaveCount(2);
+        await expect(links.nth(0)).toHaveText('FCU');
+        await expect(links.nth(1)).toHaveText('AHU');
+        await expect(links.nth(0)).toHaveAttribute('href', '/simulators/ddc-workbench-fcu.html');
+        await expect(links.nth(1)).toHaveAttribute('href', '/simulators/ddc-workbench.html');
+
+        // Exactly one aria-current, on this page's own link — which stays
+        // a real self-href anchor (asserted above), per the pattern.
+        await expect(sel.locator('[aria-current="page"]')).toHaveCount(1);
+        await expect(links.nth(0)).toHaveAttribute('aria-current', 'page');
+        await expect(links.nth(1)).not.toHaveAttribute('aria-current', /.*/);
+    });
+
+    test('the sibling link lands on the AHU workbench, current there', async ({ page }) => {
+        await page.goto(URL);
+        const sib = page.locator('.ddcw-unit-sel a.ddcw-unit-link:not([aria-current])');
+        const wait = page.waitForResponse(
+            (r) => r.url().endsWith('/simulators/ddc-workbench.html'));
+        await sib.click();
+        const resp = await wait;
+        expect(resp.status(), 'the sibling href is a live page').toBe(200);
+
+        // The AHU page's own title — the "Air Handler" qualifier is what
+        // tells it apart from this page's, so it is the cheapest proof we
+        // did not just reload.
+        await expect(page).toHaveTitle('DDC Workbench — Air Handler — controlsfreak.dev');
+
+        // …and the pair over there marks AHU, so the two halves are wired
+        // to each other rather than both to one page.
+        await expect(page.locator('.ddcw-unit-sel [aria-current="page"]')).toHaveText('AHU');
+    });
+
+    test('fullscreen keeps it on screen and clickable at max scroll', async ({ page }) => {
+        await page.goto(URL);
+        await page.click('.tool-card-fullscreen-btn');
+
+        // The statusbar is fixed chrome in the cockpit (flex: none) while
+        // the active pane is the single scroller. Run the pane to the
+        // bottom: the selector must not travel with it.
+        const m = await page.evaluate(() => {
+            const pane = document.querySelector('#tab-unit');
+            pane.scrollTop = pane.scrollHeight;
+            const el = document.querySelector('.ddcw-unit-sel a.ddcw-unit-link:not([aria-current])');
+            const r = el.getBoundingClientRect();
+            const hit = document.elementFromPoint(
+                (r.left + r.right) / 2, (r.top + r.bottom) / 2);
+            return {
+                scrollTop: pane.scrollTop,
+                top: r.top, bottom: r.bottom, height: r.height,
+                vh: window.innerHeight,
+                // Nothing painted over it — the click would reach the link.
+                covered: !(el === hit || el.contains(hit)),
+            };
+        });
+        expect(m.scrollTop, 'the pane actually scrolled').toBeGreaterThan(0);
+        expect(m.height, 'the selector still has a box').toBeGreaterThan(0);
+        expect(m.top, 'top edge on screen').toBeGreaterThanOrEqual(0);
+        expect(m.bottom, 'bottom edge on screen').toBeLessThanOrEqual(m.vh);
+        expect(m.covered, 'the sibling link is not painted over').toBe(false);
+
+        // And it still navigates from inside the cockpit.
+        await page.click('.ddcw-unit-sel a.ddcw-unit-link:not([aria-current])');
+        await expect(page).toHaveTitle('DDC Workbench — Air Handler — controlsfreak.dev');
+    });
+});
+
+test.describe('DDC Workbench — the unit selector on touch', () => {
+    // isMobile + hasTouch make Chromium's emulation match (hover: none),
+    // which is the only condition under which the page-local touch floor
+    // applies. The floor has to be page-local: the consolidated
+    // TOUCH-TARGET FLOOR block lives in styles.css, a live surface this
+    // pair may not touch — and no sweep reaches a canonical-less page, so
+    // this row is the floor's only guard.
+    test.use({ isMobile: true, hasTouch: true, viewport: { width: 412, height: 883 } });
+
+    test('the links clear the 44px floor', async ({ page }) => {
+        await page.goto(URL);
+        const links = page.locator('a.ddcw-unit-link');
+        await expect(links).toHaveCount(2);
+        for (let i = 0; i < 2; i++) {
+            const box = await links.nth(i).boundingBox();
+            expect(box.height, `link ${i} height`).toBeGreaterThanOrEqual(44);
+        }
     });
 });
