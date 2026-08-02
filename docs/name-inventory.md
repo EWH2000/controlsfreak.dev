@@ -8,8 +8,10 @@
 > only in a session scratchpad where the lane that needs it could not reach it.
 >
 > **STATUS — the names LANDED 2026-08-01** (PR B, `feat/hand-authored-block-names`).
-> All 135 `name:` keys are authored across the 12 sheets and every one of the
-> 188 heads now renders `TAG · Name`, measured non-clipping in a real browser.
+> The §3 names are authored into the literals — every head on every shipped
+> sheet renders `TAG · Name`, measured non-clipping in a real browser (the
+> spec's per-sheet floors pin the authored counts, so this claim cannot
+> silently decay).
 > Two rows in §3 were **not** authored as written, both by supersession and
 > both noted in the corrections below: the public `pid` sheet's `out` block no
 > longer exists, and its `rd` keeps the shipped, owner-approved `HW Vlv`
