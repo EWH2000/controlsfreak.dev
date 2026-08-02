@@ -11429,3 +11429,25 @@ reveal has this hole, and the reveal need not be on the element itself; here it
 was six ancestors up, on shared `.tool-card` chrome that every page carries. A
 new spec that measures ink immediately after a tab click, an accordion open or a
 lazily-mounted widget must wait on the composited quantity, not on visibility.
+
+### 260. The workbench shell's first editor mount resets every block's state — latches release, integrals clear *(noticed 2026-08-02, PR #468's adversarial verify — the sheet note it falsified was fixed in the same PR; the mechanism stands, on both pages)*
+
+`ddcw-shell.js`'s lazy editor mount (the Wiresheet tab's first open) swaps
+the driving graph for a fresh clone, so every stateful block re-initializes:
+SR latches release, PID integrals and timer accumulators clear. Measured on
+the winter-protections sheet: a machine sitting in a latched LLS trip
+restarted the moment the Wiresheet tab was first opened — before any click.
+Lane C's sheet note originally claimed the tripped machine "stays down
+waiting for the button," which is false on exactly the first-time reader
+path; the shipped note now routes the reader through opening the wiresheet
+first and teaches the mechanism as the field truth it mirrors — a download
+hands a software latch back cleared (the war-story-#3 family). The FCU's
+*2-stage + safeties* latched low-limit carries the same trap for any future
+prose that narrates a trip surviving into a first Wiresheet open.
+
+Options if this ever wants fixing rather than routing around: preserve
+per-block state across the mount clone, or pre-mount the editor at boot
+(which spends the lazy mount's first-paint savings). Shared-shell change
+either way — its own PR, both pages at once. Until then the working rule:
+teaching prose must not depend on stateful blocks surviving the first
+Wiresheet open; write the demo to enter the wiresheet first.

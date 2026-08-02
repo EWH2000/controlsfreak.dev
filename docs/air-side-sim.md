@@ -25,7 +25,7 @@ that diagnostic end**, not the point.
   unit; the owner's own fault examples are AHU faults, so the structure grows
   toward OA/mixing → MAT and beyond.
 
-## Current state — Phase 7: Lanes A + B and the naming arc are merged; Lane C is next
+## Current state — Phase 7: Lanes A + B + C and the naming arc are merged; 7.5 is next
 
 Three hidden pages carry this line. All are `noindex` +
 `eleventyExcludeFromCollections` with **no `canonical`**, so all are reachable
@@ -128,9 +128,21 @@ that file is, exactly:
   fallback, and it is live) and **#238** (`buildState` degenerates quietly
   above boiling).
 
-What comes next is a **second AHU sheet** (the natural home for a mixed-air or
-discharge low limit — `mat` and `dat` are seeded on the starter and deliberately
-unwired), then the FCU ⇄ AHU unit selector. **Phase 8 is graduation** — until
+The **second AHU sheet SHIPPED 2026-08-02 (PR #468, adversarially verified)** —
+`econ-2stage-lowlimits`, the winter-protections sequence built to the owner's
+field architecture (the Lane C rulings below): the direct-acting MAT low-limit
+PID capping the damper through a MIN — riding it below the 20 % ventilation
+minimum when freeze protection outranks ventilation — and the software LLS off
+DAT tripping a latched full stop (damper closed, HW valve held open downstream
+of the proof select, fan stopped), with a free `LLS Reset` bi as the deliberate
+release. 55 blocks / 68 wires on a widened 1926×980 canvas; `mat` and `dat` are
+wired there and stay deliberately unwired on the starter. The LLS constant is
+**35 °F, measured as this machine's own boundary** — in clean integrated
+econ+DX cooling DAT rides exactly 35.0 (the 34 °F energized-coil floor plus
+1 °F of draw-through fan heat), so a 36 °F stat nuisance-trips ordinary
+cooling; the derivation sits in the literal for a one-click retune. War story
+#4 renders on the Unit teach block. What comes next is the FCU ⇄ AHU unit
+selector. **Phase 8 is graduation** — until
 then the Workbench is a react-baseline and reference point, not a surfaced page.
 
 ### Rulings that landed with the AHU page (2026-07-30)
@@ -524,6 +536,19 @@ tiles** · short **fan-heat/calibration callout** · **improved fan animation**
   zone (gradient/color), so the zone's condition is legible at a glance.
 - **Selectable unit type** (FCU / AHU / …) — the concrete form of "grow toward
   the AHU" and the hub's "show different units."
+- **LLS trip annunciation on the Unit tab** (from PR #468's verify;
+  graduation-era candidate) — a tripped low limit reads as fan off / damper
+  0 / valve 100 with no alarm surface; the trip state is legible only on the
+  wiresheet, where a real graphic would banner a freezestat trip.
+- **A scenario preset for the LLS defeat/short-cycle demo** (winter-protections
+  sheet) — the demo is real but fragile to reach by hand (needs a wound-up PID
+  integral, a still-warm zone, and Min MAT sabotaged below the coil floor);
+  a preset would make it one click. Measured period 24–26 sim-s in that
+  state, 3–5 sim-s in a manual-damper freeze.
+- **PID warm-start prose line** — a fresh program load starts the PID integral
+  at zero, so on an economizing day the damper briefly tracks the winding-up
+  loop; the download-stops-a-running-unit teaching family, worth a sentence in
+  the sheet notes someday.
 
 ### Horizon — dynamic, FBE-driven control (ambitious, coupled)
 
