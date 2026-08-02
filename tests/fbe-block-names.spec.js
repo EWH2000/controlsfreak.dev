@@ -21,22 +21,36 @@
 //      than one shape for the whole sheet. It used to assert the single
 //      shape, because nothing on the public editor authored a name; the
 //      readout→AO fold (2026-08-01) gave the heating-PID sheet one
-//      (`rd`, 'AO · HW Vlv'), since after the fold the block's TYPE no
-//      longer says what it drives and only the name can. Which heads
-//      are named is deliberately left open — the sweep requires at
-//      least one of each branch across all sheets, not a fixed set, so
-//      naming more example blocks does not have to come back here.
+//      (`rd`, 'AO · HW Vlv'), and the hand-authored-names pass right
+//      after it named every remaining block on all seven sheets. So the
+//      canned sweep now runs entirely down the NAMED branch, and the
+//      label branch is exercised by the two arms below that drop a fresh
+//      block out of the palette — which is the honest place for it,
+//      since an unnamed head is exactly what a palette block is.
 //
-//   2. ANTI-DRIFT, on both workbench pages. Point id === FBE block id is
-//      the load-bearing binding invariant, and a point's name already
-//      lives in the ROSTER (it drives the statusbar chip and the
-//      off-program window). ddcw-shell.js therefore derives the names it
-//      hands the editor from `unit.points` instead of the program
-//      literals carrying their own copies. This half re-reads the roster
-//      off the page's own unit global and requires the rendered head to
-//      agree, on EVERY program — so the day someone re-authors a name
-//      into a block literal, or the derivation stops covering a program
-//      switch, the two sources visibly disagree here.
+//   2. ANTI-DRIFT, on both workbench pages. TWO sources feed one head
+//      there, and the split is the thing under test:
+//        • a POINT-BACKED block (block id === point id) takes its name
+//          from the ROSTER. That name already drives the statusbar chip
+//          and the off-program window, so ddcw-shell.js derives it from
+//          `unit.points` rather than let the program literals carry
+//          copies. This arm re-reads the roster off the page's own unit
+//          global and requires the rendered head to agree, on EVERY
+//          program — the day someone re-authors a point's name into a
+//          block literal, or the derivation stops covering a program
+//          switch, the two sources visibly disagree here. UNTOUCHABLE:
+//          this is the anti-drift spine.
+//        • every OTHER block is named by hand in the program literal.
+//          Those names are editorial and have no runtime source to bind
+//          to, so this arm asserts their SHAPE (two spans, the title
+//          string, inside the head budget) and a per-program FLOOR on
+//          how many there are. It deliberately does not check them
+//          against docs/name-inventory.md: parsing a markdown table at
+//          test time would make the doc a second runtime source, which
+//          is the drift this file exists to prevent.
+//      Before the hand-authored pass this arm asserted the opposite —
+//      that NO non-point block carried a name — because none did. That
+//      assertion is what the pass had to flip.
 //
 // smoke.spec.js / fbe-wires.spec.js still match palette buttons by their
 // full `label`, which is why `tag` was added ALONGSIDE `label` rather
@@ -74,6 +88,31 @@ const WORKBENCHES = [
     { url: '/simulators/ddc-workbench-fcu.html', label: 'FCU' },
     { url: '/simulators/ddc-workbench.html', label: 'AHU' },
 ];
+
+// ── how many names each sheet was authored with ──────────────────────
+// FLOORS, not pins: `>=`, so adding a block (or naming one that is not
+// named today) needs no edit here, while dropping a name — a deleted
+// `name:` key, a stamp that stopped covering a program switch, a sheet
+// that lost a block — fails. Bump a number when a sheet grows.
+//
+// The public map counts EVERY head, because every canned example block
+// is named. The workbench map counts only the HAND-authored ones: the
+// roster half is pinned exactly by the mismatch assertion in the same
+// arm, which is stronger than any count.
+const MIN_NAMED_PUBLIC = {
+    freeze: 6, econ: 6, 'tstat-cool': 9, 'tstat-heat': 9,
+    pid: 4, proof: 8, reset: 7,
+};
+const MIN_HAND_NAMED = {
+    // AHU — one sheet, 43 blocks: 17 roster + 26 hand.
+    'econ-2stage': 26,
+    // FCU — four sheets, 95 blocks: 9 roster each (the roster carries 10
+    // points, but `rat` has no block on any sheet) plus the hand spine.
+    'cool-2stage': 14,
+    'cool-1stage': 5,
+    'cool-2stage-fanon': 15,
+    'cool-2stage-safeties': 25,
+};
 
 function watchErrors(page) {
     const errors = [];
@@ -159,6 +198,11 @@ test.describe('block names — mechanism (public editor)', () => {
 
             // ── unnamed: the pre-names shape, unchanged ──
             // The type's full label as ONE text node. No spans, no title.
+            // Every canned block is named today, so this matches nothing
+            // here and the branch is covered by the palette-drop arms
+            // below. Kept because it is the generic shape rule, and the
+            // day a sheet ships a deliberately unnamed block it is
+            // already guarded.
             const unnamed = heads.filter((h) => h.name === null);
             expect(unnamed.filter((h) => h.spans !== 0 || h.title !== null || h.textNodes !== 1)
                 .map((h) => `${h.id}: ${h.text}`),
@@ -189,15 +233,36 @@ test.describe('block names — mechanism (public editor)', () => {
             expect([...new Set(heads.map((h) => h.headH))],
                 `${key}: head heights are not uniform — a head wrapped`).toHaveLength(1);
 
+            // Every canned block names itself. This is the completeness
+            // half of the feature — a sheet that ships a block with no
+            // `name:` shows a bare type label beside seven named
+            // neighbours, which reads as an oversight because it is one.
+            expect(unnamed.map((h) => `${h.id}: ${h.text}`),
+                `${key}: canned example block with no name`).toEqual([]);
+            // …and the per-sheet floor, so a DELETED block fails too
+            // (which the emptiness check above cannot see). '(initial)'
+            // is whichever example the page opens on, already covered
+            // under its own key.
+            if (MIN_NAMED_PUBLIC[key] !== undefined) {
+                expect(named.length, `${key}: fewer named heads than authored`)
+                    .toBeGreaterThanOrEqual(MIN_NAMED_PUBLIC[key]);
+            }
+
             unnamedTotal += unnamed.length;
             namedTotal += named.length;
         }
 
-        // Non-vacuity, both ways: the sweep must actually exercise each
-        // branch. Which sheets carry names is left open on purpose — this
-        // is a floor, so naming more example blocks needs no edit here.
-        expect(unnamedTotal, 'no unnamed head anywhere — the label branch went untested').toBeGreaterThan(0);
+        // Every sheet in the map was actually visited — a renamed or
+        // removed chip would otherwise skip its floor silently. Not an
+        // equality check: a NEW example needs no edit here, because the
+        // per-sheet emptiness assertion above already requires it to be
+        // named.
+        expect(keys, 'a floored example is no longer reachable')
+            .toEqual(expect.arrayContaining(Object.keys(MIN_NAMED_PUBLIC)));
+        // The named branch is exercised; the label branch is not, and is
+        // not meant to be — the two palette-drop arms below own it.
         expect(namedTotal, 'no named head anywhere — the TAG · Name branch went untested').toBeGreaterThan(0);
+        expect(unnamedTotal, 'a canned example lost its name').toBe(0);
 
         expect(errors).toEqual([]);
     });
@@ -377,14 +442,16 @@ test.describe('block names — mechanism (public editor)', () => {
 // contrast-sweep.spec.js walks tests/pages.js, which is the sitemap —
 // so it reaches function-block-editor.html but NOT the two hidden
 // workbench pages, and it measures whatever that page paints on load.
-// The public editor opens on the economizer example, where no block
-// carries a name; the one authored name lives on the heating-PID sheet,
-// which the sweep never clicks through to.
-// `.fbe-block-tag` therefore has NO blocking coverage from the site-wide
-// sweep. This is that coverage: the tag is a NEW ink token on a
-// background (--surface-2) the CLAUDE.md --text-dim figures were not
-// measured on, so it gets its own AA assertion in both themes rather
-// than a one-time hand measurement.
+// Since the hand-authored pass that page opens on a fully named
+// economizer sheet, so the sweep does now see an unselected
+// `.fbe-block-tag` in both themes. It still never sees the SELECTED
+// state — no stylesheet can open it, and the sweep does not click a
+// block — and it cannot reach either workbench at all. Both of those
+// are what this arm is for. The tag is a NEW ink token on a background
+// (--surface-2) the CLAUDE.md --text-dim figures were not measured on,
+// and the selected head repaints it onto a translucent --accent-dim
+// wash; each gets its own AA assertion in both themes rather than a
+// one-time hand measurement.
 //
 // The measurement below is the site-wide sweep's, not a simplification
 // of it: effective opacity is the product from the sample up to <html>,
@@ -652,32 +719,57 @@ test.describe('block names — roster is the single source (anti-drift)', () => 
                         const name = h.querySelector('.fbe-block-name');
                         return {
                             id: el.dataset.id,
+                            text: h.textContent,
                             tag: tag && tag.textContent,
                             name: name && name.textContent,
                             title: h.getAttribute('title'),
+                            spans: h.querySelectorAll('span').length,
+                            // A named head is TWO spans and ZERO text
+                            // nodes — the '·' is a CSS ::after.
+                            textNodes: [...h.childNodes].filter((n) => n.nodeType === 3).length,
                             headH: h.clientHeight,
                             clipX: h.scrollWidth - h.clientWidth,
                         };
                     }));
 
-                const mismatched = rows
-                    .filter((r) => roster[r.id] !== undefined)
-                    .filter((r) => r.name !== roster[r.id]);
+                // ── THE SPINE: a point's head says what the roster says ──
+                const pointBacked = rows.filter((r) => roster[r.id] !== undefined);
+                const mismatched = pointBacked.filter((r) => r.name !== roster[r.id]);
                 expect(mismatched, `${key}: head name ≠ roster name`).toEqual([]);
+                // Non-vacuity for it: a sheet where NO block matched a
+                // point would pass the line above without asserting
+                // anything. This is the check that catches a lost stamp
+                // now that hand names would keep `named > 0` true on
+                // their own.
+                expect(pointBacked.length, `${key}: no point-backed block on the sheet`).toBeGreaterThan(0);
 
-                // The converse: nothing that ISN'T a point may carry a
-                // name on these sheets today. The workbench program
-                // literals author no `name:` keys as of this change — the
-                // shell stamps roster names onto point-backed blocks and
-                // nothing else — so a name on a non-point block means a
-                // second source crept in. (Hand-authored names on the
-                // non-IO logic are a queued follow-up; this assertion is
-                // what that lane will have to update deliberately. The
-                // PUBLIC editor's heating-PID example DOES author one in
-                // its literal — that is a different sheet under a
-                // different scope, and out of this arm's reach.)
-                const strays = rows.filter((r) => r.name !== null && roster[r.id] === undefined);
-                expect(strays, `${key}: named block with no matching point`).toEqual([]);
+                // ── the other source: hand-authored names ──
+                // A name on a NON-point block used to be a failure here,
+                // because the literals authored none and one could only
+                // mean a second source had crept in beside the roster.
+                // The hand-authored pass made them the norm: everything
+                // that is not an IO point — the arithmetic, comparators,
+                // latches, permits, free constants — is named in the
+                // program literal. They have no runtime source to bind
+                // to, so what is asserted is their SHAPE and their COUNT,
+                // not their text. (Their text is reviewed against
+                // docs/name-inventory.md by a human; parsing that
+                // markdown here would install the doc as a runtime source
+                // and reintroduce exactly the drift this arm prevents.)
+                const hand = rows.filter((r) => r.name !== null && roster[r.id] === undefined);
+                expect(hand.filter((r) => r.spans !== 2 || r.textNodes !== 0 || !r.name.trim())
+                    .map((r) => `${r.id}: ${r.text}`),
+                    `${key}: a hand-authored head is not exactly two spans`).toEqual([]);
+                if (MIN_HAND_NAMED[key] !== undefined) {
+                    expect(hand.length, `${key}: fewer hand-authored names than were written`)
+                        .toBeGreaterThanOrEqual(MIN_HAND_NAMED[key]);
+                }
+
+                // Completeness: these sheets are fully authored, so no
+                // head falls back to a bare type label. A new block that
+                // arrives without a `name:` fails here.
+                expect(rows.filter((r) => r.name === null).map((r) => `${r.id}: ${r.text}`),
+                    `${key}: block with no name — roster stamp lost, or a name was never authored`).toEqual([]);
 
                 // Every named head carries its full string on `title`.
                 rows.filter((r) => r.name).forEach((r) => {
@@ -690,18 +782,17 @@ test.describe('block names — roster is the single source (anti-drift)', () => 
                 expect([...new Set(rows.map((r) => r.headH))],
                     `${key}: head heights are not uniform — a head wrapped`).toHaveLength(1);
                 // And the property that keeps that true here regardless
-                // of `white-space`: no roster name overruns its head. This
-                // is the assertion with teeth on these pages — it fires
-                // the day a point is renamed past the 18-character head
-                // budget, well before anything can wrap.
+                // of `white-space`: no name overruns its head. This is the
+                // assertion with teeth on these pages — it fires the day a
+                // point is renamed, or a hand name is rewritten, past the
+                // 18-character head budget, well before anything can wrap.
+                // With the hand names landed it now covers 135 more heads
+                // than it did, including every CONST (5-char tag, so a
+                // 10-char name), which is where the budget bites first.
                 expect(rows.filter((r) => r.clipX > 0).map((r) => `${r.id}: ${r.title}`),
-                    `${key}: a roster name overran the head budget`).toEqual([]);
+                    `${key}: a name overran the head budget`).toEqual([]);
 
-                const named = rows.filter((r) => r.name !== null).length;
-                // Non-vacuity: each program authors its IO points, so a
-                // sheet with no named block means the stamp was lost.
-                expect(named, `${key}: no point-backed block got a name`).toBeGreaterThan(0);
-                namedTotal += named;
+                namedTotal += rows.filter((r) => r.name !== null).length;
             }
             expect(namedTotal).toBeGreaterThan(0);
             expect(errors).toEqual([]);
