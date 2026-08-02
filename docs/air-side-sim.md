@@ -25,7 +25,7 @@ that diagnostic end**, not the point.
   unit; the owner's own fault examples are AHU faults, so the structure grows
   toward OA/mixing → MAT and beyond.
 
-## Current state — Phase 7, the AHU round, is in flight
+## Current state — Phase 7: Lanes A + B and the naming arc are merged; Lane C is next
 
 Three hidden pages carry this line. All are `noindex` +
 `eleventyExcludeFromCollections` with **no `canonical`**, so all are reachable
@@ -237,6 +237,57 @@ and later do not extend it; read *Where the arc stands* above for the present.
   the wall stat splits the two chips — the real-vs-sensed beat. Mockup-first:
   glyph CSS stays page-inline until the AHU page graduates it.
 - **PR #445** — the signed coil ΔT and the min-off teaching beat.
+
+### Rulings from the naming arc (2026-08-01 — PRs #458–#465, v3.79.0)
+
+Every block head across all three FBE surfaces now renders **`TAG · Name`**:
+the mechanism landed in PR #458 (per-type `tag`, per-instance top-level
+`name`, roster-derived stamps for point-backed workbench blocks via
+`ddcw-shell.js`'s `buildNamedPrograms()`), and the hand-authored set landed
+in PR #465 off **`docs/name-inventory.md`** — the committed naming record.
+⚠️ Read that file's HEADER before its body: its three supersessions are
+owner-ruled. Rulings, all 2026-08-01:
+
+- **The `readout` type is GONE — folded into `ao`** (PR #461). Owner: "the
+  type is the same, the name carries the meaning" — a display-only sink type
+  was an editor invention; in the field the NAME says what an output does.
+  The public PID sheet's probe became `AO · HW Vlv` (the AHU roster's own
+  name for that point) and its redundant second AO was dropped — "one
+  command signal, one output point."
+- **Comparator tags are ASCII** (`A>=B` / `A<=B` / `A!=B`) — #255 option 2;
+  the glyph labels stay pretty. Option 3 (re-subset SIX woff2 files, adding
+  the comparator codepoints AND Δ/≈/→) is a logged future typography lane
+  in `site-ideas-and-friction.md`.
+- **`SEL · Proof Dmpr`** replaced the inventory's falsified `Occ Dmpr` (the
+  wire moved to `fan-status` in `cadd43e`; the chain reads what-selects-at-
+  each-step: `Econ Dmpr` → `Proof Dmpr` → `OA Dmpr`). ⚠️ The owner would
+  personally call it "Fan Sts Check" but kept the chain theme — and flagged
+  that **he may want a full pass over all block names in his own voice**
+  later. Offer that pass when Lane C or Phase 8 touches the sheets; don't
+  re-litigate single names before then.
+- The FCU safeties sheet **keeps its six `DAT*` names** (the recorded
+  `Above Clear`/`Below Trip` alternate was declined).
+- **#247** low-charge verdict softened to symptom-plus-candidate
+  (disposition 3, PR #460); **#256** closed as a **written exemption** —
+  its touch-tablet scenario was DISPROVEN (the wiresheet gate is an OR;
+  no touch-primary device reaches the inspector at any width); the FCU
+  roster's `fan-speed` renamed **`Fan Spd`** (PR #463, ledger #258);
+  **bandAfterHeat's JS-selected ink tokens BLESSED** (ledger #257 — FIVE
+  inks including the dead-grey `off` band; `var()` references only, never
+  resolved colors; revisit only inside a bigger animation pass).
+- **Fullscreen scroll** (PR #462): the unit console (AHU) / graphic (FCU)
+  pins sticky while the pane scrolls, yielding its overhang at the end of
+  travel so the verdict pill stays reachable. Normal flow deliberately
+  untouched (the left column is the tall one there).
+- Testing lesson for any measured spec (ledger #259): the tool-card
+  entrance fade's DELAY phase defeats Playwright's actionability wait
+  (stationary at opacity 0) — settle composited opacity before measuring
+  ink after a tab click.
+
+**Lane C implication:** a new AHU sheet authors `name:` keys on its
+non-point blocks and adds its per-sheet floor to
+`tests/fbe-block-names.spec.js`'s `MIN_HAND_NAMED` map — a sheet with no
+floor row ships its names unguarded.
 
 ## The AHU, as designed (owner rulings, 2026-07-27 / 28)
 
