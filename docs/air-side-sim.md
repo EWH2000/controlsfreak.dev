@@ -289,6 +289,120 @@ non-point blocks and adds its per-sheet floor to
 `tests/fbe-block-names.spec.js`'s `MIN_HAND_NAMED` map — a sheet with no
 floor row ships its names unguarded.
 
+### Lane C rulings, and the war story #4 record (2026-08-02)
+
+The owner ruled the Lane C decision slate in one sitting. All 2026-08-02:
+
+1. **The second sheet is winter protections, built to his own field
+   architecture.** His description, near-verbatim: a **direct-acting PID
+   running to a min MAT** ("something around 45 to 60 depending on
+   application"), hooked to a **MIN block with the vent demand** and
+   whatever else — "it's the last PID before the LLS MUX block." The LLS
+   is physical, but he also adds **an AND with a software LLS somewhere
+   around 40 — ideally what the real LLS is set to — off DAT.** License
+   granted with it: *"You don't have to follow that exactly, but if you
+   don't, at least design around that."*
+   FBE mapping, agreed: the catalog's `pid` block
+   (`fbe-engine.js:341` — `action: 'direct'` is a literal param) with
+   SP = a hand-named min-MAT const, PV = `mat`; its OUT into a `MIN`
+   with the `dmpsel` chain's demand, then the LLS select, then the
+   existing fan-proof select. The software LLS is a comparator off
+   `dat` against a const named for the physical device's setting. **The
+   physical LLS exists in prose only — the roster gains no point.**
+   Trip actions and latch behavior are the lane's to design and defend
+   (the fan-stop → DAT-reads-zone → self-clear short-cycle interaction
+   is the known trap family, #225's story).
+   ⚠️ Correction of record: an orchestrator claim that the FBE had no
+   PID block — grounds for a gain-and-clamp design-around — was
+   **falsified by the owner live on the preview**; the claim came from
+   a truncated catalog grep. The catalog has carried `pid` (with
+   anti-windup, derivative-on-PV) all along.
+2. **No flawed sheet is needed for go-live.** The flawed-programs
+   direction (2026-07-26) stands as *add-on material*: "if I have good
+   war stories that come to mind I can build those programs or describe
+   the failure mode and add eventually, but that's not needed to go
+   live, that's add on type material anyway."
+3. **War story #4 renders on the Unit tab's teach block**, extending the
+   "Two setpoints, and what happens when they overlap" paragraph — he
+   accepted the recommendation and "may tweak once I have a full
+   preview."
+4. **The full block-name pass is NOT folded into Lane C** — "all that
+   isn't an amount to 'fold in' to a lane." It waits for the dedicated
+   pre-Phase-8 discussion.
+5. **#240 fog marker: RESOLVED same day — keep as-is.** The owner's
+   first look could not reproduce it because the recipe had been quoted
+   against the page-load zone (76 °F) rather than the settled winter
+   sawtooth (~66–67 °F). He reproduced it with the corrected recipe
+   (outdoor air −15 °F, manual damper 60 %) and ruled the candidate
+   ships unchanged: fog in AUTO would be *"an extreme fringe case on a
+   well programmed system,"* so manual-only reachability mirrors the
+   field. `codebase-issues` #240 carries the measured findings.
+
+#### War story #4 — the record (supplied 2026-07-29)
+
+Owner-true, collected live; render in house voice, never paraphrased
+into something he didn't say. The quote:
+
+> *"I have had multiple customers put heating set points above cooling
+> set point when they don't know what they're doing. They think 'oh
+> cold is a lower temperature so I'll put it lower' … you'd be
+> surprised how often people get confused with them when they have
+> access to both on the BMS."*
+
+**The mechanism, pinned so it can't drift.** Correct is heating setpoint
+BELOW cooling setpoint; the gap between them is the neutral zone — the
+`SP DIFF` rail well, **never "the deadband" and never "the
+differential" in prose**. The deadband is the separate per-setpoint
+hysteresis: as shipped, cooling 72 / heating 68 / deadband 2, so cooling
+makes at 74 and breaks at 72. Invert the setpoints and the two sides'
+active regions overlap — both call at once. The mental model that
+produces the inversion: *"cooling means cold, so the cooling number is
+the low one"* — a reasonable inference from the label, and wrong,
+because a cooling setpoint is not a cold temperature, it is the
+temperature **above which cooling starts**. (A first draft of the
+out-of-repo note conflated the setpoint gap with the deadband while
+documenting this very confusion — evidence the collision is real;
+re-check that phrase every time it is written.)
+
+**The framing, corrected twice by the owner (2026-07-29):**
+
+1. **The customer DID enter a wrong number** — do not absolve it. His
+   words: *"The customer did enter the wrong number, but it wasn't
+   their fault."* The entry was wrong; the front end set them up for
+   it. Blame moves to the design, the error stays an error.
+2. **The affordance that confused one customer is what another customer
+   wants** — *"some customers want the same thing that was confusing
+   for other customers."* The lesson is therefore NOT "don't expose
+   both setpoints"; it is a design judgement with no house answer.
+3. **Two obligations on the programmer, both stated:** get the
+   cooling-vs-heating setpoint model right *yourself*, and build the
+   graphic toward where the customer actually stands — his range:
+   *"equal to someone in the field, or someone who knows just the very
+   basics of HVAC"*; his example stays generic (a rural school's
+   custodian vs a large factory campus team), *"not just because the
+   controls are different."*
+
+**Emphasis and vocabulary (settled 2026-07-29 — he changed his mind
+mid-thread; the later instruction wins):** keep the user-level point at
+FULL weight — *"I changed my mind, I'd rather keep my real voice so
+ignore the first instruction"* (which had asked to shorten it). It stays
+an aside inside technical copy, not a section of its own. Say
+**"user", never "audience"** — *"I'd rather sound like a standard
+software dev than a consultant."* Two owner lines usable as-is in page
+copy: *"consider who will use the system and what their skill level
+is"*, and — about the sim exposing both setpoints to everyone —
+*"this is where a mistake is free and can even be fun to see."* That
+second line is the reframe: the exposure isn't a contradiction, it is
+the sim's whole purpose.
+
+**Two connections surfaced and ratified, not to be re-derived:** this
+failure mode is what his green-commanded/grey-no-point well convention
+was invented to prevent (same instinct, opposite directions — the
+graphic makes the argument visually, which is why the prose aside can
+stay an aside); and the label "cooling setpoint" inviting the wrong
+inference is the same naming-beat family as the "differential"
+collision.
+
 ## The AHU, as designed (owner rulings, 2026-07-27 / 28)
 
 A **single-zone constant-volume air handler**: two stages of DX cooling, a

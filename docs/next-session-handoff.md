@@ -104,10 +104,10 @@ Owner (2026-08-01): *"expect some additional discussion between 7.5 and 8
 … I just want to make sure this is the best it can be."* Do **not** roll
 from 7.5 into graduation without that session. Candidates he may bring or
 want brought: the **full block-name pass in his own voice** (flagged
-2026-08-01 — he'd have called `Proof Dmpr` "Fan Sts Check"); the #240
-fog-marker verdict (built, on the preview — UNVERIFIED whether he has
-looked); the parked items (hover tooltips; mobile Q2; FCU "fix 1"; the
-intake-arrow composition); the flawed-programs framing.
+2026-08-01 — he'd have called `Proof Dmpr` "Fan Sts Check"); the parked
+items (hover tooltips; mobile Q2; FCU "fix 1"; the intake-arrow
+composition); the flawed-programs framing. (#240 no longer belongs
+here — resolved 2026-08-02, keep as-is; the ledger has the findings.)
 
 ### 4. Phase 8 — graduation (only after the discussion)
 
@@ -128,10 +128,9 @@ separately, owner-directed).
 
 ## Decisions waiting on the owner
 
-- **The full name pass in his voice** — not blocking; bundle with Lane C
-  review or the pre-8 discussion rather than reopening names piecemeal.
-- **#240 fog marker** — his eye on the preview; the candidate is built and
-  deliberately cheap to reverse.
+- **The full name pass in his voice** — not blocking; owner ruled
+  2026-08-02 it is too much to fold into a lane — it waits for the
+  pre-8 discussion.
 - **Typography-lane timing** (#255 option 3 — six woff2 files, comparators
   plus Δ/≈/→; logged in the friction file).
 

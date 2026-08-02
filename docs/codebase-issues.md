@@ -10251,7 +10251,7 @@ Cheapest honest interim if a moisture readout ships first: publish
 `d.matCondensate` beside `d.matW` so a chip can annotate a fogging mixed-air
 state rather than silently under-report it.
 
-### 240. A fogging MAT no longer reconciles with the reader's own %OA arithmetic, and the graphic says nothing about it *(noticed 2026-07-29, the #236 fix round's review — a LANE 7.4 graphic question, not a physics one — **ONE CANDIDATE BUILT 2026-07-30, awaiting the owner's eye** — a depiction to look at, not a settled answer)*
+### 240. A fogging MAT no longer reconciles with the reader's own %OA arithmetic, and the graphic says nothing about it *(noticed 2026-07-29, the #236 fix round's review — a LANE 7.4 graphic question, not a physics one — **ONE CANDIDATE BUILT 2026-07-30 — RESOLVED 2026-08-02: reproduced with the corrected recipe, owner ruled KEEP AS-IS** — manual-only reachability mirrors the field)*
 
 **Built as one candidate, deliberately cheap and reversible.** The owner asked
 to SEE this rather than answer it in the abstract, and the one option ruled out
@@ -10317,6 +10317,63 @@ like the site's arithmetic and isn't, and it gives no hook for the (correct,
 teachable) reason why. Cross-check with #228 when the consumer pages adopt the
 helper, since that closes the cross-page disagreement but not the
 reader-arithmetic one.
+
+**Update 2026-08-02 — the owner's first look could NOT reproduce the
+marker.** On the LAN preview, neither the suggested recipe (outdoor-air
+slider to ~0 °F with the damper open 60 %+) nor free exploration showed
+it; his own hypothesis was the zone state ("unless I'm not letting the
+zone get hot enough"). Plausible mechanism, unconfirmed: the #240 table's
+measured fog cases all used zone 76 / damper 60–70 %, but the running
+sequence holds the zone at the heating setpoint (68 — drier return air)
+and holds the damper at `min-oa-pos` (20 %) in cold weather, since the
+economizer call requires a latched cooling stage — so the natural winter
+state may sit outside the fog region the spec forces. Under
+investigation: whether the preview's served bytes carry the marker at
+all, what state the spec actually forces and whether the UI can reach
+it, and where the onset boundary sits with the zone winter-held.
+
+**Findings, same day — measured on the built page, driving the UI
+only.** The preview served the marker (bytes verified on the preview
+and a fresh local build) — not the explanation. The recipe had been
+quoted from the wrong ZONE state: the page spec forces OAT −10 / manual
+damper 60 from page-load defaults, where zone truth is **76 °F** — the
+spec never touches the zone — while a settled winter machine rides the
+heating sawtooth at ~65.7–67.2 °F, and the fog boundary at OAT 0 /
+damper 60 sits at zone ≥ **67.0** — astride the sawtooth. Worse, the
+attempt fights itself: opening the damper saturates the HW coil and
+drags zone truth down (measured 65.7 → 58.7 °F in ~7 sim-min), away
+from the boundary. The operative variable is OAT, not zone warmth —
+the minimum fogging zone collapses with cold (OAT −5 / damper 60 →
+58.0 °F; −10 / 60 → 49.5; −15 / 60 → 41.0; −20 → at the plant's own
+zone floor), so below about −10…−15 °F fog is unconditional and
+permanent. **Fog is unreachable in AUTO:** the economizer call
+requires a latched cooling stage, so winter pins the damper at the
+20 % minimum, and at 20 % no OAT in the slider's −20…110 range fogs at
+any zone 66–80. The only UI path is the slot-8 Manual Operator command
+on the OA damper (its slider is disabled until the NULL box is
+unchecked); scenario presets seize slot-8 manual on every point and
+hold the damper at their own value, so entering through one pins fog
+unreachable until released. **Verified recipe** (end-to-end through
+the UI; persists indefinitely): outdoor air **−15 °F** → uncheck the
+OA-damper NULL box → damper slider **60 %** — the marker appears
+within ~2 s. Two accuracy notes on this entry: the flag is not
+"derived in the DOM half" by a saturation comparison — the shipped
+code forwards `mixStreams`' own `.fogging` boolean (`d.matFogging`;
+the render only gates display on the MAT point not being forced) — and
+the reachability finding sharpens the marker's question rather than
+settling it: the state it flags is precisely an operator forcing the
+damper open in cold weather, so appearing only under a manual command
+is arguably the marker doing its job. The owner's call, with a working
+recipe now in hand.
+
+**Resolution, 2026-08-02 — the owner reproduced the marker with the
+corrected recipe and ruled KEEP AS-IS.** His rationale endorses the
+reachability finding as depiction-correct rather than tolerating it:
+fogging the mixing box is *"not the kind of thing that happens unless
+an extreme fringe case on a well programmed system"* — so a marker
+that appears only when an operator forces the damper open in cold
+weather is the marker matching reality. The AUTO-unreachability is a
+property of a correct sequence, not a defect of the marker.
 
 ### 241. The site defines "deadband" two ways for beginners, and neither surface acknowledges the other *(noticed 2026-07-29, deadband/setpoint-gap terminology sweep — **RESOLVED 2026-07-30**, owner ruled for a third option: teach the habit, not the definition — then ruled again to keep both questions and let the bank overflow)*
 
