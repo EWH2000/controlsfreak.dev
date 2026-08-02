@@ -142,10 +142,13 @@ const SURFACES = {
         file: 'html/simulators/ddc-workbench.html',
         url: '/simulators/ddc-workbench.html',
         literal: 'AHU_PROGRAMS',
-        // 9 columns at the 175px pitch. h shrank 1210 → 980 with the
+        // 11 columns at the 175px pitch since the low-limits sheet's
+        // damper tail (MIN + trip select) grew the width 1576 → 1926;
+        // the starter uses 9 of them. h shrank 1210 → 980 with the
         // no-burial relayout — the sheet got shorter, not taller, once
-        // the sources moved next to their consumers.
-        canvas: { w: 1576, h: 980 },
+        // the sources moved next to their consumers — and the
+        // low-limits sheet fits inside that same height.
+        canvas: { w: 1926, h: 980 },
     },
 };
 const REGISTRIES = {};

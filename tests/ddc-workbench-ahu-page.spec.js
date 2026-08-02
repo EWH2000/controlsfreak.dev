@@ -112,8 +112,10 @@ test.describe('AHU workbench page: it boots', () => {
         // (ddcw-shell.js:565) is where a unit with no programs dies, 45
         // lines before wireControls would have been reached.
         const opts = page.locator('#ddcw-program option');
-        await expect(opts).toHaveCount(2);            // the sheet + the disabled "Custom (edited)"
-        await expect(opts.nth(1)).toHaveAttribute('value', 'custom');
+        await expect(opts).toHaveCount(3);            // both sheets + the disabled "Custom (edited)"
+        await expect(opts.nth(0)).toHaveAttribute('value', 'econ-2stage');
+        await expect(opts.nth(1)).toHaveAttribute('value', 'econ-2stage-lowlimits');
+        await expect(opts.nth(2)).toHaveAttribute('value', 'custom');
 
         // ⚠ THE OFF-PROGRAM WINDOW BEING EMPTY IS THE REAL ASSERTION
         // HERE. The shell releases slot 16 every tick for any actuator
