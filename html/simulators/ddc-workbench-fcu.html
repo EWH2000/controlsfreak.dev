@@ -343,13 +343,93 @@ noindex: true
         /* ── DDC WORKBENCH SHELL (ddcw-*) ── graduated to styles.css (the
            DDC WORKBENCH SHELL section) when the shell JS moved to
            /scripts/ddcw-shell.js — two pages will draw it next phase, and
-           the house rule keeps only single-page pieces inline. Two ddcw-*
-           control-pattern rules DO stay in this block, by design:
+           the house rule keeps only single-page pieces inline. Some ddcw-*
+           rules DO stay in this block, by design. Two are control-pattern
+           rules wired to fcu markup rather than shell chrome:
            label.ddcw-null (above) must be declared after this page's
            .fcu-fanen label rule to win their specificity tie, and the
            .ddcw-tracked disabled dimming is scoped under .fcu-controls.
-           Both are unit-control chrome wired to fcu markup, not shell
-           chrome. */
+           The third is the unit selector immediately below — real shell
+           chrome held back for a reason its own comment states. */
+
+        /* ── UNIT SELECTOR (ddcw-unit-*) ── the statusbar's "which machine
+           am I looking at" pair: two hidden workbench pages, one plain
+           anchor each way.
+
+           ⚠ THIS BLOCK IS DUPLICATED VERBATIM IN THE OTHER WORKBENCH
+           PAGE'S HEAD, and the duplication is deliberate. It is genuinely
+           shell chrome — both unit pages draw the identical row — but
+           styles.css is a LIVE surface: every page on the site links it,
+           so graduating ~30 rules there ships new bytes to every live
+           page for a control only these two hidden pages can see, and
+           owes a cache-busting version bump on top. GRADUATION TRIGGER,
+           the same one the sensor glyphs used: the day a workbench page
+           gains a `canonical` and joins the sitemap, move this block to
+           styles.css and delete both copies.
+
+           Shape is the site's own pick-one-of-two idiom — the nav
+           units / theme pill (.units-toggle / .units-toggle-pill /
+           .units-btn in styles.css) — retuned to statusbar scale so the
+           caption matches .ddcw-prog-lbl standing next to it. */
+        .ddcw-unit-sel { display: flex; align-items: center; gap: 0.45rem; }
+        .ddcw-unit-sel-lbl {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .ddcw-unit-pill {
+            display: inline-flex;
+            border: 1px solid var(--border);
+            background: var(--surface);
+        }
+        /* Element-qualified `a.` per the house specificity idiom (the same
+           reason p.ref-note and friends carry their element): the plain
+           class ties nothing, and `.tool-body a { color: var(--accent) }`
+           in styles.css out-specifies it — measured, the unselected link
+           rendered ACCENT GREEN, i.e. indistinguishable from the page you
+           are already on. Qualified, it ties at (0,1,1) and wins on order
+           because the page head block is parsed after /styles.css. */
+        a.ddcw-unit-link {
+            display: flex;
+            align-items: center;
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            letter-spacing: 0.03em;
+            padding: 0.22rem 0.6rem;
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: color 0.18s, background 0.18s;
+        }
+        a.ddcw-unit-link + a.ddcw-unit-link { border-left: 1px solid var(--border); }
+        a.ddcw-unit-link:hover { color: var(--text-bright); }
+        /* The page you are on. --accent-ink, NOT the .units-btn pill's
+           --accent: this text lands on the --accent-dim wash at 10.88px,
+           where --accent is the documented AA small-text fail and the
+           -ink step is the documented fix. contrast-sweep.spec.js cannot
+           reach a canonical-less page, so nothing downstream would have
+           caught the wrong token here. */
+        a.ddcw-unit-link[aria-current="page"] {
+            background: var(--accent-dim);
+            color: var(--accent-ink);
+            font-weight: 600;
+        }
+        /* Page-local :focus-visible, because the consolidated FOCUS
+           INDICATORS block lives in styles.css. The ring is INSET where
+           the house default is a 3px outset: the two links share one seam
+           inside one bordered pill, so an outset ring would be drawn over
+           the sibling link. */
+        a.ddcw-unit-link:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: -2px;
+        }
+        /* Page-local touch floor, same reason (the consolidated
+           TOUCH-TARGET FLOOR block is in styles.css too). Measured
+           natively at 24.42px tall, so the floor is doing real work. */
+        @media (hover: none) {
+            a.ddcw-unit-link { justify-content: center; min-height: 44px; }
+        }
 
         /* ── FULLSCREEN COCKPIT ────────────────────────────────────────────
            The shared mechanism (fullscreen-toggle.js) pins .tool-card to the
@@ -519,6 +599,23 @@ noindex: true
             <div class="ddcw-statusbar" id="ddcw-statusbar">
                 <div class="ddcw-io-strip" id="ddcw-io" aria-label="Live point values"></div>
                 <div class="ddcw-status-right">
+                    <!-- Unit selector — plain anchors, one each way, NOT tabs
+                         and not a JS switch: the two units are two pages, so
+                         the pair is navigation and works with scripting off.
+                         The current page's own link stays a real anchor and
+                         carries aria-current="page" (the standard pattern);
+                         the visible caption is the nav landmark's accessible
+                         name via aria-labelledby, so the name is not a second
+                         copy of the word. Order is FCU then AHU on BOTH
+                         pages — a selector that reorders itself per page
+                         makes the reader re-find the target every hop. -->
+                    <nav class="ddcw-unit-sel" aria-labelledby="ddcw-unit-sel-lbl">
+                        <span class="ddcw-unit-sel-lbl" id="ddcw-unit-sel-lbl">Unit</span>
+                        <span class="ddcw-unit-pill">
+                            <a class="ddcw-unit-link" href="/simulators/ddc-workbench-fcu.html" aria-current="page">FCU</a>
+                            <a class="ddcw-unit-link" href="/simulators/ddc-workbench.html">AHU</a>
+                        </span>
+                    </nav>
                     <div class="ddcw-prog">
                         <label class="ddcw-prog-lbl" for="ddcw-program">Program</label>
                         <select class="ps-input" id="ddcw-program"></select>
