@@ -69,27 +69,18 @@ named example sheets.
 
 ## The work, in order
 
-### 1. Lane C — the AHU program library
+### 1. Lane C — the AHU program library — SHIPPED (PR #468, 2026-08-02)
 
-**Owner decisions binding it** (dates and detail in `docs/air-side-sim.md`):
-the second sheet is the mixed-air / discharge-low-limit program; the
-library deliberately includes **flawed programs as teaching material**
-(2026-07-26); **war story #4** — customers putting the heating setpoint
-above the cooling setpoint — is Lane C's content beat (the verbatim quote
-and its two framing corrections are in `docs/air-side-sim.md` §war-story
-records and the air-side memory; render in house voice, never paraphrased).
-
-Verified @ `d62ebd5`: `AHU_PROGRAMS` has exactly one key (`econ-2stage`);
-`mat` and `dat` are seeded as `ai` blocks (`ddc-workbench.html:2568-2569`)
-with **no wire touching either** — the hook is intact. Programs live IN the
-page by ruling (sheet layout and canvas move together; specs regex-extract
-the literal on an 8-space closing brace — match the FCU page's shape).
-Sheet-split decisions want **measured** block counts against the canvas.
-
-**Naming (new since the lane was cut):** a new sheet authors `name:` keys
-on its non-point blocks and adds its per-sheet floor row to
-`tests/fbe-block-names.spec.js`'s `MIN_HAND_NAMED` map — a sheet with no
-floor row ships its names unguarded. Point-backed blocks are stamped from
+The winter-protections sheet `econ-2stage-lowlimits` is merged, built to
+the owner's field architecture (direct-acting MAT PID → MIN with the vent
+demand → software-LLS trip select at a measured 35 °F) and adversarially
+verified — the geometry and naming guards were proven non-vacuous by
+sabotage, and two falsified prose claims were fixed pre-merge. War story
+#4 renders on the Unit teach block; the owner reserved tweak rights after
+a preview look. `docs/air-side-sim.md` carries the Lane C rulings and the
+shipped shape; ledger #260 records the editor-mount state-reset trap the
+verify surfaced. By ruling, no flawed sheet ships for go-live — that is
+add-on material the owner seeds from future war stories. Point-backed blocks are stamped from
 the roster automatically; author nothing onto them.
 
 ### 2. 7.5 — the unit selector
