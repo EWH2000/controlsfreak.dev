@@ -10251,7 +10251,7 @@ Cheapest honest interim if a moisture readout ships first: publish
 `d.matCondensate` beside `d.matW` so a chip can annotate a fogging mixed-air
 state rather than silently under-report it.
 
-### 240. A fogging MAT no longer reconciles with the reader's own %OA arithmetic, and the graphic says nothing about it *(noticed 2026-07-29, the #236 fix round's review — a LANE 7.4 graphic question, not a physics one — **ONE CANDIDATE BUILT 2026-07-30; the owner's first look, 2026-08-02, could not reproduce it — reachability under investigation, see the Update** — a depiction to look at, not a settled answer)*
+### 240. A fogging MAT no longer reconciles with the reader's own %OA arithmetic, and the graphic says nothing about it *(noticed 2026-07-29, the #236 fix round's review — a LANE 7.4 graphic question, not a physics one — **ONE CANDIDATE BUILT 2026-07-30 — RESOLVED 2026-08-02: reproduced with the corrected recipe, owner ruled KEEP AS-IS** — manual-only reachability mirrors the field)*
 
 **Built as one candidate, deliberately cheap and reversible.** The owner asked
 to SEE this rather than answer it in the abstract, and the one option ruled out
@@ -10365,6 +10365,15 @@ settling it: the state it flags is precisely an operator forcing the
 damper open in cold weather, so appearing only under a manual command
 is arguably the marker doing its job. The owner's call, with a working
 recipe now in hand.
+
+**Resolution, 2026-08-02 — the owner reproduced the marker with the
+corrected recipe and ruled KEEP AS-IS.** His rationale endorses the
+reachability finding as depiction-correct rather than tolerating it:
+fogging the mixing box is *"not the kind of thing that happens unless
+an extreme fringe case on a well programmed system"* — so a marker
+that appears only when an operator forces the damper open in cold
+weather is the marker matching reality. The AUTO-unreachability is a
+property of a correct sequence, not a defect of the marker.
 
 ### 241. The site defines "deadband" two ways for beginners, and neither surface acknowledges the other *(noticed 2026-07-29, deadband/setpoint-gap terminology sweep — **RESOLVED 2026-07-30**, owner ruled for a third option: teach the habit, not the definition — then ruled again to keep both questions and let the bank overflow)*
 

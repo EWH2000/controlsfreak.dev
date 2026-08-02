@@ -329,10 +329,14 @@ The owner ruled the Lane C decision slate in one sitting. All 2026-08-02:
 4. **The full block-name pass is NOT folded into Lane C** — "all that
    isn't an amount to 'fold in' to a lane." It waits for the dedicated
    pre-Phase-8 discussion.
-5. **#240 fog marker: the owner's first look could not reproduce it** —
-   neither the suggested cold-OAT-plus-open-damper recipe nor free
-   exploration showed the marker on the preview. Reachability is under
-   investigation; `codebase-issues` #240 carries the findings.
+5. **#240 fog marker: RESOLVED same day — keep as-is.** The owner's
+   first look could not reproduce it because the recipe had been quoted
+   against the page-load zone (76 °F) rather than the settled winter
+   sawtooth (~66–67 °F). He reproduced it with the corrected recipe
+   (outdoor air −15 °F, manual damper 60 %) and ruled the candidate
+   ships unchanged: fog in AUTO would be *"an extreme fringe case on a
+   well programmed system,"* so manual-only reachability mirrors the
+   field. `codebase-issues` #240 carries the measured findings.
 
 #### War story #4 — the record (supplied 2026-07-29)
 
