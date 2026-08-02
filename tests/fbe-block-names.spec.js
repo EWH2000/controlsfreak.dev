@@ -104,8 +104,11 @@ const MIN_NAMED_PUBLIC = {
     pid: 4, proof: 8, reset: 7,
 };
 const MIN_HAND_NAMED = {
-    // AHU — one sheet, 43 blocks: 17 roster + 26 hand.
+    // AHU. econ-2stage: 43 blocks, 17 roster + 26 hand. The low-limits
+    // sheet: 55 blocks, the same 17 roster + 38 hand (the winter
+    // protections and their references are all named in the literal).
     'econ-2stage': 26,
+    'econ-2stage-lowlimits': 38,
     // FCU — four sheets, 95 blocks: 9 roster each (the roster carries 10
     // points, but `rat` has no block on any sheet) plus the hand spine.
     'cool-2stage': 14,

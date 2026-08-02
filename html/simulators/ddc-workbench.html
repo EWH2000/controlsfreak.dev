@@ -1896,6 +1896,7 @@ noindex: true
                             <p class="ahu-teach-p"><strong>Setpoints and the deadband.</strong> The separation between the two setpoints and the deadband are easy to read as one number, and they are not. The SP DIFF well in the rail is the separation — cooling setpoint minus heating setpoint. Nothing sets it: move either setpoint and it follows, which is why it is inked blue like the ΔT well rather than the green its two neighbours carry. The deadband is the smaller, separate thing, and it belongs to whichever setpoint is currently active rather than to the pair. On the cooling side it sits <em>above</em> the setpoint: as shipped, with a 72.0 °F cooling setpoint and a 2.0 °F deadband, the stage makes at 74.0 °F and breaks back at 72.0 °F. Here the setpoint is the cut-out, so the zone rides the band above the number on the screen and a degree of drift cannot short-cycle the compressor. That is also why a space of 73.0 °F can sit under a lit stage — between the two edges the call is held by a <a href="/education/comparators-and-deadband.html">latch</a>, not by a comparison against the setpoint.</p>
 
                             <p class="ahu-teach-p"><strong>Two setpoints, and what happens when they overlap.</strong> This unit carries a heating setpoint and a cooling setpoint as separate program constants, not one setpoint with an offset — specifically so you can drag them into each other on the wiresheet and watch a unit fight itself. A hot-water valve open under a running compressor is a real field fault: the ΔT goes nowhere, the energy goes everywhere, and nothing on the machine is broken. The graphic calls it out, because reading it off two wells that each look reasonable on their own is exactly the skill worth having.</p>
+
                         </section>
                     </div>
                 </div>
@@ -2392,6 +2393,82 @@ noindex: true
                     NULL back.
                 </p>
 
+                <p class="ddcw-sheet-note">
+                    The low-limits sample splices two winter protections into
+                    the same sequence, in series and in different styles: a
+                    mixed-air low limit that modulates, and a discharge
+                    low-limit stat that trips. The PID watches the mixed-air
+                    well against the Min MAT constant — warm mixed air parks
+                    its output high, and as the mixing box drags down toward
+                    the constant the output winds down with it. The MIN block
+                    after the economizer select then takes whichever is less:
+                    the position the economizer wants, or the most the low
+                    limit will allow. Drive it: outdoor air cold, cooling
+                    setpoint pulled below the space so the economizer opens
+                    hard, and the damper command settles well short of open
+                    while the MAT chip rides the constant. Colder still and the
+                    clamp passes below the ventilation minimum, because the MIN
+                    sits downstream of the minimum-position select on purpose.
+                    When freeze protection and ventilation argue, this sequence
+                    has already picked freeze protection — a real sequence
+                    writes that trade down, because someone will eventually ask
+                    where the minimum went.
+                </p>
+
+                <p class="ddcw-sheet-note">
+                    The stat is the backstop, and its constant is set the way
+                    the field sets the hardware it mirrors. A real low-limit
+                    stat is a manual-reset device strapped across the coil
+                    face, and the software comparator here carries the same
+                    setting the physical device would: below the coldest
+                    discharge the machine can legitimately make, above the
+                    temperature that bursts a coil. Set it higher and it
+                    becomes a nuisance — this unit's two compressor stages pull
+                    the discharge into the high thirties against a clamped-cold
+                    mixed air, which is ordinary integrated economizing, not a
+                    fault. Field stats commonly sit anywhere from the mid
+                    thirties to forty; where in that band to put one is a
+                    judgement about the machine it protects, and the constant
+                    is on the sheet to be argued with.
+                </p>
+
+                <p class="ddcw-sheet-note">
+                    A trip is the classic freezestat response, all at once:
+                    damper driven shut, hot-water valve driven open — water
+                    moving through the coil is the protection when nothing else
+                    is — and the fan stopped, with the compressor stages
+                    falling out on the airflow-proof interlock they already
+                    answer to. Then the trap this page keeps circling: the
+                    moment the fan stops, the discharge probe reads the room.
+                    Watch the DAT chip after a trip — it climbs to a perfectly
+                    comfortable number while the machine sits dead, which is
+                    exactly why the trip is held by a latch and not by the
+                    comparison alone. An unlatched stat would clear itself on
+                    its own blindness and bang the fan straight back on. The
+                    LLS Reset source is the reset button on the device: click
+                    it true and back once the cause is fixed and the machine
+                    restarts in order — fan first, proof made, then the loads.
+                    Hold it true instead and you have wired the button down:
+                    the latch is defeated, and the unit short-cycles on and off
+                    exactly as fast as each trip can clear itself.
+                </p>
+
+                <p class="ddcw-sheet-note">
+                    The cleanest way to see all of it is one lie. On the Unit
+                    tab, force the DAT sensor low — the picker option already
+                    names what watches it — and the stat takes the machine down
+                    the same tick. Now release the force, and nothing restarts:
+                    the discharge reads the still-air room number, the set side
+                    of the latch is long clear, and the machine stays down
+                    waiting for the button. A software stat trusts its sensor
+                    with no questions asked, and that cuts both ways — the
+                    hardware device it mirrors would never trip on a bad
+                    transmitter, and would never miss a freeze the transmitter
+                    failed to report. Running both, set to the same number, is
+                    not redundancy for show; it is two different failure
+                    stories covering each other.
+                </p>
+
                 <div class="desktop-only-sim">
                     <h2 class="dos-label">Desktop tool</h2>
                     <p>
@@ -2470,16 +2547,17 @@ noindex: true
         'use strict';
 
         // ── AHU sample programs (FBE graph literals; keys = editor examples) ──
-        // ONE sequence, deliberately. The FCU's library is a mixed bag of
-        // four sheets because that page has had four rounds; this page ships
-        // the honest starter, and a second sheet is the natural place for a
-        // mixed-air or discharge low limit. Every
-        // point in the roster is authored on it, which is not optional: the
-        // shell releases slot 16 every tick for an actuator with no block, so
-        // an unauthored output rests at its Relinquish_Default and the
-        // machine sits dead with no error anywhere.
+        // TWO sequences. econ-2stage is the honest starter; the low-limits
+        // sheet is the winter-protection growth the starter's mat/dat seeds
+        // always pointed at — the same sequence with a modulating mixed-air
+        // low limit and a latched software low-limit stat spliced into the
+        // damper, valve and fan chains. Every point in the roster is
+        // authored on BOTH sheets, which is not optional: the shell
+        // releases slot 16 every tick for an actuator with no block, so an
+        // unauthored output rests at its Relinquish_Default and the machine
+        // sits dead with no error anywhere.
         //
-        // WHAT IT DOES, in sequence order:
+        // WHAT THE STARTER DOES, in sequence order:
         //   • occupancy (a bi source held true) enables the fan and picks
         //     its speed through a select — constant volume, so the sheet
         //     drives 100 or 0 rather than modulating;
@@ -2502,13 +2580,67 @@ noindex: true
         //     watching precisely because it sits somewhere other than fully
         //     open or fully shut.
         //
+        // WHAT THE LOW-LIMITS SHEET ADDS — two winter protections in
+        // series, owner's field architecture (2026-08-02):
+        //   • a MIXED-AIR LOW LIMIT: a direct-acting PID with SP = the
+        //     Min MAT constant and PV = the mat point. Warm mixed air puts
+        //     the error far positive, so the output saturates at 100 and
+        //     the MIN block downstream passes the economizer demand
+        //     untouched; as MAT sags toward the setpoint the output winds
+        //     down and the lesser value wins — the damper is throttled no
+        //     matter what the economizer is asking for. The MIN sits AFTER
+        //     dmpsel, so the clamp can pull the damper below the
+        //     ventilation minimum: freeze protection outranks ventilation,
+        //     deliberately.
+        //   • a SOFTWARE LOW-LIMIT STAT off dat: in the field the LLS is a
+        //     physical manual-reset device strapped across the coil face,
+        //     and the software mirror is set to what the real one is set
+        //     to (the LLS Trip constant). A trip LATCHES (SR), forces the
+        //     damper CLOSED, drives the HW valve fully OPEN (hot water
+        //     moving through the coil is the protection when nothing else
+        //     is), and STOPS the fan; the DX stages drop on the existing
+        //     proof interlock with no extra wiring.
+        //   • WHY THE LATCH IS LOAD-BEARING (the #225 trap family): a
+        //     stopped fan puts still air on the discharge probe, so DAT
+        //     reads the ZONE — a comfortable number — and an unlatched
+        //     trip would clear itself and short-cycle the machine forever.
+        //     The latch holds through the lie; the LLS Reset bi is the
+        //     reset button on the device, and holding it TRUE is the
+        //     defeat-the-latch experiment (the short-cycle becomes
+        //     watchable). Reset order on a real board is the same:
+        //     condition clear first, then the button.
+        //   • SELECT POLARITY IS MIXED ON PURPOSE: the damper's trip
+        //     select keys on the ALARM (llstrip — trip picks zero) while
+        //     the valve's keys on the PERMISSIVE (llsok — OK picks the
+        //     heating demand), because each is the shorter wire from where
+        //     the signal already runs. Field sheets mix these constantly;
+        //     the names say which way each one reads.
+        //   • ORDER ON THE DAMPER CHAIN: Econ Dmpr → Limit Dmpr (MIN) →
+        //     Trip Dmpr (LLS) → Proof Dmpr → OA Dmpr. The modulating
+        //     protection clamps the DEMAND, the trip overrides the result
+        //     (it must beat the min-OA floor, so it sits after the MIN),
+        //     and the proof select stays last, nearest the output, exactly
+        //     where the starter put it. Trip and proof both force zero, so
+        //     their relative order is output-equivalent; keeping proof
+        //     last keeps the starter's tail readable on both sheets.
+        //     On the VALVE chain the trip select is DOWNSTREAM of the
+        //     proof select — reversed, and load-bearing: a trip stops the
+        //     fan, proof drops, and hwsel falls to zero; if proof had the
+        //     last word the protection would CLOSE the valve on the coldest
+        //     coil of the year. Trip wins: valve open, no airflow, water
+        //     moving.
+        //
         // Layout: the FCU's candidate-A grid — 175px column pitch
         // (x = 20 + 175·col), one column per link of the longest dependency
         // chain. Rows are hand-placed so multi-column wires clear the blocks
         // between their endpoints — the NO-BURIAL invariant that
-        // tests/fbe-geometry.spec.js blocks CI on, and which this sheet is
-        // now registered for (it was not, and shipped 23 burials over 13
-        // wires before anyone measured it).
+        // tests/fbe-geometry.spec.js blocks CI on, and which the starter
+        // sheet is registered for (it was not, and shipped 23 burials over
+        // 13 wires before anyone measured it; the spec discovers every key
+        // in this registry, so the low-limits sheet was measured from its
+        // first run). The low-limits sheet's damper tail adds two links —
+        // MIN, then the trip select — so that sheet runs 11 columns and the
+        // canvas width below carries the difference.
         //
         // TWO RULES make that invariant reachable by hand, both derived
         // from fbe-editor.js's `wirePath` rather than guessed at:
@@ -2709,27 +2841,271 @@ noindex: true
                     { from: ['dmpout', 'O'],           to: ['oa-damper', 'IN'] },
                 ],
             },
+            'econ-2stage-lowlimits': {
+                // The starter plus the two winter protections — see the
+                // registry header for what they do and why the latch and
+                // the select order are load-bearing. Layout is the same
+                // candidate-A grid stretched to 11 columns: the damper
+                // tail gains MIN and the trip select, so dmpout and
+                // oa-damper slide two columns right while every other
+                // starter block keeps a familiar neighborhood. Rows moved
+                // where a new wire needed the lane (zero, hundred, occ,
+                // dmpsel, fan-speed) — each move is noted where it lands.
+                blocks: [
+                    // ── column 0 · points and setpoints. Same stack as the
+                    //    starter until econ-lockout; the tail reorders to
+                    //    dat / llsset / mat so the LLS pair are neighbors
+                    //    (their comparator reads both over one-column hops)
+                    //    and mat sits beside the PID that consumes it. ──
+                    { id: 'space-temp',       type: 'ai',    x: 20,   y: 20,  params: { value: 76 } },
+                    { id: 'cooling-setpoint', type: 'const', x: 20,   y: 110, params: { value: 72 } },
+                    { id: 'deadband',         type: 'const', x: 20,   y: 200, params: { value: 2 } },
+                    { id: 'heating-setpoint', type: 'const', x: 20,   y: 290, params: { value: 68 } },
+                    { id: 'oat',              type: 'ai',    x: 20,   y: 380, params: { value: 80 } },
+                    { id: 'rat',              type: 'ai',    x: 20,   y: 470, params: { value: 76 } },
+                    { id: 'econ-lockout',     type: 'const', x: 20,   y: 560, params: { value: 62 } },
+                    { id: 'dat',              type: 'ai',    x: 20,   y: 650, params: { value: 67 } },
+                    // What the REAL low-limit stat is set to. The physical
+                    // device is a manual-reset element across the coil
+                    // face; the software stat mirrors its setting so the
+                    // two trip together instead of arguing. 35 °F is the
+                    // field rule applied to THIS machine: below the
+                    // coldest discharge it can legitimately make, above
+                    // what freezes the coil. Two DX stages drop 19.4 °F
+                    // (42,000 Btu/h at 2,000 CFM), so integrated
+                    // econ + DX against a clamped 50 °F mixed air rides
+                    // the energized-coil floor at 34 + 1 °F fan heat = 35
+                    // — a stat at 38-40 would nuisance-trip every cold
+                    // drive on ORDINARY mechanical cooling, and its
+                    // manual-reset fan stop would bury the low-limit
+                    // lesson under recovery clicks. At 35 an energized
+                    // coil can never quite reach it while raw cold
+                    // outdoor air across a dead coil still does — which
+                    // is the freeze the real device exists to catch.
+                    // (Re-derive if COIL_FLOOR / FAN_HEAT / STAGE_QSENS
+                    // move in ddcw-ahu-unit.js.)
+                    { id: 'llsset',           type: 'const', x: 20,   y: 740, params: { value: 35 }, name: 'LLS Trip' },
+                    { id: 'mat',              type: 'ai',    x: 20,   y: 830, params: { value: 77 } },
+
+                    // ── column 1 · setpoint arithmetic + the LLS front end ──
+                    { id: 'y1on',             type: 'add',   x: 195,  y: 160, name: 'Y1 Make' },
+                    { id: 'sep',              type: 'const', x: 195,  y: 270, params: { value: 2 }, name: 'Stg2 Sep' },
+                    { id: 'heaterr',          type: 'sub',   x: 195,  y: 380, name: 'Heat Error' },
+                    { id: 'lockok',           type: 'lt',    x: 195,  y: 560, name: 'Lock OK' },
+                    { id: 'diffok',           type: 'lt',    x: 195,  y: 670, name: 'Diff OK' },
+                    { id: 'llslow',           type: 'lt',    x: 195,  y: 770, name: 'DAT Low' },
+                    // The reset BUTTON on the stat, as a free bi — same
+                    // idiom as occ. Click it TRUE then back to clear a
+                    // trip; LEAVE it true and the latch is defeated, which
+                    // turns the short-cycle the latch exists to stop into
+                    // something you can watch.
+                    { id: 'llsreset',         type: 'bi',    x: 195,  y: 880, params: { state: false }, name: 'LLS Reset' },
+
+                    // ── column 2 · below the y1on corridor, as on the
+                    //    starter. matsp sits at y 800 so the mat → PID wire
+                    //    crosses this column in the 780-800 gap above it. ──
+                    { id: 'y2on',             type: 'add',   x: 370,  y: 490, name: 'Y2 Make' },
+                    { id: 'gain',             type: 'const', x: 370,  y: 600, params: { value: 25 }, name: 'Heat Gain' },
+                    { id: 'econok',           type: 'and',   x: 370,  y: 690, name: 'Econ Permit' },
+                    // The mixed-air floor the PID holds. Owner's band is
+                    // 45-60 °F by application; 50 ships as the middle of it.
+                    { id: 'matsp',            type: 'const', x: 370,  y: 800, params: { value: 50 }, name: 'Min MAT' },
+                    // Set by DAT Low, held through the fan stop (DAT then
+                    // reads the ZONE and the set condition clears itself —
+                    // the latch is what keeps the trip honest), released by
+                    // LLS Reset once the set side is clear. Set-dominant,
+                    // like the engine's SR: the button does nothing while
+                    // the discharge is still below trip.
+                    { id: 'llstrip',          type: 'sr',    x: 370,  y: 878, name: 'LLS Latch' },
+
+                    // ── column 3 · the comparator bank, plus occ beside
+                    //    the fan permit it feeds and the trip's inverse.
+                    //    matpid's row is load-bearing: its OUT pin at
+                    //    y 777.1 threads the one clear lane across columns
+                    //    4-5 (between fansel and min-oa-pos) on its way to
+                    //    the MIN block five columns right. ──
+                    { id: 'gt1',              type: 'gt',    x: 545,  y: 20, name: 'Y1 Set' },
+                    { id: 'lt1',              type: 'lt',    x: 545,  y: 110, name: 'Y1 Reset' },
+                    { id: 'gt2',              type: 'gt',    x: 545,  y: 200, name: 'Y2 Set' },
+                    { id: 'lt2',              type: 'lt',    x: 545,  y: 290, name: 'Y2 Reset' },
+                    { id: 'heatraw',          type: 'mul',   x: 545,  y: 380, name: 'Heat Raw' },
+                    { id: 'occ',              type: 'bi',    x: 545,  y: 480, params: { state: true }, name: 'Occupied' },
+                    { id: 'llsok',            type: 'not',   x: 545,  y: 558, name: 'LLS OK' },
+                    { id: 'matpid',           type: 'pid',   x: 545,  y: 740, params: { kc: 0.8, ti: 120, td: 0, action: 'direct' }, name: 'MAT Low Lim' },
+
+                    // ── column 4 · latches, proof, references, fan permit.
+                    //    hundred moved to the top band (its only consumer
+                    //    here is fansel); zero moved to y 830 so its out-pin
+                    //    exits at y 867 — under min-oa-pos, over the LLS
+                    //    Latch fan-out at y 915 — on its long hauls to the
+                    //    two far selects. ──
+                    { id: 'sr1',              type: 'sr',    x: 720,  y: 20, name: 'Y1 Latch' },
+                    { id: 'hundred',          type: 'const', x: 720,  y: 112, params: { value: 100 }, name: 'Full Spd' },
+                    { id: 'sr2',              type: 'sr',    x: 720,  y: 200, name: 'Y2 Latch' },
+                    { id: 'heatlim',          type: 'limit', x: 720,  y: 380, params: { lo: 0, hi: 100 }, name: 'Heat Clamp' },
+                    { id: 'fan-status',       type: 'bi',    x: 720,  y: 470, params: { state: false } },
+                    // occ AND LLS OK. The trip stops the fan THROUGH this
+                    // permit; the DX stages then drop on the proof
+                    // interlock with no wire of their own.
+                    { id: 'fanok',            type: 'and',   x: 720,  y: 600, name: 'Fan Permit' },
+                    { id: 'zero',             type: 'const', x: 720,  y: 830, params: { value: 0 }, name: 'Off Ref' },
+
+                    // ── column 5 · permits and selection, starter rows.
+                    //    full-open is the 100 reference for the two right-
+                    //    column selects (dmpsel, hwtrip) — hundred cannot
+                    //    reach them from column 4 without crossing this
+                    //    column's stack, so the reference sits here, beside
+                    //    its consumers, per the starter's own habit. ──
+                    { id: 'y1gate',           type: 'and',   x: 895,  y: 20, name: 'Y1 Gate' },
+                    { id: 'y2gate',           type: 'and',   x: 895,  y: 200, name: 'Y2 Gate' },
+                    { id: 'full-open',        type: 'const', x: 895,  y: 292, params: { value: 100 }, name: 'Full Open' },
+                    { id: 'hwsel',            type: 'select', x: 895, y: 380, name: 'HW Vlv Sel' },
+                    { id: 'econcall',         type: 'and',   x: 895,  y: 540, name: 'Econ Call' },
+                    { id: 'fansel',           type: 'select', x: 895, y: 660, name: 'Fan Spd Ref' },
+                    { id: 'min-oa-pos',       type: 'const', x: 895,  y: 790, params: { value: 20 } },
+
+                    // ── column 6 · the economizer select (moved up from
+                    //    the starter's y 820 to clear the LLS fan-out and
+                    //    the zero hauls crossing this column's bottom band)
+                    //    and the valve's trip select. hwtrip sits DOWNSTREAM
+                    //    of hwsel: a trip stops the fan and drops proof, and
+                    //    the valve must open anyway — trip has the last
+                    //    word, or the protection closes the valve on the
+                    //    coldest coil of the year. ──
+                    { id: 'hwtrip',           type: 'select', x: 1070, y: 338, name: 'Trip HW Vlv' },
+                    { id: 'dmpsel',           type: 'select', x: 1070, y: 560, name: 'Econ Dmpr' },
+
+                    // ── column 7 · outputs, and the low-limit MIN. Two
+                    //    demands enter, the LESSER wins: the economizer's
+                    //    position or the PID's clamp. It sits after dmpsel
+                    //    so the clamp can pull the damper below min-oa-pos
+                    //    — freeze protection outranks ventilation.
+                    //    fan-speed moved down beside fansel so their wire
+                    //    clears the relocated dmpsel. ──
+                    { id: 'y1',               type: 'bo',    x: 1245, y: 20 },
+                    { id: 'y2',               type: 'bo',    x: 1245, y: 110 },
+                    { id: 'hw-valve',         type: 'ao',    x: 1245, y: 200 },
+                    { id: 'fan-enable',       type: 'bo',    x: 1245, y: 290 },
+                    { id: 'fan-speed',        type: 'ao',    x: 1245, y: 640 },
+                    { id: 'dmpmin',           type: 'min',   x: 1245, y: 720, name: 'Limit Dmpr' },
+
+                    // ── columns 8-10 · the damper tail, one select per
+                    //    column: trip forces closed, proof forces closed,
+                    //    then the AO. Both forces read zero, so their order
+                    //    is output-equivalent; proof stays last, nearest
+                    //    the output, exactly where the starter put it. ──
+                    { id: 'dmptrip',          type: 'select', x: 1420, y: 865, name: 'Trip Dmpr' },
+                    { id: 'dmpout',           type: 'select', x: 1595, y: 470, name: 'Proof Dmpr' },
+                    { id: 'oa-damper',        type: 'ao',    x: 1770, y: 470 },
+                ],
+                wires: [
+                    // cooling staging — identical to the starter
+                    { from: ['cooling-setpoint', 'O'], to: ['y1on', 'A'] },
+                    { from: ['deadband', 'O'],         to: ['y1on', 'B'] },
+                    { from: ['y1on', 'O'],             to: ['y2on', 'A'] },
+                    { from: ['sep', 'O'],              to: ['y2on', 'B'] },
+                    { from: ['space-temp', 'O'],       to: ['gt1', 'A'] },
+                    { from: ['y1on', 'O'],             to: ['gt1', 'B'] },
+                    { from: ['space-temp', 'O'],       to: ['lt1', 'A'] },
+                    { from: ['cooling-setpoint', 'O'], to: ['lt1', 'B'] },
+                    { from: ['space-temp', 'O'],       to: ['gt2', 'A'] },
+                    { from: ['y2on', 'O'],             to: ['gt2', 'B'] },
+                    { from: ['space-temp', 'O'],       to: ['lt2', 'A'] },
+                    { from: ['y1on', 'O'],             to: ['lt2', 'B'] },
+                    { from: ['gt1', 'Q'],              to: ['sr1', 'S'] },
+                    { from: ['lt1', 'Q'],              to: ['sr1', 'R'] },
+                    { from: ['gt2', 'Q'],              to: ['sr2', 'S'] },
+                    { from: ['lt2', 'Q'],              to: ['sr2', 'R'] },
+                    // airflow-proof interlock on both stages — the trip
+                    // needs no stage wiring of its own: it stops the fan,
+                    // proof drops, and these gates do the rest
+                    { from: ['sr1', 'Q'],              to: ['y1gate', 'A'] },
+                    { from: ['fan-status', 'O'],       to: ['y1gate', 'B'] },
+                    { from: ['sr2', 'Q'],              to: ['y2gate', 'A'] },
+                    { from: ['fan-status', 'O'],       to: ['y2gate', 'B'] },
+                    { from: ['y1gate', 'Q'],           to: ['y1', 'IN'] },
+                    { from: ['y2gate', 'Q'],           to: ['y2', 'IN'] },
+                    // proportional heating, proof-interlocked, then the
+                    // trip select LAST so a trip opens the valve even with
+                    // the proof gone
+                    { from: ['heating-setpoint', 'O'], to: ['heaterr', 'A'] },
+                    { from: ['space-temp', 'O'],       to: ['heaterr', 'B'] },
+                    { from: ['heaterr', 'O'],          to: ['heatraw', 'A'] },
+                    { from: ['gain', 'O'],             to: ['heatraw', 'B'] },
+                    { from: ['heatraw', 'O'],          to: ['heatlim', 'IN'] },
+                    { from: ['fan-status', 'O'],       to: ['hwsel', 'SEL'] },
+                    { from: ['zero', 'O'],             to: ['hwsel', 'IN0'] },
+                    { from: ['heatlim', 'O'],          to: ['hwsel', 'IN1'] },
+                    { from: ['llsok', 'Q'],            to: ['hwtrip', 'SEL'] },
+                    { from: ['full-open', 'O'],        to: ['hwtrip', 'IN0'] },
+                    { from: ['hwsel', 'O'],            to: ['hwtrip', 'IN1'] },
+                    { from: ['hwtrip', 'O'],           to: ['hw-valve', 'IN'] },
+                    // fan — occupancy AND no trip, constant volume
+                    { from: ['occ', 'O'],              to: ['fanok', 'A'] },
+                    { from: ['llsok', 'Q'],            to: ['fanok', 'B'] },
+                    { from: ['fanok', 'Q'],            to: ['fan-enable', 'IN'] },
+                    { from: ['fanok', 'Q'],            to: ['fansel', 'SEL'] },
+                    { from: ['zero', 'O'],             to: ['fansel', 'IN0'] },
+                    { from: ['hundred', 'O'],          to: ['fansel', 'IN1'] },
+                    { from: ['fansel', 'O'],           to: ['fan-speed', 'IN'] },
+                    // economizer permit — identical to the starter
+                    { from: ['oat', 'O'],              to: ['lockok', 'A'] },
+                    { from: ['econ-lockout', 'O'],     to: ['lockok', 'B'] },
+                    { from: ['oat', 'O'],              to: ['diffok', 'A'] },
+                    { from: ['rat', 'O'],              to: ['diffok', 'B'] },
+                    { from: ['lockok', 'Q'],           to: ['econok', 'A'] },
+                    { from: ['diffok', 'Q'],           to: ['econok', 'B'] },
+                    { from: ['econok', 'Q'],           to: ['econcall', 'A'] },
+                    { from: ['sr1', 'Q'],              to: ['econcall', 'B'] },
+                    // damper — economize or hold the minimum, then the
+                    // winter chain: clamp, trip, proof, output
+                    { from: ['econcall', 'Q'],         to: ['dmpsel', 'SEL'] },
+                    { from: ['min-oa-pos', 'O'],       to: ['dmpsel', 'IN0'] },
+                    { from: ['full-open', 'O'],        to: ['dmpsel', 'IN1'] },
+                    { from: ['matsp', 'O'],            to: ['matpid', 'SP'] },
+                    { from: ['mat', 'O'],              to: ['matpid', 'PV'] },
+                    { from: ['dmpsel', 'O'],           to: ['dmpmin', 'A'] },
+                    { from: ['matpid', 'OUT'],         to: ['dmpmin', 'B'] },
+                    { from: ['llstrip', 'Q'],          to: ['dmptrip', 'SEL'] },
+                    { from: ['dmpmin', 'O'],           to: ['dmptrip', 'IN0'] },
+                    { from: ['zero', 'O'],             to: ['dmptrip', 'IN1'] },
+                    { from: ['fan-status', 'O'],       to: ['dmpout', 'SEL'] },
+                    { from: ['zero', 'O'],             to: ['dmpout', 'IN0'] },
+                    { from: ['dmptrip', 'O'],          to: ['dmpout', 'IN1'] },
+                    { from: ['dmpout', 'O'],           to: ['oa-damper', 'IN'] },
+                    // the software low-limit stat
+                    { from: ['dat', 'O'],              to: ['llslow', 'A'] },
+                    { from: ['llsset', 'O'],           to: ['llslow', 'B'] },
+                    { from: ['llslow', 'Q'],           to: ['llstrip', 'S'] },
+                    { from: ['llsreset', 'O'],         to: ['llstrip', 'R'] },
+                    { from: ['llstrip', 'Q'],          to: ['llsok', 'IN'] },
+                ],
+            },
         };
 
         DDCWShell.createWorkbench(DDCWAhuUnit.create({
             programs: AHU_PROGRAMS,
             programLabels: {
-                'econ-2stage': 'Economizer + 2-stage DX + HW',
+                'econ-2stage':           'Economizer + 2-stage DX + HW',
+                'econ-2stage-lowlimits': 'Economizer + 2-stage DX + HW + low limits',
             },
             defaultProgram: 'econ-2stage',
-            // Canvas bounds for the sheet above: 9 columns at the 175px
-            // pitch (last column left edge 1420 + a 136 block width + the
-            // 20px left margin) by the lowest block's bottom (the
-            // damper select ends at 926.5) plus margin.
-            // Lives beside the program literal because the sheet layout and
-            // the canvas it was authored to move together. The pane
-            // scrolls, so a tall sheet costs scrolling rather than clipping
-            // — but height is not free (measured on the FCU: +20px of
-            // canvas cost ~4 fps on the Wiresheet row of the idle
-            // profiler), so re-measure before growing it. The no-burial
-            // relayout took 230px off the height for free, which is a
-            // straight win on that row.
-            canvasSize: { w: 1576, h: 980 },
+            // Canvas bounds for the sheets above. WIDTH is the low-limits
+            // sheet's 11 columns at the 175px pitch (last column left edge
+            // 1770 + a 136 block width + the 20px left margin); the starter
+            // uses 9 of them. HEIGHT is unchanged at 980 — the low-limits
+            // relayout tucked its additions into the starter's own vertical
+            // envelope (lowest bottom 971.5, the trip select).
+            // Lives beside the program literals because the sheet layouts
+            // and the canvas they were authored to move together. The pane
+            // scrolls, so a big sheet costs scrolling rather than clipping
+            // — but canvas is not free (measured on the FCU: +20px of
+            // height cost ~4 fps on the Wiresheet row of the idle
+            // profiler), so re-measure before growing it. This width grew
+            // 1576 → 1926 for the two extra damper-tail columns; the idle
+            // profiler measured the Wiresheet row before/after and the fps
+            // delta is recorded in the low-limits PR body.
+            canvasSize: { w: 1926, h: 980 },
         }));
     })();
 </script>
