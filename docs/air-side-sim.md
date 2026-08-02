@@ -25,7 +25,7 @@ that diagnostic end**, not the point.
   unit; the owner's own fault examples are AHU faults, so the structure grows
   toward OA/mixing → MAT and beyond.
 
-## Current state — Phase 7: Lanes A + B + C and the naming arc are merged; 7.5 is next
+## Current state — Phase 7 is content-complete (Lanes A+B+C, the naming arc, the 7.5 selector); the pre-Phase-8 discussion is next
 
 Three hidden pages carry this line. All are `noindex` +
 `eleventyExcludeFromCollections` with **no `canonical`**, so all are reachable
@@ -141,8 +141,11 @@ wired there and stay deliberately unwired on the starter. The LLS constant is
 econ+DX cooling DAT rides exactly 35.0 (the 34 °F energized-coil floor plus
 1 °F of draw-through fan heat), so a 36 °F stat nuisance-trips ordinary
 cooling; the derivation sits in the literal for a one-click retune. War story
-#4 renders on the Unit teach block. What comes next is the FCU ⇄ AHU unit
-selector. **Phase 8 is graduation** — until
+#4 renders on the Unit teach block. The **FCU ⇄ AHU unit selector shipped the
+same day (PR #470)** — a `Unit — FCU | AHU` statusbar link pair with
+`aria-current="page"` on the self link, adversarially verified with zero
+defects. What comes next is the owner's pre-Phase-8 discussion round.
+**Phase 8 is graduation** — until
 then the Workbench is a react-baseline and reference point, not a surfaced page.
 
 ### Rulings that landed with the AHU page (2026-07-30)
@@ -535,7 +538,8 @@ tiles** · short **fan-heat/calibration callout** · **improved fan animation**
 - **Thermographics on the zone** — a thermal-image-style temperature read of the
   zone (gradient/color), so the zone's condition is legible at a glance.
 - **Selectable unit type** (FCU / AHU / …) — the concrete form of "grow toward
-  the AHU" and the hub's "show different units."
+  the AHU" and the hub's "show different units." *(shipped 2026-08-02, PR
+  #470 — the statusbar link pair between the two workbench pages)*
 - **LLS trip annunciation on the Unit tab** (from PR #468's verify;
   graduation-era candidate) — a tripped low limit reads as fan off / damper
   0 / valve 100 with no alarm surface; the trip state is legible only on the
