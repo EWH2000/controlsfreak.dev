@@ -10251,7 +10251,7 @@ Cheapest honest interim if a moisture readout ships first: publish
 `d.matCondensate` beside `d.matW` so a chip can annotate a fogging mixed-air
 state rather than silently under-report it.
 
-### 240. A fogging MAT no longer reconciles with the reader's own %OA arithmetic, and the graphic says nothing about it *(noticed 2026-07-29, the #236 fix round's review — a LANE 7.4 graphic question, not a physics one — **ONE CANDIDATE BUILT 2026-07-30, awaiting the owner's eye** — a depiction to look at, not a settled answer)*
+### 240. A fogging MAT no longer reconciles with the reader's own %OA arithmetic, and the graphic says nothing about it *(noticed 2026-07-29, the #236 fix round's review — a LANE 7.4 graphic question, not a physics one — **ONE CANDIDATE BUILT 2026-07-30; the owner's first look, 2026-08-02, could not reproduce it — reachability under investigation, see the Update** — a depiction to look at, not a settled answer)*
 
 **Built as one candidate, deliberately cheap and reversible.** The owner asked
 to SEE this rather than answer it in the abstract, and the one option ruled out
@@ -10317,6 +10317,22 @@ like the site's arithmetic and isn't, and it gives no hook for the (correct,
 teachable) reason why. Cross-check with #228 when the consumer pages adopt the
 helper, since that closes the cross-page disagreement but not the
 reader-arithmetic one.
+
+**Update 2026-08-02 — the owner's first look could NOT reproduce the
+marker.** On the LAN preview, neither the suggested recipe (outdoor-air
+slider to ~0 °F with the damper open 60 %+) nor free exploration showed
+it; his own hypothesis was the zone state ("unless I'm not letting the
+zone get hot enough"). Plausible mechanism, unconfirmed: the #240 table's
+measured fog cases all used zone 76 / damper 60–70 %, but the running
+sequence holds the zone at the heating setpoint (68 — drier return air)
+and holds the damper at `min-oa-pos` (20 %) in cold weather, since the
+economizer call requires a latched cooling stage — so the natural winter
+state may sit outside the fog region the spec forces. Under
+investigation: whether the preview's served bytes carry the marker at
+all, what state the spec actually forces and whether the UI can reach
+it, and where the onset boundary sits with the zone winter-held.
+Findings land here; whether a UI-unreachable marker earns its place is
+the owner's call once they do.
 
 ### 241. The site defines "deadband" two ways for beginners, and neither surface acknowledges the other *(noticed 2026-07-29, deadband/setpoint-gap terminology sweep — **RESOLVED 2026-07-30**, owner ruled for a third option: teach the habit, not the definition — then ruled again to keep both questions and let the bank overflow)*
 
