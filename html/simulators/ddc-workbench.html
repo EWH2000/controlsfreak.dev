@@ -2425,7 +2425,7 @@ noindex: true
                     discharge the machine can legitimately make, above the
                     temperature that bursts a coil. Set it higher and it
                     becomes a nuisance — this unit's two compressor stages pull
-                    the discharge into the high thirties against a clamped-cold
+                    the discharge to the mid thirties against a clamped-cold
                     mixed air, which is ordinary integrated economizing, not a
                     fault. Field stats commonly sit anywhere from the mid
                     thirties to forty; where in that band to put one is a
@@ -2455,10 +2455,14 @@ noindex: true
                 </p>
 
                 <p class="ddcw-sheet-note">
-                    The cleanest way to see all of it is one lie. On the Unit
-                    tab, force the DAT sensor low — the picker option already
-                    names what watches it — and the stat takes the machine down
-                    the same tick. Now release the force, and nothing restarts:
+                    The cleanest way to see all of it is one lie. Open the
+                    wiresheet before you start — its first open loads the sheet
+                    into the editor the way a download loads a controller, and
+                    a download hands a software latch back cleared. Then, on
+                    the Unit tab, force the DAT sensor low — the picker option
+                    already names what watches it — and the stat takes the
+                    machine down the same tick. Now release the force, and
+                    nothing restarts:
                     the discharge reads the still-air room number, the set side
                     of the latch is long clear, and the machine stays down
                     waiting for the button. A software stat trusts its sensor
