@@ -11451,3 +11451,28 @@ per-block state across the mount clone, or pre-mount the editor at boot
 either way — its own PR, both pages at once. Until then the working rule:
 teaching prose must not depend on stateful blocks surviving the first
 Wiresheet open; write the demo to enter the wiresheet first.
+
+### 261. The site nav landmark is unnamed — and the workbench pages now carry one named nav beside one bare one *(noticed 2026-08-02, the 7.5 unit-selector lane — live surface, waits for a deliberate pass)*
+
+`_includes/nav.njk`'s `<nav>` carries no `aria-label`. PR #470 added
+`<nav aria-label="Unit">` to both workbench statusbars, so a screen
+reader's landmark list on those pages now reads one named nav and one
+bare "navigation" — the unnamed one being the site-wide chrome every
+page shares. The fix is one attribute (`aria-label="Site"` or similar)
+in `_includes/nav.njk`, but that template renders into **every page on
+the site**, which makes it a live-surface, approval-gated change — not
+something a hidden-page lane ships in passing. Bundle it with the next
+a11y or nav pass.
+
+### 262. The touch-target floor is height-only; strict WCAG 2.5.5 wants 44×44 *(noticed 2026-08-02, PR #470's adversarial verify — site-wide observation, low priority)*
+
+The shared `TOUCH-TARGET FLOOR` block in `styles.css` and the
+page-local floors modelled on it set `min-height` only. Measured on the
+workbench unit-selector links under `(hover: none)`: 44px tall,
+~41–42px wide. For those two links a page-local `min-width: 44px` in
+the same rule closes the gap at zero live cost (hidden pages). For the
+site-wide block, don't add `min-width` blindly — several of its
+controls are full-width or width-constrained by layout; audit widths
+per selector before extending the convention. AAA-adjacent nicety, not
+an AA failure: 2.5.5 is Level AAA, and the site's stated floor
+(44px + Apple HIG) has always been height-based.

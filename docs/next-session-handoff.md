@@ -83,11 +83,15 @@ verify surfaced. By ruling, no flawed sheet ships for go-live — that is
 add-on material the owner seeds from future war stories. Point-backed blocks are stamped from
 the roster automatically; author nothing onto them.
 
-### 2. 7.5 — the unit selector
+### 2. 7.5 — the unit selector — SHIPPED (PR #470, 2026-08-02)
 
-`Unit — FCU | AHU` link pair with `aria-current="page"`, on both
-statusbars. Verified @ `d62ebd5`: zero `aria-current` hits in either
-workbench page — not started. Small lane.
+`Unit — FCU | AHU` on both statusbars: static markup, real anchors,
+`aria-current="page"` on the self link, byte-identical page-local CSS
+(deliberately duplicated — `styles.css` and `_includes/` are live
+surfaces; hoist both halves in one PR if the pages graduate).
+Adversarially verified, zero defects. Ledger #261/#262 carry the two
+small items the lane surfaced (the unnamed site-nav landmark; the
+height-only touch floor).
 
 ### 3. ⚠️ STOP — owner discussion before Phase 8
 
