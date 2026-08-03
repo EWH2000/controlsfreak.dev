@@ -262,6 +262,21 @@ noindex: true
                 white-space: nowrap;
                 border: 0;
             }
+            /* The diet makes every cell on the desktop row a button, so a
+               button now ALWAYS holds the last grid track — and a button's
+               -0.3rem hit-area bleed pokes past the grid's right edge. In
+               fullscreen the pane is the scroller, so that bleed became a
+               4.8px horizontal scrollbar this pane never showed at desktop
+               widths pre-diet (the last track held a PLAIN cell, which has
+               no bleed). Padding equal to the bleed absorbs it: tracks
+               shrink ~1.6px each, text alignment is untouched (the bleed
+               zone is invisible until hover/focus paints it). Scoped to the
+               diet regime — below the cutoff the mix of plain and button
+               cells is exactly main's, where a button CAN land in the last
+               track at some widths; that pre-existing overhang (and the AHU
+               pane, which already scrolls the same 5px at desktop on main)
+               stays one logged design call, not a page-local patch here. */
+            .fcu-points { padding-right: 0.3rem; }
         }
 
         /* Verdict pill sits tight under the points. */

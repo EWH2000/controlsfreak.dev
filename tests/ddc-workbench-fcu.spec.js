@@ -590,6 +590,32 @@ test.describe('DDC Workbench — the mirror diet', () => {
         expect((await cellBoxes(page)).filter((c) => c.boxed).length,
             'one pixel under the cutoff the whole list is back').toBe(6);
     });
+
+    test('the diet does not hand the fullscreen pane a horizontal scrollbar', async ({ page }) => {
+        // On main this pane is clean at the default 1280×720: the last grid
+        // track held a PLAIN cell, whose box has no hit-area bleed. The diet
+        // makes the desktop row all buttons, so a button always holds the
+        // last track — and its -0.3rem bleed poked 4.8px past the grid,
+        // which the fullscreen pane (the one scrolling ancestor) rendered
+        // as a horizontal scrollbar the pre-diet page never showed. The
+        // diet-scoped padding-right on .fcu-points absorbs the bleed; this
+        // row is what reddens if that rule is dropped.
+        //
+        // Deliberately NOT asserted below the cutoff, and NOT on the AHU:
+        // sub-900 this page's cell mix is exactly main's, where a button
+        // can land in the last track at some widths (640/700px fullscreen
+        // measure the same 5px on main), and the AHU pane already scrolls
+        // 5px at 1280 on main — both halves of the PRE-EXISTING overhang,
+        // logged as a design call (grid padding vs. the negative margin),
+        // which this row must not quietly pre-decide.
+        await page.goto(URL);
+        await page.click('.tool-card-fullscreen-btn');
+        const over = await page.evaluate(() => {
+            const pane = document.querySelector('#tab-unit');
+            return pane.scrollWidth - pane.clientWidth;
+        });
+        expect(over, 'no horizontal scroll in the diet regime').toBe(0);
+    });
 });
 
 test.describe('DDC Workbench — the low-charge verdict offers a candidate, not a finding (#247)', () => {
