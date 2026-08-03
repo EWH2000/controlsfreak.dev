@@ -212,6 +212,31 @@ test.describe('ddcw-ahu-unit: point-list contract', () => {
         });
     });
 
+    test('every param point carries coherent min/max/step (the rail clamps to them)', () => {
+        // Owner ruling 2026-08-03: the operator graphic's parameter rail
+        // commits param edits, clamped to the roster's min/max — so on
+        // params these fields are LOAD-BEARING, not informational. A
+        // param without them ships an unclamped field; an inverted pair
+        // ships a rail that rejects everything. Canonical IP; the ranges
+        // themselves are first-cut, owner-retunable, and deliberately NOT
+        // pinned to specific numbers here.
+        const Unit = loadUnit();
+        const params = Unit.points.filter((p) => p.kind === 'param');
+        expect(params.length).toBeGreaterThan(0);
+        params.forEach((p) => {
+            expect(typeof p.min, p.id + ' min').toBe('number');
+            expect(typeof p.max, p.id + ' max').toBe('number');
+            expect(typeof p.step, p.id + ' step').toBe('number');
+            expect(p.min, p.id + ' min < max').toBeLessThan(p.max);
+            expect(p.step, p.id + ' step > 0').toBeGreaterThan(0);
+        });
+        // The deadband's floor stays above zero: a zero band short-cycles
+        // by construction, and the zero-band lesson is deliberately
+        // wiresheet-only (the const there is unguarded).
+        const db = params.find((p) => p.id === 'deadband');
+        expect(db.min, 'deadband floor above zero').toBeGreaterThan(0);
+    });
+
     test('a fully relinquished machine rests stopped and closed', () => {
         // Every relinquishDefault is chosen so that losing the whole
         // priority array parks the unit safe: no fan, no compressor,

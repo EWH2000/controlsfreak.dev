@@ -208,28 +208,65 @@ test.describe('AHU workbench page: the surfaces render', () => {
         // The one permitted duplication on this component — the zone box,
         // the rail and the mirror — because that setpoint is the stage's
         // BREAK point. All three are written in one renderUnit call, and
-        // this is what keeps that true.
+        // this is what keeps that true. The rail copy is an INPUT now, so
+        // its reading is value + suffix span, not textContent.
         const a = await page.locator('#ahu-v-cool-sp').textContent();
-        const b = await page.locator('#ahu-p-cool-sp').textContent();
+        const b = await page.locator('#ahu-p-cool-sp').inputValue()
+            + ' ' + await page.locator('#ahu-p-cool-sp-u').textContent();
         const c = await page.locator('#ahu-r-cool-sp').textContent();
         expect(a.trim()).toBe(b.trim());
         expect(a.trim()).toBe(c.trim());
     });
 
-    test('the rail is read-only and carries no form control', async ({ page }) => {
+    test('the rail is the adjustable surface: five labelled inputs, calc rows control-free', async ({ page }) => {
         await open(page);
-        // The rail holds the sequence's CONSTANTS. A hand control writes
-        // slot 8 and takes a point off program; keeping the two surfaces
-        // physically separate is how the graphic says so without a
-        // paragraph. If a parameter is ever made editable it takes
-        // .ps-label + .ps-input with a real for= pairing and MOVES OUT of
-        // this panel — which is what this row would catch.
-        await expect(page.locator('.ahu-params input, .ahu-params select, .ahu-params button'))
+        // This row used to assert ZERO form controls in the rail, with a
+        // comment prescribing that an editable parameter would move OUT of
+        // the panel. The owner ruled the other way (2026-08-03): the rail
+        // itself became the adjustable surface — setpoints adjust from the
+        // operator graphic, like a real DDC graphic — so the contract is
+        // now five <input type=number>s, each with a real <label for>, and
+        // nothing else interactive in the aside.
+        const inputs = page.locator('.ahu-params input');
+        await expect(inputs).toHaveCount(5);
+        for (const id of ['ahu-p-cool-sp', 'ahu-p-heat-sp', 'ahu-p-deadband',
+            'ahu-p-econ-lockout', 'ahu-p-min-oa']) {
+            await expect(page.locator('#' + id), id).toHaveAttribute('type', 'number');
+            await expect(page.locator('label[for="' + id + '"]'), 'label for ' + id)
+                .toHaveCount(1);
+        }
+        await expect(page.locator('.ahu-params select, .ahu-params button'))
             .toHaveCount(0);
+        // The calculated rows stay control-free wells: SP DIFF (nothing
+        // sets it — it falls out of its two neighbours) and the three
+        // UNIT MODE rows. An input on any of them would claim something
+        // sets them.
+        for (const id of ['ahu-p-sp-diff', 'ahu-d-call', 'ahu-d-econ', 'ahu-d-mech']) {
+            const tag = await page.locator('#' + id)
+                .evaluate((el) => el.tagName.toLowerCase());
+            expect(tag, id + ' stays a well, not a control').toBe('span');
+        }
         // And the SP DIFF well keeps .is-calc. The default ink here is the
         // commanded green, so dropping the class is a one-token edit that
         // looks like consistency and destroys the meaning.
         await expect(page.locator('#ahu-p-sp-diff')).toHaveClass(/is-calc/);
+        // The rail's clamp announcement line exists and is a polite live
+        // region — the announced-rails half of the ruling.
+        const hint = page.locator('#ahu-params-hint');
+        await expect(hint).toHaveCount(1);
+        await expect(hint).toHaveAttribute('role', 'status');
+        await expect(hint).toHaveAttribute('aria-live', 'polite');
+        // No duplicate ids anywhere on the page — the new input/suffix ids
+        // reuse the old well ids, so a half-migrated copy would collide.
+        const dups = await page.evaluate(() => {
+            const seen = new Set(); const out = [];
+            document.querySelectorAll('[id]').forEach((el) => {
+                if (seen.has(el.id)) out.push(el.id);
+                seen.add(el.id);
+            });
+            return out;
+        });
+        expect(dups).toEqual([]);
     });
 
     test('the verdict announces outside both tab panes', async ({ page }) => {
@@ -1094,4 +1131,262 @@ test.describe('AHU workbench page: the unit selector on touch', () => {
             expect(box.height, `link ${i} height`).toBeGreaterThanOrEqual(44);
         }
     });
+});
+
+test.describe('AHU workbench page: the parameter rail adjusts the running program', () => {
+    // The 2026-08-03 ruling: params are adjustable from the operator
+    // graphic. Every row here drives the BUILT page end-to-end, because
+    // the write path is the part a unit test can't vouch for — the edit
+    // must land on the const block of the RUNNING graph (block id ===
+    // point id), never on plant.params, which bindingTick overwrites
+    // from the block within one tick. A wrong write path looks fine for
+    // exactly one tick, which is why the rows below read the OTHER
+    // surfaces (chip, SVG well, mirror, wiresheet block) and not the
+    // input they typed into.
+
+    const chipText = (page, cap) => page.evaluate((c) => {
+        const chips = Array.from(document.querySelectorAll('#ddcw-io .ddcw-chip'));
+        const hit = chips.find((el) => el.textContent.includes(c));
+        return hit ? hit.textContent : null;
+    }, cap);
+
+    test('typing does not write; Enter commits, and every surface agrees within a tick', async ({ page }) => {
+        await open(page);
+        const cool = page.locator('#ahu-p-cool-sp');
+        await cool.click();
+        await cool.fill('');
+        await cool.pressSequentially('74');
+        await settle(page, 300);
+        // Mid-type: the momentary "7" (then "74", uncommitted) must not
+        // have reached the program — the chip and the SVG well still read
+        // the shipped 72.0.
+        expect(await chipText(page, 'Cool SP'), 'chip mid-type').toContain('72.0');
+        await expect(page.locator('#ahu-v-cool-sp')).toHaveText('72.0 °F');
+
+        await cool.press('Enter');
+        await settle(page, 300);
+        expect(await chipText(page, 'Cool SP'), 'chip after Enter').toContain('74.0');
+        await expect(page.locator('#ahu-v-cool-sp')).toHaveText('74.0 °F');
+        await expect(page.locator('#ahu-r-cool-sp')).toHaveText('74.0 °F');
+        expect(await cool.inputValue()).toBe('74.0');
+        // SP DIFF follows — the calculated row recomputes off the edit.
+        await expect(page.locator('#ahu-p-sp-diff')).toHaveText('6.0 °F');
+        // And the edit is a CONSTANT change, not a hand command: the
+        // program picker must NOT flip to Custom (same contract as an
+        // inspector param edit), and nothing lands off-program.
+        expect(await page.locator('#ddcw-program').inputValue()).toBe('econ-2stage');
+        await expect(page.locator('#ddcw-offprog-list li')).toHaveCount(0);
+    });
+
+    test('Escape reverts the field without committing', async ({ page }) => {
+        await open(page);
+        const heat = page.locator('#ahu-p-heat-sp');
+        await heat.click();
+        await heat.fill('60');
+        await heat.press('Escape');
+        await settle(page, 200);
+        expect(await heat.inputValue(), 'field back on the live value').toBe('68.0');
+        expect(await chipText(page, 'Heat SP'), 'nothing committed').toContain('68.0');
+    });
+
+    test('a commit outside the rails clamps — and ANNOUNCES the range', async ({ page }) => {
+        await open(page);
+        const cool = page.locator('#ahu-p-cool-sp');
+        await cool.click();
+        await cool.fill('200');
+        await cool.press('Enter');
+        await settle(page, 300);
+        // Clamped to the roster max, not rejected and not taken raw…
+        expect(await cool.inputValue()).toBe('85.0');
+        expect(await chipText(page, 'Cool SP')).toContain('85.0');
+        // …and the hint line says so, naming the range, so a reader who
+        // skipped the prose doesn't think the field is broken. (On a real
+        // front end the rails are usually silent; this is a classroom.)
+        await expect(page.locator('#ahu-params-hint')).toContainText('65.0–85.0 °F');
+    });
+
+    test('an edit made before the first wiresheet open survives the mount (#260)', async ({ page }) => {
+        await open(page);
+        // The regression this row exists for: the first Wiresheet open
+        // deep-clones the running graph into the editor (construction →
+        // makeGraph), and makeGraph resets state/out/in but PRESERVES
+        // params. A write path that parked the value anywhere else — or a
+        // clone that reset params — would silently revert the edit on
+        // first mount, which no other row would catch.
+        const cool = page.locator('#ahu-p-cool-sp');
+        await cool.click();
+        await cool.fill('80');
+        await cool.press('Enter');
+        await settle(page, 200);
+        await page.locator('.tabs.tabs-flush [data-tab="wiresheet"]').click();
+        await settle(page, 600);
+        // Read the const block's own value strip on the sheet — the
+        // editor repaints it from the block's outputs each tick, so this
+        // is the running graph speaking, not the input echoing.
+        const strip = await page.evaluate(() => {
+            const blocks = Array.from(document.querySelectorAll('#ddcw-fbe-inner .fbe-block'));
+            const b = blocks.find((el) => (el.textContent || '').includes('Cool SP'));
+            return b ? b.querySelector('.fbe-block-val').textContent : null;
+        });
+        expect(strip, 'the wiresheet const carries the pre-mount edit').toBe('80');
+        // And the rail still agrees after the mount's graph swap.
+        expect(await cool.inputValue()).toBe('80.0');
+    });
+
+    test('a program switch resets the rail to the authored literals', async ({ page }) => {
+        await open(page);
+        const cool = page.locator('#ahu-p-cool-sp');
+        await cool.click();
+        await cool.fill('80');
+        await cool.press('Enter');
+        await settle(page, 200);
+        // Blur before switching: Playwright's selectOption moves no
+        // focus, but every real interaction with the picker does — and
+        // the mirror paint deliberately skips a FOCUSED field (commit is
+        // Enter/blur), so an unblurred switch here would read a stale
+        // field and call the reset broken when it isn't.
+        await cool.blur();
+        await page.locator('#ddcw-program').selectOption('econ-2stage-lowlimits');
+        await settle(page, 400);
+        // Same contract as the wiresheet's own picker behaviour: a
+        // program load re-clones the authored literal, params included.
+        expect(await cool.inputValue()).toBe('72.0');
+        expect(await chipText(page, 'Cool SP')).toContain('72.0');
+    });
+
+    test('after Clear the rail disables, honestly depicting the freeze', async ({ page }) => {
+        await open(page);
+        await page.locator('.tabs.tabs-flush [data-tab="wiresheet"]').click();
+        await settle(page, 600);
+        await page.locator('#tab-wiresheet [data-fbe-action="clear"]').click();
+        await settle(page, 400);
+        // bindingTick skips a missing block, so the param freezes at its
+        // last read — the input disables (with a title saying why) rather
+        // than accept an edit with nowhere to land.
+        for (const id of ['ahu-p-cool-sp', 'ahu-p-heat-sp', 'ahu-p-deadband',
+            'ahu-p-econ-lockout', 'ahu-p-min-oa']) {
+            await expect(page.locator('#' + id), id).toBeDisabled();
+        }
+        const title = await page.locator('#ahu-p-cool-sp').getAttribute('title');
+        expect(title).toContain('no cooling-setpoint block');
+        // Reloading a program re-arms the rail.
+        await page.locator('#ddcw-program').selectOption('econ-2stage');
+        await settle(page, 400);
+        await expect(page.locator('#ahu-p-cool-sp')).toBeEnabled();
+    });
+
+    test('the units toggle re-expresses values, ranges and suffixes', async ({ page }) => {
+        await open(page);
+        await page.locator('.units-btn').filter({ hasText: 'Metric' }).click();
+        await settle(page, 300);
+        const cool = page.locator('#ahu-p-cool-sp');
+        // 72 °F → 22.2 °C; the deadband is a DELTA: 2 °F → 1.1 °C.
+        expect(await cool.inputValue()).toBe('22.2');
+        expect(await page.locator('#ahu-p-deadband').inputValue()).toBe('1.1');
+        await expect(page.locator('#ahu-p-cool-sp-u')).toHaveText('°C');
+        // The range attributes move with the mode (65–85 °F → 18.3–29.4 °C)
+        // so the spinners and browser cues stay honest; the committed
+        // clamp is canonical-side and unaffected.
+        expect(await cool.getAttribute('min')).toBe('18.3');
+        expect(await cool.getAttribute('max')).toBe('29.4');
+        // A metric commit round-trips through toCanonical: 23 °C → 73.4 °F.
+        await cool.click();
+        await cool.fill('23');
+        await cool.press('Enter');
+        await settle(page, 300);
+        expect(await cool.inputValue()).toBe('23.0');
+        expect(await chipText(page, 'Cool SP')).toContain('23.0 °C');
+    });
+
+    test('boot values sit inside the declared rails', async ({ page }) => {
+        await open(page);
+        // A shipped literal outside its own roster range would clamp on
+        // the first touch — the owner retuning either side must keep the
+        // pair coherent, and this is the row that says so.
+        const vals = await page.evaluate(() => Array.from(
+            document.querySelectorAll('.ahu-params input')).map((el) => ({
+            id: el.id, v: parseFloat(el.value),
+            min: parseFloat(el.min), max: parseFloat(el.max),
+        })));
+        expect(vals.length).toBe(5);
+        for (const r of vals) {
+            expect(r.v, r.id + ' boot value >= min').toBeGreaterThanOrEqual(r.min);
+            expect(r.v, r.id + ' boot value <= max').toBeLessThanOrEqual(r.max);
+        }
+    });
+});
+
+test.describe('AHU workbench page: rail ink clears the AA floor in both themes', () => {
+    // Hand-written contrast rows, because this is a hidden page: no
+    // canonical → not in tests/pages.js → contrast-sweep.spec.js never
+    // measures a colour on it. The rail's NEW ink sources are the input
+    // value (accent-ink on the editwell), the label captions (text-dim)
+    // and the hint line (amber-ink) — each asserted at the 4.5:1
+    // small-text floor in BOTH themes. The disabled state is exempt
+    // (WCAG 1.4.3 inactive-control exception).
+
+    async function themed(browser, theme) {
+        const ctx = await browser.newContext({
+            viewport: { width: 1500, height: 950 },
+            colorScheme: theme,                    // headless default is LIGHT — never assume
+        });
+        await ctx.addInitScript((t) => {
+            try { localStorage.setItem('cf_theme', t); } catch (e) { /* private mode */ }
+        }, theme);
+        return ctx;
+    }
+
+    for (const theme of ['dark', 'light']) {
+        test(`rail ink >= 4.5:1 in ${theme}`, async ({ browser }) => {
+            const ctx = await themed(browser, theme);
+            const page = await ctx.newPage();
+            try {
+                await page.goto(URL);
+                await page.waitForTimeout(400);
+                expect(await page.evaluate(
+                    () => document.documentElement.getAttribute('data-theme'),
+                ), 'the seeded theme must actually render').toBe(theme);
+
+                const rows = await page.evaluate(() => {
+                    const lum = (c) => {
+                        const m = /rgba?\(([\d.]+), ([\d.]+), ([\d.]+)/.exec(c);
+                        const ch = [m[1], m[2], m[3]].map((v) => {
+                            const s = Number(v) / 255;
+                            return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+                        });
+                        return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+                    };
+                    const bgOf = (el) => {
+                        let n = el;
+                        while (n && n !== document.documentElement) {
+                            const bg = getComputedStyle(n).backgroundColor;
+                            if (bg && !/rgba?\(\d+, \d+, \d+, 0\)/.test(bg)
+                                && bg !== 'transparent') return bg;
+                            n = n.parentElement;
+                        }
+                        return getComputedStyle(document.documentElement).backgroundColor;
+                    };
+                    const ratio = (el) => {
+                        const fg = lum(getComputedStyle(el).color);
+                        const bg = lum(bgOf(el));
+                        return (Math.max(fg, bg) + 0.05) / (Math.min(fg, bg) + 0.05);
+                    };
+                    const hint = document.getElementById('ahu-params-hint');
+                    return {
+                        input: ratio(document.getElementById('ahu-p-cool-sp')),
+                        suffix: ratio(document.getElementById('ahu-p-cool-sp-u')),
+                        label: ratio(document.querySelector('label[for="ahu-p-cool-sp"]')),
+                        hint: ratio(hint),
+                        note: ratio(document.querySelector('.ahu-param-note')),
+                    };
+                });
+                for (const [name, r] of Object.entries(rows)) {
+                    expect(r, `${name} ink in ${theme} (measured ${r.toFixed(2)}:1)`)
+                        .toBeGreaterThanOrEqual(4.5);
+                }
+            } finally {
+                await ctx.close();
+            }
+        });
+    }
 });
