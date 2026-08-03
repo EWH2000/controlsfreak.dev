@@ -753,9 +753,11 @@ noindex: true
         p.ahu-teach-p strong { color: var(--text-bright); font-weight: 600; }
 
         /* ── Point mirror ─────────────────────────────────────────────────
-           SVG text gets tiny on a phone, so every value that exists only in
-           the drawing has an HTML twin here. The rail's rows are already
-           HTML and are NOT mirrored. */
+           SVG text does not reflow, so below the legibility cutoff the
+           drawing's values shrink past reading and every value that exists
+           only in the drawing has an HTML twin here. The rail's rows are
+           already HTML and are NOT mirrored. Above the cutoff the plain
+           twins stop taking space — see THE MIRROR DIET below. */
         .ahu-points {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -825,6 +827,60 @@ noindex: true
         .ahu-point-btn.is-active { border-color: var(--accent); }
         @media (hover: none) {
             .ahu-point-btn { min-height: 44px; }
+        }
+
+        /* ── THE MIRROR DIET (owner ruling 2026-08-03) ─────────────────────
+           On a desktop this list repaints the whole drawing a second time
+           and the duplication costs more screen than it buys, so above the
+           cutoff the PLAIN cells stop taking space. The five BUTTONS stay
+           at every width: they are the #227(b) affordance and nothing
+           inside the SVG is focusable, so hiding them would delete the only
+           keyboard path to the chip pulse.
+
+           ⚠ VISUALLY HIDDEN, NOT display:none, AND THAT IS THE CARE HERE.
+           The drawing is role="img", so its subtree is pruned from the
+           accessibility tree and this list is the ONLY text rendering of
+           those values. Three of them — RA damper, relief damper and ΔT —
+           have no statusbar chip either, because they are derived rather
+           than roster points, so display:none would delete them outright
+           for a desktop screen-reader user. ΔT included, on the page whose
+           whole diagnostic is "no ΔT over the coil". These declarations ARE
+           .sr-only's (styles.css), applied by WIDTH instead of by class:
+           the cell leaves the grid flow and keeps announcing. It is also
+           what keeps #ahu-desc's closing sentence true at every width.
+
+           ⚠ THE CUTOFF IS A MEASURED 896 ROUNDED UP, NOT A COPIED
+           BREAKPOINT. The mirror's job begins where the drawing stops
+           rendering at the scale its legibility was measured at. MEASURED
+           on the built page: this drawing holds its full 780px down to a
+           896px viewport and shrinks monotonically below it (764 at 880,
+           684 at 800, 536 at 620 — where an 8px SVG label lands at 5.1 CSS
+           px). The FCU's holds its own 660px cap down to 774px, so the AHU
+           is the binding case and one shared number has to clear 896. 900
+           is the next round one and is already a break this site uses
+           (.tool-body-2col collapses there; both cockpits' fullscreen grids
+           stack at max-width: 900px). That leaves only 4px of margin, so
+           tests/ddc-workbench-ahu-page.spec.js pins the RATIONALE and not
+           just the constant: at exactly 900 the drawing must still measure
+           780. A padding retune that pushes the 896 line past 900 reddens
+           that row instead of quietly shipping a squeezed drawing with no
+           mirror under it.
+
+           ⚠ NOT the hamburger's 620. Between 620 and 896 the drawing is
+           squeezed to as little as 536px, so a cutoff there would leave a
+           wide band with a shrunken drawing and nothing under it. */
+        @media (min-width: 900px) {
+            .ahu-point:not(.ahu-point-btn) {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                padding: 0;
+                margin: -1px;
+                overflow: hidden;
+                clip: rect(0, 0, 0, 0);
+                white-space: nowrap;
+                border: 0;
+            }
         }
 
         /* ── Controls ─────────────────────────────────────────────────── */
@@ -1077,17 +1133,23 @@ noindex: true
         }
         /* ⚠ THE CONSOLE IS STICKY, AND TALLER-THAN-SCROLLPORT IS ITS NORMAL
            CASE, NOT AN EDGE CASE. The pane is the single scroller and the
-           right column (mirror + presets + sliders) is ~2.4× the scrollport
-           at 1280×720, so an unpinned console translated up out of view and
-           the rest of the scroll ran over dead space (owner report,
-           2026-08-01). Sticky pins it — and the built console (497px) is
-           already 15px TALLER than the 482px scrollport at 1280×720, so the
-           overhang handling is load-bearing: deliberately NO height cap and
-           NO internal scrollbar. Sticky may not displace the box past the
-           scrolled content's extent, so at max scroll the offset runs out
-           and the console bottoms out flush with the pane bottom (measured:
-           it rides pinned, then yields exactly the 15px overhang at the end
-           of the travel). Every pixel — the verdict pill lives at the
+           right column (mirror + presets + sliders) outruns it at 1280×720,
+           so an unpinned console translated up out of view and the rest of
+           the scroll ran over dead space (owner report, 2026-08-01). Sticky
+           pins it — and the built console is already TALLER than the 482px
+           scrollport at 1280×720, so the overhang handling is load-bearing:
+           deliberately NO height cap and NO internal scrollbar.
+           ⚠ RE-MEASURED 2026-08-03: console 620px, overhang 138px, and the
+           pane's overflow 440px WITH the mirror diet on (669px without it —
+           the diet shortens the column but nowhere near closing it). The
+           figures this comment used to carry (497px console, 15px overhang)
+           predate #472 growing the rail's params into inputs.
+
+           Sticky may not displace the box past the scrolled content's
+           extent, so at max scroll the offset runs out and the console
+           bottoms out flush with the pane bottom (measured: it rides
+           pinned, then yields exactly the overhang at the end of the
+           travel). Every pixel — the verdict pill lives at the
            console's bottom — is reachable at some scroll position; the only
            cost is the drawing's top edge clipping by the overhang until you
            scroll back up. No `bottom: 0`: align-self: start leaves the
@@ -2236,9 +2298,10 @@ noindex: true
                 </aside>
             </div>
 
-            <!-- ══ THE MOBILE POINT MIRROR ══════════════════════════════════════
-                 SVG text does not reflow, so on a phone the drawing's values get
-                 too small to read. The rule is simple and total: EVERY VALUE THAT
+            <!-- ══ THE POINT MIRROR ═════════════════════════════════════════════
+                 SVG text does not reflow, so below the legibility cutoff — 900px,
+                 measured, see THE MIRROR DIET in the head — the drawing's values
+                 shrink past reading. The rule is simple and total: EVERY VALUE THAT
                  EXISTS ONLY IN THE SVG HAS AN HTML TWIN HERE — one entry per
                  callout row plus the two zone wells, in air-path order. The rail's
                  rows are already HTML and are deliberately NOT mirrored.
@@ -2248,13 +2311,25 @@ noindex: true
                  glyph on the drawing; pressing the mirror cell pulses that point's
                  statusbar chip and latches its annotation on the graphic. The
                  remaining eleven are plain divs, because they report commanded
-                 devices with no glyph to light. -->
+                 devices with no glyph to light.
+
+                 ⚠ AND THAT SPLIT IS ALSO THE DIET'S SEAM (owner ruling
+                 2026-08-03). Above 900px the eleven plain cells go visually
+                 hidden — still in the DOM, still painted by renderUnit, still
+                 announced — while the five buttons stay at every width. The
+                 selector is :not(.ahu-point-btn), so a cell promoted to a button
+                 later keeps its place on the desktop row without a second edit.
+                 Read THE MIRROR DIET in the head block before changing either
+                 half; the choice of visually-hidden over display:none is what
+                 keeps three chip-less values reachable up here. -->
             <section class="ahu-mirror" aria-labelledby="ahu-points-h">
                 <h2 class="subhead" id="ahu-points-h">Live points</h2>
                 <p class="ref-note">
                     The five points with a sensing device on the drawing are
                     buttons — press one to flag its live-value chip in the
-                    statusbar and light the annotation it feeds.
+                    statusbar and light the annotation it feeds. Narrow the
+                    window and the list fills out with the rest of the
+                    drawing's values, for where its own text reads too small.
                 </p>
                 <div class="ahu-points">
                     <button type="button" class="ahu-point ahu-point-btn" data-point="oat" aria-pressed="false">

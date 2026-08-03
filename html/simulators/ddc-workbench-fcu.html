@@ -171,8 +171,10 @@ noindex: true
             .fcu-fan-blade { transform: none !important; }
         }
 
-        /* Point-readout grid below the graphic — the mobile-legible mirror
-           of the on-graphic labels (SVG text gets tiny on a phone). */
+        /* Point-readout grid below the graphic — the legible mirror of the
+           on-graphic labels (SVG text does not reflow, so the drawing's
+           values shrink past reading on a narrow window). Above the cutoff
+           the plain cells stop taking space — see THE MIRROR DIET below. */
         .fcu-points {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -221,6 +223,45 @@ noindex: true
         .fcu-point-btn.is-active { border-color: var(--accent); }
         @media (hover: none) {
             .fcu-point-btn { min-height: 44px; }
+        }
+
+        /* ── THE MIRROR DIET (owner ruling 2026-08-03) ─────────────────────
+           Above the cutoff the drawing carries these values legibly on its
+           own and repeating them costs more screen than it buys, so the
+           PLAIN cells stop taking space. The three BUTTONS stay at every
+           width — same #227(b) reasoning as the buttons themselves: nothing
+           inside the SVG is focusable, so they are the only keyboard path
+           to the chip pulse. Same shape and same cutoff as the AHU page's
+           .ahu-point rule; the ruling was one change across both pages,
+           exactly like the affordance above it.
+
+           ⚠ VISUALLY HIDDEN, NOT display:none. role="img" prunes the
+           drawing's subtree, so this list is the only text rendering of
+           those values, and ΔT has no statusbar chip to fall back on — it
+           is derived, not a roster point. These declarations ARE .sr-only's
+           (styles.css), applied by WIDTH instead of by class: the cell
+           leaves the grid flow and keeps announcing.
+
+           ⚠ THE 900 IS THE AHU's MEASUREMENT, AND IT IS CONSERVATIVE HERE.
+           The line is where a drawing stops rendering at the scale its
+           legibility was measured at: this one holds its full 660px down to
+           a 774px viewport, the AHU's holds 780px only to 896px, so the AHU
+           binds and one shared number has to clear 896. Between 774 and 900
+           this page keeps its plain cells with the drawing still at cap —
+           the safe direction to err. Full derivation lives in the AHU
+           page's copy of this block. */
+        @media (min-width: 900px) {
+            .fcu-point:not(.fcu-point-btn) {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                padding: 0;
+                margin: -1px;
+                overflow: hidden;
+                clip: rect(0, 0, 0, 0);
+                white-space: nowrap;
+                border: 0;
+            }
         }
 
         /* Verdict pill sits tight under the points. */
@@ -984,11 +1025,19 @@ noindex: true
                 </svg>
             </div>
 
-            <!-- Point readouts (mobile-legible mirror) + the verdict. -->
+            <!-- Point readouts (the legible mirror) + the verdict. Above 900px
+                 the three PLAIN cells go visually hidden — still in the DOM,
+                 still painted by renderUnit, still announced — while the three
+                 buttons stay at every width. The selector is
+                 :not(.fcu-point-btn), so a cell promoted to a button later keeps
+                 its place on the desktop row without a second edit. See THE
+                 MIRROR DIET in the head block. -->
             <p class="ref-note">
                 The three points with a sensing device on the drawing are
                 buttons — press one to flag its live-value chip in the
-                statusbar.
+                statusbar. Narrow the window and the list fills out with the
+                rest of the drawing's values, for where its own text reads
+                too small.
             </p>
             <div class="fcu-points">
                 <button type="button" class="fcu-point fcu-point-btn" data-point="rat" aria-pressed="false">
