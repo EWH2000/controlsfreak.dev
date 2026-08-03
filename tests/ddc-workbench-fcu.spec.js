@@ -431,8 +431,11 @@ test.describe('DDC Workbench — the fullscreen cockpit keeps its graphic', () =
     // pane the single scroller, the readouts + controls column outruns the
     // scrollport, and before the sticky pin the graphic scrolled partly out
     // of view over dead space (246 of 390px left at 1280×720). The graphic
-    // spans all three grid rows, so it pins without any wrapper; `bottom: 0`
-    // rides along because the item is CENTERED (see the page's head block).
+    // spans the right column's whole row stack (its named grid-area covers
+    // every row, so a new row — the param rail landed this way — joins the
+    // span without touching the pin), so it pins without any wrapper;
+    // `bottom: 0` rides along because the item is CENTERED (see the page's
+    // head block).
 
     test('scrolled to the bottom, the graphic is still in full view', async ({ page }) => {
         await page.goto(URL);
@@ -665,4 +668,265 @@ test.describe('DDC Workbench — the unit selector on touch', () => {
             expect(box.height, `link ${i} height`).toBeGreaterThanOrEqual(44);
         }
     });
+});
+
+test.describe('DDC Workbench — the parameter rail adjusts the running program', () => {
+    // The FCU half of the 2026-08-03 ruling: this page gained a mini
+    // param rail (cooling setpoint + deadband) on the AHU rail's
+    // pattern. The AHU page spec carries the exhaustive behaviour rows
+    // (write path, #260 mount survival, custom-flag contract); this
+    // block pins the FCU's own wiring end-to-end — the rail exists,
+    // labels resolve, a commit reaches every display surface, the clamp
+    // announces, and the disable honestly depicts a cleared sheet.
+
+    const chipText = (page, cap) => page.evaluate((c) => {
+        const chips = Array.from(document.querySelectorAll('#ddcw-io .ddcw-chip'));
+        const hit = chips.find((el) => el.textContent.includes(c));
+        return hit ? hit.textContent : null;
+    }, cap);
+
+    test('two labelled inputs; a commit reaches chip, SVG well and mirror within a tick', async ({ page }) => {
+        await page.goto(URL);
+        await page.waitForTimeout(400);
+        for (const id of ['fcu-p-cool-sp', 'fcu-p-deadband']) {
+            await expect(page.locator('#' + id), id).toHaveAttribute('type', 'number');
+            await expect(page.locator('label[for="' + id + '"]'), 'label for ' + id)
+                .toHaveCount(1);
+        }
+        // The hint line is a polite live region.
+        const hint = page.locator('#fcu-params-hint');
+        await expect(hint).toHaveAttribute('role', 'status');
+        await expect(hint).toHaveAttribute('aria-live', 'polite');
+        // No duplicate ids page-wide (the rail reuses the p*/u* id shape).
+        const dups = await page.evaluate(() => {
+            const seen = new Set(); const out = [];
+            document.querySelectorAll('[id]').forEach((el) => {
+                if (seen.has(el.id)) out.push(el.id);
+                seen.add(el.id);
+            });
+            return out;
+        });
+        expect(dups).toEqual([]);
+
+        const cool = page.locator('#fcu-p-cool-sp');
+        // Typing alone must not write — commit is Enter / focus-out.
+        await cool.click();
+        await cool.fill('');
+        await cool.pressSequentially('75');
+        await page.waitForTimeout(300);
+        expect(await chipText(page, 'Cool SP'), 'chip mid-type').toContain('72.0');
+        await cool.press('Enter');
+        await page.waitForTimeout(300);
+        // Every display surface agrees: chip, the SVG zone well (the
+        // read-only display twin — nothing in the graphic is focusable),
+        // the mirror's zone/setpoint pair, and the field itself.
+        expect(await chipText(page, 'Cool SP')).toContain('75.0');
+        await expect(page.locator('#fcu-zone-sp')).toHaveText('75.0 °F');
+        await expect(page.locator('#fcu-zone-r')).toContainText('/ 75.0 °F');
+        expect(await cool.inputValue()).toBe('75.0');
+        // A constant change, not a hand command: picker not Custom,
+        // nothing off-program.
+        expect(await page.locator('#ddcw-program').inputValue()).toBe('cool-2stage');
+        await expect(page.locator('#ddcw-offprog-list li')).toHaveCount(0);
+    });
+
+    test('clamp announces the range; Escape reverts without committing', async ({ page }) => {
+        await page.goto(URL);
+        await page.waitForTimeout(400);
+        const cool = page.locator('#fcu-p-cool-sp');
+        await cool.click();
+        await cool.fill('10');
+        await cool.press('Enter');
+        await page.waitForTimeout(300);
+        expect(await cool.inputValue(), 'held at the roster min').toBe('65.0');
+        await expect(page.locator('#fcu-params-hint')).toContainText('65.0–85.0 °F');
+
+        const db = page.locator('#fcu-p-deadband');
+        await db.click();
+        await db.fill('4');
+        await db.press('Escape');
+        await page.waitForTimeout(200);
+        expect(await db.inputValue(), 'deadband back on the shipped 3.0').toBe('3.0');
+        expect(await chipText(page, 'Deadband'), 'nothing committed').toContain('3.0');
+        // Escape on the now-CLEAN field has nothing to cancel, so the
+        // press must bubble on to the page handlers — in the fullscreen
+        // cockpit that is the only keyboard way out for a user whose
+        // focus sits in a rail field (same contract as the AHU page's
+        // dedicated row; the rail logic is deliberately duplicated, so
+        // the claim-only-when-dirty guard needs its own pin here).
+        await page.click('.tool-card-fullscreen-btn');
+        await page.waitForTimeout(300);
+        await db.click();
+        await db.press('Escape');
+        await page.waitForTimeout(200);
+        expect(await page.evaluate(() => document.body.classList.contains('has-fullscreen-tool')),
+            'clean-field Escape exits fullscreen').toBe(false);
+    });
+
+    test('a program switch resets the rail; Clear disables it', async ({ page }) => {
+        await page.goto(URL);
+        await page.waitForTimeout(400);
+        const cool = page.locator('#fcu-p-cool-sp');
+        await cool.click();
+        await cool.fill('78');
+        await cool.press('Enter');
+        await page.waitForTimeout(200);
+        // Blur first — selectOption moves no focus, a real picker
+        // interaction does, and the mirror paint deliberately skips a
+        // focused field (commit is Enter/blur).
+        await cool.blur();
+        await page.locator('#ddcw-program').selectOption('cool-1stage');
+        await page.waitForTimeout(400);
+        expect(await cool.inputValue(), 'authored literal restored').toBe('72.0');
+
+        await page.click('.tabs.tabs-flush [data-tab="wiresheet"]');
+        await page.waitForTimeout(600);
+        await page.click('#tab-wiresheet [data-fbe-action="clear"]');
+        await page.waitForTimeout(400);
+        await expect(cool, 'no block on the sheet — the field disables').toBeDisabled();
+        await expect(page.locator('#fcu-p-deadband')).toBeDisabled();
+        expect(await cool.getAttribute('title')).toContain('no cooling-setpoint block');
+    });
+
+    test('the units toggle re-expresses the rail, deadband as a DELTA', async ({ page }) => {
+        await page.goto(URL);
+        await page.waitForTimeout(400);
+        await page.locator('.units-btn').filter({ hasText: 'Metric' }).click();
+        await page.waitForTimeout(300);
+        // 72 °F → 22.2 °C absolute; the 3 °F deadband is 1.7 °C of BAND —
+        // the absolute formula would print −16.1 °C, the contract's own
+        // worked example.
+        expect(await page.locator('#fcu-p-cool-sp').inputValue()).toBe('22.2');
+        expect(await page.locator('#fcu-p-deadband').inputValue()).toBe('1.7');
+        await expect(page.locator('#fcu-p-cool-sp-u')).toHaveText('°C');
+    });
+
+    test('a metric clamp holds the CANONICAL limit through the Enter double-fire', async ({ page }) => {
+        // Same regression pin as the AHU page's row — the rail logic is
+        // deliberately duplicated per the unit-selector precedent, so the
+        // erosion needs its own pin HERE: Enter's keydown commit clamps
+        // and re-expresses (85 °F → "29.4"); without the display-equality
+        // no-op the native change re-parses 29.4 °C → 84.92 °F and quietly
+        // undercuts the announced limit.
+        await page.goto(URL);
+        await page.waitForTimeout(400);
+        await page.locator('.units-btn').filter({ hasText: 'Metric' }).click();
+        await page.waitForTimeout(300);
+        const cool = page.locator('#fcu-p-cool-sp');
+        await cool.click();
+        await cool.fill('29.5');                 // canonical 85.1 → clamp 85
+        await cool.press('Enter');
+        await page.waitForTimeout(300);
+        expect(await cool.inputValue()).toBe('29.4');
+        await page.locator('.units-btn').filter({ hasText: 'US' }).click();
+        await page.waitForTimeout(300);
+        expect(await cool.inputValue(), 'canonical held at the limit').toBe('85.0');
+    });
+});
+
+test.describe('DDC Workbench — rail ink clears the AA floor in both themes', () => {
+    // Hand-written contrast rows, because this is a hidden page: no
+    // canonical → not in tests/pages.js → contrast-sweep.spec.js never
+    // measures a colour on it. New ink sources: the input value
+    // (accent-ink on the editwell), the label captions (text-dim) and
+    // the hint line (amber-ink) — asserted at the 4.5:1 small-text
+    // floor in BOTH themes. Disabled state exempt (WCAG 1.4.3
+    // inactive-control exception).
+
+    async function themed(browser, theme) {
+        const ctx = await browser.newContext({
+            viewport: { width: 1500, height: 950 },
+            colorScheme: theme,                    // headless default is LIGHT — never assume
+        });
+        await ctx.addInitScript((t) => {
+            try { localStorage.setItem('cf_theme', t); } catch (e) { /* private mode */ }
+        }, theme);
+        return ctx;
+    }
+
+    for (const theme of ['dark', 'light']) {
+        test(`rail ink >= 4.5:1 in ${theme}`, async ({ browser }) => {
+            const ctx = await themed(browser, theme);
+            const page = await ctx.newPage();
+            try {
+                await page.goto(URL);
+                await page.waitForTimeout(400);
+                expect(await page.evaluate(
+                    () => document.documentElement.getAttribute('data-theme'),
+                ), 'the seeded theme must actually render').toBe(theme);
+                // Settle the tool-card entrance fade BEFORE measuring — its
+                // DELAY phase defeats actionability waits (the element is
+                // stationary at opacity < 1), so a fixed timeout can land
+                // mid-fade and read a ghost (#259). The measurement below
+                // composites opacity, so an unsettled fade would read as a
+                // hard fail rather than a silent pass — this wait is what
+                // makes the rows deterministic.
+                await page.waitForFunction(() => {
+                    const card = document.querySelector('.tool-card');
+                    return card && getComputedStyle(card).opacity === '1';
+                });
+
+                const rows = await page.evaluate(() => {
+                    const parse = (c) => {
+                        const m = /rgba?\(([\d.]+), ([\d.]+), ([\d.]+)(?:, ([\d.]+))?\)/.exec(c);
+                        return { r: +m[1], g: +m[2], b: +m[3], a: m[4] === undefined ? 1 : +m[4] };
+                    };
+                    const lum = (rgb) => {
+                        const ch = [rgb.r, rgb.g, rgb.b].map((v) => {
+                            const s = v / 255;
+                            return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+                        });
+                        return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+                    };
+                    const bgOf = (el) => {
+                        let n = el;
+                        while (n && n !== document.documentElement) {
+                            const bg = getComputedStyle(n).backgroundColor;
+                            if (bg && !/rgba?\(\d+, \d+, \d+, 0\)/.test(bg)
+                                && bg !== 'transparent') return bg;
+                            n = n.parentElement;
+                        }
+                        return getComputedStyle(document.documentElement).backgroundColor;
+                    };
+                    // Ancestor-multiplied opacity — declared colour is not
+                    // rendered ink (the site sweep's .bit-idx lesson: a
+                    // separate `opacity` on the element counts, and it is
+                    // exactly what a colour-only read cannot see).
+                    const effOpacity = (el) => {
+                        let o = 1, n = el;
+                        while (n && n !== document.documentElement) {
+                            o *= parseFloat(getComputedStyle(n).opacity);
+                            n = n.parentElement;
+                        }
+                        return o;
+                    };
+                    const ratio = (el) => {
+                        const bg = parse(bgOf(el));
+                        const raw = parse(getComputedStyle(el).color);
+                        const a = effOpacity(el) * raw.a;
+                        const fg = {
+                            r: raw.r * a + bg.r * (1 - a),
+                            g: raw.g * a + bg.g * (1 - a),
+                            b: raw.b * a + bg.b * (1 - a),
+                        };
+                        const L1 = lum(fg), L2 = lum(bg);
+                        return (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
+                    };
+                    return {
+                        input: ratio(document.getElementById('fcu-p-cool-sp')),
+                        suffix: ratio(document.getElementById('fcu-p-cool-sp-u')),
+                        label: ratio(document.querySelector('label[for="fcu-p-cool-sp"]')),
+                        hint: ratio(document.getElementById('fcu-params-hint')),
+                        note: ratio(document.querySelector('.fcu-param-note')),
+                    };
+                });
+                for (const [name, r] of Object.entries(rows)) {
+                    expect(r, `${name} ink in ${theme} (measured ${r.toFixed(2)}:1)`)
+                        .toBeGreaterThanOrEqual(4.5);
+                }
+            } finally {
+                await ctx.close();
+            }
+        });
+    }
 });

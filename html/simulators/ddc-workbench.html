@@ -102,8 +102,12 @@ noindex: true
         }
         /* The rail's heading is a direct child of the grid, so in the
            stacked state it lays out as a column PEER of the groups —
-           heading nothing, and leaving a dead cell. Span it. */
-        .ahu-params > .subhead { grid-column: 1 / -1; }
+           heading nothing, and leaving a dead cell. Span it — and the
+           hint + note paragraphs with it, which would otherwise land as
+           narrow column cells beside a group. */
+        .ahu-params > .subhead,
+        .ahu-params > .ahu-param-hint,
+        .ahu-params > .ahu-param-note { grid-column: 1 / -1; }
 
         /* ══════════════════════════════════════════════════════════════════
            SVG · STRUCTURE — never coloured. Structure is the one thing on
@@ -554,16 +558,23 @@ noindex: true
         /* ══════════════════════════════════════════════════════════════════
            HTML — THE PARAMETER RAIL
 
-           ⚠ THE RAIL IS NOT THE HAND-CONTROL REGION. The rail holds the
-           SEQUENCE'S CONSTANTS — setpoints, lockouts, minimum positions —
-           and changing one leaves the program running with different
-           numbers. A hand control WRITES SLOT 8 of a point's priority array:
+           ⚠ THE RAIL IS NOT THE HAND-CONTROL REGION — including now that
+           its five parameters are INPUTS. The rail holds the SEQUENCE'S
+           CONSTANTS — setpoints, lockouts, minimum positions — and editing
+           one leaves the program running with different numbers, sequencing
+           away. A hand control WRITES SLOT 8 of a point's priority array:
            it takes the point away from the program and leaves it there until
            released, which is why it carries a NULL box and shows up in the
-           off-program window.
+           off-program window. A rail field carries neither, on purpose.
 
-           The one-sentence visual test: NOTHING IN THE RAIL IS AMBER, AND
-           NOTHING IN THE HAND-CONTROL REGION IS A WELL.
+           The one-sentence visual test survives with one carve-out: NOTHING
+           IN THE RAIL IS AMBER — except the hint line, which is an
+           ANNOUNCEMENT and takes the announcement ink the override state
+           line already owns — AND NOTHING IN THE HAND-CONTROL REGION IS A
+           WELL. The editwell frame keeps the well's own face (well bg, seam
+           border, accent-ink value) so an adjustable constant still reads
+           as the same system as the read-only ones beside it; the
+           focus-within ring is what says "field".
            ══════════════════════════════════════════════════════════════ */
         .ahu-params { display: grid; gap: 0.75rem; align-content: start; }
         .ahu-param-group {
@@ -617,6 +628,65 @@ noindex: true
            meaning: nothing SETS the setpoint separation, it falls out of the
            two rows above it exactly the way ΔT falls out of DAT and MAT. */
         .ahu-param-well.is-calc { border-color: var(--blue); color: var(--blue-ink); }
+        /* The five adjustable params: an input dressed in the well's own
+           face so the rail still reads as one system — the focus ring is
+           what says "field". The frame carries the well chrome and the
+           ring (focus-WITHIN, so the ring wraps value + suffix as one
+           object); the input inside is chromeless. */
+        .ahu-param-editwell {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 0.3rem;
+            background: var(--well);
+            border: 1px solid var(--border);
+            padding: 0.12rem 0.5rem;
+            white-space: nowrap;
+        }
+        .ahu-param-editwell:focus-within {
+            outline: 2px solid var(--accent);
+            outline-offset: 1px;
+        }
+        .ahu-param-input {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--accent-ink);
+            background: transparent;
+            border: 0;
+            padding: 0;
+            width: 4.2rem;
+            text-align: right;
+        }
+        /* The frame's focus-within ring carries the indicator — a second
+           ring on the input inside it would draw a box in a box. */
+        .ahu-param-input:focus-visible { outline: none; }
+        /* Disabled = the running sheet carries no block for the param
+           (post-Clear). Dim ink; WCAG exempts inactive controls, and the
+           title says why it is off. */
+        .ahu-param-input:disabled { color: var(--text-dim); }
+        .ahu-param-unit {
+            font-family: var(--mono);
+            font-size: 0.66rem;
+            font-weight: 700;
+            color: var(--text-dim);
+        }
+        /* The clamp announcement — the rail's one amber, the same
+           announcement ink as p.ahu-ovr-state. min-height holds the line
+           so an announcement never reflows the rail under the pointer. */
+        p.ahu-param-hint {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            line-height: 1.5;
+            color: var(--amber-ink);
+            margin: 0;
+            min-height: 1.1rem;
+        }
+        p.ahu-param-note {
+            font-size: 0.8rem;
+            line-height: 1.55;
+            color: var(--text-dim);
+            margin: 0;
+        }
 
         /* ══════════════════════════════════════════════════════════════════
            HTML — COLOUR KEY, TEACHING BLOCK
@@ -987,6 +1057,9 @@ noindex: true
         .tool-card.is-fullscreen .tool-preamble,
         .tool-card.is-fullscreen .ahu-teach,
         .tool-card.is-fullscreen .ref-note,
+        /* The rail keeps its hint (an announcement is instrument, not
+           prose) — only its note paragraph drops with the reading prose. */
+        .tool-card.is-fullscreen p.ahu-param-note,
         .tool-card.is-fullscreen .fbe-legend { display: none; }
 
         /* Unit pane in fullscreen: console left, readouts + controls right
@@ -1087,8 +1160,10 @@ noindex: true
             <p class="tool-preamble">
                 A single-zone air handler as a live DDC graphic, driven by a
                 function-block program. The <strong>Unit</strong> tab is the
-                supervisory screen a tech reads; the <strong>Wiresheet</strong>
-                tab is the control program running it. The workbench commands
+                supervisory screen a tech reads and adjusts — the parameter
+                rail's setpoints commit to the running program; the
+                <strong>Wiresheet</strong> tab is the control program running
+                it. The workbench commands
                 each output through a real BACnet priority array, on three
                 levels: <strong>slot 8 (Manual Operator)</strong> for your
                 hand, <strong>slot 16</strong> for the sequence, and the
@@ -1989,11 +2064,11 @@ noindex: true
                                  lit stage" illustration COLLAPSES here — 74
                                  IS the make point. The between-the-edges
                                  example is 73. Re-derive, never copy. -->
-                            <p class="ahu-teach-p"><strong>Setpoints and the deadband.</strong> The separation between the two setpoints and the deadband are easy to read as one number, and they are not. The SP DIFF well in the rail is the separation — cooling setpoint minus heating setpoint. Nothing sets it: move either setpoint and it follows, which is why it is inked blue like the ΔT well rather than the green its two neighbours carry. The deadband is the smaller, separate thing, and it belongs to whichever setpoint is currently active rather than to the pair. On the cooling side it sits <em>above</em> the setpoint: as shipped, with a 72.0 °F cooling setpoint and a 2.0 °F deadband, the stage makes at 74.0 °F and breaks back at 72.0 °F. Here the setpoint is the cut-out, so the zone rides the band above the number on the screen and a degree of drift cannot short-cycle the compressor. That is also why a space of 73.0 °F can sit under a lit stage — between the two edges the call is held by a <a href="/education/comparators-and-deadband.html">latch</a>, not by a comparison against the setpoint.</p>
+                            <p class="ahu-teach-p"><strong>Setpoints and the deadband.</strong> The separation between the two setpoints and the deadband are easy to read as one number, and they are not. The SP DIFF well in the rail is the separation — cooling setpoint minus heating setpoint. Nothing sets it: move either setpoint — the rail's fields are live, so try it — and it follows, which is why it is inked blue like the ΔT well rather than the green its two neighbours carry. The deadband is the smaller, separate thing, and it belongs to whichever setpoint is currently active rather than to the pair. On the cooling side it sits <em>above</em> the setpoint: as shipped, with a 72.0 °F cooling setpoint and a 2.0 °F deadband, the stage makes at 74.0 °F and breaks back at 72.0 °F. Here the setpoint is the cut-out, so the zone rides the band above the number on the screen and a degree of drift cannot short-cycle the compressor. That is also why a space of 73.0 °F can sit under a lit stage — between the two edges the call is held by a <a href="/education/comparators-and-deadband.html">latch</a>, not by a comparison against the setpoint.</p>
 
-                            <p class="ahu-teach-p"><strong>Two setpoints, and what happens when they overlap.</strong> This unit carries a heating setpoint and a cooling setpoint as separate program constants, not one setpoint with an offset — specifically so you can drag them into each other on the wiresheet and watch a unit fight itself. A hot-water valve open under a running compressor is a real field fault: the ΔT goes nowhere, the energy goes everywhere, and nothing on the machine is broken. The graphic calls it out, because reading it off two wells that each look reasonable on their own is exactly the skill worth having.</p>
+                            <p class="ahu-teach-p"><strong>Two setpoints, and what happens when they overlap.</strong> This unit carries a heating setpoint and a cooling setpoint as separate program constants, not one setpoint with an offset — specifically so you can drag them into each other, from the rail or the wiresheet, and watch a unit fight itself. A hot-water valve open under a running compressor is a real field fault: the ΔT goes nowhere, the energy goes everywhere, and nothing on the machine is broken. The graphic calls it out, because reading it off two wells that each look reasonable on their own is exactly the skill worth having.</p>
 
-                            <p class="ahu-teach-p"><strong>Two setpoints in a customer's hands.</strong> Put both setpoints on a front end and sooner or later a customer sets the heating setpoint above the cooling setpoint — on purpose, reasoning that cooling means cold, so the cooling number belongs on the bottom. The model is backwards: a cooling setpoint is the temperature above which cooling starts, not a temperature the cooling makes. But hand people access to both numbers and you would be surprised how often they get crossed, and it is worth being precise about where the fault sits when they do. The number was wrong — the error stays an error — but it was not the customer's fault: the screen put a plausible wrong model one keystroke from the plant. That is not an argument for hiding the second setpoint either, because the access that trapped this customer is exactly what the next one is paying for. There is no house answer here, only a design judgement with two obligations attached. Get the cooling-versus-heating model right yourself — the wiresheet is where that happens — and then build the graphic toward where the user actually stands: consider who will use the system and what their skill level is. A rural school whose whole front end answers to one custodian is a different job from a large factory campus with a team behind the screen, and not just because the controls are different. This simulator hands you both setpoints anyway, unguarded, because this is where a mistake is free and can even be fun to see.</p>
+                            <p class="ahu-teach-p"><strong>Two setpoints in a customer's hands.</strong> Put both setpoints on a front end and sooner or later a customer sets the heating setpoint above the cooling setpoint — on purpose, reasoning that cooling means cold, so the cooling number belongs on the bottom. The model is backwards: a cooling setpoint is the temperature above which cooling starts, not a temperature the cooling makes. But hand people access to both numbers and you would be surprised how often they get crossed, and it is worth being precise about where the fault sits when they do. The number was wrong — the error stays an error — but it was not the customer's fault: the screen put a plausible wrong model one keystroke from the plant. That is not an argument for hiding the second setpoint either, because the access that trapped this customer is exactly what the next one is paying for. There is no house answer here, only a design judgement with two obligations attached. Get the cooling-versus-heating model right yourself, and then build the graphic toward where the user actually stands: consider who will use the system and what their skill level is. A rural school whose whole front end answers to one custodian is a different job from a large factory campus with a team behind the screen, and not just because the controls are different. This simulator now shows you both postures at once. The rail is the guarded front end: each field clamps to its own range and announces the catch. The wiresheet is the unguarded side — the same constants with no rails at all, where you can set a deadband the rail would refuse and nothing says a word. Both setpoints stay one keystroke from the plant on either surface, because this is where a mistake is free and can even be fun to see.</p>
                         </section>
                     </div>
                 </div>
@@ -2019,19 +2094,38 @@ noindex: true
                      what makes the subtraction readable. So read the blue off
                      the WELL, never off which panel a row landed in.
 
-                     ⚠ THIS IS NOT THE HAND-CONTROL REGION. The rail holds the
-                     sequence's CONSTANTS; changing one leaves the program
-                     running with different numbers. A hand control WRITES SLOT
-                     8 of a point's priority array — it takes the point away
-                     from the program and leaves it there until released. The
-                     hand controls sit BELOW the whole console under their own
-                     heading, in .field / .slider-field / label.ddcw-null
-                     chrome.
+                     ⚠ THIS IS STILL NOT THE HAND-CONTROL REGION — even though
+                     the five parameters are INPUTS now (owner ruling
+                     2026-08-03: setpoints adjust from the operator graphic,
+                     like a real DDC graphic). The distinction moved from
+                     "wells vs controls" to WHAT A WRITE MEANS: a rail edit
+                     changes one of the sequence's CONSTANTS — it commits
+                     through host.writeParam to the const block on the RUNNING
+                     sheet, and the program keeps sequencing on the new
+                     number. A hand control WRITES SLOT 8 of a point's
+                     priority array — it takes the point away from the program
+                     and leaves it there until released, which is why it
+                     carries a NULL box and shows up in the off-program
+                     window. A rail edit does neither. The hand controls sit
+                     BELOW the whole console under their own heading, in
+                     .field / .slider-field / label.ddcw-null chrome.
 
-                     NO FORM CONTROLS APPEAR HERE, so there is no <label for>.
-                     Every well in the rail is READ-ONLY: these values are set
-                     on the WIRESHEET, by the const blocks the program binds
-                     them to.
+                     Each input takes <label for> (.ahu-param-lbl is a LABEL
+                     on these five rows, a SPAN on the read-only rows — for=
+                     is only valid on a form control). The value is the bare
+                     number; the °F/°C suffix rides in an aria-hidden u* span
+                     so it converts without living inside the field. Commits
+                     clamp to the roster's per-param min/max and the clamp is
+                     ANNOUNCED on #ahu-params-hint (role=status) — see the
+                     rail note in the rendered prose for why a classroom
+                     announces what a real front end keeps silent. SP DIFF
+                     and the three UNIT MODE rows stay read-only wells:
+                     nothing sets them, they are arithmetic.
+
+                     ⚠ THE SVG SETPOINT WELL STAYS A READ-ONLY DISPLAY TWIN.
+                     Nothing inside the graphic becomes focusable — role="img"
+                     prunes the subtree (#227b), so the adjustable surface is
+                     HTML out here, never a control in the drawing.
 
                      ⚠ IP-ONLY IN THE DRAWING, AND THAT IS A RULE RATHER THAN A
                      DEFERRAL. units.js walks [data-us] / [data-metric] SPANS,
@@ -2039,9 +2133,10 @@ noindex: true
                      and DO convert, because the unit paints every one of them
                      through the shell's Units statics in the same call — so a
                      metric reader sees °C in the rail, °C in the mirror and °C
-                     in the well, not a mixture. No [data-us] spans anywhere in
-                     this component: the conversion is done in JS, once, at the
-                     display boundary. -->
+                     in the well, not a mixture. The rail inputs' min/max/step
+                     attributes re-express on unitschange the same way. No
+                     [data-us] spans anywhere in this component: the conversion
+                     is done in JS, once, at the display boundary. -->
                 <aside class="ahu-params" aria-labelledby="ahu-params-h">
                     <h2 class="subhead" id="ahu-params-h">Program parameters</h2>
 
@@ -2064,12 +2159,18 @@ noindex: true
                     <div class="ahu-param-group">
                         <h3 class="ahu-param-title">Zone control</h3>
                         <div class="ahu-param-row">
-                            <span class="ahu-param-lbl">Cooling SP</span>
-                            <span class="ahu-param-well" id="ahu-p-cool-sp">72.0 °F</span>
+                            <label class="ahu-param-lbl" for="ahu-p-cool-sp">Cooling SP</label>
+                            <span class="ahu-param-editwell">
+                                <input class="ahu-param-input" type="number" id="ahu-p-cool-sp" value="72.0" min="65" max="85" step="0.5">
+                                <span class="ahu-param-unit" id="ahu-p-cool-sp-u" aria-hidden="true">°F</span>
+                            </span>
                         </div>
                         <div class="ahu-param-row">
-                            <span class="ahu-param-lbl">Heating SP</span>
-                            <span class="ahu-param-well" id="ahu-p-heat-sp">68.0 °F</span>
+                            <label class="ahu-param-lbl" for="ahu-p-heat-sp">Heating SP</label>
+                            <span class="ahu-param-editwell">
+                                <input class="ahu-param-input" type="number" id="ahu-p-heat-sp" value="68.0" min="55" max="75" step="0.5">
+                                <span class="ahu-param-unit" id="ahu-p-heat-sp-u" aria-hidden="true">°F</span>
+                            </span>
                         </div>
                         <!-- ⚠ CALCULATED, NOT A PARAMETER — and the blue is
                              the whole point of the row. Nothing sets this; it
@@ -2079,28 +2180,59 @@ noindex: true
                              rows it subtracts read COOLING SP and HEATING SP
                              directly above it, and a second abbreviation for
                              "setpoint" inside one panel is the confusion this
-                             row exists to remove. -->
+                             row exists to remove. It stays a read-only WELL
+                             while its neighbours became inputs — an input
+                             here would claim something sets it. -->
                         <div class="ahu-param-row">
                             <span class="ahu-param-lbl">SP diff</span>
                             <span class="ahu-param-well is-calc" id="ahu-p-sp-diff">4.0 °F</span>
                         </div>
                         <div class="ahu-param-row">
-                            <span class="ahu-param-lbl">Deadband</span>
-                            <span class="ahu-param-well" id="ahu-p-deadband">2.0 °F</span>
+                            <label class="ahu-param-lbl" for="ahu-p-deadband">Deadband</label>
+                            <span class="ahu-param-editwell">
+                                <input class="ahu-param-input" type="number" id="ahu-p-deadband" value="2.0" min="1" max="5" step="0.5">
+                                <span class="ahu-param-unit" id="ahu-p-deadband-u" aria-hidden="true">°F</span>
+                            </span>
                         </div>
                     </div>
 
                     <div class="ahu-param-group">
                         <h3 class="ahu-param-title">Economizer control</h3>
                         <div class="ahu-param-row">
-                            <span class="ahu-param-lbl">Enable below</span>
-                            <span class="ahu-param-well" id="ahu-p-econ-lockout">62.0 °F</span>
+                            <label class="ahu-param-lbl" for="ahu-p-econ-lockout">Enable below</label>
+                            <span class="ahu-param-editwell">
+                                <input class="ahu-param-input" type="number" id="ahu-p-econ-lockout" value="62.0" min="45" max="75" step="1">
+                                <span class="ahu-param-unit" id="ahu-p-econ-lockout-u" aria-hidden="true">°F</span>
+                            </span>
                         </div>
                         <div class="ahu-param-row">
-                            <span class="ahu-param-lbl">Min OA position</span>
-                            <span class="ahu-param-well" id="ahu-p-min-oa">20 %</span>
+                            <label class="ahu-param-lbl" for="ahu-p-min-oa">Min OA position</label>
+                            <span class="ahu-param-editwell">
+                                <input class="ahu-param-input" type="number" id="ahu-p-min-oa" value="20" min="0" max="100" step="5">
+                                <!-- Static, never repainted: % is % in both unit modes. -->
+                                <span class="ahu-param-unit" aria-hidden="true">%</span>
+                            </span>
                         </div>
                     </div>
+
+                    <!-- The rail's one live region — the clamp announcement.
+                         Signature-aware and auto-clearing (see the unit
+                         script's railHint); role="status" so a reader who
+                         skipped the prose still hears why a typed 90 landed
+                         at 85 instead of thinking the field is broken. -->
+                    <p class="ahu-param-hint" id="ahu-params-hint" role="status" aria-live="polite"></p>
+
+                    <p class="ahu-param-note">
+                        Every field clamps to a per-parameter range and says
+                        so. A real front end usually keeps its rails silent —
+                        you rarely want occupants to know where they are — but
+                        this is a classroom, so this graphic announces them.
+                        The rails are per-parameter only: nothing here stops
+                        the two setpoints from crossing, because real front
+                        ends genuinely differ on whether to guard that pair.
+                        Front ends differ, too, on when a typed value takes —
+                        this one commits on Enter or on leaving the field.
+                    </p>
                 </aside>
             </div>
 
@@ -2501,7 +2633,8 @@ noindex: true
                     after the economizer select then takes whichever is less:
                     the position the economizer wants, or the most the low
                     limit will allow. Drive it: outdoor air cold, cooling
-                    setpoint pulled below the space so the economizer opens
+                    setpoint pulled below the space — drag it down in the
+                    rail — so the economizer opens
                     hard, and the damper command settles well short of open
                     while the MAT chip rides the constant. Colder still and the
                     clamp passes below the ventilation minimum, because the MIN

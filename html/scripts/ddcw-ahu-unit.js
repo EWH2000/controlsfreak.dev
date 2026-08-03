@@ -845,15 +845,29 @@ const DDCWAhuUnit = (function () {
         // everywhere) is a real field fault, and the site has no
         // interactive demonstration of it. An offset would make the
         // fault unreachable by construction.
-        { id: 'cooling-setpoint', kind: 'param', dir: 'param',    plantKey: 'cooling-setpoint', name: 'Cool SP',   unit: '°F', conv: 'temp' },
-        { id: 'heating-setpoint', kind: 'param', dir: 'param',    plantKey: 'heating-setpoint', name: 'Heat SP',   unit: '°F', conv: 'temp' },
+        //
+        // PARAMS ARE RAIL-ADJUSTABLE (owner ruling 2026-08-03): the
+        // graphic's parameter rail commits edits through
+        // host.writeParam, so every param carries min/max/step — the
+        // clamp rails the rail enforces AND announces. Canonical IP;
+        // the rail converts at the display boundary. min/max here are
+        // first-cut ranges pending owner retune on preview. Note the
+        // rails are PER-PARAM only — deliberately no cross-field
+        // cooling-vs-heating separation guard, so the setpoints can
+        // still be walked into each other from the graphic exactly as
+        // they can from the wiresheet.
+        { id: 'cooling-setpoint', kind: 'param', dir: 'param',    plantKey: 'cooling-setpoint', name: 'Cool SP',   unit: '°F', conv: 'temp',      min: 65, max: 85, step: 0.5 },
+        { id: 'heating-setpoint', kind: 'param', dir: 'param',    plantKey: 'heating-setpoint', name: 'Heat SP',   unit: '°F', conv: 'temp',      min: 55, max: 75, step: 0.5 },
         // PER-SETPOINT hysteresis, NOT the gap between the two above:
         // cooling makes at cooling-setpoint + this and breaks at
         // cooling-setpoint. The heating/cooling separation is the
         // SETPOINT GAP (the graphic's SP DIFF well) — nothing sets it,
         // it follows whichever setpoint moves, and it is not a param.
-        { id: 'deadband',         kind: 'param', dir: 'param',    plantKey: 'deadband',         name: 'Deadband',  unit: '°F', conv: 'deltaTemp' },
-        { id: 'min-oa-pos',       kind: 'param', dir: 'param',    plantKey: 'min-oa-pos',       name: 'Min OA',    unit: '%' },
+        // min 1, not 0: a zero deadband short-cycles by construction,
+        // and the ZERO-band lesson stays reachable on the wiresheet,
+        // where the constant is unguarded.
+        { id: 'deadband',         kind: 'param', dir: 'param',    plantKey: 'deadband',         name: 'Deadband',  unit: '°F', conv: 'deltaTemp', min: 1, max: 5, step: 0.5 },
+        { id: 'min-oa-pos',       kind: 'param', dir: 'param',    plantKey: 'min-oa-pos',       name: 'Min OA',    unit: '%',                     min: 0, max: 100, step: 5 },
         // Fixed dry-bulb high limit, above the differential enable
         // (OAT < RAT). economizers.html derives ~62.4 °F as the
         // worst-case fixed limit for 75 °F / 50 % return air — the
@@ -861,7 +875,7 @@ const DDCWAhuUnit = (function () {
         // the return despite being cooler. 62 sits just under that, and
         // is deliberately not the inherited 65 or 70 the lesson argues
         // against.
-        { id: 'econ-lockout',     kind: 'param', dir: 'param',    plantKey: 'econ-lockout',     name: 'Econ Lock', unit: '°F', conv: 'temp' },
+        { id: 'econ-lockout',     kind: 'param', dir: 'param',    plantKey: 'econ-lockout',     name: 'Econ Lock', unit: '°F', conv: 'temp',      min: 45, max: 75, step: 1 },
     ];
 
     // ═════════════════════ DOM — graphic + controls ═════════════════════
@@ -964,7 +978,10 @@ const DDCWAhuUnit = (function () {
     ];
 
     // Single-surface nodes: the rail (HTML only, never mirrored) and the
-    // four state dots inside their wells.
+    // four state dots inside their wells. The five p* param nodes are
+    // <input>s (the rail is the operator-adjustable surface); their u*
+    // suffix spans ride beside them so the editable value stays a bare
+    // number. pMinOa's % suffix is static markup — it never converts.
     const SOLO_IDS = {
         pCoolSp:   'ahu-p-cool-sp',
         pHeatSp:   'ahu-p-heat-sp',
@@ -972,6 +989,11 @@ const DDCWAhuUnit = (function () {
         pDeadband: 'ahu-p-deadband',
         pEconLock: 'ahu-p-econ-lockout',
         pMinOa:    'ahu-p-min-oa',
+        uCoolSp:   'ahu-p-cool-sp-u',
+        uHeatSp:   'ahu-p-heat-sp-u',
+        uDeadband: 'ahu-p-deadband-u',
+        uEconLock: 'ahu-p-econ-lockout-u',
+        paramsHint: 'ahu-params-hint',
         dCall:     'ahu-d-call',
         dEcon:     'ahu-d-econ',
         dMech:     'ahu-d-mech',
@@ -1111,6 +1133,37 @@ const DDCWAhuUnit = (function () {
     function setBoth(pair, text) {
         pair[0].textContent = text;
         pair[1].textContent = text;
+    }
+
+    // Mirror a live param into its rail input — the override-input
+    // pattern (see the sensor-override display note): never write while
+    // the field holds focus, because the user is mid-edit and commit is
+    // Enter / focus-out, and only write on a genuine change so an idle
+    // tick never disturbs the field.
+    function setParamInput(inp, str) {
+        if (document.activeElement === inp) return;
+        if (inp.value !== str) inp.value = str;
+    }
+
+    // The rail's five adjustable params: roster point id → the bindDom
+    // handle key of its input. Walked by the mirror paint, the
+    // writability sync and the commit wiring, so the three surfaces
+    // cannot cover different sets.
+    const PARAM_POINTS = [
+        { id: 'cooling-setpoint', outKey: 'pCoolSp' },
+        { id: 'heating-setpoint', outKey: 'pHeatSp' },
+        { id: 'deadband',         outKey: 'pDeadband' },
+        { id: 'econ-lockout',     outKey: 'pEconLock' },
+        { id: 'min-oa-pos',       outKey: 'pMinOa' },
+    ];
+
+    // Roster lookup by point id — the params' min/max/step and conv all
+    // live on AHU_POINTS, the single source the chips already read.
+    function rosterPoint(id) {
+        for (let i = 0; i < AHU_POINTS.length; i++) {
+            if (AHU_POINTS[i].id === id) return AHU_POINTS[i];
+        }
+        return null;
     }
 
     // Toggle a class on BOTH surfaces of a pair — the .is-false dim on a
@@ -1268,9 +1321,11 @@ const DDCWAhuUnit = (function () {
         // mirror, because it is the stage's BREAK point — space against
         // setpoint is what tells a reader how close the call is to dropping
         // out. All three are written HERE, in one call, so they cannot
-        // drift.
+        // drift. The rail copy is an INPUT now — its value is the bare
+        // number (the suffix rides in the u* span) and the mirror write
+        // skips while the field is being edited.
         setBoth(out['cool-sp'], coolSpN.toFixed(1) + t);
-        out.pCoolSp.textContent = coolSpN.toFixed(1) + t;
+        setParamInput(out.pCoolSp, coolSpN.toFixed(1));
 
         // ── the three dampers ride ONE actuator ──
         // The roster carries a single oa-damper AO; return and relief are
@@ -1322,12 +1377,21 @@ const DDCWAhuUnit = (function () {
         classBoth(out['fan-proof'], 'is-false', !proof);
         out.dotProof.classList.toggle('is-off', !proof);
 
-        // ── the rail ──
-        out.pHeatSp.textContent   = heatSpN.toFixed(1) + t;
+        // ── the rail ── the five params are INPUTS (the rail is the
+        // operator-adjustable surface): while a field is not focused its
+        // VALUE mirrors the live param — the override-input pattern — and
+        // the °F/°C suffix rides in a separate span so the number stays a
+        // bare editable value. SP DIFF stays a painted read-only well:
+        // nothing sets it, it falls out of its two neighbours.
+        setParamInput(out.pHeatSp, heatSpN.toFixed(1));
+        setParamInput(out.pDeadband, dbN.toFixed(1));
+        setParamInput(out.pEconLock, econLkN.toFixed(1));
+        setParamInput(out.pMinOa, String(Math.round(p['min-oa-pos'])));
+        out.uCoolSp.textContent   = tSuffix();
+        out.uHeatSp.textContent   = tSuffix();
+        out.uDeadband.textContent = dSuffix();
+        out.uEconLock.textContent = tSuffix();
         out.pSpDiff.textContent   = spDiffN.toFixed(1) + ' ' + dSuffix();
-        out.pDeadband.textContent = dbN.toFixed(1) + ' ' + dSuffix();
-        out.pEconLock.textContent = econLkN.toFixed(1) + t;
-        out.pMinOa.textContent    = Math.round(p['min-oa-pos']) + ' %';
 
         // Derived UNIT MODE rows. Each is arithmetic on numbers already on
         // the screen — read off `derived`, not off the display locals.
@@ -1622,6 +1686,26 @@ const DDCWAhuUnit = (function () {
         speedValLbl.textContent = Math.round(ctx.simSpeed()) + '×';
         oaValLbl.textContent    = dispTempNum(plant.oaT).toFixed(0) + ' ' + tSuffix();
         loadValLbl.textContent  = Math.round(plant.qInternal) + ' Btu/h';
+
+        // ── param rail writability ── a field is adjustable only while
+        // the RUNNING sheet carries its const block. bindingTick skips a
+        // missing block (the value freezes at its last read), so the
+        // input disables — with a title saying why — rather than accept
+        // an edit with nowhere to land. This is the honest depiction of
+        // the existing freeze behaviour, not a new rule.
+        PARAM_POINTS.forEach(function (pp) {
+            const inp = out[pp.outKey];
+            const writable = ctx.paramWritable(pp.id);
+            if (inp.disabled !== !writable) {
+                inp.disabled = !writable;
+                if (writable) {
+                    inp.removeAttribute('title');
+                } else {
+                    inp.title = 'The running sheet has no ' + pp.id
+                        + ' block, so there is nothing to write — the value shown is the last one read.';
+                }
+            }
+        });
     }
 
     // The graphic is a viewBox SVG at width:100% — it auto-scales into its
@@ -1800,9 +1884,163 @@ const DDCWAhuUnit = (function () {
         // Re-express the forced value in the current display units when the
         // site unit toggle flips — the render loop leaves the box alone
         // while forcing (so it can't clobber typing), so do it on the event.
+        // The rail's min/max/step attributes re-express here too: the
+        // shell's own unitschange repaint re-mirrors the input VALUES, but
+        // attributes are wireControls' to keep.
         document.addEventListener('unitschange', function () {
             const ov = pl.override[ovrSelect.value];
             if (ov && ov.active) ovrInput.value = toDisplayTemp(ov.value).toFixed(1);
+            PARAM_POINTS.forEach(function (pp) {
+                railRangeAttrs(rosterPoint(pp.id), out[pp.outKey]);
+            });
+        });
+
+        // ── the param rail — the operator-adjustable surface ───────────
+        // Commit on Enter or focus-out, NEVER per keystroke: typing 74
+        // must not pass through a momentary setpoint of 7. The 'change'
+        // event is exactly that boundary (and covers the spinners, which
+        // never fire mid-typing); Escape reverts the field to the live
+        // value without committing. The write goes through
+        // host.writeParam — the const block on the RUNNING sheet —
+        // because plant.params is a per-tick block → plant mirror and a
+        // direct write there is clobbered within one tick. Clamping
+        // lives HERE: the roster owns min/max, the shell hook stays
+        // dumb, and a clamp is ANNOUNCED on the rail's hint line — on a
+        // real front end the rails are usually silent, but this is a
+        // classroom (see the markup's rail note).
+
+        // Display expression for a param value, per its conv — same
+        // paths renderUnit paints through, so the field and the wells
+        // cannot disagree about what a number looks like.
+        function paramToDisplay(pt, v) {
+            const U = window.Units;
+            if (pt.conv === 'temp') return dispTempNum(v).toFixed(1);
+            if (pt.conv === 'deltaTemp') {
+                const d = U.current() === 'us' ? v : U.display.deltaTemp(v);
+                return (Math.round(d * 10) / 10).toFixed(1);
+            }
+            return String(Math.round(v));
+        }
+        function paramToCanonical(pt, disp) {
+            const U = window.Units;
+            if (U.current() === 'us') return disp;
+            if (pt.conv === 'temp') return U.toCanonical.temp(disp);
+            if (pt.conv === 'deltaTemp') return U.toCanonical.deltaTemp(disp);
+            return disp;
+        }
+        function paramSuffix(pt) {
+            if (pt.conv === 'temp') return tSuffix();
+            if (pt.conv === 'deltaTemp') return dSuffix();
+            return pt.unit;
+        }
+        // min/max/step attributes in the CURRENT display units — they
+        // drive the spinners and the browser's own cues; the committed
+        // clamp below tests the CANONICAL value, so these are expression,
+        // never the enforcement. Metric steps by 0.5 on the temperature
+        // params: the authored 0.5 °F step converts to a 0.28 °C
+        // non-number, and half a degree is what a metric front end walks
+        // a setpoint by anyway.
+        function railRangeAttrs(pt, inp) {
+            inp.min = paramToDisplay(pt, pt.min);
+            inp.max = paramToDisplay(pt, pt.max);
+            inp.step = (pt.conv && window.Units.current() !== 'us')
+                ? '0.5' : String(pt.step);
+        }
+        // The hint line — one aria-live region for the whole rail,
+        // signature-aware: re-announcing the SAME clamp needs a genuine
+        // DOM change, so an identical message blanks first and lands on
+        // a beat. Auto-clears so a stale range note cannot sit under
+        // later edits.
+        let railHintTimer = null;
+        function railHint(msg) {
+            const el = out.paramsHint;
+            if (railHintTimer !== null) { window.clearTimeout(railHintTimer); railHintTimer = null; }
+            if (msg !== '' && el.textContent === msg) {
+                el.textContent = '';
+                window.setTimeout(function () { el.textContent = msg; }, 30);
+            } else {
+                el.textContent = msg;
+            }
+            if (msg !== '') {
+                railHintTimer = window.setTimeout(function () {
+                    el.textContent = '';
+                    railHintTimer = null;
+                }, 6000);
+            }
+        }
+        function railRangeText(pt) {
+            return paramToDisplay(pt, pt.min) + '–' + paramToDisplay(pt, pt.max)
+                + ' ' + paramSuffix(pt);
+        }
+        PARAM_POINTS.forEach(function (pp) {
+            const pt = rosterPoint(pp.id);
+            const inp = out[pp.outKey];
+            railRangeAttrs(pt, inp);
+
+            function revert() {
+                inp.value = paramToDisplay(pt, pl.params[pt.plantKey]);
+            }
+            function commit() {
+                if (inp.disabled) return;
+                const disp = parseFloat(inp.value);
+                if (!isFinite(disp)) {
+                    // Validate-and-revert: junk never reaches the sheet,
+                    // and the hint names the range so the reader knows
+                    // what the field takes.
+                    revert();
+                    railHint(pt.name + ' takes ' + railRangeText(pt)
+                        + ' — reverted to the live value.');
+                    return;
+                }
+                // Display-equality no-op: if the field reads exactly what
+                // the live value displays as, there is nothing to commit.
+                // This is what makes the Enter keydown + native 'change'
+                // double-fire harmless in METRIC mode: the keydown commit
+                // re-expresses the field (85 °F → "29.4"), and the change
+                // commit would otherwise re-parse that display through
+                // toCanonical (29.4 °C → 84.92 °F) — silently eroding the
+                // clamped canonical below the limit the hint just
+                // announced. In US units the round-trip is lossless and
+                // the second write was merely redundant.
+                if (inp.value === paramToDisplay(pt, pl.params[pt.plantKey])) return;
+                let v = paramToCanonical(pt, disp);
+                let clamped = false;
+                if (v < pt.min) { v = pt.min; clamped = true; }
+                else if (v > pt.max) { v = pt.max; clamped = true; }
+                host.writeParam(pp.id, v);
+                // Re-express what actually committed — the mirror paint
+                // skips a focused field, so the commit writes it here.
+                inp.value = paramToDisplay(pt, v);
+                // A clean commit does NOT clear the hint — the auto-clear
+                // owns removal. Enter fires keydown AND the native
+                // 'change', so a clamped commit is immediately followed by
+                // the change-side call seeing the re-expressed display and
+                // no-opping above; a clear here would wipe the
+                // announcement the keydown commit just made.
+                if (clamped) {
+                    railHint(pt.name + ' accepts ' + railRangeText(pt)
+                        + ' — held at the limit.');
+                }
+            }
+            inp.addEventListener('change', commit);
+            inp.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    commit();
+                } else if (e.key === 'Escape') {
+                    // Claim Escape only while there is an edit to cancel:
+                    // revert, and stop the press reaching the fullscreen
+                    // handler (one press = one action — fullscreen-toggle's
+                    // header sanctions exactly this claim). A CLEAN field
+                    // has nothing to cancel, so the press bubbles on and
+                    // can exit the fullscreen cockpit — an unconditional
+                    // claim would swallow Escape forever and strand a
+                    // keyboard user whose focus sits in a rail field.
+                    if (inp.value !== paramToDisplay(pt, pl.params[pt.plantKey])) {
+                        revert();
+                        e.stopPropagation();
+                    }
+                }
+            });
         });
 
         // ── THE ACTIVATION AFFORDANCE (codebase-issues #227b) ──────────
