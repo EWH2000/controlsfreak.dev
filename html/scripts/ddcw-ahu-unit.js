@@ -1992,6 +1992,17 @@ const DDCWAhuUnit = (function () {
                         + ' — reverted to the live value.');
                     return;
                 }
+                // Display-equality no-op: if the field reads exactly what
+                // the live value displays as, there is nothing to commit.
+                // This is what makes the Enter keydown + native 'change'
+                // double-fire harmless in METRIC mode: the keydown commit
+                // re-expresses the field (85 °F → "29.4"), and the change
+                // commit would otherwise re-parse that display through
+                // toCanonical (29.4 °C → 84.92 °F) — silently eroding the
+                // clamped canonical below the limit the hint just
+                // announced. In US units the round-trip is lossless and
+                // the second write was merely redundant.
+                if (inp.value === paramToDisplay(pt, pl.params[pt.plantKey])) return;
                 let v = paramToCanonical(pt, disp);
                 let clamped = false;
                 if (v < pt.min) { v = pt.min; clamped = true; }
@@ -2002,9 +2013,10 @@ const DDCWAhuUnit = (function () {
                 inp.value = paramToDisplay(pt, v);
                 // A clean commit does NOT clear the hint — the auto-clear
                 // owns removal. Enter fires keydown AND the native
-                // 'change', so a clamped commit is immediately followed
-                // by an in-range re-commit of the clamped value; a clear
-                // here would wipe the announcement it just made.
+                // 'change', so a clamped commit is immediately followed by
+                // the change-side call seeing the re-expressed display and
+                // no-opping above; a clear here would wipe the
+                // announcement the keydown commit just made.
                 if (clamped) {
                     railHint(pt.name + ' accepts ' + railRangeText(pt)
                         + ' — held at the limit.');
@@ -2015,8 +2027,18 @@ const DDCWAhuUnit = (function () {
                 if (e.key === 'Enter') {
                     commit();
                 } else if (e.key === 'Escape') {
-                    revert();
-                    e.stopPropagation();
+                    // Claim Escape only while there is an edit to cancel:
+                    // revert, and stop the press reaching the fullscreen
+                    // handler (one press = one action — fullscreen-toggle's
+                    // header sanctions exactly this claim). A CLEAN field
+                    // has nothing to cancel, so the press bubbles on and
+                    // can exit the fullscreen cockpit — an unconditional
+                    // claim would swallow Escape forever and strand a
+                    // keyboard user whose focus sits in a rail field.
+                    if (inp.value !== paramToDisplay(pt, pl.params[pt.plantKey])) {
+                        revert();
+                        e.stopPropagation();
+                    }
                 }
             });
         });
