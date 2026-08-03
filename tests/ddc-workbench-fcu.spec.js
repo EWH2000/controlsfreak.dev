@@ -436,6 +436,14 @@ test.describe('DDC Workbench — the fullscreen cockpit keeps its graphic', () =
     // span without touching the pin), so it pins without any wrapper;
     // `bottom: 0` rides along because the item is CENTERED (see the page's
     // head block).
+    //
+    // ⚠ RE-DERIVED FOR THE MIRROR DIET, 2026-08-03. Hiding the three plain
+    // mirror cells shortens the scrolling column, which is exactly the way
+    // the `scrollTop > 0` floor below could have gone vacuous. It did not:
+    // MEASURED at 1280×720 in fullscreen, the pane's overflow went 295px →
+    // 236px, so the pane still scrolls and the assertions still bite. The
+    // graphic (390px) still fits the 515px scrollport either way, so the
+    // min() in the second assertion keeps carrying the fits-the-view arm.
 
     test('scrolled to the bottom, the graphic is still in full view', async ({ page }) => {
         await page.goto(URL);
@@ -482,6 +490,131 @@ test.describe('DDC Workbench — the fullscreen cockpit keeps its graphic', () =
         const pos = await page.evaluate(
             () => getComputedStyle(document.querySelector('.fcu-graphic')).position);
         expect(pos, 'one-column fallback must not pin the graphic').toBe('static');
+    });
+});
+
+test.describe('DDC Workbench — the mirror diet', () => {
+
+    // Owner ruling 2026-08-03, one change across both workbench pages (the
+    // same scope the #227(b) affordance shipped under). Above the cutoff the
+    // PLAIN cells stop taking space; the three BUTTONS stay at every width,
+    // because nothing inside the role="img" drawing is focusable and they
+    // are the only keyboard path to a chip pulse.
+    //
+    // The cutoff is the AHU page's measurement — that drawing holds its
+    // 780px cap only down to a 896px viewport, this one holds its 660px cap
+    // down to 774px — so one shared number has to clear 896 and this page
+    // keeps its plain cells over a band where its own drawing is still at
+    // cap. Derivation lives in the AHU page's head block.
+    const CUTOFF = 900;
+    // px — .fcu-graphic's designed max-width. Pinned because the cutoff's
+    // whole justification is that a drawing renders at its designed scale
+    // above it: widen this and the AHU page's 896 line moves, so a change
+    // here must redden rather than quietly squeeze this graphic too.
+    const CAP = 660;
+
+    const cellBoxes = (page) => page.locator('.fcu-point').evaluateAll(
+        (els) => els.map((e) => {
+            const r = e.getBoundingClientRect();
+            return {
+                point: e.dataset.point || null,
+                btn: e.classList.contains('fcu-point-btn'),
+                boxed: r.width > 2 && r.height > 2,
+            };
+        }));
+
+    test('at a desktop width only the three sensed-point buttons take space', async ({ page }) => {
+        await page.goto(URL);           // the config's default viewport is 1280 wide
+        const cells = await cellBoxes(page);
+        expect(cells.length, 'the whole list is still in the DOM').toBe(6);
+        expect(cells.filter((c) => c.boxed).map((c) => c.point),
+            'the desktop row is exactly the buttons, in air-path order')
+            .toEqual(['rat', 'dat', 'space-temp']);
+        expect(cells.filter((c) => c.btn && !c.boxed),
+            'a button never leaves the flow — it is the keyboard path').toEqual([]);
+    });
+
+    test('a cell that leaves the flow is still announced, never display:none', async ({ page }) => {
+        // role="img" prunes the drawing's subtree, so this list is the only
+        // text rendering of those values and `display: none` would delete
+        // them for a desktop screen-reader user. ΔT is the sharp case: it is
+        // arithmetic rather than a roster point, so unlike the fan and
+        // compressor cells it has no statusbar chip to fall back on
+        // (asserted off the live roster below).
+        await page.goto(URL);
+        const quiet = await page.locator('.fcu-point:not(.fcu-point-btn)').evaluateAll(
+            (els) => els.map((e) => {
+                const cs = getComputedStyle(e);
+                const val = e.querySelector('.fcu-point-val');
+                return {
+                    id: val ? val.id : '(no value node)',
+                    display: cs.display,
+                    visibility: cs.visibility,
+                    ariaHidden: e.getAttribute('aria-hidden'),
+                    text: (e.textContent || '').trim(),
+                };
+            }));
+        expect(quiet.length, 'three plain cells').toBe(3);
+        expect(quiet.map((q) => q.id)).toEqual(['fcu-dt-r', 'fcu-fan-r', 'fcu-comp-r']);
+        for (const q of quiet) {
+            expect(q.display, q.id + ' must not be display:none').not.toBe('none');
+            expect(q.visibility, q.id + ' must not be visibility:hidden').not.toBe('hidden');
+            expect(q.ariaHidden, q.id + ' must not be aria-hidden').toBeNull();
+            expect(q.text, q.id + ' is still painted by renderUnit').not.toBe('');
+        }
+        const roster = await page.evaluate(() => window.DDCWFcuUnit.POINTS.map((p) => p.id));
+        expect(roster.filter((id) => /(^|-)dt$|delta/.test(id)),
+            'ΔT is arithmetic, so no chip carries it').toEqual([]);
+    });
+
+    test('the cutoff is ' + CUTOFF + 'px, and at ' + CUTOFF + ' the drawing is still at its designed width', async ({ page }) => {
+        await page.setViewportSize({ width: CUTOFF, height: 900 });
+        await page.goto(URL);
+        expect((await cellBoxes(page)).filter((c) => c.boxed).length,
+            'at the cutoff the diet is already on').toBe(3);
+
+        // The cap read off the LIVE stylesheet as well as compared to the
+        // literal — a widened cap would slide this drawing under its own
+        // designed scale at the cutoff while a bare `width >= 660` still
+        // passed. Same pairing as the AHU row.
+        const gfx = await page.locator('.fcu-graphic').evaluate((el) => ({
+            width: el.getBoundingClientRect().width,
+            cap: parseFloat(getComputedStyle(el).maxWidth),
+        }));
+        expect(gfx.cap, 'a cap change invalidates the shared cutoff — re-measure it')
+            .toBe(CAP);
+        expect(gfx.width, 'at the cutoff the drawing still renders its full cap')
+            .toBeGreaterThanOrEqual(gfx.cap - 0.5);
+
+        await page.setViewportSize({ width: CUTOFF - 1, height: 900 });
+        expect((await cellBoxes(page)).filter((c) => c.boxed).length,
+            'one pixel under the cutoff the whole list is back').toBe(6);
+    });
+
+    test('the diet does not hand the fullscreen pane a horizontal scrollbar', async ({ page }) => {
+        // On main this pane is clean at the default 1280×720: the last grid
+        // track held a PLAIN cell, whose box has no hit-area bleed. The diet
+        // makes the desktop row all buttons, so a button always holds the
+        // last track — and its -0.3rem bleed poked 4.8px past the grid,
+        // which the fullscreen pane (the one scrolling ancestor) rendered
+        // as a horizontal scrollbar the pre-diet page never showed. The
+        // diet-scoped padding-right on .fcu-points absorbs the bleed; this
+        // row is what reddens if that rule is dropped.
+        //
+        // Deliberately NOT asserted below the cutoff, and NOT on the AHU:
+        // sub-900 this page's cell mix is exactly main's, where a button
+        // can land in the last track at some widths (640/700px fullscreen
+        // measure the same 5px on main), and the AHU pane already scrolls
+        // 5px at 1280 on main — both halves of the PRE-EXISTING overhang,
+        // logged as a design call (grid padding vs. the negative margin),
+        // which this row must not quietly pre-decide.
+        await page.goto(URL);
+        await page.click('.tool-card-fullscreen-btn');
+        const over = await page.evaluate(() => {
+            const pane = document.querySelector('#tab-unit');
+            return pane.scrollWidth - pane.clientWidth;
+        });
+        expect(over, 'no horizontal scroll in the diet regime').toBe(0);
     });
 });
 
