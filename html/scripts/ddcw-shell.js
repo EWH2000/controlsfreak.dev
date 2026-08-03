@@ -101,7 +101,13 @@
 //   syncControls(plant, ctx)  reflect plant + slot state into the hand
 //       controls. ctx is an extensible OBJECT, not a mode string:
 //       ctx.slot8(pointId) → the slot-8 value, null = released;
-//       ctx.simSpeed()     → the live host clock multiplier.
+//       ctx.simSpeed()     → the live host clock multiplier;
+//       ctx.paramWritable(pointId) → true while the RUNNING graph
+//       carries a value-bearing block under that id (the const a
+//       param point binds to). False = the freeze case: bindingTick
+//       skips a missing block, so plant.params holds the last value
+//       and a rail edit would have nowhere to land — the unit's
+//       param inputs disable off this probe.
 //       A future shell-side signal (occupancy, alarm, a second
 //       operator surface) is a new key here, not a signature change
 //       on every unit.
@@ -111,7 +117,26 @@
 //       host.writeSlot8(pointId, v) / host.releaseSlot8(pointId) /
 //       host.slot8(pointId) / host.setSpeed(v) / host.requestRender() /
 //       host.highlightChip(pointId) (pulse a point's statusbar chip —
-//       see the sensor-glyph note in the markup contract below).
+//       see the sensor-glyph note in the markup contract below) /
+//       host.writeParam(pointId, v) (write a param point's live value
+//       — see the param write path note below).
+//
+// ── PARAM WRITE PATH ── host.writeParam(pointId, value) is how an
+// operator-graphic surface (a unit page's parameter rail) adjusts a
+// param point. The canonical live value of a param is
+// blk.params.value on the const block of the RUNNING graph (block id
+// === point id, the binding invariant); plant.params is a per-tick
+// block → plant mirror, so writing IT directly is clobbered within
+// one tick. The hook validates a finite number, writes the block,
+// and repaints; it returns false — writing nothing — when the sheet
+// carries no such block (Clear, or a deleted const on a custom
+// sheet). It is deliberately DUMB: clamping, unit conversion and any
+// range announcement are UNIT-side UI concerns (the roster owns
+// min/max), exactly as the hand controls own their own validation.
+// A writeParam does NOT mark the program custom — it edits a value
+// on the sheet, same as an inspector param edit, not the sheet's
+// structure — and a program switch still resets params to the
+// authored literals, both matching the wiresheet's own behaviour.
 //   initAnim(plant)      start the unit's own animation machinery.
 //   onResize(plant, isFullscreen)  reflow hook on the fullscreen edge.
 //
@@ -161,10 +186,11 @@
 // this header's contract prose — zero code identifiers. Intended
 // consumers, both assembling a unit object and calling
 // createWorkbench: simulators/ddc-workbench-fcu.html (the DX fan coil
-// unit, via /scripts/ddcw-fcu-unit.js) and the planned second unit
-// page for the AHU (its filename is still an open design call).
+// unit, via /scripts/ddcw-fcu-unit.js) and simulators/ddc-workbench.html
+// (the AHU, via /scripts/ddcw-ahu-unit.js).
 //
-// Consumers: simulators/ddc-workbench-fcu.html.
+// Consumers: simulators/ddc-workbench-fcu.html,
+// simulators/ddc-workbench.html.
 // Tests: tests/ddcw-shell.spec.js pins this header's own claims
 // engine-direct (bare-vm loadability, formatPointValue's conv paths,
 // the grep proof); tests/ddc-workbench-fcu.spec.js +
@@ -644,6 +670,21 @@ const DDCWShell = (function () {
             // future drill-down (a glyph becoming a link into a
             // meter-and-sensor sim) can call on the way out.
             highlightChip: highlightChip,
+            // The param write path (see the header note). The write
+            // lands on the RUNNING graph's block — never plant.params,
+            // which bindingTick overwrites from the block within one
+            // tick. Deliberately dumb: a finite number and a block that
+            // can hold it, or nothing happens. requestRender() makes
+            // the edit propagate to chips / wells / rail in the same
+            // synchronous tick.
+            writeParam: function (pointId, value) {
+                if (typeof value !== 'number' || !isFinite(value)) return false;
+                const blk = byId[pointId];
+                if (!blk || !blk.params || !('value' in blk.params)) return false;
+                blk.params.value = value;
+                requestRender();
+                return true;
+            },
         };
         // The sync context — deliberately an extensible OBJECT, not a mode
         // string: a future shell-side signal (occupancy, alarm, a second
@@ -655,6 +696,15 @@ const DDCWShell = (function () {
         const syncCtx = {
             slot8: host.slot8,
             simSpeed: function () { return simSpeed; },
+            // The write-path probe for a unit's param inputs: false while
+            // the running sheet carries no value-bearing block under the
+            // point's id (Clear, or a deleted const), which is exactly
+            // when bindingTick freezes the param — the unit disables the
+            // input off this rather than letting an edit vanish.
+            paramWritable: function (pointId) {
+                const blk = byId[pointId];
+                return !!(blk && blk.params && ('value' in blk.params));
+            },
         };
         unit.wireControls(plant, host);
         unit.initAnim(plant);
