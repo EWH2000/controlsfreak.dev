@@ -725,6 +725,140 @@ test.describe('AHU workbench page: the activation affordance (#227b)', () => {
     });
 });
 
+test.describe('AHU workbench page: the mirror diet', () => {
+
+    // Owner ruling 2026-08-03. On a desktop this list repainted the whole
+    // drawing a second time and the duplication cost more screen than it
+    // bought, so above the cutoff the eleven PLAIN cells stop taking space.
+    // The five BUTTONS stay at every width — they are the #227(b)
+    // affordance, and nothing inside the SVG is focusable, so hiding one
+    // would delete the only keyboard path to its chip pulse.
+    //
+    // Three separate failure modes, one row each: WHICH cells leave the
+    // flow, that a cell which leaves is still ANNOUNCED, and the CUTOFF
+    // together with the measurement that justifies the number.
+
+    // px — see THE MIRROR DIET in the page's head block for the derivation.
+    const CUTOFF = 900;
+    // px — .ahu-graphic's designed max-width, the scale every legibility
+    // and callout-width figure on this page was hand-measured at.
+    const CAP = 780;
+
+    // A LAYOUT box, not visibility: the hidden cells are .sr-only-shaped, so
+    // they are still rendered and checkVisibility() stays true. What changes
+    // above the cutoff is that they stop occupying the grid.
+    const cellBoxes = (page) => page.locator('.ahu-point').evaluateAll(
+        (els) => els.map((e) => {
+            const r = e.getBoundingClientRect();
+            return {
+                point: e.dataset.point || null,
+                btn: e.classList.contains('ahu-point-btn'),
+                boxed: r.width > 2 && r.height > 2,
+            };
+        }));
+
+    test('at a desktop width only the five sensed-point buttons take space', async ({ page }) => {
+        await open(page);               // the config's default viewport is 1280 wide
+        const cells = await cellBoxes(page);
+        expect(cells.length, 'the whole roster is still in the DOM').toBe(16);
+        expect(cells.filter((c) => c.boxed).map((c) => c.point),
+            'the desktop row is exactly the buttons, in air-path order')
+            .toEqual(['oat', 'rat', 'mat', 'dat', 'space-temp']);
+        expect(cells.filter((c) => c.btn && !c.boxed),
+            'a button never leaves the flow — it is the keyboard path').toEqual([]);
+    });
+
+    test('a cell that leaves the flow is still announced, never display:none', async ({ page }) => {
+        // THE REASON THIS ROW EXISTS, and it is the one that must not be
+        // "simplified". The drawing is role="img", so its subtree is pruned
+        // from the accessibility tree and this list is the ONLY text
+        // rendering of those values. `display: none` would therefore delete
+        // eleven live values from a desktop screen-reader user, and three of
+        // them have no statusbar chip to fall back on either (asserted
+        // below) — ΔT among them, on the page whose whole diagnostic is
+        // "no ΔT over the coil".
+        await open(page);
+        const quiet = await page.locator('.ahu-point:not(.ahu-point-btn)').evaluateAll(
+            (els) => els.map((e) => {
+                const cs = getComputedStyle(e);
+                const val = e.querySelector('.ahu-point-val');
+                return {
+                    id: val ? val.id : '(no value node)',
+                    display: cs.display,
+                    visibility: cs.visibility,
+                    ariaHidden: e.getAttribute('aria-hidden'),
+                    text: (e.textContent || '').trim(),
+                };
+            }));
+        expect(quiet.length, 'eleven plain cells').toBe(11);
+        for (const q of quiet) {
+            expect(q.display, q.id + ' must not be display:none').not.toBe('none');
+            expect(q.visibility, q.id + ' must not be visibility:hidden').not.toBe('hidden');
+            expect(q.ariaHidden, q.id + ' must not be aria-hidden').toBeNull();
+            expect(q.text, q.id + ' is still painted by renderUnit').not.toBe('');
+        }
+
+        // The no-fallback claim, off the live roster rather than asserted in
+        // prose: three dampers ride ONE commanded output, so the RA and
+        // relief cells have no chip of their own, and ΔT is arithmetic and
+        // not a point at all. Without this the paragraph above is a comment
+        // nothing checks.
+        const roster = await page.evaluate(() => window.DDCWAhuUnit.points.map((p) => p.id));
+        expect(roster.filter((id) => /damper/.test(id)),
+            'one damper output for three sets of blades').toEqual(['oa-damper']);
+        expect(roster.filter((id) => /(^|-)dt$|delta/.test(id)),
+            'ΔT is arithmetic, so no chip carries it').toEqual([]);
+    });
+
+    test('the cutoff is ' + CUTOFF + 'px, and at ' + CUTOFF + ' the drawing is still at its designed width', async ({ page }) => {
+        // This row pins the RATIONALE, not only the constant — which
+        // matters because the margin is 4px. The cutoff was chosen as the
+        // measured 896 (the narrowest viewport at which this drawing still
+        // renders its full 780) rounded up to the next round number. So a
+        // padding or max-width retune that pushes that 896 line past the
+        // cutoff reddens HERE, instead of quietly shipping a squeezed
+        // drawing with no mirror under it.
+        await page.setViewportSize({ width: CUTOFF, height: 900 });
+        await open(page);
+        const wide = await cellBoxes(page);
+        expect(wide.filter((c) => c.boxed).length,
+            'at the cutoff the diet is already on').toBe(5);
+
+        // The cap is read off the LIVE stylesheet, not only compared to the
+        // literal: hard-coding `width >= 780` let a tamper that WIDENED
+        // .ahu-graphic's max-width to 900 pass, because 784px at a 900px
+        // viewport still clears 780 while being well under the new cap —
+        // exactly the silent squeeze this row exists to prevent. So both
+        // halves are asserted: the cap is still the documented one the 896
+        // measurement was derived from, AND the drawing actually reaches it
+        // at the cutoff.
+        const gfx = await page.locator('.ahu-graphic').evaluate((el) => ({
+            width: el.getBoundingClientRect().width,
+            cap: parseFloat(getComputedStyle(el).maxWidth),
+        }));
+        expect(gfx.cap, 'a cap change invalidates the 896 derivation — re-measure it')
+            .toBe(CAP);
+        expect(gfx.width, 'at the cutoff the drawing still renders its full cap')
+            .toBeGreaterThanOrEqual(gfx.cap - 0.5);
+
+        // One pixel narrower: every cell is back in the grid, and the
+        // reclaimed height is the deliverable, so measure it.
+        const tall = await page.evaluate(
+            () => document.querySelector('.ahu-points').getBoundingClientRect().height);
+        await page.setViewportSize({ width: CUTOFF - 1, height: 900 });
+        const narrow = await cellBoxes(page);
+        expect(narrow.filter((c) => c.boxed).length,
+            'one pixel under the cutoff the whole list is back').toBe(16);
+        const grown = await page.evaluate(
+            () => document.querySelector('.ahu-points').getBoundingClientRect().height);
+        // Measured 2026-08-03: 49.2px on the desktop row vs 223.5px with all
+        // sixteen at 899 wide. The floor is deliberately loose — the claim is
+        // that the diet reclaims real height, not that it reclaims 174px.
+        expect(grown, 'the full list is materially taller than the desktop row')
+            .toBeGreaterThan(tall + 50);
+    });
+});
+
 test.describe('AHU workbench page: the fogging disclosure (#240)', () => {
 
     test('the marker is absent on an ordinary day and appears in the fog branch', async ({ page }) => {
@@ -958,14 +1092,26 @@ test.describe('AHU workbench page: naming and the live regions', () => {
 test.describe('AHU workbench page: the fullscreen cockpit keeps its console', () => {
 
     // Fullscreen makes the active pane the single scroller, and the right
-    // column (mirror + presets + sliders) is ~2.4× the scrollport at the
-    // default 1280×720 — so before the sticky pin, scrolling translated the
-    // console up out of view and the rest of the travel ran over dead space
-    // (owner report, 2026-08-01). These rows pin the fix's two contracts:
-    // the console fills the scrollport at max scroll, and its BOTTOM edge
-    // (the verdict pill lives there) lands on-screen — a hard top pin would
+    // column (mirror + presets + sliders) outruns it at the default
+    // 1280×720 — so before the sticky pin, scrolling translated the console
+    // up out of view and the rest of the travel ran over dead space (owner
+    // report, 2026-08-01). These rows pin the fix's two contracts: the
+    // console fills the scrollport at max scroll, and its BOTTOM edge (the
+    // verdict pill lives there) lands on-screen — a hard top pin would
     // satisfy the first and silently break the second, because the built
     // console is TALLER than the scrollport at this viewport.
+    //
+    // ⚠ RE-DERIVED FOR THE MIRROR DIET, 2026-08-03. Hiding the eleven plain
+    // mirror cells shortens the scrolling column, which is exactly the way
+    // the `scrollTop > 0` floor below could have gone vacuous. It did not:
+    // MEASURED at 1280×720 in fullscreen, the pane's overflow went 669px →
+    // 440px, so the pane still scrolls by a wide margin and every assertion
+    // here still bites. The console itself is untouched by the diet — the
+    // mirror is not inside it — and measures 620px against a 482px
+    // scrollport, so the overhang case the second assertion exists for is
+    // still the live case (it is now 138px, not the 15px this comment used
+    // to quote; the rail grew when its params became inputs in #472, and
+    // that stale figure is corrected here and in the page's head block).
 
     async function measureAtBottom(page, pinnedSel) {
         return page.evaluate((sel) => {
