@@ -431,8 +431,11 @@ test.describe('DDC Workbench — the fullscreen cockpit keeps its graphic', () =
     // pane the single scroller, the readouts + controls column outruns the
     // scrollport, and before the sticky pin the graphic scrolled partly out
     // of view over dead space (246 of 390px left at 1280×720). The graphic
-    // spans all three grid rows, so it pins without any wrapper; `bottom: 0`
-    // rides along because the item is CENTERED (see the page's head block).
+    // spans the right column's whole row stack (its named grid-area covers
+    // every row, so a new row — the param rail landed this way — joins the
+    // span without touching the pin), so it pins without any wrapper;
+    // `bottom: 0` rides along because the item is CENTERED (see the page's
+    // head block).
 
     test('scrolled to the bottom, the graphic is still in full view', async ({ page }) => {
         await page.goto(URL);
@@ -745,6 +748,19 @@ test.describe('DDC Workbench — the parameter rail adjusts the running program'
         await page.waitForTimeout(200);
         expect(await db.inputValue(), 'deadband back on the shipped 3.0').toBe('3.0');
         expect(await chipText(page, 'Deadband'), 'nothing committed').toContain('3.0');
+        // Escape on the now-CLEAN field has nothing to cancel, so the
+        // press must bubble on to the page handlers — in the fullscreen
+        // cockpit that is the only keyboard way out for a user whose
+        // focus sits in a rail field (same contract as the AHU page's
+        // dedicated row; the rail logic is deliberately duplicated, so
+        // the claim-only-when-dirty guard needs its own pin here).
+        await page.click('.tool-card-fullscreen-btn');
+        await page.waitForTimeout(300);
+        await db.click();
+        await db.press('Escape');
+        await page.waitForTimeout(200);
+        expect(await page.evaluate(() => document.body.classList.contains('has-fullscreen-tool')),
+            'clean-field Escape exits fullscreen').toBe(false);
     });
 
     test('a program switch resets the rail; Clear disables it', async ({ page }) => {
@@ -784,6 +800,28 @@ test.describe('DDC Workbench — the parameter rail adjusts the running program'
         expect(await page.locator('#fcu-p-deadband').inputValue()).toBe('1.7');
         await expect(page.locator('#fcu-p-cool-sp-u')).toHaveText('°C');
     });
+
+    test('a metric clamp holds the CANONICAL limit through the Enter double-fire', async ({ page }) => {
+        // Same regression pin as the AHU page's row — the rail logic is
+        // deliberately duplicated per the unit-selector precedent, so the
+        // erosion needs its own pin HERE: Enter's keydown commit clamps
+        // and re-expresses (85 °F → "29.4"); without the display-equality
+        // no-op the native change re-parses 29.4 °C → 84.92 °F and quietly
+        // undercuts the announced limit.
+        await page.goto(URL);
+        await page.waitForTimeout(400);
+        await page.locator('.units-btn').filter({ hasText: 'Metric' }).click();
+        await page.waitForTimeout(300);
+        const cool = page.locator('#fcu-p-cool-sp');
+        await cool.click();
+        await cool.fill('29.5');                 // canonical 85.1 → clamp 85
+        await cool.press('Enter');
+        await page.waitForTimeout(300);
+        expect(await cool.inputValue()).toBe('29.4');
+        await page.locator('.units-btn').filter({ hasText: 'US' }).click();
+        await page.waitForTimeout(300);
+        expect(await cool.inputValue(), 'canonical held at the limit').toBe('85.0');
+    });
 });
 
 test.describe('DDC Workbench — rail ink clears the AA floor in both themes', () => {
@@ -816,12 +854,26 @@ test.describe('DDC Workbench — rail ink clears the AA floor in both themes', (
                 expect(await page.evaluate(
                     () => document.documentElement.getAttribute('data-theme'),
                 ), 'the seeded theme must actually render').toBe(theme);
+                // Settle the tool-card entrance fade BEFORE measuring — its
+                // DELAY phase defeats actionability waits (the element is
+                // stationary at opacity < 1), so a fixed timeout can land
+                // mid-fade and read a ghost (#259). The measurement below
+                // composites opacity, so an unsettled fade would read as a
+                // hard fail rather than a silent pass — this wait is what
+                // makes the rows deterministic.
+                await page.waitForFunction(() => {
+                    const card = document.querySelector('.tool-card');
+                    return card && getComputedStyle(card).opacity === '1';
+                });
 
                 const rows = await page.evaluate(() => {
-                    const lum = (c) => {
-                        const m = /rgba?\(([\d.]+), ([\d.]+), ([\d.]+)/.exec(c);
-                        const ch = [m[1], m[2], m[3]].map((v) => {
-                            const s = Number(v) / 255;
+                    const parse = (c) => {
+                        const m = /rgba?\(([\d.]+), ([\d.]+), ([\d.]+)(?:, ([\d.]+))?\)/.exec(c);
+                        return { r: +m[1], g: +m[2], b: +m[3], a: m[4] === undefined ? 1 : +m[4] };
+                    };
+                    const lum = (rgb) => {
+                        const ch = [rgb.r, rgb.g, rgb.b].map((v) => {
+                            const s = v / 255;
                             return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
                         });
                         return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
@@ -836,10 +888,29 @@ test.describe('DDC Workbench — rail ink clears the AA floor in both themes', (
                         }
                         return getComputedStyle(document.documentElement).backgroundColor;
                     };
+                    // Ancestor-multiplied opacity — declared colour is not
+                    // rendered ink (the site sweep's .bit-idx lesson: a
+                    // separate `opacity` on the element counts, and it is
+                    // exactly what a colour-only read cannot see).
+                    const effOpacity = (el) => {
+                        let o = 1, n = el;
+                        while (n && n !== document.documentElement) {
+                            o *= parseFloat(getComputedStyle(n).opacity);
+                            n = n.parentElement;
+                        }
+                        return o;
+                    };
                     const ratio = (el) => {
-                        const fg = lum(getComputedStyle(el).color);
-                        const bg = lum(bgOf(el));
-                        return (Math.max(fg, bg) + 0.05) / (Math.min(fg, bg) + 0.05);
+                        const bg = parse(bgOf(el));
+                        const raw = parse(getComputedStyle(el).color);
+                        const a = effOpacity(el) * raw.a;
+                        const fg = {
+                            r: raw.r * a + bg.r * (1 - a),
+                            g: raw.g * a + bg.g * (1 - a),
+                            b: raw.b * a + bg.b * (1 - a),
+                        };
+                        const L1 = lum(fg), L2 = lum(bg);
+                        return (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
                     };
                     return {
                         input: ratio(document.getElementById('fcu-p-cool-sp')),

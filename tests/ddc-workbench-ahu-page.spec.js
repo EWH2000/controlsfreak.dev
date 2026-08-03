@@ -1189,6 +1189,29 @@ test.describe('AHU workbench page: the parameter rail adjusts the running progra
         expect(await chipText(page, 'Heat SP'), 'nothing committed').toContain('68.0');
     });
 
+    test('Escape claims the press only while an edit is pending (fullscreen stays reachable)', async ({ page }) => {
+        await open(page);
+        await page.click('.tool-card-fullscreen-btn');
+        await settle(page, 300);
+        const heat = page.locator('#ahu-p-heat-sp');
+        await heat.click();
+        await heat.fill('60');
+        // Dirty field: Escape cancels the edit and must NOT also exit the
+        // cockpit — one press, one action.
+        await heat.press('Escape');
+        await settle(page, 200);
+        expect(await heat.inputValue(), 'edit cancelled').toBe('68.0');
+        expect(await page.evaluate(() => document.body.classList.contains('has-fullscreen-tool')),
+            'first Escape stays in fullscreen').toBe(true);
+        // Clean field: nothing to cancel, so the press bubbles to the
+        // fullscreen handler. An unconditional stopPropagation here would
+        // swallow Escape forever and strand a keyboard user in the cockpit.
+        await heat.press('Escape');
+        await settle(page, 200);
+        expect(await page.evaluate(() => document.body.classList.contains('has-fullscreen-tool')),
+            'second Escape exits fullscreen').toBe(false);
+    });
+
     test('a commit outside the rails clamps — and ANNOUNCES the range', async ({ page }) => {
         await open(page);
         const cool = page.locator('#ahu-p-cool-sp');
@@ -1298,6 +1321,33 @@ test.describe('AHU workbench page: the parameter rail adjusts the running progra
         expect(await chipText(page, 'Cool SP')).toContain('23.0 °C');
     });
 
+    test('a metric clamp holds the CANONICAL limit through the Enter double-fire', async ({ page }) => {
+        await open(page);
+        // The regression this row exists for: Enter fires keydown AND the
+        // native 'change', and the keydown commit re-expresses the field
+        // in display units (85 °F → "29.4"). Without the display-equality
+        // no-op in commit(), the change-side call re-parses that display
+        // through toCanonical (29.4 °C → 84.92 °F) — inside the range, so
+        // it commits, silently eroding the clamped canonical below the
+        // limit the hint just announced. US units round-trip losslessly,
+        // which is why only a metric boundary catches it.
+        await page.locator('.units-btn').filter({ hasText: 'Metric' }).click();
+        await settle(page, 300);
+        const cool = page.locator('#ahu-p-cool-sp');
+        await cool.click();
+        await cool.fill('29.5');                 // canonical 85.1 → clamp 85
+        await cool.press('Enter');
+        await settle(page, 300);
+        expect(await cool.inputValue()).toBe('29.4');
+        await expect(page.locator('#ahu-params-hint')).toContainText('18.3–29.4 °C');
+        // Flip back to US: the stored canonical must be EXACTLY the roster
+        // max, not the eroded 84.9.
+        await page.locator('.units-btn').filter({ hasText: 'US' }).click();
+        await settle(page, 300);
+        expect(await cool.inputValue(), 'canonical held at the limit').toBe('85.0');
+        expect(await chipText(page, 'Cool SP')).toContain('85.0');
+    });
+
     test('boot values sit inside the declared rails', async ({ page }) => {
         await open(page);
         // A shipped literal outside its own roster range would clamp on
@@ -1346,12 +1396,26 @@ test.describe('AHU workbench page: rail ink clears the AA floor in both themes',
                 expect(await page.evaluate(
                     () => document.documentElement.getAttribute('data-theme'),
                 ), 'the seeded theme must actually render').toBe(theme);
+                // Settle the tool-card entrance fade BEFORE measuring — its
+                // DELAY phase defeats actionability waits (the element is
+                // stationary at opacity < 1), so a fixed timeout can land
+                // mid-fade and read a ghost (#259). The measurement below
+                // composites opacity, so an unsettled fade would read as a
+                // hard fail rather than a silent pass — this wait is what
+                // makes the rows deterministic.
+                await page.waitForFunction(() => {
+                    const card = document.querySelector('.tool-card');
+                    return card && getComputedStyle(card).opacity === '1';
+                });
 
                 const rows = await page.evaluate(() => {
-                    const lum = (c) => {
-                        const m = /rgba?\(([\d.]+), ([\d.]+), ([\d.]+)/.exec(c);
-                        const ch = [m[1], m[2], m[3]].map((v) => {
-                            const s = Number(v) / 255;
+                    const parse = (c) => {
+                        const m = /rgba?\(([\d.]+), ([\d.]+), ([\d.]+)(?:, ([\d.]+))?\)/.exec(c);
+                        return { r: +m[1], g: +m[2], b: +m[3], a: m[4] === undefined ? 1 : +m[4] };
+                    };
+                    const lum = (rgb) => {
+                        const ch = [rgb.r, rgb.g, rgb.b].map((v) => {
+                            const s = v / 255;
                             return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
                         });
                         return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
@@ -1366,10 +1430,29 @@ test.describe('AHU workbench page: rail ink clears the AA floor in both themes',
                         }
                         return getComputedStyle(document.documentElement).backgroundColor;
                     };
+                    // Ancestor-multiplied opacity — declared colour is not
+                    // rendered ink (the site sweep's .bit-idx lesson: a
+                    // separate `opacity` on the element counts, and it is
+                    // exactly what a colour-only read cannot see).
+                    const effOpacity = (el) => {
+                        let o = 1, n = el;
+                        while (n && n !== document.documentElement) {
+                            o *= parseFloat(getComputedStyle(n).opacity);
+                            n = n.parentElement;
+                        }
+                        return o;
+                    };
                     const ratio = (el) => {
-                        const fg = lum(getComputedStyle(el).color);
-                        const bg = lum(bgOf(el));
-                        return (Math.max(fg, bg) + 0.05) / (Math.min(fg, bg) + 0.05);
+                        const bg = parse(bgOf(el));
+                        const raw = parse(getComputedStyle(el).color);
+                        const a = effOpacity(el) * raw.a;
+                        const fg = {
+                            r: raw.r * a + bg.r * (1 - a),
+                            g: raw.g * a + bg.g * (1 - a),
+                            b: raw.b * a + bg.b * (1 - a),
+                        };
+                        const L1 = lum(fg), L2 = lum(bg);
+                        return (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
                     };
                     const hint = document.getElementById('ahu-params-hint');
                     return {
