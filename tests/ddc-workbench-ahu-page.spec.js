@@ -841,21 +841,21 @@ test.describe('AHU workbench page: the mirror diet', () => {
         expect(gfx.width, 'at the cutoff the drawing still renders its full cap')
             .toBeGreaterThanOrEqual(gfx.cap - 0.5);
 
-        // One pixel narrower: every cell is back in the grid, and the
-        // reclaimed height is the deliverable, so measure it.
-        const tall = await page.evaluate(
+        // One pixel narrower: every cell is back in the grid. The reclaimed
+        // height IS the deliverable, so measure it rather than trusting that
+        // fewer boxed cells implies a shorter grid.
+        const mirrorHeight = () => page.evaluate(
             () => document.querySelector('.ahu-points').getBoundingClientRect().height);
+        const dieted = await mirrorHeight();
         await page.setViewportSize({ width: CUTOFF - 1, height: 900 });
         const narrow = await cellBoxes(page);
         expect(narrow.filter((c) => c.boxed).length,
             'one pixel under the cutoff the whole list is back').toBe(16);
-        const grown = await page.evaluate(
-            () => document.querySelector('.ahu-points').getBoundingClientRect().height);
-        // Measured 2026-08-03: 49.2px on the desktop row vs 223.5px with all
+        // Measured 2026-08-03: 49.2px for the desktop row vs 223.5px for all
         // sixteen at 899 wide. The floor is deliberately loose — the claim is
         // that the diet reclaims real height, not that it reclaims 174px.
-        expect(grown, 'the full list is materially taller than the desktop row')
-            .toBeGreaterThan(tall + 50);
+        expect(await mirrorHeight(), 'the full list is materially taller than the desktop row')
+            .toBeGreaterThan(dieted + 50);
     });
 });
 
