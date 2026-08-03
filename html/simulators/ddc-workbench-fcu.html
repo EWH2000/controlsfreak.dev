@@ -226,6 +226,89 @@ noindex: true
         /* Verdict pill sits tight under the points. */
         .fcu-verdict { margin-top: 1rem; }
 
+        /* ── the parameter rail (mini) — the operator-adjustable surface.
+           Chrome duplicated from the AHU page's rail (page-local CSS, per
+           the unit-selector precedent): an input dressed in the well's own
+           face so an adjustable constant still reads as the same system as
+           the read-only wells; the focus-WITHIN ring on the frame is what
+           says "field". The hint line is the rail's one amber — the
+           announcement register p.fcu-ovr-state already owns. A rail edit
+           is NOT a hand control: it changes one of the sequence's
+           CONSTANTS and the program keeps sequencing; nothing here touches
+           a priority array or carries a NULL box. */
+        .fcu-params { margin-top: 1.25rem; }
+        .fcu-param-rows {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem 1.5rem;
+            margin-top: 0.5rem;
+        }
+        .fcu-param-row {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .fcu-param-lbl {
+            font-family: var(--mono);
+            font-size: 0.66rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+        .fcu-param-editwell {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 0.3rem;
+            background: var(--well);
+            border: 1px solid var(--border);
+            padding: 0.12rem 0.5rem;
+            white-space: nowrap;
+        }
+        .fcu-param-editwell:focus-within {
+            outline: 2px solid var(--accent);
+            outline-offset: 1px;
+        }
+        .fcu-param-input {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--accent-ink);
+            background: transparent;
+            border: 0;
+            padding: 0;
+            width: 4.2rem;
+            text-align: right;
+        }
+        /* The frame's focus-within ring carries the indicator — a second
+           ring on the input inside it would draw a box in a box. */
+        .fcu-param-input:focus-visible { outline: none; }
+        /* Disabled = the running sheet carries no block for the param
+           (post-Clear). Dim ink; WCAG exempts inactive controls, and the
+           title says why it is off. */
+        .fcu-param-input:disabled { color: var(--text-dim); }
+        .fcu-param-unit {
+            font-family: var(--mono);
+            font-size: 0.66rem;
+            font-weight: 700;
+            color: var(--text-dim);
+        }
+        /* The clamp announcement. min-height holds the line so an
+           announcement never reflows the console under the pointer. */
+        p.fcu-param-hint {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            line-height: 1.5;
+            color: var(--amber-ink);
+            margin: 0.5rem 0 0;
+            min-height: 1.1rem;
+        }
+        p.fcu-param-note {
+            font-size: 0.8rem;
+            line-height: 1.55;
+            color: var(--text-dim);
+            margin: 0.35rem 0 0;
+        }
+
         /* Fan-heat / calibration aside — the element-qualified idiom (ties
            .tool-body p on specificity, like p.ref-note). */
         p.fcu-note {
@@ -468,6 +551,7 @@ noindex: true
         .tool-card.is-fullscreen .subhead,
         .tool-card.is-fullscreen .ref-note,
         .tool-card.is-fullscreen p.fcu-note,
+        .tool-card.is-fullscreen p.fcu-param-note,
         .tool-card.is-fullscreen .fbe-legend { display: none; }
 
         /* Unit pane in fullscreen: graphic left, readouts + controls right
@@ -476,10 +560,11 @@ noindex: true
         .tool-card.is-fullscreen #tab-unit.active {
             display: grid;
             grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
-            grid-template-rows: auto auto minmax(0, 1fr);
+            grid-template-rows: auto auto auto minmax(0, 1fr);
             grid-template-areas:
                 "graphic points"
                 "graphic verdict"
+                "graphic params"
                 "graphic controls";
             gap: 0.6rem 1.5rem;
             align-content: start;
@@ -509,16 +594,20 @@ noindex: true
         }
         .tool-card.is-fullscreen .fcu-points { grid-area: points; margin: 0; align-content: start; }
         .tool-card.is-fullscreen .fcu-verdict { grid-area: verdict; margin: 0; }
+        /* The rail keeps its hint (an announcement is instrument, not
+           prose) — only its note paragraph drops with the reading prose. */
+        .tool-card.is-fullscreen .fcu-params { grid-area: params; margin: 0; }
         .tool-card.is-fullscreen .fcu-controls { grid-area: controls; margin-top: 0.5rem; }
 
         @media (max-width: 900px), (max-aspect-ratio: 1/1) {
             .tool-card.is-fullscreen #tab-unit.active {
                 grid-template-columns: 1fr;
-                grid-template-rows: auto auto auto auto;
+                grid-template-rows: auto auto auto auto auto;
                 grid-template-areas:
                     "graphic"
                     "points"
                     "verdict"
+                    "params"
                     "controls";
             }
             /* One column: the graphic is ordinary flow again. Sticky here
@@ -568,7 +657,9 @@ noindex: true
             <p class="tool-preamble">
                 A DX fan coil as a live DDC graphic, driven by a function-block
                 program. The <strong>Unit</strong> tab is the supervisory screen
-                a tech reads; the <strong>Wiresheet</strong> tab is the control
+                a tech reads and adjusts — the parameter rail's setpoint and
+                deadband commit to the running program; the
+                <strong>Wiresheet</strong> tab is the control
                 program running it. The workbench commands each output through
                 a real BACnet priority array, on three levels:
                 <strong>slot 8 (Manual Operator)</strong> for your hand,
@@ -934,6 +1025,51 @@ noindex: true
             <div class="status-pill ok fcu-verdict" id="fcu-verdict">
                 Cooling — clear ΔT across the coil
             </div>
+
+            <!-- ══ THE PARAMETER RAIL (mini) ═══════════════════════════════
+                 The FCU's two program constants, adjustable from the
+                 operator graphic (owner ruling 2026-08-03) — the AHU
+                 page's rail pattern, sized to this unit's roster. A rail
+                 edit commits through host.writeParam to the const block on
+                 the RUNNING sheet, so the program keeps sequencing on the
+                 new number. It is NOT a hand control: nothing here touches
+                 a priority array, carries a NULL box, or shows up in the
+                 off-program window — which is why it sits ABOVE the
+                 hand-control region rather than in it. Each input takes
+                 <label for>; the °F/°C suffix rides in an aria-hidden u*
+                 span so the value stays a bare editable number; commits
+                 clamp to the roster's per-param min/max and the clamp is
+                 ANNOUNCED on #fcu-params-hint (role=status). The SVG
+                 SETPOINT well in the zone stays the read-only display
+                 twin — nothing inside the graphic becomes focusable
+                 (#227b). -->
+            <section class="fcu-params" aria-labelledby="fcu-params-h">
+                <h2 class="subhead" id="fcu-params-h">Program parameters</h2>
+                <div class="fcu-param-rows">
+                    <div class="fcu-param-row">
+                        <label class="fcu-param-lbl" for="fcu-p-cool-sp">Cooling SP</label>
+                        <span class="fcu-param-editwell">
+                            <input class="fcu-param-input" type="number" id="fcu-p-cool-sp" value="72.0" min="65" max="85" step="0.5">
+                            <span class="fcu-param-unit" id="fcu-p-cool-sp-u" aria-hidden="true">°F</span>
+                        </span>
+                    </div>
+                    <div class="fcu-param-row">
+                        <label class="fcu-param-lbl" for="fcu-p-deadband">Deadband</label>
+                        <span class="fcu-param-editwell">
+                            <input class="fcu-param-input" type="number" id="fcu-p-deadband" value="3.0" min="1" max="5" step="0.5">
+                            <span class="fcu-param-unit" id="fcu-p-deadband-u" aria-hidden="true">°F</span>
+                        </span>
+                    </div>
+                </div>
+                <p class="fcu-param-hint" id="fcu-params-hint" role="status" aria-live="polite"></p>
+                <p class="fcu-param-note">
+                    Both fields clamp to a per-parameter range and say so —
+                    a real front end usually keeps its rails silent, but
+                    this is a classroom, so this graphic announces them.
+                    Front ends differ on when a typed setpoint takes; this
+                    one commits on Enter or on leaving the field.
+                </p>
+            </section>
 
             <!-- ── Controls ── -->
             <div class="fcu-controls">

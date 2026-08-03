@@ -495,8 +495,13 @@ const DDCWFcuUnit = (function () {
     // ── FCU IO points ── point id === seed FBE-block id === the IO block
     // the sample programs author (the load-bearing binding invariant).
     // `dir` is 'sensor' | 'actuator' for the driver; params carry
-    // dir:'param'. min/max/step mirror the hand-control ranges (informational
-    // here — the programs place their own blocks, so no `seed` field).
+    // dir:'param'. On sensors/actuators min/max/step mirror the
+    // hand-control ranges (informational there — the programs place
+    // their own blocks, so no `seed` field); on PARAMS they are
+    // LOAD-BEARING: the operator graphic's parameter rail clamps
+    // commits to them and announces the catch (owner ruling
+    // 2026-08-03). Canonical IP; first-cut ranges pending owner
+    // retune on preview.
     // `relinquishDefault` (the real BACnet property) is REQUIRED on every
     // actuator point: it is the value the point rests at when its whole
     // priority array is NULL, and it comes from HERE alone — the shell
@@ -527,8 +532,11 @@ const DDCWFcuUnit = (function () {
         { id: 'fan-enable',       kind: 'bo',    dir: 'actuator', plantKey: 'fan-enable',       name: 'Fan En',   relinquishDefault: false },
         { id: 'y1',               kind: 'bo',    dir: 'actuator', plantKey: 'y1',               name: 'Y1',       relinquishDefault: false },
         { id: 'y2',               kind: 'bo',    dir: 'actuator', plantKey: 'y2',               name: 'Y2',       relinquishDefault: false },
-        { id: 'cooling-setpoint', kind: 'param', dir: 'param',    plantKey: 'cooling-setpoint', name: 'Cool SP',  unit: '°F', conv: 'temp' },
-        { id: 'deadband',         kind: 'param', dir: 'param',    plantKey: 'deadband',         name: 'Deadband', unit: '°F', conv: 'deltaTemp' },
+        { id: 'cooling-setpoint', kind: 'param', dir: 'param',    plantKey: 'cooling-setpoint', name: 'Cool SP',  unit: '°F', conv: 'temp',      min: 65, max: 85, step: 0.5 },
+        // Deadband min is 1, not 0: a zero band short-cycles by
+        // construction, and the zero-band lesson stays reachable on the
+        // wiresheet, where the constant is unguarded. (Ships at 3.)
+        { id: 'deadband',         kind: 'param', dir: 'param',    plantKey: 'deadband',         name: 'Deadband', unit: '°F', conv: 'deltaTemp', min: 1, max: 5, step: 0.5 },
     ];
 
     // ═════════════════════ DOM — graphic + controls ═════════════════════
@@ -609,6 +617,15 @@ const DDCWFcuUnit = (function () {
             compG:document.getElementById('fcu-comp-v'),
             compR:document.getElementById('fcu-comp-r'),
             datG: document.getElementById('fcu-dat'),
+            // The param rail (the operator-adjustable surface): the p*
+            // handles are <input>s, the u* spans their unit suffixes,
+            // paramsHint the rail's one live region. The SVG setpoint
+            // well (zsp above) stays the read-only display twin.
+            pCoolSp:   document.getElementById('fcu-p-cool-sp'),
+            pDeadband: document.getElementById('fcu-p-deadband'),
+            uCoolSp:   document.getElementById('fcu-p-cool-sp-u'),
+            uDeadband: document.getElementById('fcu-p-deadband-u'),
+            paramsHint: document.getElementById('fcu-params-hint'),
         };
     }
 
@@ -621,6 +638,33 @@ const DDCWFcuUnit = (function () {
     function setBoth(pair, text) {
         pair[0].textContent = text;
         pair[1].textContent = text;
+    }
+
+    // Mirror a live param into its rail input — the override-input
+    // pattern: never write while the field holds focus (the user is
+    // mid-edit; commit is Enter / focus-out), and only on a genuine
+    // change so an idle tick never disturbs the field.
+    function setParamInput(inp, str) {
+        if (document.activeElement === inp) return;
+        if (inp.value !== str) inp.value = str;
+    }
+
+    // The rail's two adjustable params: roster point id → the out-map
+    // handle key of its input. Walked by the mirror paint, the
+    // writability sync and the commit wiring, so the three surfaces
+    // cannot cover different sets.
+    const PARAM_POINTS = [
+        { id: 'cooling-setpoint', outKey: 'pCoolSp' },
+        { id: 'deadband',         outKey: 'pDeadband' },
+    ];
+
+    // Roster lookup by point id — the params' min/max/step and conv all
+    // live on FCU_POINTS, the single source the chips already read.
+    function rosterPoint(id) {
+        for (let i = 0; i < FCU_POINTS.length; i++) {
+            if (FCU_POINTS[i].id === id) return FCU_POINTS[i];
+        }
+        return null;
     }
 
     // ── verdict — ONE writer for the pill and its screen-reader mirror ──
@@ -692,6 +736,22 @@ const DDCWFcuUnit = (function () {
         out.zt.textContent  = eatN.toFixed(1) + ' ' + tSuffix();
         out.zsp.textContent = spN.toFixed(1) + ' ' + tSuffix();
         out.zr.textContent  = eatN.toFixed(1) + ' / ' + spN.toFixed(1) + ' ' + tSuffix();
+
+        // ── the param rail ── the two params are INPUTS (the rail is the
+        // operator-adjustable surface): while a field is not focused its
+        // VALUE mirrors the live param — the override-input pattern — and
+        // the °F/°C suffix rides in a separate span so the number stays a
+        // bare editable value. The SVG SETPOINT well (zsp above) stays
+        // the read-only display twin — nothing in the graphic is
+        // focusable (#227b). The deadband converts as a DELTA, same as
+        // the chips.
+        setParamInput(out.pCoolSp, spN.toFixed(1));
+        const dbDisp = window.Units.current() === 'us'
+            ? plant.params['deadband']
+            : window.Units.display.deltaTemp(plant.params['deadband']);
+        setParamInput(out.pDeadband, (Math.round(dbDisp * 10) / 10).toFixed(1));
+        out.uCoolSp.textContent   = tSuffix();
+        out.uDeadband.textContent = dSuffix();
 
         // The fan readout shows the COMMAND, the peer of the compressor
         // readout beside it — so under a broken belt the graphic reads
@@ -885,6 +945,26 @@ const DDCWFcuUnit = (function () {
         speedValLbl.textContent = Math.round(ctx.simSpeed()) + '×';
         oaValLbl.textContent    = dispTempNum(tOa).toFixed(0) + ' ' + tSuffix();
         loadValLbl.textContent  = Math.round(qInternal) + ' Btu/h';
+
+        // ── param rail writability ── a field is adjustable only while
+        // the RUNNING sheet carries its const block. bindingTick skips a
+        // missing block (the value freezes at its last read), so the
+        // input disables — with a title saying why — rather than accept
+        // an edit with nowhere to land. This is the honest depiction of
+        // the existing freeze behaviour, not a new rule.
+        PARAM_POINTS.forEach(function (pp) {
+            const inp = out[pp.outKey];
+            const writable = ctx.paramWritable(pp.id);
+            if (inp.disabled !== !writable) {
+                inp.disabled = !writable;
+                if (writable) {
+                    inp.removeAttribute('title');
+                } else {
+                    inp.title = 'The running sheet has no ' + pp.id
+                        + ' block, so there is nothing to write — the value shown is the last one read.';
+                }
+            }
+        });
     }
 
     // The graphic is a viewBox SVG at width:100% — it auto-scales into its
@@ -1050,10 +1130,141 @@ const DDCWFcuUnit = (function () {
         // Re-express the forced value in the current display units when the
         // site unit toggle flips — the render loop leaves the box alone
         // while forcing (so it can't clobber typing), so do it on the event.
+        // The rail's min/max/step attributes re-express here too: the
+        // shell's own unitschange repaint re-mirrors the input VALUES, but
+        // attributes are wireControls' to keep.
         document.addEventListener('unitschange', function () {
             if (pl.override.spaceTemp.active) {
                 ovrInput.value = toDisplayTemp(pl.override.spaceTemp.value).toFixed(1);
             }
+            PARAM_POINTS.forEach(function (pp) {
+                railRangeAttrs(rosterPoint(pp.id), out[pp.outKey]);
+            });
+        });
+
+        // ── the param rail — the operator-adjustable surface ───────────
+        // Commit on Enter or focus-out, NEVER per keystroke: typing 74
+        // must not pass through a momentary setpoint of 7. The 'change'
+        // event is exactly that boundary (and covers the spinners, which
+        // never fire mid-typing); Escape reverts the field to the live
+        // value without committing. The write goes through
+        // host.writeParam — the const block on the RUNNING sheet —
+        // because plant.params is a per-tick block → plant mirror and a
+        // direct write there is clobbered within one tick. Clamping
+        // lives HERE: the roster owns min/max, the shell hook stays
+        // dumb, and a clamp is ANNOUNCED on the rail's hint line — on a
+        // real front end the rails are usually silent, but this is a
+        // classroom (see the markup's rail note). Same block as the AHU
+        // page's rail, sized to this unit's two params — duplicated
+        // per the unit-selector precedent rather than grown into the
+        // unit-agnostic shell.
+        function paramToDisplay(pt, v) {
+            const U = window.Units;
+            if (pt.conv === 'temp') return dispTempNum(v).toFixed(1);
+            if (pt.conv === 'deltaTemp') {
+                const d = U.current() === 'us' ? v : U.display.deltaTemp(v);
+                return (Math.round(d * 10) / 10).toFixed(1);
+            }
+            return String(Math.round(v));
+        }
+        function paramToCanonical(pt, disp) {
+            const U = window.Units;
+            if (U.current() === 'us') return disp;
+            if (pt.conv === 'temp') return U.toCanonical.temp(disp);
+            if (pt.conv === 'deltaTemp') return U.toCanonical.deltaTemp(disp);
+            return disp;
+        }
+        function paramSuffix(pt) {
+            if (pt.conv === 'temp') return tSuffix();
+            if (pt.conv === 'deltaTemp') return dSuffix();
+            return pt.unit;
+        }
+        // min/max/step attributes in the CURRENT display units — they
+        // drive the spinners and the browser's own cues; the committed
+        // clamp below tests the CANONICAL value, so these are expression,
+        // never the enforcement. Metric steps by 0.5 on the temperature
+        // params: the authored 0.5 °F step converts to a 0.28 °C
+        // non-number, and half a degree is what a metric front end walks
+        // a setpoint by anyway.
+        function railRangeAttrs(pt, inp) {
+            inp.min = paramToDisplay(pt, pt.min);
+            inp.max = paramToDisplay(pt, pt.max);
+            inp.step = (pt.conv && window.Units.current() !== 'us')
+                ? '0.5' : String(pt.step);
+        }
+        // The hint line — one aria-live region for the whole rail,
+        // signature-aware: re-announcing the SAME clamp needs a genuine
+        // DOM change, so an identical message blanks first and lands on
+        // a beat. Auto-clears so a stale range note cannot sit under
+        // later edits.
+        let railHintTimer = null;
+        function railHint(msg) {
+            const el = out.paramsHint;
+            if (railHintTimer !== null) { window.clearTimeout(railHintTimer); railHintTimer = null; }
+            if (msg !== '' && el.textContent === msg) {
+                el.textContent = '';
+                window.setTimeout(function () { el.textContent = msg; }, 30);
+            } else {
+                el.textContent = msg;
+            }
+            if (msg !== '') {
+                railHintTimer = window.setTimeout(function () {
+                    el.textContent = '';
+                    railHintTimer = null;
+                }, 6000);
+            }
+        }
+        function railRangeText(pt) {
+            return paramToDisplay(pt, pt.min) + '–' + paramToDisplay(pt, pt.max)
+                + ' ' + paramSuffix(pt);
+        }
+        PARAM_POINTS.forEach(function (pp) {
+            const pt = rosterPoint(pp.id);
+            const inp = out[pp.outKey];
+            railRangeAttrs(pt, inp);
+
+            function revert() {
+                inp.value = paramToDisplay(pt, pl.params[pt.plantKey]);
+            }
+            function commit() {
+                if (inp.disabled) return;
+                const disp = parseFloat(inp.value);
+                if (!isFinite(disp)) {
+                    // Validate-and-revert: junk never reaches the sheet,
+                    // and the hint names the range so the reader knows
+                    // what the field takes.
+                    revert();
+                    railHint(pt.name + ' takes ' + railRangeText(pt)
+                        + ' — reverted to the live value.');
+                    return;
+                }
+                let v = paramToCanonical(pt, disp);
+                let clamped = false;
+                if (v < pt.min) { v = pt.min; clamped = true; }
+                else if (v > pt.max) { v = pt.max; clamped = true; }
+                host.writeParam(pp.id, v);
+                // Re-express what actually committed — the mirror paint
+                // skips a focused field, so the commit writes it here.
+                inp.value = paramToDisplay(pt, v);
+                // A clean commit does NOT clear the hint — the auto-clear
+                // owns removal. Enter fires keydown AND the native
+                // 'change', so a clamped commit is immediately followed
+                // by an in-range re-commit of the clamped value; a clear
+                // here would wipe the announcement it just made.
+                if (clamped) {
+                    railHint(pt.name + ' accepts ' + railRangeText(pt)
+                        + ' — held at the limit.');
+                }
+            }
+            inp.addEventListener('change', commit);
+            inp.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    commit();
+                } else if (e.key === 'Escape') {
+                    revert();
+                    e.stopPropagation();
+                }
+            });
         });
 
         // ── Sim-clock speed (× real time) — always live; scales the whole
