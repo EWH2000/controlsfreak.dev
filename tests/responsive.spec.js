@@ -40,8 +40,13 @@ const PHONE_SE_PAGES = [
 // - .sr-only is the clip-rect screen-reader utility;
 // - .hp-field is the contact form's off-screen honeypot;
 // - .cf-turnstile is the fixed-width Cloudflare widget (see #146);
+// - .ddcw-offprog.is-empty is the workbench off-program window
+//   collapsed to a 1px overflow-hidden box while every point follows
+//   the program — its label is clipped BY DESIGN (the workbench pages'
+//   own hand-written sweeps carry the same exemption);
 // - anything inside a .table-scroll wrapper scrolls on purpose.
-const INTENTIONAL = 'input, textarea, select, .sr-only, .hp-field, .cf-turnstile';
+const INTENTIONAL = 'input, textarea, select, .sr-only, .hp-field, .cf-turnstile, '
+    + '.ddcw-offprog.is-empty';
 
 // Report every element whose content is genuinely cut off: wider
 // content than box, overflow-x hidden/clip, not on the intentional

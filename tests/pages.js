@@ -46,6 +46,8 @@ const PAGES = [
     { name: 'bacnet mstp lesson',     url: '/education/bacnet-mstp.html' },
     { name: 'modbus function codes',  url: '/tools/modbus-functions.html' },
     { name: 'simulators landing',     url: '/simulators/' },
+    { name: 'ddc workbench ahu',      url: '/simulators/ddc-workbench.html' },
+    { name: 'ddc workbench fcu',      url: '/simulators/ddc-workbench-fcu.html' },
     { name: 'pid tuner',              url: '/simulators/pid-tuner.html' },
     { name: 'vfd mock',               url: '/simulators/vfd-mock.html' },
     { name: 'function-block editor',  url: '/simulators/function-block-editor.html' },

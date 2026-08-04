@@ -59,28 +59,35 @@ test.describe('AHU workbench page: it boots', () => {
         expect(errs, 'the page booted without complaining').toEqual([]);
     });
 
-    test('the page is hidden, and hidden the way the house does it', async () => {
-        // Read off the SOURCE, because the three markers live in
-        // frontmatter and only one of them survives into the rendered
-        // HTML. If a later lane graduates this page it will add a
-        // `canonical` here, and this row is where that decision gets
-        // noticed — along with every merge-authority row that flips with
-        // it (CLAUDE.md, Workflow).
-        const src = fs.readFileSync(
-            path.join(__dirname, '..', 'html', 'simulators', 'ddc-workbench.html'), 'utf8');
-        const fm = src.slice(0, src.indexOf('---', 3));
-        expect(fm).toMatch(/noindex:\s*true/);
-        expect(fm).toMatch(/eleventyExcludeFromCollections:\s*true/);
-        expect(fm, 'a canonical here would put the page in the sitemap')
-            .not.toMatch(/^canonical:/m);
-
-        // And the manifest must NOT list it — the omission is the thing
-        // being asserted, not an accident to be corrected.
+    test('the page is public, and public the way the house does it', async () => {
+        // Read off the SOURCE. This row's predecessor asserted the
+        // hidden shape (noindex + eleventyExcludeFromCollections + no
+        // canonical) and named graduation as the event that flips it;
+        // Phase 8 (2026-08-04) is that event. Both workbench pages
+        // graduate together — the unit selector cross-anchors them, so
+        // one public and one hidden would strand a live link on a
+        // noindexed page. A regression back to the hidden shape gets
+        // noticed here, along with the merge-authority rows that
+        // flipped with it (CLAUDE.md, Workflow).
         const pages = require('./pages.js');
-        const list = Array.isArray(pages) ? pages : (pages.PAGES || []);
-        expect(list.some((p) => String(p).includes('ddc-workbench.html')),
-            'a canonical-less page in tests/pages.js fails the sitemap drift test')
-            .toBe(false);
+        for (const file of ['ddc-workbench.html', 'ddc-workbench-fcu.html']) {
+            const src = fs.readFileSync(
+                path.join(__dirname, '..', 'html', 'simulators', file), 'utf8');
+            const fm = src.slice(0, src.indexOf('---', 3));
+            expect(fm, `${file} canonical`).toMatch(new RegExp(
+                '^canonical: https://controlsfreak\\.dev/simulators/'
+                + file.replace('.', '\\.') + '$', 'm'));
+            expect(fm, `${file}: noindex would disclaim the canonical`)
+                .not.toMatch(/noindex/);
+            expect(fm, `${file}: exclusion would pull it from the sitemap`)
+                .not.toMatch(/eleventyExcludeFromCollections/);
+
+            // And the manifest lists it — pages.js is what routes the
+            // smoke, responsive and contrast sweeps here.
+            expect(pages.some((p) => p.url === '/simulators/' + file),
+                `${file} absent from tests/pages.js = absent from every site-wide sweep`)
+                .toBe(true);
+        }
     });
 
     test('the shell finds its whole markup skeleton', async ({ page }) => {
