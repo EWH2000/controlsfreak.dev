@@ -25,7 +25,7 @@ that diagnostic end**, not the point.
   unit; the owner's own fault examples are AHU faults, so the structure grows
   toward OA/mixing → MAT and beyond.
 
-## Current state — Phase 7 is content-complete (Lanes A+B+C, the naming arc, the 7.5 selector); the pre-Phase-8 discussion is next
+## Current state — Phase 7 and the pre-Phase-8 discussion are both COMPLETE (PRs #472–#476); next is the owner's final review, then Phase 8
 
 Three hidden pages carry this line. All are `noindex` +
 `eleventyExcludeFromCollections` with **no `canonical`**, so all are reachable
@@ -144,9 +144,21 @@ cooling; the derivation sits in the literal for a one-click retune. War story
 #4 renders on the Unit teach block. The **FCU ⇄ AHU unit selector shipped the
 same day (PR #470)** — a `Unit — FCU | AHU` statusbar link pair with
 `aria-current="page"` on the self link, adversarially verified with zero
-defects. What comes next is the owner's pre-Phase-8 discussion round.
-**Phase 8 is graduation** — until
-then the Workbench is a react-baseline and reference point, not a surfaced page.
+defects.
+
+**The pre-Phase-8 discussion has now been held AND executed** — the owner
+ruled a slate in one sitting on 2026-08-03 and five serial lanes shipped
+against it (**PRs #472–#476**, each built by a lane agent and adversarially
+verified before merge): operator-editable setpoints on both param rails, the
+mirror diet, the FCU harmonized to the AHU plus the owner's long-parked
+"fix 1", his name-pass rulings executed verbatim with the final war-story
+paragraph, and the Unit tab made an honest phone surface. The rulings and
+the execution record are the dated section below; the merge-by-merge detail
+is in `docs/next-session-handoff.md`, which briefs the review session.
+**What comes next is the owner's own final review, run WITH him in a fresh
+session** — his instruction, and the gate on everything after it. **Phase 8
+is graduation, and it executes only after his push-live call** — until then
+the Workbench is a react-baseline and reference point, not a surfaced page.
 
 ### Rulings that landed with the AHU page (2026-07-30)
 
@@ -418,6 +430,168 @@ stay an aside); and the label "cooling setpoint" inviting the wrong
 inference is the same naming-beat family as the "differential"
 collision.
 
+### The pre-Phase-8 discussion — rulings and execution (2026-08-03)
+
+The dedicated discussion Lane C deferred the block-name pass to. The owner
+ruled a slate in one sitting and five serial lanes executed it the same
+day — **PRs #472–#476**, all merged, each adversarially verified before
+merge. Everything below is a ruling of record; where he is
+quoted the words are his. What is NOT here is as load-bearing as what is:
+on the name pass **everything unmentioned stands as shipped**, with tweak
+rights reserved for his preview walk.
+
+**1. Unit-tab operability — the param rails become editable (PR #472).**
+The decision slate the lane carried as D1–D4 was ruled in favour of a real
+operator surface on both pages: labelled number inputs in the AHU's param
+rail and a new FCU mini-rail, writing the **RUNNING graph's `const`
+block** through a new `host.writeParam` hook (never `plant.params` — that
+is a per-tick block→plant mirror and a direct write there is clobbered
+inside one tick). Commit on Enter or blur, never per keystroke; Escape
+reverts; display-unit-aware; clamped to the roster's new per-param
+min/max; **disabled** when a custom sheet lacks the block. Two of the
+ruled details carry the reasoning:
+
+- **The clamp is ANNOUNCED, and that is a deliberate inversion of field
+  practice.** A real front end keeps its rails quiet — the shipped rail
+  note states the inversion in the reader's own terms: *"A real front end
+  usually keeps its rails silent — you rarely want occupants to know where
+  they are — but this is a classroom, so this graphic announces them."*
+  The announcement is the teaching surface, not a UI nicety.
+- **No cross-field separation guard, by ruling** — the rails clamp each
+  parameter to its own range and nothing stops the two setpoints from
+  crossing. Disclosed on the page as genuine field variation rather than
+  papered over, and it is the same commitment the roadmap ruling below
+  makes globally.
+
+**D2 — the commit FEEL — is the one item he reserved**, pending hands-on at
+the preview; so are all of the clamp ranges themselves, which the lane
+flagged for retune rather than defending.
+
+**2. The mirror diet (PR #473).** Above a measured 900px cutoff the
+**plain** mirror cells stop taking space; the sensor **buttons** stay at
+every width. The buttons are the only keyboard path to the chip pulse
+(`role="img"` prunes the drawing's subtree — #227b), so they are not
+diet-eligible, and the plain cells go **visually hidden, not
+`display: none`**, because three AHU values have no statusbar chip and the
+mirror is their only text rendering. The fullscreen non-vacuity floors
+were **re-derived** against the diet rather than patched to pass.
+
+**3. "Base everything off the AHU" — a STANDING tiebreak, not a one-time
+instruction (PR #474).** Where the two pages disagree about a shared
+pattern, the AHU is the reference and the FCU moves. Its first application
+harmonized the FCU's sensed-value painting to the AHU's (truth appears
+only at the override readout) and moved the FCU drawing to **RAT**
+vocabulary, the probe having already been drawn where it physically lives;
+the prose keeps the honest gloss that on a recirculating unit the return
+air *is* the entering air. Reach for this rule before inventing a third
+pattern.
+
+**4. The name pass (CLOSED).** The roster renames — `y1`/`y2` →
+`Clg Stg 1` / `Clg Stg 2` and `space-temp` → `Zone Temp`, on BOTH rosters
+— cascade to the chips, the off-program verbatim spec strings, the
+override picker, every hand-written graphic and mirror caption, and the
+spec pins. The sheet literals gained the `Stg 1 …` / `Stg 2 …` family in
+place of the `Y1 …` one, `dmpout` became `Fan Sts Chk` (the name he said
+he would personally use, offered and taken when the sheets were next
+open), and `gain` became `Heat Kp`. The rest of the damper tail is
+deliberately unchanged.
+
+- **The value-name convention, and its boundary.** A **pure reference**
+  const feeding a select or a mux is named for the value it carries —
+  `0%`, `100%`, `60%` — because on that block the number *is* the meaning.
+  **Setpoints and tuning parameters keep semantic names**, on his rule:
+  *"I don't have set points or PID tuning parameters as just the
+  numbers."* Deduplication happens **only where two value-names collide on
+  one sheet** (his minimal-dedup rule), which is why winter's pair reads
+  `100% Spd` / `100% Pos` while the starter's fan reference stays a bare
+  `100%` — a conscious asymmetry, not a miss. If a temperature reference
+  ever lands, the ASCII head constraint versus `°` gets decided then.
+- ⚠ **Values in value-names must be re-derived from the shipped literals,
+  never trusted from a document.** `tests/fbe-engine.spec.js` pins the
+  pairing with a count floor, so a retune moves the name and the value
+  together or the suite reddens.
+
+**5. War story #4 — FINAL text, and two supersessions.** He read the
+paragraph and said *"Ship it"*; it ships byte-identical on the AHU Unit
+teach block. Both supersessions are of his own earlier instructions:
+
+- **The explicit blame sentence is DELETED** — the 2026-07-29 ruling to
+  render *"the error stays an error / it wasn't the customer's fault"*
+  explicitly is superseded. The framing now lives implicitly in the
+  description of the action ("the access that trapped this customer is
+  exactly what the next one is paying for"). The record above stands as
+  history; the paragraph is the current text.
+- **"Two obligations" is gone, count-free.** The programmer's obligations
+  are now stated as *"obligations attached"* and then named, rather than
+  counted — the same reason the site's prose convention distrusts a
+  number that an addition can falsify.
+
+**6. Roadmap commitment — NO CROSSING GUARDS, ever, in this library.** No
+program in the workbench library ships setpoint-crossing protection,
+logic-side or point-side. His reason: *"if we're putting this much effort
+into teaching this, guarding against experiencing that failure mode is not
+a good idea."* **Scope is exactly the crossing failure mode.** Safeties
+are a different category and keep shipping — the low-limit stat, the
+airflow proofs, the min-off timer all stay. The war-story paragraph
+carries the practiced-eye disclaimer so the absence reads as intent
+rather than as an oversight.
+
+**7. Hover tooltips — DEFERRED until after go-live, and reclassified.**
+Not a workbench item at all: he ruled it an independent **site-wide**
+concern. It is therefore out of this backlog and lives in
+`site-ideas-and-friction.md`, where the native-versus-custom distinction
+that makes it decidable already sits.
+
+**8. Mobile — the open question is ANSWERED by declaration (PR #476).**
+*The Unit tab IS the limited mobile version* — declared, not newly built:
+*"see the unit and poke at it… also entices return traffic on desktop"*,
+and he already uses it to preview off-laptop. What that declaration OWED
+was proof, and the lane paid it: a driven audit at phone and tablet
+widths, the fixes it surfaced, hand-written responsive/touch spec rows
+(hidden pages are invisible to `responsive.spec.js`), and an honest
+one-line note for a phone reader who opens the wiresheet. The wiresheet
+keeps its existing touch gate (#256).
+
+**9. "Fix 1" is EXECUTED (PR #474)** — parked since 2026-07-22 and folded
+into the harmonization lane on his call, *"while it's cheap."* The FCU's
+return duct now drops into the cabinet **top** instead of wrapping the
+left side, the RAT probe moved onto the new run (still drawn where it
+physically lives), the badges got breathing room, the `<desc>` was
+rewritten and the chevron/geometry spec rows re-derived. His eye reviews
+the result at the final review; tweak rights standing.
+
+**10. Damage-stakes — CLOSED, and Phase 8's gate list drops it.** The
+workbench needs **no added damage-stakes boilerplate**: the existing
+page-tailored prose satisfies the convention under the
+existing-stronger-note rule (the electrical-quick-calc precedent), the
+low-limits sheet note being the strongest instance — *"where in that band
+to put one is a judgement about the machine it protects."* His ruling:
+*"if a person is taking random site info to protect their equipment,
+that's out of our hands and my LLS number is the least of their concerns,
+not that our existing warnings are not good, we want to educate too after
+all."*
+
+**11. The endgame — the final review runs in a FRESH session, WITH him.**
+His instruction: *"fresh agent's eyes just like my fresh human eyes."* The
+session that finishes the queue prepares the review rather than running
+it; `docs/next-session-handoff.md` is that briefing, and it carries what
+shipped, what waits on his call, and Phase 8's full gate list.
+**Phase 8 executes only after his push-live call.** The flawed-programs
+framing needs no further discussion — it stands as ruled (no flawed sheet
+for go-live; add-on material he seeds), now with the no-crossing-guards
+commitment beside it.
+
+**Queued by the lanes for that review, not blocking:** the
+zone-vocabulary collision (both zone boxes paint the SENSED value
+captioned `ZONE TEMP` while the truth readout beside the override says
+"zone NN.N °F" — before the rename the SPACE-vs-zone wording itself
+carried that split; by his explicit ruling the caption follows the roster,
+so any fix lands on the TRUTH READOUT's label); `Stg2 Call`, now the only
+unspaced `Stg2` left, on the two FCU sheets that still carry that block;
+and the console caption "Compressor stage — Y1 / Y2", which kept
+thermostat-TERMINAL vocabulary rather than the new point names — lane
+judgement, field-realistic, his to confirm or rename.
+
 ## The AHU, as designed (owner rulings, 2026-07-27 / 28)
 
 A **single-zone constant-volume air handler**: two stages of DX cooling, a
@@ -625,14 +799,20 @@ a genuinely novel teaching tool (write a program, watch it run the model).
   unless the "limited mobile version" gives it a genuine reduced view instead.
 - **Ship-time gates** (when it graduates from mockup): the blocking
   `contrast-sweep` (both themes), `PAGES` manifest, sitemap/nav wiring, README,
-  version bump, and the damage-stakes note question.
+  and a version bump. ~~the damage-stakes note question~~ *(CLOSED
+  2026-08-03 by owner ruling — the existing page-tailored prose satisfies
+  the convention; see the pre-Phase-8 rulings section.)* The current gate
+  list lives in `docs/next-session-handoff.md`.
 
 ## Open questions
 
 1. ~~**Duct width — how wide, what style?**~~ *(answered — filled duct body +
    marching chevrons, treatment B; shipped in Increment 1, 2026-07-22.)*
-2. **Limited mobile version** — desktop-gate + read-only view, or a genuinely
-   reduced interactive layout? Later.
+2. ~~**Limited mobile version** — desktop-gate + read-only view, or a
+   genuinely reduced interactive layout?~~ *(answered 2026-08-03 by owner
+   ruling — neither: the **Unit tab IS** the limited mobile version, declared
+   rather than newly built, and proven at phone/tablet widths in PR #476.
+   The wiresheet keeps its touch gate. See the pre-Phase-8 rulings section.)*
 
 ## Increment 1 — "ductwork & space" — SHIPPED (2026-07-22)
 
@@ -653,6 +833,11 @@ round fattened the ducts and cleared label overlaps.
   headroom shrinks as units get bigger. Eventual fix named **"fix 1": re-route
   the return so it drops into the cabinet *top*** rather than wrap the whole left
   side. Revisit in a later depiction pass, not now.
+  **EXECUTED 2026-08-03 (PR #474)**, folded into the FCU harmonization lane on
+  the owner's call — *"while it's cheap."* The drop lands on the cabinet top,
+  the RAT probe moved onto the new run, the badges were recomposed, the
+  `<desc>` rewritten and the chevron/geometry spec rows re-derived. His eye
+  reviews it at the final review (tweak rights standing).
 
 ## Increment 2 — the FBE "DDC Workbench" — SHIPPED (2026-07-23)
 
