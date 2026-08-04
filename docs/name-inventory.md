@@ -52,6 +52,13 @@
 >    or to second-guess, and §2a's `RD`-as-fallback aside is moot with it; the
 >    single `rd` row in the body (the public PID sheet) will be authored as a
 >    **named `ao`** instead.
+>
+> 4. **`Stg2 Call` is respaced.** Owner ruling 2026-08-04 (the final review):
+>    the two FCU sheets' `and1` renames **`Stg2 Call` → `Stg 2 Call`**
+>    (`AND · Stg 2 Call` = 16, inside the 18 budget), retiring the last
+>    unspaced `Stg2` in the shipped literals. The body's §3 rows 18 for
+>    `cool-2stage` and `cool-2stage-fanon` still read `Stg2 Call`, and stay
+>    that way — the body records 2026-07-31; this correction supersedes it.
 
 # FBE block-name inventory — `TAG · Name` head labels
 

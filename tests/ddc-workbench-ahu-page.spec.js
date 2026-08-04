@@ -1216,9 +1216,10 @@ test.describe('AHU workbench page: the unit selector', () => {
         const resp = await wait;
         expect(resp.status(), 'the sibling href is a live page').toBe(200);
 
-        // The FCU page's own title, which is the one WITHOUT the "Air
-        // Handler" qualifier — the cheapest proof we did not just reload.
-        await expect(page).toHaveTitle('DDC Workbench — controlsfreak.dev');
+        // The FCU page's own title — its "Fan Coil" qualifier against
+        // this page's "Air Handler" is the cheapest proof we did not
+        // just reload.
+        await expect(page).toHaveTitle('DDC Workbench — Fan Coil — controlsfreak.dev');
 
         // …and the pair over there marks FCU, so the two halves are wired
         // to each other rather than both to one page.
@@ -1255,7 +1256,7 @@ test.describe('AHU workbench page: the unit selector', () => {
 
         // And it still navigates from inside the cockpit.
         await page.click('.ddcw-unit-sel a.ddcw-unit-link:not([aria-current])');
-        await expect(page).toHaveTitle('DDC Workbench — controlsfreak.dev');
+        await expect(page).toHaveTitle('DDC Workbench — Fan Coil — controlsfreak.dev');
     });
 });
 
