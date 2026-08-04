@@ -32,8 +32,8 @@ that diagnostic end**, not the point.
 > graduated into the sitemap / search index / nav / the landing /
 > `tests/pages.js`; the mockup stays hidden. Present-tense hidden-page
 > and still-queued claims below this line are the pre-graduation
-> record — the full execution record lands with the Phase 8 docs
-> wrap-up.
+> record — the full execution record is the *Phase 8 — graduation
+> EXECUTED* section below.
 
 Three hidden pages carry this line. All are `noindex` +
 `eleventyExcludeFromCollections` with **no `canonical`**, so all are reachable
@@ -599,6 +599,56 @@ unspaced `Stg2` left, on the two FCU sheets that still carry that block;
 and the console caption "Compressor stage — Y1 / Y2", which kept
 thermostat-TERMINAL vocabulary rather than the new point names — lane
 judgement, field-realistic, his to confirm or rename.
+
+## Phase 8 — graduation EXECUTED (2026-08-04, PR #478, v3.80.0)
+
+The owner's final review ran 2026-08-04 in a fresh session,
+decisions-first on the handoff's eleven calls. Rulings: **everything
+accepted as shipped** (clamp ranges, D2 commit feel, fix-1, the 900px
+mirror-diet cutoff, the zone-vocabulary collision, the Y1/Y2 console
+caption, the 375 chip wall — option (c) accept, phone-scale legibility,
+the war story in place), with one fix ruled in: **`Stg2 Call` →
+`Stg 2 Call`** on the two FCU sheets. Two graduation-time calls rode
+along: the **FCU retitled** to `DDC Workbench — Fan Coil` (title
+frontmatter only — with both pages public the bare title was
+indistinguishable from the AHU's in nav/palette/search, the Bing
+duplicate-title lesson), and the home **Featured badge repointed** at
+the AHU.
+
+What shipped (PR #478, merged and verified live 2026-08-04):
+
+- canonicals on both unit pages (`noindex` + the collections exclusion
+  out; `keywords` in); sitemap / search index / flat Simulators
+  dropdown followed automatically from the collections
+- `tests/pages.js` rows — the smoke / responsive / contrast sweeps
+  reach both pages now; the first-ever both-themes contrast sweep of
+  the pages found **zero** new failures (the `-ink` discipline held —
+  no ALLOWLIST entries needed); `.ddcw-offprog.is-empty` joined the
+  responsive sweep's INTENTIONAL list
+- landing cards lead the simulators grid; home Browse pill 7 → 9;
+  README tour bullets; Status & Proof pays the reverse cross-link both
+  pages owed it (both anchor the lesson)
+- the in-page GRADUATION TRIGGERS were honored: the unit-selector CSS
+  and `p.ddcw-sheet-mobile-note` promoted to `styles.css`; the
+  header-clearance pair stays page-local (site-wide selectors — #272's
+  open design call), the forced-mark pair deferred as **#273** (wants
+  a `.ddcw-forced-mark` rename); the simulators landing crossing its
+  documented ~6-entry chips threshold at nine cards logged as **#274**
+  (no category taxonomy exists for sims — design call)
+- the hidden-state comment sweep across the specs, the unit scripts,
+  `perf-profile.mjs` and CLAUDE.md (whose merge-authority boundary
+  flipped: both pages plus `ddcw-shell.js`, `ddcw-ahu-unit.js`,
+  `ddcw-fcu-unit.js` and `point-arbitration.js` are LIVE surfaces
+  now); **#271 executed and RESOLVED** riding the 3.80.0 bump
+- the diff was adversarially verified pre-push (five refutation
+  lenses; nine confirmed findings, all comment/docs truthfulness,
+  fixed on the branch), the full suite ran green locally (1089/0) and
+  in CI, IndexNow fired on the merge with the clean URLs, and the LAN
+  preview was republished even with main
+
+`docs/next-session-handoff.md` is **retired** (its lifecycle condition
+— review happened, Phase 8 shipped — is met; git history retains it).
+This section is the durable record.
 
 ## The AHU, as designed (owner rulings, 2026-07-27 / 28)
 

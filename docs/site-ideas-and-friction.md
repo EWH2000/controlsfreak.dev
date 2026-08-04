@@ -6797,7 +6797,10 @@ NOT folding Simulators into Tools (Proposal 3, rejected below).
   not a second stacked widget. *(2026-07-19: the air-side sim is now
   the **named next flagship** — see the controls-spine arc close-out
   entry for the standard it has to clear. This marker stays the
-  single source for the gate itself.)*
+  single source for the gate itself. 2026-08-04: the **precondition is
+  met** — the DDC Workbench went live at `/simulators/ddc-workbench.html`
+  (Phase 8, PR #478). The second hero demo itself remains future and
+  still wants the toggle/tab-on-the-seam shape, not a second widget.)*
   `[future: an air-side simulator → then a second hero demo]`
 - **Since then:** the hydronics hub + the `hub:` → **array** step
   (PR #350, 2026-07-14 — `relatedLinks` normalizes object-or-array;
