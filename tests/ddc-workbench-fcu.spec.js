@@ -793,14 +793,156 @@ test.describe('DDC Workbench — the unit selector on touch', () => {
     // this row is the floor's only guard.
     test.use({ isMobile: true, hasTouch: true, viewport: { width: 412, height: 883 } });
 
-    test('the links clear the 44px floor', async ({ page }) => {
+    test('the links clear the 44px floor in both dimensions', async ({ page }) => {
+        // Height was the original floor; width joined it 2026-08-03 (the
+        // links measured 41–42px wide natively — codebase-issues #262's
+        // named case, closed page-locally on both workbench pages).
         await page.goto(URL);
         const links = page.locator('a.ddcw-unit-link');
         await expect(links).toHaveCount(2);
         for (let i = 0; i < 2; i++) {
             const box = await links.nth(i).boundingBox();
             expect(box.height, `link ${i} height`).toBeGreaterThanOrEqual(44);
+            expect(box.width, `link ${i} width`).toBeGreaterThanOrEqual(44);
         }
+    });
+});
+
+test.describe('DDC Workbench — the phone surface (the Unit tab is the mobile version)', () => {
+    // Owner ruling 2026-08-03: "the Unit tab IS the limited mobile
+    // version". The hand-written stand-in for the responsive sweep this
+    // canonical-less page can never join — no sideways scroll, the mirror
+    // filled back in, the rail floored and operable under touch, the
+    // wiresheet's one-line truth at tap-in, and one HTML twin per SVG
+    // drill-down. The AHU page spec carries the same block with the
+    // longer rationale comments.
+    test.use({ isMobile: true, hasTouch: true, viewport: { width: 375, height: 667 } });
+
+    test('no sideways scroll and no clipped content at 375', async ({ page }) => {
+        await page.goto(URL);
+        await page.waitForTimeout(400);
+        // .ddcw-offprog.is-empty is the sr-only collapse recipe (a live
+        // region that must stay rendered while empty) — intentional, like
+        // the sweep's own .sr-only entry.
+        const offenders = await page.evaluate(() => {
+            const out = [];
+            const doc = document.documentElement;
+            if (doc.scrollWidth > window.innerWidth + 1) {
+                out.push(`document scrolls sideways (${doc.scrollWidth} > ${window.innerWidth})`);
+            }
+            for (const el of document.querySelectorAll('body *')) {
+                if (el.clientWidth === 0 || el.scrollWidth <= el.clientWidth + 2) continue;
+                if (el.matches('input, textarea, select, .sr-only, .ddcw-offprog.is-empty')) continue;
+                const ox = getComputedStyle(el).overflowX;
+                if (ox !== 'hidden' && ox !== 'clip') continue;
+                let name = el.tagName.toLowerCase();
+                if (el.id) name += '#' + el.id;
+                else if (el.classList.length) name += '.' + [...el.classList].slice(0, 3).join('.');
+                out.push(`${name} clips ${el.scrollWidth}px into ${el.clientWidth}px`);
+            }
+            return out;
+        });
+        expect(offenders, 'the Unit tab fits a 375px phone').toEqual([]);
+    });
+
+    test('the mirror register is filled back in — the phone reading surface', async ({ page }) => {
+        await page.goto(URL);
+        const boxed = await page.locator('.fcu-point').evaluateAll((els) =>
+            els.filter((e) => {
+                const r = e.getBoundingClientRect();
+                return r.width > 2 && r.height > 2;
+            }).length);
+        expect(boxed, 'all six mirror cells occupy the grid at 375').toBe(6);
+    });
+
+    test('the rail inputs clear the 44px floor in both dimensions, and a touch commit lands', async ({ page }) => {
+        await page.goto(URL);
+        const inputs = page.locator('.fcu-param-input');
+        await expect(inputs).toHaveCount(2);
+        for (let i = 0; i < 2; i++) {
+            const box = await inputs.nth(i).boundingBox();
+            expect(box.height, `rail input ${i} height`).toBeGreaterThanOrEqual(44);
+            expect(box.width, `rail input ${i} width`).toBeGreaterThanOrEqual(44);
+        }
+        await page.tap('#fcu-p-cool-sp');
+        await page.fill('#fcu-p-cool-sp', '75');
+        await page.keyboard.press('Enter');
+        await expect(page.locator('.ddcw-chip', { hasText: 'Cool SP' })
+            .locator('.ddcw-chip-val')).toHaveText(/75/);
+    });
+
+    test('the stage buttons clear the floor in both dimensions', async ({ page }) => {
+        // "Off" measured 43px wide natively — the page-local width floor
+        // (the shared TOUCH-TARGET FLOOR is height-only, #262).
+        await page.goto(URL);
+        for (const sel of ['#fcu-stage-0', '#fcu-stage-1', '#fcu-stage-2']) {
+            const box = await page.locator(sel).boundingBox();
+            expect(box.height, `${sel} height`).toBeGreaterThanOrEqual(44);
+            expect(box.width, `${sel} width`).toBeGreaterThanOrEqual(44);
+        }
+    });
+
+    test('the fullscreen button does not paint over the title tag', async ({ page }) => {
+        // This page's AIR-SIDE tag cleared the button by a measured 2px at
+        // 375 before the clearance rule — one root-font bump from the
+        // collision the AHU page actually shipped (18px under the button).
+        await page.goto(URL);
+        const boxes = await page.evaluate(() => {
+            const t = document.querySelector('.tool-tag').getBoundingClientRect();
+            const b = document.querySelector('.tool-card-fullscreen-btn').getBoundingClientRect();
+            return { t: { l: t.left, r: t.right, t: t.top, b: t.bottom },
+                     b: { l: b.left, r: b.right, t: b.top, b: b.bottom } };
+        });
+        const overlapX = Math.min(boxes.t.r, boxes.b.r) - Math.max(boxes.t.l, boxes.b.l);
+        const overlapY = Math.min(boxes.t.b, boxes.b.b) - Math.max(boxes.t.t, boxes.b.t);
+        expect(overlapX > 0 && overlapY > 0, 'tag and fullscreen button share paint').toBe(false);
+    });
+
+    test('the wiresheet opens on its one-line truth, with the workspace honestly absent', async ({ page }) => {
+        await page.goto(URL);
+        await page.tap('button[data-tab="wiresheet"]');
+        const note = page.locator('p.ddcw-sheet-mobile-note');
+        await expect(note, 'the phone truth renders where the workspace is gated out').toBeVisible();
+        const first = await page.evaluate(() =>
+            document.getElementById('tab-wiresheet').querySelector('p') ===
+            document.querySelector('p.ddcw-sheet-mobile-note'));
+        expect(first, 'the note is the pane\'s first element').toBe(true);
+        await expect(note).toContainText('read-through');
+        await expect(note).toContainText('Unit tab');
+        await expect(page.locator('.fbe-live')).toBeHidden();
+        await expect(page.locator('.desktop-only-sim')).toBeVisible();
+    });
+
+    test('every SVG drill-down keeps an HTML twin outside the drawing', async ({ page }) => {
+        // Touch-target equivalence (WCAG 2.5.5/2.5.8): the coil and fan
+        // glyphs render ~21×39 / ~30×48 CSS px at 375 and SVG geometry
+        // cannot take a min-width, so the pass rides the prose anchors
+        // (refrigerant-loop in the blocked-condenser note, the VFD in the
+        // fan-heat note). Removing one reddens this row.
+        await page.goto(URL);
+        const drills = await page.evaluate(() => {
+            const svgHrefs = [...document.querySelectorAll('.fcu-svg a[href]')]
+                .map((a) => a.getAttribute('href'));
+            return svgHrefs.map((href) => ({
+                href,
+                twin: [...document.querySelectorAll(`main a[href="${href}"]`)]
+                    .some((a) => !a.closest('.fcu-svg')),
+            }));
+        });
+        expect(drills.length, 'the drawing still carries its two drill-downs').toBe(2);
+        for (const d of drills) {
+            expect(d.twin, `${d.href} needs an HTML twin outside the SVG`).toBe(true);
+        }
+    });
+});
+
+test.describe('DDC Workbench — the phone truth stays out of the desktop pane', () => {
+    test('at a pointer desktop width the note is gone and the workspace is live', async ({ page }) => {
+        await page.goto(URL);
+        await page.click('button[data-tab="wiresheet"]');
+        await expect(page.locator('p.ddcw-sheet-mobile-note')).toBeHidden();
+        await expect(page.locator('.fbe-live')).toBeVisible();
+        await expect(page.locator('.desktop-only-sim')).toBeHidden();
     });
 });
 
