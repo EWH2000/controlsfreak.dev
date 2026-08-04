@@ -837,10 +837,14 @@ noindex: true
 
             <!-- ── The supervisory graphic ─────────────────────────────────
                  Recirculating DX fan coil serving one zone. Return air leaves
-                 the zone (right), wraps the top return duct, drops down the
-                 left, and CROSSES the open cabinet interior — through the DX
-                 coil then the supply fan — before rising up the supply riser
-                 and back to the zone. Airflow is a page-local rAF chevron
+                 the zone (right), runs the top return duct, and DROPS INTO
+                 THE CABINET TOP just left of the coil — the owner's "fix 1"
+                 (parked 2026-07-22, drawn 2026-08-03): the old run wrapped
+                 the whole left side and crowded the badge row and the
+                 cabinet shoulder. The air then CROSSES the open cabinet
+                 interior — through the DX coil then the supply fan — before
+                 rising up the supply riser and back to the zone. Airflow is
+                 a page-local rAF chevron
                  stream marching one invisible centerline (no flow-engine):
                  speed scales with the fan fraction, and each chevron recolors
                  at the coil's leaving edge so the ΔT shows in the air itself.
@@ -859,19 +863,22 @@ noindex: true
                      role="img" aria-labelledby="fcu-title fcu-desc"
                      font-family="var(--mono)">
                     <title id="fcu-title">A DX fan coil serving one zone, as a DDC supervisory graphic</title>
-                    <desc id="fcu-desc">A recirculating direct-expansion fan coil serving one zone, drawn as a DDC supervisory graphic. Return air leaves the zone on the right, travels along the top return duct, drops down the left side, and enters the fan coil cabinet. Inside the cabinet the air crosses a DX cooling coil and then a supply fan, which pushes it up the supply riser and back out through the supply duct into the zone. Directional chevrons march along the ducts and continue across the coil and fan to show the airflow. Floating point labels report the return-air temperature entering the coil, the discharge-air temperature after the fan, and the signed temperature difference across the coil, leaving minus entering, which reads negative while the coil cools the air. The zone box shows the space temperature and the cooling setpoint; separate labels show the supply-fan status and speed and the compressor stage. The DX coil and the supply fan are drawn as the two sub-devices the graphic can drill into. The sensing devices are drawn where they physically live: a space-temperature wall plate mounted inside the zone on its far wall, a return-air insertion probe penetrating the underside of the top return duct partway along its run, and a discharge-air insertion probe penetrating the supply duct downstream of the fan — each activatable to flag its matching live-value chip in the statusbar.</desc>
+                    <desc id="fcu-desc">A recirculating direct-expansion fan coil serving one zone, drawn as a DDC supervisory graphic. Return air leaves the zone on the right, travels leftward along the top return duct, and turns down in a short drop that lands on the top of the fan coil cabinet near its left shoulder. The cabinet is drawn with its top wall open where each duct meets it, so the drop's mouth and the supply riser's mouth are both clear openings. Inside the cabinet the air crosses a DX cooling coil and then a supply fan, which pushes it up through the second opening and along the supply duct back into the zone. Directional chevrons march along the ducts, down the drop, and across the coil and fan to show the airflow. Three floating point badges read left to right in airflow order: the return-air temperature beside the drop, then — past the coil — the signed temperature difference across the coil, leaving minus entering, which reads negative while the coil cools the air, then the discharge-air temperature over the fan. The zone box shows the space temperature and the cooling setpoint; separate labels show the supply-fan status and speed and the compressor stage. The DX coil and the supply fan are drawn as the two sub-devices the graphic can drill into. The cabinet is tagged FCU-1. The sensing devices are drawn where they physically live: a space-temperature wall plate mounted inside the zone on its far wall, a return-air insertion probe penetrating the outer wall of the return drop just below its elbow with its head hanging in the open space to the left, and a discharge-air insertion probe penetrating the top wall of the supply duct downstream of the fan — each activatable to flag its matching live-value chip in the statusbar.</desc>
 
                     <!-- ── Ductwork — exterior runs only ──────────────────
                          Return duct body: from the zone face, along the top,
-                         down the left, butting the cabinet's LEFT wall at
-                         (90,298). Supply duct body: from the cabinet's TOP
-                         wall at (500,250), up to y218 and over to the zone
-                         face. The gap between them is the open cabinet interior
-                         — no body / walls there, only chevrons bridge it. Walls
-                         are the ±23 offsets of each fattened body (stroke 46). -->
-                    <path class="fcu-duct-body" d="M548 150 L60 150 L60 298 L90 298"/>
-                    <path class="fcu-duct-wall" d="M548 127 L37 127 L37 321 L90 321"/>
-                    <path class="fcu-duct-wall" d="M548 173 L83 173 L83 275 L90 275"/>
+                         then a short drop at x120 that lands ON the cabinet
+                         TOP over the coil's entering side. Supply duct body:
+                         from the cabinet's TOP wall at (500,250), up to y218
+                         and over to the zone face. Between the two mouths is
+                         the open cabinet interior — no body / walls there,
+                         only chevrons bridge it. Walls are the ±23 offsets
+                         of each fattened body (stroke 46); each wall runs to
+                         y250 and lands on its opening's edge in the cabinet
+                         top, so duct metal meets casing metal. -->
+                    <path class="fcu-duct-body" d="M548 150 L120 150 L120 250"/>
+                    <path class="fcu-duct-wall" d="M548 127 L97 127 L97 250"/>
+                    <path class="fcu-duct-wall" d="M548 173 L143 173 L143 250"/>
 
                     <path class="fcu-duct-body" d="M500 250 L500 218 L548 218"/>
                     <path class="fcu-duct-wall" d="M477 250 L477 195 L548 195"/>
@@ -882,16 +889,20 @@ noindex: true
                     <text class="fcu-pt-cap" x="524" y="187">SUPPLY</text>
 
                     <!-- Invisible centerline — the marker source for the
-                         chevrons only. Full recirculation loop, crossing the
-                         cabinet at y298. -->
+                         chevrons only. Full recirculation loop: down the
+                         drop at x120, through the open cabinet mouth, and
+                         across the interior at y298. -->
                     <path class="fcu-centerline" id="fcu-centerline"
-                          d="M548 150 L60 150 L60 298 L500 298 L500 218 L548 218"/>
+                          d="M548 150 L120 150 L120 298 L500 298 L500 218 L548 218"/>
 
                     <!-- Static flow arrows — carry direction under reduced
-                         motion / print (drawn under the moving chevrons). -->
+                         motion / print (drawn under the moving chevrons).
+                         One per leg: top run leftward, the drop downward
+                         (inside the drop at x120), the riser upward, the
+                         supply run rightward. -->
                     <g id="fcu-flow-arrows">
                         <polygon points="328,144 320,150 328,156" fill="var(--blue-cool)"/>
-                        <polygon points="54,222 66,222 60,230" fill="var(--blue-cool)"/>
+                        <polygon points="114,205 126,205 120,213" fill="var(--blue-cool)"/>
                         <polygon points="494,272 506,272 500,264" fill="var(--blue)"/>
                         <polygon points="520,212 528,218 520,224" fill="var(--blue)"/>
                     </g>
@@ -916,9 +927,19 @@ noindex: true
                         <text class="fcu-pt-val fcu-sp-val" id="fcu-zone-sp" x="623" y="225">72.0 °F</text>
                     </g>
 
-                    <!-- ── FCU cabinet ── -->
-                    <rect x="90" y="250" width="430" height="95" fill="none"
-                          stroke="var(--text-dim)" stroke-width="2"/>
+                    <!-- ── FCU cabinet ── drawn as a path, not a rect (the
+                         AHU casing convention: "drawn as a path … so the
+                         penetrations stay open"), with the two duct mouths
+                         in the top wall OPEN — the return drop lands at
+                         x97-143, the supply riser leaves at x477-523 — so
+                         recirculated air passes through an opening rather
+                         than through a drawn wall line. The right edge sits
+                         at x530 (was 520): the riser's outer wall used to
+                         straddle the old corner by 3 units, and the wider
+                         casing gives it the same short shoulder stub the
+                         drop's side has. -->
+                    <path d="M97 250 L90 250 L90 345 L530 345 L530 250 L523 250 M477 250 L143 250"
+                          fill="none" stroke="var(--text-dim)" stroke-width="2"/>
                     <text class="fcu-cabinet-label" x="490" y="339" font-size="11"
                           fill="var(--text-dim)">FCU-1</text>
 
@@ -952,10 +973,14 @@ noindex: true
                     </a>
 
                     <!-- ── Floating point badges — RAT / ΔT / DAT ──
-                         In airflow order above the cabinet: RAT over the coil
-                         inlet, ΔT just past the coil, DAT over the supply fan.
-                         Kept clear of the fattened return duct (bottom y173),
-                         the cabinet (top y250) and the supply run. The ΔT badge
+                         In airflow order, left to right: RAT beside the
+                         return drop it measures (the freed upper-left — the
+                         point of fix 1), ΔT just past the coil, DAT over the
+                         supply fan — the last two on the y188 band above the
+                         cabinet, and RAT on the same band so the row reads
+                         as one line. Kept clear of the fattened return duct
+                         (bottom y173), the drop (outer wall x97), the
+                         cabinet (top y250) and the supply run. The ΔT badge
                          is the headline: it collapses toward zero on a fault.
                          ΔT is SIGNED — leaving minus entering (DAT − RAT), so
                          cooling reads negative (owner ruling 2026-07-27); the
@@ -964,11 +989,14 @@ noindex: true
                          return-air vocabulary and the roster point's own name
                          (2026-08-03): on a recirculating unit the return air
                          IS the entering air, and the ΔT note below the mirror
-                         carries that teaching in prose. -->
+                         carries that teaching in prose. The RAT badge is 80
+                         wide (its caption needs 65.3 — see the 8px note in
+                         the head block), fitting the x0-97 column with clear
+                         space on both sides. -->
                     <g id="fcu-badges">
-                        <rect class="fcu-badge" x="96" y="188" width="86" height="40"/>
-                        <text class="fcu-pt-cap" x="139" y="204">RAT · RETURN</text>
-                        <text class="fcu-pt-val" id="fcu-rat" x="139" y="222">76.0 °F</text>
+                        <rect class="fcu-badge" x="8" y="188" width="80" height="40"/>
+                        <text class="fcu-pt-cap" x="48" y="204">RAT · RETURN</text>
+                        <text class="fcu-pt-val" id="fcu-rat" x="48" y="222">76.0 °F</text>
 
                         <rect class="fcu-badge fcu-badge-dt" x="196" y="188" width="96" height="40"/>
                         <text class="fcu-pt-cap" x="244" y="204">ΔT ACROSS COIL</text>
@@ -1022,17 +1050,21 @@ noindex: true
                          link into a meter-and-sensor sim (the .fcu-link
                          idiom) — keep the one-group-per-device shape. -->
                     <g id="fcu-sensors">
-                        <!-- RAT insertion probe — penetrates the BOTTOM wall
-                             of the top return run (y 173) at x 342: upstream
-                             of the coil, reading the real air the zone sends
-                             back — the visible entering-air measurement
-                             behind the RAT badge and the coil ΔT. Head hangs
-                             in the free band between the return duct and the
-                             badge row (tops y 188), in the x gap between the
-                             ΔT badge (ends x 292) and the DAT badge (starts
-                             x 370), clear of the static flow arrow
-                             (x 320-328); the stem tip reaches the airstream
-                             near the duct centerline (y 150).
+                        <!-- RAT insertion probe — penetrates the OUTER (left)
+                             wall of the return DROP (x 97) at y 163, just
+                             below the elbow: at the unit's return inlet,
+                             upstream of the coil, reading the real air the
+                             zone sends back — the visible entering-air
+                             measurement behind the RAT badge and the coil
+                             ΔT. It moved onto the drop with fix 1
+                             (2026-08-03): the old top-run underside spot sat
+                             a probe head 5 units over the badge band, and
+                             the drop is where a return sensor on a
+                             top-entry cabinet physically lives. Head hangs
+                             in the freed left column, above the RAT badge
+                             (top y 188); the stem reaches the airstream
+                             near the drop centerline (x 120), clear of the
+                             static down arrow (y 205-213).
                              Each sensor group carries a .fcu-forced-mark rect
                              matching its hit area — the dashed accent ring
                              renderUnit lights while that point's override is
@@ -1040,10 +1072,10 @@ noindex: true
                              reaches today; see the marker's CSS block). -->
                         <g class="ddcw-sensor" id="fcu-sensor-rat" data-point="rat">
                             <title>Return-air temperature sensor — insertion probe in the return duct</title>
-                            <rect class="ddcw-sensor-hit" x="328" y="150" width="28" height="44"/>
-                            <rect class="fcu-forced-mark" x="328" y="150" width="28" height="44"/>
-                            <line class="ddcw-sensor-stem" x1="342" y1="154" x2="342" y2="173"/>
-                            <rect class="ddcw-sensor-body" x="336" y="173" width="12" height="10"/>
+                            <rect class="ddcw-sensor-hit" x="76" y="141" width="34" height="44"/>
+                            <rect class="fcu-forced-mark" x="76" y="141" width="34" height="44"/>
+                            <line class="ddcw-sensor-stem" x1="97" y1="163" x2="116" y2="163"/>
+                            <rect class="ddcw-sensor-body" x="85" y="158" width="12" height="10"/>
                         </g>
                         <!-- DAT insertion probe — penetrates the TOP wall of
                              the horizontal discharge run (y 195) at x 492:
