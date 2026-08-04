@@ -53,6 +53,27 @@ noindex: true
         .ahu-graphic { max-width: 780px; margin: 0.5rem auto 0; }
         .ahu-svg { display: block; width: 100%; height: auto; }
 
+        /* ── Phone-width header clearance ──────────────────────────────
+           The shared fullscreen button is absolutely positioned in the
+           card's top-right corner and paints OVER the title row where
+           the two meet: at 375–390 viewports it covered the AIR HANDLER
+           tag's tail (measured 18px of overlap at 375). Reserve the
+           button's footprint and let the title row wrap, so the tag
+           drops under the title instead of under the button. The title
+           is a nowrap flex row, so the padding alone would only slide
+           the tag beneath the button — the wrap is the half that acts.
+           8.5rem = the button's font-driven ~119px + its 0.55rem inset
+           + a seam, in rem so it tracks the button's own type size.
+           Overlap measured gone by ≈400px; 480 keeps margin.
+           ⚠ DUPLICATED IN THE OTHER WORKBENCH PAGE'S HEAD — its
+           AIR-SIDE tag clears by only 2px at 375, so it carries the
+           same rule defensively. Same graduation trigger as the
+           unit-selector block. */
+        @media (max-width: 480px) {
+            .tool-card-header { padding-right: 8.5rem; }
+            .tool-card-title { flex-wrap: wrap; }
+        }
+
         /* ══════════════════════════════════════════════════════════════════
            CONSOLE LAYOUT
            The console is the drawing + a parameter rail beside it. The rail
@@ -108,6 +129,23 @@ noindex: true
         .ahu-params > .subhead,
         .ahu-params > .ahu-param-hint,
         .ahu-params > .ahu-param-note { grid-column: 1 / -1; }
+        /* On the single-column phone rail the clamp hint moves BETWEEN
+           the two input-bearing groups instead of trailing the third:
+           a phone's on-screen keyboard covers the lower half of the
+           viewport, and with the hint measured 319px below the Cooling
+           SP field (375×667) every Zone-control clamp announced under
+           the keyboard. Ordered here, the zone fields sit ≤190px above
+           the hint and the economizer fields directly below it — and
+           the committed value still snaps at the field itself, so the
+           hint is the explanation, not the only signal. Grid order
+           only: DOM order, reading order and the aria-live
+           announcement are untouched. 560 is the page's existing
+           single-column band (.ahu-knob-grid collapses there). */
+        @media (max-width: 560px) {
+            .ahu-params > .ahu-param-hint { order: 1; }
+            .ahu-params > .ahu-param-group:last-of-type { order: 2; }
+            .ahu-params > .ahu-param-note { order: 3; }
+        }
 
         /* ══════════════════════════════════════════════════════════════════
            SVG · STRUCTURE — never coloured. Structure is the one thing on
@@ -664,6 +702,15 @@ noindex: true
            (post-Clear). Dim ink; WCAG exempts inactive controls, and the
            title says why it is off. */
         .ahu-param-input:disabled { color: var(--text-dim); }
+        /* Touch floor (page-local, the vfds-selects idiom): the rail
+           inputs measure 39px tall natively, under the 44px floor every
+           other control on this page clears. The floor rides the INPUT,
+           not the editwell frame — the frame is a span, so a tap on the
+           suffix or the padding focuses nothing; the input IS the whole
+           target. Width already clears (58–67px measured). */
+        @media (hover: none) {
+            .ahu-param-input { min-height: 44px; }
+        }
         .ahu-param-unit {
             font-family: var(--mono);
             font-size: 0.66rem;
@@ -915,6 +962,14 @@ noindex: true
         .ahu-controls .ddcw-tracked[disabled],
         .ahu-controls input[disabled],
         .ahu-controls .copy-btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+        /* Touch floor: the stage group's "Off" measures 43px wide — the
+           one .copy-btn on the page under the floor's WIDTH. The shared
+           TOUCH-TARGET FLOOR block is height-only (codebase-issues
+           #262: audit widths per selector before flooring them), so the
+           width floor is page-local; a no-op on every wider button. */
+        @media (hover: none) {
+            .ahu-controls .copy-btn { min-width: 44px; }
+        }
         .ahu-fanen { margin-top: 0.25rem; }
         .ahu-fanen label { display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; }
         .ahu-fanen input { width: auto; margin: 0; }
@@ -1071,9 +1126,43 @@ noindex: true
         }
         /* Page-local touch floor, same reason (the consolidated
            TOUCH-TARGET FLOOR block is in styles.css too). Measured
-           natively at 24.42px tall, so the floor is doing real work. */
+           natively at 24.42px tall, so the floor is doing real work —
+           and 41–42px WIDE, the exact case codebase-issues #262 names,
+           so the floor sets both dimensions. */
         @media (hover: none) {
-            a.ddcw-unit-link { justify-content: center; min-height: 44px; }
+            a.ddcw-unit-link {
+                justify-content: center;
+                min-height: 44px;
+                min-width: 44px;
+            }
+        }
+
+        /* ── The wiresheet pane's one-line phone truth ─────────────────────
+           (owner ruling 2026-08-03: the Unit tab IS the limited mobile
+           version, and the wiresheet says so honestly.) Hidden wherever
+           the live workspace shows; revealed by the SAME OR-gate
+           styles.css uses to hide .fbe-live (max-width 999px /
+           touch-primary), so the note and the workspace can never show
+           together. It sits FIRST in the pane — the .desktop-only-sim
+           panel carries the fuller version, but it sits where the
+           workspace would be, nine sheet-notes down, and a phone
+           visitor deserves the truth at tap-in, not at the bottom of a
+           read. Element-qualified per the prose-utility house rule.
+           ⚠ DUPLICATED VERBATIM IN THE OTHER WORKBENCH PAGE'S HEAD —
+           same graduation trigger as the unit-selector block. */
+        p.ddcw-sheet-mobile-note { display: none; }
+        @media (max-width: 999px), (hover: none) and (pointer: coarse) {
+            p.ddcw-sheet-mobile-note {
+                display: block;
+                font-family: var(--mono);
+                font-size: 0.78rem;
+                line-height: 1.5;
+                color: var(--text);
+                border: 1px solid var(--border);
+                background: var(--surface-2);
+                padding: 0.5rem 0.65rem;
+                margin: 0 0 0.85rem;
+            }
         }
 
         /* ── FULLSCREEN COCKPIT ────────────────────────────────────────────
@@ -2093,6 +2182,20 @@ noindex: true
 
                             <p class="ahu-teach-p"><strong>How to read it.</strong> Every device the program can read or write carries its own colour — dampers amber, the fan green, the heating coil warm, the cooling coil blue — so you can find a device before you read a word. Colour is never the only channel, though: each device is also drawn as the thing it is, which is why the cooling coil carries the small wedge-shaped refrigerant distributor and feeder tubes that no hydronic coil has, and the heating coil carries a two-way valve on the pipes below it. A component drawn in plain grey has no point on it. Values sit in bordered wells tied to their device by a leader line: a green value is something the program is <strong>commanding</strong>, a plain value is something a sensor is <strong>measuring</strong>, and a blue value is <strong>calculated</strong> from the others.</p>
 
+                            <!-- ⚠ THE THREE TEXT LINKS ARE THE DRILL-DOWNS'
+                                 EQUIVALENT TARGETS, not decoration. The SVG
+                                 <a> glyphs scale with the drawing — at a
+                                 375px viewport the coil boxes render ~18×28
+                                 CSS px, far under the 44px touch floor, and
+                                 SVG geometry cannot take a min-width. The
+                                 touch-target pass (WCAG 2.5.5/2.5.8) rides
+                                 the equivalent-control clause through
+                                 exactly these anchors;
+                                 tests/ddc-workbench-ahu-page.spec.js pins
+                                 one HTML twin per drill-down href, so
+                                 removing a link reddens that row. -->
+                            <p class="ahu-teach-p"><strong>Drill-downs.</strong> The heating coil, the cooling coil and the fan are drawn as links into the simulator behind each device. The same three in text — the tap targets, for a screen where the glyphs render too small to hit: the <a href="/simulators/hydronic-loop-builder.html">Hydronic Loop Builder</a> behind the heating coil, the <a href="/simulators/refrigerant-loop.html">Refrigerant Loop Simulator</a> behind the DX coil, the <a href="/simulators/vfd-mock.html">Mock VFD Interface</a> behind the fan.</p>
+
                             <p class="ahu-teach-p"><strong>The one number to watch.</strong> Read the ΔT well in the discharge callout: it is discharge minus mixed air — the fan sits downstream of both coils on a draw-through unit, so that span covers the fan as well — and it goes negative whenever the unit is removing heat and positive whenever it is adding heat. When a unit stops doing its job, that is the number that collapses toward zero. Everything else on the screen is there to tell you <em>why</em> it collapsed: whether the air is moving, whether a coil is loaded, and whether the number a sensor is reporting is the number the machine is actually seeing. The economizer sequence itself is worked through on the <a href="/education/economizers.html">economizers lesson</a>.</p>
 
                             <p class="ahu-teach-p"><strong>Three dampers, one command.</strong> The outside, return and relief blades all move together, because the point roster carries one damper output and the linkage does the rest — return closes as outside opens, and relief opens with it so the building does not pressurise. That is how a packaged economizer is actually built, and it is why all three commands are annotated rather than just the outside one: the drawn blade angles are what tell you the linkage is doing what the single command asked.</p>
@@ -2327,9 +2430,10 @@ noindex: true
                 <p class="ref-note">
                     The five points with a sensing device on the drawing are
                     buttons — press one to flag its live-value chip in the
-                    statusbar and light the annotation it feeds. Narrow the
-                    window and the list fills out with the rest of the
-                    drawing's values, for where its own text reads too small.
+                    statusbar and light the annotation it feeds. On a narrow
+                    window the list fills out with the rest of the drawing's
+                    values — the reading copy for where the drawing's own
+                    text runs too small.
                 </p>
                 <div class="ahu-points">
                     <button type="button" class="ahu-point ahu-point-btn" data-point="oat" aria-pressed="false">
@@ -2625,6 +2729,15 @@ noindex: true
                  @media gate hides .fbe-live below 1000px / on touch and shows
                  the tips panel instead). -->
             <div id="tab-wiresheet" class="tab-pane">
+
+                <!-- The one-line phone truth (owner ruling 2026-08-03).
+                     Rendered only where the live workspace is gated out —
+                     see the p.ddcw-sheet-mobile-note rule in the head. -->
+                <p class="ddcw-sheet-mobile-note">
+                    On this screen the wiresheet is a read-through — the
+                    live sheet wires with a pointer at desktop width, and
+                    the Unit tab stays fully interactive.
+                </p>
 
                 <p class="ddcw-sheet-note">
                     The program driving the unit. The sensed points and the

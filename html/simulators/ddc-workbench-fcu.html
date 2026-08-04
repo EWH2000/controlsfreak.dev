@@ -21,6 +21,25 @@ noindex: true
         .fcu-graphic { max-width: 660px; margin: 0.5rem auto 0; }
         .fcu-svg { display: block; width: 100%; height: auto; }
 
+        /* ── Phone-width header clearance ──────────────────────────────
+           The shared fullscreen button is absolutely positioned in the
+           card's top-right corner and paints over the title row where
+           the two meet. On THIS page the AIR-SIDE tag clears it by a
+           measured 2px at 375 — one root-font bump from a collision —
+           and the sibling AHU page's longer tag was measured 18px
+           under the button, so both pages carry the rule: reserve the
+           button's footprint and let the title row wrap (the title is
+           a nowrap flex row, so the padding alone would only slide the
+           tag beneath the button). 8.5rem = the button's font-driven
+           ~119px + its 0.55rem inset + a seam, in rem so it tracks the
+           button's own type size.
+           ⚠ DUPLICATED IN THE OTHER WORKBENCH PAGE'S HEAD — same
+           graduation trigger as the unit-selector block. */
+        @media (max-width: 480px) {
+            .tool-card-header { padding-right: 8.5rem; }
+            .tool-card-title { flex-wrap: wrap; }
+        }
+
         /* On-graphic point labels — the DDC feel. Mono, small; the value
            is the loud element, the caption the quiet one (the site scan
            hierarchy). SVG text is out of the contrast-sweep's scope. */
@@ -363,6 +382,15 @@ noindex: true
            (post-Clear). Dim ink; WCAG exempts inactive controls, and the
            title says why it is off. */
         .fcu-param-input:disabled { color: var(--text-dim); }
+        /* Touch floor (page-local, the vfds-selects idiom): the rail
+           inputs measure 39px tall natively, under the 44px floor every
+           other control on this page clears. The floor rides the INPUT,
+           not the editwell frame — the frame is a span, so a tap on the
+           suffix or the padding focuses nothing; the input IS the whole
+           target. Width already clears (58–67px measured). */
+        @media (hover: none) {
+            .fcu-param-input { min-height: 44px; }
+        }
         .fcu-param-unit {
             font-family: var(--mono);
             font-size: 0.66rem;
@@ -425,6 +453,14 @@ noindex: true
         .fcu-controls .ddcw-tracked[disabled],
         .fcu-controls input[disabled],
         .fcu-controls .copy-btn[disabled] { opacity: 0.55; cursor: not-allowed; }
+        /* Touch floor: the stage group's "Off" measures 43px wide — the
+           one .copy-btn on the page under the floor's WIDTH. The shared
+           TOUCH-TARGET FLOOR block is height-only (codebase-issues
+           #262: audit widths per selector before flooring them), so the
+           width floor is page-local; a no-op on every wider button. */
+        @media (hover: none) {
+            .fcu-controls .copy-btn { min-width: 44px; }
+        }
         .fcu-fanen { margin-top: 0.25rem; }
         .fcu-fanen label { display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; }
         .fcu-fanen input { width: auto; margin: 0; }
@@ -586,9 +622,43 @@ noindex: true
         }
         /* Page-local touch floor, same reason (the consolidated
            TOUCH-TARGET FLOOR block is in styles.css too). Measured
-           natively at 24.42px tall, so the floor is doing real work. */
+           natively at 24.42px tall, so the floor is doing real work —
+           and 41–42px WIDE, the exact case codebase-issues #262 names,
+           so the floor sets both dimensions. */
         @media (hover: none) {
-            a.ddcw-unit-link { justify-content: center; min-height: 44px; }
+            a.ddcw-unit-link {
+                justify-content: center;
+                min-height: 44px;
+                min-width: 44px;
+            }
+        }
+
+        /* ── The wiresheet pane's one-line phone truth ─────────────────────
+           (owner ruling 2026-08-03: the Unit tab IS the limited mobile
+           version, and the wiresheet says so honestly.) Hidden wherever
+           the live workspace shows; revealed by the SAME OR-gate
+           styles.css uses to hide .fbe-live (max-width 999px /
+           touch-primary), so the note and the workspace can never show
+           together. It sits FIRST in the pane — the .desktop-only-sim
+           panel carries the fuller version, but it sits where the
+           workspace would be, six sheet-notes down, and a phone
+           visitor deserves the truth at tap-in, not at the bottom of a
+           read. Element-qualified per the prose-utility house rule.
+           ⚠ DUPLICATED VERBATIM IN THE OTHER WORKBENCH PAGE'S HEAD —
+           same graduation trigger as the unit-selector block. */
+        p.ddcw-sheet-mobile-note { display: none; }
+        @media (max-width: 999px), (hover: none) and (pointer: coarse) {
+            p.ddcw-sheet-mobile-note {
+                display: block;
+                font-family: var(--mono);
+                font-size: 0.78rem;
+                line-height: 1.5;
+                color: var(--text);
+                border: 1px solid var(--border);
+                background: var(--surface-2);
+                padding: 0.5rem 0.65rem;
+                margin: 0 0 0.85rem;
+            }
         }
 
         /* ── FULLSCREEN COCKPIT ────────────────────────────────────────────
@@ -1132,9 +1202,9 @@ noindex: true
             <p class="ref-note">
                 The three points with a sensing device on the drawing are
                 buttons — press one to flag its live-value chip in the
-                statusbar. Narrow the window and the list fills out with the
-                rest of the drawing's values, for where its own text reads
-                too small.
+                statusbar. On a narrow window the list fills out with the
+                rest of the drawing's values — the reading copy for where
+                the drawing's own text runs too small.
             </p>
             <div class="fcu-points">
                 <button type="button" class="fcu-point fcu-point-btn" data-point="rat" aria-pressed="false">
@@ -1406,13 +1476,27 @@ noindex: true
                 sort those apart.
             </p>
 
+            <!-- ⚠ THE VFD LINK IN THIS NOTE IS THE FAN DRILL-DOWN'S
+                 EQUIVALENT TARGET, not decoration. The SVG fan glyph
+                 scales with the drawing — ~30×48 CSS px at a 375px
+                 viewport, under the 44px touch floor, and SVG geometry
+                 cannot take a min-width. The touch-target pass (WCAG
+                 2.5.5/2.5.8) rides the equivalent-control clause through
+                 this anchor (the coil glyph's twin already lives in the
+                 blocked-condenser note above);
+                 tests/ddc-workbench-fcu.spec.js pins one HTML twin per
+                 drill-down href, so removing it reddens that row. -->
             <p class="fcu-note">
                 One honest wrinkle: the discharge sensor sits after the fan
                 (draw-through), so DAT reads the coil-leaving temp plus about
                 <span data-us="0.6&nbsp;°F" data-metric="0.3&nbsp;°C">0.6&nbsp;°F</span>
                 of fan heat — real motor work the air picks up. It is exactly
                 where a field tech would trim a small calibration offset so the
-                point reports leaving-coil temperature.
+                point reports leaving-coil temperature. The fan glyph on the
+                drawing is a link into the
+                <a href="/simulators/vfd-mock.html">Mock VFD Interface</a> —
+                the same drill-down in text, for a screen where the glyph
+                renders too small to hit.
             </p>
 
             <p class="fcu-note">
@@ -1436,6 +1520,15 @@ noindex: true
                  @media gate hides .fbe-live below 1000px / on touch and shows
                  the tips panel instead). -->
             <div id="tab-wiresheet" class="tab-pane">
+
+                <!-- The one-line phone truth (owner ruling 2026-08-03).
+                     Rendered only where the live workspace is gated out —
+                     see the p.ddcw-sheet-mobile-note rule in the head. -->
+                <p class="ddcw-sheet-mobile-note">
+                    On this screen the wiresheet is a read-through — the
+                    live sheet wires with a pointer at desktop width, and
+                    the Unit tab stays fully interactive.
+                </p>
 
                 <p class="ddcw-sheet-note">
                     The program driving the unit. Sources (zone temp, setpoint)
