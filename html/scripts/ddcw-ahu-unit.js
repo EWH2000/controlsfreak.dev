@@ -65,8 +65,9 @@
 // rule binds the graphic lane the moment it writes one.
 //
 // Consumers: html/simulators/ddc-workbench.html (the AHU workbench
-// page — hidden, no `canonical`, so it is invisible to the smoke /
-// responsive / contrast sweeps and carries its own hand-written spec).
+// page — public since Phase 8, 2026-08-04: it carries a canonical and
+// sits in tests/pages.js, so the smoke / responsive / contrast sweeps
+// reach it alongside its own hand-written spec).
 // Tests: tests/ddcw-ahu-unit.spec.js pins the physics invariants
 // engine-direct (directions, orderings, clamp bands, contract shapes —
 // never feel-constant values); tests/ddc-workbench-ahu-page.spec.js

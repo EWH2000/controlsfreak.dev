@@ -34,7 +34,7 @@
 //   wire  = { from: [blockId, outPin], to: [blockId, inPin] }
 //
 // `name` is the OPTIONAL per-instance name — what this particular block
-// does on this particular sheet ('Y1 Latch', 'Cool SP', 'OAT'), as
+// does on this particular sheet ('Trip Latch', 'Cool SP', 'OAT'), as
 // distinct from what its TYPE is. fbe-editor.js renders it in the head
 // as `tag · name`; with no name the head falls back to the type's
 // `label`, exactly as it did before names existed. It is a TOP-LEVEL
@@ -124,7 +124,7 @@ const FBE = (function () {
         sr: {
             // Set-dominant SR latch: S wins when both S and R are true.
             // The tag drops "LATCH": what KIND of latch this instance is
-            // ('Y1 Latch', 'Trip Latch') belongs in the name.
+            // ('Stg 1 Latch', 'Trip Latch') belongs in the name.
             label: 'SR LATCH', tag: 'SR', category: 'Boolean', stateful: true,
             inputs: [{ name: 'S', kind: 'bool' }, { name: 'R', kind: 'bool' }],
             outputs: [{ name: 'Q', kind: 'bool' }],

@@ -8,10 +8,10 @@
 // ahu-mockup tests/` returned nothing: a green suite proved literally
 // nothing about the page, including that it still returned 200.
 //
-// That is the same hole ddc-workbench-fcu.spec.js calls out for the FCU
-// page, and the same remedy: name the URL directly here rather than add
-// it to PAGES, which would pull a deliberately hidden page back into the
-// crawl-facing surface.
+// Same remedy the workbench specs used while those pages were hidden
+// (they graduated 2026-08-04; this page deliberately did not): name the
+// URL directly here rather than add it to PAGES, which would pull a
+// deliberately hidden page back into the crawl-facing surface.
 //
 // SCOPE — a floor, not a depiction review. The drawing itself is the
 // owner's call (his equipment-graphics eye), and pinning geometry here

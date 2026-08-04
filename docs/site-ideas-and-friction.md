@@ -658,6 +658,11 @@ fix-confirmed-bugs-on-branch / judgment-calls-to-the-owner) live in
 project memory, not here.
 
 **Air-side sim — the AHU workbench page shipped 2026-07-30.**
+*(Correction of record, 2026-08-04: Phase 8 graduated both workbench
+pages — canonical + sitemap + search index + nav + landing cards +
+`tests/pages.js`, so the site-wide sweeps reach them now. The
+hidden-page description below is the shipping-era record; the
+no-legacy-redirect ruling stands.)*
 `/simulators/ddc-workbench.html` — a hidden page (`noindex` +
 `eleventyExcludeFromCollections`, no `canonical`), so it is absent from
 the sitemap, the search index and `tests/pages.js`, and it carries its

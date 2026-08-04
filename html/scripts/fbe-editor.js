@@ -229,7 +229,7 @@ const FBEEditor = (function () {
         // ── block head ──────────────────────────────────────────────
         // A block that carries an instance `name` heads as `TAG · Name`
         // — the type's short tag, then what THIS block does on THIS
-        // sheet ('AI · OAT', 'SR · Y1 Latch'). Two spans, because the
+        // sheet ('AI · OAT', 'SR · Trip Latch'). Two spans, because the
         // tag paints dimmer than the name; the '·' between them comes
         // from CSS (::after on the tag) so it is neither selectable nor
         // announced. A block with no name renders the type's full

@@ -11833,7 +11833,7 @@ What to do instead when a sweep reports them: confirm the count is
 still three and the elements are still these, and move on. A **fourth**
 graze, or one of these growing past the stroke, is the signal.
 
-### 271. The illustrative block-head examples in shared code and the README name heads no sheet renders any more *(noticed 2026-08-03, PR #475's rename lane — cosmetic, and it must ride a version bump)*
+### 271. The illustrative block-head examples in shared code and the README name heads no sheet renders any more *(noticed 2026-08-03, PR #475's rename lane — cosmetic, and it must ride a version bump; **RESOLVED 2026-08-04** — all five sites renamed to heads real sheets render, riding the Phase 8 graduation PR's 3.80.0 bump exactly as prescribed)*
 
 The name pass replaced the `Y1 …` derived-stage family with `Stg 1 …` /
 `Stg 2 …` across the sheets that carry it. Five comments and one README
@@ -11903,3 +11903,35 @@ the natural trigger to settle it, since that is when the duplicated
 rule stops being invisible to the live site. Either way it is worth a
 spec that measures **overlap** rather than overflow for the
 title-versus-button pair.
+
+### 273. The forced-sensor marker CSS is duplicated per page under page-prefixed classes *(noticed 2026-08-04, the Phase 8 graduation lane — deferred at graduation, wants a `.ddcw-forced-mark` rename)*
+
+The dashed accent ring that marks a forced sensor glyph is one drawn
+idea with two page-local copies: `.ahu-forced-mark`
+(`html/simulators/ddc-workbench.html`, the rects in the AHU SVG) and
+`.fcu-forced-mark` (`html/simulators/ddc-workbench-fcu.html`), each
+with its own head CSS. The graduation pass (Phase 8, 2026-08-04)
+promoted the two verbatim-duplicated head blocks (the unit selector
+and `p.ddcw-sheet-mobile-note`) into `styles.css`'s DDC WORKBENCH
+SHELL section, but deliberately left this pair: the class names are
+page-prefixed, so the shared-sheet form is not a move but a RENAME —
+`.ddcw-forced-mark` across both SVGs' rects, both head blocks, and
+`tests/ddc-workbench-fcu-sensors.spec.js:248/:257`, which pins the
+FCU's class by name. Mechanical, small, and behaviour-preserving, but
+a rename across two SVGs and a spec did not belong in the go-live
+diff. The header-clearance pair the graduation also left in place is
+NOT this item — its selectors are site-wide (`.tool-card-header` /
+`.tool-card-title`), so its dedup is #272's open design call.
+
+### 274. The simulators landing crossed its own chips threshold at nine cards *(noticed 2026-08-04, the Phase 8 graduation lane — DESIGN CALL, deliberately not decided at go-live)*
+
+CLAUDE.md's Design landmarks row says the Simulators landing is "the
+same grid minus chips — add chips back if it grows past ~6 entries."
+The workbench graduation took the grid from seven cards to nine
+without adding chips, and the skip was deliberate: unlike Tools /
+Education / Practice, the simulators have no category taxonomy to
+chip by — inventing one (air-side / hydronic / electrical? by
+equipment? by teaching chapter?) is a naming-and-grouping design
+call, not a mechanical step, and did not belong in the go-live diff.
+Decide the taxonomy (or raise the documented threshold) and the chips
+are the same pattern the other landings already use.

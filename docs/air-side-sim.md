@@ -27,6 +27,14 @@ that diagnostic end**, not the point.
 
 ## Current state — Phase 7 and the pre-Phase-8 discussion are both COMPLETE (PRs #472–#476); next is the owner's final review, then Phase 8
 
+> **Correction of record (2026-08-04): the final review happened and
+> Phase 8 EXECUTED.** Both workbench unit pages carry canonicals and
+> graduated into the sitemap / search index / nav / the landing /
+> `tests/pages.js`; the mockup stays hidden. Present-tense hidden-page
+> and still-queued claims below this line are the pre-graduation
+> record — the full execution record lands with the Phase 8 docs
+> wrap-up.
+
 Three hidden pages carry this line. All are `noindex` +
 `eleventyExcludeFromCollections` with **no `canonical`**, so all are reachable
 at their URLs and absent from nav / search / sitemap / the landing —

@@ -1,16 +1,14 @@
 // The AHU DDC Workbench page — /simulators/ddc-workbench.html.
 //
-// ⚠ THIS FILE IS THE ONLY THING THAT WALKS THIS PAGE, AND THAT IS WHY IT
-// EXISTS. The page is a HIDDEN page: `noindex` +
-// `eleventyExcludeFromCollections` + NO `canonical`. That last one is
-// what does it — tests/pages.js is checked against the built sitemap by
-// its own drift test, a canonical-less page is deliberately absent from
-// the sitemap, so the manifest CANNOT list this page without failing
-// that test. The consequence is total: smoke.spec.js never loads it,
-// responsive.spec.js never checks it for phone-width overflow, and
-// contrast-sweep.spec.js never measures a single colour on it in either
-// theme. The omission from tests/pages.js is CORRECT and must not be
-// "fixed"; this spec is what stands in its place.
+// ⚠ THIS FILE PREDATES THE PAGE BEING PUBLIC — it was written while
+// the page was HIDDEN (`noindex` + `eleventyExcludeFromCollections` +
+// no `canonical`) and was the only thing that walked it. Graduation
+// (Phase 8, 2026-08-04) added the canonical and the tests/pages.js
+// rows, so the site-wide sweeps reach the page now: smoke loads it,
+// responsive checks it at phone widths, contrast-sweep measures it in
+// both themes. This spec remains the page's BEHAVIORAL coverage — the
+// unit rows, the shell contract, and the hand-written rows below,
+// which the generic sweeps cannot know to assert.
 //
 // POLICY — INVARIANTS, NOT FEEL CONSTANTS. The unit module's TUNE BY
 // FEEL block is owner-tunable by design and its rough constants are
@@ -59,28 +57,35 @@ test.describe('AHU workbench page: it boots', () => {
         expect(errs, 'the page booted without complaining').toEqual([]);
     });
 
-    test('the page is hidden, and hidden the way the house does it', async () => {
-        // Read off the SOURCE, because the three markers live in
-        // frontmatter and only one of them survives into the rendered
-        // HTML. If a later lane graduates this page it will add a
-        // `canonical` here, and this row is where that decision gets
-        // noticed — along with every merge-authority row that flips with
-        // it (CLAUDE.md, Workflow).
-        const src = fs.readFileSync(
-            path.join(__dirname, '..', 'html', 'simulators', 'ddc-workbench.html'), 'utf8');
-        const fm = src.slice(0, src.indexOf('---', 3));
-        expect(fm).toMatch(/noindex:\s*true/);
-        expect(fm).toMatch(/eleventyExcludeFromCollections:\s*true/);
-        expect(fm, 'a canonical here would put the page in the sitemap')
-            .not.toMatch(/^canonical:/m);
-
-        // And the manifest must NOT list it — the omission is the thing
-        // being asserted, not an accident to be corrected.
+    test('the page is public, and public the way the house does it', async () => {
+        // Read off the SOURCE. This row's predecessor asserted the
+        // hidden shape (noindex + eleventyExcludeFromCollections + no
+        // canonical) and named graduation as the event that flips it;
+        // Phase 8 (2026-08-04) is that event. Both workbench pages
+        // graduate together — the unit selector cross-anchors them, so
+        // one public and one hidden would strand a live link on a
+        // noindexed page. A regression back to the hidden shape gets
+        // noticed here, along with the merge-authority rows that
+        // flipped with it (CLAUDE.md, Workflow).
         const pages = require('./pages.js');
-        const list = Array.isArray(pages) ? pages : (pages.PAGES || []);
-        expect(list.some((p) => String(p).includes('ddc-workbench.html')),
-            'a canonical-less page in tests/pages.js fails the sitemap drift test')
-            .toBe(false);
+        for (const file of ['ddc-workbench.html', 'ddc-workbench-fcu.html']) {
+            const src = fs.readFileSync(
+                path.join(__dirname, '..', 'html', 'simulators', file), 'utf8');
+            const fm = src.slice(0, src.indexOf('---', 3));
+            expect(fm, `${file} canonical`).toMatch(new RegExp(
+                '^canonical: https://controlsfreak\\.dev/simulators/'
+                + file.replace('.', '\\.') + '$', 'm'));
+            expect(fm, `${file}: noindex would disclaim the canonical`)
+                .not.toMatch(/noindex/);
+            expect(fm, `${file}: exclusion would pull it from the sitemap`)
+                .not.toMatch(/eleventyExcludeFromCollections/);
+
+            // And the manifest lists it — pages.js is what routes the
+            // smoke, responsive and contrast sweeps here.
+            expect(pages.some((p) => p.url === '/simulators/' + file),
+                `${file} absent from tests/pages.js = absent from every site-wide sweep`)
+                .toBe(true);
+        }
     });
 
     test('the shell finds its whole markup skeleton', async ({ page }) => {
@@ -1168,12 +1173,11 @@ test.describe('AHU workbench page: the fullscreen cockpit keeps its console', ()
 });
 
 // ── The unit selector ────────────────────────────────────────────────
-// The statusbar's "which machine am I looking at" pair. Two hidden
-// workbench pages, one plain anchor each way — the ruled design: not
-// tabs, not a JS switch. Nothing else on this site tests a link between
-// two canonical-less pages, and link-integrity.spec.js walks _site for
-// broken FRAGMENTS, not for a page that quietly stops linking its
-// sibling, so these rows are the only thing holding the pair together.
+// The statusbar's "which machine am I looking at" pair. Two workbench
+// pages, one plain anchor each way — the ruled design: not tabs, not a
+// JS switch. link-integrity.spec.js walks _site for broken FRAGMENTS,
+// not for a page that quietly stops linking its sibling, so these rows
+// are still the only thing holding the pair together.
 
 test.describe('AHU workbench page: the unit selector', () => {
 
@@ -1216,9 +1220,10 @@ test.describe('AHU workbench page: the unit selector', () => {
         const resp = await wait;
         expect(resp.status(), 'the sibling href is a live page').toBe(200);
 
-        // The FCU page's own title, which is the one WITHOUT the "Air
-        // Handler" qualifier — the cheapest proof we did not just reload.
-        await expect(page).toHaveTitle('DDC Workbench — controlsfreak.dev');
+        // The FCU page's own title — its "Fan Coil" qualifier against
+        // this page's "Air Handler" is the cheapest proof we did not
+        // just reload.
+        await expect(page).toHaveTitle('DDC Workbench — Fan Coil — controlsfreak.dev');
 
         // …and the pair over there marks FCU, so the two halves are wired
         // to each other rather than both to one page.
@@ -1255,17 +1260,17 @@ test.describe('AHU workbench page: the unit selector', () => {
 
         // And it still navigates from inside the cockpit.
         await page.click('.ddcw-unit-sel a.ddcw-unit-link:not([aria-current])');
-        await expect(page).toHaveTitle('DDC Workbench — controlsfreak.dev');
+        await expect(page).toHaveTitle('DDC Workbench — Fan Coil — controlsfreak.dev');
     });
 });
 
 test.describe('AHU workbench page: the unit selector on touch', () => {
     // isMobile + hasTouch make Chromium's emulation match (hover: none),
-    // which is the only condition under which the page-local touch floor
-    // applies. The floor has to be page-local: the consolidated
-    // TOUCH-TARGET FLOOR block lives in styles.css, a live surface this
-    // pair may not touch — and no sweep reaches a canonical-less page, so
-    // this row is the floor's only guard.
+    // which is the only condition under which the unit-selector touch
+    // floor applies. The floor rode the unit-selector CSS into
+    // styles.css at graduation, kept beside the component (it needs
+    // justify-content on top of the TOUCH-TARGET FLOOR boilerplate);
+    // this row is still what guards it.
     test.use({ isMobile: true, hasTouch: true, viewport: { width: 412, height: 883 } });
 
     test('the links clear the 44px floor', async ({ page }) => {
@@ -1513,9 +1518,12 @@ test.describe('AHU workbench page: the parameter rail adjusts the running progra
 });
 
 test.describe('AHU workbench page: rail ink clears the AA floor in both themes', () => {
-    // Hand-written contrast rows, because this is a hidden page: no
-    // canonical → not in tests/pages.js → contrast-sweep.spec.js never
-    // measures a colour on it. The rail's NEW ink sources are the input
+    // Hand-written contrast rows, written while this was a hidden page
+    // the contrast sweep could not reach. The sweep measures the page
+    // now (graduation put it in tests/pages.js), but these rows stay:
+    // they assert exact floors on named ink sources, which localizes a
+    // failure faster than the sweep's page-wide walk. The rail's NEW
+    // ink sources are the input
     // value (accent-ink on the editwell), the label captions (text-dim)
     // and the hint line (amber-ink) — each asserted at the 4.5:1
     // small-text floor in BOTH themes. The disabled state is exempt
@@ -1623,8 +1631,9 @@ test.describe('AHU workbench page: rail ink clears the AA floor in both themes',
 test.describe('AHU workbench page: the phone surface (the Unit tab is the mobile version)', () => {
     // Owner ruling 2026-08-03: "the Unit tab IS the limited mobile
     // version" — a phone visitor gets a real interactive surface, not a
-    // desktop-gate. These rows are the hand-written stand-in for the
-    // responsive sweep this canonical-less page can never join: no
+    // desktop-gate. These rows were written before the responsive
+    // sweep reached this page (graduation joined it to tests/pages.js)
+    // and assert MORE than the sweep does: no
     // sideways scroll, the mirror register filled back in, the rail
     // operable and floored at 44px in BOTH dimensions (the shared
     // TOUCH-TARGET FLOOR is height-only — codebase-issues #262), the

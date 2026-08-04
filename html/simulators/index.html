@@ -22,6 +22,22 @@ nav: simulators
     <div class="card-grid">
         {{ navCard({
             section:    'simulators',
+            href:       '/simulators/ddc-workbench.html',
+            titleShort: 'AHU Workbench',
+            titleFull:  'DDC Workbench — Air Handler',
+            desc:       'A single-zone air handler as a live DDC graphic — economizer dampers, hot-water coil, two DX stages — with the function-block program that runs it one tab away. Force sensors, override points through a real priority array, and watch the screen tell on the machine.',
+            pills:      ['Live DDC Graphic', 'Economizer', 'Priority Array', 'Wiresheet']
+        }) }}
+        {{ navCard({
+            section:    'simulators',
+            href:       '/simulators/ddc-workbench-fcu.html',
+            titleShort: 'FCU Workbench',
+            titleFull:  'DDC Workbench — Fan Coil',
+            desc:       'A DX fan coil on the same workbench — a smaller machine that leaves the whole control chain readable. Load a sample sequence or wire your own from a blank sheet, then stage cooling, break the fan proof, and chase the fault from the graphic into the logic.',
+            pills:      ['Live DDC Graphic', 'DX Staging', 'Wire Your Own', 'Fault Presets']
+        }) }}
+        {{ navCard({
+            section:    'simulators',
             href:       '/simulators/pid-tuner.html',
             titleShort: 'PID Tuner',
             titleFull:  'PID Tuning Helper',

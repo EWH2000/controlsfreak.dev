@@ -443,14 +443,13 @@ test.describe('block names — mechanism (public editor)', () => {
 });
 
 // contrast-sweep.spec.js walks tests/pages.js, which is the sitemap —
-// so it reaches function-block-editor.html but NOT the two hidden
-// workbench pages, and it measures whatever that page paints on load.
+// it reaches function-block-editor.html (and, since graduation, both
+// workbench pages), and it measures whatever a page paints on load.
 // Since the hand-authored pass that page opens on a fully named
 // economizer sheet, so the sweep does now see an unselected
 // `.fbe-block-tag` in both themes. It still never sees the SELECTED
 // state — no stylesheet can open it, and the sweep does not click a
-// block — and it cannot reach either workbench at all. Both of those
-// are what this arm is for. The tag is a NEW ink token on a background
+// block. That is what this arm is for. The tag is a NEW ink token on a background
 // (--surface-2) the CLAUDE.md --text-dim figures were not measured on,
 // and the selected head repaints it onto a translucent --accent-dim
 // wash; each gets its own AA assertion in both themes rather than a
@@ -570,9 +569,9 @@ const MEASURE_HEAD = ({ scope, wantSelected }) => {
 // contrast-sweep.spec.js hit this already and settles for it — see its
 // header ("~20,000 'failures' that were nav dropdowns and reveal
 // animations caught in flight") and its `settle()`, which finishes or
-// cancels every running animation before walking. This arm exists
-// BECAUSE that sweep cannot reach a hidden page, and it inherited the
-// measurement without the settle. It does not simply copy `settle()`
+// cancels every running animation before walking. This arm predates
+// the sweep reaching this page (hidden until graduation), and it
+// inherited the measurement without the settle. It does not simply copy `settle()`
 // though: `finish()` throws
 // on an infinite animation and the sweep falls back to `cancel()`, and
 // this page runs an infinite `fbe-signal-flow` while the sim is live.

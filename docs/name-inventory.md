@@ -1,4 +1,4 @@
-> **A RECORD, committed 2026-08-01 — read the three corrections below before
+> **A RECORD, committed 2026-08-01 — read the corrections below before
 > you read the body.**
 >
 > Authored **2026-07-31** by the FBE block-name lane as the design source for
@@ -23,8 +23,8 @@
 >
 > **The body below is unedited and stays that way.** It records what was
 > measured on 2026-07-31, and the measurements — budget, per-sheet tables,
-> collision analysis, totals — all still hold. Three of its *judgements* have
-> since been overtaken. The three corrections here supersede the body where
+> collision analysis, totals — all still hold. Some of its *judgements* have
+> since been overtaken. The corrections here supersede the body where
 > they conflict with it; nothing else in it has moved.
 >
 > 1. **§7.5 — `Occ Dmpr` is falsified.** Commit `cadd43e` (2026-07-31, *"gate
@@ -52,6 +52,13 @@
 >    or to second-guess, and §2a's `RD`-as-fallback aside is moot with it; the
 >    single `rd` row in the body (the public PID sheet) will be authored as a
 >    **named `ao`** instead.
+>
+> 4. **`Stg2 Call` is respaced.** Owner ruling 2026-08-04 (the final review):
+>    the two FCU sheets' `and1` renames **`Stg2 Call` → `Stg 2 Call`**
+>    (`AND · Stg 2 Call` = 16, inside the 18 budget), retiring the last
+>    unspaced `Stg2` in the shipped literals. The body's §3 rows 18 for
+>    `cool-2stage` and `cool-2stage-fanon` still read `Stg2 Call`, and stay
+>    that way — the body records 2026-07-31; this correction supersedes it.
 
 # FBE block-name inventory — `TAG · Name` head labels
 
