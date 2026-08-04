@@ -718,3 +718,50 @@ test.describe('fbe-engine: AHU sample programs (workbench page)', () => {
             ['econ-2stage', 'econ-2stage-lowlimits']);
     });
 });
+
+test.describe('fbe-engine: value-named consts tell the truth', () => {
+
+    // The 2026-08-03 name pass renamed the pure reference constants to
+    // VALUE-names ('100%', '60%', '0%', '100% Spd', '100% Pos'). That
+    // head is the one a param edit can turn into a lie without moving
+    // a single wire: the head prints the NAME while the engine outputs
+    // the PARAM, and nothing else ties the two together — measured
+    // during the #475 verification, a 100 → 90 value edit under a
+    // '100%' name sailed through the entire workbench + fbe slice
+    // green (278 tests). So: any const whose name leads with
+    // `<number>%` must carry params.value equal to that number, in
+    // every shipped registry. Semantic names ('Stg 2 Sep', 'Heat Kp',
+    // 'DAT Trip') don't match the shape and stay unconstrained — the
+    // convention is value-names ONLY for pure references feeding
+    // selects/muxes; setpoints and tuning params keep semantic names
+    // (owner ruling, 2026-08-03).
+    const REGISTRIES = [
+        ['html/simulators/function-block-editor.html', 'EXAMPLES'],
+        ['html/simulators/ddc-workbench-fcu.html', 'FCU_PROGRAMS'],
+        ['html/simulators/ddc-workbench.html', 'AHU_PROGRAMS'],
+    ];
+
+    test('every %-named const carries params.value equal to its name', () => {
+        let checked = 0;
+        for (const [file, literal] of REGISTRIES) {
+            const registry = loadLiteral(file, literal);
+            for (const [sheetKey, prog] of Object.entries(registry)) {
+                for (const b of prog.blocks) {
+                    if (b.type !== 'const' || !b.name) continue;
+                    const m = b.name.match(/^(-?\d+(?:\.\d+)?)%(?:\s|$)/);
+                    if (!m) continue;
+                    checked += 1;
+                    expect(b.params.value,
+                        literal + '.' + sheetKey + '.' + b.id + ': head says "'
+                        + b.name + '" but the block outputs ' + b.params.value,
+                    ).toBe(parseFloat(m[1]));
+                }
+            }
+        }
+        // Non-vacuity: the shipped registries carry 12 value-named
+        // consts today (7 FCU + 5 AHU). A count of zero would mean the
+        // regex or the literals moved and the sweep above asserted
+        // nothing; it must fail rather than decay into a silent pass.
+        expect(checked).toBeGreaterThanOrEqual(12);
+    });
+});

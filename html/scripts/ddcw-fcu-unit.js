@@ -476,7 +476,7 @@ const DDCWFcuUnit = (function () {
         // REAL air the zone sends back, so its TRUTH is plant.zoneT,
         // never the wall stat's sensed value above: forcing the wall
         // stat leaves this probe honest, and the RAT chip visibly
-        // disagrees with the Space chip — the real-vs-sensed
+        // disagrees with the Zone Temp chip — the real-vs-sensed
         // commissioning moment, from the plant side. It routes through
         // its OWN override entry (each probe lies independently — the
         // AHU pattern), which no control writes today. (No program
@@ -555,11 +555,11 @@ const DDCWFcuUnit = (function () {
         // are unitless-or-already-universal (%) and pass through. The `unit`
         // strings stay as the US labels; the metric label comes from
         // Units.suffix at the display boundary.
-        { id: 'space-temp',       kind: 'ai',    dir: 'sensor',   plantKey: 'space-temp',       name: 'Space',    unit: '°F', conv: 'temp',      min: 70, max: 84, step: 1 },
+        { id: 'space-temp',       kind: 'ai',    dir: 'sensor',   plantKey: 'space-temp',       name: 'Zone Temp', unit: '°F', conv: 'temp',      min: 70, max: 84, step: 1 },
         // rat sits next to dat so the chip strip reads entering →
         // leaving side by side (the pair the coil ΔT is made of).
-        { id: 'rat',              kind: 'ai',    dir: 'sensor',   plantKey: 'rat',              name: 'RAT',      unit: '°F', conv: 'temp' },
-        { id: 'dat',              kind: 'ai',    dir: 'sensor',   plantKey: 'dat',              name: 'DAT',      unit: '°F', conv: 'temp' },
+        { id: 'rat',              kind: 'ai',    dir: 'sensor',   plantKey: 'rat',              name: 'RAT',       unit: '°F', conv: 'temp' },
+        { id: 'dat',              kind: 'ai',    dir: 'sensor',   plantKey: 'dat',              name: 'DAT',       unit: '°F', conv: 'temp' },
         // Airflow PROOF, not the fan command — a duct-pressure switch
         // that makes slowly and breaks at once. A sequence that
         // interlocks on this rides through a broken belt; one that
@@ -567,15 +567,15 @@ const DDCWFcuUnit = (function () {
         // `conv`: the shared formatter short-circuits a bi to ON / OFF
         // before it reaches either.
         { id: 'fan-status',       kind: 'bi',    dir: 'sensor',   plantKey: 'fan-status',       name: 'Fan Sts' },
-        { id: 'fan-speed',        kind: 'ao',    dir: 'actuator', plantKey: 'fan-speed',        name: 'Fan Spd',  unit: '%', min: 0, max: 100, step: 5, relinquishDefault: 0 },
-        { id: 'fan-enable',       kind: 'bo',    dir: 'actuator', plantKey: 'fan-enable',       name: 'Fan En',   relinquishDefault: false },
-        { id: 'y1',               kind: 'bo',    dir: 'actuator', plantKey: 'y1',               name: 'Y1',       relinquishDefault: false },
-        { id: 'y2',               kind: 'bo',    dir: 'actuator', plantKey: 'y2',               name: 'Y2',       relinquishDefault: false },
-        { id: 'cooling-setpoint', kind: 'param', dir: 'param',    plantKey: 'cooling-setpoint', name: 'Cool SP',  unit: '°F', conv: 'temp',      min: 65, max: 85, step: 0.5 },
+        { id: 'fan-speed',        kind: 'ao',    dir: 'actuator', plantKey: 'fan-speed',        name: 'Fan Spd',   unit: '%', min: 0, max: 100, step: 5, relinquishDefault: 0 },
+        { id: 'fan-enable',       kind: 'bo',    dir: 'actuator', plantKey: 'fan-enable',       name: 'Fan En',    relinquishDefault: false },
+        { id: 'y1',               kind: 'bo',    dir: 'actuator', plantKey: 'y1',               name: 'Clg Stg 1', relinquishDefault: false },
+        { id: 'y2',               kind: 'bo',    dir: 'actuator', plantKey: 'y2',               name: 'Clg Stg 2', relinquishDefault: false },
+        { id: 'cooling-setpoint', kind: 'param', dir: 'param',    plantKey: 'cooling-setpoint', name: 'Cool SP',   unit: '°F', conv: 'temp',      min: 65, max: 85, step: 0.5 },
         // Deadband min is 1, not 0: a zero band short-cycles by
         // construction, and the zero-band lesson stays reachable on the
         // wiresheet, where the constant is unguarded. (Ships at 3.)
-        { id: 'deadband',         kind: 'param', dir: 'param',    plantKey: 'deadband',         name: 'Deadband', unit: '°F', conv: 'deltaTemp', min: 1, max: 5, step: 0.5 },
+        { id: 'deadband',         kind: 'param', dir: 'param',    plantKey: 'deadband',         name: 'Deadband',  unit: '°F', conv: 'deltaTemp', min: 1, max: 5, step: 0.5 },
     ];
 
     // ═════════════════════ DOM — graphic + controls ═════════════════════
