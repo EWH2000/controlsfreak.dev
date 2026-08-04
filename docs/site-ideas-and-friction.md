@@ -4676,6 +4676,16 @@ fell out of the lane: comparator tags went ASCII (`A>=B`, codebase-
 issues #255 option 2) and the inspector's touch-target gap took a
 written exemption rather than a `styles.css` change (#256).
 
+> **Correction of record *(2026-08-03)*:** the sentence above about the
+> workbench sheets being "still unnamed" was true only on the day it was
+> written. The hand-authored set landed in **PR #465** off
+> `docs/name-inventory.md`, and the owner's own rename pass — the one that
+> entry says he might want — was ruled and executed on 2026-08-03 in
+> **PR #475** (`Clg Stg 1/2`, `Zone Temp`, the `Stg 1 …` family,
+> `Fan Sts Chk`, `Heat Kp`, and value-named reference consts). The naming
+> lane is CLOSED; the rulings record is
+> `docs/air-side-sim.md` §*The pre-Phase-8 discussion*.
+
 **`[future: font-subset extension]` — the typography lane.** Re-subset
 the **six** self-hosted woff2 files (the five Plex Mono weights plus
 `overpass-latin-var.woff2`), naming the three comparator codepoints
@@ -4691,6 +4701,98 @@ is most of its cost. This is codebase-issues **#255 option 3**, ruled
 ASCII'd the tags, leaving the comparator `label`s and every prose `Δ` /
 `≈` / `→` still rendering from a system fallback face. Cosmetic
 everywhere it appears, which is why it waits for a lane of its own.
+
+**`[future: fbe annotation primitive]` — comments and grouping frames on
+a wiresheet** *(owner's own workflow, surfaced 2026-08-03 during the
+name-pass discussion)*. Two things a real wiresheet has that ours does
+not, and he named both as how he actually works: a **free-floating
+comment** — text placed on the sheet, wired to nothing — and a
+**grouping rectangle** drawn around several blocks to *"indicate whole
+functions working toward one thing."* Per-instance names (above) made a
+block say what it does; these make a *region* say what it does, which is
+the next unit of legibility up and the one a reader uses to find their
+way around a 55-block sheet.
+
+Why it is a real lane rather than a small addition: both are **sheet
+furniture, not blocks**, so neither fits the `{blocks, wires}` graph the
+engine executes — a comment has no pins and must never enter the
+topological sort, and a frame is geometry that has to survive an editor
+relayout without capturing drags meant for the blocks inside it. That
+argues for a third top-level array (`annotations`, ignored by
+`FBE.tick`), a hit-testing decision (a frame's interior must stay
+click-through to its blocks; only its border and label are grabbable),
+and a serialization question for the sheets authored as literals. It
+also touches every accessible-name surface the block heads just went
+through, since a frame label is text on a drawing.
+
+**Scope note: this is a LIVE-CODE lane, not a hidden-page one.**
+`fbe-editor.js` and `fbe-engine.js` are loaded by the public
+Function-Block Editor, so this ships to a live page and needs approval
+and a version bump — the same trap `docs/next-session-handoff.md` and
+CLAUDE.md both name. Nothing is promised in page copy anywhere; this
+marker is the tracking mechanism.
+
+**`[future: value-derived heads for unnamed consts]` — the mechanically
+honest version of value-naming** *(surfaced 2026-08-03, option C of the
+name-pass discussion)*. The owner's ruling gave **pure reference**
+consts value-names — `0%`, `100%`, `60%` — because on a block whose
+whole job is to hand a number to a select, the number *is* the meaning.
+Those names are authored strings today, which means the name and the
+value are two copies of one fact; `tests/fbe-engine.spec.js` pins them
+together precisely because a retune could otherwise leave a const named
+`100%` outputting 90.
+
+The honest alternative: a `const` block **with no `name`** renders its
+own `params.value` in the head, formatted, instead of falling back to
+the type label. One source, nothing to drift, and it costs no
+characters that a hand-written name would not have cost. What makes it a
+decision rather than an obvious win:
+
+- It makes `CONST` the one type whose head is *derived*, so the head
+  stops being a place you can read authorial intent — the very thing
+  per-instance names were added for.
+- The formatting is a judgement with no neutral answer (`60` vs `60%` vs
+  `60.0` — the block does not know its own units; the point it feeds
+  does).
+- It changes what an empty **Name** field means on that one type, which
+  the inspector would have to explain.
+- The head budget still binds, and a derived string cannot be shortened
+  by an author who is over it.
+
+Worth doing only as part of the same live-code lane as the annotation
+primitive, if that lane opens; the authored names plus the spec pin are
+correct in the meantime.
+
+**Candidate quiet field-variation note — CamelCase point names versus
+spaced reading surfaces** *(surfaced 2026-08-03; the owner may veto —
+this is a candidate, not a decision)*. The site's point names read as
+spaced words (`Zone Temp`, `Clg Stg 1`, `Fan Sts Chk`) because they are
+rendered on graphics, chips and block heads meant to be *read*. Plenty
+of shops — the owner's own included — name points **CamelCase with no
+spaces** (`ZoneTemp`, `ClgStg1`), and the reasons are practical rather
+than aesthetic: a name with no spaces survives export, scripting and
+search-and-replace intact, some tools and integrations handle it more
+predictably than a spaced one, and a house convention that comes through
+a controller migration unchanged is worth more than a pretty label.
+⚠️ Verify the tooling half before writing any of it — the specific
+claim about which tools mishandle spaces is field lore here, not
+something this file has checked.
+
+The candidate is one or two quiet sentences, in the *disclose the
+variation rather than legislate a house answer* register the site
+already uses for `differential` and `deadband`: name that both styles
+are field-normal, say which pressure produces each (machine-readability
+versus human-readability), and let the reader recognise their own shop.
+Natural home is wherever point naming is already being taught rather
+than a page of its own.
+
+**Two reasons to leave it to him.** It is his own shop style, so the
+note describes his practice and he should decide whether it is worth
+saying; and the workbench's *rendered* names cannot change either way —
+they are spaced because they are read on a drawing, which is a
+depiction constraint and not a claim about how to name a point in a
+controller. Nothing is promised in page copy; this marker is the
+tracking mechanism.
 
 ### Function-block programming — paired Education page *(shipped 2026-05-22)*
 
@@ -6031,7 +6133,29 @@ Lower-priority candidates still parked here for completeness:
   European protocols" page at tour-level depth, deeper pages
   following if demand surfaces.
 
-### Hover tooltips on graphic values *(raised 2026-07-28, not scoped — the owner flagged the creep himself)*
+### Hover tooltips — a SITE-WIDE affordance question, deferred past go-live *(raised 2026-07-28 on the AHU graphic; RECLASSIFIED and deferred by owner ruling 2026-08-03)*
+
+> **Owner ruling, 2026-08-03 (the pre-Phase-8 discussion).** Two things
+> were settled at once. **Deferred until after go-live** — it is not a
+> gate on anything, and specifically not on the DDC Workbench's
+> graduation. And **reclassified: this is an independent SITE-WIDE
+> concern, not a workbench item.** So it is explicitly NOT carried as
+> workbench work — `docs/air-side-sim.md` records the ruling and nothing
+> else, and this entry is the whole tracking mechanism. That is the right
+> shape for a question about how the site explains a value anywhere it
+> shows one.
+>
+> Read the analysis below as scoped to the whole site, not to one
+> drawing. It happens to be written from the AHU graphic because that is
+> where the idea surfaced, and the AHU is still the hardest case — the
+> most crowded screen, and the one already spending the hover gesture on
+> `:has()`-driven annotation highlighting. But the decision it frames
+> (native supplement versus owned WCAG 1.4.13 component) is the same
+> decision on a tool's property sheet, a lesson diagram's callout or a
+> quiz figure, and it should be made once for all of them rather than
+> per page. If it is ever built, the first surface it lands on sets the
+> pattern every later one copies — which is the real reason not to
+> prototype it on the busiest page in the site.
 
 Raised while the AHU depiction round added the rail's SP DIFF well: a
 value whose *meaning* takes a sentence could carry that sentence on
