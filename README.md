@@ -351,6 +351,22 @@ Calculators, converters, and lookups — open one, get an answer.
 Running models you can play with — no install, no sign-in. Most are
 paired with an Education explainer for the underlying concepts.
 
+- **DDC Workbench — Air Handler** — a single-zone AHU drawn as the
+  supervisory graphic a tech actually opens: economizer dampers, a
+  hot-water coil, and two stages of DX cooling, every point painted
+  from the live plant. The Unit tab is the front end — adjustable
+  setpoints on a clamped parameter rail, scenario presets, sensor
+  forcing, and per-point overrides through a real three-level BACnet
+  priority array; the Wiresheet tab is the function-block program
+  running it. The teach block under the graphic reads the screen the
+  way a working tech reads it — including what happens when a
+  customer puts the heating setpoint above the cooling setpoint.
+- **DDC Workbench — Fan Coil** — the same workbench on a DX fan
+  coil, a machine small enough that the whole control chain stays
+  readable end to end. Load a sample sequence (staged cooling, fan
+  interlocks, safeties) or wire your own from a blank sheet; fault
+  presets — low charge, blocked condenser, broken belt — make the
+  graphic tell on the machine while the wiresheet shows why.
 - **PID Tuning Helper** — step-response simulator with an
   equipment-led selector (a supply-fan/duct-static loop, a 2-way
   valve, a radiator, a long-run reheat coil) and a parameter-style
