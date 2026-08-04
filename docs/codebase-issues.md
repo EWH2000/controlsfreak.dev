@@ -11903,3 +11903,22 @@ the natural trigger to settle it, since that is when the duplicated
 rule stops being invisible to the live site. Either way it is worth a
 spec that measures **overlap** rather than overflow for the
 title-versus-button pair.
+
+### 273. The forced-sensor marker CSS is duplicated per page under page-prefixed classes *(noticed 2026-08-04, the Phase 8 graduation lane — deferred at graduation, wants a `.ddcw-forced-mark` rename)*
+
+The dashed accent ring that marks a forced sensor glyph is one drawn
+idea with two page-local copies: `.ahu-forced-mark`
+(`html/simulators/ddc-workbench.html`, the rects in the AHU SVG) and
+`.fcu-forced-mark` (`html/simulators/ddc-workbench-fcu.html`), each
+with its own head CSS. The graduation pass (Phase 8, 2026-08-04)
+promoted the two verbatim-duplicated head blocks (the unit selector
+and `p.ddcw-sheet-mobile-note`) into `styles.css`'s DDC WORKBENCH
+SHELL section, but deliberately left this pair: the class names are
+page-prefixed, so the shared-sheet form is not a move but a RENAME —
+`.ddcw-forced-mark` across both SVGs' rects, both head blocks, and
+`tests/ddc-workbench-fcu-sensors.spec.js:248/:257`, which pins the
+FCU's class by name. Mechanical, small, and behaviour-preserving, but
+a rename across two SVGs and a spec did not belong in the go-live
+diff. The header-clearance pair the graduation also left in place is
+NOT this item — its selectors are site-wide (`.tool-card-header` /
+`.tool-card-title`), so its dedup is #272's open design call.
