@@ -1269,17 +1269,28 @@ under *Git conventions*). Stage specific file lists, not
   `_site/` is *served* — read it as the definition and you classify the
   404 page as private. The real test is whether a visitor can land on a
   page **without already knowing its URL**: via the nav, the search
-  index, the sitemap, or the not-found handler. Exactly four built pages
-  carry no `canonical`; re-derive that set from a build rather than
-  trusting this list, because a new hidden page joins it silently.
-  - *Merge freely:* the three genuinely unreachable hidden pages' own
-    HTML — `styleguide.html`, `simulators/ddc-workbench-fcu.html`,
-    `simulators/ddc-workbench-ahu-mockup.html` (no inbound anchor
-    anywhere in `html/`, and `searchPages` filters on `canonical` too,
-    so they are absent from the palette as well as the sitemap); a
-    script ONLY hidden pages load (`ddcw-shell.js`,
-    `ddcw-fcu-unit.js`, `ddcw-ahu-unit.js`); anything under `tests/`
-    or `docs/`; plus `CLAUDE.md` and `README.md`.
+  index, the sitemap, or the not-found handler. **Derive the
+  `canonical`-less set, never cite a count for it** — a new hidden page
+  joins it silently, and this file has already carried a stale number
+  once. `npm run build`, then diff `_site/**/*.html` against
+  `_site/sitemap.xml`'s `<loc>`s; every page the diff returns is a
+  candidate, and `html/404.html` is the one it answers wrong about (see
+  *Needs approval*).
+  - *Merge freely:* the **genuinely unreachable hidden pages'** own HTML
+    — as of 2026-08-03 that is `styleguide.html` plus the three under
+    `simulators/`: `ddc-workbench.html`, `ddc-workbench-fcu.html`,
+    `ddc-workbench-ahu-mockup.html`. ⚠️ **The test is not "no inbound
+    anchor anywhere in `html/`"** — that reading was falsified when the
+    unit selector shipped (PR #470): the two live workbench pages
+    **cross-anchor each other** (`a.ddcw-unit-link`, `FCU` ⇄ `AHU`). The
+    correct test is *no inbound anchor from a page a visitor can land
+    on*, and it still holds — the only anchors into this set come from
+    inside the set, and `searchPages` filters on `canonical` too, so
+    they are absent from the palette as well as the sitemap. A script
+    ONLY hidden pages load (today `ddcw-shell.js`, `ddcw-fcu-unit.js`,
+    `ddcw-ahu-unit.js` — verify with a `grep` over `html/`, since a live
+    page picking one up is exactly the trap below); anything under
+    `tests/` or `docs/`; plus `CLAUDE.md` and `README.md`.
   - *Needs approval:* any page carrying a `canonical`, **plus
     `html/404.html`** — `wrangler.jsonc` sets
     `not_found_handling: "404-page"`, so it is served for every
