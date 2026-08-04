@@ -27,16 +27,18 @@ noindex: true
         /* 8px, not 10 (codebase-issues #211). At 10px the badge captions
            overflowed their frames: advance is fontSize x 0.68 (Plex Mono's
            0.6 em plus the 0.08 em tracking below), so `DAT · DISCHARGE` at 15
-           chars needed 102 user units in a 90-unit badge and `EAT · ENTERING`
-           95.2 in 86 — ink outside the frame on every render, since SVG text
-           does not wrap and nothing here clips. Shrinking the type rather than
-           shortening the captions or widening the badges is deliberate (owner
-           call): it keeps the abbreviation-plus-gloss shape that teaches what
-           EAT/DAT mean, leaves the composition untouched, and buys ~3 extra
-           characters per badge as headroom for more complex unit types. At 8px
-           the three captions measure 76.2 / 76.2 / 81.6 against 86 / 96 / 90
-           (re-measured 2026-07-26 with the real 700 face below — identical
-           numbers at 600 and 700, since mono advances are weight-invariant).
+           chars needed 102 user units in a 90-unit badge — ink outside the
+           frame on every render, since SVG text does not wrap and nothing
+           here clips. Shrinking the type rather than shortening the captions
+           or widening the badges is deliberate (owner call): it keeps the
+           abbreviation-plus-gloss shape that teaches what RAT/DAT mean,
+           leaves the composition untouched, and buys ~3 extra characters per
+           badge as headroom for more complex unit types. At 8px the three
+           captions measure 65.3 / 76.2 / 81.6 against 86 / 96 / 90 (the ΔT /
+           DAT figures re-measured 2026-07-26 with the real 700 face below —
+           identical at 600 and 700, since mono advances are weight-invariant;
+           the RAT figure follows the 2026-08-03 rename to `RAT · RETURN`, 12
+           chars x 5.44, the same x 0.68 advance that measurement confirmed).
            Do not raise this without re-checking those three against their
            badge widths. */
         .fcu-pt-cap {
@@ -158,6 +160,25 @@ noindex: true
            #227(b) took the tabindex and the role="button" off all three
            (see the graphic's own header comment below), and the shell
            still binds them generically. */
+
+        /* ── FORCED-SENSOR MARKER ──────────────────────────────────────────
+           A dashed accent ring around a glyph whose point is being forced —
+           the AHU page's marker, duplicated per the unit-selector precedent
+           (page-local until a workbench page gains a canonical, the same
+           graduation trigger). ACCENT for cross-page parity: the two
+           drawings share one glyph vocabulary, so the forced flag must read
+           identically on both — and amber stays the announcement register
+           the override block already owns. Hidden until the class lands, so
+           an unforced drawing carries no extra ink. renderUnit toggles
+           .is-forced per override-map entry; only space-temp has a force
+           control today, so only the wall plate can light — the rat / dat
+           rects are the same one-change-generalises seam as the map. */
+        .fcu-forced-mark { fill: none; stroke: none; }
+        .ddcw-sensor.is-forced .fcu-forced-mark {
+            stroke: var(--accent);
+            stroke-width: 1.5;
+            stroke-dasharray: 3 2;
+        }
 
         /* Supply-fan spin — a 5-blade impeller group; speed tracks fan
            fraction, still when off. Reduced motion freezes it (the per-blade
@@ -838,7 +859,7 @@ noindex: true
                      role="img" aria-labelledby="fcu-title fcu-desc"
                      font-family="var(--mono)">
                     <title id="fcu-title">A DX fan coil serving one zone, as a DDC supervisory graphic</title>
-                    <desc id="fcu-desc">A recirculating direct-expansion fan coil serving one zone, drawn as a DDC supervisory graphic. Return air leaves the zone on the right, travels along the top return duct, drops down the left side, and enters the fan coil cabinet. Inside the cabinet the air crosses a DX cooling coil and then a supply fan, which pushes it up the supply riser and back out through the supply duct into the zone. Directional chevrons march along the ducts and continue across the coil and fan to show the airflow. Floating point labels report the entering-air temperature at the coil, the discharge-air temperature after the fan, and the signed temperature difference across the coil, leaving minus entering, which reads negative while the coil cools the air. The zone box shows the zone temperature and its cooling setpoint; separate labels show the supply-fan status and speed and the compressor stage. The DX coil and the supply fan are drawn as the two sub-devices the graphic can drill into. The sensing devices are drawn where they physically live: a space-temperature wall plate mounted inside the zone on its far wall, a return-air insertion probe penetrating the underside of the top return duct partway along its run, and a discharge-air insertion probe penetrating the supply duct downstream of the fan — each activatable to flag its matching live-value chip in the statusbar.</desc>
+                    <desc id="fcu-desc">A recirculating direct-expansion fan coil serving one zone, drawn as a DDC supervisory graphic. Return air leaves the zone on the right, travels along the top return duct, drops down the left side, and enters the fan coil cabinet. Inside the cabinet the air crosses a DX cooling coil and then a supply fan, which pushes it up the supply riser and back out through the supply duct into the zone. Directional chevrons march along the ducts and continue across the coil and fan to show the airflow. Floating point labels report the return-air temperature entering the coil, the discharge-air temperature after the fan, and the signed temperature difference across the coil, leaving minus entering, which reads negative while the coil cools the air. The zone box shows the space temperature and the cooling setpoint; separate labels show the supply-fan status and speed and the compressor stage. The DX coil and the supply fan are drawn as the two sub-devices the graphic can drill into. The sensing devices are drawn where they physically live: a space-temperature wall plate mounted inside the zone on its far wall, a return-air insertion probe penetrating the underside of the top return duct partway along its run, and a discharge-air insertion probe penetrating the supply duct downstream of the fan — each activatable to flag its matching live-value chip in the statusbar.</desc>
 
                     <!-- ── Ductwork — exterior runs only ──────────────────
                          Return duct body: from the zone face, along the top,
@@ -875,15 +896,23 @@ noindex: true
                         <polygon points="520,212 528,218 520,224" fill="var(--blue)"/>
                     </g>
 
-                    <!-- ── The zone ── return-air source + zone temp / setpoint. -->
+                    <!-- ── The zone ── return-air source + the space-temp
+                         point's well and the cooling setpoint. SPACE TEMP,
+                         not ZONE TEMP (the AHU zone box's captions, both):
+                         this well paints the SENSED space-temp — the wall
+                         stat's number, lie and all — so captioning it with
+                         the truth's name would put two disagreeing claims
+                         under one word, the exact defect the AHU's RUN-not-
+                         STATUS ruling exists to prevent. The actual zone
+                         lives at #fcu-zone-val beside the override control. -->
                     <g id="fcu-zone">
                         <rect x="548" y="90" width="150" height="170" fill="var(--surface)"
                               stroke="var(--text-dim)" stroke-width="2"/>
                         <text class="fcu-zone-label" x="623" y="118" font-size="13"
                               font-weight="600" fill="var(--text-bright)">ZONE</text>
-                        <text class="fcu-pt-cap" x="623" y="150">ZONE TEMP</text>
+                        <text class="fcu-pt-cap" x="623" y="150">SPACE TEMP</text>
                         <text class="fcu-pt-val" id="fcu-zone-t" x="623" y="170">76.0 °F</text>
-                        <text class="fcu-pt-cap" x="623" y="205">SETPOINT</text>
+                        <text class="fcu-pt-cap" x="623" y="205">COOLING SP</text>
                         <text class="fcu-pt-val fcu-sp-val" id="fcu-zone-sp" x="623" y="225">72.0 °F</text>
                     </g>
 
@@ -922,19 +951,24 @@ noindex: true
                         <text class="fcu-pt-cap" id="fcu-fan-v" x="410" y="248">100% · ON</text>
                     </a>
 
-                    <!-- ── Floating point badges — EAT / ΔT / DAT ──
-                         In airflow order above the cabinet: EAT over the coil
+                    <!-- ── Floating point badges — RAT / ΔT / DAT ──
+                         In airflow order above the cabinet: RAT over the coil
                          inlet, ΔT just past the coil, DAT over the supply fan.
                          Kept clear of the fattened return duct (bottom y173),
                          the cabinet (top y250) and the supply run. The ΔT badge
                          is the headline: it collapses toward zero on a fault.
                          ΔT is SIGNED — leaving minus entering (DAT − RAT), so
                          cooling reads negative (owner ruling 2026-07-27); the
-                         static seed reconciles from the static EAT / DAT. -->
+                         static seed reconciles from the static RAT / DAT.
+                         The entering measurement is captioned RAT, the AHU's
+                         return-air vocabulary and the roster point's own name
+                         (2026-08-03): on a recirculating unit the return air
+                         IS the entering air, and the ΔT note below the mirror
+                         carries that teaching in prose. -->
                     <g id="fcu-badges">
                         <rect class="fcu-badge" x="96" y="188" width="86" height="40"/>
-                        <text class="fcu-pt-cap" x="139" y="204">EAT · ENTERING</text>
-                        <text class="fcu-pt-val" id="fcu-eat" x="139" y="222">76.0 °F</text>
+                        <text class="fcu-pt-cap" x="139" y="204">RAT · RETURN</text>
+                        <text class="fcu-pt-val" id="fcu-rat" x="139" y="222">76.0 °F</text>
 
                         <rect class="fcu-badge fcu-badge-dt" x="196" y="188" width="96" height="40"/>
                         <text class="fcu-pt-cap" x="244" y="204">ΔT ACROSS COIL</text>
@@ -992,16 +1026,22 @@ noindex: true
                              of the top return run (y 173) at x 342: upstream
                              of the coil, reading the real air the zone sends
                              back — the visible entering-air measurement
-                             behind the EAT badge and the coil ΔT. Head hangs
+                             behind the RAT badge and the coil ΔT. Head hangs
                              in the free band between the return duct and the
                              badge row (tops y 188), in the x gap between the
                              ΔT badge (ends x 292) and the DAT badge (starts
                              x 370), clear of the static flow arrow
                              (x 320-328); the stem tip reaches the airstream
-                             near the duct centerline (y 150). -->
+                             near the duct centerline (y 150).
+                             Each sensor group carries a .fcu-forced-mark rect
+                             matching its hit area — the dashed accent ring
+                             renderUnit lights while that point's override is
+                             active (space-temp is the only one a control
+                             reaches today; see the marker's CSS block). -->
                         <g class="ddcw-sensor" id="fcu-sensor-rat" data-point="rat">
                             <title>Return-air temperature sensor — insertion probe in the return duct</title>
                             <rect class="ddcw-sensor-hit" x="328" y="150" width="28" height="44"/>
+                            <rect class="fcu-forced-mark" x="328" y="150" width="28" height="44"/>
                             <line class="ddcw-sensor-stem" x1="342" y1="154" x2="342" y2="173"/>
                             <rect class="ddcw-sensor-body" x="336" y="173" width="12" height="10"/>
                         </g>
@@ -1018,6 +1058,7 @@ noindex: true
                         <g class="ddcw-sensor" id="fcu-sensor-dat" data-point="dat">
                             <title>Discharge-air temperature sensor — insertion probe in the supply duct</title>
                             <rect class="ddcw-sensor-hit" x="478" y="174" width="28" height="44"/>
+                            <rect class="fcu-forced-mark" x="478" y="174" width="28" height="44"/>
                             <line class="ddcw-sensor-stem" x1="492" y1="195" x2="492" y2="214"/>
                             <rect class="ddcw-sensor-body" x="486" y="185" width="12" height="10"/>
                         </g>
@@ -1031,6 +1072,7 @@ noindex: true
                         <g class="ddcw-sensor" id="fcu-sensor-space-temp" data-point="space-temp">
                             <title>Space temperature sensor — wall plate in the zone</title>
                             <rect class="ddcw-sensor-hit" x="666" y="156" width="34" height="44"/>
+                            <rect class="fcu-forced-mark" x="666" y="156" width="34" height="44"/>
                             <rect class="ddcw-sensor-body" x="683" y="166" width="14" height="24"/>
                             <line class="ddcw-sensor-slot" x1="686.5" y1="173" x2="693.5" y2="173"/>
                             <line class="ddcw-sensor-slot" x1="686.5" y1="178" x2="693.5" y2="178"/>
@@ -1056,8 +1098,8 @@ noindex: true
             </p>
             <div class="fcu-points">
                 <button type="button" class="fcu-point fcu-point-btn" data-point="rat" aria-pressed="false">
-                    <span class="fcu-point-cap">EAT · entering</span>
-                    <span class="fcu-point-val" id="fcu-eat-r">76.0 °F</span>
+                    <span class="fcu-point-cap">RAT · return</span>
+                    <span class="fcu-point-val" id="fcu-rat-r">76.0 °F</span>
                 </button>
                 <button type="button" class="fcu-point fcu-point-btn" data-point="dat" aria-pressed="false">
                     <span class="fcu-point-cap">DAT · discharge</span>
@@ -1068,7 +1110,7 @@ noindex: true
                     <span class="fcu-point-val accent" id="fcu-dt-r">-19.4 °F</span>
                 </div>
                 <button type="button" class="fcu-point fcu-point-btn" data-point="space-temp" aria-pressed="false">
-                    <span class="fcu-point-cap">Zone / setpoint</span>
+                    <span class="fcu-point-cap">Space / setpoint</span>
                     <span class="fcu-point-val" id="fcu-zone-r">76.0 / 72.0 °F</span>
                 </button>
                 <div class="fcu-point">
@@ -1223,8 +1265,12 @@ noindex: true
                 </div>
 
                 <!-- Sensor override — the real-vs-sensed teaching moment. The
-                     box shows what the PROGRAM reads; the readout shows the
-                     ACTUAL integrated zone. Forcing them apart is the lesson. -->
+                     box shows what the PROGRAM reads — and so does the DRAWING:
+                     a forced sensor lies to the graphic's wells exactly as it
+                     lies to the program (the AHU render convention, harmonised
+                     2026-08-03). The `zone` readout here is the ONE place the
+                     actual integrated zone appears. Forcing them apart is the
+                     lesson. -->
                 <div class="fcu-override" id="fcu-override">
                     <div class="slider-head">
                         <label class="field-label" for="fcu-ovr-input">Space-temp sensor (what the program reads)</label>
@@ -1332,13 +1378,13 @@ noindex: true
             <p class="fcu-note">
                 The ΔT badge is signed: leaving minus entering, so a coil
                 that cools the air reads negative, and a coil that heats it
-                reads positive under the same convention. This cabinet takes
-                its coil air straight off the return, so entering is RAT and
-                the badge is DAT − RAT; where a coil takes in mixed air,
-                entering is the mixed-air temperature and the rule is
-                unchanged. The sign is information, not clutter — it tells
-                you which way the coil is driving the air, before you ask
-                how hard.
+                reads positive under the same convention. This cabinet
+                recirculates, so the return air is the entering air — the
+                drawing labels that measurement RAT and the badge is
+                DAT − RAT; where a coil takes in mixed air, entering is the
+                mixed-air temperature and the rule is unchanged. The sign is
+                information, not clutter — it tells you which way the coil
+                is driving the air, before you ask how hard.
             </p>
 
             </div><!-- #tab-unit -->
