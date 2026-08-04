@@ -1619,3 +1619,194 @@ test.describe('AHU workbench page: rail ink clears the AA floor in both themes',
         });
     }
 });
+
+test.describe('AHU workbench page: the phone surface (the Unit tab is the mobile version)', () => {
+    // Owner ruling 2026-08-03: "the Unit tab IS the limited mobile
+    // version" — a phone visitor gets a real interactive surface, not a
+    // desktop-gate. These rows are the hand-written stand-in for the
+    // responsive sweep this canonical-less page can never join: no
+    // sideways scroll, the mirror register filled back in, the rail
+    // operable and floored at 44px in BOTH dimensions (the shared
+    // TOUCH-TARGET FLOOR is height-only — codebase-issues #262), the
+    // wiresheet's one-line truth at tap-in, and one HTML twin per SVG
+    // drill-down (the touch-target equivalence that stands in for a
+    // floor SVG geometry cannot take).
+    test.use({ isMobile: true, hasTouch: true, viewport: { width: 375, height: 667 } });
+
+    test('no sideways scroll and no clipped content at 375', async ({ page }) => {
+        await open(page);
+        // The responsive.spec.js criterion applied by hand. One page-local
+        // entry joins the sweep's intentional list: .ddcw-offprog.is-empty
+        // is the sr-only collapse recipe under another name (a live region
+        // that must stay rendered while empty), so its 1px box "clips" by
+        // design exactly as .sr-only does.
+        const offenders = await page.evaluate(() => {
+            const out = [];
+            const doc = document.documentElement;
+            if (doc.scrollWidth > window.innerWidth + 1) {
+                out.push(`document scrolls sideways (${doc.scrollWidth} > ${window.innerWidth})`);
+            }
+            for (const el of document.querySelectorAll('body *')) {
+                if (el.clientWidth === 0 || el.scrollWidth <= el.clientWidth + 2) continue;
+                if (el.matches('input, textarea, select, .sr-only, .ddcw-offprog.is-empty')) continue;
+                const ox = getComputedStyle(el).overflowX;
+                if (ox !== 'hidden' && ox !== 'clip') continue;
+                let name = el.tagName.toLowerCase();
+                if (el.id) name += '#' + el.id;
+                else if (el.classList.length) name += '.' + [...el.classList].slice(0, 3).join('.');
+                out.push(`${name} clips ${el.scrollWidth}px into ${el.clientWidth}px`);
+            }
+            return out;
+        });
+        expect(offenders, 'the Unit tab fits a 375px phone').toEqual([]);
+    });
+
+    test('the mirror register is filled back in — the phone reading surface', async ({ page }) => {
+        // Below the 900 cutoff the diet is off: all sixteen cells take
+        // space, because at this width the drawing's own text renders
+        // near 3px and the mirror IS the reading copy.
+        await open(page);
+        const boxed = await page.locator('.ahu-point').evaluateAll((els) =>
+            els.filter((e) => {
+                const r = e.getBoundingClientRect();
+                return r.width > 2 && r.height > 2;
+            }).length);
+        expect(boxed, 'all sixteen mirror cells occupy the grid at 375').toBe(16);
+    });
+
+    test('the rail inputs clear the 44px floor in both dimensions, and a touch commit lands', async ({ page }) => {
+        await open(page);
+        const inputs = page.locator('.ahu-param-input');
+        await expect(inputs).toHaveCount(5);
+        for (let i = 0; i < 5; i++) {
+            const box = await inputs.nth(i).boundingBox();
+            expect(box.height, `rail input ${i} height`).toBeGreaterThanOrEqual(44);
+            expect(box.width, `rail input ${i} width`).toBeGreaterThanOrEqual(44);
+        }
+        // Operable under touch emulation: tap, type, Enter — the commit
+        // reaches the statusbar chip (the phone's always-visible surface).
+        await page.tap('#ahu-p-cool-sp');
+        await page.fill('#ahu-p-cool-sp', '75');
+        await page.keyboard.press('Enter');
+        await expect(page.locator('.ddcw-chip', { hasText: 'Cool SP' })
+            .locator('.ddcw-chip-val')).toHaveText(/75/);
+    });
+
+    test('the clamp hint sits within a phone-keyboard\'s reach of every rail field', async ({ page }) => {
+        // The fix this row pins: at single-column widths the hint is
+        // grid-ordered BETWEEN the two input-bearing groups. Before it,
+        // the Cooling SP field measured 319px above the hint — past the
+        // visible band once the on-screen keyboard takes the lower half
+        // of a 667px viewport. Ordered, the measured extremes are 169px
+        // (zone fields, hint below) and −174px (economizer fields, hint
+        // above — the keyboard-safe side); 250 is a loose ceiling on
+        // both, because the claim is reach, not a pixel.
+        await open(page);
+        const dists = await page.evaluate(() => {
+            const hint = document.getElementById('ahu-params-hint');
+            const h = hint.getBoundingClientRect();
+            return [...document.querySelectorAll('.ahu-param-input')].map((inp) => ({
+                id: inp.id,
+                dist: h.top - inp.getBoundingClientRect().bottom,
+            }));
+        });
+        for (const d of dists) {
+            expect(Math.abs(d.dist), `${d.id} to the hint`).toBeLessThanOrEqual(250);
+        }
+        // The mechanism, not just the outcome: the hint renders before the
+        // economizer group, so its announcement is never below BOTH groups.
+        const order = await page.evaluate(() => {
+            const hint = document.getElementById('ahu-params-hint').getBoundingClientRect();
+            const groups = document.querySelectorAll('.ahu-params > .ahu-param-group');
+            return { hintTop: hint.top, econTop: groups[groups.length - 1].getBoundingClientRect().top };
+        });
+        expect(order.hintTop, 'the hint is ordered above the economizer group').toBeLessThan(order.econTop);
+    });
+
+    test('the unit-selector links and the stage buttons clear the floor in both dimensions', async ({ page }) => {
+        // The unit links measured 41–42px wide natively — the exact case
+        // codebase-issues #262 names — and the stage group's "Off" 43px.
+        // Both floors are page-local; no sweep reaches this page.
+        await open(page);
+        for (const sel of ['a.ddcw-unit-link', '#ahu-stage-0', '#ahu-stage-1', '#ahu-stage-2']) {
+            const els = page.locator(sel);
+            const n = await els.count();
+            for (let i = 0; i < n; i++) {
+                const box = await els.nth(i).boundingBox();
+                expect(box.height, `${sel}[${i}] height`).toBeGreaterThanOrEqual(44);
+                expect(box.width, `${sel}[${i}] width`).toBeGreaterThanOrEqual(44);
+            }
+        }
+    });
+
+    test('the fullscreen button does not paint over the title tag', async ({ page }) => {
+        // Measured before the fix: 18px of the AIR HANDLER tag under the
+        // absolutely-positioned button at 375. The page-local clearance
+        // rule pads the header and lets the title row wrap.
+        await open(page);
+        const boxes = await page.evaluate(() => {
+            const t = document.querySelector('.tool-tag').getBoundingClientRect();
+            const b = document.querySelector('.tool-card-fullscreen-btn').getBoundingClientRect();
+            return { t: { l: t.left, r: t.right, t: t.top, b: t.bottom },
+                     b: { l: b.left, r: b.right, t: b.top, b: b.bottom } };
+        });
+        const overlapX = Math.min(boxes.t.r, boxes.b.r) - Math.max(boxes.t.l, boxes.b.l);
+        const overlapY = Math.min(boxes.t.b, boxes.b.b) - Math.max(boxes.t.t, boxes.b.t);
+        expect(overlapX > 0 && overlapY > 0, 'tag and fullscreen button share paint').toBe(false);
+    });
+
+    test('the wiresheet opens on its one-line truth, with the workspace honestly absent', async ({ page }) => {
+        await open(page);
+        await page.tap('button[data-tab="wiresheet"]');
+        const note = page.locator('p.ddcw-sheet-mobile-note');
+        await expect(note, 'the phone truth renders where the workspace is gated out').toBeVisible();
+        // First element in the pane: the truth lands at tap-in, not at the
+        // bottom of nine sheet-notes (where .desktop-only-sim keeps the
+        // fuller version, in the workspace's own slot).
+        const first = await page.evaluate(() =>
+            document.getElementById('tab-wiresheet').querySelector('p') ===
+            document.querySelector('p.ddcw-sheet-mobile-note'));
+        expect(first, 'the note is the pane\'s first element').toBe(true);
+        // Register check, not a full-string pin: what it is + where the
+        // editing lives, with no coming-soon promise.
+        await expect(note).toContainText('read-through');
+        await expect(note).toContainText('Unit tab');
+        await expect(page.locator('.fbe-live')).toBeHidden();
+        await expect(page.locator('.desktop-only-sim')).toBeVisible();
+    });
+
+    test('every SVG drill-down keeps an HTML twin outside the drawing', async ({ page }) => {
+        // The touch-target equivalence (WCAG 2.5.5/2.5.8): the SVG <a>
+        // glyphs scale with the drawing (~18×28 CSS px at 375) and SVG
+        // geometry cannot take a min-width, so the pass rides the
+        // equivalent-control clause through the teach block's anchors.
+        // Removing one reddens this row.
+        await open(page);
+        const drills = await page.evaluate(() => {
+            const svgHrefs = [...document.querySelectorAll('.ahu-svg a[href]')]
+                .map((a) => a.getAttribute('href'));
+            return svgHrefs.map((href) => ({
+                href,
+                twin: [...document.querySelectorAll(`main a[href="${href}"]`)]
+                    .some((a) => !a.closest('.ahu-svg')),
+            }));
+        });
+        expect(drills.length, 'the drawing still carries its three drill-downs').toBe(3);
+        for (const d of drills) {
+            expect(d.twin, `${d.href} needs an HTML twin outside the SVG`).toBe(true);
+        }
+    });
+});
+
+test.describe('AHU workbench page: the phone truth stays out of the desktop pane', () => {
+    test('at a pointer desktop width the note is gone and the workspace is live', async ({ page }) => {
+        // The note and the workspace are gated by the same media OR, so
+        // they can never show together — this is the desktop half of that
+        // claim (the config's default context is 1280 wide, hover-capable).
+        await open(page);
+        await page.click('button[data-tab="wiresheet"]');
+        await expect(page.locator('p.ddcw-sheet-mobile-note')).toBeHidden();
+        await expect(page.locator('.fbe-live')).toBeVisible();
+        await expect(page.locator('.desktop-only-sim')).toBeHidden();
+    });
+});
