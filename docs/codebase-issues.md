@@ -9415,6 +9415,43 @@ whenever it can change.
 > `tests/ddc-workbench-ahu-page.spec.js` pins zero rewrites while held.
 > **The FCU element is still unguarded**; the fix there is the same three lines.
 
+> **RE-MEASURED 2026-08-03 (the pre-Phase-8 lanes), and "the same three
+> lines" is NOT ENOUGH on the FCU.** The FCU element still takes an
+> unconditional `textContent` write every tick
+> (`html/scripts/ddcw-fcu-unit.js:948-956`) — measured on both `main`
+> and the lane branch at **50 mutations per 5 s** while forcing, i.e.
+> unchanged and confirmed pre-existing. Reproduced independently for this
+> entry at `main` @ `6fe27ec` (`MutationObserver`, override held, 5 s
+> window): **50 mutations carrying 4 DISTINCT strings** — the two halves
+> of the defect in one number, ten writes a second of which roughly one a
+> second is a genuinely new sentence. What the re-measurement adds is
+> the reason a plain change-guard leaves work to do here and did not on
+> the AHU:
+>
+> - **The AHU's guarded string is effectively static while an override
+>   is held.** `setOvrState` (`ddcw-ahu-unit.js:1218-1222`) is fed a line
+>   built from `plant.override[id].value` (`:1590`) — the number the
+>   operator TYPED. It does not move, so the signature holds and the
+>   region genuinely goes quiet.
+> - **The FCU's string interpolates MOVING truth.** Its line reads
+>   *"Program reads &lt;sensed&gt; … zone is actually &lt;zoneN&gt;"*, and
+>   `zoneN` is the live integrated zone temperature, so the rendered
+>   string changes roughly **once a second** at one decimal. A change
+>   guard therefore cuts 10 Hz to ~1 Hz — better, but a screen reader
+>   re-announcing a whole sentence every second while the reader is
+>   trying to study the drift is still the defect.
+>
+> **Fix shape, updated: change-guard PLUS a settle debounce** — hold the
+> announcement until the value has been stable for a beat (the rail's
+> `railHint` already owns a timer idiom worth copying,
+> `ddcw-ahu-unit.js:1954-1970`), so the region announces the *situation*
+> rather than narrating the interpolation. Note the AHU is not exempt
+> from the debounce question in principle — it is exempt in practice
+> only because its operand is static, which is a property of the CURRENT
+> string and not a guarantee. A future AHU line that interpolates truth
+> needs the same treatment, and the unit-suffix caveat above still
+> applies to both.
+
 ### 230. Light theme darkens `--amber` and `--heat` out of the register component identity depends on *(noticed 2026-07-28, AHU round-2 depiction review — **RESOLVED 2026-07-28**, owner ruled for separate fill tokens)*
 
 > **RESOLUTION (2026-07-28).** Owner ruled for the candidate fix below:
@@ -10702,6 +10739,32 @@ semantics change on a shared `.copy-btn` idiom wants its own look at whether
 other pages copied the pattern (grep `data-preset` — `refrigerant-loop.html`
 uses `.rl-presets`, worth checking in the same pass).
 
+> **Two more observations on the AHU half (2026-08-03, the pre-Phase-8
+> lanes — still not fixed).** Both sharpen the entry rather than
+> changing its disposition.
+>
+> - **The attribute is never set true, and the code path is easy to
+>   confirm.** All six AHU scenario buttons render `aria-pressed="false"`
+>   (`html/simulators/ddc-workbench.html:2526-2531`), and the click
+>   handler that `presetBtns` is bound to
+>   (`html/scripts/ddcw-ahu-unit.js:1755-1783`) seeds the plant, releases
+>   the overrides, writes slot 8 and requests a render — it never touches
+>   `aria-pressed`. The only `classList.toggle('active', …)` calls in
+>   that file are the STAGE buttons (`:1663`) and the override toggle
+>   (`:1676`), i.e. the two genuine state controls.
+> - **There is a DEAD selector waiting on the state nobody maintains.**
+>   `.ahu-presets .copy-btn.ahu-preset-fault.active { border-color:
+>   var(--red); color: var(--red-text); }`
+>   (`html/simulators/ddc-workbench.html:945`) styles a red border for an
+>   "active fault preset" — and since nothing ever adds `.active` to a
+>   preset button, that rule **can never paint**. It is evidence the
+>   original intent WAS a held state (which would have made
+>   `aria-pressed` right), abandoned halfway. So the fix has a third
+>   option beside "drop the attribute" and "start maintaining it":
+>   decide whether a fault preset is meant to latch visibly, and then
+>   either build that state on both pages or delete the selector with
+>   the attribute.
+
 ### 246. The FCU's `blocked-coil` fault names an air-side failure but the model gives it full airflow *(noticed 2026-07-30, FCU proof-sweep review — **RESOLVED 2026-07-30**, owner ruled for disposition 1)*
 
 The FCU proof sweep renamed the second capacity fault from `airflow` to
@@ -11476,3 +11539,367 @@ controls are full-width or width-constrained by layout; audit widths
 per selector before extending the convention. AAA-adjacent nicety, not
 an AA failure: 2.5.5 is Level AAA, and the site's stated floor
 (44px + Apple HIG) has always been height-based.
+
+> **PARTIALLY CLOSED PAGE-LOCALLY 2026-08-03 (PR #476).** The two
+> workbench pages now floor both dimensions on the controls this entry
+> measured: `a.ddcw-unit-link` takes `min-height: 44px; min-width: 44px`
+> inside its `@media (hover: none)` block on both pages
+> (`html/simulators/ddc-workbench.html:1132`,
+> `html/simulators/ddc-workbench-fcu.html:628`), and the stage group's
+> 43px-wide "Off" button gained a page-local width floor in the same pass
+> (`.ahu-controls .copy-btn` / `.fcu-controls .copy-btn`,
+> `ddc-workbench.html:971`, `ddc-workbench-fcu.html:462`). Both rules
+> carry a comment naming this entry, which is what keeps them from
+> reading as arbitrary. **The site-wide half is untouched and the
+> per-selector width audit this entry asks for has NOT been done** — the
+> `TOUCH-TARGET FLOOR` block in `styles.css` is still height-only, so
+> the entry stays open for the site chrome. Note the new page-local
+> rules are also the pattern to copy at graduation rather than the
+> licence to extend the shared block blindly.
+
+### 263. The ~120-line param-rail wiring block is duplicated between the two unit scripts *(noticed 2026-08-03, PR #472's lane report — duplicated BY MANDATE, logged for the graduation trigger)*
+
+`html/scripts/ddcw-ahu-unit.js:1915-2044` and
+`html/scripts/ddcw-fcu-unit.js:1243-1372` carry the same rail
+wiring block — `paramToDisplay` / `paramToCanonical` / `paramSuffix` /
+`railRangeAttrs` / `railHint` / `railRangeText` and the per-param
+`commit` / `revert` closures with their Enter / change / Escape
+bindings — differing only in how many params they walk (four on the
+AHU, two on the FCU) and in the `out.*` keys they reach through. 130
+lines each by line count.
+
+**This was the deliberate choice, not an accident**, and the FCU copy
+says so at `ddcw-fcu-unit.js:1239-1242`: *"Same block as the AHU page's
+rail, sized to this unit's two params — duplicated per the
+unit-selector precedent rather than grown into the unit-agnostic
+shell."* The precedent is real — `ddcw-shell.js` is the
+**unit-agnostic** layer, and a rail helper that knows about display
+conversions and roster ranges is unit-shaped work that would have to be
+parameterised into the shell to live there.
+
+**What makes it a ledger item rather than a closed decision: a THIRD
+unit is the graduation trigger.** Two copies can be kept in step by a
+person who remembers both exist; three cannot, and every fix to this
+block so far has had to land twice (the metric-clamp erosion no-op and
+the Escape-while-dirty claim both did). The shape of the extraction, if
+it happens: the display/canonical/suffix trio and `railHint` are
+genuinely unit-independent and could move to `ddcw-shell.js` as a
+`DDCWShell.createParamRail(host, roster, fields)` factory, with the
+per-page `out.*` map staying in the unit. Do not do it for two.
+
+### 264. `pointLabel(id)` and `rosterPoint(id)` are the same linear scan of `AHU_POINTS` *(noticed 2026-08-03, PR #472's lane report — collapse candidate)*
+
+`html/scripts/ddcw-ahu-unit.js` declares two roster lookups that walk
+the same array with the same loop:
+
+- `rosterPoint(id)` at **`:1162`** returns the whole point object.
+- `pointLabel(id)` at **`:1613`** returns `AHU_POINTS[i].name`, falling
+  back to the raw `id`.
+
+`pointLabel` is exactly `(rosterPoint(id) || {}).name || id`. Both
+comments are good — each explains why it reads out of the roster rather
+than hard-coding a string — which is part of the problem: two
+well-documented helpers 450 lines apart look like two different jobs.
+
+Low stakes and no bug: the arrays are 17 entries and neither runs in a
+hot path (`pointLabel` is called from the override-state builder,
+`rosterPoint` at wire-up and on unit toggles). The reason to collapse
+them is that a **third** roster reader is the likely next step and it
+will be written next to whichever one the author happens to find first.
+The FCU script has `rosterPoint` (`ddcw-fcu-unit.js:708`) and no
+`pointLabel`, so the collapse is AHU-local and does not cross the
+duplication in #263.
+
+### 265. The rail's unit-suffix spans repaint an identical string at 10 Hz *(noticed 2026-08-03, PR #472's lane report — perf candidate, not a correctness bug)*
+
+Every host tick, `renderUnit` unconditionally rewrites the
+`aria-hidden` `u*` suffix spans beside the rail's number inputs:
+
+- `html/scripts/ddcw-ahu-unit.js:1390-1393` — `out.uCoolSp`,
+  `out.uHeatSp`, `out.uEconLock` take `tSuffix()`; `out.uDeadband`
+  takes `dSuffix()`. Ids `ahu-p-cool-sp-u` / `ahu-p-heat-sp-u` /
+  `ahu-p-deadband-u` / `ahu-p-econ-lockout-u` (`:992-995`).
+- `html/scripts/ddcw-fcu-unit.js:818-819` — the same pattern on
+  `fcu-p-cool-sp-u` / `fcu-p-deadband-u` (`:671-672`).
+- `ddcw-ahu-unit.js:1576` and `ddcw-fcu-unit.js:947` write the override
+  box's own unit span the same way.
+
+The string only ever changes when the visitor toggles units, so this is
+**ten writes a second of a value that changes once a session** — six
+suffix sites plus two override sites. It is not the #229 family: these
+nodes are `aria-hidden`, so nothing is announced, and a `textContent`
+write of an identical string produces no mutation record for a
+`MutationObserver` — the cost is the property write and whatever style
+work Chromium does around it, not a repaint the profiler would
+necessarily see.
+
+**Why log it rather than fix it:** the correct fix is the same
+signature-guard idiom `setVerdict` and `setOvrState` already use, and
+this page family now has three variants of that idiom written out
+longhand. The right move is one sweep that either guards these sites or
+lifts a tiny `setText(el, s)` helper into `ddcw-shell.js` — worth doing
+**if `npm run perf-profile` flags these pages**, and not worth a lane
+of its own before then. Measure first: the gutter animation costs ~40 %
+of a core on every page (the site-wide finding), so a suffix write is
+unlikely to be the signal.
+
+### 266. The mirror's button hit-area bleed overhangs its grid, and in the fullscreen cockpit that is a 5px horizontal scrollbar *(noticed 2026-08-03, PRs #473/#476 lane reports — pre-existing on the AHU, measured here, DESIGN CALL)*
+
+`.ahu-point-btn` / `.fcu-point-btn` widen their hit area with
+`padding: 0.15rem 0.3rem; margin: -0.15rem -0.3rem`
+(`html/simulators/ddc-workbench.html:859`,
+`html/simulators/ddc-workbench-fcu.html:247`). The negative margin is
+what keeps the enlarged target from moving the text, and it works —
+but when a **button** holds the last track of the `auto-fit` mirror
+grid, its `-0.3rem` right bleed pokes past the grid's content box.
+`.ahu-points` / `.fcu-points` then report `scrollWidth` 5px over
+`clientWidth` (0.3rem = 4.8px, integer-rounded), and so does the
+enclosing `#tab-unit`.
+
+**In normal flow that overflow is invisible** — the pane is not a
+scroller and the document does not widen. **In the fullscreen cockpit
+it is a real horizontal scrollbar**, because `.tab-pane.active` becomes
+`overflow: auto` there.
+
+Measured on the built site at `main` @ `6fe27ec`, headless Chromium,
+1px viewport steps (`documentElement` never widens in any case):
+
+| page | fullscreen? | widths where the pane overflows 5px |
+|---|---|---|
+| AHU | normal | 360–681, **828 and up** (checked to 1500) |
+| AHU | fullscreen | 360–607, **754 and up** (checked to 1500) |
+| FCU | normal | 360–473, 610–620, 642–777 |
+| FCU | fullscreen | 360–431, 568–703 |
+
+So the **AHU cockpit shows the scrollbar at every desktop width**,
+which is the pre-existing case, and the **FCU is clean above its diet
+cutoff** — that half was *introduced* by the mirror diet (which made
+every desktop cell a button, so a button always held the last track)
+and **fixed in the same PR (#473)** by `.fcu-points { padding-right:
+0.3rem; }` inside the `@media (min-width: 900px)` diet block
+(`ddc-workbench-fcu.html:319`); the comment above it states the
+mechanism and explicitly leaves this entry to be logged. The FCU's
+remaining bands are all **below** the diet cutoff, where the mix of
+plain and button cells is exactly `main`'s and a button lands in the
+last track at some widths. ⚠️ Note the lane characterised those as
+"odd-width cases"; the sweep above shows them as contiguous width
+**bands**, not a parity effect — cite the bands.
+
+**The decision is which fix, and it is not obvious.** `padding-right`
+on the grid absorbs the bleed but shrinks every track by ~1.6px and has
+to be scoped by regime (the FCU fix is scoped to its diet block for
+exactly that reason). `overflow-x: clip` on the pane would hide the
+bleed zone, which is invisible until hover or focus paints it — but
+clipping a focus ring is its own problem. Dropping the negative margin
+loses the enlarged touch target the `(hover: none)` floor depends on.
+Do it once, on both pages, with the AHU as the reference (the standing
+tiebreak).
+
+### 267. The AHU page's RENDER SCALE comment states a width the graphic never renders at, and reads its own breakpoint backwards *(noticed 2026-08-03, PR #473's lane report — pre-existing, measured, comment-only defect)*
+
+`html/simulators/ddc-workbench.html:83-96` carries a ⚠ block that is
+the page's authority on how big the drawing renders and therefore on
+whether its type is legible. Two of its claims are wrong, and it is
+labelled `MEASURED ON THE BUILT MOCKUP, NOT DERIVED` — so it is exactly
+the kind of comment a later author trusts instead of re-measuring.
+
+Measured on the built page at `main` @ `6fe27ec` (headless Chromium,
+`.ahu-graphic` bounding box):
+
+| viewport | layout | graphic width |
+|---|---|---|
+| 1180 and up | two-column | **748px** at every width checked to 1920 |
+| 900–1179 | stacked | 780px (the max-width binds) |
+| 800 | stacked | 684px |
+| 375 | stacked | 291px |
+
+1. **"the 840-unit viewBox renders at its 780px max-width, so 0.9286
+   CSS px per unit."** Not in the two-column state, which is the
+   desktop state: 748/840 = **0.8905**, so the 8px row label lands at
+   **7.12** (not 7.43), the 9px callout title at **8.01** (not 8.36),
+   the 11px well value at **9.80** (not 10.21). The governor there is
+   not the 780px max-width at all — it is the grid column, which the
+   card's own content box caps near 750px once the 240px rail and the
+   1rem gap come off.
+   ⚠️ **The original measurement was not wrong; the TRANSFER was.** The
+   mockup page really does render 780 at every width — measured
+   `.ahu-graphic` on all four of its drawings at 900 through 1920, all
+   780 — because there the graphic does sit straight inside a
+   `.tool-body`. The false clause is *"and this page reproduces the same
+   chain"*: on the live page the graphic sits inside `.ahu-screen`,
+   inside the `minmax(0, 1fr)` column of `.ahu-console` (`:104-113`),
+   which is a different chain with a rail in it. This is the general
+   trap worth naming — a measurement carried from the mockup has to be
+   re-taken on the page that inherited it, exactly as the #242 setpoint
+   ruling already found for prose.
+2. **"THE BREAKPOINT IS 1179px, AND NOTE WHICH SIDE IT PROTECTS … It
+   is NOT protecting the stacked state — below it the drawing is the
+   same 780 wide … It protects the TWO-COLUMN state."** Backwards. The
+   drawing reaches 780 **only** below the breakpoint, in the stacked
+   state; the two-column state is the squeezed one, at every width.
+   What the breakpoint actually does is *abandon* two-column before the
+   squeeze gets worse.
+
+**Nothing renders differently because of this** — the layout is as
+designed and the owner has approved it on the preview. The damage is
+that the numbers a future legibility argument would be built on are
+wrong in the optimistic direction, and the comment forbids the two
+changes ("do not widen the rail", "do not lower this breakpoint") on a
+rationale that does not hold. Fix is a re-measured comment; the
+per-unit scale should be stated **per layout state**, and the phone
+figure is worth adding while there (291/840 = 0.346, so an 8px label is
+~2.8px — the legibility question the owner has open at the final
+review). Because this is `html/simulators/ddc-workbench.html`, a
+comment-only change here is merge-freely today and stops being so at
+graduation.
+
+### 268. `#ahu-desc` is 5,609 characters in a single text node *(noticed 2026-08-03, PR #473's lane report — structure candidate; the CONTENT is owner-ruled and stays)*
+
+`html/simulators/ddc-workbench.html:1464` holds the AHU drawing's
+`<desc>`: **5,609 characters / 986 words**, one text node, no internal
+structure. The FCU's equivalent (`ddc-workbench-fcu.html:936`) is
+**1,729 characters** — a 3.2× ratio for a machine with roughly twice
+the stations.
+
+**The length is a RULING, not a defect.** The owner settled the
+describe-the-topology-fully question on trade grounds — *someone
+visually impaired who is function-block programming is best served by
+hearing the longer description and mapping it out in their head* — and
+this drawing genuinely has nine callouts, three dampers, two coils, a
+distributor, an averaging element and three probes to name. Do not
+shorten it to hit a number.
+
+**What is worth deciding is the SHAPE.** A single unbroken node gives a
+screen-reader user no way to skim, re-enter, or skip a section: it is
+read as one utterance, and the only navigation is start over. Options,
+none free: split the drawing into nested `<g role="img">` groups each
+with its own short `<desc>` (real structure, but multiplies the
+accessible-name surface and interacts with the `role="img"` pruning
+argument in #227b/#252); or move the long description into reflowing
+HTML below the graphic and point at it, which is the direction the
+point mirror already went for values. ⚠️ Two counts here have been
+wrong in briefs — one said ~4,600 — so **re-derive from the built page**
+(`grep`-count the `<desc>` in `_site/`) rather than citing this figure
+after any edit.
+
+### 269. The FCU point mirror carries none of the AHU's screen-reader provenance glosses *(noticed 2026-08-03, PR #474's lane report — harmonization candidate)*
+
+The AHU mirror tags every caption with the point's KIND in an `sr-only`
+span — `(measured)`, `(commanded)`, `(calculated)` — 17 of them at
+`html/simulators/ddc-workbench.html:2440-2503`. That is the accessible
+half of the register-colour convention: a sighted reader gets green for
+commanded, blue for calculated and default ink for measured, and the
+glosses are how a screen-reader user gets the same distinction, which
+the depiction ruling made the general rule for this page family
+(*"provenance is about what KIND of point it is"*).
+
+`html/simulators/ddc-workbench-fcu.html`'s mirror has **zero** of them
+(`grep sr-only` returns the diet comment and the verdict mirror only).
+So on the FCU the colour is the only channel carrying provenance — the
+exact single-channel dependency #230/#231 were about, one register down.
+
+Straightforward under the standing "base everything off the AHU"
+tiebreak, and it is small: the FCU mirror is a short list and each cell
+needs one span. Left for a lane rather than done inline because #474
+was already re-drawing that page and the review round is the wrong
+place to grow scope. Worth pairing with #268's decision if that one
+touches the accessible naming surface.
+
+### 270. FCU collision-detector baseline: three em-box grazes against the cabinet outline are visually clean *(noticed 2026-08-03, PR #474's lane report — RECORDED AS BASELINE, no action)*
+
+The browser-side text-bbox-versus-stroke detector reports three
+overlaps on the FCU graphic that are **false positives**, and they are
+recorded here so a future sweep reads them as the baseline instead of
+as a regression it introduced.
+
+All three are the same mechanism: the detector measures an **em box**,
+which is taller than the ink, against a 2px-wide stroke.
+
+- `DX COIL` (`html/simulators/ddc-workbench-fcu.html:1032`, baseline
+  y=356, 11px) and `SUPPLY FAN` (`:1049`, baseline y=356, 11px) versus
+  the cabinet FLOOR at y=345 — the outline is one path
+  (`:1019`, `stroke-width="2"`, so the stroke occupies 344–346). Both
+  captions sit below the floor by design; their em-box tops land ~1–2
+  units clear of the stroke, inside the detector's tolerance.
+- `#fcu-fan-v` (`:1050`, baseline y=248, `.fcu-pt-cap` at 8px) versus
+  the cabinet TOP WALL at y=250 (stroke 249–251) — the caption's
+  descender REGION reaches the stroke; no descending glyph in the
+  rendered string does.
+
+**Do not "fix" these by moving the labels** — the positions are the
+approved depiction, and the memory note on this technique already says
+the detector and a vision review each catch what the other misses.
+What to do instead when a sweep reports them: confirm the count is
+still three and the elements are still these, and move on. A **fourth**
+graze, or one of these growing past the stroke, is the signal.
+
+### 271. The illustrative block-head examples in shared code and the README name heads no sheet renders any more *(noticed 2026-08-03, PR #475's rename lane — cosmetic, and it must ride a version bump)*
+
+The name pass replaced the `Y1 …` derived-stage family with `Stg 1 …` /
+`Stg 2 …` across the sheets that carry it. Five comments and one README
+sentence still teach the `TAG · Name` idiom using the retired names:
+
+- `html/styles.css:4368` — *"`TAG · Name` ("SR · Y1 Latch")"*
+- `html/scripts/fbe-engine.js:37` — *"('Y1 Latch', 'Cool SP', 'OAT')"*
+- `html/scripts/fbe-engine.js:127` — *"('Y1 Latch', 'Trip Latch')"*
+- `html/scripts/fbe-editor.js:232` — *"('AI · OAT', 'SR · Y1 Latch')"*
+- `README.md:378` — *"its head reads `TAG · Name` — `A>B · Y1 Set`"*
+
+Verified against the tree: `Y1 Latch` and `Y1 Set` now appear nowhere
+except these five sites and `docs/name-inventory.md`, which is the
+naming RECORD and correctly keeps the historical rows.
+
+**Why it is not already fixed.** Three of those five files —
+`styles.css`, `fbe-engine.js`, `fbe-editor.js` — are live-page surfaces
+and cache-busted by the `?v=` query the templates append, so touching
+them is a *needs-approval* change whose bytes only reach returning
+visitors after a `package.json` version bump. The rename PR carried no
+bump (every page it changed is hidden), so a comment-only edit there
+would have shipped a stale-cache asset for no reader benefit.
+**Fold these into the next PR that bumps the version for its own
+reasons** — Phase 8's graduation bump is the obvious candidate. The
+README line is merge-freely and could go earlier, but shipping one of
+six is how a sweep gets forgotten.
+
+### 272. The shared fullscreen button is absolutely positioned over the card title, and the responsive sweep is structurally blind to it *(noticed 2026-08-03, PR #476's mobile lane — the two workbench pages each fixed it PAGE-LOCALLY)*
+
+`.tool-card-fullscreen-btn` is `position: absolute; top: 0.55rem;
+right: 0.55rem; z-index: 2` in `html/styles.css:1869-1889`, anchored on
+the `.tool-card` (`:1177`). Nothing in the shared stylesheet reserves
+its footprint, so where the card's title row is long enough to reach
+the corner the button **paints over the title text**. Measured on the
+AHU workbench before the fix: **18px of the AIR HANDLER tag covered at
+a 375px viewport**, gone by ≈400px.
+
+**Why no live page shows it today, and why that is luck rather than
+design.** All four live consumers wear the `.fs-desktop-only` modifier,
+which hides the button below 1000px (`styles.css:1898-1900`):
+`html/tools/psychrometric-chart.html:196`,
+`html/simulators/refrigerant-loop.html:457`,
+`html/simulators/hydronic-loop-builder.html:279`,
+`html/simulators/function-block-editor.html:20`. The two workbench
+pages are the first to keep the button at phone widths — deliberately,
+since the Unit tab is now the mobile surface — and each carries its own
+copy of the clearance rule
+(`@media (max-width: 480px) { .tool-card-header { padding-right:
+8.5rem; } .tool-card-title { flex-wrap: wrap; } }` at
+`ddc-workbench.html:72` and `ddc-workbench-fcu.html:38`), with a
+comment noting the duplication and naming the unit-selector block's
+graduation trigger as its own.
+
+⚠️ **`responsive.spec.js` cannot catch this, in principle.** Its 375px
+arm asserts that nothing scrolls or clips sideways
+(`tests/responsive.spec.js:57-68`); an absolutely positioned element
+painting over text produces **no overflow at all**, so the check is not
+weak here, it is measuring a different property. A page that keeps the
+fullscreen button at phone width and grows its title by one word
+regresses silently, on any page in the manifest.
+
+**The decision:** whether the clearance belongs in `styles.css` beside
+the button — where it would be one rule for every future consumer, at
+the cost of reserving 8.5rem of header on cards whose titles are short
+— or stays page-local per consumer. The workbench pages' graduation is
+the natural trigger to settle it, since that is when the duplicated
+rule stops being invisible to the live site. Either way it is worth a
+spec that measures **overlap** rather than overflow for the
+title-versus-button pair.
