@@ -391,7 +391,7 @@ paired with an Education explainer for the underlying concepts.
   logic, math, timer, and PID blocks onto a sheet, wire them up,
   and watch a control sequence run live. Each block shows its type
   as a short tag and takes an instance name you type in the
-  inspector, so its head reads `TAG · Name` — `A>B · Y1 Set`
+  inspector, so its head reads `TAG · Name` — `A>B · Cool Set`
   rather than another anonymous box. Worked examples built in,
   from a freeze-stat lockout and the direct/reverse-acting
   thermostat pair to a proof-of-flow alarm and an OAT hot-water

@@ -567,11 +567,12 @@ section). **Category keys mirror the landing pages' `navCard()`
   reach it: no load check, no console-error check, no phone-width
   overflow check, and **no blocking contrast sweep in either theme**.
   This is the standing shape of a **hidden page** (`noindex` +
-  `eleventyExcludeFromCollections` + no `canonical`) — the DDC
-  Workbench pages under `html/simulators/`. They are covered only
-  because several specs name their URLs directly. **Any new hidden page
-  needs its own hand-written spec**; the omission from `tests/pages.js`
-  is correct and must not be "fixed."
+  `eleventyExcludeFromCollections` + no `canonical`) — `styleguide.html`
+  and the AHU depiction mockup under `html/simulators/` (the two
+  workbench unit pages graduated out of this set 2026-08-04). Hidden
+  pages are covered only because specs name their URLs directly. **Any
+  new hidden page needs its own hand-written spec**; the omission from
+  `tests/pages.js` is correct and must not be "fixed."
 - **Inline `<style>` in `{% block head %}` is indented to column 4**
   to match the surrounding head context (which is itself indented to
   column 4 inside the rendered `<head>`). Inner CSS rules sit at
@@ -1277,20 +1278,21 @@ under *Git conventions*). Stage specific file lists, not
   candidate, and `html/404.html` is the one it answers wrong about (see
   *Needs approval*).
   - *Merge freely:* the **genuinely unreachable hidden pages'** own HTML
-    — as of 2026-08-03 that is `styleguide.html` plus the three under
-    `simulators/`: `ddc-workbench.html`, `ddc-workbench-fcu.html`,
-    `ddc-workbench-ahu-mockup.html`. ⚠️ **The test is not "no inbound
-    anchor anywhere in `html/`"** — that reading was falsified when the
-    unit selector shipped (PR #470): the two live workbench pages
-    **cross-anchor each other** (`a.ddcw-unit-link`, `FCU` ⇄ `AHU`). The
+    — as of 2026-08-04 (Phase 8 graduated both workbench unit pages)
+    that is `styleguide.html` plus `simulators/ddc-workbench-ahu-mockup.html`.
+    ⚠️ **The test is not "no inbound anchor anywhere in `html/`"** — the
     correct test is *no inbound anchor from a page a visitor can land
-    on*, and it still holds — the only anchors into this set come from
-    inside the set, and `searchPages` filters on `canonical` too, so
-    they are absent from the palette as well as the sitemap. A script
-    ONLY hidden pages load (today `ddcw-shell.js`, `ddcw-fcu-unit.js`,
-    `ddcw-ahu-unit.js` — verify with a `grep` over `html/`, since a live
-    page picking one up is exactly the trap below); anything under
-    `tests/` or `docs/`; plus `CLAUDE.md` and `README.md`.
+    on* (the unit-selector era proved the difference: the then-hidden
+    workbench pages cross-anchored each other and stayed hidden). It
+    holds for both remaining pages — nothing anchors either, and
+    `searchPages` filters on `canonical` too, so they are absent from
+    the palette as well as the sitemap. A script ONLY hidden pages load
+    (today: none — the mockup loads no scripts and the styleguide loads
+    only the site-wide set; `ddcw-shell.js` and both unit scripts
+    became live-page scripts at graduation — verify with a `grep` over
+    `html/`, since a live page picking one up is exactly the trap
+    below); anything under `tests/` or `docs/`; plus `CLAUDE.md` and
+    `README.md`.
   - *Needs approval:* any page carrying a `canonical`, **plus
     `html/404.html`** — `wrangler.jsonc` sets
     `not_found_handling: "404-page"`, so it is served for every
@@ -1308,9 +1310,10 @@ under *Git conventions*). Stage specific file lists, not
     `html/scripts/psychro-engine.js`, which **eight pages load and
     seven of those are live**: even a purely additive function ships
     new bytes to all seven, and a parse error there breaks all seven.
-  - The boundary **moves at graduation** — the day the workbench gains
-    a `canonical` it enters the sitemap and every merge-freely row
-    flips for it.
+  - The boundary **moved at graduation** (Phase 8, 2026-08-04): the
+    workbench pages gained canonicals, entered the sitemap, and every
+    merge-freely row flipped for them and their scripts. The rule keeps
+    governing any future hidden page the same way.
 - **Log caught issues.** Code-quality issues noticed in passing —
   *even if unrelated to the current task* — get appended to
   `codebase-issues.md` under *Open*. Don't silently fix inline
@@ -1454,9 +1457,12 @@ re-submit); add `--dry-run` to print the URL list without POSTing.
   above all that **CPU% INVERTS on a saturated page** (removing work
   frees the thread to render the frames it was dropping, so CPU rises
   while fps improves), which is why fps and not CPU is the ranking
-  signal. It walks a **hand-picked manifest, not the sitemap**:
-  `ddc-workbench-fcu` is absent from `sitemap.xml`, and a sitemap walker
-  would skip the very page the profiler exists for.
+  signal. It walks a **hand-picked manifest, not the sitemap** —
+  originally because `ddc-workbench-fcu` was sitemap-absent (hidden)
+  and a sitemap walker would have skipped the very page the profiler
+  exists for; the workbench pages joined the sitemap at graduation
+  (2026-08-04), and the manifest stays hand-picked for its curated
+  rows + control page.
 - **Fedora Chromium deps:** Playwright's bundled headless Chromium
   isn't statically linked, and `npx playwright install-deps` only
   knows Debian/Ubuntu. On Fedora 44 the runtime set is:

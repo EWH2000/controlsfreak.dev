@@ -40,13 +40,16 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
            :has() cross-highlight that binds a glyph to an ahu-* annotation
            group stays page-local, because both of its ends are ahu-*.
 
-           ⚠ THIS PAGE HAS NO `canonical`, so tests/pages.js does not list it
-           and the smoke / responsive / CONTRAST sweeps never walk it. Every
+           ⚠ WRITTEN WHILE THIS PAGE HAD NO `canonical` and no sweep
+           walked it. Graduation (Phase 8, 2026-08-04) put it in
+           tests/pages.js, so the smoke / responsive / CONTRAST sweeps
+           reach the page now — but the sweeps exclude SVG text, so every
            contrast figure quoted below is HAND-MEASURED and those numbers
-           ARE the guard. The same goes for every callout width: SVG text
-           does not wrap and nothing here clips, so a string wider than its
-           frame paints ink outside it. tests/ddc-workbench-ahu-page.spec.js
-           is the hand-written spec that stands in for the sweeps.
+           ARE still the guard inside the drawing. The same goes for every
+           callout width: SVG text does not wrap and nothing here clips, so
+           a string wider than its frame paints ink outside it.
+           tests/ddc-workbench-ahu-page.spec.js carries the hand-written
+           rows.
            ══════════════════════════════════════════════════════════════ */
 
         /* ── The graphic frame ────────────────────────────────────────── */

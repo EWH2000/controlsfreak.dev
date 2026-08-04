@@ -33,11 +33,10 @@
 //     plant.actuators, and a MutationObserver holds them to it across
 //     every repaint of a full replay.
 //
-// The page is deliberately hidden (eleventyExcludeFromCollections +
-// noindex), so it is NOT in tests/pages.js — that manifest feeds
-// smoke.spec.js, responsive.spec.js and contrast-sweep.spec.js, all of
-// which would pull the page back into the crawl-facing surface. Naming
-// the URL directly here keeps the coverage without un-hiding the page.
+// The page was hidden when this file was written; graduation (Phase 8,
+// 2026-08-04) added its canonical and tests/pages.js row, so the
+// smoke / responsive / contrast sweeps reach it too (same note as the
+// sibling workbench specs).
 //
 // No fixed timeouts: the host ticks at 10 Hz (and the sim-speed
 // default is high), so every settle is a waitForFunction on chip /

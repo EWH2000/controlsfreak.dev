@@ -217,12 +217,15 @@
 // ---------------------------------------------------------------------------
 //
 // `tests/screenshot-diagrams.mjs` walks `/sitemap.xml`, and that is right for
-// what it does. It is wrong here: `simulators/ddc-workbench-fcu.html` is
-// deliberately absent from the sitemap (it ships live-but-hidden) and it is
-// the most animation-heavy page on the site — the page this whole performance
-// arc exists to fix. A sitemap-driven profiler would omit it. Verified at the
-// time of writing: `grep -c ddc-workbench-fcu _site/sitemap.xml` returns 0
-// while `_site/simulators/ddc-workbench-fcu.html` exists.
+// what it does. It was wrong here from the start: when this profiler was
+// written, `simulators/ddc-workbench-fcu.html` — the most animation-heavy
+// page on the site, the page this whole performance arc exists to fix — was
+// deliberately absent from the sitemap, so a sitemap walker would have
+// omitted the whole point. Graduation (Phase 8, 2026-08-04) put both
+// workbench pages in the sitemap, but the manifest stays hand-picked: a
+// profiler wants its curated rows (each with a `why`), a no-animation
+// control, and per-page motion selectors — none of which a sitemap can
+// supply.
 //
 // The manifest is small on purpose. Each row earns its place with a `why`
 // string that prints with the report, so a reader can tell a control from a
@@ -423,8 +426,8 @@ const MANIFEST = [
         scrollTo: '#tab-unit',
         motionSel: '.fcu-chevron',
         why: 'The most animation-heavy page on the site and the reason this arc exists. '
-            + 'Absent from the sitemap (ships live-but-hidden), so only a hand-picked '
-            + 'manifest reaches it — a sitemap walker would skip the whole point.',
+            + 'Sitemap-absent until Phase 8 graduation — the original reason this '
+            + 'manifest is hand-picked rather than sitemap-walked.',
     },
     {
         id: 'ddc-workbench-fcu-wiresheet',
@@ -463,8 +466,7 @@ const MANIFEST = [
             + 'per station per tick. It is the natural regression sentinel for the '
             + 'chevron rewrite, and the pairing with ddc-workbench-fcu-unit is what '
             + 'separates "the AHU is expensive" from "the shell got more expensive". '
-            + 'Also absent from the sitemap (hidden page), so only this hand-picked '
-            + 'manifest reaches it.',
+            + 'Sitemap-absent until Phase 8 graduation, like the FCU rows.',
     },
     {
         id: 'ddc-workbench-ahu-wiresheet',

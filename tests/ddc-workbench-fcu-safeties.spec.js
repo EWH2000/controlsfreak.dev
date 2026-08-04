@@ -32,10 +32,10 @@
 // after the switch rides through that window; at 60× it is a couple of
 // real seconds.
 //
-// The page is deliberately hidden (eleventyExcludeFromCollections +
-// noindex), so it is NOT in tests/pages.js — naming the URL directly
-// keeps the coverage without un-hiding the page (same note as the
-// sibling workbench specs).
+// The page was hidden when this file was written; graduation (Phase 8,
+// 2026-08-04) added its canonical and tests/pages.js row, so the
+// site-wide sweeps reach it too (same note as the sibling workbench
+// specs).
 //
 // No fixed sleeps: every settle is a waitForFunction on chip / verdict
 // TEXT (the ddc-workbench-fcu-priority.spec.js house pattern).

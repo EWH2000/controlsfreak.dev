@@ -1,6 +1,6 @@
 // Wiresheet PLACEMENT invariants over both FBE consumer pages —
 // /simulators/function-block-editor.html (public) and
-// /simulators/ddc-workbench-fcu.html (hidden) — #205 / #206 / #208.
+// /simulators/ddc-workbench-fcu.html — #205 / #206 / #208.
 //
 // ⚠ STATUS (measured 2026-07-26, STUB = 10): this spec is the
 // placement harness for the wiresheet-relayout lane and joins CI only

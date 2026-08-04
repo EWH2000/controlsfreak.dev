@@ -4365,7 +4365,7 @@ p.ref-note.compact {
 }
 .fbe-block-sel { border-color: var(--accent); }
 /* The head carries either the block TYPE's label ("SR LATCH") or, once
-   the instance has a name, `TAG · Name` ("SR · Y1 Latch") on ONE line.
+   the instance has a name, `TAG · Name` ("SR · Trip Latch") on ONE line.
    nowrap + ellipsis is LOAD-BEARING, not polish. Pins live in
    .fbe-block-body, after the head in DOM order, so anything that grows
    the head moves every pin and every wire endpoint below it — and the
