@@ -16,7 +16,7 @@
 //     play out in real seconds;
 //   • hand-force the fan slow (slot 8) under the standing 2-stage
 //     call — the starved coil dives DAT through the trip line;
-//   • assert the lockout: Y1/Y2 chips drop, Fan En rides through, the
+//   • assert the lockout: both stage chips drop, Fan En rides through, the
 //     hand-held speed keeps the air moving, and the unit verdict names
 //     the state ("DAT low-limit annunciator latched …" — the ladder
 //     line this program motivates; observation wording by design, the
@@ -28,7 +28,7 @@
 //
 // Program-switch note: the safeties sheet boots with its min-off TON
 // at zero, so the stages hold off for the preset after the download —
-// the anti-short-cycle power-up delay. The first waitForChip('Y1','ON')
+// the anti-short-cycle power-up delay. The first waitForChip('Clg Stg 1','ON')
 // after the switch rides through that window; at 60× it is a couple of
 // real seconds.
 //
@@ -77,7 +77,7 @@ test.describe('DDC Workbench — 2-stage + safeties program', () => {
     test('DAT low-limit lockout: stages cut, fan rides through, verdict names it; recovery restages', async ({ page }) => {
         await page.goto(URL);
         // Arrival on the default (unprotected) program.
-        await waitForChip(page, 'Y1', 'ON');
+        await waitForChip(page, 'Clg Stg 1', 'ON');
 
         // 60× — the coil lag and the min-off timer in real seconds.
         await page.locator('#fcu-speed-slider').evaluate((el) => {
@@ -90,13 +90,13 @@ test.describe('DDC Workbench — 2-stage + safeties program', () => {
         // no matter where the real zone integrates to.
         await page.click('#fcu-ovr-toggle');
         await page.locator('#fcu-ovr-input').fill('85');
-        await waitForChip(page, 'Y2', 'ON');
+        await waitForChip(page, 'Clg Stg 2', 'ON');
 
         // Download the safeties program and ride out its power-up
         // min-off — the stages must come back on their own.
         await page.selectOption('#ddcw-program', 'cool-2stage-safeties');
-        await waitForChip(page, 'Y1', 'ON');
-        await waitForChip(page, 'Y2', 'ON');
+        await waitForChip(page, 'Clg Stg 1', 'ON');
+        await waitForChip(page, 'Clg Stg 2', 'ON');
 
         // Starve the coil: hand the fan to slot 8 and drag it to 40%.
         // The 2-stage call stands, so DAT dives — the default sheet's
@@ -118,29 +118,29 @@ test.describe('DDC Workbench — 2-stage + safeties program', () => {
             });
             const verdict = document.getElementById('fcu-verdict').textContent;
             return verdict.includes('DAT low-limit annunciator latched')
-                && chips['Y1'] === 'OFF'
-                && chips['Y2'] === 'OFF'
+                && chips['Clg Stg 1'] === 'OFF'
+                && chips['Clg Stg 2'] === 'OFF'
                 && chips['Fan En'] === 'ON'
                 && chips['Fan Spd'] === '40 %';
         });
 
         // Spot-check the same state through the evaluate seam (typed,
         // not just truthy) — and that the off-program window blames
-        // only the hand-held fan, not the cut stages: Y1/Y2 are the
+        // only the hand-held fan, not the cut stages: y1/y2 are the
         // SEQUENCE's doing at slot 16, so they are on-program.
         const chips = await chipMap(page);
         expect(chips['Fan En']).toBe('ON');
         const offprog = await page.evaluate(
             () => document.getElementById('ddcw-offprog').textContent);
         expect(offprog).toContain('Fan Spd — commanded by slot 8');
-        expect(offprog).not.toContain('Y1 —');
-        expect(offprog).not.toContain('Y2 —');
+        expect(offprog).not.toContain('Clg Stg 1 —');
+        expect(offprog).not.toContain('Clg Stg 2 —');
 
         // Release the fan to the sequence: full airflow warms the coil
         // past the clear line, the min-off elapses, and the unit comes
         // back — the verdict returns to healthy cooling.
         await page.locator('#fcu-null-fan').check();
-        await waitForChip(page, 'Y1', 'ON');
+        await waitForChip(page, 'Clg Stg 1', 'ON');
         await page.waitForFunction(() => (
             document.getElementById('fcu-verdict').textContent
                 .includes('Cooling — clear ΔT across the coil')
@@ -157,7 +157,7 @@ test.describe('DDC Workbench — 2-stage + safeties program', () => {
     // paragraph without re-measuring the page reddens here.
     test("the note's belt walkthrough: the scenario holds the stages, releasing them lets the interlock act", async ({ page }) => {
         await page.goto(URL);
-        await waitForChip(page, 'Y1', 'ON');
+        await waitForChip(page, 'Clg Stg 1', 'ON');
 
         // 60× so the proof make-delay and the min-off play out in real
         // seconds. No assertion below reads either constant.
@@ -167,11 +167,11 @@ test.describe('DDC Workbench — 2-stage + safeties program', () => {
         });
 
         await page.selectOption('#ddcw-program', 'cool-2stage-safeties');
-        await waitForChip(page, 'Y1', 'ON');
+        await waitForChip(page, 'Clg Stg 1', 'ON');
 
         // "Break the belt from the scenario row and watch it: the fan
         // command stays on, the blades stop, and the DAT chip climbs to
-        // the space temperature."
+        // the zone temperature."
         await page.click('[data-preset="belt"]');
         await waitForChip(page, 'Fan Sts', 'OFF');
         const held = await chipMap(page);
@@ -185,23 +185,23 @@ test.describe('DDC Workbench — 2-stage + safeties program', () => {
             const num = (s) => parseFloat(String(s).replace(/[^\d.\-]/g, ''));
             // A blind discharge probe reads the room. Band, not a
             // value: the zone keeps integrating under the dead coil.
-            return Math.abs(num(chips['DAT']) - num(chips['Space'])) < 1;
+            return Math.abs(num(chips['DAT']) - num(chips['Zone Temp'])) < 1;
         });
 
         // "The stages hold, though" — slot 8 outranks the sequence, and
         // the off-program window says so in as many words.
-        expect(held['Y1'], 'the scenario wrote Y1 at slot 8').toBe('ON');
-        expect(held['Y2'], 'the scenario wrote Y2 at slot 8').toBe('ON');
+        expect(held['Clg Stg 1'], 'the scenario wrote y1 at slot 8').toBe('ON');
+        expect(held['Clg Stg 2'], 'the scenario wrote y2 at slot 8').toBe('ON');
         const offprog = await page.evaluate(
             () => document.getElementById('ddcw-offprog').textContent);
-        expect(offprog).toContain('Y1 — commanded by slot 8');
-        expect(offprog).toContain('Y2 — commanded by slot 8');
+        expect(offprog).toContain('Clg Stg 1 — commanded by slot 8');
+        expect(offprog).toContain('Clg Stg 2 — commanded by slot 8');
 
         // "Hand them back with the NULL — released box under Compressor
         // stage and they drop on the next tick: on the proof interlock."
         await page.locator('#fcu-null-stage').check();
-        await waitForChip(page, 'Y1', 'OFF');
-        await waitForChip(page, 'Y2', 'OFF');
+        await waitForChip(page, 'Clg Stg 1', 'OFF');
+        await waitForChip(page, 'Clg Stg 2', 'OFF');
         const dropped = await chipMap(page);
         expect(dropped['Fan En'], 'the fan is still commanded on').toBe('ON');
         expect(dropped['Fan Sts'], 'and still proving nothing').toBe('OFF');

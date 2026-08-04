@@ -805,7 +805,7 @@ const DDCWAhuUnit = (function () {
         // rejected.
         { id: 'mat',              kind: 'ai',    dir: 'sensor',   plantKey: 'mat',              name: 'MAT',       unit: '°F', conv: 'temp' },
         { id: 'dat',              kind: 'ai',    dir: 'sensor',   plantKey: 'dat',              name: 'DAT',       unit: '°F', conv: 'temp' },
-        { id: 'space-temp',       kind: 'ai',    dir: 'sensor',   plantKey: 'space-temp',       name: 'Space',     unit: '°F', conv: 'temp', min: 60, max: 90, step: 1 },
+        { id: 'space-temp',       kind: 'ai',    dir: 'sensor',   plantKey: 'space-temp',       name: 'Zone Temp', unit: '°F', conv: 'temp', min: 60, max: 90, step: 1 },
         // Airflow PROOF, not the fan command — a duct-pressure switch
         // that makes slowly and breaks at once. A sequence that
         // interlocks on this rides through a broken belt; one that
@@ -835,8 +835,8 @@ const DDCWAhuUnit = (function () {
         // Rest OFF, both stages. A compressor energized with no airflow
         // — which is exactly the state a relinquished fan-enable leaves
         // behind — floods the coil and slugs the machine.
-        { id: 'y1',               kind: 'bo',    dir: 'actuator', plantKey: 'y1',               name: 'Y1',        relinquishDefault: false },
-        { id: 'y2',               kind: 'bo',    dir: 'actuator', plantKey: 'y2',               name: 'Y2',        relinquishDefault: false },
+        { id: 'y1',               kind: 'bo',    dir: 'actuator', plantKey: 'y1',               name: 'Clg Stg 1', relinquishDefault: false },
+        { id: 'y2',               kind: 'bo',    dir: 'actuator', plantKey: 'y2',               name: 'Clg Stg 2', relinquishDefault: false },
 
         // TWO setpoints, heating and cooling, rather than one plus a
         // signed offset — specifically so OVERLAPPING them is

@@ -863,7 +863,7 @@ noindex: true
                      role="img" aria-labelledby="fcu-title fcu-desc"
                      font-family="var(--mono)">
                     <title id="fcu-title">A DX fan coil serving one zone, as a DDC supervisory graphic</title>
-                    <desc id="fcu-desc">A recirculating direct-expansion fan coil serving one zone, drawn as a DDC supervisory graphic. Return air leaves the zone on the right, travels leftward along the top return duct, and turns down in a short drop that lands on the top of the fan coil cabinet near its left shoulder. The cabinet is drawn with its top wall open where each duct meets it, so the drop's mouth and the supply riser's mouth are both clear openings. Inside the cabinet the air crosses a DX cooling coil and then a supply fan, which pushes it up through the second opening and along the supply duct back into the zone. Directional chevrons march along the ducts, down the drop, and across the coil and fan to show the airflow. Three floating point badges read left to right in airflow order: the return-air temperature beside the drop, then — past the coil — the signed temperature difference across the coil, leaving minus entering, which reads negative while the coil cools the air, then the discharge-air temperature over the fan. The zone box shows the space temperature and the cooling setpoint; separate labels show the supply-fan status and speed and the compressor stage. The DX coil and the supply fan are drawn as the two sub-devices the graphic can drill into. The cabinet is tagged FCU-1. The sensing devices are drawn where they physically live: a space-temperature wall plate mounted inside the zone on its far wall, a return-air insertion probe penetrating the outer wall of the return drop just below its elbow with its head hanging in the open space to the left, and a discharge-air insertion probe penetrating the top wall of the supply duct downstream of the fan — each activatable to flag its matching live-value chip in the statusbar.</desc>
+                    <desc id="fcu-desc">A recirculating direct-expansion fan coil serving one zone, drawn as a DDC supervisory graphic. Return air leaves the zone on the right, travels leftward along the top return duct, and turns down in a short drop that lands on the top of the fan coil cabinet near its left shoulder. The cabinet is drawn with its top wall open where each duct meets it, so the drop's mouth and the supply riser's mouth are both clear openings. Inside the cabinet the air crosses a DX cooling coil and then a supply fan, which pushes it up through the second opening and along the supply duct back into the zone. Directional chevrons march along the ducts, down the drop, and across the coil and fan to show the airflow. Three floating point badges read left to right in airflow order: the return-air temperature beside the drop, then — past the coil — the signed temperature difference across the coil, leaving minus entering, which reads negative while the coil cools the air, then the discharge-air temperature over the fan. The zone box shows the zone temperature and the cooling setpoint; separate labels show the supply-fan status and speed and the compressor stage. The DX coil and the supply fan are drawn as the two sub-devices the graphic can drill into. The cabinet is tagged FCU-1. The sensing devices are drawn where they physically live: a space-temperature wall plate mounted inside the zone on its far wall, a return-air insertion probe penetrating the outer wall of the return drop just below its elbow with its head hanging in the open space to the left, and a discharge-air insertion probe penetrating the top wall of the supply duct downstream of the fan — each activatable to flag its matching live-value chip in the statusbar.</desc>
 
                     <!-- ── Ductwork — exterior runs only ──────────────────
                          Return duct body: from the zone face, along the top,
@@ -908,20 +908,28 @@ noindex: true
                     </g>
 
                     <!-- ── The zone ── return-air source + the space-temp
-                         point's well and the cooling setpoint. SPACE TEMP,
-                         not ZONE TEMP (the AHU zone box's captions, both):
-                         this well paints the SENSED space-temp — the wall
-                         stat's number, lie and all — so captioning it with
-                         the truth's name would put two disagreeing claims
-                         under one word, the exact defect the AHU's RUN-not-
-                         STATUS ruling exists to prevent. The actual zone
-                         lives at #fcu-zone-val beside the override control. -->
+                         point's well and the cooling setpoint. Both
+                         captions match the AHU zone box's, and ZONE TEMP
+                         is now the ROSTER's own name for the point (owner
+                         ruling 2026-08-03, the name pass) — the chip, the
+                         off-program window, the wiresheet head and this
+                         well all print the one string.
+                         ⚠ THE TENSION THAT RENAME CREATED, on the record:
+                         this well paints the SENSED point — the wall
+                         stat's number, lie and all — while the INTEGRATED
+                         truth is what #fcu-zone-val prints beside the
+                         override control ("zone NN.N °F"). Before the
+                         rename the two were told apart by their words.
+                         They no longer are, so the state line under the
+                         override is the only thing that names the gap;
+                         don't caption a third surface "zone" without
+                         settling which claim owns the word. -->
                     <g id="fcu-zone">
                         <rect x="548" y="90" width="150" height="170" fill="var(--surface)"
                               stroke="var(--text-dim)" stroke-width="2"/>
                         <text class="fcu-zone-label" x="623" y="118" font-size="13"
                               font-weight="600" fill="var(--text-bright)">ZONE</text>
-                        <text class="fcu-pt-cap" x="623" y="150">SPACE TEMP</text>
+                        <text class="fcu-pt-cap" x="623" y="150">ZONE TEMP</text>
                         <text class="fcu-pt-val" id="fcu-zone-t" x="623" y="170">76.0 °F</text>
                         <text class="fcu-pt-cap" x="623" y="205">COOLING SP</text>
                         <text class="fcu-pt-val fcu-sp-val" id="fcu-zone-sp" x="623" y="225">72.0 °F</text>
@@ -1142,7 +1150,7 @@ noindex: true
                     <span class="fcu-point-val accent" id="fcu-dt-r">-19.4 °F</span>
                 </div>
                 <button type="button" class="fcu-point fcu-point-btn" data-point="space-temp" aria-pressed="false">
-                    <span class="fcu-point-cap">Space / setpoint</span>
+                    <span class="fcu-point-cap">Zone / setpoint</span>
                     <span class="fcu-point-val" id="fcu-zone-r">76.0 / 72.0 °F</span>
                 </button>
                 <div class="fcu-point">
@@ -1305,7 +1313,7 @@ noindex: true
                      lesson. -->
                 <div class="fcu-override" id="fcu-override">
                     <div class="slider-head">
-                        <label class="field-label" for="fcu-ovr-input">Space-temp sensor (what the program reads)</label>
+                        <label class="field-label" for="fcu-ovr-input">Zone-temp sensor (what the program reads)</label>
                         <span class="slider-val" id="fcu-zone-val">zone 76.0&nbsp;°F</span>
                     </div>
                     <div class="fcu-ovr-row">
@@ -1430,10 +1438,10 @@ noindex: true
             <div id="tab-wiresheet" class="tab-pane">
 
                 <p class="ddcw-sheet-note">
-                    The program driving the unit. Sources (space temp, setpoint)
-                    on the left, logic in the middle, outputs (Y1 / Y2 / fan) on
-                    the right. Pick a sample above, or wire your own — it runs on
-                    the unit every tick.
+                    The program driving the unit. Sources (zone temp, setpoint)
+                    on the left, logic in the middle, outputs (both cooling
+                    stages and the fan) on the right. Pick a sample above, or
+                    wire your own — it runs on the unit every tick.
                 </p>
 
                 <p class="ddcw-sheet-note">
@@ -1452,7 +1460,7 @@ noindex: true
                     fan-status BI feeds an AND ahead of the permit, so no
                     compressor may start — and a running one is dropped — the
                     moment the proof switch reports no air moving. Behind that
-                    sits a latched DAT low-limit that cuts Y1 and Y2 when
+                    sits a latched DAT low-limit that cuts both stages when
                     discharge air falls below the trip constant, and a minimum
                     off-time that keeps a stopped unit from restaging straight
                     back in. One AND merges those permits into the stage
@@ -1466,9 +1474,9 @@ noindex: true
                     reporting a comfortable number while the coil behind it
                     could be anything at all. Break the belt from the scenario
                     row and watch it: the fan command stays on, the blades
-                    stop, and the DAT chip climbs to the space temperature.
+                    stop, and the DAT chip climbs to the zone temperature.
                     The stages hold, though — a scenario is an operator write,
-                    and this one left Y1 and Y2 at slot 8, where your hand
+                    and this one left both stages at slot 8, where your hand
                     outranks the sequence. Hand them back with the
                     <em>NULL — released</em> box under Compressor stage and
                     they drop on the next tick: on the proof interlock, not on
@@ -1711,17 +1719,30 @@ noindex: true
         // the ' · ' (tests/fbe-block-names.spec.js fails on a head that
         // clips).
         //
-        // The four sheets deliberately REUSE names: Y1 Make / Y1 Set /
-        // Y1 Reset / Y1 Latch / Stg2 Sep / Low Spd / High Spd / Spd Ref /
-        // Cool Call are the same string wherever the same job is done, so
-        // flipping between programs shows which blocks are the same block
-        // — the diff-reading the shared coordinates already set up. Two
-        // divergences are on purpose and must not be normalised: `hundred`
-        // is High Spd where a select stages it against `low`, and Spd Ref
-        // on cool-1stage where it wires straight to the AO with nothing to
-        // be high relative to; and `sep` is Stg2 Sep — the separation
+        // The four sheets deliberately REUSE names: Stg 1 Make /
+        // Stg 1 Set / Stg 1 Reset / Stg 1 Latch / Stg 2 Sep / 60% /
+        // 100% / Spd Ref / Cool Call are the same string wherever the
+        // same job is done, so flipping between programs shows which
+        // blocks are the same block — the diff-reading the shared
+        // coordinates already set up. `sep` is Stg 2 Sep, the separation
         // between the two STAGES, which is neither the per-setpoint
         // deadband nor the gap between the heating and cooling setpoints.
+        //
+        // The two speed REFERENCES head as their own value — `60%` and
+        // `100%` — because a pure reference feeding a select or an AO
+        // has nothing to say but its number, and a value-name cannot
+        // drift away from `params.value` unseen (owner ruling
+        // 2026-08-03, the name pass). That COLLAPSED a divergence this
+        // comment used to defend as load-bearing: `hundred` was High Spd
+        // where a select stages it against `low`, and Spd Ref on
+        // cool-1stage where it wires straight to the AO with nothing to
+        // be high relative to. `100%` is true on either sheet, so the
+        // divergence has nothing left to carry — and `Spd Ref` survives
+        // as the SELECT's own name on the three staged sheets, which is
+        // where it was always the more accurate word. Setpoints and
+        // tuning params keep semantic names (DAT Trip / DAT Clear /
+        // Stg 2 Sep): a number in one of those is a value someone
+        // chose, and the name has to say what it governs.
         const FCU_PROGRAMS = {
             'cool-2stage': {
                 // Candidate-A layout (#205): 8 topological columns at a
@@ -1739,23 +1760,23 @@ noindex: true
                     { id: 'space-temp',       type: 'ai',    x: 20,   y: 20,  params: { value: 76 } },
                     { id: 'cooling-setpoint', type: 'const', x: 20,   y: 125, params: { value: 72 } },
                     { id: 'deadband',         type: 'const', x: 20,   y: 220, params: { value: 3 } },
-                    { id: 'sep',              type: 'const', x: 20,   y: 315, params: { value: 2 }, name: 'Stg2 Sep' },
-                    { id: 'y1on',             type: 'add',   x: 195,  y: 65, name: 'Y1 Make' },
-                    { id: 'y2on',             type: 'add',   x: 370,  y: 178, name: 'Y2 Make' },
-                    { id: 'hundred',          type: 'const', x: 895,  y: 388, params: { value: 100 }, name: 'High Spd' },
+                    { id: 'sep',              type: 'const', x: 20,   y: 315, params: { value: 2 }, name: 'Stg 2 Sep' },
+                    { id: 'y1on',             type: 'add',   x: 195,  y: 65, name: 'Stg 1 Make' },
+                    { id: 'y2on',             type: 'add',   x: 370,  y: 178, name: 'Stg 2 Make' },
+                    { id: 'hundred',          type: 'const', x: 895,  y: 388, params: { value: 100 }, name: '100%' },
                     { id: 'dat',              type: 'ai',    x: 195,  y: 380, params: { value: 55 } },
                     // Airflow proof, seeded but UNWIRED on this sheet —
                     // the same convention `dat` follows. The proof
                     // interlock is the safeties sheet's lesson; here the
                     // point is simply available to wire.
                     { id: 'fan-status',       type: 'bi',    x: 195,  y: 467, params: { state: false } },
-                    { id: 'gt1',              type: 'gt',    x: 545,  y: 20, name: 'Y1 Set' },
-                    { id: 'lt1',              type: 'lt',    x: 545,  y: 350, name: 'Y1 Reset' },
-                    { id: 'gt2',              type: 'gt',    x: 545,  y: 240, name: 'Y2 Set' },
-                    { id: 'lt2',              type: 'lt',    x: 545,  y: 115, name: 'Y2 Reset' },
-                    { id: 'sr1',              type: 'sr',    x: 720,  y: 20, name: 'Y1 Latch' },
-                    { id: 'sr2',              type: 'sr',    x: 720,  y: 220, name: 'Y2 Latch' },
-                    { id: 'low',              type: 'const', x: 895,  y: 304, params: { value: 60 }, name: 'Low Spd' },
+                    { id: 'gt1',              type: 'gt',    x: 545,  y: 20, name: 'Stg 1 Set' },
+                    { id: 'lt1',              type: 'lt',    x: 545,  y: 350, name: 'Stg 1 Reset' },
+                    { id: 'gt2',              type: 'gt',    x: 545,  y: 240, name: 'Stg 2 Set' },
+                    { id: 'lt2',              type: 'lt',    x: 545,  y: 115, name: 'Stg 2 Reset' },
+                    { id: 'sr1',              type: 'sr',    x: 720,  y: 20, name: 'Stg 1 Latch' },
+                    { id: 'sr2',              type: 'sr',    x: 720,  y: 220, name: 'Stg 2 Latch' },
+                    { id: 'low',              type: 'const', x: 895,  y: 304, params: { value: 60 }, name: '60%' },
                     { id: 'or1',              type: 'or',    x: 895,  y: 50, name: 'Cool Call' },
                     { id: 'and1',             type: 'and',   x: 895,  y: 195, name: 'Stg2 Call' },
                     { id: 'select',           type: 'select', x: 1070, y: 300, name: 'Spd Ref' },
@@ -1813,11 +1834,11 @@ noindex: true
                     // interlock is the safeties sheet's lesson; here the
                     // point is simply available to wire.
                     { id: 'fan-status',       type: 'bi',    x: 195, y: 467, params: { state: false } },
-                    { id: 'y1on',             type: 'add',   x: 195, y: 230, name: 'Y1 Make' },
-                    { id: 'hundred',          type: 'const', x: 545, y: 330, params: { value: 100 }, name: 'Spd Ref' },
-                    { id: 'gt1',              type: 'gt',    x: 370, y: 20, name: 'Y1 Set' },
-                    { id: 'lt1',              type: 'lt',    x: 195, y: 115, name: 'Y1 Reset' },
-                    { id: 'sr1',              type: 'sr',    x: 545, y: 120, name: 'Y1 Latch' },
+                    { id: 'y1on',             type: 'add',   x: 195, y: 230, name: 'Stg 1 Make' },
+                    { id: 'hundred',          type: 'const', x: 545, y: 330, params: { value: 100 }, name: '100%' },
+                    { id: 'gt1',              type: 'gt',    x: 370, y: 20, name: 'Stg 1 Set' },
+                    { id: 'lt1',              type: 'lt',    x: 195, y: 115, name: 'Stg 1 Reset' },
+                    { id: 'sr1',              type: 'sr',    x: 545, y: 120, name: 'Stg 1 Latch' },
                     { id: 'y1',               type: 'bo',    x: 720, y: 20 },
                     { id: 'fan-enable',       type: 'bo',    x: 720, y: 110 },
                     { id: 'y2',               type: 'bo',    x: 720, y: 220 },
@@ -1849,23 +1870,23 @@ noindex: true
                     { id: 'space-temp',       type: 'ai',    x: 20,   y: 20,  params: { value: 76 } },
                     { id: 'cooling-setpoint', type: 'const', x: 20,   y: 125, params: { value: 72 } },
                     { id: 'deadband',         type: 'const', x: 20,   y: 220, params: { value: 3 } },
-                    { id: 'sep',              type: 'const', x: 20,   y: 315, params: { value: 2 }, name: 'Stg2 Sep' },
-                    { id: 'y1on',             type: 'add',   x: 195,  y: 65, name: 'Y1 Make' },
-                    { id: 'y2on',             type: 'add',   x: 370,  y: 178, name: 'Y2 Make' },
-                    { id: 'hundred',          type: 'const', x: 895,  y: 388, params: { value: 100 }, name: 'High Spd' },
+                    { id: 'sep',              type: 'const', x: 20,   y: 315, params: { value: 2 }, name: 'Stg 2 Sep' },
+                    { id: 'y1on',             type: 'add',   x: 195,  y: 65, name: 'Stg 1 Make' },
+                    { id: 'y2on',             type: 'add',   x: 370,  y: 178, name: 'Stg 2 Make' },
+                    { id: 'hundred',          type: 'const', x: 895,  y: 388, params: { value: 100 }, name: '100%' },
                     { id: 'dat',              type: 'ai',    x: 195,  y: 380, params: { value: 55 } },
                     // Airflow proof, seeded but UNWIRED on this sheet —
                     // the same convention `dat` follows. The proof
                     // interlock is the safeties sheet's lesson; here the
                     // point is simply available to wire.
                     { id: 'fan-status',       type: 'bi',    x: 195,  y: 467, params: { state: false } },
-                    { id: 'gt1',              type: 'gt',    x: 545,  y: 20, name: 'Y1 Set' },
-                    { id: 'lt1',              type: 'lt',    x: 545,  y: 350, name: 'Y1 Reset' },
-                    { id: 'gt2',              type: 'gt',    x: 545,  y: 240, name: 'Y2 Set' },
-                    { id: 'lt2',              type: 'lt',    x: 545,  y: 115, name: 'Y2 Reset' },
-                    { id: 'sr1',              type: 'sr',    x: 720,  y: 20, name: 'Y1 Latch' },
-                    { id: 'sr2',              type: 'sr',    x: 720,  y: 220, name: 'Y2 Latch' },
-                    { id: 'low',              type: 'const', x: 895,  y: 304, params: { value: 60 }, name: 'Low Spd' },
+                    { id: 'gt1',              type: 'gt',    x: 545,  y: 20, name: 'Stg 1 Set' },
+                    { id: 'lt1',              type: 'lt',    x: 545,  y: 350, name: 'Stg 1 Reset' },
+                    { id: 'gt2',              type: 'gt',    x: 545,  y: 240, name: 'Stg 2 Set' },
+                    { id: 'lt2',              type: 'lt',    x: 545,  y: 115, name: 'Stg 2 Reset' },
+                    { id: 'sr1',              type: 'sr',    x: 720,  y: 20, name: 'Stg 1 Latch' },
+                    { id: 'sr2',              type: 'sr',    x: 720,  y: 220, name: 'Stg 2 Latch' },
+                    { id: 'low',              type: 'const', x: 895,  y: 304, params: { value: 60 }, name: '60%' },
                     { id: 'or1',              type: 'or',    x: 895,  y: 50, name: 'Cool Call' },
                     { id: 'and1',             type: 'and',   x: 895,  y: 195, name: 'Stg2 Call' },
                     { id: 'fanon',            type: 'bi',    x: 720,  y: 130, params: { state: true }, name: 'Cont Fan' },
@@ -1911,37 +1932,37 @@ noindex: true
                 // min-off cycle members last, in dependency order (the
                 // Kahn leftover-order note above is load-bearing).
                 blocks: [
-                    { id: 'sep',              type: 'const', x: 20,   y: 75,  params: { value: 2 }, name: 'Stg2 Sep' },
+                    { id: 'sep',              type: 'const', x: 20,   y: 75,  params: { value: 2 }, name: 'Stg 2 Sep' },
                     { id: 'space-temp',       type: 'ai',    x: 20,   y: 180, params: { value: 76 } },
                     { id: 'cooling-setpoint', type: 'const', x: 20,   y: 265, params: { value: 72 } },
                     { id: 'deadband',         type: 'const', x: 20,   y: 350, params: { value: 3 } },
                     { id: 'hilim',            type: 'const', x: 195,  y: 30,  params: { value: 52 }, name: 'DAT Clear' },
-                    { id: 'y1on',             type: 'add',   x: 195,  y: 120, name: 'Y1 Make' },
-                    { id: 'lt1',              type: 'lt',    x: 195,  y: 222, name: 'Y1 Reset' },
+                    { id: 'y1on',             type: 'add',   x: 195,  y: 120, name: 'Stg 1 Make' },
+                    { id: 'lt1',              type: 'lt',    x: 195,  y: 222, name: 'Stg 1 Reset' },
                     { id: 'dat',              type: 'ai',    x: 195,  y: 322, params: { value: 55 } },
                     { id: 'lowlim',           type: 'const', x: 195,  y: 405, params: { value: 42 }, name: 'DAT Trip' },
-                    { id: 'y2on',             type: 'add',   x: 370,  y: 60, name: 'Y2 Make' },
+                    { id: 'y2on',             type: 'add',   x: 370,  y: 60, name: 'Stg 2 Make' },
                     { id: 'datok',            type: 'gt',    x: 370,  y: 280, name: 'DAT OK' },
                     { id: 'datlow',           type: 'lt',    x: 370,  y: 380, name: 'DAT Low' },
-                    { id: 'gt2',              type: 'gt',    x: 545,  y: 15, name: 'Y2 Set' },
-                    { id: 'gt1',              type: 'gt',    x: 545,  y: 120, name: 'Y1 Set' },
-                    { id: 'lt2',              type: 'lt',    x: 545,  y: 220, name: 'Y2 Reset' },
+                    { id: 'gt2',              type: 'gt',    x: 545,  y: 15, name: 'Stg 2 Set' },
+                    { id: 'gt1',              type: 'gt',    x: 545,  y: 120, name: 'Stg 1 Set' },
+                    { id: 'lt2',              type: 'lt',    x: 545,  y: 220, name: 'Stg 2 Reset' },
                     { id: 'okrun',            type: 'sr',    x: 545,  y: 320, name: 'DAT Run OK' },
                     // Airflow proof. Placed under okrun because it is the
                     // low limit's partner, not a staging input: the two
                     // together are what say "this coil is safe to load".
                     { id: 'fan-status',       type: 'bi',    x: 545,  y: 430, params: { state: false } },
-                    { id: 'sr2',              type: 'sr',    x: 720,  y: 240, name: 'Y2 Latch' },
+                    { id: 'sr2',              type: 'sr',    x: 720,  y: 240, name: 'Stg 2 Latch' },
                     // coilok = okrun AND fan-status — the fan-proof
                     // interlock, sitting AHEAD of the low limit's own
                     // permit (see the registry header). sr1 moved down to
                     // the band the taller canvas opened to make room for
                     // it; column 720 had no free slot at the old height.
                     { id: 'coilok',           type: 'and',   x: 720,  y: 340, name: 'Coil Safe' },
-                    { id: 'sr1',              type: 'sr',    x: 720,  y: 450, name: 'Y1 Latch' },
+                    { id: 'sr1',              type: 'sr',    x: 720,  y: 450, name: 'Stg 1 Latch' },
                     { id: 'or1',              type: 'or',    x: 895,  y: 0, name: 'Cool Call' },
-                    { id: 'low',              type: 'const', x: 895,  y: 100, params: { value: 60 }, name: 'Low Spd' },
-                    { id: 'hundred',          type: 'const', x: 895,  y: 400, params: { value: 100 }, name: 'High Spd' },
+                    { id: 'low',              type: 'const', x: 895,  y: 100, params: { value: 60 }, name: '60%' },
+                    { id: 'hundred',          type: 'const', x: 895,  y: 400, params: { value: 100 }, name: '100%' },
                     { id: 'fan-enable',       type: 'bo',    x: 1070, y: 15 },
                     { id: 'select',           type: 'select', x: 1070, y: 240, name: 'Spd Ref' },
                     { id: 'fan-speed',        type: 'ao',    x: 1245, y: 340 },
@@ -1950,8 +1971,8 @@ noindex: true
                     { id: 'tonoff',           type: 'ton',   x: 720,  y: 140, params: { pt: 120 }, name: 'Min Off' },
                     { id: 'offok',            type: 'or',    x: 720,  y: 25, name: 'Cycle OK' },
                     { id: 'permit',           type: 'and',   x: 895,  y: 300, name: 'Run Permit' },
-                    { id: 'y1gate',           type: 'and',   x: 1070, y: 355, name: 'Y1 Gate' },
-                    { id: 'y2gate',           type: 'and',   x: 1070, y: 140, name: 'Y2 Gate' },
+                    { id: 'y1gate',           type: 'and',   x: 1070, y: 355, name: 'Stg 1 Gate' },
+                    { id: 'y2gate',           type: 'and',   x: 1070, y: 140, name: 'Stg 2 Gate' },
                     { id: 'y1',               type: 'bo',    x: 1245, y: 55 },
                     { id: 'y2',               type: 'bo',    x: 1245, y: 140 },
                 ],

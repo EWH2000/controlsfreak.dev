@@ -23,8 +23,8 @@
 //     affordance moved to the mirror). Both halves are pinned: nothing
 //     in the graphic is focusable, and each mirror button fires the
 //     same pulse from Enter and from Space;
-//   • real-vs-sensed — forcing the wall stat splits the chips: Space
-//     shows the lie the program reads, RAT stays on the zone truth
+//   • real-vs-sensed — forcing the wall stat splits the chips: Zone
+//     Temp shows the lie the program reads, RAT stays on the zone truth
 //     (a return-duct probe measures real air);
 //   • the accessible name — each glyph carries a native SVG <title>;
 //   • id hygiene — the rendered page has no duplicate ids (the glyph
@@ -52,7 +52,7 @@ const URL = '/simulators/ddc-workbench-fcu.html';
 const GLYPHED = [
     { point: 'rat',        chip: 'RAT' },
     { point: 'dat',        chip: 'DAT' },
-    { point: 'space-temp', chip: 'Space' },
+    { point: 'space-temp', chip: 'Zone Temp' },
 ];
 
 function glyphSel(point) {
@@ -167,7 +167,7 @@ test.describe('DDC Workbench — visible sensor glyphs', () => {
         }
     });
 
-    test('forcing the wall stat splits the chips — Space shows the lie, RAT stays on the truth', async ({ page }) => {
+    test('forcing the wall stat splits the chips — Zone Temp shows the lie, RAT stays on the truth', async ({ page }) => {
         // The real-vs-sensed commissioning moment, on the chip strip:
         // the space-temp override forces the value the PROGRAM reads,
         // but a return-duct probe measures real air, so the RAT chip
@@ -177,11 +177,11 @@ test.describe('DDC Workbench — visible sensor glyphs', () => {
         await page.goto(URL);
         await page.click('#fcu-ovr-toggle');
         await page.fill('#fcu-ovr-input', '60');
-        // Space chip settles on the forced value at the next host tick.
+        // Zone Temp chip settles on the forced value at the next host tick.
         await page.waitForFunction(() => {
             const chips = document.querySelectorAll('#ddcw-io .ddcw-chip');
             for (const c of chips) {
-                if (c.querySelector('.ddcw-chip-cap').textContent === 'Space') {
+                if (c.querySelector('.ddcw-chip-cap').textContent === 'Zone Temp') {
                     return c.querySelector('.ddcw-chip-val').textContent === '60.0 °F';
                 }
             }
@@ -210,7 +210,7 @@ test.describe('DDC Workbench — visible sensor glyphs', () => {
         // front end — while the ACTUAL integrated zone appears in one
         // place only, the `zone` readout beside the override control
         // (#fcu-zone-val). Before this pass the FCU painted the truth
-        // everywhere and the lie showed only on the Space chip, which
+        // everywhere and the lie showed only on the zone-temp chip, which
         // told the commissioning story backwards.
         await page.goto(URL);
         await page.click('#fcu-ovr-toggle');

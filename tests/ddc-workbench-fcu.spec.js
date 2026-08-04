@@ -393,8 +393,8 @@ test.describe('DDC Workbench — the blocked-condenser scenario is wired end to 
         const chip = (name) => read.chips.find((c) => c.startsWith(name)) || '';
         expect(chip('Fan Sts'), 'airflow proof stays made').toContain('ON');
         expect(chip('Fan En'), 'the fan is still enabled').toContain('ON');
-        expect(chip('Y1'), 'stage 1 is still called').toContain('ON');
-        expect(chip('Y2'), 'stage 2 is still called').toContain('ON');
+        expect(chip('Clg Stg 1'), 'stage 1 is still called').toContain('ON');
+        expect(chip('Clg Stg 2'), 'stage 2 is still called').toContain('ON');
 
         // Motion, not population. The chevron COUNT is fixed at init
         // from the centerline length and never changes — a stopped

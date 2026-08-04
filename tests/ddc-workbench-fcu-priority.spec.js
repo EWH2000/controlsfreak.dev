@@ -29,7 +29,7 @@
 //     populated announces nothing, and the empty→first-entry edge is
 //     the announcement that matters;
 //   • the compressor readout on the graphic can never disagree with
-//     the Y1/Y2 chips — both surfaces render from the same resolved
+//     the two stage chips — both surfaces render from the same resolved
 //     plant.actuators, and a MutationObserver holds them to it across
 //     every repaint of a full replay.
 //
@@ -53,9 +53,13 @@ const URL = '/simulators/ddc-workbench-fcu.html';
 
 // The two off-program reasons, verbatim from the page's renderer —
 // asserting the full entry pins the REASON wording, not mere presence.
-const Y1_RD_ENTRY = 'Y1 — slot 16 is NULL (no y1 block on the wiresheet) '
+// The leading DISPLAY NAME comes from the roster, while the parenthetical
+// names the missing BLOCK and so stays the point id: the two halves of
+// the sentence are deliberately different vocabularies, and a rename
+// moves only the first.
+const Y1_RD_ENTRY = 'Clg Stg 1 — slot 16 is NULL (no y1 block on the wiresheet) '
     + '— holding Relinquish_Default (OFF).';
-const Y2_RD_ENTRY = 'Y2 — slot 16 is NULL (no y2 block on the wiresheet) '
+const Y2_RD_ENTRY = 'Clg Stg 2 — slot 16 is NULL (no y2 block on the wiresheet) '
     + '— holding Relinquish_Default (OFF).';
 
 // ── statusbar chip helpers ── chips are keyed by their cap text
@@ -76,9 +80,10 @@ function waitForChip(page, name, want) {
 // The 2-stage programs stage the fan-speed reference through a select
 // (the low const at stage 1 and idle, the hundred const at stage 2),
 // so the sequence value the fan returns to after a hand release
-// depends on the LIVE stage. Y2 and the selector are both and1.Q, and
-// both chips repaint from the same resolved tick — so the stage-true
-// expectation is "Fan shows what Y2 implies", never a fixed number.
+// depends on the LIVE stage. The y2 point and the selector are both
+// and1.Q, and both chips repaint from the same resolved tick — so the
+// stage-true expectation is "Fan shows what the Clg Stg 2 chip
+// implies", never a fixed number.
 function waitForStagedFan(page) {
     return page.waitForFunction(() => {
         const chips = {};
@@ -86,7 +91,7 @@ function waitForStagedFan(page) {
             chips[c.querySelector('.ddcw-chip-cap').textContent] =
                 c.querySelector('.ddcw-chip-val').textContent;
         });
-        return chips['Fan Spd'] === (chips['Y2'] === 'ON' ? '100 %' : '60 %');
+        return chips['Fan Spd'] === (chips['Clg Stg 2'] === 'ON' ? '100 %' : '60 %');
     });
 }
 
@@ -121,14 +126,14 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
         await page.goto(URL);
         // Arrival: cool-2stage stages Y1 on the warm zone — slot 16 is
         // commanding, so the off-program window has nothing to say.
-        await waitForChip(page, 'Y1', 'ON');
+        await waitForChip(page, 'Clg Stg 1', 'ON');
         expect((await offprogState(page)).empty).toBe(true);
 
         await deleteBlock(page, 'y1');
 
         // Nothing writes slot 16 any more → the point falls to
         // Relinquish_Default (false) and the chip flips OFF.
-        await waitForChip(page, 'Y1', 'OFF');
+        await waitForChip(page, 'Clg Stg 1', 'OFF');
         await waitForOffprogEntry(page, Y1_RD_ENTRY);
 
         // Pin the REASON, not just presence: slot-16-NULL wording plus
@@ -178,7 +183,7 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
 
     test('the off-program window stays an ACTIVE live region while empty (a11y contract)', async ({ page }) => {
         await page.goto(URL);
-        await waitForChip(page, 'Y1', 'ON');
+        await waitForChip(page, 'Clg Stg 1', 'ON');
 
         // Empty on arrival — but the region must STAY in the
         // accessibility tree: a live region that enters the tree
@@ -214,15 +219,15 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
 
     test('D4: slot 16 commanding OFF (unwired block) is NOT off-program; slot 16 NULL (cleared) IS', async ({ page }) => {
         await page.goto(URL);
-        await waitForChip(page, 'Y1', 'ON');
-        await waitForChip(page, 'Y2', 'OFF');
+        await waitForChip(page, 'Clg Stg 1', 'ON');
+        await waitForChip(page, 'Clg Stg 2', 'OFF');
 
         // Stage up via the SENSOR override — an input-side force that
         // works in the default all-released state precisely because it
         // is NOT part of the output priority machinery.
         await page.click('#fcu-ovr-toggle');
         await page.locator('#fcu-ovr-input').fill('85');
-        await waitForChip(page, 'Y2', 'ON');
+        await waitForChip(page, 'Clg Stg 2', 'ON');
 
         // Switch to cool-1stage: its y2 block is present but unwired,
         // and an unwired input evaluates false — so the SEQUENCE
@@ -230,7 +235,7 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
         // but the point is FOLLOWING the program: the window must stay
         // empty.
         await page.selectOption('#ddcw-program', 'cool-1stage');
-        await waitForChip(page, 'Y2', 'OFF');
+        await waitForChip(page, 'Clg Stg 2', 'OFF');
         await page.waitForFunction(() => (
             document.getElementById('ddcw-offprog').classList.contains('is-empty')
         ));
@@ -243,7 +248,7 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
         // displayed OFF is a different state — resting on
         // Relinquish_Default — and the window says so by name.
         await page.click('#ddcw-fbe-clear');
-        await waitForChip(page, 'Y2', 'OFF');
+        await waitForChip(page, 'Clg Stg 2', 'OFF');
         await waitForOffprogEntry(page, Y2_RD_ENTRY);
         const w = await offprogState(page);
         expect(w.text).toContain('Relinquish_Default (OFF)');
@@ -251,7 +256,7 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
 
     test('a scenario preset writes slot 8: NULL boxes re-sync unchecked, window lists the holds, no mode chrome exists', async ({ page }) => {
         await page.goto(URL);
-        await waitForChip(page, 'Y1', 'ON');
+        await waitForChip(page, 'Clg Stg 1', 'ON');
 
         // Variant A: the AUTO/HAND mode buttons were deleted outright —
         // not hidden, GONE.
@@ -279,13 +284,13 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
             const t = box.textContent;
             return (t.match(/slot 8 \(Manual Operator\)/g) || []).length === 4
                 && t.includes('Fan Spd —') && t.includes('Fan En —')
-                && t.includes('Y1 —') && t.includes('Y2 —');
+                && t.includes('Clg Stg 1 —') && t.includes('Clg Stg 2 —');
         });
     });
 
-    test('the compressor readout never disagrees with the Y1/Y2 chips across a full replay', async ({ page }) => {
+    test('the compressor readout never disagrees with the stage chips across a full replay', async ({ page }) => {
         await page.goto(URL);
-        await waitForChip(page, 'Y1', 'ON');
+        await waitForChip(page, 'Clg Stg 1', 'ON');
 
         // Both surfaces render from the same resolved plant.actuators
         // inside one synchronous hostTick, so no observed repaint may
@@ -301,8 +306,8 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
                         c.querySelector('.ddcw-chip-val').textContent;
                 });
                 return {
-                    y1: chips['Y1'],
-                    y2: chips['Y2'],
+                    y1: chips['Clg Stg 1'],
+                    y2: chips['Clg Stg 2'],
                     comp: document.getElementById('fcu-comp-r').textContent,
                 };
             };
@@ -327,7 +332,7 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
         // (on chip text) after each so the observer sees every regime.
         // 1 — delete the y1 block: stage collapses to OFF.
         await deleteBlock(page, 'y1');
-        await waitForChip(page, 'Y1', 'OFF');
+        await waitForChip(page, 'Clg Stg 1', 'OFF');
 
         // 2 — the fan NULL round-trip (exercises repaints). With y1
         // deleted the zone is warming unchecked, so the stage — and
@@ -348,19 +353,19 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
         // rule's y2-wins arm).
         await page.click('#fcu-ovr-toggle');
         await page.locator('#fcu-ovr-input').fill('85');
-        await waitForChip(page, 'Y2', 'ON');
+        await waitForChip(page, 'Clg Stg 2', 'ON');
 
         // 4 — program switch restores a full sheet: Y1 ON, Y2 OFF via
         // the unwired block.
         await page.selectOption('#ddcw-program', 'cool-1stage');
-        await waitForChip(page, 'Y2', 'OFF');
-        await waitForChip(page, 'Y1', 'ON');
+        await waitForChip(page, 'Clg Stg 2', 'OFF');
+        await waitForChip(page, 'Clg Stg 1', 'ON');
 
         // 5 — Clear the canvas: everything to Relinquish_Default.
         await page.click('.tabs.tabs-flush [data-tab="wiresheet"]');
         await page.click('#ddcw-fbe-clear');
-        await waitForChip(page, 'Y1', 'OFF');
-        await waitForChip(page, 'Y2', 'OFF');
+        await waitForChip(page, 'Clg Stg 1', 'OFF');
+        await waitForChip(page, 'Clg Stg 2', 'OFF');
 
         // No repaint anywhere in the replay may have split the two
         // surfaces.
