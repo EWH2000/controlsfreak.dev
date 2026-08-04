@@ -654,7 +654,9 @@ test.describe('ddcw-fcu-unit: sensor override', () => {
         // number while the actual zone keeps integrating on physics.
         const Unit = loadUnit();
         const pl = Unit.createPlant();
-        pl.override.spaceTemp = { active: true, value: 60 };
+        // Keyed by point id — the AHU's override-map shape, harmonised
+        // onto the FCU 2026-08-03 (was a single `spaceTemp` bag).
+        pl.override['space-temp'] = { active: true, value: 60 };
         for (let i = 0; i < 10; i++) Unit.update(pl, 5);
         expect(pl.sensors['space-temp']).toBe(60);            // the program's view
         expect(pl.zoneT).not.toBe(60);                        // the truth kept moving
@@ -667,10 +669,35 @@ test.describe('ddcw-fcu-unit: sensor override', () => {
         expect(pl.sensors['rat']).toBe(pl.zoneT);
         expect(pl.sensors['rat']).not.toBe(60);
 
-        pl.override.spaceTemp.active = false;                 // release rejoins them
+        pl.override['space-temp'].active = false;             // release rejoins them
         Unit.update(pl, 5);
         expect(pl.sensors['space-temp']).toBe(pl.zoneT);
         expect(pl.sensors['rat']).toBe(pl.zoneT);             // rat never left the truth
+    });
+
+    test('every AI carries its own override entry, and each lies only to its own chip', () => {
+        // The per-point map is the generalisation seam: an id with no
+        // entry cannot be forced (`sensedValue` returns the truth), so
+        // the map itself is the roster of forceable probes. rat and dat
+        // carry entries ahead of any control reaching them — force one
+        // engine-direct and only ITS published sensor moves, which is
+        // what makes a future rat/dat control a wiring job rather than
+        // a physics change.
+        const Unit = loadUnit();
+        const pl = Unit.createPlant();
+        const aiIds = Unit.POINTS.filter((p) => p.kind === 'ai').map((p) => p.id);
+        expect(Object.keys(pl.override).sort()).toEqual(aiIds.slice().sort());
+
+        pl.override['dat'].active = true;
+        pl.override['dat'].value = 12;
+        Unit.update(pl, 5);
+        expect(pl.sensors['dat']).toBe(12);                   // the program's view
+        expect(pl.derived.datT).not.toBe(12);                 // the machine kept its truth
+        expect(pl.sensors['rat']).toBe(pl.zoneT);             // neighbours untouched
+        expect(pl.sensors['space-temp']).toBe(pl.zoneT);
+        // The annunciator watches the PLANT, not the forced sensor: a
+        // 12 °F lie on the chip must not latch a plant-side low limit.
+        expect(pl.derived.lowLimitLatched).toBe(false);
     });
 });
 
@@ -1174,8 +1201,8 @@ test.describe('ddcw-fcu-unit: airflow, proof, and the blind low-limit', () => {
         // the space-temp override is lying.
         const Unit = loadUnit();
         const pl = runToProof(Unit, (p) => {
-            p.override.spaceTemp.active = true;
-            p.override.spaceTemp.value = 55;
+            p.override['space-temp'].active = true;
+            p.override['space-temp'].value = 55;
         });
         expect(pl.derived.overrideActive).toBe(true);
         expect(pl.sensors['space-temp'], 'the program is being lied to').toBe(55);

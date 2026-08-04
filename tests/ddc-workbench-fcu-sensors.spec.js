@@ -202,6 +202,69 @@ test.describe('DDC Workbench — visible sensor glyphs', () => {
         expect(parseFloat(rat)).toBeGreaterThan(65);
     });
 
+    test('a forced sensor lies to the DRAWING too — truth only at the override readout', async ({ page }) => {
+        // The AHU render convention, harmonised onto the FCU 2026-08-03:
+        // the graphic's wells paint the SENSED value per point, so a
+        // forced wall stat rewrites the zone box on the drawing and the
+        // mirror cell under it — exactly as a stuck input lies to a real
+        // front end — while the ACTUAL integrated zone appears in one
+        // place only, the `zone` readout beside the override control
+        // (#fcu-zone-val). Before this pass the FCU painted the truth
+        // everywhere and the lie showed only on the Space chip, which
+        // told the commissioning story backwards.
+        await page.goto(URL);
+        await page.click('#fcu-ovr-toggle');
+        await page.fill('#fcu-ovr-input', '60');
+        // The zone box (SVG well) and the mirror settle on the lie at
+        // the next host tick.
+        await page.waitForFunction(() =>
+            document.getElementById('fcu-zone-t').textContent === '60.0 °F');
+        await page.waitForFunction(() =>
+            document.getElementById('fcu-zone-r').textContent.startsWith('60.0 /'));
+        // The truth readout keeps the integrating zone: it arrived at
+        // 76 °F and nothing here can drag it near the forced 60.
+        const truth = await page.evaluate(() =>
+            document.getElementById('fcu-zone-val').textContent);
+        expect(truth).toMatch(/^zone /);
+        expect(parseFloat(truth.replace(/^zone\s*/, ''))).toBeGreaterThan(65);
+        // Release: the well rejoins the truth.
+        await page.click('#fcu-ovr-toggle');
+        await page.waitForFunction(() =>
+            parseFloat(document.getElementById('fcu-zone-t').textContent) > 65);
+    });
+
+    test('forcing draws the dashed ring on the glyph, and release clears it', async ({ page }) => {
+        // The forced-sensor marker (.fcu-forced-mark, the AHU page's
+        // dashed accent ring) — a forced input that leaves no mark on
+        // the drawing is how a wrong number survives a shift change.
+        // Only space-temp has a force control today, so the wall plate
+        // is the one glyph a user can light; the ring must also RELEASE,
+        // or every drawing would eventually carry it.
+        await page.goto(URL);
+        const glyph = page.locator(glyphSel('space-temp'));
+        await expect(glyph).not.toHaveClass(/is-forced/);
+        // Every glyph carries a mark rect — the per-point seam.
+        for (const g of GLYPHED) {
+            await expect(page.locator(`${glyphSel(g.point)} .fcu-forced-mark`),
+                `${g.point} carries a forced-mark rect`).toHaveCount(1);
+        }
+        await page.click('#fcu-ovr-toggle');
+        await expect(glyph).toHaveClass(/is-forced/);
+        // The ring is real ink while forced: the mark rect gains a
+        // stroke (it is stroke:none at rest, so the drawing carries no
+        // extra ink unforced).
+        const stroked = await page.evaluate((sel) => {
+            const m = document.querySelector(sel + ' .fcu-forced-mark');
+            return getComputedStyle(m).stroke;
+        }, glyphSel('space-temp'));
+        expect(stroked).not.toBe('none');
+        // The other two glyphs stay unlit — the flag is per point.
+        await expect(page.locator(glyphSel('rat'))).not.toHaveClass(/is-forced/);
+        await expect(page.locator(glyphSel('dat'))).not.toHaveClass(/is-forced/);
+        await page.click('#fcu-ovr-toggle');
+        await expect(glyph).not.toHaveClass(/is-forced/);
+    });
+
     test('each glyph exposes an accessible name via a native SVG <title>', async ({ page }) => {
         await page.goto(URL);
         for (const g of GLYPHED) {

@@ -104,7 +104,7 @@ test.describe('DDC Workbench — air animation idle gate', () => {
 });
 
 test.describe('DDC Workbench — signed coil ΔT (leaving minus entering)', () => {
-    test('arrival cooling paints a NEGATIVE ΔT that reconciles from the displayed EAT / DAT', async ({ page }) => {
+    test('arrival cooling paints a NEGATIVE ΔT that reconciles from the displayed RAT / DAT', async ({ page }) => {
         // Owner ruling 2026-07-27: ΔT = DAT − RAT, negative while
         // cooling — the sign says which way the coil drives the air.
         // Arrival state is a live cooling call (zone 76 over SP 72), so
@@ -112,14 +112,15 @@ test.describe('DDC Workbench — signed coil ΔT (leaving minus entering)', () =
         // read clearly negative, the mobile mirror must agree, and the
         // on-screen arithmetic must close (metric worked-example
         // rounding policy: the delta IS displayed DAT minus displayed
-        // EAT, not the unrounded canonical value).
+        // RAT, not the unrounded canonical value). The entering badge
+        // is #fcu-rat since the 2026-08-03 RAT-vocabulary rename.
         await page.goto(URL);
         await page.waitForFunction(() =>
             document.getElementById('fcu-verdict').textContent
                 .includes('Cooling — clear ΔT across the coil'));
 
         const vals = await page.evaluate(() => ({
-            eat: document.getElementById('fcu-eat').textContent,
+            rat: document.getElementById('fcu-rat').textContent,
             dat: document.getElementById('fcu-dat').textContent,
             dt: document.getElementById('fcu-dt').textContent,
             dtR: document.getElementById('fcu-dt-r').textContent,
@@ -128,7 +129,7 @@ test.describe('DDC Workbench — signed coil ΔT (leaving minus entering)', () =
         const dt = parseFloat(vals.dt);
         expect(dt, 'cooling ΔT is clearly negative').toBeLessThan(-3);
         // The displayed delta is the arithmetic of the displayed pair.
-        expect(dt).toBeCloseTo(parseFloat(vals.dat) - parseFloat(vals.eat), 1);
+        expect(dt).toBeCloseTo(parseFloat(vals.dat) - parseFloat(vals.rat), 1);
     });
 });
 

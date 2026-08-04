@@ -112,11 +112,15 @@ const DDCWFcuUnit = (function () {
     // the trip is −3 °F ≡ −1.7 °C. That is the house policy's own
     // shape — the engine computes in IP and converts at the display
     // boundary — so do not "fix" it back to a °C-looking number.
-    const COOLING_DT_TRIP = -3;              // °F — signed DAT − EAT
-    // The canonical delta those gates compare. Same operand pair the
-    // badge paints (DAT − EAT, fan heat included), straight off
-    // `derived` in °F — no Units round trip, so a units toggle can
-    // move the NUMBER on screen and never the diagnosis. Callable only
+    const COOLING_DT_TRIP = -3;              // °F — signed DAT − RAT
+    // The canonical delta those gates compare — the TRUTH pair off
+    // `derived` in °F, no Units round trip, so a units toggle can
+    // move the NUMBER on screen and never the diagnosis. Unforced it
+    // is the same pair the badge paints (DAT − RAT, fan heat
+    // included); with a probe FORCED the two part company on purpose —
+    // the badge paints the sensed lie, the gates keep reading the
+    // machine (a verdict that read the sensors would believe the lie —
+    // the AHU render header's rule). Callable only
     // AFTER fcuUpdate has filled the bag: `derived.datT` / `.eatT` are
     // assigned at the end of that function, so calling this from inside
     // it (or on a pre-first-update plant, whose `derived` is `{}`)
@@ -233,7 +237,26 @@ const DDCWFcuUnit = (function () {
             // Airflow proof state — `elapsed` is seconds of CONTINUOUS
             // airflow, reset to zero the instant airflow stops.
             proof:      { made: false, elapsed: 0 },
-            override:   { spaceTemp: { active: false, value: 76 } },
+            // Sensor overrides, keyed by SENSOR POINT ID — the AHU's
+            // shape (this used to be a single `spaceTemp` bag; the AHU
+            // generalised it to a map and the harmonisation pass moved
+            // this unit onto the same contract, 2026-08-03). Every AI
+            // point carries an entry, because an id with no entry
+            // simply cannot be forced — `sensedValue` returns the truth
+            // for it. Only space-temp has a CONTROL today (the FCU's
+            // override block is single-sensor); rat and dat are seeded
+            // so a future control — or an engine-direct spec — forces
+            // them with no plant change. `fan-status` deliberately gets
+            // none: a proof switch is not a measurement of a continuous
+            // value, so there is nothing to override.
+            // The seeded `value` is read only while `active`, and the
+            // DOM half re-seeds it from the truth the moment a force is
+            // taken, so these are arrival readings, not meaningful state.
+            override:   {
+                'space-temp': { active: false, value: 76 },
+                'rat':        { active: false, value: 76 },
+                'dat':        { active: false, value: 55 },
+            },
             // DAT low-limit annunciator state (see the DAT_LOW_* consts):
             // hysteresis-latched on the SENSED discharge temp so the
             // verdict can report the annunciator.
@@ -250,6 +273,16 @@ const DDCWFcuUnit = (function () {
     // call-site changes.
     function zoneInletState(t) {
         return Psychro.solveState('rh', t, RA_RH, P);
+    }
+
+    // What the CONTROLLER reads for a sensor point: normally the truth,
+    // but a forced override hands the program a wrong number while the
+    // plant keeps integrating on actual physics. An id with no entry in
+    // the override map always reads the truth. (Verbatim the AHU's
+    // helper — the two unit modules speak one override language.)
+    function sensedValue(plant, id, truth) {
+        const ovr = plant.override[id];
+        return (ovr && ovr.active) ? ovr.value : truth;
     }
 
     // ── physics — reads `plant`, not the DOM (renderUnit does the paint).
@@ -375,8 +408,12 @@ const DDCWFcuUnit = (function () {
         // belt blinds the probe while the fan command still stands.
         const datT = airflowOn ? coilLeaveT + FAN_HEAT : zoneT;
         // Fed back into the program's `dat` AI next tick (a discharge
-        // low-limit hook).
-        plant.sensors['dat'] = datT;
+        // low-limit hook) — through the override map, so a forced dat
+        // blinds the discharge low limit from the sensor side (the
+        // AHU's fifth override lesson, reachable here the day a dat
+        // control lands). The annunciator below stays on the local
+        // TRUTH: it is a plant-side observation, not a program input.
+        plant.sensors['dat'] = sensedValue(plant, 'dat', datT);
 
         // DAT low-limit annunciator — the same trip/clear hysteresis the
         // safeties program's latch runs, tracked plant-side so the
@@ -433,33 +470,35 @@ const DDCWFcuUnit = (function () {
         // Program-visible sensor = the value the CONTROLLER reads. Normally
         // the real zone; a forced override hands the program a wrong number
         // while the real zone keeps integrating on actual physics.
-        plant.sensors['space-temp'] = plant.override.spaceTemp.active
-            ? plant.override.spaceTemp.value
-            : plant.zoneT;
+        plant.sensors['space-temp'] = sensedValue(plant, 'space-temp', plant.zoneT);
 
         // Return-air temp AI — a probe in the return duct measures the
-        // REAL air the zone sends back, so it reads the TRUTH
-        // (plant.zoneT), NEVER the sensed/overridable value above. The
-        // split is deliberate: when the wall-stat override forces a
-        // lie, the RAT chip visibly disagrees with the Space chip —
-        // the real-vs-sensed commissioning moment, from the plant
-        // side. (No program consumes it yet; the binding driver skips
-        // an unauthored point — see the header's BINDING INVARIANT.)
-        plant.sensors['rat'] = plant.zoneT;
+        // REAL air the zone sends back, so its TRUTH is plant.zoneT,
+        // never the wall stat's sensed value above: forcing the wall
+        // stat leaves this probe honest, and the RAT chip visibly
+        // disagrees with the Space chip — the real-vs-sensed
+        // commissioning moment, from the plant side. It routes through
+        // its OWN override entry (each probe lies independently — the
+        // AHU pattern), which no control writes today. (No program
+        // consumes it yet either; the binding driver skips an
+        // unauthored point — see the header's BINDING INVARIANT.)
+        plant.sensors['rat'] = sensedValue(plant, 'rat', plant.zoneT);
 
         // The proof switch is not a measurement of a continuous value,
         // so there is nothing to override — it reports its own state.
         plant.sensors['fan-status'] = plant.proof.made;
 
-        // Entering air for the DISPLAY — the same post-integration
-        // sample as sensors['rat'] above, because the EAT badge and the
-        // RAT chip are one measurement and must round identically every
-        // tick. (The pre-step local `zoneT` drifts up to ~0.06 °F from
-        // the probe inside one 5-sim-s step — enough to split the last
-        // displayed digit at a rounding boundary. The physics above
-        // deliberately keeps the tick-START zoneT: that is the Euler
-        // evaluation point; only the display samples tick-END state,
-        // like every other chip.)
+        // Entering-air TRUTH — the canonical operand the verdict ladder
+        // and datDeltaT read; the RAT badge itself paints the SENSED
+        // sensors['rat'] instead (fcuRenderUnit's header owns that
+        // split). Same post-integration sample as the rat publish
+        // above, so unforced the truth, the badge and the chip are one
+        // number. (The pre-step local `zoneT` drifts up to ~0.06 °F
+        // from the probe inside one 5-sim-s step — enough to split the
+        // last displayed digit at a rounding boundary. The physics
+        // above deliberately keeps the tick-START zoneT: that is the
+        // Euler evaluation point; only the display samples tick-END
+        // state, like every other chip.)
         d.eatT = plant.zoneT;            // actual return air (= zone temp)
         d.coilLeaveT = coilLeaveT;
         d.datT = datT;
@@ -484,7 +523,7 @@ const DDCWFcuUnit = (function () {
         d.qCool = qCool;                 // Btu/h (signed)
         d.qGain = qGain;                 // Btu/h
         d.sensedT = plant.sensors['space-temp'];
-        d.overrideActive = plant.override.spaceTemp.active;
+        d.overrideActive = !!(plant.override['space-temp'] && plant.override['space-temp'].active);
         d.lowLimitLatched = plant.lowLimit.latched;
         // The blades follow the AIR, not the command — a broken belt
         // stops the stream on the graphic while the fan-enable chip
@@ -567,6 +606,9 @@ const DDCWFcuUnit = (function () {
     // no priority array, live regardless of any slot state.
     let speedSlider, speedValLbl, oaSlider, oaValLbl, loadSlider, loadValLbl;
     let fanBlade, compDot, verdictEl, verdictSrEl, stageBtns, presetBtns, mirrorBtns;
+    // Sensor glyph groups by point id — the forced-sensor ring's target
+    // (renderUnit toggles .is-forced per override entry).
+    let sensorGroups;
     // On-graphic + readout-grid nodes (kept in one map so renderUnit writes
     // both surfaces from one source).
     let out;
@@ -604,9 +646,12 @@ const DDCWFcuUnit = (function () {
         stageBtns   = document.querySelectorAll('#tab-unit [data-stage]');
         presetBtns  = document.querySelectorAll('#tab-unit [data-preset]');
         mirrorBtns  = document.querySelectorAll('#tab-unit .fcu-point-btn[data-point]');
+        sensorGroups = {};
+        document.querySelectorAll('#fcu-graphic .ddcw-sensor[data-point]')
+            .forEach(function (g) { sensorGroups[g.getAttribute('data-point')] = g; });
 
         out = {
-            eat:  [document.getElementById('fcu-eat'),   document.getElementById('fcu-eat-r')],
+            rat:  [document.getElementById('fcu-rat'),   document.getElementById('fcu-rat-r')],
             dat:  [document.getElementById('fcu-dat'),   document.getElementById('fcu-dat-r')],
             dt:   [document.getElementById('fcu-dt'),    document.getElementById('fcu-dt-r')],
             zt:   document.getElementById('fcu-zone-t'),
@@ -709,8 +754,23 @@ const DDCWFcuUnit = (function () {
         verdictSrEl.textContent = txt;
     }
 
-    // ── paint — reads plant.derived; owns the DOM (graphic + verdict).
-    // The displayed ΔT is the arithmetic of the displayed EAT / DAT so
+    // ── paint — reads plant.sensors and plant.derived; owns the DOM
+    // (graphic + verdict).
+    //
+    // ⚠ THE BADGES AND WELLS SHOW THE SENSED VALUE, NOT THE TRUTH, and
+    // that is the whole override lesson (the AHU render header's rule,
+    // harmonised onto this unit 2026-08-03): a forced sensor lies to
+    // the program AND to this graphic, exactly as a stuck input lies to
+    // a real front end. The TRUTH appears in one place only — the zone
+    // readout beside the override control (#fcu-zone-val) — and the
+    // state line names the gap. Decisions below read `derived` (the
+    // truth) for the same reason in reverse: a verdict that read the
+    // sensors would believe the lie. Only space-temp has a force
+    // CONTROL today, so only the zone box can visibly split — but the
+    // paint is per-point, so a future rat/dat force lies to its own
+    // badge with no render change.
+    //
+    // The displayed ΔT is the arithmetic of the displayed DAT / RAT so
     // the on-screen math closes (the metric worked-example rounding
     // policy). It is SIGNED — leaving minus entering (DAT − RAT), so a
     // cooling coil reads NEGATIVE (owner ruling 2026-07-27: the sign
@@ -719,23 +779,28 @@ const DDCWFcuUnit = (function () {
     function fcuRenderUnit(plant) {
         const d = plant.derived;
         if (d.invalid) {
-            setBoth(out.eat, '—'); setBoth(out.dat, '—'); setBoth(out.dt, '—');
+            setBoth(out.rat, '—'); setBoth(out.dat, '—'); setBoth(out.dt, '—');
             setVerdict('', 'Enter a value.');
             return;
         }
-        // Displayed values — ΔT reconciles from the displayed operands,
-        // signed: leaving minus entering (negative while cooling).
-        const eatN = dispTempNum(d.eatT);
-        const datN = dispTempNum(d.datT);
-        const spN  = dispTempNum(d.setp);
-        const dtN  = Math.round((datN - eatN) * 10) / 10;
+        const s = plant.sensors;
+        // Displayed values — SENSED per point; zoneN is the one truth
+        // local, and it paints nothing but the override readout. ΔT
+        // reconciles from the displayed operands, signed: leaving minus
+        // entering (negative while cooling).
+        const ratN   = dispTempNum(s['rat']);
+        const datN   = dispTempNum(s['dat']);
+        const spaceN = dispTempNum(s['space-temp']);
+        const zoneN  = dispTempNum(plant.zoneT);
+        const spN    = dispTempNum(d.setp);
+        const dtN    = Math.round((datN - ratN) * 10) / 10;
 
-        setBoth(out.eat, eatN.toFixed(1) + ' ' + tSuffix());
+        setBoth(out.rat, ratN.toFixed(1) + ' ' + tSuffix());
         setBoth(out.dat, datN.toFixed(1) + ' ' + tSuffix());
         setBoth(out.dt,  dtN.toFixed(1)  + ' ' + dSuffix());
-        out.zt.textContent  = eatN.toFixed(1) + ' ' + tSuffix();
+        out.zt.textContent  = spaceN.toFixed(1) + ' ' + tSuffix();
         out.zsp.textContent = spN.toFixed(1) + ' ' + tSuffix();
-        out.zr.textContent  = eatN.toFixed(1) + ' / ' + spN.toFixed(1) + ' ' + tSuffix();
+        out.zr.textContent  = spaceN.toFixed(1) + ' / ' + spN.toFixed(1) + ' ' + tSuffix();
 
         // ── the param rail ── the two params are INPUTS (the rail is the
         // operator-adjustable surface): while a field is not focused its
@@ -873,21 +938,33 @@ const DDCWFcuUnit = (function () {
         setVerdict(cls, txt);
 
         // ── sensor override display — the real-vs-sensed split ──
-        // The zone readout is the ACTUAL zone (eatN). The override box
+        // The zone readout is the ACTUAL integrated zone (zoneN) — the
+        // one place on this screen the truth appears. The override box
         // shows what the program READS: it mirrors the live zone when off
         // (read-only) and holds the forced value when on. Forcing surfaces
         // the drift on the state line so the wrong-number hazard is plain.
-        zoneValLbl.textContent = 'zone ' + eatN.toFixed(1) + ' ' + tSuffix();
+        zoneValLbl.textContent = 'zone ' + zoneN.toFixed(1) + ' ' + tSuffix();
         ovrUnit.textContent = tSuffix();
         if (!d.overrideActive) {
-            ovrInput.value = eatN.toFixed(1);
+            ovrInput.value = zoneN.toFixed(1);
             ovrState.textContent = '';
         } else {
             const sensedN = dispTempNum(d.sensedT);
             ovrState.textContent = 'Program reads ' + sensedN.toFixed(1) + ' ' + tSuffix()
-                + ' — zone is actually ' + eatN.toFixed(1) + ' ' + tSuffix()
+                + ' — zone is actually ' + zoneN.toFixed(1) + ' ' + tSuffix()
                 + '. The controller is staging on the forced value.';
         }
+
+        // The forced-sensor ring — the AHU's dashed accent mark, walked
+        // per point off the override map, so the glyph of any forced
+        // probe carries the flag and a future rat/dat control lights
+        // its own ring with no render change. A forced input that
+        // leaves no mark on the drawing is how a wrong number survives
+        // a shift change.
+        Object.keys(plant.override).forEach(function (id) {
+            const g = sensorGroups[id];
+            if (g) g.classList.toggle('is-forced', plant.override[id].active === true);
+        });
     }
 
     // ── hand controls — per-point: a RELEASED control (slot 8 NULL)
@@ -930,7 +1007,7 @@ const DDCWFcuUnit = (function () {
         // which slot is winning any output's arbitration. The box is
         // editable only while forcing; renderUnit fills it with the
         // live zone when released.
-        const forcing = plant.override.spaceTemp.active;
+        const forcing = plant.override['space-temp'].active;
         ovrToggle.classList.toggle('active', forcing);
         ovrToggle.setAttribute('aria-pressed', forcing ? 'true' : 'false');
         ovrToggle.textContent = forcing ? 'Release' : 'Force sensor';
@@ -1030,8 +1107,13 @@ const DDCWFcuUnit = (function () {
                 // Seed the zone as an INITIAL CONDITION — the loop carries
                 // it from here; a preset never jams the sensed value.
                 pl.zoneT = s.zone;
-                pl.override.spaceTemp.active = false;   // a preset is a clean start
-                pl.override.spaceTemp.value  = s.zone;
+                // A preset is a clean start: release EVERY forced sensor
+                // (the AHU preset rule), and re-seed the wall stat's
+                // parked value from the new zone.
+                Object.keys(pl.override).forEach(function (id) {
+                    pl.override[id].active = false;
+                });
+                pl.override['space-temp'].value = s.zone;
                 host.writeSlot8('fan-speed', s.fan);
                 fanSlider.value = String(s.fan);   // held sliders aren't sync-tracked
                 host.writeSlot8('y1', s.stage >= 1);
@@ -1111,7 +1193,7 @@ const DDCWFcuUnit = (function () {
             return U.current() === 'us' ? disp : U.toCanonical.temp(disp);
         }
         ovrToggle.addEventListener('click', function () {
-            const ov = pl.override.spaceTemp;
+            const ov = pl.override['space-temp'];
             ov.active = !ov.active;
             if (ov.active) {
                 ov.value = pl.zoneT;                   // start the force from the truth
@@ -1121,10 +1203,10 @@ const DDCWFcuUnit = (function () {
             if (ov.active) ovrInput.focus();
         });
         ovrInput.addEventListener('input', function () {
-            if (!pl.override.spaceTemp.active) return;
+            if (!pl.override['space-temp'].active) return;
             const disp = parseFloat(ovrInput.value);
             if (!isFinite(disp)) return;               // validate-and-mute: ignore junk mid-type
-            pl.override.spaceTemp.value = fromDisplayTemp(disp);
+            pl.override['space-temp'].value = fromDisplayTemp(disp);
             host.requestRender();
         });
         // Re-express the forced value in the current display units when the
@@ -1134,8 +1216,8 @@ const DDCWFcuUnit = (function () {
         // shell's own unitschange repaint re-mirrors the input VALUES, but
         // attributes are wireControls' to keep.
         document.addEventListener('unitschange', function () {
-            if (pl.override.spaceTemp.active) {
-                ovrInput.value = toDisplayTemp(pl.override.spaceTemp.value).toFixed(1);
+            if (pl.override['space-temp'].active) {
+                ovrInput.value = toDisplayTemp(pl.override['space-temp'].value).toFixed(1);
             }
             PARAM_POINTS.forEach(function (pp) {
                 railRangeAttrs(rosterPoint(pp.id), out[pp.outKey]);
