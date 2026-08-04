@@ -1,4 +1,4 @@
-> **A RECORD, committed 2026-08-01 — read the three corrections below before
+> **A RECORD, committed 2026-08-01 — read the corrections below before
 > you read the body.**
 >
 > Authored **2026-07-31** by the FBE block-name lane as the design source for
@@ -23,8 +23,8 @@
 >
 > **The body below is unedited and stays that way.** It records what was
 > measured on 2026-07-31, and the measurements — budget, per-sheet tables,
-> collision analysis, totals — all still hold. Three of its *judgements* have
-> since been overtaken. The three corrections here supersede the body where
+> collision analysis, totals — all still hold. Some of its *judgements* have
+> since been overtaken. The corrections here supersede the body where
 > they conflict with it; nothing else in it has moved.
 >
 > 1. **§7.5 — `Occ Dmpr` is falsified.** Commit `cadd43e` (2026-07-31, *"gate

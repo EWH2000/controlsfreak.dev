@@ -366,7 +366,9 @@ paired with an Education explainer for the underlying concepts.
   readable end to end. Load a sample sequence (staged cooling, fan
   interlocks, safeties) or wire your own from a blank sheet; fault
   presets — low charge, blocked condenser, broken belt — make the
-  graphic tell on the machine while the wiresheet shows why.
+  graphic tell on the machine, and teach which faults the wiresheet
+  can explain and which leave a healthy program over a failing
+  refrigeration circuit — a tell you chase with gauges, not logic.
 - **PID Tuning Helper** — step-response simulator with an
   equipment-led selector (a supply-fan/duct-static loop, a 2-way
   valve, a radiator, a long-run reheat coil) and a parameter-style

@@ -566,13 +566,15 @@ section). **Category keys mirror the landing pages' `navCard()`
   cannot list one without failing that test, and the three sweeps never
   reach it: no load check, no console-error check, no phone-width
   overflow check, and **no blocking contrast sweep in either theme**.
-  This is the standing shape of a **hidden page** (`noindex` +
-  `eleventyExcludeFromCollections` + no `canonical`) — `styleguide.html`
-  and the AHU depiction mockup under `html/simulators/` (the two
-  workbench unit pages graduated out of this set 2026-08-04). Hidden
-  pages are covered only because specs name their URLs directly. **Any
-  new hidden page needs its own hand-written spec**; the omission from
-  `tests/pages.js` is correct and must not be "fixed."
+  This is the standing shape of a **hidden page** (`noindex` + no
+  `canonical`, plus `eleventyExcludeFromCollections` where the page
+  must also stay out of the collections) — the AHU depiction mockup
+  under `html/simulators/` carries all three, `styleguide.html` is
+  `noindex`-only. (The two workbench unit pages graduated out of this
+  set 2026-08-04.) Hidden pages are covered only because specs name
+  their URLs directly. **Any new hidden page needs its own
+  hand-written spec**; the omission from `tests/pages.js` is correct
+  and must not be "fixed."
 - **Inline `<style>` in `{% block head %}` is indented to column 4**
   to match the surrounding head context (which is itself indented to
   column 4 inside the rendered `<head>`). Inner CSS rules sit at
@@ -1287,9 +1289,10 @@ under *Git conventions*). Stage specific file lists, not
     holds for both remaining pages — nothing anchors either, and
     `searchPages` filters on `canonical` too, so they are absent from
     the palette as well as the sitemap. A script ONLY hidden pages load
-    (today: none — the mockup loads no scripts and the styleguide loads
-    only the site-wide set; `ddcw-shell.js` and both unit scripts
-    became live-page scripts at graduation — verify with a `grep` over
+    (today: none — the mockup and the styleguide load only the
+    site-wide layout set, no per-page scripts; `ddcw-shell.js` and both
+    unit scripts became live-page scripts at graduation — verify with a
+    `grep` over
     `html/`, since a live page picking one up is exactly the trap
     below); anything under `tests/` or `docs/`; plus `CLAUDE.md` and
     `README.md`.
