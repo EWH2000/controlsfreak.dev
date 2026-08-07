@@ -6,6 +6,7 @@ nav: simulators
 keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
 ---
 {% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
 
 {% block head %}
     <style>
@@ -2824,6 +2825,36 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
 
         </div>
     </div>
+
+    {# The three drill-down anchors in the "Reading this screen" section
+       (hydronic-loop-builder / refrigerant-loop / vfd-mock) are deliberately
+       NOT repeated here — they are the touch-target twins the AHU page spec
+       pins, and this column is for the topics the drill-downs don't cover. #}
+    {{ relatedLinks({
+        hub: {href: '/forced-air/', label: 'The forced-air reference hub'},
+        tools: [
+            {href: '/tools/air-mixing.html', label: 'Air-Mixing Calculator'},
+            {href: '/tools/economizer-ratio.html', label: 'Economizer Ratio Helper'},
+            {href: '/tools/coil-freeze-risk.html', label: 'Coil Freeze Risk Checker'},
+            {href: '/tools/bacnet-priority.html', label: 'BACnet Priority Array'}
+        ],
+        simulators: [
+            {href: '/simulators/ddc-workbench-fcu.html', label: 'DDC Workbench — Fan Coil'},
+            {href: '/simulators/function-block-editor.html', label: 'Function-Block Editor'}
+        ],
+        lessons: [
+            {href: '/education/air-handlers.html', label: 'Air Handlers'},
+            {href: '/education/economizers.html', label: 'Economizers'},
+            {href: '/education/comparators-and-deadband.html', label: 'Comparators & Deadband'},
+            {href: '/education/reading-a-wiresheet.html', label: 'Reading a Wiresheet'},
+            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'}
+        ],
+        quizzes: [
+            {href: '/practice/air-handlers.html', label: 'Air Handlers Quiz'},
+            {href: '/practice/economizers.html', label: 'Economizers Quiz'},
+            {href: '/practice/sequencing-scenarios.html', label: 'Sequencing Scenarios'}
+        ]
+    }) }}
 
     <a class="back-link" href="/simulators/">← All simulators</a>
 
