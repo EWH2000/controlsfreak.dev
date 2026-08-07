@@ -444,6 +444,22 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
                 16-slot reservation table alongside it.
             </p>
 
+            <p>
+                To watch the same rule arbitrate a running machine rather than a
+                bare array, the <a href="/simulators/ddc-workbench.html">DDC
+                Workbench</a> drives an air handler from a function-block
+                program and gives every commandable point a priority array of
+                its own. It uses three of the sixteen slots: the sequence writes
+                slot 16, your hand writes slot 8, and a point the program has no
+                block for falls through to <code>Relinquish_Default</code>.
+                Un-check a <em>NULL — released</em> box, leave it, and the point
+                reads broken while the sequence underneath it keeps writing
+                correctly — the failure this section describes, with a machine
+                on the other end of it. The
+                <a href="/simulators/ddc-workbench-fcu.html">fan-coil bench</a>
+                is the smaller unit to try it on first.
+            </p>
+
             <h2 class="subhead">Who-Is / I-Am — how devices announce themselves</h2>
 
             <p>
@@ -703,6 +719,10 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
             {href: '/tools/bacnet-priority.html', label: 'BACnet Priority Array'},
             {href: '/tools/bacnet-objects.html', label: 'BACnet Object Reference'},
             {href: '/tools/bacnet-ip-converter.html', label: 'BACnet/IP Hex Converter'}
+        ],
+        simulators: [
+            {href: '/simulators/ddc-workbench.html', label: 'DDC Workbench — Air Handler'},
+            {href: '/simulators/ddc-workbench-fcu.html', label: 'DDC Workbench — Fan Coil'}
         ],
         lessons: [
             {href: '/education/bacnet-services.html', label: 'BACnet Services'},

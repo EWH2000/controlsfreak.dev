@@ -261,6 +261,9 @@ faqs:
             <p class="ref-note">
                 So the classic "this point is broken" call is almost never a broken sequence. The program is writing 65 % at slot 16 exactly as designed, but a hand override someone set months ago still sits at slot 8 — and slot 8 outranks slot 16, so <code>Present_Value</code> resolves to the stale override. The value on the graphic is the <em>resolved</em> value, not what the sequence is writing. Read the entire array, find the higher-priority slot that is still populated, and release it. A <a href="/tools/bacnet-error-codes.html">write-access-denied</a> when you try to write <code>Present_Value</code> directly is often the same story — the value is owned by the array, so command a priority instead.
             </p>
+            <p class="ref-note">
+                To leave a stale override on a machine rather than on an array, the <a href="/simulators/ddc-workbench.html">DDC Workbench</a> gives every commandable point on a live air handler a priority array of its own and uses three of the sixteen slots — slot 16 for the control program, slot 8 for your hand, and <code>Relinquish_Default</code> for a point the program carries no block for. Un-check a <em>NULL — released</em> box and that point stops following the sequence until you write NULL back, and the <em>Points not following the program</em> window names which of the two reasons is holding it. The <a href="/simulators/ddc-workbench-fcu.html">fan-coil bench</a> is the smaller unit to start on.
+            </p>
         </section>
 
     </div>
@@ -273,6 +276,10 @@ faqs:
             {href: '/tools/bacnet-objects.html', label: 'BACnet Object Reference'},
             {href: '/tools/bacnet-error-codes.html', label: 'BACnet Error Code Decoder'},
             {href: '/tools/bacnet-units.html', label: 'BACnet Units Decoder'}
+        ],
+        simulators: [
+            {href: '/simulators/ddc-workbench.html', label: 'DDC Workbench — Air Handler'},
+            {href: '/simulators/ddc-workbench-fcu.html', label: 'DDC Workbench — Fan Coil'}
         ],
         lessons: [
             {href: '/education/bacnet-basics.html', label: 'BACnet Basics'},
