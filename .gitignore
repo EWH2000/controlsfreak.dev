@@ -50,3 +50,11 @@ _site/
 # in for analysis — working data, not site source). Kept out of history.
 controlsfreak.dev-Performance-on-Search-*.zip
 controlsfreak.dev_SearchPerformanceOverview_*.csv
+
+# Session working notes dropped in the repo root — briefs written elsewhere
+# and carried in for a session, plus handoffs belonging to other projects.
+# Same rationale as the SEO exports above: working data, not site source.
+# Ignoring them also keeps `git status` clean, so a lane running in a
+# worktree can't stage one by accident.
+controlsfreak-dev-arc-brief.md
+OtherProjectHandoffsDoNotGitCommit/
