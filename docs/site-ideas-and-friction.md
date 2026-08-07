@@ -210,11 +210,17 @@ floating triac-pair wiring — controller-wiring.html (anchored once);
 VFD run/speed — vfds.html (anchored once: drives take the same
 0–10 / 4–20 command languages, that page owns them); loop behavior —
 pid-basics.html; valve sizing and authority stay plain prose
-`[future: valve-authority]`.
+`[future: valve-authority]` *(marker retired 2026-08-07 — it was
+already stale when written: owner ruled it meant the TOOL, and both
+`tools/valve-cv.html` (shipped 2026-06-06) and
+`tools/valve-authority.html` (shipped 2026-07-07) predate this page.
+The sentence now anchors both, and both joined the page's
+`relatedLinks` tools group — codebase-issues #184)*.
 Debts: pays analog-sensing's "you will meet it on actuator feedback
 especially" plant (upgraded to a live link into
 #feedback-and-floating, plus relatedLinks reciprocity both ways).
-Incurs the valve-authority marker above.
+Incurs the valve-authority marker above *(paid 2026-08-07 with the
+marker retirement — see above)*.
 
 **Start/Stop Commands — the chapter closes on the output side.**
 Owner-added for input/output symmetry: the rest of the chapter lives

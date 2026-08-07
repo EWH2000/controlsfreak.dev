@@ -354,7 +354,10 @@ keywords: actuator 2-10V 0-10V 4-20mA span stroke spring return fail position no
                 list is short and ordered: transit time, span configuration, direction, mechanics — and the wiring
                 you already proved. One thing this page deliberately leaves alone: how much <em>flow</em> a given
                 valve stroke actually buys. Fifty percent stroke is rarely fifty percent flow — that's valve sizing
-                and authority, its own topic.
+                and authority, and the math lives in two tools rather than on this page:
+                <a href="/tools/valve-cv.html">Valve Cv Sizing</a> picks the valve for the flow and the pressure
+                drop you have, and the <a href="/tools/valve-authority.html">Valve Authority Calculator</a> says how
+                much of the branch's drop that valve has to own before its stroke means anything at the coil.
             </p>
 
         </div>
@@ -362,7 +365,9 @@ keywords: actuator 2-10V 0-10V 4-20mA span stroke spring return fail position no
 
     {{ relatedLinks({
         tools: [
-            {href: '/tools/signal-scaling.html', label: 'Signal Scaling'}
+            {href: '/tools/signal-scaling.html', label: 'Signal Scaling'},
+            {href: '/tools/valve-cv.html', label: 'Valve Cv Sizing'},
+            {href: '/tools/valve-authority.html', label: 'Valve Authority Calculator'}
         ],
         simulators: [
             {href: '/simulators/controller-wiring.html', label: 'Controller Wiring Simulator'}
