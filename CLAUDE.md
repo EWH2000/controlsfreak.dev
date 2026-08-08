@@ -1433,6 +1433,28 @@ re-submit); add `--dry-run` to print the URL list without POSTing.
   rather than re-deriving the pattern — two earlier hand-rolled
   formulations of this exact check produced confident numbers that
   were never reproducible.
+- **Metric-conversion guard — two arms, and only one of them gates.**
+  *Arm 1* is `tests/metric-spans.spec.js`, a **blocking** spec in `npm test`:
+  it walks every `data-us`/`data-metric` span **and** every
+  `48 °F (8.9 °C)` parenthetical under `html/` (the quiz-bank notation, which
+  `quiz-banks.spec.js` is shape-only about) and fails on any °F → °C figure
+  that is neither a valid absolute nor a valid delta conversion. *Arm 2* is
+  `npm run metric-lint` — **report-only, deliberately NOT in `test.yml`**,
+  the same standing as `prose-lint` — which asks the question arm 1
+  structurally cannot: does a stated delta agree with the metric operands its
+  own passage paints? **Arm 1 would not have caught the defect that motivated
+  it** — `1.1 °C` for `2 °F` is a *valid* delta, and is wrong only against
+  the 23.9 / 22.7 painted two sentences away (content-audit #57,
+  codebase-issues #232). Arm 1 closes *the conversion is outright wrong*;
+  arm 2 is the only thing that reaches *the conversion is valid but
+  contradicts the page's own numbers*, and it is advisory — measured at two
+  of the three known instances, with false positives expected. Both read one
+  parser, `tests/metric-spans.js`, whose header pins the tolerance (measured
+  off the corpus, not picked), the entity/sign normalisation (load-bearing —
+  folding an en dash to a hyphen mis-signs every range), and the scan scope.
+  Arm 1's `ALLOWLIST` follows the `contrast-sweep.spec.js` convention: a
+  written reason per entry, and an entry that stops matching fails its own
+  test.
 - **Diagram audit pass:** `npm run screenshots` (with a server on
   :8000) dumps every diagram-class SVG across the sitemap to
   `/tmp/audit-<page>-<id>.png`. Use it as the starting point for any
