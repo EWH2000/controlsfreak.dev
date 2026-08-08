@@ -500,8 +500,16 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
                 <text x="435" y="440" font-size="10" fill="var(--text-dim)">temperature</text>
                 <text x="401" y="453" font-size="10" fill="var(--text-bright)">AI</text>
                 <text x="435" y="453" font-size="10" fill="var(--text-dim)">RH / dew point</text>
-                <text x="401" y="470" font-size="9" fill="var(--accent)">the dew point is the</text>
-                <text x="401" y="483" font-size="9" fill="var(--accent)">primary control point</text>
+                <!-- --text-bright, NOT --accent, and that is a ruling rather than a
+                     preference (owner, 2026-08-07). The key below makes accent mean
+                     exactly one thing on this drawing — the program WRITES it — and the
+                     dew point is an AI the program reads. Green here is residue: before
+                     the rework this text read "leaving dew point SETPOINT", and a
+                     setpoint genuinely is written. Bright still reads as emphasis
+                     against the --text-dim descriptions either side of it. Do not
+                     repaint it accent. -->
+                <text x="401" y="470" font-size="9" fill="var(--text-bright)">the dew point is the</text>
+                <text x="401" y="483" font-size="9" fill="var(--text-bright)">primary control point</text>
 
                 <!-- Point-type key — keeps the diagram self-contained -->
                 <text x="-38" y="493" font-size="9" fill="var(--accent)">AO · BO</text>

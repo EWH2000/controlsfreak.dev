@@ -364,6 +364,35 @@ checks and no build guard reaches.
   "exhaust" label, 6.7 units clear), and the flow-particle layer still the
   SVG's last child with particles crossing over the fan rather than under
   it. Eyeballed in both themes.
+- **Follow-on 2026-08-08 — the outside-the-casing placement is RULED, and
+  for a better reason than the one recorded above.** The placement was put
+  to the owner as a possible defect, since a packaged ERV DOAS normally
+  carries its exhaust fan inside the unit and the drawing therefore shows
+  the two fans asymmetrically — supply in, exhaust out. He ruled **leave it
+  outside**, on field grounds rather than layout grounds: *"I've seen plenty
+  of DOAS systems in the field where the exhaust fan is separate."* That
+  supersedes the space-constraint rationale as the **reason of record** —
+  the geometry made it convenient, but the depiction is defensible on its
+  own, so a future re-layout that frees room inside the casing is **not** a
+  reason to move it. It is one real configuration among several, and this
+  site's house habit is to depict a real variant rather than legislate one.
+- **Follow-on 2026-08-08 — the accent on "the dew point is the primary
+  control point" is repainted `--text-bright`** (`dedicated-outdoor-air.html`
+  ~:503-504). Raised as a possible mixed signal and confirmed as one: the
+  key the redraw added makes accent mean exactly one thing on this drawing
+  — *the program writes it* — and the dew point is an `AI` the program
+  reads, so the same quantity was appearing in two inks three lines apart
+  inside one callout block. The cause is residue, which is why it survived
+  review: before the redraw the text read "leaving dew point **setpoint**",
+  and a setpoint genuinely *is* written; the redraw moved the sensor off
+  accent and left the accent on a sentence that now describes a
+  measurement. Two alternatives were put up — repaint, or keep the green
+  and reword to a claim that is actually written ("the dew-point setpoint
+  is what this unit controls to") — and the owner chose **repaint**, which
+  is the option that leaves accent unambiguous rather than the one that
+  rescues the colour. Bright still reads as emphasis against the
+  `--text-dim` descriptions either side. A source comment at the site
+  records the ruling so the next reader does not repaint it green.
 
 ### L6 — the Comparators capstone says the heating example differs only in two wires
 

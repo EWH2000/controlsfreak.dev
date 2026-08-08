@@ -3025,9 +3025,30 @@ further than four bolted-on markers:
   `p.ref-note` now reads "supply and exhaust fan start/stop and status"
   and adds that both fans are drawn and neither is marked, so the
   decision is legible on the page itself.
+- **The fan sits OUTSIDE the casing, and that is ruled, not incidental**
+  (owner 2026-08-08). The geometry made it convenient — the wheel fills
+  the recovery section, so no fan glyph clears both the cabinet wall and
+  the wheel edge on the exhaust centreline — but the placement was put to
+  the owner as a possible defect, because a packaged ERV DOAS normally
+  carries its exhaust fan inside the unit and the drawing therefore shows
+  the two fans asymmetrically. He ruled **leave it outside**, on field
+  grounds: *"I've seen plenty of DOAS systems in the field where the
+  exhaust fan is separate."* **That is the reason of record** — a future
+  re-layout that frees room inside the casing is not a reason to move it.
+- **The accent on "the dew point is the primary control point" is
+  repainted `--text-bright`** (owner 2026-08-08). The key the redraw
+  added makes accent mean exactly one thing — *the program writes it* —
+  and the dew point is an `AI` the program reads, so the same quantity
+  was rendering in two inks three lines apart inside one callout. The
+  cause was residue: pre-redraw the text read "leaving dew point
+  **setpoint**", and a setpoint genuinely is written. Offered a repaint
+  or a reword that would make the green correct, the owner chose the
+  repaint — the option that leaves accent unambiguous rather than the one
+  that rescues the colour. A source comment records it so the next reader
+  does not undo it.
 
 PR: docs/audit-2026-08-accuracy. *(resolved 2026-08-07; exhaust-fan
-follow-on 2026-08-07)*
+follow-on 2026-08-07; placement + ink rulings 2026-08-08)*
 
 ### 63. comparators-and-deadband.html capstone says the heating example differs only in two wires
 
