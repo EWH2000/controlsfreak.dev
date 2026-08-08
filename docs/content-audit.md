@@ -2825,8 +2825,21 @@ is sound, and what drifts is **the sentence about the picture** — a
 block count, a wire colour, a snippet's addition, a claim about what a
 diagram marks. No spec checks those and no build guard reaches them.
 
+**Closed 2026-08-07: 7 fixed, 1 accepted as written** (#64 — see its
+disposition). The cycle also shipped a **deliverable**, on the owner's
+ruling *"a cheap test that may catch it still decreases what we can miss
+ourselves"*: a two-arm metric-conversion guard. Arm 1
+(`tests/metric-spans.spec.js`) **blocks** — every °F → °C figure in the
+source, in both notations, must be a valid absolute or a valid delta.
+Arm 2 (`npm run metric-lint`) is **report-only** and asks whether a
+stated delta agrees with the operands its own passage paints. **Arm 1
+would not have caught #57** — `1.1 °C` for `2 °F` is a *valid* delta —
+so the two are not redundant and neither is sufficient. Design, measured
+tolerance, and the honest limits: the *Deliverable* section of the
+triage doc.
+
 Full evidence record, the seven refuted findings with their reasoning,
-the metric-sweep coverage note, and a proposed guard spec:
+the metric-sweep coverage note, and the guard as built:
 `docs/audits/2026-08-accuracy/triage.md`.
 
 ### 57. comparators-and-deadband.html deadband swing contradicts its own painted operands
@@ -2960,7 +2973,42 @@ point — marked"); or (b) add point callouts for the other four and keep
 the sentence. (b) is the better page but is a design change with a real
 drawing budget. Severity low; confidence high on the finding, the remedy
 is an editorial/design choice. Triage: L5.
-**Open — awaiting the owner's pick.**
+**Resolved — the DIAGRAM was reworked, not the prose** (owner ruling
+2026-08-07: *"that diagram could use a rework anyway, so let's go that
+direction"*). The sentence is now true as written, and the pass went
+further than four bolted-on markers:
+
+- **The wheel now straddles two airways.** The old capstone drew one
+  casing with the wheel sitting entirely in the supply stream, and a
+  return duct that came along the top and **stopped in mid-air** above
+  it — the exhaust stream never crossed the wheel at all, which is the
+  one thing a recovery wheel does. The cabinet is now a tall recovery
+  section carrying both streams, split by a horizontal line with the
+  wheel across it; return goes in one face and exhaust comes out the
+  other, with the colour change hidden behind the wheel so the wheel is
+  visibly what converts one into the other.
+- **All five points are marked**, each tied to its station by a dashed
+  leader and labelled with its point type: wheel command (AO/BO) and
+  rotation status (BI); cooling valve or stage (AO/BO); reheat valve or
+  stage (AO/BO); leaving-air temperature (AI) and leaving RH / dew point
+  (AI), the latter still called out as the primary control point.
+- **Ink follows the house rule** from the owner's own production
+  graphics — accent is what the program writes, plain bright is what a
+  sensor measured — so the leaving-air sensors moved from accent to
+  bright and the accent on the drawing now means "a command reaches in
+  here." An in-SVG key states that pair, so the diagram is
+  self-contained.
+- The two leaving-air sensors sit on **taps off the duct** rather than
+  on its centreline: the flow-engine particle layer paints as the SVG's
+  last child, so a sensor on the duct had its glyph occluded every time
+  a particle passed. Found by looking at the render, not the source.
+- The `<desc>` was rewritten to carry the two-airway topology and all
+  five points, and a `p.ref-note` under the diagram states the scope —
+  five points because those five answer whether the unit is doing its
+  job; a real DOAS carries more (fan start/stop and status, filter DP,
+  safeties) and none of them answers that question.
+
+PR: docs/audit-2026-08-accuracy. *(resolved 2026-08-07)*
 
 ### 63. comparators-and-deadband.html capstone says the heating example differs only in two wires
 
@@ -3010,4 +3058,17 @@ read as the NOT and everything downstream, in which case the sentence is
 loose rather than wrong — a genuine 50/50 on a live page. Severity low;
 confidence high that a green wire is in the branch as drawn, medium that
 the sentence is wrong rather than loose. Triage: L7.
-**Open — awaiting the owner's pick.**
+**Disposition:** owner-accepted as written (2026-08-07) — *"I think it
+reads well as is."* The finding's own medium-confidence caveat is the
+reason it resolves this way, and re-reading the SVG settles it: the green
+`M180 576 H390` runs from the freeze stat's tap junction to the NOT's
+**input** pin, so it is the wire *into* the branch, not a wire *on* it.
+Everything downstream of the NOT — the one wire the branch actually owns
+— is `var(--text-dim)`. Under the reading that scopes "the branch" to
+the wires within it, the sentence is correct rather than merely loose,
+and narrowing it to "the wire out of it" would trade the trap it teaches
+(a healthy branch that scans dead) for a more literal but weaker line.
+No page change. The `raw-d1-desc` alt text keeps its wording for the
+same reason: it describes the same branch under the same scoping, so
+changing one and not the other would be the real inconsistency.
+*(accepted — reads correctly as written, 2026-08-07)*

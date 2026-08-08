@@ -1,13 +1,17 @@
 # Accuracy audit — the eleven post-2026-07-14 lessons (2026-08-07)
 
-> **TRIAGE — 8 of 8 dispositioned 2026-08-07: 6 fixed, 2 awaiting the
-> owner's pick.** Six clean-cut items (**M1, L1, L2, L3, L4, L6**) were
-> fixed on `docs/audit-2026-08-accuracy`; the two whose *remedy* is an
-> editorial or design choice rather than a mechanical correction
-> (**L5, L7**) are reported and wait. Cross-filed into
-> `content-audit.md` as findings **#57–#64** — the six fixed carry
-> *(resolved 2026-08-07)*, the two open carry no disposition marker
-> yet. This doc is the durable evidence record.
+> **CLOSED 2026-08-07 — 8 of 8 dispositioned: 7 fixed, 1 accepted as
+> written.** Six clean-cut items (**M1, L1, L2, L3, L4, L6**) were fixed
+> first; the owner then ruled on the two whose *remedy* was an editorial
+> or design choice — **L5** by reworking the DOAS capstone diagram rather
+> than softening the prose, **L7** by accepting the wiresheet sentence as
+> written. Cross-filed into `content-audit.md` as findings **#57–#64**.
+> The audit also shipped a **deliverable**: the two-arm metric-conversion
+> guard proposed at the foot of this file, built on the owner's ruling
+> (*"a cheap test that may catch it still decreases what we can miss
+> ourselves"*) — see *Recommendation* below for what was actually built
+> and where it differs from the sketch. This doc is the durable evidence
+> record.
 >
 > **Method:** 15 findings raised, 7 killed by refutation, 8 survive.
 > Final severities: **0 high · 1 medium · 7 low.**
@@ -306,7 +310,32 @@ checks and no build guard reaches.
   drawing budget, so it is not an audit's call to make.
 - **Severity:** low. **Confidence:** high on the finding; the *remedy*
   is an editorial/design choice.
-- **Open — awaiting the owner's pick (2026-08-07).**
+- **Resolved 2026-08-07 — the owner picked (b), the diagram.** His words:
+  *"that diagram could use a rework anyway, so let's go that direction."*
+  Read as licence for a real pass rather than four minimum-viable markers,
+  and the pass found a second defect the finding had not: **the wheel was
+  in the wrong place.** The old `doas-d3` drew one casing with the wheel
+  sitting entirely in the supply airway and a return duct that came along
+  the top and stopped in mid-air above it — so the exhaust stream never
+  crossed the wheel, which is the one thing a recovery wheel does. The
+  redraw makes the recovery section a tall cabinet carrying both airways
+  with a split line between them and the wheel across it; return enters one
+  face and exhaust leaves the other, the colour change hidden behind the
+  wheel so the wheel is visibly what converts one into the other. On top of
+  that: all five points marked, each on a dashed leader to its station and
+  labelled with its type (wheel command AO/BO + rotation status BI; cooling
+  valve or stage AO/BO; reheat valve or stage AO/BO; leaving-air temperature
+  AI; leaving RH / dew point AI, still called out as the primary control
+  point); ink follows the owner's own house rule (accent = the program
+  writes it, plain bright = a sensor measured it), with an in-SVG key so the
+  drawing is self-contained; the two leaving-air sensors moved onto taps off
+  the duct because the flow-particle layer paints above everything and was
+  occluding their glyphs; the `<desc>` rewritten for the new topology and
+  all five points; and a `p.ref-note` stating the scope — five points
+  because those five answer whether the unit is doing its job.
+  **Verified in pixels, not coordinates** (`npm run screenshots` plus a
+  text-bbox overlap probe: 39 text nodes, zero overlaps, nothing outside the
+  viewBox) and eyeballed in both themes.
 
 ### L6 — the Comparators capstone says the heating example differs only in two wires
 
@@ -370,7 +399,18 @@ checks and no build guard reaches.
   diff.
 - **Severity:** low. **Confidence:** high that a green wire is in the
   branch as drawn; medium that the sentence is wrong rather than loose.
-- **Open — awaiting the owner's pick (2026-08-07).**
+- **Accepted as written 2026-08-07 — no page change.** Owner: *"I think it
+  reads well as is."* The medium half of this finding's own confidence is
+  what carries: "the branch" scopes to the wires WITHIN it, and re-reading
+  the SVG settles which those are. The green `M180 576 H390` runs from the
+  freeze stat's tap junction to the NOT's **input** pin — the wire *into*
+  the branch — while the one wire the branch owns, NOT → lamp, is
+  `var(--text-dim)`. Under that scoping the sentence is correct rather than
+  loose, and narrowing it to "the wire out of it" would trade the trap it
+  teaches (a healthy branch that scans dead) for a more literal, weaker
+  line. The `raw-d1-desc` alt text keeps its wording for the same reason:
+  it describes the same branch under the same scoping, so changing one and
+  not the other would be the real inconsistency.
 
 ---
 
@@ -583,7 +623,65 @@ wrong. Nothing a field engineer could act on and be misled by.
 
 ---
 
-## Recommendation — a spec that would close the M1 / L1 / L2 class permanently
+## Deliverable — the two-arm metric guard (BUILT 2026-08-07)
+
+> **Owner ruling 2026-08-07: build it.** *"A cheap test that may catch it
+> still decreases what we can miss ourselves."* Both arms shipped on
+> `docs/audit-2026-08-accuracy`. What landed differs from the sketch below
+> in four places, each of them measured rather than argued:
+>
+> 1. **One parser, two consumers.** `tests/metric-spans.js` holds the
+>    extraction, the normalisation, the two tests and the tolerance; the
+>    gate and the lint both read it. A second copy of this arithmetic is
+>    the drift generator this repo keeps re-finding.
+> 2. **Both notations, not just spans.** The sketch scanned `data-us`
+>    pairs. Half of this audit's instances of the defect were in a quiz
+>    bank, which paints `48 °F (8.9 °C)` parentheticals because those
+>    render after the units walker — so a spans-only guard is blind to the
+>    surface `quiz-banks.spec.js` is already shape-only about. All 121
+>    parenthetical figures classify cleanly, so the extra coverage cost
+>    zero exemptions.
+> 3. **The tolerance is 0.15, not 0.06, and it was measured.** Scoring
+>    every paired number against the nearer test gives a flat plateau:
+>    0.10 / 0.15 / 0.20 / 0.25 all leave the same 20 over-tolerance
+>    numbers, because the legitimate residuals top out at 0.222 and the
+>    next is 0.260 (an IP-native formula constant). 0.06 — the value used
+>    for this audit's one-shot, human-reviewed sweep — **rejects the M1
+>    and L1 fixes this very branch shipped**, because `1.2 °C` for `2 °F`
+>    is the displayed-operand arithmetic the rounding policy requires and
+>    sits 0.089 off the canonical 1.111. A gate at war with a house policy
+>    gets muted.
+> 4. **No agreement rule.** The sketch would have required every number in
+>    one span to classify the same way. Legitimate spans mix —
+>    `50 − 40 = 10 °F` → `10.0 − 4.4 = 5.6 °C` is two absolutes and a
+>    delta — so that rule flags every worked equation twin on the site
+>    (raising the exemption list from 15 to 28) and buys one contrived
+>    catch in return.
+>
+> **Final shape.** Arm 1, `tests/metric-spans.spec.js`: blocking, in
+> `npm test`, 515 spans in 40 files plus 121 parentheticals in 20,
+> **15 allowlist entries** each with a written reason, an entry that stops
+> matching fails its own test, sanity floors per notation (including one
+> that fails if the parenthetical walk stops reaching the quiz banks), and
+> a known-answer test verified by mutation — flipping the `32` or the
+> `5/9` turns both it and the corpus sweep red. Arm 2,
+> `npm run metric-lint` (`.github/scripts/metric-lint.mjs`): report-only,
+> **deliberately not in `test.yml`**, 20 candidates today.
+>
+> **The honest limitation, restated because it is the whole point.** Arm 1
+> would **not** have caught M1. `1.1 °C` for `2 °F` is a *valid* delta; it
+> fails only against operands painted elsewhere. Arm 1 closes *the
+> conversion is outright wrong*; arm 2 is the only thing that reaches *the
+> conversion is valid but contradicts the page's own numbers*, and it is
+> advisory. Measured by reverting the three fixed figures in place: arm 2
+> reports two of them (the lesson paragraph, nearest candidate 1.2 off by
+> 0.1; and the bank's `cdb-band-too-wide`, nearest 3.4 off by 0.1) and
+> misses the third, whose operands are written as one metric expression
+> with the unit stated once — "(in °C: 22.2 + 0.6 = 22.8 …)" — which a
+> scan for `<number> °C` cannot see. Two of three from a heuristic, on the
+> exact defect class.
+
+### The original proposal, as written before the ruling
 
 **Proposal only. Not built, and not to be built without the owner's
 yes.** codebase-issues #232 says outright that nothing guards this
