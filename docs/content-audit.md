@@ -3007,8 +3007,27 @@ further than four bolted-on markers:
   five points because those five answer whether the unit is doing its
   job; a real DOAS carries more (fan start/stop and status, filter DP,
   safeties) and none of them answers that question.
+- **The exhaust fan is drawn and deliberately NOT marked** (owner
+  ruling 2026-08-07, follow-on the same day). The redraw above had left
+  it out, and an ERV-equipped DOAS has one on the return path — without
+  it nothing pulls air across the wheel's exhaust face, so the machine
+  read wrong to a tech who knows what a wheel needs. Asked whether the
+  diagram should carry one, the owner ruled: **"draw the exhaust fan, do
+  not mark it."** `doas-d3-ef` is therefore plain geometry — no callout,
+  no leader, no point, no type label — in the supply fan's neutral ink,
+  on the exhaust duct downstream of the wheel with its blade pointing
+  toward the exhaust arrow. He explicitly accepted that one drawn
+  component would carry no leader while four others do. **The five-point
+  story is the diagram's point and a sixth station would dilute it — a
+  later reader should not "fix" this by adding one.** Accent was
+  off-limits for the same reason: nothing on this drawing writes or
+  reads the fan, and accent here means "a command reaches in here." The
+  `p.ref-note` now reads "supply and exhaust fan start/stop and status"
+  and adds that both fans are drawn and neither is marked, so the
+  decision is legible on the page itself.
 
-PR: docs/audit-2026-08-accuracy. *(resolved 2026-08-07)*
+PR: docs/audit-2026-08-accuracy. *(resolved 2026-08-07; exhaust-fan
+follow-on 2026-08-07)*
 
 ### 63. comparators-and-deadband.html capstone says the heating example differs only in two wires
 

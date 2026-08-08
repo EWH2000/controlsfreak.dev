@@ -336,6 +336,34 @@ checks and no build guard reaches.
   **Verified in pixels, not coordinates** (`npm run screenshots` plus a
   text-bbox overlap probe: 39 text nodes, zero overlaps, nothing outside the
   viewBox) and eyeballed in both themes.
+- **Follow-on 2026-08-07 — the exhaust fan is DRAWN and DELIBERATELY NOT
+  MARKED.** The redraw above left the exhaust fan out entirely, and an
+  ERV-equipped DOAS has one on the return path — without it the wheel has
+  nothing pulling air across its exhaust face, so the machine read wrong to
+  anyone who knows what a wheel needs. Put to the owner, who builds
+  equipment graphics professionally: **"draw the exhaust fan, do not mark
+  it."** So `doas-d3-ef` is plain geometry — no callout, no leader, no
+  point, no type label — in the supply fan's neutral ink (`--surface` fill,
+  `--text-dim` stroke and blade), on the exhaust duct downstream of the
+  wheel with its blade pointing toward the exhaust arrow. He explicitly
+  accepted the asymmetry: one drawn component with no leader while four
+  others have one. **The five-point story is the point of the diagram and
+  a sixth station would dilute it — do not "finish" the fan by adding a
+  leader.** Ink discipline is the trap here: the fan is neither commanded
+  nor read on this drawing, so accent would have broken the rule the
+  redraw had just made uniform (accent = the program writes it). It sits
+  just outside the casing because the wheel fills the recovery section —
+  between the cabinet wall (x=48) and the wheel's edge on the exhaust
+  centreline (x≈78) no fan clears both. The `<desc>` names it; the
+  `p.ref-note` now reads "supply and exhaust fan start/stop and status" and
+  says both fans are drawn and neither is marked, so the omission is legible
+  on the page and not just in this file. Re-verified in pixels: `npm run
+  screenshots`, plus the bbox probe re-run — still 39 text nodes, zero
+  overlaps at 0.5-unit tolerance, nothing outside the viewBox, the fan's
+  bbox intersecting no text and no other geometry (nearest neighbour is the
+  "exhaust" label, 6.7 units clear), and the flow-particle layer still the
+  SVG's last child with particles crossing over the fan rather than under
+  it. Eyeballed in both themes.
 
 ### L6 — the Comparators capstone says the heating example differs only in two wires
 

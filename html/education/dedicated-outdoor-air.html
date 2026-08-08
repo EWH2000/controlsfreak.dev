@@ -338,7 +338,9 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
                  reaches in here." The in-SVG key at the bottom states that pair, so
                  the diagram is self-contained. Blocks are staggered into two rows;
                  that is what lets the canvas stay narrow enough for the type to
-                 render at the same size as the other diagrams on this page.
+                 render at the same size as the other diagrams on this page. The
+                 exhaust fan is the one drawn component with no leader, and that
+                 is deliberate — the note on it below says why.
 
                  data-flow-static="true" is an ASSERTION, not a hint — see the note
                  above D1. Nothing on this page writes duct geometry. -->
@@ -349,16 +351,17 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
                     An energy-recovery wheel straddles that split. Outdoor air enters the lower left, crosses the wheel,
                     and passes on to a deep cooling coil that dehumidifies it, then a reheat coil, then the supply fan,
                     and leaves as a neutral, dry supply ducted to the zones on the right. Return air from the zones runs
-                    back along the top into the upper airway, crosses the other face of the wheel, and leaves as exhaust
-                    at the upper left; the wheel transfers heat and moisture between the two streams. Five BMS points are
-                    marked, each tied to its station by a dashed leader line, and each labelled with its point type. On the
-                    recovery wheel, a wheel command, analog or binary output, and a rotation status, binary input. On the
-                    deep cooling coil, a cooling valve or compressor stage, analog or binary output. On the reheat coil, a
-                    reheat valve or stage, analog or binary output. In the supply duct after the reheat coil, two sensors
-                    sit in the airstream: a leaving-air temperature, analog input, and a leaving-air relative-humidity and
-                    dew-point sensor, analog input, which is the unit's primary control point. A key states the convention:
-                    analog and binary outputs are what the program writes, analog and binary inputs are what it reads. Each
-                    zone has a terminal unit that handles the space's sensible heating and cooling.</desc>
+                    back along the top into the upper airway, crosses the other face of the wheel, passes an exhaust fan
+                    on the exhaust duct just outside the casing, and leaves at the upper left; the wheel transfers heat and
+                    moisture between the two streams. Five BMS points are marked, each tied to its station by a dashed
+                    leader line, and each labelled with its point type. On the recovery wheel, a wheel command, analog or
+                    binary output, and a rotation status, binary input. On the deep cooling coil, a cooling valve or
+                    compressor stage, analog or binary output. On the reheat coil, a reheat valve or stage, analog or
+                    binary output. In the supply duct after the reheat coil, two sensors sit in the airstream: a
+                    leaving-air temperature, analog input, and a leaving-air relative-humidity and dew-point sensor,
+                    analog input, which is the unit's primary control point. A key states the convention: analog and
+                    binary outputs are what the program writes, analog and binary inputs are what it reads. Each zone has
+                    a terminal unit that handles the space's sensible heating and cooling.</desc>
 
                 <!-- Ducts first, so the equipment drawn below paints over them. -->
 
@@ -400,6 +403,26 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
                     <line x1="95" y1="244" x2="81" y2="258" stroke="var(--text-dim)" stroke-width="1"/>
                     <line x1="95" y1="196" x2="81" y2="182" stroke="var(--text-dim)" stroke-width="1"/>
                     <line x1="143" y1="196" x2="157" y2="182" stroke="var(--text-dim)" stroke-width="1"/>
+                </g>
+
+                <!-- Exhaust fan — DRAWN, DELIBERATELY NOT MARKED (owner ruling
+                     2026-08-07: "draw the exhaust fan, do not mark it"). An
+                     ERV-equipped DOAS has one on the return path, so leaving it
+                     out made the machine read wrong to anyone who knows what a
+                     wheel needs to pull air across it. It carries no callout,
+                     no leader and no point type ON PURPOSE: the five marked
+                     points are the story this diagram tells, and a sixth
+                     station would dilute it. That is also why it takes the
+                     supply fan's neutral ink and not accent — nothing on this
+                     drawing writes it or reads it, and accent here means "a
+                     command reaches in here." Do not "finish" it by adding a
+                     leader. It sits on the exhaust duct just outside the
+                     casing because the wheel fills the recovery section:
+                     between the cabinet wall (x=48) and the wheel's edge at
+                     y=185 (x≈78) there is no room for a fan that clears both. -->
+                <g id="doas-d3-ef">
+                    <circle cx="26" cy="185" r="16" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="31,178 17,185 31,192" fill="var(--text-dim)"/>
                 </g>
 
                 <!-- Deep cooling coil -->
@@ -494,10 +517,10 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
             </div>
             <p class="ref-note" style="margin-top:0.75rem;">
                 Five points, because those are the five that tell you whether the unit is doing its job. A real DOAS
-                carries more — supply fan start/stop and status, filter differential pressure, an outdoor-air flow
-                station, freeze and smoke safeties — and every one of them matters when it trips. None of them tells
-                you whether the ventilation air leaving the unit is dry enough, which is the question this machine
-                exists to answer.
+                carries more — supply and exhaust fan start/stop and status, filter differential pressure, an outdoor-air
+                flow station, freeze and smoke safeties — and every one of them matters when it trips. Both fans are
+                drawn above and neither is marked, for that reason. None of them tells you whether the ventilation air
+                leaving the unit is dry enough, which is the question this machine exists to answer.
             </p>
 
             <!-- ───────────────── 5 · Closing case study — owner's true story ───────────────── -->
