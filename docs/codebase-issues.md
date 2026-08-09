@@ -19,6 +19,11 @@ rest live here until someone decides what to do about them.
 - New entries land here as code issues surface (same running-list
   spirit as `site-ideas-and-friction.md`, but scoped to code quality
   rather than features / content).
+- **Entries append at the tail of the file in number order regardless
+  of status — the inline marker is the only authority.** The `## `
+  headers further down are historical; open and resolved entries mix
+  freely below them (see the continuation header before #185). Never
+  classify an entry by the section it happens to sit under.
 
 ---
 
@@ -6610,6 +6615,17 @@ same session:
 
 ---
 
+## The running log, continued (status inline — entries append below)
+
+Everything from here to the end of the file is the same chronological
+running log as `## Issues (status inline)` above: new entries append
+at the tail in number order, open and resolved mixed, and each entry's
+**inline marker is the only authority on its status**. The
+`## Recently addressed` section above ends here and scopes nothing
+below this line. (Recorded 2026-08-09 after a handoff-verification
+round found open entries — #262, #266, #274, #275 — being classified
+as addressed by readers reasoning from the section header.)
+
 ### 185. Quiz `snippet` path: one-way invariant publishes content the page never renders *(open — 2026-07-19)*
 
 Found by the Lane C review during PR #404 (`figure` field), deliberately
@@ -9499,7 +9515,10 @@ whenever it can change.
 >   re-announcing a whole sentence every second while the reader is
 >   trying to study the drift is still the defect.
 >
-> **Fix shape, updated: change-guard PLUS a settle debounce** — hold the
+> **~~Fix shape, updated: change-guard PLUS a settle debounce~~ —
+> SUPERSEDED 2026-08-08, owner decision in the note below.** The
+> diagnosis in this note stands; only the mechanism it prescribes was
+> overturned. The superseded prescription, kept for the record: hold the
 > announcement until the value has been stable for a beat (the rail's
 > `railHint` already owns a timer idiom worth copying,
 > `ddcw-ahu-unit.js:1954-1970`), so the region announces the *situation*
@@ -9509,6 +9528,73 @@ whenever it can change.
 > string and not a guarantee. A future AHU line that interpolates truth
 > needs the same treatment, and the unit-suffix caveat above still
 > applies to both.
+
+> **OWNER DECISION 2026-08-08, reconfirmed 2026-08-09 — COV-style
+> reporting with an increment, NOT the guard-plus-settle debounce the
+> note above prescribes.** Announce when the drift has moved more than
+> an increment **since the last announcement** — BACnet's own
+> `COV_Increment` rule, applied to the page whose subject it is
+> (`education/bacnet-basics.html:180` renders a `COV_Increment` of 0.5
+> on an AI; `education/bacnet-vs-modbus.html:127` calls the effect
+> "quiet-until-something-happens"). Three reasons the debounce lost:
+>
+> - **No silence risk.** A settle debounce waits for the operand to
+>   stop moving. This operand never stops while a force is held, so a
+>   settle window can expire forever and announce nothing. The note
+>   above says as much about the AHU's exemption — *"a property of the
+>   CURRENT string and not a guarantee"* — and the same doubt applies
+>   to any wall-clock window.
+> - **Speed-invariance, stated precisely: announcements per EXCURSION
+>   is the invariant, not announcements per second.** The sim clock
+>   runs 1–60× and defaults to 20× (`ddcw-fcu-unit.js:166`; note
+>   `MAX_DT_SIM` at `:169` clamps the slider's 60× to ~50× effective).
+>   A wall-clock window announces a different *fraction* of a drift
+>   excursion at each speed; COV announces once per increment of real
+>   movement at every speed. Corollary: the increment must be sized to
+>   the measured worst-case drift RATE, or fast drives storm — size it
+>   from measurement, not from the taught 0.5.
+> - **It removes a CI flake source.** A debounce can only be pinned by
+>   a wall-clock mutation count, which depends on machine speed, on
+>   `simSpeed`, and on where in the excursion the window falls. COV is
+>   pinned by a property of the *values*: consecutive announcements
+>   differ by at least the increment. No clock in the assertion.
+>
+> **Prerequisite, also decided: split the node first.** `#fcu-ovr-state`
+> is one element doing two jobs — the visible amber drift line and the
+> live region. The visible `<p>` keeps repainting every tick and loses
+> **both** `aria-live` *and* `role="status"` (the role implies the
+> former); a new `.sr-only` `#fcu-ovr-state-sr` carries the
+> announcements, placed **outside both tab panes** beside
+> `#fcu-verdict-sr`. Pacing the shared node would freeze the visible
+> drift readout, which is the hazard the line exists to surface. The
+> outside-the-panes placement retires this entry's own "the mirror is
+> not obviously warranted here": that held while only same-pane
+> controls moved the string, and COV makes the drift half
+> non-operator-driven — inside `#tab-unit` the region would re-enter
+> the accessibility tree already populated on a tab return and announce
+> nothing (the `.ddcw-offprog` empty-collapse contract,
+> `html/styles.css:4814-4831`, and #227a).
+>
+> **Comparison is on the canonical °F value, pre-display-rounding**,
+> never on the rendered string — that is what makes the region immune
+> to rounding chatter at a display boundary (a swing smaller than the
+> increment cannot clear the hysteresis band), and it is what
+> `tests/ddcw-display-units.spec.js` requires anyway (a drift built
+> from display locals would join that guard's fixpoint). The unit
+> suffix still rides in the *event* signature so a metric toggle
+> re-announces rather than leaving a stale-°F sentence in the tree.
+>
+> Line refs in this entry predate Phase 8: the element now sits at
+> `ddc-workbench-fcu.html:1292`, not `:880`.
+>
+> Prior art, unpushed and **not to be deleted until the COV work
+> lands**: local branch `issue-229/fcu-override-live-region`
+> (`a13be01`) carries a spec written ahead of its fix, and `stash@{0}`
+> rides it with the guard-plus-settle implementation. The EVENT/DRIFT
+> split in the stash survives into the COV design; its `OVR_SETTLE_MS`
+> machinery does not. (The commit also carries a throwaway
+> `playwright.lane3.config.js` whose own header says "Not committed" —
+> it must not ride forward.)
 
 ### 230. Light theme darkens `--amber` and `--heat` out of the register component identity depends on *(noticed 2026-07-28, AHU round-2 depiction review — **RESOLVED 2026-07-28**, owner ruled for separate fill tokens)*
 
@@ -12255,3 +12341,34 @@ resets every stateful block — and any persistence work has to decide
 whether a restored session re-enters through that same mount. Both
 pages and all their scripts are LIVE since Phase 8, so anything here
 needs owner approval to merge and a version bump for cache-busting.
+
+### 276. `railHint` can leave a stale-unit hint on a units flip, on both pages *(noticed 2026-08-09, the #229 planning round — LOW, event-driven cousin of the unit-suffix family)*
+
+`railHint` (`html/scripts/ddcw-ahu-unit.js:1955-1970`, with the FCU's
+twin per the #263 duplication mandate) writes range text carrying
+numbers **and a unit suffix** into `#ahu-params-hint` /
+`#fcu-params-hint` (`role="status" aria-live="polite"`,
+`ddc-workbench.html:2283` / `ddc-workbench-fcu.html:1178`), then
+auto-clears on a timer. A °F/°C toggle while a hint is up leaves a
+stale-unit sentence on screen (and in the accessibility tree) until
+the timer fires. Not the #229 family — this region is event-driven,
+not 10 Hz — but it is the same suffix trap `setVerdict`'s header
+warns about. Fix shape, when someone is in the file anyway: clear (or
+re-render) pending hints on the shell's `unitschange` event. LOW —
+worst case is one wrong-unit sentence for a few seconds after an
+uncommon action.
+
+### 277. The display-units guard cannot see a display local hidden inside a call argument *(noticed 2026-08-09, the #229 planning round — guard-coverage note, no shipped defect)*
+
+`tests/ddcw-display-units.spec.js`'s fixpoint derivation marks every
+name that carries a display value and fails any comparison with one
+adjacent to the operator. A form like `Math.abs(zoneN - base) < INC`
+hides the display local inside a call argument, so it slips the
+matcher. No shipped code does this today, and the #229 COV work
+complies by construction (it compares canonical °F from the plant,
+never display locals) — logged so any future widening of the guard
+starts from its measured floor rather than re-deriving it, and so a
+reviewer knows a green run does not rule this shape out. Do not widen
+casually: the matcher's adjacency requirement is part of what keeps
+its false-positive rate at zero (see its own arrow-function
+counter-case pinned at `:141`).
