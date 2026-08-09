@@ -819,6 +819,18 @@ const FBEEditor = (function () {
             graph = engine.makeGraph(literal);
             selected = null;
             wireSeq = 0;
+            // Seed the drop counter past every `b<n>` id the incoming
+            // graph already carries. addBlock() issues 'b' + (++blockSeq),
+            // and until the workbench started restoring an EDITED sheet
+            // (codebase-issues #275) nothing ever handed setGraph a graph
+            // containing those ids — the authored examples key their
+            // blocks by point id. A restored custom sheet does, and a
+            // counter left at 0 re-issues 'b1' onto a sheet that already
+            // has one.
+            graph.blocks.forEach((b) => {
+                const m = /^b(\d+)$/.exec(b.id);
+                if (m) blockSeq = Math.max(blockSeq, parseInt(m[1], 10));
+            });
             ensureWireIds();
             renderAll();
             resetSim();
