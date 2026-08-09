@@ -205,6 +205,25 @@ function scanFiles(dir = SCAN_ROOT, pattern = TEMPLATE_FILES, out = []) {
 // scan inside one tag.
 const OPEN_TAG = /<([a-zA-Z][\w-]*)\b[^<>]*?>/g;
 
+// `index` is in NORMALISED coordinates for every extractor here, because
+// `metric-lint.mjs` measures its proximity window as the raw difference of two
+// indices and so needs them in ONE coordinate system. The parenthetical walk
+// and the lint's own `celsiusValues` both index into `normalise(src)`, where
+// `&nbsp;` is 1 character rather than 6 and `&ndash;` 1 rather than 7; a raw
+// span offset is therefore systematically LARGER than its normalised twin, by
+// as much as 702 characters on this corpus (66 of 515 spans drift ≥200 — 58 %
+// of the 1200-char window), which silently mis-scopes the window for spans
+// and never for parentheticals.
+//
+// It is translated rather than re-matched: running the tag scan over
+// normalised source would also rewrite the CAPTURED `data-us` / `data-metric`
+// strings, and those are the ALLOWLIST's keys in `metric-spans.spec.js` —
+// several entries hold a literal `&nbsp;`. Callers get the raw attribute text
+// (the classifier normalises internally, per the header) and a normalised
+// offset. The translation is exact because no NORMALISE pattern contains `<`,
+// so none can straddle the cut, which always lands on a tag's `<`.
+const normalisedIndex = (src, rawIndex) => normalise(src.slice(0, rawIndex)).length;
+
 function extractPairs(files = scanFiles()) {
     const pairs = [];
     for (const file of files) {
@@ -221,7 +240,7 @@ function extractPairs(files = scanFiles()) {
                 notation: 'span',
                 file: rel,
                 line: src.slice(0, m.index).split('\n').length,
-                index: m.index,
+                index: normalisedIndex(src, m.index),
                 us: us[1],
                 metric: metric[1],
             });
