@@ -964,6 +964,82 @@ test.describe('ddcw-ahu-unit: zone trajectory (integration)', () => {
         expect(cold.zoneT).toBe(40);
     });
 
+    test('the outdoor air CHASES its target instead of jumping to it', () => {
+        // The sustained-cold ruling (2026-08-09), engine-side. Four
+        // claims, none of them the RATE — OA_RAMP_RATE is a measured
+        // usability threshold and this file does not pin values:
+        //   1. a target write does not move the air on the same tick;
+        //   2. the walk is LINEAR — equal sim-time, equal travel;
+        //   3. it is spent in SIM-TIME, so the clock speed cannot change
+        //      the travel (the constant's own load-bearing claim);
+        //   4. it SNAPS on arrival rather than asymptoting, and never
+        //      overshoots.
+        const Unit = loadUnit();
+
+        // 1 — a fresh plant is settled, and the knob alone changes
+        // nothing about the air the coil sees.
+        const pl = Unit.createPlant();
+        expect(pl.oaTarget, 'arrival weather is settled').toBe(pl.oaT);
+        const from = pl.oaT;
+        pl.oaTarget = -20;
+        expect(pl.oaT, 'writing the knob is not writing the weather').toBe(from);
+
+        // 2 — equal steps. Two ticks of the same dt move it twice as far
+        // as one, exactly.
+        Unit.update(pl, 1);
+        const afterOne = from - pl.oaT;
+        expect(afterOne, 'the first tick moved the air').toBeGreaterThan(0);
+        Unit.update(pl, 1);
+        expect(from - pl.oaT, 'the walk is linear').toBeCloseTo(2 * afterOne, 9);
+
+        // 3 — sim-time, not tick count. Ten 1-second steps and one
+        // 10-second step land in the same place, so the host clock
+        // multiplier cannot change how far the weather gets.
+        const slow = Unit.createPlant();
+        slow.oaTarget = -20;
+        for (let i = 0; i < 10; i++) Unit.update(slow, 1);
+        const fast = Unit.createPlant();
+        fast.oaTarget = -20;
+        Unit.update(fast, 10);
+        expect(fast.oaT, 'the same sim-seconds, the same weather')
+            .toBeCloseTo(slow.oaT, 9);
+
+        // 4 — arrival is exact, and it stays. A step big enough to
+        // overshoot lands ON the target, and further ticks leave it.
+        const arriving = Unit.createPlant();
+        arriving.oaTarget = 40;
+        for (let i = 0; i < 500 && arriving.oaT !== 40; i++) Unit.update(arriving, 5);
+        expect(arriving.oaT, 'it arrived, exactly').toBe(40);
+        Unit.update(arriving, 5);
+        expect(arriving.oaT, 'and stayed there').toBe(40);
+
+        // Both directions — a warming trend is the same walk.
+        const warming = Unit.createPlant();
+        setOa(warming, 0);
+        warming.oaTarget = 80;
+        Unit.update(warming, 2);
+        expect(warming.oaT, 'the air walks up as well as down').toBeGreaterThan(0);
+        expect(warming.oaT, 'and does not overshoot on the way').toBeLessThanOrEqual(80);
+    });
+
+    test('a non-finite target freezes the weather rather than poisoning it', () => {
+        // The knob is a DOM read, so NaN is reachable. `oaT` is the
+        // quantity the whole air path is solved from, so a bad target
+        // must not be allowed to walk into it — the plant holds the last
+        // real weather and keeps running, which is the same posture
+        // validate-and-mute takes one row down.
+        const Unit = loadUnit();
+        [NaN, Infinity, undefined].forEach((bad) => {
+            const pl = Unit.createPlant();
+            const held = pl.oaT;
+            pl.oaTarget = bad;
+            Unit.update(pl, 5);
+            Unit.update(pl, 5);
+            expect(pl.oaT, String(bad) + ' target').toBe(held);
+            expect(pl.derived.invalid, String(bad) + ' target still ticks').toBe(false);
+        });
+    });
+
     test('simSec accumulates sim seconds', () => {
         const Unit = loadUnit();
         const pl = Unit.createPlant();

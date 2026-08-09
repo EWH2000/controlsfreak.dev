@@ -2164,6 +2164,84 @@ test.describe('AHU workbench page: the low-limit stat', () => {
         });
 });
 
+// ══════════════════════════════════════════════════════════════════════
+// THE COLD HAS TO BE SUSTAINED — the OA knob writes a target, not the
+// weather.
+//
+// Owner ruling, 2026-08-09: "I don't like the idea of a quick OAT
+// slider drag causing a trip, it needs to be sustained… I'm fine with
+// one drag doing it, but I don't want someone to trip it just testing
+// the slider itself." Before it, the knob teleported: whatever value
+// you released on WAS the weather, permanently, so a reader poking the
+// slider to see what it did got a latched safety and a dead machine
+// (measured, instant knob, arrival plant at the default 20× clock:
+// released at −20 it tripped in 1.2 wall-seconds, and every release
+// depth at or below 45 °F tripped eventually).
+//
+// The two rows below are the ruling's two halves and they only mean
+// something together — either one alone is satisfiable by a machine
+// that has stopped modelling a freeze at all.
+// ══════════════════════════════════════════════════════════════════════
+
+test.describe('AHU workbench page: sustained cold trips, a test drag does not', () => {
+
+    test('a quick drag to the floor and back leaves the machine running', async ({ page }) => {
+        // THE RULING'S ROW. Same staging as tripTheStat — free cooling,
+        // damper wide at slot 8, the arrival stage still where the preset
+        // left it — so the ONLY difference from a trip is that the knob
+        // comes back. Roughly a second at the floor: measured, the first
+        // hold that still trips at this clock is 3.0 wall-seconds from a
+        // 55 °F start, so a second is comfortably inside the safe side
+        // without being a fixed-timing assertion.
+        await open(page);
+        await page.click('[data-preset="freecool"]');
+        await page.fill('#ahu-oa-slider', '-20');
+        await page.dispatchEvent('#ahu-oa-slider', 'input');
+        await settle(page, 1000);
+        await page.fill('#ahu-oa-slider', '55');
+        await page.dispatchEvent('#ahu-oa-slider', 'input');
+
+        // Let the weather finish coming back, then watch a while longer —
+        // a latch that arrived late would still be a latch.
+        await setWeather(page, 55);
+        await settle(page, 1500);
+
+        await expect(page.locator('#ahu-lls-state'),
+            'a slider test tripped the hardwired stat').toHaveText('NORMAL');
+        // And the machine is genuinely still running, not merely
+        // un-latched: the fan is turning and the proof switch is made.
+        await expect(page.locator('#ahu-v-fan-proof')).toHaveText('MADE');
+    });
+
+    test('the same drag LEFT at the floor trips it — sustained is the difference',
+        async ({ page }) => {
+            // The other half. `tripTheStat` IS this drag; the only thing
+            // it does differently from the row above is not come back.
+            await open(page);
+            await tripTheStat(page);
+            await expect(page.locator('#ahu-lls-state')).toHaveText('TRIPPED');
+        });
+
+    test('a scenario preset SNAPS the weather — staging a machine is not testing a slider',
+        async ({ page }) => {
+            // Presets write the truth AND the target, so their weather
+            // lands at once. The exemption is deliberate: the ramp exists
+            // to keep a slider TEST from delivering cold air, and clicking
+            // "Heating" is a request to be on a 20 °F morning, not a poke
+            // at a control. A preset that ramped would arrive a sim-minute
+            // after the button, which is a worse lie than instant weather.
+            //
+            // Asserted on the OAT CHIP, which paints the plant's own
+            // outdoor air — the slider's own readout would pass this row
+            // even if nothing had snapped, since it shows the knob.
+            await open(page);
+            await expect(page.locator('#ahu-r-oat')).toHaveText('80.0 °F');
+            await page.click('[data-preset="heating"]');
+            await expect(page.locator('#ahu-r-oat'),
+                'the preset left the weather to ramp').toHaveText('20.0 °F');
+        });
+});
+
 test.describe('AHU workbench page: the phone truth stays out of the desktop pane', () => {
     test('at a pointer desktop width the note is gone and the workspace is live', async ({ page }) => {
         // The note and the workspace are gated by the same media OR, so
