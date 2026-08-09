@@ -1180,6 +1180,34 @@ const DDCWFcuUnit = (function () {
         });
     }
 
+    // ── one-shot control reconciliation after a session restore ──
+    // (codebase-issues #275; the shell calls this exactly once, only on a
+    // restore, and only after wireControls has resolved the handles.)
+    //
+    // Everything here is a control fcuSyncControls DELIBERATELY leaves
+    // alone every tick, and each omission is right for the reason it was
+    // written: an environment knob sets the world rather than reflects
+    // it, a HELD slider is the reader's hand mid-drag, and the forced
+    // sensor's box is the reader's typing. None of those hold on the
+    // first tick after a restore. The AHU's twin carries the same shape
+    // over five overridable sensors and three held sliders; this unit has
+    // one of each, which is the only difference.
+    function fcuHydrateControls(plant, ctx) {
+        speedSlider.value = String(ctx.simSpeed());
+        oaSlider.value    = String(plant.oaT);
+        loadSlider.value  = String(plant.qInternal);
+
+        // The one held slider. fan-enable and the stage buttons need
+        // nothing — syncControls paints both from the resolved actuator.
+        const fan = ctx.slot8('fan-speed');
+        if (fan !== null && isFinite(fan)) fanSlider.value = String(fan);
+
+        // The forced wall stat's box — renderUnit writes it only while
+        // RELEASED, precisely so it cannot clobber typing.
+        const o = plant.override['space-temp'];
+        if (o && o.active) ovrInput.value = dispTempNum(o.value).toFixed(1);
+    }
+
     // The graphic is a viewBox SVG at width:100% — it auto-scales into its
     // cell, so a fullscreen transition needs no unit-side reflow.
     function fcuOnResize() { /* no-op — SVG scales itself */ }
@@ -1723,6 +1751,7 @@ const DDCWFcuUnit = (function () {
             update: fcuUpdate,
             renderUnit: fcuRenderUnit,
             syncControls: fcuSyncControls,
+            hydrateControls: fcuHydrateControls,   // restore only (#275)
             onResize: fcuOnResize,
             initAnim: fcuInitAnim,
             wireControls: fcuWireControls,

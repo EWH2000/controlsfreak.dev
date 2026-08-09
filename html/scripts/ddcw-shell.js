@@ -17,6 +17,7 @@
 //     <script src="/scripts/fbe-engine.js"></script>
 //     <script src="/scripts/fbe-editor.js"></script>
 //     <script src="/scripts/point-arbitration.js"></script>
+//     <script src="/scripts/ddcw-session.js"></script>     (optional)
 //     <script src="/scripts/ddcw-shell.js"></script>
 //     <script src="/scripts/ddcw-<unit>-unit.js"></script>
 //     <script src="/scripts/ui.js"></script>               (switchTab)
@@ -111,6 +112,21 @@
 //       A future shell-side signal (occupancy, alarm, a second
 //       operator surface) is a new key here, not a signature change
 //       on every unit.
+//   hydrateControls(plant, ctx)  OPTIONAL — re-seed the controls
+//       syncControls deliberately never writes, called ONCE and only on
+//       a session restore (codebase-issues #275). syncControls owns the
+//       steady-state paint and is written not to fight a drag: it skips
+//       a HELD slider (the user's hand is on it) and never touches the
+//       environment knobs at all, because those set the world rather
+//       than reflect it. Both of those are correct every tick except
+//       the first tick after a restore, where the plant says 20 °F
+//       outside and the OA handle is still parked at its authored
+//       default. This hook is that one-shot reconciliation: write the
+//       held sliders from ctx.slot8(pointId), the environment sliders
+//       from their plant fields, the clock slider from ctx.simSpeed(),
+//       and any forced-sensor box from plant.override. Same ctx object
+//       syncControls gets. A unit without the hook simply boots with
+//       stale handles — the shell no-ops on a missing one.
 //   wireControls(plant, host) bind the unit's DOM controls, once. The
 //       host hooks are the ONLY way unit code touches the command
 //       store — arbitration stays shell code, controls stay unit code:
@@ -140,15 +156,40 @@
 //   initAnim(plant)      start the unit's own animation machinery.
 //   onResize(plant, isFullscreen)  reflow hook on the fullscreen edge.
 //
-//   Boot call order: createPlant → wireControls → initAnim → first
-//   hostTick (renderUnit / syncControls / statusbar). A unit may
-//   therefore resolve its DOM handles inside wireControls.
+//   Boot call order: createPlant → [session restore] → wireControls →
+//   initAnim → hydrateControls (restore only) → first hostTick
+//   (renderUnit / syncControls / statusbar) → [resumed notice]. A unit
+//   may therefore resolve its DOM handles inside wireControls, and
+//   hydrateControls can count on them.
+//
+// ── SESSION PERSISTENCE ── (codebase-issues #275) if
+// /scripts/ddcw-session.js is loaded before this file, the shell
+// snapshots the whole simulation to sessionStorage on the way out and
+// restores it on the way back. The unit needs to know almost nothing
+// about it: the snapshot is the plant, the running graph, the priority
+// arrays, the sim clock and the program key, and the only unit-side
+// surface is the optional hydrateControls hook above. Without the
+// module the shell boots pristine exactly as it always did — the
+// `window.DDCWSession` probe is the whole feature gate.
+//
+// Two shell invariants the restore is written around:
+//   • CONSTRUCT THEN ASSIGN. Every step that can throw runs into a
+//     local; `plant` / `graph` / `cmd` are reassigned only once all of
+//     them have succeeded, so a malformed snapshot leaves the pristine
+//     boot standing rather than a half-built one.
+//   • A snapshot never gets a privileged construction path. The graph
+//     rebuilds through FBE.makeGraph, the same call a program switch
+//     makes, and the plant merges onto a FRESH unit.createPlant().
 //
 // ── MARKUP CONTRACT ── the fixed ddcw-* skeleton the factory binds:
 //   #ddcw-io (chip strip) · #ddcw-program (an EMPTY <select> — options
 //   are built here from programs/programLabels, plus the disabled
 //   'custom' option) · #ddcw-offprog + #ddcw-offprog-list (the live
-//   region; empty = the .is-empty collapse, never `hidden`) · tab
+//   region; empty = the .is-empty collapse, never `hidden`) ·
+//   #ddcw-resumed + #ddcw-resumed-msg + #ddcw-resumed-fresh (the
+//   session notice — ships with the `hidden` ATTRIBUTE and is unhidden
+//   only on a restore) and the separate, always-present, always-empty
+//   polite region #ddcw-resumed-sr · tab
 //   buttons `.tabs.tabs-flush [data-tab]` with panes #tab-unit /
 //   #tab-wiresheet · the editor nodes #ddcw-fbe-canvas / -inner /
 //   -palette / -inspector / -status / -run and the sim-bar buttons
@@ -639,6 +680,146 @@ const DDCWShell = (function () {
         buildNamedPrograms();
         graph = FBE.makeGraph(programs[programKey]);
         reindex(graph);
+
+        // ── session restore (codebase-issues #275) ─────────────────────
+        // Construct-then-assign: rebuildGraph and applyPlant both run into
+        // LOCALS, and nothing above is reassigned until both have come
+        // back, so a snapshot that fails anywhere leaves the pristine boot
+        // standing. Feature-gated on the module being present — a page
+        // that does not load /scripts/ddcw-session.js boots exactly as it
+        // did before this existed.
+        //
+        // Every failure path is silent and every one ends in a removeItem:
+        // a snapshot that survived `validate` and then failed to rebuild
+        // is poison, and leaving it in place would fail identically on
+        // every subsequent load of the tab.
+        const Session = window.DDCWSession;
+        let resumed = false;
+        if (Session) {
+            const raw = Session.read(unit.id);
+            if (raw) {
+                const snap = Session.validate(raw, unit);
+                if (!snap) {
+                    // Wrong version, wrong unit, or the shape digest moved
+                    // under it (a model change, a new point, a re-authored
+                    // sheet). Pristine boot, and drop it.
+                    Session.clear(unit.id);
+                } else {
+                    try {
+                        const nextGraph = Session.rebuildGraph(FBE, snap.graph);
+                        const nextPlant = Session.applyPlant(unit.createPlant(), snap.plant);
+                        // A restored key that no longer names a program
+                        // reads as 'custom', which is the honest label for
+                        // a sheet the picker cannot reproduce.
+                        const nextKey = (snap.programKey && programs[snap.programKey])
+                            ? snap.programKey : null;
+                        graph = nextGraph;
+                        reindex(graph);
+                        plant = nextPlant;
+                        programKey = nextKey;
+                        if (isFinite(snap.simSpeed)) simSpeed = snap.simSpeed;
+                        // Total by construction — walks the shell's own
+                        // store, so a snapshot naming a retired point
+                        // writes nothing. Last, so nothing after it can
+                        // throw with the arrays half-loaded.
+                        Session.applyCmd(cmd, snap.cmd);
+                        resumed = true;
+                    } catch (e) {
+                        Session.clear(unit.id);
+                    }
+                }
+            }
+        }
+
+        // ── session save ───────────────────────────────────────────────
+        // NO timer and NO per-tick autosave. These pages' idle cost is
+        // profiled (tests/perf-profile.mjs) and this feature is required
+        // to add exactly zero idle work: the snapshot is taken on the way
+        // out and nowhere else.
+        //
+        // Both triggers are needed and neither is redundant.
+        // `visibilitychange → hidden` is the one that actually fires on a
+        // mobile tab switch or an app backgrounding, where `pagehide` may
+        // not; `pagehide` is the one that fires on a same-tab navigation.
+        // Chrome fires the visibility change FIRST on a navigation, so the
+        // dedupe flag is what keeps a single departure from serialising
+        // the plant twice. It resets when the document comes back, so a
+        // reader who tabs away and returns is snapshotted again next time.
+        let saveSuppressed = false;    // start-fresh sets this before reloading
+        let savedThisHide  = false;
+        function saveNow() {
+            if (!Session || saveSuppressed) return;
+            Session.write(unit.id, Session.encode(unit, {
+                fp: Session.fingerprint(unit),
+                simSpeed: simSpeed,
+                programKey: programKey,
+                graph: graph,
+                cmd: cmd,
+                plant: plant,
+            }));
+        }
+        function saveOnHide() {
+            if (savedThisHide) return;
+            savedThisHide = true;
+            saveNow();
+        }
+        if (Session) {
+            window.addEventListener('pagehide', saveOnHide);
+            document.addEventListener('visibilitychange', function () {
+                if (document.hidden) saveOnHide();
+                else savedThisHide = false;
+            });
+            window.addEventListener('pageshow', function () { savedThisHide = false; });
+        }
+
+        // ── the resumed notice ─────────────────────────────────────────
+        // A quiet one-shot line, not a dialog and not a focus steal: the
+        // reader asked for the sub-sim, not for a conversation on the way
+        // back. It has to SAY what came back, because one of the things
+        // that came back is a forced sensor — and this page's whole
+        // stale-override lesson depends on the reader knowing when a
+        // lesson is running (codebase-issues #275, axis 3).
+        //
+        // Every node lookup is guarded. The workbench scripts are
+        // per-page `{% block scripts %}` refs with no `?v=`, so a
+        // returning visitor can hold a cached PAGE against a fresh
+        // SCRIPT: a missing notice must be a missing notice, not a boot
+        // failure that takes the whole simulator with it.
+        function showResumedNotice() {
+            const box   = document.getElementById('ddcw-resumed');
+            const msg   = document.getElementById('ddcw-resumed-msg');
+            const fresh = document.getElementById('ddcw-resumed-fresh');
+            const sr    = document.getElementById('ddcw-resumed-sr');
+            if (!box || !msg) return;
+            box.hidden = false;
+            if (fresh) {
+                fresh.addEventListener('click', function () {
+                    // BEFORE the clear, not after: `location.reload()`
+                    // fires `pagehide`, and an un-suppressed save would
+                    // write back the very snapshot just removed.
+                    saveSuppressed = true;
+                    if (Session) Session.clear(unit.id);
+                    window.location.reload();
+                });
+            }
+            // The polite mirror is a SEPARATE, always-present, always-empty
+            // region, and it is written on a FOLLOW-UP TASK after the box
+            // is already unhidden. Both halves are load-bearing: a live
+            // region that enters the accessibility tree already populated
+            // announces nothing (the same trap the off-program window
+            // documents), and unhiding a `[hidden]` container in the same
+            // task as its text is that case wearing a different hat. The
+            // sentence is DERIVED from the visible copy rather than
+            // duplicated, so the two cannot drift.
+            if (sr) {
+                window.setTimeout(function () {
+                    const label = fresh ? fresh.textContent.trim() : '';
+                    sr.textContent = msg.textContent.replace(/\s+/g, ' ').trim()
+                        + (label ? ' Use the ' + label + ' button to reset it.' : '');
+                }, 0);
+            }
+        }
+
         initChips();
         buildProgramPicker();
         // Sensor glyphs — bound here, not in unit code, so a second unit
@@ -708,6 +889,12 @@ const DDCWShell = (function () {
         };
         unit.wireControls(plant, host);
         unit.initAnim(plant);
+        // One-shot reconciliation of the handles syncControls never writes
+        // — see the hook's entry in the unit contract. Restore only, and
+        // only where the unit supplies it.
+        if (resumed && typeof unit.hydrateControls === 'function') {
+            unit.hydrateControls(plant, syncCtx);
+        }
 
         // Tabs — shared switchTab (ui.js), then lazy-mount / relayout the editor.
         document.querySelectorAll('.tabs.tabs-flush [data-tab]').forEach(function (btn) {
@@ -754,6 +941,10 @@ const DDCWShell = (function () {
 
         syncProgramSelect();
         hostTick();                              // initial paint — the sequence is commanding on arrival
+        // After the first paint, so the reader's eye lands on their own
+        // restored machine and the notice explains what they are looking
+        // at — not the other way round.
+        if (resumed) showResumedNotice();
         window.setInterval(function () { if (!document.hidden) hostTick(); }, 100);
     }
 
