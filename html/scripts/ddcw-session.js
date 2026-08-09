@@ -296,14 +296,24 @@ const DDCWSession = (function () {
     function key(unitId) { return KEY_PREFIX + unitId; }
 
     function read(unitId) {
+        let raw;
         try {
-            const raw = window.sessionStorage.getItem(key(unitId));
-            if (!raw) return null;
-            const o = JSON.parse(raw);
-            return isPlainObject(o) ? o : null;
+            raw = window.sessionStorage.getItem(key(unitId));
         } catch (e) {
-            return null;
+            return null;                 // storage denied outright
         }
+        if (!raw) return null;
+        try {
+            const o = JSON.parse(raw);
+            if (isPlainObject(o)) return o;
+        } catch (e) { /* fall through to the drop below */ }
+        // Unparseable, or parseable but not an object. Dead by
+        // definition — the shell can only see the null this returns, so
+        // dropping it HERE is the only place it can be dropped, and
+        // leaving it would keep the key inert for the life of the tab
+        // until some later save happened to overwrite it.
+        clear(unitId);
+        return null;
     }
 
     function write(unitId, envelope) {
