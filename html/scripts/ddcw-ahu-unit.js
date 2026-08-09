@@ -39,7 +39,18 @@
 //                                        / canvasSize
 //   DDCWAhuUnit.createPlant()          → a fresh plant     ┐ headless
 //   DDCWAhuUnit.update(plant, dtSim)   → integrate a step  │ physics
-//   DDCWAhuUnit.points                 → the AHU point list┘ surface
+//   DDCWAhuUnit.points                 → the AHU point list│ surface
+//   DDCWAhuUnit.resetLowLimit(plant)   → manual reset      ┘
+//                                        ('cleared' |
+//                                         'still-cold' |
+//                                         'not-tripped')
+//
+// The machine carries ONE device that is not in `points`: a hardwired,
+// manual-reset low-limit stat across the coil face, wired into the fan
+// starter circuit. It is modelled in the plant and it is deliberately
+// invisible to the controller — read the LLS_STAT_TRIP block before
+// touching anything near it, because the invisibility is the lesson and
+// three separate things protect it.
 //
 // The points key is lower-case `points`, not the FCU's `POINTS`: this
 // namespace key IS the shell-contract key it populates (`unit.points`),
@@ -206,6 +217,156 @@ const DDCWAhuUnit = (function () {
     const PROOF_MAKE_DELAY = 8;    // s of continuous airflow before fan-status makes
     // ═══════════════════════════════════════════════════════════════════
 
+    // ══ THE HARDWIRED LOW-LIMIT STAT — a device with NO POINT ═══════════
+    // A manual-reset low-limit stat strapped across the coil face and
+    // wired into the fan starter circuit. It is PLANT, not program: it
+    // drops the fan through the safety string whatever the BO is
+    // commanding, on BOTH sheets, and no sequence can disable it.
+    //
+    // ⚠ IT IS DELIBERATELY NOT IN AHU_POINTS, AND THAT ABSENCE IS THE
+    // LESSON. In the field this stat is very often not wired back to the
+    // controller at all: the unit stops, and the program has no idea why.
+    // The front end then shows a dead machine with nothing explaining it —
+    // which is exactly what this model reproduces. Do not "fix" it by
+    // adding a BI. Two consequences follow and both are load-bearing:
+    //   • the VERDICT LADDER MUST NOT NAME THIS TRIP. The ladder is the
+    //     graphic's voice and the graphic speaks for what the controller
+    //     can know. An LLS trip lands on the existing "Coil loaded with
+    //     the fan off" branch — the honest, unhelpful thing a real front
+    //     end would show. That is why `plant.lls.tripped` is NOT published
+    //     into `derived`: the ladder reads `d.*` and only `d.*`, so
+    //     keeping the flag off that bag is a structural guard rather than
+    //     a comment nobody reads. The DOM half reads the plant directly to
+    //     paint the DEVICE, which is a different surface — see the
+    //     equipment-register panel on the page.
+    //   • the trip is discoverable at the MACHINE and nowhere else: the
+    //     stat is drawn on the unit graphic (unmarked — no callout, no
+    //     leader, no point) and its reset button lives on a device face,
+    //     because a stat that is not a point cannot be reset from a
+    //     wiresheet or a workstation. In the field you walk to the unit
+    //     and push the button.
+    //
+    // THE SETTING: 38 °F on the discharge, with the SOFTWARE low limit on
+    // the winter-protections sheet set 3 °F above it at 41 so the program
+    // acts first and the hardware stays a backstop.
+    //
+    // ⚠ SCOPE THE NUMBER, DO NOT UNIVERSALISE IT. 38 is the owner's own
+    // commissioning practice in the NORTHEAST US (2026-08-08), and freeze
+    // protection is climate-driven: the exposure tracks the design
+    // outdoor-air temperature, how much outdoor air the unit takes, and
+    // whether there is a wet coil there to freeze at all. Practice
+    // elsewhere plausibly differs, and a warmer climate may not carry the
+    // stat in the first place. Nobody here has verified what any other
+    // region does, so no other figure appears anywhere in this codebase —
+    // an invented field number on a teaching page is worse than an
+    // unscoped one. Say what drives the setting, say practice varies with
+    // climate, give the one worked figure that is actually evidence, and
+    // stop. That framing is also what protects the number from a future
+    // editor: a bare 38 reads as a fact to correct, "Northeast US
+    // practice" reads as evidence to extend.
+    //
+    // The owner's physical reasoning is worth carrying, and it is not
+    // climate-specific: if the discharge is actually down at a 38 °F
+    // stat, the ductwork is sweating badly and the pressures on that
+    // circuit are not pretty — the stat is catching a machine that is
+    // already in trouble, not trimming a setpoint.
+    //
+    // WHY THIS IS ITS OWN CONSTANT AND NOT `FREEZE_WATCH` (which is also
+    // 38): the two are independent quantities that happen to coincide
+    // today. FREEZE_WATCH is a VERDICT threshold, derived from this
+    // model's own coil floor — COIL_FLOOR + FAN_HEAT − COOL_DT_TRIP — so
+    // it moves the moment any of those three move. LLS_STAT_TRIP is a
+    // FIELD SETPOINT that moves only when field practice does. Folding
+    // them into one name would make a coil-capacity retune silently
+    // relocate a safety device, which is the exact class of collision a
+    // shared constant should never create. They also live on opposite
+    // sides of the PHYSICS / DOM banner — this one is plant, that one is
+    // paint — so a single constant could not sit in both places anyway.
+    //
+    // WHAT THE ELEMENT READS: `datT`, the plant's TRUTH discharge
+    // temperature — never `plant.sensors['dat']`. A capillary element is
+    // not a transmitter, so forcing the DAT sensor low trips the SOFTWARE
+    // stat and leaves this one made, which is the page's own
+    // "two different failure stories covering each other" beat, now
+    // reachable. Two modelling notes, both honest rather than tidy:
+    //   • the element physically sits at the coil face and this model's
+    //     nearest published quantity is DAT, which is coil-leaving plus
+    //     FAN_HEAT — one degree of draw-through pickup. That is inside
+    //     the precision of every other constant in this file.
+    //   • with no airflow this model's DAT reads the ZONE (the
+    //     codebase-issues #225 blindness), so a tripped stat's own set
+    //     condition clears itself one tick later. The LATCH is what makes
+    //     that safe, exactly as it is for the software stat — and it is
+    //     why the reset's condition-clear check has a one-tick window in
+    //     practice rather than a comfortable one. Named, not hidden.
+    const LLS_STAT_TRIP = 38;      // °F — discharge air; the hardwired device's setting
+    // ═══════════════════════════════════════════════════════════════════
+
+    // ══ HOW FAST THE WEATHER CAN CHANGE ════════════════════════════════
+    // THIS IS A USABILITY CONSTANT, NOT WEATHER REALISM. A real front
+    // moves outdoor air something like 10–20 °F per HOUR; this moves it
+    // 0.5 °F per sim-SECOND, which is 1,800 °F/h. It is deliberately
+    // compressed in exactly the way the 20× sim clock is compressed —
+    // the page would be unwatchable otherwise — and it exists for one
+    // reason: the outdoor air CHASES the knob instead of teleporting to
+    // it, so a quick test-drag of the slider delivers no cold air.
+    //
+    // WHY (owner ruling, 2026-08-09): "I don't like the idea of a quick
+    // OAT slider drag causing a trip, it needs to be sustained… I'm fine
+    // with one drag doing it, but I don't want someone to trip it just
+    // testing the slider itself." Leave the slider cold and the cold
+    // still arrives and still trips; bring it back and the weather never
+    // got there. Sustained, not instant.
+    //
+    // WHAT THE ACCIDENT ACTUALLY WAS, measured on the arrival plant at
+    // the default 20× clock before this landed: the knob teleported, so
+    // whatever value you RELEASED on was the weather, permanently. Let
+    // go at −20 and the hardwired stat (LLS_STAT_TRIP above) latched
+    // 1.2 wall-seconds later; every release depth at or below 45 °F
+    // tripped eventually, 50 °F and above never did. A manual-reset
+    // device, so the machine then stayed down until the reader found the
+    // device face — for someone who was only dragging the control to see
+    // what it did.
+    //
+    // IT LIVES IN SIM-TIME, so the behaviour is identical at every clock
+    // speed in TRAVEL terms (a 100 °F swing always takes 100/RATE
+    // sim-seconds); what the clock buys is how much WALL time a reader
+    // has to change their mind.
+    //
+    // TUNED BY MEASUREMENT, not by feel — the whole point is a
+    // threshold, so a guess would have been worthless. Swept
+    // {0.25, 0.5, 1, 2} °F per sim-second over release depths from −20
+    // to 55 °F, both clock speeds, from a warm start and from a 60 °F
+    // one. (Depth had to be an axis: the DEEPEST drag is not the worst
+    // case, because dragging straight to −20 crashes the zone through
+    // its setpoint fast enough that the cooling call — and with it the
+    // economizer and the lit stage — drops before the discharge gets
+    // cold.) The measurement that decides it is HOW LONG A DRAG MUST BE
+    // HELD BEFORE SNAPPING BACK STILL TRIPS, at the default clock:
+    //
+    //     rate     from 80 °F     from 60 °F
+    //     0.25     never ≤ 6 s        4.0 s
+    //     0.50         4.4 s          3.0 s      ← chosen
+    //     1.00         2.8 s          2.1 s
+    //     2.00         1.8 s          1.4 s
+    //
+    // A slider test is a second or two. 1 °F/s technically clears that
+    // and is the faster rate, but it clears it by 0.1 s at the colder
+    // start (0.27 °F of discharge margin — not a margin), so 0.5 is the
+    // fastest rate that keeps a real gap between "testing the control"
+    // and "asking for winter". The full table is in the commit that
+    // added this (`ahu: outdoor air chases the slider`).
+    //
+    // ONE RESIDUAL IS ACCEPTED RATHER THAN CHASED: at the 60× clock
+    // (50× effective under MAX_DT_SIM) those thresholds fall to 1.8 s
+    // and 1.2 s, so a deep drag held about two seconds there still
+    // trips. No rate in the swept set removes it — 0.25 only moves it to
+    // 2.9 s and 1.6 s — because at 50× effective one host tick IS five
+    // sim-seconds. A reader who has run the clock to its ceiling is no
+    // longer poking a slider to see what it does.
+    const OA_RAMP_RATE = 0.5;      // °F per SIM-second — see above; not a weather rate
+    // ═══════════════════════════════════════════════════════════════════
+
     // ── plant — the AHU's data-driven IO surface (unit-specific keys) ──
     function ahuCreatePlant() {
         // Arrival: a moderate 80 °F day with the zone at 76 °F, one DX
@@ -255,13 +416,31 @@ const DDCWAhuUnit = (function () {
             // first invariant is "more outdoor air lowers MAT when it is
             // colder outside" — unswept weather makes that untestable, so
             // the weather belongs to the plant.
-            oaT: T_OA_DEF,                       // °F — the REAL outdoor-air temp (truth); the OA knob writes it
+            oaT: T_OA_DEF,                       // °F — the REAL outdoor-air temp (truth); update() walks it toward oaTarget
+            // Where the weather is HEADED — what the OA knob writes, and
+            // the only thing it writes. `oaT` chases this at OA_RAMP_RATE
+            // (see that constant for the ruling behind the split). They
+            // start equal, so a plant nobody touches has settled weather;
+            // a PRESET writes BOTH, because staging a scenario is not
+            // slider-testing.
+            //
+            // ⚠ ANY code that sets `oaT` directly — a spec row seeding a
+            // cold morning, most of all — must set `oaTarget` too, or the
+            // chase quietly drags that weather back toward a stale target
+            // over the following ticks.
+            oaTarget: T_OA_DEF,                  // °F — where the OA knob is pointed
             qInternal: Q_INT_DEF,                // Btu/h — internal sensible gain (the load knob writes it)
             coilLeaveT: undefined,               // °F — first-order-lagged coil leaving-air; seeded to
             //                                      its quasi-static target on the first tick (no page-load ramp)
             // Airflow proof state — `elapsed` is seconds of CONTINUOUS
             // airflow, reset to zero the instant airflow stops.
             proof: { made: false, elapsed: 0 },
+            // The hardwired low-limit stat's own latch. Plant state, not a
+            // point — see the LLS_STAT_TRIP block for why the roster does
+            // not carry it and why the verdict ladder may not read it.
+            // Tripped = the safety string is open, so the motor is stopped
+            // no matter what the fan-enable BO resolves to.
+            lls: { tripped: false },
             // Sensor overrides, keyed by SENSOR POINT ID. The FCU carries
             // a single `override.spaceTemp` bag; the AHU has five AI
             // points to its three, so the shape generalises to a map and
@@ -324,7 +503,6 @@ const DDCWAhuUnit = (function () {
     //    speed-scaled, clamped sim step (seconds). ──
     function ahuUpdate(plant, dt) {
         const zoneT     = plant.zoneT;                     // °F — the REAL zone temp (truth)
-        const oaT       = plant.oaT;                       // °F — the REAL outdoor-air temp (truth)
         const fanPct    = plant.actuators['fan-speed'];    // %
         const damperPct = plant.actuators['oa-damper'];    // % open
         const hwPct     = plant.actuators['hw-valve'];     // % open
@@ -332,12 +510,33 @@ const DDCWAhuUnit = (function () {
 
         // Validate-and-mute: if a read isn't finite, blank on render and
         // leave every integrated state exactly where it was.
-        if (!isFinite(zoneT) || !isFinite(oaT) || !isFinite(fanPct)
+        if (!isFinite(zoneT) || !isFinite(plant.oaT) || !isFinite(fanPct)
             || !isFinite(damperPct) || !isFinite(hwPct) || !isFinite(plant.qInternal)) {
             d.invalid = true;
             return;
         }
         d.invalid = false;
+
+        // ── 0. the weather chases the knob ────────────────────────────
+        // Integrated state like zoneT below, so it sits AFTER the
+        // validate-and-mute guard: a bad read freezes the weather where
+        // it was rather than walking it on toward a target nobody can
+        // see. Linear at OA_RAMP_RATE (read that constant — it is a
+        // usability threshold, not a weather rate), snapping on arrival
+        // so the truth lands exactly on the number the knob shows
+        // instead of asymptoting near it. A plant with no `oaTarget`
+        // holds still, which is what a pre-chase spec plant does.
+        if (isFinite(dt) && isFinite(plant.oaTarget)) {
+            const step = OA_RAMP_RATE * dt;
+            const gap  = plant.oaTarget - plant.oaT;
+            plant.oaT = (Math.abs(gap) <= step)
+                ? plant.oaTarget
+                : plant.oaT + (gap > 0 ? step : -step);
+        }
+        // °F — the REAL outdoor-air temp (truth), sampled POST-chase:
+        // every line below is about the air that has actually arrived,
+        // never about where the knob is pointed.
+        const oaT = plant.oaT;
 
         // ── 1. airflow gating — three DIFFERENT things, named apart ──
         // fanCmd is what the sequence asked for. airflowOn is whether
@@ -346,10 +545,22 @@ const DDCWAhuUnit = (function () {
         // truth on the way up and matches it on the way down. Every
         // line of physics below gates on airflowOn, never on fanCmd:
         // that gap IS the belt fault.
+        //
+        // The LATCHED HARDWIRED STAT is the third way the command and
+        // the air can disagree, and it is the one with no point behind
+        // it (see LLS_STAT_TRIP). It opens the starter circuit, so it
+        // gates airflowOn beside the belt while `fanCmd` — the BO the
+        // program resolved — goes on reading ON. That gap is the whole
+        // fault: the front end shows a fan commanded on, and the motor
+        // is stopped by a wire the controller cannot see.
         const fanFrac   = Math.max(0, Math.min(1, fanPct / 100));
         const fanCmd    = !!plant.actuators['fan-enable'] && fanPct > 0;
         const fault     = plant.conditions.fault;
-        const airflowOn = fanCmd && fault !== 'fan-belt';
+        // Read UNGUARDED, like plant.proof and plant.conditions above it:
+        // a plant with no `lls` bag should throw here rather than quietly
+        // run with its safety disabled.
+        const statTrip  = plant.lls.tripped === true;
+        const airflowOn = fanCmd && fault !== 'fan-belt' && !statTrip;
         const cfm       = Math.max(CFM_FLOOR, NOMINAL_CFM * fanFrac);
 
         // ── 2. damper command → outdoor-air fraction ──
@@ -595,6 +806,27 @@ const DDCWAhuUnit = (function () {
         // what makes the difference between the two demonstrable.
         const datT = airflowOn ? coilLeaveT + FAN_HEAT : zoneT;
 
+        // ── 6b. the hardwired low-limit stat ──
+        // A temperature element, so it reads the TRUTH discharge air the
+        // line above just published — not plant.sensors['dat'], which a
+        // sensor override can turn into a lie. Set-only here: clearing is
+        // ahuResetLowLimit(), because the device is manual-reset.
+        //
+        // Evaluated AFTER datT and gated by nothing: the test is exactly
+        // "is the air across this element below the setting". With the
+        // fan already stopped datT is the ZONE, which the zone clamp
+        // holds at 40 °F or above, so a stopped machine cannot re-arm
+        // its own trip — the same blindness the software stat has, and
+        // the same reason both are latched.
+        //
+        // The latch takes effect on the NEXT tick, because airflowOn was
+        // resolved at the top of this one. That is a real device's
+        // response time rather than a modelling compromise, and it is
+        // also what gives the reset's condition check something to see:
+        // for one tick after the trip, derived.datT is still the cold
+        // number the element tripped on.
+        if (isFinite(datT) && datT < LLS_STAT_TRIP) plant.lls.tripped = true;
+
         // ── 7. airflow proof ──
         // A duct-pressure proof switch makes SLOW and breaks FAST: it
         // needs continuous airflow for the make delay, and it drops on
@@ -749,6 +981,13 @@ const DDCWAhuUnit = (function () {
         d.fanStatus   = plant.proof.made;
         d.capActive   = capActive;
         d.fault       = fault;
+        // ⚠ THE HARDWIRED STAT'S LATCH IS ABSENT FROM THIS BAG ON
+        // PURPOSE — do not add `d.llsTripped`. `derived` is what the
+        // graphic reads, and the verdict ladder reads nothing else, so
+        // leaving the flag out is what keeps the ladder honest about a
+        // device the controller has no point for. Its one legitimate
+        // reader is the DEVICE panel, which takes it off `plant.lls`.
+        // See the LLS_STAT_TRIP block for the whole argument.
         // Loads, Btu/h.
         d.qHeat       = qHeat;
         d.qCool       = qCool;                   // signed (<0 = supply warmer than return)
@@ -761,6 +1000,37 @@ const DDCWAhuUnit = (function () {
         d.overrideActive = !!(plant.override['space-temp'] && plant.override['space-temp'].active);
 
         plant.anim.fanFrac = airflowOn ? fanFrac : 0;
+    }
+
+    // ── the manual reset ──────────────────────────────────────────────
+    // The one way a tripped hardwired stat clears. DOM-free like
+    // everything else above the second banner, so a spec drives it
+    // directly; the page's device-face button is the only caller in the
+    // browser. Returns a STATUS STRING rather than a boolean because the
+    // two failure cases are different things to tell an operator:
+    //
+    //   'cleared'     the latch was set, the element is warm, contacts
+    //                 made — the machine restarts in order on the next
+    //                 tick (fan first, then proof, then the loads).
+    //   'still-cold'  the button is being pushed while the element is
+    //                 still below its setting. A real manual-reset stat
+    //                 physically will not latch back in that state, and
+    //                 the field order is the same: fix the cause first,
+    //                 THEN push the button.
+    //   'not-tripped' nothing was latched. Pushing the button on a made
+    //                 stat is a no-op on a real device too.
+    //
+    // The condition is read off `derived.datT` — the last TRUTH
+    // discharge this plant published, the same quantity the element
+    // trips on. Before the first update() that field is undefined, which
+    // is not finite, so a reset on a never-ticked plant reads as
+    // 'not-tripped' (it cannot have tripped either) rather than throwing.
+    function ahuResetLowLimit(plant) {
+        if (plant.lls.tripped !== true) return 'not-tripped';
+        const dat = plant.derived.datT;
+        if (isFinite(dat) && dat < LLS_STAT_TRIP) return 'still-cold';
+        plant.lls.tripped = false;
+        return 'cleared';
     }
 
     // ── AHU IO points ── point id === seed FBE-block id === the IO block
@@ -911,6 +1181,13 @@ const DDCWAhuUnit = (function () {
     // where the model stops the coil, so a verdict keyed to it would only
     // fire at the clamp. 38 is the top of the band coil-freeze-risk.html
     // and air-handlers.html teach for a mixed-air trip.
+    // ⚠ IT EQUALS LLS_STAT_TRIP TODAY AND THE TWO ARE NOT THE SAME THING.
+    // This one is a VERDICT threshold and it is derived — COIL_FLOOR +
+    // FAN_HEAT − COOL_DT_TRIP, re-derived in the branch that reads it
+    // below — so a coil-capacity retune moves it. LLS_STAT_TRIP is a
+    // FIELD SETPOINT on a physical device and moves only when field
+    // practice does. Deliberately two constants; the collision is a
+    // coincidence, not a shared value. Do not merge them.
     const FREEZE_WATCH  = 38;   // °F
 
     // Canonical ΔT — the AHU's entering-air reference is MIXED air, not
@@ -956,6 +1233,11 @@ const DDCWAhuUnit = (function () {
     let fogNoteOn = null;
     let blades;
     let out;
+    // The low-limit stat's device face. `llsPainted` latches the painted
+    // state so the 10 Hz repaint does not rewrite four nodes every tick
+    // (codebase-issues #229, the same guard the fog note carries).
+    let llsPanel, llsBtn, llsMsg;
+    let llsPainted = null;
 
     // Every SVG value id and its point-mirror twin. renderUnit writes both
     // surfaces from ONE source, which is what stops them drifting.
@@ -1002,6 +1284,12 @@ const DDCWAhuUnit = (function () {
         dotStg2:   'ahu-dot-stg2',
         dotRun:    'ahu-dot-fan-run',
         dotProof:  'ahu-dot-fan-proof',
+        // The hardwired stat's device face — the LED and the state word.
+        // They ride the same missing-node guard as every readout above
+        // because the failure mode is identical: a typo here would throw
+        // inside renderUnit and freeze the whole simulator silently.
+        llsLed:    'ahu-lls-led',
+        llsState:  'ahu-lls-state',
     };
 
     // The five AI points with a physical device on the drawing. Order is
@@ -1040,6 +1328,9 @@ const DDCWAhuUnit = (function () {
         stageBtns   = document.querySelectorAll('#tab-unit [data-stage]');
         presetBtns  = document.querySelectorAll('#tab-unit [data-preset]');
         mirrorBtns  = document.querySelectorAll('#tab-unit .ahu-point-btn[data-point]');
+        llsPanel    = document.getElementById('ahu-lls');
+        llsBtn      = document.getElementById('ahu-lls-reset');
+        llsMsg      = document.getElementById('ahu-lls-msg');
 
         // Sensor glyph groups + the annotation group each one feeds, keyed
         // by point id. The annotation seam is the data-callout-for
@@ -1473,6 +1764,32 @@ const DDCWAhuUnit = (function () {
         // or slider change — no extra listeners needed.
         if (ahuAnimSync) ahuAnimSync();
 
+        // ── the low-limit stat's device face ──────────────────────────
+        // The ONE surface on this page that tells the truth about the
+        // hardwired stat, and it is deliberately not part of the graphic:
+        // it is the EQUIPMENT — what you see having walked out to the
+        // unit — while everything above is the screen. Read off
+        // `plant.lls`, never off `derived`, which is the structural half
+        // of the guard that keeps the verdict ladder below from learning
+        // about this device (see LLS_STAT_TRIP).
+        //
+        // NOT a live region, and that is a decision rather than an
+        // oversight: an announcement would hand a screen-reader user the
+        // one thing the lesson says nobody gets — the front end telling
+        // you the stat tripped. The state is plain, labelled, keyboard-
+        // reachable text you go and read, exactly as a sighted reader
+        // goes and looks. The RESET RESULT line below IS announced,
+        // because a press is user-initiated feedback, not an alarm.
+        const statTripped = plant.lls.tripped === true;
+        if (statTripped !== llsPainted) {
+            llsPainted = statTripped;
+            out.llsState.textContent = statTripped ? 'TRIPPED' : 'NORMAL';
+            out.llsLed.className = statTripped ? 'led led--alarm' : 'led led--off';
+            llsPanel.classList.toggle('is-tripped', statTripped);
+            // A state change invalidates whatever the last press said.
+            llsMsg.textContent = '';
+        }
+
         // ── verdict ladder ────────────────────────────────────────────
         // ORDERING RULES, all inherited from the FCU and all load-bearing:
         //  • AIRFLOW BRANCHES OUTRANK EVERYTHING. They read `airflowOn` —
@@ -1500,6 +1817,17 @@ const DDCWAhuUnit = (function () {
         //  • NO BRANCH INTERPOLATES A NUMBER. The verdict string is the
         //    one text surface with no display-unit conversion behind it,
         //    so it stays unit-free by construction.
+        //  • ⚠ NO BRANCH MAY NAME THE HARDWIRED LOW-LIMIT STAT. That
+        //    device has no point on this controller, so the graphic
+        //    cannot know it tripped — it can only see the CONSEQUENCE,
+        //    which the first branch below already words correctly: a
+        //    coil loaded with the fan off. The unhelpfulness IS the
+        //    content, and it is what a real front end shows when the
+        //    safety string opens on an unmonitored stat. If this ladder
+        //    ever starts wanting a friendlier answer here, the fix is a
+        //    BI on the roster and a wire in the field, not a branch.
+        //    `derived` deliberately does not carry the flag, so writing
+        //    such a branch would take a second, visible change.
         let cls, txt;
         if (!d.airflowOn && (d.stage > 0 || d.hwFrac > 0)) {
             cls = 'error';
@@ -1517,11 +1845,28 @@ const DDCWAhuUnit = (function () {
         } else if (d.stage > 0 && d.matT < FREEZE_WATCH) {
             // ENTERING AIR ALREADY NEAR FREEZING. This branch sits ABOVE
             // the no-ΔT one because it names the same symptom's real
-            // cause, and it is REACHABLE with the shipped program in
-            // control — one drag of the outdoor-air slider to its −20 °F
-            // floor permits the economizer, drives the damper to 100 %
-            // and leaves a latched stage running on outdoor air. The
-            // sheet carries no mixed-air low limit, which is the lesson.
+            // cause. The sheet carries no mixed-air low limit, which is
+            // the lesson.
+            //
+            // ⚠ AS OF 2026-08-08 IT IS ONLY REACHABLE ON THE WAY DOWN,
+            // and the reason is a collision worth understanding before
+            // anyone "fixes" either side. It used to be one drag of the
+            // outdoor-air slider to −20 °F: the economizer permits, the
+            // damper opens, a latched stage runs on outdoor air, and the
+            // machine SITS there. The hardwired low-limit stat now stops
+            // it. With a stage lit and no heat, the DX coil's ceiling
+            // holds the leaving air at or below the entering air, so
+            // datT ≤ matT + FAN_HEAT < FREEZE_WATCH + 1 — and every
+            // value the coil's floor allows in that band is below
+            // LLS_STAT_TRIP. Heat does not open a window either: the
+            // simultaneous-heat-and-cool branch above outranks this one.
+            // So the state paints during the coil-lag transient and then
+            // the fan stops. The branch stays — it is correct, and it is
+            // what this ladder says the moment the stat is retuned,
+            // scoped or defeated — but its page spec row is marked fixme
+            // with the whole argument (tests/ddc-workbench-ahu-page.spec.js,
+            // "freezing mixed air under a running stage"), pending an
+            // owner ruling on which of the two features gives ground.
             //
             // The band is exactly `matT < FREEZE_WATCH`, not a guess:
             // the DX coil's floor is COIL_FLOOR and the fan adds
@@ -1685,7 +2030,15 @@ const DDCWAhuUnit = (function () {
         // clock multiplier is SHELL state, so ctx.simSpeed() is the live
         // read and this readout can't hold a stale local mirror.
         speedValLbl.textContent = Math.round(ctx.simSpeed()) + '×';
-        oaValLbl.textContent    = dispTempNum(plant.oaT).toFixed(0) + ' ' + tSuffix();
+        // The OA readout is the KNOB's readout, so it paints the TARGET —
+        // it has to agree with the handle sitting under it, or the
+        // control reads as broken. While the chase is running that number
+        // and the machine's own outdoor air disagree, and that is the
+        // intended reading: this row is a command, the OAT well on the
+        // graphic and the OAT chip in the statusbar are instruments. It
+        // is the same command-vs-measured split the setpoint wells teach
+        // two panels over, which is why it needs no extra UI to explain.
+        oaValLbl.textContent    = dispTempNum(plant.oaTarget).toFixed(0) + ' ' + tSuffix();
         loadValLbl.textContent  = Math.round(plant.qInternal) + ' Btu/h';
 
         // ── param rail writability ── a field is adjustable only while
@@ -1761,7 +2114,16 @@ const DDCWAhuUnit = (function () {
                 // loop carries them from here; a preset never jams a sensed
                 // value.
                 pl.zoneT = s.zone;
+                // A preset SNAPS the weather — both the truth and the
+                // target, so nothing ramps afterwards. Deliberate: the
+                // OA_RAMP_RATE chase exists to keep a slider TEST from
+                // delivering cold air, and clicking a scenario is not
+                // testing the slider, it is staging a machine. A preset
+                // that ramped would make "put me on a 20 °F morning"
+                // arrive a sim-minute later, which is a worse lie than
+                // instant weather.
                 pl.oaT = s.oa;
+                pl.oaTarget = s.oa;
                 pl.qInternal = s.load;
                 oaSlider.value = String(s.oa);
                 loadSlider.value = String(s.load);
@@ -1769,6 +2131,15 @@ const DDCWAhuUnit = (function () {
                 GLYPHED.forEach(function (id) {
                     if (pl.override[id]) pl.override[id].active = false;
                 });
+                // ⚠ IT DOES NOT CLEAR THE HARDWIRED STAT, on the same
+                // reasoning that keeps the priority arrays alive across a
+                // program switch (ddcw-shell.js): a latch lives on the
+                // DEVICE, and nothing an operator does at a screen re-makes
+                // a manual-reset element. So a preset clicked after a trip
+                // stages the situation and leaves the machine down — which
+                // reads as a broken sim for exactly as long as it takes to
+                // look at the device face, which is the walk this whole
+                // feature is about.
                 host.writeSlot8('oa-damper', s.dmp);
                 host.writeSlot8('hw-valve', s.hw);
                 host.writeSlot8('fan-speed', s.fan);
@@ -1799,6 +2170,39 @@ const DDCWAhuUnit = (function () {
             if (nullFanen.checked) return;
             host.writeSlot8('fan-enable', fanenToggle.checked);
             host.requestRender();
+        });
+
+        // ── the low-limit stat's reset button ─────────────────────────
+        // Note what this does NOT touch: no slot, no point, no program.
+        // The stat is not on the controller, so the button cannot be a
+        // priority-array write — it reaches straight into the plant,
+        // which is the whole distinction the device face exists to draw.
+        // Deliberately never disabled: a real reset button is always
+        // there to push, and disabling it while the stat is made would
+        // leak the trip state into the button's own aria.
+        //
+        // The result line is written HERE and not in renderUnit, because
+        // it reports an ACTION rather than a state. Its wording stays in
+        // the device's voice: it says what the element and the contacts
+        // did, never what the machine should do about it.
+        //
+        // ⚠ ORDER IS LOAD-BEARING: repaint FIRST, then write the result.
+        // `host.requestRender()` is synchronous — it runs renderUnit in
+        // this same task — and renderUnit's paint latch blanks llsMsg on
+        // any tripped↔normal edge, since a state change invalidates
+        // whatever the last press said. A successful reset IS that edge,
+        // so a result written before the call is erased before it can
+        // paint or be announced. The two failure wordings move no state
+        // and would survive either order; the one that matters would not.
+        llsBtn.addEventListener('click', function () {
+            const r = ahuResetLowLimit(pl);
+            host.requestRender();
+            llsMsg.textContent = r === 'cleared'
+                ? 'Reset — the element is warm and the contacts are made.'
+                : (r === 'still-cold'
+                    ? 'Nothing happens. The element is still below its setting: '
+                        + 'clear the cause first, then push the button.'
+                    : 'Nothing to reset — this stat has not tripped.');
         });
 
         // The three analog hand controls. Same shape each: ignore the drag
@@ -2086,13 +2490,19 @@ const DDCWAhuUnit = (function () {
         });
 
         // ── Outdoor-air temp — °F-native slider, always live; the readout
-        // converts for display. It writes plant.oaT, not a module-level
-        // `let`: the weather belongs to the plant on this unit (see
-        // ahuCreatePlant), which is what makes a fresh plant reproducible
-        // and lets an engine-direct spec sweep it. ──
+        // converts for display. It writes plant.oaTarget, not a
+        // module-level `let`: the weather belongs to the plant on this
+        // unit (see ahuCreatePlant), which is what makes a fresh plant
+        // reproducible and lets an engine-direct spec sweep it.
+        //
+        // AND IT WRITES THE TARGET, NEVER THE TRUTH. The knob says where
+        // the weather is headed; update() walks the actual outdoor air
+        // there at OA_RAMP_RATE. That is what makes a quick test-drag
+        // harmless and a sustained cold spell arrive anyway — the owner's
+        // 2026-08-09 ruling, argued at the constant. ──
         oaSlider.addEventListener('input', function () {
             const v = parseFloat(oaSlider.value);
-            if (isFinite(v)) pl.oaT = v;
+            if (isFinite(v)) pl.oaTarget = v;
             host.requestRender();
         });
 
@@ -2431,6 +2841,10 @@ const DDCWAhuUnit = (function () {
         createPlant: ahuCreatePlant,
         update: ahuUpdate,
         points: AHU_POINTS,
+        // The hardwired stat's manual reset. Exposed beside the physics
+        // rather than hidden in the DOM half because it IS physics — the
+        // device is plant, and the button on the page is only one caller.
+        resetLowLimit: ahuResetLowLimit,
     };
 })();
 
