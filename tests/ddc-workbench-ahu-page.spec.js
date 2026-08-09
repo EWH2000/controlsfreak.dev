@@ -866,6 +866,57 @@ test.describe('AHU workbench page: the mirror diet', () => {
 
 test.describe('AHU workbench page: the fogging disclosure (#240)', () => {
 
+    // ⚠ THE RECIPE MOVED WHEN THE HARDWIRED LOW-LIMIT STAT LANDED
+    // (2026-08-08), and the move is worth reading before touching it.
+    // Fogging needs the mixing box to cross saturation, which needs
+    // MIXED AIR IN THE THIRTIES OR COLDER — and a machine with a 38 °F
+    // discharge low-limit stat cannot hold air that cold across a dry
+    // coil, because DAT is then MAT plus a degree of fan heat. The old
+    // recipe here (outdoor −10, damper 60, no heat) trips the stat on
+    // the first tick and the fan stops, which collapses the mixed state
+    // back to return air and un-fogs it.
+    //
+    // What restores it is the HOT-WATER COIL, and that is the honest
+    // fix rather than a dodge: the fog is a MIXING-BOX phenomenon, the
+    // stat watches the DISCHARGE, and on a −15 °F morning a machine
+    // with a hot-water coil would have that valve open anyway. Holding
+    // it at 80 % puts the discharge in the sixties with the mixed air
+    // still in the twenties — fogging, and 20-odd degrees clear of the
+    // stat. The compressor is held off for the same reason: a lit stage
+    // subtracts about 10 °F from the discharge and walks it back into
+    // the trip.
+    //
+    // ORDER IS LOAD-BEARING BELOW. Set the heat and the stage FIRST and
+    // drop the weather LAST — opening the damper on cold air with the
+    // arrival stage still lit trips the stat before the valve is there
+    // to catch it.
+    //
+    // ⚠ AND THE OWNER'S OWN RECORDED RECIPE NO LONGER REACHES THIS
+    // (docs/air-side-sim.md, Lane C ruling 5, 2026-08-02: "outdoor air
+    // −15 °F, manual damper 60 %" against the settled winter zone).
+    // That state is a mixed air of about 17 °F with no heat, which this
+    // machine now stops. The disclosure still works and is still worth
+    // keeping; whether losing that particular reproduction is
+    // acceptable is the owner's call, not this spec's.
+    const fogRecipe = async (page) => {
+        // Hold the compressor off — a lit stage walks the discharge into
+        // the stat.
+        await page.locator('#ahu-null-stage').uncheck();
+        await page.locator('#ahu-stage-0').click();
+        // Hot water open: the discharge rides well clear of the stat
+        // while the mixing box stays cold enough to fog.
+        await page.locator('#ahu-null-hw').uncheck();
+        await page.locator('#ahu-hw-slider').fill('80');
+        await page.locator('#ahu-hw-slider').dispatchEvent('input');
+        await page.locator('#ahu-null-oad').uncheck();
+        await page.locator('#ahu-oad-slider').fill('50');
+        await page.locator('#ahu-oad-slider').dispatchEvent('input');
+        // Weather last.
+        await page.locator('#ahu-oa-slider').fill('-15');
+        await page.locator('#ahu-oa-slider').dispatchEvent('input');
+        await settle(page, 1200);
+    };
+
     test('the marker is absent on an ordinary day and appears in the fog branch', async ({ page }) => {
         await open(page);
         // Absent by default — an unforced, unfogged drawing carries no
@@ -879,12 +930,10 @@ test.describe('AHU workbench page: the fogging disclosure (#240)', () => {
         // WARMER than the plain %OA blend a reader would compute off the
         // screen. A silent bare number there looks like this site's own
         // %OA arithmetic and is not it.
-        await page.locator('#ahu-oa-slider').fill('-10');
-        await page.locator('#ahu-oa-slider').dispatchEvent('input');
-        await page.locator('#ahu-null-oad').uncheck();
-        await page.locator('#ahu-oad-slider').fill('60');
-        await page.locator('#ahu-oad-slider').dispatchEvent('input');
-        await settle(page, 900);
+        await fogRecipe(page);
+        // The machine is still running — the disclosure is about a state
+        // this unit can actually hold, not a frame before a safety fires.
+        await expect(page.locator('#ahu-lls-state')).toHaveText('NORMAL');
 
         await expect(page.locator('#ahu-fog-mark')).toHaveClass(/is-fogging/);
         // The accessible half — a real sentence, in the one place there is
@@ -897,12 +946,7 @@ test.describe('AHU workbench page: the fogging disclosure (#240)', () => {
 
     test('the disclosure is suppressed while the MAT sensor is forced', async ({ page }) => {
         await open(page);
-        await page.locator('#ahu-oa-slider').fill('-10');
-        await page.locator('#ahu-oa-slider').dispatchEvent('input');
-        await page.locator('#ahu-null-oad').uncheck();
-        await page.locator('#ahu-oad-slider').fill('60');
-        await page.locator('#ahu-oad-slider').dispatchEvent('input');
-        await settle(page, 900);
+        await fogRecipe(page);
         await expect(page.locator('#ahu-fog-mark')).toHaveClass(/is-fogging/);
 
         // The marker annotates the MAT WELL, and that well paints the
@@ -927,22 +971,39 @@ test.describe('AHU workbench page: the fogging disclosure (#240)', () => {
 
 test.describe('AHU workbench page: the verdict ladder\'s coil bounds', () => {
 
-    test('freezing mixed air under a running stage is named, not read as a dead coil', async ({ page }) => {
-        await open(page);
-        // Reachable with the PROGRAM in control and one drag: at the
-        // slider's −20 °F floor the economizer permits, the damper opens
-        // and a latched stage runs on outdoor air. The sheet carries no
-        // mixed-air low limit, which is the lesson — and the plain
-        // "no ΔT" wording used to blame the compressor for it, because
-        // the coil's own ceiling pins the delta near zero when the
-        // entering air is already below the coil floor.
-        await page.locator('#ahu-oa-slider').fill('-20');
-        await page.locator('#ahu-oa-slider').dispatchEvent('input');
-        await settle(page, 2000);
-        const v = page.locator('#ahu-verdict');
-        await expect(v).toHaveClass(/error/);
-        await expect(v).toContainText('already near freezing');
-    });
+    // ⚠ OWNER DECISION NEEDED — DO NOT QUIETLY DELETE THIS ROW OR ITS
+    // VERDICT BRANCH. It went unreachable on 2026-08-08, when the
+    // hardwired 38 °F discharge low-limit stat landed in the plant, and
+    // the collision is STRUCTURAL rather than a matter of coordinates:
+    //
+    //   the branch needs `stage > 0 && matT < FREEZE_WATCH (38)` with
+    //   air moving. With a stage lit and no heat, the DX coil's own
+    //   ceiling holds the leaving air at or below the entering air, so
+    //   DAT <= matT + FAN_HEAT < 39 — and every value in [35, 39) that
+    //   the coil's floor allows trips a stat set at 38. Adding heat does
+    //   not open a window either: `stage > 0 && hwFrac > 0` is the
+    //   "fighting itself" branch and sits ABOVE this one in the ladder.
+    //
+    // So the state can only be painted during the coil-lag transient, on
+    // the way down, which is a race rather than a test. The branch is
+    // still correct and still worth having if the stat is ever retuned
+    // or scoped; what is gone is the ability to SIT in it. Two ways out,
+    // both the owner's call: accept it (a protected machine genuinely
+    // cannot hold that state, and this verdict becomes near-dead code),
+    // or give the device face a defeat — the field's jumpered freezestat,
+    // which the page already teaches the software equivalent of when it
+    // says holding LLS Reset true wires the button down.
+    // eslint-disable-next-line playwright/no-skipped-test
+    test.fixme('freezing mixed air under a running stage is named, not read as a dead coil',
+        async ({ page }) => {
+            await open(page);
+            await page.locator('#ahu-oa-slider').fill('-20');
+            await page.locator('#ahu-oa-slider').dispatchEvent('input');
+            await settle(page, 2000);
+            const v = page.locator('#ahu-verdict');
+            await expect(v).toHaveClass(/error/);
+            await expect(v).toContainText('already near freezing');
+        });
 
     test('the hot-water coil at its leaving-air ceiling warns instead of reporting clean', async ({ page }) => {
         await open(page);
@@ -1805,6 +1866,221 @@ test.describe('AHU workbench page: the phone surface (the Unit tab is the mobile
             expect(d.twin, `${d.href} needs an HTML twin outside the SVG`).toBe(true);
         }
     });
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// THE HARDWIRED LOW-LIMIT STAT — the device the controller cannot see.
+//
+// The machine carries a manual-reset low-limit stat across the coil
+// face, landed in the fan starter circuit and NOT landed on the
+// controller. Three things on this page carry that idea and each has a
+// row below: it is DRAWN on the graphic and left unmarked; its reset
+// lives on an equipment-register device face rather than in the software
+// controls; and the graphic's verdict never names it.
+//
+// The verdict row is the one that exists to be defended. It pins an
+// ABSENCE, so it is written as a vocabulary ban rather than a string
+// match: whatever the ladder says while the stat is down, it may not
+// say "low limit", "freezestat" or "stat". A future edit that makes the
+// graphic more helpful here reddens it, which is the intent — the
+// unhelpfulness is the content.
+// ══════════════════════════════════════════════════════════════════════
+
+// Words the SCREEN may never use about this device. `stat` is matched
+// with a word boundary so "status" is untouched.
+const CAUSE_WORDS = /low[- ]?limit|freeze ?stat|\bstats?\b|\bLLS\b/i;
+
+// Drive the page into a hardwired trip through the real UI: the
+// free-cooling preset holds the damper wide open at slot 8, and dragging
+// the outdoor-air slider to its floor then puts raw sub-zero air across
+// the coils — the freeze a low-limit stat exists to catch. Deliberately
+// no program involvement: with slot 8 held, the SOFTWARE low limit on
+// the winter sheet could not stop the fan even if it wanted to, which is
+// exactly why the hardware device is the one that acts.
+async function tripTheStat(page) {
+    await page.click('[data-preset="freecool"]');
+    await page.fill('#ahu-oa-slider', '-20');
+    await page.dispatchEvent('#ahu-oa-slider', 'input');
+    await expect(page.locator('#ahu-lls-state')).toHaveText('TRIPPED', { timeout: 5000 });
+}
+
+test.describe('AHU workbench page: the low-limit stat', () => {
+
+    test('it is DRAWN on the graphic, and drawn unmarked', async ({ page }) => {
+        // Owner ruling 2026-08-08, the DOAS exhaust-fan shape: draw the
+        // device, do not mark it. Marking it would hand the controller a
+        // point it does not have. Every clause here is an absence, and
+        // together they are what "unmarked" means on this drawing.
+        await open(page);
+        const stat = page.locator('#ahu-lls-stat');
+        await expect(stat, 'the device is drawn').toHaveCount(1);
+        await expect(stat).toBeVisible();
+
+        const shape = await page.evaluate(() => {
+            const g = document.getElementById('ahu-lls-stat');
+            return {
+                inSvg: !!g.closest('#ahu-graphic'),
+                dataPoint: g.hasAttribute('data-point'),
+                sensorClass: g.classList.contains('ddcw-sensor')
+                    || !!g.querySelector('.ddcw-sensor'),
+                focusable: !!g.querySelector('[tabindex], a, button')
+                    || g.hasAttribute('tabindex'),
+                marks: g.querySelectorAll(
+                    '.ahu-leader, .ahu-anchor, .ahu-well, .ahu-callout, text, title').length,
+                calloutFor: !!document.querySelector('[data-callout-for="lls"]'),
+                // Every ink it paints with, resolved: the neutral no-point
+                // family and nothing else. An identity colour here would
+                // claim the program reads or writes it.
+                inks: [...g.querySelectorAll('*')].map((el) => {
+                    const cs = getComputedStyle(el);
+                    return cs.stroke + '|' + cs.fill;
+                }),
+                dim: getComputedStyle(document.querySelector('.ahu-louver-slat')).stroke,
+                surface: getComputedStyle(document.querySelector('.ahu-louver-frame')).fill,
+            };
+        });
+        expect(shape.inSvg, 'it sits inside the unit graphic').toBe(true);
+        expect(shape.dataPoint, 'no data-point — it is not a point').toBe(false);
+        expect(shape.sensorClass, 'not a .ddcw-sensor glyph either').toBe(false);
+        expect(shape.focusable, 'nothing inside it is focusable').toBe(false);
+        expect(shape.marks, 'no leader, anchor, well, callout, label or tooltip')
+            .toBe(0);
+        expect(shape.calloutFor, 'no annotation group answers to it').toBe(false);
+        // Ink: the same two computed colours the intake louver uses —
+        // the drawing's own "no point, neutral line-art" family.
+        for (const ink of shape.inks) {
+            const [stroke, fill] = ink.split('|');
+            expect(stroke, 'stat stroke is the neutral dim ink').toBe(shape.dim);
+            expect([shape.surface, 'none'], 'stat fill is the panel face or nothing')
+                .toContain(fill);
+        }
+    });
+
+    test('the reset lives on a device face, not in the software controls', async ({ page }) => {
+        // The register IS the argument: a stat that is not a point cannot
+        // be reset from a screen, so its button is drawn as hardware. If
+        // this ever becomes a .copy-btn beside the scenario row, the page
+        // has quietly claimed the controller can reach the device.
+        await open(page);
+        const panel = page.locator('#ahu-lls');
+        await expect(panel).toBeVisible();
+        await expect(panel).toHaveClass(/\bdevice\b/);
+        const btn = page.locator('#ahu-lls-reset');
+        await expect(btn).toBeVisible();
+        await expect(btn).toBeEnabled();
+
+        const shape = await page.evaluate(() => {
+            const b = document.getElementById('ahu-lls-reset');
+            const p = document.getElementById('ahu-lls');
+            return {
+                tag: b.tagName,
+                inDevice: !!b.closest('.device'),
+                softwareClass: b.classList.contains('copy-btn'),
+                named: (b.textContent || '').trim(),
+                group: p.getAttribute('role'),
+                labelled: !!document.getElementById(
+                    p.getAttribute('aria-labelledby') || ''),
+                // The result line is announced (a press is user-initiated
+                // feedback); the STATE row deliberately is not.
+                msgLive: document.getElementById('ahu-lls-msg').getAttribute('aria-live'),
+                stateLive: document.getElementById('ahu-lls-state')
+                    .closest('[aria-live]') !== null,
+            };
+        });
+        expect(shape.tag, 'a real button, so Enter and Space work').toBe('BUTTON');
+        expect(shape.inDevice, 'it sits on the device face').toBe(true);
+        expect(shape.softwareClass, 'not the software button vocabulary').toBe(false);
+        expect(shape.named.length, 'the button names itself').toBeGreaterThan(0);
+        expect(shape.group).toBe('group');
+        expect(shape.labelled, 'the group resolves its own label').toBe(true);
+        expect(shape.msgLive).toBe('polite');
+        expect(shape.stateLive, 'the state row must not announce itself').toBe(false);
+
+        // Keyboard reachable and visibly focused — the shared focus ring
+        // is suppressed by the site-wide outline reset, so the page-local
+        // :focus-visible rule is what makes this pass.
+        await btn.focus();
+        await expect(btn).toBeFocused();
+        const outline = await btn.evaluate((el) => getComputedStyle(el).outlineWidth);
+        expect(outline, 'a focused hardware button still shows a ring')
+            .not.toBe('0px');
+    });
+
+    test('a trip stops the fan under a standing command, and the graphic will not say why',
+        async ({ page }) => {
+            await open(page);
+            await tripTheStat(page);
+
+            // The gap that is the whole fault: the command reads ON and
+            // nothing is moving. Both readouts come off the SVG, which is
+            // what a technician is actually looking at.
+            await expect(page.locator('#ahu-v-fan-run')).toHaveText('ON');
+            await expect(page.locator('#ahu-v-fan-proof')).toHaveText('NONE');
+
+            // ⚠ THE ROW'S POINT. Whatever the verdict says, it may not
+            // name the device — the controller has no point for it.
+            const verdict = (await page.locator('#ahu-verdict').textContent()) || '';
+            expect(verdict.trim().length, 'the pill still says something').toBeGreaterThan(0);
+            expect(verdict, 'the graphic named a device it cannot see: ' + verdict)
+                .not.toMatch(CAUSE_WORDS);
+            const sr = (await page.locator('#ahu-verdict-sr').textContent()) || '';
+            expect(sr, 'the announced mirror leaked it instead: ' + sr)
+                .not.toMatch(CAUSE_WORDS);
+
+            // And it LATCHES: warm the weather right back up and the
+            // machine stays down.
+            await page.fill('#ahu-oa-slider', '80');
+            await page.dispatchEvent('#ahu-oa-slider', 'input');
+            await settle(page, 1200);
+            await expect(page.locator('#ahu-lls-state')).toHaveText('TRIPPED');
+            await expect(page.locator('#ahu-v-fan-proof')).toHaveText('NONE');
+        });
+
+    test('the button on the device is what brings it back', async ({ page }) => {
+        await open(page);
+        await tripTheStat(page);
+        // Clear the cause first — the field order, and the only order
+        // that leaves the machine running afterwards.
+        await page.fill('#ahu-oa-slider', '80');
+        await page.dispatchEvent('#ahu-oa-slider', 'input');
+        await settle(page, 800);
+
+        await page.click('#ahu-lls-reset');
+        await expect(page.locator('#ahu-lls-state')).toHaveText('NORMAL');
+        // The proof has to re-make from nothing, which is the restart
+        // order the page teaches: fan first, then proof, then the loads.
+        await expect(page.locator('#ahu-v-fan-proof')).toHaveText('MADE', { timeout: 8000 });
+    });
+
+    test('the software low limit sits above the hardware one, and neither fires on a settled machine',
+        async ({ page }) => {
+            // Two claims in one row because they are one decision (owner,
+            // 2026-08-08): the sheet's LLS Trip constant is ABOVE the
+            // hardwired setting, so the program acts first — and with the
+            // winter sheet running normally, nothing trips at all.
+            //
+            // The relation is read off the two SOURCES rather than
+            // asserted as a pair of numbers: the setting is field
+            // practice, and a retune should move it without reddening a
+            // spec that only cares which one is higher.
+            const sheet = fs.readFileSync(path.join(
+                __dirname, '..', 'html', 'simulators', 'ddc-workbench.html'), 'utf8');
+            const unit = fs.readFileSync(path.join(
+                __dirname, '..', 'html', 'scripts', 'ddcw-ahu-unit.js'), 'utf8');
+            const soft = parseFloat(
+                sheet.match(/id: 'llsset',[^}]*value: (-?[\d.]+)/)[1]);
+            const hard = parseFloat(
+                unit.match(/const LLS_STAT_TRIP\s*=\s*(-?[\d.]+)/)[1]);
+            expect(Number.isFinite(soft) && Number.isFinite(hard)).toBe(true);
+            expect(soft, `software limit ${soft} must sit above the hardwired ${hard}`)
+                .toBeGreaterThan(hard);
+
+            await open(page);
+            await page.selectOption('#ddcw-program', 'econ-2stage-lowlimits');
+            await settle(page, 2500);                 // ~8 sim-minutes at 20×
+            await expect(page.locator('#ahu-lls-state')).toHaveText('NORMAL');
+            await expect(page.locator('#ahu-v-fan-proof')).toHaveText('MADE');
+        });
 });
 
 test.describe('AHU workbench page: the phone truth stays out of the desktop pane', () => {

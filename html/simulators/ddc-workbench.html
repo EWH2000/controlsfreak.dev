@@ -21,10 +21,27 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
            round-1 scope block, the cross-round state table — is deliberately
            NOT here.
 
-           SOFTWARE REGISTER ONLY. Schematic duct strokes, neutral link-box
-           frames, plain live-value text. No equipment register
-           (.device / .lcd / --dev-* / --lcd-*) — a supervisory graphic is a
-           screen, not a hardware face.
+           SOFTWARE REGISTER FOR THE SCREEN. Schematic duct strokes, neutral
+           link-box frames, plain live-value text — a supervisory graphic is
+           a screen, not a hardware face, so the drawing, the wells, the
+           callouts, the rail, the point mirror and every control that
+           commands a POINT are software register and stay that way.
+
+           ⚠ ONE EQUIPMENT-REGISTER EXCEPTION, ADDED 2026-08-08, and the
+           exception is the argument. The machine carries a hardwired
+           manual-reset low-limit stat that is NOT a point on this
+           controller (ddcw-ahu-unit.js, LLS_STAT_TRIP): it opens the fan
+           starter circuit and the program never learns why the unit
+           stopped. Its reset button therefore cannot be a software control
+           — you walk to the unit and push it — so it is built from the
+           shared .device / .device-inner / .device-tb / .led vocabulary,
+           in the HTML — THE LOW-LIMIT STAT'S DEVICE FACE block below.
+           Nothing else on the page moves register, and the SVG stays
+           entirely software: the stat is DRAWN on the graphic in the
+           neutral no-point line-art the filter and louver already use, and
+           it is drawn UNMARKED — no callout, no leader, no well, no point
+           type (owner ruling 2026-08-08). Read the note beside its
+           geometry before touching it.
 
            Colour comes only from bare custom properties. Never a literal,
            never a var(--x, #hex) fallback: if a property is ever removed the
@@ -311,6 +328,42 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
             fill: none;
             stroke: var(--text-dim);
             stroke-width: 1.5;
+        }
+
+        /* The hardwired low-limit stat — the THIRD member of the neutral
+           family above, and the only one that is neutral for a reason the
+           reader can act on: the filter and the louver have no point
+           because nothing would ever command them, while this device has
+           no point because nobody landed one, which is the fault the page
+           is teaching. Same paint either way — the rule is "no point,
+           neutral line-art", and it does not ask why.
+           ⚠ NO STATE VARIANT AND NO HOVER LIFT. It is not a link, not a
+           glyph, not focusable, and it looks the same tripped as made —
+           see the drawing note beside the geometry. */
+        .ahu-stat-body {
+            fill: var(--surface);
+            stroke: var(--text-dim);
+            stroke-width: 1.5;
+        }
+        /* The reset button on the switch face: the shape signature that
+           says manual-reset device rather than sensor. A RING, not a
+           solid — a filled disc this size is the state-dot idiom (and
+           the anchor-dot idiom), and this dot is neither. */
+        .ahu-stat-knob {
+            fill: var(--surface);
+            stroke: var(--text-dim);
+            stroke-width: 1.5;
+        }
+        /* The capillary element. Round caps and joins are the same
+           flexibility cue .ddcw-sensor-cap carries — bent tubing on
+           standoffs — kept at the 1.5 weight the rest of the neutral
+           family uses. */
+        .ahu-stat-cap {
+            fill: none;
+            stroke: var(--text-dim);
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
         /* ── Airflow — four terminal block arrows, and they are the ONLY
@@ -982,6 +1035,87 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
         .ahu-fanen label { display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; }
         .ahu-fanen input { width: auto; margin: 0; }
 
+        /* ══════════════════════════════════════════════════════════════════
+           HTML — THE LOW-LIMIT STAT'S DEVICE FACE (the one equipment-register
+           widget on this page)
+
+           ⚠ THIS IS THE EXCEPTION THE BLOCK COMMENT AT THE TOP OF THIS FILE
+           NAMES. The drawing and every readout around it stay software
+           register because a supervisory graphic is a screen; this widget is
+           the hardware you walk out to, and the register difference is what
+           says so before a word is read. Built from the shared .device /
+           .device-inner / .device-tb / .led vocabulary in styles.css so the
+           face, the bezel and the LED are the same ones the styleguide
+           documents — only the row layout, the state word and the button are
+           page-local, because only this page draws them.
+
+           ⚠ LITERAL COLOURS, AND ONLY IN HERE. The rest of this file takes
+           colour from bare custom properties; the equipment register cannot,
+           because it is CONSTANT ACROSS THEMES by design (styles.css:
+           "a device is a device in either theme") and every software token
+           flips in light. So the two inks below are literals, matching the
+           register's own .device-tb / .key colours, and their contrast is
+           hand-measured — the contrast sweep skips .device subtrees by
+           documented exclusion, so these numbers ARE the guard:
+               #cfc8ad on --dev-face #16140f  =  10.97:1
+               #f07a6d on --dev-face #16140f  =   6.76:1
+           (#f07a6d is --red-text's DARK value, frozen as a literal here
+           because the face it lands on never changes with the theme.)
+           ══════════════════════════════════════════════════════════════ */
+        .ahu-lls { margin: 0 0 1rem; max-width: 26rem; }
+        .ahu-lls-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .ahu-lls-readout { display: inline-flex; align-items: center; gap: 0.55rem; }
+        .ahu-lls-word {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            color: #cfc8ad;
+        }
+        .ahu-lls.is-tripped .ahu-lls-word { color: #f07a6d; }
+        /* An embossed keycap, the register's own button idiom (.key in
+           styles.css). Page-local rather than the shared class because
+           .key is grid-sized for a 4-column keypad and carries neither a
+           focus ring nor a touch floor — and adding those to the shared
+           rule would restyle the styleguide's keypad. Widget internals
+           with no shared class take their floor page-locally; that is the
+           documented pattern. */
+        .ahu-lls-btn {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #cfc8ad;
+            padding: 0.45rem 1.4rem;
+            border: 1px solid #000;
+            border-radius: var(--rail);
+            background: linear-gradient(180deg, #2a281e, #1b1913);
+            box-shadow: inset 0 1px 0 var(--dev-hi);
+            cursor: pointer;
+        }
+        .ahu-lls-btn:active { background: #17150f; box-shadow: inset 0 1px 3px #000; }
+        .ahu-lls-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+        @media (hover: none) {
+            .ahu-lls-btn { min-height: 44px; min-width: 44px; }
+        }
+        /* The press result. Empty until the button is pushed, and cleared
+           again by the next state change — so an empty line is the resting
+           state and never reserves space. */
+        p.ahu-lls-msg {
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            line-height: 1.5;
+            color: #cfc8ad;
+        }
+        p.ahu-lls-msg:not(:empty) { margin-top: 0.6rem; }
+
         /* NULL — released checkboxes, one per hand control (the stage group's
            box nulls BOTH y1 and y2 — one control, two points). Checked =
            slot 8 released; the paired control disables and tracks the
@@ -1356,7 +1490,7 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                  role="img" aria-labelledby="ahu-title ahu-desc"
                  font-family="var(--mono)">
                 <title id="ahu-title">An air handler serving one zone, as a live DDC supervisory graphic</title>
-                <desc id="ahu-desc">A single-zone constant-volume air handler drawn as a DDC supervisory graphic, laid out left to right in air-path order. Outdoor air arrives at the far left, marked by a block arrow, and enters through a fixed louvered intake plate set into the outdoor face of the unit casing; the louver and its slats are drawn in neutral grey line-art. A shielded outdoor-air temperature sensor is bracketed to that same outdoor face at the top of the intake plate: a wide solid roof slab with a shallow gable, then three thick tapering shield plates stacked below it and separated by hairline seams, with the sensing element running down the axis through the stack and its tip protruding below the lowest plate as an open bulb. Just inside the casing an outside-air damper is drawn in amber in a tall narrow frame that spans the full height of the intake opening, top to bottom, with three blades whose angle tracks the commanded position. Return air arrives from the zone at the right, marked by a block arrow at the zone face, and runs leftward along a duct across the top of the drawing; a return-air insertion probe penetrates the top wall of that duct partway along its run, its head sitting above the duct and its stem reaching in toward the centerline. Further left a relief branch tees upward out of the top of the drawing through an amber relief damper, and above that damper a short dashed stem and a block arrow mark air leaving the building. Left of the tee the return duct continues and turns down in a short drop that lands on the top of the casing over the mixing box; an amber return-air damper sits in the throat of that drop in a short wide frame. All three dampers ride one commanded position on a common linkage, so the return blades close as the outside blades open. Inside the casing the stations run left to right, separated by thin section dividers: the mixing box, then a filter rack drawn in neutral grey with three media diagonals, then a hot-water heating coil whose serpentine tube is drawn in the warm heating colour, then a direct-expansion cooling coil whose serpentine is drawn in the cool blue, then the supply fan, whose five blades are filled green around a bright hub and turn while air is moving. The cooling coil carries its refrigerant connections on the entering-air face, drawn in that same blue: off the lower left corner of the coil a wedge-shaped distributor body sits clear of the section divider, outlined in blue and filled with the panel behind it, narrow at its outboard end and widening toward the coil, and four fine feeder tubes fan from its wide face into the coil, two leaving above the body's axis and two below it with none on the axis itself. Each tube curves as it goes, sweeping away from the axis and then flattening to run level where it meets the coil; they land one coil pitch apart. Above them a short horizontal suction stub leaves the top of the serpentine and ends in a short vertical header bar. The heating coil has neither, and no other station on the unit carries a distributor. A two-way hot-water control valve with its actuator stem and bar sits on a pair of pipe stubs that pass down through the casing floor beneath the heating coil, drawn in the same warm colour as that coil; each stub ends in a short cross tick marking where the piping continues on to the plant. The mixed-air temperature sensor is drawn as an averaging element: its transmitter head sits on the casing top wall downstream of the mixing dampers and upstream of the filter, and one continuous capillary hangs below it in four full-depth vertical passes that span most of the plenum height, ending in a short clip at the far end. Downstream of the fan the supply duct leaves the casing on the right and runs to the zone, marked by a block arrow at the zone face, and a discharge-air insertion probe penetrates the top wall of that run just clear of the casing. Marching chevrons run along each duct and across the machine's interior to show the air moving, and their colour changes where a coil has conditioned the air. The heating coil, the cooling coil and the supply fan are each drawn as a link into a matching simulator. The casing is tagged AHU-1, and the mixing box and filter stations carry captions beneath them. Nine titled callout boxes stand in the open space around the unit, each tied to its device by a thin leader line that ends in a small dot on that device's outline. Relief damper, tied to the relief damper, reports its commanded position. Return damper, tied to the return-air damper in the drop, reports its commanded position. Return air, tied to the return-air probe head, reports the return-air temperature. Outside air, tied to the outside-air damper, reports the outdoor-air temperature and the damper command. Mixed air, tied to the averaging element head, reports the mixed-air temperature. Heating coil, tied to the hot-water valve body, reports the valve command. Cooling coil, tied to the cooling coil, reports each compressor stage with a state dot in its well. Supply fan, tied to the fan, reports commanded speed, running status and the airflow proof switch. Discharge air, tied to the discharge probe head, reports the discharge-air temperature and, in a blue-framed well, the calculated temperature difference between discharge and mixed air. At the right the zone is drawn as a box with a space-temperature wall plate mounted flush on its far interior wall; the zone box carries two wells of its own, the zone temperature and the cooling setpoint. Every live value in this drawing is repeated as real text in the live-points list below it.</desc>
+                <desc id="ahu-desc">A single-zone constant-volume air handler drawn as a DDC supervisory graphic, laid out left to right in air-path order. Outdoor air arrives at the far left, marked by a block arrow, and enters through a fixed louvered intake plate set into the outdoor face of the unit casing; the louver and its slats are drawn in neutral grey line-art. A shielded outdoor-air temperature sensor is bracketed to that same outdoor face at the top of the intake plate: a wide solid roof slab with a shallow gable, then three thick tapering shield plates stacked below it and separated by hairline seams, with the sensing element running down the axis through the stack and its tip protruding below the lowest plate as an open bulb. Just inside the casing an outside-air damper is drawn in amber in a tall narrow frame that spans the full height of the intake opening, top to bottom, with three blades whose angle tracks the commanded position. Return air arrives from the zone at the right, marked by a block arrow at the zone face, and runs leftward along a duct across the top of the drawing; a return-air insertion probe penetrates the top wall of that duct partway along its run, its head sitting above the duct and its stem reaching in toward the centerline. Further left a relief branch tees upward out of the top of the drawing through an amber relief damper, and above that damper a short dashed stem and a block arrow mark air leaving the building. Left of the tee the return duct continues and turns down in a short drop that lands on the top of the casing over the mixing box; an amber return-air damper sits in the throat of that drop in a short wide frame. All three dampers ride one commanded position on a common linkage, so the return blades close as the outside blades open. Inside the casing the stations run left to right, separated by thin section dividers: the mixing box, then a filter rack drawn in neutral grey with three media diagonals, then a hot-water heating coil whose serpentine tube is drawn in the warm heating colour, then a direct-expansion cooling coil whose serpentine is drawn in the cool blue, then the supply fan, whose five blades are filled green around a bright hub and turn while air is moving. The cooling coil carries its refrigerant connections on the entering-air face, drawn in that same blue: off the lower left corner of the coil a wedge-shaped distributor body sits clear of the section divider, outlined in blue and filled with the panel behind it, narrow at its outboard end and widening toward the coil, and four fine feeder tubes fan from its wide face into the coil, two leaving above the body's axis and two below it with none on the axis itself. Each tube curves as it goes, sweeping away from the axis and then flattening to run level where it meets the coil; they land one coil pitch apart. Above them a short horizontal suction stub leaves the top of the serpentine and ends in a short vertical header bar. The heating coil has neither, and no other station on the unit carries a distributor. In the narrow gap between the cooling coil and the next section divider, on the coil's leaving face, a small rectangular switch body sits on top of the casing roof with a round button drawn on its face; from the underside of that body a single fine line runs down into the plenum and folds back and forth in a narrow serpentine, ending short of the casing floor. It is drawn in the same neutral grey line-art as the filter rack and the intake louver. A two-way hot-water control valve with its actuator stem and bar sits on a pair of pipe stubs that pass down through the casing floor beneath the heating coil, drawn in the same warm colour as that coil; each stub ends in a short cross tick marking where the piping continues on to the plant. The mixed-air temperature sensor is drawn as an averaging element: its transmitter head sits on the casing top wall downstream of the mixing dampers and upstream of the filter, and one continuous capillary hangs below it in four full-depth vertical passes that span most of the plenum height, ending in a short clip at the far end. Downstream of the fan the supply duct leaves the casing on the right and runs to the zone, marked by a block arrow at the zone face, and a discharge-air insertion probe penetrates the top wall of that run just clear of the casing. Marching chevrons run along each duct and across the machine's interior to show the air moving, and their colour changes where a coil has conditioned the air. The heating coil, the cooling coil and the supply fan are each drawn as a link into a matching simulator. The casing is tagged AHU-1, and the mixing box and filter stations carry captions beneath them. Nine titled callout boxes stand in the open space around the unit, each tied to its device by a thin leader line that ends in a small dot on that device's outline. Relief damper, tied to the relief damper, reports its commanded position. Return damper, tied to the return-air damper in the drop, reports its commanded position. Return air, tied to the return-air probe head, reports the return-air temperature. Outside air, tied to the outside-air damper, reports the outdoor-air temperature and the damper command. Mixed air, tied to the averaging element head, reports the mixed-air temperature. Heating coil, tied to the hot-water valve body, reports the valve command. Cooling coil, tied to the cooling coil, reports each compressor stage with a state dot in its well. Supply fan, tied to the fan, reports commanded speed, running status and the airflow proof switch. Discharge air, tied to the discharge probe head, reports the discharge-air temperature and, in a blue-framed well, the calculated temperature difference between discharge and mixed air. At the right the zone is drawn as a box with a space-temperature wall plate mounted flush on its far interior wall; the zone box carries two wells of its own, the zone temperature and the cooling setpoint. Every live value in this drawing is repeated as real text in the live-points list below it.</desc>
 
                 <!-- ══ 1 · DUCTWORK — exterior runs only ═══════════════════════════
                      Three coincident paths per run: a fattened BODY stroke (46) in the
@@ -1681,7 +1815,74 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                      CSS. -->
                 <g id="ahu-flow" class="ahu-flow-layer"></g>
 
-                <!-- ══ 9 · SENSOR GLYPHS ═══════════════════════════════════════════
+                <!-- ══ 9 · THE LOW-LIMIT STAT — DRAWN, DELIBERATELY NOT MARKED ═════
+                     A hardwired manual-reset low-limit stat: a switch body on the
+                     casing roof with a reset button on its face, and one capillary
+                     element hanging down across the cooling coil's LEAVING face.
+                     Modelled in ddcw-ahu-unit.js (LLS_STAT_TRIP, 38 °F) as plant that
+                     opens the fan starter circuit, and it is NOT in the point roster.
+
+                     ⚠ NO CALLOUT, NO LEADER, NO WELL, NO POINT TYPE, NO data-point,
+                     AND NOT A .ddcw-sensor — and every one of those absences is the
+                     lesson rather than an omission (owner ruling 2026-08-08, the same
+                     shape he ruled for the DOAS exhaust fan: "draw the exhaust fan, do
+                     not mark it"). In the field this stat is very often not landed on
+                     the controller at all, so the unit stops and the program has no
+                     idea why. Marking it here would hand the controller a point it
+                     does not have and destroy that. It is drawn because a reader has
+                     to be able to find the device by LOOKING AT THE MACHINE — which is
+                     the whole field experience: nothing on the front end, and a
+                     tripped stat with a button on it if you walk out to the unit.
+                     Do not "finish" it with a leader, a tag or a value.
+
+                     INK — DERIVED, NOT COPIED. This drawing already has a category for
+                     it and states the rule in the IDENTITY COLOURS block: a component
+                     the program reads or writes carries an identity colour, a
+                     component with no point stays neutral line-art. The filter rack
+                     and the intake louver are the existing members; this is the third,
+                     and it takes the same --surface face with a --text-dim outline. No
+                     new category is being established here.
+
+                     ⚠ IT DOES NOT TRACK STATE, on purpose. Identity colour is constant
+                     on this drawing and state rides three things only — a well's
+                     value, a well's state dot, a drawn blade angle — and this device
+                     has none of them. A tripped stat therefore looks exactly like a
+                     made one HERE; where the trip is legible is the device face below
+                     the drawing, which is the equipment register and a different
+                     surface on purpose.
+
+                     PAINTED AFTER THE CHEVRON LAYER for the same reason the sensor
+                     glyphs are: the supply rail starts at x552 and marches straight
+                     through this element's gap, and a device buried under a moving
+                     stream is unreadable.
+
+                     GEOMETRY, DERIVED, AND THE CLEARANCES ARE INK-TO-INK RATHER
+                     THAN COORDINATE-TO-COORDINATE — the first draft measured
+                     centrelines, and at this corridor's width that is the whole
+                     margin. The corridor is the cooling coil's leaving face: the
+                     coil's link box ends at x552 at a 2 stroke (ink to 553) and the
+                     section divider sits at x566 at a 1 stroke (ink from 565.5), so
+                     the clear span is 553 → 565.5, 12.5 units. The element's legs run
+                     x556 and x563 at the 1.5 stroke, inking 555.25 → 563.75, which
+                     leaves 2.25 to the coil and 1.75 to the divider. THREE passes,
+                     not four: at this width four put the legs 2.3 apart at render
+                     scale and the element read as a comb rather than as tubing.
+                     The body sits on the casing roof (y250) OUTSIDE the casing, where
+                     a switch body with a reset button on it actually mounts; the
+                     element hangs from y250 to y336, most of the plenum height,
+                     stopping clear of the floor at y355. Round caps and joins are the
+                     capillary cue the averaging element already uses — this is bent
+                     tubing, not the mitered sheet metal everything else here is drawn
+                     from. RE-DERIVE IF THE DX COIL BOX OR THE x566 DIVIDER MOVES, and
+                     re-derive from the STROKES, not the coordinates. -->
+                <g id="ahu-lls-stat">
+                    <rect class="ahu-stat-body" x="547" y="230" width="24" height="20"/>
+                    <circle class="ahu-stat-knob" cx="559" cy="240" r="4.5"/>
+                    <path class="ahu-stat-cap"
+                          d="M559.5 250 V272 H556 V294 H563 V316 H556 V336"/>
+                </g>
+
+                <!-- ══ 10 · SENSOR GLYPHS ══════════════════════════════════════════
                      One group per PHYSICAL device, drawn where the device actually
                      lives. Local-frame geometry placed by translate only — never
                      rotate, never scale — so the same numbers work in any composition.
@@ -1801,7 +2002,7 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
 
                 </g>
 
-                <!-- ══ 10 · CALLOUTS — PAINTED LAST ════════════════════════════════
+                <!-- ══ 11 · CALLOUTS — PAINTED LAST ════════════════════════════════
                      A leader must be followable END TO END, and anchors terminate on
                      component outlines that a sensor body's surface fill would swallow
                      — so painting the whole callout over everything removes the problem
@@ -2094,6 +2295,8 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                             <p class="ahu-teach-p"><strong>The one number to watch.</strong> Read the ΔT well in the discharge callout: it is discharge minus mixed air — the fan sits downstream of both coils on a draw-through unit, so that span covers the fan as well — and it goes negative whenever the unit is removing heat and positive whenever it is adding heat. When a unit stops doing its job, that is the number that collapses toward zero. Everything else on the screen is there to tell you <em>why</em> it collapsed: whether the air is moving, whether a coil is loaded, and whether the number a sensor is reporting is the number the machine is actually seeing. The economizer sequence itself is worked through on the <a href="/education/economizers.html">economizers lesson</a>.</p>
 
                             <p class="ahu-teach-p"><strong>Three dampers, one command.</strong> The outside, return and relief blades all move together, because the point roster carries one damper output and the linkage does the rest — return closes as outside opens, and relief opens with it so the building does not pressurise. That is how a packaged economizer is actually built, and it is why all three commands are annotated rather than just the outside one: the drawn blade angles are what tell you the linkage is doing what the single command asked.</p>
+
+                            <p class="ahu-teach-p"><strong>Not everything on the machine is on the screen.</strong> Grey means no point, and there is a difference between the two kinds of grey here. The filter rack and the intake louver have no point because nothing would ever command them. The small device on the cooling coil&rsquo;s leaving face &mdash; a switch body on the casing roof with a button on it, and one thin capillary hanging down across the coil &mdash; has no point because nobody landed one, and that is extremely common in the field. It is a hardwired low-limit stat: it opens the fan starter circuit directly, so it can stop this machine at any moment, and the controller will not know. When it does, the fan command on this screen keeps reading exactly what it read before, the verdict tells you a coil is loaded with the fan off, and no amount of staring at the front end gets you further. That is not a gap in the graphic. It is the reason the first thing an experienced tech does with a unit that stopped for no reason is walk out to it and look, and it is why the reset button for that device is on the device.</p>
 
                             <!-- ⚠ THE SETPOINT IS THE CUT-OUT. Cooling makes
                                  at SP + deadband and breaks at SP, so the
@@ -2415,6 +2618,70 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
             <div class="ahu-controls">
                 <h2 class="subhead">Controls</h2>
 
+                <!-- ══ THE LOW-LIMIT STAT'S DEVICE FACE ═══════════════════
+                     The one EQUIPMENT-register widget on this page, and the
+                     register switch is the whole point. Everything above is
+                     the supervisory graphic — a screen. This is the device
+                     you walk out to: a hardwired manual-reset stat that is
+                     not a point on this controller, so it cannot be reset
+                     from the wiresheet, from a workstation, or from any
+                     priority array. The page already said as much in the
+                     wiresheet notes ("the reset button on the device"); this
+                     is that button.
+
+                     ⚠ IT MUST NOT LOOK LIKE THE REST OF THE CONTROLS. The
+                     software-register surfaces on this tab all command
+                     POINTS — a slot-8 write, a param edit, a sensor force —
+                     and every one of them shows up somewhere in the
+                     controller. This button reaches straight into the plant
+                     and shows up nowhere. If it ever gets restyled into the
+                     .copy-btn / .field vocabulary beside it, the page has
+                     quietly claimed the controller can see the device.
+
+                     ⚠ NOT A LIVE REGION on the state row, deliberately. An
+                     announcement would give a screen-reader user the one
+                     thing the lesson says nobody gets: the front end telling
+                     you the stat tripped. The state is plain labelled text
+                     you go and read, exactly as a sighted reader goes and
+                     looks at the machine. The RESULT line below the button
+                     IS announced, because a press is user-initiated feedback
+                     rather than an alarm.
+
+                     The LED is aria-hidden: the word beside it carries the
+                     same state in text, so announcing both would say it
+                     twice. -->
+                <div class="ahu-lls device" id="ahu-lls" role="group" aria-labelledby="ahu-lls-h">
+                    <div class="device-inner">
+                        <div class="device-tb">
+                            <span class="title" id="ahu-lls-h">Low-limit stat</span>
+                            <span class="badge">AT THE UNIT</span>
+                        </div>
+                        <div class="ahu-lls-row">
+                            <span class="ahu-lls-readout">
+                                <span class="led led--off" id="ahu-lls-led" aria-hidden="true"></span>
+                                <span class="ahu-lls-word" id="ahu-lls-state">NORMAL</span>
+                            </span>
+                            <button type="button" class="ahu-lls-btn" id="ahu-lls-reset">Reset</button>
+                        </div>
+                        <p class="ahu-lls-msg" id="ahu-lls-msg" role="status" aria-live="polite"></p>
+                    </div>
+                </div>
+
+                <p class="ref-note">
+                    That is a real device on the machine and not a point on
+                    the controller — which is how a great many of them are
+                    actually wired. It sits across the coil face and lands in
+                    the fan starter circuit, so when it opens the motor stops
+                    whether or not the program ever asked it to, on either
+                    sample sequence, and the fan command on the screen above
+                    goes on reading exactly what it read before. Nothing on
+                    that screen will tell you the stat tripped, because
+                    nothing on that screen can know. What you get is a dead
+                    machine and a verdict that describes the symptom. The
+                    device is drawn on the unit, unlabelled, where the real
+                    one lives; finding it is the job.
+                </p>
+
                 <div class="ahu-presets field" role="group" aria-labelledby="ahu-try-lbl">
                     <span class="field-label" id="ahu-try-lbl">Scenarios (write slot 8):</span>
                     <div class="btn-row">
@@ -2729,20 +2996,43 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                 </p>
 
                 <p class="ddcw-sheet-note">
-                    The stat is the backstop, and its constant is set the way
-                    the field sets the hardware it mirrors. A real low-limit
-                    stat is a manual-reset device strapped across the coil
-                    face, and the software comparator here carries the same
-                    setting the physical device would: below the coldest
-                    discharge the machine can legitimately make, above the
-                    temperature that bursts a coil. Set it higher and it
-                    becomes a nuisance — this unit's two compressor stages pull
-                    the discharge to the mid thirties against a clamped-cold
-                    mixed air, which is ordinary integrated economizing, not a
-                    fault. Field stats commonly sit anywhere from the mid
-                    thirties to forty; where in that band to put one is a
-                    judgement about the machine it protects, and the constant
-                    is on the sheet to be argued with.
+                    There are two low-limit stats on this machine, and only one
+                    of them is on the sheet. The hardwired one is a
+                    manual-reset element strapped across the coil face and
+                    landed in the fan starter circuit; this unit carries one,
+                    set at thirty-eight. The comparator here is the software
+                    limit, and it sits three degrees <em>above</em> that, at
+                    forty-one — so the program is what acts first, in a way you
+                    can watch on the sheet and clear from it, and the hardware
+                    element stays the backstop it is meant to be. That pair
+                    comes from one engineer&rsquo;s commissioning practice in the
+                    Northeast: the physical stat around thirty-eight, the limit
+                    in the program somewhere between forty and forty-two. Treat
+                    it as a worked example and not as a rule, because freeze
+                    protection is a climate question before it is a setpoint —
+                    what drives the number is the design outdoor-air
+                    temperature, how much outdoor air the unit takes, and
+                    whether there is a wet coil sitting in it. Somewhere warm
+                    enough, the argument is whether the stat goes on at all.
+                    What travels is the shape: know what your machine can
+                    legitimately produce, put the program&rsquo;s limit above the
+                    hardware&rsquo;s, and set neither by habit. Set this one too
+                    low and it becomes decoration — this unit&rsquo;s two
+                    compressor stages bottom the discharge at thirty-five, and
+                    nothing in the program would ever see a colder number than
+                    that.
+                </p>
+
+                <p class="ddcw-sheet-note">
+                    The reason a number down there matters at all is what it
+                    says about the rest of the machine, and that part is not
+                    regional. If the discharge really is riding the stat, the
+                    ductwork is sweating badly and the pressures on that
+                    circuit are not pretty — the stat is not trimming a
+                    setpoint, it is catching a unit that is already in trouble.
+                    Which is the argument for the spread: you would rather the
+                    program stopped the machine on a sheet you can read than
+                    have somebody find a popped button on a wet air handler.
                 </p>
 
                 <p class="ddcw-sheet-note">
@@ -2778,10 +3068,12 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                     the discharge reads the still-air room number, the set side
                     of the latch is long clear, and the machine stays down
                     waiting for the button. A software stat trusts its sensor
-                    with no questions asked, and that cuts both ways — the
-                    hardware device it mirrors would never trip on a bad
-                    transmitter, and would never miss a freeze the transmitter
-                    failed to report. Running both, set to the same number, is
+                    with no questions asked, and that cuts both ways. Watch
+                    what the hardwired element does during that same
+                    experiment: nothing. It is a capillary in the airstream,
+                    not a transmitter, so a lie told to the controller never
+                    reaches it — and by the same token it would never miss a
+                    freeze the transmitter failed to report. Running both is
                     not redundancy for show; it is two different failure
                     stories covering each other.
                 </p>
@@ -2939,14 +3231,19 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
         //     dmpsel, so the clamp can pull the damper below the
         //     ventilation minimum: freeze protection outranks ventilation,
         //     deliberately.
-        //   • a SOFTWARE LOW-LIMIT STAT off dat: in the field the LLS is a
-        //     physical manual-reset device strapped across the coil face,
-        //     and the software mirror is set to what the real one is set
-        //     to (the LLS Trip constant). A trip LATCHES (SR), forces the
-        //     damper CLOSED, drives the HW valve fully OPEN (hot water
-        //     moving through the coil is the protection when nothing else
-        //     is), and STOPS the fan; the DX stages drop on the existing
-        //     proof interlock with no extra wiring.
+        //   • a SOFTWARE LOW-LIMIT STAT off dat, sitting ABOVE the
+        //     hardwired one rather than on top of it. The physical device
+        //     is a manual-reset element across the coil face wired into
+        //     the fan starter circuit, and this machine really carries one
+        //     (ddcw-ahu-unit.js, LLS_STAT_TRIP, 38 °F) — it is plant, it
+        //     is not a point, and no sequence can reach it. The program's
+        //     limit ships at 41, three degrees above it, so the software
+        //     acts first and the hardware stays the backstop. A trip
+        //     LATCHES (SR), forces the damper CLOSED, drives the HW valve
+        //     fully OPEN (hot water moving through the coil is the
+        //     protection when nothing else is), and STOPS the fan; the DX
+        //     stages drop on the existing proof interlock with no extra
+        //     wiring.
         //   • WHY THE LATCH IS LOAD-BEARING (the #225 trap family): a
         //     stopped fan puts still air on the discharge probe, so DAT
         //     reads the ZONE — a comfortable number — and an unlatched
@@ -3221,26 +3518,69 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                     { id: 'rat',              type: 'ai',    x: 20,   y: 470, params: { value: 76 } },
                     { id: 'econ-lockout',     type: 'const', x: 20,   y: 560, params: { value: 62 } },
                     { id: 'dat',              type: 'ai',    x: 20,   y: 650, params: { value: 67 } },
-                    // What the REAL low-limit stat is set to. The physical
-                    // device is a manual-reset element across the coil
-                    // face; the software stat mirrors its setting so the
-                    // two trip together instead of arguing. 35 °F is the
-                    // field rule applied to THIS machine: below the
-                    // coldest discharge it can legitimately make, above
-                    // what freezes the coil. Two DX stages drop 19.4 °F
-                    // (42,000 Btu/h at 2,000 CFM), so integrated
-                    // econ + DX against a clamped 50 °F mixed air rides
-                    // the energized-coil floor at 34 + 1 °F fan heat = 35
-                    // — a stat at 38-40 would nuisance-trip every cold
-                    // drive on ORDINARY mechanical cooling, and its
-                    // manual-reset fan stop would bury the low-limit
-                    // lesson under recovery clicks. At 35 an energized
-                    // coil can never quite reach it while raw cold
-                    // outdoor air across a dead coil still does — which
-                    // is the freeze the real device exists to catch.
-                    // (Re-derive if COIL_FLOOR / FAN_HEAT / STAGE_QSENS
-                    // move in ddcw-ahu-unit.js.)
-                    { id: 'llsset',           type: 'const', x: 20,   y: 740, params: { value: 35 }, name: 'LLS Trip' },
+                    // The SOFTWARE low limit, and it is set from FIELD
+                    // PRACTICE rather than from this model's arithmetic.
+                    // The owner's own commissioning practice in the
+                    // NORTHEAST US (2026-08-08): the HARDWIRED stat at
+                    // 38 °F, the limit in the PROGRAM between 40 and 42.
+                    // 41 ships, which puts a 3 °F spread below it to the
+                    // hardware device — the program acts first, in a way
+                    // you can see and reset from the sheet, and the
+                    // manual-reset element stays a backstop rather than
+                    // the first thing to fire.
+                    //
+                    // ⚠ THAT PAIR IS REGIONAL EVIDENCE, NOT A UNIVERSAL
+                    // SETTING. Freeze protection is climate-driven — the
+                    // exposure tracks design outdoor-air temperature, how
+                    // much outdoor air the unit takes, and whether there
+                    // is a wet coil there to freeze — so practice
+                    // plausibly differs elsewhere, and a warm climate may
+                    // carry no stat at all. Nobody has verified what any
+                    // other region does, so NO FIGURE FOR ONE APPEARS
+                    // HERE OR IN THE PAGE COPY: an invented field number
+                    // on a teaching page is worse than an unscoped one.
+                    // Disclose the variation, give the one figure that is
+                    // evidence, stop.
+                    //
+                    // His physical reasoning, because it says why the
+                    // number matters at all: if the discharge is really
+                    // down at a 38 °F stat, the ductwork is sweating
+                    // badly and the pressures on that circuit are not
+                    // pretty. A low limit is not trimming a setpoint —
+                    // it is catching a machine already in trouble.
+                    //
+                    // THE MACHINE'S OWN NUMBERS, still true and still
+                    // worth knowing — they say what 41 costs, not what it
+                    // is derived from. Two DX stages drop 19.4 °F
+                    // (42,000 Btu/h at 2,000 CFM), and an energized coil
+                    // bottoms at COIL_FLOOR + FAN_HEAT = 35 °F, so the
+                    // lowest discharge this unit can legitimately make is
+                    // 35. A limit at 41 therefore engages once the mixed
+                    // air falls to about 59.4 °F with both stages lit
+                    // (measured: MAT 59.4 → DAT 41.3); the old 35
+                    // engaged at about 53.4 °F. It acts EARLIER, which is
+                    // the point of the spread.
+                    //
+                    // MEASURED CONSEQUENCE OF THE CHANGE (driven on the
+                    // real sheet, 2026-08-08). At 35 the software limit
+                    // was effectively dead code on this machine: across
+                    // the whole −20…110 °F slider, the coldest discharge
+                    // any drive produced was 38.8 °F, so it never fired
+                    // once — and the only thing between the unit and a
+                    // hardware trip was 0.8 °F. At 41 the sheet's own
+                    // cold-economizer recipe (outdoor air below 30 °F,
+                    // cooling setpoint dragged down while the zone is
+                    // still warm) trips the software limit 2.0–4.0
+                    // sim-minutes in, at a discharge bottoming near
+                    // 40.9 °F, and the hardware stat never sees the air.
+                    // Ordinary driving — the settled machine, the
+                    // arrival day, the default setpoints — reaches
+                    // neither limit at either value.
+                    // (Re-derive the engagement figures if COIL_FLOOR /
+                    // FAN_HEAT / STAGE_QSENS move in ddcw-ahu-unit.js;
+                    // the SETTING itself is field practice and does not
+                    // follow them.)
+                    { id: 'llsset',           type: 'const', x: 20,   y: 740, params: { value: 41 }, name: 'LLS Trip' },
                     { id: 'mat',              type: 'ai',    x: 20,   y: 830, params: { value: 77 } },
 
                     // ── column 1 · setpoint arithmetic + the LLS front end ──

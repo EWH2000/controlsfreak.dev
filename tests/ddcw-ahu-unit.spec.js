@@ -36,7 +36,10 @@
 //   loses the proof; proof makes slowly and breaks at once; DAT goes
 //   blind the tick the air stops, not on the coil lag; an override
 //   splits sensed from truth while the return probe keeps reading
-//   truth.
+//   truth; the hardwired low-limit stat trips on the TRUTH discharge,
+//   latches, drops the fan under a standing command, resets only after
+//   the condition clears, and stays out of both the roster and the
+//   derived bag.
 //
 // ANTI-VACUITY IS PART OF THE POLICY. A clamp row that never reaches
 // its clamp is a green row asserting nothing, and this file shipped
@@ -1073,5 +1076,203 @@ test.describe('ddcw-ahu-unit: sensed vs truth', () => {
             expect(pl.sensors[p.plantKey], p.id + ' was written').not.toBeUndefined();
         });
         expect(pl.sensors['oat'], 'the outdoor probe follows the knob').toBe(42);
+    });
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// THE HARDWIRED LOW-LIMIT STAT — a device with no point.
+//
+// The machine carries a manual-reset low-limit stat across the coil
+// face, landed in the fan starter circuit. It is PLANT: it opens the
+// starter no matter what the fan-enable BO resolves to, on either
+// program sheet, and it is deliberately absent from the roster because
+// in the field that stat is very often not wired back to the controller
+// at all. Everything below pins the BEHAVIOUR and the ABSENCE; the
+// setting itself (LLS_STAT_TRIP) is a field number, so no row asserts
+// 38 — every one of them discovers the boundary by driving the plant,
+// exactly as the rest of this file discovers its clamp bands.
+//
+// The row that matters most is the last one: `derived` must NOT carry
+// the latch. That bag is what the graphic reads and what the verdict
+// ladder reads, and keeping the flag out of it is the structural half
+// of the guarantee that the front end never names this trip.
+// ══════════════════════════════════════════════════════════════════════
+
+// Drive a plant until the stat trips, with the given actuator state held
+// every tick. Capped, and the cap is a LOOP bound rather than an
+// assertion about how fast the trip arrives.
+function runToStatTrip(Unit, mutate) {
+    const plant = Unit.createPlant();
+    if (mutate) mutate(plant);
+    const hold = JSON.parse(JSON.stringify(plant.actuators));
+    for (let i = 0; i < 400 && !plant.lls.tripped; i++) {
+        Object.keys(hold).forEach((k) => { plant.actuators[k] = hold[k]; });
+        Unit.update(plant, 2);
+    }
+    return plant;
+}
+
+// A design-cold morning with the dampers wide open and the fan running —
+// raw outdoor air straight across the coils, which is the freeze a real
+// low-limit stat exists to catch.
+function rawColdAir(p) {
+    p.oaT = -20;
+    p.actuators['oa-damper'] = 100;
+    p.actuators['fan-speed'] = 100;
+    p.actuators['fan-enable'] = true;
+    p.actuators['hw-valve'] = 0;
+    p.actuators.y1 = false;
+    p.actuators.y2 = false;
+}
+
+test.describe('ddcw-ahu-unit: the hardwired low-limit stat', () => {
+
+    test('it is NOT on the roster, and that absence is the whole feature', () => {
+        // The trap this guards is a well-meaning "the graphic should say
+        // why the unit stopped" edit, whose first move is a BI. The
+        // roster row further up already pins the id set; this one says
+        // out loud WHICH device may not join it, so a future reader hits
+        // the reason and not just a count.
+        const Unit = loadUnit();
+        const ids = Unit.points.map((p) => p.id);
+        const names = Unit.points.map((p) => p.name || '').join(' ').toLowerCase();
+        // `stat` is deliberately NOT in this list: `fan-status` is a real
+        // roster id and a substring ban would catch it. The name sweep
+        // below carries the word-boundary form instead.
+        ['lls', 'low-limit', 'lowlimit', 'freeze'].forEach((word) => {
+            expect(ids.some((id) => id.includes(word)), 'roster id containing ' + word)
+                .toBe(false);
+        });
+        expect(names).not.toMatch(/low limit|freeze|\bstats?\b/);
+        // And the plant models it anyway.
+        expect(Unit.createPlant().lls, 'the plant carries the device')
+            .toEqual({ tripped: false });
+    });
+
+    test('a fresh plant arrives with the stat made', () => {
+        const Unit = loadUnit();
+        const plant = run(Unit, null, 20, 2);
+        expect(plant.lls.tripped, 'the arrival day never trips it').toBe(false);
+        expect(plant.derived.airflowOn).toBe(true);
+    });
+
+    test('it trips on cold discharge air and stops the fan the command is still asking for', () => {
+        // The gap IS the fault: the BO resolves ON, and the motor is
+        // stopped by a wire the controller cannot see.
+        const Unit = loadUnit();
+        const plant = runToStatTrip(Unit, rawColdAir);
+        expect(plant.lls.tripped, 'the stat tripped inside the cap').toBe(true);
+        Unit.update(plant, 2);                       // the tick after the latch
+        expect(plant.derived.fanCmd, 'the command still stands').toBe(true);
+        expect(plant.actuators['fan-enable'], 'the BO is still ON').toBe(true);
+        expect(plant.derived.airflowOn, 'and no air is moving').toBe(false);
+        expect(plant.sensors['fan-status'], 'proof drops with the airflow').toBe(false);
+        expect(plant.anim.fanFrac, 'the drawn fan stands still').toBe(0);
+    });
+
+    test('the trip LATCHES — it stays down long after the cold air is gone', () => {
+        const Unit = loadUnit();
+        const plant = runToStatTrip(Unit, rawColdAir);
+        expect(plant.lls.tripped).toBe(true);
+        // Put the weather back and shut the damper: the set condition is
+        // long gone, and a real manual-reset device does not care.
+        plant.oaT = 80;
+        for (let i = 0; i < 200; i++) {
+            plant.actuators['oa-damper'] = 20;
+            plant.actuators['fan-speed'] = 100;
+            plant.actuators['fan-enable'] = true;
+            Unit.update(plant, 2);
+        }
+        expect(plant.lls.tripped, 'still latched').toBe(true);
+        expect(plant.derived.airflowOn, 'still stopped').toBe(false);
+        expect(plant.derived.fanCmd, 'still commanded').toBe(true);
+    });
+
+    test('it acts on the TRUTH discharge, so a forced DAT sensor neither trips nor saves it', () => {
+        // A capillary element is not a transmitter. This is the page's
+        // "two different failure stories covering each other" beat, and
+        // it is the one behaviour that separates this device from the
+        // software low limit reading the same point.
+        const Unit = loadUnit();
+
+        // (a) a lie told to the controller does not reach the element
+        const lied = run(Unit, (p) => {
+            p.override['dat'].active = true;
+            p.override['dat'].value = -40;
+        }, 40, 2);
+        expect(lied.sensors['dat'], 'the program is reading the lie').toBe(-40);
+        expect(lied.lls.tripped, 'the element read the real air').toBe(false);
+
+        // (b) and a comfortable lie does not stop it either
+        const hidden = runToStatTrip(Unit, (p) => {
+            rawColdAir(p);
+            p.override['dat'].active = true;
+            p.override['dat'].value = 72;
+        });
+        expect(hidden.sensors['dat'], 'the program sees a fine number').toBe(72);
+        expect(hidden.lls.tripped, 'the element tripped anyway').toBe(true);
+    });
+
+    test('the reset needs the condition clear FIRST, then the button', () => {
+        // Real order on a real board, and the model reproduces it: while
+        // the element is still below its setting the button does
+        // nothing. The window is narrow here and the narrowness is
+        // honest — a stopped fan puts still air on the discharge, so
+        // this plant's own DAT goes blind one tick later (the #225
+        // story) and the condition clears itself. The latch is what
+        // makes that safe, and it is why this row drives ticks rather
+        // than wall time.
+        const Unit = loadUnit();
+        const plant = runToStatTrip(Unit, rawColdAir);
+        expect(plant.lls.tripped).toBe(true);
+        // Pushed on the same tick the element tripped, with the cold
+        // number still published: refused. The probe is that the
+        // discharge really is the cold air and not the room — the room
+        // is 70-something and the raw outdoor air is far below it.
+        expect(plant.derived.datT).toBeLessThan(plant.zoneT - 20);
+        expect(Unit.resetLowLimit(plant)).toBe('still-cold');
+        expect(plant.lls.tripped, 'a refused reset changes nothing').toBe(true);
+
+        // One tick later the fan is stopped, the discharge probe reads
+        // the room, and the button takes.
+        Unit.update(plant, 2);
+        expect(Unit.resetLowLimit(plant)).toBe('cleared');
+        expect(plant.lls.tripped).toBe(false);
+
+        // The machine restarts in order: air moves again on the next
+        // tick, and the proof has to re-make from zero.
+        expect(plant.proof.elapsed).toBe(0);
+        Unit.update(plant, 2);
+        expect(plant.derived.airflowOn, 'the starter circuit is closed again').toBe(true);
+    });
+
+    test('resetting a stat that never tripped is a no-op, and says so', () => {
+        const Unit = loadUnit();
+        const plant = run(Unit, null, 10, 2);
+        expect(plant.lls.tripped).toBe(false);
+        expect(Unit.resetLowLimit(plant)).toBe('not-tripped');
+        expect(plant.lls.tripped).toBe(false);
+        // And on a plant that has never been ticked at all — derived is
+        // empty there, so the condition read must not throw.
+        expect(Unit.resetLowLimit(Unit.createPlant())).toBe('not-tripped');
+    });
+
+    test('the latch is ABSENT from the derived bag — the graphic cannot read it', () => {
+        // ⚠ THE POINT OF THIS ROW. `derived` is the only thing the unit
+        // graphic and its verdict ladder read, so a flag that never
+        // lands there cannot be turned into a helpful annunciation by
+        // accident: doing that would take adding a field here AND a
+        // branch there, which is two visible changes instead of one.
+        // The controller has no point for this device; the front end
+        // must therefore report the CONSEQUENCE (no air across a loaded
+        // coil) and never the cause.
+        const Unit = loadUnit();
+        const plant = runToStatTrip(Unit, rawColdAir);
+        Unit.update(plant, 2);
+        expect(plant.lls.tripped).toBe(true);
+        const leaked = Object.keys(plant.derived).filter(
+            (k) => /lls|lowlimit|trip|freeze/i.test(k) || /^stat/i.test(k));
+        expect(leaked, 'derived leaked the hardwired stat: ' + leaked.join(', '))
+            .toEqual([]);
     });
 });
