@@ -11608,7 +11608,7 @@ either way — its own PR, both pages at once. Until then the working rule:
 teaching prose must not depend on stateful blocks surviving the first
 Wiresheet open; write the demo to enter the wiresheet first.
 
-### 261. The site nav landmark is unnamed — and the workbench pages now carry one named nav beside one bare one *(noticed 2026-08-02, the 7.5 unit-selector lane — live surface, waits for a deliberate pass)*
+### 261. The site nav landmark is unnamed — and the workbench pages now carry one named nav beside one bare one *(addressed 2026-08-08 · PR #485)*
 
 `_includes/nav.njk`'s `<nav>` carries no `aria-label`. PR #470 added
 `<nav aria-label="Unit">` to both workbench statusbars, so a screen
@@ -11619,6 +11619,38 @@ in `_includes/nav.njk`, but that template renders into **every page on
 the site**, which makes it a live-surface, approval-gated change — not
 something a hidden-page lane ships in passing. Bundle it with the next
 a11y or nav pass.
+
+**Addressed 2026-08-08 (PR #485, `11dc011`).** `_includes/nav.njk`'s
+`<nav>` now carries `aria-label="Site"`, and `tests/machine-sweep.spec.js`
+pins it beside the #55 nav-chrome test as the other `nav.njk`
+markup-conformance check. The pin asserts the **computed accessible
+name**, not the attribute — what a landmark list actually announces —
+plus two invariants written to survive a rename: the name stays
+non-empty, and it never matches `/navigation/i`. Measured before the fix,
+the computed name was the empty string on every page.
+
+**The two wording constraints are the reusable part, and neither is
+visible in the one-attribute diff.** First, the label deliberately omits
+the role word: the `nav` role already announces "navigation", so
+`aria-label="Site navigation"` would be announced as *"Site navigation
+navigation"* — which is why the pin forbids `/navigation/i` rather than
+merely requiring a non-empty string. Second, it is **not "Main"**, the
+more conventional choice, because every page also renders a `<main>`
+landmark — "Main navigation" would sit beside a bare "main" in the same
+landmark list, which is the exact confusion the label exists to remove.
+"Site" also matches the `.site-nav` class the markup already uses. Both
+constraints are pinned in a Nunjucks comment above the tag (template-only;
+it does not reach output).
+
+As of this resolution the repo has four `<nav>` landmarks and **all four
+carry distinct accessible names**: "Site" (`_includes/nav.njk`, every
+page), "Lesson sequence" (`layouts/page.njk`'s lesson pager), and "Unit"
+on each of the two workbench statusbars
+(`simulators/ddc-workbench.html` / `ddc-workbench-fcu.html`, via
+`aria-labelledby` rather than `aria-label`). The durable rule is the
+family shape, not the count: **every `<nav>` names what it navigates
+over**, and a fifth landmark inherits that rule rather than falsifying
+this paragraph.
 
 ### 262. The touch-target floor is height-only; strict WCAG 2.5.5 wants 44×44 *(noticed 2026-08-02, PR #470's adversarial verify — site-wide observation, low priority)*
 
