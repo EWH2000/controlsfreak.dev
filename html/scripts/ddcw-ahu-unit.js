@@ -1302,7 +1302,13 @@ const DDCWAhuUnit = (function () {
     // The low-limit stat's device face. `llsPainted` latches the painted
     // state so the 10 Hz repaint does not rewrite four nodes every tick
     // (codebase-issues #229, the same guard the fog note carries).
-    let llsPanel, llsBtn, llsMsg;
+    //
+    // ⚠ IT IS A COMPOSITE KEY, not a boolean, because the face now
+    // reports TWO independent facts — the element's latch and the jumper
+    // across its terminals. One guard owns the whole face: a boolean over
+    // `tripped` alone would leave the jumper row painting stale on any
+    // defeat that did not happen to coincide with a trip edge.
+    let llsPanel, llsBtn, llsMsg, llsJumperBtn;
     let llsPainted = null;
 
     // Every SVG value id and its point-mirror twin. renderUnit writes both
@@ -1350,12 +1356,16 @@ const DDCWAhuUnit = (function () {
         dotStg2:   'ahu-dot-stg2',
         dotRun:    'ahu-dot-fan-run',
         dotProof:  'ahu-dot-fan-proof',
-        // The hardwired stat's device face — the LED and the state word.
-        // They ride the same missing-node guard as every readout above
-        // because the failure mode is identical: a typo here would throw
-        // inside renderUnit and freeze the whole simulator silently.
-        llsLed:    'ahu-lls-led',
-        llsState:  'ahu-lls-state',
+        // The hardwired stat's device face — two rows, an LED and a state
+        // word each: the ELEMENT's latch, and the JUMPER across its
+        // terminals. They ride the same missing-node guard as every
+        // readout above because the failure mode is identical: a typo
+        // here would throw inside renderUnit and freeze the whole
+        // simulator silently.
+        llsLed:         'ahu-lls-led',
+        llsState:       'ahu-lls-state',
+        llsJumperLed:   'ahu-lls-jumper-led',
+        llsJumperState: 'ahu-lls-jumper-state',
     };
 
     // The five AI points with a physical device on the drawing. Order is
@@ -1394,9 +1404,10 @@ const DDCWAhuUnit = (function () {
         stageBtns   = document.querySelectorAll('#tab-unit [data-stage]');
         presetBtns  = document.querySelectorAll('#tab-unit [data-preset]');
         mirrorBtns  = document.querySelectorAll('#tab-unit .ahu-point-btn[data-point]');
-        llsPanel    = document.getElementById('ahu-lls');
-        llsBtn      = document.getElementById('ahu-lls-reset');
-        llsMsg      = document.getElementById('ahu-lls-msg');
+        llsPanel     = document.getElementById('ahu-lls');
+        llsBtn       = document.getElementById('ahu-lls-reset');
+        llsMsg       = document.getElementById('ahu-lls-msg');
+        llsJumperBtn = document.getElementById('ahu-lls-jumper');
 
         // Sensor glyph groups + the annotation group each one feeds, keyed
         // by point id. The annotation seam is the data-callout-for
@@ -1846,12 +1857,33 @@ const DDCWAhuUnit = (function () {
         // reachable text you go and read, exactly as a sighted reader
         // goes and looks. The RESET RESULT line below IS announced,
         // because a press is user-initiated feedback, not an alarm.
+        //
+        // TWO INDEPENDENT FACTS, TWO ROWS, ONE GUARD. Row 1 is the
+        // ELEMENT and row 2 is the WIRING, and they do not imply each
+        // other: a jumpered stat goes on reading TRIPPED because the
+        // capillary never learns about the wire. The paint latch is a
+        // composite key over both, so either edge repaints the whole face
+        // once and neither can go stale waiting for the other.
+        //
+        // ⚠ aria-pressed IS SYNCED HERE, not only in the click handler.
+        // The flag is plant state, so anything that reached it another
+        // way would leave the button's aria lying — and a toggle button
+        // whose state lives in an attribute nobody re-derives is exactly
+        // the bug that shape invites.
         const statTripped = plant.lls.tripped === true;
-        if (statTripped !== llsPainted) {
-            llsPainted = statTripped;
+        const defeated    = plant.lls.defeated === true;
+        const llsKey      = (statTripped ? 'T' : 'N') + (defeated ? 'J' : '-');
+        if (llsKey !== llsPainted) {
+            llsPainted = llsKey;
             out.llsState.textContent = statTripped ? 'TRIPPED' : 'NORMAL';
             out.llsLed.className = statTripped ? 'led led--alarm' : 'led led--off';
             llsPanel.classList.toggle('is-tripped', statTripped);
+            // Steady, not blinking: a jumper is a standing condition
+            // somebody left behind, not an event that just happened.
+            out.llsJumperState.textContent = defeated ? 'JUMPERED' : 'NO JUMPER';
+            out.llsJumperLed.className = defeated ? 'led led--warn' : 'led led--off';
+            llsPanel.classList.toggle('is-defeated', defeated);
+            llsJumperBtn.setAttribute('aria-pressed', defeated ? 'true' : 'false');
             // A state change invalidates whatever the last press said.
             llsMsg.textContent = '';
         }
@@ -2269,6 +2301,41 @@ const DDCWAhuUnit = (function () {
                     ? 'Nothing happens. The element is still below its setting: '
                         + 'clear the cause first, then push the button.'
                     : 'Nothing to reset — this stat has not tripped.');
+        });
+
+        // ── the jumper ────────────────────────────────────────────────
+        // Same reach as the reset and for the same reason — no slot, no
+        // point, no program. This one is even further from the
+        // controller: the reset at least presses a button that exists on
+        // the device, and this lays a wire across two terminal screws.
+        //
+        // ⚠ SAME ORDER AS THE RESET: repaint FIRST, then write the
+        // result. The paint latch blanks llsMsg on any change to its
+        // composite key, and a defeat edge IS one — so a line written
+        // before the synchronous requestRender is erased before it can
+        // paint or be announced. Unlike the reset's, ALL FOUR wordings
+        // here follow a state change, so this ordering is load-bearing on
+        // every branch rather than on one.
+        //
+        // The four lines are the device's own voice and each DEFINES the
+        // jumper by what it does (owner ruling 2026-08-09: the word
+        // JUMPERED ships, explained where it appears). None of them says
+        // what the reader should do about it.
+        llsJumperBtn.addEventListener('click', function () {
+            const wasTripped = pl.lls.tripped === true;
+            const nowIn = pl.lls.defeated !== true;
+            pl.lls.defeated = nowIn;
+            host.requestRender();
+            llsMsg.textContent = nowIn
+                ? (wasTripped
+                    ? 'Jumper across the terminals. The stat was tripped — the fan '
+                        + 'is running again, and nothing has been fixed.'
+                    : 'Jumper across the terminals. Whatever this stat does now, '
+                        + 'the fan will not hear about it.')
+                : (wasTripped
+                    ? 'Jumper removed. The element had tripped while it was wired '
+                        + 'around — the fan just dropped.'
+                    : 'Jumper removed. The stat is back in the circuit.');
         });
 
         // The three analog hand controls. Same shape each: ignore the drag

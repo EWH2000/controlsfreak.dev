@@ -1059,8 +1059,22 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
            documented exclusion, so these numbers ARE the guard:
                #cfc8ad on --dev-face #16140f  =  10.97:1
                #f07a6d on --dev-face #16140f  =   6.76:1
-           (#f07a6d is --red-text's DARK value, frozen as a literal here
-           because the face it lands on never changes with the theme.)
+               #e0a94a on --dev-face #16140f  =   8.71:1
+           (#f07a6d is --red-text's DARK value and #e0a94a is --amber's,
+           frozen as literals here because the face they land on never
+           changes with the theme.)
+
+           ⚠ THE LEDs ARE THE ONE EXCEPTION, AND IT IS INHERITED RATHER
+           THAN CHOSEN. .led--alarm rides var(--red) and .led--warn rides
+           var(--amber), so both flip with the theme on a face that does
+           not — shared styles.css vocabulary, and this page is not the
+           place to fork it. They are DRAWN GEOMETRY, so the floor that
+           applies is WCAG 1.4.11's 3:1 for non-text, not 1.4.3's 4.5:1,
+           and both clear it in both themes against the constant face:
+               alarm  #e85d4f dark 5.35:1  /  #c4382f light 3.47:1
+               warn   #e0a94a dark 8.71:1  /  #83641f light 3.34:1
+           Each LED is aria-hidden with its state in text beside it, so
+           the word is what actually carries the state either way.
            ══════════════════════════════════════════════════════════════ */
         .ahu-lls { margin: 0 0 1rem; max-width: 26rem; }
         .ahu-lls-row {
@@ -1070,6 +1084,7 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
             gap: 1rem;
             flex-wrap: wrap;
         }
+        .ahu-lls-row + .ahu-lls-row { margin-top: 0.55rem; }
         .ahu-lls-readout { display: inline-flex; align-items: center; gap: 0.55rem; }
         .ahu-lls-word {
             font-family: var(--mono);
@@ -1078,7 +1093,13 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
             letter-spacing: 0.14em;
             color: #cfc8ad;
         }
-        .ahu-lls.is-tripped .ahu-lls-word { color: #f07a6d; }
+        /* ⚠ EACH STATE COLOUR IS SCOPED TO ITS OWN ROW'S WORD. The two
+           rows report DIFFERENT things — the element's latch and the
+           wiring around it — so an unscoped `.ahu-lls.is-tripped
+           .ahu-lls-word` would paint "NO JUMPER" red the moment the stat
+           tripped and claim a fault the wiring does not have. */
+        .ahu-lls.is-tripped .ahu-lls-word-stat { color: #f07a6d; }
+        .ahu-lls.is-defeated .ahu-lls-word-jumper { color: #e0a94a; }
         /* An embossed keycap, the register's own button idiom (.key in
            styles.css). Page-local rather than the shared class because
            .key is grid-sized for a 4-column keypad and carries neither a
@@ -1101,9 +1122,84 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
             cursor: pointer;
         }
         .ahu-lls-btn:active { background: #17150f; box-shadow: inset 0 1px 3px #000; }
-        .ahu-lls-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+        /* ── THE JUMPER — a clip lead across the terminal screws ────────
+           Toggle SEMANTICS (a real <button> carrying aria-pressed), wire
+           APPEARANCE. Deliberately NOT a second keycap: Reset is embossed
+           because a reset button is a thing you press, and this is a
+           piece of wire somebody left on the terminals. So it is drawn
+           recessed — a terminal strip set into the face, two brass screws
+           in it, and a lead arcing across them only while the jumper is
+           in. An empty pair of screws is what an un-jumpered stat looks
+           like, which is why the OFF state draws no ghost wire.
+
+           It shares the Reset button's focus ring and touch floor (the
+           rules below name both selectors) because those are the two
+           things about a control that are not about what it depicts. */
+        .ahu-lls-jumper {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.7rem;
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #cfc8ad;
+            padding: 0.3rem 0.9rem 0.3rem 0.6rem;
+            border: 1px solid #000;
+            border-radius: var(--rail);
+            background: #100e0a;
+            box-shadow: inset 0 1px 3px #000, 0 1px 0 var(--dev-hi);
+            cursor: pointer;
+        }
+        /* The two terminal screws, one clip-lead span apart. The 22px gap
+           IS the span the lead has to cross — the lead below is pinned to
+           the two screw CENTRES (4.5px in from each end of a 40px strip),
+           so moving this gap moves the wire with it. */
+        .ahu-lls-terms {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 22px;
+            height: 16px;
+        }
+        .ahu-lls-screw {
+            position: relative;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 34% 30%, #b6a67e, #6d6247 68%, #403a29);
+        }
+        .ahu-lls-screw::after {          /* the screwdriver slot */
+            content: '';
+            position: absolute;
+            left: 1px;
+            right: 1px;
+            top: 50%;
+            height: 1px;
+            background: #2b2619;
+            transform: translateY(-50%) rotate(-28deg);
+        }
+        /* Painted LAST in the strip, so the lead sits ON the screw heads
+           the way a real one does. Half an ellipse: top border only,
+           bowed up out of the strip. */
+        .ahu-lls-lead {
+            position: absolute;
+            left: 4.5px;
+            right: 4.5px;
+            top: 2px;
+            height: 6px;
+            border: 2px solid #e0a94a;
+            border-bottom: 0;
+            border-radius: 7px 7px 0 0;
+            opacity: 0;
+        }
+        .ahu-lls.is-defeated .ahu-lls-lead { opacity: 1; }
+        .ahu-lls-btn:focus-visible,
+        .ahu-lls-jumper:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
         @media (hover: none) {
-            .ahu-lls-btn { min-height: 44px; min-width: 44px; }
+            .ahu-lls-btn,
+            .ahu-lls-jumper { min-height: 44px; min-width: 44px; }
         }
         /* The press result. Empty until the button is pushed, and cleared
            again by the next state change — so an empty line is the resting
@@ -2659,9 +2755,45 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                         <div class="ahu-lls-row">
                             <span class="ahu-lls-readout">
                                 <span class="led led--off" id="ahu-lls-led" aria-hidden="true"></span>
-                                <span class="ahu-lls-word" id="ahu-lls-state">NORMAL</span>
+                                <span class="ahu-lls-word ahu-lls-word-stat" id="ahu-lls-state">NORMAL</span>
                             </span>
                             <button type="button" class="ahu-lls-btn" id="ahu-lls-reset">Reset</button>
+                        </div>
+                        <!-- ── ROW 2 · THE JUMPER ─────────────────────────
+                             A wire across the stat's terminal screws. The
+                             two rows report DIFFERENT things and must go on
+                             doing so: row 1 is the ELEMENT (it reads
+                             TRIPPED under a jumper exactly as it does
+                             without one, because the capillary never learns
+                             about the wiring), row 2 is the WIRING. A face
+                             that folded them into one word would teach the
+                             opposite of the lesson.
+
+                             ⚠ A TOGGLE BUTTON, NOT A CHECKBOX AND NOT A
+                             SWITCH. `aria-pressed` is the state; the
+                             accessible name stays the constant "Jumper"
+                             (the toggle-button pattern — the label names
+                             the thing, the state names itself). The
+                             terminal strip inside is decorative and
+                             aria-hidden: it is a PICTURE of the wire the
+                             word beside the LED already reports.
+
+                             Same live-region split as row 1 — the state row
+                             does not announce itself, the result line
+                             below does. -->
+                        <div class="ahu-lls-row">
+                            <span class="ahu-lls-readout">
+                                <span class="led led--off" id="ahu-lls-jumper-led" aria-hidden="true"></span>
+                                <span class="ahu-lls-word ahu-lls-word-jumper" id="ahu-lls-jumper-state">NO JUMPER</span>
+                            </span>
+                            <button type="button" class="ahu-lls-jumper" id="ahu-lls-jumper" aria-pressed="false">
+                                <span class="ahu-lls-terms" aria-hidden="true">
+                                    <span class="ahu-lls-screw"></span>
+                                    <span class="ahu-lls-screw"></span>
+                                    <span class="ahu-lls-lead"></span>
+                                </span>
+                                Jumper
+                            </button>
                         </div>
                         <p class="ahu-lls-msg" id="ahu-lls-msg" role="status" aria-live="polite"></p>
                     </div>

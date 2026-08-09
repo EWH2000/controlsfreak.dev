@@ -1013,10 +1013,10 @@ test.describe('AHU workbench page: the fogging disclosure (#240)', () => {
 
 test.describe('AHU workbench page: the verdict ladder\'s coil bounds', () => {
 
-    // ⚠ OWNER DECISION NEEDED — DO NOT QUIETLY DELETE THIS ROW OR ITS
-    // VERDICT BRANCH. It went unreachable on 2026-08-08, when the
-    // hardwired 38 °F discharge low-limit stat landed in the plant, and
-    // the collision is STRUCTURAL rather than a matter of coordinates:
+    // ⚠ THIS ROW WAS FIXME'D FOR A DAY, AND THE RESOLUTION IS THE POINT.
+    // It went unreachable on 2026-08-08, when the hardwired 38 °F
+    // discharge low-limit stat landed in the plant. The collision was
+    // STRUCTURAL rather than a matter of coordinates:
     //
     //   the branch needs `stage > 0 && matT < FREEZE_WATCH (38)` with
     //   air moving. With a stage lit and no heat, the DX coil's own
@@ -1026,23 +1026,67 @@ test.describe('AHU workbench page: the verdict ladder\'s coil bounds', () => {
     //   not open a window either: `stage > 0 && hwFrac > 0` is the
     //   "fighting itself" branch and sits ABOVE this one in the ladder.
     //
-    // So the state can only be painted during the coil-lag transient, on
-    // the way down, which is a race rather than a test. The branch is
-    // still correct and still worth having if the stat is ever retuned
-    // or scoped; what is gone is the ability to SIT in it. Two ways out,
-    // both the owner's call: accept it (a protected machine genuinely
-    // cannot hold that state, and this verdict becomes near-dead code),
-    // or give the device face a defeat — the field's jumpered freezestat,
-    // which the page already teaches the software equivalent of when it
-    // says holding LLS Reset true wires the button down.
-    // eslint-disable-next-line playwright/no-skipped-test
-    test.fixme('freezing mixed air under a running stage is named, not read as a dead coil',
+    // So a PROTECTED machine cannot hold the state, and the row was left
+    // fixme'd with two ways out, both the owner's call: accept it, or
+    // give the device face a defeat.
+    //
+    // OWNER RULING 2026-08-09: build the defeat. A jumper across the
+    // stat's terminals is what the trade actually does, and it makes the
+    // branch sittable for the same reason it is worth teaching — the
+    // machine runs straight through the freeze. Read the row that way:
+    // it is not a verdict test that happens to need a jumper, it is the
+    // demonstration that the ONLY way to sit in this state is with the
+    // safety wired around. A protected machine still cannot hold it, and
+    // that remains correct.
+    //
+    // HAND-HELD RATHER THAN PROGRAM-DRIVEN, and the difference is
+    // measured, not cautious. The program-driven route reaches the state
+    // too — jumper in, one drag of the outdoor-air slider to −20 on the
+    // default sheet, arrival stage lit: the branch paints for ~2.3 wall
+    // seconds and overlaps a TRIPPED element for ~1.5 of them, then the
+    // zone falls past the cooling cut-out, the stage breaks and the
+    // machine flips to heating. That is a window, not a state, and this
+    // row asserts two facts TOGETHER. Slot 8 on stage, damper, fan and
+    // the heating valve makes it sit indefinitely (measured: still
+    // painting after 28 wall-seconds), which is also what the screenshot
+    // set needs. The heating valve is the non-obvious one: leave it on
+    // the program and the crashing zone opens it, and the
+    // "fighting itself" branch above outranks this one.
+    test('freezing mixed air under a running stage is named, not read as a dead coil',
         async ({ page }) => {
             await open(page);
+            await page.click('#ahu-lls-jumper');
+            for (const id of ['ahu-null-stage', 'ahu-null-oad', 'ahu-null-hw', 'ahu-null-fan']) {
+                await page.locator('#' + id).uncheck();
+            }
+            await page.click('[data-stage="2"]');
+            for (const [id, val] of [['ahu-oad-slider', '100'], ['ahu-hw-slider', '0'],
+                ['ahu-fan-slider', '100']]) {
+                await page.locator('#' + id).fill(val);
+                await page.locator('#' + id).dispatchEvent('input');
+            }
             await setWeather(page, -20);
+            await settle(page, 1500);
+
             const v = page.locator('#ahu-verdict');
             await expect(v).toHaveClass(/error/);
             await expect(v).toContainText('already near freezing');
+
+            // ⚠ READ IN ONE SNAPSHOT, not as two polled assertions. The
+            // claim is that a machine SITTING in this verdict is a
+            // machine whose stat has tripped — two facts at one instant,
+            // and two separate `expect`s would let them be true a second
+            // apart. This is what makes the row say "only a jumpered
+            // machine can hold this" rather than "these both happened".
+            const both = await page.evaluate(() => ({
+                verdict: document.getElementById('ahu-verdict').textContent.trim(),
+                stat: document.getElementById('ahu-lls-state').textContent.trim(),
+                jumper: document.getElementById('ahu-lls-jumper-state').textContent.trim(),
+            }));
+            expect(both.verdict).toContain('already near freezing');
+            expect(both.stat, 'a protected machine cannot hold this state').toBe('TRIPPED');
+            expect(both.jumper, 'and this one is only holding it on a wire')
+                .toBe('JUMPERED');
         });
 
     test('the hot-water coil at its leaving-air ceiling warns instead of reporting clean', async ({ page }) => {
@@ -1917,10 +1961,11 @@ test.describe('AHU workbench page: the phone surface (the Unit tab is the mobile
 //
 // The machine carries a manual-reset low-limit stat across the coil
 // face, landed in the fan starter circuit and NOT landed on the
-// controller. Three things on this page carry that idea and each has a
-// row below: it is DRAWN on the graphic and left unmarked; its reset
-// lives on an equipment-register device face rather than in the software
-// controls; and the graphic's verdict never names it.
+// controller. Each of the ideas that carries has a row below: it is
+// DRAWN on the graphic and left unmarked; its reset lives on an
+// equipment-register device face rather than in the software controls;
+// and the graphic's verdict never names it. (The wire somebody lays
+// across its terminals has its own describe block further down.)
 //
 // The verdict row is the one that exists to be defended. It pins an
 // ABSENCE, so it is written as a vocabulary ban rather than a string
@@ -1932,7 +1977,14 @@ test.describe('AHU workbench page: the phone surface (the Unit tab is the mobile
 
 // Words the SCREEN may never use about this device. `stat` is matched
 // with a word boundary so "status" is untouched.
-const CAUSE_WORDS = /low[- ]?limit|freeze ?stat|\bstats?\b|\bLLS\b/i;
+//
+// ⚠ THE WIRING VOCABULARY IS IN THE BAN TOO, and it is not padding. A
+// controller with no point for the stat certainly has no point for a
+// wire somebody laid across its terminals, so a verdict that said
+// "safety bypassed" would be a bigger lie than one that named the trip.
+// The ban has to cover the jumper or it has a hole exactly the width of
+// the feature that made this device sittable.
+const CAUSE_WORDS = /low[- ]?limit|freeze ?stat|\bstats?\b|\bLLS\b|jumper|defeat|bypass/i;
 
 // Drive the page into a hardwired trip through the real UI: the
 // free-cooling preset holds the damper wide open at slot 8, and dragging
@@ -2161,6 +2213,225 @@ test.describe('AHU workbench page: the low-limit stat', () => {
             await settle(page, 2500);                 // ~8 sim-minutes at 20×
             await expect(page.locator('#ahu-lls-state')).toHaveText('NORMAL');
             await expect(page.locator('#ahu-v-fan-proof')).toHaveText('MADE');
+        });
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// THE JUMPER — a wire across the stat's terminals.
+//
+// Owner ruling 2026-08-09. The field's answer to a stat that keeps
+// stopping a machine somebody needs running, and the page's second
+// defeat: the wiresheet already teaches the SOFTWARE one (hold LLS
+// Reset true and the latch never holds). They are different defeats
+// with different field signatures, and the page says so rather than
+// calling either the other's equivalent.
+//
+// Two things the rows below defend, both of which a well-meaning edit
+// would take away:
+//   • THE TWO ROWS ON THE FACE REPORT DIFFERENT THINGS. Row 1 is the
+//     element and goes on reading TRIPPED under a jumper, because the
+//     capillary never learns about the wiring. Folding them into one
+//     word would teach the opposite of the lesson.
+//   • THE SCREEN STILL SAYS NOTHING. The verdict ban (CAUSE_WORDS) now
+//     covers the wiring vocabulary too — see its comment.
+// ══════════════════════════════════════════════════════════════════════
+
+test.describe('AHU workbench page: the jumper across the stat', () => {
+
+    test('it is a toggle on the device face, wearing a wire rather than a keycap',
+        async ({ page }) => {
+            await open(page);
+            const btn = page.locator('#ahu-lls-jumper');
+            await expect(btn).toBeVisible();
+            await expect(btn).toBeEnabled();
+
+            const shape = await page.evaluate(() => {
+                const b = document.getElementById('ahu-lls-jumper');
+                const st = document.getElementById('ahu-lls-jumper-state');
+                return {
+                    tag: b.tagName,
+                    type: b.getAttribute('type'),
+                    inDevice: !!b.closest('.device'),
+                    softwareClass: b.classList.contains('copy-btn'),
+                    // A toggle button, so the STATE is aria-pressed and
+                    // the accessible name stays constant. A name that
+                    // changed with the state would report it twice and
+                    // disagree with itself half the time.
+                    pressed: b.getAttribute('aria-pressed'),
+                    named: (b.textContent || '').trim().length > 0,
+                    // The drawn terminal strip is a PICTURE of what the
+                    // word already says, so it must not be announced.
+                    stripHidden: b.querySelector('.ahu-lls-terms')
+                        .getAttribute('aria-hidden'),
+                    // Same live-region split as row 1 (the reset row's
+                    // own spec pins that half).
+                    stateLive: st.closest('[aria-live]') !== null,
+                    // And it is a SECOND row on the SAME face — not a
+                    // second widget somewhere else on the page.
+                    sameFace: st.closest('#ahu-lls')
+                        === document.getElementById('ahu-lls'),
+                };
+            });
+            expect(shape.tag, 'a real button, so Enter and Space work').toBe('BUTTON');
+            expect(shape.type, 'and not a submit').toBe('button');
+            expect(shape.inDevice, 'it sits on the device face').toBe(true);
+            expect(shape.softwareClass, 'not the software button vocabulary').toBe(false);
+            expect(shape.pressed, 'a toggle reports its state in aria-pressed').toBe('false');
+            expect(shape.named, 'the button names itself').toBe(true);
+            expect(shape.stripHidden, 'the drawn wire is decorative').toBe('true');
+            expect(shape.stateLive, 'the state row must not announce itself').toBe(false);
+            expect(shape.sameFace).toBe(true);
+
+            // The aria-pressed cycle, driven through the real control.
+            await btn.click();
+            await expect(btn).toHaveAttribute('aria-pressed', 'true');
+            await expect(page.locator('#ahu-lls-jumper-state')).toHaveText('JUMPERED');
+            await expect(page.locator('#ahu-lls')).toHaveClass(/is-defeated/);
+            await btn.click();
+            await expect(btn).toHaveAttribute('aria-pressed', 'false');
+            await expect(page.locator('#ahu-lls-jumper-state')).toHaveText('NO JUMPER');
+            await expect(page.locator('#ahu-lls')).not.toHaveClass(/is-defeated/);
+
+            // Keyboard reachable and visibly focused — the site-wide
+            // outline reset means the page-local :focus-visible rule is
+            // what makes this pass, exactly as for the Reset button.
+            await btn.focus();
+            await expect(btn).toBeFocused();
+            const outline = await btn.evaluate((el) => getComputedStyle(el).outlineWidth);
+            expect(outline, 'a focused hardware toggle still shows a ring')
+                .not.toBe('0px');
+        });
+
+    test('a jumpered machine runs straight through a trip, and the face says both',
+        async ({ page }) => {
+            // THE ROW THE FEATURE EXISTS FOR. The element latches, the
+            // fan never stops, and the two rows on the face disagree
+            // because they are about two different things.
+            await open(page);
+            await page.click('#ahu-lls-jumper');
+            await tripTheStat(page);
+
+            const snap = await page.evaluate(() => ({
+                stat: document.getElementById('ahu-lls-state').textContent.trim(),
+                jumper: document.getElementById('ahu-lls-jumper-state').textContent.trim(),
+                fanRun: document.getElementById('ahu-v-fan-run').textContent.trim(),
+                proof: document.getElementById('ahu-v-fan-proof').textContent.trim(),
+                verdict: document.getElementById('ahu-verdict').textContent.trim(),
+                sr: document.getElementById('ahu-verdict-sr').textContent.trim(),
+            }));
+            expect(snap.stat, 'the element latched').toBe('TRIPPED');
+            expect(snap.jumper).toBe('JUMPERED');
+            expect(snap.fanRun, 'and the fan never stopped').toBe('ON');
+            expect(snap.proof, 'the air really is still moving').toBe('MADE');
+
+            // ⚠ Same ban as the trip row above, now with the wiring
+            // words in it. A screen that cannot see the stat cannot see
+            // a wire across it either.
+            expect(snap.verdict.length).toBeGreaterThan(0);
+            expect(snap.verdict, 'the graphic named the wiring: ' + snap.verdict)
+                .not.toMatch(CAUSE_WORDS);
+            expect(snap.sr, 'the announced mirror leaked it instead: ' + snap.sr)
+                .not.toMatch(CAUSE_WORDS);
+        });
+
+    test('pulling the jumper under cold air drops the machine on the spot',
+        async ({ page }) => {
+            // The field signature the page exists to show: a unit that
+            // dies the second the wire comes off was never fixed.
+            await open(page);
+            await page.click('#ahu-lls-jumper');
+            await tripTheStat(page);
+            await expect(page.locator('#ahu-v-fan-proof')).toHaveText('MADE');
+
+            await page.click('#ahu-lls-jumper');
+            await expect(page.locator('#ahu-v-fan-proof')).toHaveText('NONE');
+            await expect(page.locator('#ahu-lls-state')).toHaveText('TRIPPED');
+            await expect(page.locator('#ahu-v-fan-run'),
+                'and nobody withdrew the command').toHaveText('ON');
+            // The press is ANSWERED, and the wording survives the
+            // synchronous repaint it triggers — the same ordering trap
+            // the reset handler documents, on all four of these lines.
+            await expect(page.locator('#ahu-lls-msg')).toHaveText(
+                'Jumper removed. The element had tripped while it was wired around '
+                + '— the fan just dropped.');
+        });
+
+    test('the reset still refuses a cold element with a jumper in, and takes when it clears',
+        async ({ page }) => {
+            // The button is about the ELEMENT; the jumper is about the
+            // WIRING. So the reset flow is unchanged in both directions
+            // — and the jumper is still there afterwards.
+            await open(page);
+            await page.click('#ahu-lls-jumper');
+            await tripTheStat(page);
+
+            await page.click('#ahu-lls-reset');
+            await expect(page.locator('#ahu-lls-msg')).toContainText(
+                'still below its setting');
+            await expect(page.locator('#ahu-lls-state')).toHaveText('TRIPPED');
+
+            // Clear the cause, then push the button — the field order.
+            await setWeather(page, 80);
+            await page.click('#ahu-lls-reset');
+            await expect(page.locator('#ahu-lls-state')).toHaveText('NORMAL');
+            await expect(page.locator('#ahu-lls-jumper-state'),
+                'a reset does not pull a jumper').toHaveText('JUMPERED');
+        });
+
+    test('the jumper survives a scenario preset and a program switch', async ({ page }) => {
+        // Owner ruling 2026-08-09: nothing an operator does at a screen
+        // takes a wire off a terminal — the same reasoning that keeps a
+        // preset from clearing the latch and a program switch from
+        // clearing the priority arrays. Driven through both surfaces
+        // that plausibly would have reset it.
+        await open(page);
+        await page.click('#ahu-lls-jumper');
+        await expect(page.locator('#ahu-lls-jumper-state')).toHaveText('JUMPERED');
+
+        await page.click('[data-preset="heating"]');
+        await expect(page.locator('#ahu-lls-jumper-state')).toHaveText('JUMPERED');
+        await page.click('[data-preset="cooling"]');
+        await expect(page.locator('#ahu-lls-jumper-state')).toHaveText('JUMPERED');
+
+        await page.selectOption('#ddcw-program', 'econ-2stage-lowlimits');
+        await settle(page, 800);
+        await expect(page.locator('#ahu-lls-jumper-state')).toHaveText('JUMPERED');
+        await expect(page.locator('#ahu-lls-jumper')).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    test('you cannot jumper past the program — the software limit still stops the fan',
+        async ({ page }) => {
+            // THE PAYOFF OF THE 3 °F SPREAD, and the honest limit of the
+            // jumper. The wire is across the HARDWARE element's
+            // contacts; the winter sheet's low limit lives in the
+            // controller and acts through the fan-enable BO, which no
+            // amount of wire at the unit reaches.
+            //
+            // The damper goes to slot 8 so raw outdoor air keeps coming
+            // — otherwise the sheet's own MAT clamp holds the mixing box
+            // near 50 °F and nothing ever gets cold enough to prove
+            // anything. Everything else stays on the program, which is
+            // the whole point of the row.
+            await open(page);
+            await page.click('#ahu-lls-jumper');
+            await page.selectOption('#ddcw-program', 'econ-2stage-lowlimits');
+            await settle(page, 500);
+            await page.locator('#ahu-null-oad').uncheck();
+            await page.locator('#ahu-oad-slider').fill('100');
+            await page.locator('#ahu-oad-slider').dispatchEvent('input');
+
+            await page.fill('#ahu-oa-slider', '-20');
+            await page.dispatchEvent('#ahu-oa-slider', 'input');
+
+            // The BO the program resolved, not the airflow: this fan is
+            // stopped by the sequence, not by a starter contact.
+            await expect(page.locator('#ahu-v-fan-run'),
+                'the software low limit never fired').toHaveText('OFF', { timeout: 30000 });
+            await expect(page.locator('#ahu-lls-jumper-state')).toHaveText('JUMPERED');
+            // And the hardware element is still made — the software
+            // limit sits ABOVE it, so on a ramp down it gets there
+            // first and the discharge goes blind behind a stopped fan.
+            await expect(page.locator('#ahu-lls-state')).toHaveText('NORMAL');
         });
 });
 
