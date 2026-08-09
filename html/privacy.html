@@ -108,6 +108,23 @@ canonical: https://controlsfreak.dev/privacy.html
                     attempted each one, and when you last played it.
                 </p>
                 <p>
+                    The two DDC Workbench simulators keep one more
+                    value each, in
+                    <code>sessionStorage</code> rather than
+                    <code>localStorage</code>: the keys
+                    <code>cf_ddcw_ahu</code> and
+                    <code>cf_ddcw_fcu</code> hold the simulation you
+                    have set up on that unit — the commands you have
+                    written by hand, the sensors you have forced, the
+                    control sheet you have loaded, and the conditions
+                    you have dialled in — so that clicking a component
+                    to open the simulator behind it does not throw
+                    your work away on the way back. Session storage is
+                    per tab: it is gone when you close the tab, and
+                    the workbench's own Start fresh button clears it
+                    on the spot.
+                </p>
+                <p>
                     All of that stays on your device. It is never sent
                     to me or to anyone else, and it is not used to
                     identify you or track you across visits. Clearing

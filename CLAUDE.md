@@ -369,10 +369,18 @@ section). **Category keys mirror the landing pages' `navCard()`
   today; if it's still a future page, write the topic as plain prose
   so a visitor doesn't click into a 404. Either way, the friction file
   tracks the topic as `[future: <page>]`.
-- **New `cf_*` localStorage keys update `privacy.html` in the same
-  PR.** The policy's on-device-storage paragraph reads as exhaustive,
-  so it must be: the theme toggle's `cf_theme` shipped five days after
-  the list was written and silently drifted (audit-2026-06 #52).
+- **New `cf_*` browser-storage keys update `privacy.html` in the same
+  PR — `localStorage` AND `sessionStorage`.** The policy's
+  on-device-storage paragraph reads as exhaustive, so it must be: the
+  theme toggle's `cf_theme` shipped five days after the list was
+  written and silently drifted (audit-2026-06 #52). The rule broadened
+  beyond localStorage when the DDC Workbench's per-tab session snapshot
+  landed (`cf_ddcw_ahu` / `cf_ddcw_fcu`, codebase-issues #275) — a
+  reader asking what this site keeps on their device does not care
+  which Web Storage area it sits in, and a rule that names only one is
+  a rule with a hole in it. The two areas differ in LIFETIME, so the
+  policy states each one's: localStorage persists between visits,
+  sessionStorage dies with the tab. Say which, per key.
 - **Metric worked-example rounding policy** (audit-2026-06 #53):
   metric temperatures in worked examples round to **one decimal**, and
   any stated delta/result is the arithmetic of the **displayed**
