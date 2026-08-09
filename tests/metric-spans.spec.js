@@ -45,8 +45,9 @@
 // found, zero failures, test passes. So the run asserts how much it saw
 // before it asserts that what it saw is clean. Measured against the shipped
 // parser, today's populations are: 515 spans in 40 files, 121 parenthetical
-// figures in 20 files (113 of those in the quiz banks, across 16 banks), and
-// 317 numbered °F → °C figures classified across both notations.
+// figures in 20 files — 113 of those in the quiz banks across 16 banks, and
+// 8 in the four other files that carry the notation — and 317 numbered
+// °F → °C figures classified across both notations.
 //
 // Each floor sits ROUGHLY A FIFTH UNDER its population — low enough that
 // ordinary editing never trips it, close enough that a walk losing most of
@@ -55,6 +56,28 @@
 // 30 against a population its own comment put at 52, when the real figure is
 // 113 — 72 % of slack, enough that the extractor could have lost five banks
 // out of six and still reported a clean sweep. Re-measure before moving one.
+//
+// The two PARENTHETICAL floors measure DISJOINT halves — the quiz banks and
+// everything else — because a NESTED floor does not constrain anything. The
+// pair shipped as `total > 90` beside `quiz > 90`, and since the quiz banks
+// are 113 of the 121, `quiz > 90` already forces `total > 90`: the outer
+// assertion could not fail on its own, so it documented the population
+// instead of guarding it. Split, each half guards one arm of the same walk.
+// The realistic half-blind case is a file-set change rather than a regex
+// change — both halves share ONE regex and differ only in which files reach
+// it — and the split is what catches it: drop `html` from `PROSE_FILES` and
+// the quiz banks (all `.js`) still report 113 while the non-quiz half falls
+// 8 → 6 and trips.
+//
+// The non-quiz floor is 6 against a population of 8: the same 0.75 ratio as
+// the file-count floor above, the loosest of the siblings. At that size the
+// slack is ONE figure, which is the cost of guarding the half at all — if a
+// content edit legitimately retires two of them, re-measure and re-size
+// rather than lowering it reflexively. Where the eight live today:
+// `html/scripts/thermistor-data.js` (5, reference-condition comments),
+// `html/scripts/refrigerant-loop-engine.js`,
+// `html/education/setpoint-math-reset.html`,
+// `html/tools/coil-freeze-risk.html`.
 'use strict';
 
 const { test, expect } = require('@playwright/test');
@@ -223,12 +246,17 @@ test('every °F to °C figure converts as an absolute or a delta', () => {
         .toBeGreaterThan(400);
     expect(new Set(spans.map((p) => p.file)).size, 'the span walk reached implausibly few files')
         .toBeGreaterThan(30);
-    expect(parens.length, 'the parenthetical walk found implausibly few °F (°C) figures')
-        .toBeGreaterThan(90);
+    // The two parenthetical floors are DISJOINT on purpose — see the header.
+    // Nested, the outer one could never fail on its own.
+    const quizParens = parens.filter((p) => p.file.startsWith('html/_data/quizzes/'));
     expect(
-        parens.filter((p) => p.file.startsWith('html/_data/quizzes/')).length,
+        quizParens.length,
         'the parenthetical walk stopped reaching the quiz banks — the surface it exists for',
     ).toBeGreaterThan(90);
+    expect(
+        parens.length - quizParens.length,
+        'the parenthetical walk stopped reaching the prose files outside the quiz banks',
+    ).toBeGreaterThan(6);
     expect(templates.length, 'the template scan found implausibly few files').toBeGreaterThan(80);
     const numbered = rows.filter((r) => r.result.status === 'classified' || r.result.status === 'unclassified');
     expect(numbered.length, 'implausibly few numbered °F to °C figures were classified at all')
