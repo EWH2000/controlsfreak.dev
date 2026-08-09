@@ -314,6 +314,10 @@ keywords: BO binary output start stop HOA hand off auto interposing relay contac
             </p>
 
             <p>
+                That word <em>ideally</em> is carrying weight, because nothing in the string requires any of its contacts to be a point. Land an input across the whole string and the front end learns exactly one bit: a safety is open. Spend a conductor and an input on each trip and it can finally say <em>which</em>. Spend neither — the common case — and all the graphic offers is a command sitting at ON against a status of OFF, the same undifferentiated split a broken belt or a dead contactor coil produces. Worse, a trip wired outside the string altogether — a duct detector on its own shutdown relay, the breaker feeding the control transformer switched off — may never reach the screen at all. There are plenty of units that give an operator no reason they shouldn't be running, right up until you walk up to one and find the freeze stat latched out, a breaker tripped or switched off, or a duct detector nobody ever tied back to the BMS. The graphic wasn't lying; the instrumentation to say otherwise was never bought. Which is why the walk to the unit stays part of the diagnosis rather than a last resort: on a machine that isn't running, a quiet screen is a statement about what's wired, not about what's wrong.
+            </p>
+
+            <p>
                 And when the equipment grows up and gets a drive, the shape survives. On a <a href="/education/vfds.html#run-vs-speed">VFD</a>, the contactor disappears — the drive itself switches the motor — but the run command is the same story landed on a drive terminal: a BO, an interposing relay where ratings call for one, an enable or safety circuit the drive honors before it will run. Drives replace the contactor; they keep the command path's shape.
             </p>
 

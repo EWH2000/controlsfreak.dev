@@ -19,6 +19,11 @@ rest live here until someone decides what to do about them.
 - New entries land here as code issues surface (same running-list
   spirit as `site-ideas-and-friction.md`, but scoped to code quality
   rather than features / content).
+- **Entries append at the tail of the file in number order regardless
+  of status — the inline marker is the only authority.** The `## `
+  headers further down are historical; open and resolved entries mix
+  freely below them (see the continuation header before #185). Never
+  classify an entry by the section it happens to sit under.
 
 ---
 
@@ -6610,6 +6615,17 @@ same session:
 
 ---
 
+## The running log, continued (status inline — entries append below)
+
+Everything from here to the end of the file is the same chronological
+running log as `## Issues (status inline)` above: new entries append
+at the tail in number order, open and resolved mixed, and each entry's
+**inline marker is the only authority on its status**. The
+`## Recently addressed` section above ends here and scopes nothing
+below this line. (Recorded 2026-08-09 after a handoff-verification
+round found open entries — #262, #266, #274, #275 — being classified
+as addressed by readers reasoning from the section header.)
+
 ### 185. Quiz `snippet` path: one-way invariant publishes content the page never renders *(open — 2026-07-19)*
 
 Found by the Lane C review during PR #404 (`figure` field), deliberately
@@ -9499,7 +9515,10 @@ whenever it can change.
 >   re-announcing a whole sentence every second while the reader is
 >   trying to study the drift is still the defect.
 >
-> **Fix shape, updated: change-guard PLUS a settle debounce** — hold the
+> **~~Fix shape, updated: change-guard PLUS a settle debounce~~ —
+> SUPERSEDED 2026-08-08, owner decision in the note below.** The
+> diagnosis in this note stands; only the mechanism it prescribes was
+> overturned. The superseded prescription, kept for the record: hold the
 > announcement until the value has been stable for a beat (the rail's
 > `railHint` already owns a timer idiom worth copying,
 > `ddcw-ahu-unit.js:1954-1970`), so the region announces the *situation*
@@ -9509,6 +9528,73 @@ whenever it can change.
 > string and not a guarantee. A future AHU line that interpolates truth
 > needs the same treatment, and the unit-suffix caveat above still
 > applies to both.
+
+> **OWNER DECISION 2026-08-08, reconfirmed 2026-08-09 — COV-style
+> reporting with an increment, NOT the guard-plus-settle debounce the
+> note above prescribes.** Announce when the drift has moved more than
+> an increment **since the last announcement** — BACnet's own
+> `COV_Increment` rule, applied to the page whose subject it is
+> (`education/bacnet-basics.html:180` renders a `COV_Increment` of 0.5
+> on an AI; `education/bacnet-vs-modbus.html:127` calls the effect
+> "quiet-until-something-happens"). Three reasons the debounce lost:
+>
+> - **No silence risk.** A settle debounce waits for the operand to
+>   stop moving. This operand never stops while a force is held, so a
+>   settle window can expire forever and announce nothing. The note
+>   above says as much about the AHU's exemption — *"a property of the
+>   CURRENT string and not a guarantee"* — and the same doubt applies
+>   to any wall-clock window.
+> - **Speed-invariance, stated precisely: announcements per EXCURSION
+>   is the invariant, not announcements per second.** The sim clock
+>   runs 1–60× and defaults to 20× (`ddcw-fcu-unit.js:166`; note
+>   `MAX_DT_SIM` at `:169` clamps the slider's 60× to ~50× effective).
+>   A wall-clock window announces a different *fraction* of a drift
+>   excursion at each speed; COV announces once per increment of real
+>   movement at every speed. Corollary: the increment must be sized to
+>   the measured worst-case drift RATE, or fast drives storm — size it
+>   from measurement, not from the taught 0.5.
+> - **It removes a CI flake source.** A debounce can only be pinned by
+>   a wall-clock mutation count, which depends on machine speed, on
+>   `simSpeed`, and on where in the excursion the window falls. COV is
+>   pinned by a property of the *values*: consecutive announcements
+>   differ by at least the increment. No clock in the assertion.
+>
+> **Prerequisite, also decided: split the node first.** `#fcu-ovr-state`
+> is one element doing two jobs — the visible amber drift line and the
+> live region. The visible `<p>` keeps repainting every tick and loses
+> **both** `aria-live` *and* `role="status"` (the role implies the
+> former); a new `.sr-only` `#fcu-ovr-state-sr` carries the
+> announcements, placed **outside both tab panes** beside
+> `#fcu-verdict-sr`. Pacing the shared node would freeze the visible
+> drift readout, which is the hazard the line exists to surface. The
+> outside-the-panes placement retires this entry's own "the mirror is
+> not obviously warranted here": that held while only same-pane
+> controls moved the string, and COV makes the drift half
+> non-operator-driven — inside `#tab-unit` the region would re-enter
+> the accessibility tree already populated on a tab return and announce
+> nothing (the `.ddcw-offprog` empty-collapse contract,
+> `html/styles.css:4814-4831`, and #227a).
+>
+> **Comparison is on the canonical °F value, pre-display-rounding**,
+> never on the rendered string — that is what makes the region immune
+> to rounding chatter at a display boundary (a swing smaller than the
+> increment cannot clear the hysteresis band), and it is what
+> `tests/ddcw-display-units.spec.js` requires anyway (a drift built
+> from display locals would join that guard's fixpoint). The unit
+> suffix still rides in the *event* signature so a metric toggle
+> re-announces rather than leaving a stale-°F sentence in the tree.
+>
+> Line refs in this entry predate Phase 8: the element now sits at
+> `ddc-workbench-fcu.html:1292`, not `:880`.
+>
+> Prior art, unpushed and **not to be deleted until the COV work
+> lands**: local branch `issue-229/fcu-override-live-region`
+> (`a13be01`) carries a spec written ahead of its fix, and `stash@{0}`
+> rides it with the guard-plus-settle implementation. The EVENT/DRIFT
+> split in the stash survives into the COV design; its `OVR_SETTLE_MS`
+> machinery does not. (The commit also carries a throwaway
+> `playwright.lane3.config.js` whose own header says "Not committed" —
+> it must not ride forward.)
 
 ### 230. Light theme darkens `--amber` and `--heat` out of the register component identity depends on *(noticed 2026-07-28, AHU round-2 depiction review — **RESOLVED 2026-07-28**, owner ruled for separate fill tokens)*
 
@@ -12060,3 +12146,229 @@ equipment? by teaching chapter?) is a naming-and-grouping design
 call, not a mechanical step, and did not belong in the go-live diff.
 Decide the taxonomy (or raise the documented threshold) and the chips
 are the same pattern the other landings already use.
+
+### 275. The DDC Workbench holds its whole simulation in memory, and its own flagship navigation model navigates away from it *(noticed 2026-08-08 — UNRESOLVED, wants a design decision; it also blocks the sheet-note linking pass)*
+
+**The defect.** Both workbench pages discard every bit of simulation
+state on any navigation away, and the arc's chosen way to move around
+the sim *is* a navigation. A reader who spends ten minutes building a
+situation — forcing a sensor, taking a point off program, loading the
+low-limits sheet, dragging the weather and load knobs, waiting for the
+zone to integrate somewhere interesting — and then clicks the DX coil
+to see the refrigerant loop behind it comes back to a pristine unit.
+Nothing warns them on the way out and nothing tells them on the way
+back that it happened: a grep of both pages for reader-facing copy
+about reloading, resetting or returning finds none.
+
+**Mechanism — there is no persistence layer to have a bug in.** Every
+script either page loads (`ddcw-shell.js`, `ddcw-ahu-unit.js`,
+`ddcw-fcu-unit.js`, plus the shared `fbe-engine.js` / `fbe-editor.js` /
+`point-arbitration.js` / `psychro-engine.js` / `ui.js`) and both pages'
+own inline assembly IIFEs contain **zero** references to
+`localStorage`, `sessionStorage`, `indexedDB`, `document.cookie`,
+`history.pushState` / `replaceState`, `location.hash` or
+`URLSearchParams`. The state lives in the `createWorkbench` closure
+(`ddcw-shell.js:266-286`) and in the `plant` object the unit's
+`createPlant()` returns; the init sequence at `ddcw-shell.js:624-641`
+constructs both fresh on every load, and nothing serialises either.
+
+**What resets to arrival — shell state:**
+
+- **The priority arrays.** One `PriorityArray` per actuator point,
+  rebuilt at `ddcw-shell.js:629-631`, taking every slot-8 (Manual
+  Operator) hand command with them, along with the off-program window
+  that lists them.
+- **The running program.** `programKey = unit.defaultProgram`
+  (`:635`) then `graph = FBE.makeGraph(programs[programKey])` (`:640`)
+  — the AHU's `econ-2stage` and the FCU's `cool-2stage`. A reader who
+  switched to the low-limits sheet, or edited one into `custom`, gets
+  the starter back; blocks dropped, wires drawn, inspector edits and
+  block names existed only in that graph object.
+- **The parameter rail.** `host.writeParam` (`:680-687`) writes
+  `blk.params.value` on the running graph's const block and
+  `plant.params` is a per-tick mirror of it, so the rail's setpoints,
+  deadband, minimum OA position and economizer lockout are graph
+  state and go back to the authored literals with it.
+- **The sim clock.** `simSpeed` back to `unit.speedDefault` — 20× on
+  both units (`ddcw-ahu-unit.js:898`, `ddcw-fcu-unit.js:166`).
+- **The editor mount and the tab.** `editorBuilt` is false again, so a
+  return lands on the Unit tab with the wiresheet unmounted; the first
+  re-open then also re-runs #260's block-state reset (latches release,
+  integrals clear).
+
+**…and plant state** (`ddcw-ahu-unit.js:210-303`, FCU `:187-266`):
+
+- **The integrated zone temperature** `zoneT` and everything downstream
+  of it — `coilLeaveT`'s lag, `proof.made` / `proof.elapsed` (so the
+  airflow-proof make delay at `ddcw-ahu-unit.js:206` runs again from
+  zero), the FCU's latched DAT low-limit annunciator
+  (`ddcw-fcu-unit.js:263`), and `simSec`, the accumulated sim-second
+  counter.
+- **The staged scenario.** `conditions.fault` back to `'none'`, so a
+  staged low charge, broken belt or blocked condenser clears.
+- **Every forced sensor.** All `active` flags in the `override` map
+  false again — the AHU's entries for `space-temp` / `rat` / `oat` /
+  `mat` / `dat` and the FCU's for `space-temp` / `rat` / `dat`. Lying
+  to the sequence through a sensor is a headline teaching affordance
+  on both pages.
+- **The commissioning knobs** — outdoor-air temperature and internal
+  gain, back to each unit's `T_OA_DEF` / `Q_INT_DEF` (80 °F on both;
+  8000 Btu/h on the AHU, 3000 on the FCU). On the AHU they are plant
+  fields (`oaT` / `qInternal`, `:258-259`); on the FCU they are
+  module-level `let`s (`ddcw-fcu-unit.js:183-184`), which is the same
+  loss by another route, since a fresh document re-evaluates the
+  module.
+
+**What survives:** the two site-wide chrome preferences that own their
+own localStorage keys — `cf_theme` (`theme.js`) and the units choice
+(`units.js`). A returning reader keeps their theme and their °C. That
+is the whole list; nothing about the simulation is in it.
+
+**Measured 2026-08-08**, Playwright against the built site. On arrival
+the off-program window is empty, the verdict reads *"Mechanical cooling
+— clear ΔT across the machine"* and the chips read RAT 76.0 / OAT 80.0
+/ Zone 76.0 °F. After clicking the **Broken belt** preset, the window
+lists the AHU's actuator points each commanded by slot 8, the verdict
+reads *"Fan commanded on but no air moving — a coil is loaded on dead
+air"* and OAT has moved to 85.0 with the zone drifting to 78.2. After
+clicking the in-graphic VFD link and pressing Back: empty window,
+arrival verdict, arrival chips — indistinguishable from a cold load in
+the same run.
+
+**One caveat on that Back, and it is a real one.** The browser's
+back/forward cache would restore the whole JS heap on a history
+navigation, and this harness cannot see it either way: Playwright
+launches Chromium with `--disable-back-forward-cache`
+(`node_modules/playwright-core/lib/server/chromium/chromiumSwitches.js:59`),
+and with the flag removed a trivial two-page control in the same
+harness still reported `pageshow.persisted === false`. So read the
+measurement as *every fresh load reboots* — proven, and that covers the
+site nav, the command palette, the `← All simulators` back-link, the
+AHU↔FCU unit selector, a typed URL and a shared link — with the Back
+path unmeasured. Even a bfcache hit would not settle this: it is a
+browser heuristic subject to eviction and memory pressure, it varies
+across engines, and it covers exactly one of the return paths.
+
+**Why this is architecture and not a papercut.** The navigation model
+that destroys the state is the one the arc deliberately chose.
+`docs/air-side-sim.md:21-24` puts it in the north star: *"**Hub of sims
+('walk up to the unit')** — components on the graphic drill into
+device-level sims (fan → VFD sim, DX coil → heat-pump sim), which
+unifies the existing sims and gives future ones a front door."* The
+2026-07-21 live-look ruling then removed the competing UI in its
+favour (`:755-760`): *"**Remove the drill-down tiles below the
+graphic** … **Keep the in-graphic component-click** 'walk up to the
+unit' (owner, 2026-07-21): the sub-sims live IN THE UNIT,
+**keyboard-reachable**, a small delight to discover when inspecting a
+component."* (the source italicises *in the unit*; flattened here so
+the outer quote's emphasis does not close early.) Those clicks are
+live today and pinned as a feature:
+`tests/ddc-workbench-ahu-page.spec.js:1787-1807` walks `.ahu-svg
+a[href]` and asserts the drawing "still carries its three drill-downs"
+(hydronic-loop-builder, refrigerant-loop, vfd-mock), and
+`tests/ddc-workbench-fcu.spec.js:916-936` asserts the FCU's two
+(refrigerant-loop, vfd-mock). Both specs additionally require an HTML
+**twin** outside the drawing for each one — a WCAG 2.5.5/2.5.8
+equivalent-control pass — so every drill-down is reachable two ways,
+and both ways detonate the same state.
+
+The shell says out loud what is being thrown away. `ddcw-shell.js:280-285`,
+on the priority arrays: *"Deliberately NEVER reset on program switch,
+editor Reset, or Clear: a priority array lives on the POINT, not in the
+program, so a slot-8 hand value survives a program download exactly as
+it does in the field. That persistence IS the lesson this page teaches
+(the months-old stale override)."* The arrays survive every in-page
+event the shell knows about, and then a click on the fan glyph — the
+affordance the page advertises — discards them.
+
+**A second surface makes it worse, and is currently blocked by this.**
+The wiresheet sheet notes are long and nearly unlinked. Measured
+2026-08-08 against the built `_site` (words and `<a href=` counted
+inside `<p>` elements): the AHU's `p.ddcw-sheet-note` paragraphs run
+**1,253 words carrying one inline link**; the FCU's run **638 words,
+also one link**; taken as whole panes, `#tab-wiresheet` is 1,332 words
+/ 1 link on the AHU and 717 / 1 on the FCU. For scale, the paragraphs
+inside `<main>` on `education/status-and-proof.html` — a lesson of
+comparable length — run 1,745 words carrying **eight** inline links,
+about one per 218 words, and the AHU's own Unit-tab prose sits at one
+per 222. The obvious remedy for over-long sheet notes is a linking
+pass that hands the background off to the lessons that already cover
+it. Every link that pass adds is another way to leave mid-experiment,
+so the two problems are coupled: **fixing the prose length makes the
+state loss worse until the state loss is answered.**
+
+**Unresolved — this needs a design decision, and none of the following
+is a recommendation.** The axes, laid out so the call can be made
+rather than drifted into:
+
+1. **What is worth persisting at all.** "All of it" is not obviously
+   right. The priority arrays, the loaded/edited sheet and the forced
+   sensors are the reader's *work*; the integrated zone temperature,
+   the proof timer and the sim-second counter are a *running physical
+   state* that is arguably stale the moment attention leaves. A
+   restored plant resumed from a five-minute-old integration is its own
+   kind of lie, and the sim's whole claim is that it does not lie.
+2. **Where it would live.** `sessionStorage` (per-tab, dies with the
+   tab, needs a serialisation format for the FBE graph and the plant);
+   URL state (shareable and deep-linkable, but a graph plus a plant is
+   far past what belongs in a query string); or no storage at all
+   because the drill-down stops navigating — an overlay or dialog that
+   mounts the sub-sim beside a still-running workbench, in which case
+   nothing needs persisting and the problem dissolves. Note the storage
+   options drag in the privacy-policy convention: `privacy.html`'s
+   on-device-storage paragraph reads as exhaustive, and a workbench key
+   would have to land in the same PR.
+3. **What a returning reader should see.** Land back in their
+   configuration silently; land back in it with a restored-state
+   annunciation; or reset with an explicit notice that it reset (today
+   it is that last one, minus the notice). This one has teeth beyond
+   UX politeness: the page exists partly to teach *state you did not
+   put there* — the months-old stale override — so silently restoring a
+   forced sensor could teach that lesson by accident, to a reader who
+   has not been told a lesson is running.
+4. **Whether the drill-downs should be navigations at all.** Answering
+   this one can moot 1 and 2, and it is the largest change: both the
+   in-SVG anchors and their spec-mandated HTML twins would move, and
+   `tests/ddc-workbench-ahu-page.spec.js:1787` /
+   `tests/ddc-workbench-fcu.spec.js:916` encode the current shape.
+   The AHU↔FCU unit selector is the same question wearing different
+   clothes — it is a plain anchor between two workbench pages
+   (`ddc-workbench.html:1254-1255`,
+   `ddc-workbench-fcu.html:751-752`) and loses everything too.
+
+Related: **#260** is the in-page cousin — the first Wiresheet open
+resets every stateful block — and any persistence work has to decide
+whether a restored session re-enters through that same mount. Both
+pages and all their scripts are LIVE since Phase 8, so anything here
+needs owner approval to merge and a version bump for cache-busting.
+
+### 276. `railHint` can leave a stale-unit hint on a units flip, on both pages *(noticed 2026-08-09, the #229 planning round — LOW, event-driven cousin of the unit-suffix family)*
+
+`railHint` (`html/scripts/ddcw-ahu-unit.js:1955-1970`, with the FCU's
+twin per the #263 duplication mandate) writes range text carrying
+numbers **and a unit suffix** into `#ahu-params-hint` /
+`#fcu-params-hint` (`role="status" aria-live="polite"`,
+`ddc-workbench.html:2283` / `ddc-workbench-fcu.html:1178`), then
+auto-clears on a timer. A °F/°C toggle while a hint is up leaves a
+stale-unit sentence on screen (and in the accessibility tree) until
+the timer fires. Not the #229 family — this region is event-driven,
+not 10 Hz — but it is the same suffix trap `setVerdict`'s header
+warns about. Fix shape, when someone is in the file anyway: clear (or
+re-render) pending hints on the shell's `unitschange` event. LOW —
+worst case is one wrong-unit sentence for a few seconds after an
+uncommon action.
+
+### 277. The display-units guard cannot see a display local hidden inside a call argument *(noticed 2026-08-09, the #229 planning round — guard-coverage note, no shipped defect)*
+
+`tests/ddcw-display-units.spec.js`'s fixpoint derivation marks every
+name that carries a display value and fails any comparison with one
+adjacent to the operator. A form like `Math.abs(zoneN - base) < INC`
+hides the display local inside a call argument, so it slips the
+matcher. No shipped code does this today, and the #229 COV work
+complies by construction (it compares canonical °F from the plant,
+never display locals) — logged so any future widening of the guard
+starts from its measured floor rather than re-deriving it, and so a
+reviewer knows a green run does not rule this shape out. Do not widen
+casually: the matcher's adjacency requirement is part of what keeps
+its false-positive rate at zero (see its own arrow-function
+counter-case pinned at `:141`).
