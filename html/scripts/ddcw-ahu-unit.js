@@ -409,13 +409,15 @@ const DDCWAhuUnit = (function () {
             // ── closed-loop thermal state ──
             zoneT: 76,                           // °F — the integrated REAL zone temp (truth)
             // The commissioning knobs live on the PLANT, not in module
-            // scope. The FCU keeps its equivalents as module-level `let`s
-            // the sliders write, which means a fresh plant silently
-            // inherits whatever the last slider drag left behind and an
-            // engine-direct spec cannot vary them at all. The AHU's very
-            // first invariant is "more outdoor air lowers MAT when it is
-            // colder outside" — unswept weather makes that untestable, so
-            // the weather belongs to the plant.
+            // scope: a module-level `let` the sliders write means a fresh
+            // plant silently inherits whatever the last drag left behind,
+            // and an engine-direct spec cannot vary it at all. The AHU's
+            // very first invariant is "more outdoor air lowers MAT when it
+            // is colder outside" — unswept weather makes that untestable,
+            // so the weather belongs to the plant. The FCU held its
+            // equivalents in module scope until 2026-08-09 and now matches
+            // (ddcw-fcu-unit.js); the session snapshot forced the issue,
+            // since a knob outside the plant cannot be serialised with it.
             oaT: T_OA_DEF,                       // °F — the REAL outdoor-air temp (truth); update() walks it toward oaTarget
             // Where the weather is HEADED — what the OA knob writes, and
             // the only thing it writes. `oaT` chases this at OA_RAMP_RATE

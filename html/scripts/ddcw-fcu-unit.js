@@ -177,12 +177,6 @@ const DDCWFcuUnit = (function () {
     const PROOF_MAKE_DELAY = 8;              // s of continuous airflow before fan-status makes
     // ═══════════════════════════════════════════════════════════════════
 
-    // Live commissioning knobs — start at the placeholders above; the OA
-    // and load sliders write these, the speed slider writes the shell's
-    // simSpeed via the host hook.
-    let tOa       = T_OA_DEF;                // °F — outdoor-air temp (envelope driver)
-    let qInternal = Q_INT_DEF;               // Btu/h — internal sensible gain
-
     // ── plant — the FCU's data-driven IO surface (unit-specific keys) ──
     function fcuCreatePlant() {
         // Arrival: zone 76 °F with SP 72 / deadband 3 puts the cool-2stage
@@ -230,6 +224,21 @@ const DDCWFcuUnit = (function () {
             anim:       { fanFrac: 1 },
             // ── closed-loop thermal state ──
             zoneT:      76,                  // °F — the integrated REAL zone temp (truth)
+            // The commissioning knobs live on the PLANT, matching the AHU
+            // (ddcw-ahu-unit.js's own comment argued for the move). They
+            // were module-level `let`s until 2026-08-09, which cost two
+            // things: a fresh plant silently inherited whatever the last
+            // slider drag left behind, and an engine-direct spec could not
+            // vary them at all. The session snapshot is what forced the
+            // issue — a knob in module scope is not in the plant, so it
+            // could not be serialised with it.
+            // No `oaTarget` twin here: the FCU's outdoor air is the knob
+            // value directly. The AHU splits truth from target because its
+            // weather RAMPS (see OA_RAMP_RATE there); this unit has no
+            // ramp to chase, and inventing one for symmetry would be a
+            // second model, not parity.
+            oaT:        T_OA_DEF,            // °F — outdoor-air temp (envelope driver; the OA knob writes it)
+            qInternal:  Q_INT_DEF,           // Btu/h — internal sensible gain (the load knob writes it)
             // zoneW:   0.0094,              // lb/lb — future latent state; NOT integrated
             //                                  this session (see the RH-ready seam in fcuUpdate)
             coilLeaveT: undefined,           // °F — first-order-lagged coil leaving-air; seeded to
@@ -453,7 +462,7 @@ const DDCWFcuUnit = (function () {
             }
         }
         // Envelope (negative feedback toward OA — adds damping) + internal.
-        const qGain = UA_ENV * (tOa - zoneT) + qInternal;        // Btu/h
+        const qGain = UA_ENV * (plant.oaT - zoneT) + plant.qInternal;   // Btu/h
         if (isFinite(dt)) {
             // pv += dt · net / C  (tau ↔ C_ZONE). Loads are Btu/HOUR and
             // C_ZONE is Btu/°F, so net/C is °F/h; dt is sim-SECONDS, hence
@@ -1147,8 +1156,8 @@ const DDCWFcuUnit = (function () {
         // clock multiplier is SHELL state — ctx.simSpeed() is the live
         // read, so this readout can't hold a stale local mirror.
         speedValLbl.textContent = Math.round(ctx.simSpeed()) + '×';
-        oaValLbl.textContent    = dispTempNum(tOa).toFixed(0) + ' ' + tSuffix();
-        loadValLbl.textContent  = Math.round(qInternal) + ' Btu/h';
+        oaValLbl.textContent    = dispTempNum(plant.oaT).toFixed(0) + ' ' + tSuffix();
+        loadValLbl.textContent  = Math.round(plant.qInternal) + ' Btu/h';
 
         // ── param rail writability ── a field is adjustable only while
         // the RUNNING sheet carries its const block. bindingTick skips a
@@ -1510,14 +1519,14 @@ const DDCWFcuUnit = (function () {
         // live; the readout converts for display. ──
         oaSlider.addEventListener('input', function () {
             const v = parseFloat(oaSlider.value);
-            if (isFinite(v)) tOa = v;
+            if (isFinite(v)) pl.oaT = v;
             host.requestRender();
         });
 
         // ── Internal sensible load (Btu/h) — always live. ──
         loadSlider.addEventListener('input', function () {
             const v = parseFloat(loadSlider.value);
-            if (isFinite(v)) qInternal = v;
+            if (isFinite(v)) pl.qInternal = v;
             host.requestRender();
         });
     }
