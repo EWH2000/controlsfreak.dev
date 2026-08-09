@@ -1,5 +1,15 @@
 {% from "nav-dropdown.njk" import navDropdown %}
-<nav class="site-nav">
+{# aria-label="Site" — the nav role already announces "navigation", so the
+   label carries only the differentiator, never the role word itself (a
+   label of "Site navigation" would read "Site navigation navigation").
+   The sibling landmarks name what they navigate over — "Unit" on the two
+   workbench statusbars, "Lesson sequence" on the lesson pager — and "Site"
+   completes that family while matching the .site-nav class. Not "Main":
+   every page also renders a <main> landmark, so "Main navigation" would
+   sit beside a bare "main" in the same landmark list, which is the kind of
+   confusion this label exists to remove. Pinned by
+   tests/machine-sweep.spec.js (#261). #}
+<nav class="site-nav" aria-label="Site">
     <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
     <div class="site-nav-links" id="site-nav-links">
         <a href="/"{% if nav == "home" %} class="active"{% endif %}>Home</a>
