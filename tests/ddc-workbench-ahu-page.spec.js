@@ -891,13 +891,21 @@ test.describe('AHU workbench page: the fogging disclosure (#240)', () => {
     // arrival stage still lit trips the stat before the valve is there
     // to catch it.
     //
-    // ⚠ AND THE OWNER'S OWN RECORDED RECIPE NO LONGER REACHES THIS
+    // ⚠ AND THE OWNER'S RECORDED RECIPE STILL WORKS — AN EARLIER DRAFT
+    // OF THIS NOTE SAID OTHERWISE (corrected 2026-08-09, verified
+    // engine-direct on this branch, twice). The recorded reproduction
     // (docs/air-side-sim.md, Lane C ruling 5, 2026-08-02: "outdoor air
-    // −15 °F, manual damper 60 %" against the settled winter zone).
-    // That state is a mixed air of about 17 °F with no heat, which this
-    // machine now stops. The disclosure still works and is still worth
-    // keeping; whether losing that particular reproduction is
-    // acceptable is the owner's call, not this spec's.
+    // −15 °F, manual damper 60 %" against the settled winter zone) is a
+    // state where the program already holds the hot-water valve at
+    // 100 % — settled at −15 °F, it could hardly be elsewhere — so the
+    // mixed air sits near 17–19 °F while the discharge rides in the
+    // nineties, 55 °F clear of the stat: fog asserts, nothing trips,
+    // nothing was lost. What the stat actually retired is THIS SPEC'S
+    // old arrival-plant recipe (zone 76 °F, valve 0 %): cold air across
+    // a dry coil trips it on the first tick, which is the story the
+    // paragraph above tells. The recipe below restores the same
+    // mixing-box state the honest way — the valve open, exactly as the
+    // settled machine holds it for itself.
     const fogRecipe = async (page) => {
         // Hold the compressor off — a lit stage walks the discharge into
         // the stat.
