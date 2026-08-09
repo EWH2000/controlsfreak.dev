@@ -2068,19 +2068,27 @@ const DDCWAhuUnit = (function () {
         // leak the trip state into the button's own aria.
         //
         // The result line is written HERE and not in renderUnit, because
-        // it reports an ACTION rather than a state — renderUnit clears it
-        // on the next state change. Its wording stays in the device's
-        // voice: it says what the element and the contacts did, never
-        // what the machine should do about it.
+        // it reports an ACTION rather than a state. Its wording stays in
+        // the device's voice: it says what the element and the contacts
+        // did, never what the machine should do about it.
+        //
+        // ⚠ ORDER IS LOAD-BEARING: repaint FIRST, then write the result.
+        // `host.requestRender()` is synchronous — it runs renderUnit in
+        // this same task — and renderUnit's paint latch blanks llsMsg on
+        // any tripped↔normal edge, since a state change invalidates
+        // whatever the last press said. A successful reset IS that edge,
+        // so a result written before the call is erased before it can
+        // paint or be announced. The two failure wordings move no state
+        // and would survive either order; the one that matters would not.
         llsBtn.addEventListener('click', function () {
             const r = ahuResetLowLimit(pl);
+            host.requestRender();
             llsMsg.textContent = r === 'cleared'
                 ? 'Reset — the element is warm and the contacts are made.'
                 : (r === 'still-cold'
                     ? 'Nothing happens. The element is still below its setting: '
                         + 'clear the cause first, then push the button.'
                     : 'Nothing to reset — this stat has not tripped.');
-            host.requestRender();
         });
 
         // The three analog hand controls. Same shape each: ignore the drag

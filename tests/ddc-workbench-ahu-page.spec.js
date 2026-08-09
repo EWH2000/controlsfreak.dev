@@ -2052,6 +2052,33 @@ test.describe('AHU workbench page: the low-limit stat', () => {
         await expect(page.locator('#ahu-v-fan-proof')).toHaveText('MADE', { timeout: 8000 });
     });
 
+    test('and the press says so — the confirmation survives the repaint it triggers',
+        async ({ page }) => {
+            // The row above proves the RESET works; this one proves the
+            // press is ANSWERED. They are separate claims because the
+            // failure mode is invisible to the first: the handler's
+            // `host.requestRender()` repaints SYNCHRONOUSLY, and the
+            // device face's paint latch wipes the message on the
+            // tripped→normal edge — so a result written before that call
+            // is erased in the same task. The state row still reads
+            // NORMAL, the machine still restarts, and the only casualty
+            // is the line the polite live region exists to announce.
+            await open(page);
+            await tripTheStat(page);
+            await page.fill('#ahu-oa-slider', '80');
+            await page.dispatchEvent('#ahu-oa-slider', 'input');
+            await settle(page, 800);
+
+            await page.click('#ahu-lls-reset');
+            await expect(page.locator('#ahu-lls-state')).toHaveText('NORMAL');
+            // Wording read off the handler, not paraphrased — the device
+            // speaks about its own element and contacts, never about what
+            // the machine should do next.
+            await expect(page.locator('#ahu-lls-msg'),
+                'the successful press left no confirmation to announce')
+                .toHaveText('Reset — the element is warm and the contacts are made.');
+        });
+
     test('the software low limit sits above the hardware one, and neither fires on a settled machine',
         async ({ page }) => {
             // Two claims in one row because they are one decision (owner,
