@@ -48,6 +48,31 @@ async function open(page) {
 // reach a specific number.
 const settle = (page, ms) => page.waitForTimeout(ms);
 
+// Move the weather AND WAIT FOR IT TO ARRIVE.
+//
+// The OA slider no longer sets the outdoor air — it sets where the
+// outdoor air is HEADED, and the plant walks there at OA_RAMP_RATE
+// (ddcw-ahu-unit.js; the sustained-cold ruling, 2026-08-09). So every
+// row that needs the new weather to have LANDED goes through here, and
+// this helper polls the OAT readout — which paints the plant's own
+// truth — instead of sleeping a computed number of milliseconds. That
+// choice is load-bearing, not tidiness: the travel is fixed in
+// SIM-seconds, and a host under load runs fewer 10 Hz ticks per wall
+// second, which turns the same travel into MORE wall time. A fixed
+// settle sized off a quiet box is a flake generator on a busy one.
+//
+// Rows that want the JOURNEY rather than the destination — the trip
+// rows below, which are about cold air arriving eventually — wait on
+// what they actually care about instead of calling this.
+async function setWeather(page, degF) {
+    await page.fill('#ahu-oa-slider', String(degF));
+    await page.dispatchEvent('#ahu-oa-slider', 'input');
+    await expect
+        .poll(async () => parseFloat(await page.locator('#ahu-r-oat').textContent()),
+            { timeout: 30000, message: 'the weather never reached ' + degF + ' °F' })
+        .toBeCloseTo(degF, 0);
+}
+
 test.describe('AHU workbench page: it boots', () => {
 
     test('loads clean, with no console errors', async ({ page }) => {
@@ -342,9 +367,10 @@ test.describe('AHU workbench page: the controls', () => {
         await open(page);
         // A DIRECTION, not a number: the unit module's very first
         // invariant. Drive the weather cold, take the damper by hand, and
-        // MAT has to fall as the damper opens.
-        await page.locator('#ahu-oa-slider').fill('0');
-        await page.locator('#ahu-oa-slider').dispatchEvent('input');
+        // MAT has to fall as the damper opens. The weather has to have
+        // ARRIVED before the damper moves — mid-ramp the two variables
+        // move together and the comparison stops being about the damper.
+        await setWeather(page, 0);
         await page.locator('#ahu-null-oad').uncheck();
         const read = async () => {
             const s = await page.locator('#ahu-r-mat').textContent();
@@ -919,10 +945,18 @@ test.describe('AHU workbench page: the fogging disclosure (#240)', () => {
         await page.locator('#ahu-null-oad').uncheck();
         await page.locator('#ahu-oad-slider').fill('50');
         await page.locator('#ahu-oad-slider').dispatchEvent('input');
-        // Weather last.
-        await page.locator('#ahu-oa-slider').fill('-15');
-        await page.locator('#ahu-oa-slider').dispatchEvent('input');
-        await settle(page, 1200);
+        // Weather last — and the weather now TAKES TIME. The knob writes
+        // a target and the outdoor air walks there at OA_RAMP_RATE, so
+        // this recipe has 95 °F of travel to do (80 → −15): 190
+        // sim-seconds, ~9.5 wall-seconds at the default 20× clock.
+        // `setWeather` waits for arrival rather than sleeping a number,
+        // which is what keeps the recipe honest on a loaded box — see its
+        // header. Measured engine-direct: the mixing box crosses
+        // saturation at ~7.9 wall-seconds, with the discharge bottoming
+        // 8.6 °F clear of the stat the whole way down, so nothing trips
+        // during the ramp.
+        await setWeather(page, -15);
+        await settle(page, 600);
     };
 
     test('the marker is absent on an ordinary day and appears in the fog branch', async ({ page }) => {
@@ -1005,9 +1039,7 @@ test.describe('AHU workbench page: the verdict ladder\'s coil bounds', () => {
     test.fixme('freezing mixed air under a running stage is named, not read as a dead coil',
         async ({ page }) => {
             await open(page);
-            await page.locator('#ahu-oa-slider').fill('-20');
-            await page.locator('#ahu-oa-slider').dispatchEvent('input');
-            await settle(page, 2000);
+            await setWeather(page, -20);
             const v = page.locator('#ahu-verdict');
             await expect(v).toHaveClass(/error/);
             await expect(v).toContainText('already near freezing');
@@ -1019,10 +1051,13 @@ test.describe('AHU workbench page: the verdict ladder\'s coil bounds', () => {
         await page.locator('#ahu-null-fan').uncheck();
         await page.locator('#ahu-null-stage').uncheck();
         await page.locator('[data-stage="0"]').click();
-        for (const [id, val] of [['ahu-hw-slider', '100'], ['ahu-fan-slider', '25'], ['ahu-oa-slider', '20']]) {
+        for (const [id, val] of [['ahu-hw-slider', '100'], ['ahu-fan-slider', '25']]) {
             await page.locator('#' + id).fill(val);
             await page.locator('#' + id).dispatchEvent('input');
         }
+        // The weather is its own step now: it ramps, so it has to be
+        // waited for rather than filled alongside the two actuators.
+        await setWeather(page, 20);
         await settle(page, 2500);
         const v = page.locator('#ahu-verdict');
         await expect(v).toHaveClass(/warn/);
@@ -1151,13 +1186,14 @@ test.describe('AHU workbench page: naming and the live regions', () => {
         await open(page);
         const row = page.locator('#ahu-d-econ');
         // Above the high limit: locked out, whatever the zone is doing.
-        await page.locator('#ahu-oa-slider').fill('95');
-        await page.locator('#ahu-oa-slider').dispatchEvent('input');
+        await setWeather(page, 95);
         await settle(page, 900);
         await expect(row).toHaveText('Locked out');
-        // Permitted and calling: open.
-        await page.locator('#ahu-oa-slider').fill('60');
-        await page.locator('#ahu-oa-slider').dispatchEvent('input');
+        // Permitted and calling: open. The lockout is read off the
+        // OUTDOOR AIR, not off the knob, so this row has to let the
+        // weather arrive — mid-ramp at 80 °F the economizer is still
+        // locked out and the row would read the old verdict.
+        await setWeather(page, 60);
         await settle(page, 1500);
         await expect(row).toHaveText('Open');
     });
@@ -1905,11 +1941,22 @@ const CAUSE_WORDS = /low[- ]?limit|freeze ?stat|\bstats?\b|\bLLS\b/i;
 // no program involvement: with slot 8 held, the SOFTWARE low limit on
 // the winter sheet could not stop the fan even if it wanted to, which is
 // exactly why the hardware device is the one that acts.
+//
+// THE DRAG IS LEFT AT THE FLOOR, and that is the whole recipe now. The
+// knob writes a target and the outdoor air walks toward it at
+// OA_RAMP_RATE (the sustained-cold ruling, 2026-08-09), so a drag that
+// came back would deliver nothing — that is the ruling's other half,
+// pinned by its own row further down. Here the cold is left to arrive:
+// the preset snaps the weather to 55 °F, the knob asks for −20, and the
+// element goes at ~24 °F on the way past. MEASURED engine-direct at the
+// default 20× clock: 62 sim-seconds, ~3.1 wall-seconds. The timeout is
+// an order of magnitude clear of that because a loaded box runs fewer
+// ticks per wall second, not because the number is uncertain.
 async function tripTheStat(page) {
     await page.click('[data-preset="freecool"]');
     await page.fill('#ahu-oa-slider', '-20');
     await page.dispatchEvent('#ahu-oa-slider', 'input');
-    await expect(page.locator('#ahu-lls-state')).toHaveText('TRIPPED', { timeout: 5000 });
+    await expect(page.locator('#ahu-lls-state')).toHaveText('TRIPPED', { timeout: 30000 });
 }
 
 test.describe('AHU workbench page: the low-limit stat', () => {
@@ -2035,11 +2082,10 @@ test.describe('AHU workbench page: the low-limit stat', () => {
             expect(sr, 'the announced mirror leaked it instead: ' + sr)
                 .not.toMatch(CAUSE_WORDS);
 
-            // And it LATCHES: warm the weather right back up and the
-            // machine stays down.
-            await page.fill('#ahu-oa-slider', '80');
-            await page.dispatchEvent('#ahu-oa-slider', 'input');
-            await settle(page, 1200);
+            // And it LATCHES: warm the weather right back up — all the
+            // way back, which now takes a ramp rather than a keystroke —
+            // and the machine stays down.
+            await setWeather(page, 80);
             await expect(page.locator('#ahu-lls-state')).toHaveText('TRIPPED');
             await expect(page.locator('#ahu-v-fan-proof')).toHaveText('NONE');
         });
@@ -2048,10 +2094,12 @@ test.describe('AHU workbench page: the low-limit stat', () => {
         await open(page);
         await tripTheStat(page);
         // Clear the cause first — the field order, and the only order
-        // that leaves the machine running afterwards.
-        await page.fill('#ahu-oa-slider', '80');
-        await page.dispatchEvent('#ahu-oa-slider', 'input');
-        await settle(page, 800);
+        // that leaves the machine running afterwards. "Cleared" now means
+        // the WEATHER is back, not the knob: reset while the outdoor air
+        // is still mid-ramp and the restarted fan pulls the same cold air
+        // across the coil and trips the element again, which is a fair
+        // model of pushing the button before the cause is fixed.
+        await setWeather(page, 80);
 
         await page.click('#ahu-lls-reset');
         await expect(page.locator('#ahu-lls-state')).toHaveText('NORMAL');
@@ -2073,9 +2121,7 @@ test.describe('AHU workbench page: the low-limit stat', () => {
             // is the line the polite live region exists to announce.
             await open(page);
             await tripTheStat(page);
-            await page.fill('#ahu-oa-slider', '80');
-            await page.dispatchEvent('#ahu-oa-slider', 'input');
-            await settle(page, 800);
+            await setWeather(page, 80);
 
             await page.click('#ahu-lls-reset');
             await expect(page.locator('#ahu-lls-state')).toHaveText('NORMAL');

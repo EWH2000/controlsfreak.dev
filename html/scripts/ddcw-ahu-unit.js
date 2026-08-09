@@ -302,6 +302,71 @@ const DDCWAhuUnit = (function () {
     const LLS_STAT_TRIP = 38;      // °F — discharge air; the hardwired device's setting
     // ═══════════════════════════════════════════════════════════════════
 
+    // ══ HOW FAST THE WEATHER CAN CHANGE ════════════════════════════════
+    // THIS IS A USABILITY CONSTANT, NOT WEATHER REALISM. A real front
+    // moves outdoor air something like 10–20 °F per HOUR; this moves it
+    // 0.5 °F per sim-SECOND, which is 1,800 °F/h. It is deliberately
+    // compressed in exactly the way the 20× sim clock is compressed —
+    // the page would be unwatchable otherwise — and it exists for one
+    // reason: the outdoor air CHASES the knob instead of teleporting to
+    // it, so a quick test-drag of the slider delivers no cold air.
+    //
+    // WHY (owner ruling, 2026-08-09): "I don't like the idea of a quick
+    // OAT slider drag causing a trip, it needs to be sustained… I'm fine
+    // with one drag doing it, but I don't want someone to trip it just
+    // testing the slider itself." Leave the slider cold and the cold
+    // still arrives and still trips; bring it back and the weather never
+    // got there. Sustained, not instant.
+    //
+    // WHAT THE ACCIDENT ACTUALLY WAS, measured on the arrival plant at
+    // the default 20× clock before this landed: the knob teleported, so
+    // whatever value you RELEASED on was the weather, permanently. Let
+    // go at −20 and the hardwired stat (LLS_STAT_TRIP above) latched
+    // 1.2 wall-seconds later; every release depth at or below 45 °F
+    // tripped eventually, 50 °F and above never did. A manual-reset
+    // device, so the machine then stayed down until the reader found the
+    // device face — for someone who was only dragging the control to see
+    // what it did.
+    //
+    // IT LIVES IN SIM-TIME, so the behaviour is identical at every clock
+    // speed in TRAVEL terms (a 100 °F swing always takes 100/RATE
+    // sim-seconds); what the clock buys is how much WALL time a reader
+    // has to change their mind.
+    //
+    // TUNED BY MEASUREMENT, not by feel — the whole point is a
+    // threshold, so a guess would have been worthless. Swept
+    // {0.25, 0.5, 1, 2} °F per sim-second over release depths from −20
+    // to 55 °F, both clock speeds, from a warm start and from a 60 °F
+    // one. (Depth had to be an axis: the DEEPEST drag is not the worst
+    // case, because dragging straight to −20 crashes the zone through
+    // its setpoint fast enough that the cooling call — and with it the
+    // economizer and the lit stage — drops before the discharge gets
+    // cold.) The measurement that decides it is HOW LONG A DRAG MUST BE
+    // HELD BEFORE SNAPPING BACK STILL TRIPS, at the default clock:
+    //
+    //     rate     from 80 °F     from 60 °F
+    //     0.25     never ≤ 6 s        4.0 s
+    //     0.50         4.4 s          3.0 s      ← chosen
+    //     1.00         2.8 s          2.1 s
+    //     2.00         1.8 s          1.4 s
+    //
+    // A slider test is a second or two. 1 °F/s technically clears that
+    // and is the faster rate, but it clears it by 0.1 s at the colder
+    // start (0.27 °F of discharge margin — not a margin), so 0.5 is the
+    // fastest rate that keeps a real gap between "testing the control"
+    // and "asking for winter". The full table is in the commit that
+    // added this (`ahu: outdoor air chases the slider`).
+    //
+    // ONE RESIDUAL IS ACCEPTED RATHER THAN CHASED: at the 60× clock
+    // (50× effective under MAX_DT_SIM) those thresholds fall to 1.8 s
+    // and 1.2 s, so a deep drag held about two seconds there still
+    // trips. No rate in the swept set removes it — 0.25 only moves it to
+    // 2.9 s and 1.6 s — because at 50× effective one host tick IS five
+    // sim-seconds. A reader who has run the clock to its ceiling is no
+    // longer poking a slider to see what it does.
+    const OA_RAMP_RATE = 0.5;      // °F per SIM-second — see above; not a weather rate
+    // ═══════════════════════════════════════════════════════════════════
+
     // ── plant — the AHU's data-driven IO surface (unit-specific keys) ──
     function ahuCreatePlant() {
         // Arrival: a moderate 80 °F day with the zone at 76 °F, one DX
@@ -351,7 +416,19 @@ const DDCWAhuUnit = (function () {
             // first invariant is "more outdoor air lowers MAT when it is
             // colder outside" — unswept weather makes that untestable, so
             // the weather belongs to the plant.
-            oaT: T_OA_DEF,                       // °F — the REAL outdoor-air temp (truth); the OA knob writes it
+            oaT: T_OA_DEF,                       // °F — the REAL outdoor-air temp (truth); update() walks it toward oaTarget
+            // Where the weather is HEADED — what the OA knob writes, and
+            // the only thing it writes. `oaT` chases this at OA_RAMP_RATE
+            // (see that constant for the ruling behind the split). They
+            // start equal, so a plant nobody touches has settled weather;
+            // a PRESET writes BOTH, because staging a scenario is not
+            // slider-testing.
+            //
+            // ⚠ ANY code that sets `oaT` directly — a spec row seeding a
+            // cold morning, most of all — must set `oaTarget` too, or the
+            // chase quietly drags that weather back toward a stale target
+            // over the following ticks.
+            oaTarget: T_OA_DEF,                  // °F — where the OA knob is pointed
             qInternal: Q_INT_DEF,                // Btu/h — internal sensible gain (the load knob writes it)
             coilLeaveT: undefined,               // °F — first-order-lagged coil leaving-air; seeded to
             //                                      its quasi-static target on the first tick (no page-load ramp)
@@ -426,7 +503,6 @@ const DDCWAhuUnit = (function () {
     //    speed-scaled, clamped sim step (seconds). ──
     function ahuUpdate(plant, dt) {
         const zoneT     = plant.zoneT;                     // °F — the REAL zone temp (truth)
-        const oaT       = plant.oaT;                       // °F — the REAL outdoor-air temp (truth)
         const fanPct    = plant.actuators['fan-speed'];    // %
         const damperPct = plant.actuators['oa-damper'];    // % open
         const hwPct     = plant.actuators['hw-valve'];     // % open
@@ -434,12 +510,33 @@ const DDCWAhuUnit = (function () {
 
         // Validate-and-mute: if a read isn't finite, blank on render and
         // leave every integrated state exactly where it was.
-        if (!isFinite(zoneT) || !isFinite(oaT) || !isFinite(fanPct)
+        if (!isFinite(zoneT) || !isFinite(plant.oaT) || !isFinite(fanPct)
             || !isFinite(damperPct) || !isFinite(hwPct) || !isFinite(plant.qInternal)) {
             d.invalid = true;
             return;
         }
         d.invalid = false;
+
+        // ── 0. the weather chases the knob ────────────────────────────
+        // Integrated state like zoneT below, so it sits AFTER the
+        // validate-and-mute guard: a bad read freezes the weather where
+        // it was rather than walking it on toward a target nobody can
+        // see. Linear at OA_RAMP_RATE (read that constant — it is a
+        // usability threshold, not a weather rate), snapping on arrival
+        // so the truth lands exactly on the number the knob shows
+        // instead of asymptoting near it. A plant with no `oaTarget`
+        // holds still, which is what a pre-chase spec plant does.
+        if (isFinite(dt) && isFinite(plant.oaTarget)) {
+            const step = OA_RAMP_RATE * dt;
+            const gap  = plant.oaTarget - plant.oaT;
+            plant.oaT = (Math.abs(gap) <= step)
+                ? plant.oaTarget
+                : plant.oaT + (gap > 0 ? step : -step);
+        }
+        // °F — the REAL outdoor-air temp (truth), sampled POST-chase:
+        // every line below is about the air that has actually arrived,
+        // never about where the knob is pointed.
+        const oaT = plant.oaT;
 
         // ── 1. airflow gating — three DIFFERENT things, named apart ──
         // fanCmd is what the sequence asked for. airflowOn is whether
@@ -1933,7 +2030,15 @@ const DDCWAhuUnit = (function () {
         // clock multiplier is SHELL state, so ctx.simSpeed() is the live
         // read and this readout can't hold a stale local mirror.
         speedValLbl.textContent = Math.round(ctx.simSpeed()) + '×';
-        oaValLbl.textContent    = dispTempNum(plant.oaT).toFixed(0) + ' ' + tSuffix();
+        // The OA readout is the KNOB's readout, so it paints the TARGET —
+        // it has to agree with the handle sitting under it, or the
+        // control reads as broken. While the chase is running that number
+        // and the machine's own outdoor air disagree, and that is the
+        // intended reading: this row is a command, the OAT well on the
+        // graphic and the OAT chip in the statusbar are instruments. It
+        // is the same command-vs-measured split the setpoint wells teach
+        // two panels over, which is why it needs no extra UI to explain.
+        oaValLbl.textContent    = dispTempNum(plant.oaTarget).toFixed(0) + ' ' + tSuffix();
         loadValLbl.textContent  = Math.round(plant.qInternal) + ' Btu/h';
 
         // ── param rail writability ── a field is adjustable only while
@@ -2009,7 +2114,16 @@ const DDCWAhuUnit = (function () {
                 // loop carries them from here; a preset never jams a sensed
                 // value.
                 pl.zoneT = s.zone;
+                // A preset SNAPS the weather — both the truth and the
+                // target, so nothing ramps afterwards. Deliberate: the
+                // OA_RAMP_RATE chase exists to keep a slider TEST from
+                // delivering cold air, and clicking a scenario is not
+                // testing the slider, it is staging a machine. A preset
+                // that ramped would make "put me on a 20 °F morning"
+                // arrive a sim-minute later, which is a worse lie than
+                // instant weather.
                 pl.oaT = s.oa;
+                pl.oaTarget = s.oa;
                 pl.qInternal = s.load;
                 oaSlider.value = String(s.oa);
                 loadSlider.value = String(s.load);
@@ -2376,13 +2490,19 @@ const DDCWAhuUnit = (function () {
         });
 
         // ── Outdoor-air temp — °F-native slider, always live; the readout
-        // converts for display. It writes plant.oaT, not a module-level
-        // `let`: the weather belongs to the plant on this unit (see
-        // ahuCreatePlant), which is what makes a fresh plant reproducible
-        // and lets an engine-direct spec sweep it. ──
+        // converts for display. It writes plant.oaTarget, not a
+        // module-level `let`: the weather belongs to the plant on this
+        // unit (see ahuCreatePlant), which is what makes a fresh plant
+        // reproducible and lets an engine-direct spec sweep it.
+        //
+        // AND IT WRITES THE TARGET, NEVER THE TRUTH. The knob says where
+        // the weather is headed; update() walks the actual outdoor air
+        // there at OA_RAMP_RATE. That is what makes a quick test-drag
+        // harmless and a sustained cold spell arrive anyway — the owner's
+        // 2026-08-09 ruling, argued at the constant. ──
         oaSlider.addEventListener('input', function () {
             const v = parseFloat(oaSlider.value);
-            if (isFinite(v)) pl.oaT = v;
+            if (isFinite(v)) pl.oaTarget = v;
             host.requestRender();
         });
 

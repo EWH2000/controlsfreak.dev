@@ -84,6 +84,22 @@ function loadUnit() {
     return vm.runInContext('DDCWAhuUnit;', ctx);
 }
 
+// Seed the weather — the TRUTH and the knob it chases, together.
+//
+// ⚠ USE THIS, NEVER A BARE `plant.oaT = …`. The outdoor air walks
+// toward `plant.oaTarget` at OA_RAMP_RATE on every update (the
+// sustained-cold ruling, 2026-08-09), so a row that seeds only the
+// truth has its morning quietly dragged back toward whatever the
+// target still says — the arrival day's 80 °F, usually. It is a
+// silent failure and a selective one: the quasi-static probe passes a
+// dt of 0 and so cannot move, while every row that INTEGRATES drifts.
+// The one deliberate bare write left in this file is the NaN row in
+// validate-and-mute, which is about a bad truth read specifically.
+function setOa(plant, t) {
+    plant.oaT = t;
+    plant.oaTarget = t;
+}
+
 // Quasi-static probe (see header): steady-state derived.* for a
 // mutated plant state, no integration.
 function quasi(Unit, mutate) {
@@ -317,7 +333,7 @@ test.describe('ddcw-ahu-unit: the mixing box', () => {
         // check off the graphic with a calculator.
         const Unit = loadUnit();
         const matAt = (oat, damper) => quasi(Unit, (pl) => {
-            pl.oaT = oat;
+            setOa(pl, oat);
             pl.actuators['oa-damper'] = damper;
         }).derived.matT;
 
@@ -346,7 +362,7 @@ test.describe('ddcw-ahu-unit: the mixing box', () => {
         [-10, 10, 40, 68, 95, 110].forEach((oat) => {
             for (let d = 0; d <= 100; d += 10) {
                 const pl = quasi(Unit, (p) => {
-                    p.oaT = oat;
+                    setOa(p, oat);
                     p.actuators['oa-damper'] = d;
                 });
                 const lo = Math.min(oat, pl.zoneT);
@@ -355,9 +371,9 @@ test.describe('ddcw-ahu-unit: the mixing box', () => {
                 expect(pl.derived.matT, label + ' floor').toBeGreaterThanOrEqual(lo - 1e-9);
                 expect(pl.derived.matT, label + ' ceiling').toBeLessThanOrEqual(hi + 1e-9);
             }
-            const shut = quasi(Unit, (p) => { p.oaT = oat; p.actuators['oa-damper'] = 0; });
+            const shut = quasi(Unit, (p) => { setOa(p, oat); p.actuators['oa-damper'] = 0; });
             expect(shut.derived.matT, 'dampers shut → all return air').toBeCloseTo(shut.zoneT, 9);
-            const wide = quasi(Unit, (p) => { p.oaT = oat; p.actuators['oa-damper'] = 100; });
+            const wide = quasi(Unit, (p) => { setOa(p, oat); p.actuators['oa-damper'] = 100; });
             expect(wide.derived.matT, 'dampers wide → all outdoor air').toBeCloseTo(oat, 6);
         });
     });
@@ -384,7 +400,7 @@ test.describe('ddcw-ahu-unit: the mixing box', () => {
         const off = quasi(Unit, (pl) => {
             pl.actuators['fan-enable'] = false;
             pl.actuators['oa-damper'] = 100;
-            pl.oaT = -10;
+            setOa(pl, -10);
         });
         expect(off.derived.airflowOn).toBe(false);
         expect(off.derived.matT).toBe(off.zoneT);
@@ -399,7 +415,7 @@ test.describe('ddcw-ahu-unit: the coil section (quasi-static)', () => {
         // valve position.
         const Unit = loadUnit();
         const cold = (hw) => quasi(Unit, (pl) => {
-            pl.oaT = 20;
+            setOa(pl, 20);
             pl.zoneT = 68;
             pl.actuators.y1 = false;
             pl.actuators['hw-valve'] = hw;
@@ -428,7 +444,7 @@ test.describe('ddcw-ahu-unit: the coil section (quasi-static)', () => {
         // Assert the BAND and the conserved quantity, never the value.
         const Unit = loadUnit();
         const at = (fan) => quasi(Unit, (pl) => {
-            pl.oaT = 10;
+            setOa(pl, 10);
             pl.zoneT = 68;
             pl.actuators['hw-valve'] = 100;
             pl.actuators['fan-speed'] = fan;
@@ -489,7 +505,7 @@ test.describe('ddcw-ahu-unit: the coil section (quasi-static)', () => {
         expect(coilDt(cooling), 'cooling drives the air down').toBeLessThan(0);
 
         const heating = quasi(Unit, (pl) => {
-            pl.oaT = 20;
+            setOa(pl, 20);
             pl.zoneT = 66;
             pl.actuators.y1 = false;
             pl.actuators['hw-valve'] = 60;
@@ -589,7 +605,7 @@ test.describe('ddcw-ahu-unit: the coil section (quasi-static)', () => {
                     [0, 1, 2].forEach((stage) => {
                         ['none', 'low-charge'].forEach((fault) => {
                             const p = quasi(Unit, (pl) => {
-                                pl.oaT = oat;
+                                setOa(pl, oat);
                                 pl.actuators['oa-damper'] = damper;
                                 pl.actuators['fan-speed'] = fan;
                                 pl.actuators.y1 = stage >= 1;
@@ -631,7 +647,7 @@ test.describe('ddcw-ahu-unit: the coil section (quasi-static)', () => {
                                pl.conditions.fault = 'low-charge'; }]].forEach(([label, stageMut]) => {
             [-20, 0, 20].forEach((oat) => {
                 const p = quasi(Unit, (pl) => {
-                    pl.oaT = oat;
+                    setOa(pl, oat);
                     pl.actuators['oa-damper'] = 100;      // the deleted min-OA block
                     pl.actuators['hw-valve'] = 0;
                     stageMut(pl);
@@ -650,7 +666,7 @@ test.describe('ddcw-ahu-unit: the coil section (quasi-static)', () => {
         let prev = null;
         [0, 10, 20, 30].forEach((hw) => {
             const p = quasi(Unit, (pl) => {
-                pl.oaT = 20;
+                setOa(pl, 20);
                 pl.actuators['oa-damper'] = 100;
                 pl.actuators['hw-valve'] = hw;
                 pl.actuators.y1 = false;
@@ -829,10 +845,10 @@ test.describe('ddcw-ahu-unit: zone trajectory (integration)', () => {
         // A cold morning with the valve shut loses the zone; open it and
         // the same morning holds.
         const noHeat = run(Unit, (pl) => {
-            pl.oaT = 10; pl.actuators.y1 = false;
+            setOa(pl, 10); pl.actuators.y1 = false;
         }, STEPS, DT);
         const heat = run(Unit, (pl) => {
-            pl.oaT = 10; pl.actuators.y1 = false; pl.actuators['hw-valve'] = 100;
+            setOa(pl, 10); pl.actuators.y1 = false; pl.actuators['hw-valve'] = 100;
         }, STEPS, DT);
         expect(noHeat.zoneT, 'no heat on a cold morning').toBeLessThan(start);
         expect(heat.zoneT, 'the coil carries it').toBeGreaterThan(noHeat.zoneT);
@@ -846,16 +862,16 @@ test.describe('ddcw-ahu-unit: zone trajectory (integration)', () => {
 
         // The outdoor-air load rides in on the supply air, so opening
         // the dampers on a hot day costs the zone.
-        const min = run(Unit, (pl) => { pl.oaT = 95; pl.actuators['oa-damper'] = 20; }, STEPS, DT);
-        const wide = run(Unit, (pl) => { pl.oaT = 95; pl.actuators['oa-damper'] = 80; }, STEPS, DT);
+        const min = run(Unit, (pl) => { setOa(pl, 95); pl.actuators['oa-damper'] = 20; }, STEPS, DT);
+        const wide = run(Unit, (pl) => { setOa(pl, 95); pl.actuators['oa-damper'] = 80; }, STEPS, DT);
         expect(wide.zoneT, 'more hot outdoor air is a warmer zone').toBeGreaterThan(min.zoneT);
 
         // …and it is counted ONCE. At a fixed zone and outdoor temp the
         // damper position cannot move qGain, which carries only the
         // envelope and the internals; the ventilation load shows up in
         // qCool instead, as less net cooling delivered.
-        const shut = quasi(Unit, (pl) => { pl.oaT = 95; pl.actuators['oa-damper'] = 20; });
-        const open = quasi(Unit, (pl) => { pl.oaT = 95; pl.actuators['oa-damper'] = 80; });
+        const shut = quasi(Unit, (pl) => { setOa(pl, 95); pl.actuators['oa-damper'] = 20; });
+        const open = quasi(Unit, (pl) => { setOa(pl, 95); pl.actuators['oa-damper'] = 80; });
         expect(shut.derived.qGain, 'qGain is envelope + internal only')
             .toBeCloseTo(open.derived.qGain, 9);
         expect(open.derived.qCool, 'the ventilation load lands in the supply-air term')
@@ -941,7 +957,7 @@ test.describe('ddcw-ahu-unit: zone trajectory (integration)', () => {
         expect(hot.zoneT).toBe(120);
         const cold = Unit.createPlant();
         cold.zoneT = 25;
-        cold.oaT = -20;
+        setOa(cold, -20);
         cold.actuators.y1 = false;
         cold.actuators['fan-enable'] = false;
         Unit.update(cold, 1);
@@ -1070,7 +1086,7 @@ test.describe('ddcw-ahu-unit: sensed vs truth', () => {
         // hand its program a stale seed forever.
         const Unit = loadUnit();
         const pl = Unit.createPlant();
-        pl.oaT = 42;
+        setOa(pl, 42);
         Unit.update(pl, 1);
         Unit.points.filter((p) => p.dir === 'sensor').forEach((p) => {
             expect(pl.sensors[p.plantKey], p.id + ' was written').not.toBeUndefined();
@@ -1116,7 +1132,7 @@ function runToStatTrip(Unit, mutate) {
 // raw outdoor air straight across the coils, which is the freeze a real
 // low-limit stat exists to catch.
 function rawColdAir(p) {
-    p.oaT = -20;
+    setOa(p, -20);
     p.actuators['oa-damper'] = 100;
     p.actuators['fan-speed'] = 100;
     p.actuators['fan-enable'] = true;
@@ -1176,7 +1192,7 @@ test.describe('ddcw-ahu-unit: the hardwired low-limit stat', () => {
         expect(plant.lls.tripped).toBe(true);
         // Put the weather back and shut the damper: the set condition is
         // long gone, and a real manual-reset device does not care.
-        plant.oaT = 80;
+        setOa(plant, 80);
         for (let i = 0; i < 200; i++) {
             plant.actuators['oa-damper'] = 20;
             plant.actuators['fan-speed'] = 100;
