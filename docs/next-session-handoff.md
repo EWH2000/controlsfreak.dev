@@ -13,6 +13,16 @@
 **Every claim in this file is a hypothesis. The repo is the truth.** Correct
 it and tell the orchestrator; do not quietly work around a discrepancy.
 
+> **Fact-checked 2026-08-09 at `b80afe1`** (`/verify-handoff`, six lanes plus
+> an adversarial refutation stage over every proposed correction). 56 claims:
+> **48 verified, 4 corrected, 2 unverifiable, 2 owner-decision.** The four
+> corrections are marked ⚠️ inline at the point of use — sheet-note mention
+> counts (item 5), the "named next flagship" designation (passing note), "two
+> live scripts" (item 2), and the flake attribution (process notes). Ten
+> further corrections were *proposed and then refuted* on re-check; the claims
+> they targeted stand as written. **The corrected numbers above are re-derived,
+> not carried forward.**
+
 Two concrete failures from the session that wrote this, both worth
 internalising:
 
@@ -62,6 +72,22 @@ Branch hygiene: 28 local branches → 5 (two of those are merged and
 deletable). `archive/issue-202-pre-rewrite` was converted to a **git tag** of
 the same name, pushed to origin, and its branch deleted — owner call,
 2026-08-08. `origin/candidate-b` was deliberately **kept**.
+
+Three follow-ons, verified at `b80afe1`:
+
+- **Local branches are now 3, not 5** — the two flagged as merged-and-deletable
+  (`docs/close-261-and-retire-decayed-pointers`, `docs/log-workbench-state-loss`)
+  have since been deleted. That is the advice executed, not drift. Their stale
+  `origin/*` tracking refs survive, so `git branch -a` over-counts by two until
+  `git remote prune origin`.
+- ⚠️ **There is un-pushed work in a stash that no branch listing surfaces:**
+  `stash@{0}: WIP on issue-229/fcu-override-live-region`. That branch is
+  1 ahead / 34 behind `main` and its tip is an emergency snapshot. **Anyone
+  told to "clean up the remaining branches" would destroy both silently** —
+  check the stash before deleting the branch (item 4 depends on that work).
+- The `archive/issue-202-pre-rewrite` **tag is load-bearing, not decorative**:
+  it resolves to `8e0c2f1`, which is *not* an ancestor of `main`, so the tag is
+  the only thing keeping that history reachable from gc.
 
 ## Corrections that cost real time — do not rediscover these
 
@@ -180,8 +206,16 @@ driving.
    recommends a defeat/jumper on the device face. **`UNVERIFIED` by the
    orchestrator — check the reasoning before acting on it.**
 2. **Version bump owed: 3.80.1 → 3.81.0.** New behaviour on a live page plus
-   two live scripts, so it also cache-busts `ddcw-ahu-unit.js`. Deliberately
-   not done.
+   **one** live script, so it also cache-busts `ddcw-ahu-unit.js`. Deliberately
+   not done. ⚠️ **An earlier draft said "two live scripts," and so does PR
+   #488's own test-plan line — both are wrong; fix the PR body before the owner
+   reads it, since that sentence is what justifies the bump.** The diff is four
+   files: `html/scripts/ddcw-ahu-unit.js`, the live page
+   `html/simulators/ddc-workbench.html`, and two specs. **`ddcw-shell.js` — the
+   only ddcw script both live workbench pages load — is untouched**, so the
+   blast radius is one page and its one script, not two pages. That distinction
+   is exactly the shared-code trap CLAUDE.md's merge-authority section warns
+   about (PR #452 / `psychro-engine.js`).
 3. The recorded **#240 fog recipe** (OA −15, damper 60 %) no longer reaches;
    the lane found damper 50 % + HW valve 80 %. `docs/air-side-sim.md` needs
    the line — the lane did not touch `docs/`.
@@ -247,11 +281,27 @@ Keep what is true of *this machine and this sheet*; link the concept an
 existing lesson already owns.
 
 Headroom is large — see correction 5 above. Concepts the AHU notes explain
-that lessons already own, with mention counts measured at `2ea9a31`: proof
-(9), economizer (5), latch (5), differential (2), low limit (2), PID (1). All
+that lessons already own, with mention counts **re-derived at `b80afe1`**
+across the 9 `p.ddcw-sheet-note` paragraphs (1,254 flowed words), counted on
+what a reader sees and stem-inclusive throughout: **proof 8 · low limit 6
+(across 3 notes) · economizer 6 · latch 5 · differential 2 · PID 1**. All
 six owning lessons exist and are legally linkable under the forward-link
 convention: `status-and-proof`, `economizers`, `boolean-logic-latches`,
 `comparators-and-deadband`, `pid-basics`, `start-stop-commands`.
+
+⚠️ **An earlier draft of this list said `proof (9)` and `low limit (2)`; both
+were counting artifacts and the second inverted the ranking.** They came from
+grepping the raw, hard-wrapped HTML rather than the flowed text: `proof` hit 9
+only because line 2684 is `href="/education/status-and-proof.html"` and the
+slug contains the word, and `low limit` hit 2 only because a literal
+single-space pattern misses one instance split across a line break *and* all
+three `low-limit(s)` hyphenations. Low limit is the **second** most-mentioned
+concept, not the least — do not deprioritise it. The list was also internally
+inconsistent (`economizer 5` required excluding the stem while `latch 5`
+required including it), which is why the numbers above are stem-inclusive
+throughout. **Rule for any future mention count in this repo: strip tags and
+collapse whitespace first, then match a stem with `[- ]` for compounds, and
+say whether hrefs were excluded.**
 
 ⚠️ **Why it is blocked, and the constraint that survives even after #275 is
 fixed:** every added link is another way to leave mid-experiment. So the
@@ -293,9 +343,15 @@ confirm before building.
 - **Per-lane Playwright** needs a throwaway config **outside the repo** on a
   unique high port, run in the **foreground**. Ports 8000–8099 are occupied on
   this box. A config outside the package root needs an **absolute `require`
-  path** for `@playwright/test`. One flake per full run is normal —
-  `ddc-workbench-ahu-page.spec.js` is the usual offender; isolate before
-  reporting.
+  path** for `@playwright/test`. One flake per full run is normal — isolate
+  the spec before reporting a failure (`.claude/skills/handoff/SKILL.md:168`).
+  ⚠️ **An earlier draft named `ddc-workbench-ahu-page.spec.js` as "the usual
+  offender." Nothing in the repo records that, and the durable records say the
+  opposite shape** — a *different* test flakes each run (`docs/codebase-issues.md`
+  `:3739` flow-engine gutter teardown + modbus reset-best, `:4736`
+  `worker.spec.js`, `:2816` `contact.spec.js`). Every one of the nine other
+  mentions of the AHU page spec cites it as the spec that **pins** a behaviour.
+  Do **not** wave off a red run of it as presumptively a flake.
 - **Two concurrent worktree lanes is the ceiling** on this box; four pinned it
   at 99 % CPU.
 - **`docs/codebase-issues.md` is orchestrator-only.** Two lanes were told to
@@ -311,10 +367,20 @@ confirm before building.
 
 ## One passing note
 
-The named next flagship after this arc is the **branching diagnostic scenario
-drills** (a `scenario-engine.js` sibling to `quiz-engine.js`), fully scoped in
-`docs/site-ideas-and-friction.md` and never opened. Honest readiness read:
+A candidate next arc is the **branching diagnostic scenario drills** (a
+`scenario-engine.js` sibling to `quiz-engine.js`), opened as a future arc
+2026-06-10 and scoped at concept level in `docs/site-ideas-and-friction.md`
+(`:51-72`) — never built. Honest readiness read:
 **not yet.** #275 is a design decision about how the workbench holds state,
 and a branching scenario engine is *also* a design about how a session holds
 state. Settling #275 first will inform it; opening both at once would mean
 deciding the same question twice, in two places, with two answers.
+
+⚠️ **An earlier draft called this "the named next flagship." It is not.** That
+phrase is a term of art in this repo and it designates the **air-side
+simulator** (`docs/site-ideas-and-friction.md:721`, `:6804`) — which has now
+graduated at Phase 8, leaving the slot vacant with **no designated successor**.
+The repo also parks a competing flagship-scale candidate the draft did not
+mention: the **BACnet MS/TP bus simulator** (`:3685-3686`, explicitly described
+as having been sequenced behind the air-side sim). So the next arc is an open
+choice between at least two candidates, not a decision the repo already made.
