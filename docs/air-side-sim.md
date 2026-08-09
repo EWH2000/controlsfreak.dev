@@ -1,10 +1,11 @@
 # Air-side equipment DDC simulator — design & backlog
 
 > Living design doc for the air-side / equipment DDC simulator line. Owner-active,
-> scope evolves through interaction (mockup → react → refine). Supersedes the
-> *decided direction* portion of `docs/air-side-sim-scoping.md` (that file stays
-> as the 2026-07-19 feasibility pass; its engine/readiness findings are still
-> valid). Started 2026-07-21.
+> scope evolves through interaction (mockup → react → refine). Started 2026-07-21.
+> It superseded `docs/air-side-sim-scoping.md`, the 2026-07-19 feasibility pass,
+> which was **retired 2026-08-08** once the sim shipped — that file's own
+> lifecycle condition. What survived it is folded into *Reuse findings carried
+> forward from the feasibility pass* below; git history holds the full text.
 
 ## North star
 
@@ -879,6 +880,64 @@ a genuinely novel teaching tool (write a program, watch it run the model).
   lived in `docs/next-session-handoff.md`, retired at graduation; **every
   gate on it was met on 2026-08-04** — what was gated and what shipped is
   the *Phase 8 — graduation EXECUTED* section above.
+
+## Reuse findings carried forward from the feasibility pass
+
+`docs/air-side-sim-scoping.md` (the 2026-07-19 read-only feasibility pass,
+`main` @ `2ddd7d0`) was **retired 2026-08-08** — its own header said to
+retire it when the sim shipped or the scope was decided, and both happened.
+Most of it is spent: the Option-A-vs-B scope recommendation was superseded
+2026-07-21 by this doc, the hero-demo constraint and the refrigerant-loop
+standard both live in `site-ideas-and-friction.md`, the desktop gate is in
+*Engineering guardrails* above, and the #174 / #175 revisit triggers are
+written on those deferrals in `codebase-issues.md`. Four findings had no
+second home, and this is it. Git history holds the full text; treat the
+line numbers and counts in it as drifted, per its own warning.
+
+- **The reuse map for a future air-DISTRIBUTION sim, which is what the
+  Workbench did NOT build.** The Workbench is the psychrometric/sequence
+  half — mixing box, coils, economizer, staging. A VAV / duct-static sim
+  would need one genuinely new solver, and `hydronic-engine.js` is its
+  **structural template**: a nonlinear resistor network solved as a
+  linearized nodal system, iterated to convergence, then a one-pass thermal
+  sweep on settled flows — the same mathematics with a fan curve as the
+  source instead of a pump. The water constants don't port; the
+  architecture does (`COMPONENTS` catalog, `createComponent`, `makeSystem`
+  deep-cloning so literals are never mutated, `tick(system, dt)`, and a
+  `solve()` returning hydraulics-only for tests). Also on the shelf:
+  `duct-engine.js` (Altshul-Tsal friction, Huebscher rect↔round, bisection
+  solvers) if real duct geometry is modelled, and `pid-engine.js` +
+  `pid-chart.js` if loops run rather than quasi-static solves.
+- **The numeric-agreement contract with the lesson widgets is still
+  undecided, and it binds a distribution sim, not this one.** Several
+  forced-air lessons carry owner-blessed constants — 30,000 CFM design and
+  a 5.5 in. w.c. shutoff in `duct-static-control`, a 200/1000 CFM box with
+  `k=1000` and a 400 CFM/ton coil floor in `vav-systems`, a 0.5 Btu/lb
+  enthalpy wash band in `economizers`. Three options, unchanged: the sim
+  adopts them and the widgets are later refactored onto the shared engine;
+  the sim adopts them and both stand independently; or the sim re-derives
+  and the widgets drift. **Decide before freezing constants** — the repo
+  has been bitten by this class before. The Workbench sidestepped it by
+  modelling a different machine with its own seeds; a duct-static sim
+  cannot.
+- **The time-step question is answered for this line.** The scoping pass
+  posed `solve(inputs)→state` versus `tick(system, dt)` as a call that is
+  *not cheaply interconvertible*. The Workbench answered it: a 10 Hz tick
+  driving both the zone integrator and `FBE.tick`, with a 1–60× speed
+  slider scaling the one `dtSim`. A future air-side sim on this line
+  inherits the tick, not `refrigerant-loop`'s recompute-on-change.
+- **`air-unit-identification.html` is the odd one out in any
+  "lessons with a model" count — and that is a trap, not trivia.** It
+  carries a substantial interactive widget but **zero physical constants**:
+  it is a constraint-satisfaction identification game
+  (FAMILIES / MYSTERIES / QUESTIONS / survivors / firstMismatch), so it has
+  nothing for a physics sim to consolidate. The retired file carried two
+  counts that differed for exactly this reason and a session once
+  "corrected" one into the other, making a true statement false; it was
+  reverted the next day. Naming the page instead of counting the set is
+  what makes the fact survive the chapter growing. (`air-balancing.html`
+  and `dedicated-outdoor-air.html` are the lessons with no interactive
+  widget at all — any physics they need is genuinely new work.)
 
 ## Open questions
 
