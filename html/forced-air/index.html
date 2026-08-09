@@ -111,6 +111,29 @@ keywords: forced air air handler ahu rtu economizer vav duct static building pre
         }) }}
     </div>
 
+    <h2 class="hub-group">Build one — the simulator</h2>
+    <p class="hub-group-intro">
+        Interactive models for the air side — a live DDC graphic with the function-block program that runs it one tab away, so the sequences, sensor faults, and stale overrides from the lessons move in front of you instead of sitting on the page. The fan coil is the smaller machine to start on.
+    </p>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'simulators',
+            href:       '/simulators/ddc-workbench.html',
+            titleShort: 'AHU Workbench',
+            titleFull:  'DDC Workbench — Air Handler',
+            desc:       'A single-zone air handler as a live DDC graphic — economizer dampers, hot-water coil, two DX stages — with the function-block program that runs it one tab away. Force sensors, override points through a real priority array, and watch the screen tell on the machine.',
+            pills:      ['Live DDC Graphic', 'Economizer', 'Priority Array', 'Wiresheet']
+        }) }}
+        {{ navCard({
+            section:    'simulators',
+            href:       '/simulators/ddc-workbench-fcu.html',
+            titleShort: 'FCU Workbench',
+            titleFull:  'DDC Workbench — Fan Coil',
+            desc:       'A DX fan coil on the same workbench — a smaller machine that leaves the whole control chain readable. Load a sample sequence or wire your own from a blank sheet, then stage cooling, break the fan proof, and chase the fault from the graphic into the logic.',
+            pills:      ['Live DDC Graphic', 'DX Staging', 'Wire Your Own', 'Fault Presets']
+        }) }}
+    </div>
+
     <h2 class="hub-group">The tools</h2>
     <p class="hub-group-intro">
         Thirteen field utilities for the air side — measure what a duct is moving, size ducts and coils, work the ventilation math, and predict what a speed change does to a fan. No login, nothing to install.

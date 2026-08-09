@@ -6,6 +6,7 @@ nav: simulators
 keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
 ---
 {% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
 
 {% block head %}
     <style>
@@ -1551,6 +1552,35 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
 
         </div>
     </div>
+
+    {# This unit is 100 % air side — no valve, no outdoor-air damper, no
+       economizer, no hydronics — so nothing water- or mixing-related belongs
+       in this column even though the AHU page carries it. #}
+    {{ relatedLinks({
+        hub: {href: '/forced-air/', label: 'The forced-air reference hub'},
+        tools: [
+            {href: '/tools/bacnet-priority.html', label: 'BACnet Priority Array'},
+            {href: '/tools/equipment-airflow.html', label: 'Equipment Airflow Check'}
+        ],
+        simulators: [
+            {href: '/simulators/ddc-workbench.html', label: 'DDC Workbench — Air Handler'},
+            {href: '/simulators/function-block-editor.html', label: 'Function-Block Editor'},
+            {href: '/simulators/controller-wiring.html', label: 'Controller Wiring Simulator'}
+        ],
+        lessons: [
+            {href: '/education/reading-a-wiresheet.html', label: 'Reading a Wiresheet'},
+            {href: '/education/function-blocks.html', label: 'Function-Block Basics'},
+            {href: '/education/comparators-and-deadband.html', label: 'Comparators & Deadband'},
+            {href: '/education/timers-and-delays.html', label: 'Timers & Delays'},
+            {href: '/education/status-and-proof.html', label: 'Status & Proof'},
+            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'}
+        ],
+        quizzes: [
+            {href: '/practice/wiresheet-traces.html', label: 'Wiresheet Traces Drill'},
+            {href: '/practice/sequencing-scenarios.html', label: 'Sequencing Scenarios'},
+            {href: '/practice/troubleshooting.html', label: 'Troubleshooting'}
+        ]
+    }) }}
 
     <a class="back-link" href="/simulators/">← All simulators</a>
 
