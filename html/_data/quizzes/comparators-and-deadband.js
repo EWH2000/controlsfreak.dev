@@ -81,11 +81,11 @@ module.exports = [
     {
         type: 'numeric',
         id: 'cdb-band-edge-set-point',
-        prompt: 'A cooling thermostat is built set/reset style around a 72 °F (22.2 °C) setpoint with a 2 °F (1.1 °C) band centered on it — half above, half below. Where is the set line — the temperature the space must rise above before the cooling call latches ON? Enter the answer in °F.',
+        prompt: 'A cooling thermostat is built set/reset style around a 72 °F (22.2 °C) setpoint with a 2 °F (1.2 °C) band centered on it — half above, half below. Where is the set line — the temperature the space must rise above before the cooling call latches ON? Enter the answer in °F.',
         answer: 73,
         tolerance: 0,
         unit: '°F',
-        explain: 'Half of the 2 °F (1.1 °C) band sits each side of setpoint: set at 72 + 1 = 73 °F, reset at 72 − 1 = 71 °F (in °C: 22.2 + 0.6 = 22.8, and 22.2 − 0.6 = 21.6). Cooling latches on above 73 °F, holds straight through the band, and releases only below 71 °F. The 2 °F between the two lines is the deadband — the space the latch\'s memory covers.',
+        explain: 'Half of the 2 °F (1.2 °C) band sits each side of setpoint: set at 72 + 1 = 73 °F, reset at 72 − 1 = 71 °F (in °C: 22.2 + 0.6 = 22.8, and 22.2 − 0.6 = 21.6). Cooling latches on above 73 °F, holds straight through the band, and releases only below 71 °F. The 2 °F between the two lines is the deadband — the space the latch\'s memory covers.',
         learnMore: { href: '/education/comparators-and-deadband.html#deadband', label: 'Comparators & Deadband — Building the deadband' },
         tags: ['comparators-and-deadband', 'logic', 'deadband']
     },
@@ -120,14 +120,14 @@ module.exports = [
     {
         type: 'mcq',
         id: 'cdb-band-too-wide',
-        prompt: 'A room thermostat\'s deadband gets widened to 6 °F (3.3 °C) total to "protect the equipment." The equipment is certainly resting now. What is the cost?',
+        prompt: 'A room thermostat\'s deadband gets widened to 6 °F (3.4 °C) total to "protect the equipment." The equipment is certainly resting now. What is the cost?',
         choices: [
             { id: 'a', text: 'The sequence stops working entirely.' },
             { id: 'b', text: 'Comfort: around a 72 °F (22.2 °C) setpoint the space free-floats between roughly 69 and 75 °F (20.5 and 23.9 °C), and the occupants feel the whole swing.', correct: true },
             { id: 'c', text: 'The comparators chatter more.' },
             { id: 'd', text: 'The latch loses its memory over a band that wide.' }
         ],
-        explain: 'Band width is a straight trade: narrow is tight comfort and busy equipment, wide is rested equipment and a swing the occupants ride. Six degrees centered on 72 °F puts the set line near 75 °F and the reset near 69 °F (22.2 ± 1.7 °C displayed-operand: 23.9 and 20.5 °C) — nobody\'s idea of comfort. Room stats usually land around 1–2 °F (0.6–1.1 °C) of total band; and the same trade repeats at plant scale in equipment staging\'s stage-up/stage-down gap.',
+        explain: 'Band width is a straight trade: narrow is tight comfort and busy equipment, wide is rested equipment and a swing the occupants ride. Six degrees centered on 72 °F puts the set line near 75 °F and the reset near 69 °F (22.2 ± 1.7 °C displayed-operand: 23.9 and 20.5 °C) — nobody\'s idea of comfort. Room stats usually land around 1–2 °F (0.6–1.2 °C) of total band; and the same trade repeats at plant scale in equipment staging\'s stage-up/stage-down gap.',
         learnMore: { href: '/education/comparators-and-deadband.html#deadband', label: 'Comparators & Deadband — Building the deadband' },
         tags: ['comparators-and-deadband', 'logic', 'deadband', 'comfort']
     },

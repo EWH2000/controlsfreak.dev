@@ -2789,3 +2789,327 @@ surfaces. Severity very low; confidence high. Triage: L6.
 on the lesson (both the heading and the diagram `<desc>` alt-text); the quiz
 already read "word-swap." PR: content/fresh-audit-cleancut-fixes.
 *(resolved 2026-07-14)*
+
+## Accuracy audit — the eleven post-2026-07-14 lessons (2026-08-07)
+
+An accuracy pass over everything that landed **after** the 2026-07-14
+audit above: eleven lessons under `html/education/` (all first committed
+2026-07-15 or 2026-07-18, 4,631 lines) plus their ten paired quiz banks
+in `html/_data/quizzes/` — exactly 100 questions. The scope basis is
+*"landed after the last audit,"* **not** *"never mentioned in an audit
+doc"*: a name-mention test returns sixteen lessons, because a clean page
+produces no finding and absence of mention proves nothing.
+
+The pass was weighted at the quiz banks, because
+`tests/quiz-banks.spec.js` is **shape-only** — it checks the export
+shape, kebab-case unique ids, exactly one `correct: true`, and finite
+numeric answers, and **nothing anywhere asserts that a marked-correct
+answer is factually right or that a numeric answer matches its lesson's
+arithmetic**. There are also zero `// user to verify` / `TODO` markers
+under `html/`, so nothing was inherited and everything was verified from
+first principles: thermistor and RTD figures against
+`html/scripts/thermistor-data.js` in Node, timer and latch semantics
+against `html/scripts/fbe-engine.js`, and the full 517-pair
+`data-us`/`data-metric` population re-classified. Every finding **and
+its proposed fix** went through an adversarial refutation stage:
+**15 raised, 7 killed, 8 survive** — four of the seven kills would have
+made the site worse if acted on.
+
+**Headline: 0 high · 1 medium · 7 low.** Every engineering figure that
+could be reproduced was reproduced. The eight survivors are of two kinds
+only — metric figures that don't close against operands the same passage
+paints (#57, #58, #59: one defect class, three sites), and prose that
+describes its own diagram or example slightly wrong (#60–#64). That
+second family is the structural result: on these pages the engineering
+is sound, and what drifts is **the sentence about the picture** — a
+block count, a wire colour, a snippet's addition, a claim about what a
+diagram marks. No spec checks those and no build guard reaches them.
+
+**Closed 2026-08-07: 7 fixed, 1 accepted as written** (#64 — see its
+disposition). The cycle also shipped a **deliverable**, on the owner's
+ruling *"a cheap test that may catch it still decreases what we can miss
+ourselves"*: a two-arm metric-conversion guard. Arm 1
+(`tests/metric-spans.spec.js`) **blocks** — every °F → °C figure in the
+source, in both notations, must be a valid absolute or a valid delta.
+Arm 2 (`npm run metric-lint`) is **report-only** and asks whether a
+stated delta agrees with the operands its own passage paints. **Arm 1
+would not have caught #57** — `1.1 °C` for `2 °F` is a *valid* delta —
+so the two are not redundant and neither is sufficient. Design, measured
+tolerance, and the honest limits: the *Deliverable* section of the
+triage doc.
+
+Full evidence record, the seven refuted findings with their reasoning,
+the metric-sweep coverage note, and the guard as built:
+`docs/audits/2026-08-accuracy/triage.md`.
+
+### 57. comparators-and-deadband.html deadband swing contradicts its own painted operands
+
+**Location:** education/comparators-and-deadband.html line 419 (the "One
+number to be careful with" paragraph). Also logged as codebase-issues
+**#232**. **Lens:** engineer (metric worked-example rounding).
+**Verification status: confirmed** (arithmetic on the page's own spans).
+
+The paragraph reads "the DB constant here is *half* the band — it's
+applied once up and once down, so the space actually swings
+`2 °F` / `1.1 °C` from set to reset." `1.1` is the round of the
+canonical delta (2 × 5/9 = 1.111), but the same paragraph run paints
+every operand a metric reader would use and all of them give **1.2**:
+the two band edges `75 °F → 23.9 °C` (line 404) and `73 °F → 22.7 °C`
+(line 407) differ by 1.2, and the half-band constant `1 °F → 0.6 °C`
+(line 412) doubles to 1.2. So the one paragraph whose entire thesis is
+*"the constant is HALF the band"* fails to demonstrate that
+relationship in metric — a teaching failure on its own point, not a
+rounding nit. **An alternative fix was considered and refuted:**
+repainting `73 °F` as the canonical `22.8 °C` would also close the
+swing at 1.1, but the passage builds that edge with an explicit
+`SUBTRACT` block (SP − DB) and 23.3 − 0.6 = 22.7 — canonicalising the
+edge breaks the arithmetic the sheet performs. Severity medium;
+confidence high. Triage: M1.
+**Resolved:** `data-metric` on line 419 changed `1.1 °C` → `1.2 °C`.
+Note the correct resolution of #232 is **two spans, not one** — see #58,
+which #232 does not name. PR: docs/audit-2026-08-accuracy.
+*(resolved 2026-08-07)*
+
+### 58. comparators-and-deadband.html typical-band range keeps the superseded conversion
+
+**Location:** education/comparators-and-deadband.html line 443 ("How
+wide should the band be?"). **Lens:** engineer (on-page consistency).
+**Verification status: confirmed.**
+
+"A room thermostat usually lands around `1–2 °F` / `0.6–1.1 °C` of total
+band." In isolation `0.6–1.1` is a defensible canonical conversion — no
+operands are painted in that sentence. But with #57 fixed the page
+states two paragraphs above that a 2 °F band swings **1.2 °C**, so
+leaving 1.1 here puts two different metric values for the same 2 °F
+quantity on one page *and* drops the page's own worked example outside
+the typical range it then recommends. Fixing #57 alone leaves the page
+self-contradictory. **Suggested direction:** `0.6–1.2 °C` (or re-cast
+the sentence so it doesn't restate the quantity). Severity low;
+confidence high on the inconsistency, medium on 1.2 being the preferred
+value. Triage: L1.
+**Resolved:** changed to `0.6–1.2 °C`. PR: docs/audit-2026-08-accuracy.
+*(resolved 2026-08-07)*
+
+### 59. comparators-and-deadband quiz bank carries the same metric defect in two questions
+
+**Location:** html/_data/quizzes/comparators-and-deadband.js —
+`cdb-band-edge-set-point` (prompt line 84, explain line 88) and
+`cdb-band-too-wide` (prompt line 123). **Lens:** engineer (metric
+rounding). **Verification status: confirmed.**
+
+Both questions paint their metric operands in the same breath and
+neither total closes. `cdb-band-edge-set-point` states "a 2 °F (1.1 °C)
+band" while its own explain paints 22.2 + 0.6 = 22.8 and
+22.2 − 0.6 = 21.6 — a difference of **1.2**, and 0.6 doubled is **1.2**.
+`cdb-band-too-wide` states "6 °F (3.3 °C) total" while its explain
+paints "22.2 ± 1.7 °C displayed-operand: 23.9 and 20.5" — a difference
+of **3.4**. The second is the sharper case: it invokes the
+displayed-operand rule *by name* and then states a total the rule
+contradicts. Found only by reading all 100 questions —
+`tests/quiz-banks.spec.js` is shape-only and cannot see this. Severity
+low; confidence high. Triage: L2.
+**Resolved:** `1.1 °C` → `1.2 °C` (prompt + explain), `3.3 °C` →
+`3.4 °C`, and the same bank's "1–2 °F (0.6–1.1 °C)" → `0.6–1.2 °C` for
+consistency with #58. PR: docs/audit-2026-08-accuracy.
+*(resolved 2026-08-07)*
+
+### 60. timers-and-delays.html calls its own eight-block sheet "seven blocks"
+
+**Location:** education/timers-and-delays.html line 500 (the "Race the
+window yourself" capstone). **Lens:** engineer (prose-vs-artifact
+drift). **Verification status: confirmed.**
+
+"The proof-of-flow sheet is the whole lesson in **seven blocks**." The
+Function-Block Editor's `proof` example carries **eight** — `cmd`,
+`sts`, `rst`, `inv`, `fail`, `tmr`, `latch`, `alarm`
+(simulators/function-block-editor.html:338-346). The lesson's own
+diagram draws all eight and its own `<desc>` at line 260 opens "A
+function-block sheet with **eight blocks**," so the page contradicts
+itself; and the capstone instructs the reader to load the example, where
+they will count eight. Severity low; confidence high. Triage: L3.
+**Resolved:** "seven blocks" → "eight blocks".
+PR: docs/audit-2026-08-accuracy. *(resolved 2026-08-07)*
+
+### 61. setpoint-math-reset quiz gotcha snippet's ADD output doesn't equal its own operands
+
+**Location:** html/_data/quizzes/setpoint-math-reset.js,
+`smr-flipped-slope` — the `snippet` (line 131) and `explain` (line 138).
+**Lens:** engineer (arithmetic). **Verification status: confirmed.**
+
+The wire-value snippet reads `MUL out (m × OAT): 56.7`, `intercept
+constant: 180`, `ADD out: 237`. But 85 × 0.667 = 56.695 → the displayed
+56.7, and 56.7 + 180 = **236.7**; the unrounded 236.695 also rounds to
+236.7 at the snippet's own one-decimal precision. No slope value yields
+237 from a MUL output displayed as 56.7. The gotcha's whole exercise is
+walking a chain of wire values to spot the bug, so a chain whose own
+addition is off by 0.3 undercuts it. The *answer* is unaffected — the
+LIMIT clamps to 180 either way — which is why this is low rather than
+medium. Severity low; confidence high. Triage: L4.
+**Resolved:** `ADD out: 237` → `236.7`, and the explain's "≈ 237" /
+"reads 237" → "= 236.7" / "reads 236.7".
+PR: docs/audit-2026-08-accuracy. *(resolved 2026-08-07)*
+
+### 62. dedicated-outdoor-air.html capstone claims to mark five control points; it marks one
+
+**Location:** education/dedicated-outdoor-air.html lines 313-317 (the
+claim) and the `doas-d3` SVG at lines 320-408. **Lens:** engineer +
+newcomer (prose-vs-diagram drift). **Verification status: confirmed.**
+
+The paragraph lists five BMS points — leaving-air temperature, leaving
+RH/dew point, cooling-coil valve or compressor stage, reheat valve or
+stage, and energy-recovery wheel command and status — then says "**The
+capstone below marks each of them on the airflow path.**" The capstone
+draws the four *stations* in air-path order and carries exactly one
+marked control point: the leaving-air RH/dew-point sensor with its
+"leaving dew point setpoint" callout (`doas-d3-dpt`, lines 384-390). The
+SVG's own `<desc>` confirms the scope, describing one control point and
+calling it "the unit's primary control point." The list of five is
+correct and useful; only the sentence pointing at the picture
+over-promises, sending a reader hunting for four callouts that aren't
+there. **Suggested direction — two forms, owner's pick:** (a) soften the
+prose to what the drawing does ("puts the stations they attach to in
+air-path order, with the leaving dew point — the unit's primary control
+point — marked"); or (b) add point callouts for the other four and keep
+the sentence. (b) is the better page but is a design change with a real
+drawing budget. Severity low; confidence high on the finding, the remedy
+is an editorial/design choice. Triage: L5.
+**Resolved — the DIAGRAM was reworked, not the prose** (owner ruling
+2026-08-07: *"that diagram could use a rework anyway, so let's go that
+direction"*). The sentence is now true as written, and the pass went
+further than four bolted-on markers:
+
+- **The wheel now straddles two airways.** The old capstone drew one
+  casing with the wheel sitting entirely in the supply stream, and a
+  return duct that came along the top and **stopped in mid-air** above
+  it — the exhaust stream never crossed the wheel at all, which is the
+  one thing a recovery wheel does. The cabinet is now a tall recovery
+  section carrying both streams, split by a horizontal line with the
+  wheel across it; return goes in one face and exhaust comes out the
+  other, with the colour change hidden behind the wheel so the wheel is
+  visibly what converts one into the other.
+- **All five points are marked**, each tied to its station by a dashed
+  leader and labelled with its point type: wheel command (AO/BO) and
+  rotation status (BI); cooling valve or stage (AO/BO); reheat valve or
+  stage (AO/BO); leaving-air temperature (AI) and leaving RH / dew point
+  (AI), the latter still called out as the primary control point.
+- **Ink follows the house rule** from the owner's own production
+  graphics — accent is what the program writes, plain bright is what a
+  sensor measured — so the leaving-air sensors moved from accent to
+  bright and the accent on the drawing now means "a command reaches in
+  here." An in-SVG key states that pair, so the diagram is
+  self-contained.
+- The two leaving-air sensors sit on **taps off the duct** rather than
+  on its centreline: the flow-engine particle layer paints as the SVG's
+  last child, so a sensor on the duct had its glyph occluded every time
+  a particle passed. Found by looking at the render, not the source.
+- The `<desc>` was rewritten to carry the two-airway topology and all
+  five points, and a `p.ref-note` under the diagram states the scope —
+  five points because those five answer whether the unit is doing its
+  job; a real DOAS carries more (fan start/stop and status, filter DP,
+  safeties) and none of them answers that question.
+- **The exhaust fan is drawn and deliberately NOT marked** (owner
+  ruling 2026-08-07, follow-on the same day). The redraw above had left
+  it out, and an ERV-equipped DOAS has one on the return path — without
+  it nothing pulls air across the wheel's exhaust face, so the machine
+  read wrong to a tech who knows what a wheel needs. Asked whether the
+  diagram should carry one, the owner ruled: **"draw the exhaust fan, do
+  not mark it."** `doas-d3-ef` is therefore plain geometry — no callout,
+  no leader, no point, no type label — in the supply fan's neutral ink,
+  on the exhaust duct downstream of the wheel with its blade pointing
+  toward the exhaust arrow. He explicitly accepted that one drawn
+  component would carry no leader while four others do. **The five-point
+  story is the diagram's point and a sixth station would dilute it — a
+  later reader should not "fix" this by adding one.** Accent was
+  off-limits for the same reason: nothing on this drawing writes or
+  reads the fan, and accent here means "a command reaches in here." The
+  `p.ref-note` now reads "supply and exhaust fan start/stop and status"
+  and adds that both fans are drawn and neither is marked, so the
+  decision is legible on the page itself.
+- **The fan sits OUTSIDE the casing, and that is ruled, not incidental**
+  (owner 2026-08-08). The geometry made it convenient — the wheel fills
+  the recovery section, so no fan glyph clears both the cabinet wall and
+  the wheel edge on the exhaust centreline — but the placement was put to
+  the owner as a possible defect, because a packaged ERV DOAS normally
+  carries its exhaust fan inside the unit and the drawing therefore shows
+  the two fans asymmetrically. He ruled **leave it outside**, on field
+  grounds: *"I've seen plenty of DOAS systems in the field where the
+  exhaust fan is separate."* **That is the reason of record** — a future
+  re-layout that frees room inside the casing is not a reason to move it.
+- **The accent on "the dew point is the primary control point" is
+  repainted `--text-bright`** (owner 2026-08-08). The key the redraw
+  added makes accent mean exactly one thing — *the program writes it* —
+  and the dew point is an `AI` the program reads, so the same quantity
+  was rendering in two inks three lines apart inside one callout. The
+  cause was residue: pre-redraw the text read "leaving dew point
+  **setpoint**", and a setpoint genuinely is written. Offered a repaint
+  or a reword that would make the green correct, the owner chose the
+  repaint — the option that leaves accent unambiguous rather than the one
+  that rescues the colour. A source comment records it so the next reader
+  does not undo it.
+
+PR: docs/audit-2026-08-accuracy. *(resolved 2026-08-07; exhaust-fan
+follow-on 2026-08-07; placement + ink rulings 2026-08-08)*
+
+### 63. comparators-and-deadband.html capstone says the heating example differs only in two wires
+
+**Location:** education/comparators-and-deadband.html line 496 ("Walk
+the band yourself"). **Lens:** newcomer (an instruction that falsifies
+itself). **Verification status: confirmed.**
+
+"Then load the *heating thermostat* and hunt for what changed — **the
+blocks are identical**; only the two wires into S and R have traded
+places." Structurally right: both examples carry the same nine block
+types in the same layout, and the only *logic* difference is the S/R
+swap. But a reader told to hunt for what changed will also find the
+setpoint constant (74 → 70), the space AI value (72 → 68), and **seven
+of the nine block names** (`Cool SP` → `Heat SP`, `Cool Make` → `Heat
+Break`, `Cool Set` → `Heat Reset`, and so on — only `Space` and
+`Deadband` are byte-identical in both). Unlike the workbench pages —
+where `ddcw-shell.js` derives names from the point roster — the FBE
+example names are authored literals and are visibly different on screen.
+The hunt returns four kinds of answer and the sentence admits one. The
+page's *other* statement of the same idea, at line 433 ("the same nine
+blocks are a heating thermostat"), is already correct. Severity low;
+confidence high. Triage: L6.
+**Resolved:** scoped the claim to the logic — "hunt for what changed in
+the *logic* — same nine blocks, same layout, and only the two wires into
+S and R have traded places. (Its constants and block names read for
+heating; the shape underneath is identical.)"
+PR: docs/audit-2026-08-accuracy. *(resolved 2026-08-07)*
+
+### 64. reading-a-wiresheet.html says "every wire on it is grey" of a branch with a green wire
+
+**Location:** education/reading-a-wiresheet.html lines 492-493 (prose)
+and line 257 (the `raw-d1-desc` alt text). **Lens:** engineer +
+accessibility. **Verification status: confirmed** (SVG source).
+
+"the freeze-trip lamp branch at the bottom … it's the sheet's best trap,
+because **every wire on it is grey**" — and the `<desc>` says the same
+("with every wire grey"). The branch as drawn has two wires and one is
+green: `FRZ OK` reads TRUE, so the tap feeding the NOT is its own
+`<path d="M180 576 H390">` painted `var(--accent)` (line 284), with the
+NOT's input pin filled to match (line 407); only the NOT → lamp output
+wire is `var(--text-dim)`. The pedagogical point survives — a beginner
+scanning for grey still lands on the grey output wire — but the sentence
+over-claims, and the `<desc>` version is the worse of the two because it
+is a blind reader's only access to the picture. **Suggested direction:**
+narrow to the output ("because the wire out of it is grey"; in the
+`<desc>`, "its output wire grey"). **Not acted on:** "the branch" can be
+read as the NOT and everything downstream, in which case the sentence is
+loose rather than wrong — a genuine 50/50 on a live page. Severity low;
+confidence high that a green wire is in the branch as drawn, medium that
+the sentence is wrong rather than loose. Triage: L7.
+**Disposition:** owner-accepted as written (2026-08-07) — *"I think it
+reads well as is."* The finding's own medium-confidence caveat is the
+reason it resolves this way, and re-reading the SVG settles it: the green
+`M180 576 H390` runs from the freeze stat's tap junction to the NOT's
+**input** pin, so it is the wire *into* the branch, not a wire *on* it.
+Everything downstream of the NOT — the one wire the branch actually owns
+— is `var(--text-dim)`. Under the reading that scopes "the branch" to
+the wires within it, the sentence is correct rather than merely loose,
+and narrowing it to "the wire out of it" would trade the trap it teaches
+(a healthy branch that scans dead) for a more literal but weaker line.
+No page change. The `raw-d1-desc` alt text keeps its wording for the
+same reason: it describes the same branch under the same scoping, so
+changing one and not the other would be the real inconsistency.
+*(accepted — reads correctly as written, 2026-08-07)*

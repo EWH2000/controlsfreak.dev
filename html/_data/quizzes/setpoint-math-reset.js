@@ -128,14 +128,14 @@ module.exports = [
         type: 'gotcha',
         id: 'smr-flipped-slope',
         prompt: 'A hot-water reset chain reads as below on an 85 °F (29.4 °C) summer afternoon, and the boiler loop is holding its maximum water temperature on the hottest day of the year. What went wrong?',
-        snippet: '<pre class="quiz-snippet">OAT (analog in):      85\nslope constant:       +0.667\nMUL out (m × OAT):    56.7\nintercept constant:   180\nADD out:              237\nLIMIT 140–180 out:    180\nHW setpoint (AO):     180</pre>',
+        snippet: '<pre class="quiz-snippet">OAT (analog in):      85\nslope constant:       +0.667\nMUL out (m × OAT):    56.7\nintercept constant:   180\nADD out:              236.7\nLIMIT 140–180 out:    180\nHW setpoint (AO):     180</pre>',
         choices: [
             { id: 'a', text: 'The LIMIT\'s high clamp is set too low for summer.' },
             { id: 'b', text: 'The slope\'s sign is flipped — at +0.667 the setpoint climbs as the outdoor air warms, so summer asks for the hottest water and the LIMIT pins it at 180.', correct: true },
             { id: 'c', text: 'The intercept should be 140, not 180.' },
             { id: 'd', text: 'The outdoor sensor must be reading in °C.' }
         ],
-        explain: 'A reset slope is negative — water slides DOWN as outdoor air rises. With +0.667 the line runs the wrong direction: 85 × 0.667 + 180 ≈ 237, and the LIMIT does its job on a bad request, clamping to 180 — which is why the symptom is "pinned at max," not "reads 237." The tell is the season: max heat on a design cooling day. Check the sign before you suspect the clamp; the LIMIT masked the bug, it didn\'t cause it.',
+        explain: 'A reset slope is negative — water slides DOWN as outdoor air rises. With +0.667 the line runs the wrong direction: 85 × 0.667 + 180 = 236.7, and the LIMIT does its job on a bad request, clamping to 180 — which is why the symptom is "pinned at max," not "reads 236.7." The tell is the season: max heat on a design cooling day. Check the sign before you suspect the clamp; the LIMIT masked the bug, it didn\'t cause it.',
         learnMore: { href: '/education/setpoint-math-reset.html#reset', label: 'Setpoint Math — The Linear Reset' },
         tags: ['setpoint-math-reset', 'programming', 'reset', 'gotcha']
     },

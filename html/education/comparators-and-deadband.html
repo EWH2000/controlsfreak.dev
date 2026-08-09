@@ -416,7 +416,7 @@ keywords: comparator deadband hysteresis threshold chatter short cycle GT LT set
             <p>
                 One number to be careful with: the DB constant here is <em>half</em> the band
                 — it's applied once up and once down, so the space actually swings
-                <span data-us="2 °F" data-metric="1.1 °C">2 °F</span> from set to reset.
+                <span data-us="2 °F" data-metric="1.2 °C">2 °F</span> from set to reset.
                 Vendors split on this. Some deadband parameters mean the full width, some the
                 half; copy a value between platforms without checking and you've silently
                 doubled or halved the band. Read the block's documentation — or better, do
@@ -440,7 +440,7 @@ keywords: comparator deadband hysteresis threshold chatter short cycle GT LT set
                 How wide should the band be? It's a trade, and it's the same trade at every
                 scale. Narrow means tight comfort and busy equipment; wide means the
                 equipment rests and the occupants ride the swing. A room thermostat usually
-                lands around <span data-us="1–2 °F" data-metric="0.6–1.1 °C">1–2 °F</span> of
+                lands around <span data-us="1–2 °F" data-metric="0.6–1.2 °C">1–2 °F</span> of
                 total band; but zoom out and the pattern repeats — the
                 <a href="/education/equipment-staging.html#staging">equipment-staging</a>
                 lesson's stage-up and stage-down thresholds are this exact construction at
@@ -493,8 +493,9 @@ keywords: comparator deadband hysteresis threshold chatter short cycle GT LT set
                 back down and watch where it lets go: not at 75, not at 74, only below 73.
                 Set and reset firing at <em>different values</em> is the deadband, live on
                 the wire. Then load the <em>heating thermostat</em> and hunt for what
-                changed — the blocks are identical; only the two wires into S and R have
-                traded places.
+                changed in the <em>logic</em> — same nine blocks, same layout, and only the
+                two wires into S and R have traded places. (Its constants and block names
+                read for heating; the shape underneath is identical.)
             </p>
 
             <a class="cta-button" href="/simulators/function-block-editor.html">Open the Function-Block Editor →</a>
