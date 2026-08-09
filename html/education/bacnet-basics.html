@@ -449,9 +449,9 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
                 bare array, the <a href="/simulators/ddc-workbench.html">DDC
                 Workbench</a> drives an air handler from a function-block
                 program and gives every commandable point a priority array of
-                its own. It uses three of the sixteen slots: the sequence writes
-                slot 16, your hand writes slot 8, and a point the program has no
-                block for falls through to <code>Relinquish_Default</code>.
+                its own. It commands each point on three levels: the sequence
+                writes slot 16, your hand writes slot 8, and a point the program
+                has no block for falls through to <code>Relinquish_Default</code>.
                 Un-check a <em>NULL — released</em> box, leave it, and the point
                 reads broken while the sequence underneath it keeps writing
                 correctly — the failure this section describes, with a machine
