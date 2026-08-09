@@ -1,10 +1,11 @@
 # Air-side equipment DDC simulator — design & backlog
 
 > Living design doc for the air-side / equipment DDC simulator line. Owner-active,
-> scope evolves through interaction (mockup → react → refine). Supersedes the
-> *decided direction* portion of `docs/air-side-sim-scoping.md` (that file stays
-> as the 2026-07-19 feasibility pass; its engine/readiness findings are still
-> valid). Started 2026-07-21.
+> scope evolves through interaction (mockup → react → refine). Started 2026-07-21.
+> It superseded `docs/air-side-sim-scoping.md`, the 2026-07-19 feasibility pass,
+> which was **retired 2026-08-08** once the sim shipped — that file's own
+> lifecycle condition. What survived it is folded into *Reuse findings carried
+> forward from the feasibility pass* below; git history holds the full text.
 
 ## North star
 
@@ -25,7 +26,7 @@ that diagnostic end**, not the point.
   unit; the owner's own fault examples are AHU faults, so the structure grows
   toward OA/mixing → MAT and beyond.
 
-## Current state — Phase 7 and the pre-Phase-8 discussion are both COMPLETE (PRs #472–#476); next is the owner's final review, then Phase 8
+## Pre-graduation record — Phase 7 and the pre-Phase-8 discussion, both COMPLETE (PRs #472–#476); the final review and Phase 8 have since EXECUTED
 
 > **Correction of record (2026-08-04): the final review happened and
 > Phase 8 EXECUTED.** Both workbench unit pages carry canonicals and
@@ -35,13 +36,20 @@ that diagnostic end**, not the point.
 > record — the full execution record is the *Phase 8 — graduation
 > EXECUTED* section below.
 
-Three hidden pages carry this line. All are `noindex` +
-`eleventyExcludeFromCollections` with **no `canonical`**, so all are reachable
-at their URLs and absent from nav / search / sitemap / the landing —
-**crawl-hidden, not undeployed.** They build and ship to Cloudflare on every
-merge.
+Three pages carry this line, and **one of them is still hidden.**
+*(Corrected 2026-08-08: as written this paragraph called all three hidden,
+which stopped being true at Phase 8. Verified against the three pages' own
+frontmatter.)* Both workbench unit pages carry a `canonical` and no
+`noindex` / `eleventyExcludeFromCollections` — they are live, indexed pages
+reachable from nav, search and the sitemap since 2026-08-04. Only the AHU
+depiction mockup is still `noindex` + `eleventyExcludeFromCollections` with
+**no `canonical`**, so it is reachable at its URL and absent from nav /
+search / sitemap / the landing — **crawl-hidden, not undeployed.** All three
+build and ship to Cloudflare on every merge.
 
-- **`html/simulators/ddc-workbench-fcu.html`** — the working Workbench, a DX fan
+- **`html/simulators/ddc-workbench-fcu.html`** *(LIVE and indexed since
+  2026-08-04; retitled `DDC Workbench — Fan Coil` at graduation)* — the working
+  Workbench, a DX fan
   coil (renamed from `fcu-ddc.html`, then off the bare `ddc-workbench` name —
   that slot is reserved for the AHU). Two tabbed views on one runtime: a
   **Unit** view (the DDC graphic) and a **Wiresheet** view (the Function-Block
@@ -49,14 +57,16 @@ merge.
   10 Hz tick** through a generic binding driver. The unit-agnostic shell lives
   in `html/scripts/ddcw-shell.js`, the FCU plug-in in
   `html/scripts/ddcw-fcu-unit.js`.
-- **`html/simulators/ddc-workbench.html`** — **the AHU Workbench, and it is
+- **`html/simulators/ddc-workbench.html`** *(LIVE and indexed since
+  2026-08-04)* — **the AHU Workbench, and it was
   live at its URL as of 2026-07-30.** Same shell, same two tabs, the AHU plug-in
   driving it: the approved round-2 depiction as the Unit view, one starter
   program (`econ-2stage` — economizer permit, 2-stage DX, proportional HW, all
   six actuators authored) on the Wiresheet, a five-way sensor-override block,
   and an outdoor-air slider that reaches −20 °F. The bare `ddc-workbench` name
   was reserved for exactly this.
-- **`html/simulators/ddc-workbench-ahu-mockup.html`** — the AHU depiction
+- **`html/simulators/ddc-workbench-ahu-mockup.html`** *(the one page still
+  hidden)* — the AHU depiction
   mockup: one machine drawn twice, round two rebuilt on the owner's own
   production-graphic conventions, with round one's three compositions kept below
   it as the reference he asked to keep. Drawing and static plausible values
@@ -67,9 +77,11 @@ merge.
 > ⚠️ **A hidden page is invisible to the whole test suite.** No `canonical`
 > means no entry in `tests/pages.js`, and that manifest is what the smoke walk,
 > the responsive sweep and the blocking contrast sweep all iterate — so a green
-> run proves *nothing* about such a page. These two escape it only because specs
-> name their URLs directly. Any further hidden page needs its own spec, written
-> by hand.
+> run proves *nothing* about such a page. Any further hidden page needs its own
+> spec, written by hand. *(Corrected 2026-08-08: this warning applied to all
+> three pages when written and now binds only the mockup — the two unit pages
+> joined `tests/pages.js` at graduation and the sweeps reach them. The mockup is
+> covered only where a spec names its URL directly.)*
 
 **The loop is CLOSED** (PR #425, 2026-07-24): `plant.zoneT` is an integrated
 state driven by a zone heat balance, so the staging program holds the space on
@@ -162,7 +174,9 @@ mirror diet, the FCU harmonized to the AHU plus the owner's long-parked
 "fix 1", his name-pass rulings executed verbatim with the final war-story
 paragraph, and the Unit tab made an honest phone surface. The rulings and
 the execution record are the dated section below; the merge-by-merge detail
-is in `docs/next-session-handoff.md`, which briefs the review session.
+lived in `docs/next-session-handoff.md`, which briefed the review session
+and was **retired at graduation** (git history retains it) — the
+*Phase 8 — graduation EXECUTED* section below is now the record.
 **What comes next is the owner's own final review, run WITH him in a fresh
 session** — his instruction, and the gate on everything after it. **Phase 8
 is graduation, and it executes only after his push-live call** — until then
@@ -582,8 +596,11 @@ all."*
 **11. The endgame — the final review runs in a FRESH session, WITH him.**
 His instruction: *"fresh agent's eyes just like my fresh human eyes."* The
 session that finishes the queue prepares the review rather than running
-it; `docs/next-session-handoff.md` is that briefing, and it carries what
-shipped, what waits on his call, and Phase 8's full gate list.
+it; `docs/next-session-handoff.md` was that briefing — it carried what
+shipped, what waited on his call, and Phase 8's full gate list, and was
+**retired at graduation** once all three were spent (git history retains
+it). The *Phase 8 — graduation EXECUTED* section below records the review
+it briefed and what actually shipped.
 **Phase 8 executes only after his push-live call.** The flawed-programs
 framing needs no further discussion — it stands as ruled (no flawed sheet
 for go-live; add-on material he seeds), now with the no-crossing-guards
@@ -859,8 +876,68 @@ a genuinely novel teaching tool (write a program, watch it run the model).
   `contrast-sweep` (both themes), `PAGES` manifest, sitemap/nav wiring, README,
   and a version bump. ~~the damage-stakes note question~~ *(CLOSED
   2026-08-03 by owner ruling — the existing page-tailored prose satisfies
-  the convention; see the pre-Phase-8 rulings section.)* The current gate
-  list lives in `docs/next-session-handoff.md`.
+  the convention; see the pre-Phase-8 rulings section.)* The gate list
+  lived in `docs/next-session-handoff.md`, retired at graduation; **every
+  gate on it was met on 2026-08-04** — what was gated and what shipped is
+  the *Phase 8 — graduation EXECUTED* section above.
+
+## Reuse findings carried forward from the feasibility pass
+
+`docs/air-side-sim-scoping.md` (the 2026-07-19 read-only feasibility pass,
+`main` @ `2ddd7d0`) was **retired 2026-08-08** — its own header said to
+retire it when the sim shipped or the scope was decided, and both happened.
+Most of it is spent: the Option-A-vs-B scope recommendation was superseded
+2026-07-21 by this doc, the hero-demo constraint and the refrigerant-loop
+standard both live in `site-ideas-and-friction.md`, the desktop gate is in
+*Engineering guardrails* above, and the #174 / #175 revisit triggers are
+written on those deferrals in `codebase-issues.md`. Four findings had no
+second home, and this is it. Git history holds the full text; treat the
+line numbers and counts in it as drifted, per its own warning.
+
+- **The reuse map for a future air-DISTRIBUTION sim, which is what the
+  Workbench did NOT build.** The Workbench is the psychrometric/sequence
+  half — mixing box, coils, economizer, staging. A VAV / duct-static sim
+  would need one genuinely new solver, and `hydronic-engine.js` is its
+  **structural template**: a nonlinear resistor network solved as a
+  linearized nodal system, iterated to convergence, then a one-pass thermal
+  sweep on settled flows — the same mathematics with a fan curve as the
+  source instead of a pump. The water constants don't port; the
+  architecture does (`COMPONENTS` catalog, `createComponent`, `makeSystem`
+  deep-cloning so literals are never mutated, `tick(system, dt)`, and a
+  `solve()` returning hydraulics-only for tests). Also on the shelf:
+  `duct-engine.js` (Altshul-Tsal friction, Huebscher rect↔round, bisection
+  solvers) if real duct geometry is modelled, and `pid-engine.js` +
+  `pid-chart.js` if loops run rather than quasi-static solves.
+- **The numeric-agreement contract with the lesson widgets is still
+  undecided, and it binds a distribution sim, not this one.** Several
+  forced-air lessons carry owner-blessed constants — 30,000 CFM design and
+  a 5.5 in. w.c. shutoff in `duct-static-control`, a 200/1000 CFM box with
+  `k=1000` and a 400 CFM/ton coil floor in `vav-systems`, a 0.5 Btu/lb
+  enthalpy wash band in `economizers`. Three options, unchanged: the sim
+  adopts them and the widgets are later refactored onto the shared engine;
+  the sim adopts them and both stand independently; or the sim re-derives
+  and the widgets drift. **Decide before freezing constants** — the repo
+  has been bitten by this class before. The Workbench sidestepped it by
+  modelling a different machine with its own seeds; a duct-static sim
+  cannot.
+- **The time-step question is answered for this line.** The scoping pass
+  posed `solve(inputs)→state` versus `tick(system, dt)` as a call that is
+  *not cheaply interconvertible*. The Workbench answered it: a 10 Hz tick
+  driving both the zone integrator and `FBE.tick`, with a 1–60× speed
+  slider scaling the one `dtSim`. A future air-side sim on this line
+  inherits the tick, not `refrigerant-loop`'s recompute-on-change.
+- **`air-unit-identification.html` is the odd one out in any
+  "lessons with a model" count — and that is a trap, not trivia.** It
+  carries a substantial interactive widget but **zero physical constants**:
+  it is a constraint-satisfaction identification game
+  (FAMILIES / MYSTERIES / QUESTIONS / survivors / firstMismatch), so it has
+  nothing for a physics sim to consolidate. The retired file carried two
+  counts that differed for exactly this reason and a session once
+  "corrected" one into the other, making a true statement false; it was
+  reverted the next day. Naming the page instead of counting the set is
+  what makes the fact survive the chapter growing. (`air-balancing.html`
+  and `dedicated-outdoor-air.html` are the lessons with no interactive
+  widget at all — any physics they need is genuinely new work.)
 
 ## Open questions
 
