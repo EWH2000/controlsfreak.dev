@@ -5931,7 +5931,7 @@ invisible for exactly the same reason `learnMore` was. The shipped guard
 walks **every string value** on every question rather than a maintained
 field list, and names the field trail in the failure message.
 
-### 183. Forced-air chapter: `air-handlers` never picked up the two appended lessons *(open — 2026-07-19)*
+### 183. Forced-air chapter: `air-handlers` never picked up the two appended lessons *(addressed 2026-08-08 · PR #481)*
 
 `html/education/air-handlers.html`'s `relatedLinks()` lessons group
 omits both `air-balancing.html` and `dedicated-outdoor-air.html` —
@@ -5960,7 +5960,24 @@ imposes no limit, and `air-handlers` already renders nine,
 fit; the open question is editorial (does a nine-entry column want
 pruning while it's being touched?), not structural.
 
-### 184. Forward-link convention violated on `commanding-actuators` — both targets already existed *(open — 2026-07-19)*
+**Addressed 2026-08-08 (PR #481, `19b8192`) — and the lane paid BOTH
+directions.** This entry names only `air-handlers` →
+(`air-balancing`, `dedicated-outdoor-air`), but the gap was two-way:
+`air-balancing`'s own `relatedLinks()` lessons group likewise omitted
+`air-handlers`, and `air-balancing` carried just two editorial inbound
+references site-wide, which made it the genuinely under-linked half.
+Paying only the direction named here would have left the chapter's map
+page reachable *from* `air-balancing`'s neighbours but not from
+`air-balancing` itself. Per CLAUDE.md's *name the payer for every
+reverse cross-link*, the lane paid the reverse in the same commit
+rather than recording it in a PR body that evaporates on merge.
+`dedicated-outdoor-air` already linked `air-handlers`, so that
+direction needed nothing. The column-cap note above held in practice —
+the nine-entry column went to eleven and was deliberately not pruned,
+since pruning a discoverability column is the opposite of what the
+lane was for.
+
+### 184. Forward-link convention violated on `commanding-actuators` — both targets already existed *(addressed 2026-08-08 · PR #481)*
 
 `html/education/commanding-actuators.html:356` closes its out-of-scope
 paragraph with "that's valve sizing and authority, its own topic" —
@@ -5996,6 +6013,19 @@ marker needs renaming so it stops colliding with a shipped page.
 If it always meant the tool, the fix is two anchors and retiring the
 marker per the *Adding a new tool* step-5 rule. Owner's call; logged
 rather than fixed for that reason.
+
+**Addressed 2026-08-08 (PR #481, `73aa1ba`).** The owner resolved the
+ambiguity above on 2026-08-07: the `[future: valve-authority]` marker
+meant the **tool**, so the fix was the two anchors, not a rewording.
+`html/education/commanding-actuators.html`'s closing out-of-scope
+sentence now anchors both `tools/valve-cv.html` and
+`tools/valve-authority.html` and says what each answers, and both
+joined its `relatedLinks()` tools group, which had listed only
+`signal-scaling`. The stale marker went with it in the same commit:
+`docs/site-ideas-and-friction.md`'s `[future: valve-authority]` line
+and the "Incurs the valve-authority marker above" debt line are both
+annotated retired/paid rather than deleted, in that file's house
+style — the *Adding a new tool* step-5 rule applied after the fact.
 
 ### Deferred / Won't fix (with revisit trigger)
 
@@ -8049,7 +8079,7 @@ fix is **rem-proportional coordinates** — block x/y scaling with the root
 font the way the blocks themselves already do; nothing short of that closes
 the F ≥ 16.4 class of failure this entry measured.
 
-### 209. Actuator points have no relinquish path — implement 3-slot priority arbitration *(addressed 2026-07-26)*
+### 209. Actuator points have no relinquish path — implement 3-slot priority arbitration *(addressed 2026-07-26; the deferred cross-links paid 2026-08-08 · PR #481)*
 
 **Originally filed as "deleting an actuator IO block strands its plant
 actuator." That is one symptom of three; the owner reframed it, correctly, as
@@ -8214,6 +8244,34 @@ The cross-links owed to `education/bacnet-basics.html` and
 workbench is still live-but-hidden, and inbound links from two indexed pages
 would advertise it early. That debt now rides the graduation checklist, not
 this entry.
+
+**Both cross-links paid 2026-08-08 (PR #481, `1c68b1e`); the two sentences
+above are now historical.** The deferral's reason expired at Phase 8
+graduation (`012567e`, 2026-08-04) — both workbench unit pages carry
+canonicals and sit in the sitemap, so an inbound link no longer advertises a
+hidden page early, and the workbench is no longer "live-but-hidden."
+`education/bacnet-basics.html` gained a paragraph in its `#priority-array`
+section plus a `simulators` group in `relatedLinks()`;
+`tools/bacnet-priority.html` gained a closing `p.ref-note` in its "Writing
+NULL releases" section plus the same group. Before that commit
+`grep -c ddc-workbench` returned 0 on both files.
+
+**⚠️ Read the copy constraint in *The decided design* above with #217
+beside it — this entry's constraint text is what misled the lane.** That
+block still reads *"the sim must say it **uses** three of the sixteen slots,
+never that there are three"*, and both new passages honoured it literally:
+they said the workbench "uses three of the sixteen slots", with
+`Relinquish_Default` as the third. That is precisely the wording **#217
+superseded on 2026-07-26** — `Relinquish_Default` is a separate writable
+property, not a slot — and on `tools/bacnet-priority.html` the regression
+landed thirteen lines below that page's own teaching that it is not
+"slot 17", so two paragraphs disagreed on one screen. Caught in pre-merge
+review and corrected in `80d4b0d` to #217's ruled shape ("commands it on
+three levels" / "It commands each point on three levels"), which
+`simulators/ddc-workbench.html`'s preamble and the `point-arbitration.js`
+header had already been carrying since #217 resolved. **Treat #217's
+resolution as superseding the constraint above**: the mandated three-part
+shape survives, the word *slots* for the third item does not.
 
 ### 210. Stale comment in `ddc-workbench.html` claims the fan-off fault needs a HAND override *(addressed 2026-07-26)*
 
@@ -9814,7 +9872,7 @@ equipment-graphics eye. Cheapest honest options, in order of preference:
 2. Restore a short station caption on each coil box (round 1's answer).
 3. Hatch one serpentine's return bends.
 
-### 232. `comparators-and-deadband.html` states a metric band delta the displayed operands do not produce *(noticed 2026-07-28, differential-nod review round — open)*
+### 232. `comparators-and-deadband.html` states a metric band delta the displayed operands do not produce *(noticed 2026-07-28, differential-nod review round — addressed 2026-08-08 · PR #482)*
 
 `html/education/comparators-and-deadband.html:419` renders the total band as
 `<span data-us="2 °F" data-metric="1.1 °C">`. The metric worked-example
@@ -9838,6 +9896,41 @@ diff, and an unexplained `1.1 → 1.2` inside a terminology PR is noise at
 review time. Worth a sweep rather than a one-liner: this is the same defect
 shape wherever a `data-metric` delta was converted from the IP delta instead
 of subtracted from the displayed metric operands, and nothing guards it.
+
+**Addressed 2026-08-08 (PR #482, `e2f0919`), as content-audit #57 — and the
+correct resolution is THREE sites across TWO files, not the single span this
+entry names.** Taking only the one-liner above would have left the page
+self-contradictory, so read this entry as one third of its own fix:
+
+- `html/education/comparators-and-deadband.html:419` — the deadband swing,
+  `1.1 °C` → `1.2 °C`. The span this entry names (content-audit #57).
+- `html/education/comparators-and-deadband.html:443` — the typical-band
+  range, `0.6–1.1 °C` → `0.6–1.2 °C` (content-audit #58). In isolation
+  `0.6–1.1` was a defensible canonical conversion — that sentence paints no
+  operands — but with the first span fixed the page would have carried two
+  different metric values for the same 2 °F quantity, and its own worked
+  example would have fallen outside the typical range it recommends.
+- `html/_data/quizzes/comparators-and-deadband.js` — the same defect in two
+  questions (content-audit #59): `cdb-band-edge-set-point`'s prompt and
+  explain (`2 °F (1.1 °C)` → `1.2 °C`), and `cdb-band-too-wide`'s prompt
+  (`6 °F (3.3 °C)` → `3.4 °C`, since its explain paints 23.9 and 20.5) and
+  its explain's `1–2 °F (0.6–1.1 °C)` → `0.6–1.2 °C`. The `too-wide` one is
+  the sharper case: it invokes the displayed-operand rule *by name* and then
+  stated a total the rule contradicts.
+
+The alternative repair is refuted in content-audit #57: repainting the
+`73 °F` edge as the canonical `22.8 °C` would also close the swing at 1.1,
+but the passage builds that edge with an explicit `SUBTRACT` block
+(SP − DB, 23.3 − 0.6 = 22.7), so the edge is right and the *swing* is what
+had to move.
+
+The sweep this entry asked for shipped on the same PR as two arms:
+`tests/metric-spans.spec.js` (blocking, in `npm test`) and
+`npm run metric-lint` (report-only). Note the blocking arm **would not have
+caught this defect** — `1.1 °C` is a valid delta conversion of `2 °F`, wrong
+only against the operands painted two sentences away; that question is the
+report-only arm's, and it is advisory. See CLAUDE.md §*Local preview &
+tests* for the split.
 
 ### 233. AHU plant: MAT and the RAT probe are sampled one Euler step apart *(noticed 2026-07-28, shipped knowingly with the AHU physics half — for the graphic lane — RE-DISPOSITIONED 2026-07-30 — deferred again, with the reason written down)*
 
