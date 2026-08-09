@@ -2433,6 +2433,37 @@ test.describe('AHU workbench page: the jumper across the stat', () => {
             // first and the discharge goes blind behind a stopped fan.
             await expect(page.locator('#ahu-lls-state')).toHaveText('NORMAL');
         });
+
+    test('the damage-stakes scope note reaches BOTH tabs, and neither cockpit',
+        async ({ page }) => {
+            // The page joined the damage-stakes convention (CLAUDE.md)
+            // when the stat gained a jumper, and on a tabbed tool that
+            // note goes in a .tool-body-row SIBLING of the panes. The
+            // placement is the whole claim: the Wiresheet is where a
+            // reader learns to wire a reset input down and the Unit tab
+            // is where they learn to wire around the contacts, so a note
+            // inside either pane is absent from half the material it is
+            // about. It was a plain .ref-note inside #tab-unit until
+            // 2026-08-09; this row is what stops it drifting back.
+            await open(page);
+            const row = page.locator('.tool-body-row');
+            await expect(row).toHaveCount(1);
+            expect(await page.evaluate(() => !!document.querySelector(
+                '.tool-body-row').closest('.tab-pane')),
+            'the note is back inside a pane').toBe(false);
+            await expect(row).toBeVisible();
+
+            await page.click('button[data-tab="wiresheet"]');
+            await expect(row, 'the wiresheet tab lost the scope note').toBeVisible();
+
+            // Fullscreen is the instrument view, and reading prose drops
+            // out of it. The ROW has to go, not just the paragraph —
+            // .tool-body-row carries its own padding, border and fill.
+            await page.click('button[data-tab="unit"]');
+            await page.locator('.tool-card-fullscreen-btn').click();
+            await expect(page.locator('.tool-card')).toHaveClass(/is-fullscreen/);
+            await expect(row).toBeHidden();
+        });
 });
 
 // ══════════════════════════════════════════════════════════════════════
