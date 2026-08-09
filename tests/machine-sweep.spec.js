@@ -1,6 +1,8 @@
 // Pins for the audit-2026-06 machine-sweep conformance batch
 // (#54 print tokens, #55 chrome markup, #56 palette input, #57 log
-// role, #14 SVG strokes + the landmark/row-header polish).
+// role, #14 SVG strokes + the landmark/row-header polish), plus the
+// #261 site-nav landmark name, which sits beside #55 as the other
+// nav.njk markup-conformance pin.
 
 const { test, expect } = require('@playwright/test');
 
@@ -40,6 +42,25 @@ test('nav chrome markup: div wrappers, no redundant menu labels (#55)', async ({
     // (the toggle buttons carry the accessible names).
     expect(await page.locator('.nav-menu[aria-label]').count()).toBe(0);
     expect(errors, 'nav markup should log no errors').toEqual([]);
+});
+
+test('site nav landmark carries a role-distinct accessible name (#261)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/');
+    const nav = page.locator('nav.site-nav');
+    // The computed accessible name, not the attribute: what a landmark
+    // list actually announces. "Site" — beside the workbench statusbar's
+    // "Unit" nav and the lesson pager's "Lesson sequence", each landmark
+    // names what it navigates over.
+    await expect(nav).toHaveAccessibleName('Site');
+    // The invariants that must survive any future rename: the name stays
+    // non-empty (a bare "navigation" beside a named sibling is the gap
+    // #261 closed), and it never contains the role word — the nav role
+    // already announces "navigation", so a label carrying it would read
+    // "… navigation navigation".
+    await expect(nav).toHaveAccessibleName(/\S/);
+    await expect(nav).not.toHaveAccessibleName(/navigation/i);
+    expect(errors, 'site nav landmark check should log no errors').toEqual([]);
 });
 
 test('palette input is a conformant combobox (#56)', async ({ page }) => {
