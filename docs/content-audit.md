@@ -3061,9 +3061,10 @@ blocks are identical**; only the two wires into S and R have traded
 places." Structurally right: both examples carry the same nine block
 types in the same layout, and the only *logic* difference is the S/R
 swap. But a reader told to hunt for what changed will also find the
-setpoint constant (74 → 70), the space AI value (72 → 68), and **all
-nine block names** (`Cool SP` → `Heat SP`, `Cool Make` → `Heat Break`,
-`Cool Set` → `Heat Reset`, and so on). Unlike the workbench pages —
+setpoint constant (74 → 70), the space AI value (72 → 68), and **seven
+of the nine block names** (`Cool SP` → `Heat SP`, `Cool Make` → `Heat
+Break`, `Cool Set` → `Heat Reset`, and so on — only `Space` and
+`Deadband` are byte-identical in both). Unlike the workbench pages —
 where `ddcw-shell.js` derives names from the point roster — the FBE
 example names are authored literals and are visibly different on screen.
 The hunt returns four kinds of answer and the sentence admits one. The

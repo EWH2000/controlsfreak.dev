@@ -9,9 +9,9 @@
 > The audit also shipped a **deliverable**: the two-arm metric-conversion
 > guard proposed at the foot of this file, built on the owner's ruling
 > (*"a cheap test that may catch it still decreases what we can miss
-> ourselves"*) — see *Recommendation* below for what was actually built
-> and where it differs from the sketch. This doc is the durable evidence
-> record.
+> ourselves"*) — see *Deliverable — the two-arm metric guard* below for
+> what was actually built and where it differs from the sketch. This doc
+> is the durable evidence record.
 >
 > **Method:** 15 findings raised, 7 killed by refutation, 8 survive.
 > Final severities: **0 high · 1 medium · 7 low.**
@@ -557,20 +557,43 @@ match except at F = 32.
 files** — 2 of which are doc-comment examples in
 `html/scripts/units.js`, leaving **515 content spans in 40 files**. Of
 the °F→°C spans, 55 are label-only (`Dry-bulb (°F)` → `Dry-bulb (°C)`,
-no numeral) and **199 carry numbers**: **141 absolute, 45 delta,
-13 hand-inspect**.
+no numeral) and **199 carry numbers**. Re-derived against the SHIPPED
+classifier (`tests/metric-spans.js`, which pairs *every* number in a
+span positionally rather than only the leading one), those 199 split
+**132 all-absolute · 42 all-delta · 10 mixed · 15 hand-inspect**.
 
-⚠️ **Correcting the record.** The parent plan for this lane stated
-"27 delta spans in 11 files." **That is wrong, and no slicing of the
-population produces it** — the delta set is **45 spans in 17 files**
-under the normalised classifier (41 in 16 under an un-normalised one,
-which is the likely origin of the smaller figure but still not 27/11).
+⚠️ **Correcting the record — twice.** The parent plan for this lane
+stated "27 delta spans in 11 files." That is wrong. But so was this
+file's own first correction of it, which read "the delta set is **45
+spans in 17 files** … and no slicing of the population produces
+[27/11]" — a claim whose whole rhetorical weight was that the earlier
+number could not be reproduced.
+
+Against the shipped classifier the all-delta set is **42 spans in 15
+files**. The gap is a BUCKETING difference, not a parsing one, and it
+is reproducible: the ad-hoc sweep classified each span by its LEADING
+number only, so a span carrying both an absolute and a delta landed
+whole in one bucket instead of in a `mixed` one, and a span whose two
+sides do not align in COUNT was compared on its leading pair instead of
+being rejected. That accounts for the whole difference — 132 + 9 of the
+10 mixed ≈ 141, 42 + 3 ≈ 45, and two of today's hand-inspects are
+`count-mismatch` spans the leading-number method never saw. Counting
+delta-CONTAINING spans instead of all-delta ones gives 52 in 16 files;
+no slicing gives 45/17.
+
+The lesson is the one this file keeps re-learning: state the *slicing
+rule* alongside any population figure, and derive the figure from the
+code that ships rather than from a one-shot script.
 
 **A delta conversion is not itself a defect** — it is the *correct*
 conversion for a difference. The #232 defect is one level in: a delta
 span is wrong when the same passage **also paints the two metric
-operands and they don't close**. Forty of the forty-five are correct on
-that test. The five live ones and their dispositions:
+operands and they don't close**. Thirty-nine of the forty-two are
+correct on that test. Five sites were flagged for reading; note that
+only the first three are all-delta spans — `pid-tuner` and
+`thermistor-calculator` each carry a third number the classifier calls
+`neither`, so today they are hand-inspects, and both are ALLOWLIST
+entries in `tests/metric-spans.spec.js` with the reasons below:
 
 | item | disposition |
 |---|---|
