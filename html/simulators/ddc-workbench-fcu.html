@@ -725,6 +725,29 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
                 <button class="tab-btn" data-tab="wiresheet">Wiresheet</button>
             </div>
 
+
+            <!-- ── Session notice (shell chrome — /scripts/ddcw-shell.js) ──
+                 Ships HIDDEN and is unhidden only when the workbench boots
+                 from a sessionStorage snapshot (codebase-issues #275). It
+                 has to SAY what came back, because one of the things that
+                 can come back is a forced sensor, and this page's own
+                 stale-override lesson depends on the reader knowing when a
+                 lesson is running rather than discovering a lie they did
+                 not tell.
+
+                 #ddcw-resumed-sr is a SEPARATE, always-present, always-empty
+                 polite region — not a live attribute on the box above. A
+                 live region that enters the accessibility tree already
+                 populated announces nothing (the off-program window's own
+                 comment carries the long version), and unhiding a [hidden]
+                 container is exactly that case; the shell unhides the box
+                 first and writes this node on a follow-up task. -->
+            <div class="ddcw-resumed" id="ddcw-resumed" hidden>
+                <p class="ddcw-resumed-msg" id="ddcw-resumed-msg">Picked the workbench back up where you left it — hand commands, forced sensors, the loaded sheet and the conditions all came back with you.</p>
+                <button type="button" class="ddcw-resumed-fresh" id="ddcw-resumed-fresh">Start fresh</button>
+            </div>
+            <p class="sr-only" id="ddcw-resumed-sr" aria-live="polite"></p>
+
             <!-- Persistent statusbar (shell, unit-agnostic). IO chips are
                  rendered from unit.points; the program picker drives the
                  whole workbench. The <select> ships EMPTY — the shell

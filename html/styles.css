@@ -2053,6 +2053,7 @@ input[type="range"]::-moz-range-thumb {
 .bec-id.bec-copyable:focus-visible,
 .bpri-val:focus-visible,
 .bpri-release:focus-visible,
+.ddcw-resumed-fresh:focus-visible,
 .widget-try button:focus-visible,
 .ah-w-mode-btn:focus-visible,
 .aid-w-mode-btn:focus-visible,
@@ -2107,7 +2108,8 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     .bec-mode,
     .tool-card-fullscreen-btn,
     .quiz-action,
-    .quiz-reset-best {
+    .quiz-reset-best,
+    .ddcw-resumed-fresh {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -4857,6 +4859,73 @@ a.ddcw-unit-link:focus-visible {
     line-height: 1.55;
     color: var(--text-bright);
     overflow-wrap: anywhere;
+}
+
+/* ── Session notice ── the one-shot line a restored workbench shows
+   (codebase-issues #275). Software register, and BLUE rather than the
+   off-program window's amber: amber is this page's "an operator is
+   holding something" hue and the notice is not a hold, it is the shell
+   telling the reader what it just did. Same seam vocabulary otherwise,
+   so the two read as one family of shell chrome.
+
+   ⚠ THE [hidden] ARM IS LOAD-BEARING, NOT DEFENSIVE. The box ships with
+   the `hidden` attribute and the shell removes it; an author `display`
+   declaration beats the UA stylesheet's `[hidden] { display: none }`
+   whatever the specificity, so without the arm below every visitor
+   would see the notice on every load. */
+.ddcw-resumed {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.45rem 1rem;
+    margin: 0 0 1.1rem;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--blue);
+    background: var(--surface-2);
+}
+.ddcw-resumed[hidden] { display: none; }
+/* Element-qualified per the prose-utility house rule — `.tool-body p`
+   sets a size and a colour this would otherwise tie with and lose to on
+   declaration order. */
+p.ddcw-resumed-msg {
+    /* min-width:0 with flex-basis so a long sentence wraps inside the
+       row instead of forcing it wider than the card — the phone arm of
+       responsive.spec.js measures exactly that. */
+    flex: 1 1 18rem;
+    min-width: 0;
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    line-height: 1.55;
+    color: var(--text-bright);
+    overflow-wrap: anywhere;
+}
+.ddcw-resumed-fresh {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.3rem 0.75rem;
+    color: var(--blue-ink);
+    background: var(--surface);
+    border: 1px solid var(--blue);
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+}
+.ddcw-resumed-fresh:hover {
+    background: var(--blue-dim);
+    color: var(--text-bright);
+}
+/* Fullscreen: same compaction the off-program window takes, for the
+   same reason — fixed chrome between the tabs and the panes must not
+   eat the instrument canvas. */
+.tool-card.is-fullscreen .ddcw-resumed {
+    flex: none;
+    margin: 0 0 0.6rem;
+    padding: 0.35rem 0.65rem;
 }
 
 /* ── Sheet note ── a short intro line above the wiresheet, tying it

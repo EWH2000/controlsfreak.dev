@@ -2098,6 +2098,21 @@ const DDCWAhuUnit = (function () {
                 if (v !== null && isFinite(v)) pair[0].value = String(v);
             });
 
+        // The override picker is pure UI state — it is not on the plant
+        // and nothing snapshots it — so a restore lands it back on the
+        // roster's first entry while the forced sensor may be any of the
+        // five. Point it at a sensor that IS forced, so the reader's own
+        // lie is the one under the box rather than an unrelated point
+        // reading its truth. Roster order when more than one is forced,
+        // which is the air-path walk the mirror already uses; the reader
+        // reaches the others through the picker exactly as before.
+        if (!(plant.override[ovrSelect.value] || {}).active) {
+            for (let i = 0; i < GLYPHED.length; i++) {
+                const ov = plant.override[GLYPHED[i]];
+                if (ov && ov.active) { ovrSelect.value = GLYPHED[i]; break; }
+            }
+        }
+
         // A forced sensor's box — renderUnit writes it only while the
         // selected point is RELEASED, precisely so it cannot clobber
         // typing. Restored, there is nothing to clobber.
