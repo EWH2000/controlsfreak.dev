@@ -146,6 +146,20 @@ module.exports = [
         tags: ['signals', 'start-stop-commands', 'interlocks']
     },
     {
+        type: 'mcq',
+        id: 'which-safety-opened',
+        prompt: 'A fan is down, dead in Hand and Auto alike. The graphic shows the command at ON, the status at OFF, and no alarm naming a cause. What can the front end tell you about which safety opened?',
+        choices: [
+            { id: 'a', text: 'Nothing, unless somebody paid for it — the string is a series circuit, and no point in the system distinguishes a tripped freeze stat from a tripped overload unless each trip was landed on its own binary input.', correct: true },
+            { id: 'b', text: 'Which contact opened — the controller watches the string through the same BO it commands, so the open device reports itself.' },
+            { id: 'c', text: 'That the freeze stat opened — it is the only device in the string that latches, so an unexplained shutdown is always the freeze stat.' },
+            { id: 'd', text: 'Nothing yet, but reading the contactor\'s object properties over BACnet will name the open safety without leaving the office.' }
+        ],
+        explain: 'Dead in Hand and Auto puts the fault downstream of the HOA, and the string is the first suspect — but "a safety is probably open" is where the front end\'s knowledge ends. A series circuit carries one bit, and the controller is not in that circuit: its BO drives the interposing relay <em>upstream</em>, so it never sees what the string is doing. Naming the veto costs hardware — a conductor and a binary input per trip — and plenty of jobs never bought it. A single input across the whole string is the common middle ground: it says a safety is open, not which one. There are worse cases: a trip wired outside the string altogether — a duct detector on its own shutdown relay, the control-transformer breaker switched off — can leave the graphic looking untroubled while the unit sits dead, which is why so many "no reason it shouldn\'t be running" calls end at the unit rather than at the screen. The freeze stat is not the only latching device either (manual-reset overloads and fire-shutdown contacts latch too), and no BACnet read reaches a dry contact nobody landed on an input.',
+        learnMore: { href: '/education/start-stop-commands.html#finding-the-break', label: 'Start/Stop Commands — finding the break' },
+        tags: ['signals', 'start-stop-commands', 'troubleshooting']
+    },
+    {
         type: 'gotcha',
         id: 'ir-coil-hot-wired',
         prompt: 'An exhaust fan in Auto runs constantly — the BMS commands OFF and nothing changes. The tech before you left this landing sheet on the interposing relay:',
