@@ -4739,9 +4739,9 @@ through, since a frame label is text on a drawing.
 **Scope note: this is a LIVE-CODE lane, not a hidden-page one.**
 `fbe-editor.js` and `fbe-engine.js` are loaded by the public
 Function-Block Editor, so this ships to a live page and needs approval
-and a version bump — the same trap `docs/next-session-handoff.md` and
-CLAUDE.md both name. Nothing is promised in page copy anywhere; this
-marker is the tracking mechanism.
+and a version bump — the shared-code trap CLAUDE.md names under
+*Workflow → merge approval*. Nothing is promised in page copy anywhere;
+this marker is the tracking mechanism.
 
 **`[future: value-derived heads for unnamed consts]` — the mechanically
 honest version of value-naming** *(surfaced 2026-08-03, option C of the
