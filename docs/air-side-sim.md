@@ -386,6 +386,10 @@ The owner ruled the Lane C decision slate in one sitting. All 2026-08-02:
    ships unchanged: fog in AUTO would be *"an extreme fringe case on a
    well programmed system,"* so manual-only reachability mirrors the
    field. `codebase-issues` #240 carries the measured findings.
+   *(2026-08-09: this recipe SURVIVES PR #488 unchanged — the settled
+   program holds the hot-water valve at 100 %, so nothing trips. Only
+   the SPEC's arrival-plant recipe moved. See the Phase 9A section's
+   fog correction before "fixing" either.)*
 
 #### War story #4 — the record (supplied 2026-07-29)
 
@@ -667,6 +671,69 @@ What shipped (PR #478, merged and verified live 2026-08-04):
 — review happened, Phase 8 shipped — is met; git history retains it).
 This section is the durable record.
 
+## Phase 9A — the hardwired low-limit stat + the sustained-cold ramp — SHIPPED (2026-08-09, PR #488, v3.81.0)
+
+What shipped, from owner rulings on 2026-08-08/09:
+
+- **A hardwired manual-reset low-limit stat modelled in the plant**,
+  tripping at truth DAT < 38 °F, latched, dropping the fan on both
+  sheets beside the belt fault. **Not a roster point** — the
+  instrumentation gap IS the lesson (the unit stops and the program
+  cannot say why). It reads the truth discharge, not the DAT sensor: a
+  forced-low sensor trips the software limit and leaves this one made.
+  No verdict branch names the trip — the ladder reports only the
+  consequence, and a spec vocabulary ban pins it.
+- **The software `LLS Trip` moved 35 → 41** (low-limits sheet only),
+  from field practice rather than the model's own constants: hardware
+  ~38, program 40–42, a 3 °F spread, scoped in-code to the owner's
+  Northeast US practice. Measured before the change, 35 was dead code —
+  across every ordinary drive the coldest discharge was 38.83 °F
+  (verified twice, engine-direct).
+- **Reset lives on a `.device` equipment-register face** — the physical
+  button on the machine. The drawn stat on the graphic is unmarked and
+  stateless (identity ink; the trip is legible at the device face). The
+  reset confirmation is written AFTER the repaint it triggers — the
+  synchronous paint latch blanks anything written before it (caught and
+  fixed pre-merge, with a spec row that fails against the unfixed tip).
+- **The sustained-cold ramp** (owner ruling, 2026-08-09: *"I'm fine with
+  one drag doing it, but I don't want someone to trip it just testing
+  the slider itself"*): the OA slider writes a TARGET and the outdoor
+  air walks toward it at 0.5 °F/sim-s — a usability constant, not
+  weather realism, tuned by measurement. A drag-and-release at the
+  default 20× clock must be held ~4.4 wall-s before it can trip; a
+  slider left cold trips in ~3–5 wall-s. Presets snap (deliberate
+  staging, not slider-testing). Accepted residual: at 50× effective a
+  deep drag held ~1.2–1.8 s can still trip. Two measured surprises
+  behind the tuning: the accident was drag-and-RELEASE (the teleporting
+  knob made any release position permanent weather), and full depth was
+  NOT the worst case — crashing the zone drops the stage before the
+  discharge gets cold, so the dangerous release band was ~40–45 °F.
+- **The "Compressor running on air already near freezing" verdict became
+  unsittable on a protected machine** (structural: with a stage lit and
+  no heat, every discharge the coil floor allows in that band trips the
+  38 °F stat). Kept, `test.fixme` with the argument written above it.
+  The defeat/jumper follow-on (`feat/ahu-low-limit-stat-defeat`, in
+  flight) makes it sittable again — owner rulings there: the state word
+  is JUMPERED with the term defined in adjacent copy, and the jumper
+  survives presets and program switches.
+
+**The fog-recipe record, corrected (2026-08-09).** An earlier draft of
+PR #488's body — and its spec's note — claimed the recorded #240
+reproduction (ruling 5 in the Lane C section above: OAT −15, manual
+damper 60 % against the settled winter zone) "no longer reaches."
+**Refuted by engine-direct measurement, twice:** in the settled winter
+state the program already holds the hot-water valve at 100 %, so the
+mixed air sits ≈ 17–19 °F while the discharge rides in the nineties,
+55 °F clear of the stat — fog asserts, nothing trips, and the recorded
+reproduction survives unchanged on the low-limits sheet. What #488
+actually retired is the SPEC's own arrival-plant recipe (zone 76 °F,
+valve 0 %): cold air across a dry coil now trips the stat on the first
+tick. The spec's replacement recipe (damper 50 %, HW valve 80 %,
+OAT −15, compressor off) restores the same mixing-box state with the
+valve open — exactly as the settled machine holds it for itself — and
+its fog window is a ≈ 17-sim-minute transient whose spec rows land well
+inside it via arrival-polls rather than fixed settles.
+
 ## The AHU, as designed (owner rulings, 2026-07-27 / 28)
 
 A **single-zone constant-volume air handler**: two stages of DX cooling, a
@@ -793,11 +860,19 @@ tiles** · short **fan-heat/calibration callout** · **improved fan animation**
   graduation-era candidate) — a tripped low limit reads as fan off / damper
   0 / valve 100 with no alarm surface; the trip state is legible only on the
   wiresheet, where a real graphic would banner a freezestat trip.
+  *(2026-08-09: PR #488's device face annunciates the HARDWIRED stat on
+  the Unit tab; the SOFTWARE latch this entry is about is still
+  wiresheet-only — entry stands.)*
 - **A scenario preset for the LLS defeat/short-cycle demo** (winter-protections
   sheet) — the demo is real but fragile to reach by hand (needs a wound-up PID
   integral, a still-warm zone, and Min MAT sabotaged below the coil floor);
   a preset would make it one click. Measured period 24–26 sim-s in that
   state, 3–5 sim-s in a manual-damper freeze.
+  *(Disambiguation, 2026-08-09: this entry is the SOFTWARE latch defeat —
+  LLS Reset wired true, the short-cycling signature. The hardwired stat's
+  JUMPER — a contacts defeat, the runs-straight-through signature — is a
+  different feature shipping via `feat/ahu-low-limit-stat-defeat` and
+  must not mark this entry shipped.)*
 - **PID warm-start prose line** — a fresh program load starts the PID integral
   at zero, so on an economizing day the damper briefly tracks the winding-up
   loop; the download-stops-a-running-unit teaching family, worth a sentence in

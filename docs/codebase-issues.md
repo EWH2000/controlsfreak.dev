@@ -12372,3 +12372,19 @@ reviewer knows a green run does not rule this shape out. Do not widen
 casually: the matcher's adjacency requirement is part of what keeps
 its false-positive rate at zero (see its own arrow-function
 counter-case pinned at `:141`).
+
+### 278. The FCU's weather knob still teleports — the sustained-cold ramp shipped AHU-only *(noticed 2026-08-09, the ramp ruling's scope cut — parity candidate)*
+
+PR #488's sustained-cold ramp (the OA slider writes a target;
+`plant.oaT` walks toward it at 0.5 °F/sim-s; presets snap) shipped on
+the AHU only — the ruling's deliberate scope cut, not an oversight. The
+FCU's OAT slider still writes instantly, and the FCU carries its own
+latched DAT low-limit annunciator (`ddcw-fcu-unit.js`, the
+`lowLimit.latched` field), so the same accidental-trip class exists
+there with a weaker consequence — an annunciation latch, not a dead
+machine. Fix shape: the same target-chase, best built AFTER
+issue-275's knob-to-plant move lands (that lane moves the FCU's
+module-level `tOa` / `qInternal` onto the plant, which is where the
+target field wants to live). The rate constant should be shared or
+identically derived — a weather model that diverges between the two
+workbench pages is a #263-family drift risk.
