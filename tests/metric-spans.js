@@ -155,8 +155,11 @@ function classifyNumber(fToken, cToken) {
 /**
  * status:
  *   'not-temperature'  — not a °F → °C pair; out of scope
- *   'label-only'       — a °F → °C pair with no numeral on one side
- *                        (`Dry-bulb (°F)` → `Dry-bulb (°C)`)
+ *   'label-only'       — a °F → °C pair with no numeral on EITHER side
+ *                        (`Dry-bulb (°F)` → `Dry-bulb (°C)`). A pair with a
+ *                        numeral on ONE side is NOT this: a dropped numeral
+ *                        (`55 °F` → ` °C`) is the classic copy-paste slip and
+ *                        must reach 'count-mismatch', which fails.
  *   'count-mismatch'   — different numeral counts; nothing to pair
  *   'classified'       — every paired number is absolute or delta
  *   'unclassified'     — at least one paired number is neither  ← the failure
@@ -167,7 +170,12 @@ function classifyPair(pair) {
     }
     const fTokens = numberTokens(pair.us);
     const cTokens = numberTokens(pair.metric);
-    if (!fTokens.length || !cTokens.length) return { status: 'label-only', numbers: [] };
+    // `&&`, not `||`: a pair that is numeral-free on BOTH sides is a label
+    // twin and genuinely out of scope, but one that has a numeral on ONE side
+    // has LOST a figure, which is squarely the defect class this gate exists
+    // for. `||` swallowed that case as 'label-only' and skipped it; `&&` lets
+    // it fall through to 'count-mismatch', which is a hard failure.
+    if (!fTokens.length && !cTokens.length) return { status: 'label-only', numbers: [] };
     if (fTokens.length !== cTokens.length) return { status: 'count-mismatch', numbers: [] };
 
     const numbers = fTokens.map((f, i) => ({

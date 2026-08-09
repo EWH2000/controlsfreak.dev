@@ -43,10 +43,18 @@
 // Every assertion here derives truth from a regex walk, and a walk that
 // quietly stops matching turns a real gate into a green no-op: zero spans
 // found, zero failures, test passes. So the run asserts how much it saw
-// before it asserts that what it saw is clean. Floors sit well under today's
-// numbers so ordinary growth never trips them: 515 spans in 40 files, 121
-// parenthetical figures in 20 files (52 of those in the quiz banks), and 317
-// numbered °F → °C figures classified across both notations.
+// before it asserts that what it saw is clean. Measured against the shipped
+// parser, today's populations are: 515 spans in 40 files, 121 parenthetical
+// figures in 20 files (113 of those in the quiz banks, across 16 banks), and
+// 317 numbered °F → °C figures classified across both notations.
+//
+// Each floor sits ROUGHLY A FIFTH UNDER its population — low enough that
+// ordinary editing never trips it, close enough that a walk losing most of
+// its matches does. That sizing is the whole point and it has to be checked
+// against a MEASUREMENT, not a recollection: the quiz-bank floor shipped at
+// 30 against a population its own comment put at 52, when the real figure is
+// 113 — 72 % of slack, enough that the extractor could have lost five banks
+// out of six and still reported a clean sweep. Re-measure before moving one.
 'use strict';
 
 const { test, expect } = require('@playwright/test');
@@ -220,7 +228,7 @@ test('every °F to °C figure converts as an absolute or a delta', () => {
     expect(
         parens.filter((p) => p.file.startsWith('html/_data/quizzes/')).length,
         'the parenthetical walk stopped reaching the quiz banks — the surface it exists for',
-    ).toBeGreaterThan(30);
+    ).toBeGreaterThan(90);
     expect(templates.length, 'the template scan found implausibly few files').toBeGreaterThan(80);
     const numbered = rows.filter((r) => r.result.status === 'classified' || r.result.status === 'unclassified');
     expect(numbered.length, 'implausibly few numbered °F to °C figures were classified at all')
@@ -303,6 +311,14 @@ test('the classifier reproduces known conversions and normalises signs', () => {
     expect(classifyPair({ us: '30 °F', metric: '−1.1 °C (30 °F)' }).status).toBe('count-mismatch');
     expect(classifyPair({ us: '100 GPM', metric: '6.3 L/s' }).status).toBe('not-temperature');
     expect(classifyPair({ us: 'Dry-bulb (°F)', metric: 'Dry-bulb (°C)' }).status).toBe('label-only');
+
+    // 'label-only' means numeral-free on BOTH sides. A pair with a numeral on
+    // exactly ONE side has DROPPED a figure — the classic copy-paste slip —
+    // and must reach the failing 'count-mismatch' branch instead of being
+    // skipped. This pins the `&&` in classifyPair: under `||` both of these
+    // returned 'label-only' and the gate walked past a missing conversion.
+    expect(classifyPair({ us: '55 °F', metric: ' °C' }).status).toBe('count-mismatch');
+    expect(classifyPair({ us: 'Dry-bulb (°F)', metric: '12.8 °C' }).status).toBe('count-mismatch');
     expect(classifyPair({ us: '55 °F', metric: '12.8 °C' }).status).toBe('classified');
     expect(classifyPair({ us: '55 °F', metric: '13.9 °C' }).status).toBe('unclassified');
 });
