@@ -12451,20 +12451,67 @@ target field wants to live). The rate constant should be shared or
 identically derived — a weather model that diverges between the two
 workbench pages is a #263-family drift risk.
 
-### 279. `#fcu-stage-2` measures 43.9997px against a 44px floor — a sub-pixel flake in the touch-target row *(noticed 2026-08-09, the defeat lane's full-suite run — pre-existing, isolated at 3/8 serial failures)*
+### 279. Every 44px touch-floor assertion has ZERO tolerance, and the box lands on the boundary — not a flake, a boundary *(noticed 2026-08-09 as an `#fcu-stage-2` flake; **re-diagnosed and RESOLVED 2026-08-10 · PR #503** when it reddened CI on a docs-only diff)*
 
+**As first written (2026-08-09), this entry said:**
 `tests/ddc-workbench-fcu.spec.js` › *"the stage buttons clear the floor
 in both dimensions"* intermittently reads `#fcu-stage-2`'s height as
 `43.999755859375 ≥ 44` and fails — isolated at 3 failures in 8 serial
 runs of that row alone, on a tree whose only FCU-page delta was the
 version string in a `?v=`-free reference (same byte length either way).
-Sub-pixel line-height rounding, host-load dependent; CI on the same
-tree passed, which is the flake signature. Fix-shape candidates:
-assert `≥ 43.5` with a comment (the WCAG floor is CSS-pixel intent,
-not device-rounding trivia), or pad the control's `min-height` by 1px
-in the touch-floor block. Until one ships, a red on this row is this
-flake FIRST — but isolate before waving off, per the standing
-one-flake rule.
+Sub-pixel line-height rounding, host-load dependent; **CI on the same
+tree passed, which is the flake signature.**
+
+**That diagnosis was wrong, and the counter-example arrived a day
+later.** On 2026-08-10 a **docs-only** PR (#502, the handoff
+verification) went red on
+`tests/ddc-workbench-ahu-page.spec.js` › *"the unit-selector links and
+the stage buttons clear the floor in both dimensions"*:
+`a.ddcw-unit-link` height **43.99993896484375**, **3 of 3 attempts**
+(initial plus both retries) — while the same element measured **exactly
+44.0** locally on the same tree. That is the **mirror image** of the
+original observation: CI red / local green, where #279 had local red /
+CI green. Two elements, two pages, opposite polarity. **Host load
+cannot produce that; a boundary can.**
+
+**The mechanism.** None of these controls reaches 44px naturally — each
+is pinned there by a `min-height: 44px` / `min-width: 44px` declaration
+in the `TOUCH-TARGET FLOOR` block (18 such declarations). So the
+measured box sits **exactly on** the number a bare
+`toBeGreaterThanOrEqual(44)` demands, and the comparison carries **no
+margin at all**. These specs run in `isMobile: true` contexts — that is
+the point, it is what makes `(hover: none)` match — so a device-scale
+factor is in play and `boundingBox()` returns through a float path that
+does not always land on 44.0. The shortfall is 6×10⁻⁵ px. **Exposure
+was 23 assertions across three specs**, every one of them zero-margin
+by construction; the two that have bitten so far are the two that
+happened to get measured on the wrong side.
+
+**RESOLVED 2026-08-10 · PR #503.** New shared module `tests/touch-floor.js`
+(`expectTouchFloor` / `expectTouchFloorHeight`) rounds the measurement to
+2 dp before comparing, and all 23 assertions now call it — 18 call sites
+across `touch-floor.spec.js`, `ddc-workbench-ahu-page.spec.js` and
+`ddc-workbench-fcu.spec.js`. The tolerance forgives a shortfall up to
+0.005px (20× the largest ever observed, 2.4×10⁻⁴) and nothing more:
+43.994, 43.99, 43.5 and the 41px native unit-link all still fail, pinned
+by a unit check at fix time. The twelve unlabelled assertions in
+`touch-floor.spec.js` gained labels in the same pass, so a red there now
+names the control.
+
+**The two fix shapes this entry originally proposed were both wrong,
+and the reasoning is worth keeping.** `≥ 43.5` gives away half a pixel
+of a real accessibility floor to solve a 6×10⁻⁵ problem, and would
+silently pass a control that genuinely missed. Padding the CSS floor to
+45px changes real layout on ~18 control families to satisfy a
+measurement artifact, reaches every live page, and 45 is not what WCAG
+2.5.5 asks for. The success criterion states its floor in **CSS
+pixels** — these controls *are* 44 CSS px; the sub-pixel shortfall is
+an artifact of measuring through a device-pixel scale. The assertion
+now encodes that, and before this it did not.
+
+**Standing note for the next red on a touch row:** it is no longer
+"this flake first." The artifact is handled, so a failure here means
+the control genuinely missed the floor — read the number.
 
 ### 280. The device face is theme-constant, but its LEDs ride theme tokens *(noticed 2026-08-09, the defeat lane's contrast measurement — nothing broken; register-consistency wrinkle)*
 
