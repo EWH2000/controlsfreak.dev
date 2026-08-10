@@ -712,8 +712,8 @@ What shipped, from owner rulings on 2026-08-08/09:
   unsittable on a protected machine** (structural: with a stage lit and
   no heat, every discharge the coil floor allows in that band trips the
   38 °F stat). Kept, `test.fixme` with the argument written above it.
-  The defeat/jumper follow-on (`feat/ahu-low-limit-stat-defeat`, in
-  flight) makes it sittable again — owner rulings there: the state word
+  The defeat/jumper follow-on (shipped 2026-08-09, PR #495, v3.82.0)
+  makes it sittable again — owner rulings there: the state word
   is JUMPERED with the term defined in adjacent copy, and the jumper
   survives presets and program switches.
 

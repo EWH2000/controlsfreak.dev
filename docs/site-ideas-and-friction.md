@@ -6235,7 +6235,7 @@ of a real reader; do not open it as a general affordance.
 > written curation rule for what earns a gloss, or the arc licenses
 > the eleventh-tooltip creep this entry warns about. A scoping pass
 > ran the same day (term inventory, marking-site count, sense-collision
-> classification); its record lands under `docs/` with the synthesis.
+> classification); its record is `docs/tooltip-glossary-scoping.md`.
 
 ---
 
