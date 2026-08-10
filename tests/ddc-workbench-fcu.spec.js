@@ -25,6 +25,8 @@
 // entering, negative while cooling — owner ruling 2026-07-27), and the
 // statusbar unit selector that links this page to the AHU workbench.
 
+const fs = require('node:fs');
+const path = require('node:path');
 const { test, expect } = require('@playwright/test');
 
 const URL = '/simulators/ddc-workbench-fcu.html';
@@ -328,6 +330,287 @@ test.describe('DDC Workbench — the verdict annunciation reaches a screen reade
         expect(seen.srPresent, 'the sr-only mirror exists to be guarded').toBe(true);
         expect(seen.srN, 'live region repaints only on a verdict change')
             .toBeLessThanOrEqual(changed ? 1 : 0);
+    });
+});
+
+test.describe('DDC Workbench — the override drift is reported on change of value (#229)', () => {
+    // The page's OTHER live region, and the harder one. #fcu-ovr-state used
+    // to be a single element doing two jobs: a visible amber drift line
+    // repainted on every 10 Hz host tick, carrying role="status"
+    // aria-live="polite". Measured on the build before this: 50 mutation
+    // records over 5 s with a force held, carrying 4 distinct sentences.
+    //
+    // ⚠ THE FIX IS NOT THE VERDICT'S SIGNATURE GUARD, and the rows below are
+    // written so a build that "harmonised" it back would go red. The AHU's
+    // twin interpolates the STATIC number the operator typed, so de-duping
+    // identical writes takes it to zero. This line interpolates the LIVE
+    // integrated zone temperature, so a de-dup guard leaves ~1 Hz — a
+    // screen reader talking over itself once a second instead of ten times.
+    // So the node was SPLIT (visible line keeps 10 Hz and carries no
+    // aria-live at all; #fcu-ovr-state-sr outside both panes carries the
+    // announcement) and the mirror reports on a COV increment.
+    //
+    // ⚠ AND THE ASSERTIONS ARE DELIBERATELY CLOCK-FREE. A settle debounce
+    // could only be pinned by a wall-clock mutation count, which depends on
+    // the machine, on simSpeed, and on where in the excursion the window
+    // falls — the CI flake the COV decision was partly made to avoid. What
+    // is asserted here is a property of the VALUES: consecutive
+    // announcements differ by at least the increment. The one row that does
+    // count mutations (the storm bound) is deliberately 3× loose and says
+    // so.
+
+    const OVR = '#fcu-ovr-state';
+    const OVR_SR = '#fcu-ovr-state-sr';
+    const HELD = 'The controller is staging on the forced value.';
+
+    // The increment is read out of the shipped source rather than repeated
+    // here — a spec carrying its own copy of a tuning constant is a drift
+    // generator, and this one is meant to be retunable. A miss THROWS: a
+    // regex that silently returned NaN would make every comparison below
+    // vacuously true, which is the failure mode this whole file exists to
+    // avoid.
+    function increment() {
+        const src = fs.readFileSync(
+            path.join(__dirname, '..', 'html', 'scripts', 'ddcw-fcu-unit.js'), 'utf8');
+        const m = /const OVR_COV_INCREMENT = ([\d.]+)/.exec(src);
+        if (!m) throw new Error('OVR_COV_INCREMENT not found in ddcw-fcu-unit.js');
+        return Number(m[1]);
+    }
+
+    // The zone reading out of an announcement — the second number in
+    // "Program reads X °F — zone is actually Y °F." While a force is HELD
+    // the sensed half is constant, so the change in this number IS the
+    // change in the canonical drift the increment is measured on. In US
+    // units the display is canonical, so no conversion enters the test.
+    function zoneOf(txt) {
+        const m = /zone is actually (-?[\d.]+)/.exec(txt);
+        return m ? Number(m[1]) : null;
+    }
+
+    // The worst drift the page can produce: both environment knobs at an
+    // extreme AND the clock at its fastest, with the sensor forced well
+    // below the zone so the sequence shuts off and the envelope runs away.
+    // Measured engine-direct at 1.29 °F per WALL second — the fastest arm
+    // of five, at the fastest of three speeds. Every row below that needs
+    // announcements inside a short window uses this, because at the shipped
+    // defaults the region is (correctly) nearly silent: ~2 announcements a
+    // minute.
+    async function stormSetup(page) {
+        await page.goto(URL);
+        await page.waitForFunction(() => document.getElementById('fcu-verdict')
+            .textContent.trim().length > 0);
+        await page.locator('#fcu-speed-slider').fill('60');
+        await page.locator('#fcu-oa-slider').fill('110');
+        await page.locator('#fcu-load-slider').fill('10000');
+        await page.locator('#fcu-ovr-toggle').click();
+        await expect(page.locator(OVR)).toContainText(HELD);
+        await page.locator('#fcu-ovr-input').fill('60');
+        await expect(page.locator(OVR_SR)).toContainText(HELD);
+    }
+
+    // Collect every distinct text a node takes over a window, in order.
+    function watch(page, id, ms) {
+        return page.evaluate(([elId, span]) => new Promise((resolve) => {
+            const el = document.getElementById(elId);
+            const texts = [];
+            let n = 0;
+            const mo = new MutationObserver((recs) => {
+                n += recs.length;
+                texts.push(el.textContent);
+            });
+            mo.observe(el, { childList: true, characterData: true, subtree: true });
+            window.setTimeout(() => { mo.disconnect(); resolve({ n, texts }); }, span);
+        }), [id, ms]);
+    }
+
+    test('the visible drift line still repaints on every host tick', async ({ page }) => {
+        // The half that must NOT be paced. Pacing the shared node was the
+        // obvious fix and is the wrong one: the visible line exists to show
+        // the sensed number and the real one walking apart, so freezing it
+        // would delete the hazard to protect the announcement. At the
+        // shipped 20× default with a force held, 5 s of 10 Hz ticks is ~50
+        // records; the floor is set well under that so a slow CI box cannot
+        // flake it, and far over the ~5 a mere de-dup guard would leave.
+        await page.goto(URL);
+        await page.waitForFunction(() => document.getElementById('fcu-verdict')
+            .textContent.trim().length > 0);
+        await page.locator('#fcu-ovr-toggle').click();
+        await expect(page.locator(OVR)).toContainText(HELD);
+
+        const seen = await watch(page, 'fcu-ovr-state', 5000);
+
+        // Anti-vacuity: the window must have been spent narrating a HELD
+        // force. A released override, or a line that was never populated,
+        // would post records for the wrong reason.
+        expect(seen.texts[seen.texts.length - 1], 'the window was spent with a force held')
+            .toContain(HELD);
+        expect(seen.n, 'the visible drift readout keeps its 10 Hz repaint')
+            .toBeGreaterThanOrEqual(30);
+    });
+
+    test('the visible line carries neither aria-live nor role="status"', async ({ page }) => {
+        // Pins the split itself against a future "harmonise the two units"
+        // pass. role="status" IMPLIES aria-live, so dropping one and
+        // keeping the other reintroduces the defect in full — both are
+        // asserted for that reason. The mirror is asserted in the same
+        // breath so a build that deleted the mirror instead of muting the
+        // line cannot pass by having nothing to announce.
+        await page.goto(URL);
+        const vis = page.locator(OVR);
+        expect(await vis.getAttribute('aria-live')).toBeNull();
+        expect(await vis.getAttribute('role')).toBeNull();
+
+        const sr = page.locator(OVR_SR);
+        await expect(sr).toHaveAttribute('aria-live', 'polite');
+        await expect(sr).toHaveClass(/\bsr-only\b/);
+        // Outside BOTH panes — not (only) because #tab-unit goes
+        // display:none, but because a live region that re-enters the tree
+        // already populated announces nothing, and the drift half is not
+        // operator-driven (#227a, the .ddcw-offprog contract).
+        expect(await sr.evaluate((el) => !!el.closest('.tab-pane'))).toBe(false);
+    });
+
+    test('consecutive announcements differ by at least the increment', async ({ page }) => {
+        // THE PRIMARY ROW. Clock-free by construction: it asserts a
+        // property of the values, so it means the same thing on a fast
+        // machine, a slow one, and at any sim speed. A de-dup guard would
+        // fail it on the first pair (a tenth apart, not two degrees); the
+        // pre-fix build would fail it on nearly every pair.
+        const INC = increment();
+        await stormSetup(page);
+
+        const seen = await watch(page, 'fcu-ovr-state-sr', 12000);
+
+        // Anti-vacuity, both directions: the pairs have to exist, and the
+        // window has to have been spent on a held force rather than on an
+        // empty region.
+        expect(seen.texts.length, 'the window produced pairs to compare')
+            .toBeGreaterThanOrEqual(2);
+        seen.texts.forEach((t) => {
+            expect(t, 'every announcement is the real sentence').toContain(HELD);
+        });
+
+        for (let i = 1; i < seen.texts.length; i++) {
+            expect(seen.texts[i], 'no announcement repeats its predecessor verbatim')
+                .not.toBe(seen.texts[i - 1]);
+            const a = zoneOf(seen.texts[i - 1]);
+            const b = zoneOf(seen.texts[i]);
+            expect(a, 'the announcement carries a zone reading').not.toBeNull();
+            expect(b, 'the announcement carries a zone reading').not.toBeNull();
+            // INC − 0.1: the sentence prints the zone to one decimal while
+            // the rule compares the canonical value, so a pair exactly at
+            // the increment can render a tenth short of it.
+            expect(Math.abs(b - a), 'announcement ' + i + ' moved a full increment')
+                .toBeGreaterThanOrEqual(INC - 0.1);
+        }
+    });
+
+    test('the mirror speaks a small fraction of what the visible line paints', async ({ page }) => {
+        // The two halves in ONE window, which is the only way to state the
+        // ratio honestly — comparing counts from two different runs would
+        // compare two different drift excursions. Both floors matter: a
+        // mirror at zero is not "quiet", it is broken, and a visible line
+        // at zero would mean the pacing leaked onto the wrong node.
+        //
+        // ⚠ THIS IS THE ONLY ROW IN THE BLOCK THAT DOES NOT READ THE
+        // INCREMENT, and that is why it exists. The rows that regex it out
+        // of the source track the shipped constant by design — which means
+        // an increment set to 0 moves their goalposts with it and they pass
+        // vacuously (verified: at INC = 0 this row was the only one that
+        // went red). A ratio has no constant to move.
+        await stormSetup(page);
+
+        const seen = await page.evaluate((span) => new Promise((resolve) => {
+            const visEl = document.getElementById('fcu-ovr-state');
+            const srEl = document.getElementById('fcu-ovr-state-sr');
+            const opts = { childList: true, characterData: true, subtree: true };
+            let visN = 0;
+            let srN = 0;
+            const moVis = new MutationObserver((r) => { visN += r.length; });
+            const moSr = new MutationObserver((r) => { srN += r.length; });
+            moVis.observe(visEl, opts);
+            moSr.observe(srEl, opts);
+            window.setTimeout(() => {
+                moVis.disconnect();
+                moSr.disconnect();
+                resolve({ visN, srN });
+            }, 10000);
+        }), 10000);
+
+        expect(seen.visN, 'the visible line kept painting').toBeGreaterThanOrEqual(50);
+        expect(seen.srN, 'the mirror said something').toBeGreaterThanOrEqual(1);
+        expect(seen.srN * 5, 'the mirror is a small fraction of the repaint')
+            .toBeLessThanOrEqual(seen.visN);
+    });
+
+    test('the fastest drift the page can produce does not storm the region', async ({ page }) => {
+        // A SMOKE NET, not the tight assertion — the tight one is the
+        // consecutive-increment row above, re-run here in the same
+        // conditions. The bound is the analytic ceiling ×3: the measured
+        // worst-case drift rate is R_max = 1.29 °F per WALL second (both
+        // knobs extreme, clock at 60×, which MAX_DT_SIM clamps to ~50×
+        // effective), so a 5 s window can move 5 × R_max degrees and buy at
+        // most ceil(5 × R_max / INC) announcements. Tripled, because R_max
+        // is a measurement off one machine's physics run and this row is
+        // here to catch a lost increment, not to police the tuning.
+        const INC = increment();
+        const R_MAX = 1.29;                       // °F per wall second, measured
+        const ceiling = Math.ceil(5 * R_MAX / INC) * 3;
+        await stormSetup(page);
+
+        const seen = await watch(page, 'fcu-ovr-state-sr', 5000);
+        expect(seen.n, 'the region stays inside the storm ceiling of ' + ceiling)
+            .toBeLessThanOrEqual(ceiling);
+        // Same window, tight rule — so a pass here is never a pass by
+        // silence.
+        for (let i = 1; i < seen.texts.length; i++) {
+            const d = Math.abs(zoneOf(seen.texts[i]) - zoneOf(seen.texts[i - 1]));
+            expect(d, 'and every pair inside it still moved an increment')
+                .toBeGreaterThanOrEqual(INC - 0.1);
+        }
+    });
+
+    test('the operator’s own actions announce at once, with no increment to clear', async ({ page }) => {
+        // The EVENT half. Someone who has just forced a sensor needs to
+        // hear that it took — waiting for two degrees of drift would be a
+        // control that answers late — and a release has to clear the claim
+        // before it can be read back stale. Plain waits, no timing
+        // assertion: the announcement is synchronous with the tick that
+        // handles the click, so a deadline here would only measure
+        // Playwright.
+        await page.goto(URL);
+        await page.waitForFunction(() => document.getElementById('fcu-verdict')
+            .textContent.trim().length > 0);
+
+        await page.locator('#fcu-ovr-toggle').click();
+        await expect(page.locator(OVR_SR)).toContainText(HELD);
+
+        await page.locator('#fcu-ovr-toggle').click();
+        await expect(page.locator(OVR_SR)).toHaveText('');
+        await expect(page.locator(OVR)).toHaveText('');
+    });
+
+    test('a units flip mid-override re-announces instead of stranding a °F sentence', async ({ page }) => {
+        // The unit suffix rides in the EVENT signature deliberately — the
+        // trap setVerdict's header names, which lands for real here because
+        // this vocabulary carries numbers and units. Classed as drift, a
+        // metric flip would wait on two degrees of movement while the tree
+        // held a sentence in the units the reader just left.
+        await page.goto(URL);
+        await page.waitForFunction(() => document.getElementById('fcu-verdict')
+            .textContent.trim().length > 0);
+
+        await page.locator('#fcu-ovr-toggle').click();
+        await expect(page.locator(OVR_SR)).toContainText('°F');
+
+        await page.click('.units-btn[data-units="metric"]');
+        await expect(page.locator(OVR_SR)).toContainText('°C');
+        await expect(page.locator(OVR_SR)).not.toContainText('°F');
+        // The visible line gets this for free from its unconditional
+        // repaint; asserted anyway, because the two nodes carrying
+        // different units would be worse than either being stale.
+        await expect(page.locator(OVR)).toContainText('°C');
+        await expect(page.locator(OVR)).not.toContainText('°F');
     });
 });
 

@@ -601,7 +601,9 @@ const DDCWFcuUnit = (function () {
     let zoneValLbl;                          // actual zone readout
     let fanValLbl;
     // Sensor-override controls (real-vs-sensed teaching moment).
-    let ovrField, ovrToggle, ovrInput, ovrUnit, ovrState;
+    // ovrState is the VISIBLE drift line (repaints every tick, carries no
+    // aria-live); ovrStateSr is its announced mirror outside both panes.
+    let ovrField, ovrToggle, ovrInput, ovrUnit, ovrState, ovrStateSr;
     // Environment / clock knobs — sim inputs, not BACnet points:
     // no priority array, live regardless of any slot state.
     let speedSlider, speedValLbl, oaSlider, oaValLbl, loadSlider, loadValLbl;
@@ -635,14 +637,18 @@ const DDCWFcuUnit = (function () {
         fanBlade    = document.getElementById('fcu-fan-blade');
         compDot     = document.getElementById('fcu-comp-dot');
         verdictEl   = document.getElementById('fcu-verdict');
-        // Unguarded on purpose, like every other handle in here
-        // (zoneValLbl, ovrUnit …): a guard would make this one the odd
-        // one out. Worth knowing the cost — a null verdictSrEl throws
-        // inside fcuRenderUnit, which takes syncControls, the statusbar
-        // and the 10 Hz paint with it, so the failure mode is a frozen
-        // simulator rather than a loud error. Only reachable via
-        // HTML/JS cache skew (this file is loaded unversioned).
+        // Both sr-only mirrors are unguarded on purpose, like every other
+        // handle in here (zoneValLbl, ovrUnit …): a guard would make them
+        // the odd ones out. Worth knowing the cost — a null verdictSrEl
+        // or ovrStateSr throws inside fcuRenderUnit, which takes
+        // syncControls, the statusbar and the 10 Hz paint with it, so the
+        // failure mode is a frozen simulator rather than a loud error.
+        // Only reachable via HTML/JS cache skew (this file is loaded
+        // unversioned), which is exactly the skew that would ship the
+        // announcer without its node — so the two are named together
+        // here rather than one carrying the note for both.
         verdictSrEl = document.getElementById('fcu-verdict-sr');
+        ovrStateSr  = document.getElementById('fcu-ovr-state-sr');
         stageBtns   = document.querySelectorAll('#tab-unit [data-stage]');
         presetBtns  = document.querySelectorAll('#tab-unit [data-preset]');
         mirrorBtns  = document.querySelectorAll('#tab-unit .fcu-point-btn[data-point]');
@@ -752,6 +758,115 @@ const DDCWFcuUnit = (function () {
         verdictEl.className = 'status-pill fcu-verdict' + (cls ? ' ' + cls : '');
         verdictEl.textContent = txt;
         verdictSrEl.textContent = txt;
+    }
+
+    // ── the override state line — the OTHER live region on this pane, and
+    // the one codebase-issues #229 was filed against. It used to be ONE
+    // element doing two jobs: a visible amber drift line repainted on
+    // every 10 Hz host tick, carrying role="status" aria-live="polite".
+    // Measured on the shipped build with a force held: 50 mutation records
+    // over 5 s, carrying 4 distinct sentences.
+    //
+    // ⚠ A SIGNATURE GUARD ALONE IS NOT THE FIX HERE, and this is the point
+    // on which this unit and the AHU genuinely differ — so do not
+    // "harmonise" it back. The AHU's twin (ddcw-ahu-unit.js's setOvrState)
+    // interpolates plant.override[id].value, the static number the operator
+    // TYPED, so de-duplicating identical writes takes it to zero. This line
+    // interpolates zoneN, the LIVE integrated zone temperature, so the
+    // string genuinely changes about once a second and a de-dup guard would
+    // only cut 10 Hz to ~1 Hz. A sentence per second is still a screen
+    // reader talking over itself.
+    //
+    // The fix is a SPLIT plus CHANGE-OF-VALUE reporting (owner decision
+    // 2026-08-08, reconfirmed 2026-08-09):
+    //
+    //   THE VISIBLE LINE keeps its unconditional per-tick repaint and lost
+    //   aria-live/role="status" entirely. Pacing it would freeze the drift
+    //   readout, which is the hazard the line exists to show.
+    //
+    //   THE ANNOUNCEMENT moved to #fcu-ovr-state-sr, outside both panes,
+    //   and is reported on a COV increment — BACnet's own COV_Increment
+    //   rule (education/bacnet-basics.html renders one on an AI), applied
+    //   to the page whose subject it is.
+    //
+    // A settle debounce was the earlier prescription and lost on three
+    // counts. (1) No silence risk: a settle window waits for the operand to
+    // stop moving, and this operand never stops while a force is held, so
+    // the window can expire forever and announce nothing. (2) Speed
+    // invariance: the sim clock runs 1–60× (default 20×), so a wall-clock
+    // window announces a different FRACTION of a drift excursion at every
+    // speed, while COV announces once per increment of real movement at
+    // all of them — announcements per EXCURSION is the invariant, not
+    // announcements per second. (3) A debounce can only be pinned by a
+    // wall-clock mutation count, which depends on the machine; COV is
+    // pinned by a property of the VALUES. There are deliberately NO TIMERS
+    // in this block.
+    //
+    // EVENT vs DRIFT. The sentence has two halves and they are paced
+    // oppositely:
+    //   · THE EVENT half — is a force held at all, at what value, in what
+    //     unit. Only the OPERATOR moves it (the Force button, the value
+    //     box, the site units toggle). It announces on the tick it changes,
+    //     with no increment test at all: someone who has just forced a
+    //     sensor needs to hear that it took, and a release has to clear the
+    //     claim before it can be read back stale. The unit suffix rides IN
+    //     the event signature deliberately — a °F/°C flip must re-announce
+    //     rather than strand a stale-unit sentence (the trap setVerdict's
+    //     header names, which lands for real here because this vocabulary
+    //     DOES carry numbers and units).
+    //   · THE DRIFT half — "zone is actually N". Nothing the operator did;
+    //     it is the model integrating away from the forced value. Announced
+    //     only when it has moved OVR_COV_INCREMENT since the last
+    //     announcement.
+    //
+    // The drift is compared on the CANONICAL °F values, never on the
+    // rendered locals: that is what makes the region immune to rounding
+    // chatter at the display boundary (a swing smaller than the increment
+    // cannot clear the band), and a drift built from display locals would
+    // join tests/ddcw-display-units.spec.js's fixpoint anyway.
+    //
+    // OVR_COV_INCREMENT = 2 °F, canonical. The derivation:
+    //   · Owner's instinct, and it lands where he aimed: a full ~20 °F
+    //     excursion buys ~10 announcements, which is a narration of the
+    //     drift rather than a metronome over it.
+    //   · A screen reader spends roughly 4–5 s speaking this ~18-word
+    //     sentence, so the increment has to be big enough that consecutive
+    //     announcements do not arrive inside that. Measured by simulating
+    //     this exact rule over the shipped physics (60 s wall windows,
+    //     override held, five arms × three speeds): at the DEFAULT knobs
+    //     the minimum gap is 9.1 s at 20× and 3.8 s at 60×.
+    //   · The measurement also answered #229's open question — the ~4
+    //     distinct strings per 5 s are MONOTONIC DRIFT, not rounding
+    //     chatter. Every arm at every speed is monotone in the rendered
+    //     sequence with peak-to-peak oscillation amplitude A_pp = 0.00 °F,
+    //     so no hysteresis band is needed to suppress a wobble; the
+    //     increment is doing rate work only.
+    //   · Worst-case drift rate R_max = 1.29 °F per WALL second, reached
+    //     only with BOTH environment knobs at an extreme (OA 110 °F, load
+    //     10 000 Btu/h) AND the clock at 60×, where 2 °F puts announcements
+    //     1.6 s apart for the ~20 it takes the zone to run into its 120 °F
+    //     clamp. That is a bounded storm in a deliberately runaway
+    //     demonstration state, against ~600 announcements in the same
+    //     window before this change. Sizing the increment to that corner
+    //     would cost the ~10-per-excursion target everywhere else, so the
+    //     per-excursion invariant wins — which is the invariant the COV
+    //     decision was made on.
+    const OVR_COV_INCREMENT = 2;             // °F, canonical (pre-display-rounding)
+    let ovrEventSig = null;                  // the operator-owned half of the sentence
+    let ovrAnnouncedDrift = 0;               // canonical drift at the last announcement
+    function setOvrState(txt, eventSig, driftF) {
+        if (eventSig !== ovrEventSig) {
+            // The operator moved something — say it on this tick, and
+            // rebaseline, so the next drift announcement is measured from
+            // here rather than from a reading the reader never heard.
+            ovrEventSig = eventSig;
+            ovrAnnouncedDrift = driftF;
+            ovrStateSr.textContent = txt;
+            return;
+        }
+        if (Math.abs(driftF - ovrAnnouncedDrift) < OVR_COV_INCREMENT) return;
+        ovrAnnouncedDrift = driftF;
+        ovrStateSr.textContent = txt;
     }
 
     // ── paint — reads plant.sensors and plant.derived; owns the DOM
@@ -945,14 +1060,26 @@ const DDCWFcuUnit = (function () {
         // the drift on the state line so the wrong-number hazard is plain.
         zoneValLbl.textContent = 'zone ' + zoneN.toFixed(1) + ' ' + tSuffix();
         ovrUnit.textContent = tSuffix();
+        // The VISIBLE line's write stays unconditional on both branches —
+        // it is the 10 Hz drift readout and pacing it would freeze the
+        // hazard. Only the sr mirror is paced, through setOvrState: see
+        // its header for the EVENT/DRIFT split and why a de-dup guard
+        // alone is not enough on this unit. The drift argument is the
+        // CANONICAL °F gap (plant.zoneT − d.sensedT), never the display
+        // locals above.
         if (!d.overrideActive) {
             ovrInput.value = zoneN.toFixed(1);
             ovrState.textContent = '';
+            setOvrState('', '', 0);
         } else {
             const sensedN = dispTempNum(d.sensedT);
-            ovrState.textContent = 'Program reads ' + sensedN.toFixed(1) + ' ' + tSuffix()
-                + ' — zone is actually ' + zoneN.toFixed(1) + ' ' + tSuffix()
+            const suffix  = tSuffix();
+            const ovrLine = 'Program reads ' + sensedN.toFixed(1) + ' ' + suffix
+                + ' — zone is actually ' + zoneN.toFixed(1) + ' ' + suffix
                 + '. The controller is staging on the forced value.';
+            ovrState.textContent = ovrLine;
+            setOvrState(ovrLine, 'on|' + sensedN.toFixed(1) + '|' + suffix,
+                plant.zoneT - d.sensedT);
         }
 
         // The forced-sensor ring — the AHU's dashed accent mark, walked
