@@ -799,6 +799,40 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
                  shape pid-tuner ships (audit-2026-06 #7). -->
             <p class="sr-only" id="fcu-verdict-sr" aria-live="polite"></p>
 
+            <!-- Screen-reader mirror of the sensor-override state line
+                 (#fcu-ovr-state, down in the Unit pane's override block). The
+                 visible line repaints at 10 Hz because it interpolates the live
+                 zone temperature; a live region cannot do that without
+                 re-announcing a full sentence ten times a second, which is
+                 codebase-issues #229. So the two jobs are split: the visible
+                 line keeps its 10 Hz repaint and carries no aria-live at all,
+                 and this node is announced on a CHANGE OF VALUE — the drift has
+                 to move OVR_COV_INCREMENT °F since the last announcement, plus
+                 an immediate announcement whenever the OPERATOR moves something
+                 (force taken, value typed, units flipped, force released).
+                 BACnet's own COV_Increment rule, applied to the page whose
+                 subject it is. Written by setOvrState() in
+                 scripts/ddcw-fcu-unit.js — see its header for the derivation.
+
+                 OUTSIDE BOTH PANES, deliberately, and for a different reason
+                 than #fcu-verdict-sr above: not (only) because #tab-unit goes
+                 display:none on the Wiresheet, but because a live region that
+                 re-enters the accessibility tree ALREADY POPULATED announces
+                 nothing — the .ddcw-offprog empty-collapse contract
+                 (html/styles.css, and #227a). The drift half is not
+                 operator-driven, so on a tab return this node would be carrying
+                 a sentence it never got to say.
+
+                 Empty in MARKUP *and* on the boot paint — the contract
+                 distinction from #fcu-verdict-sr, whose whole point is that the
+                 shell's boot hostTick fills it so an arriving reader hears the
+                 current verdict once. Nothing is forced on arrival, so there is
+                 nothing to announce until a reader takes a force; the first
+                 sentence a reader ever hears here is the answer to their own
+                 button press. No aria-atomic, matching #fcu-verdict-sr: the node
+                 is rewritten whole, so there is no partial update to atomise. -->
+            <p class="sr-only" id="fcu-ovr-state-sr" aria-live="polite"></p>
+
             <!-- ══ TAB: UNIT ══ the DDC supervisory graphic + readouts +
                  hand controls. -->
             <div id="tab-unit" class="tab-pane active">
@@ -1289,7 +1323,20 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
                         <input type="number" id="fcu-ovr-input" class="ps-input fcu-ovr-input" step="0.5" value="76.0" disabled>
                         <span class="fcu-ovr-unit" id="fcu-ovr-unit" aria-hidden="true">°F</span>
                     </div>
-                    <p class="fcu-ovr-state" id="fcu-ovr-state" role="status" aria-live="polite"></p>
+                    <!-- No aria-live here, and no role="status" either (the role
+                         IMPLIES the live region — dropping one and keeping the
+                         other changes nothing). This line repaints on every 10 Hz
+                         host tick BY DESIGN: it interpolates the live integrated
+                         zone temperature, and watching that number walk away from
+                         the forced one is the whole hazard the line exists to
+                         surface. A live region cannot be paced and repaint at
+                         10 Hz at the same time, so the two jobs were split —
+                         announcements ride the #fcu-ovr-state-sr mirror above,
+                         outside both panes, on a change-of-value increment
+                         (codebase-issues #229). Contrast the verdict pill below,
+                         which is silent for the OPPOSITE reason: it is silent
+                         because it is inside a pane that goes display:none. -->
+                    <p class="fcu-ovr-state" id="fcu-ovr-state"></p>
                 </div>
 
                 <p class="ref-note">
