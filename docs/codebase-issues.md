@@ -11713,6 +11713,15 @@ either way — its own PR, both pages at once. Until then the working rule:
 teaching prose must not depend on stateful blocks surviving the first
 Wiresheet open; write the demo to enter the wiresheet first.
 
+> **2026-08-09 — now pinned from both sides.** #275's session
+> persistence (PR #496) deliberately restores block runtime state into
+> the shell's graph and lets this entry's mount reset clear it; the
+> round-trip row in `tests/ddc-workbench-session.spec.js` asserts BOTH
+> halves (a software latch still set on the Unit tab after a return;
+> released after the first Wiresheet open) with a comment citing this
+> entry. A future fix here must change that row on purpose — which is
+> the point.
+
 ### 261. The site nav landmark is unnamed — and the workbench pages now carry one named nav beside one bare one *(addressed 2026-08-08 · PR #485)*
 
 `_includes/nav.njk`'s `<nav>` carries no `aria-label`. PR #470 added
@@ -12166,7 +12175,7 @@ call, not a mechanical step, and did not belong in the go-live diff.
 Decide the taxonomy (or raise the documented threshold) and the chips
 are the same pattern the other landings already use.
 
-### 275. The DDC Workbench holds its whole simulation in memory, and its own flagship navigation model navigates away from it *(noticed 2026-08-08 — UNRESOLVED, wants a design decision; it also blocks the sheet-note linking pass)*
+### 275. The DDC Workbench holds its whole simulation in memory, and its own flagship navigation model navigates away from it *(noticed 2026-08-08 — **RESOLVED 2026-08-09 · PR #496 (v3.83.0)**, owner-designed and shipped the same day; resolution block at the end; the sheet-note linking pass is unblocked)*
 
 **The defect.** Both workbench pages discard every bit of simulation
 state on any navigation away, and the arc's chosen way to move around
@@ -12361,6 +12370,40 @@ whether a restored session re-enters through that same mount. Both
 pages and all their scripts are LIVE since Phase 8, so anything here
 needs owner approval to merge and a version bump for cache-busting.
 
+> **RESOLVED 2026-08-09 — PR #496 (v3.83.0).** The four axes were ruled
+> in one sitting (2026-08-09): full snapshot — the reader's work AND the
+> running plant; **sessionStorage**, per unit, per tab
+> (`cf_ddcw_ahu` / `cf_ddcw_fcu`); restore with a **quiet one-shot
+> notice** carrying a Start-fresh action; navigations stay (the
+> 2026-07-21 in-graphic ruling stands). Shipped the same day.
+>
+> The shape: `html/scripts/ddcw-session.js` snapshots on
+> pagehide/visibility-hidden (zero idle cost — perf-profiled flat on
+> all four workbench rows) and the init sequence hydrates a **fresh
+> construction, never a partial restore**: a shape fingerprint computed
+> live at both save and restore (plant keys, roster ids, program keys)
+> makes any model change self-invalidating — proven in flight when PR
+> #488 added `plant.lls` and `plant.oaTarget` between this design and
+> its build, covered with zero edits. The sim clock freezes while away;
+> a mid-ramp snapshot resumes its walk (the reader's command stands).
+> Every failure path (corrupt, cross-version, storage disabled) boots
+> pristine with zero console output, spec-pinned. `privacy.html`
+> gained the keys in the same PR and CLAUDE.md's `cf_*` rule broadened
+> to sessionStorage.
+>
+> **What deliberately does NOT survive:** block runtime state through
+> the first Wiresheet mount — #260's mechanism, left for #260's own
+> fix and now pinned from both sides by
+> `tests/ddc-workbench-session.spec.js` (see the note there).
+>
+> **Correction to this entry's enumeration as of the fix:** the FCU
+> commissioning knobs are no longer module-level `let`s at
+> `ddcw-fcu-unit.js:183-184` — PR #496's first commit moved them onto
+> the plant (`plant.oaT` / `plant.qInternal`), which is also where
+> #278's ramp-parity work wants to build. The FCU deliberately did
+> NOT gain `oaTarget` (parity without the ramp would be a second
+> weather model, not symmetry — #278 owns that).
+
 ### 276. `railHint` can leave a stale-unit hint on a units flip, on both pages *(noticed 2026-08-09, the #229 planning round — LOW, event-driven cousin of the unit-suffix family)*
 
 `railHint` (`html/scripts/ddcw-ahu-unit.js:1955-1970`, with the FCU's
@@ -12437,3 +12480,17 @@ constants beside the `--dev-*` family (defined once, no theme
 override) and pointing `.led--*` at them — a shared `styles.css`
 change. PR #495 documented the measured pairs in the device-face CSS
 header rather than reaching outside its scope.
+
+### 281. `loadExample` races the end-of-body IIFE on the function-block editor *(noticed 2026-08-09, the #275 lane's full-suite triage — pre-existing flake with a diagnosed mechanism)*
+
+`tests/fbe-geometry.spec.js` › the fullscreen "proof" row intermittently
+sees **5 wires where the proof example has 7** — and 5 is exactly the
+BOOT sheet's wire count, so the `[data-example="proof"]` click landed
+before the page's end-of-body IIFE bound the handler: the click did
+nothing and the boot sheet got measured. Green in isolation (21/21,
+and at `--repeat-each=3` on the exact row); it needs a loaded host to
+lose the race. Fix shape: the spec waits on a bound signal (or on the
+example's wire count) before clicking, or the page binds the example
+buttons earlier. Until one ships, a red on that row under load is this
+race FIRST — but isolate before waving off, per the standing
+one-flake rule.
