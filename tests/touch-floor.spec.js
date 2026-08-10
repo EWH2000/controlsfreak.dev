@@ -4,6 +4,7 @@
 // rest of the suite runs as a desktop pointer where it never does.
 
 const { test, expect } = require('@playwright/test');
+const { expectTouchFloorHeight } = require('./touch-floor.js');
 
 test.describe('phone (hover:none, 412×883)', () => {
     // isMobile + hasTouch make Chromium's emulation match (hover: none)
@@ -16,36 +17,36 @@ test.describe('phone (hover:none, 412×883)', () => {
         // the main touch way to drive the process visual.
         await page.goto('/simulators/pid-tuner.html');
         const preset = await page.locator('#pid-preset-aggr').boundingBox();
-        expect(preset.height).toBeGreaterThanOrEqual(44);
+        expectTouchFloorHeight(preset, 'pid preset chip');
 
         // Range sliders: the padded hit box, not the painted track.
         const slider = await page.locator('#pid-kc').boundingBox();
-        expect(slider.height).toBeGreaterThanOrEqual(44);
+        expectTouchFloorHeight(slider, 'pid range slider');
 
         // Filter chips on the tools landing — 28.2px natively.
         await page.goto('/tools/');
         const chip = await page.locator('.filter-chip').first().boundingBox();
-        expect(chip.height).toBeGreaterThanOrEqual(44);
+        expectTouchFloorHeight(chip, 'tools filter chip');
 
         // Quiz actions — 39.2px natively.
         await page.goto('/practice/modbus-decoding.html');
         const action = await page.locator('.quiz-action-primary').boundingBox();
-        expect(action.height).toBeGreaterThanOrEqual(44);
+        expectTouchFloorHeight(action, 'quiz action');
     });
 
     test('the #164 form-control family clears the 44px floor on touch', async ({ page }) => {
         // .field select — 38.6px natively (refrigerant-loop sim).
         await page.goto('/simulators/refrigerant-loop.html');
         const fieldSelect = await page.locator('#rl-refrigerant').boundingBox();
-        expect(fieldSelect.height).toBeGreaterThanOrEqual(44);
+        expectTouchFloorHeight(fieldSelect, '.field select');
 
         // The property-sheet family — 29px natively, selects AND inputs
         // floored together so a sheet doesn't mix 44px and 29px rows.
         await page.goto('/tools/refrigerant-pt.html');
         const psSelect = await page.locator('select.ps-input').first().boundingBox();
-        expect(psSelect.height).toBeGreaterThanOrEqual(44);
+        expectTouchFloorHeight(psSelect, 'select.ps-input');
         const psInput = await page.locator('input.ps-input').first().boundingBox();
-        expect(psInput.height).toBeGreaterThanOrEqual(44);
+        expectTouchFloorHeight(psInput, 'input.ps-input');
     });
 
     test('the #172 tail clears the 44px floor on touch', async ({ page }) => {
@@ -57,24 +58,24 @@ test.describe('phone (hover:none, 412×883)', () => {
         await page.route('https://challenges.cloudflare.com/**', route => route.abort());
         await page.goto('/contact.html', { waitUntil: 'domcontentloaded' });
         const fieldInput = await page.locator('#contact-name').boundingBox();
-        expect(fieldInput.height).toBeGreaterThanOrEqual(44);
+        expectTouchFloorHeight(fieldInput, 'contact .field input');
 
         // The same .field input family on the simulator sidebars.
         await page.goto('/simulators/pid-tuner.html');
         const sgInput = await page.locator('#pid-sg-dco').boundingBox();
-        expect(sgInput.height).toBeGreaterThanOrEqual(44);
+        expectTouchFloorHeight(sgInput, 'pid sidebar input');
         await page.goto('/simulators/staging-sequencer.html');
         const stgInput = await page.locator('#stg-up').boundingBox();
-        expect(stgInput.height).toBeGreaterThanOrEqual(44);
+        expectTouchFloorHeight(stgInput, 'staging sidebar input');
 
         // The vfds run/speed source selects — 31.8px natively; widget
         // internals with no shared class, floored by the page-local
         // (hover: none) rule in the vfds head, not the shared block.
         await page.goto('/education/vfds.html');
         const runSrc = await page.locator('#vfd-run-src').boundingBox();
-        expect(runSrc.height).toBeGreaterThanOrEqual(44);
+        expectTouchFloorHeight(runSrc, 'vfd run source select');
         const spdSrc = await page.locator('#vfd-spd-src').boundingBox();
-        expect(spdSrc.height).toBeGreaterThanOrEqual(44);
+        expectTouchFloorHeight(spdSrc, 'vfd speed source select');
     });
 
     test('mode-filtered preset row stays filtered on touch', async ({ page }) => {

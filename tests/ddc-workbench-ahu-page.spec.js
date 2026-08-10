@@ -25,6 +25,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { test, expect } = require('@playwright/test');
+const { expectTouchFloor, expectTouchFloorHeight } = require('./touch-floor.js');
 
 const URL = '/simulators/ddc-workbench.html';
 
@@ -1428,7 +1429,7 @@ test.describe('AHU workbench page: the unit selector on touch', () => {
         await expect(links).toHaveCount(2);
         for (let i = 0; i < 2; i++) {
             const box = await links.nth(i).boundingBox();
-            expect(box.height, `link ${i} height`).toBeGreaterThanOrEqual(44);
+            expectTouchFloorHeight(box, `link ${i}`);
         }
     });
 });
@@ -1838,8 +1839,7 @@ test.describe('AHU workbench page: the phone surface (the Unit tab is the mobile
         await expect(inputs).toHaveCount(5);
         for (let i = 0; i < 5; i++) {
             const box = await inputs.nth(i).boundingBox();
-            expect(box.height, `rail input ${i} height`).toBeGreaterThanOrEqual(44);
-            expect(box.width, `rail input ${i} width`).toBeGreaterThanOrEqual(44);
+            expectTouchFloor(box, `rail input ${i}`);
         }
         // Operable under touch emulation: tap, type, Enter — the commit
         // reaches the statusbar chip (the phone's always-visible surface).
@@ -1891,8 +1891,7 @@ test.describe('AHU workbench page: the phone surface (the Unit tab is the mobile
             const n = await els.count();
             for (let i = 0; i < n; i++) {
                 const box = await els.nth(i).boundingBox();
-                expect(box.height, `${sel}[${i}] height`).toBeGreaterThanOrEqual(44);
-                expect(box.width, `${sel}[${i}] width`).toBeGreaterThanOrEqual(44);
+                expectTouchFloor(box, `${sel}[${i}]`);
             }
         }
     });
