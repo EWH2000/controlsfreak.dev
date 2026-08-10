@@ -402,12 +402,20 @@ function walk(equipmentSelector, selfTest) {
 }
 
 // Chrome that ships closed on every page and would otherwise never be
-// measured: the two nav dropdown levels, inactive tab panes, and the
-// command palette. Revealing them costs nothing in accuracy — the walk
-// resolves a backdrop by ancestor chain, not by painted pixels, so the
-// overlapping layout a forced-open menu produces does not change any
-// ratio.
-const COLLAPSED_CHROME = '.nav-menu, .nav-submenu, .tab-pane, .palette';
+// measured: the two nav dropdown levels, inactive tab panes, the
+// command palette, and the DDC Workbench's session notice. Revealing
+// them costs nothing in accuracy — the walk resolves a backdrop by
+// ancestor chain, not by painted pixels, so the overlapping layout a
+// forced-open menu produces does not change any ratio.
+//
+// `.ddcw-resumed` (codebase-issues #275) ships with the `hidden`
+// attribute on both workbench pages and is unhidden only when the
+// workbench boots from a sessionStorage snapshot — a state no
+// stylesheet can open and no cold page walk reaches, which is exactly
+// the class of markup this list exists for. Its message paints
+// --text-bright and its Start fresh button --blue-ink on --surface,
+// both of which need measuring in both themes like any other ink.
+const COLLAPSED_CHROME = '.nav-menu, .nav-submenu, .tab-pane, .palette, .ddcw-resumed';
 
 async function settle(page) {
     // The nav dropdowns are closed with the `hidden` ATTRIBUTE, not just

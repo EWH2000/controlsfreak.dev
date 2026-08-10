@@ -447,13 +447,15 @@ const DDCWAhuUnit = (function () {
             // ── closed-loop thermal state ──
             zoneT: 76,                           // °F — the integrated REAL zone temp (truth)
             // The commissioning knobs live on the PLANT, not in module
-            // scope. The FCU keeps its equivalents as module-level `let`s
-            // the sliders write, which means a fresh plant silently
-            // inherits whatever the last slider drag left behind and an
-            // engine-direct spec cannot vary them at all. The AHU's very
-            // first invariant is "more outdoor air lowers MAT when it is
-            // colder outside" — unswept weather makes that untestable, so
-            // the weather belongs to the plant.
+            // scope: a module-level `let` the sliders write means a fresh
+            // plant silently inherits whatever the last drag left behind,
+            // and an engine-direct spec cannot vary it at all. The AHU's
+            // very first invariant is "more outdoor air lowers MAT when it
+            // is colder outside" — unswept weather makes that untestable,
+            // so the weather belongs to the plant. The FCU held its
+            // equivalents in module scope until 2026-08-09 and now matches
+            // (ddcw-fcu-unit.js); the session snapshot forced the issue,
+            // since a knob outside the plant cannot be serialised with it.
             oaT: T_OA_DEF,                       // °F — the REAL outdoor-air temp (truth); update() walks it toward oaTarget
             // Where the weather is HEADED — what the OA knob writes, and
             // the only thing it writes. `oaT` chases this at OA_RAMP_RATE
@@ -2160,6 +2162,62 @@ const DDCWAhuUnit = (function () {
         });
     }
 
+    // ── one-shot control reconciliation after a session restore ──
+    // (codebase-issues #275; the shell calls this exactly once, only on a
+    // restore, and only after wireControls has resolved the handles.)
+    //
+    // Everything here is a control ahuSyncControls DELIBERATELY leaves
+    // alone every tick, and each omission is right for the reason it was
+    // written: an environment knob sets the world rather than reflects
+    // it, a HELD slider is the reader's hand mid-drag, and a forced
+    // sensor's box is the reader's typing. None of those hold on the
+    // first tick after a restore, where the plant carries a state no
+    // handle on the page has seen. So this is the ONE moment the paint
+    // may write them — after which syncControls resumes owning the
+    // steady state and this function is never called again.
+    function ahuHydrateControls(plant, ctx) {
+        speedSlider.value = String(ctx.simSpeed());
+        // The OA handle carries the TARGET, matching the readout beside it
+        // (see the comment in ahuSyncControls): the row is a command, the
+        // OAT well and chip are instruments. A snapshot taken mid-ramp
+        // therefore restores oaT ≠ oaTarget and the weather RESUMES its
+        // walk toward the target on the next tick — the reader's standing
+        // command survives the trip, which is the whole point of the
+        // sustained-cold split.
+        oaSlider.value    = String(plant.oaTarget);
+        loadSlider.value  = String(plant.qInternal);
+
+        // A held slider (slot 8 not NULL) shows the hand value.
+        // fan-enable and the stage buttons need nothing: syncControls
+        // paints both from the resolved actuator every tick.
+        [[oadSlider, 'oa-damper'], [hwSlider, 'hw-valve'], [fanSlider, 'fan-speed']]
+            .forEach(function (pair) {
+                const v = ctx.slot8(pair[1]);
+                if (v !== null && isFinite(v)) pair[0].value = String(v);
+            });
+
+        // The override picker is pure UI state — it is not on the plant
+        // and nothing snapshots it — so a restore lands it back on the
+        // roster's first entry while the forced sensor may be any of the
+        // five. Point it at a sensor that IS forced, so the reader's own
+        // lie is the one under the box rather than an unrelated point
+        // reading its truth. Roster order when more than one is forced,
+        // which is the air-path walk the mirror already uses; the reader
+        // reaches the others through the picker exactly as before.
+        if (!(plant.override[ovrSelect.value] || {}).active) {
+            for (let i = 0; i < GLYPHED.length; i++) {
+                const ov = plant.override[GLYPHED[i]];
+                if (ov && ov.active) { ovrSelect.value = GLYPHED[i]; break; }
+            }
+        }
+
+        // A forced sensor's box — renderUnit writes it only while the
+        // selected point is RELEASED, precisely so it cannot clobber
+        // typing. Restored, there is nothing to clobber.
+        const o = plant.override[ovrSelect.value];
+        if (o && o.active) ovrInput.value = dispTempNum(o.value).toFixed(1);
+    }
+
     // The graphic is a viewBox SVG at width:100% — it auto-scales into its
     // cell, so a fullscreen transition needs no unit-side reflow. Present
     // and doing nothing on purpose: the shell reaches this only on the
@@ -2961,6 +3019,7 @@ const DDCWAhuUnit = (function () {
             update: ahuUpdate,
             renderUnit: ahuRenderUnit,
             syncControls: ahuSyncControls,
+            hydrateControls: ahuHydrateControls,   // restore only (#275)
             onResize: ahuOnResize,
             initAnim: ahuInitAnim,
             wireControls: ahuWireControls,
