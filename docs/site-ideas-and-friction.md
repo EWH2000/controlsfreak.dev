@@ -6237,6 +6237,22 @@ of a real reader; do not open it as a general affordance.
 > ran the same day (term inventory, marking-site count, sense-collision
 > classification); its record is `docs/tooltip-glossary-scoping.md`.
 
+> **DECIDED 2026-08-09, same day — this IS the next arc.** With the
+> scoping record merged, the owner picked the glossary/tooltip arc for
+> the flagship slot left vacant at Phase 8, over the branching
+> scenario drills and the MS/TP bus simulator (both stay parked,
+> neither rejected). Standing shape at arc open: **ratify the curation
+> rule first** (§8 of the scoping record — it is a draft until he
+> accepts, amends or rejects it), tier-1 single-sense terms first
+> (~17, the sampled-not-checked ones getting their sense check at
+> definition-writing time), **hand-marked triggers** (the collision
+> tier settled walker-vs-hand-marked), and the sheet-note
+> linking + collapsed-prose pass as the **pilot surface** — one
+> disclosure system across the term/section/page grains, first
+> surface sets the pattern, so deliberately NOT the AHU page. The
+> eleventh-tooltip creep test governs throughout; definitions are
+> written in house voice under the two-senses discipline.
+
 ---
 
 ### Mixed air, mass basis vs volume basis *(measured 2026-07-28 — owner ruled the sim's basis; the teaching beat is unbuilt)*
