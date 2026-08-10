@@ -25,6 +25,7 @@
 > run** — worth knowing, because the brief warns that one flake per full
 > run is normal, so a failure the next session sees is more likely real
 > than the base rate suggests. Re-isolate anyway before believing it.
+> That run predates PR #503; the suite is unchanged in count by it.
 > The single skip is the long-standing `tests/contact.spec.js:49`
 > honeypot `test.fixme` (needs `POST /api/contact`, which only the
 > Worker serves) — see *Found during verification* #5, because it is
@@ -286,8 +287,8 @@ fix (its own PR, `fbe-editor.js` reaches three live pages).
 
 ## Found during verification (2026-08-10) — not in the original brief
 
-Item 6 blocks CI for every PR and wants an owner pick; the rest
-block nothing. They are recorded here because the
+Item 6 was found, diagnosed and fixed within this session (PR #503);
+the rest block nothing. They are recorded here because the
 verification session did no other work, so this file is the only place
 they exist.
 
@@ -353,10 +354,12 @@ they exist.
    a squatted port into an explicit bind error instead of 100+ opaque
    failures.
 
-6. **⚠️ CI IS RED, AND IT IS NOT THIS PR'S DOING — the 44px
-   touch-floor assertions have ZERO tolerance and CI now lands on the
-   wrong side of the boundary.** This is the highest-value thing this
-   session found, and it blocks merging anything.
+6. **The 44px touch-floor assertions had ZERO tolerance, and CI landed
+   on the wrong side of the boundary — FOUND AND FIXED THIS SESSION
+   (PR #503, merged; `codebase-issues` #279 re-diagnosed and closed).**
+   Recorded in full because the wrong diagnosis survived a day in the
+   ledger and the right one is worth not re-deriving. **Nothing here is
+   outstanding** — CI is green again.
 
    `tests/ddc-workbench-ahu-page.spec.js:1894` read
    `a.ddcw-unit-link` height as **43.99993896484375** against
@@ -392,20 +395,24 @@ they exist.
    are one **boundary** that different environments round to different
    sides. Update #279 accordingly, and widen it beyond `#fcu-stage-2`.
 
-   **Fix shapes — this needs an owner pick, and the two are not
+   **What shipped (PR #503, owner-picked):** a shared
+   `tests/touch-floor.js` (`expectTouchFloor` / `expectTouchFloorHeight`)
+   that rounds to 2 dp before comparing, with all 23 assertions rewritten
+   to call it across 18 sites. The tolerance forgives 0.005px — 20x the
+   largest shortfall ever observed — and nothing more; `43.994`, `43.99`,
+   `43.5` and the 41px native unit-link all still fail, unit-checked at
+   fix time rather than assumed. The twelve unlabelled assertions in
+   `touch-floor.spec.js` gained labels in the same pass. CI green, and
+   the formerly-red row passed on the same runner that failed it.
+
+   **The two shapes that were rejected, and why — they are not
    equivalent:**
-   - *Relax the assertion* (tests-only, merges freely). #279 proposed
-     `>= 43.5`; that is looser than the problem — it would let a
-     genuinely 43.5px control pass and gives away half a pixel of a real
-     accessibility gate. An epsilon sized to the artifact
-     (`>= 43.99`, or round to 2dp before comparing) kills the false red
-     while keeping the gate. Best done **once in a shared helper** all
-     23 sites call, with the reason written there, so the next touch
-     assertion inherits it instead of re-litigating it.
-   - *Pad the CSS floor to 45px* (touches `styles.css` → every live
-     page → **needs approval**). This changes real layout on ~18 control
-     families to satisfy a measurement artifact, and 45px is not what
-     WCAG 2.5.5 asks for. Recommend against.
+   - *`>= 43.5`*, which #279 first proposed — gives away half a pixel of
+     a real accessibility gate to solve a 6x10^-5 problem, and would
+     silently pass a control that genuinely missed.
+   - *Padding the CSS floor to 45px* — changes real layout on ~18
+     control families to satisfy a measurement artifact, reaches every
+     live page, and 45px is not what WCAG 2.5.5 asks for.
 
    The substantive point either way: **WCAG 2.5.5's 44×44 is a CSS-pixel
    intent.** The page genuinely lays out at 44 CSS px; the
