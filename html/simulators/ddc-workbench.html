@@ -1059,8 +1059,22 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
            documented exclusion, so these numbers ARE the guard:
                #cfc8ad on --dev-face #16140f  =  10.97:1
                #f07a6d on --dev-face #16140f  =   6.76:1
-           (#f07a6d is --red-text's DARK value, frozen as a literal here
-           because the face it lands on never changes with the theme.)
+               #e0a94a on --dev-face #16140f  =   8.71:1
+           (#f07a6d is --red-text's DARK value and #e0a94a is --amber's,
+           frozen as literals here because the face they land on never
+           changes with the theme.)
+
+           ⚠ THE LEDs ARE THE ONE EXCEPTION, AND IT IS INHERITED RATHER
+           THAN CHOSEN. .led--alarm rides var(--red) and .led--warn rides
+           var(--amber), so both flip with the theme on a face that does
+           not — shared styles.css vocabulary, and this page is not the
+           place to fork it. They are DRAWN GEOMETRY, so the floor that
+           applies is WCAG 1.4.11's 3:1 for non-text, not 1.4.3's 4.5:1,
+           and both clear it in both themes against the constant face:
+               alarm  #e85d4f dark 5.35:1  /  #c4382f light 3.47:1
+               warn   #e0a94a dark 8.71:1  /  #83641f light 3.34:1
+           Each LED is aria-hidden with its state in text beside it, so
+           the word is what actually carries the state either way.
            ══════════════════════════════════════════════════════════════ */
         .ahu-lls { margin: 0 0 1rem; max-width: 26rem; }
         .ahu-lls-row {
@@ -1070,6 +1084,7 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
             gap: 1rem;
             flex-wrap: wrap;
         }
+        .ahu-lls-row + .ahu-lls-row { margin-top: 0.55rem; }
         .ahu-lls-readout { display: inline-flex; align-items: center; gap: 0.55rem; }
         .ahu-lls-word {
             font-family: var(--mono);
@@ -1078,7 +1093,13 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
             letter-spacing: 0.14em;
             color: #cfc8ad;
         }
-        .ahu-lls.is-tripped .ahu-lls-word { color: #f07a6d; }
+        /* ⚠ EACH STATE COLOUR IS SCOPED TO ITS OWN ROW'S WORD. The two
+           rows report DIFFERENT things — the element's latch and the
+           wiring around it — so an unscoped `.ahu-lls.is-tripped
+           .ahu-lls-word` would paint "NO JUMPER" red the moment the stat
+           tripped and claim a fault the wiring does not have. */
+        .ahu-lls.is-tripped .ahu-lls-word-stat { color: #f07a6d; }
+        .ahu-lls.is-defeated .ahu-lls-word-jumper { color: #e0a94a; }
         /* An embossed keycap, the register's own button idiom (.key in
            styles.css). Page-local rather than the shared class because
            .key is grid-sized for a 4-column keypad and carries neither a
@@ -1101,9 +1122,84 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
             cursor: pointer;
         }
         .ahu-lls-btn:active { background: #17150f; box-shadow: inset 0 1px 3px #000; }
-        .ahu-lls-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+        /* ── THE JUMPER — a clip lead across the terminal screws ────────
+           Toggle SEMANTICS (a real <button> carrying aria-pressed), wire
+           APPEARANCE. Deliberately NOT a second keycap: Reset is embossed
+           because a reset button is a thing you press, and this is a
+           piece of wire somebody left on the terminals. So it is drawn
+           recessed — a terminal strip set into the face, two brass screws
+           in it, and a lead arcing across them only while the jumper is
+           in. An empty pair of screws is what an un-jumpered stat looks
+           like, which is why the OFF state draws no ghost wire.
+
+           It shares the Reset button's focus ring and touch floor (the
+           rules below name both selectors) because those are the two
+           things about a control that are not about what it depicts. */
+        .ahu-lls-jumper {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.7rem;
+            font-family: var(--mono);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #cfc8ad;
+            padding: 0.3rem 0.9rem 0.3rem 0.6rem;
+            border: 1px solid #000;
+            border-radius: var(--rail);
+            background: #100e0a;
+            box-shadow: inset 0 1px 3px #000, 0 1px 0 var(--dev-hi);
+            cursor: pointer;
+        }
+        /* The two terminal screws, one clip-lead span apart. The 22px gap
+           IS the span the lead has to cross — the lead below is pinned to
+           the two screw CENTRES (4.5px in from each end of a 40px strip),
+           so moving this gap moves the wire with it. */
+        .ahu-lls-terms {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 22px;
+            height: 16px;
+        }
+        .ahu-lls-screw {
+            position: relative;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 34% 30%, #b6a67e, #6d6247 68%, #403a29);
+        }
+        .ahu-lls-screw::after {          /* the screwdriver slot */
+            content: '';
+            position: absolute;
+            left: 1px;
+            right: 1px;
+            top: 50%;
+            height: 1px;
+            background: #2b2619;
+            transform: translateY(-50%) rotate(-28deg);
+        }
+        /* Painted LAST in the strip, so the lead sits ON the screw heads
+           the way a real one does. Half an ellipse: top border only,
+           bowed up out of the strip. */
+        .ahu-lls-lead {
+            position: absolute;
+            left: 4.5px;
+            right: 4.5px;
+            top: 2px;
+            height: 6px;
+            border: 2px solid #e0a94a;
+            border-bottom: 0;
+            border-radius: 7px 7px 0 0;
+            opacity: 0;
+        }
+        .ahu-lls.is-defeated .ahu-lls-lead { opacity: 1; }
+        .ahu-lls-btn:focus-visible,
+        .ahu-lls-jumper:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
         @media (hover: none) {
-            .ahu-lls-btn { min-height: 44px; min-width: 44px; }
+            .ahu-lls-btn,
+            .ahu-lls-jumper { min-height: 44px; min-width: 44px; }
         }
         /* The press result. Empty until the button is pushed, and cleared
            again by the next state change — so an empty line is the resting
@@ -1231,6 +1327,11 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
         .tool-card.is-fullscreen .tool-preamble,
         .tool-card.is-fullscreen .ahu-teach,
         .tool-card.is-fullscreen .ref-note,
+        /* The scope note's ROW, not just the note. .tool-body-row carries
+           padding, a top border and a recessed fill of its own, so hiding
+           only the paragraph inside it leaves an empty band across the
+           bottom of the cockpit. */
+        .tool-card.is-fullscreen .tool-body-row,
         /* The rail keeps its hint (an announcement is instrument, not
            prose) — only its note paragraph drops with the reading prose. */
         .tool-card.is-fullscreen p.ahu-param-note,
@@ -2319,7 +2420,7 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
 
                             <p class="ahu-teach-p"><strong>Three dampers, one command.</strong> The outside, return and relief blades all move together, because the point roster carries one damper output and the linkage does the rest — return closes as outside opens, and relief opens with it so the building does not pressurise. That is how a packaged economizer is actually built, and it is why all three commands are annotated rather than just the outside one: the drawn blade angles are what tell you the linkage is doing what the single command asked.</p>
 
-                            <p class="ahu-teach-p"><strong>Not everything on the machine is on the screen.</strong> Grey means no point, and there is a difference between the two kinds of grey here. The filter rack and the intake louver have no point because nothing would ever command them. The small device on the cooling coil&rsquo;s leaving face &mdash; a switch body on the casing roof with a button on it, and one thin capillary hanging down across the coil &mdash; has no point because nobody landed one, and that is extremely common in the field. It is a hardwired low-limit stat: it opens the fan starter circuit directly, so it can stop this machine at any moment, and the controller will not know. When it does, the fan command on this screen keeps reading exactly what it read before, the verdict tells you a coil is loaded with the fan off, and no amount of staring at the front end gets you further. That is not a gap in the graphic. It is the reason the first thing an experienced tech does with a unit that stopped for no reason is walk out to it and look, and it is why the reset button for that device is on the device.</p>
+                            <p class="ahu-teach-p"><strong>Not everything on the machine is on the screen.</strong> Grey means no point, and there is a difference between the two kinds of grey here. The filter rack and the intake louver have no point because nothing would ever command them. The small device on the cooling coil&rsquo;s leaving face &mdash; a switch body on the casing roof with a button on it, and one thin capillary hanging down across the coil &mdash; has no point because nobody landed one, and that is extremely common in the field. It is a hardwired low-limit stat: it opens the fan starter circuit directly, so it can stop this machine at any moment, and the controller will not know. When it does, the fan command on this screen keeps reading exactly what it read before, the verdict tells you a coil is loaded with the fan off, and no amount of staring at the front end gets you further. That is not a gap in the graphic. It is the reason the first thing an experienced tech does with a unit that stopped for no reason is walk out to it and look, and it is why the reset button for that device is on the device. The wire somebody eventually lays across that stat&rsquo;s terminals so it will stop dropping the unit is a third thing you only ever learn about the same way.</p>
 
                             <!-- ⚠ THE SETPOINT IS THE CUT-OUT. Cooling makes
                                  at SP + deadband and breaks at SP, so the
@@ -2682,9 +2783,45 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                         <div class="ahu-lls-row">
                             <span class="ahu-lls-readout">
                                 <span class="led led--off" id="ahu-lls-led" aria-hidden="true"></span>
-                                <span class="ahu-lls-word" id="ahu-lls-state">NORMAL</span>
+                                <span class="ahu-lls-word ahu-lls-word-stat" id="ahu-lls-state">NORMAL</span>
                             </span>
                             <button type="button" class="ahu-lls-btn" id="ahu-lls-reset">Reset</button>
+                        </div>
+                        <!-- ── ROW 2 · THE JUMPER ─────────────────────────
+                             A wire across the stat's terminal screws. The
+                             two rows report DIFFERENT things and must go on
+                             doing so: row 1 is the ELEMENT (it reads
+                             TRIPPED under a jumper exactly as it does
+                             without one, because the capillary never learns
+                             about the wiring), row 2 is the WIRING. A face
+                             that folded them into one word would teach the
+                             opposite of the lesson.
+
+                             ⚠ A TOGGLE BUTTON, NOT A CHECKBOX AND NOT A
+                             SWITCH. `aria-pressed` is the state; the
+                             accessible name stays the constant "Jumper"
+                             (the toggle-button pattern — the label names
+                             the thing, the state names itself). The
+                             terminal strip inside is decorative and
+                             aria-hidden: it is a PICTURE of the wire the
+                             word beside the LED already reports.
+
+                             Same live-region split as row 1 — the state row
+                             does not announce itself, the result line
+                             below does. -->
+                        <div class="ahu-lls-row">
+                            <span class="ahu-lls-readout">
+                                <span class="led led--off" id="ahu-lls-jumper-led" aria-hidden="true"></span>
+                                <span class="ahu-lls-word ahu-lls-word-jumper" id="ahu-lls-jumper-state">NO JUMPER</span>
+                            </span>
+                            <button type="button" class="ahu-lls-jumper" id="ahu-lls-jumper" aria-pressed="false">
+                                <span class="ahu-lls-terms" aria-hidden="true">
+                                    <span class="ahu-lls-screw"></span>
+                                    <span class="ahu-lls-screw"></span>
+                                    <span class="ahu-lls-lead"></span>
+                                </span>
+                                Jumper
+                            </button>
                         </div>
                         <p class="ahu-lls-msg" id="ahu-lls-msg" role="status" aria-live="polite"></p>
                     </div>
@@ -2703,6 +2840,22 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                     machine and a verdict that describes the symptom. The
                     device is drawn on the unit, unlabelled, where the real
                     one lives; finding it is the job.
+                </p>
+
+                <p class="ref-note">
+                    The second row on that face is a <strong>jumper</strong>: a
+                    piece of wire laid across the stat&rsquo;s two terminal
+                    screws, so the starter circuit stops passing through the
+                    contacts at all. Anybody who has worked on equipment for a
+                    while has found one. Nothing about the device changes when
+                    the wire goes on &mdash; the element still trips on cold air
+                    and the row above still reads TRIPPED &mdash; the fan simply
+                    never hears about it, and the machine runs on through the
+                    freeze the stat was there to catch. Take the wire off and
+                    the fan drops that instant, on a trip that had been sitting
+                    there the whole time. That is the tell worth carrying out of
+                    here: a unit that dies the second a jumper comes out was
+                    never fixed. It was silenced.
                 </p>
 
                 <div class="ahu-presets field" role="group" aria-labelledby="ahu-try-lbl">
@@ -2893,16 +3046,6 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                     priority array in BACnet Basics</a>.
                 </p>
 
-                <p class="ref-note">
-                    Directional only. The coil effects are rough sensible and
-                    latent splits for a nominal five-ton, two-thousand-CFM air
-                    handler, the damper is linear in its commanded position
-                    (real damper flow is not), and the fault presets zero a
-                    coil's work outright to make the tell obvious. A real
-                    no-cooling call has more than one cause; the graphic shows
-                    you where to look, not what to fix. Nothing here replaces
-                    the manufacturer's data or the unit's own safeties.
-                </p>
             </div>
 
             </div><!-- #tab-unit -->
@@ -3079,6 +3222,27 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                     exactly as fast as each trip can clear itself.
                 </p>
 
+                <!-- ⚠ DO NOT COMPRESS THIS INTO "the software equivalent of a
+                     jumper". The page carries BOTH defeats now, and they are
+                     different pieces of wire producing different field
+                     signatures — the whole reason this paragraph exists is
+                     that the shorthand is wrong, and it is the shorthand a
+                     future editor will reach for. -->
+                <p class="ddcw-sheet-note">
+                    There are two ways to defeat a low limit on this machine and
+                    they are not the same defeat, which is worth being exact
+                    about, because they read alike on a work order and look
+                    nothing alike on the roof. Wiring that reset input down
+                    defeats the <em>latch</em>: the trip still happens, it just
+                    cannot hold, so the unit short-cycles &mdash; down, clear,
+                    back on, down again, all morning. The jumper on the device
+                    face defeats the <em>contacts</em>: the trip still happens
+                    and still holds, and the fan never drops at all. One machine
+                    bangs on and off where anyone can hear it. The other runs
+                    straight through a freeze point looking perfectly normal
+                    from the front end, which is the more expensive of the two.
+                </p>
+
                 <p class="ddcw-sheet-note">
                     The cleanest way to see all of it is one lie. Open the
                     wiresheet before you start — its first open loads the sheet
@@ -3137,6 +3301,44 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                 </div><!-- .fbe-live -->
 
             </div><!-- #tab-wiresheet -->
+
+            <!-- ══ SCOPE NOTE — A SIBLING OF BOTH PANES, NOT INSIDE ONE ═══
+                 The damage-stakes convention (CLAUDE.md): a tool whose
+                 output, acted on directly, can damage equipment ends its
+                 last .tool-card with a page-tailored scope note, and on a
+                 TABBED tool that note sits in a .tool-body-row sibling of
+                 the panes so BOTH tabs show it. This page joined the
+                 convention when the low-limit stat gained a jumper — the
+                 wiresheet is where a reader learns to wire a reset input
+                 down, and the Unit tab is where they learn to wire around
+                 the contacts, so a note living in one pane would be absent
+                 from half the material it is about.
+
+                 It was a plain .ref-note at the end of #tab-unit before
+                 that; the move is what makes it reachable from the
+                 Wiresheet. The fullscreen rule below drops the whole row,
+                 not just the note inside it — .tool-body-row carries its
+                 own padding, border and recessed fill, so hiding only the
+                 paragraph would leave an empty band in the cockpit. -->
+            <div class="tool-body-row">
+                <p class="ref-note">
+                    Directional only. The coil effects are rough sensible and
+                    latent splits for a nominal five-ton, two-thousand-CFM air
+                    handler, the damper is linear in its commanded position
+                    (real damper flow is not), and the fault presets zero a
+                    coil&rsquo;s work outright to make the tell obvious. A real
+                    no-cooling call has more than one cause; the graphic shows
+                    you where to look, not what to fix. And take the two
+                    defeats here as a demonstration, never as a method: on a
+                    real machine that stat is the last thing standing between a
+                    wet coil and a cold night, the wire across it is somebody
+                    else&rsquo;s shortcut you have inherited, and a coil that
+                    freezes and splits takes the building down with it. This
+                    page exists so you have already seen what happens when one
+                    comes out. Nothing here replaces the manufacturer&rsquo;s
+                    data or the unit&rsquo;s own safeties.
+                </p>
+            </div>
 
         </div>
     </div>

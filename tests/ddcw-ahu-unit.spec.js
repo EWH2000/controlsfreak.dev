@@ -39,7 +39,9 @@
 //   truth; the hardwired low-limit stat trips on the TRUTH discharge,
 //   latches, drops the fan under a standing command, resets only after
 //   the condition clears, and stays out of both the roster and the
-//   derived bag.
+//   derived bag; a JUMPER across its terminals takes the contacts out
+//   of the starter circuit while the element goes on latching
+//   underneath, and only the wire clears the wire.
 //
 // ANTI-VACUITY IS PART OF THE POLICY. A clamp row that never reaches
 // its clamp is a green row asserting nothing, and this file shipped
@@ -1217,6 +1219,16 @@ function rawColdAir(p) {
     p.actuators.y2 = false;
 }
 
+// The same morning with a WIRE ACROSS THE STAT'S TERMINALS. Used by the
+// defeat rows below, which all share one shape: drive the plant to a
+// state, then assert what the jumper did and did not change. It is a
+// separate helper rather than a flag on rawColdAir because every row
+// that reads it has to be able to see the defeat in the setup.
+function defeatedColdAir(p) {
+    rawColdAir(p);
+    p.lls.defeated = true;
+}
+
 test.describe('ddcw-ahu-unit: the hardwired low-limit stat', () => {
 
     test('it is NOT on the roster, and that absence is the whole feature', () => {
@@ -1236,9 +1248,10 @@ test.describe('ddcw-ahu-unit: the hardwired low-limit stat', () => {
                 .toBe(false);
         });
         expect(names).not.toMatch(/low limit|freeze|\bstats?\b/);
-        // And the plant models it anyway.
+        // And the plant models it anyway — the element's latch and the
+        // wiring around it, arriving made and un-jumpered.
         expect(Unit.createPlant().lls, 'the plant carries the device')
-            .toEqual({ tripped: false });
+            .toEqual({ tripped: false, defeated: false });
     });
 
     test('a fresh plant arrives with the stat made', () => {
@@ -1362,9 +1375,151 @@ test.describe('ddcw-ahu-unit: the hardwired low-limit stat', () => {
         const plant = runToStatTrip(Unit, rawColdAir);
         Unit.update(plant, 2);
         expect(plant.lls.tripped).toBe(true);
+        // ⚠ `defeat|jumper|bypass` is not padding. The jumper is a
+        // SECOND fact about this device, and a ban that named only the
+        // latch would leave a hole exactly the width of the new feature
+        // — `d.jumpered` would sail through a sweep written in 2026-08.
+        // A controller that cannot see the stat certainly cannot see a
+        // wire somebody laid across its terminals.
         const leaked = Object.keys(plant.derived).filter(
-            (k) => /lls|lowlimit|trip|freeze/i.test(k) || /^stat/i.test(k));
+            (k) => /lls|lowlimit|trip|freeze|defeat|jumper|bypass/i.test(k)
+                || /^stat/i.test(k));
         expect(leaked, 'derived leaked the hardwired stat: ' + leaked.join(', '))
             .toEqual([]);
+    });
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// THE JUMPER — a wire across the stat's terminals.
+//
+// The field's answer to a stat that keeps stopping a machine somebody
+// needs running, and the model puts it where the wire actually is: in
+// the STARTER CIRCUIT, not in the device. Every row below is a
+// consequence of that one placement rather than of a rule written down
+// somewhere, which is why they are worth pinning — the set line and the
+// reset were both left untouched, and the behaviour has to fall out.
+//
+// Owner ruling 2026-08-09: the jumper SURVIVES everything (presets,
+// program switches, resets), on the same reasoning as the latch and the
+// priority arrays. Nothing in the plant clears it, so the rows here
+// assert it by driving state that would plausibly have cleared it.
+//
+// Anti-vacuity, per the file's policy: no row asserts a defeat it set
+// and never exercised. Each one drives the plant into the state that
+// makes the flag observable — air moving that should not be, or air
+// stopping that had been.
+// ══════════════════════════════════════════════════════════════════════
+
+test.describe('ddcw-ahu-unit: the jumper across the stat', () => {
+
+    test('the latch still sets under a jumper — the element never knows', () => {
+        // THE ROW THE MODEL EXISTS FOR. A jumper is in the wiring; the
+        // capillary goes on doing exactly what it did. So the machine
+        // keeps running through a freeze that has already latched the
+        // device, which is the whole hazard.
+        const Unit = loadUnit();
+        const plant = runToStatTrip(Unit, defeatedColdAir);
+        expect(plant.lls.tripped, 'the element latched anyway').toBe(true);
+        Unit.update(plant, 2);                       // the tick after the latch
+        expect(plant.derived.airflowOn, 'and the fan is still turning').toBe(true);
+        expect(plant.derived.fanCmd).toBe(true);
+        expect(plant.anim.fanFrac, 'the drawn fan is still turning')
+            .toBeGreaterThan(0);
+        // The probe that keeps this row from passing vacuously: the air
+        // it is running on really is the freeze the stat tripped on.
+        expect(plant.derived.datT).toBeLessThan(plant.zoneT - 20);
+    });
+
+    test('pulling the jumper drops the fan on a trip that was sitting there', () => {
+        // The field signature: a unit that dies the second the wire
+        // comes off was never fixed, it was silenced. Nothing about the
+        // machine changes in this row except the wire.
+        const Unit = loadUnit();
+        const plant = runToStatTrip(Unit, defeatedColdAir);
+        Unit.update(plant, 2);
+        expect(plant.derived.airflowOn, 'running on the jumper').toBe(true);
+
+        plant.lls.defeated = false;
+        Unit.update(plant, 2);
+        expect(plant.derived.airflowOn, 'the very next tick, no air').toBe(false);
+        expect(plant.derived.fanCmd, 'and nobody withdrew the command').toBe(true);
+        expect(plant.sensors['fan-status'], 'proof breaks at once').toBe(false);
+        expect(plant.lls.tripped, 'the trip was there the whole time').toBe(true);
+    });
+
+    test('jumpering an already-tripped machine restarts it with nothing fixed', () => {
+        // The other direction, and the one that gets used at 2am. The
+        // fan comes back on the next tick and the element is still
+        // latched — no reset, no cause cleared, nothing.
+        const Unit = loadUnit();
+        const plant = runToStatTrip(Unit, rawColdAir);
+        Unit.update(plant, 2);
+        expect(plant.derived.airflowOn, 'down on the hardwired stat').toBe(false);
+
+        plant.lls.defeated = true;
+        Unit.update(plant, 2);
+        expect(plant.derived.airflowOn, 'air moving again').toBe(true);
+        expect(plant.lls.tripped, 'and the stat is still tripped').toBe(true);
+        // Proof re-makes from nothing, exactly as it does after a real
+        // reset — the restart order is the same, the fix is not.
+        expect(plant.proof.made, 'proof has to re-make from zero').toBe(false);
+    });
+
+    test('the jumper survives a fault, a weather swing and a reset — only the wire clears it', () => {
+        // The owner's ruling, driven rather than asserted. This plant
+        // gets everything an operator can throw at it from a screen; the
+        // preset and program-switch halves live on the page spec, since
+        // those are DOM surfaces.
+        const Unit = loadUnit();
+        const plant = runToStatTrip(Unit, defeatedColdAir);
+
+        setOa(plant, 80);
+        plant.conditions.fault = 'fan-belt';
+        for (let i = 0; i < 50; i++) Unit.update(plant, 2);
+        plant.conditions.fault = 'none';
+        for (let i = 0; i < 50; i++) {
+            plant.actuators['fan-enable'] = true;
+            plant.actuators['fan-speed'] = 100;
+            Unit.update(plant, 2);
+        }
+        expect(plant.lls.defeated, 'the wire is still on the terminals').toBe(true);
+
+        // And the reset does not pull it either — the button is about
+        // the element. Here the element IS clear (warm air, long since),
+        // so the reset takes and the jumper is untouched by it.
+        expect(Unit.resetLowLimit(plant)).toBe('cleared');
+        expect(plant.lls.tripped, 'the latch cleared').toBe(false);
+        expect(plant.lls.defeated, 'the jumper did not').toBe(true);
+    });
+
+    test('a jumper does not make a cold element resettable', () => {
+        // The reset reads the ELEMENT, so the wiring is irrelevant to
+        // it. Same refusal, same reason, jumper or no — and this is the
+        // row that would redden if someone "helpfully" taught
+        // resetLowLimit about the defeat flag.
+        const Unit = loadUnit();
+        const plant = runToStatTrip(Unit, defeatedColdAir);
+        expect(plant.lls.tripped).toBe(true);
+        // Still running, so the discharge is still the cold air itself —
+        // no blind-DAT window to hide in, which makes this refusal a
+        // stronger claim than the un-jumpered one.
+        expect(plant.derived.airflowOn).toBe(true);
+        expect(plant.derived.datT).toBeLessThan(plant.zoneT - 20);
+        expect(Unit.resetLowLimit(plant), 'the element is still below its setting')
+            .toBe('still-cold');
+        expect(plant.lls.tripped).toBe(true);
+        expect(plant.lls.defeated, 'and the refusal moved no wire').toBe(true);
+    });
+
+    test('an un-jumpered plant is bit-for-bit the machine that shipped before it', () => {
+        // The regression guard for the gate edit. `defeated: false` must
+        // change nothing about a normal trip — the fan still drops, the
+        // latch still holds, the command still stands.
+        const Unit = loadUnit();
+        const plant = runToStatTrip(Unit, rawColdAir);
+        expect(plant.lls.defeated).toBe(false);
+        Unit.update(plant, 2);
+        expect(plant.derived.airflowOn).toBe(false);
+        expect(plant.derived.fanCmd).toBe(true);
     });
 });
