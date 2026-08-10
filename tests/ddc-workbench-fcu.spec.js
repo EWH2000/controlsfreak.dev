@@ -28,6 +28,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { test, expect } = require('@playwright/test');
+const { expectTouchFloor } = require('./touch-floor.js');
 
 const URL = '/simulators/ddc-workbench-fcu.html';
 
@@ -1084,8 +1085,7 @@ test.describe('DDC Workbench — the unit selector on touch', () => {
         await expect(links).toHaveCount(2);
         for (let i = 0; i < 2; i++) {
             const box = await links.nth(i).boundingBox();
-            expect(box.height, `link ${i} height`).toBeGreaterThanOrEqual(44);
-            expect(box.width, `link ${i} width`).toBeGreaterThanOrEqual(44);
+            expectTouchFloor(box, `link ${i}`);
         }
     });
 });
@@ -1144,8 +1144,7 @@ test.describe('DDC Workbench — the phone surface (the Unit tab is the mobile v
         await expect(inputs).toHaveCount(2);
         for (let i = 0; i < 2; i++) {
             const box = await inputs.nth(i).boundingBox();
-            expect(box.height, `rail input ${i} height`).toBeGreaterThanOrEqual(44);
-            expect(box.width, `rail input ${i} width`).toBeGreaterThanOrEqual(44);
+            expectTouchFloor(box, `rail input ${i}`);
         }
         await page.tap('#fcu-p-cool-sp');
         await page.fill('#fcu-p-cool-sp', '75');
@@ -1160,8 +1159,7 @@ test.describe('DDC Workbench — the phone surface (the Unit tab is the mobile v
         await page.goto(URL);
         for (const sel of ['#fcu-stage-0', '#fcu-stage-1', '#fcu-stage-2']) {
             const box = await page.locator(sel).boundingBox();
-            expect(box.height, `${sel} height`).toBeGreaterThanOrEqual(44);
-            expect(box.width, `${sel} width`).toBeGreaterThanOrEqual(44);
+            expectTouchFloor(box, sel);
         }
     });
 
