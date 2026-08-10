@@ -5,7 +5,8 @@
 > `docs/next-session-handoff.md` **item 3**, which the owner opened with
 > *"do this properly, with sources — not as a hedge in prose."* Nothing
 > in this file is reader-facing yet, and §5 is the only place that
-> proposes wording; those are **proposals awaiting an owner pick**, not
+> proposes wording; those are **proposals awaiting an owner pick**
+> *(made 2026-08-09 — see the pick note in §5)*, not
 > copy.
 >
 > **Method.** Four independent finder agents, one per angle
@@ -559,6 +560,14 @@ answers:
 **Proposals, not copy.** None of these has been written into a page;
 each names the variation rather than legislating a second house answer.
 Pick, reject or rewrite.
+
+> **Owner pick, 2026-08-09 (same day):** **P1, P4 and P5 are blessed**
+> for lanes to draw on when they next touch relevant copy. **P2 and P3
+> "may earn their place"** — provisional, not rejected. His
+> accompanying concern became a standing direction of its own: dense
+> pages ship background prose collapsed and expandable per section
+> (recorded in the friction file's site-wide tooltips entry, and the
+> glossary arc's pilot surface is where it first lands).
 
 **P1 — The two cold surfaces.** *"Cold air is a hazard in both
 climates. The hazard sits on opposite sides of the duct wall."* Up
