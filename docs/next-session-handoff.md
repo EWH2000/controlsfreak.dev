@@ -15,7 +15,7 @@
 > environment traps with nothing to reproduce against). Every correction
 > is applied **in place below** and marked `⟨corrected 2026-08-10⟩`, so
 > read the file as it stands rather than diffing it against the
-> corrections. Five findings the brief did not contain are in
+> corrections. Six findings the brief did not contain are in
 > *Found during verification* at the end. **The corrections were all
 > imprecision, not invention** — no claim in this file pointed at
 > something that does not exist, and no planned work was invalidated.
@@ -286,7 +286,8 @@ fix (its own PR, `fbe-editor.js` reaches three live pages).
 
 ## Found during verification (2026-08-10) — not in the original brief
 
-None of these blocks the arc. They are recorded here because the
+Item 6 blocks CI for every PR and wants an owner pick; the rest
+block nothing. They are recorded here because the
 verification session did no other work, so this file is the only place
 they exist.
 
@@ -351,6 +352,66 @@ they exist.
    the documented reason the base config uses it, and it is what turns
    a squatted port into an explicit bind error instead of 100+ opaque
    failures.
+
+6. **⚠️ CI IS RED, AND IT IS NOT THIS PR'S DOING — the 44px
+   touch-floor assertions have ZERO tolerance and CI now lands on the
+   wrong side of the boundary.** This is the highest-value thing this
+   session found, and it blocks merging anything.
+
+   `tests/ddc-workbench-ahu-page.spec.js:1894` read
+   `a.ddcw-unit-link` height as **43.99993896484375** against
+   `toBeGreaterThanOrEqual(44)` and failed the docs-only verification PR
+   (#502) — **3 of 3 attempts, initial plus both retries**, so on that
+   runner it is deterministic, not flaky. The nine CI runs before it were
+   all green, including a docs-only PR 22 hours earlier.
+
+   **The mechanism, measured.** Locally the same element measures
+   **exactly 44.0** and passes. Its height is not natural — it is pinned
+   by `min-height: 44px` in the `TOUCH-TARGET FLOOR` block, with the
+   content shorter than the floor. So the box sits *exactly on* the
+   number the assertion demands, and the comparison has **no margin at
+   all**: one float step down in any environment that rounds differently
+   (these are `isMobile: true` contexts, so a device-scale factor is in
+   play) turns a correct layout into a red build. The shortfall is
+   **6 × 10⁻⁵ px**.
+
+   **The exposure is 23 assertions, not one.**
+   `grep -rn 'toBeGreaterThanOrEqual(44)' tests/` →
+   `touch-floor.spec.js` 12, `ddc-workbench-fcu.spec.js` 6,
+   `ddc-workbench-ahu-page.spec.js` 5 — every one of them pointed at a
+   control whose size comes from one of the **18** `min-height: 44px` /
+   `min-width: 44px` declarations. Every pair is zero-margin by
+   construction.
+
+   **This reframes #279, which is understated.** #279 records
+   `#fcu-stage-2` at `43.999755859375`, isolated at 3-of-8 *local* runs,
+   and concludes *"CI on the same tree passed, which is the flake
+   signature."* Today is the mirror image — a different element, a
+   different page, **CI red 3/3 while local passes cleanly**. Two
+   observations with opposite local/CI polarity are not two flakes; they
+   are one **boundary** that different environments round to different
+   sides. Update #279 accordingly, and widen it beyond `#fcu-stage-2`.
+
+   **Fix shapes — this needs an owner pick, and the two are not
+   equivalent:**
+   - *Relax the assertion* (tests-only, merges freely). #279 proposed
+     `>= 43.5`; that is looser than the problem — it would let a
+     genuinely 43.5px control pass and gives away half a pixel of a real
+     accessibility gate. An epsilon sized to the artifact
+     (`>= 43.99`, or round to 2dp before comparing) kills the false red
+     while keeping the gate. Best done **once in a shared helper** all
+     23 sites call, with the reason written there, so the next touch
+     assertion inherits it instead of re-litigating it.
+   - *Pad the CSS floor to 45px* (touches `styles.css` → every live
+     page → **needs approval**). This changes real layout on ~18 control
+     families to satisfy a measurement artifact, and 45px is not what
+     WCAG 2.5.5 asks for. Recommend against.
+
+   The substantive point either way: **WCAG 2.5.5's 44×44 is a CSS-pixel
+   intent.** The page genuinely lays out at 44 CSS px; the
+   43.99993896484375 is the measurement's device-pixel rounding, not a
+   smaller target. The assertion should encode that, and today it does
+   not.
 
 5. **`docs/air-side-sim.md:714-718` reads as if the "already near
    freezing" verdict row is still `test.fixme`'d. It is not — #495
