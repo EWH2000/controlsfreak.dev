@@ -6215,6 +6215,28 @@ which reflows, translates, prints, and is read the same way by
 everyone. Revisit if a specific value proves genuinely opaque in front
 of a real reader; do not open it as a general affordance.
 
+> **2026-08-09 — the owner floated this as a next-arc candidate**, on
+> cost-timing grounds: *"that's just going to be more of a pain the
+> longer along we go."* Hand-marked triggers scale linearly with
+> shipped pages, so later genuinely is more retrofit — and the
+> auto-marking walker alternative leans REJECTED, because the deadband
+> two-senses ruling is the standing proof that context-free term
+> marking is unsafe on this site (which is also exactly what keeps the
+> linear-cost argument true). Opening it as an arc would deliberately
+> supersede this entry's revisit trigger (evidence of a reader
+> stalling) with a timing rationale — to be decided after #275 ships,
+> against the scenario drills and the MS/TP bus sim. Two framing notes
+> from that conversation: the arc is a **glossary** more than a widget
+> (definitions in house voice, each passing the two-senses discipline;
+> the component is the small half), and term-grain tooltips + the
+> owner's collapsed-prose direction (section grain) + the sheet-note
+> linking pass (page grain) read as one "depth without density"
+> system — one disclosure idiom, not three. If it runs, it needs a
+> written curation rule for what earns a gloss, or the arc licenses
+> the eleventh-tooltip creep this entry warns about. A scoping pass
+> ran the same day (term inventory, marking-site count, sense-collision
+> classification); its record lands under `docs/` with the synthesis.
+
 ---
 
 ### Mixed air, mass basis vs volume basis *(measured 2026-07-28 — owner ruled the sim's basis; the teaching beat is unbuilt)*

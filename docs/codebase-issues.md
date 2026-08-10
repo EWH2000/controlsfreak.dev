@@ -9442,7 +9442,7 @@ become the fifth implementation.
 cite it.
 
 
-### 229. `#fcu-ovr-state` is a live region rewritten on every 10 Hz host tick *(noticed 2026-07-27 — still OPEN on the FCU; the AHU's twin `#ahu-ovr-state` shipped guarded 2026-07-30 after reproducing it verbatim, see the note at the end)*
+### 229. `#fcu-ovr-state` is a live region rewritten on every 10 Hz host tick *(noticed 2026-07-27; the AHU's twin shipped guarded 2026-07-30 — **RESOLVED 2026-08-09 · PR #493**, COV announcer per the owner-decision note; closing record at the end)*
 
 Same defect as prose-audit item 18, on a different element, found while
 fixing #227(a) and deliberately not bundled into it — a distinct element
@@ -9595,6 +9595,25 @@ whenever it can change.
 > machinery does not. (The commit also carries a throwaway
 > `playwright.lane3.config.js` whose own header says "Not committed" —
 > it must not ride forward.)
+
+> **CLOSED 2026-08-09 — PR #493 merged (v3.81.1), and the measurement
+> answered this entry's open question.** Engine-direct, five arms ×
+> three speeds, 60 s windows: the rendered sequence is **monotone in
+> all fifteen runs, chatter amplitude 0.00 °F** — the ~4 distinct
+> strings per 5 s were pure drift, so the COV increment does rate work
+> only. `OVR_COV_INCREMENT = 2` (owner instinct, confirmed against the
+> measured rates; minimum announcement gap 9.1 s at 20×, 3.8 s at 60×
+> on shipped knobs; one disclosed corner — both knobs at extremes at
+> 60× — gaps to 1.6 s for ~20 s, accepted by the owner as a bounded
+> storm in a deliberately runaway state, against ~600 announcements
+> pre-fix). The split shipped as prescribed; the spec was verified to
+> discriminate (three rows red against a de-dup-only announcer), and
+> the one row that survives a zeroed increment is deliberately the one
+> that does not read the constant. **The stranded prior art is
+> retired**: branch `issue-229/fcu-override-live-region` (`a13be01`)
+> deleted and `stash@{0}` dropped in one deliberate step after the
+> merge, per the triage in the note above (the EVENT/DRIFT split
+> survived into the shipped design; the settle machinery did not).
 
 ### 230. Light theme darkens `--amber` and `--heat` out of the register component identity depends on *(noticed 2026-07-28, AHU round-2 depiction review — **RESOLVED 2026-07-28**, owner ruled for separate fill tokens)*
 
@@ -12388,3 +12407,33 @@ module-level `tOa` / `qInternal` onto the plant, which is where the
 target field wants to live). The rate constant should be shared or
 identically derived — a weather model that diverges between the two
 workbench pages is a #263-family drift risk.
+
+### 279. `#fcu-stage-2` measures 43.9997px against a 44px floor — a sub-pixel flake in the touch-target row *(noticed 2026-08-09, the defeat lane's full-suite run — pre-existing, isolated at 3/8 serial failures)*
+
+`tests/ddc-workbench-fcu.spec.js` › *"the stage buttons clear the floor
+in both dimensions"* intermittently reads `#fcu-stage-2`'s height as
+`43.999755859375 ≥ 44` and fails — isolated at 3 failures in 8 serial
+runs of that row alone, on a tree whose only FCU-page delta was the
+version string in a `?v=`-free reference (same byte length either way).
+Sub-pixel line-height rounding, host-load dependent; CI on the same
+tree passed, which is the flake signature. Fix-shape candidates:
+assert `≥ 43.5` with a comment (the WCAG floor is CSS-pixel intent,
+not device-rounding trivia), or pad the control's `min-height` by 1px
+in the touch-floor block. Until one ships, a red on this row is this
+flake FIRST — but isolate before waving off, per the standing
+one-flake rule.
+
+### 280. The device face is theme-constant, but its LEDs ride theme tokens *(noticed 2026-08-09, the defeat lane's contrast measurement — nothing broken; register-consistency wrinkle)*
+
+`.led--warn` / `.led--alarm` take their colour from `--amber` /
+`--red`, which the light theme retunes — so the one surface ruled
+constant across themes (the equipment register) shows different LED
+inks per theme: warn measures 8.71:1 dark / 3.34:1 light against
+`--dev-face`, alarm 5.35:1 / 3.47:1. Everything clears the 1.4.11
+3:1 non-text floor, so this is a wrinkle, not a defect — but the
+register's whole argument is "a device is a device," and its LEDs
+currently disagree. Fix shape: `--led-warn` / `--led-alarm`
+constants beside the `--dev-*` family (defined once, no theme
+override) and pointing `.led--*` at them — a shared `styles.css`
+change. PR #495 documented the measured pairs in the device-face CSS
+header rather than reaching outside its scope.
