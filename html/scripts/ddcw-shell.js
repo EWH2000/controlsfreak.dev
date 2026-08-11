@@ -465,45 +465,91 @@ const DDCWShell = (function () {
             });
         }
 
-        // ── off-program window — lists every actuator point whose resolved
-        // command is NOT the sequence at slot 16. Walks unit.points (never
+        // ── off-program window — names every actuator point whose
+        // resolved command is NOT the sequence at slot 16, GROUPED BY THE
+        // SLOT IN PLAY: one line per slot family, each point rendered
+        // "<name> <value>" and the family's teaching tail written once
+        // (codebase-issues #283, treatment T-A). Walks unit.points (never
         // a hard-coded point list) and formats through formatPointValue, so
         // it makes no assumption about how many actuators a unit has or
         // what units they carry. Vocabulary matches tools/bacnet-priority:
         // 'slot 8 (Manual Operator)', slot 16 = the sequence, and
         // Relinquish_Default as the fallback property — never "slot 17".
         //
+        // Why grouped: this window is FIXED CHROME above the fullscreen
+        // instrument pane, so every row it grows comes straight out of the
+        // machine — six sentences measured 154px of a 768px cockpit (29%
+        // of the pane) with 57% of the band's width empty, and a preset
+        // seizes every actuator at once, so that is the common path rather
+        // than the corner. Nothing the per-point sentences carried is
+        // lost — which points, which slot, at what value, how to release —
+        // only the repeated tail, and the shared clause reads as the
+        // shared CAUSE: one hand on six points, not six unrelated events.
+        //
+        // The grouping key is the RESOLVED SLOT the walk already computed,
+        // never a second membership test — a point is in the slot-8 family
+        // because its own resolve said 8. Grouping by slot (rather than by
+        // the three-way "manual / released / other") is also what keeps
+        // the fallback arm honest: two points held at different slots get
+        // two lines, each naming its own.
+        //
         // Signature-guarded repaint: the host ticks at 10 Hz and this is an
         // aria-live region, so rewriting the DOM every tick would spam a
-        // screen reader (and burn layout). The joined entry text is the
-        // signature — it also changes on a units toggle, so a future
-        // temperature-carrying entry re-renders in the right unit.
+        // screen reader (and burn layout). The joined LINE text is the
+        // signature — it carries every point's value, so it still changes
+        // on a units toggle and a future temperature-carrying entry
+        // re-renders in the right unit.
         let offprogSig = null;
         function renderOffProgram() {
             const box  = document.getElementById('ddcw-offprog');
             const list = document.getElementById('ddcw-offprog-list');
-            const entries = [];
+            // One bucket per slot in play, in first-appearance order (so
+            // the lines follow the roster the chips already run in). 'rd'
+            // keys the released case — slot 16 NULL, resting on
+            // Relinquish_Default — so it can never collide with a slot
+            // number.
+            const families = [];
+            const byKey = {};
             unit.points.forEach(function (p) {
                 if (p.dir !== 'actuator') return;
                 const r = PriorityArray.resolve(cmd[p.id]);
                 if (r.slot === 16) return;      // following the program — not listed
-                if (r.slot === null) {
+                const key = r.slot === null ? 'rd' : 's' + r.slot;
+                if (!byKey[key]) {
+                    byKey[key] = { slot: r.slot, members: [] };
+                    families.push(byKey[key]);
+                }
+                byKey[key].members.push({ point: p, value: r.value });
+            });
+            const entries = families.map(function (fam) {
+                const many = fam.members.length > 1;
+                const all = many ? 'all ' : '';
+                const named = fam.members.map(function (m) {
+                    return m.point.name + ' ' + formatPointValue(m.point, m.value);
+                }).join(' · ');
+                if (fam.slot === null) {
                     // Slot 16 can only be NULL when the block is gone: a
                     // present block always evaluates (unwired inputs read
-                    // false/0), so the sequence writes it every tick.
-                    entries.push(p.name + ' — slot 16 is NULL (no ' + p.id
-                        + ' block on the wiresheet) — holding Relinquish_Default ('
-                        + formatPointValue(p, r.value) + ').');
-                } else if (r.slot === 8) {
-                    entries.push(p.name + ' — commanded by slot 8 (Manual Operator) at '
-                        + formatPointValue(p, r.value) + ' — write NULL to release.');
-                } else {
-                    // Unreachable from the shell's own hooks (only 8 and 16
-                    // are written), but the array underneath is a full
-                    // sixteen slots — don't render a lie if that changes.
-                    entries.push(p.name + ' — commanded by slot ' + r.slot + ' at '
-                        + formatPointValue(p, r.value) + '.');
+                    // false/0), so the sequence writes it every tick. The
+                    // missing BLOCK ids stay enumerated even when the tail
+                    // is shared — they are the one part of this line that
+                    // is per point, and they are what a reader carries
+                    // back to the wiresheet.
+                    const ids = fam.members.map(function (m) { return m.point.id; });
+                    const blocks = many
+                        ? ids.slice(0, -1).join(', ') + ' or ' + ids[ids.length - 1] + ' blocks'
+                        : ids[0] + ' block';
+                    return named + ' — slot 16 is NULL (no ' + blocks
+                        + ' on the wiresheet) — ' + all + 'holding Relinquish_Default.';
                 }
+                if (fam.slot === 8) {
+                    return named + ' — ' + all
+                        + 'commanded by slot 8 (Manual Operator) — write NULL to release.';
+                }
+                // Unreachable from the shell's own hooks (only 8 and 16
+                // are written), but the array underneath is a full
+                // sixteen slots — don't render a lie if that changes.
+                return named + ' — ' + all + 'commanded by slot ' + fam.slot + '.';
             });
             const sig = entries.join('\n');
             if (sig === offprogSig) return;
