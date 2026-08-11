@@ -217,16 +217,20 @@
     --dev-edge:     #2c2a20;   /* warm bezel seam */
     --dev-hi:       rgba(220,210,170,0.08);
     /* Status-LED inks for the device face. Frozen here rather than taken
-       from --amber / --red because those RETUNE in light theme, which
-       gave the one register ruled constant across themes a per-theme LED
-       colour (codebase-issues #280). The values are the DARK --amber /
-       --red — the pair the face was designed and measured against — so
-       the lit look is the one PR #495 characterised. Measured against
-       --dev-face: warn 8.71:1, alarm 5.35:1, both clear of WCAG 1.4.11's
-       3:1 non-text floor (an LED is drawn geometry, not type). Like the
-       --dev-* / --lcd-* tokens above, these are defined ONCE: no light
-       override, and none in the @media print block either — a device
-       prints as a device. */
+       from the software-register hues these used to share (--accent /
+       --teal / --amber / --red), because those RETUNE in light theme —
+       which gave the one register ruled constant across themes a
+       per-theme LED colour (codebase-issues #280). The values ARE the
+       dark hues, the set the face was designed and measured against, so
+       the lit look is the one PR #495 characterised and the change is a
+       no-op in dark theme. Measured against --dev-face: run 7.07:1,
+       comm 7.28:1, warn 8.71:1, alarm 5.35:1 — all clear of WCAG
+       1.4.11's 3:1 non-text floor (an LED is drawn geometry, not type).
+       Like the --dev-* / --lcd-* tokens above, these are defined ONCE:
+       no light override, and none in the @media print block either — a
+       device prints as a device. */
+    --led-run:      #6cb23a;
+    --led-comm:     #46b3ac;
     --led-warn:     #e0a94a;
     --led-alarm:    #e85d4f;
     --lcd-bg:       #adba4e;   /* lit olive-green backlight — BMS character LCD */
@@ -4070,13 +4074,15 @@ p.ref-note.compact {
    flat software-widget .bas-led: the colour rides a local --c so each
    modifier just reassigns it (no var(--x, #hex) fallback).
 
-   --warn / --alarm read the frozen --led-* constants in :root instead of
-   --amber / --red, so the device face keeps one LED colour in both themes
-   (codebase-issues #280). --run / --comm still take --accent / --teal and
-   so still shift per theme — same wrinkle, outside the fix shape #280
-   recorded. */
+   Every lit state reads a frozen --led-* constant from :root rather than
+   the software-register hue it used to share, so the device face shows
+   one LED colour in both themes (codebase-issues #280). The base --c
+   default is frozen too and is NOT dead: simulators/controller-wiring.html
+   paints a bare `class="led"` on a blown fuse, so the default is what
+   renders there. --off stays a literal because it is an UNLIT lamp rather
+   than a hue — it has no software-register twin to drift against. */
 .led {
-    --c: var(--accent);
+    --c: var(--led-run);
     width: 8px;
     height: 8px;
     border-radius: 50%;
@@ -4085,9 +4091,9 @@ p.ref-note.compact {
     background: var(--c);
     box-shadow: 0 0 5px 0 var(--c);
 }
-.led--run   { --c: var(--accent); }
+.led--run   { --c: var(--led-run); }
 .led--alarm { --c: var(--led-alarm); animation: blink 1.2s steps(1) infinite; }
-.led--comm  { --c: var(--teal); }
+.led--comm  { --c: var(--led-comm); }
 .led--warn  { --c: var(--led-warn); }
 .led--off   { --c: #2f3640; box-shadow: inset 0 0 2px rgba(0,0,0,0.7); }
 @keyframes blink { 50% { opacity: 0.25; box-shadow: none; } }
