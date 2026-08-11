@@ -19,6 +19,23 @@ nav: simulators
         Interactive models you can poke at, right in the browser. Practice on the controls before you're standing in front of the real thing — no login, nothing to install, nothing tracked.
     </p>
 
+    <p class="chip-row-preamble">Filter by activity:</p>
+
+    <div class="filter-chips" role="group" aria-label="Filter simulators by activity">
+        <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
+            All <span class="filter-chip-count">9</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="panel-wiring" aria-pressed="false">
+            Panel &amp; Wiring <span class="filter-chip-count">2</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="programming-logic" aria-pressed="false">
+            Programming &amp; Logic <span class="filter-chip-count">3</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="equipment-systems" aria-pressed="false">
+            Equipment &amp; Systems <span class="filter-chip-count">4</span>
+        </button>
+    </div>
+
     <div class="card-grid">
         {{ navCard({
             section:    'simulators',
@@ -26,7 +43,8 @@ nav: simulators
             titleShort: 'AHU Workbench',
             titleFull:  'DDC Workbench — Air Handler',
             desc:       'A single-zone air handler as a live DDC graphic — economizer dampers, hot-water coil, two DX stages — with the function-block program that runs it one tab away. Force sensors, override points through a real priority array, and watch the screen tell on the machine.',
-            pills:      ['Live DDC Graphic', 'Economizer', 'Priority Array', 'Wiresheet']
+            pills:      ['Live DDC Graphic', 'Economizer', 'Priority Array', 'Wiresheet'],
+            category:   'equipment-systems'
         }) }}
         {{ navCard({
             section:    'simulators',
@@ -34,7 +52,8 @@ nav: simulators
             titleShort: 'FCU Workbench',
             titleFull:  'DDC Workbench — Fan Coil',
             desc:       'A DX fan coil on the same workbench — a smaller machine that leaves the whole control chain readable. Load a sample sequence or wire your own from a blank sheet, then stage cooling, break the fan proof, and chase the fault from the graphic into the logic.',
-            pills:      ['Live DDC Graphic', 'DX Staging', 'Wire Your Own', 'Fault Presets']
+            pills:      ['Live DDC Graphic', 'DX Staging', 'Wire Your Own', 'Fault Presets'],
+            category:   'equipment-systems'
         }) }}
         {{ navCard({
             section:    'simulators',
@@ -42,7 +61,8 @@ nav: simulators
             titleShort: 'PID Tuner',
             titleFull:  'PID Tuning Helper',
             desc:       'A step-response simulator — gain · reset · rate (or Ti·Td / proportional band), preset tunings, a PV-vs-setpoint plot, and a symptom → tuning-move cheat sheet.',
-            pills:      ['PID Loop', 'Step Response', 'FOPDT', 'Tuning Cheat']
+            pills:      ['PID Loop', 'Step Response', 'FOPDT', 'Tuning Cheat'],
+            category:   'programming-logic'
         }) }}
         {{ navCard({
             section:    'simulators',
@@ -50,7 +70,8 @@ nav: simulators
             titleShort: 'Mock VFD',
             titleFull:  'Mock VFD Interface',
             desc:       'Practice navigating a generic drive\'s parameter tree on a clickable keypad — feel the run-source / speed-source gating before you\'re at a real drive. Paired with the VFDs explainer.',
-            pills:      ['VFD', 'Keypad Sim', 'Parameter Tree', 'Run / Speed Source']
+            pills:      ['VFD', 'Keypad Sim', 'Parameter Tree', 'Run / Speed Source'],
+            category:   'panel-wiring'
         }) }}
         {{ navCard({
             section:    'simulators',
@@ -59,6 +80,7 @@ nav: simulators
             titleFull:  'Function-Block Editor',
             desc:       'A graphical wiresheet sandbox — drop logic, math, timer, and PID blocks, wire them up, and watch a control sequence run live. Worked examples built in. Paired with the Function-Block Basics explainer.',
             pills:      ['Logic Sandbox', 'Logic / Math / Timer / PID', 'Worked Examples'],
+            category:   'programming-logic',
             desktopOnly: true
         }) }}
         {{ navCard({
@@ -67,7 +89,8 @@ nav: simulators
             titleShort: 'Staging Sequencer',
             titleFull:  'Equipment Staging Sequencer',
             desc:       'A live parallel plant — demand rides a day-load curve while a configurable sequence stages units up and down, rotates the lead three ways, injects a fault, and logs every move. Paired with the Equipment Staging explainer.',
-            pills:      ['Stage Up / Down', 'Lead Rotation', 'Runtime Equalize', 'Event Log']
+            pills:      ['Stage Up / Down', 'Lead Rotation', 'Runtime Equalize', 'Event Log'],
+            category:   'programming-logic'
         }) }}
         {{ navCard({
             section:    'simulators',
@@ -76,6 +99,7 @@ nav: simulators
             titleFull:  'Controller Wiring Simulator',
             desc:       'Wire a generic DDC controller end to end — power it from a transformer, drop sensors, an actuator, and a fan, and click terminal-to-terminal. Land it right and points read live; land it wrong and it sparks, opens, or pops the fuse.',
             pills:      ['24 VAC Power', 'UI / BI / AO / BO', 'Live Faults', 'Find the Fault'],
+            category:   'panel-wiring',
             desktopOnly: true
         }) }}
         {{ navCard({
@@ -85,6 +109,7 @@ nav: simulators
             titleFull:  'Hydronic Loop Builder',
             desc:       'Build a hot- or chilled-water loop on an elevation — drop a plant, pump, coils, and valves, pipe them port-to-port, and watch real flow, head, and water temperature solve and propagate live. Three worked loops built in.',
             pills:      ['Live Solver', 'Pump / Coil / Valve', 'Operating Point', '3 Examples'],
+            category:   'equipment-systems',
             desktopOnly: true
         }) }}
         {{ navCard({
@@ -93,9 +118,54 @@ nav: simulators
             titleShort: 'Refrigerant Loop',
             titleFull:  'Refrigerant Loop Simulator',
             desc:       'A live vapor-compression loop — turn airflow, charge, ambient, and metering superheat and watch suction, head, superheat, subcooling, and a starving coil react on manifold gauges and a live P-T strip. Pairs with the refrigerant lessons.',
-            pills:      ['Vapor-Compression', 'Suction / Head', 'Superheat / Subcooling', 'Starve the Coil']
+            pills:      ['Vapor-Compression', 'Suction / Head', 'Superheat / Subcooling', 'Starve the Coil'],
+            category:   'equipment-systems'
         }) }}
     </div>
 
 </main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        'use strict';
+        const grid = document.querySelector('.card-grid');
+        const chips = document.querySelectorAll('.filter-chip');
+        if (!grid || !chips.length) return;
+
+        const validSlugs = new Set();
+        chips.forEach(c => validSlugs.add(c.dataset.category));
+
+        function apply(slug) {
+            const showAll = slug === 'all';
+            chips.forEach(c => {
+                const on = c.dataset.category === slug;
+                c.classList.toggle('active', on);
+                c.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
+            grid.querySelectorAll('.nav-card').forEach(card => {
+                const match = showAll || card.dataset.category === slug;
+                if (match) card.removeAttribute('hidden');
+                else card.setAttribute('hidden', '');
+            });
+        }
+
+        function slugFromHash() {
+            const h = (location.hash || '').slice(1).toLowerCase();
+            return validSlugs.has(h) ? h : 'all';
+        }
+
+        chips.forEach(chip => chip.addEventListener('click', () => {
+            const slug = chip.dataset.category;
+            // replaceState — don't pollute back-button history with filter taps.
+            const newHash = slug === 'all' ? '' : '#' + slug;
+            history.replaceState(null, '', location.pathname + newHash);
+            apply(slug);
+        }));
+
+        window.addEventListener('hashchange', () => apply(slugFromHash()));
+        apply(slugFromHash());
+    })();
+</script>
 {% endblock %}

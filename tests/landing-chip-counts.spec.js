@@ -1,7 +1,8 @@
 const { test, expect } = require('@playwright/test');
 
-// Runtime-derived chip-count guard for the education and practice
-// landings — the section-landing sibling of home-hero.spec.js's
+// Runtime-derived chip-count guard for the education, practice and
+// simulators landings — the section-landing sibling of
+// home-hero.spec.js's
 // /tools/ chip cross-check (same drift rationale: hand-pinned counts
 // rot silently, so derive every count from the page itself and
 // cross-check it against the cards the chip actually filters to — a
@@ -22,6 +23,11 @@ const { test, expect } = require('@playwright/test');
 // The tools landing is deliberately NOT duplicated here — the
 // home-count drift guard in home-hero.spec.js already runs this exact
 // cross-check on /tools/ as its authoritative-count source.
+//
+// Simulators joined the chip landings 2026-08-11 (codebase-issues
+// #274, activity-based taxonomy). Its counts have no other guard —
+// home-hero.spec.js reads /simulators/ for the Browse pill's CARD
+// total only and never touches its chips — so it enrolls here.
 
 function watchErrors(page) {
     const errors = [];
@@ -88,6 +94,22 @@ test('education landing — every chip count matches its cards and the chips par
     expect(allCount, 'the All chip count should equal the card total').toBe(totalCards);
 
     expect(errors, 'education chip audit should log no errors').toEqual([]);
+});
+
+test('simulators landing — every chip count matches its cards and the chips partition All', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/simulators/');
+
+    const { allCount, totalCards, perChip } = await auditChips(page);
+    const claimed = claimedOnce(perChip);
+
+    // Unlike practice, every simulator is claimed — there is no
+    // chip-less bucket here, so the activity chips must partition the
+    // grid exactly.
+    expect(claimed.size, 'every simulator card should be claimed by a chip').toBe(totalCards);
+    expect(allCount, 'the All chip count should equal the card total').toBe(totalCards);
+
+    expect(errors, 'simulators chip audit should log no errors').toEqual([]);
 });
 
 test('practice landing — every chip count matches its cards and chips + field drills partition All', async ({ page }) => {

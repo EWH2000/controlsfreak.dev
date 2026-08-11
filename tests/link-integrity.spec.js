@@ -45,8 +45,9 @@
 // quietly weakened one.
 //
 // ── Why the allowlist is derived, never hardcoded ────────────────────
-// Three landings run an identical `location.hash` filter-chip router
-// (tools, education, practice), so `#hydronics` on /tools/ is a valid
+// Four landings run an identical `location.hash` filter-chip router
+// (tools, education, practice, simulators — the last joined 2026-08-11,
+// codebase-issues #274), so `#hydronics` on /tools/ is a valid
 // route, not a broken anchor. Each page's own JS builds its valid set
 // with `chips.forEach(c => validSlugs.add(c.dataset.category))`; this
 // spec scrapes the same buttons for the same reason. A hardcoded list of
@@ -163,7 +164,7 @@ test('every fragment href resolves to a real id', () => {
     expect(builtHtml.length, 'sanity: built pages were found').toBeGreaterThanOrEqual(120);
     expect(allIds.size, 'sanity: ids were collected').toBeGreaterThanOrEqual(2000);
     // EXACT, not a minimum — see the header note on hollowed guards.
-    expect(chipsByUrl.size, 'sanity: the three filter-chip landings were found').toBe(3);
+    expect(chipsByUrl.size, 'sanity: the four filter-chip landings were found').toBe(4);
     let chipSlugs = 0;
     for (const chips of chipsByUrl.values()) chipSlugs += chips.size;
     expect(chipSlugs, 'sanity: chip route slugs were collected').toBeGreaterThanOrEqual(20);
