@@ -132,9 +132,15 @@ test.describe('DDC Workbench — 2-stage + safeties program', () => {
         expect(chips['Fan En']).toBe('ON');
         const offprog = await page.evaluate(
             () => document.getElementById('ddcw-offprog').textContent);
-        expect(offprog).toContain('Fan Spd — commanded by slot 8');
-        expect(offprog).not.toContain('Clg Stg 1 —');
-        expect(offprog).not.toContain('Clg Stg 2 —');
+        // The window groups by the slot in play (#283), so "Fan Spd 40 %"
+        // sitting directly against the tail is itself the claim that the
+        // fan is ALONE at slot 8 — a second held point would join the
+        // same line ahead of the em dash. The stage names must not appear
+        // at all: they are the sequence's doing at slot 16.
+        expect(offprog).toContain(
+            'Fan Spd 40 % — commanded by slot 8 (Manual Operator) — write NULL to release.');
+        expect(offprog).not.toContain('Clg Stg 1');
+        expect(offprog).not.toContain('Clg Stg 2');
 
         // Release the fan to the sequence: full airflow warms the coil
         // past the clear line, the min-off elapses, and the unit comes
@@ -194,8 +200,13 @@ test.describe('DDC Workbench — 2-stage + safeties program', () => {
         expect(held['Clg Stg 2'], 'the scenario wrote y2 at slot 8').toBe('ON');
         const offprog = await page.evaluate(
             () => document.getElementById('ddcw-offprog').textContent);
-        expect(offprog).toContain('Clg Stg 1 — commanded by slot 8');
-        expect(offprog).toContain('Clg Stg 2 — commanded by slot 8');
+        // A scenario writes slot 8 on every output it touches, so the
+        // grouped window (#283) names them on ONE line under one tail —
+        // both stages among them, at the values the chips just read.
+        expect(offprog).toContain('Clg Stg 1 ON');
+        expect(offprog).toContain('Clg Stg 2 ON');
+        expect(offprog).toContain(
+            'all commanded by slot 8 (Manual Operator) — write NULL to release.');
 
         // "Hand them back with the NULL — released box under Compressor
         // stage and they drop on the next tick: on the proof interlock."
