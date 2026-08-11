@@ -536,6 +536,59 @@ test.describe('workbench session: a snapshot taken mid-ramp', () => {
         expect(oatLater).toBeGreaterThanOrEqual(10);
         expect(errs).toEqual([]);
     });
+
+    test('the FCU splits the same way, and the snapshot is where you can see it', async ({ page }) => {
+        // codebase-issues #278 — the ramp ported to the FCU for
+        // weather-model parity. Same contract as the row above, but this
+        // unit has NO `oat` point and so no OAT chip: there is no page
+        // surface painting the plant's outdoor-air truth, and
+        // #fcu-oa-val is the knob's own readout (the target).
+        //
+        // So this row reads the SNAPSHOT, which is a deliberate
+        // exception to this file's read-off-surfaces policy and earns it:
+        // the snapshot is the artifact under test in this file, and it is
+        // the only place the two halves are both visible on this unit.
+        // It is also the assertion that matters most here — that the
+        // chase is running in the BROWSER, not merely in the vm where
+        // ddcw-fcu-unit.spec.js exercises it.
+        const errs = await open(page, FCU);
+        await page.locator('#fcu-oa-slider').evaluate((el) => {
+            el.value = '55';
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        // Leave almost immediately. The walk is 25 °F at 0.5 °F per
+        // sim-second = 50 sim-seconds, ~2.5 wall-seconds at the default
+        // 20× clock, so a departure now is nowhere near arrival — a wide
+        // margin, not a tuned one.
+        await page.waitForTimeout(250);
+
+        await page.click('.ddcw-unit-sel a[href="' + AHU + '"]');
+        await page.waitForURL(/ddc-workbench\.html/);
+        await page.waitForTimeout(300);
+
+        // Same tab, same origin — the FCU's key is still there.
+        const saved = await page.evaluate(() => {
+            const raw = sessionStorage.getItem('cf_ddcw_fcu');
+            return raw ? JSON.parse(raw) : null;
+        });
+        expect(saved, 'the FCU left a snapshot behind').not.toBeNull();
+        expect(saved.plant.oaTarget, 'the standing command travelled').toBe(55);
+        expect(saved.plant.oaT, 'the truth was still on its way, not teleported')
+            .toBeGreaterThan(55);
+        expect(saved.plant.oaT, 'and it had genuinely started moving')
+            .toBeLessThan(80);
+
+        // Coming back, the reader's command is intact and the walk goes on.
+        await page.click('.ddcw-unit-sel a[href="' + FCU + '"]');
+        await page.waitForURL(/ddc-workbench-fcu/);
+        await page.waitForTimeout(400);
+        await expect(page.locator('#ddcw-resumed')).toBeVisible();
+        expect(await page.locator('#fcu-oa-slider').inputValue(),
+            'the handle came back on the target the reader set').toBe('55');
+        expect((await page.locator('#fcu-oa-val').textContent()).trim(),
+            'and so did the knob readout').toMatch(/^55\s/);
+        expect(errs).toEqual([]);
+    });
 });
 
 test.describe('workbench session: the module contract', () => {
