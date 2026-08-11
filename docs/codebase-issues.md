@@ -12721,7 +12721,7 @@ the panel (the 1.4.13 hoverable grace) dies. Nothing breaks today
 (the pilot page has no fullscreen target). Add a palette-style
 exemption when glosses reach tool/simulator pages.
 
-### 289. A blown fuse and a running fuse render the same green on the wiring sim *(noticed 2026-08-10, the #280 lane — **CLOSED 2026-08-11 · NOT A DEFECT · PR #516**; the entry's premise was DISPROVEN before any fix shipped — correction block at the end)*
+### 289. A blown fuse and a running fuse render the same green on the wiring sim *(noticed 2026-08-10, the #280 lane — **CLOSED 2026-08-11 · NOT A DEFECT · PR #517**; the entry's premise was DISPROVEN before any fix shipped — correction block at the end)*
 
 **As first written (2026-08-10):** `controller-wiring.html:910` builds
 `'led ' + (blown ? '' : 'led--run')` — clearly intending the lamp to
@@ -12761,11 +12761,13 @@ do go `led--off` on a blown fuse (`wiring-engine.js:330` / `:527`
 return `led: 'off'` for dead points). The 2026-08-10 ruling is
 superseded — it answered a report of a defect that did not exist.
 
-**Shipped anyway, as cleanup (PR #516):** `:910` now names the state
-explicitly (`'led ' + (blown ? 'cw-fuse-led--blown' : 'led--run')`)
-and `:103` was retargeted onto that class, so the colour source is
-visible from the JS line instead of hiding in an invisible descendant
-rule — that opacity is what made this entry misread the page. Zero
+**Shipped anyway, as cleanup (PR #517):** the repaint line (`:919`
+after the change, `:910` before) now names the state explicitly —
+`'led ' + (blown ? 'cw-fuse-led--blown' : 'led--run')` — and the
+`:103` rule was retargeted onto that class rather than the parent, so
+the colour has exactly one source and it is visible from the JS line
+instead of hiding in an invisible descendant rule; that opacity is
+what made this entry misread the page. Zero
 rendered change, measured before/after in both themes (fill, shadow,
 box). The trailing-space nit in the old string died with it. The
 `smoke.spec.js` broken-fuse row now pins both classes and asserts the
