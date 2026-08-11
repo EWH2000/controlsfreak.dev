@@ -418,8 +418,13 @@ section). **Category keys mirror the landing pages' `navCard()`
   an `owners` path that names no page, the anti-vacuity probe) and the
   **`gloss` transform** (the repo's first `addTransform`; post-render,
   so a trigger arriving via a partial is visible at all). The build
-  fails **loudly** on an unknown id, a non-`<button>` trigger, a mark
-  on an owning page, a stale `owners` path, or a non-kebab entry id.
+  fails **loudly** on an unknown id, a non-`<button>` trigger, a
+  trigger without an explicit `type="button"` (a bare `<button>`
+  defaults to `type="submit"`), a mark on an owning page, a page that
+  already uses the `gloss-tip-<id>` id, a stale `owners` path, or a
+  non-kebab entry id. Marks inside HTML comments are masked out before
+  the scan, so commented-out example markup neither fails the build nor
+  earns a panel.
   The transform splices the `aria-describedby` — which is the whole
   no-JS screen-reader story, since a description is computed even
   while the panel is `hidden` — then injects one `.gloss-tip` panel

@@ -11,7 +11,10 @@
 //      every behavioral assertion below would pass vacuously against a
 //      page whose marks silently stopped rendering.
 //   2. BEHAVIOR — focus-open, tap-toggle, one-at-a-time, Escape,
-//      outside-dismiss, driven against the built page.
+//      outside-dismiss, the preview/pinned split and the scroll rules,
+//      driven against the built page. Every gesture test PARKS its
+//      trigger mid-viewport first; see park() for why that is
+//      correctness rather than hygiene.
 //   3. DATA FILE — glossary.js's shape, checked pure-Node the way
 //      data-integrity.spec.js checks the hand-touched data tables.
 //
@@ -20,10 +23,13 @@
 // for that — navCategoryGuard, educationSequenceGuard, flowStaticGuard
 // and quizOrderGuard are none of them covered by a spec; a build guard
 // is proven by the build, and `npm run build` is what CI and the
-// Cloudflare deploy both run. All five gloss guard arms (unknown id,
-// non-button trigger, mark on an owning page, stale owners path,
-// non-kebab entry id) were exercised by hand against this branch and
-// each one failed the build with a named offender. Arm 1's
+// Cloudflare deploy both run. All SEVEN gloss guard arms (unknown id,
+// non-button trigger, missing type="button", mark on an owning page,
+// gloss-tip-<id> namespace collision, stale owners path, non-kebab
+// entry id) were exercised by hand against this branch and each one
+// failed the build with a named offender; the comment-masking arm was
+// verified in the other direction, by confirming a commented-out
+// trigger builds clean and injects nothing. Arm 1's
 // anti-vacuity floor is what keeps the guards from decaying into a
 // silent pass between those hand checks.
 
@@ -92,9 +98,21 @@ test('a page with no marks ships no gloss payload', async ({ page }) => {
 
 // ── 2. Behavior ──────────────────────────────────────────────────────
 
+// Park the trigger mid-viewport BEFORE interacting. Two reasons, both
+// real rather than defensive: focusing or clicking an offscreen trigger
+// makes the browser scroll it into view, and a page scroll is a
+// deliberate dismissal in this component — so without this a "click
+// twice" assertion is really measuring whether Playwright happened to
+// re-scroll between the clicks. Centering first makes every gesture
+// below scroll-free and therefore deterministic.
+async function park(trigger) {
+    await trigger.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+}
+
 test('focus opens a gloss and Escape dismisses it in place', async ({ page }) => {
     await page.goto(PILOT);
     const trigger = page.locator('button[data-gloss]').first();
+    await park(trigger);
     const id = await trigger.getAttribute('data-gloss');
     const panel = page.locator(`#gloss-tip-${id}`);
 
@@ -112,6 +130,7 @@ test('focus opens a gloss and Escape dismisses it in place', async ({ page }) =>
 test('tap toggles a gloss open and closed', async ({ page }) => {
     await page.goto(PILOT);
     const trigger = page.locator('button[data-gloss]').first();
+    await park(trigger);
     const id = await trigger.getAttribute('data-gloss');
     const panel = page.locator(`#gloss-tip-${id}`);
 
@@ -121,6 +140,72 @@ test('tap toggles a gloss open and closed', async ({ page }) => {
     await expect(panel).toBeVisible();
 
     await trigger.click();
+    await expect(panel).toBeHidden();
+});
+
+// The regression test for the hover/click race. Before the preview/
+// pinned split, a click was decided against LIVE state, so a pointer
+// that dwelled past the 120ms hover-intent delay opened a preview and
+// the click then closed it — the same gesture that opened the panel
+// when the user was quick. Measured both ways on this page before the
+// fix. Dwelling well past the threshold is the whole point of the test,
+// so it must not be shortened into insignificance.
+test('a click on a hover-opened gloss pins it rather than closing it', async ({ page }) => {
+    await page.goto(PILOT);
+    const trigger = page.locator('button[data-gloss]').first();
+    await park(trigger);
+    const id = await trigger.getAttribute('data-gloss');
+    const panel = page.locator(`#gloss-tip-${id}`);
+
+    await trigger.hover();
+    await expect(panel).toBeVisible();          // the hover PREVIEW
+
+    await trigger.click();
+    await expect(panel).toBeVisible();          // pinned, not toggled shut
+
+    // Pinned means the pointer wandering off no longer dismisses it —
+    // that is exactly what separates a pin from a preview.
+    await page.mouse.move(2, 2);
+    await page.waitForTimeout(400);             // longer than HOVER_CLOSE_MS
+    await expect(panel).toBeVisible();
+
+    await trigger.click();                      // and a second click still closes
+    await expect(panel).toBeHidden();
+});
+
+test('a hover preview closes on its own when the pointer leaves', async ({ page }) => {
+    await page.goto(PILOT);
+    const trigger = page.locator('button[data-gloss]').first();
+    await park(trigger);
+    const id = await trigger.getAttribute('data-gloss');
+    const panel = page.locator(`#gloss-tip-${id}`);
+
+    await page.mouse.move(2, 2);                // start off the trigger
+    await trigger.hover();
+    await expect(panel).toBeVisible();
+
+    await page.mouse.move(2, 2);
+    await expect(panel).toBeHidden();
+});
+
+test('a scroll inside the panel does not dismiss it', async ({ page }) => {
+    await page.goto(PILOT);
+    const trigger = page.locator('button[data-gloss]').first();
+    await park(trigger);
+    const id = await trigger.getAttribute('data-gloss');
+    const panel = page.locator(`#gloss-tip-${id}`);
+
+    await trigger.click();
+    await expect(panel).toBeVisible();
+
+    // .gloss-tip provisions overflow-y:auto and place() can hand it a
+    // max-height, so this is reachable markup: a reader scrolling the
+    // definition is using the panel, not dismissing it.
+    await panel.evaluate((el) => el.dispatchEvent(new Event('scroll', { bubbles: true })));
+    await expect(panel).toBeVisible();
+
+    // A PAGE scroll still dismisses — that is the design.
+    await page.evaluate(() => document.dispatchEvent(new Event('scroll', { bubbles: true })));
     await expect(panel).toBeHidden();
 });
 
@@ -135,9 +220,11 @@ test('only one gloss is open at a time', async ({ page }) => {
     const first = page.locator(`button[data-gloss="${ids[0]}"]`).first();
     const second = page.locator(`button[data-gloss="${ids[1]}"]`).first();
 
+    await park(first);
     await first.click();
     await expect(page.locator(`#gloss-tip-${ids[0]}`)).toBeVisible();
 
+    await park(second);
     await second.click();
     await expect(page.locator(`#gloss-tip-${ids[1]}`)).toBeVisible();
     await expect(page.locator(`#gloss-tip-${ids[0]}`)).toBeHidden();
@@ -150,6 +237,7 @@ test('a pointerdown outside the gloss closes it', async ({ page }) => {
     const id = await trigger.getAttribute('data-gloss');
     const panel = page.locator(`#gloss-tip-${id}`);
 
+    await park(trigger);
     await trigger.click();
     await expect(panel).toBeVisible();
 
@@ -160,6 +248,7 @@ test('a pointerdown outside the gloss closes it', async ({ page }) => {
 test('the panel is positioned inside the viewport', async ({ page }) => {
     await page.goto(PILOT);
     const trigger = page.locator('button[data-gloss]').first();
+    await park(trigger);
     await trigger.click();
 
     const fits = await page.evaluate(() => {
