@@ -12721,9 +12721,9 @@ the panel (the 1.4.13 hoverable grace) dies. Nothing breaks today
 (the pilot page has no fullscreen target). Add a palette-style
 exemption when glosses reach tool/simulator pages.
 
-### 289. A blown fuse and a running fuse render the same green on the wiring sim *(noticed 2026-08-10, the #280 lane — behavioral, pre-existing; owner ruling recorded, fix queued)*
+### 289. A blown fuse and a running fuse render the same green on the wiring sim *(noticed 2026-08-10, the #280 lane — **CLOSED 2026-08-11 · NOT A DEFECT · PR #517**; the entry's premise was DISPROVEN before any fix shipped — correction block at the end)*
 
-`controller-wiring.html:910` builds
+**As first written (2026-08-10):** `controller-wiring.html:910` builds
 `'led ' + (blown ? '' : 'led--run')` — clearly intending the lamp to
 stop reading as "run" on a blown fuse — but the base `.led` default
 painted the bare element the same green `.led--run` uses, so the
@@ -12732,6 +12732,49 @@ froze the default's COLOR theme-constant; the logic is untouched.)
 **Owner ruling 2026-08-10: blown = dark — `led--off`** (the lamp
 depicts circuit-powered / fuse-OK, matching the code's intent).
 One-line fix; queued as its own lane.
+
+**Premise correction, recorded before implementation (2026-08-11).**
+The lamp was never green. This page carries its own rule —
+`controller-wiring.html:103`,
+`.cw-fuse.cw-fuse--blown .led { --c: var(--red); }` — which the entry
+missed. At `(0,3,0)` it out-specifies the `.led` default's `(0,1,0)`,
+and `:908` toggles `cw-fuse--blown` on the parent in the same
+`refresh()` breath that `:910` rewrites the child, so the two are
+never out of step. Measured on the built site, `broken-fuse` preset,
+both themes: **healthy `#6cb23a` green, blown `#e85d4f` red** (light
+theme `#c4382f`) — plus the `cw-fuse-flash` red-glow animation `:281`
+fires on the failure edge. Only the JS line LOOKED bare; the render
+was distinct the whole time.
+
+**The ruled fix would also have regressed the page.** `led--off` is
+`(0,1,0)` and loses to that same `:103` rule, so `--c` stays red and
+only the `box-shadow` flips — measured, both themes: a red dot with
+its glow swapped for a dark inset, desynced from the flash keyframes
+that still animate red glow. Reaching an actually-dark lamp meant
+deleting `:103`, i.e. removing the red failure cue — a design change,
+not the one-line fix the entry scoped.
+
+**Owner re-ruling 2026-08-11, with the true facts in front of him:
+RED STAYS.** The fuse lamp is the panel's fault annunciator, and the
+dark/unpowered story is already told by the ten terminal LEDs, which
+do go `led--off` on a blown fuse (`wiring-engine.js:330` / `:527`
+return `led: 'off'` for dead points). The 2026-08-10 ruling is
+superseded — it answered a report of a defect that did not exist.
+
+**Shipped anyway, as cleanup (PR #517):** the repaint line (`:919`
+after the change, `:910` before) now names the state explicitly —
+`'led ' + (blown ? 'cw-fuse-led--blown' : 'led--run')` — and the
+`:103` rule was retargeted onto that class rather than the parent, so
+the colour has exactly one source and it is visible from the JS line
+instead of hiding in an invisible descendant rule; that opacity is
+what made this entry misread the page. Zero
+rendered change, measured before/after in both themes (fill, shadow,
+box). The trailing-space nit in the old string died with it. The
+`smoke.spec.js` broken-fuse row now pins both classes and asserts the
+blown fill differs from the running fill, so the green-on-green the
+entry alleged could not ship unnoticed today. `styles.css`'s LED
+comment, which repeated the same false claim, was corrected in the
+same PR.
 
 ### 290. Simulator prose is set smaller AND dimmer than lesson prose — squint territory *(reported 2026-08-11 by the owner — site-wide legibility, DESIGN CALL; survey measured, treatment open)*
 
@@ -12811,3 +12854,36 @@ The shell header names `ddcw-shell.spec.js` /
 AHU spec now pins the off-program window's grouped format directly.
 Comment-only, but the shell is a live-page script, so it rides the
 next PR that touches `ddcw-shell.js` rather than shipping alone.
+
+### 293. The blown-fuse flash cancels itself — `refresh()` wipes the class the drift tick then never restores *(noticed 2026-08-11, the #289 lane — cosmetic, log-don't-fix)*
+
+`fireBlownFuse` (`controller-wiring.html:983`) adds `cw-fuse-flash`
+and removes it on a 1600 ms timer, driving a 1.5 s red-glow keyframe
+(`0.5s steps(2) 3`). But `refresh()` repaints the lamp with a whole
+`className` assignment (`:919`), which **wipes `cw-fuse-flash`** along
+with everything else, and the re-arm at `:932` is edge-gated
+(`blown && !lastBlown`) — so once `lastBlown` is set the flash never
+comes back. Any `refresh()` inside the window silently truncates the
+cue.
+
+One fires on its own: the cosmetic-drift tick (`:1172`,
+`setInterval(…, 2500)`) calls `refresh()` whenever a `therm10k` sits
+on the bench (`:1170`) — and the `broken-fuse` preset **places one**
+(`:1096`), so this is the canonical failure demo, not an edge case.
+The tick's phase against the click decides the outcome; predicted
+duty 1500/2500 = 60 %.
+
+Measured on the shipped build (8 reps, click staggered 380 ms across
+the interval, polling for the class): flash armed every time, dropped
+at **253 / 656 / 1008 / 1418 ms** in four reps against **~1612 ms**
+(the timeout firing normally) in the other four — **4 of 8 truncated
+mid-animation**, consistent with the predicted duty at this sample
+size.
+
+Cosmetic only: colour, tag text, faults and readouts are all correct
+either way — the visitor just gets a shorter flash, or a single
+frame of one. Fix shape, when it's worth it: swap `:919`'s
+`className` assignment for targeted `classList` toggles so the repaint
+stops clobbering unrelated state, or re-arm from the `blown` state
+rather than the edge. Left unfixed deliberately — noticed in passing
+during #289, and the house rule is log-don't-fix.

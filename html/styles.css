@@ -4268,10 +4268,16 @@ p.ref-note.compact {
    Every lit state reads a frozen --led-* constant from :root rather than
    the software-register hue it used to share, so the device face shows
    one LED colour in both themes (codebase-issues #280). The base --c
-   default is frozen too and is NOT dead: simulators/controller-wiring.html
-   paints a bare `class="led"` on a blown fuse, so the default is what
-   renders there. --off stays a literal because it is an UNLIT lamp rather
-   than a hue — it has no software-register twin to drift against. */
+   default is frozen too, but it is a FALLBACK, not a rendered state:
+   every caller names a modifier, so no element on the site paints a bare
+   `class="led"`. An earlier version of this comment claimed the blown
+   fuse on simulators/controller-wiring.html did — it never did. That
+   page's own rule out-specified this default and painted the lamp red
+   the whole time; only the JS line LOOKED bare (codebase-issues #289,
+   premise disproven 2026-08-11 and the class now named explicitly).
+   Treat a bare .led as unreachable, not as green. --off stays a literal
+   because it is an UNLIT lamp rather than a hue — it has no
+   software-register twin to drift against. */
 .led {
     --c: var(--led-run);
     width: 8px;
