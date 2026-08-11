@@ -105,8 +105,17 @@ test('a page with no marks ships no gloss payload', async ({ page }) => {
 // twice" assertion is really measuring whether Playwright happened to
 // re-scroll between the clicks. Centering first makes every gesture
 // below scroll-free and therefore deterministic.
+//
+// `behavior: 'instant'` is LOAD-BEARING: styles.css sets
+// `html { scroll-behavior: smooth }`, so the default animates, and an
+// in-flight smooth scroll keeps emitting scroll events straight through
+// the click that follows — dismissing the panel that click just opened.
+// That is the component behaving correctly against a test that hadn't
+// finished scrolling; it cost one suite run to see. The settle wait is
+// belt to that braces.
 async function park(trigger) {
-    await trigger.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+    await trigger.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
+    await new Promise((resolve) => setTimeout(resolve, 150));
 }
 
 test('focus opens a gloss and Escape dismisses it in place', async ({ page }) => {
@@ -127,20 +136,43 @@ test('focus opens a gloss and Escape dismisses it in place', async ({ page }) =>
     expect(stillFocused, 'Escape leaves focus on the trigger').toBe(true);
 });
 
-test('tap toggles a gloss open and closed', async ({ page }) => {
-    await page.goto(PILOT);
-    const trigger = page.locator('button[data-gloss]').first();
-    await park(trigger);
-    const id = await trigger.getAttribute('data-gloss');
-    const panel = page.locator(`#gloss-tip-${id}`);
+// The toggle is asserted on a TOUCH context, deliberately. Tap is the
+// whole touch story for this component, and a touch device emits no
+// mouseover at all — so there is no hover-intent timer in play and the
+// two taps are decided purely by the pre-gesture state. Asserting the
+// same thing with a mouse click means asserting against a pointer that
+// is also, unavoidably, hovering: the gesture is real and covered (see
+// the pin test below, which hovers ON PURPOSE), but it is the wrong
+// instrument for pinning toggle semantics.
+test.describe('touch', () => {
+    test.use({ hasTouch: true });
 
-    // The click-after-focus trap: focus fires first and opens the panel,
-    // so a naive toggle would close it on the very same gesture.
-    await trigger.click();
-    await expect(panel).toBeVisible();
+    test('tap toggles a gloss open and closed', async ({ page }) => {
+        await page.goto(PILOT);
+        const trigger = page.locator('button[data-gloss]').first();
+        await park(trigger);
+        const id = await trigger.getAttribute('data-gloss');
+        const panel = page.locator(`#gloss-tip-${id}`);
 
-    await trigger.click();
-    await expect(panel).toBeHidden();
+        // The click-after-focus trap: focus fires first and opens the
+        // panel, so a naive toggle would close it on the same gesture.
+        await trigger.tap();
+        await expect(panel).toBeVisible();
+
+        // Settle past HOVER_CLOSE_MS before the second tap. A tap MUST
+        // leave the panel pinned — open and staying open — and under
+        // host load the synthesized compatibility mouse events a touch
+        // tap generates can leave a preview-close pending. Asserting the
+        // settled state is the real contract and is deterministic;
+        // tapping again mid-flight measures the scheduler instead. If a
+        // tap ever failed to pin, this wait turns that into a reliable
+        // failure rather than a load-dependent one.
+        await page.waitForTimeout(350);
+        await expect(panel).toBeVisible();
+
+        await trigger.tap();
+        await expect(panel).toBeHidden();
+    });
 });
 
 // The regression test for the hover/click race. Before the preview/
