@@ -908,6 +908,71 @@ test.describe('AHU workbench page: the mirror diet', () => {
     });
 });
 
+test.describe('AHU workbench page: the mirror absorbs its buttons\' hit-area bleed (#266)', () => {
+
+    // Owner decision 2026-08-10, after the design call sat open since the
+    // diet landed. .ahu-point-btn widens its target with a negative margin
+    // so the enlarged hit area does not move the text — and when a BUTTON
+    // holds the last auto-fit track, that -0.3rem right bleed pokes past
+    // the grid's content box. In normal flow it is invisible (the pane is
+    // not a scroller); in the fullscreen cockpit .tab-pane.active is
+    // overflow: auto, so it was a 5px horizontal scrollbar. Grid
+    // padding-right absorbs it, unscoped: measured before the fix, the
+    // pane overflowed across 360–681 and 828 up in flow and 360–607 and
+    // 754 up in fullscreen, so there is no clean regime to scope to.
+    //
+    // Two failure modes, one row each: the overflow itself, in both
+    // states, and the EQUALITY the fix rests on.
+
+    const bleedAndPad = (page) => page.evaluate(() => {
+        const btn = document.querySelector('.ahu-point-btn');
+        const grid = document.querySelector('.ahu-points');
+        return {
+            bleed: -parseFloat(getComputedStyle(btn).marginRight),
+            pad: parseFloat(getComputedStyle(grid).paddingRight),
+        };
+    });
+
+    const overflow = (page) => page.evaluate(() => {
+        const grid = document.querySelector('.ahu-points');
+        const pane = document.querySelector('#tab-unit');
+        return {
+            grid: grid.scrollWidth - grid.clientWidth,
+            pane: pane.scrollWidth - pane.clientWidth,
+        };
+    });
+
+    test('neither the grid nor the fullscreen pane scrolls sideways, above or below the cutoff', async ({ page }) => {
+        await open(page);               // the config's default viewport is 1280 wide
+        expect(await overflow(page), 'desktop, normal flow').toEqual({ grid: 0, pane: 0 });
+
+        await page.click('.tool-card-fullscreen-btn');
+        expect(await overflow(page), 'desktop, fullscreen cockpit').toEqual({ grid: 0, pane: 0 });
+
+        // 420 sits inside the widest measured pre-fix band on this page and
+        // is below the diet cutoff, where the mix of plain and button cells
+        // is the one that predates the diet entirely. Checked in BOTH
+        // states because the bands differ between them.
+        await page.setViewportSize({ width: 420, height: 900 });
+        expect(await overflow(page), 'phone width, fullscreen cockpit').toEqual({ grid: 0, pane: 0 });
+        await page.keyboard.press('Escape');
+        expect(await overflow(page), 'phone width, normal flow').toEqual({ grid: 0, pane: 0 });
+    });
+
+    test('the padding still equals the bleed it absorbs', async ({ page }) => {
+        // The rationale, not just the constant: the two values are one
+        // quantity written twice, so a retune of the hit area that leaves
+        // the grid alone reddens here rather than quietly re-opening the
+        // scrollbar at some widths and not others. Dropping the negative
+        // margin instead was rejected — it would shrink the (hover: none)
+        // target back under the 44px floor.
+        await open(page);
+        const m = await bleedAndPad(page);
+        expect(m.bleed, 'the button still bleeds 0.3rem past its box').toBeCloseTo(4.8, 1);
+        expect(m.pad, 'the grid absorbs exactly that much').toBeCloseTo(m.bleed, 1);
+    });
+});
+
 test.describe('AHU workbench page: the fogging disclosure (#240)', () => {
 
     // ⚠ THE RECIPE MOVED WHEN THE HARDWIRED LOW-LIMIT STAT LANDED
