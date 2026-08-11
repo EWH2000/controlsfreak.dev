@@ -100,7 +100,16 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
         }
         .cw-fuse .tag { color: var(--accent); }
         .cw-fuse.cw-fuse--blown .tag { color: var(--red); }
-        .cw-fuse.cw-fuse--blown .led { --c: var(--red); }
+        /* The blown lamp is this panel's fault ANNUNCIATOR, so it goes red
+           rather than dark — the ten terminal LEDs already carry the
+           dark/unpowered story (wiring-engine returns led:'off' for every
+           dead point). The modifier is named on the element by refresh()
+           rather than inherited from the parent's .cw-fuse--blown, so the
+           JS line says out loud which state it paints: keying it on the
+           parent left refresh() emitting a bare `class="led"` that reads
+           as the green .led default it silently out-specified
+           (codebase-issues #289). */
+        .led.cw-fuse-led--blown { --c: var(--red); }
 
         .cw-group-label {
             font-family: var(--mono);
@@ -907,7 +916,7 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
             const blown = res.power.blownFuse;
             fuse.classList.toggle('cw-fuse--blown', blown);
             fuse.querySelector('.tag').textContent = blown ? 'FUSE BLOWN' : 'FUSE OK';
-            fuse.querySelector('.led').className = 'led ' + (blown ? '' : 'led--run');
+            fuse.querySelector('.led').className = 'led ' + (blown ? 'cw-fuse-led--blown' : 'led--run');
 
             // faults
             paintFaults(res.faults);
