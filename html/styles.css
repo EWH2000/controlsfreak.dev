@@ -1336,9 +1336,10 @@ details.tool-preamble > .preamble-rest {
    --text-dim summary, no fill): the fold should recede the way the
    background it hides does. NO transitions — instant toggle, AX-sharp,
    so there is nothing for prefers-reduced-motion to squash. Ships
-   closed and holds no state: /scripts/prose-fold.js only force-opens
-   for print (CSS cannot open a closed <details>), so no cf_* key and
-   no privacy.html surface. The ▸ marker is pseudo content with no
+   closed and holds no state: /scripts/details-print.js force-opens it
+   for print (CSS cannot open a closed <details>) and nothing else, so
+   no cf_* key and no privacy.html surface. The ▸ marker is pseudo
+   content with no
    letter or digit in it, so the contrast sweep skips it as decoration
    — same standing as .pid-spoiler's. */
 details.prose-fold {

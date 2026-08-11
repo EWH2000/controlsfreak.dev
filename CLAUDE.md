@@ -30,7 +30,8 @@ from the recurring content-accuracy audits.
     `schematic-bg.njk` / `nav.njk` / `footer.njk`; hosts the
     command-palette dialog markup and loads the site-wide scripts
     (`theme` / `units` / `search` / `nav-menu` / `flow-engine` /
-    `schematic-bg` / `fullscreen-toggle`) at end-of-body; exposes
+    `schematic-bg` / `fullscreen-toggle` / `details-print`) at
+    end-of-body; exposes
     `head` / `content` / `scripts` blocks. See *Templating*.
   - `head.njk` — `<head>`: meta, OG, favicons, fonts, `/styles.css`,
     units + theme before-paint bootstrap scripts.
@@ -67,12 +68,21 @@ from the recurring content-accuracy audits.
   `simulatePid`, `FlowEngine`, `Quiz` for page IIFEs to reach by
   name. Each file has a thorough header — **read it for the API**.
   `theme.js`, `units.js`, `search.js`, `nav-menu.js`,
-  `flow-engine.js`, `schematic-bg.js`, and `fullscreen-toggle.js` are
+  `flow-engine.js`, `schematic-bg.js`, `fullscreen-toggle.js`, and
+  `details-print.js` are
   loaded site-wide from `layouts/page.njk` (theme + units toggles,
   command palette, nav dropdowns + mobile hamburger, gutter motifs,
   and fullscreen all appear on every page — units.js's DOM walker
   no-ops without `data-us` spans, and pages must not load it
-  themselves); the rest load per-page inside
+  themselves). **`details-print.js` is the print half of every
+  disclosure**: CSS cannot open a closed `<details>`, so it force-opens
+  each one on `beforeprint` and restores exactly those on
+  `afterprint` (owner ruling 2026-08-10 — all three idioms, not just
+  the newest). It is site-wide for the same reason units.js is: the
+  behaviour has to reach the page that grows a `<details>` tomorrow,
+  not just the ones that have one today. A disclosure that genuinely
+  must stay off paper hides its body with `@media print`, not with an
+  exception in that script. The rest load per-page inside
   `{% block scripts %}` *before* the page's inline `<script>`.
 - **Worker:** `src/worker.js` — ES-module Worker. Handles
   `POST /api/contact` (validate, honeypot, Turnstile, Resend); falls

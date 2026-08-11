@@ -1,24 +1,26 @@
 // Behavioral tests for the details.prose-fold disclosure — the glossary
 // arc's collapse pilot (docs/glossary-arc.md, 2026-08-10).
 //
-// The pattern is shared (styles.css "PROSE FOLD" + /scripts/prose-fold.js)
-// and lands on two pages at once, so it gets its own spec named after the
-// script rather than assertions duplicated into each page spec — the
-// tests/fullscreen-toggle.spec.js shape, and for the same reason: what is
-// under test is the mechanism, not either page's content.
+// The pattern is shared (the "PROSE FOLD" block in styles.css) and lands
+// on two pages at once, so it gets its own spec rather than assertions
+// duplicated into each page spec — the tests/fullscreen-toggle.spec.js
+// shape, and for the same reason: what is under test is the mechanism,
+// not either page's content.
 //
-// The four things worth pinning:
+// The three things worth pinning here:
 //   * folds ship CLOSED, with a summary that names what is inside. Ship
 //     one open and the pilot has bought the reader nothing; ship one with
 //     a generic "more" and the reader cannot tell whether to open it.
 //   * the toggle works. Native <details> needs no JS for this, which is
 //     exactly why nothing else would notice if a stylesheet rule ever
 //     broke the summary's hit area.
-//   * print force-opens every CLOSED fold and restores EXACTLY those —
-//     the one job /scripts/prose-fold.js has. A shim that closed every
-//     fold afterward would silently discard a reader's own open state.
 //   * the fullscreen cockpit drops the folds along with the sheet notes
 //     inside them. Dropping only the notes leaves orphaned summary bars.
+//
+// PRINT behaviour is NOT here — it moved to details-print.spec.js when
+// the owner ruled the shim covers all three disclosure idioms
+// (2026-08-10), because it stopped being a property of this pattern and
+// became a property of <details> site-wide.
 //
 // Plus the editorial guard, which is the part a future editor is most
 // likely to break: the owner's rule is that "what is this machine doing
@@ -126,29 +128,6 @@ test('a fold opens on click and closes again', async ({ page }) => {
     await expect(body).toContainText('two low-limit stats on this machine');
     await summary.click();
     await expect(body, 'and clicking again puts it away').toBeHidden();
-});
-
-test('print force-opens the closed folds and restores exactly those', async ({ page }) => {
-    await page.goto(AHU);
-
-    // One fold opened by the "reader" first: the shim must leave it open
-    // after printing, because it was not the shim that opened it.
-    await page.evaluate(() => { document.getElementById('ddcw-fold-econ-permit').open = true; });
-
-    const duringPrint = await page.evaluate(() => {
-        window.dispatchEvent(new Event('beforeprint'));
-        return [...document.querySelectorAll('details.prose-fold')].every((d) => d.open);
-    });
-    expect(duringPrint, 'every fold is open inside the print box').toBe(true);
-
-    const afterPrint = await page.evaluate(() => {
-        window.dispatchEvent(new Event('afterprint'));
-        return Object.fromEntries(
-            [...document.querySelectorAll('details.prose-fold')].map((d) => [d.id, d.open]));
-    });
-    expect(afterPrint['ddcw-fold-econ-permit'], 'the reader-opened fold stays open').toBe(true);
-    expect(afterPrint['ddcw-fold-lls-numbers'], 'the shim closes what the shim opened').toBe(false);
-    expect(afterPrint['ddcw-fold-lls-defeats'], 'the shim closes what the shim opened').toBe(false);
 });
 
 test('the fullscreen cockpit drops the folds with the notes inside them', async ({ page }) => {

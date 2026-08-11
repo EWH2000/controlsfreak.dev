@@ -178,13 +178,22 @@ evaporate with it:
     `styles.css` block and the third member of the
     `details.tool-preamble` / `.pid-spoiler` ▸/▾ family. Native
     `<details>`, ships closed, no transitions, **no persistence** —
-    so no `cf_*` key and no `privacy.html` surface. Plus the ~10-line
-    `beforeprint`/`afterprint` force-open shim
-    (`html/scripts/prose-fold.js`), which **diverges** from the
-    standing precedent that the five `tool-preamble` pages and the
-    pid-spoiler all print closed. The divergence is deliberate and
-    narrow: the shim is scoped to `details.prose-fold` and does not
-    retrofit the older idioms, which stays an open owner call.
+    so no `cf_*` key and no `privacy.html` surface.
+  - **Print: every `<details>` on the site prints open** (owner ruling,
+    same day, on the pilot's flagged divergence — the retrofit was
+    taken, not deferred). `html/scripts/details-print.js` force-opens
+    each closed disclosure on `beforeprint` and restores **exactly
+    those** on `afterprint`, so a reader's own open one survives.
+    It is **site-wide from `layouts/page.njk`**, and that was not a
+    selector widening: the pilot loaded its script per-page on the two
+    workbench pages, while `<details>` lives on **33** — 30
+    `details.tool-preamble` tool pages (the design proposal said five;
+    it was wrong), `.pid-spoiler` on pid-tuner, and the two fold
+    pages. A per-page tag would have to be remembered 33 times and the
+    34th page would print closed silently. The selector is bare
+    `details` so a future disclosure inherits the behaviour. A
+    disclosure that must stay off paper hides its body with
+    `@media print`, never with an exception in that script.
   - **Contrast guard:** a third `settle()` arm setting the `open`
     ATTRIBUTE on `details.prose-fold`, **not** a `COLLAPSED_CHROME`
     entry — membership there would read as "handled" while both of

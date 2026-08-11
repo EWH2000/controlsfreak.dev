@@ -113,6 +113,15 @@
    {% block scripts %} so its keydown listener registers before any
    page-level keydown handler. #}
 <script src="/scripts/fullscreen-toggle.js?v={{ site.version }}"></script>
+{# details-print.js is loaded site-wide so EVERY <details> prints open —
+   the three disclosure idioms (details.tool-preamble on 30 tool pages,
+   .pid-spoiler, details.prose-fold) plus any future one. CSS cannot
+   open a closed <details>, so this is the only instrument available;
+   owner ruling 2026-08-10. Site-wide rather than per-page because a
+   script loaded on the pages that have folds TODAY silently stops
+   covering the page that grows one tomorrow. Pages with no <details>
+   pay two event listeners and nothing else. #}
+<script src="/scripts/details-print.js?v={{ site.version }}"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>
