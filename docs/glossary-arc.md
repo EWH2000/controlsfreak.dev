@@ -244,6 +244,18 @@ evaporate with it:
     panel's opaque `--surface-2` background load-bearing for the
     guard rather than a styling choice.
 
+- **2026-08-10, late (the night grant)** — both pilots SHIPPED live
+  by the session under the owner's explicit one-night merge
+  clearance: PR #507 (collapse, v3.84.0 — print shim retrofitted
+  site-wide to every details idiom at owner ruling) and PR #508
+  (gloss, v3.85.0), each through a five-agent adversarial + rendered
+  verification round before merge (one blocking hover/click race
+  found and fixed with preview/pinned semantics, four guards
+  hardened, one finding refuted as a smooth-scroll test artifact).
+  Morning items: wiresheet definition wording, the econ fold's
+  try-it sentence, an every-occurrence density feel-check on the
+  live pilot page.
+
 ## Open questions
 
 - ~~**Mid-density pilot page for the tooltip component**~~ — settled

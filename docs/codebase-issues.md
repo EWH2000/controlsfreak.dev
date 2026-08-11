@@ -12454,7 +12454,7 @@ casually: the matcher's adjacency requirement is part of what keeps
 its false-positive rate at zero (see its own arrow-function
 counter-case pinned at `:141`).
 
-### 278. The FCU's weather knob still teleports — the sustained-cold ramp shipped AHU-only *(noticed 2026-08-09, the ramp ruling's scope cut — parity candidate)*
+### 278. The FCU's weather knob still teleports — the sustained-cold ramp shipped AHU-only *(noticed 2026-08-09, the ramp ruling's scope cut — **RESOLVED 2026-08-10 · PR #506 (v3.83.2)**; the entry's trip premise was DISPROVED at fix time — correction block at the end)*
 
 PR #488's sustained-cold ramp (the OA slider writes a target;
 `plant.oaT` walks toward it at 0.5 °F/sim-s; presets snap) shipped on
@@ -12469,6 +12469,19 @@ module-level `tOa` / `qInternal` onto the plant, which is where the
 target field wants to live). The rate constant should be shared or
 identically derived — a weather model that diverges between the two
 workbench pages is a #263-family drift risk.
+
+**Premise correction, recorded at resolution (2026-08-10).** This
+entry asserted the FCU carried "the same accidental-trip class with a
+weaker consequence." Measured engine-direct at fix time: the OA knob
+ALONE cannot latch the FCU's low limit at any slider position — at
+the knob's 55 °F floor with stage 2 held on, DAT settles at 44.7 °F
+against a 42 °F trip; only OA-min + zero load + a held stage reaches
+the latch, ~634 sim-s in. Outdoor air reaches this machine only
+through the envelope term, and the knob bottoms at 55 °F, not the
+AHU's −20. So the ramp shipped for the entry's OTHER stated reason —
+weather-model consistency, the #263-family drift risk — not trip
+protection; the constant's comment in `ddcw-fcu-unit.js` warns
+against repeating the AHU's trip story on this unit.
 
 ### 279. Every 44px touch-floor assertion has ZERO tolerance, and the box lands on the boundary — not a flake, a boundary *(noticed 2026-08-09 as an `#fcu-stage-2` flake; **re-diagnosed and RESOLVED 2026-08-10 · PR #503** when it reddened CI on a docs-only diff)*
 
@@ -12532,7 +12545,7 @@ now encodes that, and before this it did not.
 "this flake first." The artifact is handled, so a failure here means
 the control genuinely missed the floor — read the number.
 
-### 280. The device face is theme-constant, but its LEDs ride theme tokens *(noticed 2026-08-09, the defeat lane's contrast measurement — nothing broken; register-consistency wrinkle)*
+### 280. The device face is theme-constant, but its LEDs ride theme tokens *(noticed 2026-08-09, the defeat lane's contrast measurement — **RESOLVED 2026-08-10 · PR #505 (v3.83.1)**, scope grown at fix time to the FULL register: warn/alarm as recorded here, plus run/comm and the base `.led` default, all frozen at the dark values; every lit state now renders byte-identical in both themes)*
 
 `.led--warn` / `.led--alarm` take their colour from `--amber` /
 `--red`, which the light theme retunes — so the one surface ruled
@@ -12576,7 +12589,7 @@ annotated markdown file cannot survive. Fix shape: cite `#260` by
 number (or by its heading text), never by line; fix it in whichever
 PR next touches that spec.
 
-### 283. The fullscreen cockpit's override indications don't scale — several points overridden eats real screen estate *(reported 2026-08-10 by the owner — fullscreen UX, DESIGN CALL)*
+### 283. The fullscreen cockpit's override indications don't scale — several points overridden eats real screen estate *(reported 2026-08-10 by the owner — fullscreen UX, DESIGN CALL; design round DONE 2026-08-10 late, owner decision pending — measurements and treatments below)*
 
 Owner report, verbatim intent: once multiple points are overridden,
 the override indications take up a significant amount of screen real
@@ -12598,3 +12611,91 @@ summary count that expands, vs the growing list) and ask how his own
 graphics show override state at density. Constraint from the COV work
 (#229/#493): whatever renders must not reintroduce per-tick churn —
 signature-guard any repaint.
+
+
+**Design round (2026-08-10, late session).** Measured on the built
+site at 1366×768: the off-program window alone grows 1 px → 154 px
+when a preset seizes the AHU's five points — 29 % of the fullscreen
+instrument pane (18 % at 1920×1080; FCU 118 px / −21 %) — and the
+same 154 px overlays the wiresheet editor. Sharper than this entry's
+hypothesis: the amber forcing chrome contributes nothing under
+presets, and NO per-point override marker exists anywhere — chips,
+wells and mirror render a held point identically to a following one,
+so the verbose window carries the entire indication job (57 % of its
+band empty at max). Three treatments were mocked in house tokens and
+delivered to the owner: T-A group-by-slot (154 → ~56 px, smallest
+diff), T-B summary + disclosure (→ 34 px; the live region becomes
+the summary line), T-C hold-moves-onto-the-point (per-point marker,
+the BAS-authentic destination, largest diff). Recommendation on
+record: T-A now, T-C as the destination — pending the owner's glyph
+ruling and his production-graphics conventions. Deliberately NOT
+shipped under the 2026-08-10 night grant: the depiction call is his.
+
+### 284. The FCU workbench has no observable outdoor-air truth — weather behavior is untestable from the DOM *(noticed 2026-08-10, the #278 fix lane — LOW, testability floor, deliberate design)*
+
+The FCU roster has no `oat` point (outdoor air is a sim knob there,
+not a BACnet point — deliberate), so no chip or readout shows the
+outdoor-air truth and no page-driving spec can assert weather
+behavior; the #278 lane split its coverage engine-direct plus a
+session-snapshot read (a recorded exception to that spec's
+read-off-surfaces policy). Standing floor the next weather change
+hits too. Related asymmetry: `tests/ddc-workbench-session.spec.js`'s
+FCU → AHU → FCU round-trip asserts only `offprog` / `program` /
+`forcedValue` while the AHU side asserts more; partly covered by the
+lane's new snapshot row.
+
+### 285. The older details idioms' closed ink is measured only through a Chromium UA implementation detail *(noticed 2026-08-10, the collapse pilot's guard work — LOW)*
+
+The contrast sweep reaches closed-`<details>` ink on the ~30
+`details.tool-preamble` pages and the pid-spoiler only because
+Chromium's UA shadow-slot hiding is invisible to the walker's skip
+set — an implementation detail, not a contract. PR #507's `settle()`
+arm removes that dependence for `details.prose-fold` ONLY;
+deliberately not widened, since force-opening 30+ pages' hidden
+prose could surface latent reds that are not a pilot's call. Widening
+the arm (and triaging what it finds) is its own pass.
+
+### 286. Print never reaches non-active tab panes — site-wide, pre-existing *(noticed 2026-08-10, the print-shim verification — LOW)*
+
+`.tab-pane { display: none }` is not lifted in any `@media print`
+block, so tab content off the active tab never prints anywhere on
+the site. Surfaced because #507's shim opens folds for print, yet
+all four folds sit inside `#tab-wiresheet` — a fold the shim opens
+still cannot reach paper unless the reader prints from that tab. Not
+a #507 regression; recorded so the shim's "paper shows the page"
+contract is understood as tab-scoped.
+
+### 287. details-print.js: two minor hardening notes *(noticed 2026-08-10, the pilot verification — MINOR)*
+
+(1) `details-print.js` resets its `forcedOpen` set at every
+`beforeprint`, so correctness silently assumes browsers always pair
+beforeprint/afterprint; dropping the reset (afterprint already
+clears it) would degrade an unpaired beforeprint to a harmless
+duplicate push instead of a leaked-open set. (2)
+`tests/details-print.spec.js`'s inert-page guard asserts no
+`pageerror` immediately after the dispatching evaluate resolves, but
+pageerror delivery is async — the guard cannot flake, but it can
+pass vacuously. Both one-liners; ride whichever PR next touches the
+shim.
+
+### 288. Fullscreen's applyInert would disable gloss panels on a future gloss-marked tool page *(noticed 2026-08-10, the gloss verification — LATENT, out of pilot scope)*
+
+`fullscreen-toggle.js`'s `applyInert` inerts all body-level siblings
+except `#palette`; `.gloss-tip` panels render at body end, so on a
+future gloss-marked page with a fullscreened tool-card the panels go
+inert — `aria-describedby` still announces, but pointer travel onto
+the panel (the 1.4.13 hoverable grace) dies. Nothing breaks today
+(the pilot page has no fullscreen target). Add a palette-style
+exemption when glosses reach tool/simulator pages.
+
+### 289. A blown fuse and a running fuse render the same green on the wiring sim *(noticed 2026-08-10, the #280 lane — behavioral, pre-existing; owner ruling recorded, fix queued)*
+
+`controller-wiring.html:910` builds
+`'led ' + (blown ? '' : 'led--run')` — clearly intending the lamp to
+stop reading as "run" on a blown fuse — but the base `.led` default
+painted the bare element the same green `.led--run` uses, so the
+blown state appears never to have been visually distinct. (PR #505
+froze the default's COLOR theme-constant; the logic is untouched.)
+**Owner ruling 2026-08-10: blown = dark — `led--off`** (the lamp
+depicts circuit-powered / fuse-OK, matching the code's intent).
+One-line fix; queued as its own lane.
