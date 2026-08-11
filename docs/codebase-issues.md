@@ -12589,7 +12589,7 @@ annotated markdown file cannot survive. Fix shape: cite `#260` by
 number (or by its heading text), never by line; fix it in whichever
 PR next touches that spec.
 
-### 283. The fullscreen cockpit's override indications don't scale — several points overridden eats real screen estate *(reported 2026-08-10 by the owner — fullscreen UX, DESIGN CALL; design round DONE 2026-08-10 late, owner decision pending — measurements and treatments below)*
+### 283. The fullscreen cockpit's override indications don't scale — several points overridden eats real screen estate *(reported 2026-08-10 by the owner — fullscreen UX, DESIGN CALL; design round DONE 2026-08-10 late; owner ruled 2026-08-11 — T-A shipped, T-C the recorded destination — measurements, treatments and the ruling below)*
 
 Owner report, verbatim intent: once multiple points are overridden,
 the override indications take up a significant amount of screen real
@@ -12630,6 +12630,39 @@ the BAS-authentic destination, largest diff). Recommendation on
 record: T-A now, T-C as the destination — pending the owner's glyph
 ruling and his production-graphics conventions. Deliberately NOT
 shipped under the 2026-08-10 night grant: the depiction call is his.
+
+**Owner ruling, and T-A shipped (2026-08-11 — PR #513,
+`issue-283/offprog-group-by-slot`).** He took the recommendation:
+**T-A now**, and `renderOffProgram()` now emits one line per SLOT
+FAMILY rather than one per point — each point as `<name> <value>`
+joined by ` · `, the family's teaching tail written once, `all` only
+when the family holds more than one point. Measured on the built site
+at 1366×768, same method as the design round: the AHU's maxed window
+**154 px → 64.63 px (−58 %)**, the FCU's **118 px → 64.63 px**, both
+now a single unwrapped line, and the AHU instrument pane comes back
+377 → 466 px. (The design round's ~56 px was an estimate off the
+mock; the fixed chrome — label, padding, borders — is ~47 px of it,
+so one line lands at 64.63 px. Reported as measured rather than tuned
+to the estimate.) Nothing the per-point sentences carried is lost:
+which points, which slot, at what value, how to release. Three
+further calls, all his:
+
+- **T-C remains the destination**, for a future lane — the hold moves
+  onto the point (statusbar chip marker + a permanent summary line),
+  because that is the workstation idiom the page is teaching.
+- **The T-C marker glyph is RULED: the `@8` priority tag** — it
+  teaches the array itself and generalises to `@1` / `@16`, where the
+  hand glyph and the corner flag only say "someone is holding this".
+  Recorded, not built.
+- **One treatment everywhere** — the cockpit and normal flow render
+  the same window. T-B's fullscreen-only split is dead: the two
+  surfaces must never disagree about what is off program. (T-A needed
+  no mode-dependent code for this, and none was added.)
+
+Still **open**, deferred to the T-C lane: proposal Q5 — whether the
+unit graphic's own wells eventually carry the hold, or override state
+stays off the drawing on purpose — plus whatever Q1 production-
+convention detail the marker's register needs at that point.
 
 ### 284. The FCU workbench has no observable outdoor-air truth — weather behavior is untestable from the DOM *(noticed 2026-08-10, the #278 fix lane — LOW, testability floor, deliberate design)*
 
@@ -12749,3 +12782,32 @@ are not covered by it. Treatment levers for the design round (owner
 rules): a size floor for prose-length text, ink promotion for prose
 (`--text-dim` stays for captions), or both — plus classes for the
 inline stragglers either way.
+
+### 291. Negative assertions keyed on incidental punctuation go vacuous silently *(noticed 2026-08-11, the #283 T-A lane — test-pattern class, LOW)*
+
+`tests/ddc-workbench-fcu-safeties.spec.js` asserted
+`not.toContain('Clg Stg 1 —')` to prove a stage was NOT listed
+off-program — a match keyed on the em dash that happened to follow a
+point name in the old per-point format. The #283 grouping moved the
+value inline (`Clg Stg 1 ON · …`), so the assertion would have kept
+passing **even with the stage listed**: the punctuation left, not the
+point. The lane fixed that instance (`not.toContain('Clg Stg 1')`),
+but the *class* is the entry: a negative assertion whose match
+depends on incidental punctuation or formatting is a guard that a
+format change silently disarms — it cannot fail red, only vacuous.
+Sweep candidate: grep the specs for `not.toContain` / `not.toMatch`
+arguments carrying ` — `, ` · `, trailing colons or parens, and
+re-anchor each on the name or a structural locator. Same defect
+family as the anti-vacuity probes the build guards carry
+(`flowGeometryLive`'s exempt-path check, the contrast `ALLOWLIST`
+self-test) — negatives need a way to prove they still bite.
+
+### 292. ddcw-shell.js's header `Tests:` list has drifted *(noticed 2026-08-11, the #283 T-A lane — docs drift, MINOR)*
+
+The shell header names `ddcw-shell.spec.js` /
+`ddc-workbench-fcu.spec.js` / `ddc-workbench-fcu-priority.spec.js`;
+`ddc-workbench-ahu-page.spec.js` and
+`ddc-workbench-fcu-safeties.spec.js` also drive shell surfaces — the
+AHU spec now pins the off-program window's grouped format directly.
+Comment-only, but the shell is a live-page script, so it rides the
+next PR that touches `ddcw-shell.js` rather than shipping alone.

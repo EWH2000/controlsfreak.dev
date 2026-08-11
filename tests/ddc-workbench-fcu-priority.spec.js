@@ -33,6 +33,13 @@
 //     plant.actuators, and a MutationObserver holds them to it across
 //     every repaint of a full replay.
 //
+// The window's FORMAT changed at codebase-issues #283 (T-A): one line
+// per SLOT FAMILY, not per point — "<name> <value>" segments joined by
+// ' · ', the teaching tail written once, and "all" only when the family
+// holds more than one point. The line-level assertions here are the
+// grouping's pin: singular after a single block delete, plural after a
+// canvas Clear, and exactly one line for a preset's four slot-8 writes.
+//
 // The page was hidden when this file was written; graduation (Phase 8,
 // 2026-08-04) added its canonical and tests/pages.js row, so the
 // smoke / responsive / contrast sweeps reach it too (same note as the
@@ -50,16 +57,25 @@ test.use({ colorScheme: 'dark' });
 
 const URL = '/simulators/ddc-workbench-fcu.html';
 
-// The two off-program reasons, verbatim from the page's renderer —
-// asserting the full entry pins the REASON wording, not mere presence.
-// The leading DISPLAY NAME comes from the roster, while the parenthetical
-// names the missing BLOCK and so stays the point id: the two halves of
-// the sentence are deliberately different vocabularies, and a rename
-// moves only the first.
-const Y1_RD_ENTRY = 'Clg Stg 1 — slot 16 is NULL (no y1 block on the wiresheet) '
-    + '— holding Relinquish_Default (OFF).';
-const Y2_RD_ENTRY = 'Clg Stg 2 — slot 16 is NULL (no y2 block on the wiresheet) '
-    + '— holding Relinquish_Default (OFF).';
+// Two off-program lines, verbatim from the page's renderer — asserting
+// the full line pins the REASON wording, not mere presence. The leading
+// DISPLAY NAME comes from the roster, while the parenthetical names the
+// missing BLOCK and so stays the point id: the two halves of the
+// sentence are deliberately different vocabularies, and a rename moves
+// only the first.
+//
+// Since #283 the window renders ONE LINE PER SLOT FAMILY rather than one
+// per point: each point appears as "<name> <value>" joined by ' · ', and
+// the family's tail is written once. So the two constants below are the
+// two shapes that matter for the released family — one point alone, and
+// the whole roster at once after a canvas Clear, where the block ids
+// stay enumerated in the shared parenthetical because they are the one
+// per-point fact in the line.
+const Y1_RD_LINE = 'Clg Stg 1 OFF — slot 16 is NULL (no y1 block on the wiresheet) '
+    + '— holding Relinquish_Default.';
+const CLEARED_RD_LINE = 'Fan Spd 0 % · Fan En OFF · Clg Stg 1 OFF · Clg Stg 2 OFF '
+    + '— slot 16 is NULL (no fan-speed, fan-enable, y1 or y2 blocks on the wiresheet) '
+    + '— all holding Relinquish_Default.';
 
 // ── statusbar chip helpers ── chips are keyed by their cap text
 // (p.name), the one stable handle the shell renders from unit.points.
@@ -133,14 +149,19 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
         // Nothing writes slot 16 any more → the point falls to
         // Relinquish_Default (false) and the chip flips OFF.
         await waitForChip(page, 'Clg Stg 1', 'OFF');
-        await waitForOffprogEntry(page, Y1_RD_ENTRY);
+        await waitForOffprogEntry(page, Y1_RD_LINE);
 
-        // Pin the REASON, not just presence: slot-16-NULL wording plus
-        // the Relinquish_Default value, in one entry.
+        // Pin the REASON, not just presence: slot-16-NULL wording, the
+        // point's resolved value, and the fallback property by name —
+        // one point, so the line takes the singular tail.
         const w = await offprogState(page);
         expect(w.empty).toBe(false);
         expect(w.text).toContain('slot 16 is NULL');
-        expect(w.text).toContain('Relinquish_Default (OFF)');
+        expect(w.text).toContain('Clg Stg 1 OFF');
+        expect(w.text).toContain('holding Relinquish_Default.');
+        // Singular: no other point is off program, so nothing is grouped.
+        expect(w.text).not.toContain('all holding');
+        await expect(page.locator('#ddcw-offprog-list li')).toHaveCount(1);
     });
 
     test('NULL box round-trip: uncheck seeds slot 8 bumplessly, hand drives it, NULL hands it back', async ({ page }) => {
@@ -153,7 +174,7 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
         // resolved value (bumpless) — slot 8 opens at 60, not 0.
         await page.locator('#fcu-null-fan').uncheck();
         await waitForOffprogEntry(page,
-            'Fan Spd — commanded by slot 8 (Manual Operator) at 60 %');
+            'Fan Spd 60 % — commanded by slot 8 (Manual Operator)');
 
         // Drive the (now-enabled) slider to 0 — every move rewrites
         // slot 8, and both surfaces follow.
@@ -163,7 +184,7 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
         });
         await waitForChip(page, 'Fan Spd', '0 %');
         await waitForOffprogEntry(page,
-            'Fan Spd — commanded by slot 8 (Manual Operator) at 0 % — write NULL to release.');
+            'Fan Spd 0 % — commanded by slot 8 (Manual Operator) — write NULL to release.');
 
         // Write NULL back: slot 8 releases and the sequence's slot-16
         // command returns within a tick. The fan sat hand-forced at 0
@@ -175,7 +196,7 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
         await page.waitForFunction(() => {
             const box = document.getElementById('ddcw-offprog');
             return box.classList.contains('is-empty')
-                || !box.textContent.includes('Fan Spd — commanded');
+                || !box.textContent.includes('Fan Spd');
         });
         expect(await page.locator('#fcu-null-fan').isChecked()).toBe(true);
     });
@@ -245,12 +266,16 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
 
         // Clear the canvas: now NOTHING writes slot 16, so the same
         // displayed OFF is a different state — resting on
-        // Relinquish_Default — and the window says so by name.
+        // Relinquish_Default — and the window says so by name. Clear
+        // takes EVERY output at once, which is the released family's
+        // grouped shape: one line, four points, the four missing block
+        // ids still enumerated in the shared parenthetical.
         await page.click('#ddcw-fbe-clear');
         await waitForChip(page, 'Clg Stg 2', 'OFF');
-        await waitForOffprogEntry(page, Y2_RD_ENTRY);
+        await waitForOffprogEntry(page, CLEARED_RD_LINE);
         const w = await offprogState(page);
-        expect(w.text).toContain('Relinquish_Default (OFF)');
+        expect(w.text).toContain('all holding Relinquish_Default.');
+        await expect(page.locator('#ddcw-offprog-list li')).toHaveCount(1);
     });
 
     test('a scenario preset writes slot 8: NULL boxes re-sync unchecked, window lists the holds, no mode chrome exists', async ({ page }) => {
@@ -277,13 +302,19 @@ test.describe('DDC Workbench — point-priority arbitration', () => {
             && !document.getElementById('fcu-null-fan').checked
             && !document.getElementById('fcu-null-fanen').checked
         ));
+        // Four points, ONE line: since #283 the window groups by the slot
+        // in play, so a preset's four slot-8 writes read as one hand on
+        // four points — the anchored shape below is what proves the
+        // grouping (exactly four "<name> <value>" segments, one shared
+        // tail), and it stays value-agnostic so a scenario retune can't
+        // redden it.
         await page.waitForFunction(() => {
             const box = document.getElementById('ddcw-offprog');
             if (box.classList.contains('is-empty')) return false;
-            const t = box.textContent;
-            return (t.match(/slot 8 \(Manual Operator\)/g) || []).length === 4
-                && t.includes('Fan Spd —') && t.includes('Fan En —')
-                && t.includes('Clg Stg 1 —') && t.includes('Clg Stg 2 —');
+            const lines = document.querySelectorAll('#ddcw-offprog-list li');
+            if (lines.length !== 1) return false;
+            return /^Fan Spd .+ · Fan En .+ · Clg Stg 1 .+ · Clg Stg 2 .+ — all commanded by slot 8 \(Manual Operator\) — write NULL to release\.$/
+                .test(lines[0].textContent);
         });
     });
 

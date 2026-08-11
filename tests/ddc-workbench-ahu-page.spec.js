@@ -358,10 +358,27 @@ test.describe('AHU workbench page: the controls', () => {
         await expect(page.locator('#ahu-oad-slider')).toBeEnabled();
         // The window is the shell's, rendered from the roster — so this
         // also proves the page's point ids reach it.
-        await expect(page.locator('#ddcw-offprog-list li')).toHaveCount(1);
+        const lines = page.locator('#ddcw-offprog-list li');
+        await expect(lines).toHaveCount(1);
         await expect(page.locator('#ddcw-offprog')).not.toHaveClass(/is-empty/);
+        // One point held = the SINGULAR tail: no "all", and the roster
+        // display name carries the value inline (#283 groups by slot).
+        await expect(lines.first()).toHaveText(
+            /^OA Dmpr .+ — commanded by slot 8 \(Manual Operator\) — write NULL to release\.$/);
+
+        // A second hand-take joins the SAME line rather than adding one —
+        // the whole point of the grouping, and the reason the fullscreen
+        // cockpit stopped paying a row per override. Names stay in roster
+        // order, the tail is written once, and "all" appears now that the
+        // family holds more than one point.
+        await page.locator('#ahu-null-hw').uncheck();
+        await expect(lines).toHaveCount(1);
+        await expect(lines.first()).toHaveText(
+            /^OA Dmpr .+ · HW Vlv .+ — all commanded by slot 8 \(Manual Operator\) — write NULL to release\.$/);
+
+        await page.locator('#ahu-null-hw').check();
         await page.locator('#ahu-null-oad').check();
-        await expect(page.locator('#ddcw-offprog-list li')).toHaveCount(0);
+        await expect(lines).toHaveCount(0);
     });
 
     test('opening the damper on a cold day drops the mixed air', async ({ page }) => {
