@@ -256,6 +256,32 @@ evaporate with it:
   try-it sentence, an every-occurrence density feel-check on the
   live pilot page.
 
+- **2026-08-11 — the morning pilot verdict** (owner, reading the live
+  pilots at work). The feedback loop the pilots existed to run,
+  closed:
+  - **The gloss component is confirmed as built.** His words: he
+    didn't comment on the tooltips *"because they were so good"* —
+    the only issue, *"if you want to call it that"*: he was *"left
+    wanting more of them."* No tuning round.
+  - **Every-occurrence density is confirmed from the demand side** —
+    the feel-check morning item closes as *density right, appetite
+    for more terms*. The factor-of-two-or-three lever named in the
+    scoping record's §2 stays at its wider setting.
+  - **Tier-1 definition drafting (phase 2) is unblocked.** The one
+    recorded readiness risk — pilot feedback sending the component
+    back for tuning — did not materialize; the opposite. When to open
+    the phase is the owner's timing call.
+  - **The one affordance gap is the fold, not the gloss:** the
+    collapsed `details.prose-fold` summary lacks a this-is-clickable
+    cue — the deliberately-quiet register (hairline seam, dim mono
+    summary, small green ▸) receded past inviting the click it needs.
+    Owner levers: bigger marker / bolder outline. Runs as its own
+    lane (`fix/prose-fold-affordance`), variants → his pick; the
+    styles.css register comment inherits the amended rationale there.
+  - The other two morning items (wiresheet definition wording, the
+    econ fold's swept-in try-it sentence) were re-raised directly and
+    remain open.
+
 ## Open questions
 
 - ~~**Mid-density pilot page for the tooltip component**~~ — settled

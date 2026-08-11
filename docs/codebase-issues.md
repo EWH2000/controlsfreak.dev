@@ -12699,3 +12699,53 @@ froze the default's COLOR theme-constant; the logic is untouched.)
 **Owner ruling 2026-08-10: blown = dark — `led--off`** (the lamp
 depicts circuit-powered / fuse-OK, matching the code's intent).
 One-line fix; queued as its own lane.
+
+### 290. Simulator prose is set smaller AND dimmer than lesson prose — squint territory *(reported 2026-08-11 by the owner — site-wide legibility, DESIGN CALL; survey measured, treatment open)*
+
+Owner report, verbatim intent: a lot of the sim prose is almost too
+dark to read, and very small — the two combined make you squint.
+Raised as bigger than any one page, board-first.
+
+Measured mechanism (2026-08-11 survey of every `html/simulators/*.html`
+prose class): lesson body prose renders at **0.95rem in `--text`**
+(`.tool-body p`, styles.css:1240; lead paragraphs 1.0rem) — but the
+simulators essentially never use it (ddc-workbench: 2 plain `<p>` vs
+36 classed). Simulator explanatory prose instead runs
+**0.70–0.82rem, nearly all of it in `--text-dim`** (`#919cab` dark /
+`#636b63` light) — simultaneously ~75–85 % of lesson size AND one ink
+step dimmer. Base scale: 1rem = 16px (the body's 18px does not move
+`rem`), so these are 11.2–13.1px paragraphs.
+
+Ranked worst offenders:
+
+1. `pid-tuner.html:392` — **inline** 0.66rem mono `--text-dim`
+   (10.56px; classless, escapes any shared-class fix).
+2. `p.tool-preamble` — 0.70rem mono `--text-dim` (styles.css:1285) —
+   on **all 10 simulator pages and 31 tool pages**.
+3. `p.ahu-point-note` — 0.70rem, line-height 1.4 (the tightest
+   leading of any sim prose), `--blue-ink` (ddc-workbench.html:904).
+4. `p.pid-note` — 0.72rem mono `--text-dim` (styles.css:2636;
+   pid-tuner ×6). `p.vfdm-mode-note` matches at 0.72rem.
+5. `p.ref-note` — 0.74rem `--text-dim` (styles.css:3770) — highest
+   volume site-wide, **53 files**.
+6. `p.ddcw-sheet-note` — 0.78rem mono `--text-dim` (styles.css:5140)
+   — the dominant workbench prose (×17 across the two pages, plus
+   every `details.prose-fold` body). The fold summary itself is
+   0.72rem `--text-dim` (styles.css:1366 — the affordance lane may
+   brighten it, which chips at this issue for that one surface).
+
+Why no guard caught it: every class above passes
+`contrast-sweep.spec.js`'s 4.5:1 small-text floor (dark `--text-dim`
+measured 4.81–6.63:1, light 4.60+; no `opacity` involved anywhere).
+The defect is **size × dim ink**, a legibility axis the sweep
+structurally does not measure — AA-passing is not the same thing as
+comfortable at 11px.
+
+Scope note: the shared classes reach 31 tools + 17 lessons, so any
+retune is a **site-wide design pass, not a simulator patch**. #168's
+"dim captions are working as designed" ruling covers the LABEL/value
+scan hierarchy; running prose paragraphs are a different surface and
+are not covered by it. Treatment levers for the design round (owner
+rules): a size floor for prose-length text, ink promotion for prose
+(`--text-dim` stays for captions), or both — plus classes for the
+inline stragglers either way.
