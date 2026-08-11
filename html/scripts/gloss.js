@@ -29,18 +29,29 @@
 // At most ONE panel is open at a time; opening any gloss closes the
 // previous one.
 //
-//   pointer enters trigger  open after HOVER_OPEN_MS hover-intent delay
-//                           (canceled if the pointer leaves first)
+// An open panel is in one of TWO STATES, and the distinction is what
+// makes the gestures deterministic (see THE TOGGLE RACE below):
+//
+//   PREVIEW — opened by hover. Transient: it closes when the pointer
+//             wanders off, because the reader never asked for it.
+//   PINNED  — opened by click, tap or focus, or promoted from a preview
+//             by a click. It ignores pointer-out entirely and is
+//             dismissed only deliberately.
+//
+//   pointer enters trigger  open a PREVIEW after HOVER_OPEN_MS
+//                           hover-intent delay (canceled if the pointer
+//                           leaves first)
 //   pointer leaves trigger  close after HOVER_CLOSE_MS grace — canceled
 //                           if the pointer enters the PANEL, and skipped
-//                           entirely while the trigger holds focus
-//   pointer leaves panel    close (same grace)
-//   trigger focused         open immediately
+//                           entirely while the panel is PINNED
+//   pointer leaves panel    close (same grace, preview only)
+//   trigger focused         open PINNED, immediately
 //   trigger blurred         close, unless focus moved INTO the panel
-//   click / tap on trigger  toggle (the whole touch story)
+//   click / tap on trigger  PREVIEW → pin it (never closes);
+//                           PINNED  → close; closed → open PINNED
 //   Escape                  close, without moving pointer or focus
 //   pointerdown outside     close
-//   scroll / resize         close (see POSITIONING)
+//   scroll / resize         close — but NOT a scroll inside the panel
 //   another gloss opens     close
 //
 // WCAG 1.4.13 (Content on Hover or Focus), all three prongs explicit:
@@ -49,12 +60,32 @@
 //                 panel, and hovering the panel cancels the close;
 //   persistent  — nothing else closes it. No auto-dismiss timer exists.
 //
-// One subtlety the toggle has to survive: focus precedes click, so a
-// mouse click on a CLOSED trigger opens it via focusin before the click
-// event arrives, and a naive toggle would immediately close it again.
-// So the pre-gesture state is captured at `pointerdown` and keyboard
-// activation is distinguished by `event.detail === 0`. Click-toggle then
-// means what the user meant on pointer, touch and keyboard alike.
+// ── THE TOGGLE RACE, AND WHY PREVIEW/PINNED EXISTS ────────────────────
+// Two orderings collide on one gesture, and a naive toggle loses to
+// both:
+//
+//   1. FOCUS PRECEDES CLICK. A mouse click on a closed trigger opens it
+//      via focusin before the click event arrives, so a toggle reading
+//      live state would immediately close what the click just opened.
+//   2. HOVER PRECEDES CLICK. A pointer that DWELLS over the trigger for
+//      longer than HOVER_OPEN_MS opens a preview first — so the same
+//      physical "point at the word and click it" produced OPEN when the
+//      user was quick and CLOSED when the user was deliberate. Measured
+//      on this component before the fix: hover 300 ms then click left
+//      the panel hidden; an immediate click left it visible. Identical
+//      intent, opposite outcomes, decided by milliseconds — and it made
+//      the spec host-load-flaky, since Playwright's own move→down gap
+//      crosses 120 ms under load.
+//
+// The fix is to decide from PRE-GESTURE state plus the preview/pinned
+// bit, never from live visibility. `pointerdown` captures both (was it
+// open, and was that open a mere preview); keyboard activation is
+// distinguished by `event.detail === 0`, since it sends no pointerdown.
+// A click on a preview therefore PINS it rather than closing it: the
+// reader was already reading that definition, and the click means
+// "keep this", which is also the only reading under which the gesture
+// is dwell-independent. Closing stays available — a second click, from
+// the pinned state, does it.
 //
 // ── POSITIONING, AND WHY SCROLLING CLOSES ─────────────────────────────
 // `position: fixed` + viewport coordinates means no scroll-offset math
@@ -72,9 +103,11 @@
 // horizontal edge is a clamp. No loop, no observer.
 //
 // ── COST AT REST ──────────────────────────────────────────────────────
-// Zero per-frame work, zero rAF, zero MutationObserver, zero timers at
-// rest — the two hover timers exist only between pointer-enter and
-// open/close. Listeners are six document-level delegates plus two
+// Zero per-frame work, zero MutationObserver, zero timers at rest — the
+// two hover timers exist only between pointer-enter and open/close, and
+// the single requestAnimationFrame exists only between open and the
+// next frame (see armDismiss for why the dismiss listeners are armed
+// late). Listeners are six document-level delegates plus two
 // window-level ones attached on open and removed on close.
 //
 // Panels carry no focusable content in the pilot. The blur path already
@@ -97,7 +130,10 @@
     let openTimer = 0;
     let closeTimer = 0;
     let pendingTrigger = null;
-    let downWasOpen = false;
+    let openedByHover = false;   // true = PREVIEW, false = PINNED
+    let downWasOpen = false;     // pre-gesture state, captured at pointerdown
+    let downWasPreview = false;
+    let armFrame = 0;
     let wired = false;
 
     // Element.closest, guarded: an event target can be a non-Element node
@@ -123,6 +159,7 @@
     function place(panel, trigger) {
         panel.style.left = '0px';
         panel.style.top = '0px';
+        panel.style.maxHeight = '';   // re-measure clean; the degenerate arm may set it
         panel.hidden = false;
         panel.style.visibility = 'hidden';
 
@@ -131,12 +168,26 @@
         const vw = document.documentElement.clientWidth;
         const vh = document.documentElement.clientHeight;
 
-        let top = t.bottom + GAP;
-        if (top + p.height > vh - MARGIN) {
-            const above = t.top - GAP - p.height;
-            // Neither side fits only on a degenerate viewport; the CSS
-            // max-height + overflow clamp bounds it either way.
-            top = above >= MARGIN ? above : Math.max(MARGIN, vh - MARGIN - p.height);
+        // The panel must NEVER overlap its own trigger. If it did, the
+        // pointer would end up over the panel instead of the word it is
+        // pointing at, and the click that follows would land on the panel
+        // and no-op — the gesture silently doing nothing. So the two
+        // gaps are measured explicitly and the degenerate case (a panel
+        // taller than both) is bounded to the roomier side rather than
+        // being allowed to drift across the trigger.
+        const spaceBelow = vh - MARGIN - (t.bottom + GAP);
+        const spaceAbove = (t.top - GAP) - MARGIN;
+        let top;
+        if (p.height <= spaceBelow) {
+            top = t.bottom + GAP;
+        } else if (p.height <= spaceAbove) {
+            top = t.top - GAP - p.height;
+        } else if (spaceBelow >= spaceAbove) {
+            top = t.bottom + GAP;
+            panel.style.maxHeight = Math.max(0, spaceBelow) + 'px';
+        } else {
+            top = MARGIN;
+            panel.style.maxHeight = Math.max(0, spaceAbove) + 'px';
         }
 
         let left = t.left;
@@ -149,32 +200,79 @@
         panel.style.visibility = '';
     }
 
+    // Scrolling dismisses the panel — but a scroll ORIGINATING INSIDE it
+    // is the reader using the panel, not the page moving out from under
+    // it. .gloss-tip provisions overflow-y:auto (and the degenerate arm
+    // in place() can hand it a max-height), so this is reachable markup,
+    // not a hypothetical.
+    function onScroll(e) {
+        const tgt = e.target;
+        if (openPanel && tgt && tgt.nodeType === 1 && openPanel.contains(tgt)) return;
+        close();
+    }
+
+    // The dismiss listeners are armed ONE FRAME LATE, on purpose.
+    // Focusing a trigger that sits partly offscreen makes the BROWSER
+    // scroll it into view, and that scroll belongs to the OPENING
+    // gesture, not to the reader dismissing anything. Arming
+    // immediately let a panel open and dismiss itself in the same
+    // breath — measured on a 380x210 viewport, where the panel never
+    // appeared at all, and reachable on any viewport by tabbing to a
+    // trigger below the fold. Scroll events fire before animation-frame
+    // callbacks within a frame's "update the rendering" steps, so a
+    // single rAF is enough to let the focus scroll pass. This is the
+    // component's only frame callback and it exists only between open
+    // and the next frame — there is still no per-frame work.
+    function armDismiss() {
+        if (armFrame) cancelAnimationFrame(armFrame);
+        armFrame = requestAnimationFrame(function () {
+            armFrame = 0;
+            window.addEventListener('scroll', onScroll, { passive: true, capture: true });
+            window.addEventListener('resize', close);
+        });
+    }
+
+    function disarmDismiss() {
+        if (armFrame) { cancelAnimationFrame(armFrame); armFrame = 0; }
+        window.removeEventListener('scroll', onScroll, true);
+        window.removeEventListener('resize', close);
+    }
+
     function close() {
         clearTimers();
         if (!openPanel) return;
         openPanel.hidden = true;
         openPanel.style.visibility = '';
+        openPanel.style.maxHeight = '';
         openTrigger.classList.remove('gloss-open');
         openPanel = null;
         openTrigger = null;
-        window.removeEventListener('scroll', close, true);
-        window.removeEventListener('resize', close);
+        openedByHover = false;
+        disarmDismiss();
     }
 
-    function open(trigger) {
+    // `byHover` opens a PREVIEW; everything else opens PINNED. Re-opening
+    // the already-open trigger can only PROMOTE preview → pinned, never
+    // demote — a hover crossing a pinned gloss must not make it
+    // transient again.
+    function open(trigger, byHover) {
         const panel = panelFor(trigger);
         if (!panel) return;              // a mark whose panel never rendered
-        if (openTrigger === trigger) { clearTimers(); return; }
+        if (openTrigger === trigger) {
+            clearTimers();
+            if (!byHover) openedByHover = false;
+            return;
+        }
         close();
         place(panel, trigger);
         trigger.classList.add('gloss-open');
         openTrigger = trigger;
         openPanel = panel;
+        openedByHover = !!byHover;
         // Capture-phase scroll so a scroll inside ANY container closes it,
         // not only a document scroll. Passive — this handler never
-        // preventDefault()s.
-        window.addEventListener('scroll', close, { passive: true, capture: true });
-        window.addEventListener('resize', close);
+        // preventDefault()s. Armed a frame late; see armDismiss().
+        armDismiss();
     }
 
     function scheduleOpen(trigger) {
@@ -183,14 +281,16 @@
         pendingTrigger = trigger;
         openTimer = setTimeout(function () {
             openTimer = 0;
-            if (pendingTrigger === trigger) open(trigger);
+            if (pendingTrigger === trigger) open(trigger, true);
         }, HOVER_OPEN_MS);
     }
 
     function scheduleClose() {
-        // A trigger the user has tabbed to stays open until it is blurred
-        // or Escaped — the pointer wandering off it is not a dismissal.
-        if (openTrigger && document.activeElement === openTrigger) return;
+        // Only a PREVIEW closes on pointer-out. A pinned gloss — clicked,
+        // tapped or tabbed to — is dismissed by Escape, an outside
+        // pointerdown, a blur or another gloss, never by the pointer
+        // wandering off it.
+        if (openTrigger && !openedByHover) return;
         if (closeTimer) clearTimeout(closeTimer);
         closeTimer = setTimeout(function () {
             closeTimer = 0;
@@ -229,7 +329,7 @@
 
         document.addEventListener('focusin', function (e) {
             const trigger = closestSel(e.target, TRIGGER_SEL);
-            if (trigger) { clearTimers(); open(trigger); return; }
+            if (trigger) { clearTimers(); open(trigger, false); return; }
             if (openTrigger && !withinOpen(e.target)) close();
         });
 
@@ -249,6 +349,7 @@
         document.addEventListener('pointerdown', function (e) {
             const trigger = closestSel(e.target, TRIGGER_SEL);
             downWasOpen = !!trigger && trigger === openTrigger;
+            downWasPreview = downWasOpen && openedByHover;
             if (trigger) return;
             if (openPanel && closestSel(e.target, '.gloss-tip') === openPanel) return;
             close();
@@ -257,11 +358,23 @@
         document.addEventListener('click', function (e) {
             const trigger = closestSel(e.target, TRIGGER_SEL);
             if (!trigger) return;
-            // detail === 0 is keyboard activation (Enter / Space), which
-            // sends no pointerdown — so read live state, not the capture.
-            const wasOpen = e.detail === 0 ? trigger === openTrigger : downWasOpen;
-            if (wasOpen) close();
-            else open(trigger);
+            if (e.detail === 0) {
+                // Keyboard activation (Enter / Space) sends no pointerdown,
+                // so there is no capture to read and no hover to race —
+                // live state is the honest answer, and it toggles.
+                if (trigger === openTrigger) close();
+                else open(trigger, false);
+                return;
+            }
+            // Pointer / touch: decide from PRE-GESTURE state only.
+            //   was closed  → open pinned (this also absorbs the focusin
+            //                 that fired between pointerdown and click)
+            //   was preview → pin it; a deliberate click on a definition
+            //                 you are already reading means "keep this"
+            //   was pinned  → close; this is the toggle-off
+            if (!downWasOpen) open(trigger, false);
+            else if (downWasPreview) openedByHover = false;
+            else close();
         });
 
         document.addEventListener('keydown', function (e) {
