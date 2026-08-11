@@ -6144,7 +6144,7 @@ Lower-priority candidates still parked here for completeness:
   European protocols" page at tour-level depth, deeper pages
   following if demand surfaces.
 
-### Hover tooltips — a SITE-WIDE affordance question, deferred past go-live *(raised 2026-07-28 on the AHU graphic; RECLASSIFIED and deferred by owner ruling 2026-08-03)*
+### Hover tooltips — a SITE-WIDE affordance question, deferred past go-live *(raised 2026-07-28 on the AHU graphic; RECLASSIFIED and deferred by owner ruling 2026-08-03; DECIDED as the next arc 2026-08-09 → arc opened 2026-08-10, plan in `docs/glossary-arc.md`)*
 
 > **Owner ruling, 2026-08-03 (the pre-Phase-8 discussion).** Two things
 > were settled at once. **Deferred until after go-live** — it is not a
@@ -6252,6 +6252,20 @@ of a real reader; do not open it as a general affordance.
 > surface sets the pattern, so deliberately NOT the AHU page. The
 > eleventh-tooltip creep test governs throughout; definitions are
 > written in house voice under the two-senses discipline.
+
+> **ARC OPENED 2026-08-10.** §8 ratified **as amended** (one
+> amendment: the stall criterion now covers zero-definition terms —
+> the rule text in the scoping record carries the marker and is the
+> single live copy). The pilot-surface question resolved as a
+> **split pilot**: the collapse + inline-links half pilots on the
+> workbench sheet notes (collapse is click-driven, so the spent-hover
+> argument never applied to it — and the FCU page has no hover
+> callouts at all), while the tooltip/gloss component pilots on a
+> mid-density page still to be picked. "Deliberately NOT the AHU
+> page" above is therefore partially superseded — it still binds the
+> *tooltip* pattern, not the collapse. The arc now runs on its own
+> plan: **`docs/glossary-arc.md`**; this entry stays as the decision
+> history, not the tracking mechanism.
 
 ---
 
