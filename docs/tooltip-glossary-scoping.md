@@ -649,6 +649,12 @@ pass (Y1/Y2/G, make/break, front end, MAT family, DX, priority array,
 relinquish default, low-limit's three referents) and the **worst place
 to land the first tooltip**.
 
+*(2026-08-10: the split-pilot ruling reads this section as AHU-only in
+fact as well as in name — the FCU page has zero `:has()` hover
+callouts, so the spent-hover argument does not reach it. The
+click-driven collapse pattern was never in this section's scope
+either. See `docs/glossary-arc.md`.)*
+
 ### 7.4 A page that teaches a term is the wrong place to gloss it
 
 Recurring across three checkers, and worth stating once as a
@@ -663,6 +669,18 @@ it is part of the correctness argument.
 
 ## 8. A draft curation rule — for the owner to accept, amend or reject
 
+> **RATIFIED AS AMENDED, 2026-08-10 — this rule is IN FORCE.** The
+> owner accepted the draft with one amendment: criterion 2's stall
+> test now covers the zero-definition terms as well as the
+> define-elsewhere idiom (amended in place below, marked). Rationale:
+> §9's phase 1 names the zero-definition terms (*DDC*, *DX*, *APDU*)
+> as the purest stall candidates, so the criterion's original letter —
+> "defined thoroughly on ONE page" — excluded the very terms the
+> pass's own sizing leads with. Everything else stands verbatim. The
+> paragraph below this block describes the draft's status when it was
+> written; this block governs. The arc's living plan is
+> `docs/glossary-arc.md`.
+
 The friction note is explicit that the arc needs a written curation
 rule or it licenses the eleventh-tooltip creep. This is a **draft**,
 derived from what the sweeps and checkers actually found. It is not in
@@ -673,10 +691,14 @@ force.
 1. **It is a term of trade** — the reader's job vocabulary, not
    ordinary English used precisely. *DDC*, *relinquish default*, *live
    zero*, *deadhead*. Not *proof*, *authority*, *reset* as bare words.
-2. **A reader plausibly stalls on it** — measured by the pass's own
-   test: is it *defined thoroughly on one page and used bare on
-   others*? That pattern is the stall, and it is what the site's
-   define-elsewhere idiom leaves behind by design.
+2. **A reader plausibly stalls on it** — it is *used bare where it
+   isn't defined*, whether the definition lives on one other page
+   (the define-elsewhere idiom, the pass's original test) or nowhere
+   on the site yet (the zero-definition terms — *DDC*, *DX*, *APDU*).
+   Either pattern is the stall. ⟨amended 2026-08-10 — the original
+   read "defined thoroughly on one page and used bare on others,"
+   which excluded the zero-definition terms §9's phase 1 explicitly
+   includes; see the ratification block above⟩
 3. **It is single-sense site-wide, or resolvable to one sense by the
    collocation being marked.** *Modbus RTU* qualifies; bare *RTU* does
    not. *Valve authority* qualifies; bare *authority* does not.
@@ -745,3 +767,9 @@ The quiz banks (32% of the estimate) sit outside all four phases until
 the §7.2 component question is answered, and the workbench pages —
 densest surface, spent hover gesture — are the last place the pattern
 should land, not the first.
+
+*(2026-08-10: this closing sentence's plural — "the workbench pages" —
+was ruled a loose restatement of §7.3's AHU-only argument, not a wider
+exclusion; only the AHU has the spent hover gesture in fact. The
+pilot decision that resolves it — split across surfaces — is recorded
+in `docs/glossary-arc.md`.)*
