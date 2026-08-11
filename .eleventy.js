@@ -613,6 +613,164 @@ module.exports = function(eleventyConfig) {
         return [];
     });
 
+    // ── GLOSS / GLOSSARY ─────────────────────────────────────────────
+    // Two halves, deliberately split by what each one can see:
+    //
+    //   glossaryGuard (below)  — the DATA-FILE lint arm. Runs once per
+    //       build, inside a collection, because only a collection has the
+    //       page list an `owners` path must resolve against.
+    //   the `gloss` transform  — the PER-PAGE arm. Runs after render,
+    //       because that is the only point where a trigger arriving via a
+    //       partial or an {% include %} is visible at all. (A paired
+    //       shortcode would be pre-render and blind to exactly that.)
+    //
+    // This is the repo's first addTransform, so the mechanism choice is
+    // recorded here rather than left implicit.
+
+    // Build-time guard: the glossary data file itself. Entry ids must be
+    // kebab-case (the house id rule, and the ids become DOM ids); every
+    // entry needs a `term` and a `def`; and every `owners` path must name
+    // a real page. That last check is the anti-vacuity probe — an owners
+    // path that stops resolving would silently stop SUPPRESSING, and §7.4
+    // suppression is part of the correctness argument, not an
+    // optimisation. Same reasoning as EXEMPT_TEMPLATES' stops-resolving
+    // rule in flowStaticGuard: a guard must never decay into a quiet
+    // pass. Mirrors quizOrderGuard's accumulate-then-throw shape.
+    //
+    // NOT an error: a glossary entry no page marks yet. Phase 2 marks
+    // gradually, so entries are allowed to precede their marks.
+    eleventyConfig.addCollection("glossaryGuard", (collectionApi) => {
+        const glossary = require("./html/_data/glossary.js");
+        const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+        const offenders = [];
+        const pagePaths = new Set(
+            collectionApi.getAll()
+                .filter((item) => typeof item.data.canonical === "string")
+                .map((item) => item.data.canonical.replace("https://controlsfreak.dev", ""))
+        );
+        const keys = Object.keys(glossary);
+        // The walk must never pass because it found nothing to look at —
+        // an emptied glossary would make every arm below vacuously true.
+        if (!keys.length) offenders.push("  html/_data/glossary.js — no entries; this guard cannot see anything");
+        if (!pagePaths.size) offenders.push("  no pages carry a canonical; the owners arm cannot resolve anything");
+        keys.forEach((key) => {
+            const entry = glossary[key] || {};
+            if (!KEBAB.test(key)) offenders.push(`  ${key} — entry id is not kebab-case (CLAUDE.md "ID naming")`);
+            if (typeof entry.term !== "string" || !entry.term.trim()) offenders.push(`  ${key} — missing \`term\``);
+            if (typeof entry.def !== "string" || !entry.def.trim()) offenders.push(`  ${key} — missing or empty \`def\``);
+            if (!Array.isArray(entry.owners)) {
+                offenders.push(`  ${key} — \`owners\` must be an array (use [] for a term defined nowhere yet)`);
+                return;
+            }
+            entry.owners.forEach((owner) => {
+                if (!pagePaths.has(owner)) {
+                    offenders.push(`  ${key} — owners path ${owner} names no page that carries that canonical; re-point it or drop it`);
+                }
+            });
+        });
+        if (offenders.length) {
+            throw new Error(
+                `html/_data/glossary.js shape + owners resolution ` +
+                `(docs/tooltip-glossary-scoping.md §7.4, §8):\n${offenders.join("\n")}`
+            );
+        }
+        return [];
+    });
+
+    // The per-page arm. On every rendered .html page: validate each
+    // `data-gloss` mark, splice in the `aria-describedby` that wires the
+    // trigger to its panel, then inject one panel per DISTINCT term plus
+    // the runtime — all before </body>. A page with no marks returns its
+    // input byte-identical.
+    //
+    // Because the build owns the panels and the script tag, a page can
+    // never carry triggers without them: the drift class "author forgot
+    // the script tag" is unrepresentable.
+    //
+    // THE GUARD'S FLOOR, stated honestly (the flowStaticGuard lesson):
+    // it reads literal `data-gloss="…"` attributes in rendered HTML.
+    // JS-painted prose (vfds.html's concatenated anecdote, quiz-engine
+    // DOM) is invisible to it — which is fine, because §7.2 rules those
+    // surfaces out of scope until the component question is answered.
+    // Read it as *no marked trigger ships unresolved or on its owning
+    // page*, never as *every occurrence is marked*.
+    eleventyConfig.addTransform("gloss", function (content, outputPath) {
+        const out = (this.page && this.page.outputPath) || outputPath;
+        if (typeof out !== "string" || !out.endsWith(".html")) return content;
+        if (!content.includes("data-gloss")) return content;
+
+        const glossary = require("./html/_data/glossary.js");
+        const version = require("./package.json").version;
+        const pageUrl = (this.page && this.page.url) || "";
+        const inputPath = (this.page && this.page.inputPath) || out;
+        const offenders = [];
+        const used = [];
+
+        // Opening tags carrying a data-gloss attribute. `[^>]*` is the
+        // textual floor named above — an attribute VALUE containing a
+        // literal ">" would defeat it, which no house trigger does.
+        const TRIGGER_RE = /<([a-zA-Z][a-zA-Z0-9-]*)\b([^>]*\bdata-gloss="([^"]*)"[^>]*)>/g;
+
+        const spliced = content.replace(TRIGGER_RE, (match, rawTag, attrs, id) => {
+            const tag = rawTag.toLowerCase();
+            if (tag !== "button") {
+                offenders.push(`  <${tag} data-gloss="${id}"> — a gloss trigger must be a <button>; the trigger contract is uniform semantics`);
+                return match;
+            }
+            const entry = glossary[id];
+            if (!entry) {
+                offenders.push(`  data-gloss="${id}" — no such glossary entry. Known ids: ${Object.keys(glossary).join(", ")}`);
+                return match;
+            }
+            if (entry.owners.indexOf(pageUrl) !== -1) {
+                offenders.push(`  data-gloss="${id}" — this page TEACHES that term (glossary owners), and a gloss there shadows the page's own teaching beat (docs/tooltip-glossary-scoping.md §7.4). Remove the mark; never soften the guard`);
+                return match;
+            }
+            if (/\baria-describedby=/.test(attrs)) {
+                offenders.push(`  data-gloss="${id}" — the trigger already carries aria-describedby; the build owns that attribute`);
+                return match;
+            }
+            if (used.indexOf(id) === -1) used.push(id);
+            return `<${rawTag}${attrs} aria-describedby="gloss-tip-${id}">`;
+        });
+
+        if (offenders.length) {
+            throw new Error(
+                `gloss triggers in ${inputPath} (definitions + curation notes ` +
+                `in html/_data/glossary.js; the markup contract is in the ` +
+                `html/scripts/gloss.js header):\n${offenders.join("\n")}`
+            );
+        }
+        if (!used.length) return content;
+
+        // One panel per distinct term, at body end — outside <main>, so
+        // position:fixed never inherits a future ancestor transform, and
+        // above body.has-fullscreen-tool main (z-index 400) while staying
+        // below the command palette (1000). `term` is plain text and gets
+        // escaped; `def` is trusted authored markup and goes in raw (see
+        // the data file's header).
+        const esc = (s) => String(s)
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        const panels = used.map((id) => {
+            const entry = glossary[id];
+            return `<div class="gloss-tip" role="tooltip" id="gloss-tip-${id}" hidden>\n`
+                 + `    <p class="gloss-tip-term"><dfn>${esc(entry.term)}</dfn></p>\n`
+                 + `    <p class="gloss-tip-def">${entry.def}</p>\n`
+                 + `</div>`;
+        }).join("\n");
+
+        const injected = `${panels}\n<script src="/scripts/gloss.js?v=${version}"></script>\n</body>`;
+        const at = spliced.lastIndexOf("</body>");
+        if (at === -1) {
+            throw new Error(
+                `gloss: ${inputPath} carries ${used.length} gloss term(s) but has no ` +
+                `</body> to inject the panels and runtime into`
+            );
+        }
+        return spliced.slice(0, at) + injected + spliced.slice(at + "</body>".length);
+    });
+
     // Pages for sitemap.njk: every template that carries a `canonical`
     // frontmatter — i.e. every real page; the sitemap template itself
     // has none, so it self-excludes. (Counts drift: a hardcoded "all 20
