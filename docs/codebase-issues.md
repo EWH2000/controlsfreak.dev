@@ -12782,3 +12782,32 @@ are not covered by it. Treatment levers for the design round (owner
 rules): a size floor for prose-length text, ink promotion for prose
 (`--text-dim` stays for captions), or both — plus classes for the
 inline stragglers either way.
+
+### 291. Negative assertions keyed on incidental punctuation go vacuous silently *(noticed 2026-08-11, the #283 T-A lane — test-pattern class, LOW)*
+
+`tests/ddc-workbench-fcu-safeties.spec.js` asserted
+`not.toContain('Clg Stg 1 —')` to prove a stage was NOT listed
+off-program — a match keyed on the em dash that happened to follow a
+point name in the old per-point format. The #283 grouping moved the
+value inline (`Clg Stg 1 ON · …`), so the assertion would have kept
+passing **even with the stage listed**: the punctuation left, not the
+point. The lane fixed that instance (`not.toContain('Clg Stg 1')`),
+but the *class* is the entry: a negative assertion whose match
+depends on incidental punctuation or formatting is a guard that a
+format change silently disarms — it cannot fail red, only vacuous.
+Sweep candidate: grep the specs for `not.toContain` / `not.toMatch`
+arguments carrying ` — `, ` · `, trailing colons or parens, and
+re-anchor each on the name or a structural locator. Same defect
+family as the anti-vacuity probes the build guards carry
+(`flowGeometryLive`'s exempt-path check, the contrast `ALLOWLIST`
+self-test) — negatives need a way to prove they still bite.
+
+### 292. ddcw-shell.js's header `Tests:` list has drifted *(noticed 2026-08-11, the #283 T-A lane — docs drift, MINOR)*
+
+The shell header names `ddcw-shell.spec.js` /
+`ddc-workbench-fcu.spec.js` / `ddc-workbench-fcu-priority.spec.js`;
+`ddc-workbench-ahu-page.spec.js` and
+`ddc-workbench-fcu-safeties.spec.js` also drive shell surfaces — the
+AHU spec now pins the off-program window's grouped format directly.
+Comment-only, but the shell is a live-page script, so it rides the
+next PR that touches `ddcw-shell.js` rather than shipping alone.

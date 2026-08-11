@@ -282,9 +282,46 @@ evaporate with it:
     econ fold's swept-in try-it sentence) were re-raised directly and
     remain open.
 
+- **2026-08-11, later — the rapid-fire rulings** (owner, working the
+  re-raised list one by one, same morning; every morning item now
+  CLOSED and `docs/next-session-handoff.md` retired this PR — both of
+  its lifecycle conditions met):
+  - **Fold affordance: the control-bar variant** (loudest of four
+    mocks — `--surface-2` fill, `--text` ink, `--border` seam,
+    1.05rem marker). "Your logic sold me": the argument that landed
+    was that only the filled bar reads as UI rather than
+    inferred-interactive. Ships as PR #514.
+  - **`wiresheet` definition: KEPT as shipped, no tuning round.** His
+    reasoning, worth keeping because it is a curation precedent: he
+    says *program* and *wiresheet* interchangeably and picked
+    wiresheet as the headword because "program reads too generic to a
+    non-BMS user who is expecting something closer to a language like
+    C" — then dismissed his own concern as an edge case and further
+    term-hunting as *pedantic*: "the language you used more than gets
+    the job done." Precedent: definitions need to clear *good enough
+    in the trade's ear*, not *perfect term* — don't burn owner review
+    cycles polishing headword alternates.
+  - **The econ fold's try-it sentence: ACCEPTED in the fold** — and
+    the concern inverted into a direction: **"I'm fine folding even
+    more, that way someone can read the specific section of prose
+    they want while seeing the unit work, without having to scroll."**
+    With the control-bar affordance, folds are not a place prose goes
+    to be skipped — they are the page's sectional reading mechanism
+    beside the live unit. The pilot's owner-ruled fold set (AHU notes
+    2/3/7/8/10 + FCU note 2) now *understates* the intent; a
+    **fold-set widening pass is queued** (proposal → his ruling;
+    per-note editorial judgment still applies, and the damage-stakes
+    note stays always-visible by its own convention).
+  - **Tier-1 drafting: HELD until the backlog clears** (owner word,
+    same morning). The phase stays unblocked; the queued mechanical
+    lanes and the new design passes go first.
+
 ## Open questions
 
 - ~~**Mid-density pilot page for the tooltip component**~~ — settled
   2026-08-10: `education/timers-and-delays.html`, decision log above.
 - **§7.2 quiz-bank component question** — deferred until the tooltip
   component exists; decide before any bank counts as in scope.
+- **Fold-set widening pass** (owner direction 2026-08-11, decision
+  log above) — propose the wider workbench fold set for his ruling.
+  Sequenced into the backlog clear, ahead of tier-1 drafting.
