@@ -866,11 +866,40 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
            only in the drawing has an HTML twin here. The rail's rows are
            already HTML and are NOT mirrored. Above the cutoff the plain
            twins stop taking space — see THE MIRROR DIET below. */
+        /* ⚠ THE padding-right IS A BUTTON'S HIT-AREA BLEED, ABSORBED — IT IS
+           NOT SPACING (owner decision 2026-08-10, codebase-issues #266).
+           .ahu-point-btn below widens its target with padding 0.15/0.3rem
+           against margin -0.15/-0.3rem, which is what keeps the enlarged
+           target from moving the text. When a BUTTON holds the last auto-fit
+           track, its -0.3rem right bleed pokes past this grid's content box:
+           .ahu-points reports scrollWidth 5px over clientWidth (0.3rem =
+           4.8px, integer-rounded) and so does the enclosing #tab-unit. In
+           normal flow that is invisible — the pane is not a scroller and the
+           document never widens. In the fullscreen cockpit .tab-pane.active
+           is overflow: auto, so it is a real horizontal scrollbar. Padding
+           equal to the bleed absorbs it inside the grid.
+           The cost was named and accepted: every track loses ~1.6px, and
+           text alignment is untouched (the bleed zone is empty until hover
+           or focus paints a border on it). overflow-x: clip on the pane was
+           rejected — it would clip the focus ring; dropping the negative
+           margin was rejected — it would shrink the (hover: none) target
+           back under the 44px floor.
+           ⚠ NOT SCOPED TO A BREAKPOINT, AND THAT IS THE MEASUREMENT TALKING.
+           Above the mirror-diet cutoff every cell IS a button, so a button
+           ALWAYS holds the last track. Below it the mix of plain and button
+           cells still puts one there across wide contiguous width BANDS (not
+           a parity effect): measured on the built page before this line
+           landed, the pane overflowed at 360–681 and 828 up in normal flow,
+           360–607 and 754 up in fullscreen. The bands differ between the two
+           states, so no width query names them — only a narrow strip is ever
+           clean. The FCU page carries the same declaration for the same
+           reason; this block is the derivation. */
         .ahu-points {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
             gap: 0.6rem 1rem;
             margin-top: 1rem;
+            padding-right: 0.3rem;
         }
         .ahu-point {
             display: flex;

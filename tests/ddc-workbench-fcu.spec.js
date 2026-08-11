@@ -927,30 +927,50 @@ test.describe('DDC Workbench — the mirror diet', () => {
             'one pixel under the cutoff the whole list is back').toBe(6);
     });
 
-    test('the diet does not hand the fullscreen pane a horizontal scrollbar', async ({ page }) => {
-        // On main this pane is clean at the default 1280×720: the last grid
-        // track held a PLAIN cell, whose box has no hit-area bleed. The diet
-        // makes the desktop row all buttons, so a button always holds the
-        // last track — and its -0.3rem bleed poked 4.8px past the grid,
-        // which the fullscreen pane (the one scrolling ancestor) rendered
-        // as a horizontal scrollbar the pre-diet page never showed. The
-        // diet-scoped padding-right on .fcu-points absorbs the bleed; this
-        // row is what reddens if that rule is dropped.
+    test('the mirror absorbs its buttons\' hit-area bleed, above and below the cutoff (#266)', async ({ page }) => {
+        // Pre-diet this pane was clean at the default 1280×720: the last
+        // grid track held a PLAIN cell, whose box has no hit-area bleed.
+        // The diet makes the desktop row all buttons, so a button always
+        // holds the last track — and its -0.3rem bleed poked 4.8px past
+        // the grid, which the fullscreen pane (the one scrolling ancestor)
+        // rendered as a horizontal scrollbar the pre-diet page never
+        // showed. Grid padding-right absorbs it.
         //
-        // Deliberately NOT asserted below the cutoff, and NOT on the AHU:
-        // sub-900 this page's cell mix is exactly main's, where a button
-        // can land in the last track at some widths (640/700px fullscreen
-        // measure the same 5px on main), and the AHU pane already scrolls
-        // 5px at 1280 on main — both halves of the PRE-EXISTING overhang,
-        // logged as a design call (grid padding vs. the negative margin),
-        // which this row must not quietly pre-decide.
+        // The below-cutoff arm arrived with #266's ruling (2026-08-10),
+        // which decided the design call this row used to leave open and
+        // moved the declaration out of the diet block onto .fcu-points
+        // itself. Sub-900 the cell mix is the pre-diet one, where a button
+        // lands in the last track across wide contiguous BANDS — measured
+        // here before the fix: 360–473, 610–620 and 642–777 in normal
+        // flow, 360–431 and 568–703 in fullscreen. 400 is inside every
+        // one of them. The AHU page carries the twin rows.
         await page.goto(URL);
-        await page.click('.tool-card-fullscreen-btn');
-        const over = await page.evaluate(() => {
+        const overflow = () => page.evaluate(() => {
+            const grid = document.querySelector('.fcu-points');
             const pane = document.querySelector('#tab-unit');
-            return pane.scrollWidth - pane.clientWidth;
+            return {
+                grid: grid.scrollWidth - grid.clientWidth,
+                pane: pane.scrollWidth - pane.clientWidth,
+            };
         });
-        expect(over, 'no horizontal scroll in the diet regime').toBe(0);
+        expect(await overflow(), 'desktop, normal flow').toEqual({ grid: 0, pane: 0 });
+        await page.click('.tool-card-fullscreen-btn');
+        expect(await overflow(), 'desktop, fullscreen cockpit').toEqual({ grid: 0, pane: 0 });
+
+        await page.setViewportSize({ width: 400, height: 900 });
+        expect(await overflow(), 'phone width, fullscreen cockpit').toEqual({ grid: 0, pane: 0 });
+        await page.keyboard.press('Escape');
+        expect(await overflow(), 'phone width, normal flow').toEqual({ grid: 0, pane: 0 });
+
+        // The equality the fix rests on: the two values are one quantity
+        // written twice, so a retune of the hit area that leaves the grid
+        // alone reddens here instead of quietly re-opening the scrollbar.
+        const m = await page.evaluate(() => ({
+            bleed: -parseFloat(getComputedStyle(document.querySelector('.fcu-point-btn')).marginRight),
+            pad: parseFloat(getComputedStyle(document.querySelector('.fcu-points')).paddingRight),
+        }));
+        expect(m.bleed, 'the button still bleeds 0.3rem past its box').toBeCloseTo(4.8, 1);
+        expect(m.pad, 'the grid absorbs exactly that much').toBeCloseTo(m.bleed, 1);
     });
 });
 
