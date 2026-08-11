@@ -1349,25 +1349,34 @@ details.tool-preamble > .preamble-rest {
    judgement, not something a selector can decide — see the fold call
    sites on the two DDC Workbench pages.
 
-   Register is deliberately quieter than .pid-spoiler (hairline seam,
-   --text-dim summary, no fill): the fold should recede the way the
-   background it hides does. NO transitions — instant toggle, AX-sharp,
-   so there is nothing for prefers-reduced-motion to squash. Ships
-   closed and holds no state: /scripts/details-print.js force-opens it
-   for print (CSS cannot open a closed <details>) and nothing else, so
-   no cf_* key and no privacy.html surface. The ▸ marker is pseudo
-   content with no
+   Register: a flat control BAR — --surface-2 fill, --text summary ink,
+   --border seam, 1.05rem accent marker — sitting between
+   details.tool-preamble (quietest of the family) and .pid-spoiler (a
+   titled filled box). It SHIPPED quieter than this (hairline
+   --border-faint seam, --text-dim summary, no fill, text-size marker)
+   on the theory that the fold should recede the way the background it
+   hides does — and the pilot's first live read (owner, 2026-08-11)
+   found that styling was itself the defect: nothing said "this is
+   clickable", so folded content was undiscoverable. Ruled louder from
+   four mocked variants (glossary-arc.md D-log). The BODY stays
+   background; the bar is a control and now reads as one. NO
+   transitions — instant toggle, AX-sharp, so there is nothing for
+   prefers-reduced-motion to squash. Ships closed and holds no state:
+   /scripts/details-print.js force-opens it for print (CSS cannot open
+   a closed <details>) and nothing else, so no cf_* key and no
+   privacy.html surface. The ▸ marker is pseudo content with no
    letter or digit in it, so the contrast sweep skips it as decoration
    — same standing as .pid-spoiler's. */
 details.prose-fold {
-    border: 1px solid var(--border-faint);
+    border: 1px solid var(--border);
     margin: 0 0 0.25rem;
 }
 details.prose-fold > summary {
     font-family: var(--mono);
     font-size: 0.72rem;
     letter-spacing: 0.04em;
-    color: var(--text-dim);
+    color: var(--text);
+    background: var(--surface-2);
     padding: 0.45rem 0.65rem;
     cursor: pointer;
     list-style: none;
@@ -1376,10 +1385,10 @@ details.prose-fold > summary {
     gap: 0.5rem;
 }
 details.prose-fold > summary::-webkit-details-marker { display: none; }
-details.prose-fold > summary::before { content: "▸"; color: var(--accent); }
+details.prose-fold > summary::before { content: "▸"; color: var(--accent); font-size: 1.05rem; line-height: 1; }
 details.prose-fold[open] > summary::before { content: "▾"; }
-details.prose-fold > summary:hover { color: var(--text); }
-details.prose-fold[open] > summary { border-bottom: 1px solid var(--border-faint); }
+details.prose-fold > summary:hover { color: var(--text-bright); }
+details.prose-fold[open] > summary { border-bottom: 1px solid var(--border); }
 details.prose-fold > .prose-fold-body { padding: 0.5rem 0.65rem 0.35rem; }
 
 /* First-use acronym gloss (G-008). A quiet dotted underline cues "there's
