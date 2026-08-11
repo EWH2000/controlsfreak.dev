@@ -6531,6 +6531,25 @@ No refrigeration hub exists yet, so the sim forward-links the three
 refrigerant lessons and the P-T tool without a `hub:` back-link
 ([future: /refrigeration/] *(shipped 2026-07-18)*).
 
+*Shipped 2026-08-11 — the chip row, at last.* The Phase 8 workbench
+graduation took the grid to nine and the deferral expired with it
+(codebase-issues #274). The taxonomy question the 2026-05 note left
+open — group by equipment? by teaching chapter? — was answered by the
+owner on a third axis: **what the tech is doing**. Panel & Wiring
+(Controller Wiring, Mock VFD) · Programming & Logic (Function-Block
+Editor, PID Tuner, Staging Sequencer) · Equipment & Systems (both
+Workbenches, Hydronic Loop Builder, Refrigerant Loop). It reads as the
+one axis that doesn't fragment: an equipment split strands the two
+sandboxes that model no particular machine, and a chapter split
+strands the sims with no paired lesson. Mechanically it is the tools /
+education / practice chip row unchanged — same `.filter-chips` markup,
+same hash-routing IIFE, categories carried on the landing's
+`navCard()` calls only. Simulators still have **no** `NAV_CATEGORIES`
+entry, so the nav dropdown stays flat and the chips are page-local;
+that split was left as-is deliberately, since a three-bucket cascade
+over nine items buys a reader nothing the flat list doesn't already
+give them.
+
 *Shipped 2026-07-18.* The **refrigeration hub** (`/refrigeration/`, the
 fourth `/bacnet/`-clone pillar, wired into the Guides lane via
 `nav: guides` + `navLabel`) landed: a start-here path over the

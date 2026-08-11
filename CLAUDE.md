@@ -813,8 +813,15 @@ adding or moving pages.
 - **Tools landing** has a filter-chip row above the card grid;
   bump the All chip count when adding a tool, add a per-category
   chip if the new tool opens a new category. **Simulators landing**
-  is the same grid minus chips — add chips back if it grows past
-  ~6 entries. **Practice landing** is two H2 sections (Content
+  is the same grid with an **activity** chip row — Panel & Wiring /
+  Programming & Logic / Equipment & Systems, bucketing by what the
+  tech is *doing* rather than by equipment or teaching chapter
+  (owner decision 2026-08-10, codebase-issues #274; the row landed at
+  nine cards, past the ~6 threshold the section had carried since it
+  split off Tools). Chips are **page-local**: the categories live only
+  in the landing's `navCard()` calls, simulators still have no
+  `NAV_CATEGORIES` entry, and the nav dropdown stays flat. **Practice
+  landing** is two H2 sections (Content
   Quizzes / Field Drills) with a topic chip row above; chips
   collapse both grids into a flat filtered view, `[All]` restores
   the sectioned layout. Drill cards use `category: 'field'` (no
@@ -1110,7 +1117,14 @@ section headers).
 **Adding a new simulator** follows the same steps under
 `html/simulators/` instead, with `nav: simulators` in the
 frontmatter and the new `.nav-card` added to
-`simulators/index.html`. No filter chips to recount there.
+`simulators/index.html`. Give that card an **activity `category`**
+(`panel-wiring` / `programming-logic` / `equipment-systems`) and bump
+both the All chip count and its own chip's count — the card carries
+the category, the page's frontmatter does **not** (simulators have no
+`NAV_CATEGORIES` entry, so no `navCategoryGuard` arm and no build
+failure to catch a miss; `landing-chip-counts.spec.js` is what catches
+it, and it demands the chips partition the grid exactly — every
+simulator lands in one bucket, there is no chip-less case).
 
 **Adding a new education lesson** follows the same steps under
 `html/education/` (`nav: education` + a `category` in
