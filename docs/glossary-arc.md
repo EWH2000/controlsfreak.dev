@@ -316,12 +316,39 @@ evaporate with it:
     same morning). The phase stays unblocked; the queued mechanical
     lanes and the new design passes go first.
 
+- **2026-08-11 — the fold-widening ruling: ACCEPT ALL, flags as
+  called.** The owner approved the full widening proposal built from
+  the two-page prose inventory, unmodified — his words: *"Accept all,
+  keep the flags as you called them. Close enough to where I'm happy
+  to approve so I can scope it live right as it builds."* The ruled
+  after-state, per tab (visible prose blocks outside folds):
+  - AHU unit 15 → 4 visible + **5 new folds** (reading-the-graphic ·
+    ΔT well · setpoints/deadband/customer · the unseen stat+jumper ·
+    overrides); AHU wiresheet 6 → 1 visible + **5 new folds** (proof ·
+    heating valve · low-limits drive · trip · one-lie walkthrough),
+    existing three folds unchanged.
+  - FCU unit 9 → 3 visible + **4 new folds** (overrides · setpoint
+    convention · blocked-condenser · fan-heat/ΔT-sign); FCU wiresheet
+    5 → 1 visible + **4 new folds** (safeties contents · proof-first ·
+    recovery order · off-timer), parked-AO fold unchanged.
+  - Flags kept: drill-downs paragraph, the four control captions, one
+    orientation anchor per wiresheet, and the FCU directional-scope
+    note all STAY VISIBLE; both page preambles convert to the
+    standard `details.tool-preamble` disclosure.
+  - Consequences the lane carries: `prose-fold.spec.js`'s
+    MUST_STAY_VISIBLE list re-derives from this ruling (it encoded
+    the superseded background-only rule), its fold-body shape
+    assertion widens beyond `p.ddcw-sheet-note`, and the fold-id
+    inventory extends. No version bump owed (page HTML + specs only).
+    He scopes the built result live before merge (cfdev preview +
+    screenshots).
+
 ## Open questions
 
 - ~~**Mid-density pilot page for the tooltip component**~~ — settled
   2026-08-10: `education/timers-and-delays.html`, decision log above.
 - **§7.2 quiz-bank component question** — deferred until the tooltip
   component exists; decide before any bank counts as in scope.
-- **Fold-set widening pass** (owner direction 2026-08-11, decision
-  log above) — propose the wider workbench fold set for his ruling.
-  Sequenced into the backlog clear, ahead of tier-1 drafting.
+- ~~**Fold-set widening pass**~~ — settled 2026-08-11 same day:
+  ACCEPT ALL on the 18-fold proposal, decision log above;
+  implementation lane in flight.
