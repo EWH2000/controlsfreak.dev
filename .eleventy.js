@@ -706,32 +706,89 @@ module.exports = function(eleventyConfig) {
         const offenders = [];
         const used = [];
 
+        // HTML comments are masked before the scan, LENGTH-PRESERVINGLY,
+        // so a match index in the masked copy addresses the same
+        // characters in the original and the splice can work on real
+        // text. Without this, commented-out example markup — the natural
+        // way to park a trigger you are not shipping — fails the build on
+        // an unknown id, or worse, silently earns a panel and an
+        // aria-describedby splice inside dead markup. Same masking idea
+        // as flowStaticGuard's maskComments; only the HTML-comment arm is
+        // wanted here, because this runs on RENDERED output, where
+        // Nunjucks comments are already gone and blanking `//` lines
+        // would reach into prose.
+        const blank = (m) => m.replace(/[^\n]/g, " ");
+        const scannable = content.replace(/<!--[\s\S]*?-->/g, blank);
+
         // Opening tags carrying a data-gloss attribute. `[^>]*` is the
         // textual floor named above — an attribute VALUE containing a
-        // literal ">" would defeat it, which no house trigger does.
+        // literal ">" would defeat it, which no house trigger does. A
+        // `data-gloss=` inside a <script> STRING would still be seen;
+        // that fails loudly rather than silently, and no page does it.
         const TRIGGER_RE = /<([a-zA-Z][a-zA-Z0-9-]*)\b([^>]*\bdata-gloss="([^"]*)"[^>]*)>/g;
 
-        const spliced = content.replace(TRIGGER_RE, (match, rawTag, attrs, id) => {
+        let spliced = "";
+        let cursor = 0;
+        let m;
+        TRIGGER_RE.lastIndex = 0;
+        while ((m = TRIGGER_RE.exec(scannable)) !== null) {
+            const rawTag = m[1];
+            const attrs = m[2];
+            const id = m[3];
+            const start = m.index;
+            const end = start + m[0].length;
+            // The real characters at the same span — masking only ever
+            // blanks comment regions, which cannot match this pattern.
+            const original = content.slice(start, end);
             const tag = rawTag.toLowerCase();
+            let ok = true;
+
             if (tag !== "button") {
                 offenders.push(`  <${tag} data-gloss="${id}"> — a gloss trigger must be a <button>; the trigger contract is uniform semantics`);
-                return match;
+                ok = false;
+            } else if (!/\btype="button"/.test(attrs)) {
+                // A <button> with no type defaults to type="submit". On a
+                // form-bearing page (contact.html today, any future one)
+                // that turns a definition into a form submission.
+                offenders.push(`  data-gloss="${id}" — the trigger needs an explicit type="button"; a bare <button> defaults to type="submit" and would submit any form it lands inside`);
+                ok = false;
             }
             const entry = glossary[id];
-            if (!entry) {
+            if (ok && !entry) {
                 offenders.push(`  data-gloss="${id}" — no such glossary entry. Known ids: ${Object.keys(glossary).join(", ")}`);
-                return match;
+                ok = false;
             }
-            if (entry.owners.indexOf(pageUrl) !== -1) {
+            if (ok && entry.owners.indexOf(pageUrl) !== -1) {
                 offenders.push(`  data-gloss="${id}" — this page TEACHES that term (glossary owners), and a gloss there shadows the page's own teaching beat (docs/tooltip-glossary-scoping.md §7.4). Remove the mark; never soften the guard`);
-                return match;
+                ok = false;
             }
-            if (/\baria-describedby=/.test(attrs)) {
+            if (ok && /\baria-describedby=/.test(attrs)) {
                 offenders.push(`  data-gloss="${id}" — the trigger already carries aria-describedby; the build owns that attribute`);
-                return match;
+                ok = false;
             }
-            if (used.indexOf(id) === -1) used.push(id);
-            return `<${rawTag}${attrs} aria-describedby="gloss-tip-${id}">`;
+
+            spliced += content.slice(cursor, start);
+            if (ok) {
+                if (used.indexOf(id) === -1) used.push(id);
+                spliced += original.slice(0, -1) + ` aria-describedby="gloss-tip-${id}">`;
+            } else {
+                spliced += original;
+            }
+            cursor = end;
+        }
+        spliced += content.slice(cursor);
+
+        // The gloss-tip-<id> id namespace has to be ours alone on this
+        // page. A page that already carries id="gloss-tip-wiresheet" on
+        // some other element wins document order, so getElementById
+        // hands the runtime that element instead of the panel and the
+        // gloss silently does nothing — while aria-describedby points a
+        // screen reader at the wrong node. Checked against the masked
+        // copy so a commented-out example id doesn't trip it.
+        used.forEach((id) => {
+            if (scannable.indexOf(`id="gloss-tip-${id}"`) !== -1) {
+                offenders.push(`  data-gloss="${id}" — this page already carries id="gloss-tip-${id}" on another element; the gloss-tip-<id> namespace belongs to the build. Rename the page's id`);
+            }
         });
 
         if (offenders.length) {
