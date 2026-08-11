@@ -427,7 +427,20 @@ function walk(equipmentSelector, selfTest) {
 // the class of markup this list exists for. Its message paints
 // --text-bright and its Start fresh button --blue-ink on --surface,
 // both of which need measuring in both themes like any other ink.
-const COLLAPSED_CHROME = '.nav-menu, .nav-submenu, .tab-pane, .palette, .ddcw-resumed';
+//
+// `.gloss-tip` — the inline-term gloss panels the `gloss` transform
+// injects at body end — ships with the `hidden` attribute and is opened
+// only by a hover / focus / tap on its trigger. Same class of markup, so
+// the same route: FORCE IT OPEN AND MEASURE IT, no ALLOWLIST entry, no
+// reasoned exemption. Two design facts make that sound. The panel paints
+// a FULLY OPAQUE --surface-2 background (the GLOSS TOOLTIP block in
+// styles.css flags this as load-bearing for exactly this reason), so
+// each panel's backdrop resolution stops at its own background and the
+// overlapping positions force-opening produces change no ratio. And the
+// panel has no transition in any mode, so settle() has nothing to catch
+// mid-animation. The TRIGGER itself needs nothing here — it is ordinary
+// visible body text at load and gets measured like any prose.
+const COLLAPSED_CHROME = '.nav-menu, .nav-submenu, .tab-pane, .palette, .ddcw-resumed, .gloss-tip';
 
 async function settle(page) {
     // The nav dropdowns are closed with the `hidden` ATTRIBUTE, not just

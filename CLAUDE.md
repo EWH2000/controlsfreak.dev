@@ -84,6 +84,10 @@ from the recurring content-accuracy audits.
   must stay off paper hides its body with `@media print`, not with an
   exception in that script. The rest load per-page inside
   `{% block scripts %}` *before* the page's inline `<script>`.
+  `gloss.js` is the one script **neither** hand-loaded nor site-wide:
+  the `gloss` transform injects it at body end on exactly the pages
+  its scan found a trigger on, so pages must **not** load it
+  themselves (see *Conventions → Inline term glosses*).
 - **Worker:** `src/worker.js` — ES-module Worker. Handles
   `POST /api/contact` (validate, honeypot, Turnstile, Resend); falls
   through to `env.ASSETS.fetch(request)`. Secrets: `TURNSTILE_SECRET`,
@@ -403,6 +407,47 @@ section). **Category keys mirror the landing pages' `navCard()`
   `48 °F (8.9 °C)`. Engine-methodology formula lines with IP constants
   (0.240, CFM·60/v) stay IP-native with a "computes in IP, converts at
   the display boundary" caveat rather than a converted twin.
+- **Inline term glosses are hand-placed, and the build owns
+  everything else.** An author marks a term of trade in **prose only**
+  with one attribute on a real `<button>` —
+  `<button type="button" data-gloss="sr-latch">SR latch</button>` — and
+  writes nothing else: no class, no `aria-describedby`, no panel
+  markup, no script tag. Never inside a JS string, SVG text, an id or
+  a heading. There is **no walker**, deliberately: marking is a
+  curation act, and `education/vav-systems.html`'s *"thirty dampers
+  glide toward minimum"* is the standing exhibit for why a
+  context-free matcher would ship a falsehood. Definitions live in
+  **`html/_data/glossary.js`** — one keyed entry per headword,
+  `{ term, def, owners[] }`, `def` inserted as trusted markup —
+  because the same source has to serve the build today and the
+  palette / `quiz-engine.js` / JSON-LD later, the quiz-bank reasoning
+  exactly. **`owners[]` is the §7.4 suppression list**: the pages that
+  TEACH the term, where a gloss would shadow the page's own teaching
+  beat. Two build halves enforce it, both accumulate-then-throw:
+  `glossaryGuard` (a collection — it lints entry shape and fails on
+  an `owners` path that names no page, the anti-vacuity probe) and the
+  **`gloss` transform** (the repo's first `addTransform`; post-render,
+  so a trigger arriving via a partial is visible at all). The build
+  fails **loudly** on an unknown id, a non-`<button>` trigger, a
+  trigger without an explicit `type="button"` (a bare `<button>`
+  defaults to `type="submit"`), a mark on an owning page, a page that
+  already uses the `gloss-tip-<id>` id, a stale `owners` path, or a
+  non-kebab entry id. Marks inside HTML comments are masked out before
+  the scan, so commented-out example markup neither fails the build nor
+  earns a panel.
+  The transform splices the `aria-describedby` — which is the whole
+  no-JS screen-reader story, since a description is computed even
+  while the panel is `hidden` — then injects one `.gloss-tip` panel
+  per **distinct** term plus `/scripts/gloss.js`, so a page can never
+  carry triggers without its panels and runtime. Curation rule:
+  `docs/tooltip-glossary-scoping.md` §8 (ratified as amended); arc
+  plan and decision log: `docs/glossary-arc.md`. Two consequences
+  elsewhere — `.gloss-tip` is in `contrast-sweep.spec.js`'s
+  `COLLAPSED_CHROME` (panels ship `hidden`, so force-opening is the
+  only way their ink is ever measured, and the panel's **opaque**
+  `--surface-2` background is what makes that measurement sound), and
+  the trigger is deliberately **absent** from the TOUCH-TARGET FLOOR
+  block under WCAG 2.5.8's inline exception.
 - **Placeholder-content markers:** unverified data in a shipped page
   carries an HTML comment
   `<!-- // user to verify <thing> — placeholder data, refine after review -->`,
@@ -1205,7 +1250,7 @@ item.
 
 - **Code changes** use a *semantic-area* prefix naming the code area
   touched (e.g. `pid:`, `bacnet:`, `worker:`, `psychrometric:`,
-  `flow-engine:`, `units:`). Cross-cutting concerns get their own
+  `flow-engine:`, `units:`, `gloss:`). Cross-cutting concerns get their own
   (`a11y:`, `tests:`). Grep `git log --oneline` for the in-use set.
 - **Non-code changes** use a *Conventional Commits type*: `docs:`,
   `chore:`, `test:`.

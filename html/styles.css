@@ -1394,6 +1394,127 @@ abbr[title] {
     cursor: help;
 }
 
+/* ── GLOSS TOOLTIP ──
+   The keyboard- and touch-operable sibling of the abbr[title] gloss
+   above. That one is a hover-only BONUS by design; this one exists
+   precisely because `title` is not keyboard-reachable, not touch-
+   operable and not stylable. Runtime: /scripts/gloss.js. Definitions:
+   html/_data/glossary.js. Both the panel markup and the script tag are
+   injected by the `gloss` transform in .eleventy.js — an author writes
+   ONE attribute in prose and nothing else:
+
+       <button type="button" data-gloss="sr-latch">SR latch</button>
+
+   so the selectors here key off the attribute, not a class the author
+   could forget. A real <button> (not a span+role, not <dfn> — a trigger
+   marks a USE, and §7.4 suppresses marking on the defining page, so by
+   construction no trigger is a defining instance; the PANEL's headword
+   is the <dfn>).
+
+   AFFORDANCE: exactly the abbr[title] decoration — --text-dim dots on
+   the baseline, lifting to a solid --accent underline on hover / while
+   open. No color change on the text, no background, no icon, no
+   superscript marker. However quiet one marker is, forty of them stripe
+   a lesson; the control for that is MARKING DENSITY (a curation policy,
+   docs/glossary-arc.md), never a louder or quieter style here.
+
+   The --text-dim dotted underline is a component indicator under WCAG
+   1.4.11's 3:1 non-text floor, which it clears on every house surface
+   by a wide margin — it is body-label ink at 5.5:1+ (see the
+   `label, .field-label` comment for the measured pair).
+
+   TOUCH: deliberately NOT in the TOUCH-TARGET FLOOR block. A dotted-
+   underlined word in body prose is ~17px tall and padding it up would
+   wreck the line box — which is exactly WCAG 2.5.8's inline exception
+   for a target "in a sentence, or whose size is otherwise constrained
+   by the line-height of non-target text", the same standing body-prose
+   links already have here. The omission is a decision; see the note in
+   the TOUCH-TARGET FLOOR block.
+
+   MOTION: none, in any mode. Instant show/hide matches the hard-seam
+   register (nothing fades on this site's chrome), so
+   prefers-reduced-motion needs no branch and neither the contrast sweep
+   nor a screenshot can catch a panel mid-transition. ── */
+button[data-gloss] {
+    display: inline;
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    text-align: inherit;
+    text-decoration: underline dotted var(--text-dim);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+    cursor: help;
+}
+button[data-gloss]:hover,
+button[data-gloss].gloss-open {
+    text-decoration-color: var(--accent);
+    text-decoration-style: solid;
+}
+
+/* The panel. Square corners, 1px seam, flat fill, no shadow, no caret
+   arrow — AX-sharp register. Positioned by gloss.js in VIEWPORT
+   coordinates (position: fixed), which is why it lives at body end and
+   why scrolling dismisses it rather than costing a per-frame reposition.
+   z-index sits above body.has-fullscreen-tool main (400) and below the
+   command palette (1000).
+
+   ⚠️ The --surface-2 background must stay FULLY OPAQUE. It is
+   load-bearing for tests/contrast-sweep.spec.js: the sweep force-opens
+   `.gloss-tip` (COLLAPSED_CHROME) and resolves each ink source's
+   backdrop by walking ANCESTORS, not the painted stack — so resolution
+   stops at this background, and force-opened panels overlapping each
+   other at odd spots changes no ratio. A translucent panel skin would
+   silently change what the guard measures. */
+.gloss-tip {
+    position: fixed;
+    z-index: 900;
+    left: 0;
+    top: 0;
+    max-width: min(21rem, calc(100vw - 2rem));
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+    padding: 0.55rem 0.8rem 0.65rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--blue);
+    border-radius: 0;
+}
+.gloss-tip-term {
+    margin: 0 0 0.25rem;
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+}
+.gloss-tip-term dfn { font-style: normal; }
+.gloss-tip-def {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--text);
+}
+.gloss-tip-def strong { color: var(--text-bright); font-weight: 600; }
+.gloss-tip-def code {
+    font-family: var(--mono);
+    font-size: 0.9em;
+    background: var(--surface-3);
+    padding: 0.02em 0.3em;
+    border-radius: 0;
+}
+
+/* Glosses must not print as mystery underlines, and a panel could be
+   open when the reader hits Ctrl-P. Definitions simply don't print —
+   the prose reads as prose. */
+@media print {
+    button[data-gloss] { text-decoration: none; cursor: auto; }
+    .gloss-tip { display: none !important; }
+}
+
 /* Lead paragraph on Education pages — the opening prose paragraph that
    sets up the lesson. Slightly larger / wider line-height than the body
    .tool-body p shape. Spans the full .tool-body width so the intro
@@ -2125,6 +2246,12 @@ input[type="range"]::-moz-range-thumb {
 .vav-w-mode-btn:focus-visible,
 .bec-mode:focus-visible,
 details.tool-preamble > summary:focus-visible,
+/* The gloss trigger is an INLINE word inside a sentence, so the shared
+   3px offset below sits looser around it than around a padded control.
+   It joins the shared declaration anyway rather than forking a one-off
+   rule — one consolidated block is the point of this section, and the
+   ring still reads as a ring on a word. */
+button[data-gloss]:focus-visible,
 details.prose-fold > summary:focus-visible,
 .pid-spoiler > summary:focus-visible {
     outline: 2px solid var(--accent);
@@ -2157,7 +2284,14 @@ input[type="range"]:focus-visible::-moz-range-thumb {
    vfds source selects) get a page-local (hover: none) floor in their
    own head block instead.
    See codebase-issues #74 / #164 / #172 / ux-audit #3 / #8 / #9 +
-   audit-2026-06 #24 / #25 for the why. */
+   audit-2026-06 #24 / #25 for the why.
+   DELIBERATELY ABSENT: button[data-gloss], the inline gloss trigger.
+   It is a target "in a sentence, [whose] size is otherwise constrained
+   by the line-height of non-target text" — WCAG 2.5.8's inline
+   exception, the same standing body-prose links have — and padding a
+   ~17px underlined word up to 44px would wreck the line box it sits in.
+   Recorded here so the omission reads as a decision, not a miss; the
+   reasoning lives in full in the GLOSS TOOLTIP block. */
 @media (hover: none) {
     .site-nav-links a,
     .units-btn,

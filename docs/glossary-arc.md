@@ -43,8 +43,9 @@ ruling:
 - **The tooltip/gloss component pilots on a mid-density page** —
   NOT a workbench page (§7.3's argument does bind tooltips on the
   AHU, and pattern-proving belongs on a calmer surface first).
-  Candidate pages: to be proposed (2–3) for the owner's pick —
-  **open question**.
+  Candidate pages: three were proposed and the owner picked
+  `education/timers-and-delays.html` (2026-08-10 — see the decision
+  log). **Settled.**
 
 ## Phasing (derived from §9 of the scoping record; live copy here)
 
@@ -207,10 +208,45 @@ evaporate with it:
     existing staging-hold "latch" keeps
     `education/comparators-and-deadband.html`. Two anchors on one
     word, two targets, each to its own owner.
+- **2026-08-10 — the D2 gloss-component rulings.** Owner decisions on
+  the six questions the D2 design proposal put to him, taken against
+  the interactive mockup:
+  - **Pilot page: `education/timers-and-delays.html`**, terms
+    `sr-latch` / `wiresheet` / `change-of-value` — candidate A of the
+    three proposed. A calm mid-chapter lesson whose own prose states
+    the lean-on-neighbors convention outright and then uses the terms
+    bare for the rest of the page, and Education is the archetype
+    phase 2 mostly lives on, so the pattern gets proven on its main
+    future surface.
+  - **Mark EVERY prose occurrence**, not the first per page — the
+    recommended default was first-occurrence. Marking stays
+    hand-placed in the source; there is no walker and the pilot
+    deliberately ships none. The density lever named in §2 of the
+    scoping record is therefore live at its wider setting, and the
+    eleventh-tooltip control is entirely the curation rule, not the
+    styling.
+  - **Definitions only** — no owning-lesson link inside the panel
+    yet. The panel is structured so a link line can be added without
+    a markup redesign, and `glossary.js`'s `owners` already carries
+    the target, so this stays a component change rather than a data
+    migration. The runtime's blur path already treats focus moving
+    INTO the panel as not-a-dismissal; what a linked panel would add
+    is Enter/Space moving focus in.
+  - The three minor calls all adopted as recommended: **120 ms
+    hover-intent delay**, a **2 px `--blue` left rule** on the panel,
+    and **no `aria-roledescription`** — the trigger announces as a
+    plain button, which is an honest earcon for a thing that is
+    operable.
+  - Falling out of the build, not decided: **no `cf_*` storage key**,
+    so no `privacy.html` change; and the panels join
+    `contrast-sweep.spec.js`'s `COLLAPSED_CHROME` force-open list
+    rather than taking an `ALLOWLIST` entry — which is what makes the
+    panel's opaque `--surface-2` background load-bearing for the
+    guard rather than a styling choice.
 
 ## Open questions
 
-- **Mid-density pilot page for the tooltip component** — candidates
-  to be proposed for the owner's pick.
+- ~~**Mid-density pilot page for the tooltip component**~~ — settled
+  2026-08-10: `education/timers-and-delays.html`, decision log above.
 - **§7.2 quiz-bank component question** — deferred until the tooltip
   component exists; decide before any bank counts as in scope.
