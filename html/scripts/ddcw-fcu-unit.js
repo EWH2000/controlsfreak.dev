@@ -177,6 +177,47 @@ const DDCWFcuUnit = (function () {
     const PROOF_MAKE_DELAY = 8;              // s of continuous airflow before fan-status makes
     // ═══════════════════════════════════════════════════════════════════
 
+    // ══ HOW FAST THE WEATHER CAN CHANGE ════════════════════════════════
+    // THIS IS A USABILITY CONSTANT, NOT WEATHER REALISM — 0.5 °F per
+    // sim-SECOND is 1,800 °F/h, compressed exactly the way the 20× sim
+    // clock is. The outdoor air CHASES the knob instead of teleporting to
+    // it, so the value a reader RELEASES on is a standing command rather
+    // than an instantly-delivered fact.
+    //
+    // ⚠ DUPLICATED FROM `ddcw-ahu-unit.js`'s OA_RAMP_RATE, DELIBERATELY —
+    // read that constant for the owner's 2026-08-09 ruling and the swept
+    // measurement table behind the number. Same posture as
+    // PROOF_MAKE_DELAY above and as the param-rail block below:
+    // duplicated per the unit-selector precedent rather than grown into
+    // the unit-agnostic shell (codebase-issues #263). **A THIRD unit is
+    // the graduation trigger** — at three, a shared weather model stops
+    // being keepable in step by hand. Do not extract it for two; DO keep
+    // the two values equal, because the drift this guards is a reader
+    // hopping between the two pages and meeting two different weathers.
+    //
+    // WHY THE NUMBER IS INHERITED RATHER THAN RE-DERIVED HERE. On the AHU
+    // the rate is a measured threshold: cold outdoor air reaches the
+    // mixed-air station directly, so a test-drag of the slider latched
+    // the hardwired low-limit stat in about a second, and 0.5 is the
+    // fastest rate that still separates "testing the control" from
+    // "asking for winter". THIS UNIT HAS NO SUCH ACCIDENT TO PREVENT,
+    // and the parity work measured it rather than assuming it: outdoor
+    // air reaches this machine only through the envelope term (UA_ENV,
+    // via the zone's lumped capacitance), and the OA knob bottoms at
+    // 55 °F, not −20. Held at that floor with stage 2 jammed on, DAT
+    // settles at 44.7 °F — above the 42 °F annunciator trip, so the
+    // weather knob ALONE cannot latch it at any slider position. Only
+    // the coldest environment the page can express at all (OA at 55 AND
+    // the load knob at 0, stage held) reaches the latch, and it takes
+    // ~634 sim-seconds — half a minute of wall time at the default
+    // clock, which nobody does by accident.
+    //
+    // So on the FCU this constant buys MODEL CONSISTENCY, not trip
+    // protection, and that is the whole reason it is here. Do not repeat
+    // the AHU's trip story on this page: it is not true of this machine.
+    const OA_RAMP_RATE = 0.5;      // °F per SIM-second — see above; not a weather rate
+    // ═══════════════════════════════════════════════════════════════════
+
     // ── plant — the FCU's data-driven IO surface (unit-specific keys) ──
     function fcuCreatePlant() {
         // Arrival: zone 76 °F with SP 72 / deadband 3 puts the cool-2stage
@@ -232,12 +273,25 @@ const DDCWFcuUnit = (function () {
             // vary them at all. The session snapshot is what forced the
             // issue — a knob in module scope is not in the plant, so it
             // could not be serialised with it.
-            // No `oaTarget` twin here: the FCU's outdoor air is the knob
-            // value directly. The AHU splits truth from target because its
-            // weather RAMPS (see OA_RAMP_RATE there); this unit has no
-            // ramp to chase, and inventing one for symmetry would be a
-            // second model, not parity.
-            oaT:        T_OA_DEF,            // °F — outdoor-air temp (envelope driver; the OA knob writes it)
+            // The weather is split into TRUTH and TARGET, matching the AHU
+            // (codebase-issues #278). This unit carried the knob value
+            // directly until 2026-08-10, on the reasoning that a ramp with
+            // no trip to prevent would be a second model rather than
+            // parity — which had it backwards: two workbench pages whose
+            // outdoor air behaves differently ARE two weather models, and
+            // a reader hops between them. See OA_RAMP_RATE above for what
+            // this unit's own measurement says about the trip case.
+            oaT:        T_OA_DEF,            // °F — the REAL outdoor-air temp (truth); update() walks it toward oaTarget
+            // Where the weather is HEADED — what the OA knob writes, and
+            // the only thing it writes. They start equal, so a plant
+            // nobody touches has settled weather.
+            //
+            // ⚠ ANY code that sets `oaT` directly — a spec row seeding a
+            // cold morning, most of all — must set `oaTarget` too, or the
+            // chase quietly drags that weather back toward a stale target
+            // over the following ticks. (The FCU's presets stage no
+            // weather at all, so they need no snap; see SCENARIOS.)
+            oaTarget:   T_OA_DEF,            // °F — where the OA knob is pointed
             qInternal:  Q_INT_DEF,           // Btu/h — internal sensible gain (the load knob writes it)
             // zoneW:   0.0094,              // lb/lb — future latent state; NOT integrated
             //                                  this session (see the RH-ready seam in fcuUpdate)
@@ -304,6 +358,25 @@ const DDCWFcuUnit = (function () {
         // Validate-and-mute: if a read isn't finite, blank on render.
         if (!isFinite(zoneT) || !isFinite(fanPct)) { d.invalid = true; return; }
         d.invalid = false;
+
+        // ── the weather chases the knob (the AHU's step 0, ported) ────
+        // Integrated state like zoneT below, so it sits AFTER the
+        // validate-and-mute guard: a bad read freezes the weather where
+        // it was rather than walking it on toward a target nobody can
+        // see. Linear at OA_RAMP_RATE (read that constant — on this unit
+        // it is a consistency constant, not a trip threshold), snapping
+        // on arrival so the truth lands exactly on the number the knob
+        // shows instead of asymptoting near it. A plant with no
+        // `oaTarget` holds still, which is what a pre-chase spec plant
+        // does. Everything downstream reads `plant.oaT` — the air that
+        // has actually arrived, never where the knob is pointed.
+        if (isFinite(dt) && isFinite(plant.oaTarget)) {
+            const step = OA_RAMP_RATE * dt;
+            const gap  = plant.oaTarget - plant.oaT;
+            plant.oaT = (Math.abs(gap) <= step)
+                ? plant.oaTarget
+                : plant.oaT + (gap > 0 ? step : -step);
+        }
 
         const fanFrac = fanPct / 100;
         // Y2-implies-Y1 interlock, FCU-local: a Y2 call is always stage 2.
@@ -1156,7 +1229,13 @@ const DDCWFcuUnit = (function () {
         // clock multiplier is SHELL state — ctx.simSpeed() is the live
         // read, so this readout can't hold a stale local mirror.
         speedValLbl.textContent = Math.round(ctx.simSpeed()) + '×';
-        oaValLbl.textContent    = dispTempNum(plant.oaT).toFixed(0) + ' ' + tSuffix();
+        // The OA readout is the KNOB's readout, so it paints the TARGET —
+        // it has to agree with the handle sitting under it, or the control
+        // reads as broken. While the chase is running that number and the
+        // machine's own outdoor air disagree, and that is the intended
+        // reading: this row is a command, the envelope's response on the
+        // graphic is the instrument. Same split the AHU's row carries.
+        oaValLbl.textContent    = dispTempNum(plant.oaTarget).toFixed(0) + ' ' + tSuffix();
         loadValLbl.textContent  = Math.round(plant.qInternal) + ' Btu/h';
 
         // ── param rail writability ── a field is adjustable only while
@@ -1194,7 +1273,11 @@ const DDCWFcuUnit = (function () {
     // one of each, which is the only difference.
     function fcuHydrateControls(plant, ctx) {
         speedSlider.value = String(ctx.simSpeed());
-        oaSlider.value    = String(plant.oaT);
+        // The OA handle carries the TARGET, matching the readout beside it
+        // (see fcuSyncControls). A snapshot taken mid-ramp therefore
+        // restores oaT ≠ oaTarget and the weather RESUMES its walk on the
+        // next tick — the reader's standing command survives the trip.
+        oaSlider.value    = String(plant.oaTarget);
         loadSlider.value  = String(plant.qInternal);
 
         // The one held slider. fan-enable and the stage buttons need
@@ -1251,6 +1334,15 @@ const DDCWFcuUnit = (function () {
         // (kebab-case — see fcuCreatePlant). The two are hand-mapped
         // here on purpose, which is what lets the buttons read as
         // sentences without pushing that wording into the model.
+        //
+        // ⚠ NO SCENARIO STAGES WEATHER on this unit — there is no `oa`
+        // key below, so none of them touches `oaT` / `oaTarget` and the
+        // pair cannot be split by a preset click. The AHU's scenarios DO
+        // carry one, and they SNAP both halves (truth and target) rather
+        // than ramping, because staging a machine is not slider-testing.
+        // If a scenario here ever gains an `oa`, it must write BOTH for
+        // the same reason — writing the truth alone leaves the chase
+        // dragging the staged weather back toward a stale target.
         const SCENARIOS = {
             healthy:   { zone: 78, fan: 100, stage: 2, fault: 'none' },
             compoff:   { zone: 78, fan: 100, stage: 0, fault: 'none' },
@@ -1544,10 +1636,15 @@ const DDCWFcuUnit = (function () {
         });
 
         // ── Outdoor-air temp (envelope driver) — °F-native slider, always
-        // live; the readout converts for display. ──
+        // live; the readout converts for display.
+        //
+        // IT WRITES THE TARGET, NEVER THE TRUTH. The knob says where the
+        // weather is headed; update() walks the actual outdoor air there
+        // at OA_RAMP_RATE (read that constant for why this unit rides the
+        // AHU's rate). ──
         oaSlider.addEventListener('input', function () {
             const v = parseFloat(oaSlider.value);
-            if (isFinite(v)) pl.oaT = v;
+            if (isFinite(v)) pl.oaTarget = v;
             host.requestRender();
         });
 
