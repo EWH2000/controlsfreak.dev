@@ -121,6 +121,18 @@
 // caught in flight. So: reducedMotion, transitions zeroed, and every
 // running animation finished (or cancelled, for the infinite ones)
 // before the walk.
+//
+// `details.prose-fold` is settled by a THIRD arm, and it is neither of
+// the two above. A closed <details> is closed by an absent `open`
+// ATTRIBUTE, not by a stylesheet rule and not by `hidden` — Chromium
+// hides the body inside the UA shadow slot, which never appears in the
+// light-DOM ancestor chain and never changes a child's computed
+// `display`. So COLLAPSED_CHROME's two arms both no-op against it:
+// `removeAttribute('hidden')` has nothing to strip, and
+// `display:block !important` was never what was hiding the prose.
+// Setting `open` is the only reveal that works, and doing it makes the
+// measurement independent of that UA implementation detail rather than
+// dependent on it.
 
 'use strict';
 
@@ -439,6 +451,17 @@ async function settle(page) {
     await page.evaluate((sel) => {
         for (const el of document.querySelectorAll(sel)) el.removeAttribute('hidden');
     }, COLLAPSED_CHROME);
+    // Same shape as the nav-dropdown note above, one attribute along: a
+    // prose fold is closed by the ABSENCE of `open`, so neither the
+    // `hidden` strip above nor the `display:block` override below
+    // reveals it. Deliberately NOT in COLLAPSED_CHROME — membership
+    // there would read as "handled" while both of that list's arms
+    // silently no-op. Scoped to .prose-fold rather than bare `details`
+    // so the older idioms (details.tool-preamble, .pid-spoiler) keep
+    // whatever standing they have today; widening it is a separate call.
+    await page.evaluate(() => {
+        for (const d of document.querySelectorAll('details.prose-fold')) d.open = true;
+    });
     await page.addStyleTag({
         content: '*,*::before,*::after{transition-duration:0s !important;transition-delay:0s !important}'
             + COLLAPSED_CHROME + '{display:block !important;visibility:visible !important}',

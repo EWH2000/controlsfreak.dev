@@ -78,21 +78,42 @@ evaporate with it:
   the design deliverable. The workbench's damage-stakes scope note
   is always-visible by its own convention (it must show on every
   tab) and is not a sheet note.
-- **Any new collapsed pattern joins the contrast sweep's force-open
-  list** — the `COLLAPSED_CHROME` const in
-  `tests/contrast-sweep.spec.js` — or its ink is never measured. A
-  `<details>`-based collapse needs its selector added there **and**
-  `settle()` checked: forcing `<details>` open is an `open`
-  ATTRIBUTE, not a style, the same shape as the spec's note about
-  the nav dropdowns being closed with the `hidden` attribute.
+- **Any new collapsed pattern must be reachable by the contrast
+  sweep** — or its ink is never measured. The instrument depends on
+  HOW the pattern hides: `COLLAPSED_CHROME` in
+  `tests/contrast-sweep.spec.js` is right for `hidden`/`display`
+  collapses, and **wrong for `<details>`**, whose closed state is an
+  absent `open` ATTRIBUTE that both of that list's arms no-op
+  against. RESOLVED for `<details>` by the collapse pilot: a third
+  `settle()` arm setting `open` on `details.prose-fold` (see the
+  2026-08-10 decision-log entry). A future non-`<details>` collapse
+  is still a `COLLAPSED_CHROME` case.
 - **Re-derive the sheet-note mention counts before pilot design.**
-  Last measured at `340cf06`: 11 `class=` uses on
-  `ddc-workbench.html` + 6 on `ddc-workbench-fcu.html` = 17
-  site-wide (raw string occurrences 11 / 7 / 2, the last two in
-  `styles.css`). Always state which page a count is for. The
-  recorded counting rule: strip tags and collapse whitespace first,
-  match stems with `[- ]` for compounds, and state whether hrefs
-  were excluded.
+  Done, and the recorded raw figure was wrong. Element counts are
+  confirmed **unchanged** from the `340cf06` record: 11
+  `class="ddcw-sheet-note"` uses on `ddc-workbench.html` + 6 on
+  `ddc-workbench-fcu.html` = 17 site-wide (plus 2 rule selectors in
+  `styles.css`). But the recorded raw-string figure **11 / 7 / 2 does
+  not reproduce under the rule it was recorded with** — the `[- ]`
+  stem gives **13 AHU / 7 FCU / 4 `styles.css`**, at `340cf06` and at
+  `ab695ca` alike. 11 / 7 / 2 is what hyphen-only matching
+  (`sheet-note`) returns, so the prior measure did not follow its own
+  rule. The four extra hits are all space-form and non-element: AHU
+  L2753 (HTML comment) and L3431 (JS comment) are "wire**sheet
+  note**s" — the stem reaching inside the compound *wiresheet*, the
+  matching hazard the scoping record predicts for other terms — and
+  `styles.css` L4949 / L4971 are prose comments beside the fullscreen
+  rules. **No content drifted; only the number was mis-derived.**
+  Always state which page a count is for. The counting rule, stated
+  in full: match the stem `sheet[- ]note` over the **raw source
+  text** with whitespace collapsed, hrefs included (the string never
+  occurs inside an `href` value, so inclusion does not move any
+  number); counts are occurrences, not matching lines. Note that
+  strip-tags-first — the earlier phrasing of this rule — measures a
+  different thing entirely, since the class attribute lives inside a
+  tag: it returns **0 / 0** for the pages, which is the correct
+  answer to "how often does a visitor READ the phrase" and useless
+  as an inventory.
 - **Forward-link convention:** inline links to owning lessons anchor
   only pages that exist today.
 - **New `cf_*` storage keys (if the disclosure system persists
@@ -141,6 +162,52 @@ evaporate with it:
   amendment; scoping record carries the marked text). Split pilot
   ruled (above). `origin/candidate-b` retired to the annotated tag
   `archive/candidate-b` in the same session's housekeeping.
+- **2026-08-10 — the collapse pilot's fold rulings** (owner, on the
+  D1 design proposal). Stated goal: *a less overwhelming, cleaner
+  page.*
+  - **Fold set, and nothing else:** AHU sheet notes **2, 3, 7, 8, 10**
+    — the economizer-permit pair, the 38 / 41 commissioning pair, and
+    the two-defeats note — plus **FCU note 2**. Every other sheet
+    note stays visible. Two of these overrode the proposal's own
+    lean: it argued #10 should stay visible (both defeats are
+    performable live) and that the FCU had zero clear candidates
+    under a strict reading of the background-versus-live rule. The
+    owner folded both. Read the rule as *background may fold*, with
+    the reader's page-weight the tie-breaker — not as a classifier
+    that decides on its own.
+  - **The disclosure system:** `details.prose-fold`, a shared
+    `styles.css` block and the third member of the
+    `details.tool-preamble` / `.pid-spoiler` ▸/▾ family. Native
+    `<details>`, ships closed, no transitions, **no persistence** —
+    so no `cf_*` key and no `privacy.html` surface.
+  - **Print: every `<details>` on the site prints open** (owner ruling,
+    same day, on the pilot's flagged divergence — the retrofit was
+    taken, not deferred). `html/scripts/details-print.js` force-opens
+    each closed disclosure on `beforeprint` and restores **exactly
+    those** on `afterprint`, so a reader's own open one survives.
+    It is **site-wide from `layouts/page.njk`**, and that was not a
+    selector widening: the pilot loaded its script per-page on the two
+    workbench pages, while `<details>` lives on **33** — 30
+    `details.tool-preamble` tool pages (the design proposal said five;
+    it was wrong), `.pid-spoiler` on pid-tuner, and the two fold
+    pages. A per-page tag would have to be remembered 33 times and the
+    34th page would print closed silently. The selector is bare
+    `details` so a future disclosure inherits the behaviour. A
+    disclosure that must stay off paper hides its body with
+    `@media print`, never with an exception in that script.
+  - **Contrast guard:** a third `settle()` arm setting the `open`
+    ATTRIBUTE on `details.prose-fold`, **not** a `COLLAPSED_CHROME`
+    entry — membership there would read as "handled" while both of
+    that list's arms silently no-op against a closed `<details>`.
+    Scoped to `.prose-fold` rather than bare `details` so the older
+    idioms keep whatever standing they have today.
+  - **Inline lesson links** land at point of use in the same pass —
+    including the **two-sense `latch` split** the proposal flagged:
+    the safety SR-latch sense anchors
+    `education/boolean-logic-latches.html` on both pages, while the
+    existing staging-hold "latch" keeps
+    `education/comparators-and-deadband.html`. Two anchors on one
+    word, two targets, each to its own owner.
 - **2026-08-10 — the D2 gloss-component rulings.** Owner decisions on
   the six questions the D2 design proposal put to him, taken against
   the interactive mockup:

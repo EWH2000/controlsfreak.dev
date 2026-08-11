@@ -3079,28 +3079,44 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                     are wells in the parameter rail beside the drawing.
                 </p>
 
-                <p class="ddcw-sheet-note">
-                    Read the economizer permit first, because it is two
-                    conditions and not one. A fixed high limit asks whether the
-                    outdoor air is cool enough to be worth using at all; a
-                    differential comparison asks whether it is cooler than the
-                    air already coming back from the building. Either one alone
-                    gets a unit into trouble — a fixed limit on its own will
-                    open the dampers on a mild humid morning when the return is
-                    cooler still, and a differential on its own will open them
-                    at ninety degrees just because the building is hotter. Both
-                    have to agree before the damper leaves its minimum position.
-                </p>
+                <!-- Folded (glossary arc, collapse pilot 2026-08-10): both
+                     paragraphs are "what an economizer permit is" —
+                     /education/economizers.html owns the teaching, and the
+                     second leans on the first ("the other half of that
+                     block"), so they share one fold or neither folds. -->
+                <details class="prose-fold" id="ddcw-fold-econ-permit">
+                    <summary>Background — the two economizer permit conditions, and the minimum position</summary>
+                    <div class="prose-fold-body">
+                        <p class="ddcw-sheet-note">
+                            Read <a href="/education/economizers.html">the
+                            economizer permit</a> first, because it is two
+                            conditions and not one. A fixed high limit asks
+                            whether the outdoor air is cool enough to be worth
+                            using at all; a differential comparison asks
+                            whether it is cooler than the air already coming
+                            back from the building. Either one alone gets a
+                            unit into trouble — a fixed limit on its own will
+                            open the dampers on a mild humid morning when the
+                            return is cooler still, and a differential on its
+                            own will open them at ninety degrees just because
+                            the building is hotter. Both have to agree before
+                            the damper leaves its minimum position.
+                        </p>
 
-                <p class="ddcw-sheet-note">
-                    The minimum position is the other half of that block. When
-                    the economizer is not permitted the damper does not go
-                    shut — it goes to the ventilation minimum, because the
-                    building still needs outdoor air. That is what the select
-                    block below the permit is doing, and deleting it is a fault
-                    worth trying: the damper drops to zero, the unit stops
-                    ventilating, and absolutely nothing on the graphic goes red.
-                </p>
+                        <p class="ddcw-sheet-note">
+                            The minimum position is the other half of that
+                            block. When the economizer is not permitted the
+                            damper does not go shut — it goes to
+                            <a href="/tools/minimum-outdoor-air.html">the
+                            ventilation minimum</a>, because the building still
+                            needs outdoor air. That is what the select block
+                            below the permit is doing, and deleting it is a
+                            fault worth trying: the damper drops to zero, the
+                            unit stops ventilating, and absolutely nothing on
+                            the graphic goes red.
+                        </p>
+                    </div>
+                </details>
 
                 <p class="ddcw-sheet-note">
                     Airflow proof gates both coils, and the ordering is the
@@ -3124,7 +3140,9 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                 </p>
 
                 <p class="ddcw-sheet-note">
-                    The heating valve is a proportional loop, not a stage: the
+                    The heating valve is
+                    <a href="/education/pid-basics.html">a proportional
+                    loop</a>, not a stage: the
                     error between the heating setpoint and the space runs through
                     a gain and a limit block, so the valve sits wherever it has
                     to sit to hold the space rather than banging open and shut.
@@ -3161,45 +3179,62 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                     where the minimum went.
                 </p>
 
-                <p class="ddcw-sheet-note">
-                    There are two low-limit stats on this machine, and only one
-                    of them is on the sheet. The hardwired one is a
-                    manual-reset element strapped across the coil face and
-                    landed in the fan starter circuit; this unit carries one,
-                    set at thirty-eight. The comparator here is the software
-                    limit, and it sits three degrees <em>above</em> that, at
-                    forty-one — so the program is what acts first, in a way you
-                    can watch on the sheet and clear from it, and the hardware
-                    element stays the backstop it is meant to be. That pair
-                    comes from one engineer&rsquo;s commissioning practice in the
-                    Northeast: the physical stat around thirty-eight, the limit
-                    in the program somewhere between forty and forty-two. Treat
-                    it as a worked example and not as a rule, because freeze
-                    protection is a climate question before it is a setpoint —
-                    what drives the number is the design outdoor-air
-                    temperature, how much outdoor air the unit takes, and
-                    whether there is a wet coil sitting in it. Somewhere warm
-                    enough, the argument is whether the stat goes on at all.
-                    What travels is the shape: know what your machine can
-                    legitimately produce, put the program&rsquo;s limit above the
-                    hardware&rsquo;s, and set neither by habit. Set this one too
-                    low and it becomes decoration — this unit&rsquo;s two
-                    compressor stages bottom the discharge at thirty-five, and
-                    nothing in the program would ever see a colder number than
-                    that.
-                </p>
+                <!-- Folded (glossary arc, collapse pilot 2026-08-10): where
+                     one engineer's numbers come from and why the spread is
+                     worth having — background a reader can take or leave.
+                     Nothing here is watchable on the running machine, which
+                     is what separates it from the trip note below. -->
+                <details class="prose-fold" id="ddcw-fold-lls-numbers">
+                    <summary>Background — where the 38 / 41 pair comes from, and why the spread</summary>
+                    <div class="prose-fold-body">
+                        <p class="ddcw-sheet-note">
+                            There are two low-limit stats on this machine, and
+                            only one of them is on the sheet. The hardwired one
+                            is a manual-reset element strapped across the coil
+                            face and landed in the fan starter circuit; this
+                            unit carries one, set at thirty-eight. The
+                            comparator here is the software limit, and it sits
+                            three degrees <em>above</em> that, at forty-one —
+                            so the program is what acts first, in a way you can
+                            watch on the sheet and clear from it, and the
+                            hardware element stays the backstop it is meant to
+                            be. That pair comes from one engineer&rsquo;s
+                            commissioning practice in the Northeast: the
+                            physical stat around thirty-eight, the limit in the
+                            program somewhere between forty and forty-two.
+                            Treat it as a worked example and not as a rule,
+                            because
+                            <a href="/tools/coil-freeze-risk.html">freeze
+                            protection is a climate question</a> before it is a
+                            setpoint — what drives the number is the design
+                            outdoor-air temperature, how much outdoor air the
+                            unit takes, and whether there is a wet coil sitting
+                            in it. Somewhere warm enough, the argument is
+                            whether the stat goes on at all. What travels is
+                            the shape: know what your machine can legitimately
+                            produce, put the program&rsquo;s limit above the
+                            hardware&rsquo;s, and set neither by habit. Set
+                            this one too low and it becomes decoration — this
+                            unit&rsquo;s two compressor stages bottom the
+                            discharge at thirty-five, and nothing in the
+                            program would ever see a colder number than that.
+                        </p>
 
-                <p class="ddcw-sheet-note">
-                    The reason a number down there matters at all is what it
-                    says about the rest of the machine, and that part is not
-                    regional. If the discharge really is riding the stat, the
-                    ductwork is sweating badly and the pressures on that
-                    circuit are not pretty — the stat is not trimming a
-                    setpoint, it is catching a unit that is already in trouble.
-                    Which is the argument for the spread: you would rather the
-                    program stopped the machine on a sheet you can read than
-                    have somebody find a popped button on a wet air handler.
-                </p>
+                        <p class="ddcw-sheet-note">
+                            The reason a number down there matters at all is
+                            what it says about the rest of the machine, and
+                            that part is not regional. If the discharge really
+                            is riding the stat, the ductwork is sweating badly
+                            and the pressures on that circuit are not pretty —
+                            the stat is not trimming a setpoint, it is catching
+                            a unit that is already in trouble. Which is the
+                            argument for the spread: you would rather the
+                            program stopped the machine on a sheet you can read
+                            than have somebody find a popped button on a wet
+                            air handler.
+                        </p>
+                    </div>
+                </details>
 
                 <p class="ddcw-sheet-note">
                     A trip is the classic freezestat response, all at once:
@@ -3211,8 +3246,10 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                     moment the fan stops, the discharge probe reads the room.
                     Watch the DAT chip after a trip — it climbs to a perfectly
                     comfortable number while the machine sits dead, which is
-                    exactly why the trip is held by a latch and not by the
-                    comparison alone. An unlatched stat would clear itself on
+                    exactly why the trip is
+                    <a href="/education/boolean-logic-latches.html">held by a
+                    latch and not by the comparison alone</a>. An unlatched
+                    stat would clear itself on
                     its own blindness and bang the fan straight back on. The
                     LLS Reset source is the reset button on the device: click
                     it true and back once the cause is fixed and the machine
@@ -3222,26 +3259,40 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                     exactly as fast as each trip can clear itself.
                 </p>
 
-                <!-- ⚠ DO NOT COMPRESS THIS INTO "the software equivalent of a
-                     jumper". The page carries BOTH defeats now, and they are
-                     different pieces of wire producing different field
-                     signatures — the whole reason this paragraph exists is
-                     that the shorthand is wrong, and it is the shorthand a
-                     future editor will reach for. -->
-                <p class="ddcw-sheet-note">
-                    There are two ways to defeat a low limit on this machine and
-                    they are not the same defeat, which is worth being exact
-                    about, because they read alike on a work order and look
-                    nothing alike on the roof. Wiring that reset input down
-                    defeats the <em>latch</em>: the trip still happens, it just
-                    cannot hold, so the unit short-cycles &mdash; down, clear,
-                    back on, down again, all morning. The jumper on the device
-                    face defeats the <em>contacts</em>: the trip still happens
-                    and still holds, and the fan never drops at all. One machine
-                    bangs on and off where anyone can hear it. The other runs
-                    straight through a freeze point looking perfectly normal
-                    from the front end, which is the more expensive of the two.
-                </p>
+                <!-- Folded (glossary arc, collapse pilot 2026-08-10): field
+                     signatures — how the two defeats read on a roof — rather
+                     than a step to perform here. Both defeats stay live on
+                     this page; the fold hides the telling-apart, not the
+                     capability. -->
+                <details class="prose-fold" id="ddcw-fold-lls-defeats">
+                    <summary>Background — the two defeats, told apart</summary>
+                    <div class="prose-fold-body">
+                        <!-- ⚠ DO NOT COMPRESS THIS INTO "the software
+                             equivalent of a jumper". The page carries BOTH
+                             defeats now, and they are different pieces of
+                             wire producing different field signatures — the
+                             whole reason this paragraph exists is that the
+                             shorthand is wrong, and it is the shorthand a
+                             future editor will reach for. -->
+                        <p class="ddcw-sheet-note">
+                            There are two ways to defeat a low limit on this
+                            machine and they are not the same defeat, which is
+                            worth being exact about, because they read alike on
+                            a work order and look nothing alike on the roof.
+                            Wiring that reset input down defeats the
+                            <em>latch</em>: the trip still happens, it just
+                            cannot hold, so the unit short-cycles &mdash; down,
+                            clear, back on, down again, all morning. The jumper
+                            on the device face defeats the <em>contacts</em>:
+                            the trip still happens and still holds, and the fan
+                            never drops at all. One machine bangs on and off
+                            where anyone can hear it. The other runs straight
+                            through a freeze point looking perfectly normal
+                            from the front end, which is the more expensive of
+                            the two.
+                        </p>
+                    </div>
+                </details>
 
                 <p class="ddcw-sheet-note">
                     The cleanest way to see all of it is one lie. Open the
