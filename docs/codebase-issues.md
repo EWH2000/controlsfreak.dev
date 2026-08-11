@@ -11886,7 +11886,7 @@ of its own before then. Measure first: the gutter animation costs ~40 %
 of a core on every page (the site-wide finding), so a suffix write is
 unlikely to be the signal.
 
-### 266. The mirror's button hit-area bleed overhangs its grid, and in the fullscreen cockpit that is a 5px horizontal scrollbar *(noticed 2026-08-03, PRs #473/#476 lane reports — pre-existing on the AHU, measured here, DESIGN CALL)*
+### 266. The mirror's button hit-area bleed overhangs its grid, and in the fullscreen cockpit that is a 5px horizontal scrollbar *(noticed 2026-08-03, PRs #473/#476 lane reports — pre-existing on the AHU, measured here, DESIGN CALL; owner decided 2026-08-10, **RESOLVED 2026-08-11 · PR #518** — it ships unscoped rather than per width regime, and the resolution block says why)*
 
 `.ahu-point-btn` / `.fcu-point-btn` widen their hit area with
 `padding: 0.15rem 0.3rem; margin: -0.15rem -0.3rem`
@@ -11944,6 +11944,48 @@ reference (the FCU's above-cutoff half already ships exactly this
 shape and stays). The ~1.6px-per-track cost was named and accepted;
 `overflow-x: clip` was rejected for clipping focus rings, dropping the
 negative margin for shrinking the touch target. Fix lane can open.
+
+**RESOLVED 2026-08-11 · PR #518.** `padding-right: 0.3rem` on
+`.ahu-points` and on `.fcu-points`, each on the grid's own base rule.
+Re-measured first: the table above reproduces **exactly** at `main` @
+`96fdec0`, all four rows, 1px steps 360–1500. After the fix every band
+is empty in all four rows — no width in that range leaves either grid
+or `#tab-unit` with a single pixel of horizontal overflow.
+
+**It ships unscoped, and the measurement is why.** The decision said
+"scoped per width regime", which the FCU's shipped half read as a rule
+inside its `@media (min-width: 900px)` diet block. That scoping only
+survives contact with the code above the cutoff, where the diet makes
+every cell a button and the bleed is *constant*. Below it the bleed is
+in the wide contiguous bands this entry already measured — 360–681 and
+828 up on the AHU in flow, 360–607 and 754 up in fullscreen — and those
+bands **differ between normal flow and the fullscreen cockpit**, which
+is a class, not a width. No media query names them, and only a narrow
+strip is ever clean, so a second query would buy back ~1.6px per track
+across a sliver while doubling the places the value lives. The FCU's
+diet-block declaration therefore **moved up** to `.fcu-points` rather
+than being duplicated: one declaration covering both regimes cannot
+drift from itself, and the diet block keeps a comment saying so. The
+fix the owner chose is unchanged — this is where it sits, not what it
+is.
+
+**The accepted cost, measured rather than asserted.** The grid's
+content box loses 4.8px, so each `auto-fit` column-count threshold
+moves up by about that much: within a ~5px band at each threshold the
+mirror wraps one column earlier than it did (12px in viewport terms in
+the fullscreen cockpit, where the grid sits in a fractional column).
+Nothing else moves. Above the cutoff the computed track list loses one
+*collapsed* `0px` track and is otherwise identical — five sized tracks,
+one row, same cell positions.
+
+Guarded on both pages, since the pre-fix state was invisible in normal
+flow and this is exactly the class of defect that ships twice: the FCU
+row that used to assert the diet regime only now walks desktop and
+phone width in both states, and the AHU gained its twin rows. Both pin
+the EQUALITY the fix rests on — grid `padding-right` equals the
+button's negative right margin — so a retune of the hit area that
+leaves the grid alone reddens instead of quietly re-opening the
+scrollbar at some widths and not others.
 
 ### 267. The AHU page's RENDER SCALE comment states a width the graphic never renders at, and reads its own breakpoint backwards *(noticed 2026-08-03, PR #473's lane report — pre-existing, measured, comment-only defect)*
 
