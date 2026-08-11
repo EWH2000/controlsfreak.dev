@@ -12217,7 +12217,7 @@ added with no category**. The guard that does is
 arm; unlike practice there is no chip-less bucket here, so it demands
 the chips partition the grid exactly and a categoryless card fails it.
 
-**Two consumers were coupled and both were swept.**
+**One consumer was coupled; two more were checked and needed nothing.**
 `link-integrity.spec.js`'s chip-landing floor is an EXACT `toBe(3)` —
 deliberately exact, per its own header, so a `.filter-chip` rename
 can't hollow the hash-route allowlist — and a fourth chip landing
