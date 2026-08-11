@@ -10,6 +10,14 @@
 
 ## Read this first
 
+> **Verified 2026-08-11 against `598c1f3` (`/verify-handoff`).** 42
+> claims extracted, 38 verified, 4 corrected in place, 5 left as
+> owner-side unverifiables. Every correction is marked
+> **[corrected 2026-08-11]** at the point of use with its evidence —
+> the two that would have cost real work are the mark-density fallback
+> (item 1) and #281's merge standing (item 3). The suite baseline was
+> re-measured at a *later* tree than it was written against and holds.
+
 **Every claim in this file is a hypothesis. The repo is the truth.**
 Two things the morning session must know before touching anything:
 
@@ -30,11 +38,15 @@ Two things the morning session must know before touching anything:
 
 ## Where things stand
 
-`main` @ **`38af9d8`**, **v3.85.0**, working tree clean, **zero open
-PRs, zero stashes, one worktree (this one may still exist if the
-session died before removing it — `git worktree list` and clean up),
-`main` the only local branch.** (Measurements below cite `38af9d8`,
-the commit they were taken at — that is deliberate, not stale.)
+`main` @ **`598c1f3`** *(**[corrected 2026-08-11]** — written as
+`38af9d8`, which was correct until this file's own PR #510 merged on
+top of it. Self-referential drift: a handoff cannot cite the tip it
+will itself move. The `38af9d8` measurements below are unaffected —
+nothing between the two commits touches anything they measure.)*,
+**v3.85.0**, working tree clean, **zero open PRs, zero stashes,
+`main` the only local branch, and no stale worktree — `git worktree
+list` returns the primary tree alone, so the cleanup this line used to
+ask for is already moot.**
 Counts, re-derived: **40 education lessons · 34 content quizzes + 7
 field drills · 31 tools · 10 non-index simulator files** (9 carry
 canonicals; `ddc-workbench-ahu-mockup.html` stays hidden).
@@ -69,8 +81,14 @@ Eight PRs merged 2026-08-10/11 (#502–#509). The six from this session:
 
 **Suite baseline: 1174 passed / 1 skipped** — measured by the #508
 lane on its merged tree at `14b0f54` (pre-merge of the final bump);
-CI green on every merged tip. The single skip is still the
-`contact.spec.js` honeypot fixme. **Production smoke passed** after
+CI green on every merged tip. **Re-verified 2026-08-11 at two later
+trees**, so the baseline is good against current `main`'s content, not
+just the tree it was taken on: CI run `31454202546` @ `ed25828` (the
+3.85.0 bump — the commit that rewrites every `?v=` string site-wide,
+the one place a stale baseline could have hidden) and run
+`31455027029` @ `e19c4d6` both report **1174 passed / 1 skipped**.
+The single skip is still the `contact.spec.js` honeypot fixme
+(`test.fixme` at `tests/contact.spec.js:49`). **Production smoke passed** after
 the last deploy: gloss triggers/panels live on the pilot page at
 `?v=3.85.0`, zero gloss payload on non-pilot pages, folds live on
 both workbench pages, `details-print.js` on the tool pages.
@@ -99,9 +117,12 @@ All durably recorded; pointers so a lane doesn't re-derive them:
 
 All three are small, all on live surfaces (his merge word needed):
 
-- **`wiresheet` definition wording** — `html/_data/glossary.js:98`
-  (@ `38af9d8`), flagged in PR #508's body: the panel keeps
-  vendor-neutral alternates; the owner may want the wording tuned.
+- **`wiresheet` definition wording** — `html/_data/glossary.js:99-103`
+  *(**[corrected 2026-08-11]** — written as `:98`, which is the
+  `term:` line; the wording actually under review is the `def`, and
+  the whole entry spans `:97-105`)*, flagged in PR #508's body under
+  *"⚠️ For owner review"*: the panel keeps vendor-neutral alternates;
+  the owner may want the wording tuned.
 - **The econ fold's swept-in try-it sentence** —
   `ddc-workbench.html:3114-3116` (@ `38af9d8`): "…fault worth trying:
   the damper drops to zero… nothing on the graphic goes red" is
@@ -109,9 +130,20 @@ All three are small, all on live surfaces (his merge word needed):
   "reword to descriptive, or accept," and the fold's summary gives it
   no scent trail. His call.
 - **Mark-density feel check** — he picked every-occurrence marking;
-  the live pilot page has 5 marks (3× sr-latch). Have him read it and
-  confirm the density feels right in situ; first-per-section is the
-  recorded fallback.
+  the live pilot page has 5 marks (3× sr-latch, at
+  `timers-and-delays.html:67/254/382`, plus `wiresheet` at `:54` and
+  `change-of-value` at `:429`). Have him read it and confirm the
+  density feels right in situ. The recorded fallback is
+  **first-occurrence-per-page** *(**[corrected 2026-08-11]** — written
+  as "first-per-section", which appears nowhere. The lever is named
+  `docs/tooltip-glossary-scoping.md` §2: *"Every-occurrence vs
+  **first-occurrence-per-page** is unset, and it is a
+  factor-of-two-or-three lever on its own"*, and
+  `glossary-arc.md`'s D2 log records the owner overriding "the
+  recommended default was **first-occurrence**". Per *page*, not per
+  *section* — on this pilot the two differ: three of the five marks
+  are `sr-latch`, so per-page yields 3 marks and per-section would
+  yield more.)*
 
 ### 2. The #283 treatment decision → its lane
 
@@ -120,13 +152,24 @@ fully specified by ledger #283's design-round block.
 
 ### 3. The queued mechanical lanes (ledger-specified, none dispatched)
 
-In no required order, **one suite at a time**: **#281** (fbe race,
-test-side — merges freely), **#264** (pointLabel collapse), **#266**
-(grid `padding-right` — owner-decided 2026-08-10), **#274**
-(activity-based simulator chips — owner-decided; final labels ride
-the PR for his review), **#269** (FCU sr-only provenance glosses),
-**#273** (forced-mark rename), **#289** (blown fuse → `led--off` —
-owner-ruled). Each entry carries its fix shape.
+In no required order, **one suite at a time**: **#281** (fbe race —
+see the merge-standing correction below), **#264** (pointLabel
+collapse), **#266** (grid `padding-right` — owner-decided 2026-08-10),
+**#274** (activity-based simulator chips — owner-decided; final labels
+ride the PR for his review), **#269** (FCU sr-only provenance
+glosses), **#273** (forced-mark rename), **#289** (blown fuse →
+`led--off` — owner-ruled). Each entry carries its fix shape.
+
+> **[corrected 2026-08-11] — #281 does not automatically merge
+> freely.** This line called it "test-side — merges freely"; the
+> ledger does not settle the side. Its fix shape is *"the spec waits
+> on a bound signal (or on the example's wire count), **or the page
+> binds the example buttons earlier**"* — and
+> `simulators/function-block-editor.html` carries a canonical, so the
+> page-side branch is a live-facing change needing his merge word.
+> Merge-freedom is a **consequence of the branch the lane picks**, not
+> a property of the issue. Pick the side first, then read the merge
+> rule. Everything else in this list is live-facing either way.
 
 **Explicitly parked — do not carry as open work:** #263 (third-unit
 trigger), #265 (needs a perf-profile flag), #262 (needs the
