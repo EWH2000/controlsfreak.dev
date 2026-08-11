@@ -1,12 +1,11 @@
 const { test, expect } = require('@playwright/test');
 
 // Runtime-derived chip-count guard for the education, practice and
-// simulators landings — the section-landing sibling of
-// home-hero.spec.js's
-// /tools/ chip cross-check (same drift rationale: hand-pinned counts
-// rot silently, so derive every count from the page itself and
-// cross-check it against the cards the chip actually filters to — a
-// wrong chip can't quietly validate itself).
+// simulators landings — the section-landing sibling of the /tools/
+// chip cross-check in home-hero.spec.js (same drift rationale:
+// hand-pinned counts rot silently, so derive every count from the page
+// itself and cross-check it against the cards the chip actually
+// filters to — a wrong chip can't quietly validate itself).
 //
 // Two properties per landing:
 //   1. COUNT — for every non-All chip, clicking it shows exactly the
