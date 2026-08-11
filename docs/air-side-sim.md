@@ -711,11 +711,12 @@ What shipped, from owner rulings on 2026-08-08/09:
 - **The "Compressor running on air already near freezing" verdict became
   unsittable on a protected machine** (structural: with a stage lit and
   no heat, every discharge the coil floor allows in that band trips the
-  38 °F stat). Kept, `test.fixme` with the argument written above it.
-  The defeat/jumper follow-on (shipped 2026-08-09, PR #495, v3.82.0)
-  makes it sittable again — owner rulings there: the state word
-  is JUMPERED with the term defined in adjacent copy, and the jumper
-  survives presets and program switches.
+  38 °F stat). Kept — it **was** `test.fixme`'d with the argument
+  written above it, until the defeat/jumper follow-on (shipped
+  2026-08-09, PR #495, v3.82.0) made it sittable again and
+  **un-fixme'd it; the row asserts live now** — owner rulings there:
+  the state word is JUMPERED with the term defined in adjacent copy,
+  and the jumper survives presets and program switches.
 
 **The fog-recipe record, corrected (2026-08-09).** An earlier draft of
 PR #488's body — and its spec's note — claimed the recorded #240
@@ -862,7 +863,10 @@ tiles** · short **fan-heat/calibration callout** · **improved fan animation**
   wiresheet, where a real graphic would banner a freezestat trip.
   *(2026-08-09: PR #488's device face annunciates the HARDWIRED stat on
   the Unit tab; the SOFTWARE latch this entry is about is still
-  wiresheet-only — entry stands.)*
+  wiresheet-only — entry stands.)* *(Fog fence, 2026-08-10: nothing in
+  this entry touches the fog record — the settled-winter fog
+  reproduction SURVIVES PR #488 unchanged; read §Phase 9A's fog
+  correction before acting on any fog claim found elsewhere.)*
 - **A scenario preset for the LLS defeat/short-cycle demo** (winter-protections
   sheet) — the demo is real but fragile to reach by hand (needs a wound-up PID
   integral, a still-warm zone, and Min MAT sabotaged below the coil floor);
@@ -872,7 +876,17 @@ tiles** · short **fan-heat/calibration callout** · **improved fan animation**
   LLS Reset wired true, the short-cycling signature. The hardwired stat's
   JUMPER — a contacts defeat, the runs-straight-through signature — is a
   different feature shipping via `feat/ahu-low-limit-stat-defeat` and
-  must not mark this entry shipped.)*
+  must not mark this entry shipped.)* *(Fog fence, 2026-08-10: same as
+  the entry above — the recorded fog reproduction survives PR #488;
+  see §Phase 9A's fog correction before touching anything
+  fog-adjacent.)*
+- **FCU damage-stakes note — deliberately absent, checked, not an
+  oversight** *(recorded 2026-08-10, from the handoff verification)*:
+  the AHU workbench page carries the damage-stakes scope note because
+  of the two safety defeats it ships; the FCU page has no defeat and
+  correctly carries no note (CLAUDE.md's damage-stakes set names only
+  `ddc-workbench`). If the FCU ever gains a defeat, the note goes
+  with it in the same PR.
 - **PID warm-start prose line** — a fresh program load starts the PID integral
   at zero, so on an economizing day the damper briefly tracks the winding-up
   loop; the download-stops-a-running-unit teaching family, worth a sentence in

@@ -7929,7 +7929,11 @@ measured steps:
   the 2-stage sheets) at a uniform 175px pitch — **zero burials, all-forward
   routing (27/27), min margin 39.4px** across all three FCU sheets at the
   16px root font. **Candidate B's honest numbers** (branch `candidate-b`,
-  preserved for the record): the same zero burials at F=16 inside the
+  preserved for the record ⟨2026-08-10: the branch is retired — owner
+  decision; its commit `0548d66` stays reachable as the annotated tag
+  `archive/candidate-b`, so these numbers remain checkable without
+  leaving a branch point a lane could pick up by accident⟩): the same
+  zero burials at F=16 inside the
   default 900×480, but **26 of 27 wires route backwards** (min margin
   **−135.6px**, two wires wrapping a full block-width the wrong way), and at
   a 20px root font it degrades ~9× worse than A (71 burials / 1320px buried
@@ -11934,6 +11938,13 @@ loses the enlarged touch target the `(hover: none)` floor depends on.
 Do it once, on both pages, with the AHU as the reference (the standing
 tiebreak).
 
+**Owner decision 2026-08-10: grid `padding-right`** — absorb the bleed
+inside the grid, scoped per width regime, both pages, AHU as the
+reference (the FCU's above-cutoff half already ships exactly this
+shape and stays). The ~1.6px-per-track cost was named and accepted;
+`overflow-x: clip` was rejected for clipping focus rings, dropping the
+negative margin for shrinking the touch target. Fix lane can open.
+
 ### 267. The AHU page's RENDER SCALE comment states a width the graphic never renders at, and reads its own breakpoint backwards *(noticed 2026-08-03, PR #473's lane report — pre-existing, measured, comment-only defect)*
 
 `html/simulators/ddc-workbench.html:83-96` carries a ⚠ block that is
@@ -12175,7 +12186,15 @@ call, not a mechanical step, and did not belong in the go-live diff.
 Decide the taxonomy (or raise the documented threshold) and the chips
 are the same pattern the other landings already use.
 
-### 275. The DDC Workbench holds its whole simulation in memory, and its own flagship navigation model navigates away from it *(noticed 2026-08-08 — **RESOLVED 2026-08-09 · PR #496 (v3.83.0)**, owner-designed and shipped the same day; resolution block at the end; the sheet-note linking pass is unblocked)*
+**Owner decision 2026-08-10: activity-based taxonomy** — bucket by
+what the tech is doing, along the lines of *Panel & Wiring*
+(Controller Wiring, Mock VFD) · *Programming & Logic* (Function-Block
+Editor, PID Tuner, Staging Sequencer) · *Equipment & Systems* (both
+Workbenches, Hydronic Loop, Refrigerant Loop). Final chip labels are
+proposed in the fix PR for his review; CLAUDE.md's "grid minus chips"
+Design-landmarks row updates in the same PR. Fix lane can open.
+
+### 275. The DDC Workbench holds its whole simulation in memory, and its own flagship navigation model navigates away from it *(noticed 2026-08-08 — **RESOLVED 2026-08-09 · PR #496 (v3.83.0)**, owner-designed and shipped the same day; resolution block at the end; the sheet-note linking pass is unblocked — 2026-08-10: that pass now runs as the collapse half of the glossary arc's pilot under `docs/glossary-arc.md`'s constraints, not standalone)*
 
 **The defect.** Both workbench pages discard every bit of simulation
 state on any navigation away, and the arc's chosen way to move around
@@ -12541,3 +12560,41 @@ example's wire count) before clicking, or the page binds the example
 buttons earlier. Until one ships, a red on that row under load is this
 race FIRST — but isolate before waving off, per the standing
 one-flake rule.
+
+### 282. A spec cites the ledger by line number, and the ledger moved *(noticed 2026-08-10, the handoff verification session — comment-only defect)*
+
+`tests/ddc-workbench-session.spec.js:442` cites
+`codebase-issues.md:11589` for #260 — but #260's entry sits well over
+a hundred lines further down (and moves again every time an earlier
+entry gains an annotation, including in the very PR that logs this).
+Line 11589 is inside a different entry (the FCU roster `Fan Spd`
+rename ruling), so the citation points a reader at unrelated text. It
+is the only `codebase-issues.md:<line>` citation under `tests/` — the
+others live in archived `docs/audits/` files, where staleness is
+expected and harmless. A hardcoded line number into an append-only,
+annotated markdown file cannot survive. Fix shape: cite `#260` by
+number (or by its heading text), never by line; fix it in whichever
+PR next touches that spec.
+
+### 283. The fullscreen cockpit's override indications don't scale — several points overridden eats real screen estate *(reported 2026-08-10 by the owner — fullscreen UX, DESIGN CALL)*
+
+Owner report, verbatim intent: once multiple points are overridden,
+the override indications take up a significant amount of screen real
+estate in fullscreen. Likely mechanism (unverified — pin with
+screenshots before designing): the shell-owned off-program window
+(`#ddcw-offprog`, one `<li>` per point whose resolved command is not
+the program's, on both workbench pages) grows a row per override —
+and every scenario preset seizes all five AHU points to slot-8
+Manual, so the window maxes out on the most common path into an
+interesting state. The per-point amber "operator is holding
+something" indications stack on top of that.
+
+**This is a design pass, not a blind fix.** The off-program window is
+teaching surface (the stale-override lesson depends on it), and the
+owner builds production equipment graphics professionally — the
+design round should bring him screenshots of the maxed-out state
+plus 2–3 compact treatments (e.g. per-point flag/hand marker with a
+summary count that expands, vs the growing list) and ask how his own
+graphics show override state at density. Constraint from the COV work
+(#229/#493): whatever renders must not reintroduce per-tick churn —
+signature-guard any repaint.
