@@ -1336,6 +1336,52 @@ details.tool-preamble > .preamble-rest {
     margin-top: 0.5rem;
 }
 
+/* ── PROSE FOLD ── section-grain disclosure for BACKGROUND prose on a
+   dense page (owner direction 2026-08-09: background collapses per
+   section, live-reading prose stays visible). Third member of the ▸/▾
+   native-<details> family — details.tool-preamble above is card-grain
+   ("what this tool does"), .pid-spoiler is a titled box, this one wraps
+   a run of body paragraphs that already carry their own class.
+
+   The split it encodes: prose answering "what is this thing / where do
+   these numbers come from" may fold; prose answering "what is this
+   machine doing right now" must not. That is per-note editorial
+   judgement, not something a selector can decide — see the fold call
+   sites on the two DDC Workbench pages.
+
+   Register is deliberately quieter than .pid-spoiler (hairline seam,
+   --text-dim summary, no fill): the fold should recede the way the
+   background it hides does. NO transitions — instant toggle, AX-sharp,
+   so there is nothing for prefers-reduced-motion to squash. Ships
+   closed and holds no state: /scripts/details-print.js force-opens it
+   for print (CSS cannot open a closed <details>) and nothing else, so
+   no cf_* key and no privacy.html surface. The ▸ marker is pseudo
+   content with no
+   letter or digit in it, so the contrast sweep skips it as decoration
+   — same standing as .pid-spoiler's. */
+details.prose-fold {
+    border: 1px solid var(--border-faint);
+    margin: 0 0 0.25rem;
+}
+details.prose-fold > summary {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: var(--text-dim);
+    padding: 0.45rem 0.65rem;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+details.prose-fold > summary::-webkit-details-marker { display: none; }
+details.prose-fold > summary::before { content: "▸"; color: var(--accent); }
+details.prose-fold[open] > summary::before { content: "▾"; }
+details.prose-fold > summary:hover { color: var(--text); }
+details.prose-fold[open] > summary { border-bottom: 1px solid var(--border-faint); }
+details.prose-fold > .prose-fold-body { padding: 0.5rem 0.65rem 0.35rem; }
+
 /* First-use acronym gloss (G-008). A quiet dotted underline cues "there's
    a definition here"; the title shows the expansion on desktop hover. The
    hover is a BONUS, not load-bearing — touch devices have no hover, so a
@@ -2079,6 +2125,7 @@ input[type="range"]::-moz-range-thumb {
 .vav-w-mode-btn:focus-visible,
 .bec-mode:focus-visible,
 details.tool-preamble > summary:focus-visible,
+details.prose-fold > summary:focus-visible,
 .pid-spoiler > summary:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 3px;   /* v2.0.0 — was 2px; lifted so the accent ring no longer kisses the border on .nav-card */
@@ -2174,7 +2221,8 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     /* Disclosure summaries get min-height ONLY — they're left-aligned text
        lines, so the group's center declaration would mis-align them. */
     .pid-spoiler > summary,
-    details.tool-preamble > summary { min-height: 44px; }
+    details.tool-preamble > summary,
+    details.prose-fold > summary { min-height: 44px; }
     /* Range sliders: the input element IS the painted 4px track (its
        background is the track color), so bare padding would paint a
        fat gray bar. border-box height 44 − 2×20 padding leaves a 4px
@@ -5001,6 +5049,10 @@ p.ddcw-sheet-mobile-note { display: none; }
     padding: 0.35rem 0.65rem;
 }
 .tool-card.is-fullscreen p.ddcw-sheet-note { display: none; }
+/* The folds go with them. Dropping only the p.ddcw-sheet-note children
+   would leave orphaned summary bars — a "Background — …" toggle over
+   nothing — stacked above the instrument canvas. */
+.tool-card.is-fullscreen details.prose-fold { display: none; }
 
 /* ── Sensor glyphs ── the physical sensing devices drawn where they
    actually live on a unit graphic: a wall plate on the room boundary, an

@@ -1505,15 +1505,27 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
                     wire your own — it runs on the unit every tick.
                 </p>
 
-                <p class="ddcw-sheet-note">
-                    Worth a look on the single-stage sample: its speed reference
-                    stays parked at full speed even while the unit is off — the
-                    classic graphic-reading nitpick. Nothing is broken: an AO
-                    shows the command, not the state, and the fan-enable BO is
-                    what actually stops the motor. The staged samples move the
-                    reference with the staging call; this one deliberately
-                    leaves it standing.
-                </p>
+                <!-- Folded (glossary arc, collapse pilot 2026-08-10): the
+                     command-versus-state concept is what this paragraph is
+                     for, and /education/commanding-actuators.html owns it.
+                     The observation it hangs on stays one click away rather
+                     than sitting between the reader and the sheet. -->
+                <details class="prose-fold" id="ddcw-fold-ao-command">
+                    <summary>Background — why the parked speed reference is not a fault</summary>
+                    <div class="prose-fold-body">
+                        <p class="ddcw-sheet-note">
+                            Worth a look on the single-stage sample: its speed
+                            reference stays parked at full speed even while the
+                            unit is off — the classic graphic-reading nitpick.
+                            Nothing is broken:
+                            <a href="/education/commanding-actuators.html">an
+                            AO shows the command, not the state</a>, and the
+                            fan-enable BO is what actually stops the motor. The
+                            staged samples move the reference with the staging
+                            call; this one deliberately leaves it standing.
+                        </p>
+                    </div>
+                </details>
 
                 <p class="ddcw-sheet-note">
                     On the 2-stage + safeties sample the stages answer to more
@@ -1521,11 +1533,14 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
                     fan-status BI feeds an AND ahead of the permit, so no
                     compressor may start — and a running one is dropped — the
                     moment the proof switch reports no air moving. Behind that
-                    sits a latched DAT low-limit that cuts both stages when
-                    discharge air falls below the trip constant, and a minimum
-                    off-time that keeps a stopped unit from restaging straight
-                    back in. One AND merges those permits into the stage
-                    commands.
+                    sits
+                    <a href="/education/boolean-logic-latches.html">a latched
+                    DAT low-limit</a> that cuts both stages when
+                    discharge air falls below the trip constant, and
+                    <a href="/education/timers-and-delays.html">a minimum
+                    off-time</a> that keeps a stopped unit from restaging
+                    straight back in. One AND merges those permits into the
+                    stage commands.
                 </p>
 
                 <p class="ddcw-sheet-note">

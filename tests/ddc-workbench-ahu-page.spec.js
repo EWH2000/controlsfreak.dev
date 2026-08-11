@@ -1918,8 +1918,11 @@ test.describe('AHU workbench page: the phone surface (the Unit tab is the mobile
         const note = page.locator('p.ddcw-sheet-mobile-note');
         await expect(note, 'the phone truth renders where the workspace is gated out').toBeVisible();
         // First element in the pane: the truth lands at tap-in, not at the
-        // bottom of nine sheet-notes (where .desktop-only-sim keeps the
-        // fuller version, in the workspace's own slot).
+        // bottom of the sheet notes (where .desktop-only-sim keeps the
+        // fuller version, in the workspace's own slot). De-counted with
+        // the collapse pilot — the old "nine" was already wrong at 11,
+        // and folding some of them behind details.prose-fold would only
+        // have made a fresh number wrong again.
         const first = await page.evaluate(() =>
             document.getElementById('tab-wiresheet').querySelector('p') ===
             document.querySelector('p.ddcw-sheet-mobile-note'));
