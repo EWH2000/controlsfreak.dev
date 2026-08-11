@@ -106,6 +106,57 @@ test.describe('DDC Workbench — air animation idle gate', () => {
     });
 });
 
+test.describe('DDC Workbench — the outdoor-air knob is a command, not a fact', () => {
+
+    // codebase-issues #278. The OA slider used to write `plant.oaT`
+    // directly; it now writes `plant.oaTarget` and the plant walks the
+    // truth there at OA_RAMP_RATE (the AHU's ruling, ported for
+    // weather-model parity — a reader hops between the two pages).
+    //
+    // ⚠ WHY THIS ROW PINS ONLY THE COMMAND HALF. The AHU can assert the
+    // whole split on the page because it HAS a weather instrument — an
+    // `oat` point, and so an OAT statusbar chip painting the plant's
+    // truth beside the knob's own readout. This unit deliberately has no
+    // `oat` point at all (the graphic says so: outdoor air is a sim knob,
+    // not a BACnet point), so there is NO page surface that shows the
+    // truth, and a row claiming to read it here would be reading the
+    // command back. The truth-side chase is pinned engine-direct in
+    // ddcw-fcu-unit.spec.js, and its browser-side reality is pinned
+    // through the session snapshot in ddc-workbench-session.spec.js.
+    // Three layers, one contract, split by what each can actually see.
+    test('the readout and the handle track the target the instant it is set', async ({ page }) => {
+        await page.goto(URL);
+        await page.waitForFunction(() => document.getElementById('fcu-verdict')
+            .textContent.trim().length > 0);
+
+        const readout = page.locator('#fcu-oa-val');
+        await expect(readout, 'arrival weather is settled on the default day')
+            .toHaveText(/^80\s/);
+
+        // Drag to the cold end of THIS unit's range (55 °F, not the AHU's
+        // −20 — see the slider's own range note on the AHU page).
+        await page.locator('#fcu-oa-slider').evaluate((el) => {
+            el.value = '55';
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+
+        // The command lands at once even though the weather does not:
+        // the row is a control, and a knob whose own readout lagged its
+        // handle would read as broken.
+        await expect(readout, 'the knob readout is the knob, so it is instant')
+            .toHaveText(/^55\s/);
+        expect(await page.locator('#fcu-oa-slider').inputValue(),
+            'and the handle stays where the reader left it').toBe('55');
+
+        // It STAYS on the command while the chase runs underneath — the
+        // regression this guards is a readout re-pointed at the truth,
+        // which would visibly crawl 80 → 55 under a stationary handle.
+        await page.waitForTimeout(600);
+        await expect(readout, 'the readout does not crawl toward the target')
+            .toHaveText(/^55\s/);
+    });
+});
+
 test.describe('DDC Workbench — signed coil ΔT (leaving minus entering)', () => {
     test('arrival cooling paints a NEGATIVE ΔT that reconciles from the displayed RAT / DAT', async ({ page }) => {
         // Owner ruling 2026-07-27: ΔT = DAT − RAT, negative while

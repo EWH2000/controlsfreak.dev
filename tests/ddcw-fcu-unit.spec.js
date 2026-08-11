@@ -92,6 +92,22 @@ function displayDt(plant) {
     return plant.derived.datT - plant.derived.eatT;
 }
 
+// Seed the weather — the TRUTH and the knob it chases, together.
+//
+// ⚠ USE THIS, NEVER A BARE `plant.oaT = …`. The outdoor air walks
+// toward `plant.oaTarget` at OA_RAMP_RATE (codebase-issues #278, the
+// AHU's sustained-cold ruling ported for weather-model parity), so a
+// row that seeds only the truth has its morning quietly dragged back
+// toward whatever the target still says — the arrival day's 80 °F,
+// usually. It is a silent failure and a selective one: the
+// quasi-static probe passes a dt of 0 and so cannot move, while every
+// row that INTEGRATES drifts. Mirrors the same helper in
+// ddcw-ahu-unit.spec.js, which carries the identical warning.
+function setOa(plant, t) {
+    plant.oaT = t;
+    plant.oaTarget = t;
+}
+
 // Trajectory run: integrate a mutated fresh plant N steps of dt sim-s.
 function run(Unit, mutate, steps, dt) {
     const plant = Unit.createPlant();
@@ -580,6 +596,110 @@ test.describe('ddcw-fcu-unit: zone trajectory (integration)', () => {
         }, 20, 5);
         expect(pl.zoneT).not.toBe(76);                    // the zone genuinely moved
         expect(pl.derived.eatT).toBe(pl.sensors['rat']);  // one measurement, one number
+    });
+});
+
+test.describe('ddcw-fcu-unit: the weather chases the knob', () => {
+
+    // codebase-issues #278 — the AHU's sustained-cold ramp, ported here
+    // for weather-model parity. These rows assert the CONTRACT of the
+    // chase, not the rate: OA_RAMP_RATE is a tunable the AHU owns and
+    // this file's INVARIANTS-NOT-FEEL-CONSTANTS policy applies to it as
+    // hard as to C_ZONE. So nothing below names 0.5 — every row asserts
+    // a direction, a linearity, a clock-independence or an exactness
+    // that any rate must satisfy. The AHU's twin block does the same.
+
+    test('the knob sets a target and the truth walks to it', () => {
+        const Unit = loadUnit();
+
+        // 1 — a fresh plant is settled, and the knob alone changes
+        // nothing about the air the envelope sees.
+        const pl = Unit.createPlant();
+        expect(pl.oaTarget, 'arrival weather is settled').toBe(pl.oaT);
+        const from = pl.oaT;
+        pl.oaTarget = 55;
+        expect(pl.oaT, 'writing the knob is not writing the weather').toBe(from);
+
+        // 2 — equal steps. Two ticks of the same dt move it twice as far
+        // as one, exactly.
+        Unit.update(pl, 1);
+        const afterOne = from - pl.oaT;
+        expect(afterOne, 'the first tick moved the air').toBeGreaterThan(0);
+        Unit.update(pl, 1);
+        expect(from - pl.oaT, 'the walk is linear').toBeCloseTo(2 * afterOne, 9);
+
+        // 3 — sim-time, not tick count. Ten 1-second steps and one
+        // 10-second step land in the same place, so the host clock
+        // multiplier cannot change how far the weather gets.
+        const slow = Unit.createPlant();
+        slow.oaTarget = 55;
+        for (let i = 0; i < 10; i++) Unit.update(slow, 1);
+        const fast = Unit.createPlant();
+        fast.oaTarget = 55;
+        Unit.update(fast, 10);
+        expect(fast.oaT, 'the same sim-seconds, the same weather')
+            .toBeCloseTo(slow.oaT, 9);
+
+        // 4 — arrival is exact, and it stays. A step big enough to
+        // overshoot lands ON the target, and further ticks leave it.
+        const arriving = Unit.createPlant();
+        arriving.oaTarget = 60;
+        for (let i = 0; i < 500 && arriving.oaT !== 60; i++) Unit.update(arriving, 5);
+        expect(arriving.oaT, 'it arrived, exactly').toBe(60);
+        Unit.update(arriving, 5);
+        expect(arriving.oaT, 'and stayed there').toBe(60);
+
+        // Both directions — a warming trend is the same walk. The FCU's
+        // knob floors at 55 °F, so the cold start here is the coldest
+        // weather this page can express (see the slider's own range).
+        const warming = Unit.createPlant();
+        setOa(warming, 55);
+        warming.oaTarget = 110;
+        Unit.update(warming, 2);
+        expect(warming.oaT, 'the air walks up as well as down').toBeGreaterThan(55);
+        expect(warming.oaT, 'and does not overshoot on the way').toBeLessThanOrEqual(110);
+    });
+
+    test('a non-finite target freezes the weather rather than poisoning it', () => {
+        // The knob is a DOM read, so NaN is reachable. `oaT` drives the
+        // envelope term the whole zone trajectory is solved from, so a
+        // bad target must not be allowed to walk into it — the plant
+        // holds the last real weather and keeps running, the same
+        // posture validate-and-mute takes on a bad sensor read.
+        const Unit = loadUnit();
+        [NaN, Infinity, undefined].forEach((bad) => {
+            const pl = Unit.createPlant();
+            const held = pl.oaT;
+            pl.oaTarget = bad;
+            Unit.update(pl, 5);
+            Unit.update(pl, 5);
+            expect(pl.oaT, String(bad) + ' target').toBe(held);
+            expect(pl.derived.invalid, String(bad) + ' target still ticks').toBe(false);
+        });
+    });
+
+    test('the chase drives the envelope — a walked-to cold morning cools the zone', () => {
+        // The point of the split, end to end: the knob is a command, and
+        // the ZONE only responds once the air has actually arrived. Two
+        // plants given the same standing command, one integrated and one
+        // not, must disagree about the zone — which is what proves the
+        // envelope reads the truth rather than the target.
+        const Unit = loadUnit();
+
+        const walked = Unit.createPlant();
+        walked.oaTarget = 55;
+        for (let i = 0; i < 200; i++) Unit.update(walked, 5);
+        expect(walked.oaT, 'the cold morning arrived').toBe(55);
+
+        const settled = Unit.createPlant();
+        setOa(settled, 55);
+        for (let i = 0; i < 200; i++) Unit.update(settled, 5);
+
+        // Same destination, so after a long run they converge; the
+        // walked one spent its first seconds warmer, so it can never be
+        // the colder of the two.
+        expect(walked.zoneT, 'the walk is never ahead of the instant seed')
+            .toBeGreaterThanOrEqual(settled.zoneT - 1e-9);
     });
 });
 
