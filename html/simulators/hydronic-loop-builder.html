@@ -265,6 +265,58 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             .desktop-only-sim { display: block; }
         }
     </style>
+    <script>
+        // ── Example chips: one permanent binding, installed before the
+        //    chips are parsed (codebase-issues #297) ────────────────────
+        // Same shape as the function-block editor's, and for the same two
+        // reasons (#281, PR #522). The chip row renders partway down
+        // <main>, but the loader it drives is only defined by the
+        // end-of-body IIFE — after nine <script src> fetches (eight
+        // site-wide from layouts/page.njk, then hydronic-engine.js). None
+        // of them are deferred, so each one blocks the parser in turn;
+        // until the last lands, every chip is painted, hit-testable and
+        // INERT, and the click silently does nothing. On a loaded host
+        // that window is milliseconds, on a slow connection seconds — and
+        // tests/smoke.spec.js clicks [data-example="parallel"] here, so
+        // this page carried the same latent flake #281 measured on the
+        // editor.
+        //
+        // So the click path is owned here instead — ONE delegated listener
+        // on the document, installed before <main> exists, so there is no
+        // moment at which a parsed chip is unbound. Until the loader
+        // exists the requested key is QUEUED (last one wins: the most
+        // recent choice is the one the visitor is waiting on); the page
+        // IIFE calls ready() straight after its own boot load and the
+        // queue drains into it, once. Every later click goes straight
+        // through the same listener. Deliberately NOT a temporary handler
+        // the IIFE replaces — a temporary binding plus a permanent one is
+        // two systems for one control, which is the drift generator.
+        (function () {
+            'use strict';
+
+            let load = null;      // the page's loadExample, once it exists
+            let pending = null;   // a key clicked before that
+
+            window.HlbExamples = {
+                ready: function (fn) {
+                    load = fn;
+                    if (pending !== null) {
+                        const key = pending;
+                        pending = null;   // drain exactly once
+                        load(key);
+                    }
+                },
+            };
+
+            document.addEventListener('click', function (e) {
+                const chip = e.target && e.target.closest
+                    ? e.target.closest('#hlb-examples [data-example]')
+                    : null;
+                if (!chip) { return; }
+                if (load) { load(chip.dataset.example); } else { pending = chip.dataset.example; }
+            });
+        })();
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -336,11 +388,15 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             </div>
 
             <div class="hlb-live">
+                <!-- Real <button>s, not bare <a>s: these load a loop, they
+                     don't navigate, and an anchor with no href is invisible to
+                     the keyboard (#297). Same .widget-try look either way — the
+                     shared stylesheet already carries the button twin. -->
                 <div class="widget-try" id="hlb-examples">
                     <span class="lbl">Try this:</span>
-                    <a data-example="single">single loop</a>
-                    <a data-example="parallel">parallel coils + balance</a>
-                    <a data-example="threeway">3-way bypass</a>
+                    <button type="button" data-example="single">single loop</button>
+                    <button type="button" data-example="parallel">parallel coils + balance</button>
+                    <button type="button" data-example="threeway">3-way bypass</button>
                 </div>
 
                 <div class="hlb-simbar">
@@ -1277,9 +1333,10 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             // clear-selection handler and wipe the current selection / pending pipe.
             btn.addEventListener('click', (e) => { e.stopPropagation(); setMaximized(btn.dataset.max); });
         });
-        byId('hlb-examples').querySelectorAll('[data-example]').forEach((a) => {
-            a.addEventListener('click', () => loadExample(a.dataset.example));
-        });
+        // Example chips are NOT bound here — see the handover at the bottom
+        // of this IIFE, and the delegated listener in the page's head block
+        // that has been catching their clicks since before the row was
+        // parsed (#297).
 
         // background tab + desktop-width gates
         document.addEventListener('visibilitychange', () => {
@@ -1333,6 +1390,17 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
         // ── boot ──
         renderPalette();
         loadExample('single');
+
+        // Example chips — the click path is owned by the delegated listener in
+        // this page's head block (#297), which has been catching clicks since
+        // before the chip row was parsed. Handing it the loader both drains
+        // whatever was clicked while the scripts were still in flight and
+        // routes every later click straight through; there is deliberately no
+        // second binding. It sits AFTER the boot load rather than up with the
+        // other control wiring, because this page boots its default sheet at
+        // the very end of the IIFE — draining the queue any earlier would let
+        // loadExample('single') overwrite the choice the visitor is waiting on.
+        window.HlbExamples.ready(loadExample);
     })();
 </script>
 {% endblock %}

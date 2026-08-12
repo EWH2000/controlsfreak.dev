@@ -13171,7 +13171,7 @@ alone would make the version bump load-bearing for a no-op byte
 change, so it rides whichever PR next touches `styles.css` — the
 #274 lane deliberately left it for exactly that reason.
 
-### 297. Two pages still run hrefless-anchor example chips — hydronic-loop-builder carries #281's race whole, with a latent suite flake *(noticed 2026-08-11, the #281 lane's site-wide grep — sibling sweep, queued)*
+### 297. Two pages still run hrefless-anchor example chips — hydronic-loop-builder carries #281's race whole, with a latent suite flake *(noticed 2026-08-11, the #281 lane's site-wide grep — sibling sweep; **RESOLVED 2026-08-12 · PR #527**, both pages converted; equipment-staging's race turned out to be REAL and is characterized in the resolution block, and the entry's "complete remaining set" claim did not survive the lane — see #299)*
 
 The #281 lane's closing grep (`<a data-` without `href`) found the
 complete remaining set of anchor-shaped controls, two files:
@@ -13193,6 +13193,66 @@ queues a pre-mount click and drains on mount, per-chip bindings
 removed. Open the lane AFTER #522 merges so the pattern is on main
 to copy. The #281 resolution block records why page-side beat
 spec-side; the same reasoning transfers whole.
+
+**RESOLVED 2026-08-12 · PR #527.** Both chip rows are
+`<button type="button">`, each page's click path is one delegated
+listener installed from its own `{% block head %}`, and both per-chip
+`addEventListener` loops are gone. `styles.css` was not touched, for
+the second time — `.widget-try button` and its `:focus-visible` twin
+already existed, so the conversion is markup-only.
+
+**equipment-staging's race exposure: REAL, and measured.** The entry
+left this open ("check when the lane opens"), and the answer is yes.
+Its bindings sit in the end-of-body inline IIFE inside
+`{% block scripts %}`; the page has **no page-specific `<script src>`**,
+which is what made the question look like it might resolve to "no
+window." It doesn't, because the *layout's* eight site-wide scripts
+(`theme` / `units` / `search` / `nav-menu` / `flow-engine` /
+`schematic-bg` / `fullscreen-toggle` / `details-print`) are **classic,
+non-deferred, and therefore parser-blocking**, and every one of them
+renders above `{% block scripts %}` in `layouts/page.njk`. The chip row
+is parsed partway up `<main>`, far above all of them. So the window is
+eight fetches wide instead of the loop builder's nine — narrower, not
+absent, and the failure at the end of it is the same silent no-op (the
+click vanishes and the widget stays at its authored 20% demand). This
+was not reasoned to, it was **reproduced**: the new pre-mount spec run
+against the pre-fix page reports the demand readout stuck at `20`.
+
+The generalisation worth keeping: **any page whose controls are bound
+from an end-of-body IIFE has this window**, whether or not it loads a
+script of its own, because the site-wide eight are always in front of
+it. A page-script-free page is not a page-fetch-free page.
+
+**Spec side.** Four rows in `tests/smoke.spec.js` — where per-page
+behavioral coverage lives for these two, neither having a dedicated
+spec file — two per page, one arm each. All four **fail against the
+pre-fix pages**, verified by stashing only the page edits: the two
+keyboard rows report Tab never landing on a chip, the loop builder's
+pre-mount row reports `locator resolved to 4 elements` (the boot
+sheet — #281's exact signature shape, one sheet over), and the staging
+row reports the demand stuck at `20`. The pre-mount rows hold a
+parser-blocking script at the network with `page.route` rather than
+racing for the window, and each proves the page script is genuinely
+absent at click time before clicking (`typeof window.HYDRO`, an empty
+`.es-pump` rack) so neither can pass vacuously.
+
+**One placement difference from #522, and it is load-bearing.** On
+`hydronic-loop-builder` the `ready()` handover sits *after* the boot
+`loadExample('single')`, not where the old per-chip loop did. That page
+boots its default sheet at the very END of its IIFE, so draining the
+queue at the old binding site would hand the visitor's queued choice to
+`loadExample` and then immediately overwrite it with the default. The
+FBE page and equipment-staging both boot before that point, so their
+handovers sit in place. **The rule is "drain after the page's own boot
+load," not "drain where the old loop was"** — the two coincide on two
+of the three pages and diverge on the third.
+
+**The entry's scope claim did not survive the lane.** It called its two
+files "the complete remaining set of anchor-shaped controls"; they were
+the complete set the #281 grep could see. Ten more hrefless
+`.widget-try` chips are addressed by `id` rather than a `data-`
+attribute, on three further live pages — logged as **#299**, not fixed
+here.
 
 ### 298. The FCU spends half the AHU's register key and shows none of it — blue without green, and no key at all *(noticed 2026-08-11, the #269 lane — DESIGN CALL, log-don't-fix)*
 
@@ -13226,3 +13286,48 @@ Three shapes, not costed here: spend green + print the key (full AHU
 parity), print a two-row key for what the page *does* spend (honest,
 smaller), or drop the blue too and let the glosses carry provenance
 alone (internally consistent, loses ΔT's cue). Owner's pick.
+
+### 299. The hrefless-chip set was three pages bigger than #297 said — the grep keyed on `data-`, and ten chips key on `id` *(noticed 2026-08-12, the #297 lane — sibling sweep, queued)*
+
+#297 opened on the #281 lane's closing grep (`<a data-` with no
+`href`) and called its two files "the complete remaining set of
+anchor-shaped controls." They were the complete set **that grep can
+see**. The chip rows it missed carry no `data-` attribute at all —
+they are addressed by `id`, one `getElementById` per chip:
+
+- `html/education/pump-control.html:573-575` — three `<a id="pc-w2-try-*">`
+  chips, bound in the end-of-body IIFE at `:851-853`.
+- `html/education/vfds.html:352-354` — three `<a id="vfd-try-*">` chips,
+  bound at `:745-747`.
+- `html/simulators/vfd-mock.html:289-292` — **four** `<a id="vfdm-try-*">`
+  chips, bound at `:943-955` (four separate `getElementById` calls).
+
+All ten are inside a `.widget-try` row, all ten have no `href` and no
+`tabindex`, and all ten are therefore **out of the tab order
+permanently** — #281's second and worse defect, unchanged, on three
+more live pages. The pre-mount race applies too: every one is bound
+from an end-of-body IIFE sitting below the eight parser-blocking
+site-wide `<script src>` tags (`vfd-mock` and `vfds` add page scripts
+on top of that).
+
+A fourth page is a **near miss, not a hit**:
+`html/education/load-piping.html:621-622` uses
+`<a href="#" id="lp-w-try-*">`. The `href` puts those two in the tab
+order, so the keyboard half does not apply — what is left is an
+anchor that does not navigate (its handler must `preventDefault`) and
+the same pre-mount window. Lower stakes, same conversion.
+
+**The durable lesson is about the grep, not the pages.** A search for
+anchor-shaped controls has to key on the *element and its missing
+`href`*, not on the attribute that happens to address it. The check
+that finds all of them:
+
+    grep -rn -A8 'class="widget-try"' html/ --include=*.html | grep '<a '
+
+Fix is the same copy of #522's shape #297 shipped, per page: chips
+become `<button type="button">`, one permanent head-block delegation
+queues a pre-mount click and drains on mount, per-chip bindings
+removed. `styles.css` needs nothing — `.widget-try button` and its
+`:focus-visible` twin already exist and already carry the "new
+try-rows should use buttons" comment. The three pages are independent
+of each other, so this can ship as one lane or three.
