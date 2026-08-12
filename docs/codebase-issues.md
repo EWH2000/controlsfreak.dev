@@ -12074,7 +12074,7 @@ wrong in briefs — one said ~4,600 — so **re-derive from the built page**
 (`grep`-count the `<desc>` in `_site/`) rather than citing this figure
 after any edit.
 
-### 269. The FCU point mirror carries none of the AHU's screen-reader provenance glosses *(noticed 2026-08-03, PR #474's lane report — harmonization candidate)*
+### 269. The FCU point mirror carries none of the AHU's screen-reader provenance glosses *(noticed 2026-08-03, PR #474's lane report — harmonization candidate; **RESOLVED 2026-08-11 · PR #523** — the entry UNDERSTATED it, see the resolution block: the FCU has no commanded register at all, so colour was never the channel here, and one cell needed two glosses)*
 
 The AHU mirror tags every caption with the point's KIND in an `sr-only`
 span — `(measured)`, `(commanded)`, `(calculated)` — 17 of them at
@@ -12096,6 +12096,64 @@ needs one span. Left for a lane rather than done inline because #474
 was already re-drawing that page and the review round is the wrong
 place to grow scope. Worth pairing with #268's decision if that one
 touches the accessible naming surface.
+
+**RESOLVED 2026-08-11 · PR #523.** Every caption in
+`html/simulators/ddc-workbench-fcu.html`'s mirror now carries the
+AHU's `<span class="sr-only"> (kind)</span>`, same wording, same
+placement — inside the caption span, after the words, ahead of the
+live value so a button's accessible name stays stable across repaints.
+Six cells, **seven** glosses:
+
+| mirror cell | announced caption | kind derived from |
+|---|---|---|
+| `fcu-rat-r` | RAT · return (measured) | `rat`, `ai` / `sensor` |
+| `fcu-dat-r` | DAT · discharge (measured) | `dat`, `ai` / `sensor` |
+| `fcu-dt-r` | ΔT across coil (calculated) | arithmetic; no roster row |
+| `fcu-zone-r` | Zone (measured) / setpoint (commanded) | `space-temp` `sensor` + `cooling-setpoint` `param` |
+| `fcu-fan-r` | Supply fan (commanded) | `fan-enable` + `fan-speed`, actuators |
+| `fcu-comp-r` | Compressor (commanded) | `y1` + `y2`, actuators |
+
+**The entry understated the defect, and the correction matters.** It
+read the FCU as having colour as its *only* provenance channel, one
+register down from #230/#231. It is a step further than that: this page
+has **no commanded register at all**. Its only colour is `--blue` on ΔT
+(`.accent` in the mirror, `.fcu-dt-val` on the drawing) — there is no
+`.is-cmd`, no green, and no colour key. `Supply fan` and `Compressor`
+render in exactly the ink `RAT · return` does. So colour separates
+*calculated* from everything else and stops, and a **sighted** reader
+could not tell a command from a measurement here either. The gloss is
+not the accessible half of an existing visual convention on this page;
+it is the first channel of any kind. That also means the AHU's spec
+shape does not port: its row derives the expected word from the value's
+colour class, which here would pass vacuously against a class that does
+not exist.
+
+**One cell carries two glosses, because it carries two points.**
+`Zone / setpoint` prints a sensed zone temperature beside the setpoint
+it answers to — `sensors['space-temp']` and `params['cooling-setpoint']`
+— which are different kinds. The AHU splits that pair into two rows
+(`Zone temp` / `Cooling SP`) and so never had to answer the question.
+One word would have been false about half the cell, so each operand
+takes its own: *Zone (measured) / setpoint (commanded)*. Note the
+precedent for the second word is the AHU's own — it glosses its
+`Cooling SP` row, a `param`, as commanded.
+
+**Guarded, and derived rather than restated.** A new
+`tests/ddc-workbench-fcu.spec.js` describe reads the LIVE roster
+(`window.DDCWFcuUnit.POINTS`, `dir`) and maps `sensor` → measured,
+`actuator` / `param` → commanded; only the wiring of which roster rows
+feed which mirror cell is hand-written, so a `dir` retune reddens it
+with no edit to the spec and a source naming no live point fails
+instead of passing. It also pins the one colour correspondence this
+page does carry, both ways — `.accent` is `fcu-dt-r` and nothing else,
+`(calculated)` is `fcu-dt-r` and nothing else — plus a row asserting
+the glosses take no layout space, which is what would catch a caption
+that lost the `.sr-only` class.
+
+**Two cites in this entry went stale before it was worked.** The AHU's
+glosses are **16**, not 17, and after the fold-widening restructure
+(PR #520) they sit at `html/simulators/ddc-workbench.html:2720-2783`,
+not `:2440-2503`. Counted and located at fix time.
 
 ### 270. FCU collision-detector baseline: three em-box grazes against the cabinet outline are visually clean *(noticed 2026-08-03, PR #474's lane report — RECORDED AS BASELINE, no action)*
 
@@ -12997,3 +13055,36 @@ and now also omits `/simulators/` (#274). Comment-only, but fixing it
 alone would make the version bump load-bearing for a no-op byte
 change, so it rides whichever PR next touches `styles.css` — the
 #274 lane deliberately left it for exactly that reason.
+
+### 297. The FCU spends half the AHU's register key and shows none of it — blue without green, and no key at all *(noticed 2026-08-11, the #269 lane — DESIGN CALL, log-don't-fix)*
+
+Surfaced while deriving #269's glosses, and it is the visual half of
+that entry rather than a separate defect: **the FCU has a calculated
+register and no commanded one.**
+
+The AHU spends a full key — green `.is-cmd`, blue `.is-calc`, plain
+measured — on the drawing *and* the mirror, and prints the legend on
+the page (`.ahu-key-well`, `html/simulators/ddc-workbench.html:2403`).
+The FCU spends `--blue` on ΔT alone (`.fcu-dt-val` on the drawing,
+`.accent` in the mirror) and nothing else, and prints **no key**. So
+`fcu-fan-r` and `fcu-comp-r` — genuinely commanded outputs — render in
+exactly the ink `fcu-rat-r` does.
+
+Why it is worth a row rather than a shrug: the convention is
+cross-page, and a reader who learned it on the AHU will read the FCU's
+blue correctly and then read its un-coloured fan and compressor as
+**measured**, which is wrong. A partial key is a worse teacher than no
+key, because it looks complete. This is the standing "base everything
+off the AHU" tiebreak pointing at a gap the tiebreak has not been
+applied to.
+
+#269 closed the *accessible* channel (every caption now names its kind
+in text, which is why that fix is not merely a screen-reader
+courtesy here — it was the only channel of any kind). It deliberately
+did **not** touch paint: adding `.is-cmd` to this page is a depiction
+change on a live graphic, it wants the owner's equipment-graphics eye,
+and it would drag `styles.css` or the page's key markup along with it.
+Three shapes, not costed here: spend green + print the key (full AHU
+parity), print a two-row key for what the page *does* spend (honest,
+smaller), or drop the blue too and let the glosses carry provenance
+alone (internally consistent, loses ΔT's cue). Owner's pick.
