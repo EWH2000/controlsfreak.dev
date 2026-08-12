@@ -13437,3 +13437,30 @@ open, and when it settles, re-run `place()` against the trigger's new
 position instead of closing — a timer-free version of the same
 "whose scroll is this" question the arming grace already answers for
 focus. Owner's call whether the reach justifies it.
+
+### 302. `details.tool-preamble > summary:hover` is a no-op since the #290 promotion *(noticed 2026-08-12, the #290 lane — cosmetic, small design call)*
+
+The hover rule (styles.css, the tool-preamble block) lifts the
+summary's ink to `var(--text)` — but PR #530 moved the summary's
+RESTING ink to `var(--text)`, so hovering now changes nothing. Either
+the disclosure wants a different hover cue (a step to
+`--text-bright`, or letting the `▸ more` affordance carry hover
+alone) or the rule should go. Harmless until decided; whichever
+lane next touches the preamble block should carry the call.
+
+### 303. `.fcu-point-val.dim` is dead CSS on the FCU workbench *(noticed 2026-08-12, the #298 lane — cleanup, LOW)*
+
+Defined in `ddc-workbench-fcu.html`'s mirror CSS block next to
+`.accent`; nothing in the page, `ddcw-fcu-unit.js`, or any spec ever
+applies it — likely a leftover from the pre-diet mirror. Delete in
+the next lane that touches the FCU head block, with a grep first in
+case a consumer lands in between.
+
+### 304. Five byte-identical `*-empty td` rules across the lookup tools *(noticed 2026-08-12, the #290 lane — consolidation candidate, LOW)*
+
+`bacnet-error-codes` / `bacnet-objects` / `bacnet-units` /
+`bacnet-vendor-ids` / `modbus-functions` each define the same
+italic empty-state cell rule page-locally (the #290 pass edited all
+five in lockstep, which is the tell). A shared `styles.css` class
+would collapse them; the empty-state is genuinely shared chrome, not
+a widget internal. Log-don't-fix until something touches the family.
