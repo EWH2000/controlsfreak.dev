@@ -12997,3 +12997,26 @@ and now also omits `/simulators/` (#274). Comment-only, but fixing it
 alone would make the version bump load-bearing for a no-op byte
 change, so it rides whichever PR next touches `styles.css` — the
 #274 lane deliberately left it for exactly that reason.
+
+### 297. Two pages still run hrefless-anchor example chips — hydronic-loop-builder carries #281's race whole, with a latent suite flake *(noticed 2026-08-11, the #281 lane's site-wide grep — sibling sweep, queued)*
+
+The #281 lane's closing grep (`<a data-` without `href`) found the
+complete remaining set of anchor-shaped controls, two files:
+
+- `html/simulators/hydronic-loop-builder.html:341-343` — three
+  `<a data-example>` chips, bound in the end-of-body IIFE at :1280.
+  **Both halves of #281**: keyboard-dead permanently, and the same
+  pre-mount race — and `tests/smoke.spec.js:249` clicks
+  `[data-example="parallel"]` on that page, so the identical flake
+  is LATENT in the suite, just not yet observed. Strongest candidate
+  first.
+- `html/education/equipment-staging.html:334-336` — three
+  `<a data-demand>` chips, the keyboard-dead half (race exposure not
+  yet characterized; check when the lane opens).
+
+Fix is a copy of #281's shipped shape (PR #522): chips become
+`<button type="button">`, one permanent head-block delegation that
+queues a pre-mount click and drains on mount, per-chip bindings
+removed. Open the lane AFTER #522 merges so the pattern is on main
+to copy. The #281 resolution block records why page-side beat
+spec-side; the same reasoning transfers whole.
