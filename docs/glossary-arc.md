@@ -342,6 +342,14 @@ evaporate with it:
     inventory extends. No version bump owed (page HTML + specs only).
     He scopes the built result live before merge (cfdev preview +
     screenshots).
+  - **Scoped 2026-08-11, same day (owner, on the cfdev preview +
+    screenshots): approved.** The AHU teach-section reorder (the one
+    DOM-contiguity deviation) accepted — "not too particular there."
+    And the summary register is now UNIFORM: **the "Background — "
+    prefix is stripped from the four pilot-generation fold summaries**
+    (owner ruling — the control-bar styling does that word's job), so
+    every `details.prose-fold` summary site-wide opens with a bare
+    title. Shipped on the same PR (#520) as the widening.
 
 ## Open questions
 
