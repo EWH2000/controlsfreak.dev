@@ -1528,8 +1528,14 @@ const DDCWAhuUnit = (function () {
         { id: 'min-oa-pos',       outKey: 'pMinOa' },
     ];
 
-    // Roster lookup by point id — the params' min/max/step and conv all
-    // live on AHU_POINTS, the single source the chips already read.
+    // Roster lookup by point id — the ONE reader of AHU_POINTS, and the
+    // place a new reader belongs (it was two identical scans far enough
+    // apart to read as different jobs — codebase-issues #264). Both
+    // rationales it now carries: the params' min/max/step and conv all
+    // live on AHU_POINTS, the single source the chips already read, and
+    // so does the display `name` — the override-state line captions
+    // itself out of the roster so a renamed point cannot leave a stale
+    // label behind.
     function rosterPoint(id) {
         for (let i = 0; i < AHU_POINTS.length; i++) {
             if (AHU_POINTS[i].id === id) return AHU_POINTS[i];
@@ -2033,7 +2039,14 @@ const DDCWAhuUnit = (function () {
             const o = plant.override[id];
             const on = !!(o && o.active);
             if (sensorGroups[id]) sensorGroups[id].classList.toggle('is-forced', on);
-            if (on) forced.push(pointLabel(id) + ' ' + dispTempNum(o.value).toFixed(1) + t);
+            if (on) {
+                // Caption straight off the roster; the raw id is the
+                // fallback, so a point missing from AHU_POINTS still
+                // names itself rather than printing `undefined`.
+                const pt = rosterPoint(id);
+                forced.push((pt ? pt.name : id) + ' '
+                    + dispTempNum(o.value).toFixed(1) + t);
+            }
         });
         setOvrState(forced.length
             ? 'Forced: ' + forced.join(' · ')
@@ -2052,15 +2065,6 @@ const DDCWAhuUnit = (function () {
         if (id === 'mat') return d.matT;
         if (id === 'dat') return d.datT;
         return plant.zoneT;
-    }
-
-    // Short caption for the override state line. Reads out of the point
-    // roster so a renamed point cannot leave a stale string here.
-    function pointLabel(id) {
-        for (let i = 0; i < AHU_POINTS.length; i++) {
-            if (AHU_POINTS[i].id === id) return AHU_POINTS[i].name;
-        }
-        return id;
     }
 
     // ── hand controls — per-point: a RELEASED control (slot 8 NULL)
