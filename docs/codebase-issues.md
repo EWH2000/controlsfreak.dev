@@ -13434,6 +13434,11 @@ What shipped:
    second depiction call and was deliberately left out of scope**, since
    it needs a class the render loop toggles and a ruling on whether an
    OFF command should read dim here at all.
+   *The in-flesh read happened at merge (owner, 2026-08-12): both this
+   and the 7-cell narrow rhythm are the same tensions he weighs
+   building production graphics, and the shipped answers stand —
+   "changes become subjective better rather than objective" from here,
+   deferrable. Read both flags as deliberately parked, not open.*
 3. **The drawing's ΔT stays `--blue`, not `--blue-ink`** — a knowing
    divergence from the AHU's SVG calculated ink. The ΔT badge FRAME is
    `--blue` (`.fcu-badge-dt`), so moving only the value splits a pair
