@@ -11830,7 +11830,7 @@ genuinely unit-independent and could move to `ddcw-shell.js` as a
 `DDCWShell.createParamRail(host, roster, fields)` factory, with the
 per-page `out.*` map staying in the unit. Do not do it for two.
 
-### 264. `pointLabel(id)` and `rosterPoint(id)` are the same linear scan of `AHU_POINTS` *(noticed 2026-08-03, PR #472's lane report — collapse candidate)*
+### 264. `pointLabel(id)` and `rosterPoint(id)` are the same linear scan of `AHU_POINTS` *(noticed 2026-08-03, PR #472's lane report — collapse candidate; **RESOLVED 2026-08-11 · PR #525** — `rosterPoint` survives, `pointLabel` inlined at its one caller; the equivalence this entry states turned out NOT to be exact, and the resolution block says why)*
 
 `html/scripts/ddcw-ahu-unit.js` declares two roster lookups that walk
 the same array with the same loop:
@@ -11852,6 +11852,45 @@ will be written next to whichever one the author happens to find first.
 The FCU script has `rosterPoint` (`ddcw-fcu-unit.js:708`) and no
 `pointLabel`, so the collapse is AHU-local and does not cross the
 duplication in #263.
+
+**RESOLVED 2026-08-11 · PR #525.** `rosterPoint` survives as the single
+roster primitive; `pointLabel` is gone. It had exactly one caller — the
+override-state builder — so it was inlined there as
+`const pt = rosterPoint(id)` + `pt ? pt.name : id`, matching the
+`const pt = rosterPoint(pp.id)` idiom the rail wiring already used. One
+`AHU_POINTS` scan now remains in the file, which is the outcome this
+entry actually wanted: the next roster reader has one obvious place to
+land.
+
+**Both comments' rationale was folded into the survivor, not dropped.**
+That was this entry's own complaint — two *good* comments are what made
+the pair read as two jobs — so `rosterPoint`'s comment now states both
+halves: the params' min/max/step and conv live on `AHU_POINTS`, the
+single source the chips already read, and so does the display `name`,
+which the override-state line captions itself from so a renamed point
+cannot leave a stale label. The raw-id fallback keeps its own one-line
+reason at the call site.
+
+**The equivalence stated above is a paraphrase, not an identity — do not
+copy it.** `pointLabel` is written above as
+`(rosterPoint(id) || {}).name || id`, but that `|| id` also fires on a
+roster entry whose `name` is empty, where the original returned the
+empty name. Unobservable today — all 17 entries carry a truthy `name` —
+and cosmetic if it ever fired, but the fix took `pt ? pt.name : id`, the
+original's exact semantics, rather than shipping the paraphrase. Worth
+recording because the paraphrase is the form a future reader would lift.
+
+**The FCU twin, verified rather than assumed.** As predicted above,
+`ddcw-fcu-unit.js` has `rosterPoint` and no `pointLabel`, so the
+collapse stayed AHU-local and never crossed #263. The reason is
+structural, not incidental: the FCU's override-state builder describes a
+single zone sensor in prose, so it has no list of points to caption.
+
+**The line numbers above are as-noticed and had drifted by fix time** —
+`rosterPoint` sat at `:1533` and `pointLabel` at `:2059`, 526 lines
+apart rather than the 450 recorded. The file grew between 2026-08-03 and
+the fix; identification by NAME is what survived, which is the general
+lesson for line-number citations in this ledger.
 
 ### 265. The rail's unit-suffix spans repaint an identical string at 10 Hz *(noticed 2026-08-03, PR #472's lane report — perf candidate, not a correctness bug)*
 
