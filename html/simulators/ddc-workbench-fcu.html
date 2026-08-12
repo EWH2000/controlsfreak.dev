@@ -699,22 +699,24 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
         </div>
         <div class="tool-body">
 
-            <p class="tool-preamble">
-                A DX fan coil as a live DDC graphic, driven by a function-block
-                program. The <strong>Unit</strong> tab is the supervisory screen
-                a tech reads and adjusts — the parameter rail's setpoint and
-                deadband commit to the running program; the
-                <strong>Wiresheet</strong> tab is the control
-                program running it. The workbench commands each output through
-                a real BACnet priority array, on three levels:
-                <strong>slot 8 (Manual Operator)</strong> for your hand,
-                <strong>slot 16</strong> for the sequence, and the
-                <strong>Relinquish_Default</strong> fallback when both are
-                NULL. The zone
-                is a live thermal model: the coil pulls it down while envelope
-                and internal gains push it up, so the program closes the loop
-                on its own.
-            </p>
+            <details class="tool-preamble">
+                <summary>A DX fan coil as a live DDC graphic, driven by a function-block program.</summary>
+                <div class="preamble-rest">
+                    The <strong>Unit</strong> tab is the supervisory screen
+                    a tech reads and adjusts — the parameter rail's setpoint and
+                    deadband commit to the running program; the
+                    <strong>Wiresheet</strong> tab is the control
+                    program running it. The workbench commands each output through
+                    a real BACnet priority array, on three levels:
+                    <strong>slot 8 (Manual Operator)</strong> for your hand,
+                    <strong>slot 16</strong> for the sequence, and the
+                    <strong>Relinquish_Default</strong> fallback when both are
+                    NULL. The zone
+                    is a live thermal model: the coil pulls it down while envelope
+                    and internal gains push it up, so the program closes the loop
+                    on its own.
+                </div>
+            </details>
 
             <!-- ── Tabs: Unit graphic | Wiresheet (FBE) ── the shell is
                  unit-agnostic; the persistent statusbar below sits OUTSIDE the
@@ -1362,51 +1364,69 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
                     <p class="fcu-ovr-state" id="fcu-ovr-state"></p>
                 </div>
 
-                <p class="ref-note">
-                    Forcing the sensor is what a stuck or mis-scaled input does in
-                    the field: the program keeps staging on the number it is
-                    handed while the real space drifts the other way. Trust the
-                    graphic reading over a thermometer on the wall and you chase a
-                    fault that was never in the equipment. Release the override and
-                    the program sees the room again.
-                </p>
+                <!-- Folded (glossary arc, fold-widening pass 2026-08-11): the AHU
+                     page folds its twin of this pair under the same id. The
+                     input-force / slot-8 distinction is the concept behind the two
+                     controls above; the controls themselves stay in reach. -->
+                <details class="prose-fold" id="ddcw-fold-overrides">
+                    <summary>Overrides — forcing the sensor vs commanding outputs</summary>
+                    <div class="prose-fold-body">
+                        <p class="ref-note">
+                            Forcing the sensor is what a stuck or mis-scaled input does in
+                            the field: the program keeps staging on the number it is
+                            handed while the real space drifts the other way. Trust the
+                            graphic reading over a thermometer on the wall and you chase a
+                            fault that was never in the equipment. Release the override and
+                            the program sees the room again.
+                        </p>
 
-                <p class="ref-note">
-                    The NULL boxes above are the other half of that lesson.
-                    Un-check one and your hand lands in slot 8 (Manual
-                    Operator), which outranks the sequence writing at slot 16 —
-                    the point stops following the program until you write NULL
-                    back. Walking away without releasing that slot is how most
-                    priority-array trouble starts in the field: months later
-                    the point reads "broken" while the sequence writes
-                    correctly underneath the stale hand value. And note the two
-                    mechanisms are different things — the sensor override
-                    forces an <em>input</em>, so the program stages on a wrong
-                    number; a slot-8 write commands an <em>output</em>, so the
-                    program keeps computing and simply loses the arbitration.
-                    Work the full sixteen slots in the
-                    <a href="/tools/bacnet-priority.html">BACnet Priority Array
-                    tool</a>, or start from
-                    <a href="/education/bacnet-basics.html#priority-array">the
-                    priority array in BACnet Basics</a>.
-                </p>
+                        <p class="ref-note">
+                            The NULL boxes above are the other half of that lesson.
+                            Un-check one and your hand lands in slot 8 (Manual
+                            Operator), which outranks the sequence writing at slot 16 —
+                            the point stops following the program until you write NULL
+                            back. Walking away without releasing that slot is how most
+                            priority-array trouble starts in the field: months later
+                            the point reads "broken" while the sequence writes
+                            correctly underneath the stale hand value. And note the two
+                            mechanisms are different things — the sensor override
+                            forces an <em>input</em>, so the program stages on a wrong
+                            number; a slot-8 write commands an <em>output</em>, so the
+                            program keeps computing and simply loses the arbitration.
+                            Work the full sixteen slots in the
+                            <a href="/tools/bacnet-priority.html">BACnet Priority Array
+                            tool</a>, or start from
+                            <a href="/education/bacnet-basics.html#priority-array">the
+                            priority array in BACnet Basics</a>.
+                        </p>
+                    </div>
+                </details>
             </div>
 
-            <p class="ref-note">
-                Read the setpoint label knowing which convention the program
-                uses. Here the label is the cut-out: stage 1 makes at setpoint
-                plus deadband and breaks at setpoint — on the wiresheet, y1on
-                into gt1 makes the stage, and the setpoint itself into lt1
-                breaks it — so the zone rides the deadband
-                <em>above</em> the number on the graphic. Other sequences
-                center the band on the setpoint instead, and neither is wrong:
-                the commissioning question is which side of the deadband you
-                want for this application. One field wrinkle worth knowing —
-                some block libraries fix which side of the comparator the
-                deadband lives on, and you end up expressing a greater-than as
-                a NOT wrapped around a less-than to put the band where the
-                sequence needs it.
-            </p>
+            <!-- Folded (glossary arc, fold-widening pass 2026-08-11): which
+                 side of the setpoint the band sits on —
+                 /education/comparators-and-deadband.html is the canonical
+                 disambiguation, and the rail above shows the live pair. -->
+            <details class="prose-fold" id="ddcw-fold-setpoint-convention">
+                <summary>The setpoint convention on this sheet</summary>
+                <div class="prose-fold-body">
+                    <p class="ref-note">
+                        Read the setpoint label knowing which convention the program
+                        uses. Here the label is the cut-out: stage 1 makes at setpoint
+                        plus deadband and breaks at setpoint — on the wiresheet, y1on
+                        into gt1 makes the stage, and the setpoint itself into lt1
+                        breaks it — so the zone rides the deadband
+                        <em>above</em> the number on the graphic. Other sequences
+                        center the band on the setpoint instead, and neither is wrong:
+                        the commissioning question is which side of the deadband you
+                        want for this application. One field wrinkle worth knowing —
+                        some block libraries fix which side of the comparator the
+                        deadband lives on, and you end up expressing a greater-than as
+                        a NOT wrapped around a less-than to put the band where the
+                        sequence needs it.
+                    </p>
+                </div>
+            </details>
 
             <p class="ref-note">
                 Directional only — the coil effect is a rough sensible split
@@ -1416,68 +1436,89 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
                 shows you where to look, not what to fix.
             </p>
 
-            <p class="ref-note">
-                The blocked-condenser scenario is the one worth sitting with,
-                because the whole air side keeps reading right: the fan is
-                commanded, the proof switch is made, the chevrons keep
-                marching — only their supply-side tint drops from cooled blue
-                to plain grey — and the ΔT badge settles on the small fan-heat
-                offset and nothing more. What the drawing does tell you is the
-                compressor LED, which goes red: energized, and producing
-                nothing. That pairing is the tell. A clean air side under a red
-                compressor puts the failure on the refrigeration circuit, and
-                this cabinet's graphic stops at the DX coil — heat rejection
-                happens past the edge of it, so nothing else on the screen
-                narrows it any further. That is a real habit to build: when the
-                air side reads clean and the coil is doing nothing, stop
-                interrogating the screen and go look at the refrigeration
-                circuit. These readings cannot separate a plugged condenser
-                from a dead compressor, or from the low-charge fault this panel
-                also carries — they only tell you which side to walk to. That
-                is why the low-charge verdict offers charge as a candidate
-                rather than calling it: the scenario button knows which fault
-                was set, the graphic does not, and a front end that annunciated
-                <em>low charge</em> off these points would be guessing in your
-                name. Open the coil glyph on the graphic and the
-                <a href="/simulators/refrigerant-loop.html">refrigerant-loop
-                simulator</a> is where head pressure, subcooling and superheat
-                sort those apart.
-            </p>
+            <!-- Folded (glossary arc, fold-widening pass 2026-08-11): the
+                 scenario button is above and the lesson is here, so a reader
+                 can open this beside the running fault rather than ahead of it.
+                 ⚠ THIS PARAGRAPH CARRIES THE COIL DRILL-DOWN'S HTML TWIN
+                 (refrigerant-loop) — tests/ddc-workbench-fcu.spec.js pins one
+                 twin per SVG href by EXISTENCE, so a closed fold satisfies it,
+                 but deleting the anchor still reddens that row. -->
+            <details class="prose-fold" id="ddcw-fold-blocked-condenser">
+                <summary>The blocked-condenser lesson — when the graphic can't tell you</summary>
+                <div class="prose-fold-body">
+                    <p class="ref-note">
+                        The blocked-condenser scenario is the one worth sitting with,
+                        because the whole air side keeps reading right: the fan is
+                        commanded, the proof switch is made, the chevrons keep
+                        marching — only their supply-side tint drops from cooled blue
+                        to plain grey — and the ΔT badge settles on the small fan-heat
+                        offset and nothing more. What the drawing does tell you is the
+                        compressor LED, which goes red: energized, and producing
+                        nothing. That pairing is the tell. A clean air side under a red
+                        compressor puts the failure on the refrigeration circuit, and
+                        this cabinet's graphic stops at the DX coil — heat rejection
+                        happens past the edge of it, so nothing else on the screen
+                        narrows it any further. That is a real habit to build: when the
+                        air side reads clean and the coil is doing nothing, stop
+                        interrogating the screen and go look at the refrigeration
+                        circuit. These readings cannot separate a plugged condenser
+                        from a dead compressor, or from the low-charge fault this panel
+                        also carries — they only tell you which side to walk to. That
+                        is why the low-charge verdict offers charge as a candidate
+                        rather than calling it: the scenario button knows which fault
+                        was set, the graphic does not, and a front end that annunciated
+                        <em>low charge</em> off these points would be guessing in your
+                        name. Open the coil glyph on the graphic and the
+                        <a href="/simulators/refrigerant-loop.html">refrigerant-loop
+                        simulator</a> is where head pressure, subcooling and superheat
+                        sort those apart.
+                    </p>
+                </div>
+            </details>
 
-            <!-- ⚠ THE VFD LINK IN THIS NOTE IS THE FAN DRILL-DOWN'S
-                 EQUIVALENT TARGET, not decoration. The SVG fan glyph
-                 scales with the drawing — ~30×48 CSS px at a 375px
-                 viewport, under the 44px touch floor, and SVG geometry
-                 cannot take a min-width. The touch-target pass (WCAG
-                 2.5.5/2.5.8) rides the equivalent-control clause through
-                 this anchor (the coil glyph's twin already lives in the
-                 blocked-condenser note above);
-                 tests/ddc-workbench-fcu.spec.js pins one HTML twin per
-                 drill-down href, so removing it reddens that row. -->
-            <p class="fcu-note">
-                One honest wrinkle: the discharge sensor sits after the fan
-                (draw-through), so DAT reads the coil-leaving temp plus about
-                <span data-us="0.6&nbsp;°F" data-metric="0.3&nbsp;°C">0.6&nbsp;°F</span>
-                of fan heat — real motor work the air picks up. It is exactly
-                where a field tech would trim a small calibration offset so the
-                point reports leaving-coil temperature. The fan glyph on the
-                drawing is a link into the
-                <a href="/simulators/vfd-mock.html">Mock VFD Interface</a> —
-                the same drill-down in text, for a screen where the glyph
-                renders too small to hit.
-            </p>
+            <!-- Folded (glossary arc, fold-widening pass 2026-08-11): where the
+                 numbers come from — fan heat and the sign convention — rather
+                 than what the machine is doing now. The VFD drill-down comment
+                 travels INSIDE the fold with the paragraph it is about. -->
+            <details class="prose-fold" id="ddcw-fold-fan-heat-dt">
+                <summary>Reading the numbers — fan heat and the signed ΔT</summary>
+                <div class="prose-fold-body">
+                    <!-- ⚠ THE VFD LINK IN THIS NOTE IS THE FAN DRILL-DOWN'S
+                         EQUIVALENT TARGET, not decoration. The SVG fan glyph
+                         scales with the drawing — ~30×48 CSS px at a 375px
+                         viewport, under the 44px touch floor, and SVG geometry
+                         cannot take a min-width. The touch-target pass (WCAG
+                         2.5.5/2.5.8) rides the equivalent-control clause through
+                         this anchor (the coil glyph's twin already lives in the
+                         blocked-condenser note above);
+                         tests/ddc-workbench-fcu.spec.js pins one HTML twin per
+                         drill-down href, so removing it reddens that row. -->
+                    <p class="fcu-note">
+                        One honest wrinkle: the discharge sensor sits after the fan
+                        (draw-through), so DAT reads the coil-leaving temp plus about
+                        <span data-us="0.6&nbsp;°F" data-metric="0.3&nbsp;°C">0.6&nbsp;°F</span>
+                        of fan heat — real motor work the air picks up. It is exactly
+                        where a field tech would trim a small calibration offset so the
+                        point reports leaving-coil temperature. The fan glyph on the
+                        drawing is a link into the
+                        <a href="/simulators/vfd-mock.html">Mock VFD Interface</a> —
+                        the same drill-down in text, for a screen where the glyph
+                        renders too small to hit.
+                    </p>
 
-            <p class="fcu-note">
-                The ΔT badge is signed: leaving minus entering, so a coil
-                that cools the air reads negative, and a coil that heats it
-                reads positive under the same convention. This cabinet
-                recirculates, so the return air is the entering air — the
-                drawing labels that measurement RAT and the badge is
-                DAT − RAT; where a coil takes in mixed air, entering is the
-                mixed-air temperature and the rule is unchanged. The sign is
-                information, not clutter — it tells you which way the coil
-                is driving the air, before you ask how hard.
-            </p>
+                    <p class="fcu-note">
+                        The ΔT badge is signed: leaving minus entering, so a coil
+                        that cools the air reads negative, and a coil that heats it
+                        reads positive under the same convention. This cabinet
+                        recirculates, so the return air is the entering air — the
+                        drawing labels that measurement RAT and the badge is
+                        DAT − RAT; where a coil takes in mixed air, entering is the
+                        mixed-air temperature and the rule is unchanged. The sign is
+                        information, not clutter — it tells you which way the coil
+                        is driving the air, before you ask how hard.
+                    </p>
+                </div>
+            </details>
 
             </div><!-- #tab-unit -->
 
@@ -1527,76 +1568,112 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
                     </div>
                 </details>
 
-                <p class="ddcw-sheet-note">
-                    On the 2-stage + safeties sample the stages answer to more
-                    than the thermostat. Airflow proof comes first: a
-                    fan-status BI feeds an AND ahead of the permit, so no
-                    compressor may start — and a running one is dropped — the
-                    moment the proof switch reports no air moving. Behind that
-                    sits
-                    <a href="/education/boolean-logic-latches.html">a latched
-                    DAT low-limit</a> that cuts both stages when
-                    discharge air falls below the trip constant, and
-                    <a href="/education/timers-and-delays.html">a minimum
-                    off-time</a> that keeps a stopped unit from restaging
-                    straight back in. One AND merges those permits into the
-                    stage commands.
-                </p>
+                <!-- Folded (glossary arc, fold-widening pass 2026-08-11): an
+                     inventory of what the sample contains — the sheet below draws
+                     the same thing, and the blocks are named. -->
+                <details class="prose-fold" id="ddcw-fold-safeties-contents">
+                    <summary>What's on the safeties sample</summary>
+                    <div class="prose-fold-body">
+                        <p class="ddcw-sheet-note">
+                            On the 2-stage + safeties sample the stages answer to more
+                            than the thermostat. Airflow proof comes first: a
+                            fan-status BI feeds an AND ahead of the permit, so no
+                            compressor may start — and a running one is dropped — the
+                            moment the proof switch reports no air moving. Behind that
+                            sits
+                            <a href="/education/boolean-logic-latches.html">a latched
+                            DAT low-limit</a> that cuts both stages when
+                            discharge air falls below the trip constant, and
+                            <a href="/education/timers-and-delays.html">a minimum
+                            off-time</a> that keeps a stopped unit from restaging
+                            straight back in. One AND merges those permits into the
+                            stage commands.
+                        </p>
+                    </div>
+                </details>
 
-                <p class="ddcw-sheet-note">
-                    Why proof has to come first: a discharge sensor sitting in
-                    still air reads the room, not the coil. Stop the air and
-                    the low limit does not merely fail to trip — it goes blind,
-                    reporting a comfortable number while the coil behind it
-                    could be anything at all. Break the belt from the scenario
-                    row and watch it: the fan command stays on, the blades
-                    stop, and the DAT chip climbs to the zone temperature.
-                    The stages hold, though — a scenario is an operator write,
-                    and this one left both stages at slot 8, where your hand
-                    outranks the sequence. Hand them back with the
-                    <em>NULL — released</em> box under Compressor stage and
-                    they drop on the next tick: on the proof interlock, not on
-                    a discharge reading nobody should trust. Command, status
-                    and proof are three different claims —
-                    <a href="/education/status-and-proof.html">Status &amp; Proof</a>
-                    works through the difference.
-                </p>
+                <!-- Folded (glossary arc, fold-widening pass 2026-08-11): FOLDED BY
+                     THE OWNER'S RULING even though it reads as a live walkthrough —
+                     the widening direction is that a fold is where a reader goes TO
+                     read a section beside the working unit, not where prose goes to
+                     be skipped. tests/ddc-workbench-fcu-safeties.spec.js drives this
+                     path in code, not through the note, so the fold changes nothing
+                     it asserts; its prose-fold.spec.js row moved to the fold list. -->
+                <details class="prose-fold" id="ddcw-fold-proof-first">
+                    <summary>Proof first — the blind-DAT trap</summary>
+                    <div class="prose-fold-body">
+                        <p class="ddcw-sheet-note">
+                            Why proof has to come first: a discharge sensor sitting in
+                            still air reads the room, not the coil. Stop the air and
+                            the low limit does not merely fail to trip — it goes blind,
+                            reporting a comfortable number while the coil behind it
+                            could be anything at all. Break the belt from the scenario
+                            row and watch it: the fan command stays on, the blades
+                            stop, and the DAT chip climbs to the zone temperature.
+                            The stages hold, though — a scenario is an operator write,
+                            and this one left both stages at slot 8, where your hand
+                            outranks the sequence. Hand them back with the
+                            <em>NULL — released</em> box under Compressor stage and
+                            they drop on the next tick: on the proof interlock, not on
+                            a discharge reading nobody should trust. Command, status
+                            and proof are three different claims —
+                            <a href="/education/status-and-proof.html">Status &amp; Proof</a>
+                            works through the difference.
+                        </p>
+                    </div>
+                </details>
 
-                <p class="ddcw-sheet-note">
-                    Watch the recovery order, because two protections are
-                    stacked and they clear in series. A low-limit trip is
-                    itself a full stop of the stage command, so it arms the
-                    minimum off-timer at the same instant it cuts the stages.
-                    The discharge has to climb past the clear constant
-                    <em>and</em> the off-timer has to expire before anything
-                    restages — so the stages return well after the clear point,
-                    not at it. That timer also starts from zero on a program
-                    download, which is why selecting this sample stops a
-                    running unit and holds it stopped for a spell: a real board
-                    serves a minimum off on power-up too.
-                </p>
+                <!-- Folded (glossary arc, fold-widening pass 2026-08-11): why the
+                     stages return late — the mechanism behind an observation the
+                     reader makes on the running unit. -->
+                <details class="prose-fold" id="ddcw-fold-recovery-order">
+                    <summary>Recovery order — two timers to clear</summary>
+                    <div class="prose-fold-body">
+                        <p class="ddcw-sheet-note">
+                            Watch the recovery order, because two protections are
+                            stacked and they clear in series. A low-limit trip is
+                            itself a full stop of the stage command, so it arms the
+                            minimum off-timer at the same instant it cuts the stages.
+                            The discharge has to climb past the clear constant
+                            <em>and</em> the off-timer has to expire before anything
+                            restages — so the stages return well after the clear point,
+                            not at it. That timer also starts from zero on a program
+                            download, which is why selecting this sample stops a
+                            running unit and holds it stopped for a spell: a real board
+                            serves a minimum off on power-up too.
+                        </p>
+                    </div>
+                </details>
 
-                <p class="ddcw-sheet-note">
-                    Note what that off-timer watches: the
-                    sequence's own stop, nothing else. Force the stages off at
-                    slot 8 and the compressor stops while the program carries
-                    on asking for cooling — the permit chain never sees a stop,
-                    so the timer sits at zero and the unit restarts the moment
-                    you release. Nothing is broken; the sequence is guarding
-                    the stop it knows about. That is the habit worth taking off
-                    this page: when you force a point, know what your override
-                    is doing to the logic underneath it. The program is still
-                    running on its own view of the machine, and you have just
-                    changed the machine without telling it.
-                    The fan is deliberately outside the permit path —
-                    it keeps following the cooling call, so air keeps moving
-                    across the coil while the lockout recovers. It has to be:
-                    gate the fan on the proof its own airflow produces and
-                    nothing could ever start. Force the fan
-                    slow under a heavy call and watch the safety act; the same
-                    move on the default sample is the freeze dive it exists to
-                    answer.
-                </p>
+                <!-- Folded (glossary arc, fold-widening pass 2026-08-11): the habit
+                     this page is for — know what your override does to the logic
+                     underneath. Folded as a section a reader opens on purpose. -->
+                <details class="prose-fold" id="ddcw-fold-off-timer">
+                    <summary>What the off-timer watches — and what your override does</summary>
+                    <div class="prose-fold-body">
+                        <p class="ddcw-sheet-note">
+                            Note what that off-timer watches: the
+                            sequence's own stop, nothing else. Force the stages off at
+                            slot 8 and the compressor stops while the program carries
+                            on asking for cooling — the permit chain never sees a stop,
+                            so the timer sits at zero and the unit restarts the moment
+                            you release. Nothing is broken; the sequence is guarding
+                            the stop it knows about. That is the habit worth taking off
+                            this page: when you force a point, know what your override
+                            is doing to the logic underneath it. The program is still
+                            running on its own view of the machine, and you have just
+                            changed the machine without telling it.
+                            The fan is deliberately outside the permit path —
+                            it keeps following the cooling call, so air keeps moving
+                            across the coil while the lockout recovers. It has to be:
+                            gate the fan on the proof its own airflow produces and
+                            nothing could ever start. Force the fan
+                            slow under a heavy call and watch the safety act; the same
+                            move on the default sample is the freeze dive it exists to
+                            answer.
+                        </p>
+                    </div>
+                </details>
 
                 <div class="desktop-only-sim">
                     <h2 class="dos-label">Desktop tool</h2>
