@@ -161,9 +161,11 @@ keywords: fla amps hz drive inverter speed torque carrier motor run
         .vfd-w-msgs {
             font-size: 0.8rem;
             line-height: 1.7;
-            color: var(--text-dim);
+            color: var(--text);
         }
         .vfd-w-msgs > div { padding-left: 0.85em; text-indent: -0.85em; }
+        /* The arrow keeps the dim ink explicitly (it inherited it until the
+           messages promoted to --text, #290) — it is a bullet, not prose. */
         .vfd-w-msgs > div::before { content: "→ "; color: var(--text-dim); }
 
         /* Fan animation — cube-law equipment as the visual indicator
@@ -312,7 +314,7 @@ keywords: fla amps hz drive inverter speed torque carrier motor run
                     <div><span class="pct">50% speed</span><span class="val">~13% power</span></div>
                     <div><span class="pct">30% speed</span><span class="val">~3% power</span></div>
                 </div>
-                <p style="margin-top:0.7rem;color:var(--text-dim);">Real drives lose a few points to inverter and motor inefficiency, especially at very low speed, so don't expect the numbers above on the meter — but the shape of the curve is what's selling the drive.</p>
+                <p style="margin-top:0.7rem;">Real drives lose a few points to inverter and motor inefficiency, especially at very low speed, so don't expect the numbers above on the meter — but the shape of the curve is what's selling the drive.</p>
             </div>
 
             <p style="margin-top:1.25rem;">

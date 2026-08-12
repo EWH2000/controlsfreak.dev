@@ -52,6 +52,21 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
            padded .tool-body, so zero the horizontal padding to keep a
            single inset. */
         .tool-body .ps-seed-note { padding-left: 0; padding-right: 0; }
+
+        /* Page-local prose utility for the one mono lead-in above the
+           Symptom → Tuning Move table. Was an inline 0.66rem/--text-dim
+           declaration; running prose is never both small and dim (#290),
+           so it takes the 0.78rem floor on --text like every other note.
+           Element-qualified per the prose-utility house rule — `.tool-body p`
+           sets a size and colour a bare class would tie with and lose to.
+           Named .pt-note, not .pid-note: that one is a shared class. */
+        p.pt-note {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            line-height: 1.7;
+            color: var(--text);
+            margin-bottom: 0.9rem;
+        }
     </style>
 {% endblock %}
 
@@ -389,7 +404,7 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
 
                 <h2 class="ps-section-label" style="margin-top:2.25rem;">Symptom → Tuning Move</h2>
 
-                <p style="font-family:var(--mono);font-size:0.66rem;color:var(--text-dim);margin-bottom:0.9rem;line-height:1.7;">
+                <p class="pt-note">
                     Quick reference for when you already know your way around a loop. ↑ = more, ↓ = less; P = gain, I = reset, D = rate.
                 </p>
 

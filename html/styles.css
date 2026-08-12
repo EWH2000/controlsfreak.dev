@@ -720,10 +720,14 @@ main { flex: 1; }
     margin: 0;
     padding: 0.55rem 1rem;
     font-family: var(--mono);
-    font-size: 0.66rem;
+    /* 0.72rem, not the 0.78rem running-prose floor (#290): this blurb sits
+       inside a fixed-measure dropdown panel, and the floor's extra step
+       re-flows the capped 240px text box. Promoted to --text with the rest
+       of the pass — a sentence is never both small and dim. */
+    font-size: 0.72rem;
     line-height: 1.45;
     letter-spacing: 0.02em;
-    color: var(--text-dim);
+    color: var(--text);
     white-space: normal;
     /* Cap the text measure so the blurb wraps to a readable column and
        doesn't drive the panel width. The separating rule lives on the
@@ -1284,8 +1288,8 @@ body.education-page .tool-body p + p:not([class]) { margin-top: 1.25rem; }
    or inside .tool-body (where .tool-body's own padding applies). */
 p.tool-preamble {
     font-family: var(--mono);
-    font-size: 0.7rem;
-    color: var(--text-dim);
+    font-size: 0.78rem;
+    color: var(--text);
     line-height: 1.7;
 }
 
@@ -1293,12 +1297,12 @@ p.tool-preamble {
    example that computes a live answer before you touch anything, and the
    seeded inputs ARE the worked example. This one line, between the preamble
    and the inputs, marks the values as demo data so a fast reader doesn't
-   mistake the seeded answer for one computed from their own numbers. Mono-dim
-   like the preamble; padded to align with the card content inset. */
+   mistake the seeded answer for one computed from their own numbers. Mono at
+   the preamble's size and ink; padded to align with the card content inset. */
 .ps-seed-note {
     font-family: var(--mono);
-    font-size: 0.72rem;
-    color: var(--text-dim);
+    font-size: 0.78rem;
+    color: var(--text);
     padding: 0.6rem 1.5rem 0.2rem;
     margin: 0;
 }
@@ -1307,12 +1311,12 @@ p.tool-preamble {
    always-visible <summary> (so a newcomer is never left without context); the
    rest expands behind "▸ more", keeping the Input/Output grid near the top of
    the card for the repeat expert. Native <details>, mirroring the .pid-spoiler
-   ▸/▾ idiom; shares p.tool-preamble's small mono-dim type. Per-tool inline
+   ▸/▾ idiom; shares p.tool-preamble's small mono type. Per-tool inline
    padding stays on the <details> (varies by inside/outside .tool-body). */
 details.tool-preamble > summary {
     font-family: var(--mono);
-    font-size: 0.7rem;
-    color: var(--text-dim);
+    font-size: 0.78rem;
+    color: var(--text);
     line-height: 1.7;
     cursor: pointer;
     list-style: none;
@@ -1323,15 +1327,15 @@ details.tool-preamble > summary::after {
     color: var(--accent);
     margin-left: 0.5rem;
     white-space: nowrap;
-    font-size: 0.66rem;
+    font-size: 0.7rem;
     letter-spacing: 0.04em;
 }
 details.tool-preamble[open] > summary::after { content: "▾ less"; }
 details.tool-preamble > summary:hover { color: var(--text); }
 details.tool-preamble > .preamble-rest {
     font-family: var(--mono);
-    font-size: 0.7rem;
-    color: var(--text-dim);
+    font-size: 0.78rem;
+    color: var(--text);
     line-height: 1.7;
     margin-top: 0.5rem;
 }
@@ -1571,7 +1575,7 @@ button[data-gloss].gloss-open {
 .hub-group-intro {
     font-size: 0.94rem;
     line-height: 1.7;
-    color: var(--text-dim);
+    color: var(--text);
     margin: 0 0 1.1rem;
     max-width: 56rem;
 }
@@ -1773,8 +1777,8 @@ input::placeholder, textarea::placeholder { color: var(--text-dim); }
    `<p>` — see also p.pid-note and p.ref-note below. */
 p.bit-hint {
     font-family: var(--mono);
-    font-size: 0.7rem;
-    color: var(--text-dim);
+    font-size: 0.78rem;
+    color: var(--text);
     margin-bottom: 0.85rem;
 }
 
@@ -2546,7 +2550,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
 .ref-table td:first-child { color: var(--text-bright); }
 .ref-table tbody tr:last-child td { border-bottom: none; }
 @media (max-width: 620px) {
-    .ref-table       { font-size: 0.76rem; }
+    .ref-table       { font-size: 0.78rem; }
     .ref-table th, .ref-table td { padding: 0.5rem 0.5rem; }
 }
 /* Scroll guard for tables whose min-content width can exceed a narrow
@@ -2583,7 +2587,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
 .narrow-width-note {
     display: none;
     font-size: 0.8rem;
-    color: var(--text-dim);
+    color: var(--text);
     background: var(--surface-3);
     border: 1px solid var(--border);
     border-radius: 0;
@@ -2644,8 +2648,8 @@ input[type="range"]:focus-visible::-moz-range-thumb {
 
 p.pid-note {
     font-family: var(--mono);
-    font-size: 0.72rem;
-    color: var(--text-dim);
+    font-size: 0.78rem;
+    color: var(--text);
     line-height: 1.75;
     margin-top: 1.25rem;
 }
@@ -2917,8 +2921,8 @@ p.chip-row-preamble {
 .about-prose a { color: var(--accent); }
 .about-prose .colophon {
     font-family: var(--mono);
-    font-size: 0.72rem;
-    color: var(--text-dim);
+    font-size: 0.78rem;
+    color: var(--text);
     margin-top: 1rem;
 }
 
@@ -3068,7 +3072,7 @@ p.chip-row-preamble {
 .faq-a {
     font-family: var(--sans);
     font-size: 0.85rem;
-    color: var(--text-dim);
+    color: var(--text);
     line-height: 1.6;
     margin: 0;
 }
@@ -3154,7 +3158,7 @@ p.chip-row-preamble {
     border: 1px solid var(--amber-glow);
     border-radius: 0;
     font-family: var(--mono);
-    font-size: 0.74rem;
+    font-size: 0.78rem;
     color: var(--text);
     display: flex;
     align-items: center;
@@ -3769,17 +3773,21 @@ input.ps-input:focus, select.ps-input:focus, textarea.ps-input:focus {
         font-family: var(--sans);
         font-size: 0.78rem;
         line-height: 1.5;
-        color: var(--text-dim);
+        color: var(--text);
         margin-top: 0.2rem;
     }
     .rt-stack tbody tr:nth-child(even) { background: var(--surface-2); }
 }
 
-/* a short explanatory note under a reference table. */
+/* a short explanatory note under a reference table. Element-qualified, and
+   that `p` is load-bearing beyond the usual specificity reason: the variants
+   below include ol.ref-note.worked-list, whose ~85 worked-example <li> render
+   at body size on --text precisely BECAUSE this rule cannot reach them. Never
+   de-qualify it to a bare .ref-note (#290). */
 p.ref-note {
     font-family: var(--sans);
-    font-size: 0.74rem;
-    color: var(--text-dim);
+    font-size: 0.78rem;
+    color: var(--text);
     line-height: 1.55;
     margin-top: 0.85rem;
     padding-top: 0.85rem;
@@ -4723,7 +4731,7 @@ p.ref-note.compact {
     color: var(--text-bright);
     align-self: center;
 }
-.fbe-insp-empty { font-size: 0.78rem; color: var(--text-dim); align-self: center; }
+.fbe-insp-empty { font-size: 0.78rem; color: var(--text); align-self: center; }
 .fbe-insp-keys {
     font-family: var(--mono);
     font-size: 0.62rem;
@@ -5119,7 +5127,7 @@ p.ddcw-resumed-msg {
     min-width: 0;
     margin: 0;
     font-family: var(--mono);
-    font-size: 0.72rem;
+    font-size: 0.78rem;
     line-height: 1.55;
     color: var(--text-bright);
     overflow-wrap: anywhere;
@@ -5156,7 +5164,7 @@ p.ddcw-sheet-note {
     font-family: var(--mono);
     font-size: 0.78rem;
     line-height: 1.5;
-    color: var(--text-dim);
+    color: var(--text);
     margin: 0 0 0.25rem;
 }
 
