@@ -219,8 +219,11 @@ test.describe('DDC Workbench — visible sensor glyphs', () => {
         // the next host tick.
         await page.waitForFunction(() =>
             document.getElementById('fcu-zone-t').textContent === '60.0 °F');
+        // The mirror's zone cell is a single value since #298 split the
+        // setpoint into its own row — the lie has to reach it whole, not as
+        // the first half of a pair.
         await page.waitForFunction(() =>
-            document.getElementById('fcu-zone-r').textContent.startsWith('60.0 /'));
+            document.getElementById('fcu-zone-r').textContent.trim() === '60.0 °F');
         // The truth readout keeps the integrating zone: it arrived at
         // 76 °F and nothing here can drag it near the forced 60.
         const truth = await page.evaluate(() =>

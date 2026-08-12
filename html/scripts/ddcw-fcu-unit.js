@@ -744,7 +744,11 @@ const DDCWFcuUnit = (function () {
             dt:   [document.getElementById('fcu-dt'),    document.getElementById('fcu-dt-r')],
             zt:   document.getElementById('fcu-zone-t'),
             zsp:  document.getElementById('fcu-zone-sp'),
+            // The mirror's zone pair is TWO cells, not one (#298): a
+            // sensed temperature and the param it answers to are different
+            // registers, and one span can only take one ink.
             zr:   document.getElementById('fcu-zone-r'),
+            cspR: document.getElementById('fcu-csp-r'),
             fanG: document.getElementById('fcu-fan-v'),
             fanR: document.getElementById('fcu-fan-r'),
             compG:document.getElementById('fcu-comp-v'),
@@ -997,7 +1001,12 @@ const DDCWFcuUnit = (function () {
         setBoth(out.dt,  dtN.toFixed(1)  + ' ' + dSuffix());
         out.zt.textContent  = spaceN.toFixed(1) + ' ' + tSuffix();
         out.zsp.textContent = spN.toFixed(1) + ' ' + tSuffix();
-        out.zr.textContent  = spaceN.toFixed(1) + ' / ' + spN.toFixed(1) + ' ' + tSuffix();
+        // The mirror's zone and setpoint cells — one write each. They used
+        // to be one cell printing "76.0 / 72.0 °F"; the register inks split
+        // them (#298), since the sensed value is measured and the setpoint
+        // is commanded and a single span cannot carry both colours.
+        out.zr.textContent   = spaceN.toFixed(1) + ' ' + tSuffix();
+        out.cspR.textContent = spN.toFixed(1) + ' ' + tSuffix();
 
         // ── the param rail ── the two params are INPUTS (the rail is the
         // operator-adjustable surface): while a field is not focused its
