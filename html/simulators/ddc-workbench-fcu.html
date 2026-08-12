@@ -110,8 +110,14 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
            paint an active setpoint at the same ink as its own caption,
            inverting the value-loud / caption-quiet hierarchy this block is
            built on, and on a device face a greyed point reads as
-           out-of-service rather than as secondary. */
-        .fcu-sp-val { font-size: 12px; }
+           out-of-service rather than as secondary.
+           ⚠ THE FILL IS THE COMMANDED REGISTER, NOT A DIM (#298). A cooling
+           setpoint is a param — something the program holds — so it takes
+           --accent-ink like every other commanded value on this page. That
+           is the opposite move from the dead attribute above: still a loud
+           value, just a coded one. The mockup omitted it; a shipped page
+           that spends the key must not. */
+        .fcu-sp-val { font-size: 12px; fill: var(--accent-ink); }
         .fcu-badge { fill: var(--surface-2); stroke: var(--border); stroke-width: 1; }
         .fcu-badge-dt { stroke: var(--blue); }
         .fcu-zone-label,
@@ -122,6 +128,22 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
            overrides the SVG text-anchor ATTRIBUTE, so the attribute alone let
            the dot land inside the string — the "ST●2" overlap). */
         #fcu-comp-v { text-anchor: start; }
+        /* ── THE TWO COMMANDED VALUES ON THE DRAWING (#298) ────────────────
+           The fan and compressor texts print what the program ASKED FOR, not
+           what the machine proved (fcuRenderUnit's own comment pins the fan
+           one — proof rides on the separate `fan-status` claim), so they take
+           the commanded ink. They are captions by CLASS, not wells, which is
+           why the id selectors are what land the fill: .fcu-pt-cap's
+           var(--text-dim) is single-class and an id beats it.
+           ⚠ NO --text-dim FALSE STATE HERE, unlike the AHU's .is-false. That
+           override needs a class the render loop toggles, and adding one
+           would be a second depiction call: green on this page means
+           COMMANDED (provenance), not ON (state), and the state channel is
+           already drawn — the compressor's LED dot and the fan's blades. So
+           a commanded OFF paints green, correctly under the doctrine and
+           worth the owner's eye anyway; #298 carries it. */
+        #fcu-fan-v,
+        #fcu-comp-v { fill: var(--accent-ink); }
 
         /* Ductwork — a filled channel with real width (the recessed --well
            body) framed by two crisp AX wall strokes, drawn ONLY on the
@@ -262,7 +284,31 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
             font-weight: 700;
             color: var(--text-bright);
         }
-        .fcu-point-val.accent { color: var(--blue); }
+        /* ── THE THREE REGISTER INKS (codebase-issues #298) ───────────────
+           MEASURED    --text-bright  anything a sensor reports
+           COMMANDED   --accent-ink   anything the program writes or holds
+           CALCULATED  --blue-ink     values derived from other values
+           The AHU page carries the doctrine in full (its well-ink block is
+           the reference, and it names the code as cut on PROVENANCE rather
+           than on point type). This page used to spend HALF of it — blue on
+           ΔT and nothing else — so `Supply fan` and `Compressor`, which are
+           genuinely commanded outputs, rendered in exactly the ink
+           `RAT · return` does. A reader who learned the code on the AHU read
+           them as measured. #269 gave every caption a text gloss; this pair
+           of rules gives the sighted reader the same thing, and .fcu-key
+           below prints the legend that makes it learnable in one look.
+           ⚠ CALCULATED IS --blue-ink HERE, NOT --blue. The mirror is HTML
+           text, inside contrast-sweep.spec.js's scope, and the -ink step
+           exists because small text needs a deeper/brighter one per theme.
+           The DRAWING's ΔT (.fcu-dt-val) is still --blue, which is a
+           divergence from the AHU's SVG calculated ink (--blue-ink) and is
+           left standing deliberately: the ΔT badge FRAME is --blue too
+           (.fcu-badge-dt), so moving only the value splits a pair that
+           currently reads as one, and SVG text is outside the sweep so
+           nothing forces the step. Recorded under #298 rather than fixed
+           silently — it is a depiction call, not an oversight. */
+        .fcu-point-val.is-cmd { color: var(--accent-ink); }
+        .fcu-point-val.accent { color: var(--blue-ink); }
         .fcu-point-val.dim { color: var(--text-dim); }
 
         /* ── THE ACTIVATION AFFORDANCE (codebase-issues #227b) ─────────────
@@ -339,7 +385,55 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
                copies of one value is a drift generator. */
         }
 
-        /* Verdict pill sits tight under the points. */
+        /* ── THE REGISTER KEY (codebase-issues #298) ──────────────────────
+           The legend for the three inks above — what makes the code
+           learnable in one look instead of only after a reader has met the
+           AHU. Adapted from that page's .ahu-key, REGISTER ROW ONLY: its
+           first row keys the component identity colours (damper / fan /
+           cooling / heating), which this drawing does not spend, and a key
+           row for a code the page never uses would be the same defect in
+           the other direction.
+           Still a GRID rather than a bare flex row: the AHU's second row is
+           the shape a component key would take here too, and the grid is
+           what keeps two rows stacked rather than reading as one long
+           legend at a wide viewport.
+           PAGE-LOCAL, per the widget-internals convention — the same
+           standing as this page's copy of the parameter rail and the mirror
+           diet. That makes it the second copy of one legend across the two
+           workbench pages, which is the #263/#273 duplication family by
+           mandate rather than by accident; a graduation to styles.css is a
+           decision about that whole family, not about this block. */
+        .fcu-key { display: grid; gap: 0.35rem; margin-top: 1rem; }
+        .fcu-key-row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+        .fcu-key-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-family: var(--mono);
+            font-size: 0.66rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+        /* The wells are SAMPLES, not readouts: each one carries a value the
+           page's own static seed actually shows in that register, so the
+           legend and the instrument never disagree about what the ink looks
+           like. They convert with the units toggle for the same reason the
+           readouts do — a metric reader comparing the key to the mirror has
+           to be comparing like with like. */
+        .fcu-key-well {
+            font-family: var(--mono);
+            font-size: 0.66rem;
+            font-weight: 700;
+            background: var(--well);
+            border: 1px solid var(--border);
+            padding: 0.1rem 0.4rem;
+            color: var(--text-bright);
+        }
+        .fcu-key-well.is-cmd { color: var(--accent-ink); }
+        .fcu-key-well.is-calc { border-color: var(--blue); color: var(--blue-ink); }
+
+        /* Verdict pill sits under the key, which sits under the points. */
         .fcu-verdict { margin-top: 1rem; }
 
         /* ── the parameter rail (mini) — the operator-adjustable surface.
@@ -615,9 +709,10 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
         .tool-card.is-fullscreen #tab-unit.active {
             display: grid;
             grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
-            grid-template-rows: auto auto auto minmax(0, 1fr);
+            grid-template-rows: auto auto auto auto minmax(0, 1fr);
             grid-template-areas:
                 "graphic points"
+                "graphic key"
                 "graphic verdict"
                 "graphic params"
                 "graphic controls";
@@ -648,6 +743,17 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
             bottom: 0;
         }
         .tool-card.is-fullscreen .fcu-points { grid-area: points; margin: 0; align-content: start; }
+        /* The key STAYS in the cockpit rather than dropping with the reading
+           prose above (#298). It is not prose: the instrument view is where
+           the coded values are, and a legend that only exists in the scrolled
+           page is a key you cannot consult while reading the thing it keys.
+           The AHU gets this for free — its legend rides inside .ahu-console —
+           so an explicit area here is what makes the two pages behave alike.
+           It needs one: #tab-unit.active is a NAMED-AREA grid in fullscreen,
+           and a direct child with no `grid-area` is auto-placed into an
+           implicit cell, which is a broken cockpit rather than a misplaced
+           legend. */
+        .tool-card.is-fullscreen .fcu-key { grid-area: key; margin: 0; }
         .tool-card.is-fullscreen .fcu-verdict { grid-area: verdict; margin: 0; }
         /* The rail keeps its hint (an announcement is instrument, not
            prose) — only its note paragraph drops with the reading prose. */
@@ -657,10 +763,11 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
         @media (max-width: 900px), (max-aspect-ratio: 1/1) {
             .tool-card.is-fullscreen #tab-unit.active {
                 grid-template-columns: 1fr;
-                grid-template-rows: auto auto auto auto auto;
+                grid-template-rows: auto auto auto auto auto auto;
                 grid-template-areas:
                     "graphic"
                     "points"
+                    "key"
                     "verdict"
                     "params"
                     "controls";
@@ -1159,13 +1266,13 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
                 </svg>
             </div>
 
-            <!-- Point readouts (the legible mirror) + the verdict. Above 900px
-                 the three PLAIN cells go visually hidden — still in the DOM,
-                 still painted by renderUnit, still announced — while the three
-                 buttons stay at every width. The selector is
-                 :not(.fcu-point-btn), so a cell promoted to a button later keeps
-                 its place on the desktop row without a second edit. See THE
-                 MIRROR DIET in the head block. -->
+            <!-- Point readouts (the legible mirror), the register key and the
+                 verdict. Above 900px the PLAIN cells go visually hidden —
+                 still in the DOM, still painted by renderUnit, still
+                 announced — while the buttons stay at every width. The
+                 selector is :not(.fcu-point-btn), so a cell promoted to a
+                 button later keeps its place on the desktop row without a
+                 second edit. See THE MIRROR DIET in the head block. -->
             <p class="ref-note">
                 The three points with a sensing device on the drawing are
                 buttons — press one to flag its live-value chip in the
@@ -1173,33 +1280,41 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
                 rest of the drawing's values — the reading copy for where
                 the drawing's own text runs too small.
             </p>
-            <!-- ⚠ THE PROVENANCE GLOSSES (codebase-issues #269) — and on THIS
-                 page they are not a redundant channel, they are the only one.
-                 The AHU mirror tags each caption with the point's KIND in an
-                 .sr-only span because its colour key already says the same
-                 thing in ink: green .is-cmd commanded, blue .is-calc
-                 calculated, plain measured. This page has NO commanded
-                 register — the only colour it spends is --blue on ΔT (the
-                 .accent value here and .fcu-dt-val on the drawing), so the
-                 fan and compressor cells render in exactly the ink RAT and
-                 DAT do. A sighted reader cannot tell a command from a
-                 measurement here either; the gloss is what carries it, for
-                 everyone. Kinds derive from ddcw-fcu-unit.js: rat / dat /
-                 space-temp are `ai` sensors, fan-speed / fan-enable / y1 /
-                 y2 are actuators (and fcuRenderUnit's own comment pins the
-                 fan cell as the COMMAND, the peer of the compressor beside
-                 it — proof is the separate `fan-status` claim, which this
-                 list does not carry), cooling-setpoint is a `param`, which
-                 the AHU glosses commanded. ΔT is arithmetic over the two
-                 displayed operands, so it is calculated and owns no roster
-                 row at all.
+            <!-- ⚠ THE PROVENANCE CHANNELS (codebase-issues #269, then #298).
+                 Every caption tags its point's KIND in an .sr-only span and
+                 every value carries the matching register ink — the AHU's
+                 pair of channels, which this page now spends in full.
+                 It did not always. #269 shipped the glosses ALONE, and on a
+                 page that had no commanded register they were not a redundant
+                 channel but the only one: the sole colour here was --blue on
+                 ΔT, so `Supply fan` and `Compressor` — genuinely commanded
+                 outputs — rendered in exactly the ink `RAT · return` does, and
+                 a sighted reader could not tell a command from a measurement.
+                 #298 closed that half: green .is-cmd on the commanded values,
+                 --blue-ink on the calculated one, plain on the measured, and
+                 the .fcu-key legend below so the code is learnable here rather
+                 than only after a reader has met the AHU.
+                 Kinds derive from ddcw-fcu-unit.js: rat / dat / space-temp are
+                 `ai` sensors, fan-speed / fan-enable / y1 / y2 are actuators
+                 (and fcuRenderUnit's own comment pins the fan cell as the
+                 COMMAND, the peer of the compressor beside it — proof is the
+                 separate `fan-status` claim, which this list does not carry),
+                 cooling-setpoint is a `param`, which the AHU glosses
+                 commanded. ΔT is arithmetic over the two displayed operands,
+                 so it is calculated and owns no roster row at all.
                  The word rides in the CAPTION, ahead of the live value, so a
                  button's accessible name stays stable across repaints.
-                 ⚠ "Zone / setpoint" is the one cell carrying TWO points of
-                 two different kinds, so it carries two glosses — one on each
-                 operand — rather than a single word that would be false about
-                 half the cell. The AHU splits the pair into two rows and so
-                 never had to answer this. -->
+                 ⚠ ZONE AND SETPOINT ARE TWO ROWS, not one cell with two
+                 glosses. #269 had to double-gloss "Zone / setpoint" because
+                 one cell printed a sensed temperature beside the param it
+                 answers to — two points of two different kinds, where a single
+                 word would have been false about half the cell. Ink cannot be
+                 split that way at all: one span takes one colour. So the pair
+                 separated the way the AHU's always was, and each row now
+                 carries one gloss and one register. The zone row keeps the
+                 button (it is the space-temp glyph's keyboard path); the
+                 setpoint row is a plain div because a param has no sensing
+                 device on the drawing to flag. -->
             <div class="fcu-points">
                 <button type="button" class="fcu-point fcu-point-btn" data-point="rat" aria-pressed="false">
                     <span class="fcu-point-cap">RAT · return<span class="sr-only"> (measured)</span></span>
@@ -1214,16 +1329,40 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
                     <span class="fcu-point-val accent" id="fcu-dt-r">-19.4 °F</span>
                 </div>
                 <button type="button" class="fcu-point fcu-point-btn" data-point="space-temp" aria-pressed="false">
-                    <span class="fcu-point-cap">Zone<span class="sr-only"> (measured)</span> / setpoint<span class="sr-only"> (commanded)</span></span>
-                    <span class="fcu-point-val" id="fcu-zone-r">76.0 / 72.0 °F</span>
+                    <span class="fcu-point-cap">Zone<span class="sr-only"> (measured)</span></span>
+                    <span class="fcu-point-val" id="fcu-zone-r">76.0 °F</span>
                 </button>
                 <div class="fcu-point">
+                    <span class="fcu-point-cap">Cooling setpoint<span class="sr-only"> (commanded)</span></span>
+                    <span class="fcu-point-val is-cmd" id="fcu-csp-r">72.0 °F</span>
+                </div>
+                <div class="fcu-point">
                     <span class="fcu-point-cap">Supply fan<span class="sr-only"> (commanded)</span></span>
-                    <span class="fcu-point-val" id="fcu-fan-r">100% · ON</span>
+                    <span class="fcu-point-val is-cmd" id="fcu-fan-r">100% · ON</span>
                 </div>
                 <div class="fcu-point">
                     <span class="fcu-point-cap">Compressor<span class="sr-only"> (commanded)</span></span>
-                    <span class="fcu-point-val" id="fcu-comp-r">Stage 2 · ON</span>
+                    <span class="fcu-point-val is-cmd" id="fcu-comp-r">Stage 2 · ON</span>
+                </div>
+            </div>
+
+            <!-- ── The register key (codebase-issues #298) ───────────────────
+                 The legend for the ink the mirror above and the drawing both
+                 spend. role="group" + aria-label rather than a heading, the
+                 AHU's call: a one-row key does not earn a heading and a bare
+                 div with aria-label would be ignored.
+                 REGISTER ROW ONLY — the AHU's first row keys its component
+                 identity colours, which this drawing does not spend, and a
+                 legend for a code the page never uses is the same defect #298
+                 was about, pointing the other way.
+                 The three sample values are this page's own static seed (RAT,
+                 fan command, ΔT), so the legend shows the ink on values the
+                 reader is looking at rather than on invented ones. -->
+            <div class="fcu-key" role="group" aria-label="Colour key">
+                <div class="fcu-key-row">
+                    <span class="fcu-key-item"><span class="fcu-key-well" data-us="76.0 °F" data-metric="24.4 °C">76.0 °F</span>Measured</span>
+                    <span class="fcu-key-item"><span class="fcu-key-well is-cmd">100%</span>Commanded</span>
+                    <span class="fcu-key-item"><span class="fcu-key-well is-calc" data-us="-19.4 °F" data-metric="-10.8 °C">-19.4 °F</span>Calculated</span>
                 </div>
             </div>
 
