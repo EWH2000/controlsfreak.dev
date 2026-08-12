@@ -12602,7 +12602,7 @@ override) and pointing `.led--*` at them — a shared `styles.css`
 change. PR #495 documented the measured pairs in the device-face CSS
 header rather than reaching outside its scope.
 
-### 281. `loadExample` races the end-of-body IIFE on the function-block editor *(noticed 2026-08-09, the #275 lane's full-suite triage — pre-existing flake with a diagnosed mechanism)*
+### 281. `loadExample` races the end-of-body IIFE on the function-block editor *(noticed 2026-08-09, the #275 lane's full-suite triage — pre-existing flake with a diagnosed mechanism; **owner ruled PAGE-SIDE 2026-08-11 and RESOLVED the same day**, scope grown at fix time to a second defect with the same root — resolution block at the end)*
 
 `tests/fbe-geometry.spec.js` › the fullscreen "proof" row intermittently
 sees **5 wires where the proof example has 7** — and 5 is exactly the
@@ -12615,6 +12615,73 @@ example's wire count) before clicking, or the page binds the example
 buttons earlier. Until one ships, a red on that row under load is this
 race FIRST — but isolate before waving off, per the standing
 one-flake rule.
+
+**Resolution (owner ruling 2026-08-11 — page-side).** The
+spec-side option was **rejected**: waiting on a bound signal papers over
+a hole a visitor falls into, and the entry's own framing ("the click did
+nothing") is the tell — that sentence describes a user-facing defect,
+not a test-harness one. What the spec would have gained is a longer
+wait; what a visitor on a slow connection would have kept is a row of
+chips that look like controls and aren't.
+
+**Two defects, one root, and the second is the worse of the pair.** The
+seven chips were bare `<a data-example="…">` with **no `href` and no
+`tabindex`** (`html/simulators/function-block-editor.html:70-80` as
+written), handlers attached in the end-of-body IIFE:
+
+1. *The race this entry describes.* The IIFE runs after ten
+   `<script src>` fetches — eight site-wide from `layouts/page.njk`,
+   then `fbe-engine.js` and `fbe-editor.js`. Until the last of them
+   lands, every chip is painted, hit-testable and inert. On a loaded CI
+   host that window is milliseconds; on a slow connection it is
+   seconds.
+2. *An anchor with no `href` is not a control at all.* It is out of the
+   tab order entirely, so the row was **permanently unreachable by
+   keyboard** — not intermittently, always, on the live page, since the
+   editor shipped. No spec had ever pressed Tab at it. Measured before
+   the fix: Tab from the preamble link walked eight stops without ever
+   landing on a chip.
+
+**What shipped.** The chips are real `<button type="button">`, and the
+click path is **one delegated listener installed from the page's head
+block** — before `<main>` is parsed, so there is no moment at which a
+parsed chip is unbound. Until the editor exists the requested key is
+queued (last one wins); the IIFE calls `window.FbeExamples.ready(fn)`
+straight after `createEditor()` and the queue drains into it, once. The
+per-chip `addEventListener` loop is **gone** rather than kept alongside
+— a temporary binding plus a permanent one is two systems for one
+control, which is the drift generator.
+
+**`styles.css` was not touched.** `.widget-try button` and
+`.widget-try button:focus-visible` already existed — seven other
+`.widget-try` rows (economizers, air-handlers, VAV, building-pressure,
+duct-static, air-unit-identification, and the workbench's own) have used
+the button twin since #142/#143, and the CSS comment on it already read
+*"new try-rows should use buttons."* The anchors here were the outlier,
+not the norm. Measured at 1366 dark: every chip's `x` and `width`
+unchanged to the pixel, and `color` / `font` / `border-bottom` /
+`margin` / `padding` / `cursor` byte-identical. Two rendered
+consequences of inline → inline-block, both matching the existing button
+rows exactly (economizers measures the same 20.03px box): the dashed
+underline sits ~3px lower, and a chip no longer splits mid-label across
+a line wrap — *"hot-water reset"* moves to the second line whole.
+
+**Spec side.** `fbe-geometry.spec.js` needed **no change** — its
+`openSheet` already waited on the example's wire count; that wait was
+what timed out when the click no-op'd, so the page was the only thing
+that could fix it. Every `[data-example]` locator under `tests/` was
+already attribute-only (the SVG-selector convention paying off outside
+SVG), so nothing broke on the element change. Two new rows in
+`fbe-editor.spec.js` cover one arm each, and **both fail against the
+pre-fix page** — the pre-mount one with this entry's exact signature,
+`locator resolved to 5 elements`. It reproduces the race deterministically
+instead of racing for it: `page.route` holds `/scripts/fbe-editor.js` at
+the network, the chip is clicked while the editor is provably absent
+(`typeof window.FBEEditor === 'undefined'`), then the gate is released
+and the queue drains to the seven-wire sheet.
+
+**The standing note above is retired.** A red on that geometry row is no
+longer this race — the click cannot no-op any more. Read the failure.
 
 ### 282. A spec cites the ledger by line number, and the ledger moved *(noticed 2026-08-10, the handoff verification session — comment-only defect)*
 
