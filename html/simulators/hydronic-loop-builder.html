@@ -181,7 +181,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             min-height: 3.4rem;
         }
         .hlb-insp-title { font-family: var(--mono); font-size: 0.7rem; font-weight: 600; color: var(--text-bright); align-self: center; }
-        .hlb-insp-empty { font-size: 0.78rem; color: var(--text-dim); align-self: center; }
+        .hlb-insp-empty { font-size: 0.78rem; color: var(--text); align-self: center; }
         /* No opacity here: 0.85 composited --text-dim down to 3.48:1 on the
            light --surface-3 face, an AA fail on static hint text. --text-dim
            at full strength is already the "quiet" step (4.60:1 there). */
@@ -219,10 +219,17 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
         .hlb-readouts { display: flex; flex-wrap: wrap; gap: 0.7rem; margin: 0.2rem 0 0.9rem; }
         .hlb-readouts .device { flex: 1 1 12rem; min-width: 11rem; }
 
+        /* The legend mixes two kinds of item: two swatch CAPTIONS naming a
+           colour (label chrome — they stay small and dim), and two
+           sentence-shaped teaching lines that tell you how to read the
+           drawing. Only the sentences are prose, so only they take the
+           0.78rem/--text floor (#290); the base rule lifts to 0.7rem so the
+           captions are not the smallest ink on the page either. */
         .hlb-legend {
             display: flex; flex-wrap: wrap; gap: 1rem;
-            font-family: var(--mono); font-size: 0.62rem; color: var(--text-dim); margin-top: 0.4rem;
+            font-family: var(--mono); font-size: 0.7rem; color: var(--text-dim); margin-top: 0.4rem;
         }
+        .hlb-legend .hlb-legend-note { font-size: 0.78rem; color: var(--text); }
         .hlb-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
         .hlb-swatch { width: 1.4rem; height: 0; border-top-width: 3px; border-top-style: solid; }
         .hlb-sw-supply { border-color: var(--heat); }
@@ -394,8 +401,8 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                 <div class="hlb-legend">
                     <span><span class="hlb-swatch hlb-sw-supply"></span> warmer water</span>
                     <span><span class="hlb-swatch hlb-sw-return"></span> cooler water</span>
-                    <span>particles show flow direction &amp; rate</span>
-                    <span>north = width · east = depth · up = height</span>
+                    <span class="hlb-legend-note">particles show flow direction &amp; rate</span>
+                    <span class="hlb-legend-note">north = width · east = depth · up = height</span>
                 </div>
 
                 <h2 class="subhead">How it works</h2>
