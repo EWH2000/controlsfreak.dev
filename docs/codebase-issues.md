@@ -12215,7 +12215,7 @@ diff. The header-clearance pair the graduation also left in place is
 NOT this item — its selectors are site-wide (`.tool-card-header` /
 `.tool-card-title`), so its dedup is #272's open design call.
 
-### 274. The simulators landing crossed its own chips threshold at nine cards *(noticed 2026-08-04, the Phase 8 graduation lane — DESIGN CALL, deliberately not decided at go-live)*
+### 274. The simulators landing crossed its own chips threshold at nine cards *(noticed 2026-08-04, the Phase 8 graduation lane — DESIGN CALL, deliberately not decided at go-live; owner decided the taxonomy 2026-08-10, **RESOLVED 2026-08-11 · PR #519** — resolution block at the end, chip LABELS still ride that PR for review)*
 
 CLAUDE.md's Design landmarks row says the Simulators landing is "the
 same grid minus chips — add chips back if it grows past ~6 entries."
@@ -12235,6 +12235,40 @@ Editor, PID Tuner, Staging Sequencer) · *Equipment & Systems* (both
 Workbenches, Hydronic Loop, Refrigerant Loop). Final chip labels are
 proposed in the fix PR for his review; CLAUDE.md's "grid minus chips"
 Design-landmarks row updates in the same PR. Fix lane can open.
+
+**Resolution (PR #519).** The decided taxonomy, shipped as the chip row
+the other three landings already run — no new pattern, no new CSS.
+`html/simulators/index.html` grew a `p.chip-row-preamble` ("Filter by
+activity:"), a four-button `.filter-chips` row, a `category` on each of
+the nine `navCard()` calls, and the same hash-routing IIFE
+tools/education/practice carry verbatim. Labels as shipped, for review:
+**Panel & Wiring** (2 — Mock VFD, Controller Wiring) · **Programming &
+Logic** (3 — PID Tuner, Function-Block Editor, Staging Sequencer) ·
+**Equipment & Systems** (4 — both Workbenches, Hydronic Loop Builder,
+Refrigerant Loop). Slugs are the kebab-case labels, so the routes are
+`/simulators/#panel-wiring` and friends.
+
+**Chips are page-local, and that was a decision, not an omission.** The
+entry is silent on the nav dropdown, so the categories live only in the
+landing's `navCard()` calls: simulators still have no `NAV_CATEGORIES`
+entry, the dropdown still renders flat, and no page gained a `category`
+frontmatter. Consequence worth knowing — `navCategoryGuard` never
+reaches this section, so **the build cannot catch a tenth simulator
+added with no category**. The guard that does is
+`landing-chip-counts.spec.js`, which this PR extended with a simulators
+arm; unlike practice there is no chip-less bucket here, so it demands
+the chips partition the grid exactly and a categoryless card fails it.
+
+**One consumer was coupled; two more were checked and needed nothing.**
+`link-integrity.spec.js`'s chip-landing floor is an EXACT `toBe(3)` —
+deliberately exact, per its own header, so a `.filter-chip` rename
+can't hollow the hash-route allowlist — and a fourth chip landing
+fails it. Now `toBe(4)`, header updated with it.
+`home-hero.spec.js` needed **no** change: it reads `/simulators/` for
+the Browse pill's `.nav-card` count only and never touches its chips,
+and `.count()` matches hidden cards, so a hash-filtered arrival cannot
+skew it. `README.md` needed none either — its Simulators tour lists the
+sims but never describes the landing's shape.
 
 ### 275. The DDC Workbench holds its whole simulation in memory, and its own flagship navigation model navigates away from it *(noticed 2026-08-08 — **RESOLVED 2026-08-09 · PR #496 (v3.83.0)**, owner-designed and shipped the same day; resolution block at the end; the sheet-note linking pass is unblocked — 2026-08-10: that pass now runs as the collapse half of the glossary arc's pilot under `docs/glossary-arc.md`'s constraints, not standalone)*
 
