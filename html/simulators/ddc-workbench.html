@@ -1467,22 +1467,24 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
         </div>
         <div class="tool-body">
 
-            <p class="tool-preamble">
-                A single-zone air handler as a live DDC graphic, driven by a
-                function-block program. The <strong>Unit</strong> tab is the
-                supervisory screen a tech reads and adjusts — the parameter
-                rail's setpoints commit to the running program; the
-                <strong>Wiresheet</strong> tab is the control program running
-                it. The workbench commands
-                each output through a real BACnet priority array, on three
-                levels: <strong>slot 8 (Manual Operator)</strong> for your
-                hand, <strong>slot 16</strong> for the sequence, and the
-                <strong>Relinquish_Default</strong> fallback when both are
-                NULL. The zone is a live thermal model, and the air path is
-                solved psychrometrically station by station — mixing box,
-                heating coil, cooling coil, fan — so the coil ΔT on the
-                graphic is the one the airflow and the load actually produce.
-            </p>
+            <details class="tool-preamble">
+                <summary>A single-zone air handler as a live DDC graphic, driven by a function-block program.</summary>
+                <div class="preamble-rest">
+                    The <strong>Unit</strong> tab is the
+                    supervisory screen a tech reads and adjusts — the parameter
+                    rail's setpoints commit to the running program; the
+                    <strong>Wiresheet</strong> tab is the control program running
+                    it. The workbench commands
+                    each output through a real BACnet priority array, on three
+                    levels: <strong>slot 8 (Manual Operator)</strong> for your
+                    hand, <strong>slot 16</strong> for the sequence, and the
+                    <strong>Relinquish_Default</strong> fallback when both are
+                    NULL. The zone is a live thermal model, and the air path is
+                    solved psychrometrically station by station — mixing box,
+                    heating coil, cooling coil, fan — so the coil ΔT on the
+                    graphic is the one the airflow and the load actually produce.
+                </div>
+            </details>
 
             <!-- ── Tabs: Unit graphic | Wiresheet (FBE) ── the shell is
                  unit-agnostic; the persistent statusbar below sits OUTSIDE the
@@ -2427,9 +2429,23 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                         <section class="ahu-teach" aria-labelledby="ahu-teach-h">
                             <h2 class="subhead" id="ahu-teach-h">Reading this screen</h2>
 
-                            <p class="ahu-teach-p"><strong>What this screen is.</strong> The supervisory graphic for a single-zone air handler — the screen a technician opens to see what the unit is doing right now. Air runs left to right: outdoor air at the intake, return air down from the zone, the two streams blending in the mixing box, then the filter, the heating coil, the cooling coil and the supply fan. The chevrons are the air itself, and they change colour where a coil has worked on it.</p>
+                            <!-- Folded (glossary arc, fold-widening pass 2026-08-11): what the
+                                 drawing IS and how its inks read — orientation a returning
+                                 reader already has. The linkage and no-point paragraphs join it
+                                 because they answer the same question the colour key does, and
+                                 the owner ruled the grouping over their authored order. -->
+                            <details class="prose-fold" id="ddcw-fold-reading-graphic">
+                                <summary>Reading this graphic — the inks, the chevrons, and the linkage</summary>
+                                <div class="prose-fold-body">
+                                    <p class="ahu-teach-p"><strong>What this screen is.</strong> The supervisory graphic for a single-zone air handler — the screen a technician opens to see what the unit is doing right now. Air runs left to right: outdoor air at the intake, return air down from the zone, the two streams blending in the mixing box, then the filter, the heating coil, the cooling coil and the supply fan. The chevrons are the air itself, and they change colour where a coil has worked on it.</p>
 
-                            <p class="ahu-teach-p"><strong>How to read it.</strong> Every device the program can read or write carries its own colour — dampers amber, the fan green, the heating coil warm, the cooling coil blue — so you can find a device before you read a word. Colour is never the only channel, though: each device is also drawn as the thing it is, which is why the cooling coil carries the small wedge-shaped refrigerant distributor and feeder tubes that no hydronic coil has, and the heating coil carries a two-way valve on the pipes below it. A component drawn in plain grey has no point on it. Values sit in bordered wells tied to their device by a leader line: a green value is something the program is <strong>commanding</strong>, a plain value is something a sensor is <strong>measuring</strong>, and a blue value is <strong>calculated</strong> from the others.</p>
+                                    <p class="ahu-teach-p"><strong>How to read it.</strong> Every device the program can read or write carries its own colour — dampers amber, the fan green, the heating coil warm, the cooling coil blue — so you can find a device before you read a word. Colour is never the only channel, though: each device is also drawn as the thing it is, which is why the cooling coil carries the small wedge-shaped refrigerant distributor and feeder tubes that no hydronic coil has, and the heating coil carries a two-way valve on the pipes below it. A component drawn in plain grey has no point on it. Values sit in bordered wells tied to their device by a leader line: a green value is something the program is <strong>commanding</strong>, a plain value is something a sensor is <strong>measuring</strong>, and a blue value is <strong>calculated</strong> from the others.</p>
+
+                                    <p class="ahu-teach-p"><strong>Three dampers, one command.</strong> The outside, return and relief blades all move together, because the point roster carries one damper output and the linkage does the rest — return closes as outside opens, and relief opens with it so the building does not pressurise. That is how a packaged economizer is actually built, and it is why all three commands are annotated rather than just the outside one: the drawn blade angles are what tell you the linkage is doing what the single command asked.</p>
+
+                                    <p class="ahu-teach-p"><strong>Not everything on the machine is on the screen.</strong> Grey means no point, and there is a difference between the two kinds of grey here. The filter rack and the intake louver have no point because nothing would ever command them. The small device on the cooling coil&rsquo;s leaving face &mdash; a switch body on the casing roof with a button on it, and one thin capillary hanging down across the coil &mdash; has no point because nobody landed one, and that is extremely common in the field. It is a hardwired low-limit stat: it opens the fan starter circuit directly, so it can stop this machine at any moment, and the controller will not know. When it does, the fan command on this screen keeps reading exactly what it read before, the verdict tells you a coil is loaded with the fan off, and no amount of staring at the front end gets you further. That is not a gap in the graphic. It is the reason the first thing an experienced tech does with a unit that stopped for no reason is walk out to it and look, and it is why the reset button for that device is on the device. The wire somebody eventually lays across that stat&rsquo;s terminals so it will stop dropping the unit is a third thing you only ever learn about the same way.</p>
+                                </div>
+                            </details>
 
                             <!-- ⚠ THE THREE TEXT LINKS ARE THE DRILL-DOWNS'
                                  EQUIVALENT TARGETS, not decoration. The SVG
@@ -2445,46 +2461,59 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                                  removing a link reddens that row. -->
                             <p class="ahu-teach-p"><strong>Drill-downs.</strong> The heating coil, the cooling coil and the fan are drawn as links into the simulator behind each device. The same three in text — the tap targets, for a screen where the glyphs render too small to hit: the <a href="/simulators/hydronic-loop-builder.html">Hydronic Loop Builder</a> behind the heating coil, the <a href="/simulators/refrigerant-loop.html">Refrigerant Loop Simulator</a> behind the DX coil, the <a href="/simulators/vfd-mock.html">Mock VFD Interface</a> behind the fan.</p>
 
-                            <p class="ahu-teach-p"><strong>The one number to watch.</strong> Read the ΔT well in the discharge callout: it is discharge minus mixed air — the fan sits downstream of both coils on a draw-through unit, so that span covers the fan as well — and it goes negative whenever the unit is removing heat and positive whenever it is adding heat. When a unit stops doing its job, that is the number that collapses toward zero. Everything else on the screen is there to tell you <em>why</em> it collapsed: whether the air is moving, whether a coil is loaded, and whether the number a sensor is reporting is the number the machine is actually seeing. The economizer sequence itself is worked through on the <a href="/education/economizers.html">economizers lesson</a>.</p>
+                            <!-- Folded (glossary arc, fold-widening pass 2026-08-11): the ΔT
+                                 well's meaning is background; the well itself is on the
+                                 drawing beside this text and stays readable without it. -->
+                            <details class="prose-fold" id="ddcw-fold-dt-well">
+                                <summary>The one number to watch — the ΔT well</summary>
+                                <div class="prose-fold-body">
+                                    <p class="ahu-teach-p"><strong>The one number to watch.</strong> Read the ΔT well in the discharge callout: it is discharge minus mixed air — the fan sits downstream of both coils on a draw-through unit, so that span covers the fan as well — and it goes negative whenever the unit is removing heat and positive whenever it is adding heat. When a unit stops doing its job, that is the number that collapses toward zero. Everything else on the screen is there to tell you <em>why</em> it collapsed: whether the air is moving, whether a coil is loaded, and whether the number a sensor is reporting is the number the machine is actually seeing. The economizer sequence itself is worked through on the <a href="/education/economizers.html">economizers lesson</a>.</p>
+                                </div>
+                            </details>
 
-                            <p class="ahu-teach-p"><strong>Three dampers, one command.</strong> The outside, return and relief blades all move together, because the point roster carries one damper output and the linkage does the rest — return closes as outside opens, and relief opens with it so the building does not pressurise. That is how a packaged economizer is actually built, and it is why all three commands are annotated rather than just the outside one: the drawn blade angles are what tell you the linkage is doing what the single command asked.</p>
+                            <!-- Folded (glossary arc, fold-widening pass 2026-08-11): the three
+                                 setpoint paragraphs are one subject and fold as one. The rail
+                                 beside them is live, so a reader who wants to DRIVE the
+                                 setpoints needs the fields, not the prose. -->
+                            <details class="prose-fold" id="ddcw-fold-setpoints">
+                                <summary>Setpoints — the gap, the deadband, and the customer's hands</summary>
+                                <div class="prose-fold-body">
+                                    <!-- ⚠ THE SETPOINT IS THE CUT-OUT. Cooling makes
+                                         at SP + deadband and breaks at SP, so the
+                                         zone rides the band ABOVE the number on the
+                                         screen. Owner ruling 2026-07-28, and it is
+                                         the convention the shipped FCU already
+                                         carries. An earlier draft of this component
+                                         had it the other way round (energise AT the
+                                         setpoint, drop out below it); that is wrong
+                                         and must not come back.
 
-                            <p class="ahu-teach-p"><strong>Not everything on the machine is on the screen.</strong> Grey means no point, and there is a difference between the two kinds of grey here. The filter rack and the intake louver have no point because nothing would ever command them. The small device on the cooling coil&rsquo;s leaving face &mdash; a switch body on the casing roof with a button on it, and one thin capillary hanging down across the coil &mdash; has no point because nobody landed one, and that is extremely common in the field. It is a hardwired low-limit stat: it opens the fan starter circuit directly, so it can stop this machine at any moment, and the controller will not know. When it does, the fan command on this screen keeps reading exactly what it read before, the verdict tells you a coil is loaded with the fan off, and no amount of staring at the front end gets you further. That is not a gap in the graphic. It is the reason the first thing an experienced tech does with a unit that stopped for no reason is walk out to it and look, and it is why the reset button for that device is on the device. The wire somebody eventually lays across that stat&rsquo;s terminals so it will stop dropping the unit is a third thing you only ever learn about the same way.</p>
+                                         ⚠ SHARED LABEL AND CONCEPT, NOT SHARED
+                                         ARITHMETIC — do not "reconcile" this with
+                                         /education/comparators-and-deadband.html. The
+                                         lesson builds its band SYMMETRICALLY, with
+                                         the DB constant as HALF the width. This unit
+                                         hangs the FULL width on ONE side of the
+                                         active setpoint. That is the very
+                                         full-vs-half split the lesson itself calls
+                                         out.
 
-                            <!-- ⚠ THE SETPOINT IS THE CUT-OUT. Cooling makes
-                                 at SP + deadband and breaks at SP, so the
-                                 zone rides the band ABOVE the number on the
-                                 screen. Owner ruling 2026-07-28, and it is
-                                 the convention the shipped FCU already
-                                 carries. An earlier draft of this component
-                                 had it the other way round (energise AT the
-                                 setpoint, drop out below it); that is wrong
-                                 and must not come back.
+                                         ⚠ THE NUMBERS BELOW ARE THE MODULE'S SHIPPED
+                                         SEEDS (cooling 72, heating 68, deadband 2 —
+                                         make 74, break 72, separation 4), NOT the
+                                         mockup's 73/68 depiction. codebase-issues
+                                         #242 ruled the physics module wins, so the
+                                         mockup's "a space of 74.0 °F can sit under a
+                                         lit stage" illustration COLLAPSES here — 74
+                                         IS the make point. The between-the-edges
+                                         example is 73. Re-derive, never copy. -->
+                                    <p class="ahu-teach-p"><strong>Setpoints and the deadband.</strong> The separation between the two setpoints and the deadband are easy to read as one number, and they are not. The SP DIFF well in the rail is the separation — cooling setpoint minus heating setpoint. Nothing sets it: move either setpoint — the rail's fields are live, so try it — and it follows, which is why it is inked blue like the ΔT well rather than the green its two neighbours carry. The deadband is the smaller, separate thing, and it belongs to whichever setpoint is currently active rather than to the pair. On the cooling side it sits <em>above</em> the setpoint: as shipped, with a 72.0 °F cooling setpoint and a 2.0 °F deadband, the stage makes at 74.0 °F and breaks back at 72.0 °F. Here the setpoint is the cut-out, so the zone rides the band above the number on the screen and a degree of drift cannot short-cycle the compressor. That is also why a space of 73.0 °F can sit under a lit stage — between the two edges the call is held by a <a href="/education/comparators-and-deadband.html">latch</a>, not by a comparison against the setpoint.</p>
 
-                                 ⚠ SHARED LABEL AND CONCEPT, NOT SHARED
-                                 ARITHMETIC — do not "reconcile" this with
-                                 /education/comparators-and-deadband.html. The
-                                 lesson builds its band SYMMETRICALLY, with
-                                 the DB constant as HALF the width. This unit
-                                 hangs the FULL width on ONE side of the
-                                 active setpoint. That is the very
-                                 full-vs-half split the lesson itself calls
-                                 out.
+                                    <p class="ahu-teach-p"><strong>Two setpoints, and what happens when they overlap.</strong> This unit carries a heating setpoint and a cooling setpoint as separate program constants, not one setpoint with an offset — specifically so you can drag them into each other, from the rail or the wiresheet, and watch a unit fight itself. A hot-water valve open under a running compressor is a real field fault: the ΔT goes nowhere, the energy goes everywhere, and nothing on the machine is broken. The graphic calls it out, because reading it off two wells that each look reasonable on their own is exactly the skill worth having.</p>
 
-                                 ⚠ THE NUMBERS BELOW ARE THE MODULE'S SHIPPED
-                                 SEEDS (cooling 72, heating 68, deadband 2 —
-                                 make 74, break 72, separation 4), NOT the
-                                 mockup's 73/68 depiction. codebase-issues
-                                 #242 ruled the physics module wins, so the
-                                 mockup's "a space of 74.0 °F can sit under a
-                                 lit stage" illustration COLLAPSES here — 74
-                                 IS the make point. The between-the-edges
-                                 example is 73. Re-derive, never copy. -->
-                            <p class="ahu-teach-p"><strong>Setpoints and the deadband.</strong> The separation between the two setpoints and the deadband are easy to read as one number, and they are not. The SP DIFF well in the rail is the separation — cooling setpoint minus heating setpoint. Nothing sets it: move either setpoint — the rail's fields are live, so try it — and it follows, which is why it is inked blue like the ΔT well rather than the green its two neighbours carry. The deadband is the smaller, separate thing, and it belongs to whichever setpoint is currently active rather than to the pair. On the cooling side it sits <em>above</em> the setpoint: as shipped, with a 72.0 °F cooling setpoint and a 2.0 °F deadband, the stage makes at 74.0 °F and breaks back at 72.0 °F. Here the setpoint is the cut-out, so the zone rides the band above the number on the screen and a degree of drift cannot short-cycle the compressor. That is also why a space of 73.0 °F can sit under a lit stage — between the two edges the call is held by a <a href="/education/comparators-and-deadband.html">latch</a>, not by a comparison against the setpoint.</p>
-
-                            <p class="ahu-teach-p"><strong>Two setpoints, and what happens when they overlap.</strong> This unit carries a heating setpoint and a cooling setpoint as separate program constants, not one setpoint with an offset — specifically so you can drag them into each other, from the rail or the wiresheet, and watch a unit fight itself. A hot-water valve open under a running compressor is a real field fault: the ΔT goes nowhere, the energy goes everywhere, and nothing on the machine is broken. The graphic calls it out, because reading it off two wells that each look reasonable on their own is exactly the skill worth having.</p>
-
-                            <p class="ahu-teach-p"><strong>Two setpoints in a customer's hands.</strong> Put both setpoints on a front end and sooner or later a customer may set the heating setpoint above the cooling setpoint — on purpose, reasoning that cooling means cold, so the cooling number belongs on the bottom. The model is backwards: a cooling setpoint is the temperature above which cooling starts, not a temperature the cooling makes. But allow everyone access to both numbers and you'd be surprised how often they get crossed. That is not an argument for hiding the second setpoint either, because the access that trapped this customer is exactly what the next one is paying for. There is no house answer here, only a design judgement with obligations attached. Get the cooling-versus-heating model right yourself, and then build the graphic toward where the user actually stands: consider who will use the system and what their skill level is. A rural school whose whole front end answers to one custodian is a different job from a large factory campus with a team behind the screen, and not just because the controls are different. And consider adding protections in your logic, or even in the point itself if you have the ability. The programs on this machine leave them out on purpose — to a practiced eye that absence can read as a mistake, but it is the point: the failure has to stay reachable to be worth experiencing. This simulator shows you both postures at once: the rail is the guarded front end, each field clamping to its own range and announcing the catch; the wiresheet is the unguarded side — the same constants with no rails at all, where you can set a deadband the rail would refuse and nothing says a word. Both setpoints stay one keystroke from the plant on either surface, because this is where a mistake is free and can even be fun to see.</p>
+                                    <p class="ahu-teach-p"><strong>Two setpoints in a customer's hands.</strong> Put both setpoints on a front end and sooner or later a customer may set the heating setpoint above the cooling setpoint — on purpose, reasoning that cooling means cold, so the cooling number belongs on the bottom. The model is backwards: a cooling setpoint is the temperature above which cooling starts, not a temperature the cooling makes. But allow everyone access to both numbers and you'd be surprised how often they get crossed. That is not an argument for hiding the second setpoint either, because the access that trapped this customer is exactly what the next one is paying for. There is no house answer here, only a design judgement with obligations attached. Get the cooling-versus-heating model right yourself, and then build the graphic toward where the user actually stands: consider who will use the system and what their skill level is. A rural school whose whole front end answers to one custodian is a different job from a large factory campus with a team behind the screen, and not just because the controls are different. And consider adding protections in your logic, or even in the point itself if you have the ability. The programs on this machine leave them out on purpose — to a practiced eye that absence can read as a mistake, but it is the point: the failure has to stay reachable to be worth experiencing. This simulator shows you both postures at once: the rail is the guarded front end, each field clamping to its own range and announcing the catch; the wiresheet is the unguarded side — the same constants with no rails at all, where you can set a deadband the rail would refuse and nothing says a word. Both setpoints stay one keystroke from the plant on either surface, because this is where a mistake is free and can even be fun to see.</p>
+                                </div>
+                            </details>
                         </section>
                     </div>
                 </div>
@@ -2856,36 +2885,45 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                     </div>
                 </div>
 
-                <p class="ref-note">
-                    That is a real device on the machine and not a point on
-                    the controller — which is how a great many of them are
-                    actually wired. It sits across the coil face and lands in
-                    the fan starter circuit, so when it opens the motor stops
-                    whether or not the program ever asked it to, on either
-                    sample sequence, and the fan command on the screen above
-                    goes on reading exactly what it read before. Nothing on
-                    that screen will tell you the stat tripped, because
-                    nothing on that screen can know. What you get is a dead
-                    machine and a verdict that describes the symptom. The
-                    device is drawn on the unit, unlabelled, where the real
-                    one lives; finding it is the job.
-                </p>
+                <!-- Folded (glossary arc, fold-widening pass 2026-08-11): what the
+                     stat and the jumper ARE. The device face above is live and its
+                     result line announces itself, so the reader can work both
+                     defeats without this prose in front of the controls. -->
+                <details class="prose-fold" id="ddcw-fold-stat-jumper">
+                    <summary>The device the controller cannot see — the stat and the jumper</summary>
+                    <div class="prose-fold-body">
+                        <p class="ref-note">
+                            That is a real device on the machine and not a point on
+                            the controller — which is how a great many of them are
+                            actually wired. It sits across the coil face and lands in
+                            the fan starter circuit, so when it opens the motor stops
+                            whether or not the program ever asked it to, on either
+                            sample sequence, and the fan command on the screen above
+                            goes on reading exactly what it read before. Nothing on
+                            that screen will tell you the stat tripped, because
+                            nothing on that screen can know. What you get is a dead
+                            machine and a verdict that describes the symptom. The
+                            device is drawn on the unit, unlabelled, where the real
+                            one lives; finding it is the job.
+                        </p>
 
-                <p class="ref-note">
-                    The second row on that face is a <strong>jumper</strong>: a
-                    piece of wire laid across the stat&rsquo;s two terminal
-                    screws, so the starter circuit stops passing through the
-                    contacts at all. Anybody who has worked on equipment for a
-                    while has found one. Nothing about the device changes when
-                    the wire goes on &mdash; the element still trips on cold air
-                    and the row above still reads TRIPPED &mdash; the fan simply
-                    never hears about it, and the machine runs on through the
-                    freeze the stat was there to catch. Take the wire off and
-                    the fan drops that instant, on a trip that had been sitting
-                    there the whole time. That is the tell worth carrying out of
-                    here: a unit that dies the second a jumper comes out was
-                    never fixed. It was silenced.
-                </p>
+                        <p class="ref-note">
+                            The second row on that face is a <strong>jumper</strong>: a
+                            piece of wire laid across the stat&rsquo;s two terminal
+                            screws, so the starter circuit stops passing through the
+                            contacts at all. Anybody who has worked on equipment for a
+                            while has found one. Nothing about the device changes when
+                            the wire goes on &mdash; the element still trips on cold air
+                            and the row above still reads TRIPPED &mdash; the fan simply
+                            never hears about it, and the machine runs on through the
+                            freeze the stat was there to catch. Take the wire off and
+                            the fan drops that instant, on a trip that had been sitting
+                            there the whole time. That is the tell worth carrying out of
+                            here: a unit that dies the second a jumper comes out was
+                            never fixed. It was silenced.
+                        </p>
+                    </div>
+                </details>
 
                 <div class="ahu-presets field" role="group" aria-labelledby="ahu-try-lbl">
                     <span class="field-label" id="ahu-try-lbl">Scenarios (write slot 8):</span>
@@ -3045,35 +3083,44 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                     <p class="ahu-ovr-state" id="ahu-ovr-state" role="status" aria-live="polite"></p>
                 </div>
 
-                <p class="ref-note">
-                    Forcing a sensor is what a stuck or mis-scaled input does in
-                    the field: the program keeps sequencing on the number it is
-                    handed while the machine does something else entirely. The
-                    forced device gets a dashed ring on the drawing, because a
-                    forced input that leaves no mark is how a wrong number
-                    survives a shift change. Release it and the program sees the
-                    machine again.
-                </p>
+                <!-- Folded (glossary arc, fold-widening pass 2026-08-11): the
+                     input-force / slot-8 distinction is the concept behind the two
+                     controls above, and /tools/bacnet-priority.html owns the
+                     teaching. Both paragraphs are one lesson, so they fold as one. -->
+                <details class="prose-fold" id="ddcw-fold-overrides">
+                    <summary>Overrides — forcing inputs vs commanding outputs</summary>
+                    <div class="prose-fold-body">
+                        <p class="ref-note">
+                            Forcing a sensor is what a stuck or mis-scaled input does in
+                            the field: the program keeps sequencing on the number it is
+                            handed while the machine does something else entirely. The
+                            forced device gets a dashed ring on the drawing, because a
+                            forced input that leaves no mark is how a wrong number
+                            survives a shift change. Release it and the program sees the
+                            machine again.
+                        </p>
 
-                <p class="ref-note">
-                    The NULL boxes above are the other half of that lesson.
-                    Un-check one and your hand lands in slot 8 (Manual
-                    Operator), which outranks the sequence writing at slot 16 —
-                    the point stops following the program until you write NULL
-                    back. Walking away without releasing that slot is how most
-                    priority-array trouble starts in the field: months later the
-                    point reads "broken" while the sequence writes correctly
-                    underneath the stale hand value. And note the two mechanisms
-                    are different things — the sensor override forces an
-                    <em>input</em>, so the program sequences on a wrong number; a
-                    slot-8 write commands an <em>output</em>, so the program
-                    keeps computing and simply loses the arbitration. Work the
-                    full sixteen slots in the
-                    <a href="/tools/bacnet-priority.html">BACnet Priority Array
-                    tool</a>, or start from
-                    <a href="/education/bacnet-basics.html#priority-array">the
-                    priority array in BACnet Basics</a>.
-                </p>
+                        <p class="ref-note">
+                            The NULL boxes above are the other half of that lesson.
+                            Un-check one and your hand lands in slot 8 (Manual
+                            Operator), which outranks the sequence writing at slot 16 —
+                            the point stops following the program until you write NULL
+                            back. Walking away without releasing that slot is how most
+                            priority-array trouble starts in the field: months later the
+                            point reads "broken" while the sequence writes correctly
+                            underneath the stale hand value. And note the two mechanisms
+                            are different things — the sensor override forces an
+                            <em>input</em>, so the program sequences on a wrong number; a
+                            slot-8 write commands an <em>output</em>, so the program
+                            keeps computing and simply loses the arbitration. Work the
+                            full sixteen slots in the
+                            <a href="/tools/bacnet-priority.html">BACnet Priority Array
+                            tool</a>, or start from
+                            <a href="/education/bacnet-basics.html#priority-array">the
+                            priority array in BACnet Basics</a>.
+                        </p>
+                    </div>
+                </details>
 
             </div>
 
@@ -3114,7 +3161,7 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                      second leans on the first ("the other half of that
                      block"), so they share one fold or neither folds. -->
                 <details class="prose-fold" id="ddcw-fold-econ-permit">
-                    <summary>Background — the two economizer permit conditions, and the minimum position</summary>
+                    <summary>The two economizer permit conditions, and the minimum position</summary>
                     <div class="prose-fold-body">
                         <p class="ddcw-sheet-note">
                             Read <a href="/education/economizers.html">the
@@ -3147,66 +3194,90 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                     </div>
                 </details>
 
-                <p class="ddcw-sheet-note">
-                    Airflow proof gates both coils, and the ordering is the
-                    field's. A discharge sensor sitting in still air reads the
-                    room, not the coil — so a low limit behind no proof does not
-                    merely fail to trip, it goes blind, reporting a comfortable
-                    number while the coil behind it could be anything at all.
-                    Break the belt from the scenario row and watch it: the fan
-                    command stays on, the blades stop, the chevrons freeze, and
-                    the DAT chip climbs to the zone temperature. What is
-                    deliberately NOT gated is the fan itself — gate a fan on the
-                    proof its own airflow produces and nothing could ever start.
-                    Command, status and proof are three different claims, and
-                    <a href="/education/status-and-proof.html">Status &amp; Proof</a>
-                    works through the difference. On a real job you rarely get
-                    all three — status is usually the only claim on the screen,
-                    so the work becomes deciding whether to believe it. That is
-                    what the ΔT well beside the discharge reading is for: a fan
-                    reporting ON with no split across a loaded coil is a status
-                    that is lying, and the temperatures are what catch it.
-                </p>
+                <!-- Folded (glossary arc, fold-widening pass 2026-08-11): the
+                     command/status/proof split is background /education/status-and-proof.html
+                     owns; the belt scenario it names stays one row away on the Unit tab. -->
+                <details class="prose-fold" id="ddcw-fold-airflow-proof">
+                    <summary>Airflow proof — why it gates the coils</summary>
+                    <div class="prose-fold-body">
+                        <p class="ddcw-sheet-note">
+                            Airflow proof gates both coils, and the ordering is the
+                            field's. A discharge sensor sitting in still air reads the
+                            room, not the coil — so a low limit behind no proof does not
+                            merely fail to trip, it goes blind, reporting a comfortable
+                            number while the coil behind it could be anything at all.
+                            Break the belt from the scenario row and watch it: the fan
+                            command stays on, the blades stop, the chevrons freeze, and
+                            the DAT chip climbs to the zone temperature. What is
+                            deliberately NOT gated is the fan itself — gate a fan on the
+                            proof its own airflow produces and nothing could ever start.
+                            Command, status and proof are three different claims, and
+                            <a href="/education/status-and-proof.html">Status &amp; Proof</a>
+                            works through the difference. On a real job you rarely get
+                            all three — status is usually the only claim on the screen,
+                            so the work becomes deciding whether to believe it. That is
+                            what the ΔT well beside the discharge reading is for: a fan
+                            reporting ON with no split across a loaded coil is a status
+                            that is lying, and the temperatures are what catch it.
+                        </p>
+                    </div>
+                </details>
 
-                <p class="ddcw-sheet-note">
-                    The heating valve is
-                    <a href="/education/pid-basics.html">a proportional
-                    loop</a>, not a stage: the
-                    error between the heating setpoint and the space runs through
-                    a gain and a limit block, so the valve sits wherever it has
-                    to sit to hold the space rather than banging open and shut.
-                    Watch the authority, with every NULL box checked so the
-                    program is in control: driving the outdoor-air slider down
-                    opens the valve further to hold the space, and far enough
-                    down is where it reaches a hundred percent and the room
-                    starts falling anyway. The scenario buttons will not show
-                    you this — each one puts its hand on all six outputs, so the
-                    valve holds wherever the scenario put it until you write
-                    NULL back.
-                </p>
+                <!-- Folded (glossary arc, fold-widening pass 2026-08-11): what a
+                     proportional loop is — /education/pid-basics.html owns it. The
+                     valve block is on the sheet beside this text. -->
+                <details class="prose-fold" id="ddcw-fold-heating-valve">
+                    <summary>The heating valve — a proportional loop, not a stage</summary>
+                    <div class="prose-fold-body">
+                        <p class="ddcw-sheet-note">
+                            The heating valve is
+                            <a href="/education/pid-basics.html">a proportional
+                            loop</a>, not a stage: the
+                            error between the heating setpoint and the space runs through
+                            a gain and a limit block, so the valve sits wherever it has
+                            to sit to hold the space rather than banging open and shut.
+                            Watch the authority, with every NULL box checked so the
+                            program is in control: driving the outdoor-air slider down
+                            opens the valve further to hold the space, and far enough
+                            down is where it reaches a hundred percent and the room
+                            starts falling anyway. The scenario buttons will not show
+                            you this — each one puts its hand on all six outputs, so the
+                            valve holds wherever the scenario put it until you write
+                            NULL back.
+                        </p>
+                    </div>
+                </details>
 
-                <p class="ddcw-sheet-note">
-                    The low-limits sample splices two winter protections into
-                    the same sequence, in series and in different styles: a
-                    mixed-air low limit that modulates, and a discharge
-                    low-limit stat that trips. The PID watches the mixed-air
-                    well against the Min MAT constant — warm mixed air parks
-                    its output high, and as the mixing box drags down toward
-                    the constant the output winds down with it. The MIN block
-                    after the economizer select then takes whichever is less:
-                    the position the economizer wants, or the most the low
-                    limit will allow. Drive it: outdoor air cold, cooling
-                    setpoint pulled below the space — drag it down in the
-                    rail — so the economizer opens
-                    hard, and the damper command settles well short of open
-                    while the MAT chip rides the constant. Colder still and the
-                    clamp passes below the ventilation minimum, because the MIN
-                    sits downstream of the minimum-position select on purpose.
-                    When freeze protection and ventilation argue, this sequence
-                    has already picked freeze protection — a real sequence
-                    writes that trade down, because someone will eventually ask
-                    where the minimum went.
-                </p>
+                <!-- Folded (glossary arc, fold-widening pass 2026-08-11): how the
+                     sample is built and what the MIN block is for — read once, then
+                     driven from the rail rather than from the paragraph. -->
+                <details class="prose-fold" id="ddcw-fold-low-limits-drive">
+                    <summary>The low-limits sample — driving two protections</summary>
+                    <div class="prose-fold-body">
+                        <p class="ddcw-sheet-note">
+                            The low-limits sample splices two winter protections into
+                            the same sequence, in series and in different styles: a
+                            mixed-air low limit that modulates, and a discharge
+                            low-limit stat that trips. The PID watches the mixed-air
+                            well against the Min MAT constant — warm mixed air parks
+                            its output high, and as the mixing box drags down toward
+                            the constant the output winds down with it. The MIN block
+                            after the economizer select then takes whichever is less:
+                            the position the economizer wants, or the most the low
+                            limit will allow. Drive it: outdoor air cold, cooling
+                            setpoint pulled below the space — drag it down in the
+                            rail — so the economizer opens
+                            hard, and the damper command settles well short of open
+                            while the MAT chip rides the constant. Colder still and the
+                            clamp passes below the ventilation minimum, because the MIN
+                            sits downstream of the minimum-position select on purpose.
+                            When freeze protection and ventilation argue, this sequence
+                            has already picked freeze protection — a real sequence
+                            writes that trade down, because someone will eventually ask
+                            where the minimum went.
+                        </p>
+                    </div>
+                </details>
 
                 <!-- Folded (glossary arc, collapse pilot 2026-08-10): where
                      one engineer's numbers come from and why the spread is
@@ -3214,7 +3285,7 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                      Nothing here is watchable on the running machine, which
                      is what separates it from the trip note below. -->
                 <details class="prose-fold" id="ddcw-fold-lls-numbers">
-                    <summary>Background — where the 38 / 41 pair comes from, and why the spread</summary>
+                    <summary>Where the 38 / 41 pair comes from, and why the spread</summary>
                     <div class="prose-fold-body">
                         <p class="ddcw-sheet-note">
                             There are two low-limit stats on this machine, and
@@ -3265,28 +3336,36 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                     </div>
                 </details>
 
-                <p class="ddcw-sheet-note">
-                    A trip is the classic freezestat response, all at once:
-                    damper driven shut, hot-water valve driven open — water
-                    moving through the coil is the protection when nothing else
-                    is — and the fan stopped, with the compressor stages
-                    falling out on the airflow-proof interlock they already
-                    answer to. Then the trap this page keeps circling: the
-                    moment the fan stops, the discharge probe reads the room.
-                    Watch the DAT chip after a trip — it climbs to a perfectly
-                    comfortable number while the machine sits dead, which is
-                    exactly why the trip is
-                    <a href="/education/boolean-logic-latches.html">held by a
-                    latch and not by the comparison alone</a>. An unlatched
-                    stat would clear itself on
-                    its own blindness and bang the fan straight back on. The
-                    LLS Reset source is the reset button on the device: click
-                    it true and back once the cause is fixed and the machine
-                    restarts in order — fan first, proof made, then the loads.
-                    Hold it true instead and you have wired the button down:
-                    the latch is defeated, and the unit short-cycles on and off
-                    exactly as fast as each trip can clear itself.
-                </p>
+                <!-- Folded (glossary arc, fold-widening pass 2026-08-11): what a
+                     trip does and why a latch holds it —
+                     /education/boolean-logic-latches.html owns the mechanism. -->
+                <details class="prose-fold" id="ddcw-fold-trip-latch">
+                    <summary>A trip, and what holds it</summary>
+                    <div class="prose-fold-body">
+                        <p class="ddcw-sheet-note">
+                            A trip is the classic freezestat response, all at once:
+                            damper driven shut, hot-water valve driven open — water
+                            moving through the coil is the protection when nothing else
+                            is — and the fan stopped, with the compressor stages
+                            falling out on the airflow-proof interlock they already
+                            answer to. Then the trap this page keeps circling: the
+                            moment the fan stops, the discharge probe reads the room.
+                            Watch the DAT chip after a trip — it climbs to a perfectly
+                            comfortable number while the machine sits dead, which is
+                            exactly why the trip is
+                            <a href="/education/boolean-logic-latches.html">held by a
+                            latch and not by the comparison alone</a>. An unlatched
+                            stat would clear itself on
+                            its own blindness and bang the fan straight back on. The
+                            LLS Reset source is the reset button on the device: click
+                            it true and back once the cause is fixed and the machine
+                            restarts in order — fan first, proof made, then the loads.
+                            Hold it true instead and you have wired the button down:
+                            the latch is defeated, and the unit short-cycles on and off
+                            exactly as fast as each trip can clear itself.
+                        </p>
+                    </div>
+                </details>
 
                 <!-- Folded (glossary arc, collapse pilot 2026-08-10): field
                      signatures — how the two defeats read on a roof — rather
@@ -3294,7 +3373,7 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                      this page; the fold hides the telling-apart, not the
                      capability. -->
                 <details class="prose-fold" id="ddcw-fold-lls-defeats">
-                    <summary>Background — the two defeats, told apart</summary>
+                    <summary>The two defeats, told apart</summary>
                     <div class="prose-fold-body">
                         <!-- ⚠ DO NOT COMPRESS THIS INTO "the software
                              equivalent of a jumper". The page carries BOTH
@@ -3323,27 +3402,36 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                     </div>
                 </details>
 
-                <p class="ddcw-sheet-note">
-                    The cleanest way to see all of it is one lie. Open the
-                    wiresheet before you start — its first open loads the sheet
-                    into the editor the way a download loads a controller, and
-                    a download hands a software latch back cleared. Then, on
-                    the Unit tab, force the DAT sensor low — the picker option
-                    already names what watches it — and the stat takes the
-                    machine down the same tick. Now release the force, and
-                    nothing restarts:
-                    the discharge reads the still-air room number, the set side
-                    of the latch is long clear, and the machine stays down
-                    waiting for the button. A software stat trusts its sensor
-                    with no questions asked, and that cuts both ways. Watch
-                    what the hardwired element does during that same
-                    experiment: nothing. It is a capillary in the airstream,
-                    not a transmitter, so a lie told to the controller never
-                    reaches it — and by the same token it would never miss a
-                    freeze the transmitter failed to report. Running both is
-                    not redundancy for show; it is two different failure
-                    stories covering each other.
-                </p>
+                <!-- Folded (glossary arc, fold-widening pass 2026-08-11): a whole
+                     walkthrough, and the owner's stated reason for widening — a
+                     reader who wants to RUN it opens the fold and works beside the
+                     unit, rather than scrolling past it to reach the sheet. -->
+                <details class="prose-fold" id="ddcw-fold-one-lie">
+                    <summary>The one-lie walkthrough</summary>
+                    <div class="prose-fold-body">
+                        <p class="ddcw-sheet-note">
+                            The cleanest way to see all of it is one lie. Open the
+                            wiresheet before you start — its first open loads the sheet
+                            into the editor the way a download loads a controller, and
+                            a download hands a software latch back cleared. Then, on
+                            the Unit tab, force the DAT sensor low — the picker option
+                            already names what watches it — and the stat takes the
+                            machine down the same tick. Now release the force, and
+                            nothing restarts:
+                            the discharge reads the still-air room number, the set side
+                            of the latch is long clear, and the machine stays down
+                            waiting for the button. A software stat trusts its sensor
+                            with no questions asked, and that cuts both ways. Watch
+                            what the hardwired element does during that same
+                            experiment: nothing. It is a capillary in the airstream,
+                            not a transmitter, so a lie told to the controller never
+                            reaches it — and by the same token it would never miss a
+                            freeze the transmitter failed to report. Running both is
+                            not redundancy for show; it is two different failure
+                            stories covering each other.
+                        </p>
+                    </div>
+                </details>
 
                 <div class="desktop-only-sim">
                     <h2 class="dos-label">Desktop tool</h2>
