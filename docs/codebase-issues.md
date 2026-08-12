@@ -13017,7 +13017,7 @@ entry alleged could not ship unnoticed today. `styles.css`'s LED
 comment, which repeated the same false claim, was corrected in the
 same PR.
 
-### 290. Simulator prose is set smaller AND dimmer than lesson prose — squint territory *(reported 2026-08-11 by the owner — site-wide legibility, DESIGN CALL; survey measured; **treatment ruled 2026-08-12 — both levers**, pass queued)*
+### 290. Simulator prose is set smaller AND dimmer than lesson prose — squint territory *(reported 2026-08-11 by the owner — site-wide legibility, DESIGN CALL; survey measured; treatment ruled 2026-08-12 — both levers; **pass shipped 2026-08-12 · PR #530**)*
 
 Owner report, verbatim intent: a lot of the sim prose is almost too
 dark to read, and very small — the two combined make you squint.
@@ -13074,6 +13074,65 @@ promotes to `--text` (captions and labels keep `--text-dim` — the
 floor around 0.78rem; the inline stragglers get classes either way.
 Ships as the site-wide pass the scope note above predicts; the entry
 stays open until that pass lands.
+
+**Resolution (PR #530, 2026-08-12).** The pass shipped as ruled: a
+**0.78rem floor** on paragraph-shaped text and `--text-dim` → `--text`
+on its ink, across ~44 rules in `styles.css` plus ~20 pages. Nothing
+already at or above 0.78rem was raised, and the **`--text-dim` token
+itself was not touched** — only per-rule declarations moved, so #168's
+caption/label hierarchy stands unchanged. **Semantic inks were kept**
+throughout: `--blue-ink` (register provenance, `p.ahu-point-note`),
+`--amber-ink` (override state, the four workbench announcement lines),
+`--heat` / `--red-text` (status hues), and the equipment register.
+Those surfaces took the size floor only. The inline stragglers got
+classes as ruled — `pid-tuner.html:392`'s classless 0.66rem `<p>`, the
+worst offender in the ranked list above, is now `p.pt-note`.
+
+**Scope excluded: SVG `<text>`.** The ruling covers HTML prose only, so
+diagram labels, axis captions and in-drawing callouts keep their
+current size and ink site-wide. That is a real remaining surface, not
+a closed one — it would need its own survey (the measurement here was
+of HTML prose classes, and SVG text is sized in **user units against a
+viewBox**, so a `rem` floor does not even transfer). Logged as the
+boundary rather than as a follow-on entry.
+
+**One thing to not undo:** `p.ref-note` keeps its `p` element
+qualifier, and the rule now carries a comment saying why in its own
+terms. `ol.ref-note.worked-list` matches only the padding rule at
+`:3793`, so ~85 worked-example `<li>` render at body size on `--text`
+**precisely because** the base rule cannot reach them. De-qualifying to
+a bare `.ref-note` — which looks like a tidy-up — would shrink every
+one of them to 0.78rem.
+
+**One documented exception: `.nav-menu-blurb` landed at 0.72rem**, not
+the floor. It sits in a fixed-measure dropdown panel against a 240px
+capped text box, and the full step re-flows the panel geometry; the ink
+promotion applies normally. Flagged in the PR for the owner's
+before/after eye.
+
+Two survey findings worth keeping. Of the nineteen inline
+`font-size:0.86rem` declarations the survey read as no-op duplicates of
+`.callout p`, **two are not**: `education/hydronic-loops.html:381` and
+`education/pump-control.html:363` are `<ul>` elements, not `<p>`.
+`.callout p` cannot reach them and there is no `.callout ul`, so they
+fall to `.tool-body ul` at 0.95rem — deleting their `font-size` would
+have *enlarged* both lists. 17 removed, not 19. And
+`tools/psychrometric-chart.html:420`'s "gray" span already carried the
+explicit `--text-dim` the plan called for adding before `p.bit-hint`
+promoted, so no edit was needed there.
+
+*Stale line-number corrections to the ranked list above,* re-derived
+against `main` at 4219463 when the pass ran — the entry's cites had
+drifted as the files grew: `p.pid-note` is styles.css **:2645** (not
+2636); `p.ref-note` is **:3779** (not 3770); `p.ddcw-sheet-note` is
+**:5155** (not 5140); `p.ahu-point-note` is ddc-workbench.html **:933**
+(not :904); `p.vfdm-mode-note` is vfd-mock.html **:140** (not :143).
+The `details.prose-fold` summary is styles.css **:1374** (not 1366),
+and the entry's "0.72rem `--text-dim`" reading of it is stale on the
+ink: it is **already `--text`**, brightened by the affordance lane
+before this pass ran. Its size is still 0.72rem, and it was held out
+of this pass deliberately as that lane's surface — so read it as one
+lever paid, not as resolved.
 
 ### 291. Negative assertions keyed on incidental punctuation go vacuous silently *(noticed 2026-08-11, the #283 T-A lane — test-pattern class, LOW)*
 

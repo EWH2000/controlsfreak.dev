@@ -122,7 +122,11 @@ test.describe('phone collapse contracts (375×667)', () => {
         await expect(page.locator('.sim-canvas-wrap canvas').first()).toHaveCSS('height', '200px');
         const spoiler = page.locator('.pid-spoiler');
         await spoiler.locator('summary').click();
-        await expect(spoiler.locator('.ref-table')).toHaveCSS('font-size', '12.16px');
+        // 0.78rem = 12.48px — the phone shrink was retuned from 0.76rem
+        // when #290 put a 0.78rem floor under prose-length text. The
+        // assertion is that the ≤620px override APPLIES at all (it was
+        // dead on source order pre-#23); the literal tracks that floor.
+        await expect(spoiler.locator('.ref-table')).toHaveCSS('font-size', '12.48px');
 
         // Audit #26: the open spoiler's 4-column table must not bleed
         // through the card border — it either fits or scrolls inside
