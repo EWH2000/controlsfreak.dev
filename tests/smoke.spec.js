@@ -259,6 +259,105 @@ test('hydronic loop builder — an example loads and the loop solves to live flo
     expect(errors, 'hydronic loop builder behavioral should log no page / console errors').toEqual([]);
 });
 
+// ── The example chips are real controls (codebase-issues #297) ──────────
+// Same pair as fbe-editor.spec.js's (#281), against the second page that
+// ran the same idiom: bare <a> elements with no href, wired by the
+// end-of-body IIFE. An anchor with no href is not in the tab order at all,
+// and the wiring did not exist until nine <script src> fetches had landed —
+// so the row was keyboard-dead permanently and mouse-dead intermittently.
+// The `[data-example="parallel"]` click in the behavioral test above rode
+// that same window, which is why #281's measured flake was latent here.
+// Each row below covers one arm; either one fails against the pre-fix page.
+
+test('hydronic loop builder — the example chips are keyboard-reachable (#297)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/simulators/hydronic-loop-builder.html');
+    // Boot sheet is the single loop — four components, and no balance valve.
+    await expect(page.locator('#hlb-inner-n .hlb-comp')).toHaveCount(4);
+    await expect(page.locator('#hlb-body-n-bv')).toHaveCount(0);
+
+    // Walk forward from the last link in the preamble, which is the last
+    // focusable above the chip row at desktop width (.desktop-only-sim is
+    // display:none there, so its own link is out of the tab order). Bounded,
+    // so a chip that drops out of the tab order fails here instead of
+    // hanging — and the loop is what makes this a REACHABILITY test rather
+    // than a .focus() call, which would pass just as happily on an
+    // unreachable element.
+    await page.locator('.tool-preamble a[href="/education/balancing.html"]').focus();
+    let key = null;
+    let steps = 0;
+    while (steps < 8 && key === null) {
+        await page.keyboard.press('Tab');
+        steps += 1;
+        key = await page.evaluate(() => document.activeElement.dataset.example || null);
+    }
+    expect(key, 'Tab from the preamble link should land on the first example chip')
+        .toBe('single');
+
+    // Enter on a focused <button> fires a click — the delegated listener sees
+    // it exactly as it sees a mouse click. Parallel is seven components and
+    // the only example carrying a balance valve.
+    await page.keyboard.press('Tab');
+    await expect(page.locator(':focus')).toHaveAttribute('data-example', 'parallel');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#hlb-inner-n .hlb-comp')).toHaveCount(7);
+    await expect(page.locator('#hlb-body-n-bv')).toHaveCount(1);
+
+    expect(errors, 'keyboard-loading an example should log no page / console errors').toEqual([]);
+});
+
+test('hydronic loop builder — a chip clicked before the engine lands still loads (#297)', async ({ page }) => {
+    const errors = watchErrors(page);
+
+    // Hold /scripts/hydronic-engine.js at the network until this test
+    // releases it. That script is parser-blocking and sits directly above the
+    // page's inline IIFE, so holding it holds the loader too — while the chip
+    // row, parsed partway up <main>, is already painted and clickable. That
+    // IS the window #297 is about, reproduced deterministically instead of
+    // raced for. Nothing is stubbed: the real head listener queues, the real
+    // page drains.
+    let release;
+    const gate = new Promise((resolve) => { release = resolve; });
+    await page.route('**/scripts/hydronic-engine.js', async (route) => {
+        await gate;
+        await route.continue();
+    });
+
+    // 'commit' rather than 'load' — the parser-blocking script above never
+    // returns, so neither DOMContentLoaded nor load will fire yet.
+    await page.goto('/simulators/hydronic-loop-builder.html', { waitUntil: 'commit' });
+    const chip = page.locator('[data-example="parallel"]');
+    await chip.waitFor({ state: 'visible' });
+
+    // ANTI-VACUITY: prove the engine really is absent, or this test would
+    // pass without ever exercising the queue.
+    expect(await page.evaluate(() => typeof window.HYDRO),
+        'the hydronic engine must still be in flight for this test to mean anything')
+        .toBe('undefined');
+    await expect(page.locator('#hlb-inner-n .hlb-comp')).toHaveCount(0);
+
+    await chip.click();
+    // Queued, not dropped, and not applied early either.
+    await expect(page.locator('#hlb-inner-n .hlb-comp')).toHaveCount(0);
+
+    release();
+    // The page boots its own default sheet (single loop, four components) and
+    // the queue drains straight into it: parallel, seven.
+    await expect(page.locator('#hlb-inner-n .hlb-comp')).toHaveCount(7);
+    // The balance valve is parallel's alone — a component count could in
+    // principle be hit by another example, this id could not.
+    await expect(page.locator('#hlb-body-n-bv')).toHaveCount(1);
+
+    // The queue drains ONCE and the same listener then serves live clicks —
+    // one path, both phases. The 3-way bypass is six components with a
+    // diverting valve, so this can't be confused with either sheet above.
+    await page.click('[data-example="threeway"]');
+    await expect(page.locator('#hlb-inner-n .hlb-comp')).toHaveCount(6);
+    await expect(page.locator('#hlb-body-n-v3')).toHaveCount(1);
+
+    expect(errors, 'the queued-click path should log no page / console errors').toEqual([]);
+});
+
 test('bacnet/ip converter converts a hex string', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/tools/bacnet-ip-converter.html');
@@ -1361,6 +1460,89 @@ test('equipment staging — staging widget stages up, rotation widget equalizes 
     await expect(page.locator('.es-runtime').nth(1).locator('.h')).toHaveText('168');
 
     expect(errors, 'equipment-staging behavioral should log no page / console errors').toEqual([]);
+});
+
+// ── The demand presets are real controls (codebase-issues #297) ─────────
+// The third page that ran the hrefless-anchor chip idiom, and the mildest
+// of the three: no page-specific <script src>, so the pre-mount window is
+// only the eight parser-blocking site-wide scripts wide — but it is the
+// same window, and the same silent no-op at the end of it. The keyboard arm
+// was the unconditional half here too: an <a> with no href is out of the
+// tab order permanently.
+
+test('equipment staging — the demand presets are keyboard-reachable (#297)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/education/equipment-staging.html');
+    await expect(page.locator('#es-w1-demand')).toHaveText('20');
+
+    // Walk forward from the lesson link above the widget — the last
+    // focusable before the preset row. Bounded, so a chip that drops out of
+    // the tab order fails here instead of hanging, and the loop is what makes
+    // this a REACHABILITY test rather than a .focus() call.
+    await page.locator('main a[href="/education/pump-control.html"]').first().focus();
+    let demand = null;
+    let steps = 0;
+    while (steps < 8 && demand === null) {
+        await page.keyboard.press('Tab');
+        steps += 1;
+        demand = await page.evaluate(() => document.activeElement.dataset.demand || null);
+    }
+    expect(demand, 'Tab from the lesson link should land on the first preset chip')
+        .toBe('12');
+
+    // Enter on a focused <button> fires a click — the delegated listener sees
+    // it exactly as it sees a mouse click. The preset drives the slider, not
+    // just the readout, so assert both.
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#es-w1-demand')).toHaveText('12');
+    await expect(page.locator('#es-w1-demand-slider')).toHaveValue('12');
+
+    expect(errors, 'keyboard-setting a demand preset should log no page / console errors').toEqual([]);
+});
+
+test('equipment staging — a preset clicked before the widget mounts still applies (#297)', async ({ page }) => {
+    const errors = watchErrors(page);
+
+    // Hold the last site-wide script at the network. Every one of them is
+    // parser-blocking and they all sit above {% block scripts %}, so holding
+    // this one holds the widget's IIFE — while the preset row, parsed partway
+    // up <main>, is already painted and clickable.
+    let release;
+    const gate = new Promise((resolve) => { release = resolve; });
+    await page.route('**/scripts/details-print.js*', async (route) => {
+        await gate;
+        await route.continue();
+    });
+
+    await page.goto('/education/equipment-staging.html', { waitUntil: 'commit' });
+    const chip = page.locator('[data-demand="95"]');
+    await chip.waitFor({ state: 'visible' });
+
+    // ANTI-VACUITY: the three pump cells are built by the widget's IIFE, so
+    // an empty rack proves it has not run. Without this the test could pass
+    // without ever exercising the queue.
+    await expect(page.locator('.es-pump')).toHaveCount(0);
+    await expect(page.locator('#es-w1-demand')).toHaveText('20');
+
+    await chip.click();
+    // Queued, not dropped, and not applied early either — the static markup
+    // still reads its authored 20%.
+    await expect(page.locator('#es-w1-demand')).toHaveText('20');
+
+    release();
+    // The widget boots at its authored 20% and the queue drains straight into
+    // it: design day, 95%, on both the readout and the slider it drives.
+    await expect(page.locator('.es-pump')).toHaveCount(3);
+    await expect(page.locator('#es-w1-demand')).toHaveText('95');
+    await expect(page.locator('#es-w1-demand-slider')).toHaveValue('95');
+
+    // The queue drains ONCE and the same listener then serves live clicks —
+    // one path, both phases.
+    await page.click('[data-demand="12"]');
+    await expect(page.locator('#es-w1-demand')).toHaveText('12');
+    await expect(page.locator('#es-w1-demand-slider')).toHaveValue('12');
+
+    expect(errors, 'the queued-click path should log no page / console errors').toEqual([]);
 });
 
 test('vfds page renders its diagrams and the run/speed widget is wired up', async ({ page }) => {
