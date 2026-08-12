@@ -359,4 +359,4 @@ evaporate with it:
   component exists; decide before any bank counts as in scope.
 - ~~**Fold-set widening pass**~~ — settled 2026-08-11 same day:
   ACCEPT ALL on the 18-fold proposal, decision log above;
-  implementation lane in flight.
+  implementation lane merged 2026-08-11 as PR #520 (v3.86.0).
