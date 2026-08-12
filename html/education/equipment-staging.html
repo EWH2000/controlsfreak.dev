@@ -183,6 +183,58 @@ keywords: lead lag stage up down rotation runtime hysteresis
             transition: width 0.35s;
         }
     </style>
+    <script>
+        // ── Demand presets: one permanent binding, installed before the
+        //    chips are parsed (codebase-issues #297) ────────────────────
+        // Same shape as the function-block editor's example chips (#281,
+        // PR #522), for the same two reasons. The preset row renders
+        // partway down <main>, but the setter it drives only exists once
+        // the end-of-body IIFE has run — after eight site-wide
+        // <script src> fetches from layouts/page.njk. None of them are
+        // deferred, so each blocks the parser in turn; until the last
+        // lands, every chip is painted, hit-testable and INERT. This page
+        // has no page-specific <script src>, so the window is shorter than
+        // the simulator's, but it is the same window, and the failure is
+        // the same silent no-op: the visitor's chosen load never arrives
+        // and the widget sits at its 20% boot demand.
+        //
+        // So the click path is owned here — ONE delegated listener on the
+        // document, installed before <main> exists, so there is no moment
+        // at which a parsed chip is unbound. Until the setter exists the
+        // requested demand is QUEUED (last one wins: the most recent
+        // choice is the one the visitor is waiting on); the widget's IIFE
+        // calls ready() where its per-chip loop used to sit, and the queue
+        // drains into it, once. Every later click goes straight through
+        // the same listener. Deliberately NOT a temporary handler the IIFE
+        // replaces — two binding systems for one control is the drift
+        // generator.
+        (function () {
+            'use strict';
+
+            let apply = null;     // the widget's demand setter, once it exists
+            let pending = null;   // a demand clicked before that
+
+            window.EsDemand = {
+                ready: function (fn) {
+                    apply = fn;
+                    if (pending !== null) {
+                        const pct = pending;
+                        pending = null;   // drain exactly once
+                        apply(pct);
+                    }
+                },
+            };
+
+            document.addEventListener('click', function (e) {
+                const chip = e.target && e.target.closest
+                    ? e.target.closest('#es-w1 [data-demand]')
+                    : null;
+                if (!chip) { return; }
+                const pct = parseInt(chip.dataset.demand, 10);
+                if (apply) { apply(pct); } else { pending = pct; }
+            });
+        })();
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -329,11 +381,16 @@ keywords: lead lag stage up down rotation runtime hysteresis
                  count (with a deadband between them), a stage-delay timer,
                  and a minimum-stage-time lock after each change. -->
             <div class="widget" id="es-w1">
+                <!-- Real <button>s, not bare <a>s: these set the demand
+                     slider, they don't navigate, and an anchor with no href is
+                     invisible to the keyboard (#297). Same .widget-try look
+                     either way — the shared stylesheet carries the button
+                     twin. -->
                 <div class="widget-try">
                     <span class="lbl">Try this:</span>
-                    <a data-demand="12">light load (12%)</a>
-                    <a data-demand="50">mid load (50%)</a>
-                    <a data-demand="95">design day (95%)</a>
+                    <button type="button" data-demand="12">light load (12%)</button>
+                    <button type="button" data-demand="50">mid load (50%)</button>
+                    <button type="button" data-demand="95">design day (95%)</button>
                 </div>
 
                 <div class="widget-section-label">Building demand</div>
@@ -612,14 +669,18 @@ keywords: lead lag stage up down rotation runtime hysteresis
             onChange();
         });
 
-        // Preset links — light / mid / design-day demand.
-        document.querySelectorAll('#es-w1 [data-demand]').forEach(function (a) {
-            a.addEventListener('click', function (e) {
-                e.preventDefault();
-                state.demand = parseInt(a.dataset.demand, 10);
-                demandSlider.value = state.demand;
-                onChange();
-            });
+        // Preset chips — light / mid / design-day demand. The click path is
+        // owned by the delegated listener in this page's head block (#297),
+        // which has been catching clicks since before the chip row was
+        // parsed. Handing it the setter both drains whatever was clicked
+        // while the site-wide scripts were still in flight and routes every
+        // later click straight through; there is deliberately no second
+        // binding here. No preventDefault any more either — a
+        // <button type="button"> has no default action to suppress.
+        window.EsDemand.ready(function (pct) {
+            state.demand = pct;
+            demandSlider.value = pct;
+            onChange();
         });
 
         render();

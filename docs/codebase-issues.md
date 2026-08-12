@@ -11383,7 +11383,7 @@ exemption cannot decay in either direction.
    `getPointAtLength(getTotalLength())` against the dot's centre. Both new
    guards were checked against the pre-fix markup and fail on it.
 
-### 254. `buildAnswerText` joins the correct choice to `explain` with an unconditional `". "`, so most published FAQPage answers carry a double period *(noticed 2026-07-30, the #241 review round — pre-existing and site-wide, not fixed there)*
+### 254. `buildAnswerText` joins the correct choice to `explain` with an unconditional `". "`, so most published FAQPage answers carry a double period *(noticed 2026-07-30, the #241 review round — pre-existing and site-wide, not fixed there; **RESOLVED 2026-08-12 · PR #528** — separator made conditional, 295 of 416 → 0, resolution block at the end)*
 
 `.eleventy.js`'s `buildAnswerText` — the helper behind the `faqPageJsonLd`
 filter that `head.njk` emits on every `nav: practice` page — closes with:
@@ -11409,6 +11409,45 @@ branch and its own before/after over the built site.
 its own #247 — renumbered to 248 when main was merged in, 2026-07-30, then
 to 254 when PR #457 landed its own 248-253, 2026-07-31. The number is the
 only thing that moved; the finding is unchanged and still unfixed.)*
+
+**RESOLVED 2026-08-12 · PR #528.** The second option was taken — the
+separator is now conditional on the answer's last character, and no answer
+text is stripped or rewritten. The stripping option was the worse of the
+two: it *edits published content* to work around a join, so an answer
+deliberately ending in a question mark would lose it.
+
+Re-derived over the built site rather than trusted from the 2026-07-30
+numbers, and anchored at the join — recompute each `answer` from
+`html/_data/quizzes/*.js`, find it in the built `acceptedAnswer.text`, and
+classify what follows it:
+
+| | before | after |
+|---|---|---|
+| entries with an answer + an explanation | 416 | 416 |
+| **doubled terminal punctuation at the join** | **295** | **0** |
+| joined `". "` (answer brought no terminal mark) | 121 | 121 |
+| joined `" "` (answer already terminal) | 0 | 295 |
+
+The 2026-07-30 spot figures above reproduce exactly on the before build (7
+of 11, 9 of 10), so the entry was measuring the same thing.
+
+Two notes for anyone re-measuring. A **naive `..` grep overcounts by one**:
+`practice/modbus-decoding.html` carries `change the point map to
+30001..30010` inside an explanation, a legitimate address range and not a
+join artifact — which is why the instrument anchors at the join instead of
+scanning the string. And **no shipped answer ends in `!` or `?`** (0 of
+416), so those two arms of the fix are unexercised by current content;
+they are covered anyway, and the guard below is what will keep the first
+one honest.
+
+`tests/smoke.spec.js` gained the regression guard, beside the existing
+FAQPage JSON-LD test and Node-side like the sitemap-drift test at the top
+of that file — nothing else could see this defect, since the banks are
+source-side and the browser never renders the join. It asserts the whole
+contract (a bare space after a terminal answer, `". "` after one without)
+and closes with an anti-vacuity check that shipped content actually
+reaches the new branch. Verified red against the old separator before
+being kept.
 
 ### 255. `≥`, `≤` and `≠` are not in the bundled mono font, and the block-tag work makes them reachable *(noticed 2026-07-31, FBE block-name lane — RULED 2026-08-01: option 2 taken in the same lane; option 3 stays open as the typography lane)*
 
@@ -13230,7 +13269,7 @@ alone would make the version bump load-bearing for a no-op byte
 change, so it rides whichever PR next touches `styles.css` — the
 #274 lane deliberately left it for exactly that reason.
 
-### 297. Two pages still run hrefless-anchor example chips — hydronic-loop-builder carries #281's race whole, with a latent suite flake *(noticed 2026-08-11, the #281 lane's site-wide grep — sibling sweep, queued)*
+### 297. Two pages still run hrefless-anchor example chips — hydronic-loop-builder carries #281's race whole, with a latent suite flake *(noticed 2026-08-11, the #281 lane's site-wide grep — sibling sweep; **RESOLVED 2026-08-12 · PR #527**, both pages converted; equipment-staging's race turned out to be REAL and is characterized in the resolution block, and the entry's "complete remaining set" claim did not survive the lane — see #299)*
 
 The #281 lane's closing grep (`<a data-` without `href`) found the
 complete remaining set of anchor-shaped controls, two files:
@@ -13252,6 +13291,66 @@ queues a pre-mount click and drains on mount, per-chip bindings
 removed. Open the lane AFTER #522 merges so the pattern is on main
 to copy. The #281 resolution block records why page-side beat
 spec-side; the same reasoning transfers whole.
+
+**RESOLVED 2026-08-12 · PR #527.** Both chip rows are
+`<button type="button">`, each page's click path is one delegated
+listener installed from its own `{% block head %}`, and both per-chip
+`addEventListener` loops are gone. `styles.css` was not touched, for
+the second time — `.widget-try button` and its `:focus-visible` twin
+already existed, so the conversion is markup-only.
+
+**equipment-staging's race exposure: REAL, and measured.** The entry
+left this open ("check when the lane opens"), and the answer is yes.
+Its bindings sit in the end-of-body inline IIFE inside
+`{% block scripts %}`; the page has **no page-specific `<script src>`**,
+which is what made the question look like it might resolve to "no
+window." It doesn't, because the *layout's* eight site-wide scripts
+(`theme` / `units` / `search` / `nav-menu` / `flow-engine` /
+`schematic-bg` / `fullscreen-toggle` / `details-print`) are **classic,
+non-deferred, and therefore parser-blocking**, and every one of them
+renders above `{% block scripts %}` in `layouts/page.njk`. The chip row
+is parsed partway up `<main>`, far above all of them. So the window is
+eight fetches wide instead of the loop builder's nine — narrower, not
+absent, and the failure at the end of it is the same silent no-op (the
+click vanishes and the widget stays at its authored 20% demand). This
+was not reasoned to, it was **reproduced**: the new pre-mount spec run
+against the pre-fix page reports the demand readout stuck at `20`.
+
+The generalisation worth keeping: **any page whose controls are bound
+from an end-of-body IIFE has this window**, whether or not it loads a
+script of its own, because the site-wide eight are always in front of
+it. A page-script-free page is not a page-fetch-free page.
+
+**Spec side.** Four rows in `tests/smoke.spec.js` — where per-page
+behavioral coverage lives for these two, neither having a dedicated
+spec file — two per page, one arm each. All four **fail against the
+pre-fix pages**, verified by stashing only the page edits: the two
+keyboard rows report Tab never landing on a chip, the loop builder's
+pre-mount row reports `locator resolved to 4 elements` (the boot
+sheet — #281's exact signature shape, one sheet over), and the staging
+row reports the demand stuck at `20`. The pre-mount rows hold a
+parser-blocking script at the network with `page.route` rather than
+racing for the window, and each proves the page script is genuinely
+absent at click time before clicking (`typeof window.HYDRO`, an empty
+`.es-pump` rack) so neither can pass vacuously.
+
+**One placement difference from #522, and it is load-bearing.** On
+`hydronic-loop-builder` the `ready()` handover sits *after* the boot
+`loadExample('single')`, not where the old per-chip loop did. That page
+boots its default sheet at the very END of its IIFE, so draining the
+queue at the old binding site would hand the visitor's queued choice to
+`loadExample` and then immediately overwrite it with the default. The
+FBE page and equipment-staging both boot before that point, so their
+handovers sit in place. **The rule is "drain after the page's own boot
+load," not "drain where the old loop was"** — the two coincide on two
+of the three pages and diverge on the third.
+
+**The entry's scope claim did not survive the lane.** It called its two
+files "the complete remaining set of anchor-shaped controls"; they were
+the complete set the #281 grep could see. Ten more hrefless
+`.widget-try` chips are addressed by `id` rather than a `data-`
+attribute, on three further live pages — logged as **#299**, not fixed
+here.
 
 ### 298. The FCU spends half the AHU's register key and shows none of it — blue without green, and no key at all *(noticed 2026-08-11, the #269 lane — DESIGN CALL, log-don't-fix; **RESOLVED 2026-08-12 · PR #532** — owner took the full-parity shape AND split the two-point cell, which is what made the ink assignable at all)*
 
@@ -13370,3 +13469,142 @@ read off the live mirror, plus a distinctness check so a token collapse
 cannot pass it), the samples convert on the units toggle, the key is
 placed explicitly in the fullscreen cockpit, and the split rows are
 shown moving apart under a forced sensor.
+
+### 299. The hrefless-chip set was three pages bigger than #297 said — the grep keyed on `data-`, and ten chips key on `id` *(noticed 2026-08-12, the #297 lane — sibling sweep, queued)*
+
+#297 opened on the #281 lane's closing grep (`<a data-` with no
+`href`) and called its two files "the complete remaining set of
+anchor-shaped controls." They were the complete set **that grep can
+see**. The chip rows it missed carry no `data-` attribute at all —
+they are addressed by `id`, one `getElementById` per chip:
+
+- `html/education/pump-control.html:573-575` — three `<a id="pc-w2-try-*">`
+  chips, bound in the end-of-body IIFE at `:851-853`.
+- `html/education/vfds.html:352-354` — three `<a id="vfd-try-*">` chips,
+  bound at `:745-747`.
+- `html/simulators/vfd-mock.html:289-292` — **four** `<a id="vfdm-try-*">`
+  chips, bound at `:943-955` (four separate `getElementById` calls).
+
+All ten are inside a `.widget-try` row, all ten have no `href` and no
+`tabindex`, and all ten are therefore **out of the tab order
+permanently** — #281's second and worse defect, unchanged, on three
+more live pages. The pre-mount race applies too: every one is bound
+from an end-of-body IIFE sitting below the eight parser-blocking
+site-wide `<script src>` tags (`vfd-mock` and `vfds` add page scripts
+on top of that).
+
+A fourth page is a **near miss, not a hit**:
+`html/education/load-piping.html:621-622` uses
+`<a href="#" id="lp-w-try-*">`. The `href` puts those two in the tab
+order, so the keyboard half does not apply — what is left is an
+anchor that does not navigate (its handler must `preventDefault`) and
+the same pre-mount window. Lower stakes, same conversion.
+
+**The durable lesson is about the grep, not the pages.** A search for
+anchor-shaped controls has to key on the *element and its missing
+`href`*, not on the attribute that happens to address it. The check
+that finds all of them:
+
+    grep -rn -A8 'class="widget-try"' html/ --include=*.html | grep '<a '
+
+Fix is the same copy of #522's shape #297 shipped, per page: chips
+become `<button type="button">`, one permanent head-block delegation
+queues a pre-mount click and drains on mount, per-chip bindings
+removed. `styles.css` needs nothing — `.widget-try button` and its
+`:focus-visible` twin already exist and already carry the "new
+try-rows should use buttons" comment. The three pages are independent
+of each other, so this can ship as one lane or three.
+
+### 300. The gloss gesture specs raced the environment's own scrolls — and one run reported the failures as green *(noticed 2026-08-12, triaging the merge-queue suite run — test infrastructure; **RESOLVED 2026-08-12 · PR #529**, mechanism instrumented both ways; resolution block below)*
+
+`tests/gloss.spec.js`'s behavior rows failed 5-for-5 on one full-suite
+run, 1-in-11 isolated, and 25-of-110 under `--repeat-each=10` — every
+failure the same signature: the panel a gesture just opened resolves
+`hidden` and stays hidden for the assert's whole retry window.
+Something dismissed it once, and nothing reopens it.
+
+Instrumented timelines split the dismissal into two mechanisms, both
+environmental, both arriving as a scroll event the reader never made,
+after `gloss.js`'s deliberately one-frame arming grace:
+
+1. **`park()` raced late layout.** At domcontentloaded+150ms the page
+   can still be growing; the trigger measured in-viewport, the instant
+   `scrollIntoView` no-oped (a probe caught `scrollY` still 0 after
+   parking), and the CLICK inherited the scrolling — smooth, per
+   styles.css — emitting dismissal scrolls for ~270ms. The captured
+   timeline: panel SHOWN at +287ms, dismissed at +310ms, easing curve
+   settling ~250ms later.
+2. **Scroll anchoring moved the page under load.** Late font reflow
+   above the parked trigger makes Chromium adjust `scrollTop`, which
+   fires a native scroll mid-gesture. Under repeat-load this one
+   mechanism explained every failing row — hover and tap included.
+
+The REAL keyboard path was probed the same day and survives: a
+Tab-focus scroll is instant and lands inside the one-rAF grace exactly
+as `armDismiss()`'s comment intends. So the fix is test-side (PR
+#529): `park()` re-scrolls until the trigger's rect is stable across
+two frames and fully in-viewport, waits on `document.fonts.ready`, and
+freezes the scroll ecology (`scroll-behavior: auto`,
+`overflow-anchor: none`) — which does not un-test dismissal, because
+that contract is asserted with DISPATCHED events. Measured 26-of-110
+failing before, **110/110 after**, on the same instrument.
+
+**The reporting half is its own trap, recorded here for the record:**
+the original 5-failure run was reported GREEN in-session because the
+command piped Playwright through `tail`, which replaced the exit code
+with the pipe's and cut the failed-list out of the visible window. A
+test run's exit code and summary must come from the runner itself —
+redirect to a file, never pipe. (Tooling recipe updated the same day.)
+
+### 301. A mouse click on an edge-clipped gloss trigger can dismiss the panel it opens *(noticed 2026-08-12, the #300 diagnosis — page-side residual, DESIGN CALL, log-don't-fix)*
+
+The narrow real-user shape of #300's mechanism 1, on the live page: a
+trigger sits partially clipped at the viewport's bottom edge, the
+reader clicks its visible half, the click's focus makes the browser
+scroll the trigger fully into view — animated, because styles.css
+sets `html { scroll-behavior: smooth }` — and the animation's scroll
+events outlive `armDismiss()`'s one-frame grace. The panel opens and
+closes in the same gesture. The component is following its own rule
+(a page scroll is a dismissal, and the panel WAS placed at pre-scroll
+coordinates, so leaving it open would leave it misaligned); the rule
+just cannot tell the opening gesture's own scroll from the reader's.
+
+Reachable only by mouse on a clipped trigger — the keyboard path is
+instant-scroll and safe (probed, #300), and a fully-visible trigger
+produces no scroll at all. Self-healing in practice: the second click
+finds the trigger already in view and the panel opens clean, which is
+also why this files as log-don't-fix rather than a defect lane.
+
+If it ever earns a fix, the honest shape is *re-place-on-settle*, not
+a longer grace: treat the opening gesture's scroll as part of the
+open, and when it settles, re-run `place()` against the trigger's new
+position instead of closing — a timer-free version of the same
+"whose scroll is this" question the arming grace already answers for
+focus. Owner's call whether the reach justifies it.
+
+### 302. `details.tool-preamble > summary:hover` is a no-op since the #290 promotion *(noticed 2026-08-12, the #290 lane — cosmetic, small design call)*
+
+The hover rule (styles.css, the tool-preamble block) lifts the
+summary's ink to `var(--text)` — but PR #530 moved the summary's
+RESTING ink to `var(--text)`, so hovering now changes nothing. Either
+the disclosure wants a different hover cue (a step to
+`--text-bright`, or letting the `▸ more` affordance carry hover
+alone) or the rule should go. Harmless until decided; whichever
+lane next touches the preamble block should carry the call.
+
+### 303. `.fcu-point-val.dim` is dead CSS on the FCU workbench *(noticed 2026-08-12, the #298 lane — cleanup, LOW)*
+
+Defined in `ddc-workbench-fcu.html`'s mirror CSS block next to
+`.accent`; nothing in the page, `ddcw-fcu-unit.js`, or any spec ever
+applies it — likely a leftover from the pre-diet mirror. Delete in
+the next lane that touches the FCU head block, with a grep first in
+case a consumer lands in between.
+
+### 304. Five byte-identical `*-empty td` rules across the lookup tools *(noticed 2026-08-12, the #290 lane — consolidation candidate, LOW)*
+
+`bacnet-error-codes` / `bacnet-objects` / `bacnet-units` /
+`bacnet-vendor-ids` / `modbus-functions` each define the same
+italic empty-state cell rule page-locally (the #290 pass edited all
+five in lockstep, which is the tell). A shared `styles.css` class
+would collapse them; the empty-state is genuinely shared chrome, not
+a widget internal. Log-don't-fix until something touches the family.
