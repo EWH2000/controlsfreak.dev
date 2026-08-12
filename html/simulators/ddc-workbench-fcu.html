@@ -225,11 +225,28 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
            on-graphic labels (SVG text does not reflow, so the drawing's
            values shrink past reading on a narrow window). Above the cutoff
            the plain cells stop taking space — see THE MIRROR DIET below. */
+        /* ⚠ THE padding-right IS A BUTTON'S HIT-AREA BLEED, ABSORBED — IT IS
+           NOT SPACING (owner decision 2026-08-10, codebase-issues #266).
+           .fcu-point-btn's -0.3rem right margin pokes past this grid's
+           content box whenever a BUTTON holds the last auto-fit track, which
+           the pane reports as scrollWidth 5px over clientWidth — invisible
+           in normal flow, a real horizontal scrollbar in the fullscreen
+           cockpit, where .tab-pane.active is overflow: auto. Measured here
+           before this line landed: 360–473, 610–620 and 642–777 in normal
+           flow, 360–431 and 568–703 in fullscreen — contiguous bands, not
+           the odd widths they were first read as. Above the diet cutoff
+           every cell is a button and the bleed is constant; that half
+           shipped with the diet (PR #473) as a rule inside the diet block
+           and is folded in here, since one declaration covering both
+           regimes cannot drift from itself. Same shape and same ~1.6px
+           per-track cost as the AHU page, which is the reference and carries
+           the full derivation. */
         .fcu-points {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             gap: 0.6rem 1rem;
             margin-top: 1rem;
+            padding-right: 0.3rem;
         }
         .fcu-point { display: flex; flex-direction: column; gap: 0.15rem; }
         .fcu-point-cap {
@@ -312,21 +329,14 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
                 white-space: nowrap;
                 border: 0;
             }
-            /* The diet makes every cell on the desktop row a button, so a
-               button now ALWAYS holds the last grid track — and a button's
-               -0.3rem hit-area bleed pokes past the grid's right edge. In
-               fullscreen the pane is the scroller, so that bleed became a
-               4.8px horizontal scrollbar this pane never showed at desktop
-               widths pre-diet (the last track held a PLAIN cell, which has
-               no bleed). Padding equal to the bleed absorbs it: tracks
-               shrink ~1.6px each, text alignment is untouched (the bleed
-               zone is invisible until hover/focus paints it). Scoped to the
-               diet regime — below the cutoff the mix of plain and button
-               cells is exactly main's, where a button CAN land in the last
-               track at some widths; that pre-existing overhang (and the AHU
-               pane, which already scrolls the same 5px at desktop on main)
-               stays one logged design call, not a page-local patch here. */
-            .fcu-points { padding-right: 0.3rem; }
+            /* ⚠ The diet makes every cell on the desktop row a button, so a
+               button ALWAYS holds the last grid track here and the hit-area
+               bleed past the grid's right edge is constant above the cutoff.
+               The padding-right that absorbs it used to live in this block,
+               scoped to the diet regime; #266 measured the same overflow in
+               wide bands BELOW the cutoff and on the AHU, so the declaration
+               moved up to .fcu-points itself. Do not re-add it here — two
+               copies of one value is a drift generator. */
         }
 
         /* Verdict pill sits tight under the points. */

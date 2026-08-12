@@ -211,12 +211,28 @@ test('controller wiring — a correct panel reads live; a short pops the fuse', 
     await page.click('[data-preset="ahu"]');
     await expect(page.locator('[data-readout="ui1"]')).toContainText('°F');
     await expect(page.locator('#cw-faults-list')).toContainText('All landings check out');
+    // A healthy fuse names the shared run modifier.
+    const fuseLed = page.locator('#cw-fuse .led');
+    await expect(fuseLed).toHaveClass('led led--run');
+    const litFill = await fuseLed.evaluate((el) => getComputedStyle(el).backgroundColor);
     // The broken-fuse preset dead-shorts the transformer — the fuse pops
     // and the engine names the short. This is the obvious-failure path.
     await page.click('[data-preset="broken-fuse"]');
     await expect(page.locator('#cw-fuse .tag')).toHaveText('FUSE BLOWN');
     await expect(page.locator('#cw-faults-list')).toContainText('Dead short');
     await expect(page.locator('[data-readout="ui1"]')).toHaveText('———');
+    // The blown lamp is the panel's fault annunciator: it stays LIT and
+    // names its own modifier (never the bare `class="led"` that read as
+    // the green default, and never led--off — the terminal LEDs own the
+    // dark/unpowered story). codebase-issues #289.
+    await expect(fuseLed).toHaveClass('led cw-fuse-led--blown');
+    // Colour, not just class — the ratchet the class name alone can't
+    // hold. #289 was filed on a report that blown and running painted
+    // the same green; comparing the two fills pins the distinction in
+    // whichever theme the runner resolves, since --red is per-theme.
+    const blownFill = await fuseLed.evaluate((el) => getComputedStyle(el).backgroundColor);
+    expect(blownFill, 'a blown fuse lamp must not paint the running colour').not.toBe(litFill);
+    expect(blownFill, 'a blown fuse lamp must stay lit, not go dark').not.toBe('rgb(47, 54, 64)');
     expect(errors, 'controller wiring behavioral should log no page / console errors').toEqual([]);
 });
 
