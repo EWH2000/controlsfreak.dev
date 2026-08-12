@@ -1173,29 +1173,56 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
                 rest of the drawing's values — the reading copy for where
                 the drawing's own text runs too small.
             </p>
+            <!-- ⚠ THE PROVENANCE GLOSSES (codebase-issues #269) — and on THIS
+                 page they are not a redundant channel, they are the only one.
+                 The AHU mirror tags each caption with the point's KIND in an
+                 .sr-only span because its colour key already says the same
+                 thing in ink: green .is-cmd commanded, blue .is-calc
+                 calculated, plain measured. This page has NO commanded
+                 register — the only colour it spends is --blue on ΔT (the
+                 .accent value here and .fcu-dt-val on the drawing), so the
+                 fan and compressor cells render in exactly the ink RAT and
+                 DAT do. A sighted reader cannot tell a command from a
+                 measurement here either; the gloss is what carries it, for
+                 everyone. Kinds derive from ddcw-fcu-unit.js: rat / dat /
+                 space-temp are `ai` sensors, fan-speed / fan-enable / y1 /
+                 y2 are actuators (and fcuRenderUnit's own comment pins the
+                 fan cell as the COMMAND, the peer of the compressor beside
+                 it — proof is the separate `fan-status` claim, which this
+                 list does not carry), cooling-setpoint is a `param`, which
+                 the AHU glosses commanded. ΔT is arithmetic over the two
+                 displayed operands, so it is calculated and owns no roster
+                 row at all.
+                 The word rides in the CAPTION, ahead of the live value, so a
+                 button's accessible name stays stable across repaints.
+                 ⚠ "Zone / setpoint" is the one cell carrying TWO points of
+                 two different kinds, so it carries two glosses — one on each
+                 operand — rather than a single word that would be false about
+                 half the cell. The AHU splits the pair into two rows and so
+                 never had to answer this. -->
             <div class="fcu-points">
                 <button type="button" class="fcu-point fcu-point-btn" data-point="rat" aria-pressed="false">
-                    <span class="fcu-point-cap">RAT · return</span>
+                    <span class="fcu-point-cap">RAT · return<span class="sr-only"> (measured)</span></span>
                     <span class="fcu-point-val" id="fcu-rat-r">76.0 °F</span>
                 </button>
                 <button type="button" class="fcu-point fcu-point-btn" data-point="dat" aria-pressed="false">
-                    <span class="fcu-point-cap">DAT · discharge</span>
+                    <span class="fcu-point-cap">DAT · discharge<span class="sr-only"> (measured)</span></span>
                     <span class="fcu-point-val" id="fcu-dat-r">56.6 °F</span>
                 </button>
                 <div class="fcu-point">
-                    <span class="fcu-point-cap">ΔT across coil</span>
+                    <span class="fcu-point-cap">ΔT across coil<span class="sr-only"> (calculated)</span></span>
                     <span class="fcu-point-val accent" id="fcu-dt-r">-19.4 °F</span>
                 </div>
                 <button type="button" class="fcu-point fcu-point-btn" data-point="space-temp" aria-pressed="false">
-                    <span class="fcu-point-cap">Zone / setpoint</span>
+                    <span class="fcu-point-cap">Zone<span class="sr-only"> (measured)</span> / setpoint<span class="sr-only"> (commanded)</span></span>
                     <span class="fcu-point-val" id="fcu-zone-r">76.0 / 72.0 °F</span>
                 </button>
                 <div class="fcu-point">
-                    <span class="fcu-point-cap">Supply fan</span>
+                    <span class="fcu-point-cap">Supply fan<span class="sr-only"> (commanded)</span></span>
                     <span class="fcu-point-val" id="fcu-fan-r">100% · ON</span>
                 </div>
                 <div class="fcu-point">
-                    <span class="fcu-point-cap">Compressor</span>
+                    <span class="fcu-point-cap">Compressor<span class="sr-only"> (commanded)</span></span>
                     <span class="fcu-point-val" id="fcu-comp-r">Stage 2 · ON</span>
                 </div>
             </div>

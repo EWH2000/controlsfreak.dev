@@ -974,6 +974,110 @@ test.describe('DDC Workbench — the mirror diet', () => {
     });
 });
 
+test.describe('DDC Workbench — the point mirror names its register in text (#269)', () => {
+
+    // The AHU twin of this row (ddc-workbench-ahu-page.spec.js) derives the
+    // expected word from the VALUE's colour class, because that page spends
+    // a full register key: green .is-cmd, blue .is-calc, plain measured.
+    //
+    // ⚠ That derivation is not available here, and the reason is the point
+    // of #269. This page carries no commanded register at all — its only
+    // colour is --blue on ΔT (.accent in the mirror, .fcu-dt-val on the
+    // drawing) — so `Supply fan` and `Compressor` render in exactly the ink
+    // `RAT · return` does. Colour separates calculated from everything else
+    // and stops there. The gloss is therefore the ONLY provenance channel
+    // for the commanded cells, for a sighted reader as much as a screen
+    // reader, and asserting it against a class that does not exist would
+    // pass vacuously.
+    //
+    // So the expected words are derived from the LIVE roster instead — the
+    // one source that actually knows a point's kind (ddcw-fcu-unit.js's
+    // FCU_POINTS `dir`). Only the wiring below is hand-written: which roster
+    // rows feed which mirror cell. A `dir` retune reddens this without any
+    // edit here, and a cell whose sources stop resolving fails rather than
+    // skipping.
+    const DIR_WORD = { sensor: '(measured)', actuator: '(commanded)', param: '(commanded)' };
+
+    // mirror value id → the roster point ids the cell prints, IN CAPTION
+    // ORDER. `fcu-dt-r` is deliberately empty: ΔT is arithmetic over the two
+    // displayed operands, owns no roster row, and is the page's one
+    // calculated cell.
+    const SOURCES = [
+        { id: 'fcu-rat-r',  points: ['rat'] },
+        { id: 'fcu-dat-r',  points: ['dat'] },
+        { id: 'fcu-dt-r',   points: [] },
+        // The one cell carrying two points of two kinds — a sensed zone
+        // temperature beside the setpoint it answers to. It takes one gloss
+        // per operand; a single word would be false about half of it.
+        { id: 'fcu-zone-r', points: ['space-temp', 'cooling-setpoint'] },
+        // The fan cell prints the COMMAND, not the proof: fcuRenderUnit's
+        // own comment pins that, and `fan-status` (the bi) is a separate
+        // claim this list does not carry. Both sources are actuators, so the
+        // two collapse to one word.
+        { id: 'fcu-fan-r',  points: ['fan-enable', 'fan-speed'] },
+        { id: 'fcu-comp-r', points: ['y1', 'y2'] },
+    ];
+
+    test('every mirror caption carries its kind, and the words match the roster', async ({ page }) => {
+        await page.goto(URL);
+
+        const dirs = await page.evaluate(() => Object.fromEntries(
+            window.DDCWFcuUnit.POINTS.map((p) => [p.id, p.dir])));
+
+        const rows = await page.locator('.fcu-point').evaluateAll((els) => els.map((e) => {
+            const cap = e.querySelector('.fcu-point-cap');
+            const val = e.querySelector('.fcu-point-val');
+            return {
+                id: val ? val.id : null,
+                glosses: cap
+                    ? Array.from(cap.querySelectorAll('.sr-only')).map((s) => s.textContent.trim())
+                    : [],
+                cls: val ? val.className : null,
+            };
+        }));
+
+        expect(rows.map((r) => r.id), 'the mirror is the six cells, in air-path order')
+            .toEqual(SOURCES.map((s) => s.id));
+
+        for (const [i, row] of rows.entries()) {
+            const src = SOURCES[i];
+            // Derive, don't restate: a source naming no roster point would
+            // otherwise hand this row a silent pass.
+            const want = src.points.length === 0
+                ? ['(calculated)']
+                : src.points.map((p) => {
+                    expect(dirs[p], src.id + ' names a live roster point: ' + p).toBeTruthy();
+                    return DIR_WORD[dirs[p]];
+                });
+            // Adjacent sources of one kind print one word, not two.
+            const collapsed = want.filter((w, n) => n === 0 || w !== want[n - 1]);
+            expect(row.glosses, src.id + ' names its register in text, not only in colour')
+                .toEqual(collapsed);
+        }
+
+        // The one colour correspondence this page does carry, asserted both
+        // ways: blue is calculated, and nothing else claims that word.
+        const blue = rows.filter((r) => /\baccent\b/.test(r.cls || ''));
+        expect(blue.map((r) => r.id), 'ΔT is the page\'s only blue cell').toEqual(['fcu-dt-r']);
+        expect(rows.filter((r) => r.glosses.includes('(calculated)')).map((r) => r.id),
+            'and the only one glossed calculated').toEqual(['fcu-dt-r']);
+    });
+
+    test('the gloss is invisible ink — it never widens a caption', async ({ page }) => {
+        // .sr-only is the clip-rect utility, so this is a real assertion
+        // about the shipped class rather than a tautology: a caption that
+        // grew would be the tell that the span lost it. Measured on the
+        // desktop row, where all three cells are buttons in the flow.
+        await page.goto(URL);
+        const bad = await page.locator('.fcu-point-btn .fcu-point-cap .sr-only').evaluateAll(
+            (els) => els.filter((e) => {
+                const r = e.getBoundingClientRect();
+                return r.width > 2 || r.height > 2;
+            }).length);
+        expect(bad, 'no gloss takes layout space').toBe(0);
+    });
+});
+
 test.describe('DDC Workbench — the low-charge verdict offers a candidate, not a finding (#247)', () => {
     test('it names the symptom, and stays a different string from the condenser one', async ({ page }) => {
         // #247, owner disposition 3 (2026-08-01). The low-charge and
