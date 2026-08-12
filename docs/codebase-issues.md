@@ -12312,7 +12312,7 @@ diff. The header-clearance pair the graduation also left in place is
 NOT this item — its selectors are site-wide (`.tool-card-header` /
 `.tool-card-title`), so its dedup is #272's open design call.
 
-### 274. The simulators landing crossed its own chips threshold at nine cards *(noticed 2026-08-04, the Phase 8 graduation lane — DESIGN CALL, deliberately not decided at go-live; owner decided the taxonomy 2026-08-10, **RESOLVED 2026-08-11 · PR #519** — resolution block at the end, chip LABELS still ride that PR for review)*
+### 274. The simulators landing crossed its own chips threshold at nine cards *(noticed 2026-08-04, the Phase 8 graduation lane — DESIGN CALL, deliberately not decided at go-live; owner decided the taxonomy 2026-08-10, **RESOLVED 2026-08-11 · PR #519** — resolution block at the end, chip LABELS signed off by the owner 2026-08-12)*
 
 CLAUDE.md's Design landmarks row says the Simulators landing is "the
 same grid minus chips — add chips back if it grows past ~6 entries."
@@ -12338,7 +12338,8 @@ the other three landings already run — no new pattern, no new CSS.
 `html/simulators/index.html` grew a `p.chip-row-preamble` ("Filter by
 activity:"), a four-button `.filter-chips` row, a `category` on each of
 the nine `navCard()` calls, and the same hash-routing IIFE
-tools/education/practice carry verbatim. Labels as shipped, for review:
+tools/education/practice carry verbatim. Labels as shipped — signed
+off by the owner 2026-08-12, reviewed with the PR #519 approval:
 **Panel & Wiring** (2 — Mock VFD, Controller Wiring) · **Programming &
 Logic** (3 — PID Tuner, Function-Block Editor, Staging Sequencer) ·
 **Equipment & Systems** (4 — both Workbenches, Hydronic Loop Builder,
@@ -13016,7 +13017,7 @@ entry alleged could not ship unnoticed today. `styles.css`'s LED
 comment, which repeated the same false claim, was corrected in the
 same PR.
 
-### 290. Simulator prose is set smaller AND dimmer than lesson prose — squint territory *(reported 2026-08-11 by the owner — site-wide legibility, DESIGN CALL; survey measured, treatment open)*
+### 290. Simulator prose is set smaller AND dimmer than lesson prose — squint territory *(reported 2026-08-11 by the owner — site-wide legibility, DESIGN CALL; survey measured; **treatment ruled 2026-08-12 — both levers**, pass queued)*
 
 Owner report, verbatim intent: a lot of the sim prose is almost too
 dark to read, and very small — the two combined make you squint.
@@ -13065,6 +13066,14 @@ are not covered by it. Treatment levers for the design round (owner
 rules): a size floor for prose-length text, ink promotion for prose
 (`--text-dim` stays for captions), or both — plus classes for the
 inline stragglers either way.
+
+**Owner ruling (2026-08-12) — both levers, adopted as a principle:
+prose-length text is never both small and dim.** Running prose
+promotes to `--text` (captions and labels keep `--text-dim` — the
+#168 ruling is untouched), AND paragraph-shaped text gets a size
+floor around 0.78rem; the inline stragglers get classes either way.
+Ships as the site-wide pass the scope note above predicts; the entry
+stays open until that pass lands.
 
 ### 291. Negative assertions keyed on incidental punctuation go vacuous silently *(noticed 2026-08-11, the #283 T-A lane — test-pattern class, LOW)*
 
