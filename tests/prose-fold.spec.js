@@ -23,12 +23,25 @@
 // became a property of <details> site-wide.
 //
 // Plus the editorial guard, which is the part a future editor is most
-// likely to break: the owner's rule is that "what is this machine doing
-// right now" prose stays VISIBLE and only "what is this thing"
-// background folds. The live-walkthrough notes are asserted to be
-// outside every fold, by their opening phrases. The FCU's proof note is
-// the load-bearing one — ddc-workbench-fcu-safeties.spec.js drives the
-// reader's path click for click from it.
+// likely to break: an explicit list of the prose the owner ruled must
+// stay OUT of every fold, asserted by opening phrase.
+//
+// ── WHAT THAT GUARD ENCODES, AND WHAT IT NO LONGER ENCODES ───────────
+// The pilot's rule was background-versus-live: "what is this thing"
+// prose could fold, "what is this machine doing right now" prose could
+// not. The fold-widening ruling (owner, 2026-08-11 — glossary-arc.md
+// D-log) SUPERSEDED it, in his words: "I'm fine folding even more, that
+// way someone can read the specific section of prose they want while
+// seeing the unit work, without having to scroll." With the control-bar
+// affordance shipped, a fold is where a reader GOES to read a section
+// beside the running unit — not where prose goes to be skipped. So
+// live-walkthrough notes fold now, and four of this list's original
+// eight rows moved into the fold inventory above.
+//
+// What survives is a SHORTER, ruled list rather than a derivable one,
+// and that is the point: it is the owner's flag set, not a classifier.
+// Each row below has its own reason, written beside it. A future editor
+// who folds one of these is changing a decision, not tidying a page.
 
 const { test, expect } = require('@playwright/test');
 
@@ -38,29 +51,76 @@ const FCU = '/simulators/ddc-workbench-fcu.html';
 // The fold inventory as shipped. Pinned by id, not by count: a fold that
 // is renamed or dropped fails here, and a NEW fold still has to satisfy
 // the closed-on-load sweep below even though it is not listed.
+//
+// The four pilot folds head each page's block; the rest landed with the
+// 2026-08-11 widening. `ddcw-fold-overrides` deliberately appears on
+// BOTH pages — the two override notes are twins and carry one id per
+// page, which is legal because ids are page-scoped.
 const FOLDS = [
+    // ── AHU · pilot ──
     { url: AHU, id: 'ddcw-fold-econ-permit' },
     { url: AHU, id: 'ddcw-fold-lls-numbers' },
     { url: AHU, id: 'ddcw-fold-lls-defeats' },
+    // ── AHU · unit tab (widening) ──
+    { url: AHU, id: 'ddcw-fold-reading-graphic' },
+    { url: AHU, id: 'ddcw-fold-dt-well' },
+    { url: AHU, id: 'ddcw-fold-setpoints' },
+    { url: AHU, id: 'ddcw-fold-stat-jumper' },
+    { url: AHU, id: 'ddcw-fold-overrides' },
+    // ── AHU · wiresheet tab (widening) ──
+    { url: AHU, id: 'ddcw-fold-airflow-proof' },
+    { url: AHU, id: 'ddcw-fold-heating-valve' },
+    { url: AHU, id: 'ddcw-fold-low-limits-drive' },
+    { url: AHU, id: 'ddcw-fold-trip-latch' },
+    { url: AHU, id: 'ddcw-fold-one-lie' },
+    // ── FCU · pilot ──
     { url: FCU, id: 'ddcw-fold-ao-command' },
+    // ── FCU · unit tab (widening) ──
+    { url: FCU, id: 'ddcw-fold-overrides' },
+    { url: FCU, id: 'ddcw-fold-setpoint-convention' },
+    { url: FCU, id: 'ddcw-fold-blocked-condenser' },
+    { url: FCU, id: 'ddcw-fold-fan-heat-dt' },
+    // ── FCU · wiresheet tab (widening) ──
+    { url: FCU, id: 'ddcw-fold-safeties-contents' },
+    { url: FCU, id: 'ddcw-fold-proof-first' },
+    { url: FCU, id: 'ddcw-fold-recovery-order' },
+    { url: FCU, id: 'ddcw-fold-off-timer' },
 ];
 
-// Opening phrases of notes that must NOT be folded — the live-reading
-// half of the owner's split. Substrings, so a copy edit that does not
-// touch the opening clause keeps passing.
+// Opening phrases of prose the owner flagged to stay VISIBLE, with the
+// reason per row. Substrings, so a copy edit that does not touch the
+// opening clause keeps passing. Re-derived from the 2026-08-11 ruling —
+// the pilot's background-only list is gone (see the header).
 const MUST_STAY_VISIBLE = [
+    // One orientation anchor per wiresheet: the first thing on the tab
+    // says what the sheet IS. Fold it and the tab opens on a stack of
+    // summary bars with nothing naming the drawing below them.
     { url: AHU, text: 'The program driving the unit' },
-    { url: AHU, text: 'Airflow proof gates both coils' },
-    { url: AHU, text: 'The low-limits sample splices two winter protections' },
-    { url: AHU, text: 'A trip is the classic freezestat response' },
-    { url: AHU, text: 'The cleanest way to see all of it is one lie' },
-    // Spec-pinned: ddc-workbench-fcu-safeties.spec.js walks the reader's
-    // path from this note. Folding it would move the instructions behind
-    // a click the spec never makes.
-    { url: FCU, text: 'Why proof has to come first' },
-    { url: FCU, text: 'Watch the recovery order' },
-    { url: FCU, text: 'Note what that off-timer watches' },
+    { url: FCU, text: 'The program driving the unit' },
+    // The drill-downs paragraph carries all three of the AHU's HTML
+    // twins for the SVG links (WCAG 2.5.5/2.5.8 equivalent controls),
+    // and ddc-workbench-session.spec.js CLICKS the VFD one.
+    { url: AHU, text: 'Drill-downs.' },
+    // The four control captions — prose that sits with a control and
+    // explains what the control in front of it will do. Each page words
+    // its pair differently (five points / three points, every field /
+    // both fields), so the substrings are per-page rather than shared.
+    { url: AHU, text: 'Every field clamps' },
+    { url: AHU, text: 'The five points with a sensing device' },
+    { url: FCU, text: 'Both fields clamp' },
+    { url: FCU, text: 'The three points with a sensing device' },
+    // Scope disclaimer on the FCU's coil model: a reader must not have
+    // to open anything to learn how far the depiction is meant to go.
+    { url: FCU, text: 'Directional only' },
 ];
+
+// The visible-prose selector set. Wider than the pilot's
+// `p.ddcw-sheet-note` because the widening reached prose that never
+// carried that class — the AHU teach block (p.ahu-teach-p), both param
+// rails (p.ahu-param-note / p.fcu-param-note), the .ref-note family and
+// the FCU's p.fcu-note.
+const PROSE = 'p.ddcw-sheet-note, p.ahu-teach-p, p.ref-note, p.fcu-note, '
+    + 'p.ahu-param-note, p.fcu-param-note';
 
 const wiresheet = async (page, url) => {
     await page.goto(url);
@@ -76,7 +136,13 @@ for (const url of [AHU, FCU]) {
                 id: d.id,
                 open: d.open,
                 summary: (d.querySelector(':scope > summary')?.textContent || '').trim(),
-                notes: d.querySelectorAll(':scope > .prose-fold-body > p.ddcw-sheet-note').length,
+                // Widened from `p.ddcw-sheet-note` with the 2026-08-11
+                // ruling: the fold set reached the AHU teach block, the
+                // .ref-note family and p.fcu-note, none of which carry
+                // the sheet-note class. The honest generalisation is
+                // "at least one paragraph" — the shape claim the
+                // assertion was always making.
+                notes: d.querySelectorAll(':scope > .prose-fold-body > p').length,
             })));
 
         const ids = folds.map((f) => f.id);
@@ -88,7 +154,7 @@ for (const url of [AHU, FCU]) {
             expect(fold.id, 'every fold carries a kebab-case id so specs can reach it')
                 .toMatch(/^[a-z0-9-]+$/);
             expect(fold.open, `${fold.id} ships closed`).toBe(false);
-            expect(fold.notes, `${fold.id} folds at least one sheet note`).toBeGreaterThan(0);
+            expect(fold.notes, `${fold.id} folds at least one paragraph`).toBeGreaterThan(0);
             // Never "More info": the summary is the only thing a closed
             // fold tells the reader, so it has to be specific enough to
             // decide on.
@@ -98,15 +164,17 @@ for (const url of [AHU, FCU]) {
         }
     });
 
-    test(`live-reading sheet notes stay outside every fold — ${url}`, async ({ page }) => {
+    test(`the owner's flagged prose stays outside every fold — ${url}`, async ({ page }) => {
         await page.goto(url);
 
         const rows = MUST_STAY_VISIBLE.filter((n) => n.url === url);
-        const found = await page.evaluate((texts) => texts.map((t) => {
-            const note = [...document.querySelectorAll('p.ddcw-sheet-note')]
+        expect(rows.length, `${url} has flagged prose to check`).toBeGreaterThan(0);
+
+        const found = await page.evaluate(([texts, sel]) => texts.map((t) => {
+            const note = [...document.querySelectorAll(sel)]
                 .find((p) => p.textContent.replace(/\s+/g, ' ').includes(t));
             return { t, present: !!note, folded: !!note && !!note.closest('details.prose-fold') };
-        }), rows.map((n) => n.text));
+        }), [rows.map((n) => n.text), PROSE]);
 
         for (const row of found) {
             expect(row.present, `the note opening "${row.t}" still exists`).toBe(true);
