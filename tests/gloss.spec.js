@@ -113,9 +113,70 @@ test('a page with no marks ships no gloss payload', async ({ page }) => {
 // That is the component behaving correctly against a test that hadn't
 // finished scrolling; it cost one suite run to see. The settle wait is
 // belt to that braces.
+//
+// And ONE PARK IS NOT ENOUGH — hardened 2026-08-12 after this file
+// failed 5-for-5 on one full-suite run, 1-in-11 isolated, and 25 of
+// 110 under `--repeat-each=10` load. Instrumented timelines split the
+// mechanism in two, and both halves end the same way — a scroll event
+// the reader never made, arriving after gloss.js's one-frame arming
+// grace, dismissing the panel the gesture just opened. Permanently:
+// nothing reopens it, so the assert sees `hidden` for its whole 5s.
+//
+//   A. The park itself raced layout. At domcontentloaded+150ms the
+//      page can still be GROWING; the trigger measures in-viewport,
+//      scrollIntoView no-ops (a probe caught scrollY still 0 after
+//      parking), late layout pushes the trigger below the fold, and
+//      the CLICK inherits the scrolling — smooth, per styles.css, and
+//      one captured timeline shows it emitting scroll events for
+//      ~270ms: panel SHOWN at +287ms, dismissed at +310ms, easing
+//      curve settling ~250ms later. The settle loop below closes this
+//      half: re-scroll until the rect is stable across two frames AND
+//      fully in-viewport, so the gesture that follows needs no scroll.
+//   B. The ENVIRONMENT scrolled mid-test. Under worker load, font
+//      swaps and other late reflow land seconds after navigation;
+//      content growing above the parked trigger makes Chromium's
+//      scroll anchoring adjust scrollTop, which fires a native scroll
+//      event mid-gesture — indistinguishable by design from a reader
+//      scroll, so the component correctly closes. That one mechanism
+//      explained EVERY failing row in the repeat-load profile, hover
+//      and tap included. The style tag below closes this half:
+//      `overflow-anchor: none` stops anchoring from ever moving
+//      scrollTop under the test, and `scroll-behavior: auto` makes any
+//      residual scroll single-frame (inside the arming grace) instead
+//      of a 20-frame animation. Neither un-tests the component — the
+//      scroll-dismissal contract is asserted with DISPATCHED events
+//      ("a scroll inside the panel", below), which a frozen scroll
+//      ecology does not touch; what the freeze removes is the
+//      environment's ability to fire that contract into unrelated
+//      gesture assertions.
+//
+// The REAL keyboard path was probed the same day and survives without
+// any of this: a Tab-focus scroll is instant and lands inside the
+// one-rAF grace exactly as gloss.js's armDismiss() comment intends.
+// Everything here is test hygiene, not a page workaround.
 async function park(trigger) {
-    await trigger.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    const page = trigger.page();
+    await page.addStyleTag({
+        content: 'html { scroll-behavior: auto !important; overflow-anchor: none !important; }',
+    });
+    await page.evaluate(() => document.fonts.ready);
+    for (let i = 0; i < 20; i++) {
+        await trigger.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        const settled = await trigger.evaluate((el) => {
+            const before = el.getBoundingClientRect();
+            return new Promise((resolve) => {
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    const after = el.getBoundingClientRect();
+                    resolve(Math.abs(after.top - before.top) < 1
+                        && after.top >= 0
+                        && after.bottom <= window.innerHeight);
+                }));
+            });
+        });
+        if (settled) return;
+    }
+    throw new Error('park(): trigger never settled fully in-viewport');
 }
 
 test('focus opens a gloss and Escape dismisses it in place', async ({ page }) => {
