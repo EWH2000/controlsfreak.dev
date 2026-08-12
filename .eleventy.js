@@ -1103,7 +1103,13 @@ module.exports = function(eleventyConfig) {
             answer = correct ? stripHtml(correct.text) : "";
         }
         const explanation = stripHtml(q.explain);
-        return answer + (answer && explanation ? ". " : "") + explanation;
+        // The join is a sentence break, so it supplies only the punctuation
+        // the answer is missing: a choice written as a full sentence already
+        // ends in one, and an unconditional ". " published
+        // "…before you touch a setpoint.. Both numbers…" on most entries
+        // (#254 — 295 of 416 at the time it was fixed).
+        const separator = /[.!?]$/.test(answer) ? " " : ". ";
+        return answer + (answer && explanation ? separator : "") + explanation;
     };
     eleventyConfig.addFilter("faqPageJsonLd", (canonical, questions, title, pairedLesson) => {
         if (!canonical || !Array.isArray(questions) || !questions.length) return "";

@@ -585,6 +585,54 @@ test('bacnet vendor ids — FAQPage JSON-LD emits and every block parses', async
     for (const b of blocks) JSON.parse(b);
 });
 
+// #254: `buildAnswerText` (.eleventy.js) joins the correct choice to the
+// explanation with a sentence break, and that separator used to be an
+// unconditional ". " — so every answer already written as a full sentence
+// published a doubled break (295 of 416 entries when it was fixed). Nothing
+// else can see the join: the banks are source-side, and the browser never
+// renders it (the quiz engine paints choices and explanation separately), so
+// this reads the built JSON-LD the way a crawler would. Node-side, no
+// browser — the same _site read the sitemap-drift test at the top does.
+test('practice FAQPage answers join the explanation exactly once (#254)', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const bankDir = path.join(__dirname, '..', 'html', '_data', 'quizzes');
+    const strip = (s) => String(s || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+    const banks = fs.readdirSync(bankDir).filter(f => f.endsWith('.js')).sort();
+    expect(banks.length, 'there should be quiz banks to sweep').toBeGreaterThan(0);
+
+    let terminalAnswers = 0;
+    for (const file of banks) {
+        const slug = file.replace(/\.js$/, '');
+        const bank = require(path.join(bankDir, file));
+        const html = fs.readFileSync('_site/practice/' + slug + '.html', 'utf8');
+        const faq = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+            .map(m => JSON.parse(m[1].replace(/\\u003c/g, '<')))
+            .find(n => n['@type'] === 'FAQPage');
+        expect(faq, `${slug} should publish a FAQPage node`).toBeTruthy();
+        bank.forEach((q, i) => {
+            let answer = '';
+            if (q.type === 'tf') answer = q.answer ? 'True' : 'False';
+            else if (q.type === 'numeric') answer = String(q.answer) + (q.unit ? ' ' + q.unit : '');
+            else answer = strip(((q.choices || []).find((c) => c.correct) || {}).text);
+            if (!answer || !strip(q.explain)) return;
+            const text = faq.mainEntity[i].acceptedAnswer.text;
+            expect(text.startsWith(answer), `${slug}/${q.id}: answer should open the answer text`).toBe(true);
+            // What follows the answer IS the contract: a bare space when the
+            // answer brought its own terminal mark, ". " when it did not.
+            if (/[.!?]$/.test(answer)) {
+                terminalAnswers++;
+                expect(text[answer.length], `${slug}/${q.id}: answer already ends a sentence`).toBe(' ');
+            } else {
+                expect(text.slice(answer.length, answer.length + 2), `${slug}/${q.id}: answer needs the break`).toBe('. ');
+            }
+        });
+    }
+    // Anti-vacuity: the branch the fix added has to be one shipped content
+    // actually reaches, or this test passes without measuring anything.
+    expect(terminalAnswers, 'some shipped answers should end in terminal punctuation').toBeGreaterThan(0);
+});
+
 test('modbus register viewer — single + pair tabs decode bits and bytes correctly', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/tools/modbus-register-viewer.html');
