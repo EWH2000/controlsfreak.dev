@@ -13370,3 +13370,70 @@ removed. `styles.css` needs nothing — `.widget-try button` and its
 `:focus-visible` twin already exist and already carry the "new
 try-rows should use buttons" comment. The three pages are independent
 of each other, so this can ship as one lane or three.
+
+### 300. The gloss gesture specs raced the environment's own scrolls — and one run reported the failures as green *(noticed 2026-08-12, triaging the merge-queue suite run — test infrastructure; **RESOLVED 2026-08-12 · PR #529**, mechanism instrumented both ways; resolution block below)*
+
+`tests/gloss.spec.js`'s behavior rows failed 5-for-5 on one full-suite
+run, 1-in-11 isolated, and 25-of-110 under `--repeat-each=10` — every
+failure the same signature: the panel a gesture just opened resolves
+`hidden` and stays hidden for the assert's whole retry window.
+Something dismissed it once, and nothing reopens it.
+
+Instrumented timelines split the dismissal into two mechanisms, both
+environmental, both arriving as a scroll event the reader never made,
+after `gloss.js`'s deliberately one-frame arming grace:
+
+1. **`park()` raced late layout.** At domcontentloaded+150ms the page
+   can still be growing; the trigger measured in-viewport, the instant
+   `scrollIntoView` no-oped (a probe caught `scrollY` still 0 after
+   parking), and the CLICK inherited the scrolling — smooth, per
+   styles.css — emitting dismissal scrolls for ~270ms. The captured
+   timeline: panel SHOWN at +287ms, dismissed at +310ms, easing curve
+   settling ~250ms later.
+2. **Scroll anchoring moved the page under load.** Late font reflow
+   above the parked trigger makes Chromium adjust `scrollTop`, which
+   fires a native scroll mid-gesture. Under repeat-load this one
+   mechanism explained every failing row — hover and tap included.
+
+The REAL keyboard path was probed the same day and survives: a
+Tab-focus scroll is instant and lands inside the one-rAF grace exactly
+as `armDismiss()`'s comment intends. So the fix is test-side (PR
+#529): `park()` re-scrolls until the trigger's rect is stable across
+two frames and fully in-viewport, waits on `document.fonts.ready`, and
+freezes the scroll ecology (`scroll-behavior: auto`,
+`overflow-anchor: none`) — which does not un-test dismissal, because
+that contract is asserted with DISPATCHED events. Measured 26-of-110
+failing before, **110/110 after**, on the same instrument.
+
+**The reporting half is its own trap, recorded here for the record:**
+the original 5-failure run was reported GREEN in-session because the
+command piped Playwright through `tail`, which replaced the exit code
+with the pipe's and cut the failed-list out of the visible window. A
+test run's exit code and summary must come from the runner itself —
+redirect to a file, never pipe. (Tooling recipe updated the same day.)
+
+### 301. A mouse click on an edge-clipped gloss trigger can dismiss the panel it opens *(noticed 2026-08-12, the #300 diagnosis — page-side residual, DESIGN CALL, log-don't-fix)*
+
+The narrow real-user shape of #300's mechanism 1, on the live page: a
+trigger sits partially clipped at the viewport's bottom edge, the
+reader clicks its visible half, the click's focus makes the browser
+scroll the trigger fully into view — animated, because styles.css
+sets `html { scroll-behavior: smooth }` — and the animation's scroll
+events outlive `armDismiss()`'s one-frame grace. The panel opens and
+closes in the same gesture. The component is following its own rule
+(a page scroll is a dismissal, and the panel WAS placed at pre-scroll
+coordinates, so leaving it open would leave it misaligned); the rule
+just cannot tell the opening gesture's own scroll from the reader's.
+
+Reachable only by mouse on a clipped trigger — the keyboard path is
+instant-scroll and safe (probed, #300), and a fully-visible trigger
+produces no scroll at all. Self-healing in practice: the second click
+finds the trigger already in view and the panel opens clean, which is
+also why this files as log-don't-fix rather than a defect lane.
+
+If it ever earns a fix, the honest shape is *re-place-on-settle*, not
+a longer grace: treat the opening gesture's scroll as part of the
+open, and when it settles, re-run `place()` against the trigger's new
+position instead of closing — a timer-free version of the same
+"whose scroll is this" question the arming grace already answers for
+focus. Owner's call whether the reach justifies it.
