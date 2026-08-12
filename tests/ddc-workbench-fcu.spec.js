@@ -32,6 +32,14 @@ const { expectTouchFloor } = require('./touch-floor.js');
 
 const URL = '/simulators/ddc-workbench-fcu.html';
 
+// How many cells the point mirror carries. Three describes below assert it
+// — the diet, the phone reading surface and the register rows — so it lives
+// here rather than as three literals that a split can move out of step with
+// each other (it went 6 → 7 when #298 separated zone from setpoint). The
+// figure that MATTERS is that the count is one number; its value is checked
+// against the shipped list by the register row, which names every id.
+const MIRROR_CELLS = 7;
+
 const CHEVRON = '#fcu-flow .fcu-chevron';
 
 // The first chevron's transform — the cheapest observable "is the air
@@ -862,7 +870,7 @@ test.describe('DDC Workbench — the mirror diet', () => {
     test('at a desktop width only the three sensed-point buttons take space', async ({ page }) => {
         await page.goto(URL);           // the config's default viewport is 1280 wide
         const cells = await cellBoxes(page);
-        expect(cells.length, 'the whole list is still in the DOM').toBe(6);
+        expect(cells.length, 'the whole list is still in the DOM').toBe(MIRROR_CELLS);
         expect(cells.filter((c) => c.boxed).map((c) => c.point),
             'the desktop row is exactly the buttons, in air-path order')
             .toEqual(['rat', 'dat', 'space-temp']);
@@ -890,8 +898,14 @@ test.describe('DDC Workbench — the mirror diet', () => {
                     text: (e.textContent || '').trim(),
                 };
             }));
-        expect(quiet.length, 'three plain cells').toBe(3);
-        expect(quiet.map((q) => q.id)).toEqual(['fcu-dt-r', 'fcu-fan-r', 'fcu-comp-r']);
+        // The cooling-setpoint cell joined this set with #298's split: a
+        // param has no sensing device on the drawing, so it is a plain div
+        // like the fan and compressor rather than a fourth button. Its own
+        // fallback is the SVG zone box, which prints the same value.
+        expect(quiet.length, 'the plain cells are everything but the three sensor buttons')
+            .toBe(MIRROR_CELLS - 3);
+        expect(quiet.map((q) => q.id))
+            .toEqual(['fcu-dt-r', 'fcu-csp-r', 'fcu-fan-r', 'fcu-comp-r']);
         for (const q of quiet) {
             expect(q.display, q.id + ' must not be display:none').not.toBe('none');
             expect(q.visibility, q.id + ' must not be visibility:hidden').not.toBe('hidden');
@@ -924,7 +938,7 @@ test.describe('DDC Workbench — the mirror diet', () => {
 
         await page.setViewportSize({ width: CUTOFF - 1, height: 900 });
         expect((await cellBoxes(page)).filter((c) => c.boxed).length,
-            'one pixel under the cutoff the whole list is back').toBe(6);
+            'one pixel under the cutoff the whole list is back').toBe(MIRROR_CELLS);
     });
 
     test('the mirror absorbs its buttons\' hit-area bleed, above and below the cutoff (#266)', async ({ page }) => {
@@ -974,42 +988,53 @@ test.describe('DDC Workbench — the mirror diet', () => {
     });
 });
 
-test.describe('DDC Workbench — the point mirror names its register in text (#269)', () => {
+test.describe('DDC Workbench — the point mirror names its register twice (#269, #298)', () => {
 
-    // The AHU twin of this row (ddc-workbench-ahu-page.spec.js) derives the
-    // expected word from the VALUE's colour class, because that page spends
-    // a full register key: green .is-cmd, blue .is-calc, plain measured.
+    // TWO channels, one derivation. Every mirror caption tags its point's
+    // KIND in an .sr-only span (#269) and every value carries the matching
+    // register ink (#298) — so this row asserts the pair AGREE, per cell,
+    // against a third source neither of them is.
     //
-    // ⚠ That derivation is not available here, and the reason is the point
-    // of #269. This page carries no commanded register at all — its only
-    // colour is --blue on ΔT (.accent in the mirror, .fcu-dt-val on the
-    // drawing) — so `Supply fan` and `Compressor` render in exactly the ink
-    // `RAT · return` does. Colour separates calculated from everything else
-    // and stops there. The gloss is therefore the ONLY provenance channel
-    // for the commanded cells, for a sighted reader as much as a screen
-    // reader, and asserting it against a class that does not exist would
-    // pass vacuously.
+    // ⚠ The AHU twin (ddc-workbench-ahu-page.spec.js) derives the expected
+    // word FROM the colour class. That direction was unavailable here while
+    // #269 stood alone, and the reason was the whole of #298: this page had
+    // no commanded register at all, so `Supply fan` and `Compressor`
+    // rendered in exactly the ink `RAT · return` does and asserting a word
+    // against a class that did not exist would have passed vacuously. It is
+    // available now — but the derivation still runs off the LIVE ROSTER
+    // rather than off the class, because the roster (ddcw-fcu-unit.js's
+    // FCU_POINTS `dir`) is the one source that actually knows a point's
+    // kind, and driving both channels from it catches the case where gloss
+    // and ink agree with each other and are both wrong.
     //
-    // So the expected words are derived from the LIVE roster instead — the
-    // one source that actually knows a point's kind (ddcw-fcu-unit.js's
-    // FCU_POINTS `dir`). Only the wiring below is hand-written: which roster
-    // rows feed which mirror cell. A `dir` retune reddens this without any
-    // edit here, and a cell whose sources stop resolving fails rather than
-    // skipping.
+    // Only the wiring below is hand-written: which roster rows feed which
+    // mirror cell. A `dir` retune reddens this with no edit here, and a
+    // cell whose sources stop resolving fails rather than skipping.
     const DIR_WORD = { sensor: '(measured)', actuator: '(commanded)', param: '(commanded)' };
+    // …and the ink each word is spent in. `null` = the plain measured ink,
+    // which is the ABSENCE of a register class, so it is asserted as such
+    // rather than skipped.
+    const WORD_CLASS = {
+        '(measured)': null,
+        '(commanded)': 'is-cmd',
+        '(calculated)': 'accent',
+    };
+    const REGISTER_CLASSES = ['is-cmd', 'accent'];
 
-    // mirror value id → the roster point ids the cell prints, IN CAPTION
-    // ORDER. `fcu-dt-r` is deliberately empty: ΔT is arithmetic over the two
-    // displayed operands, owns no roster row, and is the page's one
-    // calculated cell.
+    // mirror value id → the roster point ids the cell prints. `fcu-dt-r` is
+    // deliberately empty: ΔT is arithmetic over the two displayed operands,
+    // owns no roster row, and is the page's one calculated cell.
     const SOURCES = [
         { id: 'fcu-rat-r',  points: ['rat'] },
         { id: 'fcu-dat-r',  points: ['dat'] },
         { id: 'fcu-dt-r',   points: [] },
-        // The one cell carrying two points of two kinds — a sensed zone
-        // temperature beside the setpoint it answers to. It takes one gloss
-        // per operand; a single word would be false about half of it.
-        { id: 'fcu-zone-r', points: ['space-temp', 'cooling-setpoint'] },
+        // Zone and setpoint are TWO cells, not one. #269 shipped them as one
+        // caption with two glosses, because the cell printed a sensed
+        // temperature beside the param it answers to and a single word would
+        // have been false about half of it. Ink cannot be halved that way at
+        // all, so #298 separated them — the AHU's shape all along.
+        { id: 'fcu-zone-r', points: ['space-temp'] },
+        { id: 'fcu-csp-r',  points: ['cooling-setpoint'] },
         // The fan cell prints the COMMAND, not the proof: fcuRenderUnit's
         // own comment pins that, and `fan-status` (the bi) is a separate
         // claim this list does not carry. Both sources are actuators, so the
@@ -1036,8 +1061,10 @@ test.describe('DDC Workbench — the point mirror names its register in text (#2
             };
         }));
 
-        expect(rows.map((r) => r.id), 'the mirror is the six cells, in air-path order')
+        expect(rows.map((r) => r.id), 'the mirror is these cells, in air-path order')
             .toEqual(SOURCES.map((s) => s.id));
+        expect(rows.length, 'and the shared cell count agrees with them')
+            .toBe(MIRROR_CELLS);
 
         for (const [i, row] of rows.entries()) {
             const src = SOURCES[i];
@@ -1051,16 +1078,30 @@ test.describe('DDC Workbench — the point mirror names its register in text (#2
                 });
             // Adjacent sources of one kind print one word, not two.
             const collapsed = want.filter((w, n) => n === 0 || w !== want[n - 1]);
-            expect(row.glosses, src.id + ' names its register in text, not only in colour')
+            expect(row.glosses, src.id + ' names its register in text')
                 .toEqual(collapsed);
+            // ONE register per cell, which is what the split bought: a cell
+            // spanning two kinds could carry two glosses but never two inks.
+            expect(collapsed.length, src.id + ' is a single register').toBe(1);
+
+            // …and the ink says the same thing the word does.
+            const worn = REGISTER_CLASSES.filter((c) => new RegExp('\\b' + c + '\\b').test(row.cls || ''));
+            const wantClass = WORD_CLASS[collapsed[0]];
+            expect(worn, src.id + ' paints the register its caption names')
+                .toEqual(wantClass === null ? [] : [wantClass]);
         }
 
-        // The one colour correspondence this page does carry, asserted both
-        // ways: blue is calculated, and nothing else claims that word.
-        const blue = rows.filter((r) => /\baccent\b/.test(r.cls || ''));
-        expect(blue.map((r) => r.id), 'ΔT is the page\'s only blue cell').toEqual(['fcu-dt-r']);
-        expect(rows.filter((r) => r.glosses.includes('(calculated)')).map((r) => r.id),
-            'and the only one glossed calculated').toEqual(['fcu-dt-r']);
+        // Both correspondences also asserted in the reverse direction, so a
+        // register cannot quietly spread to a cell that does not claim it.
+        const bearing = (cls) => rows.filter((r) => new RegExp('\\b' + cls + '\\b').test(r.cls || ''))
+            .map((r) => r.id);
+        const glossed = (word) => rows.filter((r) => r.glosses.includes(word)).map((r) => r.id);
+        expect(bearing('accent'), 'ΔT is the page\'s only blue cell').toEqual(['fcu-dt-r']);
+        expect(glossed('(calculated)'), 'and the only one glossed calculated').toEqual(['fcu-dt-r']);
+        expect(bearing('is-cmd'), 'green is the commanded cells and nothing else')
+            .toEqual(glossed('(commanded)'));
+        expect(bearing('is-cmd').length, 'and there is a commanded register at all (#298)')
+            .toBeGreaterThan(0);
     });
 
     test('the gloss is invisible ink — it never widens a caption', async ({ page }) => {
@@ -1075,6 +1116,140 @@ test.describe('DDC Workbench — the point mirror names its register in text (#2
                 return r.width > 2 || r.height > 2;
             }).length);
         expect(bad, 'no gloss takes layout space').toBe(0);
+    });
+
+    test('the split rows paint independently — zone follows the sensor, setpoint the param', async ({ page }) => {
+        // The two halves of the old combined cell now have to be driven
+        // from their own sources, and the row that proves it is the one
+        // where they MOVE APART: forcing the wall stat rewrites the zone
+        // cell and must leave the setpoint cell exactly where it was.
+        await page.goto(URL);
+        await page.waitForTimeout(400);
+
+        const read = () => page.evaluate(() => ({
+            zone: document.getElementById('fcu-zone-r').textContent.trim(),
+            csp: document.getElementById('fcu-csp-r').textContent.trim(),
+            well: document.getElementById('fcu-zone-sp').textContent.trim(),
+        }));
+
+        const before = await read();
+        expect(before.zone, 'the zone cell paints').not.toBe('');
+        expect(before.csp, 'the setpoint cell paints').not.toBe('');
+        expect(before.csp, 'and it agrees with the SVG setpoint well it twins')
+            .toBe(before.well);
+
+        await page.click('#fcu-ovr-toggle');
+        await page.fill('#fcu-ovr-input', '60');
+        await page.waitForFunction(() =>
+            document.getElementById('fcu-zone-r').textContent.trim() === '60.0 °F');
+        const after = await read();
+        expect(after.csp, 'a forced sensor does not move the commanded setpoint')
+            .toBe(before.csp);
+    });
+
+    // ── The legend (#298) ────────────────────────────────────────────────
+    // A key is only worth printing if it keys what the page actually
+    // spends, which is why every row below ties a well back to the mirror
+    // rather than checking the legend against itself. The failure mode
+    // #298 named — "a partial key is a worse teacher than no key, because
+    // it looks complete" — is exactly a legend drifting out of step with
+    // the instrument, in either direction.
+
+    test('the key prints all three registers, in the same inks the mirror spends', async ({ page }) => {
+        await page.goto(URL);
+
+        const key = page.locator('.fcu-key');
+        await expect(key, 'the page prints a key at all').toHaveCount(1);
+        // role=group + aria-label, the AHU's call: a one-row key does not
+        // earn a heading and a bare div with aria-label would be ignored.
+        await expect(key).toHaveAttribute('role', 'group');
+        await expect(key).toHaveAttribute('aria-label', 'Colour key');
+
+        const items = await key.locator('.fcu-key-item').evaluateAll((els) => els.map((e) => {
+            const well = e.querySelector('.fcu-key-well');
+            return {
+                label: e.textContent.replace(well ? well.textContent : '', '').trim(),
+                sample: well ? well.textContent.trim() : null,
+                colour: well ? getComputedStyle(well).color : null,
+                cls: well ? well.className : null,
+            };
+        }));
+        expect(items.map((i) => i.label), 'measured / commanded / calculated, in that order')
+            .toEqual(['Measured', 'Commanded', 'Calculated']);
+
+        // The colours are read off the LIVE mirror rather than restated as
+        // hexes: the assertion is that the legend and the instrument are
+        // one system, and a token retune must move both or redden here.
+        const mirror = await page.evaluate(() => {
+            const paint = (id) => getComputedStyle(document.getElementById(id)).color;
+            return {
+                measured: paint('fcu-rat-r'),
+                commanded: paint('fcu-fan-r'),
+                calculated: paint('fcu-dt-r'),
+            };
+        });
+        expect(items[0].colour, 'the measured well is painted like a measured cell')
+            .toBe(mirror.measured);
+        expect(items[1].colour, 'the commanded well is painted like a commanded cell')
+            .toBe(mirror.commanded);
+        expect(items[2].colour, 'the calculated well is painted like a calculated cell')
+            .toBe(mirror.calculated);
+        // …and the three are genuinely three, so a token collapse cannot
+        // pass the three rows above by making everything one colour.
+        expect(new Set(items.map((i) => i.colour)).size, 'three distinct inks').toBe(3);
+
+        expect(items.map((i) => i.cls), 'the wells carry the register classes')
+            .toEqual(['fcu-key-well', 'fcu-key-well is-cmd', 'fcu-key-well is-calc']);
+    });
+
+    test('the key samples are this page\'s own values, and they convert', async ({ page }) => {
+        // A legend showing invented numbers is a legend a reader cannot
+        // match to the screen. Each sample is a value the static seed
+        // actually paints, so the US arm reads them straight off the
+        // mirror; the metric arm is the units-toggle half — a key frozen in
+        // °F beside a metric mirror is the same mismatch one step on.
+        await page.goto(URL);
+        const wells = page.locator('.fcu-key-well');
+
+        await expect(wells.nth(0), 'measured: the seeded RAT').toHaveText('76.0 °F');
+        await expect(wells.nth(1), 'commanded: the seeded fan command').toHaveText('100%');
+        await expect(wells.nth(2), 'calculated: the seeded ΔT').toHaveText('-19.4 °F');
+
+        await page.click('.units-btn[data-units="metric"]');
+        await expect(wells.nth(0), 'absolute temperature converts').toHaveText('24.4 °C');
+        await expect(wells.nth(1), 'a percentage is already universal').toHaveText('100%');
+        await expect(wells.nth(2), 'ΔT converts as a DELTA, not an absolute')
+            .toHaveText('-10.8 °C');
+    });
+
+    test('the key rides into the fullscreen cockpit rather than dropping with the prose', async ({ page }) => {
+        // #tab-unit.active is a NAMED-AREA grid in fullscreen, so a child
+        // with no grid-area is auto-placed into an implicit cell — a broken
+        // cockpit, not a misplaced legend. And the cockpit is where the
+        // coded values are, so the legend that keys them has to be there
+        // too. Both halves in one row: it is placed, and it is placed
+        // between the mirror and the verdict.
+        await page.goto(URL);
+        await page.click('.tool-card-fullscreen-btn');
+        const geom = await page.evaluate(() => {
+            const box = (sel) => {
+                const r = document.querySelector(sel).getBoundingClientRect();
+                return { top: r.top, w: r.width, h: r.height };
+            };
+            return {
+                key: box('.fcu-key'),
+                points: box('.fcu-points'),
+                verdict: box('#fcu-verdict'),
+                area: getComputedStyle(document.querySelector('.fcu-key')).gridArea,
+            };
+        });
+        expect(geom.key.w, 'the key is rendered in the cockpit').toBeGreaterThan(2);
+        expect(geom.key.h, 'and has height').toBeGreaterThan(2);
+        expect(geom.area, 'it is placed explicitly, not auto-flowed').toContain('key');
+        expect(geom.key.top, 'it sits below the mirror it keys')
+            .toBeGreaterThan(geom.points.top);
+        expect(geom.key.top, 'and above the verdict').toBeLessThan(geom.verdict.top);
+        await page.keyboard.press('Escape');
     });
 });
 
@@ -1310,7 +1485,7 @@ test.describe('DDC Workbench — the phone surface (the Unit tab is the mobile v
                 const r = e.getBoundingClientRect();
                 return r.width > 2 && r.height > 2;
             }).length);
-        expect(boxed, 'all six mirror cells occupy the grid at 375').toBe(6);
+        expect(boxed, 'every mirror cell occupies the grid at 375').toBe(MIRROR_CELLS);
     });
 
     test('the rail inputs clear the 44px floor in both dimensions, and a touch commit lands', async ({ page }) => {
@@ -1451,10 +1626,22 @@ test.describe('DDC Workbench — the parameter rail adjusts the running program'
         await page.waitForTimeout(300);
         // Every display surface agrees: chip, the SVG zone well (the
         // read-only display twin — nothing in the graphic is focusable),
-        // the mirror's zone/setpoint pair, and the field itself.
+        // the mirror's own setpoint cell, and the field itself. That cell
+        // is #fcu-csp-r since #298 split it out of the zone cell; the zone
+        // cell beside it must NOT have moved, which is the half of this
+        // assertion the old combined string could not make.
         expect(await chipText(page, 'Cool SP')).toContain('75.0');
         await expect(page.locator('#fcu-zone-sp')).toHaveText('75.0 °F');
-        await expect(page.locator('#fcu-zone-r')).toContainText('/ 75.0 °F');
+        await expect(page.locator('#fcu-csp-r')).toHaveText('75.0 °F');
+        // Read in ONE evaluate: both nodes are written in the same
+        // synchronous render pass, so a single snapshot cannot straddle a
+        // tick and see them disagree for a reason other than a real one.
+        const zone = await page.evaluate(() => ({
+            mirror: document.getElementById('fcu-zone-r').textContent,
+            well: document.getElementById('fcu-zone-t').textContent,
+        }));
+        expect(zone.mirror, 'the zone cell still tracks the sensed zone, not the setpoint')
+            .toBe(zone.well);
         expect(await cool.inputValue()).toBe('75.0');
         // A constant change, not a hand command: picker not Custom,
         // nothing off-program.
