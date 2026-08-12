@@ -107,7 +107,7 @@ test('every canned example loads without a console error', async ({ page }) => {
 
     const keys = await page.evaluate(() =>
         [...document.querySelectorAll('#fbe-examples [data-example]')]
-            .map((a) => a.dataset.example));
+            .map((chip) => chip.dataset.example));
     // The page ships seven programs; assert the set is non-trivial so a
     // silently-empty chip row can't make this pass vacuously.
     expect(keys.length).toBeGreaterThanOrEqual(7);
@@ -123,6 +123,96 @@ test('every canned example loads without a console error', async ({ page }) => {
     }
 
     expect(errors, 'loading every example should log no page / console errors').toEqual([]);
+});
+
+// ── The example chips are real controls (codebase-issues #281) ──────────
+// Two defects with one root: the chips used to be bare <a> elements with no
+// href, wired by the end-of-body IIFE. An anchor with no href is not in the
+// tab order at all, and the wiring did not exist until ten <script src>
+// fetches had landed — so the row was keyboard-dead permanently and
+// mouse-dead intermittently. The pair below covers one arm each; either one
+// fails against the pre-fix page.
+
+test('the example chips are keyboard-reachable and Enter loads the sheet (#281)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto(URL);
+    // Boot sheet is the economizer — six blocks, none of them a freezestat.
+    await expect(page.locator('.fbe-block')).toHaveCount(6);
+    await expect(page.locator('.fbe-block[data-id="fz"]')).toHaveCount(0);
+
+    // Walk forward from the link in the preamble, which is the last
+    // focusable above the chip row. Bounded, so a chip that drops out of
+    // the tab order fails here instead of hanging — and the loop is what
+    // makes this a REACHABILITY test rather than a .focus() call, which
+    // would pass just as happily on an unreachable element.
+    await page.locator('.tool-preamble a').focus();
+    let key = null;
+    let steps = 0;
+    while (steps < 8 && key === null) {
+        await page.keyboard.press('Tab');
+        steps += 1;
+        key = await page.evaluate(() => document.activeElement.dataset.example || null);
+    }
+    expect(key, 'Tab from the preamble link should land on the first example chip')
+        .toBe('freeze');
+
+    // Enter on a focused <button> fires a click — the delegated listener
+    // sees it exactly as it sees a mouse click.
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.fbe-block[data-id="fz"] .fbe-block-val')).toHaveText('FALSE');
+    await expect(page.locator('.fbe-block[data-id="alarm"]')).toBeVisible();
+
+    expect(errors, 'keyboard-loading an example should log no page / console errors').toEqual([]);
+});
+
+test('a chip clicked before the editor mounts still loads its sheet (#281)', async ({ page }) => {
+    const errors = watchErrors(page);
+
+    // Hold /scripts/fbe-editor.js at the network until this test releases
+    // it. The chip row is parsed near the top of <main>, so it is painted
+    // and clickable while that request is still in flight — which IS the
+    // window #281 is about, reproduced deterministically instead of raced
+    // for. Nothing is stubbed: the real head listener queues, the real
+    // editor drains.
+    let release;
+    const gate = new Promise((resolve) => { release = resolve; });
+    await page.route('**/scripts/fbe-editor.js', async (route) => {
+        await gate;
+        await route.continue();
+    });
+
+    // 'commit' rather than 'load' — the parser-blocking script above never
+    // returns, so neither DOMContentLoaded nor load will fire yet.
+    await page.goto(URL, { waitUntil: 'commit' });
+    const chip = page.locator('[data-example="proof"]');
+    await chip.waitFor({ state: 'visible' });
+
+    // ANTI-VACUITY: prove the editor really is absent, or this test would
+    // pass without ever exercising the queue.
+    expect(await page.evaluate(() => typeof window.FBEEditor),
+        'the editor module must still be in flight for this test to mean anything')
+        .toBe('undefined');
+    await expect(page.locator('.fbe-block')).toHaveCount(0);
+
+    await chip.click();
+    // Queued, not dropped, and not applied early either.
+    await expect(page.locator('.fbe-block')).toHaveCount(0);
+
+    release();
+    // The editor boots on its own initialExampleKey ('econ', five wires)
+    // and the queue drains straight into it: proof-of-flow, seven wires.
+    await expect(page.locator('#fbe-inner path.fbe-wire')).toHaveCount(7);
+    // The fail-delay timer is proof-of-flow's alone — a wire count could in
+    // principle be hit by another sheet, this block id could not.
+    await expect(page.locator('.fbe-block[data-id="tmr"]')).toBeVisible();
+
+    // The queue drains ONCE and the same listener then serves live clicks —
+    // one path, both phases. Hot-water reset is six wires, so this can't be
+    // confused with either the boot sheet or the queued one.
+    await page.click('[data-example="reset"]');
+    await expect(page.locator('#fbe-inner path.fbe-wire')).toHaveCount(6);
+
+    expect(errors, 'the queued-click path should log no page / console errors').toEqual([]);
 });
 
 test('Reset re-zeros a stateful block (SR latch drops its held state)', async ({ page }) => {

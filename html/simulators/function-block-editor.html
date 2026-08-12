@@ -8,6 +8,59 @@ keywords: wiresheet logic block and or pid wire program sequence
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
 
+{% block head %}
+    <script>
+        // ── Example chips: one permanent binding, installed before the
+        //    chips are parsed (codebase-issues #281) ───────────────────
+        // The chip row renders near the top of <main>, but the editor it
+        // drives is only created by the end-of-body IIFE — after ten
+        // <script src> fetches (eight site-wide, then fbe-engine and
+        // fbe-editor). Binding the chips down there leaves a window in
+        // which they are painted, focusable and clickable but INERT: the
+        // click silently does nothing. That window is a real dead spot
+        // for a visitor on a slow connection, and it is also what let the
+        // fullscreen "proof" row of tests/fbe-geometry.spec.js measure
+        // the boot sheet's five wires instead of the proof sheet's seven.
+        //
+        // So the click path is owned here instead — ONE delegated
+        // listener on the document, installed before <main> exists, so
+        // there is no moment at which a parsed chip is unbound. Until the
+        // editor exists the requested key is QUEUED (last one wins: the
+        // most recent choice is the one the visitor is waiting on); the
+        // page IIFE calls ready() straight after createEditor() and the
+        // queue drains into it. Every later click goes straight through
+        // the same listener. Deliberately NOT a temporary handler the
+        // IIFE replaces — two binding systems for one control is the
+        // drift generator, and this way a chip click at any moment after
+        // the chips are parsed loads its example exactly once.
+        (function () {
+            'use strict';
+
+            let load = null;      // the editor's loader, once it exists
+            let pending = null;   // a key clicked before that
+
+            window.FbeExamples = {
+                ready: function (fn) {
+                    load = fn;
+                    if (pending !== null) {
+                        const key = pending;
+                        pending = null;   // drain exactly once
+                        load(key);
+                    }
+                },
+            };
+
+            document.addEventListener('click', function (e) {
+                const chip = e.target && e.target.closest
+                    ? e.target.closest('#fbe-examples [data-example]')
+                    : null;
+                if (!chip) { return; }
+                if (load) { load(chip.dataset.example); } else { pending = chip.dataset.example; }
+            });
+        })();
+    </script>
+{% endblock %}
+
 {% block content %}
 <main id="main">
 
@@ -68,15 +121,19 @@ keywords: wiresheet logic block and or pid wire program sequence
             </div>
 
             <div class="fbe-live">
+                <!-- Real <button>s, not bare <a>s: these load a program, they
+                     don't navigate, and an anchor with no href is invisible to
+                     the keyboard (#281). Same .widget-try look either way — the
+                     shared stylesheet already carries the button twin. -->
                 <div class="widget-try" id="fbe-examples">
                     <span class="lbl">Try this:</span>
-                    <a data-example="freeze">freeze-stat shutdown</a>
-                    <a data-example="econ">economizer enable</a>
-                    <a data-example="tstat-cool">cooling thermostat</a>
-                    <a data-example="tstat-heat">heating thermostat</a>
-                    <a data-example="pid">heating PID</a>
-                    <a data-example="proof">proof-of-flow alarm</a>
-                    <a data-example="reset">hot-water reset</a>
+                    <button type="button" data-example="freeze">freeze-stat shutdown</button>
+                    <button type="button" data-example="econ">economizer enable</button>
+                    <button type="button" data-example="tstat-cool">cooling thermostat</button>
+                    <button type="button" data-example="tstat-heat">heating thermostat</button>
+                    <button type="button" data-example="pid">heating PID</button>
+                    <button type="button" data-example="proof">proof-of-flow alarm</button>
+                    <button type="button" data-example="reset">hot-water reset</button>
                 </div>
 
                 <div class="fbe-simbar">
@@ -119,8 +176,8 @@ keywords: wiresheet logic block and or pid wire program sequence
                     wire to select it; press <code>Delete</code> to remove the selection, or
                     <code>Escape</code> to cancel a wire-in-progress. The inspector below the
                     canvas edits the selected block's parameters live. Placing and wiring
-                    blocks needs a mouse or trackpad; the inspector and the sim-bar buttons
-                    take keyboard too.
+                    blocks needs a mouse or trackpad; the example chips, the inspector and
+                    the sim-bar buttons take keyboard too.
                 </p>
                 <p>
                     The sequence evaluates ten times a second. Pure logic settles in a single
@@ -164,8 +221,10 @@ keywords: wiresheet logic block and or pid wire program sequence
     // /scripts/fbe-editor.js (window.FBEEditor); the simulation core in
     // /scripts/fbe-engine.js (window.FBE). This inline script owns only
     // what is page-specific: the seven canned example programs, and the
-    // wiring of the page's own controls (the sim-bar buttons, the example
-    // chips, and the fullscreen transition) to one editor instance.
+    // wiring of the page's own controls (the sim-bar buttons and the
+    // fullscreen transition) to one editor instance — plus handing that
+    // instance's loader to the example-chip listener the head block
+    // installed long before this script ran (#281).
     (function () {
         'use strict';
 
@@ -399,8 +458,10 @@ keywords: wiresheet logic block and or pid wire program sequence
             autoloop: true,
         });
 
-        // Sim-bar buttons — one delegated handler over data-action,
-        // mirroring the [data-example] chip pattern below.
+        // Sim-bar buttons — one handler shape over data-action. These sit
+        // beside the editor and are meaningless without it, so binding
+        // them here is right; the example chips are the opposite case
+        // (see below).
         document.querySelectorAll('.fbe-simbar [data-action]').forEach((btn) => {
             btn.addEventListener('click', () => {
                 switch (btn.dataset.action) {
@@ -412,10 +473,13 @@ keywords: wiresheet logic block and or pid wire program sequence
             });
         });
 
-        // Example chips — load a canned program.
-        document.getElementById('fbe-examples')
-            .querySelectorAll('[data-example]')
-            .forEach((a) => a.addEventListener('click', () => editor.loadExample(a.dataset.example)));
+        // Example chips — the click path is owned by the delegated
+        // listener in this page's head block (#281), which has been catching
+        // clicks since before the chip row was parsed. Handing it the loader
+        // both drains whatever was clicked while the scripts were still in
+        // flight and routes every later click straight through; there is
+        // deliberately no second binding here.
+        window.FbeExamples.ready((key) => editor.loadExample(key));
 
         // Fullscreen entry/exit — hand the transition to the editor so it
         // reflows the canvas + wire layer to the new viewport.
