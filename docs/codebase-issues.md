@@ -11383,7 +11383,7 @@ exemption cannot decay in either direction.
    `getPointAtLength(getTotalLength())` against the dot's centre. Both new
    guards were checked against the pre-fix markup and fail on it.
 
-### 254. `buildAnswerText` joins the correct choice to `explain` with an unconditional `". "`, so most published FAQPage answers carry a double period *(noticed 2026-07-30, the #241 review round — pre-existing and site-wide, not fixed there)*
+### 254. `buildAnswerText` joins the correct choice to `explain` with an unconditional `". "`, so most published FAQPage answers carry a double period *(noticed 2026-07-30, the #241 review round — pre-existing and site-wide, not fixed there; **RESOLVED 2026-08-12 · PR #528** — separator made conditional, 295 of 416 → 0, resolution block at the end)*
 
 `.eleventy.js`'s `buildAnswerText` — the helper behind the `faqPageJsonLd`
 filter that `head.njk` emits on every `nav: practice` page — closes with:
@@ -11409,6 +11409,45 @@ branch and its own before/after over the built site.
 its own #247 — renumbered to 248 when main was merged in, 2026-07-30, then
 to 254 when PR #457 landed its own 248-253, 2026-07-31. The number is the
 only thing that moved; the finding is unchanged and still unfixed.)*
+
+**RESOLVED 2026-08-12 · PR #528.** The second option was taken — the
+separator is now conditional on the answer's last character, and no answer
+text is stripped or rewritten. The stripping option was the worse of the
+two: it *edits published content* to work around a join, so an answer
+deliberately ending in a question mark would lose it.
+
+Re-derived over the built site rather than trusted from the 2026-07-30
+numbers, and anchored at the join — recompute each `answer` from
+`html/_data/quizzes/*.js`, find it in the built `acceptedAnswer.text`, and
+classify what follows it:
+
+| | before | after |
+|---|---|---|
+| entries with an answer + an explanation | 416 | 416 |
+| **doubled terminal punctuation at the join** | **295** | **0** |
+| joined `". "` (answer brought no terminal mark) | 121 | 121 |
+| joined `" "` (answer already terminal) | 0 | 295 |
+
+The 2026-07-30 spot figures above reproduce exactly on the before build (7
+of 11, 9 of 10), so the entry was measuring the same thing.
+
+Two notes for anyone re-measuring. A **naive `..` grep overcounts by one**:
+`practice/modbus-decoding.html` carries `change the point map to
+30001..30010` inside an explanation, a legitimate address range and not a
+join artifact — which is why the instrument anchors at the join instead of
+scanning the string. And **no shipped answer ends in `!` or `?`** (0 of
+416), so those two arms of the fix are unexercised by current content;
+they are covered anyway, and the guard below is what will keep the first
+one honest.
+
+`tests/smoke.spec.js` gained the regression guard, beside the existing
+FAQPage JSON-LD test and Node-side like the sitemap-drift test at the top
+of that file — nothing else could see this defect, since the banks are
+source-side and the browser never renders the join. It asserts the whole
+contract (a bare space after a terminal answer, `". "` after one without)
+and closes with an anti-vacuity check that shipped content actually
+reaches the new branch. Verified red against the old separator before
+being kept.
 
 ### 255. `≥`, `≤` and `≠` are not in the bundled mono font, and the block-tag work makes them reachable *(noticed 2026-07-31, FBE block-name lane — RULED 2026-08-01: option 2 taken in the same lane; option 3 stays open as the typography lane)*
 
