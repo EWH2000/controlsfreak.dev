@@ -12616,7 +12616,7 @@ buttons earlier. Until one ships, a red on that row under load is this
 race FIRST — but isolate before waving off, per the standing
 one-flake rule.
 
-**Resolution (owner ruling 2026-08-11 — page-side).** The
+**Resolution (owner ruling 2026-08-11 — page-side; PR #522).** The
 spec-side option was **rejected**: waiting on a bound signal papers over
 a hole a visitor falls into, and the entry's own framing ("the click did
 nothing") is the tell — that sentence describes a user-facing defect,
