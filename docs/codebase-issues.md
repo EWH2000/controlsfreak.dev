@@ -12929,3 +12929,37 @@ frame of one. Fix shape, when it's worth it: swap `:919`'s
 stops clobbering unrelated state, or re-arm from the `blown` state
 rather than the edge. Left unfixed deliberately — noticed in passing
 during #289, and the house rule is log-don't-fix.
+
+### 294. The fullscreen cockpit fades in over ~1s — a settle trap for every capture and computed-style measurement *(noticed 2026-08-11, the #266 lane — measurement trap, LOW)*
+
+`.tool-card.is-fullscreen` reaches full opacity over roughly a
+second; measured at 300 ms after the toggle the card sits at
+`opacity: 0.89` with the page ghosting through it. Not a defect —
+but any screenshot, contrast measurement, or computed-style read of
+a fullscreen cockpit taken before the fade settles is measuring a
+composite, and `contrast-sweep.spec.js` composites `opacity` up to
+`<html>` by design — so if the sweep (or any future spec) ever
+force-enters fullscreen, it needs a real settle first or it will
+report ratios ~11 % low. Same family as ledger #259's
+entrance-fade actionability trap; record here so the next fullscreen
+measurement doesn't rediscover it.
+
+### 295. AHU fullscreen puts `.ahu-points` in a `minmax(0,1fr)` column — width bands measured in normal flow don't transfer *(noticed 2026-08-11, the #266 lane — measurement trap, LOW)*
+
+In the AHU page's fullscreen grid the mirror sits in a
+`minmax(0, 1fr)` column, making viewport→grid width roughly 2.5:1 —
+so a width threshold measured in normal flow lands somewhere else
+entirely in the cockpit, and vice versa. Any future width-band
+measurement on that page must be taken in BOTH states. Same
+transfer-trap class as #267 (mockup→live); this is the
+normal-flow→fullscreen edition, found while re-measuring #266's
+bleed bands.
+
+### 296. styles.css's filter-chip comment names two of the four chip landings *(noticed 2026-08-11, the #274 lane — docs drift, MINOR)*
+
+`html/styles.css:2665` says the chip row sits "above the `.card-grid`
+on `/tools/` and `/education/`" — it already omitted `/practice/`
+and now also omits `/simulators/` (#274). Comment-only, but fixing it
+alone would make the version bump load-bearing for a no-op byte
+change, so it rides whichever PR next touches `styles.css` — the
+#274 lane deliberately left it for exactly that reason.
