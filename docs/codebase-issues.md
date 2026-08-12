@@ -13217,3 +13217,48 @@ Three shapes, not costed here: spend green + print the key (full AHU
 parity), print a two-row key for what the page *does* spend (honest,
 smaller), or drop the blue too and let the glosses carry provenance
 alone (internally consistent, loses ΔT's cue). Owner's pick.
+
+### 299. The hrefless-chip set was three pages bigger than #297 said — the grep keyed on `data-`, and ten chips key on `id` *(noticed 2026-08-12, the #297 lane — sibling sweep, queued)*
+
+#297 opened on the #281 lane's closing grep (`<a data-` with no
+`href`) and called its two files "the complete remaining set of
+anchor-shaped controls." They were the complete set **that grep can
+see**. The chip rows it missed carry no `data-` attribute at all —
+they are addressed by `id`, one `getElementById` per chip:
+
+- `html/education/pump-control.html:573-575` — three `<a id="pc-w2-try-*">`
+  chips, bound in the end-of-body IIFE at `:851-853`.
+- `html/education/vfds.html:352-354` — three `<a id="vfd-try-*">` chips,
+  bound at `:745-747`.
+- `html/simulators/vfd-mock.html:289-292` — **four** `<a id="vfdm-try-*">`
+  chips, bound at `:943-955` (four separate `getElementById` calls).
+
+All ten are inside a `.widget-try` row, all ten have no `href` and no
+`tabindex`, and all ten are therefore **out of the tab order
+permanently** — #281's second and worse defect, unchanged, on three
+more live pages. The pre-mount race applies too: every one is bound
+from an end-of-body IIFE sitting below the eight parser-blocking
+site-wide `<script src>` tags (`vfd-mock` and `vfds` add page scripts
+on top of that).
+
+A fourth page is a **near miss, not a hit**:
+`html/education/load-piping.html:621-622` uses
+`<a href="#" id="lp-w-try-*">`. The `href` puts those two in the tab
+order, so the keyboard half does not apply — what is left is an
+anchor that does not navigate (its handler must `preventDefault`) and
+the same pre-mount window. Lower stakes, same conversion.
+
+**The durable lesson is about the grep, not the pages.** A search for
+anchor-shaped controls has to key on the *element and its missing
+`href`*, not on the attribute that happens to address it. The check
+that finds all of them:
+
+    grep -rn -A8 'class="widget-try"' html/ --include=*.html | grep '<a '
+
+Fix is the same copy of #522's shape #297 shipped, per page: chips
+become `<button type="button">`, one permanent head-block delegation
+queues a pre-mount click and drains on mount, per-chip bindings
+removed. `styles.css` needs nothing — `.widget-try button` and its
+`:focus-visible` twin already exist and already carry the "new
+try-rows should use buttons" comment. The three pages are independent
+of each other, so this can ship as one lane or three.
