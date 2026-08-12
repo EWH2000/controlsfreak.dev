@@ -13253,7 +13253,7 @@ removed. Open the lane AFTER #522 merges so the pattern is on main
 to copy. The #281 resolution block records why page-side beat
 spec-side; the same reasoning transfers whole.
 
-### 298. The FCU spends half the AHU's register key and shows none of it — blue without green, and no key at all *(noticed 2026-08-11, the #269 lane — DESIGN CALL, log-don't-fix)*
+### 298. The FCU spends half the AHU's register key and shows none of it — blue without green, and no key at all *(noticed 2026-08-11, the #269 lane — DESIGN CALL, log-don't-fix; **RESOLVED 2026-08-12 · PR #532** — owner took the full-parity shape AND split the two-point cell, which is what made the ink assignable at all)*
 
 Surfaced while deriving #269's glosses, and it is the visual half of
 that entry rather than a separate defect: **the FCU has a calculated
@@ -13285,3 +13285,88 @@ Three shapes, not costed here: spend green + print the key (full AHU
 parity), print a two-row key for what the page *does* spend (honest,
 smaller), or drop the blue too and let the glosses carry provenance
 alone (internally consistent, loses ΔT's cue). Owner's pick.
+
+**RESOLVED 2026-08-12 · PR #532.** Owner ruled (2026-08-12) for shape
+one — **full AHU parity** — after a mock round put all three in front of
+him, **and** added the amendment the entry above did not anticipate: the
+`Zone / setpoint` mirror cell **splits into two rows**.
+
+**The split is not a garnish on the paint; it is what makes the paint
+possible.** #269's resolution had to hang two glosses on one caption —
+*Zone (measured) / setpoint (commanded)* — because that cell printed a
+sensed temperature beside the param it answers to. A caption can carry
+two words. **A span cannot carry two colours.** So the moment the page
+started spending green, the combined cell became unpaintable: either
+half of it would have been lying. The pair separated the way the AHU's
+always was (`Zone temp` / `Cooling SP`), each row now carries one gloss
+and one register, and #269's two-gloss wart goes with it. The spec row
+that used to say "the one cell carrying two points of two kinds" now
+says the opposite, and asserts it: `collapsed.length === 1` per cell.
+
+What shipped:
+
+| surface | before | after |
+|---|---|---|
+| mirror — fan / compressor | `--text-bright` (measured ink) | `.is-cmd` → `--accent-ink` |
+| mirror — cooling setpoint | *(inside the zone cell, uncoloured)* | own row, `.is-cmd` |
+| mirror — zone | `76.0 / 72.0 °F`, two glosses | `76.0 °F`, one gloss, measured |
+| mirror — ΔT | `.accent` → `--blue` | `.accent` → `--blue-ink` |
+| drawing — `#fcu-fan-v` / `#fcu-comp-v` | `--text-dim` (via `.fcu-pt-cap`) | `--accent-ink` |
+| drawing — zone `COOLING SP` well | `--text-bright` | `--accent-ink` |
+| the key | *(none)* | `.fcu-key`, register row, above the verdict |
+
+**Three things worth carrying forward.**
+
+1. **The key is the REGISTER row only.** The AHU's `.ahu-key` is two
+   rows — component identity colours, then value states. This drawing
+   does not spend the identity code, and a legend for a code the page
+   never uses is *the same defect this entry is about*, pointing the
+   other way. The markup keeps the grid (rather than collapsing to a
+   bare flex row) so a component row can land later without restyling.
+2. **Green-on-green, accepted pending the owner's in-flesh read.**
+   `#fcu-comp-v` now prints `STG 1 · ON` in the commanded ink an inch
+   from the compressor's `--accent` **state LED**: two meanings of green
+   side by side, the dot saying *producing* and the text saying *this is
+   a command*. A commanded **OFF** paints green for the same reason.
+   That is correct under the doctrine the AHU states — *the code is cut
+   on PROVENANCE, not point type* — and this page draws state on its own
+   channels anyway (the LED, the fan blades). The AHU layers an
+   `.is-false` dim override on top of its inks; **porting that is a
+   second depiction call and was deliberately left out of scope**, since
+   it needs a class the render loop toggles and a ruling on whether an
+   OFF command should read dim here at all.
+3. **The drawing's ΔT stays `--blue`, not `--blue-ink`** — a knowing
+   divergence from the AHU's SVG calculated ink. The ΔT badge FRAME is
+   `--blue` (`.fcu-badge-dt`), so moving only the value splits a pair
+   that currently reads as one unit, and SVG text is outside
+   `contrast-sweep.spec.js` so nothing forces the step. The MIRROR's ΔT
+   did move (`--blue` → `--blue-ink`), because that one is HTML text and
+   inside the sweep. Left as a depiction call rather than fixed silently.
+
+**The key CSS is page-local, per the widget-internals convention** —
+same standing as this page's copy of the parameter rail, the mirror diet
+and the forced-sensor marker. That makes it the **second copy of one
+legend** across the two workbench pages, which joins the #263 / #273
+duplication family **by mandate rather than by accident**: a graduation
+to `styles.css` is a decision about that whole family (and about a
+`.ddcw-key` rename), not about this block on its own.
+
+**One asymmetry left standing on purpose.** The mirror's calculated
+class is `.accent` here and `.is-calc` on the AHU, while the commanded
+one is `.is-cmd` on both. Renaming `.accent` would touch a class the
+#269 spec row reads and buys nothing a reader sees; the INK is what the
+parity ruling was about, and the ink now matches. Noted so a future
+harmonisation lane finds it rather than rediscovers it.
+
+**Guarded.** `tests/ddc-workbench-fcu.spec.js`'s register describe could
+not assert an ink before this — the page had no commanded class, so
+deriving the expected word FROM the colour (the AHU twin's shape) would
+have passed vacuously, which the #269 resolution said in as many words.
+It can now, and the row derives **both** channels from the live roster
+rather than one from the other, so a gloss and an ink that agree with
+each other and are both wrong still fails. Added alongside: the key
+prints three registers in the inks the mirror actually spends (colours
+read off the live mirror, plus a distinctness check so a token collapse
+cannot pass it), the samples convert on the units toggle, the key is
+placed explicitly in the fullscreen cockpit, and the split rows are
+shown moving apart under a forced sensor.
