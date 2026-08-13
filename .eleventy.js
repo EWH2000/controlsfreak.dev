@@ -298,14 +298,21 @@ module.exports = function(eleventyConfig) {
     // `{% from "related-links.njk" import relatedLinks %}`, so a rule that
     // fires on any macro call fires on every page it is meant to protect.
     //
-    // COMMENTS ARE MASKED FIRST. Most of these pages mention `data-flow=`
-    // in prose — HTML comments above the diagrams, a CSS block comment, JS
-    // `//` lines — and two education pages with NO flow paths mention it
-    // only to say they have none. `{# … #}` Nunjucks comments are masked
-    // too: Nunjucks strips them before render, so their contents never
-    // ship (schematic-bg.njk and page.njk both document the attribute
-    // inside one). An unmasked scan counts all of those and reports
-    // offenders that do not exist.
+    // COMMENTS ARE MASKED FIRST — as insurance against a COMMENTED-OUT
+    // MARKUP EXAMPLE, not against prose. What the mask defends: a comment
+    // containing a full example start tag (`<!-- <path data-flow="supply"
+    // d="…"/> -->`) would otherwise parse as a real element and fail the
+    // build as a phantom offender. None exists in the tree today; the
+    // mask is what keeps that a safe thing to write tomorrow. What the
+    // mask does NOT do is neutralize prose mentions of `data-flow=` —
+    // the attribute parse below already does that on its own (a sentence
+    // about the attribute has no `<`, so it never parses as a start tag).
+    // Measured (codebase-issues #203): replacing the mask with the
+    // identity function changes the guard's verdict on ZERO scanned
+    // files. An earlier version of this paragraph credited the mask with
+    // the prose case; that was true of the guard's substring-probing
+    // first cut and went stale when the attribute parse landed —
+    // two correct fixes, one stale explanation between them.
     //
     // ATTRIBUTES ARE PARSED, NOT SUBSTRING-PROBED. The first cut tested
     // each tag's attribute text for `/\sdata-flow\s*=/`, which is wrong in

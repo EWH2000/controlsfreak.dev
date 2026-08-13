@@ -7645,7 +7645,7 @@ floor below is not a fourth round; it is the guard's permanent shape.
 
 ---
 
-### 203. `flowStaticGuard`'s comment mask is inert on the current tree, and two records credit it anyway *(open — 2026-07-25)*
+### 203. `flowStaticGuard`'s comment mask is inert on the current tree, and two records credit it anyway *(open — 2026-07-25; **RESOLVED 2026-08-12** — owner took option (a): mask kept, header rewritten honest)*
 
 Found while verifying the #202 mask reorder (round 3); **logged, not
 fixed**, because #202 was a declared stop and this is a documentation-
@@ -7731,6 +7731,19 @@ remedy has to reach the header *and* leave the header hard to re-copy
 wrongly. See **#204** for the separate finding about what the `//` pass
 does and does not blank; that one is a live coverage gap rather than a
 stale justification, which is why it is filed on its own.
+
+**RESOLVED 2026-08-12 (owner ruling, the clear-the-decks decision
+batch): option (a).** The mask stays; the COMMENTS ARE MASKED FIRST
+paragraph in `.eleventy.js` now says what the mask actually defends —
+a commented-out markup example that would otherwise parse as a
+phantom offender — states outright that prose mentions are
+neutralized by the attribute parse, not the mask, cites this entry's
+zero-of-scanned-files measurement, and names its own history (the
+substring-probing first cut is when the old claim was true). The
+"hard to re-copy wrongly" remedy is that the paragraph now leads with
+the insurance framing, so there is no sentence crediting the mask
+with the prose case left to quote. No behaviour change; the guard's
+code is untouched.
 
 ### 204. `flowStaticGuard`'s `//` mask is line-anchored — round 3 closed one shape of the comment-pairing hole and opened another *(option (b) shipped 2026-07-26 — both directions documented; (a) still uncorrected by choice)*
 
