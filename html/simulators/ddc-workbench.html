@@ -105,20 +105,31 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
            is sibling HTML rather than in-SVG because HTML is real text
            (selectable, zoomable, reflowing, native to a screen reader).
 
-           ⚠ RENDER SCALE — MEASURED ON THE BUILT MOCKUP, NOT DERIVED, and
-           this page reproduces the same chain: .ahu-graphic sits straight
-           inside a .tool-body, the 840-unit viewBox renders at its 780px
-           max-width, so 0.9286 CSS px per unit — the 8px row label at 7.43,
-           the 9px callout title at 8.36, the 11px well value at 10.21. The
-           governor is the 780px MAX-WIDTH, not the column.
+           ⚠ RENDER SCALE — MEASURED ON THE BUILT PAGE (2026-08-03,
+           re-verified 2026-08-12), NOT DERIVED — and NOT carried from the
+           mockup. The mockup's .ahu-graphic sits straight inside a
+           .tool-body and really does render 780px at every width; THIS
+           page's graphic sits inside .ahu-screen, inside the
+           minmax(0, 1fr) column of .ahu-console — a different chain with
+           a rail in it, so the mockup's numbers do not transfer
+           (re-measure on the page that inherits — the #242 lesson,
+           codebase-issues #267). In the TWO-COLUMN state (1180 and up)
+           the 840-unit viewBox renders at 748px at every width to 1920:
+           the governor there is the GRID COLUMN — the card's content box
+           caps near 750 once the 240px rail and the 1rem gap come off —
+           not the 780px max-width. That is 0.8905 CSS px per unit: the
+           8px row label lands at 7.12, the 9px callout title at 8.01,
+           the 11px well value at 9.80. The 780px max-width binds only in
+           the STACKED state (900–1179; 684 at an 800 viewport, 291 at
+           375).
 
-           ⚠ THE BREAKPOINT IS 1179px, AND NOTE WHICH SIDE IT PROTECTS. It is
-           NOT protecting the stacked state — below it the drawing is the
-           same 780 wide, because the max-width still binds. It protects the
-           TWO-COLUMN state: subtracting a 240 rail and a 16 gap from a
-           narrower card is what would start squeezing the graphic column.
-           Do not widen the viewBox, do not widen the rail, and do not lower
-           this breakpoint.
+           ⚠ THE BREAKPOINT IS 1179px, AND NOTE WHICH SIDE OF IT THE
+           DRAWING IS BIGGER ON: the full 780 is reached ONLY below it,
+           in the stacked state — the two-column state above it is the
+           squeezed one, at every width. What the breakpoint does is
+           abandon two-column before the rail's squeeze gets worse.
+           Do not widen the viewBox, do not widen the rail, and do not
+           lower this breakpoint.
 
            ⚠ .ahu-screen CARRIES NO HORIZONTAL PADDING, AND THAT IS
            LOAD-BEARING. A 0.75rem pad plus the two borders eats 26px, which
