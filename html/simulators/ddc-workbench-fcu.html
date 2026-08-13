@@ -1464,6 +1464,19 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
                         </label>
                     </div>
 
+                    <!-- THIS SLIDER OWNS THE SIM-CLOCK RANGE (codebase-issues
+                         #234). 1× is real building time — long enough to watch
+                         an ON-delay tick; 60× fast-forwards a whole recovery.
+                         The unit module deliberately declares no SPEED_MIN /
+                         SPEED_MAX twin (read the note beside SPEED_DEF in
+                         ddcw-fcu-unit.js): nothing would consume it, because
+                         host.setSpeed() clamps nothing. Retune here. The AHU
+                         sheet carries the same range and a spec holds the two
+                         together — a reader hopping between the workbench
+                         pages must not meet two different clocks. `value` is
+                         the boot default only; the shell overwrites it from
+                         the module's SPEED_DEF, and from the session snapshot
+                         on a resume. -->
                     <div class="slider-field">
                         <div class="slider-head">
                             <label for="fcu-speed-slider">Sim speed (× real time)</label>

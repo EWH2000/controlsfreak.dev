@@ -1868,3 +1868,112 @@ test.describe('DDC Workbench — rail ink clears the AA floor in both themes', (
         });
     }
 });
+
+test.describe('DDC Workbench — one sim clock across both sheets (#234)', () => {
+    // The residual two-source #234 leaves behind. That entry was about a
+    // dead SPEED_MIN / SPEED_MAX pair in ddcw-fcu-unit.js, deleted with
+    // this row: nothing read them, host.setSpeed() clamps nothing, and
+    // the slider's own min / max were always the whole of it — so the
+    // knob owns its travel, the way the fan / outdoor-air / load knobs
+    // beside it already did.
+    //
+    // What that leaves untied is the pair that MATTERS, and it is not
+    // script-versus-markup: it is SHEET versus SHEET. Both workbench
+    // pages ship a sim clock, they agreed at 1…60 by coincidence, and a
+    // reader who crosses the unit selector mid-thought must not find the
+    // clock re-scaled under them. That is the same drift ddcw-fcu-unit's
+    // OA_RAMP_RATE comment refuses for the weather model, in the same
+    // words and for the same reason the two pages keep equal values there.
+    //
+    // NOT pinned here: the numbers themselves (1 and 60 are TUNE BY FEEL
+    // — retune them together and this stays green), `step`, or `value`.
+    // `value` is per-unit on purpose — it is each module's own SPEED_DEF
+    // showing through, and two models are allowed to want different
+    // default paces.
+    //
+    // Deliberately NOT the outdoor-air sliders: those diverge on purpose
+    // (−20…110 on the AHU vs 55…110 here — codebase-issues #243, owner
+    // decision 2026-07-30), which is exactly why this row names the sim
+    // clock rather than sweeping every slider the two pages share.
+
+    // Derived from the directory, never a list — the #235 lesson. A page
+    // is in scope because it SHIPS a sim clock, so a third workbench is
+    // covered the day its markup lands rather than the day someone
+    // remembers this file. The mockup has no clock and drops out on its
+    // own.
+    function simClocks() {
+        const dir = path.join(__dirname, '..', 'html', 'simulators');
+        const found = [];
+        for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.html'))) {
+            const src = fs.readFileSync(path.join(dir, file), 'utf8');
+            const m = /<input type="range" id="[a-z]+-speed-slider"([^>]*)>/.exec(src);
+            if (!m) continue;
+            // Anchored on whitespace so a future `data-min="…"` cannot
+            // answer for `min` — the attribute-substring trap.
+            const attr = (name) => {
+                const a = new RegExp(`\\s${name}="(-?[\\d.]+)"`).exec(m[1]);
+                if (!a) throw new Error(`${file}: sim-clock slider has no ${name}`);
+                return Number(a[1]);
+            };
+            found.push({ file, min: attr('min'), max: attr('max') });
+        }
+        return found;
+    }
+
+    test('every workbench sheet offers the same sim-clock range', () => {
+        const clocks = simClocks();
+
+        // Anti-vacuity. A regex that quietly matched nothing would make
+        // the parity assertion below trivially true — the exact way the
+        // #235 guard could have gone silent. Two is the floor because
+        // parity needs something to compare.
+        expect(clocks.length,
+            `expected at least 2 workbench sim clocks, found ${clocks.length}`
+            + ` (${clocks.map((c) => c.file).join(', ') || 'none'})`)
+            .toBeGreaterThanOrEqual(2);
+
+        const shape = (c) => `${c.min}…${c.max}`;
+        const ranges = [...new Set(clocks.map(shape))];
+        expect(ranges,
+            'the workbench sheets disagree on the sim-clock range: '
+            + clocks.map((c) => `${c.file} ${shape(c)}`).join(' vs '))
+            .toHaveLength(1);
+
+        // And it is a real range, not two matching typos.
+        for (const c of clocks) {
+            expect(c.min, `${c.file}: 1× is real time and the floor`).toBe(1);
+            expect(c.max, `${c.file}: the clock must fast-forward`).toBeGreaterThan(c.min);
+        }
+    });
+
+    test('no unit module carries a sim-clock bounds mirror', () => {
+        // The other half of #234, and the half that decays silently: a
+        // future unit re-declaring SPEED_MIN / SPEED_MAX would be dead on
+        // arrival for the same reason the FCU's pair was, and nothing
+        // else in the suite would notice. Walks every unit module the way
+        // ddcw-display-units.spec.js does, so a third unit is covered on
+        // the day its file lands.
+        const dir = path.join(__dirname, '..', 'html', 'scripts');
+        const units = fs.readdirSync(dir).filter((f) => /^ddcw-.*-unit\.js$/.test(f));
+        expect(units.length, 'no unit modules found — the walk went vacuous')
+            .toBeGreaterThanOrEqual(2);
+
+        for (const file of units) {
+            const src = fs.readFileSync(path.join(dir, file), 'utf8');
+            const code = src.split('\n').filter((l) => !/^\s*(\/\/|\*)/.test(l));
+            // SPEED_DEF is live (create() → the shell's speedDefault) and
+            // stays; only the BOUNDS are banned.
+            const mirror = code.filter((l) => /\bSPEED_(MIN|MAX)\b/.test(l));
+            expect(mirror,
+                `${file} declares a sim-clock bounds mirror nothing can read`
+                + ` — the range belongs to the slider (#234): ${mirror.join(' / ')}`)
+                .toHaveLength(0);
+
+            // Anti-vacuity for the regex: the live neighbour must still be
+            // there, so a rename cannot turn this row into a no-op.
+            expect(code.some((l) => /\bSPEED_DEF\b/.test(l)),
+                `${file}: SPEED_DEF missing — this guard's regex may be stale`)
+                .toBe(true);
+        }
+    });
+});

@@ -3000,6 +3000,16 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                         </label>
                     </div>
 
+                    <!-- THIS SLIDER OWNS THE SIM-CLOCK RANGE (codebase-issues
+                         #234) — the AHU module says as much beside its own
+                         sim-clock prefs, and declares no SPEED_MIN /
+                         SPEED_MAX, because host.setSpeed() clamps nothing and
+                         a mirror would be read by no one. ⚠ UNLIKE the
+                         outdoor-air range below, this one is NOT the FCU's to
+                         differ from: a reader hopping between the two
+                         workbench pages must meet the same clock, so the range
+                         is held equal to the FCU's by a spec row
+                         (ddc-workbench-fcu.spec.js). Move both or neither. -->
                     <div class="slider-field">
                         <div class="slider-head">
                             <label for="ahu-speed-slider">Sim speed (× real time)</label>
