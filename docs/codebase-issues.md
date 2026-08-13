@@ -12191,7 +12191,7 @@ button's negative right margin — so a retune of the hit area that
 leaves the grid alone reddens instead of quietly re-opening the
 scrollbar at some widths and not others.
 
-### 267. The AHU page's RENDER SCALE comment states a width the graphic never renders at, and reads its own breakpoint backwards *(noticed 2026-08-03, PR #473's lane report — pre-existing, measured, comment-only defect)*
+### 267. The AHU page's RENDER SCALE comment states a width the graphic never renders at, and reads its own breakpoint backwards *(noticed 2026-08-03, PR #473's lane report — pre-existing, measured, comment-only defect; **RESOLVED 2026-08-12** — comment rewritten from a re-verified measurement)*
 
 `html/simulators/ddc-workbench.html:83-96` carries a ⚠ block that is
 the page's authority on how big the drawing renders and therefore on
@@ -12235,6 +12235,19 @@ Measured on the built page at `main` @ `6fe27ec` (headless Chromium,
    state; the two-column state is the squeezed one, at every width.
    What the breakpoint actually does is *abandon* two-column before the
    squeeze gets worse.
+
+**RESOLVED 2026-08-12 (the clear-the-decks queue).** The measurement
+was re-taken on the day's build before rewriting — 748 at 1180/1400/
+1920 (two-column), 780 at 1000, 684 at 800, 291 at 375 — identical to
+this entry's 2026-08-03 table, so the rewrite states both dates. The
+⚠ block now: names the mockup-vs-page chain difference outright (with
+the re-measure-on-the-page-that-inherits lesson and a pointer here),
+gives the two-column state its real numbers (748 → 0.8905 px/unit →
+7.12 / 8.01 / 9.80) with the grid column named as the governor, keeps
+the max-width's true jurisdiction (stacked only), and reads the
+breakpoint the right way around — the 780 lives BELOW it. The
+do-not-widen instructions survive with corrected reasoning; the
+.ahu-screen padding paragraph was never in dispute and is untouched.
 
 **Nothing renders differently because of this** — the layout is as
 designed and the owner has approved it on the preview. The damage is
