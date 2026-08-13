@@ -1480,6 +1480,16 @@ const DDCWFcuUnit = (function () {
         // The rail's min/max/step attributes re-express here too: the
         // shell's own unitschange repaint re-mirrors the input VALUES, but
         // attributes are wireControls' to keep.
+        //
+        // The rail hint is CLEARED here, not re-expressed (#276). Its text
+        // carries a unit SUFFIX, so a flip while one is up would strand
+        // "65.0–85.0 °F" on screen — and in the accessibility tree, the
+        // line is role="status" — until the 6 s auto-clear fired. Clearing
+        // beats re-rendering because the message is a past-tense REPORT of
+        // an edit that just happened ("held at the limit"), not a readout
+        // of current state: only its range clause is regenerable, and
+        // repainting the sentence into a live region would announce a
+        // clamp nobody performed. This just brings the auto-clear forward.
         document.addEventListener('unitschange', function () {
             if (pl.override['space-temp'].active) {
                 ovrInput.value = toDisplayTemp(pl.override['space-temp'].value).toFixed(1);
@@ -1487,6 +1497,7 @@ const DDCWFcuUnit = (function () {
             PARAM_POINTS.forEach(function (pp) {
                 railRangeAttrs(rosterPoint(pp.id), out[pp.outKey]);
             });
+            railHint('');
         });
 
         // ── the param rail — the operator-adjustable surface ───────────
@@ -1543,7 +1554,8 @@ const DDCWFcuUnit = (function () {
         // signature-aware: re-announcing the SAME clamp needs a genuine
         // DOM change, so an identical message blanks first and lands on
         // a beat. Auto-clears so a stale range note cannot sit under
-        // later edits.
+        // later edits — and the unitschange listener above clears it
+        // early, since the text's unit suffix cannot survive a flip.
         let railHintTimer = null;
         function railHint(msg) {
             const el = out.paramsHint;

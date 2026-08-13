@@ -1731,6 +1731,31 @@ test.describe('AHU workbench page: the parameter rail adjusts the running progra
         expect(await chipText(page, 'Cool SP')).toContain('85.0');
     });
 
+    test('a units flip clears the rail hint, suffix and all (#276)', async ({ page }) => {
+        await open(page);
+        // #ahu-params-hint is role="status" aria-live="polite" and the
+        // hint text carries a unit SUFFIX. Before the fix a flip while a
+        // hint was up stranded the old suffix on screen — and in the
+        // accessibility tree — until the 6 s auto-clear fired.
+        const cool = page.locator('#ahu-p-cool-sp');
+        await cool.click();
+        await cool.fill('200');
+        await cool.press('Enter');
+        await settle(page, 300);
+        // Anti-vacuity: the hint is UP, in US units, BEFORE the flip. A
+        // row that only checked the after-state would pass on a page that
+        // never announced anything.
+        await expect(page.locator('#ahu-params-hint')).toContainText('65.0–85.0 °F');
+        await page.locator('.units-btn').filter({ hasText: 'Metric' }).click();
+        await settle(page, 200);
+        // Read ONCE, no retry window. The clear is synchronous inside the
+        // unitschange handler, so a polling assertion would only mask a
+        // late write — and given long enough it would race the 6 s
+        // auto-clear into a false pass.
+        expect(await page.locator('#ahu-params-hint').textContent(),
+            'the stale-unit sentence is gone, not re-expressed').toBe('');
+    });
+
     test('boot values sit inside the declared rails', async ({ page }) => {
         await open(page);
         // A shipped literal outside its own roster range would clamp on

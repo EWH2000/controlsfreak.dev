@@ -1741,6 +1741,32 @@ test.describe('DDC Workbench — the parameter rail adjusts the running program'
         await page.waitForTimeout(300);
         expect(await cool.inputValue(), 'canonical held at the limit').toBe('85.0');
     });
+
+    test('a units flip clears the rail hint, suffix and all (#276)', async ({ page }) => {
+        // Twin of the AHU page's row — the rail logic is deliberately
+        // duplicated per the unit-selector precedent, so the clear needs
+        // its own pin HERE. #fcu-params-hint is role="status"
+        // aria-live="polite" and the hint text carries a unit SUFFIX;
+        // before the fix a flip while a hint was up stranded the old
+        // suffix on screen, and in the accessibility tree, until the 6 s
+        // auto-clear fired.
+        await page.goto(URL);
+        await page.waitForTimeout(400);
+        const cool = page.locator('#fcu-p-cool-sp');
+        await cool.click();
+        await cool.fill('200');
+        await cool.press('Enter');
+        await page.waitForTimeout(300);
+        // Anti-vacuity: the hint is UP, in US units, BEFORE the flip.
+        await expect(page.locator('#fcu-params-hint')).toContainText('65.0–85.0 °F');
+        await page.locator('.units-btn').filter({ hasText: 'Metric' }).click();
+        await page.waitForTimeout(200);
+        // Read ONCE, no retry window — the clear is synchronous inside the
+        // unitschange handler, and a polling assertion given long enough
+        // would race the 6 s auto-clear into a false pass.
+        expect(await page.locator('#fcu-params-hint').textContent(),
+            'the stale-unit sentence is gone, not re-expressed').toBe('');
+    });
 });
 
 test.describe('DDC Workbench — rail ink clears the AA floor in both themes', () => {
