@@ -1331,7 +1331,7 @@ details.tool-preamble > summary::after {
     letter-spacing: 0.04em;
 }
 details.tool-preamble[open] > summary::after { content: "▾ less"; }
-details.tool-preamble > summary:hover { color: var(--text); }
+details.tool-preamble > summary:hover { color: var(--text-bright); }
 details.tool-preamble > .preamble-rest {
     font-family: var(--mono);
     font-size: 0.78rem;
