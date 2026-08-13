@@ -866,6 +866,13 @@ one pillar, every page cross-linked and every spoke pointing back. Next
 BACnet work (BACnet/SC, deeper alarm/event, segmentation) is fresh
 scope, not part of this arc; re-pull GSC mid-Aug 2026 (per
 `seo-growth-plan-2026-07`) to see what the cluster earned.
+*(Pulled + read 2026-08-12, off the owner's 2026-08-07 export: the
+cluster's TOOLS are the site's engine — ~37 of the site's 60 total
+clicks at positions 5–12, `bacnet-objects` the #1 page site-wide
+(12 clicks / 494 impressions / pos 11.7); the five lessons earned
+0 clicks at positions mostly 15–62; the hub is near-invisible
+(52 impressions, pos 62.8). Full read banked at the nav-redesign
+entry's 2026-08-12 disposition below.)*
 
 ### Forced-air buildout — the air-side chapter *(opened 2026-07-09, completed 2026-07-11 — all six shipped)*
 
@@ -6569,7 +6576,9 @@ second-merging lane, as planned; the sim now carries the "Part of"
 back-link and all five core spokes point at the pillar.)*
 Hub count is now **four**, which half-arms the topic-primary-nav
 revisit trigger ("~4 hubs AND the mid-Aug 2026 GSC pull") — the GSC
-pull is now the sole remaining condition.
+pull is now the sole remaining condition. *(Read 2026-08-12: does
+not fire — trigger DISARMED, re-pull ~late Oct 2026; the full read
+sits at the nav-redesign entry's disposition.)*
 
 *Verification round (2026-07-16).* An independent multi-agent
 verification (engine re-derivation, source-PDF table audit, 6×6
@@ -6913,6 +6922,23 @@ the mid-Aug 2026 GSC pull shows the pillars earning rank** (ties
 into `seo-growth-plan-2026-07`). *(Half-armed 2026-07-18 — the
 hub-count half fired when `/refrigeration/` made it four; the GSC
 half is now the sole remaining condition.)*
+*(GSC half READ 2026-08-12, off the owner's 2026-08-07 export,
+window ≈ 2026-05-12 → 2026-08-05: the pillars are NOT earning
+rank — 0 clicks / 55 impressions across all four, `/bacnet/` at
+position 62.8, `/refrigeration/` absent from the export entirely —
+while the BACnet lookup TOOLS carry ~60 % of all site clicks at
+positions 5–12. **Owner ruling: trigger DISARMED, no nav rewrite.**
+Caveat carried with the ruling: three of the four pillars were 3–8
+weeks old at window end, so this reads "not earning rank YET," not
+proof of failure — re-pull ~late Oct 2026 when they have age. The
+same read surfaced the site's largest unmet search demand: the
+valve-Cv family — ~930 impressions on `valve-cv` (both URL forms)
+stuck at positions 66–76, several hundred more across "valve cv
+calculator"-family queries, and "valve authority" at 124
+impressions / position 51 — recorded as content-selection INPUT,
+not a driver, per the priority directive. One more oddity worth
+keeping: the superheat/subcooling PRACTICE quiz outranks its own
+lesson — position 8.9 at 10 % CTR against the lesson's 42.3.)*
 `[future: topic-primary nav rewrite]`
 
 **Deferred — multi-membership "core tool" taxonomy (retrigger,

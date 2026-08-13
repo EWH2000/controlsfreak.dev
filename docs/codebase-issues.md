@@ -12944,6 +12944,15 @@ unit graphic's own wells eventually carry the hold, or override state
 stays off the drawing on purpose — plus whatever Q1 production-
 convention detail the marker's register needs at that point.
 
+> **Q5 ANSWERED early (2026-08-12, the clear-the-decks decision
+> batch)** — the owner ruled without waiting for the T-C lane:
+> **override state stays off the drawing on purpose.** The unit
+> graphic's wells never carry the hold; the statusbar chip marker
+> (the ruled `@8` tag) plus the permanent summary line own the whole
+> indication, matching his production-graphics convention. What the
+> T-C lane still owes is only the Q1 register detail of the marker
+> itself.
+
 ### 284. The FCU workbench has no observable outdoor-air truth — weather behavior is untestable from the DOM *(noticed 2026-08-10, the #278 fix lane — LOW, testability floor, deliberate design)*
 
 The FCU roster has no `oat` point (outdoor air is a sim knob there,
@@ -13586,6 +13595,11 @@ open, and when it settles, re-run `place()` against the trigger's new
 position instead of closing — a timer-free version of the same
 "whose scroll is this" question the arming grace already answers for
 focus. Owner's call whether the reach justifies it.
+
+> **Owner reviewed 2026-08-12 (the clear-the-decks decision batch):
+> log-don't-fix STANDS.** The reach doesn't justify a component
+> change; *re-place-on-settle* stays the recorded shape if it ever
+> earns one.
 
 ### 302. `details.tool-preamble > summary:hover` is a no-op since the #290 promotion *(noticed 2026-08-12, the #290 lane — cosmetic, small design call)*
 
