@@ -13384,7 +13384,7 @@ family as the anti-vacuity probes the build guards carry
 (`flowGeometryLive`'s exempt-path check, the contrast `ALLOWLIST`
 self-test) — negatives need a way to prove they still bite.
 
-### 292. ddcw-shell.js's header `Tests:` list has drifted *(noticed 2026-08-11, the #283 T-A lane — docs drift, MINOR)*
+### 292. ddcw-shell.js's header `Tests:` list has drifted *(noticed 2026-08-11, the #283 T-A lane — docs drift, MINOR; **RESOLVED 2026-08-12** — both specs added)*
 
 The shell header names `ddcw-shell.spec.js` /
 `ddc-workbench-fcu.spec.js` / `ddc-workbench-fcu-priority.spec.js`;
@@ -13393,6 +13393,17 @@ The shell header names `ddcw-shell.spec.js` /
 AHU spec now pins the off-program window's grouped format directly.
 Comment-only, but the shell is a live-page script, so it rides the
 next PR that touches `ddcw-shell.js` rather than shipping alone.
+
+**RESOLVED 2026-08-12 (the clear-the-decks queue).** Both named specs
+added to the header's `Tests:` list with one line each on what they
+pin. The "rides the next PR" condition was overtaken by the owner's
+overnight clearance — no queued lane touches the shell, and the
+close-out's batched version bump covers the cache question a solo
+comment-only ship would otherwise raise. `ddc-workbench-session.
+spec.js` was considered and deliberately NOT added: the session
+machinery it pins lives in `ddcw-session.js`, which has its own
+header — listing it here would re-create the drift this entry is
+about, one file over.
 
 ### 293. The blown-fuse flash cancels itself — `refresh()` wipes the class the drift tick then never restores *(noticed 2026-08-11, the #289 lane — cosmetic, log-don't-fix)*
 

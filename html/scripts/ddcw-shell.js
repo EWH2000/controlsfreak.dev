@@ -236,6 +236,9 @@
 // engine-direct (bare-vm loadability, formatPointValue's conv paths,
 // the grep proof); tests/ddc-workbench-fcu.spec.js +
 // tests/ddc-workbench-fcu-priority.spec.js drive the built page;
+// tests/ddc-workbench-fcu-safeties.spec.js drives shell surfaces on
+// the safeties program, and tests/ddc-workbench-ahu-page.spec.js
+// pins the shell-owned off-program window's grouped format directly;
 // tests/point-arbitration.spec.js proves the arbitration core
 // engine-direct.
 // ──────────────────────────────────────────────────────────────────────
