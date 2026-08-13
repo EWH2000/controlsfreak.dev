@@ -14490,3 +14490,60 @@ re-introduces a `.widget-try` anchor. That is now a convention rather
 than a guarantee — there is no build guard on it, and the four
 conversions were each caught by a hand-run grep, so re-run the one
 above before deleting.
+
+### 307. The FCU register key's sample wells are hand-authored literals of a computed state *(noticed 2026-08-12, the #219 lane — the mechanism behind that entry's live half; structural, LOW)*
+
+What made half of #219 a LIVE defect rather than a no-JS nicety: the
+#298 register key's three sample wells carry no `id`, so `renderUnit`
+never repaints them — they are static prose that HAPPENS to state a
+computed value, and when the arrival state moved (#205), they sat on
+screen printing `100%` / `-19.4 °F` beside a live mirror reading
+`60% · ON` / `-17.5 °F`. The #219 fix trued the literals and pinned
+them with a spec, so today they cannot drift silently — but the CLASS
+remains: a legend whose samples are hand-authored copies of what the
+instrument computes will desync on the next arrival-state change,
+caught by a spec instead of prevented by design. The structural fix,
+either flavor: give the wells ids and let `renderUnit` write them, or
+have the key read its samples from the mirror at paint time. The
+generalizable rule from the lane, worth keeping: *"the boot tick
+repaints it" holds only for nodes `renderUnit` actually writes.*
+Log-don't-fix until the register key is next open.
+
+### 308. Two opposite documented conventions for deviating focus rings *(noticed 2026-08-12, the #197 lane — convention conflict, needs an OWNER RULING)*
+
+#197 moved `.fbe-palette-btn:focus-visible` INTO the consolidated
+FOCUS INDICATORS block with its deviating declaration preserved
+(1px offset, load-bearing for the tight palette rail — the moved rule
+carries a comment saying so). But `a.ddcw-unit-link:focus-visible`
+(~styles.css:5071) sits OUTSIDE the block behind a comment stating
+the opposite idiom outright: *":focus-visible kept beside the
+component rather than in the consolidated FOCUS INDICATORS block,
+because the ring deviates."* Its ring deviates (inset -2px); the
+palette button's deviates too, and #197 was filed to move it in.
+Both cannot be the convention. Either `a.ddcw-unit-link` moves in
+with its declaration preserved (the #197 shape), or CLAUDE.md's
+focus-indicators bullet gains an explicit "a deviating ring stays
+beside its component" carve-out and the palette rule moves back.
+The `.ddcw-sensor` descendant-targeting glyph arms are a genuinely
+separate category (long written rationale) and are not part of this
+call. After #197 there is no *undocumented* stray left — this entry
+is the one documented contradiction.
+
+### 309. The `.tool-card` fadeUp stagger's comment misreads its own selector — `:nth-of-type` counts elements, not classes *(noticed 2026-08-12, the #178 lane — cosmetic, site-wide comment/behavior mismatch)*
+
+`styles.css`'s entrance-stagger block (`.tool-card:nth-of-type(1)` …
+`(4)` with stepped `animation-delay`s) carries a comment claiming
+`:nth-of-type` "counts tool-card siblings independently of a leading
+`.section-header` div." It does not — `:nth-of-type` counts DIV
+SIBLINGS of any class, so every interleaved `div.section-header`
+shifts which cards match. Measured on pid-basics during #178: before
+that fix one of four cards animated (the divider ate an index); after,
+two of four — both states arbitrary, neither the four-step stagger
+the comment describes, and the same applies on any page whose `main`
+interleaves `div.section-header` between cards (most of them). Purely
+cosmetic — a 0.5s entrance fade — so the stakes are the false comment,
+not the render. Options when something next touches the block: fix
+the comment to describe reality, or key the stagger on a class-aware
+mechanism (`:nth-child(... of .tool-card)` has the same type-blind
+problem; a real fix probably wants explicit per-page classes or
+accepting the quirk in writing). Log-don't-fix.
