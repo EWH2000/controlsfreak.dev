@@ -13586,7 +13586,7 @@ still cannot reach paper unless the reader prints from that tab. Not
 a #507 regression; recorded so the shim's "paper shows the page"
 contract is understood as tab-scoped.
 
-### 287. details-print.js: two minor hardening notes *(noticed 2026-08-10, the pilot verification — MINOR)*
+### 287. details-print.js: two minor hardening notes *(noticed 2026-08-10, the pilot verification — MINOR; **RESOLVED 2026-08-13 · PR #563** — both reproduced at HEAD first; note (2) was the more serious of the two)*
 
 (1) `details-print.js` resets its `forcedOpen` set at every
 `beforeprint`, so correctness silently assumes browsers always pair
@@ -13598,6 +13598,59 @@ duplicate push instead of a leaked-open set. (2)
 pageerror delivery is async — the guard cannot flake, but it can
 pass vacuously. Both one-liners; ride whichever PR next touches the
 shim.
+
+**RESOLVED 2026-08-13 (PR #563). Both notes were right, and both were
+reproduced at HEAD before anything was changed** — the entry was
+written from a reading of the code, so the first job was to check the
+reading.
+
+**(1) The unpaired `beforeprint`.** The mechanism is exactly as filed,
+and the leak is total rather than partial. On the second `beforeprint`
+every disclosure the shim opened already reads `open`, so the scan
+`continue`s past all of them and pushes nothing — while the reset has
+just emptied the set. `afterprint` then iterates an empty array.
+Measured on `ddc-workbench` (beforeprint, beforeprint, afterprint): all
+three `prose-fold`s **stayed open**, permanently, since nothing else
+ever closes them. The fix is the entry's own prescription — delete the
+reset — and it is behaviour-preserving on every paired print, because
+`afterprint` clears the set and so it is already empty on entry to the
+next `beforeprint`. The deleted line was a no-op on the common path and
+a leak on the uncommon one. `afterprint` is now the **only** place the
+set is emptied, and a comment at the declaration says so: the absence
+of a reset reads like an oversight, and this is the kind of line a
+later editor tidies back in.
+
+**(2) The vacuous guard — worse than "can pass vacuously" implies, and
+falsified in tree rather than argued.** With a top-level `throw` added
+to `details-print.js`, so the listeners never bound and the shim was
+**entirely dead**, the old guard still **passed**. The async-delivery
+mechanism the entry names is real but is not the load-bearing one: the
+listener is attached *after* `page.goto`, so a load-time `pageerror`
+is missed outright, and an empty array is equally what a script that
+404'd, never parsed, or bound nothing produces. The neighbouring
+assertion only proves the `<script>` **tag** is in the DOM. So the
+guard could not distinguish "inert because there is nothing to do"
+from "inert because it is not running" — which is the whole claim its
+test title makes.
+
+The replacement asserts a **positive** signal: it appends a probe
+`<details>` at runtime and checks the site-wide listeners open it and
+restore it. That is deliberately the file header's own *34th page grows
+a disclosure* scenario — the case the shim is site-wide **for** — and
+it fails on the same dead script the old guard passed. The async half
+is closed too, by a trailing round trip that flushes `pageerror`
+delivery before the assertion (CDP messages arrive in order on one
+session, so a response sent later cannot precede an exception raised
+earlier) and doubles as the probe's cleanup check.
+
+A regression arm for (1) shipped alongside — `an unpaired second
+beforeprint does not strand the disclosures open` — which fails at HEAD
+and passes after. Suite: 1208 passed, 1 skipped, 0 failed.
+
+**No version bump in that PR, deliberately.** `details-print.js` is a
+site-wide live script, so the cache-busting bump is genuinely owed
+(#84); it was left to the merge captain's batch rather than having the
+lane race other open lanes for the same line in `package.json`.
 
 ### 288. Fullscreen's applyInert would disable gloss panels on a future gloss-marked tool page *(noticed 2026-08-10, the gloss verification — LATENT, out of pilot scope; **RESOLVED 2026-08-12 · PR #558** — fixed while still latent; the entry's diagnosis held on both counts, measurements below)*
 
