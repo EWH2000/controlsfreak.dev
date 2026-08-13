@@ -298,13 +298,52 @@
 // the observation here; do not treat it as a regression. Two data points
 // cannot characterise noise on a machine this contended.
 //
-// ONE ROW HAS ALREADY TRIPPED THAT PROTOCOL AND IS DELIBERATELY NOT WIDENED:
-// `ddc-workbench-fcu-unit`. Its observations sit on the BASELINE row itself
-// rather than here, because that is where a reader holding a red number is
-// looking; codebase-issues #214 carries the same record. Read that comment
-// before acting on a drift there — the row's baseline is not trusted, and
-// widening its floor without a measurement session would hide the open
-// question rather than settle it.
+// ONE ROW TRIPPED THAT PROTOCOL AND CARRIED AN OPEN QUESTION FOR 17 DAYS:
+// `ddc-workbench-fcu-unit` (codebase-issues #214). The 2026-08-12 session
+// below answered it and re-pinned the row; the KNOWN-UNTRUSTWORTHY marker
+// that sat on its BASELINE row is retired with it. Kept as the worked
+// example of the protocol's two halves running in the intended order —
+// record first (2026-07-26), measure before widening (2026-08-12) — and
+// the measurement said RE-PIN, NOT WIDEN.
+//
+// FOUR ROWS RE-BASELINED 2026-08-12 — the #214/#222 measurement session.
+// Three full 6-rep runs, back to back, on the SAME box in the state the
+// 2026-07-24 capture never had: genuinely idle (load ~0.8, no agent
+// lanes), static server on :9401, --only the three workbench rows (the
+// control always runs). Per-run reported values (the CPU-median rep):
+//
+//     row                l/f                fps               Δ control
+//     control            4.87/1.98/3.45     59.7/60.2/60.3    —
+//     ddc fcu unit       2.19/5.09/3.56     59.4/60.1/59.9    126.8/113.0/122.1
+//     ddc fcu wiresheet  4.73/5.02/4.97     41.9/44.5/51.7     40.9/ 41.2/ 49.5
+//     ddc ahu unit       3.54/2.90/2.81     60.4/59.7/59.5    179.9/170.6/152.0
+//
+// WHAT THIS SETTLED. #214's precondition question is ANSWERED: there never
+// was a page-state difference. The control and the FCU Unit row produce
+// statistically indistinguishable l/f distributions (means 3.43 and 3.61,
+// both swinging ±1.5), because at 2-5 l/f the reported number is ONE rep's
+// 2 s window and a single gutter burst inside it moves the value by ±1.5.
+// The "inverted ordering" (2.23 under the control's 2.87) was two draws
+// from overlapping distributions; the old flagging runs (4.34 / 4.67) were
+// the same distribution sampled under load.
+//
+// NO TOLERANCE WIDENED — RE-PINNED INSTEAD, and the arithmetic is the
+// justification: against the fresh three-run means, every deviation on
+// every measured row sits inside the ±2.0 floor (worst: control 1.45, fcu
+// unit 1.48). The old pins were one 3-rep session's medians that happened
+// to sit at the edges of their distributions; the floor was never the
+// problem. This is not the "quiet nudge" the note above forbids — it is
+// the protocol's own measurement session, recorded here in full. deltaTask
+// moved with the pages (fcu unit 89.4 → 120.6, wiresheet 18.8 → 43.9 —
+// session persistence, the COV work and the sheet-note folds all landed on
+// these pages since 07-24), inside ±110 throughout.
+//
+// The wiresheet's l/f (4.73/5.02/4.97) sits tight in the top of its
+// documented 2.09-5.23 unstable range; its own 4.0 floor stands. Its fps
+// read 41.9/44.5/51.7 against the old printed 53.1 — fps carries no
+// tolerance, but worth an eye on the next natural run. The AHU Unit row
+// gets its FIRST pin from this session; the AHU wiresheet row was not
+// measured and stays unpinned. Full record: codebase-issues #214/#222.
 //
 // Original capture (kept for provenance) was on `command.home.arpa` — Fedora
 // 44, and NOT an idle
@@ -549,34 +588,15 @@ const MANIFEST = [
 // ---------------------------------------------------------------------------
 
 const BASELINE = {
-    'signal-scaling':                { deltaTask: 0.0, fps: 59.7, layoutsPerFrame: 2.87 },
-    // KNOWN-UNTRUSTWORTHY BASELINE — a DRIFT on this row means nothing until
-    // the question below is answered, so do not read one as a regression
-    // (codebase-issues #214). Two observations, recorded here because the
-    // protocol says they belong next to the row they haunt:
-    //
-    //   1. 2.23 came from capture samples 2.20 / 2.44 / 1.87, and the row has
-    //      flagged over-tolerance on BOTH runs since — 4.34 and 4.67
-    //      layouts/frame.
-    //   2. Noise at this magnitude explains the SIZE of that gap and not its
-    //      ORDERING: the recorded 2.23 sits BELOW the control's 2.87, i.e.
-    //      the most animation-heavy page on the site doing less structural
-    //      work per frame than a plain calculator, while both later runs sit
-    //      above it.
-    //
-    // A missing idle gate is RULED OUT — the capture was taken at the #426
-    // idle-gate merge, not before it. The remaining candidate is a page-state
-    // precondition difference between the capture and the later runs, and
-    // WHICH precondition is unresolved and open.
-    //
-    // NOT WIDENED, DELIBERATELY. The protocol in the header has two halves —
-    // widen the floor AND record the observation — and the widen half needs a
-    // measurement session (three fresh runs, characterised machine) that the
-    // pass writing this did not do. Widening a tolerance around a baseline
-    // nobody trusts hides the question instead of answering it, which is the
-    // decay the RE-BASELINING note warns about. So the observation lands and
-    // the numbers stay exactly where they were.
-    'ddc-workbench-fcu-unit':        { deltaTask: 89.4, fps: 58.6, layoutsPerFrame: 2.23 },
+    // Re-pinned 2026-08-12 (the #214/#222 session — FOUR ROWS RE-BASELINED
+    // in the header).
+    'signal-scaling':                { deltaTask: 0.0, fps: 60.1, layoutsPerFrame: 3.43 },
+    // Re-pinned 2026-08-12, same session. The 17-day KNOWN-UNTRUSTWORTHY
+    // marker that lived here is RESOLVED: the old 2.23 was a low-edge
+    // sample of a ±1.5 swing every low-magnitude row shares — sampling
+    // noise, not a page-state artefact. Answer + full numbers in the
+    // header's FOUR ROWS RE-BASELINED block and codebase-issues #214.
+    'ddc-workbench-fcu-unit':        { deltaTask: 120.6, fps: 59.8, layoutsPerFrame: 3.61 },
     // Two rows carry their own wider absolute floor. Both animate
     // CONVERGENTLY and event-driven rather than steady-state, so their
     // per-frame layout count is genuinely unstable run to run — not noise in
@@ -586,7 +606,12 @@ const BASELINE = {
     // Widening the GLOBAL floor to cover them would blind every steady-state
     // row, which is where this column earns its keep. If either settles down
     // later, tighten it back and say so here.
-    'ddc-workbench-fcu-wiresheet':   { deltaTask: 18.8, fps: 53.1, layoutsPerFrame: 3.43, tolLayoutsAbs: 4.0 },
+    // Re-pinned 2026-08-12: its three runs sat tight in the top of the
+    // documented range above (4.73/5.02/4.97), so the wider floor stays.
+    'ddc-workbench-fcu-wiresheet':   { deltaTask: 43.9, fps: 46.0, layoutsPerFrame: 4.91, tolLayoutsAbs: 4.0 },
+    // First pin 2026-08-12 (the row predates it but had never been
+    // baselined; the #214/#222 session measured it alongside the FCU pair).
+    'ddc-workbench-ahu-unit':        { deltaTask: 167.5, fps: 59.9, layoutsPerFrame: 3.08 },
     'refrigerant-loop':              { deltaTask: 97.3, fps: 47.3, layoutsPerFrame: 4.44 },
     'function-block-editor':         { deltaTask: -35.2, fps: 46.8, layoutsPerFrame: 3.10, tolLayoutsAbs: 4.0 },
     // Re-baselined 2026-07-25 for the #202 education point-table sweep —
