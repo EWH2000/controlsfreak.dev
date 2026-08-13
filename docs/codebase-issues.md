@@ -13445,7 +13445,7 @@ pageerror delivery is async — the guard cannot flake, but it can
 pass vacuously. Both one-liners; ride whichever PR next touches the
 shim.
 
-### 288. Fullscreen's applyInert would disable gloss panels on a future gloss-marked tool page *(noticed 2026-08-10, the gloss verification — LATENT, out of pilot scope)*
+### 288. Fullscreen's applyInert would disable gloss panels on a future gloss-marked tool page *(noticed 2026-08-10, the gloss verification — LATENT, out of pilot scope; **RESOLVED 2026-08-12 · PR #558** — fixed while still latent; the entry's diagnosis held on both counts, measurements below)*
 
 `fullscreen-toggle.js`'s `applyInert` inerts all body-level siblings
 except `#palette`; `.gloss-tip` panels render at body end, so on a
@@ -13454,6 +13454,49 @@ inert — `aria-describedby` still announces, but pointer travel onto
 the panel (the 1.4.13 hoverable grace) dies. Nothing breaks today
 (the pilot page has no fullscreen target). Add a palette-style
 exemption when glosses reach tool/simulator pages.
+
+**RESOLVED 2026-08-12 (PR #558), still latent.** `applyInert()` now
+skips `.gloss-tip`, one line after the `#palette` skip and for the same
+reason — a second overlay that layers above the z-300 card
+(`.gloss-tip` is z-index 900) and whose trigger sits in the prose
+INSIDE the card, so the panel is live content rather than covered
+chrome. Like the palette it is never tagged `data-fs-inert`, which is
+what makes both inverse paths free: `clearInert()` has nothing to undo,
+and `search.js`'s palette-close arm — which holds `inert` only on
+`data-fs-inert` carriers — restores it. Both were measured, not
+assumed: 0 leftover attributes after exit and after three cycles;
+palette open over a fullscreen card leaves 3/3 panels inert (correct,
+it is `aria-modal`) and 0 tagged, and palette close returns all three
+to live with the nav still contained.
+
+**The entry was right about the mechanism, and about its limit.**
+Measured on the built site with the pilot page's card fullscreened,
+pointer travelling from the trigger onto the open panel: **before**, 0
+`mouseover` events reached the panel, `elementFromPoint` at the panel's
+own centre resolved elsewhere, and the panel closed once the 200 ms
+grace elapsed — permanently, since nothing reopens it; **after**, 1
+`mouseover`, `elementFromPoint` resolves into the panel, and it
+survives 500 ms of dwell. The cause is that Chromium's `inert` is not
+hit-testable, so the pointer can never land where the grace period
+expects it. And the entry's "`aria-describedby` still announces" was
+confirmed rather than merely inherited: the accessible DESCRIPTION is
+byte-identical inert and not (CDP `Accessibility.getPartialAXTree`,
+`ignored: false` both ways), so this was only ever the pointer half —
+never the screen-reader half the `gloss.js` header calls the whole
+no-JS story.
+
+Covered by three arms in `tests/fullscreen-toggle.spec.js`. Since no
+live page carries both halves, they run on the gloss pilot page — real
+panels, real runtime, real triggers — and supply fullscreen through
+`window.Fullscreen.toggle()`, the idiom that file's `#106` arm already
+uses. Two of the three fail with the skip removed; the third is a
+boundary against the wrong reading of #288 (that the panels should be
+actively un-inerted, which would trample a page's own `inert`) and
+passes either way by design. The arms assert hit-testability rather
+than choreographing the gesture — that is what `inert` removes and what
+the grace needs, and it is deterministic where the gesture needs
+`gloss.spec.js`'s whole `park()` apparatus. When a gloss-marked tool
+page ships, delete the `toggle()` call and point them at its button.
 
 ### 289. A blown fuse and a running fuse render the same green on the wiring sim *(noticed 2026-08-10, the #280 lane — **CLOSED 2026-08-11 · NOT A DEFECT · PR #517**; the entry's premise was DISPROVEN before any fix shipped — correction block at the end)*
 
