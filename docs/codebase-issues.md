@@ -14044,7 +14044,7 @@ focus. Owner's call whether the reach justifies it.
 > change; *re-place-on-settle* stays the recorded shape if it ever
 > earns one.
 
-### 302. `details.tool-preamble > summary:hover` is a no-op since the #290 promotion *(noticed 2026-08-12, the #290 lane — cosmetic, small design call)*
+### 302. `details.tool-preamble > summary:hover` is a no-op since the #290 promotion *(noticed 2026-08-12, the #290 lane — cosmetic, small design call; **RESOLVED 2026-08-12 · PR #552** — owner ruled the `--text-bright` step; the entry's third option, letting the `▸ more` affordance carry hover alone, turned out to describe a thing the file does not do — see the resolution block)*
 
 The hover rule (styles.css, the tool-preamble block) lifts the
 summary's ink to `var(--text)` — but PR #530 moved the summary's
@@ -14053,6 +14053,42 @@ the disclosure wants a different hover cue (a step to
 `--text-bright`, or letting the `▸ more` affordance carry hover
 alone) or the rule should go. Harmless until decided; whichever
 lane next touches the preamble block should carry the call.
+
+**RESOLVED 2026-08-12 · PR #552.** Owner ruled (2026-08-12) for the
+first option: the hover steps to `var(--text-bright)`. One token, one
+rule — `html/styles.css:1334` — keeping pointer feedback on an
+interactive element rather than deleting the rule.
+
+Three things the lane verified that the entry left open:
+
+- **The no-op spans one rule, not two.** `git log -L 1316,1340` on the
+  block pins the collision to commit `8d4f785` (the #290 promotion,
+  PR #530), which lifted the resting ink `--text-dim` → `--text` and
+  left the `:hover` line untouched at `--text`. Nothing else in the
+  block collided.
+- **The entry's second option was not available.** "Letting the
+  `▸ more` affordance carry hover alone" assumes the affordance
+  responds to hover — it does not. `details.tool-preamble >
+  summary::after` declares its own `color: var(--accent)`, and there
+  is no `:hover::after` rule anywhere in `styles.css`, so the summary's
+  hover cannot reach it and the affordance has no hover state of its
+  own to lean on. Taking that option would have shipped a disclosure
+  with no hover feedback at all, which is the defect this entry opened
+  on. Worth recording because the option read plausible from the
+  markup.
+- **The ruled fix lands the block on an idiom the file already runs.**
+  `details.prose-fold > summary:hover` (`styles.css:1394`) steps to
+  `--text-bright` while its `::before` marker keeps `--accent` — now
+  byte-for-byte the same shape as the preamble's. The third family
+  member, `.pid-spoiler > summary:hover` (`:2525`), hovers to
+  `--accent` instead; that difference is deliberate (a titled filled
+  box, not a quiet caption) and was left alone.
+
+`--text-bright` is defined in the dark `:root` (`:129`), the light
+block (`:269`) and the `@media print` block (`:390`), so the step
+survives both themes and paper — the `-fill`-family print trap does
+not apply here. No version bump was spent: `styles.css`'s cache-bust
+bump rides the merge captain's close-out batch.
 
 ### 303. `.fcu-point-val.dim` is dead CSS on the FCU workbench *(noticed 2026-08-12, the #298 lane — cleanup, LOW)*
 
