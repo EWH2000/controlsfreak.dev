@@ -8467,7 +8467,7 @@ switch, and after that scene's band change), console clean. The page-level
 `FlowEngine.init()` idempotence and the hidden-scene pools are untouched; this
 is an attribute-only change.
 
-### 214. `ddc-workbench-fcu-unit`'s profiler baseline is known-untrustworthy and carries no note *(annotated 2026-07-26 — the precondition question stays open)*
+### 214. `ddc-workbench-fcu-unit`'s profiler baseline is known-untrustworthy and carries no note *(annotated 2026-07-26 — the precondition question stayed open; **RESOLVED 2026-08-12 · PR #537** — answered: sampling noise, not page state; row re-pinned)*
 
 `tests/perf-profile.mjs`'s baseline for that row records 2.23 layouts/frame
 (capture samples 2.20 / 2.44 / 1.87), and it has since flagged over-tolerance
@@ -8508,6 +8508,23 @@ open is exactly the precondition question: what differed between the capture
 state of `/simulators/ddc-workbench-fcu.html` (Unit) and the two later runs.
 Answer that and the row can be re-baselined properly; until then a red number
 there is uninterpretable and now says so in the file.
+
+**RESOLVED 2026-08-12 · PR #537 — the precondition question is ANSWERED,
+and the answer is "there never was one."** The clear-the-decks re-baseline
+session ran three full 6-rep runs on a genuinely idle box (load ~0.8, no
+agent lanes, static server on :9401): the FCU Unit row read
+2.19 / 5.09 / 3.56 layouts/frame while the CONTROL read 4.87 / 1.98 / 3.45
+— two statistically indistinguishable distributions (means 3.61 / 3.43,
+both swinging ±1.5). At 2–5 l/f the reported value is one rep's 2 s
+window, so a single gutter burst moves it ±1.5: the pinned 2.23 was a
+low-edge sample, the flagging 4.34 / 4.67 were high-edge samples under
+load, and the "inverted ordering vs the control" was two draws from
+overlapping distributions. No page-state difference exists to find. The
+row is re-pinned (l/f 3.61, fps 59.8, Δtask 120.6), the
+KNOWN-UNTRUSTWORTHY marker is retired, and the script's FOUR ROWS
+RE-BASELINED 2026-08-12 header block carries the full numbers as the
+protocol's worked example. No tolerance widened — against the fresh means
+every measured row sits inside the existing ±2.0 floor.
 
 ### 215. FBE inspector accepts unbounded const values straight into the plant *(open — 2026-07-25)*
 
@@ -8745,7 +8762,7 @@ from its own program set. The only reachable difference is a no-JS render
 incremental render — the same accepted class as #219's static placeholders,
 on a page that is wholly JS-driven, noindex, and excluded from collections.
 
-### 222. perf-profile: the workbench Unit row's layoutsPerFrame tolerance fires on a clean main build *(noticed 2026-07-27, PR #443 gates)*
+### 222. perf-profile: the workbench Unit row's layoutsPerFrame tolerance fires on a clean main build *(noticed 2026-07-27, PR #443 gates — **RESOLVED 2026-08-12 · PR #537**, the re-baseline pass ran: re-pin, not widen)*
 
 While recording the report-only before/after for the safeties-program PR,
 the `ddc-workbench-fcu-unit` row read `layoutsPerFrame` 3.73 on a clean
@@ -8774,6 +8791,24 @@ event-driven CSS transitions, no rAF or interval — and liveness held
 26/26. Same disposition as the entry above: fps is the ranking signal,
 tolerances under-absorb this box under load, and the re-baseline pass
 is where these numbers get settled.
+
+**RESOLVED 2026-08-12 · PR #537 — the re-baseline pass this entry asked
+for ran (three idle 6-rep runs), and it said RE-PIN, NOT WIDEN.** The
+pinned baselines, not the tolerance, were the problem: one 3-rep
+session's medians sitting at the edges of their distributions. Against
+the fresh three-run means, every measured row's worst deviation sits
+inside the existing ±2.0 floor. Re-pinned: control l/f 2.87 → 3.43 (fps
+60.1), FCU Unit 2.23 → 3.61 (Δtask 89.4 → 120.6, fps 59.8), FCU
+Wiresheet 3.43 → 4.91 (Δtask 18.8 → 43.9, fps pin 53.1 → 46.0 — its
+three runs sat tight in the top of its documented 2.09–5.23 unstable
+range, own 4.0 floor unchanged), and the AHU Unit row got its first pin
+(l/f 3.08, fps 59.9, Δtask 167.5). The Δtask growth on the FCU rows is
+the pages growing (session persistence, the COV work and the sheet-note
+folds all landed since 07-24), inside ±110 throughout. The 3.73 / 5.63
+readings this entry recorded were ordinary draws from the
+now-characterised distribution. Full numbers: the script's FOUR ROWS
+RE-BASELINED 2026-08-12 header block; the mechanism story is #214's
+resolution.
 
 ### 223. screenshot-wiresheets: canvas-element shots clip a scrolling sheet *(resolved 2026-07-27)*
 
