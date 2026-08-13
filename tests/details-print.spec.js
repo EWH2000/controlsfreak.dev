@@ -73,6 +73,28 @@ test('a disclosure the reader opened stays open after printing', async ({ page }
     expect(after['ddcw-fold-lls-defeats'], 'the shim closes what the shim opened').toBe(false);
 });
 
+test('an unpaired second beforeprint does not strand the disclosures open', async ({ page }) => {
+    // Nothing guarantees the two events pair. A cancelled print preview can
+    // fire beforeprint a second time with no afterprint between, and on that
+    // pass every disclosure the shim opened is already `open`, so the scan
+    // skips it and pushes nothing. If the handler cleared its set on entry,
+    // afterprint would then have nothing to restore and would leave exactly
+    // those folds open forever — a leak the reader never asked for and cannot
+    // see coming. Not resetting degrades the unpaired case to a duplicate
+    // push at worst, which afterprint absorbs (`open = false` twice).
+    await page.goto('/simulators/ddc-workbench.html');
+
+    const after = await page.evaluate(() => {
+        window.dispatchEvent(new Event('beforeprint'));
+        window.dispatchEvent(new Event('beforeprint'));
+        window.dispatchEvent(new Event('afterprint'));
+        return [...document.querySelectorAll('details')].map((d) => d.open);
+    });
+
+    expect(after.length, 'the page still has disclosures to strand').toBeGreaterThan(0);
+    expect(after.every((o) => o === false), 'the second beforeprint stranded none of them').toBe(true);
+});
+
 test('the shim is wired site-wide, not per-page', async ({ page }) => {
     // The home page carries no <details> at all. If the script is there,
     // it came from layouts/page.njk — which is the only way the 34th page
@@ -86,12 +108,33 @@ test('the shim is wired site-wide, not per-page', async ({ page }) => {
     expect(wiring.loaded, 'the layout loads details-print.js on a page with no folds').toBe(true);
     expect(wiring.details, 'and this page genuinely has no <details>').toBe(0);
 
-    // It must also be inert here — no throw, nothing to restore.
+    // It must also be inert here — no throw, nothing to restore. An empty
+    // `errors` array cannot carry that on its own: a script that 404'd, or
+    // never parsed, or bound nothing produces exactly the same empty array,
+    // and the assertion above only proves the <script> TAG is in the DOM.
+    // So drive a probe <details> the page grows at runtime — literally the
+    // 34th-page case in the header — which is a POSITIVE signal that the
+    // listeners are live on a page that ships no folds of its own.
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    await page.evaluate(() => {
+    const probe = await page.evaluate(() => {
+        const d = document.body.appendChild(document.createElement('details'));
         window.dispatchEvent(new Event('beforeprint'));
+        const opened = d.open;
         window.dispatchEvent(new Event('afterprint'));
+        const restored = !d.open;
+        d.remove();
+        return { opened, restored };
     });
+    expect(probe.opened, 'the site-wide listener reaches a fold this page grew at runtime').toBe(true);
+    expect(probe.restored, 'and restores it when the print box closes').toBe(true);
+
+    // pageerror delivery is async, so asserting on `errors` the instant the
+    // evaluate above resolves can outrun a throw it caused. One more round
+    // trip is the flush: CDP messages arrive in order on a single session,
+    // so this response cannot precede an exception raised before it was sent.
+    // It doubles as the probe's cleanup check.
+    expect(await page.evaluate(() => document.querySelectorAll('details').length),
+        'the probe left nothing behind').toBe(0);
     expect(errors, 'printing a page with no disclosures is a no-op').toEqual([]);
 });

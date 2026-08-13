@@ -57,10 +57,21 @@
 
     // The disclosures THIS script opened, so afterprint restores only
     // those and leaves the reader's own open ones alone.
+    //
+    // beforeprint deliberately does NOT clear this set on entry, and that
+    // omission is load-bearing: nothing guarantees the browser pairs the
+    // two events, and a cancelled print preview can fire beforeprint twice
+    // with no afterprint between. On that second pass every disclosure this
+    // script already opened reads `open`, so the scan below skips it and
+    // pushes nothing — clearing first would leave afterprint with an empty
+    // set and strand exactly those folds open permanently. Keeping the set
+    // degrades the unpaired case to a duplicate push at worst (only if the
+    // reader closed one meanwhile), which afterprint absorbs: `open = false`
+    // twice on one element is the same as once. afterprint is the only
+    // place the set is emptied, which is what makes that true.
     const forcedOpen = [];
 
     window.addEventListener('beforeprint', function () {
-        forcedOpen.length = 0;
         for (const el of document.querySelectorAll('details')) {
             if (el.open) continue;
             el.open = true;
