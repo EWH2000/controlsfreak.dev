@@ -439,7 +439,7 @@ test.describe('workbench session: the interplay with #260', () => {
         // BOTH HALVES ARE THE ASSERTION, and the second half is a
         // DOCUMENTED EXISTING DEFECT, not a bug this row is reporting.
         //
-        // codebase-issues.md:11589 (#260, "The workbench shell's first
+        // codebase-issues.md #260 ("The workbench shell’s first
         // editor mount resets every block's state — latches release,
         // integrals clear"): the lazy editor mount swaps the driving
         // graph for a fresh clone, so every stateful block
