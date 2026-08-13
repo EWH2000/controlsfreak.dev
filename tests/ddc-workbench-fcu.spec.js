@@ -1513,21 +1513,12 @@ test.describe('DDC Workbench — the phone surface (the Unit tab is the mobile v
         }
     });
 
-    test('the fullscreen button does not paint over the title tag', async ({ page }) => {
-        // This page's AIR-SIDE tag cleared the button by a measured 2px at
-        // 375 before the clearance rule — one root-font bump from the
-        // collision the AHU page actually shipped (18px under the button).
-        await page.goto(URL);
-        const boxes = await page.evaluate(() => {
-            const t = document.querySelector('.tool-tag').getBoundingClientRect();
-            const b = document.querySelector('.tool-card-fullscreen-btn').getBoundingClientRect();
-            return { t: { l: t.left, r: t.right, t: t.top, b: t.bottom },
-                     b: { l: b.left, r: b.right, t: b.top, b: b.bottom } };
-        });
-        const overlapX = Math.min(boxes.t.r, boxes.b.r) - Math.max(boxes.t.l, boxes.b.l);
-        const overlapY = Math.min(boxes.t.b, boxes.b.b) - Math.max(boxes.t.t, boxes.b.t);
-        expect(overlapX > 0 && overlapY > 0, 'tag and fullscreen button share paint').toBe(false);
-    });
+    // The title/fullscreen-button overlap row moved to the shared
+    // tests/fullscreen-btn-overlap.spec.js when #272 promoted the
+    // clearance out of this page's head into styles.css. This page's
+    // Air-side tag clears the button by a measured 11.4px at 375 unaided —
+    // one root-font bump from the collision the AHU page shipped — and
+    // the shared version carries that history plus the anti-vacuity rows.
 
     test('the wiresheet opens on its one-line truth, with the workspace honestly absent', async ({ page }) => {
         await page.goto(URL);

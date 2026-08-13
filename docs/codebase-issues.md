@@ -12457,7 +12457,7 @@ reasons** — Phase 8's graduation bump is the obvious candidate. The
 README line is merge-freely and could go earlier, but shipping one of
 six is how a sweep gets forgotten.
 
-### 272. The shared fullscreen button is absolutely positioned over the card title, and the responsive sweep is structurally blind to it *(noticed 2026-08-03, PR #476's mobile lane — the two workbench pages each fixed it PAGE-LOCALLY)*
+### 272. The shared fullscreen button is absolutely positioned over the card title, and the responsive sweep is structurally blind to it *(noticed 2026-08-03, PR #476's mobile lane — the two workbench pages each fixed it PAGE-LOCALLY; owner ruled 2026-08-12, **RESOLVED 2026-08-12 · PR #549** — shared `:has()`-scoped rule in `styles.css`, both page-local copies gone, plus the overlap spec; and the entry's two measurements had gone stale, see the resolution block)*
 
 `.tool-card-fullscreen-btn` is `position: absolute; top: 0.55rem;
 right: 0.55rem; z-index: 2` in `html/styles.css:1869-1889`, anchored on
@@ -12499,6 +12499,70 @@ the natural trigger to settle it, since that is when the duplicated
 rule stops being invisible to the live site. Either way it is worth a
 spec that measures **overlap** rather than overflow for the
 title-versus-button pair.
+
+**RESOLVED 2026-08-12 · PR #549.** The owner took the `styles.css`
+branch of the design call. The clearance is one rule beside the button
+block, and the scope is the whole point:
+
+```css
+@media (max-width: 480px) {
+    .tool-card:has(.tool-card-fullscreen-btn:not(.fs-desktop-only)) .tool-card-header {
+        padding-right: 8.5rem;
+    }
+    .tool-card:has(.tool-card-fullscreen-btn:not(.fs-desktop-only)) .tool-card-title {
+        flex-wrap: wrap;
+    }
+}
+```
+
+The entry framed the cost as "reserving 8.5rem of header on cards whose
+titles are short." `:not(.fs-desktop-only)` is what retires that cost
+rather than accepting it: the four `.fs-desktop-only` consumers hide the
+button at every width ≤999px, so they must not pay, and the `:not()` is
+coupled to the hide rule directly above it in the file. Only a button
+that SURVIVES to phone width buys a reservation — which today is the two
+workbench pages and, automatically, any future page that keeps one. Both
+halves move together, since the title is a nowrap flex row and the
+padding alone would only slide the tag beneath the button.
+
+**The entry's measurements had gone stale, and the discrepancy is worth
+recording.** Re-measured at 375 with the rule disabled: the AHU's
+`Air handler` tag runs **8.7px** under the button (entry: 18px) and the
+FCU's `Air-side` clears by **11.4px** (entry: 2px). Both strings were
+reworded after 2026-08-03. The *shape* of the finding survived intact —
+the AHU collides, the FCU clears narrowly — so both pages still pay;
+11.4px is one root-font bump from a collision. Identical under touch
+emulation, where the TOUCH-TARGET FLOOR grows the button 31.2 → 44px: it
+grows DOWNWARD, so the horizontal story is unchanged.
+
+**Two overlap specs already existed, and the entry did not know it.**
+Its closing sentence reads as though nothing measured overlap, but
+`ddc-workbench-ahu-page.spec.js` and `ddc-workbench-fcu.spec.js` each
+carried a `the fullscreen button does not paint over the title tag` row.
+Both had the same hole: they measured only `.tool-tag`, and **a
+`display: none` button has a zero rect, which intersects nothing** — so
+either would have passed vacuously the moment the button was hidden,
+which is precisely what `.fs-desktop-only` does. Both are removed as
+superseded by `tests/fullscreen-btn-overlap.spec.js`, which leads with
+anti-vacuity rows (button not `display:none`, real width and height,
+title text actually painted, and the button still spanning the header
+band), measures `Range`s over **text nodes** rather than the title's
+element box (the reserved padding shrinks that box, so it can clear the
+button while a wrapped glyph still sits under it), and adds the arm
+neither page-local spec could have: a `.fs-desktop-only` card hides its
+button and reserves nothing. The overlap assertion fires BEFORE the
+padding assertion on purpose — a source-level proxy firing first masks
+the reader-facing symptom.
+
+**Falsified once.** With the shared rule neutered in-tree, the AHU row
+went red on the overlap assertion itself, naming the colliding rect; the
+FCU row went red on the mechanism assertion, since its tag clears the
+button unaided. The `.fs-desktop-only` arm stayed green throughout,
+which is what proves it measures the other branch.
+
+`responsive.spec.js` is untouched — the entry's ⚠ is right that it
+cannot be made to catch this, since it measures overflow and there is
+none.
 
 ### 273. The forced-sensor marker CSS is duplicated per page under page-prefixed classes *(noticed 2026-08-04, the Phase 8 graduation lane — deferred at graduation, wants a `.ddcw-forced-mark` rename)*
 
@@ -13492,7 +13556,7 @@ transfer-trap class as #267 (mockup→live); this is the
 normal-flow→fullscreen edition, found while re-measuring #266's
 bleed bands.
 
-### 296. styles.css's filter-chip comment names two of the four chip landings *(noticed 2026-08-11, the #274 lane — docs drift, MINOR)*
+### 296. styles.css's filter-chip comment names two of the four chip landings *(noticed 2026-08-11, the #274 lane — docs drift, MINOR; **RESOLVED 2026-08-12 · PR #549**, rode the #272 `styles.css` PR exactly as this entry planned)*
 
 `html/styles.css:2665` says the chip row sits "above the `.card-grid`
 on `/tools/` and `/education/`" — it already omitted `/practice/`
@@ -13500,6 +13564,15 @@ and now also omits `/simulators/` (#274). Comment-only, but fixing it
 alone would make the version bump load-bearing for a no-op byte
 change, so it rides whichever PR next touches `styles.css` — the
 #274 lane deliberately left it for exactly that reason.
+
+**RESOLVED 2026-08-12 · PR #549.** The #272 lane was the next
+`styles.css` PR, and carried it. The comment now names all four
+chip-bearing landings — `/tools/`, `/simulators/`, `/education/`,
+`/practice/` — verified against the tree rather than the entry:
+`grep -rl 'filter-chips' html/` returns exactly those four
+`index.html`s, so the list is complete as written and not merely two
+longer than before. The plan worked as designed: no version bump was
+spent on a comment.
 
 ### 297. Two pages still run hrefless-anchor example chips — hydronic-loop-builder carries #281's race whole, with a latent suite flake *(noticed 2026-08-11, the #281 lane's site-wide grep — sibling sweep; **RESOLVED 2026-08-12 · PR #527**, both pages converted; equipment-staging's race turned out to be REAL and is characterized in the resolution block, and the entry's "complete remaining set" claim did not survive the lane — see #299)*
 

@@ -22,29 +22,14 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
         .fcu-graphic { max-width: 660px; margin: 0.5rem auto 0; }
         .fcu-svg { display: block; width: 100%; height: auto; }
 
-        /* ── Phone-width header clearance ──────────────────────────────
-           The shared fullscreen button is absolutely positioned in the
-           card's top-right corner and paints over the title row where
-           the two meet. On THIS page the AIR-SIDE tag clears it by a
-           measured 2px at 375 — one root-font bump from a collision —
-           and the sibling AHU page's longer tag was measured 18px
-           under the button, so both pages carry the rule: reserve the
-           button's footprint and let the title row wrap (the title is
-           a nowrap flex row, so the padding alone would only slide the
-           tag beneath the button). 8.5rem = the button's font-driven
-           ~119px + its 0.55rem inset + a seam, in rem so it tracks the
-           button's own type size.
-           ⚠ DUPLICATED IN THE OTHER WORKBENCH PAGE'S HEAD. The
-           graduation trigger fired (Phase 8, 2026-08-04) WITHOUT
-           promoting this pair: the selectors are the site-wide
-           .tool-card-header / .tool-card-title, so a styles.css copy
-           would restyle every page's phone header — that is exactly
-           codebase-issues #272's open design call, and the dedup
-           rides it. */
-        @media (max-width: 480px) {
-            .tool-card-header { padding-right: 8.5rem; }
-            .tool-card-title { flex-wrap: wrap; }
-        }
+        /* Phone-width header clearance for the fullscreen button lives in
+           styles.css now, beside the button itself, scoped with :has() to
+           cards whose button survives to phone width (#272 — this page and
+           the AHU each carried a copy). This page's Air-side tag clears the
+           button by only 11.4px at 375 unaided — it does not collide the way
+           the AHU's does, but it is one root-font bump from it, which is why
+           it pays the reservation too. tests/fullscreen-btn-overlap.spec.js
+           measures both. */
 
         /* On-graphic point labels — the DDC feel. Mono, small; the value
            is the loud element, the caption the quiet one (the site scan

@@ -2096,6 +2096,46 @@ footer {
     .tool-card-fullscreen-btn.fs-desktop-only { display: none; }
 }
 
+/* ── Phone-width header clearance ──
+   The button is absolutely positioned in the card's top-right corner and
+   nothing else reserves its footprint, so on a narrow viewport it paints
+   OVER the title row where the two meet. Re-measured at 375 with this
+   rule disabled (#272, 2026-08-12): the AHU workbench's "Air handler"
+   tag runs 8.7px under the button, and the FCU's "Air-side" clears it by
+   11.4px — thin enough that a root-font bump closes it, which is why
+   both pay rather than only the one that collides. (The original
+   2026-08-03 figures, 18px and 2px, were taken before those two strings
+   changed; the shape of the finding survived, the numbers did not.)
+   Identical under touch emulation, where the TOUCH-TARGET FLOOR grows
+   the button 31.2 → 44px: it grows DOWNWARD, so the horizontal story is
+   unchanged. The DDC Workbench pages are the only consumers that keep
+   the button at phone width, and each carried its own copy of this rule
+   until #272.
+   Two halves, both needed: reserve the button's footprint, AND let the
+   title row wrap. .tool-card-title is a nowrap flex row, so the padding
+   alone would only slide the tag beneath the button — the wrap is the
+   half that acts. 8.5rem = the button's font-driven ~119px + its 0.55rem
+   inset + a seam, in rem so it tracks the button's own type size.
+
+   ⚠ THE :not(.fs-desktop-only) IS THE WHOLE SCOPE, and it is coupled to
+   the rule directly above: a .fs-desktop-only button is display:none at
+   every width ≤999px, so its card must NOT reserve 8.5rem of header it
+   will never use. Only cards holding a button that SURVIVES to phone
+   width pay. If a future modifier also hides the button down here, add
+   it to this :not() list or that page reserves dead space.
+   :has() takes the specificity of its most specific argument, so this
+   lands at (0,4,0) — comfortably over anything a page head would set,
+   which is why the two page-local copies could simply be deleted rather
+   than re-scoped. */
+@media (max-width: 480px) {
+    .tool-card:has(.tool-card-fullscreen-btn:not(.fs-desktop-only)) .tool-card-header {
+        padding-right: 8.5rem;
+    }
+    .tool-card:has(.tool-card-fullscreen-btn:not(.fs-desktop-only)) .tool-card-title {
+        flex-wrap: wrap;
+    }
+}
+
 .tool-card.is-fullscreen {
     position: fixed;
     inset: 0;
@@ -2667,7 +2707,8 @@ p.pid-note {
 }
 .card-grid.two { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
 
-/* Filter chip row above the .card-grid on /tools/ and /education/.
+/* Filter chip row above the .card-grid on /tools/, /simulators/,
+   /education/ and /practice/ — all four chip-bearing landings.
    Each chip toggles which .nav-card[data-category] is visible; URL hash
    tracks state. Chips are <button>s with a mono pill shape — same
    family as the .nav-card-pill statusline items, just larger and
