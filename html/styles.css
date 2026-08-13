@@ -3790,6 +3790,20 @@ input.ps-input:focus, select.ps-input:focus, textarea.ps-input:focus {
 .ref-table-dense tbody tr:nth-child(even) td { background: var(--surface-2); }
 .ref-table-dense tbody tr:last-child td { border-bottom: none; }
 
+/* the "nothing matched" row every filter-driven lookup table keeps as a
+   permanent <tr hidden>, unhidden when a filter empties its tbody. Shared
+   because the message cell is table chrome, not a widget internal — five
+   pages had defined it identically page-locally (#304). Sits after both
+   table families so it out-orders their equal-specificity td colour; the
+   .rt-stack cell rules are (0,3,3) and set neither of the two declarations
+   that do the work here. Pages keep their own <prefix>-empty class on the
+   same <tr> — that one is the filter script's and the specs' hook. */
+.ref-empty td {
+    color: var(--text);
+    font-style: italic;
+    text-align: center;
+}
+
 /* stacked-row opt-in (.rt-stack) for lookup tables whose last column is
    prose: below 620px each row stacks — the leading cells (id, name)
    share a header line and the prose cell drops to a full-width line

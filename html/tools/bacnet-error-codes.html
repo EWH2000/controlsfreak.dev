@@ -83,12 +83,6 @@ faqs:
         .ref-table-dense td.bec-id.bec-copyable { cursor: pointer; }
         .ref-table-dense td.bec-id.bec-copyable:hover { color: var(--accent); }
         .bec-noteless td:last-child { color: var(--text-dim); }
-
-        .bec-empty td {
-            color: var(--text);
-            font-style: italic;
-            text-align: center;
-        }
     </style>
 {% endblock %}
 
@@ -205,7 +199,7 @@ faqs:
                             {% set d = bacnetErrorNotes.codes[c.name] %}
                             <tr{% if not d %} class="bec-noteless"{% endif %}><td class="bec-id">{{ c.id }}</td><td data-name="{{ c.name }}">{{ c.name | safe }}</td><td>{% if d %}{{ d | safe }}{% else %}—{% endif %}</td></tr>
                             {% endfor %}
-                            <tr class="bec-empty" hidden><td colspan="3">No codes match that filter.</td></tr>
+                            <tr class="ref-empty bec-empty" hidden><td colspan="3">No codes match that filter.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -220,7 +214,7 @@ faqs:
                             {% set d = bacnetErrorNotes.classes[c.name] %}
                             <tr{% if not d %} class="bec-noteless"{% endif %}><td class="bec-id">{{ c.id }}</td><td data-name="{{ c.name }}">{{ c.name | safe }}</td><td>{% if d %}{{ d | safe }}{% else %}—{% endif %}</td></tr>
                             {% endfor %}
-                            <tr class="bec-empty" hidden><td colspan="3">No classes match that filter.</td></tr>
+                            <tr class="ref-empty bec-empty" hidden><td colspan="3">No classes match that filter.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -235,7 +229,7 @@ faqs:
                             {% set d = bacnetErrorNotes.reject[c.name] %}
                             <tr{% if not d %} class="bec-noteless"{% endif %}><td class="bec-id">{{ c.id }}</td><td data-name="{{ c.name }}">{{ c.name | safe }}</td><td>{% if d %}{{ d | safe }}{% else %}—{% endif %}</td></tr>
                             {% endfor %}
-                            <tr class="bec-empty" hidden><td colspan="3">No reject reasons match that filter.</td></tr>
+                            <tr class="ref-empty bec-empty" hidden><td colspan="3">No reject reasons match that filter.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -250,7 +244,7 @@ faqs:
                             {% set d = bacnetErrorNotes.abort[c.name] %}
                             <tr{% if not d %} class="bec-noteless"{% endif %}><td class="bec-id">{{ c.id }}</td><td data-name="{{ c.name }}">{{ c.name | safe }}</td><td>{% if d %}{{ d | safe }}{% else %}—{% endif %}</td></tr>
                             {% endfor %}
-                            <tr class="bec-empty" hidden><td colspan="3">No abort reasons match that filter.</td></tr>
+                            <tr class="ref-empty bec-empty" hidden><td colspan="3">No abort reasons match that filter.</td></tr>
                         </tbody>
                     </table>
                 </div>

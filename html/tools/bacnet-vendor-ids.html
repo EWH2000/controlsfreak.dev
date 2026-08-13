@@ -70,12 +70,6 @@ faqs:
             color: var(--text-dim);
             font-style: italic;
         }
-
-        .bvid-empty td {
-            color: var(--text);
-            font-style: italic;
-            text-align: center;
-        }
     </style>
 {% endblock %}
 
@@ -149,7 +143,7 @@ faqs:
                     {% for v in bacnetVendorIds.vendors %}
                     <tr{% if v.reserved %} class="bvid-res"{% endif %}><td>{{ v.id }}</td><td>{{ v.org }}</td></tr>
                     {% endfor %}
-                    <tr class="bvid-empty" hidden><td colspan="2">No vendor IDs match that filter.</td></tr>
+                    <tr class="ref-empty bvid-empty" hidden><td colspan="2">No vendor IDs match that filter.</td></tr>
                 </tbody>
             </table>
             <p class="ref-note">
