@@ -50,10 +50,14 @@ noindex: true
            page restores role="button" when ddcw-shell.js wiring lands — the
            .is-hilite arm below is already there for it.
 
-           ⚠ THE .ddcw-sensor* BLOCK AT THE BOTTOM IS SHARED AND
-           DELIBERATELY UNPREFIXED. It is the site-wide sensor-glyph
-           vocabulary, all four drawings reach for it, and it appears
-           exactly ONCE. Everything else here is ahu-*.
+           ⚠ THE .ddcw-sensor* GLYPH VOCABULARY IS NOT DECLARED HERE. It
+           is site-wide and lives in the DDC WORKBENCH SHELL section of
+           styles.css; all four drawings on this page reach for it from
+           there. This page held the declaring copy until the vocabulary
+           graduated when the AHU page landed, and the leftover duplicate
+           came out under codebase-issues #248 — a retune to the shared
+           block now reaches this mockup like every other consumer.
+           Everything in this block is ahu-*.
            ══════════════════════════════════════════════════════════════ */
 
         /* ── Mockup-page chrome ───────────────────────────────────────── */
@@ -1034,84 +1038,6 @@ noindex: true
         .ahu-svg:has([data-point="space-temp"]:hover) [data-point-target="space-temp"] text,
         .ahu-svg:has([data-point="space-temp"]:focus-visible) [data-point-target="space-temp"] text {
             fill: var(--accent-ink);
-        }
-
-        /* ══════════════════════════════════════════════════════════════════
-           SHARED — SENSOR GLYPHS (.ddcw-*). NOT component-local, NOT
-           prefixed, and DECLARED EXACTLY ONCE for all four drawings. It is
-           the site-wide glyph vocabulary, the concept is shell-shared, and
-           the shell binds .ddcw-sensor[data-point] generically.
-
-           No sensor geometry carries an inline fill= or stroke=. That is
-           load-bearing rather than tidy: the hover / focus lift below is
-           what makes the glyph feel like the drill-down seam it will become,
-           and one inline attribute would freeze that part at the dim ink
-           while its siblings lift to the accent.
-           ══════════════════════════════════════════════════════════════ */
-        .ddcw-sensor { cursor: pointer; }
-        .ddcw-sensor-hit { fill: transparent; stroke: none; }
-        .ddcw-sensor-body {
-            fill: var(--surface);
-            stroke: var(--text-dim);
-            stroke-width: 1.5;
-            transition: stroke 0.15s;
-        }
-        .ddcw-sensor-stem,
-        .ddcw-sensor-slot {
-            fill: none;
-            stroke: var(--text-dim);
-            stroke-width: 1.5;
-            stroke-linecap: butt;
-            transition: stroke 0.15s;
-        }
-        /* SOLID glyph members — the fifth class in the vocabulary, added for
-           the shielded outdoor head. The other four are OUTLINE forms:
-           -body fills with var(--surface), which on this component is the
-           panel behind the drawing, so a shape given -body reads as HOLLOW
-           no matter how the drawing spec words it. A radiation shield is a
-           stack of solid discs seen edge-on, and thin open chevrons on a
-           vertical rod read as arrow fletching instead — which is exactly
-           how round 1's head failed review. Reach for -solid whenever a
-           glyph member's SILHOUETTE is the thing being communicated; keep
-           -body for members whose outline is. */
-        .ddcw-sensor-solid {
-            fill: var(--text-dim);
-            stroke: none;
-            transition: fill 0.15s;
-        }
-        .ddcw-sensor:hover .ddcw-sensor-solid,
-        .ddcw-sensor:focus-visible .ddcw-sensor-solid {
-            fill: var(--accent);
-        }
-
-        /* The averaging element's capillary. Round caps and joins are the
-           FLEXIBILITY CUE: this is tubing bent around standoffs, not the
-           mitered sheet-metal geometry everything else on the drawing uses.
-           Weight stays in the 1.5 sensor family — resizing an averaging
-           element changes its pass EXTENTS, never this stroke width and
-           never the pass count, because a scale() would thin the family
-           weight. */
-        .ddcw-sensor-cap {
-            fill: none;
-            stroke: var(--text-dim);
-            stroke-width: 1.5;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            transition: stroke 0.15s;
-        }
-        .ddcw-sensor:hover .ddcw-sensor-body,
-        .ddcw-sensor:focus-visible .ddcw-sensor-body,
-        .ddcw-sensor:hover .ddcw-sensor-stem,
-        .ddcw-sensor:focus-visible .ddcw-sensor-stem,
-        .ddcw-sensor:hover .ddcw-sensor-slot,
-        .ddcw-sensor:focus-visible .ddcw-sensor-slot,
-        .ddcw-sensor:hover .ddcw-sensor-cap,
-        .ddcw-sensor:focus-visible .ddcw-sensor-cap {
-            stroke: var(--accent);
-        }
-        .ddcw-sensor:focus-visible {
-            outline: 2px solid var(--accent);
-            outline-offset: 2px;
         }
     </style>
 {% endblock %}
