@@ -7252,7 +7252,7 @@ actual failure mechanism — seeding a stale *coloured* `lastCls` at create time
 so `refreshValues` skips the colour write — which fails `fbe-wires` as
 expected.
 
-### 197. `.fbe-palette-btn:focus-visible` sits outside the consolidated FOCUS INDICATORS block *(open — 2026-07-22)*
+### 197. `.fbe-palette-btn:focus-visible` sits outside the consolidated FOCUS INDICATORS block *(open — 2026-07-22 — **RESOLVED 2026-08-12 · PR #554**, as a move and NOT as a merge)*
 
 When the function-block editor's `.fbe-*` CSS moved into `styles.css` (PR-1 of
 the DDC Workbench arc, `refactor/fbe-editor-module`), the
@@ -7264,6 +7264,59 @@ that block; don't scatter a one-off rule"). Behaviour is correct; this is a
 placement/consolidation cleanup, not a bug. Deferred out of PR-1 to keep that
 behaviour-preserving refactor tight. Fold the rule into the `FOCUS INDICATORS`
 block in a later `styles.css` pass.
+
+**RESOLVED 2026-08-12 · PR #554 — moved into the block, but deliberately NOT
+folded into the shared selector list, because "fold the rule in" above would
+have been a visual change.** The two are not declaration-identical: the shared
+declaration is `outline-offset: 3px`, the palette button's is **1px**. Adding
+the selector to the list would therefore have moved the rendered ring — and
+this entry's own premise is that behaviour is correct and only placement is
+wrong. So the rule was moved verbatim into the `FOCUS INDICATORS` block as its
+own rule (precedent: the two `input[type="range"]` thumb rules already sit in
+that block without sharing its declaration), immediately after the shared rule
+and ahead of them.
+
+**The 1px is load-bearing, not an oversight.** A 3px offset on a 2px ring
+extends 5px past the border box, and the palette packs tighter than that in
+*both* its layouts: the default rail is an `overflow-y: auto` scroll box
+stacking buttons `margin-bottom: 0.25rem` (4px) apart, and the fullscreen rail
+is a wrapped flex row at `gap: 0.35rem 0.4rem` (5.6 / 6.4px) with the button
+margin zeroed. The shared ring would be clipped by the rail and would overlap
+its neighbours. `git log -S` puts the 1px on this control since the page was
+authored (2026-05-22, `59b2a24`), unchanged through `b08201d` — i.e. the
+"travelled verbatim" this entry describes was carrying a deliberate value. The
+moved rule now carries a comment saying all of this, so a later consolidation
+pass cannot tidy it into the list and silently change the ring.
+
+**Cascade preservation was verified, not argued.** Moving a rule ~2200 lines
+earlier is only safe if nothing competes, and nothing does. None of the
+stylesheet's other `outline` / `outline-offset` declarations match a palette
+button (the five `outline: none` rules belong to `.palette-input`, the
+`input`/`textarea`/`select` focus rule, `input[type="range"]`,
+`.quiz-numeric-input` and `.ps-input`). The one ancestor-dependent arm in the
+shared list that could ever reach one — `.widget-try button:focus-visible`,
+which at (0,2,1) would have out-specified the (0,2,0) component rule
+regardless of source order — does not match: the palette rail is a standalone
+`.fbe-palette` div on all three host pages (`function-block-editor`,
+`ddc-workbench`, `ddc-workbench-fcu`), ancestry
+`.fbe-palette → .fbe-workspace → .fbe-live → (.tool-body | #tab-wiresheet) →
+.tool-card → main#main`, with no `.widget-try` anywhere in it. Confirmed
+empirically by focusing a real palette button and dumping both the computed
+ring and the full set of `:focus-visible` rules matching the element, in source
+order, before and after the move: identical — matched set is exactly
+`[.fbe-palette-btn:focus-visible → 2px solid var(--accent), 1px]`, computed
+`2px solid rgb(108, 178, 58)` at offset `1px`.
+
+**Follow-on for the owner, not fixed here.** Two `:focus-visible` rules remain
+outside the block, and both carry written reasons, so no *undocumented* stray
+is left. But `a.ddcw-unit-link:focus-visible`'s comment states the **opposite
+idiom** to this entry's: *":focus-visible kept beside the component rather than
+in the consolidated FOCUS INDICATORS block, because the ring deviates."* Its
+ring deviates (inset `-2px`); the palette button's deviates too and was moved
+*in*. Both cannot be the convention. Either `a.ddcw-unit-link` also moves in
+with its declaration preserved (as here), or the CLAUDE.md convention gains an
+explicit "a deviating ring stays beside its component" carve-out. Left alone to
+keep this branch to one issue.
 
 Per the orchestrator, not appended to `docs/codebase-issues.md` here — several PRs appending at that file's tail would conflict. Text for the single batched commit:
 
