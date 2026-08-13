@@ -12914,7 +12914,7 @@ and the queue drains to the seven-wire sheet.
 **The standing note above is retired.** A red on that geometry row is no
 longer this race — the click cannot no-op any more. Read the failure.
 
-### 282. A spec cites the ledger by line number, and the ledger moved *(noticed 2026-08-10, the handoff verification session — comment-only defect)*
+### 282. A spec cites the ledger by line number, and the ledger moved *(noticed 2026-08-10, the handoff verification session — comment-only defect; **RESOLVED 2026-08-12** — cites #260 by number)*
 
 `tests/ddc-workbench-session.spec.js:442` cites
 `codebase-issues.md:11589` for #260 — but #260's entry sits well over
@@ -12928,6 +12928,12 @@ expected and harmless. A hardcoded line number into an append-only,
 annotated markdown file cannot survive. Fix shape: cite `#260` by
 number (or by its heading text), never by line; fix it in whichever
 PR next touches that spec.
+
+**RESOLVED 2026-08-12 (the clear-the-decks queue).** The citation now
+reads `codebase-issues.md #260 ("The workbench shell's first …")` —
+number + heading text, no line. Comment-only diff; `node --check`
+green; the entry's own prediction held (the cited line had drifted
+again by fix time, to inside yet another entry).
 
 ### 283. The fullscreen cockpit's override indications don't scale — several points overridden eats real screen estate *(reported 2026-08-10 by the owner — fullscreen UX, DESIGN CALL; design round DONE 2026-08-10 late; owner ruled 2026-08-11 — T-A shipped, T-C the recorded destination — measurements, treatments and the ruling below)*
 
