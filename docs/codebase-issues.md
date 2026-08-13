@@ -14682,3 +14682,15 @@ the comment to describe reality, or key the stagger on a class-aware
 mechanism (`:nth-child(... of .tool-card)` has the same type-blind
 problem; a real fix probably wants explicit per-page classes or
 accepting the quirk in writing). Log-don't-fix.
+
+### 310. `#ddcw-statusbar` overflows its own box by 15px at a 320px viewport *(noticed 2026-08-12, the #262 lane — below every tested width, LOW)*
+
+Both workbench pages, measured under touch emulation: at a 320px
+viewport the statusbar's content runs 15px past its box — internal
+chrome overflow, not document-level sideways scroll, so
+`responsive.spec.js`'s 375px arm never sees it (clean at 375 and
+above, and 320 sits below every width the suite tests). Pre-existing
+and unrelated to the unit selector the lane was working. If a 320
+class of devices ever matters, the fix is the statusbar's own
+wrap/scroll behavior; until then this records why a 320 tester would
+see a clipped bar. Log-don't-fix.
