@@ -14,22 +14,26 @@ keywords: gain reset rate proportional integral derivative offset loop error
 <main id="main">
 
     <div class="section-header">
-        <h1 class="section-label">Education · PID Basics</h1>
-        <div class="section-line"></div>
-    </div>
-
-    <p class="page-intro">
-        PID is three knobs that, together, push a process variable (PV — the thing you're measuring) toward a setpoint (SP — the value you want it to hold). This is a common sense walk through what each one does on a typical HVAC loop, plus three small sims you can play with one knob at a time. By the end, the full <a href="/simulators/pid-tuner.html">PID Tuning Helper</a> should make a lot more sense.
-    </p>
-
-    <!-- ── What P, I, and D Actually Do ── -->
-    <div class="section-header">
-        <h2 class="section-label">What P, I, and D Actually Do</h2>
+        <span class="section-label">Education · PID Basics</span>
         <div class="section-line"></div>
     </div>
 
     <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                PID Basics
+                <span class="tool-tag">Loops</span>
+            </h1>
+        </div>
         <div class="tool-body">
+
+            <p class="page-intro">
+                PID is three knobs that, together, push a process variable (PV — the thing you're measuring) toward a setpoint (SP — the value you want it to hold). This is a common sense walk through what each one does on a typical HVAC loop, plus three small sims you can play with one knob at a time. By the end, the full <a href="/simulators/pid-tuner.html">PID Tuning Helper</a> should make a lot more sense.
+            </p>
+
+            <!-- ── What P, I, and D Actually Do ── -->
+            <h2 class="subhead">What P, I, and D Actually Do</h2>
+
             <!-- The `Worked example.` paragraph in each callout below keeps an
                  inline `margin-top:0.6rem` rather than inheriting the shared
                  lesson-prose rhythm (1.25rem). Inside a compact callout box the
