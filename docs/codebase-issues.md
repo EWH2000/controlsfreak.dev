@@ -11478,7 +11478,7 @@ it is the same over-claim from the same injected `d.fault`, and the same
 disposition-3 wording would fit. Worth an owner call the next time someone
 is in that ladder.
 
-### 248. The AHU mockup still carries an inline copy of the sensor-glyph CSS that graduated to `styles.css` *(noticed 2026-07-30, AHU page lane — deliberately not fixed)*
+### 248. The AHU mockup still carries an inline copy of the sensor-glyph CSS that graduated to `styles.css` *(noticed 2026-07-30, AHU page lane — deliberately not fixed then; **RESOLVED 2026-08-12**, PR #561)*
 
 The `.ddcw-sensor*` glyph vocabulary and the `.ddcw-chip-hilite` pulse graduated
 into the `DDC WORKBENCH SHELL` section of `html/styles.css` when the AHU page
@@ -11498,6 +11498,50 @@ depiction record and said not to edit it. The removal is a two-minute change
 whenever someone is in that file for another reason; note that its copy is a
 SUPERSET of the FCU's old one (it added `-solid` and `-cap`), and that superset
 is what graduated, so deleting the inline block loses nothing.
+
+**Resolution (PR #561, 2026-08-12).** Deleted — 78 lines, the `SHARED — SENSOR
+GLYPHS` comment plus all nine rules. `styles.css` is now the sole declarer of
+the vocabulary; no page under `html/` declares `.ddcw-sensor` any more.
+
+Because this page is the frozen depiction record, **equivalence was verified
+before deleting rather than assumed** — a divergence would have meant KEEPING
+the inline copy and closing this entry as "no longer byte-duplicated." It does
+not diverge: comments stripped and whitespace normalised, both blocks are the
+same 1051 characters.
+
+The text diff is the weaker half of that check, though, and worth recording as
+the reusable technique. A byte-identical LATER copy can still be load-bearing —
+it out-cascades any equal-specificity rule that sits between it and the earlier
+copy. So the real check was a dump of **every rule in the document matching a
+sensor element**: the `*` reset (ord 3), the shared block (ord 726-734), the
+reduced-motion `*` (ord 736), the duplicate (ord 864-872) — and **nothing in
+between**, which is what actually licensed the deletion.
+
+Render proof, before vs after: 109 sensor elements × 12 paint properties in
+both motion contexts, 20 hovered groups (949 comparisons), per-element
+cascade-ordered rule sets (0 of 109 differ), and a dark-theme full-page
+screenshot at **0 differing pixels of 8,859,200**.
+
+⚠️ **That pixel figure is only meaningful against a control**, which is the
+finding worth keeping: a same-build control run — identical bytes, captured
+twice — did NOT match by hash. The variance is confined to `y=10..86`, where
+the `position: sticky` nav composites at a ~19px different offset run to run.
+Below that band the control is pixel-identical, so any future visual-regression
+check on this site must either exclude the nav band or stop using full-page
+hashes. Two related capture traps recurred here and are already noted in
+memory: headless Chromium needs `colorScheme: 'dark'` pinned, and computed
+styles read immediately after `hover()` sample the 0.15s stroke transition
+mid-flight (the first pass reported 55 "differences" that were all intermediate
+blend colours — present in the *before* run too).
+
+The one thing genuinely lost is prose, not behaviour: the inline `-solid`
+comment attributed the class to how "round 1's head failed review." `styles.css`
+keeps the fletching rationale, only not that page-history attribution — git
+retains it.
+
+Full suite green at 1207 passed / 1 skipped, including all seven instances of
+`tests/ddc-workbench-ahu-mockup.spec.js`. No version bump: hidden page, no
+shared code touched.
 
 ### 249. `fill-token-misuse`'s rendered arm attributes a colour it cannot always attribute *(noticed 2026-07-30, AHU page lane — **FIXED in the same change**, recorded for the coverage it narrows)*
 
