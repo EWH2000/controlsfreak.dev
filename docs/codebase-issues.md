@@ -9349,6 +9349,15 @@ Two of the mixing sites cannot simply adopt the exact form:
   `simulators/ddc-workbench-fcu.html:940` both teaching the concept). Two
   surfaces modelling the same draw-through pickup, 40 % apart. Neither is
   wrong in isolation; nothing ties them.
+  **Sub-call RULED 2026-08-12 (owner, the clear-the-decks decision
+  batch): keep both values, cross-comment them — and the field reason
+  is his:** not only are the fans different (low-static in-space FCU vs
+  an AHU working real duct static), the AHU is more likely to sit in a
+  hot mechanical room, or worse, on a roof, so its air picks up more
+  than the fan's own heat. Both declaration sites now carry the
+  cross-reference and the do-not-standardise instruction; this
+  sub-call is CLOSED while the entry's engine-standardisation body
+  stays open and scheduled separately.
 - **Freeze thresholds** are close but independent: `FREEZE_AT = 38`
   (`air-handlers.html:665`), the freezestat default `value="38"`
   (`coil-freeze-risk.html:119`, with `sp = us ? 38 : 3.3` at `:478`), and

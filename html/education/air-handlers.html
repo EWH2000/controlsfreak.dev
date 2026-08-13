@@ -666,6 +666,12 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
         const MIN_OA    = 0.20;   // fixed minimum outside-air fraction
         const SP_COOL   = 55;     // °F discharge setpoint, cooling
         const SP_HEAT   = 90;     // °F discharge setpoint, heating
+        // FAN_HEAT deliberately DISAGREES with ddcw-fcu-unit.js's 0.6 °F
+        // twin (owner ruling 2026-08-12, codebase-issues #228's fan-heat
+        // sub-call): an AHU fan works real duct static, and the unit more
+        // likely sits in a hot mechanical room — or worse, on a roof — so
+        // its air picks up more than an in-space FCU's does. Do not
+        // "standardise" these two.
         const FAN_HEAT  = 1;      // °F picked up across the fan
         const FREEZE_AT = 38;     // °F MA-T — freeze-stat territory
 

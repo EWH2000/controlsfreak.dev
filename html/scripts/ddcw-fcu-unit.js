@@ -98,6 +98,13 @@ const DDCWFcuUnit = (function () {
     const STAGE_QSENS = { 1: 7000, 2: 13500 };   // Btu/h sensible
     const STAGE_QLAT  = { 1: 1500, 2: 3000 };    // Btu/h latent
     const RA_RH       = 50;                  // % — assumed return-air RH
+    // FAN_HEAT deliberately DISAGREES with air-handlers.html's 1 °F twin
+    // (owner ruling 2026-08-12, #228's fan-heat sub-call): different
+    // equipment, different number. An FCU fan works low static, and the
+    // unit hangs in the space it serves; the lesson's AHU fan works
+    // real duct static and the unit more likely sits in a hot
+    // mechanical room — or worse, on a roof — so its air picks up more
+    // than the fan's own heat. Do not "standardise" these two.
     const FAN_HEAT    = 0.6;                 // °F picked up across the fan
     const COIL_FLOOR  = 34;                  // °F leaving-air clamp (freeze floor)
     // "The coil is doing real work" line — SIGNED (leaving minus
