@@ -1507,7 +1507,7 @@ test.describe('AHU workbench page: the unit selector on touch', () => {
 
     test('the links clear the 44px floor in both dimensions', async ({ page }) => {
         // Both dimensions, matching the FCU twin. This row asserted HEIGHT
-        // only until 2026-08-12 even though the rule it guards has set
+        // only until 2026-08-13 even though the rule it guards has set
         // `min-width: 44px` since PR #476 — so the AHU's width floor was
         // covered only incidentally, by the phone-surface row further down
         // in this file. Two rows measuring one rule, one of them blind to
