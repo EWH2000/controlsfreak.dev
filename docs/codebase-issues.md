@@ -8746,7 +8746,7 @@ this entry) and the unit delegates through them. No commit carries a
 note is the ledger link. Closed on the extraction PR itself — this doc
 edit rides the same merge, so the status is true the moment it lands.
 
-### 219. Workbench static placeholders describe a state the staged programs never resolve to *(open — 2026-07-26 · cosmetic)*
+### 219. Workbench static placeholders describe a state the staged programs never resolve to *(open — 2026-07-26 · cosmetic — **RESOLVED 2026-08-12 · PR #553**, and one surface was never cosmetic)*
 
 The FCU graphic's authored SVG text and its mobile mirror ship with
 `100% · ON` / `STG 2 · ON` / `Stage 2 · ON` / DAT `56.6 °F` / ΔT `20.4 °F`,
@@ -8763,6 +8763,45 @@ before `unit.update` ever reads it. Worth truing up to the arrival state
 is the only surface that can ever show them, and the sim is JS-only anyway.
 Found by the #205 adversarial verify; deliberately not fixed on that branch
 to keep the candidate diff reviewable.
+
+**RESOLVED 2026-08-12 · PR #553 — trued to the arrival state, and the
+"invisible in practice" framing above was HALF WRONG by the time it was
+acted on.** Every authored value now equals the frame the shell's boot
+`hostTick()` paints: fan **60 % · ON**, **stage 1**, DAT **58.4 °F**, ΔT
+**-17.6 °F**, against the unchanged RAT / zone **76.0** — so the ΔT badge
+still reconciles from its own displayed operands (58.4 − 76.0 = -17.6).
+The fan slider's `value` went 100 → 60 and the plant seed's `'fan-speed'`
+with it; that seed's comment claims it matches what cool-2stage commands
+on arrival, which is a live invariant rather than a description, and it is
+the half that drifted.
+
+**The correction to this entry: the #298 register key is NOT invisible.**
+It landed after this entry was written, and its three sample wells carry
+no `id`, so `renderUnit` never repaints them. They sat permanently on
+screen printing `100%` and `-19.4 °F` immediately beside a live mirror
+reading `60% · ON` and `-17.5 °F` — the legend-drifting-from-the-instrument
+failure that row's own spec comment warns about. So the entry's disposition
+("cosmetic … a no-JS render is the only surface that can ever show them")
+was true when filed and stopped being true when a later PR added a static
+surface nothing repaints. **Generalise it: "the boot tick repaints it"
+holds only for nodes `renderUnit` actually writes** — a new static value on
+this page is live-visible unless it is wired to an `out.*` target, and the
+next reader should re-check that before trusting an invisibility claim.
+`tests/ddc-workbench-fcu.spec.js` now pins the key row to the arrival frame
+with the derivation recorded, which is the standing guard for the visible
+half.
+
+Derivation, since the DAT was not guessable from the entry: the boot
+`hostTick()` is a direct call and the 10 Hz repaint is a separate
+`setInterval`, so stubbing `window.setInterval` before boot leaves that one
+tick as the only one that runs and the DOM holds exactly the frame these
+placeholders are replaced by. Frame 1 beats a settled reading here — zone
+is exactly the 76.0 seed, so RAT and zone stay on their correct values,
+where a settled snapshot (≈ 58.1 / 75.6 at 6 s) is an arbitrary point on a
+continuous drift and would have dragged them off. Suite green at 1204
+passed / 1 skipped; the seed change moved a dozen engine-direct rows from
+100 % to 60 % airflow and reddened none, which is that file's
+directions-not-values policy doing its job.
 
 ### 220. Shell-extraction residue the AHU page must inherit consciously *(open — 2026-07-26 · carry into the AHU brief — **RESOLVED 2026-07-30**, AHU page lane)*
 

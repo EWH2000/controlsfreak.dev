@@ -248,14 +248,23 @@ const DDCWFcuUnit = (function () {
         // sensed value the program reads (= zoneT unless overridden).
         // The seeded actuator values only cover the instant before the
         // first bindingTick — from then on the resolver overwrites them
-        // every tick (they match what cool-2stage commands on arrival,
-        // so nothing visibly changes hands).
+        // every tick. They MATCH what cool-2stage commands on arrival, so
+        // nothing changes hands: that parenthetical is a live invariant,
+        // not a description, and it has already gone stale once. #205
+        // restaged the fan reference behind the stage-2 call — arrival
+        // resolves stage 1, so `select` picks IN0 (the 60 % const), not
+        // the 100 % one — and the seed kept saying 100 for three weeks
+        // (codebase-issues #219). Re-derive this row from the default
+        // program's arrival, not from the last value that looked right.
+        // Note the seed is the SPEC SUITE's only consumer: on the page
+        // bindingTick always writes before update reads, so a wrong value
+        // here is silent, which is exactly why it drifted.
         return {
             sensors:    {
                 'space-temp': 76, 'dat': 55, 'rat': 76,   // rat = zoneT on arrival (a return probe reads the zone's own air)
                 'fan-status': false,         // proof has not made yet — it takes airflow plus time
             },
-            actuators:  { 'fan-speed': 100, 'fan-enable': true, 'y1': true, 'y2': false },
+            actuators:  { 'fan-speed': 60, 'fan-enable': true, 'y1': true, 'y2': false },
             params:     { 'cooling-setpoint': 72, 'deadband': 3 },
             // Fault vocabulary is KEBAB-CASE, matching ddcw-ahu-unit.js:
             // the two unit modules have to speak one language before a
