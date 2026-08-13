@@ -6276,6 +6276,81 @@ of a real reader; do not open it as a general affordance.
 
 ---
 
+### The owner's dev-arc brief (2026-08-07) — triaged 2026-08-12, PARKED *(re-triage when glossary phases 2–3 are done)*
+
+An owner-authored, deliberately broad brief (~30 items across seven
+themes: bus/physical-layer reality, gateway quirks, platform
+translation, the latent-load thread, job engineering artifacts,
+diagnostic method, correctness hardening), every item traced to real
+field friction. It lives **untracked at the repo root by design** —
+it contains real-job accounts, and "the pattern is publishable; the
+account is not" — so THIS entry, not the brief, is the durable record
+of its disposition. The full triage ran in the 2026-08-12
+clear-the-decks session; what follows separates what the owner RULED
+from what was merely recommended.
+
+**RULED — the brief as a whole is PARKED.** Re-triage when glossary
+phases 2–3 are done. Nothing below is a promise; page copy carries
+none of it (the no-coming-soon rule).
+
+**RULED — Theme B (gateway quirks) is parked entirely.** B1's
+database schema is manufacturer + model + firmware — it cannot exist
+under the avoid-exact-vendor-names guardrail, and "submittable"
+violates the no-submissions hard-no; the vendor-free method salvage
+(B2 instance planner, B3 method explainer) parks with the theme
+rather than shipping headless.
+
+**RULED — C1, the PID parameter translator, is APPROVED and out of
+the park:** it joins the glossary Phase 2 arc as its build lane.
+Vendor-free framing throughout — repeats-per-minute ↔ integral time
+↔ proportional band ↔ gain, ISA/parallel/series algorithm forms named
+generically; the algorithm-form assumption stated in the output; a
+damage-stakes-adjacent "verify at the bench" note. Hangs off the PID
+Tuner. `[future: tools/pid-parameter-translator.html]`
+
+**RULED — LON: banked + parked.** The owner wants LON content and
+raised the proprietary concern himself; the analysis is banked so the
+re-triage inherits it: LonTalk is ANSI/CEA-709.1 / ISO-IEC 14908-1 —
+the same legal shape as ASHRAE 135, which the BACnet pillar already
+handles — and the SNVT/SCPT master list is published publicly by
+LonMark International, the verification source for a decoder (the
+role BACpypes3/BACnet4J played for the BACnet enums). Nominative
+protocol naming is the BACnet/Modbus precedent. The line: vendor TOOL
+workflows and product names stay out (the existing guardrail), and
+standard TEXT is never reproduced — only facts. C2 (the SNVT/NCI hex
+decoder; the owner's worked examples are in the brief) sits fully
+inside that boundary; most of C3's starter set does too. Re-verify
+the LonMark sourcing state at build time.
+
+**Recommended, deliberately un-ruled (inputs to the re-triage):**
+the case-file content type (F4 + the diagnostic-method stories) as
+the spine candidate — pilot mockup-first, schema shaped so a future
+scenario-engine can consume it (the parked scenario drills are the
+same material in play form), stories owner-supplied in house voice,
+and ship method-not-verdict on any diagnosis still unresolved (the
+brief's own §3.3 rule); E1 (I/O planner) to stay parked — the bloat
+magnet, per the controller-commissioner precedent; E3 (trend/alarm
+buildout standard), D1/D3 (the latent-feasibility pair —
+`psychro-engine.js`'s own header has named them candidate second
+consumers for months), and A2/A3 (meter-reality + termination
+references) as the strong follow-on pool; Theme G needs no ruling —
+it is already committed paper (G2 ≈ #228, owner-directed, with #65's
+trigger fired; G1 rides the same extraction; G3 is cheap and
+partially done).
+
+**Ground-truth corrections to the brief's own working assumptions
+(§0/§4):** the homepage-derived counts were exactly right (31 tools /
+40 lessons / 9 sims / 41 practice / 4 hubs; the stale v0.6 footers it
+saw were cache artifacts). `units.js` is a display-only walker — the
+shared conversion MATH the brief asks about does not exist, which is
+precisely ledger #228. Engine-direct specs exist, but page-inline
+calculator math is unreachable by them until extracted — G1 and G2
+are one workstream. The pipeline supports a new content type
+trivially; the cost is taxonomy (and the sharp-shelves preference),
+not plumbing.
+
+---
+
 ### Mixed air, mass basis vs volume basis *(measured 2026-07-28 — owner ruled the sim's basis; the teaching beat is unbuilt)*
 
 The AHU's mixing box weights **volumetrically** — `%OA × OAT + %RA × RAT`,

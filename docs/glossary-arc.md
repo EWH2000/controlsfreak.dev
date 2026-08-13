@@ -328,6 +328,19 @@ evaporate with it:
   - **Phase 2 (tier-1 drafting) opens NEXT SESSION**, assuming the
     arc's mechanical queue lands clean.
 
+- **2026-08-12, later — the Phase 2 arc gains its build lane: the PID
+  parameter translator (C1).** Owner ruling at the dev-arc-brief
+  triage (the brief itself is PARKED for re-triage after phases 2–3;
+  the durable record is the friction file's new brief-triage entry).
+  The next session's arc shape is therefore the house default —
+  content lanes (tier-1 drafting) plus one build lane (the tool).
+  Constraints travel with it: vendor-free framing (repeats-per-minute
+  ↔ integral time ↔ proportional band ↔ gain; ISA / parallel / series
+  algorithm forms named generically), the algorithm-form assumption
+  stated in the tool's output, a damage-stakes-adjacent
+  verify-at-the-bench note, and it hangs off the PID Tuner.
+  `[future: tools/pid-parameter-translator.html]`
+
 - **2026-08-11 — the fold-widening ruling: ACCEPT ALL, flags as
   called.** The owner approved the full widening proposal built from
   the two-page prose inventory, unmodified — his words: *"Accept all,
