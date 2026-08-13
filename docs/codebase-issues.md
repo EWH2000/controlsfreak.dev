@@ -13475,7 +13475,7 @@ cannot pass it), the samples convert on the units toggle, the key is
 placed explicitly in the fullscreen cockpit, and the split rows are
 shown moving apart under a forced sensor.
 
-### 299. The hrefless-chip set was three pages bigger than #297 said — the grep keyed on `data-`, and ten chips key on `id` *(noticed 2026-08-12, the #297 lane — sibling sweep, queued)*
+### 299. The hrefless-chip set was three pages bigger than #297 said — the grep keyed on `data-`, and ten chips key on `id` *(noticed 2026-08-12, the #297 lane — sibling sweep; **RESOLVED 2026-08-12 · PR #540**, all four pages converted; the entry's page/line list held except for a two-line drift, and the handover placement rule #297 wrote turned out to have a second, sharper reason — see the resolution block)*
 
 #297 opened on the #281 lane's closing grep (`<a data-` with no
 `href`) and called its two files "the complete remaining set of
@@ -13519,6 +13519,89 @@ removed. `styles.css` needs nothing — `.widget-try button` and its
 `:focus-visible` twin already exist and already carry the "new
 try-rows should use buttons" comment. The three pages are independent
 of each other, so this can ship as one lane or three.
+
+**RESOLVED 2026-08-12 · PR #540.** All four rows — the three hrefless
+pages and the `href="#"` near miss — are `<button type="button">`, each
+page's click path is one delegated listener installed from its own
+`{% block head %}`, and every per-chip `getElementById(...)` +
+`addEventListener` pair is gone (the now-unused element consts went with
+them). `styles.css` was not touched, for the **third** time: the
+conversion stays markup-only because `.widget-try button` and its
+`:focus-visible` twin were already there.
+
+**The entry's page list held; one line number had drifted.** Ten
+hrefless chips over three pages, plus the two-chip near miss — exactly
+as written. `pump-control.html:573-575` and `vfd-mock.html:289-292` and
+`load-piping.html:621-622` were all exact. `vfds.html` was cited as
+`352-354`; 352 is the `<div class="widget-try">` opener and the three
+chips sit at **354-356**. Nothing else in the entry moved.
+
+**The addressing scheme was kept, deliberately.** The chips are still
+keyed by `id`, and the delegated listener queues `chip.id` rather than a
+new `data-` attribute; the id→preset mapping stays in each page's IIFE
+where the widget's vocabulary lives. Two reasons. The entry's own
+durable lesson is that a chip is a control because of its **element and
+binding**, not the attribute that addresses it — so re-addressing them
+would have treated the incidental half as the defect. And
+`tests/smoke.spec.js` already clicked `#vfd-try-classic` /
+`#vfd-try-network` by id, so a swap would have meant editing live
+selectors to no end.
+
+**The handover placement rule from #297 is real, and it has a second
+reason that is sharper than the first.** #297 recorded it as *"drain
+after the page's own boot load"*, discovered because the loop builder's
+boot `loadExample('single')` would overwrite a queued choice. None of
+these four pages boots that way — each ends its IIFE with a bare
+`render()` that only PAINTS state — so on the first pass all four
+handovers were placed where the old per-chip loops had been, and three
+of them worked.
+
+`vfd-mock` did not, and the failure was **not** a paint-order problem:
+`applyPreset → render → ensureTickRunning` reads `motorTickId`, a `let`
+declared ~60 lines further down the IIFE. A queued click therefore threw
+`Cannot access 'motorTickId' before initialization` and the drive never
+mounted at all. The per-chip listeners never met this because a
+`addEventListener` call only *registers*; the handover **calls** the
+applier, synchronously, at handover time. New spec caught it on its
+first run.
+
+So the rule generalises past its original wording: **a handover is a
+CALL, not a binding, so it belongs after everything the call can reach**
+— after the boot paint (the #297 reason) *and* after every `let` on the
+call path is initialised (this one). All four pages now drain at the
+very end of their IIFE, which satisfies both without needing a per-page
+judgement, and each carries the reasoning in a comment.
+
+**Spec side.** Eight rows in `tests/smoke.spec.js` — where per-page
+behavioral coverage lives for all four, none having a dedicated spec
+file — two per page, one arm each. **Seven of the eight fail against the
+pre-fix pages**, verified by stashing only the page edits. The eighth is
+`load piping — the preset chips stay keyboard-reachable`, and it passing
+pre-fix is correct rather than vacuous: those two chips carried `href`,
+so they were already in the tab order and there is no keyboard
+regression to catch. That row is kept as the standing proof the
+conversion did not *cost* the tab order, and its `location.hash` assert
+is the part that is genuinely new — the old handlers had to
+`preventDefault` their own `href`, and a `<button type="button">` has no
+default action to suppress.
+
+The pre-mount rows hold `/scripts/flow-engine.js` at the network with
+`page.route` rather than racing for the window. That is a change from
+#297's choice of `details-print.js`, and it buys a **universal
+anti-vacuity probe**: `flow-engine.js` exports `window.FlowEngine`, so
+`typeof window.FlowEngine === 'undefined'` proves the parser is still
+blocked on every page, without needing a per-page DOM fact. Three of the
+four also assert one (empty valve rack, empty status panel, empty
+parameter table); `load-piping` has none available, because its static
+markup mirrors its boot state exactly — sys flow 30, pump 50%, state OK
+— so there is no DOM difference between "not mounted" and "mounted and
+idle." The script probe is sufficient there on document order alone: the
+IIFE is strictly below the held script.
+
+**One thing this lane creates.** `.widget-try a` in `styles.css` is now
+dead — these four rows were its last consumers. Logged as **#306**, not
+swept here: `styles.css` is a live-page file whose edits carry the
+cache-bust question, and this PR is otherwise markup-and-spec only.
 
 ### 300. The gloss gesture specs raced the environment's own scrolls — and one run reported the failures as green *(noticed 2026-08-12, triaging the merge-queue suite run — test infrastructure; **RESOLVED 2026-08-12 · PR #529**, mechanism instrumented both ways; resolution block below)*
 
@@ -13637,3 +13720,30 @@ audit is bigger and the per-page payoff unmeasured. Log-don't-fix.
 A natural trigger: if a GSC read shows education pages
 underperforming on impressions relative to tools, this is the first
 cheap lever to reach for.
+
+### 306. `.widget-try a` is dead CSS as of the #299 conversion *(noticed 2026-08-12, the #299 lane — cleanup, LOW)*
+
+The anchor half of the `.widget-try` chip rule (`styles.css`, the
+`WIDGET CHROME` block) plus its `:hover` twin. #281 / #297 / #299
+converted every `.widget-try` chip on the site to `<button>`, and
+`.widget-try a` had no other consumers — the check is the same one #299
+wrote for finding them:
+
+    grep -rn -A10 'class="widget-try"' html/ --include=*.html | grep '<a '
+
+which now returns nothing. The button rule below it already carries the
+comment saying new try-rows should use buttons; with the anchors gone
+that comment is the whole story and the `a` rule is the historical
+half.
+
+Not swept in the #299 lane on purpose. `styles.css` is a live-page file
+— its edits need owner approval and raise the cache-bust question
+(#84), while that PR was markup-and-spec only. Fold this into whatever
+lane next has `styles.css` open for its own reasons; deleting ~10 lines
+of unreachable CSS does not earn a version bump by itself.
+
+One caveat for whoever takes it: the rule is dead only while nothing
+re-introduces a `.widget-try` anchor. That is now a convention rather
+than a guarantee — there is no build guard on it, and the four
+conversions were each caught by a hand-run grep, so re-run the one
+above before deleting.
