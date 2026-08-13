@@ -8526,7 +8526,7 @@ RE-BASELINED 2026-08-12 header block carries the full numbers as the
 protocol's worked example. No tolerance widened — against the fresh means
 every measured row sits inside the existing ±2.0 floor.
 
-### 215. FBE inspector accepts unbounded const values straight into the plant *(open — 2026-07-25)*
+### 215. FBE inspector accepts unbounded const values straight into the plant *(open — 2026-07-25; **RESOLVED 2026-08-12** — measured in-browser: no wedge, the plant's own floor absorbs it; no clamp, by design)*
 
 Split out of #209 on 2026-07-25 — same file, unrelated mechanism, and #209
 became a design arc while this stayed a small robustness question.
@@ -8571,6 +8571,31 @@ staging ordered here — and the down-sweep stages off in reverse, everything
 off at 71 °F. Restoring `sep = +2` at 60 °F recovers nominal thresholds
 (75.25 / 77.25 °F) with no latch state surviving. Legible exploration like
 the rest of the const family; no clamp warranted for `sep`.
+
+**RESOLVED 2026-08-12 — the measurement this entry demanded ran, and the
+answer is NO WEDGE: leave it unclamped.** In a real browser against the
+built FCU page, through the inspector's own `#fbe-p-value` input path
+(Playwright). Method note the next measurer needs: a first probe that
+just set `hundred` = ±1e300 measured **nothing** — with stage 2 off, the
+SEL block never selects IN1, so the absurd value sat parked behind an
+unselected input and the plant never saw it. The real run first dropped
+`cooling-setpoint` to 60 °F so stage 2 engaged THROUGH the program and
+the SEL output actually fed the fan-speed AO. Then, consumed by the
+physics, `1e300` produced: ONE tick to the plant's own floor —
+`ddcw-fcu-unit.js:548`, `if (plant.zoneT < 40) plant.zoneT = 40;` — the
+latches drop out (zone below every threshold), the fan goes idle, and
+the zone re-warms at its natural rate. No NaN, no Infinity, no
+saturation anywhere in the block values or the mirror. `-1e300` is
+quieter still: `fanCmd` requires `fanPct > 0`, so a negative speed reads
+as fan-off. Restoring `hundred` = 100 / SP = 72 recovered the nominal
+program in seconds — thresholds 75.25 / 77.25 back, the unit legibly
+idle until the zone re-crosses — **without reload**. The deciding
+question lands on the first branch: *silly input, silly output —
+harmless, arguably instructive.* The single stateful physics variable is
+already hard-floored by the plant; every other absurd-const path flows
+through stateless comparators or boolean latches. Same disposition as
+the negative-`sep` measurement above: legible exploration, no clamp
+warranted, entry CLOSED.
 
 ### 216. Nine rules request a mono weight the site does not ship *(addressed 2026-07-26)*
 
