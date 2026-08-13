@@ -1978,21 +1978,14 @@ test.describe('AHU workbench page: the phone surface (the Unit tab is the mobile
         }
     });
 
-    test('the fullscreen button does not paint over the title tag', async ({ page }) => {
-        // Measured before the fix: 18px of the AIR HANDLER tag under the
-        // absolutely-positioned button at 375. The page-local clearance
-        // rule pads the header and lets the title row wrap.
-        await open(page);
-        const boxes = await page.evaluate(() => {
-            const t = document.querySelector('.tool-tag').getBoundingClientRect();
-            const b = document.querySelector('.tool-card-fullscreen-btn').getBoundingClientRect();
-            return { t: { l: t.left, r: t.right, t: t.top, b: t.bottom },
-                     b: { l: b.left, r: b.right, t: b.top, b: b.bottom } };
-        });
-        const overlapX = Math.min(boxes.t.r, boxes.b.r) - Math.max(boxes.t.l, boxes.b.l);
-        const overlapY = Math.min(boxes.t.b, boxes.b.b) - Math.max(boxes.t.t, boxes.b.t);
-        expect(overlapX > 0 && overlapY > 0, 'tag and fullscreen button share paint').toBe(false);
-    });
+    // The title/fullscreen-button overlap row moved to the shared
+    // tests/fullscreen-btn-overlap.spec.js when #272 promoted the
+    // clearance out of this page's head into styles.css. This page is the
+    // one that actually collides — 8.7px of the Air handler tag under the
+    // button at 375 with the rule off. The shared version measures every
+    // title text rect (not just .tool-tag) and
+    // adds the anti-vacuity rows this one lacked — a display:none button
+    // has a zero rect, which intersects nothing and passed silently.
 
     test('the wiresheet opens on its one-line truth, with the workspace honestly absent', async ({ page }) => {
         await open(page);

@@ -74,30 +74,13 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
         .ahu-graphic { max-width: 780px; margin: 0.5rem auto 0; }
         .ahu-svg { display: block; width: 100%; height: auto; }
 
-        /* ── Phone-width header clearance ──────────────────────────────
-           The shared fullscreen button is absolutely positioned in the
-           card's top-right corner and paints OVER the title row where
-           the two meet: at 375–390 viewports it covered the AIR HANDLER
-           tag's tail (measured 18px of overlap at 375). Reserve the
-           button's footprint and let the title row wrap, so the tag
-           drops under the title instead of under the button. The title
-           is a nowrap flex row, so the padding alone would only slide
-           the tag beneath the button — the wrap is the half that acts.
-           8.5rem = the button's font-driven ~119px + its 0.55rem inset
-           + a seam, in rem so it tracks the button's own type size.
-           Overlap measured gone by ≈400px; 480 keeps margin.
-           ⚠ DUPLICATED IN THE OTHER WORKBENCH PAGE'S HEAD — its
-           AIR-SIDE tag clears by only 2px at 375, so it carries the
-           same rule defensively. The graduation trigger fired
-           (Phase 8, 2026-08-04) WITHOUT promoting this pair: the
-           selectors are the site-wide .tool-card-header /
-           .tool-card-title, so a styles.css copy would restyle every
-           page's phone header — that is exactly codebase-issues
-           #272's open design call, and the dedup rides it. */
-        @media (max-width: 480px) {
-            .tool-card-header { padding-right: 8.5rem; }
-            .tool-card-title { flex-wrap: wrap; }
-        }
+        /* Phone-width header clearance for the fullscreen button lives in
+           styles.css now, beside the button itself, scoped with :has() to
+           cards whose button survives to phone width (#272 — this page and
+           the FCU each carried a copy). This is the page that actually
+           collides: with the rule off, 8.7px of the Air handler tag runs
+           under the button at 375 (the FCU's tag clears by 11.4px).
+           tests/fullscreen-btn-overlap.spec.js measures both. */
 
         /* ══════════════════════════════════════════════════════════════════
            CONSOLE LAYOUT
