@@ -14203,6 +14203,40 @@ applies it — likely a leftover from the pre-diet mirror. Delete in
 the next lane that touches the FCU head block, with a grep first in
 case a consumer lands in between.
 
+**RESOLVED 2026-08-12 (PR #555).** Deleted. The grep the entry asked
+for was re-run at `20d5ad2` rather than trusted from this text, since
+the page had moved in between — #219's static-placeholder pass merged
+the same night as PR #553, and the branch is cut from exactly that
+commit. Zero consumers at that HEAD, on five surfaces: the seven
+`.fcu-point-val` spans wear `is-cmd` (3), `accent` (1) or no modifier
+(3); `ddcw-fcu-unit.js` writes those spans' `textContent` only and
+never their class (its class mutations all land on the verdict pill,
+the SVG sensor groups, buttons, a chevron and the tab pane);
+`ddcw-shell.js`'s one computed class string is `'ddcw-chip-val' + cls`
+with `cls` ∈ `{'', 'on', 'off'}`, a different element; `classBoth` in
+`ddcw-ahu-unit.js` — the other computed-class site — passes the
+literal `'is-false'` at all four callers, on the other page; and no
+`dim` token appears anywhere under `tests/`. `styles.css` carries no
+`.dim` rule either, so nothing shared was feeding it.
+
+The strongest single piece of evidence is that
+`tests/ddc-workbench-fcu.spec.js` declares
+`REGISTER_CLASSES = ['is-cmd', 'accent']` — the ink code's own
+bidirectional guard had already fixed the register set at two, so
+`dim` was outside the code it sat beside, not an unguarded third
+member of it.
+
+Per the lane's don't-leave-a-twin check, `.accent` was verified alive
+before touching anything: worn by `#fcu-dt-r` and pinned in both
+directions by that spec's `bearing('accent') === ['fcu-dt-r']`.
+`.is-cmd` likewise. Both untouched, and so was the block's comment,
+which called the survivors "this pair of rules" — accurate only once
+the third was gone. No visual change in either theme (the rule matched
+no element in any state), and no version bump spent: the edit is CSS
+removal inside the page's own `{% block head %}`, not `styles.css` or
+a shared script, so there is no cache-busting exposure — the bump
+rides the merge captain's close-out batch.
+
 ### 304. Five byte-identical `*-empty td` rules across the lookup tools *(noticed 2026-08-12, the #290 lane — consolidation candidate, LOW)*
 
 `bacnet-error-codes` / `bacnet-objects` / `bacnet-units` /
