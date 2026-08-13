@@ -10167,7 +10167,7 @@ integrator; the call is which pair a reader is most likely to check.
 Recommendation is (a) plus a comment, which is what shipped — the residual is
 documented at the `d.eatT` assignment.
 
-### 234. `SPEED_MIN` / `SPEED_MAX` are declared in the FCU unit and read nowhere *(noticed 2026-07-28, reading the FCU as the AHU's reference)*
+### 234. `SPEED_MIN` / `SPEED_MAX` are declared in the FCU unit and read nowhere *(noticed 2026-07-28, reading the FCU as the AHU's reference — **RESOLVED 2026-08-12 · PR #550**, by DELETION rather than the entry's recommended middle option; the reasoning against wiring them up is below, and the residual two-source it exposed — sheet vs sheet — is what got the guard)*
 
 `html/scripts/ddcw-fcu-unit.js:163-164` declares
 
@@ -10198,6 +10198,70 @@ only one that makes the constants do work.
 The AHU physics half deliberately declares neither — an unread constant is
 exactly the trap this entry describes, and the AHU's sim-clock prefs land
 with its shell-contract half instead.
+
+**RESOLVED 2026-08-12 · PR #550 — deletion, not the middle option.** The
+entry called the middle way out ("have `fcuWireControls` write `slider.min` /
+`slider.max` from them") *"the only one that makes the constants do work,"*
+and that is true as far as it goes. It was not taken, for four reasons that
+outrank it:
+
+* **The sibling module had already ruled the other way, in writing.**
+  `ddcw-ahu-unit.js` states it at its own sim-clock prefs — *"SPEED_MIN /
+  SPEED_MAX are NOT declared … a second copy here would be exactly that
+  trap"* — and #220's resolution records the same settlement ("settled by
+  omission on this unit, per #234"). #220 had explicitly left this half open:
+  *"either wire the bounds from the constants or carry the mirror
+  knowingly."* Wiring the FCU up would have left two sibling unit modules in
+  **opposite postures on one question**, which is a worse drift generator
+  than one dead const.
+* **There is no no-JS fallback for the markup to be.** The workbench is
+  wholly JS-driven; with scripting off the sim-clock slider does nothing at
+  all. Under the middle option the markup numbers become **decoys** —
+  greppable, authoritative-looking, silently overwritten at bind time. That
+  is this entry's own complaint (edit a number, watch nothing happen, get no
+  sign) reproduced on the other side of the seam. Note it also removes no
+  copy; it only flips which copy is dead.
+* **`host.setSpeed()` clamps nothing** (`ddcw-shell.js` — `if (isFinite(v))
+  simSpeed = v`), so the model has no notion of a valid speed and there is no
+  model-side truth for a constant to *be*. The range is purely how far a knob
+  travels, which is the entry's own "affordances, not model constants."
+* **It would single out one of the page's four sliders.** Fan, sim-speed,
+  outdoor-air and load all declare bounds the same way and none of the other
+  three has a JS mirror.
+
+The entry's third option (a spec asserting markup == const) is barred by the
+spec that would host it: `ddcw-fcu-unit.spec.js`'s header promises *"INVARIANTS,
+NOT FEEL CONSTANTS … Nothing below pins any of their values."* And the
+genuinely one-source version — `speedMin` / `speedMax` in the `create()`
+contract with the shell writing both sliders — is ruled out by the standing
+note beside `OA_RAMP_RATE`: extraction into the unit-agnostic shell **waits for
+a third unit**.
+
+**What the deletion exposed, and what now guards it.** Removing the dead copy
+leaves the two-source that actually matters, and it is not script-vs-markup —
+it is **sheet vs sheet**. Both workbench pages ship a sim clock and agreed at
+1…60 *by coincidence*; a reader crossing the unit selector mid-thought must
+not find the clock re-scaled under them, which is the same drift the
+`OA_RAMP_RATE` comment refuses for the weather model. Two rows in
+`tests/ddc-workbench-fcu.spec.js` now hold it:
+
+* *every workbench sheet offers the same sim-clock range* — walks
+  `html/simulators/` and compares the bounds of every page that ships a sim
+  clock (the mockup has none and drops out on its own).
+* *no unit module carries a sim-clock bounds mirror* — walks every
+  `ddcw-*-unit.js`, so a **third** unit re-declaring the pair fails on the day
+  its file lands rather than the day someone remembers this entry.
+
+Both walk their directory rather than naming files (the #235 lesson) and both
+carry anti-vacuity probes; each was falsified once before shipping. Neither
+pins 1 or 60 — those stay TUNE BY FEEL and retune together. Both sheets and
+both unit modules gained a comment naming the slider as the range's owner.
+
+**Two cites in this entry had drifted** by the time it was worked: the consts
+were at `ddcw-fcu-unit.js:167-168`, not `:163-164`, and the markup slider at
+`ddc-workbench-fcu.html:1478`, not `:867`. The substantive claim held exactly —
+a repo-wide grep found `SPEED_MIN` / `SPEED_MAX` only in their own
+declarations, this ledger, and the AHU comment declining to declare them.
 
 ### 235. The #224 display-unit guard is bound by path and by local name to the FCU, so a second unit module ships that rule unguarded *(noticed 2026-07-28, AHU physics lane — **RESOLVED 2026-07-30**, AHU page lane — generalised, not duplicated)*
 
