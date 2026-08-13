@@ -10967,7 +10967,7 @@ block's **rendered bottom** against the declared canvas h, which is a
 different claim from layer A's authored-`y` drag clamp (`h − 40`) and is the
 one that catches this. Both surfaces measure clean at 540 now.
 
-### 245. FCU scenario buttons carry `aria-pressed` but are one-shot actions, and nothing ever updates it *(noticed 2026-07-30, FCU proof sweep — in passing, not fixed)*
+### 245. FCU scenario buttons carry `aria-pressed` but are one-shot actions, and nothing ever updates it *(noticed 2026-07-30, FCU proof sweep — in passing, not fixed; **RESOLVED 2026-08-12 · PR #538** — owner ruled for dropping the attribute; the entry was one dead selector short and its line numbers had drifted, see the resolution block)*
 **Inherited by the AHU page 2026-07-30.** `html/simulators/ddc-workbench.html`'s
 scenario row copies the same shape — six one-shot buttons carrying
 `aria-pressed="false"` that nothing updates. Copied knowingly rather than fixed,
@@ -11026,6 +11026,72 @@ uses `.rl-presets`, worth checking in the same pass).
 >   decide whether a fault preset is meant to latch visibly, and then
 >   either build that state on both pages or delete the selector with
 >   the attribute.
+
+**RESOLVED 2026-08-12 · PR #538.** Owner ruling: **drop the attribute and
+delete the dead selector.** A scenario is a one-shot command, not a mode —
+so the third option the 2026-08-03 block opened (build the latch on both
+pages) was declined, and the abandoned-halfway state went out with the
+attribute that presumed it. Same call as the controller-wiring presets
+(#142), whose `a11y-bundle.spec.js` test this one now sits beside.
+
+What shipped, per page:
+
+- **`html/simulators/ddc-workbench.html`** — `aria-pressed` off all six AHU
+  scenario buttons; the `.ahu-presets .copy-btn.ahu-preset-fault.active`
+  rule deleted; the `ahu-preset-fault` class dropped from the three fault
+  buttons, since deleting the rule left it with no reference anywhere in the
+  repo. A comment at the row pins the reasoning and names the STAGE group as
+  the counter-example, so the attribute is not re-added by symmetry.
+- **`html/simulators/ddc-workbench-fcu.html`** — the same on the five FCU
+  scenario buttons, the `.fcu-preset-fault.active` rule and the
+  `fcu-preset-fault` class.
+- **`tests/a11y-bundle.spec.js`** — a guard beside the #142 one. It asserts
+  the absence in both directions (no `aria-pressed` before **or** after a
+  click), asserts the scenario row is non-empty so the count-zero check can
+  never pass vacuously, and asserts the stage group on the same panel still
+  reports `aria-pressed="true"` — the half an over-broad sweep would break.
+
+**Untouched, deliberately:** the STAGE buttons and the override toggle on
+both pages. Their `aria-pressed` *is* maintained (`ahuSyncControls` /
+`fcuSyncControls`) and they are the genuine toggle case this entry always
+named as the contrast.
+
+**The sibling sweep this entry asked for.** Every `data-preset` consumer was
+checked for the copied shape, and the answer is that the defect was confined
+to the two workbench pages:
+
+- **`simulators/refrigerant-loop.html` (`.rl-presets`) — NOT the same
+  defect; left alone.** Its presets are a genuine latch, maintained in both
+  directions: `applyPreset()` calls `clearActivePreset()` (every button to
+  `false`) and then sets the clicked one `true`, and every hand move on a
+  knob, stage or refrigerant calls `clearActivePreset()` again — so a
+  pressed button always means "this scenario is currently loaded," which is
+  exactly the held state `aria-pressed` is for. The identical `.rl-preset-*`
+  `.active` selectors there are live, not dead.
+- **`simulators/pid-tuner.html`** — the same maintained-latch shape, already
+  pinned by the #143 test. Left alone.
+- **`simulators/controller-wiring.html`** — already carries no
+  `aria-pressed`; this is the #142 precedent.
+- **`tools/bacnet-priority.html`** — carries no `aria-pressed`.
+
+**Entry-vs-reality discrepancies, recorded rather than silently fixed.**
+The 2026-08-03 observations block was right about the mechanism and wrong
+about where to look, and it was one finding short:
+
+- The AHU scenario buttons are at `ddc-workbench.html:2931-2936`, not
+  `:2526-2531`.
+- The dead selector is at `ddc-workbench.html:1035`, not `:945`.
+- **The FCU carried the identical dead selector** at
+  `ddc-workbench-fcu.html:553` (`.fcu-presets .copy-btn
+  .fcu-preset-fault.active`) and the block names only the AHU one — even
+  though the entry's own opening paragraph says a lane resolving this should
+  sweep both files together. Fixed in the same pass.
+- The preset click handler is at `ddcw-ahu-unit.js:~2269-2300`, not
+  `:1755-1783`. The claim it was cited for holds: neither unit script ever
+  writes `aria-pressed` on a preset, and the only
+  `classList.toggle('active', …)` calls in either file are the stage buttons
+  and the override toggle — re-verified by grep before editing, which is
+  what licensed deleting the rules rather than wiring them up.
 
 ### 246. The FCU's `blocked-coil` fault names an air-side failure but the model gives it full airflow *(noticed 2026-07-30, FCU proof-sweep review — **RESOLVED 2026-07-30**, owner ruled for disposition 1)*
 
