@@ -1719,7 +1719,22 @@ test.describe('DDC Workbench — the parameter rail adjusts the running program'
         // worked example.
         expect(await page.locator('#fcu-p-cool-sp').inputValue()).toBe('22.2');
         expect(await page.locator('#fcu-p-deadband').inputValue()).toBe('1.7');
-        await expect(page.locator('#fcu-p-cool-sp-u')).toHaveText('°C');
+        // EVERY suffix span, both directions. The spans are painted by one
+        // signature-guarded writer that skips the identical repaint on each
+        // of the 10 Hz host ticks (codebase-issues #265), so the flip is
+        // the one event that has to get through it — and it has to get
+        // through going back, which a metric-only assertion never checks.
+        // The override box's span rides the same guard as the rail's, so
+        // it is named here too.
+        const SUFFIXES = ['#fcu-p-cool-sp-u', '#fcu-p-deadband-u', '#fcu-ovr-unit'];
+        for (const sel of SUFFIXES) {
+            await expect(page.locator(sel), sel).toHaveText('°C');
+        }
+        await page.locator('.units-btn').filter({ hasText: 'US' }).click();
+        await page.waitForTimeout(300);
+        for (const sel of SUFFIXES) {
+            await expect(page.locator(sel), sel + ' back in US').toHaveText('°F');
+        }
     });
 
     test('a metric clamp holds the CANONICAL limit through the Enter double-fire', async ({ page }) => {

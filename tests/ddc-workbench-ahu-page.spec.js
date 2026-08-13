@@ -1689,7 +1689,18 @@ test.describe('AHU workbench page: the parameter rail adjusts the running progra
         // 72 °F → 22.2 °C; the deadband is a DELTA: 2 °F → 1.1 °C.
         expect(await cool.inputValue()).toBe('22.2');
         expect(await page.locator('#ahu-p-deadband').inputValue()).toBe('1.1');
-        await expect(page.locator('#ahu-p-cool-sp-u')).toHaveText('°C');
+        // EVERY suffix span, both directions. The spans are painted by one
+        // signature-guarded writer that skips the identical repaint on each
+        // of the 10 Hz host ticks (codebase-issues #265), so the flip is
+        // the one event that has to get through it — and it has to get
+        // through going back, which a metric-only assertion never checks.
+        // The override box's span rides the same guard as the rail's, so
+        // it is named here too.
+        const SUFFIXES = ['#ahu-p-cool-sp-u', '#ahu-p-heat-sp-u',
+            '#ahu-p-deadband-u', '#ahu-p-econ-lockout-u', '#ahu-ovr-unit'];
+        for (const sel of SUFFIXES) {
+            await expect(page.locator(sel), sel).toHaveText('°C');
+        }
         // The range attributes move with the mode (65–85 °F → 18.3–29.4 °C)
         // so the spinners and browser cues stay honest; the committed
         // clamp is canonical-side and unaffected.
@@ -1702,6 +1713,12 @@ test.describe('AHU workbench page: the parameter rail adjusts the running progra
         await settle(page, 300);
         expect(await cool.inputValue()).toBe('23.0');
         expect(await chipText(page, 'Cool SP')).toContain('23.0 °C');
+        // Back to US — the return trip through the #265 guard.
+        await page.locator('.units-btn').filter({ hasText: 'US' }).click();
+        await settle(page, 300);
+        for (const sel of SUFFIXES) {
+            await expect(page.locator(sel), sel + ' back in US').toHaveText('°F');
+        }
     });
 
     test('a metric clamp holds the CANONICAL limit through the Enter double-fire', async ({ page }) => {

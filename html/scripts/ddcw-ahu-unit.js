@@ -1523,6 +1523,50 @@ const DDCWAhuUnit = (function () {
         if (inp.value !== str) inp.value = str;
     }
 
+    // ── the °F/°C suffix spans — ONE guarded writer for the whole set ──
+    // Every one of these aria-hidden spans (four beside the rail's number
+    // inputs, one in the override box) is a pure function of the site
+    // units mode, so they change TOGETHER or not at all — one signature is
+    // the honest shape, not five. The visitor flips units maybe once a
+    // session; ahuRenderUnit runs on every 10 Hz host tick, so the
+    // unguarded version rewrote five identical strings ten times a second
+    // (codebase-issues #265).
+    //
+    // ⚠ NOT a #229-family fix — these spans are aria-hidden, so nothing is
+    // announced and no live region is being spammed. This is cost alone.
+    // But the cost is larger than the ledger entry assumed: measured on
+    // the built page, an identical-string textContent write DOES queue a
+    // mutation record in Chromium (childList — the old text node is
+    // removed and a new one inserted), 31 per span over a 3 s idle window.
+    // These were real tree mutations, not bare property writes.
+    //
+    // ⚠ THE SIGNATURE IS THE PAINTED STRINGS THEMSELVES, and that is what
+    // lets a units flip through: the shell's `unitschange` listener calls
+    // renderUnit, the suffixes come back different, the guard opens.
+    // Keying on Units.current() instead would put an indirection between
+    // the guard and the thing on screen. Both suffixes ride in it even
+    // though temp and deltaTemp return the same string today — the pair is
+    // what the spans paint, and a later divergence must not need this
+    // guard re-derived.
+    //
+    // A CACHED signature (setVerdict's idiom) rather than setParamInput's
+    // compare-the-element form: reading el.textContent to decide would
+    // walk the span and build a string every tick, which is the work being
+    // removed.
+    let suffixSpanSig = null;
+    function paintSuffixSpans() {
+        const t = tSuffix();
+        const d = dSuffix();
+        const sig = t + '|' + d;
+        if (sig === suffixSpanSig) return;
+        suffixSpanSig = sig;
+        out.uCoolSp.textContent   = t;
+        out.uHeatSp.textContent   = t;
+        out.uDeadband.textContent = d;
+        out.uEconLock.textContent = t;
+        ovrUnit.textContent       = t;
+    }
+
     // The rail's five adjustable params: roster point id → the bindDom
     // handle key of its input. Walked by the mirror paint, the
     // writability sync and the commit wiring, so the three surfaces
@@ -1771,10 +1815,7 @@ const DDCWAhuUnit = (function () {
         setParamInput(out.pDeadband, dbN.toFixed(1));
         setParamInput(out.pEconLock, econLkN.toFixed(1));
         setParamInput(out.pMinOa, String(Math.round(p['min-oa-pos'])));
-        out.uCoolSp.textContent   = tSuffix();
-        out.uHeatSp.textContent   = tSuffix();
-        out.uDeadband.textContent = dSuffix();
-        out.uEconLock.textContent = tSuffix();
+        paintSuffixSpans();      // rail + override box, signature-guarded (#265)
         out.pSpDiff.textContent   = spDiffN.toFixed(1) + ' ' + dSuffix();
 
         // Derived UNIT MODE rows. Each is arithmetic on numbers already on
@@ -2031,8 +2072,10 @@ const DDCWAhuUnit = (function () {
         // shows what the program READS for the SELECTED point: it mirrors
         // the live sensed value when that point is released (read-only) and
         // holds the forced value when it is held.
+        // The box's own °F/°C span is painted by paintSuffixSpans() up at
+        // the rail — it is the same units-mode string as the four rail
+        // suffixes and shares their one guard (#265).
         zoneValLbl.textContent = 'zone ' + zoneN.toFixed(1) + t;
-        ovrUnit.textContent = tSuffix();
         const sel = ovrSelect.value;
         const selOvr = plant.override[sel];
         const selActive = !!(selOvr && selOvr.active);
