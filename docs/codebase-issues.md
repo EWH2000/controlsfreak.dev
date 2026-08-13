@@ -5486,7 +5486,7 @@ defrost, low-ambient) unchanged. One further intended behavior
 change: overcharge (charge 1.20) now flags at every ambient — honest,
 and the pill is unchanged because floodback outranks it.
 
-### 177. Home Practice Browse-card desc names a specific drill *(open — 2026-07-18, low; may be intentional)*
+### 177. Home Practice Browse-card desc names a specific drill *(open — 2026-07-18, low; may be intentional; **RESOLVED 2026-08-12** — owner ruled KEEP, call-site comment added)*
 
 `html/index.html` — the Practice Browse-card `desc` ends "New to the
 field? Surviving Your First Months is the gentlest place to start."
@@ -5505,6 +5505,13 @@ keep the name and accept it as a surface someone must remember to
 true up (worth a comment at the call site saying so), or drop to a
 generic "start with the field drills" phrasing and lose the
 hand-hold. Low. Logged-only from the 2026-07-18 arc.
+
+**RESOLVED 2026-08-12 (owner ruling, the clear-the-decks decision
+batch): KEEP the name.** The entry's own read was right — it is a
+deliberate editorial entry-point, and the hand-hold does work a
+kind-level phrase can't. A Nunjucks comment now sits at the call
+site (`html/index.html`, the Practice `navCard`) naming the ruling
+and the true-up obligation, which was the accepted cost.
 
 ### 178. `pid-basics.html` eyebrow carries the `<h1>` — sole outlier among the lessons *(open — 2026-07-18, low; document-outline, not cosmetic)*
 
