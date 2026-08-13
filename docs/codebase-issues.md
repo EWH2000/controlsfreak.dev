@@ -5513,7 +5513,7 @@ kind-level phrase can't. A Nunjucks comment now sits at the call
 site (`html/index.html`, the Practice `navCard`) naming the ruling
 and the true-up obligation, which was the accepted cost.
 
-### 178. `pid-basics.html` eyebrow carries the `<h1>` — sole outlier among the lessons *(open — 2026-07-18, low; document-outline, not cosmetic)*
+### 178. `pid-basics.html` eyebrow carries the `<h1>` — sole outlier among the lessons *(open — 2026-07-18, low; document-outline, not cosmetic; **RESOLVED 2026-08-12 · PR #559** — fixed as the semantics change the entry asked for; the outlier ran one layer deeper than the h1, see the resolution block)*
 
 `html/education/pid-basics.html:17` uses
 `<h1 class="section-label">Education · PID Basics</h1>` for its
@@ -5539,6 +5539,59 @@ outranks the content headings. That makes it a document-outline
 defect rather than a cosmetic one — low priority, but it should be
 fixed as a semantics change, not filed as styling. Logged-only from
 the 2026-07-18 arc.
+
+**RESOLVED 2026-08-12 · PR #559.** Fixed exactly as the entry framed
+it — a semantics change, not styling. The eyebrow is now
+`<span class="section-label">Education · PID Basics</span>` and the
+first `.tool-card` gained a `.tool-card-header` carrying
+`<h1 class="tool-card-title">PID Basics <span class="tool-tag">Loops</span></h1>`.
+The `Loops` tag is existing house vocabulary rather than a new term:
+it is what the paired `simulators/pid-tuner.html` already carries.
+Verified on the rendered page, not the source — one `<h1>` before and
+after, and the outline now reads h1 *PID Basics* → h2 *What P, I, and
+D Actually Do* → h3 ×3 callouts → h2 *See Each Term in Action* → h3 ×3
+sim titles, descending without a gap. Full suite green first run
+(1204 passed / 1 skipped); no spec pinned the old shape, so no spec
+changed.
+
+**One correction to the entry, and it is the interesting part.** The
+entry read the defect as living entirely in the h1 element, so the
+implied fix was a two-line swap: demote the eyebrow, add a card title.
+That is not sufficient here, because pid-basics was an outlier one
+layer deeper — it is also the only lesson whose `p.page-intro` sat
+*outside* a `.tool-card`, with an `h2.section-label` section divider
+between the intro and the first card. Demoting the eyebrow in place
+would have left the page's own topic h1 *below* both its intro
+paragraph and a section heading, which trades one outline defect for
+another. The fix therefore had to fold the intro and that first
+divider into the card, taking the shape from
+`education/psychrometrics-basics.html` — the structural twin (same
+`fundamentals` category, and the only other lesson pairing an
+explainer card with a later `h2.section-label` divider plus an
+interactive card), where the same beat renders as an in-card
+`h2.subhead`. Read the general lesson as: *the sole-outlier framing
+was right about the symptom and understated the scope* — when a page
+is the only one doing something, check whether it is the only one
+doing several things.
+
+**Side effect, measured not assumed — and it exposes a live bug
+elsewhere.** `styles.css`'s `.tool-card:nth-of-type(1..4)` fadeUp
+stagger keys on `:nth-of-type`, which counts by element *type*
+(`div`), not by class. Its own comment claims the opposite —
+"`:nth-of-type` counts tool-card siblings independently of a leading
+`.section-header` div" — but interleaved `div.section-header` siblings
+DO shift the index, so removing one from `main` renumbers the cards.
+Measured `animationName` / `animationDelay` on the built page: the
+topic card went fadeUp 0.24s → 0.16s, and `#sim1` went from *no
+animation* to fadeUp 0.32s; `#sim2` / `#sim3` had none before and have
+none now. So the page went from one of four cards animating to two of
+four. Both states are arbitrary — the stagger has never worked as its
+comment describes on this page — and it is a 0.5s entrance fade with
+no functional effect, so it was flagged rather than fixed. The
+`nth-of-type` misreading is site-wide and wants its own entry; the
+same comment also cites pid-basics as its worked example ("4 on
+pid-basics: page topic + 3 mini-sims"), which is still an accurate
+card count after this change.
 
 ### 179. `function-blocks.html` (and `setpoint-math-reset.html`) lack the follow-on-paragraph margin rhythm *(open — 2026-07-18, low / cosmetic; **RESOLVED — superseded by the LESSON PROSE RHYTHM rule; measured closed 2026-08-12**)*
 
