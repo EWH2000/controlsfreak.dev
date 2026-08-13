@@ -12255,7 +12255,7 @@ apart rather than the 450 recorded. The file grew between 2026-08-03 and
 the fix; identification by NAME is what survived, which is the general
 lesson for line-number citations in this ledger.
 
-### 265. The rail's unit-suffix spans repaint an identical string at 10 Hz *(noticed 2026-08-03, PR #472's lane report — perf candidate, not a correctness bug)*
+### 265. The rail's unit-suffix spans repaint an identical string at 10 Hz *(noticed 2026-08-03, PR #472's lane report — perf candidate, not a correctness bug; **RESOLVED 2026-08-12 · PR #557** — and the entry's mechanism was wrong: these were real DOM mutations, see the block)*
 
 Every host tick, `renderUnit` unconditionally rewrites the
 `aria-hidden` `u*` suffix spans beside the rail's number inputs:
@@ -12287,6 +12287,63 @@ lifts a tiny `setText(el, s)` helper into `ddcw-shell.js` — worth doing
 of its own before then. Measure first: the gutter animation costs ~40 %
 of a core on every page (the site-wide finding), so a suffix write is
 unlikely to be the signal.
+
+**RESOLVED 2026-08-12 (PR #557).** Guarded rather than lifted into the
+shell. Each unit module got one module-local `suffixSpanSig` and one
+`paintSuffixSpans()` writer, shapes verbatim-parallel across the two
+files (#263) and sized to each unit's span set — four rail spans on the
+AHU, two on the FCU, each page's override-box span folded into the same
+writer rather than taking a second signature, since all of them are a
+pure function of the units mode and change together or not at all. The
+`setText(el, s)` alternative was declined for a reason worth keeping:
+that helper has to read `el.textContent` to decide, which walks the span
+and builds a string every tick — the compare would cost roughly what the
+write did. The cached-signature form (`setVerdict`'s idiom) reads no DOM
+at all.
+
+**⚠ THE ENTRY'S STATED MECHANISM ABOVE IS WRONG, and it understated the
+cost.** *"A `textContent` write of an identical string produces no
+mutation record for a `MutationObserver`"* — it does. Chromium queues a
+**`childList`** record, because Blink removes the old text node and
+inserts a new one instead of taking the `setData` path. So these were
+real tree mutations at 10 Hz, not the bare property writes the entry
+assumed: **50 mutation records a second on the AHU page, 30 on the FCU.**
+The line above is left standing rather than edited, since a ledger entry
+is a record of what was believed when it was written.
+
+Measured on the built site, headless Chromium, 3 s idle window at 1× sim
+speed, per span: **31 `textContent` writes and 31 mutation records
+before, 0 and 0 after** — all eight spans, identically. Zero, not fewer:
+the strings are constant for the life of a units mode.
+
+The instrumentation was the obvious suspect for a result that contradicts
+the entry, so it was refuted two ways before being believed. An
+**unshimmed** `MutationObserver` — no property redefinition on the
+element at all — still reported **30 records** over 3 s. And an isolated
+control on a detached span: 10 identical `textContent` writes → 10
+records, 10 identical `.data` writes → 10 records.
+
+The units flip is the one event that must survive the guard, and it does
+because **the signature is the painted strings, not the units mode**: the
+shell's `unitschange` listener calls `renderUnit`, the suffixes come back
+different, the guard opens. Keying on `Units.current()` would have put an
+indirection between the guard and the thing on screen. Both suffixes ride
+in the signature even though `temp` and `deltaTemp` return the same
+string today, so a later divergence needs no re-derivation. No
+interaction with #276's `railHint('')` clear — different element,
+different listener.
+
+Pinned in the two existing units-toggle rows rather than a new spec:
+`ddc-workbench-ahu-page.spec.js` and `ddc-workbench-fcu.spec.js` now
+assert **every** suffix span, plus the return trip to US. Falsified
+twice — latching the guard fails both rows, but so would the one
+pre-existing `#…-p-cool-sp-u` assertion, so the sharper run dropped only
+the **newly covered** spans from the writer and failed on
+`#ahu-p-heat-sp-u` and `#fcu-ovr-unit`, which nothing had reached before.
+
+Suite 1204 passed / 1 skipped / 0 failed, first run. No version bump
+spent: these are live-page scripts, and the cache-busting bump rides the
+merge captain's close-out batch.
 
 ### 266. The mirror's button hit-area bleed overhangs its grid, and in the fullscreen cockpit that is a 5px horizontal scrollbar *(noticed 2026-08-03, PRs #473/#476 lane reports — pre-existing on the AHU, measured here, DESIGN CALL; owner decided 2026-08-10, **RESOLVED 2026-08-11 · PR #518** — it ships unscoped rather than per width regime, and the resolution block says why)*
 

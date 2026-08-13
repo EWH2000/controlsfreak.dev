@@ -816,6 +816,48 @@ const DDCWFcuUnit = (function () {
         if (inp.value !== str) inp.value = str;
     }
 
+    // ── the °F/°C suffix spans — ONE guarded writer for the whole set ──
+    // Every one of these aria-hidden spans (two beside the rail's number
+    // inputs, one in the override box) is a pure function of the site
+    // units mode, so they change TOGETHER or not at all — one signature is
+    // the honest shape, not three. The visitor flips units maybe once a
+    // session; fcuRenderUnit runs on every 10 Hz host tick, so the
+    // unguarded version rewrote three identical strings ten times a second
+    // (codebase-issues #265).
+    //
+    // ⚠ NOT a #229-family fix — these spans are aria-hidden, so nothing is
+    // announced and no live region is being spammed. This is cost alone.
+    // But the cost is larger than the ledger entry assumed: measured on
+    // the built page, an identical-string textContent write DOES queue a
+    // mutation record in Chromium (childList — the old text node is
+    // removed and a new one inserted), 31 per span over a 3 s idle window.
+    // These were real tree mutations, not bare property writes.
+    //
+    // ⚠ THE SIGNATURE IS THE PAINTED STRINGS THEMSELVES, and that is what
+    // lets a units flip through: the shell's `unitschange` listener calls
+    // renderUnit, the suffixes come back different, the guard opens.
+    // Keying on Units.current() instead would put an indirection between
+    // the guard and the thing on screen. Both suffixes ride in it even
+    // though temp and deltaTemp return the same string today — the pair is
+    // what the spans paint, and a later divergence must not need this
+    // guard re-derived.
+    //
+    // A CACHED signature (setVerdict's idiom) rather than setParamInput's
+    // compare-the-element form: reading el.textContent to decide would
+    // walk the span and build a string every tick, which is the work being
+    // removed.
+    let suffixSpanSig = null;
+    function paintSuffixSpans() {
+        const t = tSuffix();
+        const d = dSuffix();
+        const sig = t + '|' + d;
+        if (sig === suffixSpanSig) return;
+        suffixSpanSig = sig;
+        out.uCoolSp.textContent   = t;
+        out.uDeadband.textContent = d;
+        ovrUnit.textContent       = t;
+    }
+
     // The rail's two adjustable params: roster point id → the out-map
     // handle key of its input. Walked by the mirror paint, the
     // writability sync and the commit wiring, so the three surfaces
@@ -1051,8 +1093,7 @@ const DDCWFcuUnit = (function () {
             ? plant.params['deadband']
             : window.Units.display.deltaTemp(plant.params['deadband']);
         setParamInput(out.pDeadband, (Math.round(dbDisp * 10) / 10).toFixed(1));
-        out.uCoolSp.textContent   = tSuffix();
-        out.uDeadband.textContent = dSuffix();
+        paintSuffixSpans();      // rail + override box, signature-guarded (#265)
 
         // The fan readout shows the COMMAND, the peer of the compressor
         // readout beside it — so under a broken belt the graphic reads
@@ -1179,8 +1220,10 @@ const DDCWFcuUnit = (function () {
         // shows what the program READS: it mirrors the live zone when off
         // (read-only) and holds the forced value when on. Forcing surfaces
         // the drift on the state line so the wrong-number hazard is plain.
+        // The box's own °F/°C span is painted by paintSuffixSpans() up at
+        // the rail — it is the same units-mode string as the two rail
+        // suffixes and shares their one guard (#265).
         zoneValLbl.textContent = 'zone ' + zoneN.toFixed(1) + ' ' + tSuffix();
-        ovrUnit.textContent = tSuffix();
         // The VISIBLE line's write stays unconditional on both branches —
         // it is the 10 Hz drift readout and pacing it would freeze the
         // hazard. Only the sr mirror is paced, through setOvrState: see
