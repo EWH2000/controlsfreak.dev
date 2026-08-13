@@ -14246,6 +14246,47 @@ five in lockstep, which is the tell). A shared `styles.css` class
 would collapse them; the empty-state is genuinely shared chrome, not
 a widget internal. Log-don't-fix until something touches the family.
 
+**Resolved (2026-08-12, `issue-304/shared-empty-cell`, PR #556).** The
+clear-the-decks arc was the touch the entry was waiting for. One
+`.ref-empty td` now lives in `styles.css` after the `.ref-table-dense`
+base block, named for the `ref-` family that already carries shared
+reference-table chrome (`.ref-table`, `.ref-table-dense`,
+`p.ref-note`).
+
+The census confirmed the entry and closed its open end: exactly five
+pages and **eleven** rows, the five rule bodies byte-identical, and
+**no sixth consumer** — grepping the declaration body and every
+`colspan` row under `html/` returns those eleven and nothing else.
+
+Three things worth carrying forward:
+
+- **The page-local `<prefix>-empty` classes stayed on the markup.**
+  They stopped being styling hooks but remain *script* and *spec*
+  hooks — each filter does `body.querySelector('.<prefix>-empty')`,
+  and `smoke.spec.js` asserts on `.bo-empty` / `.bvid-empty` by name.
+  Only the CSS moved. A future lane reading "the rules were
+  consolidated" should not take that as licence to delete the classes.
+- **The rule's placement is load-bearing, not cosmetic.**
+  `.ref-empty td` is (0,1,1) — the shape the page-local rules had —
+  and only out-orders `.ref-table-dense td`'s equal-specificity colour
+  because it sits *after* both table families in the file, which is
+  what the inline `<style>` gave it for free before. Moving it above
+  them would be a silent behaviour change. The `.rt-stack` ≤620px cell
+  rules are (0,3,3) and set neither `font-style` nor `text-align`, so
+  that relationship is unchanged in both directions.
+- **Identity was measured, not argued.** All five filters were driven
+  into their no-match state and 18 computed properties diffed on every
+  empty cell, in both themes at 1400px and 600px (the `.rt-stack`
+  branch): 44 cells, each asserted visible so the check could not pass
+  vacuously, byte-for-byte identical before and after. Suite 1204
+  passed / 1 skipped / 0 failed, contrast sweep included.
+
+Per the #296 lesson the shared rule's comment names the consumer
+*family* — every filter-driven lookup table — rather than the five
+page names, which would drift the moment a sixth adopts it. No
+version bump was spent: `styles.css`'s cache-bust bump rides the merge
+captain's close-out batch.
+
 ### 305. The SVG diagram alt-text audit lived only in an archived doc *(logged 2026-08-12, the clear-the-decks hygiene pass — deferred SEO audit, LOW)*
 
 The one still-open item anywhere under `docs/audits/` — the SVG

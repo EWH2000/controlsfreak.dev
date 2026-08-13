@@ -44,12 +44,6 @@ keywords: function code exception CRC CRC-16 RTU checksum register coil holding 
         }
         .ref-table-dense .mf-hex { color: var(--text-dim); font-weight: 400; }
 
-        .mf-empty td {
-            color: var(--text);
-            font-style: italic;
-            text-align: center;
-        }
-
         .mf-verify {
             margin-top: 1rem;
             padding: 0.5rem 0.75rem;
@@ -127,7 +121,7 @@ keywords: function code exception CRC CRC-16 RTU checksum register coil holding 
                             <tr><td class="mf-id">22 <span class="mf-hex">0x16</span></td><td>Mask Write Register</td><td>AND/OR-mask selected bits of one holding register.</td></tr>
                             <tr><td class="mf-id">23 <span class="mf-hex">0x17</span></td><td>Read/Write Multiple Registers</td><td>Read one block and write another in a single transaction.</td></tr>
                             <tr><td class="mf-id">43 <span class="mf-hex">0x2B</span></td><td>Encapsulated Interface Transport</td><td>Read Device Identification (MEI type 0x0E) — vendor, model.</td></tr>
-                            <tr class="mf-empty" hidden><td colspan="3">No function codes match that filter.</td></tr>
+                            <tr class="ref-empty mf-empty" hidden><td colspan="3">No function codes match that filter.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -156,7 +150,7 @@ keywords: function code exception CRC CRC-16 RTU checksum register coil holding 
                             <tr><td class="mf-id">8 <span class="mf-hex">0x08</span></td><td>Memory Parity Error</td><td>Parity error in the extended file-record memory (FC 20/21).</td></tr>
                             <tr><td class="mf-id">10 <span class="mf-hex">0x0A</span></td><td>Gateway Path Unavailable</td><td>A gateway is misconfigured or overloaded — no path to the target.</td></tr>
                             <tr><td class="mf-id">11 <span class="mf-hex">0x0B</span></td><td>Gateway Target Failed to Respond</td><td>No reply from the target device — often the wrong unit ID.</td></tr>
-                            <tr class="mf-empty" hidden><td colspan="3">No exception codes match that filter.</td></tr>
+                            <tr class="ref-empty mf-empty" hidden><td colspan="3">No exception codes match that filter.</td></tr>
                         </tbody>
                     </table>
                 </div>
