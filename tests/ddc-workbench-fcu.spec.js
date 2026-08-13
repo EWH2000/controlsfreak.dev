@@ -1211,15 +1211,26 @@ test.describe('DDC Workbench — the point mirror names its register twice (#269
         await page.goto(URL);
         const wells = page.locator('.fcu-key-well');
 
+        // The three literals below are the ARRIVAL frame — what the shell's
+        // boot hostTick() paints with the default cool-2stage program on a
+        // fresh plant (zone 76.0, stage 1, fan 60 %). They were 100% and
+        // -19.4 °F until codebase-issues #219: #205 restaged the fan
+        // reference behind the stage-2 call, so arrival dropped to stage 1
+        // / 60 %, and these wells — which carry no id and are the one
+        // static surface renderUnit never repaints — went on printing a
+        // full-speed stage-2 snapshot BESIDE a mirror reading 60% · ON.
+        // A drift here is visible, unlike the rest of the page's statics,
+        // so this row is the guard for it: re-derive from the mirror
+        // (#fcu-fan-r / #fcu-dt-r on load), never by patching a digit.
         await expect(wells.nth(0), 'measured: the seeded RAT').toHaveText('76.0 °F');
-        await expect(wells.nth(1), 'commanded: the seeded fan command').toHaveText('100%');
-        await expect(wells.nth(2), 'calculated: the seeded ΔT').toHaveText('-19.4 °F');
+        await expect(wells.nth(1), 'commanded: the seeded fan command').toHaveText('60%');
+        await expect(wells.nth(2), 'calculated: the seeded ΔT').toHaveText('-17.6 °F');
 
         await page.click('.units-btn[data-units="metric"]');
         await expect(wells.nth(0), 'absolute temperature converts').toHaveText('24.4 °C');
-        await expect(wells.nth(1), 'a percentage is already universal').toHaveText('100%');
+        await expect(wells.nth(1), 'a percentage is already universal').toHaveText('60%');
         await expect(wells.nth(2), 'ΔT converts as a DELTA, not an absolute')
-            .toHaveText('-10.8 °C');
+            .toHaveText('-9.8 °C');
     });
 
     test('the key rides into the fullscreen cockpit rather than dropping with the prose', async ({ page }) => {
