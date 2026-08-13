@@ -25,7 +25,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { test, expect } = require('@playwright/test');
-const { expectTouchFloor, expectTouchFloorHeight } = require('./touch-floor.js');
+const { expectTouchFloor } = require('./touch-floor.js');
 
 const URL = '/simulators/ddc-workbench.html';
 
@@ -1505,13 +1505,19 @@ test.describe('AHU workbench page: the unit selector on touch', () => {
     // this row is still what guards it.
     test.use({ isMobile: true, hasTouch: true, viewport: { width: 412, height: 883 } });
 
-    test('the links clear the 44px floor', async ({ page }) => {
+    test('the links clear the 44px floor in both dimensions', async ({ page }) => {
+        // Both dimensions, matching the FCU twin. This row asserted HEIGHT
+        // only until 2026-08-12 even though the rule it guards has set
+        // `min-width: 44px` since PR #476 — so the AHU's width floor was
+        // covered only incidentally, by the phone-surface row further down
+        // in this file. Two rows measuring one rule, one of them blind to
+        // half of it, is how a floor decays quietly (#262).
         await page.goto(URL);
         const links = page.locator('a.ddcw-unit-link');
         await expect(links).toHaveCount(2);
         for (let i = 0; i < 2; i++) {
             const box = await links.nth(i).boundingBox();
-            expectTouchFloorHeight(box, `link ${i}`);
+            expectTouchFloor(box, `link ${i}`);
         }
     });
 });
@@ -2008,7 +2014,13 @@ test.describe('AHU workbench page: the phone surface (the Unit tab is the mobile
     test('the unit-selector links and the stage buttons clear the floor in both dimensions', async ({ page }) => {
         // The unit links measured 41–42px wide natively — the exact case
         // codebase-issues #262 names — and the stage group's "Off" 43px.
-        // Both floors are page-local; no sweep reaches this page.
+        // The two floors no longer live in the same place: the unit-link
+        // one graduated into styles.css with the page (2026-08-04), the
+        // stage-button one is still page-local in this page's head,
+        // because `.ahu-controls .copy-btn` is a page-scoped selector and
+        // the shared block takes shared classes only. No sweep measures
+        // either — tests/pages.js reaches this page for load / console /
+        // 375-overflow / contrast, none of which is a target size.
         await open(page);
         for (const sel of ['a.ddcw-unit-link', '#ahu-stage-0', '#ahu-stage-1', '#ahu-stage-2']) {
             const els = page.locator(sel);
