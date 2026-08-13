@@ -13613,3 +13613,27 @@ italic empty-state cell rule page-locally (the #290 pass edited all
 five in lockstep, which is the tell). A shared `styles.css` class
 would collapse them; the empty-state is genuinely shared chrome, not
 a widget internal. Log-don't-fix until something touches the family.
+
+### 305. The SVG diagram alt-text audit lived only in an archived doc *(logged 2026-08-12, the clear-the-decks hygiene pass — deferred SEO audit, LOW)*
+
+The one still-open item anywhere under `docs/audits/` — the SVG
+diagram alt-text audit, named in
+`docs/audits/2026-05-refinement/priorities.md`'s deferred tail as "a
+future SEO bottleneck" — lived only in that archived doc, where
+nothing would ever surface it again. Moved here so the live ledger
+carries it; the archived doc stays unedited per its own convention.
+
+What it is: an SEO-richness pass over the diagram SVGs' accessible
+text, not a compliance fix — the diagrams already carried `<title>` /
+`<desc>` when the item was written (per #21), and the quiz figure
+banks enforce native naming at mount. The audit would ask whether
+those texts do indexing work — do they name the concepts a search
+would use, or just describe the picture — and it was deferred "until
+other SEO items land and the gap becomes the next bottleneck."
+
+Scale has moved since 2026-05: the item was scoped at 8 education
+pages; the site now carries 40 lessons plus the simulators, so the
+audit is bigger and the per-page payoff unmeasured. Log-don't-fix.
+A natural trigger: if a GSC read shows education pages
+underperforming on impressions relative to tools, this is the first
+cheap lever to reach for.

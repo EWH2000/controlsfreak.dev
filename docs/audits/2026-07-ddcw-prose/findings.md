@@ -1,4 +1,12 @@
-# DDC Workbench teaching-prose audit — the open #443/#444/#445 stack
+# DDC Workbench teaching-prose audit — the #443/#444/#445 stack
+
+> **Archived 2026-08-12.** The cycle this file governed is closed: the
+> §1/§2/§5 program-level deferrals were logged as `codebase-issues`
+> **#225/#226** and both RESOLVED 2026-07-30 (the FCU proof sweep); §3
+> and §6 were applied in-lane; §7/§8 became **#227**, resolved on both
+> pages 2026-07-30. The title's former "open stack" wording was
+> historical — PRs #443/#444/#445 all merged. Nothing here is still
+> actionable; the ledger, not this file, is the live record.
 
 > **Disposition: owner-dispositioned 2026-07-27.** Three outcomes:
 >
