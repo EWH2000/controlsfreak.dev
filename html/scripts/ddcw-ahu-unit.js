@@ -1233,6 +1233,13 @@ const DDCWAhuUnit = (function () {
     // NOT declared — nothing would read them; the slider's own min / max
     // are written from the markup and the shell clamps nothing, so a
     // second copy here would be exactly that trap.
+    //
+    // That was a decision by omission until #234, when the FCU's copy of
+    // the pair — which HAD been declared, and read nowhere for as long as
+    // it existed — was deleted to match. It is now enforced rather than
+    // merely written down: ddc-workbench-fcu.spec.js walks EVERY
+    // ddcw-*-unit.js and fails on a bounds mirror in any of them, and
+    // holds the two sheets' sliders to one range besides.
     const SPEED_DEF  = 20;   // × real time
     const MAX_DT_SIM = 5;    // s — the forward-Euler safety net
 

@@ -164,8 +164,22 @@ const DDCWFcuUnit = (function () {
     const T_OA_DEF    = 80;                  // °F — default outdoor-air temp (moderate day)
     const COIL_TAU    = 30;                  // s — coil thermal + DAT sensor/filter response (bigger = slower ramp)
     const SPEED_DEF   = 20;                  // × — default sim-clock multiplier (1× ≈ real time)
-    const SPEED_MIN   = 1;                   // × — slowest (watch a 5 s ON-delay in real seconds)
-    const SPEED_MAX   = 60;                  // × — fastest (fast-forward a slow recovery)
+    // THE CLOCK'S RANGE IS NOT A CONSTANT HERE, AND MUST NOT BECOME ONE
+    // (codebase-issues #234; ddcw-ahu-unit.js states the same rule at its
+    // own sim-clock prefs, which is where it was settled first). SPEED_DEF
+    // is live — create() hands it to the shell as `speedDefault`. A
+    // SPEED_MIN / SPEED_MAX pair would be read by NOTHING, and this file
+    // carried exactly that pair until #234 removed it: host.setSpeed()
+    // clamps nothing, so the model has no notion of a valid speed at all,
+    // and the range is purely how far the knob travels. That lives on the
+    // knob — `#fcu-speed-slider` in the page markup — exactly like the fan
+    // / outdoor-air / load knobs beside it, none of which has a mirror
+    // here either. A copy here would be a number you could edit and watch
+    // do nothing, with no sign that nothing happened, which is the worst
+    // failure a block advertised as "trivially findable and changed" can
+    // have. Retune the range in the markup; ddc-workbench-fcu.spec.js
+    // holds both workbench pages to one range so the two sheets can't
+    // drift apart under a reader.
     const MAX_DT_SIM  = 5;                   // s — per-tick sim-time clamp (forward-Euler safety)
     // Airflow proof make-delay. A real duct-pressure proof switch is
     // slow to make and fast to break; this is the make side. The break
