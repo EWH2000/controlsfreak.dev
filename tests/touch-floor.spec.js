@@ -120,6 +120,39 @@ test.describe('desktop pointer density stays compact (#164)', () => {
         const runSrc = await page.locator('#vfd-run-src').boundingBox();
         expect(runSrc.height).toBeLessThan(44);
     });
+
+    test('the unit-selector links keep their compact desktop box (#262)', async ({ page }) => {
+        // `a.ddcw-unit-link` is the sheet's only WIDTH floor — 44x44 inside
+        // an @media (hover: none) block beside the component in styles.css
+        // (it needs justify-content on top of this block's boilerplate, so
+        // it sits there rather than in the list above).
+        //
+        // Its touch half is asserted on each workbench page's own spec.
+        // This is the other half, and until now nothing measured it: hoist
+        // that rule out of its media query and BOTH of those rows stay
+        // green — they only ever ask for >= 44 — while the desktop
+        // statusbar silently grows a 44px pill pair beside 24px chrome.
+        // The floor block's whole design is that the pointer keeps the
+        // workstation density, so the scoping needs a witness of its own.
+        //
+        // Measured on pointer at HEAD, identical on both pages:
+        // 41.17 x 24.42 (FCU label) and 42.17 x 24.42 (AHU label). That is
+        // the same 41-42px width #262 named — the NATIVE size with the
+        // floor correctly off, not a shortfall. Height carries ~19px of
+        // headroom under the assertion; width carries ~1.8px, which is
+        // thin by construction: the claim IS the complement of `>= 44`,
+        // and a looser number would stop being that claim.
+        for (const url of ['/simulators/ddc-workbench.html', '/simulators/ddc-workbench-fcu.html']) {
+            await page.goto(url);
+            const links = page.locator('a.ddcw-unit-link');
+            await expect(links, `${url}: both links render`).toHaveCount(2);
+            for (let i = 0; i < 2; i++) {
+                const box = await links.nth(i).boundingBox();
+                expect(box.height, `${url} link ${i} height`).toBeLessThan(44);
+                expect(box.width, `${url} link ${i} width`).toBeLessThan(44);
+            }
+        }
+    });
 });
 
 test.describe('touch tablet (hover:none, 768×1024)', () => {

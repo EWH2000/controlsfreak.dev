@@ -12260,6 +12260,44 @@ an AA failure: 2.5.5 is Level AAA, and the site's stated floor
 > rules are also the pattern to copy at graduation rather than the
 > licence to extend the shared block blindly.
 
+> **UNIT-SELECTOR HALF RE-VERIFIED, AND ITS SCOPING GUARDED 2026-08-13
+> (PR #562).** No CSS changed — the width fix is real and still holds.
+> But one of the two rules above has **moved**: `a.ddcw-unit-link`
+> graduated out of the page heads into the `DDC WORKBENCH SHELL` section
+> of `html/styles.css` with the pages themselves (Phase 8, 2026-08-04),
+> so the two page-head line references in the block above are stale for
+> it. The stage-button floor did **not** move and correctly stays
+> page-local — `.ahu-controls .copy-btn` / `.fcu-controls .copy-btn` are
+> page-scoped selectors, and the shared block takes shared classes only.
+>
+> Re-measured at HEAD on both workbench pages, dark and light: the links
+> render **exactly 44 × 44** under `(hover: none)` at 412, 375 and 320
+> viewport widths, on one line, with no document-level sideways scroll.
+> On a pointer they render **41.17 × 24.42** (FCU label) and
+> **42.17 × 24.42** (AHU label) — the same 41–42px this entry names,
+> which is the NATIVE size with the floor correctly off, not a
+> shortfall. Anyone re-reading the opening paragraph should read those
+> numbers as the *unfloored* measurement, not as an open defect.
+>
+> **What was actually missing was a witness for the SCOPING.** Every row
+> that measured these links asked for `>= 44` under touch emulation, so
+> hoisting `min-width: 44px` out of its `@media (hover: none)` wrapper
+> left every one of them green while the desktop statusbar grew a 44px
+> pill pair beside 24px chrome — falsified by measurement, not reasoned.
+> The floor block's whole design is that the pointer keeps the
+> workstation density, and nothing defended that half.
+> `tests/touch-floor.spec.js` now carries the complement (`< 44` in both
+> dimensions, both pages) in its existing pointer-density describe. A
+> second gap closed in the same pass: the AHU's dedicated touch row
+> asserted **height only** while its FCU twin asserted both, so the
+> AHU's width was covered only incidentally by the phone-surface row —
+> two rows measuring one rule with one blind to half of it.
+>
+> **The site-wide half is still untouched and still open**, exactly as
+> the block above leaves it: the `TOUCH-TARGET FLOOR` block remains
+> height-only and the per-selector width audit has NOT been done. This
+> pass deliberately did not start it.
+
 ### 263. The ~120-line param-rail wiring block is duplicated between the two unit scripts *(noticed 2026-08-03, PR #472's lane report — duplicated BY MANDATE, logged for the graduation trigger)*
 
 `html/scripts/ddcw-ahu-unit.js:1915-2044` and

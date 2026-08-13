@@ -1440,7 +1440,10 @@ test.describe('DDC Workbench — the unit selector on touch', () => {
     test('the links clear the 44px floor in both dimensions', async ({ page }) => {
         // Height was the original floor; width joined it 2026-08-03 (the
         // links measured 41–42px wide natively — codebase-issues #262's
-        // named case, closed page-locally on both workbench pages).
+        // named case). It landed page-local on both workbench pages and
+        // then graduated into styles.css with them (2026-08-04), so this
+        // row and its AHU twin now measure ONE shared rule from two
+        // pages; the scoping half is in tests/touch-floor.spec.js.
         await page.goto(URL);
         const links = page.locator('a.ddcw-unit-link');
         await expect(links).toHaveCount(2);
