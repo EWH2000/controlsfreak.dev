@@ -316,6 +316,18 @@ evaporate with it:
     same morning). The phase stays unblocked; the queued mechanical
     lanes and the new design passes go first.
 
+- **2026-08-12 — §7.2 answered; the hold's lift condition set** (owner
+  rulings from the clear-the-decks decision batch):
+  - **The quiz banks (750 of ~2,360 sites, 32 %) are IN scope via a
+    future `quiz-engine.js` gloss-component lane, sequenced AFTER
+    phases 2–3** prove the density on prose surfaces. The FAQPage
+    JSON-LD emitter strips triggers to plain text.
+  - The 2026-08-11 hold ruling's "new design passes" meant **the
+    flagged design calls** (#245 / #272 / #302 and kin) — worked and
+    ruled in that same batch, their fixes queued as lanes.
+  - **Phase 2 (tier-1 drafting) opens NEXT SESSION**, assuming the
+    arc's mechanical queue lands clean.
+
 - **2026-08-11 — the fold-widening ruling: ACCEPT ALL, flags as
   called.** The owner approved the full widening proposal built from
   the two-page prose inventory, unmodified — his words: *"Accept all,
@@ -355,8 +367,14 @@ evaporate with it:
 
 - ~~**Mid-density pilot page for the tooltip component**~~ — settled
   2026-08-10: `education/timers-and-delays.html`, decision log above.
-- **§7.2 quiz-bank component question** — deferred until the tooltip
-  component exists; decide before any bank counts as in scope.
+- ~~**§7.2 quiz-bank component question**~~ — settled 2026-08-12
+  (owner, the clear-the-decks decision batch): **the banks are IN
+  scope, sequenced last.** A `quiz-engine.js` gloss-component lane
+  runs only after phases 2–3 prove the density on the prose
+  surfaces; the FAQPage JSON-LD emitter strips triggers to plain
+  text so the structured data never carries gloss markup. Until
+  that lane exists, no bank counts as in scope for marking.
+  Decision log below.
 - ~~**Fold-set widening pass**~~ — settled 2026-08-11 same day:
   ACCEPT ALL on the 18-fold proposal, decision log above;
   implementation lane merged 2026-08-11 as PR #520 (v3.86.0).
