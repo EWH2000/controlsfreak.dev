@@ -5540,7 +5540,7 @@ defect rather than a cosmetic one — low priority, but it should be
 fixed as a semantics change, not filed as styling. Logged-only from
 the 2026-07-18 arc.
 
-### 179. `function-blocks.html` (and `setpoint-math-reset.html`) lack the follow-on-paragraph margin rhythm *(open — 2026-07-18, low / cosmetic)*
+### 179. `function-blocks.html` (and `setpoint-math-reset.html`) lack the follow-on-paragraph margin rhythm *(open — 2026-07-18, low / cosmetic; **RESOLVED — superseded by the LESSON PROSE RHYTHM rule; measured closed 2026-08-12**)*
 
 `html/education/function-blocks.html` has five follow-on paragraph
 pairs (a `<p>` immediately after another `<p>`) and zero
@@ -5562,6 +5562,19 @@ thing actually causing the drift, and a shared `p + p` rule (or a
 `p.follow-on` utility, per the element-qualified prose-utility
 convention) would end the class rather than re-fix it page by page.
 Logged-only from the 2026-07-18 arc.
+
+**RESOLVED — this entry's own last paragraph shipped as the fix, and
+nobody came back to mark it.** The shared LESSON PROSE RHYTHM rule
+(`body.education-page .tool-body p + p:not([class])`, the #179→#190
+arc recorded in CLAUDE.md) is exactly the "shared `p + p` rule" the
+paragraph above proposed, and it reaches both pages with no inline
+treatment needed. Measured on the built site 2026-08-12
+(clear-the-decks queue, verify-before-fix): every unclassed follow-on
+pair on BOTH pages computes `margin-top: 20px` (= the house 1.25rem)
+— function-blocks 5 pairs, setpoint-math-reset 5 pairs (the entry
+counted six; one pair has since gained a class or moved, the
+remainder are all treated). Nothing left to fix; closed by
+measurement rather than by a diff.
 
 ### 180. Forced-air chapter: stale terminal-position claims + a hand-kept page count *(addressed 2026-07-19)*
 
