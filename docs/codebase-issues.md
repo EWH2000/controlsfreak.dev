@@ -12762,7 +12762,7 @@ needs owner approval to merge and a version bump for cache-busting.
 > NOT gain `oaTarget` (parity without the ramp would be a second
 > weather model, not symmetry — #278 owns that).
 
-### 276. `railHint` can leave a stale-unit hint on a units flip, on both pages *(noticed 2026-08-09, the #229 planning round — LOW, event-driven cousin of the unit-suffix family)*
+### 276. `railHint` can leave a stale-unit hint on a units flip, on both pages *(noticed 2026-08-09, the #229 planning round — LOW, event-driven cousin of the unit-suffix family; **RESOLVED 2026-08-12 · PR #541** — CLEARED, not re-rendered, and the resolution block says why the entry's parenthetical alternative is the wrong one)*
 
 `railHint` (`html/scripts/ddcw-ahu-unit.js:1955-1970`, with the FCU's
 twin per the #263 duplication mandate) writes range text carrying
@@ -12777,6 +12777,44 @@ warns about. Fix shape, when someone is in the file anyway: clear (or
 re-render) pending hints on the shell's `unitschange` event. LOW —
 worst case is one wrong-unit sentence for a few seconds after an
 uncommon action.
+
+**RESOLVED 2026-08-12 · PR #541.** Both unit scripts call
+`railHint('')` from the `unitschange` listener they already had. The
+call went into that existing listener rather than a second one: it
+already forward-calls `railRangeAttrs`, a function declaration below it
+in the same `wireControls` scope, so a forward call to `railHint` is
+the file's own idiom and the rail's whole units-flip response stays in
+one place.
+
+**The fix shape above offers "clear (or re-render)" — they are not
+interchangeable, and re-rendering is the wrong one.** Only the hint's
+RANGE CLAUSE is regenerable from current state. The verb is not: both
+messages are past-tense reports of an edit that just happened
+(*"reverted to the live value"*, *"held at the limit"*), not readouts
+of anything the page currently holds. Repainting such a sentence into a
+`role="status"` region on a units flip would announce a clamp nobody
+performed — a phantom announcement in place of a stale one, which is
+the worse of the two defects because it is not merely out of date, it
+is false. Clearing also adds no state: no remembered point, no
+remembered message kind, no preserved timer remainder. It brings
+forward an auto-clear the code already owns.
+
+**The line cite in the entry body had drifted** — `railHint` was at
+`ddcw-ahu-unit.js:2554-2570` at fix time, not `:1955-1970`. Every other
+claim held exactly, including both `role="status"` markup cites and the
+FCU twin.
+
+**Pinned in both page specs**, as *"a units flip clears the rail hint,
+suffix and all (#276)"* — a twin row per the #263 duplication mandate,
+since the rail logic is duplicated. Each clamps the cooling setpoint,
+asserts the hint is UP in °F (the anti-vacuity half — a page that never
+announced anything cannot pass), flips to metric, then reads the region
+ONCE. The one-shot read is deliberate: the clear is synchronous inside
+the handler, so a retrying assertion would only mask a late write, and
+given enough retry budget it would race the 6 s auto-clear into a false
+pass. Both rows were falsified before being trusted — with the call
+stubbed out each fails on the literal defect string,
+`Received: "Cool SP accepts 65.0–85.0 °F — held at the limit."`
 
 ### 277. The display-units guard cannot see a display local hidden inside a call argument *(noticed 2026-08-09, the #229 planning round — guard-coverage note, no shipped defect)*
 
