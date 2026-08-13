@@ -2310,6 +2310,22 @@ details.prose-fold > summary:focus-visible,
     outline: 2px solid var(--accent);
     outline-offset: 3px;   /* v2.0.0 — was 2px; lifted so the accent ring no longer kisses the border on .nav-card */
 }
+/* Moved here from the FBE section (#197) so every :focus-visible rule in
+   this stylesheet lives in this block. It keeps its own declaration rather
+   than joining the list above — unlike the gloss trigger, which took the
+   looser shared ring. A 3px offset on a 2px ring extends 5px past the border
+   box, and the palette packs tighter than that in BOTH its layouts: the
+   default rail is an `overflow-y: auto` scroll box stacking buttons 0.25rem
+   (4px) apart, and the fullscreen rail is a wrapped flex row at
+   `gap: 0.35rem 0.4rem` (5.6/6.4px) with the button margin zeroed. So the
+   shared ring would clip against the rail and overlap its neighbours. 1px is
+   what this control has carried since the page was authored; folding it into
+   the list would be a visual change, not the placement cleanup #197 asked
+   for. */
+.fbe-palette-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
 input[type="range"]:focus-visible::-webkit-slider-thumb {
     box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px var(--accent-glow);
 }
@@ -4509,8 +4525,9 @@ p.ref-note.compact {
  * .widget-try idiom. Lifted here from the page's head block when the
  * editor JS moved to /scripts/fbe-editor.js, so a second consumer (the
  * "DDC Workbench") reads one source. Desktop-only by design — the @media
- * gate at the end hides the live workspace below 1000px / on touch. The
- * page-local #fbe-canvas:focus-visible sits in the FOCUS INDICATORS block.
+ * gate at the end hides the live workspace below 1000px / on touch. Both of
+ * this section's focus rings — #fbe-canvas:focus-visible and
+ * .fbe-palette-btn:focus-visible — sit in the FOCUS INDICATORS block (#197).
  * ────────────────────────────────────────────────────────────────────── */
 .fbe-workspace {
     display: grid;
@@ -4553,10 +4570,6 @@ p.ref-note.compact {
     cursor: pointer;
 }
 .fbe-palette-btn:hover { border-color: var(--accent); color: var(--accent); }
-.fbe-palette-btn:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 1px;
-}
 
 /* ── Canvas ── */
 .fbe-canvas {
