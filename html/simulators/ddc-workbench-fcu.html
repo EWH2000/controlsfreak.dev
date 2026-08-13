@@ -550,7 +550,6 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
         }
         .fcu-presets { margin: 0 0 1.25rem; }
         .fcu-presets .btn-row { margin-top: 0.5rem; }
-        .fcu-presets .copy-btn.fcu-preset-fault.active { border-color: var(--red); color: var(--red-text); }
 
         /* Lift the control captions to full ink — this block is dense
            enough that the captions are the scan target (the page-local
@@ -1424,14 +1423,24 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
             <div class="fcu-controls">
                 <h2 class="subhead">Controls</h2>
 
+                <!-- Scenario buttons carry NO `aria-pressed` — deliberately
+                     (#245). A scenario is a one-shot COMMAND, not a mode:
+                     clicking "Broken belt" seeds the plant, releases the
+                     overrides and writes slot 8, and the unit is free to leave
+                     that state on the very next knob move. Nothing here is a
+                     toggle, so nothing here holds a pressed state. The STAGE
+                     group below is the counter-example on the same panel — a
+                     genuine exclusive state whose `aria-pressed` IS maintained
+                     (in `fcuSyncControls`). Same call as the controller-wiring
+                     presets (#142). -->
                 <div class="fcu-presets field" role="group" aria-labelledby="fcu-try-lbl">
                     <span class="field-label" id="fcu-try-lbl">Scenarios (write slot 8):</span>
                     <div class="btn-row">
-                        <button type="button" class="copy-btn" data-preset="healthy" aria-pressed="false">Healthy cooling</button>
-                        <button type="button" class="copy-btn" data-preset="compoff" aria-pressed="false">Compressor off</button>
-                        <button type="button" class="copy-btn fcu-preset-fault" data-preset="lowcharge" aria-pressed="false">Low charge</button>
-                        <button type="button" class="copy-btn fcu-preset-fault" data-preset="condenser" aria-pressed="false">Blocked condenser</button>
-                        <button type="button" class="copy-btn fcu-preset-fault" data-preset="belt" aria-pressed="false">Broken belt</button>
+                        <button type="button" class="copy-btn" data-preset="healthy">Healthy cooling</button>
+                        <button type="button" class="copy-btn" data-preset="compoff">Compressor off</button>
+                        <button type="button" class="copy-btn" data-preset="lowcharge">Low charge</button>
+                        <button type="button" class="copy-btn" data-preset="condenser">Blocked condenser</button>
+                        <button type="button" class="copy-btn" data-preset="belt">Broken belt</button>
                     </div>
                 </div>
 

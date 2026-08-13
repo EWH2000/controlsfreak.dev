@@ -158,3 +158,31 @@ test('controller-wiring presets are momentary actions, not aria-pressed toggles 
     await expect(page.locator('.cw-preset[aria-pressed]')).toHaveCount(0);
     expect(errors, 'cw presets should log no errors').toEqual([]);
 });
+
+test('workbench scenario presets are one-shot commands, not aria-pressed toggles (#245)', async ({ page }) => {
+    const errors = watchErrors(page);
+    // Same call as #142 above, applied to both workbench units: a scenario
+    // writes slot 8 and seeds the plant, it does not enter a mode the button
+    // holds, so it carries no aria-pressed. The STAGE group on the same panel
+    // is the genuine toggle case and MUST keep its own aria-pressed — that is
+    // the half this test protects from an over-broad sweep.
+    for (const [url, prefix, fire] of [
+        ['/simulators/ddc-workbench.html', 'ahu', 'belt'],
+        ['/simulators/ddc-workbench-fcu.html', 'fcu', 'condenser'],
+    ]) {
+        await page.goto(url);
+        // Wait on the module being live, not a duration — the click handler
+        // is bound at init and a preset click that lands first is a no-op.
+        await page.waitForFunction(
+            (id) => document.getElementById(id).textContent.trim().length > 0,
+            prefix + '-verdict');
+        const presets = page.locator('.' + prefix + '-presets [data-preset]');
+        expect(await presets.count(), url + ' still renders its scenario row').toBeGreaterThan(0);
+        await expect(page.locator('.' + prefix + '-presets [data-preset][aria-pressed]')).toHaveCount(0);
+        await page.click('[data-preset="' + fire + '"]');
+        await expect(page.locator('.' + prefix + '-presets [data-preset][aria-pressed]')).toHaveCount(0);
+        // The counter-example, still wired.
+        await expect(page.locator('#' + prefix + '-stage-2')).toHaveAttribute('aria-pressed', 'true');
+    }
+    expect(errors, 'workbench presets should log no errors').toEqual([]);
+});
