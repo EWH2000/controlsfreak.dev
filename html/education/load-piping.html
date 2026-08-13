@@ -177,6 +177,66 @@ keywords: 2-way 3-way valve coil bypass diverting mixing tee
         }
         .lp-w-svg-valve-bow.closed { fill: var(--text-dim); }
     </style>
+    <script>
+        // ── Preset chips: one permanent binding, installed before the
+        //    chips are parsed (codebase-issues #299) ────────────────────
+        // The mildest of the four #299 pages, and the only one where the
+        // KEYBOARD half never applied: these two chips carried href="#",
+        // which put them in the tab order. What they were was an anchor
+        // that does not navigate — a link-shaped control whose handler had
+        // to preventDefault the hash jump it never wanted — plus the same
+        // pre-mount window every one of the others has.
+        //
+        // That window: the chip row renders well down <main>, but the
+        // applyPreset() it drives only exists once the end-of-body IIFE has
+        // run — after the eight site-wide <script src> fetches from
+        // layouts/page.njk, none of them deferred, so each blocks the
+        // parser in turn. Until the last lands, both chips are painted,
+        // hit-testable and INERT, and the click silently does nothing (the
+        // widget stays at its authored boot load).
+        //
+        // So the click path is owned here — ONE delegated listener on the
+        // document, installed before <main> exists, so there is no moment
+        // at which a parsed chip is unbound. Until the widget exists the
+        // clicked chip is QUEUED (last one wins); the widget's IIFE calls
+        // ready() where its per-chip bindings used to sit, and the queue
+        // drains into it, once. Every later click goes straight through the
+        // same listener. Deliberately NOT a temporary handler the IIFE
+        // replaces — two binding systems for one control is the drift
+        // generator.
+        //
+        // The queued token is the chip's own id. These chips are addressed
+        // by id rather than by a data- attribute (which is exactly how the
+        // #281 grep missed them), and the fix has no reason to change that
+        // — what makes a chip a control is the element and its binding,
+        // not the attribute that names it. The id→preset mapping stays in
+        // the IIFE, where the widget's vocabulary lives.
+        (function () {
+            'use strict';
+
+            let apply = null;     // the widget's preset applier, once it exists
+            let pending = null;   // a chip id clicked before that
+
+            window.LpPresets = {
+                ready: function (fn) {
+                    apply = fn;
+                    if (pending !== null) {
+                        const id = pending;
+                        pending = null;   // drain exactly once
+                        apply(id);
+                    }
+                },
+            };
+
+            document.addEventListener('click', function (e) {
+                const chip = e.target && e.target.closest
+                    ? e.target.closest('#lp-w .widget-try button')
+                    : null;
+                if (!chip) { return; }
+                if (apply) { apply(chip.id); } else { pending = chip.id; }
+            });
+        })();
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -616,10 +676,15 @@ keywords: 2-way 3-way valve coil bypass diverting mixing tee
                  bal-w- / vfd-w-). -->
             <div class="widget" id="lp-w" data-state="ok">
 
+                <!-- Real <button>s, not <a href="#">: these set the widget's
+                     load, mode and bypass, they don't navigate, and an anchor
+                     whose handler has to preventDefault its own href is a
+                     link-shaped control (#299). Same .widget-try look either
+                     way — the shared stylesheet carries the button twin. -->
                 <div class="widget-try">
                     Try it:
-                    <a href="#" id="lp-w-try-design">design day</a> ·
-                    <a href="#" id="lp-w-try-night">quiet night</a>
+                    <button type="button" id="lp-w-try-design">design day</button> ·
+                    <button type="button" id="lp-w-try-night">quiet night</button>
                 </div>
 
                 <div class="lp-w-grid">
@@ -891,8 +956,6 @@ keywords: 2-way 3-way valve coil bypass diverting mixing tee
         const barFillEl     = document.getElementById('lp-w-bar-fill');
         const barLabelEl    = document.getElementById('lp-w-bar-label');
         const anecdoteEl    = document.getElementById('lp-w-anecdote');
-        const tryDesignEl   = document.getElementById('lp-w-try-design');
-        const tryNightEl    = document.getElementById('lp-w-try-night');
         const minflowBowTop = document.getElementById('lp-w-svg-minflow-bow-top');
         const minflowBowBot = document.getElementById('lp-w-svg-minflow-bow-bot');
         const bypassUpEl    = document.getElementById('lp-w-svg-bypass-up');
@@ -1060,19 +1123,34 @@ keywords: 2-way 3-way valve coil bypass diverting mixing tee
             });
             render();
         }
-        tryDesignEl.addEventListener('click', function (e) {
-            e.preventDefault();
-            applyPreset(50, 'cs', 'off');
-        });
-        tryNightEl.addEventListener('click', function (e) {
-            e.preventDefault();
-            applyPreset(0, 'vfd', 'off');
-        });
-
         // First paint. FlowEngine.init() above ran synchronously, so its
         // pools exist (under reduced-motion they don't, but setPathColor
         // is a safe no-op in that case).
         render();
+
+        // Preset chips — the click path is owned by the delegated listener in
+        // this page's head block (#299), which has been catching clicks since
+        // before the chip row was parsed. Handing it the applier both drains
+        // whatever was clicked while the site-wide scripts were still in
+        // flight and routes every later click straight through; there is
+        // deliberately no second binding here, and no preventDefault — a
+        // <button type="button"> has no default action, and the href="#"
+        // whose hash jump these handlers were suppressing is gone.
+        //
+        // The handover sits HERE, at the very end of the IIFE, not where the
+        // per-chip bindings used to: draining runs the applier SYNCHRONOUSLY,
+        // so it must land after the boot render() (whose state it would
+        // otherwise be painted over by) and after every `let` the call path
+        // touches has been initialised. On vfd-mock the second half was not
+        // hypothetical — the handover at the old binding site reached a `let`
+        // in its own temporal dead zone and threw. A handover is a CALL, not
+        // a binding; it belongs after everything the call can reach.
+        window.LpPresets.ready(function (id) {
+            switch (id) {
+                case 'lp-w-try-design': applyPreset(50, 'cs', 'off');  break;
+                case 'lp-w-try-night':  applyPreset(0, 'vfd', 'off');  break;
+            }
+        });
     })();
 </script>
 {% endblock %}

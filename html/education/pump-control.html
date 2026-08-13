@@ -162,6 +162,62 @@ keywords: vfd delta p dp gpm head curve staging trim impeller
         }
 
     </style>
+    <script>
+        // ── Preset chips: one permanent binding, installed before the
+        //    chips are parsed (codebase-issues #299) ────────────────────
+        // Same shape as the function-block editor's example chips (#281,
+        // PR #522) and equipment-staging's demand presets (#297), for the
+        // same two reasons. The DP-reset widget's chip row renders well
+        // down <main>, but the preset() it drives only exists once the
+        // end-of-body IIFE has run — after eight site-wide <script src>
+        // fetches from layouts/page.njk. None of them are deferred, so
+        // each blocks the parser in turn; until the last lands, every chip
+        // is painted, hit-testable and INERT, and the click silently does
+        // nothing (the widget stays at its authored 100% fixed-DP boot).
+        //
+        // So the click path is owned here — ONE delegated listener on the
+        // document, installed before <main> exists, so there is no moment
+        // at which a parsed chip is unbound. Until the widget exists the
+        // clicked chip is QUEUED (last one wins: the most recent choice is
+        // the one the visitor is waiting on); the widget's IIFE calls
+        // ready() where its per-chip bindings used to sit, and the queue
+        // drains into it, once. Every later click goes straight through
+        // the same listener. Deliberately NOT a temporary handler the IIFE
+        // replaces — two binding systems for one control is the drift
+        // generator.
+        //
+        // The queued token is the chip's own id. These chips are addressed
+        // by id rather than by a data- attribute (which is exactly how the
+        // #281 grep missed them), and the fix has no reason to change that
+        // — what makes a chip a control is the element and its binding,
+        // not the attribute that names it. The id→preset mapping stays in
+        // the IIFE, where the widget's vocabulary lives.
+        (function () {
+            'use strict';
+
+            let apply = null;     // the widget's preset applier, once it exists
+            let pending = null;   // a chip id clicked before that
+
+            window.PcPresets = {
+                ready: function (fn) {
+                    apply = fn;
+                    if (pending !== null) {
+                        const id = pending;
+                        pending = null;   // drain exactly once
+                        apply(id);
+                    }
+                },
+            };
+
+            document.addEventListener('click', function (e) {
+                const chip = e.target && e.target.closest
+                    ? e.target.closest('#pc-w2 .widget-try button')
+                    : null;
+                if (!chip) { return; }
+                if (apply) { apply(chip.id); } else { pending = chip.id; }
+            });
+        })();
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -568,11 +624,16 @@ keywords: vfd delta p dp gpm head curve staging trim impeller
                  Valve openness in reset mode: clamped to ~95% (the reset target)
                  Valve openness in fixed mode: walks with demand (lower demand ⇒ more throttling) -->
             <div class="widget" id="pc-w2">
+                <!-- Real <button>s, not bare <a>s: these set the widget's mode
+                     and demand, they don't navigate, and an anchor with no href
+                     is invisible to the keyboard (#299). Same .widget-try look
+                     either way — the shared stylesheet carries the button
+                     twin. -->
                 <div class="widget-try">
                     <span class="lbl">Try this:</span>
-                    <a id="pc-w2-try-design">design day (all valves wide)</a>
-                    <a id="pc-w2-try-mid">mid-day (60% demand)</a>
-                    <a id="pc-w2-try-night">night setback (15% demand)</a>
+                    <button type="button" id="pc-w2-try-design">design day (all valves wide)</button>
+                    <button type="button" id="pc-w2-try-mid">mid-day (60% demand)</button>
+                    <button type="button" id="pc-w2-try-night">night setback (15% demand)</button>
                 </div>
 
                 <div class="pc-w2-mode" role="group" aria-label="DP control mode">
@@ -848,9 +909,6 @@ keywords: vfd delta p dp gpm head curve staging trim impeller
         const valvesWrap   = document.getElementById('pc-w2-valves');
         const modeFixed    = document.getElementById('pc-w2-mode-fixed');
         const modeReset    = document.getElementById('pc-w2-mode-reset');
-        const tryDesign    = document.getElementById('pc-w2-try-design');
-        const tryMid       = document.getElementById('pc-w2-try-mid');
-        const tryNight     = document.getElementById('pc-w2-try-night');
         const anecdoteEl   = document.getElementById('pc-w2-anecdote-wrap');
 
         const state = { demand: 100, mode: 'fixed', anecdoteShown: false };
@@ -971,13 +1029,33 @@ keywords: vfd delta p dp gpm head curve staging trim impeller
         });
         modeFixed.addEventListener('click', function () { setMode('fixed'); });
         modeReset.addEventListener('click', function () { setMode('reset'); });
-        tryDesign.addEventListener('click', function (e) { e.preventDefault(); preset('fixed', 100); });
-        tryMid.addEventListener('click',    function (e) { e.preventDefault(); preset('reset', 60);  });
-        tryNight.addEventListener('click',  function (e) { e.preventDefault(); preset('reset', 15);  });
-
         document.addEventListener('unitschange', render);
 
         render();
+
+        // Preset chips — the click path is owned by the delegated listener in
+        // this page's head block (#299), which has been catching clicks since
+        // before the chip row was parsed. Handing it the applier both drains
+        // whatever was clicked while the site-wide scripts were still in
+        // flight and routes every later click straight through; there is
+        // deliberately no second binding here, and no preventDefault — a
+        // <button type="button"> has no default action to suppress.
+        //
+        // The handover sits HERE, at the very end of the IIFE, not where the
+        // per-chip bindings used to: draining runs the applier SYNCHRONOUSLY,
+        // so it must land after the boot render() (whose state it would
+        // otherwise be painted over by) and after every `let` the call path
+        // touches has been initialised. On vfd-mock the second half was not
+        // hypothetical — the handover at the old binding site reached a `let`
+        // in its own temporal dead zone and threw. A handover is a CALL, not
+        // a binding; it belongs after everything the call can reach.
+        window.PcPresets.ready(function (id) {
+            switch (id) {
+                case 'pc-w2-try-design': preset('fixed', 100); break;
+                case 'pc-w2-try-mid':    preset('reset', 60);  break;
+                case 'pc-w2-try-night':  preset('reset', 15);  break;
+            }
+        });
     })();
 
     // Start the flow-engine on the DP-control diagram. No-op under

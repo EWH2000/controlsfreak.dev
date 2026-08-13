@@ -1420,6 +1420,102 @@ test('vfd mock — run-source gating works from the keypad', async ({ page }) =>
     expect(errors, 'vfd-mock behavioral should log no page / console errors').toEqual([]);
 });
 
+// ── The preset chips are real controls (codebase-issues #299) ──────────
+// The same pair as fbe-editor.spec.js's (#281) and the #297 rows above,
+// against the three pages the #281 grep could not see: their chips carry
+// no data- attribute at all, so a search keyed on `<a data-` missed them.
+// Element and binding are what make a chip a control, not the attribute
+// that addresses it — and on all three these were bare <a> with no href,
+// wired from the end-of-body IIFE. Keyboard-dead permanently, and
+// mouse-dead until the eight parser-blocking site-wide scripts landed.
+// Each row below covers one arm; either fails against the pre-fix page.
+
+test('vfd mock — the preset chips are keyboard-reachable (#299)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/simulators/vfd-mock.html');
+    // Boot state is REMOTE (localMode false) — what the keypad preset changes.
+    await expect(page.locator('#vfdm-local-rem-txt')).toHaveText(/^REMOTE/);
+
+    // Walk forward from the preamble's lesson link, the last focusable above
+    // the chip row. Bounded, so a chip that drops out of the tab order fails
+    // here instead of hanging — and the loop is what makes this a
+    // REACHABILITY test rather than a .focus() call, which would pass just
+    // as happily on an unreachable element.
+    await page.locator('.tool-preamble a[href="/education/vfds.html"]').first().focus();
+    let id = null;
+    let steps = 0;
+    while (steps < 8 && id === null) {
+        await page.keyboard.press('Tab');
+        steps += 1;
+        id = await page.evaluate(() => {
+            const el = document.activeElement;
+            return el && el.id && el.id.startsWith('vfdm-try-') ? el.id : null;
+        });
+    }
+    expect(id, 'Tab from the preamble link should land on the first preset chip')
+        .toBe('vfdm-try-default');
+
+    // Enter on a focused <button> fires a click — the delegated listener sees
+    // it exactly as it sees a mouse click. Keypad commissioning is the one
+    // preset that puts the drive in LOCAL.
+    await page.keyboard.press('Tab');
+    await expect(page.locator(':focus')).toHaveAttribute('id', 'vfdm-try-keypad');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#vfdm-local-rem-txt')).toHaveText(/^LOCAL/);
+
+    expect(errors, 'keyboard-loading a preset should log no page / console errors').toEqual([]);
+});
+
+test('vfd mock — a preset clicked before the drive mounts still applies (#299)', async ({ page }) => {
+    const errors = watchErrors(page);
+
+    // Hold /scripts/flow-engine.js at the network until this test releases
+    // it. It is one of the eight site-wide scripts, all parser-blocking and
+    // all above {% block scripts %}, so holding it holds the page's IIFE —
+    // while the chip row, parsed near the top of <main>, is already painted
+    // and clickable. That IS the window #299 is about, reproduced
+    // deterministically instead of raced for. Nothing is stubbed: the real
+    // head listener queues, the real page drains.
+    let release;
+    const gate = new Promise((resolve) => { release = resolve; });
+    await page.route('**/scripts/flow-engine.js*', async (route) => {
+        await gate;
+        await route.continue();
+    });
+
+    // 'commit' rather than 'load' — the parser-blocking script above never
+    // returns, so neither DOMContentLoaded nor load will fire yet.
+    await page.goto('/simulators/vfd-mock.html', { waitUntil: 'commit' });
+    const chip = page.locator('#vfdm-try-keypad');
+    await chip.waitFor({ state: 'visible' });
+
+    // ANTI-VACUITY, both halves: the parser really is still blocked, and the
+    // page's own IIFE really has not run (it builds the parameter table).
+    // Without these the test could pass without ever exercising the queue.
+    expect(await page.evaluate(() => typeof window.FlowEngine),
+        'the site-wide scripts must still be in flight for this test to mean anything')
+        .toBe('undefined');
+    await expect(page.locator('#vfdm-params-tbody tr')).toHaveCount(0);
+
+    await chip.click();
+    // Queued, not dropped, and not applied early — the static markup still
+    // reads its authored REMOTE.
+    await expect(page.locator('#vfdm-local-rem-txt')).toHaveText(/^REMOTE/);
+
+    release();
+    // The drive boots at its authored parameters and the queue drains
+    // straight into it: keypad commissioning, which is LOCAL.
+    await expect(page.locator('#vfdm-params-tbody tr').first()).toBeVisible();
+    await expect(page.locator('#vfdm-local-rem-txt')).toHaveText(/^LOCAL/);
+
+    // The queue drains ONCE and the same listener then serves live clicks —
+    // one path, both phases. BAS auto is REMOTE again.
+    await page.click('#vfdm-try-bas');
+    await expect(page.locator('#vfdm-local-rem-txt')).toHaveText(/^REMOTE/);
+
+    expect(errors, 'the queued-click path should log no page / console errors').toEqual([]);
+});
+
 test('pump control page renders its diagram and both widgets respond', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/education/pump-control.html');
@@ -1466,6 +1562,91 @@ test('pump control page renders its diagram and both widgets respond', async ({ 
     });
     await expect(page.locator('.widget-anecdote')).toBeVisible();
     expect(errors, 'pump-control behavioral should log no page / console errors').toEqual([]);
+});
+
+test('pump control — the preset chips are keyboard-reachable (#299)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/education/pump-control.html');
+    // Widget 2 boots at 100% demand in fixed-DP mode.
+    await expect(page.locator('#pc-w2-demand')).toHaveText('100');
+
+    // Walk forward from the cube-law link, the last focusable above the chip
+    // row. Bounded, so a chip that drops out of the tab order fails here
+    // instead of hanging — and the loop is what makes this a REACHABILITY
+    // test rather than a .focus() call.
+    await page.getByRole('link', { name: 'cube law' }).focus();
+    let id = null;
+    let steps = 0;
+    while (steps < 8 && id === null) {
+        await page.keyboard.press('Tab');
+        steps += 1;
+        id = await page.evaluate(() => {
+            const el = document.activeElement;
+            return el && el.id && el.id.startsWith('pc-w2-try-') ? el.id : null;
+        });
+    }
+    expect(id, 'Tab from the cube-law link should land on the first preset chip')
+        .toBe('pc-w2-try-design');
+
+    // Enter on a focused <button> fires a click — the delegated listener sees
+    // it exactly as it sees a mouse click. Night setback is reset-DP at 15%,
+    // and it drives the slider, not just the readout, so assert both.
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
+    await expect(page.locator(':focus')).toHaveAttribute('id', 'pc-w2-try-night');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#pc-w2-demand')).toHaveText('15');
+    await expect(page.locator('#pc-w2-demand-slider')).toHaveValue('15');
+    await expect(page.locator('#pc-w2-mode-reset')).toHaveClass(/\bon\b/);
+
+    expect(errors, 'keyboard-setting a preset should log no page / console errors').toEqual([]);
+});
+
+test('pump control — a preset clicked before the widget mounts still applies (#299)', async ({ page }) => {
+    const errors = watchErrors(page);
+
+    // Hold /scripts/flow-engine.js at the network. It is one of the eight
+    // site-wide scripts, all parser-blocking and all above
+    // {% block scripts %}, so holding it holds the widget's IIFE — while the
+    // chip row, parsed well down <main>, is already painted and clickable.
+    let release;
+    const gate = new Promise((resolve) => { release = resolve; });
+    await page.route('**/scripts/flow-engine.js*', async (route) => {
+        await gate;
+        await route.continue();
+    });
+
+    await page.goto('/education/pump-control.html', { waitUntil: 'commit' });
+    const chip = page.locator('#pc-w2-try-night');
+    await chip.waitFor({ state: 'visible' });
+
+    // ANTI-VACUITY, both halves: the parser is still blocked, and the
+    // widget's IIFE has not run (it builds the five valve cells).
+    expect(await page.evaluate(() => typeof window.FlowEngine),
+        'the site-wide scripts must still be in flight for this test to mean anything')
+        .toBe('undefined');
+    await expect(page.locator('#pc-w2-valves .pc-w2-valve')).toHaveCount(0);
+
+    await chip.click();
+    // Queued, not dropped, and not applied early — the static markup still
+    // reads its authored 100%.
+    await expect(page.locator('#pc-w2-demand')).toHaveText('100');
+
+    release();
+    // The widget boots at its authored 100% fixed-DP and the queue drains
+    // straight into it: night setback, 15%, reset-DP.
+    await expect(page.locator('#pc-w2-valves .pc-w2-valve')).toHaveCount(5);
+    await expect(page.locator('#pc-w2-demand')).toHaveText('15');
+    await expect(page.locator('#pc-w2-demand-slider')).toHaveValue('15');
+    await expect(page.locator('#pc-w2-mode-reset')).toHaveClass(/\bon\b/);
+
+    // The queue drains ONCE and the same listener then serves live clicks —
+    // one path, both phases.
+    await page.click('#pc-w2-try-mid');
+    await expect(page.locator('#pc-w2-demand')).toHaveText('60');
+    await expect(page.locator('#pc-w2-demand-slider')).toHaveValue('60');
+
+    expect(errors, 'the queued-click path should log no page / console errors').toEqual([]);
 });
 
 test('equipment staging — staging widget stages up, rotation widget equalizes runtime', async ({ page }) => {
@@ -1622,6 +1803,87 @@ test('vfds page renders its diagrams and the run/speed widget is wired up', asyn
     expect(errors, 'vfds behavioral should log no page / console errors').toEqual([]);
 });
 
+test('vfds — the preset chips are keyboard-reachable (#299)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/education/vfds.html');
+    // Widget boots at run=terminals / speed=network.
+    await expect(page.locator('#vfd-run-src')).toHaveValue('terminals');
+
+    // Walk forward from the BACnet AV link, the last focusable above the chip
+    // row. Bounded, so a chip that drops out of the tab order fails here
+    // instead of hanging — and the loop is what makes this a REACHABILITY
+    // test rather than a .focus() call.
+    await page.getByRole('link', { name: 'a BACnet Analog Value object' }).focus();
+    let id = null;
+    let steps = 0;
+    while (steps < 8 && id === null) {
+        await page.keyboard.press('Tab');
+        steps += 1;
+        id = await page.evaluate(() => {
+            const el = document.activeElement;
+            return el && el.id && el.id.startsWith('vfd-try-') ? el.id : null;
+        });
+    }
+    expect(id, 'Tab from the BACnet AV link should land on the first preset chip')
+        .toBe('vfd-try-keypad');
+
+    // Enter on a focused <button> fires a click — the delegated listener sees
+    // it exactly as it sees a mouse click. The preset writes both source
+    // selects, not just one, so assert both.
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#vfd-run-src')).toHaveValue('keypad');
+    await expect(page.locator('#vfd-spd-src')).toHaveValue('keypad');
+
+    expect(errors, 'keyboard-setting a preset should log no page / console errors').toEqual([]);
+});
+
+test('vfds — a preset clicked before the widget mounts still applies (#299)', async ({ page }) => {
+    const errors = watchErrors(page);
+
+    // Hold /scripts/flow-engine.js at the network. It is one of the eight
+    // site-wide scripts, all parser-blocking and all above
+    // {% block scripts %}, so holding it holds the widget's IIFE — while the
+    // chip row, parsed partway down <main>, is already painted and clickable.
+    let release;
+    const gate = new Promise((resolve) => { release = resolve; });
+    await page.route('**/scripts/flow-engine.js*', async (route) => {
+        await gate;
+        await route.continue();
+    });
+
+    await page.goto('/education/vfds.html', { waitUntil: 'commit' });
+    const chip = page.locator('#vfd-try-keypad');
+    await chip.waitFor({ state: 'visible' });
+
+    // ANTI-VACUITY, both halves: the parser is still blocked, and the
+    // widget's IIFE has not run (its first render fills the status panel,
+    // which ships empty in the markup).
+    expect(await page.evaluate(() => typeof window.FlowEngine),
+        'the site-wide scripts must still be in flight for this test to mean anything')
+        .toBe('undefined');
+    await expect(page.locator('#vfd-msgs')).toBeEmpty();
+
+    await chip.click();
+    // Queued, not dropped, and not applied early — the select still reads its
+    // authored terminals.
+    await expect(page.locator('#vfd-run-src')).toHaveValue('terminals');
+
+    release();
+    // The widget boots at its authored pair and the queue drains straight
+    // into it: all-keypad, on both source selects.
+    await expect(page.locator('#vfd-msgs')).not.toBeEmpty();
+    await expect(page.locator('#vfd-run-src')).toHaveValue('keypad');
+    await expect(page.locator('#vfd-spd-src')).toHaveValue('keypad');
+
+    // The queue drains ONCE and the same listener then serves live clicks —
+    // one path, both phases.
+    await page.click('#vfd-try-network');
+    await expect(page.locator('#vfd-run-src')).toHaveValue('network');
+    await expect(page.locator('#vfd-spd-src')).toHaveValue('network');
+
+    expect(errors, 'the queued-click path should log no page / console errors').toEqual([]);
+});
+
 test('load piping — bypass widget protects pump from deadhead at zero demand', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/education/load-piping.html');
@@ -1661,6 +1923,104 @@ test('load piping — bypass widget protects pump from deadhead at zero demand',
     await expect(page.locator('#lp-w-bar-label')).toHaveText('Pump head');
 
     expect(errors, 'load-piping behavioural should log no page / console errors').toEqual([]);
+});
+
+// ── load-piping's chips: the #299 NEAR MISS, converted anyway ──────────
+// These two carried href="#", so unlike the other three #299 rows they
+// WERE in the tab order and the keyboard arm never applied. What they
+// were was an anchor that does not navigate — a handler that had to
+// preventDefault its own href — plus the same pre-mount window. Only the
+// pre-mount arm is a regression guard here; the keyboard row below is
+// kept as the standing proof that the conversion did not COST the tab
+// order, which a bare <a> → <button> swap could have done had the button
+// landed inside something focus-hostile.
+
+test('load piping — the preset chips stay keyboard-reachable (#299)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/education/load-piping.html');
+    await expect(page.locator('#lp-w')).toHaveAttribute('data-state', 'ok');
+
+    // Walk forward from the pump-control link, the last focusable above the
+    // chip row. Bounded, so a chip that drops out of the tab order fails here
+    // instead of hanging.
+    await page.getByRole('link', { name: 'pump-control lesson' }).focus();
+    let id = null;
+    let steps = 0;
+    while (steps < 8 && id === null) {
+        await page.keyboard.press('Tab');
+        steps += 1;
+        id = await page.evaluate(() => {
+            const el = document.activeElement;
+            return el && el.id && el.id.startsWith('lp-w-try-') ? el.id : null;
+        });
+    }
+    expect(id, 'Tab from the pump-control link should land on the first preset chip')
+        .toBe('lp-w-try-design');
+
+    // Enter on a focused <button> fires a click. Quiet night is demand 0 on a
+    // VFD with the bypass off — the deadhead corner.
+    await page.keyboard.press('Tab');
+    await expect(page.locator(':focus')).toHaveAttribute('id', 'lp-w-try-night');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#lp-w')).toHaveAttribute('data-state', 'deadhead');
+    await expect(page.locator('#lp-w-state-text')).toHaveText('DEADHEAD');
+
+    // …and the URL still has no '#' on it: a <button> has no default action,
+    // which is the whole reason the old handlers had to preventDefault.
+    expect(new URL(page.url()).hash, 'a preset chip must not push a hash onto the URL').toBe('');
+
+    expect(errors, 'keyboard-setting a preset should log no page / console errors').toEqual([]);
+});
+
+test('load piping — a preset clicked before the widget mounts still applies (#299)', async ({ page }) => {
+    const errors = watchErrors(page);
+
+    // Hold /scripts/flow-engine.js at the network. It is one of the eight
+    // site-wide scripts, all parser-blocking and all above
+    // {% block scripts %}, so holding it holds this page's FlowEngine.init()
+    // AND the widget IIFE below it — while the chip row, parsed well down
+    // <main>, is already painted and clickable.
+    let release;
+    const gate = new Promise((resolve) => { release = resolve; });
+    await page.route('**/scripts/flow-engine.js*', async (route) => {
+        await gate;
+        await route.continue();
+    });
+
+    await page.goto('/education/load-piping.html', { waitUntil: 'commit' });
+    const chip = page.locator('#lp-w-try-night');
+    await chip.waitFor({ state: 'visible' });
+
+    // ANTI-VACUITY: the parser really is still blocked. This page's static
+    // markup mirrors its boot state exactly (sys flow 30, pump 50%, state
+    // OK), so there is no DOM fact that distinguishes "not mounted" from
+    // "mounted and idle" — the script probe is the whole proof here, and it
+    // is sufficient because the IIFE is strictly below the held script in
+    // document order.
+    expect(await page.evaluate(() => typeof window.FlowEngine),
+        'the site-wide scripts must still be in flight for this test to mean anything')
+        .toBe('undefined');
+
+    await chip.click();
+    // Queued, not dropped, and not applied early — the authored OK stands.
+    await expect(page.locator('#lp-w-state-text')).toHaveText('OK');
+
+    release();
+    // The widget boots at its authored demand and the queue drains straight
+    // into it: quiet night, which lands in the deadhead corner and reveals
+    // the anecdote.
+    await expect(page.locator('#lp-w')).toHaveAttribute('data-state', 'deadhead');
+    await expect(page.locator('#lp-w-state-text')).toHaveText('DEADHEAD');
+    await expect(page.locator('#lp-w-anecdote')).toBeVisible();
+
+    // The queue drains ONCE and the same listener then serves live clicks —
+    // one path, both phases. Design day is a constant-speed pump at 50%, so
+    // the readout label flips to "Pump head".
+    await page.click('#lp-w-try-design');
+    await expect(page.locator('#lp-w')).toHaveAttribute('data-state', 'ok');
+    await expect(page.locator('#lp-w-pump-readout-label')).toHaveText('Pump head');
+
+    expect(errors, 'the queued-click path should log no page / console errors').toEqual([]);
 });
 
 test('balancing page renders riser, widget compares three branches, anecdote reveals at low Δp', async ({ page }) => {

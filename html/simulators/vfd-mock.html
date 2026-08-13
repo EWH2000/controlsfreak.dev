@@ -251,6 +251,65 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
         .vfdm-params td.val { color: var(--blue); font-weight: 600; font-variant-numeric: tabular-nums; }
         .vfdm-params td.grp { color: var(--text-dim); font-size: 0.74rem; }
     </style>
+    <script>
+        // ── Preset chips: one permanent binding, installed before the
+        //    chips are parsed (codebase-issues #299) ────────────────────
+        // Same shape as the function-block editor's example chips (#281,
+        // PR #522) and equipment-staging's demand presets (#297), for the
+        // same two reasons. The chip row renders near the top of <main>,
+        // but the applyPreset() it drives only exists once the end-of-body
+        // IIFE has run — after the eight site-wide <script src> fetches
+        // from layouts/page.njk. None of them are deferred, so each blocks
+        // the parser in turn; until the last lands, every chip is painted,
+        // hit-testable and INERT, and the click silently does nothing (the
+        // drive face keeps its authored boot parameters and never flashes
+        // "> PRESET"). This page has no page-specific <script src>, so the
+        // window is shorter than the loop builder's — but a page-script-free
+        // page is not a page-fetch-free page, and it is the same window.
+        //
+        // So the click path is owned here — ONE delegated listener on the
+        // document, installed before <main> exists, so there is no moment
+        // at which a parsed chip is unbound. Until the drive exists the
+        // clicked chip is QUEUED (last one wins: the most recent choice is
+        // the one the visitor is waiting on); the page's IIFE calls
+        // ready() where its per-chip bindings used to sit, and the queue
+        // drains into it, once. Every later click goes straight through
+        // the same listener. Deliberately NOT a temporary handler the IIFE
+        // replaces — two binding systems for one control is the drift
+        // generator.
+        //
+        // The queued token is the chip's own id. These chips are addressed
+        // by id rather than by a data- attribute (which is exactly how the
+        // #281 grep missed them), and the fix has no reason to change that
+        // — what makes a chip a control is the element and its binding,
+        // not the attribute that names it. The id→preset mapping stays in
+        // the IIFE, where the drive's parameter vocabulary lives.
+        (function () {
+            'use strict';
+
+            let apply = null;     // the drive's preset applier, once it exists
+            let pending = null;   // a chip id clicked before that
+
+            window.VfdmPresets = {
+                ready: function (fn) {
+                    apply = fn;
+                    if (pending !== null) {
+                        const id = pending;
+                        pending = null;   // drain exactly once
+                        apply(id);
+                    }
+                },
+            };
+
+            document.addEventListener('click', function (e) {
+                const chip = e.target && e.target.closest
+                    ? e.target.closest('#vfdm-try button')
+                    : null;
+                if (!chip) { return; }
+                if (apply) { apply(chip.id); } else { pending = chip.id; }
+            });
+        })();
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -284,12 +343,16 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
                 motor electrically. New to drives? <a href="/education/vfds.html">Start with the VFDs lesson →</a>
             </p>
 
+            <!-- Real <button>s, not bare <a>s: these write the drive's source
+                 parameters, they don't navigate, and an anchor with no href is
+                 invisible to the keyboard (#299). Same .widget-try look either
+                 way — the shared stylesheet carries the button twin. -->
             <div class="widget-try" id="vfdm-try">
                 <span class="lbl">Try this:</span>
-                <a id="vfdm-try-default">factory defaults</a>
-                <a id="vfdm-try-keypad">keypad commissioning</a>
-                <a id="vfdm-try-bas">BAS auto (all network)</a>
-                <a id="vfdm-try-classic">the classic mistake</a>
+                <button type="button" id="vfdm-try-default">factory defaults</button>
+                <button type="button" id="vfdm-try-keypad">keypad commissioning</button>
+                <button type="button" id="vfdm-try-bas">BAS auto (all network)</button>
+                <button type="button" id="vfdm-try-classic">the classic mistake</button>
             </div>
 
             <div class="vfdm-grid">
@@ -940,25 +1003,9 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
             flash('> PRESET');
             render();
         }
-        document.getElementById('vfdm-try-default').addEventListener('click', e => {
-            e.preventDefault();
-            applyPreset({ runSrc: 1, spdSrc: 2, local: false, diClosed: false });
-        });
-        document.getElementById('vfdm-try-keypad').addEventListener('click', e => {
-            e.preventDefault();
-            applyPreset({ runSrc: 0, spdSrc: 0, local: true,  diClosed: false });
-        });
-        document.getElementById('vfdm-try-bas').addEventListener('click', e => {
-            e.preventDefault();
-            applyPreset({ runSrc: 2, spdSrc: 2, local: false, diClosed: false });
-        });
-        document.getElementById('vfdm-try-classic').addEventListener('click', e => {
-            e.preventDefault();
-            // Intentional twin of `vfdm-try-default` — the "classic mistake"
-            // *is* factory defaults verbatim; that's the lesson this preset
-            // teaches.
-            applyPreset({ runSrc: 1, spdSrc: 2, local: false, diClosed: false });
-        });
+        // The chips that drive applyPreset are bound from this page's head
+        // block (#299); the handover that drains their queue sits at the very
+        // END of this IIFE — see the note above the last render() call.
 
         // ── Tick loop ──────────────────────────────────────────────────
         // Drive motor model + flash-message expiry. 50 ms keeps the
@@ -994,6 +1041,47 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
         }
 
         render();
+
+        // Preset chips — the click path is owned by the delegated listener in
+        // this page's head block (#299), which has been catching clicks since
+        // before the chip row was parsed. Handing it the applier both drains
+        // whatever was clicked while the site-wide scripts were still in
+        // flight and routes every later click straight through; there is
+        // deliberately no second binding here, and no preventDefault — a
+        // <button type="button"> has no default action to suppress.
+        //
+        // The handover sits HERE, at the very end of the IIFE, not where the
+        // per-chip bindings used to. Two reasons, and the second one bit:
+        // draining runs the applier SYNCHRONOUSLY, so it must not run before
+        // the boot render() (whose state it would then be painted over) and
+        // it must not run before every `let` this call path touches has been
+        // initialised. At the old binding site it did the latter —
+        // applyPreset → render → ensureTickRunning reads `motorTickId`, which
+        // is declared with `let` well below, so a queued click threw
+        // "Cannot access 'motorTickId' before initialization" and the drive
+        // never mounted. The per-chip listeners never hit that because they
+        // only ever fired long after the IIFE finished. Generalised: a
+        // handover is a CALL, not a binding, so it belongs after everything
+        // the call can reach.
+        window.VfdmPresets.ready(function (id) {
+            switch (id) {
+                case 'vfdm-try-default':
+                    applyPreset({ runSrc: 1, spdSrc: 2, local: false, diClosed: false });
+                    break;
+                case 'vfdm-try-keypad':
+                    applyPreset({ runSrc: 0, spdSrc: 0, local: true,  diClosed: false });
+                    break;
+                case 'vfdm-try-bas':
+                    applyPreset({ runSrc: 2, spdSrc: 2, local: false, diClosed: false });
+                    break;
+                case 'vfdm-try-classic':
+                    // Intentional twin of `vfdm-try-default` — the "classic
+                    // mistake" *is* factory defaults verbatim; that's the
+                    // lesson this preset teaches.
+                    applyPreset({ runSrc: 1, spdSrc: 2, local: false, diClosed: false });
+                    break;
+            }
+        });
     })();
 </script>
 {% endblock %}

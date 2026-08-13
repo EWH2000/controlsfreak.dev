@@ -208,6 +208,64 @@ keywords: fla amps hz drive inverter speed torque carrier motor run
         .vfd-cube-numbers div .pct { color: var(--text-dim); font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; display: block; margin-bottom: 0.1rem; }
         .vfd-cube-numbers div .val { color: var(--blue); font-weight: 600; font-size: 0.95rem; }
     </style>
+    <script>
+        // ── Preset chips: one permanent binding, installed before the
+        //    chips are parsed (codebase-issues #299) ────────────────────
+        // Same shape as the function-block editor's example chips (#281,
+        // PR #522) and equipment-staging's demand presets (#297), for the
+        // same two reasons. The run/speed-source widget's chip row renders
+        // partway down <main>, but the applyPreset() it drives only exists
+        // once the end-of-body IIFE has run — after the eight site-wide
+        // <script src> fetches from layouts/page.njk. None of them are
+        // deferred, so each blocks the parser in turn; until the last
+        // lands, every chip is painted, hit-testable and INERT, and the
+        // click silently does nothing (the widget stays at its authored
+        // run=terminals / speed=network boot pair — which is itself one of
+        // the configurations a chip offers, so the no-op is invisible).
+        //
+        // So the click path is owned here — ONE delegated listener on the
+        // document, installed before <main> exists, so there is no moment
+        // at which a parsed chip is unbound. Until the widget exists the
+        // clicked chip is QUEUED (last one wins: the most recent choice is
+        // the one the visitor is waiting on); the widget's IIFE calls
+        // ready() where its per-chip bindings used to sit, and the queue
+        // drains into it, once. Every later click goes straight through
+        // the same listener. Deliberately NOT a temporary handler the IIFE
+        // replaces — two binding systems for one control is the drift
+        // generator.
+        //
+        // The queued token is the chip's own id. These chips are addressed
+        // by id rather than by a data- attribute (which is exactly how the
+        // #281 grep missed them), and the fix has no reason to change that
+        // — what makes a chip a control is the element and its binding,
+        // not the attribute that names it. The id→preset mapping stays in
+        // the IIFE, where the widget's vocabulary lives.
+        (function () {
+            'use strict';
+
+            let apply = null;     // the widget's preset applier, once it exists
+            let pending = null;   // a chip id clicked before that
+
+            window.VfdPresets = {
+                ready: function (fn) {
+                    apply = fn;
+                    if (pending !== null) {
+                        const id = pending;
+                        pending = null;   // drain exactly once
+                        apply(id);
+                    }
+                },
+            };
+
+            document.addEventListener('click', function (e) {
+                const chip = e.target && e.target.closest
+                    ? e.target.closest('#vfd-widget .widget-try button')
+                    : null;
+                if (!chip) { return; }
+                if (apply) { apply(chip.id); } else { pending = chip.id; }
+            });
+        })();
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -349,11 +407,16 @@ keywords: fla amps hz drive inverter speed torque carrier motor run
                  against an open DI — matches the d3 widget's failure-state reward pattern on
                  hydronic-loops. -->
             <div class="widget" id="vfd-widget">
+                <!-- Real <button>s, not bare <a>s: these set the run and speed
+                     sources, they don't navigate, and an anchor with no href is
+                     invisible to the keyboard (#299). Same .widget-try look
+                     either way — the shared stylesheet carries the button
+                     twin. -->
                 <div class="widget-try">
                     <span class="lbl">Try this:</span>
-                    <a id="vfd-try-keypad">all keypad (commissioning)</a>
-                    <a id="vfd-try-network">all network (BMS auto)</a>
-                    <a id="vfd-try-classic">the classic mistake</a>
+                    <button type="button" id="vfd-try-keypad">all keypad (commissioning)</button>
+                    <button type="button" id="vfd-try-network">all network (BMS auto)</button>
+                    <button type="button" id="vfd-try-classic">the classic mistake</button>
                 </div>
 
                 <div class="vfd-w-sources">
@@ -744,9 +807,6 @@ keywords: fla amps hz drive inverter speed torque carrier motor run
         const anecdoteEl = document.getElementById('vfd-anecdote-wrap');
         const fanEl      = document.getElementById('vfd-w-fan');
         const fanBlades  = document.getElementById('vfd-w-fan-blades');
-        const tryKeypad  = document.getElementById('vfd-try-keypad');
-        const tryNetwork = document.getElementById('vfd-try-network');
-        const tryClassic = document.getElementById('vfd-try-classic');
 
         // — State
         const state = {
@@ -904,9 +964,9 @@ keywords: fla amps hz drive inverter speed torque carrier motor run
         diClosed.addEventListener('click', function () { setDi(true); });
         netRun.addEventListener('click',  function () { attemptRun('network'); });
         netStop.addEventListener('click', function () { attemptStop('network'); });
-        tryKeypad.addEventListener('click',  function (e) { e.preventDefault(); applyPreset('keypad', 'keypad'); });
-        tryNetwork.addEventListener('click', function (e) { e.preventDefault(); applyPreset('network', 'network'); });
-        tryClassic.addEventListener('click', function (e) { e.preventDefault(); applyPreset('terminals', 'network'); });
+        // The chips that drive applyPreset are bound from this page's head
+        // block (#299); the handover that drains their queue sits at the very
+        // END of this IIFE — see the note above the last render() call.
 
         // ── Fan rotation tick ──────────────────────────────────────────
         // Independent from render() because the angle has to advance
@@ -942,6 +1002,30 @@ keywords: fla amps hz drive inverter speed torque carrier motor run
         }
 
         render();
+
+        // Preset chips — the click path is owned by the delegated listener in
+        // this page's head block (#299), which has been catching clicks since
+        // before the chip row was parsed. Handing it the applier both drains
+        // whatever was clicked while the site-wide scripts were still in
+        // flight and routes every later click straight through; there is
+        // deliberately no second binding here, and no preventDefault — a
+        // <button type="button"> has no default action to suppress.
+        //
+        // The handover sits HERE, at the very end of the IIFE, not where the
+        // per-chip bindings used to: draining runs the applier SYNCHRONOUSLY,
+        // so it must land after the boot render() (whose state it would
+        // otherwise be painted over by) and after every `let` the call path
+        // touches has been initialised. On vfd-mock the second half was not
+        // hypothetical — the handover at the old binding site reached a `let`
+        // in its own temporal dead zone and threw. A handover is a CALL, not
+        // a binding; it belongs after everything the call can reach.
+        window.VfdPresets.ready(function (id) {
+            switch (id) {
+                case 'vfd-try-keypad':  applyPreset('keypad', 'keypad');     break;
+                case 'vfd-try-network': applyPreset('network', 'network');   break;
+                case 'vfd-try-classic': applyPreset('terminals', 'network'); break;
+            }
+        });
     })();
 </script>
 {% endblock %}
