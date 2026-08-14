@@ -376,6 +376,29 @@ evaporate with it:
     every `details.prose-fold` summary site-wide opens with a bare
     title. Shipped on the same PR (#520) as the widening.
 
+- **2026-08-14 — Phase 2 OPENS** (the drafting lanes are running; this
+  entry rides the tier-1 drafting PR). Owner rulings banked at the
+  arc's opening:
+  - **The §3b sense-greps fold into this arc — phases 2 and 3 are
+    merged.** The 16 never-checked rows got their per-term greps in
+    the drafting pass itself (verdicts recorded in `glossary.js`'s
+    SENSE-GREPS block: 14 graduated, 2 failed the in-scope test —
+    Y1/Y2/G and make/break/cut-out, both workbench-only), so there is
+    no separate phase-3 lane to sequence. The §9 phasing above reads
+    accordingly: multi-benign (§5) is the next content tier.
+  - **#308 (the two contradictory focus-ring conventions): consolidate.**
+    Rides Lane H.
+  - **The gloss single-quote guard arm: approved.** Rides Lane H.
+  - **C1 ships at full-PID scope**, category `signals` for now — his
+    words: "if we build more similar we may start the new 'controls'
+    category." The tuner's vendor-dialect prose gets a pointer
+    sentence to C1; the vendor-name ruling itself is deferred to the
+    ledger.
+  - **`docs/next-session-handoff.md` retired on this PR** — both of
+    its lifecycle conditions met (the owner worked the morning review
+    2026-08-14; this PR opens the Phase 2 arc). Git history retains
+    it; its standing constraints were already carried into this file.
+
 ## Open questions
 
 - ~~**Mid-density pilot page for the tooltip component**~~ — settled
