@@ -149,7 +149,7 @@ faqs:
             <section class="tool-body-row">
                 <h2 class="ps-section-label" id="hex-encode">BACnet/IP device address → 8- or 12-character hex string</h2>
                 <p class="ref-note" style="margin-top:0;">
-                    Each octet of the dotted-decimal address becomes one hex byte pair, and the UDP port appends as two more — the default BACnet/IP port encodes as <code>BAC0</code>. The 12-character result is the same six-byte address field a BBMD's Broadcast Distribution Table entries carry (each entry pairs it with a four-byte broadcast-distribution mask).
+                    Each octet of the dotted-decimal address becomes one hex byte pair, and the UDP port appends as two more — the default BACnet/IP port encodes as <code>BAC0</code>. The 12-character result is the same six-byte address field a <button type="button" data-gloss="bbmd">BBMD</button>'s <button type="button" data-gloss="broadcast-distribution-table">Broadcast Distribution Table</button> entries carry (each entry pairs it with a four-byte broadcast-distribution mask).
                 </p>
             </section>
         </div>
@@ -234,11 +234,11 @@ faqs:
             </p>
             <p class="ref-note">
                 <a href="/education/bacnet-basics.html">BACnet Basics</a> covers the
-                object model, the services, the priority array, and how Who-Is / I-Am
+                object model, the services, the <button type="button" data-gloss="priority-array">priority array</button>, and how Who-Is / I-Am
                 discovery works. <a href="/education/bacnet-networking.html">BACnet Networking</a>
                 is the companion page on the gotchas behind the hex-blob conversion above —
-                the three layers of addressing, BBMDs and Foreign Device Registration, and
-                the BVLL/NPDU/APDU frame each BACnet/IP message wraps itself in.
+                the three layers of addressing, <button type="button" data-gloss="bbmd">BBMDs</button> and <button type="button" data-gloss="foreign-device">Foreign Device Registration</button>, and
+                the BVLL/NPDU/<button type="button" data-gloss="apdu">APDU</button> frame each BACnet/IP message wraps itself in.
             </p>
         </div>
     </div>
