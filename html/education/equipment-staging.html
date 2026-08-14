@@ -259,11 +259,11 @@ keywords: lead lag stage up down rotation runtime hysteresis
             <h2 class="subhead" id="why-parallel">Why a Plant Runs Several Identical Units</h2>
 
             <p>
-                Before the staging question makes sense, name why the plant has more than one pump at all. A single pump sized for the building's <em>peak</em> load is oversized for nearly every hour that isn't the peak. A variable-speed pump rides that out gracefully for a while — slow down, follow the building, that's the whole pump-control story — but only down to a point. Every VFD has a minimum speed, and below the flow that minimum produces you're back to the problems variable-speed pumping was meant to solve: pressure dumped across throttled valves, and at the extreme the <em>deadhead</em> the pump-control page ended on. One pump can only turn down so far.
+                Before the staging question makes sense, name why the plant has more than one pump at all. A single pump sized for the building's <em>peak</em> load is oversized for nearly every hour that isn't the peak. A variable-speed pump rides that out gracefully for a while — slow down, follow the building, that's the whole pump-control story — but only down to a point. Every VFD has a minimum speed, and below the flow that minimum produces you're back to the problems variable-speed pumping was meant to solve: pressure dumped across throttled valves, and at the extreme the <em><button type="button" data-gloss="deadhead">deadhead</button></em> the pump-control page ended on. One pump can only turn down so far.
             </p>
 
             <p>
-                Split the duty across several smaller pumps and the turndown problem softens. At light load you run one pump at a sensible point on its curve; as demand climbs you bring on a second, then a third. And there's a second reason that has nothing to do with efficiency: <em>redundancy</em>. A plant built N+1 — one more pump than the peak load needs — keeps running when a pump fails or gets pulled for service. The building doesn't care that a bearing let go at 2 a.m.; the standby picks up the load and a technician deals with it in daylight.
+                Split the duty across several smaller pumps and the <button type="button" data-gloss="turndown">turndown</button> problem softens. At light load you run one pump at a sensible point on its curve; as demand climbs you bring on a second, then a third. And there's a second reason that has nothing to do with efficiency: <em>redundancy</em>. A plant built N+1 — one more pump than the peak load needs — keeps running when a pump fails or gets pulled for service. The building doesn't care that a bearing let go at 2 a.m.; the standby picks up the load and a technician deals with it in daylight.
             </p>
 
             <p>
@@ -369,7 +369,7 @@ keywords: lead lag stage up down rotation runtime hysteresis
             </p>
 
             <p>
-                Two timers finish the picture. A crossed threshold doesn't act <em>immediately</em> — a <em>stage delay</em> requires the demand to stay across the line for a sustained period before the sequence acts, so a brief swing (a single zone slamming open, a momentary pressure dip) doesn't churn the whole plant. And once a stage change does happen, a <em>minimum stage time</em> blocks the next change for a while. A pump that just started shouldn't be asked to stop sixty seconds later; short-cycling is hard on the motor windings, hard on the starter, and hard on the pump itself.
+                Two timers finish the picture. A crossed threshold doesn't act <em>immediately</em> — a <em>stage delay</em> requires the demand to stay across the line for a sustained period before the sequence acts, so a brief swing (a single zone slamming open, a momentary pressure dip) doesn't churn the whole plant. And once a stage change does happen, a <em>minimum stage time</em> blocks the next change for a while. A pump that just started shouldn't be asked to stop sixty seconds later; <button type="button" data-gloss="short-cycling">short-cycling</button> is hard on the motor windings, hard on the starter, and hard on the pump itself.
             </p>
 
             <p>
@@ -500,7 +500,7 @@ keywords: lead lag stage up down rotation runtime hysteresis
             </p>
 
             <p>
-                Staging is one kind of sequence. The same BMS runs others this page hasn't touched — resetting setpoints against outside-air temperature, shifting a building between occupied and unoccupied modes, easing through a morning warm-up without every piece of equipment slamming on at once. Those are sequencing topics for pages of their own. Closer to home, keeping a pump from running off the end of its curve — end-of-curve protection — belongs to the same family of safeties a real staging sequence carries; the pump-control page met its worst case as the deadhead. Staging is where the plant stops being a collection of equipment and starts being a system.
+                Staging is one kind of sequence. The same BMS runs others this page hasn't touched — resetting setpoints against outside-air temperature, shifting a building between occupied and unoccupied modes, easing through a morning warm-up without every piece of equipment slamming on at once. Those are sequencing topics for pages of their own. Closer to home, keeping a pump from running off the end of its curve — end-of-curve protection — belongs to the same family of safeties a real staging sequence carries; the pump-control page met its worst case as the <button type="button" data-gloss="deadhead">deadhead</button>. Staging is where the plant stops being a collection of equipment and starts being a system.
             </p>
 
         </div>

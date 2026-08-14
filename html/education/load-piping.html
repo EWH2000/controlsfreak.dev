@@ -489,7 +489,7 @@ keywords: 2-way 3-way valve coil bypass diverting mixing tee
             </p>
 
             <p>
-                Here's the same twin-T, with each load box opened up. <em>Load A</em> is wired two-way; <em>Load B</em> is wired three-way diverting. (Real systems pick one type for every load on the loop — both are drawn together here so the comparison is in one frame.)
+                Here's the same <button type="button" data-gloss="primary-secondary">twin-T</button>, with each load box opened up. <em>Load A</em> is wired two-way; <em>Load B</em> is wired three-way diverting. (Real systems pick one type for every load on the loop — both are drawn together here so the comparison is in one frame.)
             </p>
 
             <!-- Tie-back diagram: deliberately mirrors hydronic-loops d3's positioning so the visual
@@ -646,19 +646,19 @@ keywords: 2-way 3-way valve coil bypass diverting mixing tee
             </div>
 
             <p style="margin-top:1.25rem;">
-                If the twin-T's loads are <em>two-way</em> (Load A above), the system loop is variable-flow. As loads modulate down, the system pump should slow down with them, and the injection pump may even need to adjust to keep the supply temperature stable as system demand swings.
+                If the <button type="button" data-gloss="primary-secondary">twin-T</button>'s loads are <em>two-way</em> (Load A above), the system loop is variable-flow. As loads modulate down, the system pump should slow down with them, and the injection pump may even need to adjust to keep the supply temperature stable as system demand swings.
             </p>
 
             <p>
-                The variable-flow plumbing has one easy-to-miss piece, marked <strong>MIN-FLOW</strong> at the far end of the system loop above. A <em>minimum-flow bypass</em> sits opposite the pump and short-circuits a controlled trickle of supply water straight back to the return main, never touching a load. With most 2-way valves throttled closed, system flow can otherwise fall low enough to dead-head the pump against its own discharge — and a VFD system pump, which can only slow down so far, still needs that floor. The guaranteed minimum flow is the pump protection a variable-flow system needs. (It's a cousin of the <em>differential pressure bypass valve</em> covered in the <a href="/education/pump-control.html">pump-control lesson</a> — same crossover location, but a DPBV opens on a Δp setpoint and is the classic constant-speed-pump fix; under VFD pressure control the drive already caps loop Δp, so the variable-flow device is sized to hold a minimum flow instead.) Three-way systems need neither — the per-load bypasses already keep flow through the pump constant.
+                The variable-flow plumbing has one easy-to-miss piece, marked <strong>MIN-FLOW</strong> at the far end of the system loop above. A <em>minimum-flow bypass</em> sits opposite the pump and short-circuits a controlled trickle of supply water straight back to the return main, never touching a load. With most 2-way valves throttled closed, system flow can otherwise fall low enough to <button type="button" data-gloss="deadhead">dead-head</button> the pump against its own discharge — and a VFD system pump, which can only slow down so far, still needs that floor. The guaranteed minimum flow is the pump protection a variable-flow system needs. (It's a cousin of the <em>differential pressure bypass valve</em> covered in the <a href="/education/pump-control.html">pump-control lesson</a> — same crossover location, but a DPBV opens on a Δp setpoint and is the classic constant-speed-pump fix; under VFD pressure control the drive already caps loop Δp, so the variable-flow device is sized to hold a minimum flow instead.) Three-way systems need neither — the per-load bypasses already keep flow through the pump constant.
             </p>
 
             <p>
-                If the twin-T's loads are <em>three-way</em> (Load B above), the system loop is constant-flow. A fixed-speed system pump runs all day, and the injection pump becomes the only thing modulating in response to load. Either way, the boiler doesn't care — it's still on its own primary loop, the closely-spaced tees still decouple it — but the <em>system</em> loop has a personality, and the load piping is what gives it one.
+                If the <button type="button" data-gloss="primary-secondary">twin-T</button>'s loads are <em>three-way</em> (Load B above), the system loop is constant-flow. A fixed-speed system pump runs all day, and the injection pump becomes the only thing modulating in response to load. Either way, the boiler doesn't care — it's still on its own primary loop, the <button type="button" data-gloss="primary-secondary">closely-spaced tees</button> still decouple it — but the <em>system</em> loop has a personality, and the load piping is what gives it one.
             </p>
 
             <p>
-                That's the difference the twin-T diagram didn't mention. Pick the wrong load type for the rest of your system and you end up with a constant-speed system pump fighting a building full of throttling two-way valves, or a variable-speed pump trying to ramp down on a building full of three-ways that won't let it. The connection point at each load doesn't look like much on a riser diagram, but it determines what the rest of the loop is allowed to do.
+                That's the difference the <button type="button" data-gloss="primary-secondary">twin-T</button> diagram didn't mention. Pick the wrong load type for the rest of your system and you end up with a constant-speed system pump fighting a building full of throttling two-way valves, or a variable-speed pump trying to ramp down on a building full of three-ways that won't let it. The connection point at each load doesn't look like much on a riser diagram, but it determines what the rest of the loop is allowed to do.
             </p>
 
             <!-- ───────────────── 4 · See what the bypass does ───────────────── -->
@@ -855,7 +855,7 @@ keywords: 2-way 3-way valve coil bypass diverting mixing tee
 
                 <div class="widget-anecdote-wrap">
                     <p class="widget-anecdote warn" id="lp-w-anecdote" hidden>
-                        <strong>You've found it.</strong> Zero demand, VFD pump, no bypass — the loop has nowhere for water to go. The drive can't slow below ~25%, and the load valves are all the way shut, so the pump dead-heads against a closed loop, water in the volute heating up. The min-flow bypass is the floor that catches this. The rest of the variable-flow story picks up on <a href="/education/vfds.html">VFDs</a> (the drive that lets the pump slow down at all) and <a href="/education/pump-control.html">pump control</a> (the BMS sequence that decides when to ask it to).
+                        <strong>You've found it.</strong> Zero demand, VFD pump, no bypass — the loop has nowhere for water to go. The drive can't slow below ~25%, and the load valves are all the way shut, so the pump <button type="button" data-gloss="deadhead">dead-heads</button> against a closed loop, water in the volute heating up. The min-flow bypass is the floor that catches this. The rest of the variable-flow story picks up on <a href="/education/vfds.html">VFDs</a> (the drive that lets the pump slow down at all) and <a href="/education/pump-control.html">pump control</a> (the BMS sequence that decides when to ask it to).
                     </p>
                 </div>
 
