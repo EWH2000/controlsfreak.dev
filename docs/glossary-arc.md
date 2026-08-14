@@ -399,6 +399,38 @@ evaporate with it:
     2026-08-14; this PR opens the Phase 2 arc). Git history retains
     it; its standing constraints were already carried into this file.
 
+- **2026-08-14 — Phase 2+3 SHIPPED: the marking fan-out is live.**
+  One session, eight merged PRs: #567 (the #308 focus-ring ruling +
+  the single-quote guard arm), #568 (drafting — glossary.js 3 → 42
+  entries, §3b greps 14 pass / 2 fail, the handoff retired), #569
+  (the C1 PID Parameter Translator, the arc's build lane) + #570
+  (v3.89.0), and the four marking lanes #571–#574. **Measured end
+  state: 259 marks site-wide — 174 education · 78 tools · 7 hub
+  landings** (lane-summary arithmetic disagreed by a few; the grep is
+  the record). Marking landed far under the raw-count sizing
+  (~253 new vs the ~500–800 budget) — owners[] suppression and the
+  prose-only discipline ate most raw hits, which is §7.4 doing its
+  job; each PR body carries the per-page marks table and a near-miss
+  ledger accounting for every unmarked occurrence.
+  Owner rulings at the close, all applied:
+  - **Widget UI captions are NEVER-markable** (readout labels,
+    line-names, option text — UI-chrome label register, not prose).
+    Now in CLAUDE.md's gloss bullet; ~31 lane flags close as correct
+    near-misses.
+  - **vav-systems stays a non-owner of velocity-pressure** (the 5
+    marks stand); **economizer-ratio joins enthalpy-changeover's
+    owners** (guard now enforces the M4 judgment; zero rendered
+    change).
+  - The three conservative curation calls (raw-sig notation lines,
+    commandable-surfaced priority-array marks, the DEADHEAD
+    state-pill) accepted as shipped.
+  Open ledger items spawned: #311 (tuner vendor-name rewrite —
+  deferred to its own ruling), #312 (unquoted data-gloss floor —
+  extend the arm vs accept). Remaining arc phases per §9: multi-benign
+  (§5) with written matching rules, then the collision tier (§4) with
+  per-context handling, then the §7.2 quiz-bank component lane — the
+  brief re-triage follows.
+
 ## Open questions
 
 - ~~**Mid-density pilot page for the tooltip component**~~ — settled

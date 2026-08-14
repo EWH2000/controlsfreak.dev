@@ -6276,6 +6276,31 @@ of a real reader; do not open it as a general affordance.
 
 ---
 
+### Quiz expansion — grow the banks + new quizzes *(owner direction 2026-08-14; candidate for the post-glossary re-triage)*
+
+The owner's CEO was shown the site by a third party and was "VERY
+impressed," singling out **the quizzes** as what he liked most. Owner
+direction, same day: expand answer banks AND build out new quizzes in
+a future session. This entry is the durable record; it feeds the
+brief re-triage that picks the arc after glossary phases 2–3 (the
+CEO signal is an input to that pick, not a preemption of it).
+
+What a quiz-expansion arc inherits, already decided elsewhere: banks
+grow past `defaultCount` gradually, one bank at a time, and crossing
+the sampling line is a feature (the #241 ruling — replayability is
+the goal, landing properly around 20+ questions); the engine's
+**shuffle-order change is decided but unbuilt** (2026-07-30) and
+should land with or before a big bank-growth push so the
+replayability payoff arrives together; growing a bank quietly grows
+its FAQPage JSON-LD too, so the CEO's favorite feature and the SEO
+trajectory feed each other; and the quiz-bank gloss-component lane
+(§7.2, ruled IN scope 2026-08-12) is sequenced in the same
+post-phase-3 window — bank *content* growth and that engine lane
+barely conflict (data files vs engine), but sequence them
+deliberately.
+
+---
+
 ### The owner's dev-arc brief (2026-08-07) — triaged 2026-08-12, PARKED *(re-triage when glossary phases 2–3 are done)*
 
 An owner-authored, deliberately broad brief (~30 items across seven
