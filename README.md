@@ -345,6 +345,14 @@ Calculators, converters, and lookups — open one, get an answer.
   service call that prompted the tool: effective turndown (input ÷
   burner min fire) graded through "poor — short-cycling likely",
   plant totals by quantity, and a Riello firing-string parser.
+- **PID Parameter Translator** — one PID tuning re-stated in every
+  dialect: gain ↔ proportional band, repeats/min ↔ integral time
+  (minutes or seconds), rate ↔ derivative gain, plus the standard
+  (ISA), series (interacting), and parallel (independent) algorithm
+  forms side by side, with the form assumption stated on the output.
+  Closes the copy trap where three numbers move between controllers
+  that read them differently — wrong form, or a time base off by
+  60×. Pairs with the PID Tuning Helper and PID Basics.
 
 ### Simulators
 

@@ -29,6 +29,7 @@ const PAGES = [
     { name: 'power & energy converter', url: '/tools/power-energy-converter.html' },
     { name: 'dew point calculator',   url: '/tools/dew-point-calculator.html' },
     { name: 'thermistor calculator',  url: '/tools/thermistor-calculator.html' },
+    { name: 'pid parameter translator', url: '/tools/pid-parameter-translator.html' },
     { name: 'refrigerant p-t',        url: '/tools/refrigerant-pt.html' },
     { name: 'valve cv sizing',        url: '/tools/valve-cv.html' },
     { name: 'valve authority',        url: '/tools/valve-authority.html' },

@@ -430,7 +430,7 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
             </details>
 
             <p class="pid-note" style="margin-top:1.5rem;">
-                Rule of thumb on this tool: most HVAC loops are PI, not full PID. Start with reset off, raise the gain until the loop just begins to cycle, back it off, then add only as much reset as you need. Vendors differ on the knobs — Niagara LoopPoint exposes bare proportional / integral / derivative constants (closest to the gain · reset · rate view), EBO uses gain with integral and derivative times in seconds (Ti / Td), and a proportional-band style swaps the gain for a proportional band while keeping the same time-in-seconds Ti / Td; flip the <em>Parameter Style</em> selector above to read the loop in whichever terms you use. Same idea, different clothes — the numbers here show the relationships between the knobs, not drop-in values for any one platform.
+                Rule of thumb on this tool: most HVAC loops are PI, not full PID. Start with reset off, raise the gain until the loop just begins to cycle, back it off, then add only as much reset as you need. Vendors differ on the knobs — Niagara LoopPoint exposes bare proportional / integral / derivative constants (closest to the gain · reset · rate view), EBO uses gain with integral and derivative times in seconds (Ti / Td), and a proportional-band style swaps the gain for a proportional band while keeping the same time-in-seconds Ti / Td; flip the <em>Parameter Style</em> selector above to read the loop in whichever terms you use. Same idea, different clothes — the numbers here show the relationships between the knobs, not drop-in values for any one platform. For arbitrary numbers, and for the series / parallel algorithm-form axis this selector doesn't cover, use the <a href="/tools/pid-parameter-translator.html">PID Parameter Translator</a>.
             </p>
 
             <h2 class="subhead" style="margin-top:2.75rem;">Starting Gains from a Bump Test</h2>
@@ -520,6 +520,9 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
     </div>
 
     {{ relatedLinks({
+        tools: [
+            {href: '/tools/pid-parameter-translator.html', label: 'PID Parameter Translator'}
+        ],
         simulators: [
             {href: '/simulators/function-block-editor.html', label: 'Function-Block Editor'}
         ],

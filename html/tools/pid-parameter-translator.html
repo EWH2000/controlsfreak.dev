@@ -1,0 +1,536 @@
+---
+title: PID Parameter Translator — controlsfreak.dev
+description: Translate a PID tuning between gain, proportional band, repeats per minute, and integral time — and across standard, series, and parallel algorithm forms.
+canonical: https://controlsfreak.dev/tools/pid-parameter-translator.html
+nav: tools
+category: signals
+keywords: gain proportional band pb reset repeats per minute integral time ti td rate derivative kc kp ki kd isa standard series interacting parallel independent form convert
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* PID Parameter Translator — page-local widget internals. The
+           shared property-sheet / table / callout vocabulary lives in
+           styles.css; only the value+unit input pairing is page-specific
+           (same shape as power-energy-converter's .pe-vu). */
+
+        /* A value field + its unit picker sharing one .ps-row value cell. */
+        .ppt-vu {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .ppt-vu input.ps-input {
+            flex: 1 1 auto;
+            min-width: 0;                       /* let the input shrink inside the grid cell */
+        }
+        .ppt-vu select.ps-input {
+            flex: 0 0 auto;
+            width: auto;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Tools · PID Translator</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <!-- tool-tag "Loops" vs category "signals" is intentional: the tag is
+                 page vocabulary (it matches the PID Tuning Helper's tag), the
+                 frontmatter category is nav taxonomy (owner ruling 2026-08-14 —
+                 signals for now). -->
+            <h1 class="tool-card-title">
+                PID Parameter Translator
+                <span class="tool-tag">Loops</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>One PID tuning, many spellings — gain or proportional band, repeats per minute or integral time, and three algorithm forms that make the same three numbers mean different things.</summary>
+            <div class="preamble-rest">
+                Enter a tuning the way one controller states it and read it back the way another one wants it. Everything pivots through the standard (ISA) form in this site&rsquo;s canonical units — dimensionless gain, reset in repeats per minute, derivative time in minutes — the same parameter convention as the <a href="/simulators/pid-tuner.html">PID Tuning Helper</a>. New to the knobs themselves? <a href="/education/pid-basics.html">PID Basics</a> covers what each one does.
+            </div>
+        </details>
+        <p class="ps-seed-note">Inputs are seeded with an example — edit them to your numbers.</p>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">Input</h2>
+                <div class="ps-row">
+                    <label class="ps-label" for="ppt-form">Algorithm form of the entry</label>
+                    <select class="ps-input" id="ppt-form">
+                        <option value="isa" selected>Standard (ISA) — gain multiplies I and D</option>
+                        <option value="series">Series (interacting) — the derivative stage feeds P·I</option>
+                        <option value="parallel">Parallel (independent) — three independent gains</option>
+                    </select>
+                </div>
+                <!-- Seed deliberately mirrors the worked example below in reverse:
+                     the on-load pivot (Kc 2.5 · 0.2 rep/min · Td 0.8 min) is the
+                     example's answer, so the page and its prose check each other. -->
+                <div id="ppt-std-params">
+                    <div class="ps-row">
+                        <label class="ps-label" for="ppt-p-val">Proportional</label>
+                        <div class="ppt-vu">
+                            <input class="ps-input" type="number" id="ppt-p-val" step="any" placeholder="2.5" value="2.5">
+                            <select class="ps-input" id="ppt-p-unit" aria-label="Proportional parameter style">
+                                <option value="kc" selected>gain Kc</option>
+                                <option value="pb">PB %</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="ppt-i-val">Integral</label>
+                        <div class="ppt-vu">
+                            <input class="ps-input" type="number" id="ppt-i-val" step="any" min="0" placeholder="0.2" value="0.2">
+                            <select class="ps-input" id="ppt-i-unit" aria-label="Integral parameter style">
+                                <option value="rep" selected>rep/min</option>
+                                <option value="timin">Ti min</option>
+                                <option value="tisec">Ti s</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p class="ref-note">0 = integral off.</p>
+                    <div class="ps-row">
+                        <label class="ps-label" for="ppt-d-val">Derivative</label>
+                        <div class="ppt-vu">
+                            <input class="ps-input" type="number" id="ppt-d-val" step="any" min="0" placeholder="0.8" value="0.8">
+                            <select class="ps-input" id="ppt-d-unit" aria-label="Derivative parameter style">
+                                <option value="tdmin" selected>Td min</option>
+                                <option value="tdsec">Td s</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p class="ref-note">0 = derivative off.</p>
+                </div>
+                <div id="ppt-par-params" class="hidden">
+                    <div class="ps-row">
+                        <label class="ps-label" for="ppt-kp">Proportional gain Kp</label>
+                        <input class="ps-input" type="number" id="ppt-kp" step="any" placeholder="2.5" value="2.5">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="ppt-ki-val">Integral gain Ki</label>
+                        <div class="ppt-vu">
+                            <input class="ps-input" type="number" id="ppt-ki-val" step="any" min="0" placeholder="0.5" value="0.5">
+                            <select class="ps-input" id="ppt-ki-unit" aria-label="Integral gain time base">
+                                <option value="permin" selected>per min</option>
+                                <option value="persec">per s</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="ppt-kd-val">Derivative gain Kd</label>
+                        <div class="ppt-vu">
+                            <input class="ps-input" type="number" id="ppt-kd-val" step="any" min="0" placeholder="2" value="2">
+                            <select class="ps-input" id="ppt-kd-unit" aria-label="Derivative gain time base">
+                                <option value="min" selected>min</option>
+                                <option value="s">s</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p class="ref-note">State the time base — a per-minute Ki and a per-second Ki for the same loop differ by a factor of 60, and Kd the same the other way. 0 = that action off.</p>
+                </div>
+            </section>
+
+            <section role="status" aria-atomic="false">
+                <h2 class="ps-section-label">Output</h2>
+                <p class="ref-note" id="ppt-assume"><span id="ppt-assume-form">Entries are read as the standard (ISA) form — gain multiplies all three terms.</span> Each output group is labeled with the form it belongs to; the same three numbers behave differently on a controller that implements a different form, so match the form to your controller&rsquo;s documentation before copying anything.</p>
+                <div class="ps-row primary">
+                    <span class="ps-label">Gain (Kc)</span>
+                    <span class="ps-value muted" id="ppt-out-kc">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label">Prop. band (PB %)</span>
+                    <span class="ps-value muted" id="ppt-out-pb">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label">Reset (rep/min)</span>
+                    <span class="ps-value muted" id="ppt-out-rep">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label">Integral time (Ti, min)</span>
+                    <span class="ps-value muted" id="ppt-out-ti-min">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label">Integral time (Ti, s)</span>
+                    <span class="ps-value muted" id="ppt-out-ti-s">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label">Derivative time (Td, min)</span>
+                    <span class="ps-value muted" id="ppt-out-td-min">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label">Derivative time (Td, s)</span>
+                    <span class="ps-value muted" id="ppt-out-td-s">—</span>
+                </div>
+                <div class="btn-row">
+                    <button class="copy-btn" id="ppt-copy-pivot">Copy tuning</button>
+                </div>
+                <div class="failure-callout" id="ppt-callout" hidden></div>
+            </section>
+
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Across algorithm forms</h2>
+            <div class="table-scroll">
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr><th>Parameter</th><th>Standard (ISA)</th><th>Series (interacting)</th><th>Parallel (independent)</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>P</td><td id="ppt-c-p-std">—</td><td id="ppt-c-p-ser">—</td><td id="ppt-c-p-par">—</td></tr>
+                        <tr><td>I</td><td id="ppt-c-i-std">—</td><td id="ppt-c-i-ser">—</td><td id="ppt-c-i-par">—</td></tr>
+                        <tr><td>D</td><td id="ppt-c-d-std">—</td><td id="ppt-c-d-ser">—</td><td id="ppt-c-d-par">—</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="failure-callout" id="ppt-series-note" hidden>This tuning has no series equivalent — a series controller&rsquo;s interaction always keeps Td ≤ Ti/4, so no real Ti′/Td′ pair multiplies out to these numbers.</div>
+            <div class="btn-row">
+                <button class="copy-btn" id="ppt-copy-std">Copy standard</button>
+                <button class="copy-btn" id="ppt-copy-ser">Copy series</button>
+                <button class="copy-btn" id="ppt-copy-par">Copy parallel</button>
+            </div>
+            <p class="ref-note">
+                State the time base whenever you write an independent gain down: a per-minute Ki and a per-second Ki for the same loop differ by 60×, and Kd by the same factor the other way. And if your platform takes a proportional band in engineering units instead of percent, PB in EU = PB % × span ÷ 100.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">The three forms</h2>
+            <p class="ref-note">
+                <strong>Standard (ISA):</strong> <code>u = Kc · (e + (1/Ti) ∫e dt + Td · de/dt)</code> — one gain multiplies all three terms, so retuning Kc rescales P, I, and D together.
+            </p>
+            <p class="ref-note">
+                <strong>Series (interacting):</strong> <code>u = Kc′ · (1 + 1/(Ti′·s)) · (1 + Td′·s)</code>, a product of stages — the derivative stage feeds the P·I stage, the way pneumatic and early electronic controllers were built, so Ti′ and Td′ interact. Multiply the product out and you get the standard form with slightly different numbers; that arithmetic is exactly what this page does.
+            </p>
+            <p class="ref-note">
+                <strong>Parallel (independent):</strong> <code>u = Kp·e + Ki ∫e dt + Kd · de/dt</code> — three separate gains with no shared multiplier, so changing Kp leaves the integral and derivative action untouched.
+            </p>
+            <p class="ref-note">
+                Real controllers also put a filter on the derivative term (a limited derivative gain) so it doesn&rsquo;t amplify sensor noise; this page translates the ideal, unfiltered forms, which is what the parameter arithmetic is defined on.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Worked example</h2>
+            <p class="ref-note worked-intro">
+                A controller hands you an interacting-form tuning: gain 2.0, Ti 4.0 min, Td 1.0 min. What does the same loop need on a standard-form controller — and as independent gains?
+            </p>
+            <ol class="ref-note worked-list">
+                <li>Interaction factor: <code>F = 1 + Td′/Ti′ = 1 + 1.0/4.0 = 1.25</code>.</li>
+                <li>Gain: <code>Kc = 2.0 × 1.25 = 2.5</code> → PB = 100 ÷ 2.5 = 40 %.</li>
+                <li>Integral: <code>Ti = 4.0 × 1.25 = 5.0 min</code> → 0.2 rep/min → 300 s.</li>
+                <li>Derivative: <code>Td = 1.0 ÷ 1.25 = 0.8 min</code> → 48 s.</li>
+                <li>Independent gains: <code>Kp = 2.5</code> · <code>Ki = 2.5 ÷ 5.0 = 0.5 min⁻¹</code> (0.0083 s⁻¹) · <code>Kd = 2.5 × 0.8 = 2.0 min</code>.</li>
+            </ol>
+            <p class="ref-note">
+                Same loop — and the knob labeled gain legitimately reads 2.0 or 2.5 depending on the form, while the integral knob reads 4.0, 5.0, 0.2, 300, or 0.5 depending on form and units. That spread is the whole reason this page exists.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <p class="ref-note">
+                <strong>Verify the translation at the bench, not on paper.</strong> The arithmetic on this page is exact, but which algorithm form a controller actually runs — and whether its times read in minutes or seconds — is a documentation question no calculator can settle. A tuning carried across on the wrong form or time base can turn a stable loop into one that hunts hard enough to wear an actuator or trip the equipment on the swings. This page is the conversion math and a second opinion; the controller&rsquo;s own documentation governs the form, and the trend after the first setpoint change is the proof. Watch the loop settle before you walk away.
+            </p>
+        </section>
+    </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/simulators/pid-tuner.html', label: 'PID Tuning Helper'}
+        ],
+        lessons: [
+            {href: '/education/pid-basics.html', label: 'PID Basics'}
+        ],
+        quizzes: [
+            {href: '/practice/pid-basics.html', label: 'PID Basics Quiz'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/tools/">← All tools</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/ui.js"></script>
+<script>
+    // PID Parameter Translator — one tuning re-stated across parameter
+    // dialects (gain ↔ PB, rep/min ↔ Ti, min ↔ s) and algorithm forms
+    // (standard/ISA ↔ series/interacting ↔ parallel/independent).
+    //
+    // Everything pivots through the standard (ISA) form in the site's
+    // canonical units — dimensionless Kc, reset in repeats/min, Td in
+    // minutes — the same parameter interface as /scripts/pid-engine.js's
+    // simulatePid (this page is pure algebra, so it doesn't load the
+    // engine). The math:
+    //   series → ISA:   F = 1 + Td′/Ti′;  Kc = Kc′·F, Ti = Ti′·F, Td = Td′/F
+    //   ISA → series:   only when Td ≤ Ti/4 —
+    //                   F′ = (1 + √(1 − 4·Td/Ti)) / 2;
+    //                   Kc′ = Kc·F′, Ti′ = Ti·F′, Td′ = Td/F′
+    //   ISA ↔ parallel: Kp = Kc, Ki = Kc/Ti, Kd = Kc·Td (per time base)
+    //   PB = 100/Kc  ·  Ti = 1/reset  ·  integral entry 0 = off
+    //   Td = 0 or integral off ⇒ series ≡ ISA (the interaction vanishes)
+    (function () {
+        'use strict';
+
+        // ── Pure core ──────────────────────────────────────────────
+        // Canonical pivot: { Kc, rep, tdMin } — standard (ISA) form.
+        // Kc dimensionless, rep = repeats/min (0 = integral off),
+        // tdMin = derivative time in minutes.
+
+        // Entered state → ISA pivot. state.form is 'isa' | 'series' |
+        // 'parallel'; the field set depends on the form (see readState —
+        // parallel arrives pre-converted to kiPerMin / kdMin). Assumes
+        // the fields already passed validation.
+        function normalizeToIsa(state) {
+            if (state.form === 'parallel') {
+                return {
+                    Kc: state.kp,
+                    rep: state.kiPerMin / state.kp,
+                    tdMin: state.kdMin / state.kp,
+                };
+            }
+            // 'isa' and 'series' share the entry fields.
+            const Kc = state.pUnit === 'pb' ? 100 / state.pVal : state.pVal;
+            const rep = state.iVal === 0 ? 0
+                : state.iUnit === 'rep' ? state.iVal
+                : state.iUnit === 'timin' ? 1 / state.iVal
+                : 60 / state.iVal;                      // 'tisec'
+            const tdMin = state.dUnit === 'tdsec' ? state.dVal / 60 : state.dVal;
+            if (state.form === 'isa') return { Kc: Kc, rep: rep, tdMin: tdMin };
+            // series → ISA. Td′/Ti′ = Td′·rep′ (rep′ = 1/Ti′, 0 when off).
+            const F = 1 + tdMin * rep;
+            return { Kc: Kc * F, rep: rep / F, tdMin: tdMin / F };
+        }
+
+        // ISA pivot → series (interacting): { Kc, tiMin, tdMin } with
+        // tiMin Infinity = integral off, or null when no series
+        // equivalent exists — the interaction factor caps the Td/Ti a
+        // series controller can express at exactly 1/4. The 1e-12 slack
+        // keeps a boundary tuning that round-trips through floating
+        // point (Td exactly Ti/4) on the valid side.
+        function isaToSeries(p) {
+            if (p.tdMin === 0 || p.rep === 0) {
+                return { Kc: p.Kc, tiMin: p.rep === 0 ? Infinity : 1 / p.rep, tdMin: p.tdMin };
+            }
+            const ratio = 4 * p.tdMin * p.rep;          // 4·Td/Ti
+            if (ratio > 1 + 1e-12) return null;
+            const Fp = (1 + Math.sqrt(Math.max(0, 1 - ratio))) / 2;
+            return { Kc: p.Kc * Fp, tiMin: (1 / p.rep) * Fp, tdMin: p.tdMin / Fp };
+        }
+
+        // ISA pivot → parallel (independent), both time bases.
+        function isaToParallel(p) {
+            const kiPerMin = p.Kc * p.rep;              // = Kc/Ti
+            const kdMin = p.Kc * p.tdMin;
+            return {
+                kp: p.Kc,
+                kiPerMin: kiPerMin, kiPerSec: kiPerMin / 60,
+                kdMin: kdMin, kdSec: kdMin * 60,
+            };
+        }
+
+        // ── DOM ────────────────────────────────────────────────────
+        const $ = (id) => document.getElementById(id);
+
+        const formEl = $('ppt-form');
+        const stdDiv = $('ppt-std-params');
+        const parDiv = $('ppt-par-params');
+        const calloutEl = $('ppt-callout');
+
+        const PIVOT_IDS = ['ppt-out-kc', 'ppt-out-pb', 'ppt-out-rep',
+            'ppt-out-ti-min', 'ppt-out-ti-s', 'ppt-out-td-min', 'ppt-out-td-s'];
+        const CELL_IDS = ['ppt-c-p-std', 'ppt-c-i-std', 'ppt-c-d-std',
+            'ppt-c-p-ser', 'ppt-c-i-ser', 'ppt-c-d-ser',
+            'ppt-c-p-par', 'ppt-c-i-par', 'ppt-c-d-par'];
+
+        // First sentence of the assumption line tracks the selected form;
+        // the constant second sentence lives in the HTML.
+        const ASSUME = {
+            isa: 'Entries are read as the standard (ISA) form — gain multiplies all three terms.',
+            series: 'Entries are read as the series (interacting) form — the derivative stage feeds the P·I stage.',
+            parallel: 'Entries are read as the parallel (independent) form — three separate gains with no shared multiplier.',
+        };
+
+        // Display rounds to 4 significant figures (and crushes float
+        // noise); the copy buttons paste full precision from `last`.
+        const disp = (v) => String(parseFloat(v.toPrecision(4)));
+
+        // Latest full-precision results for the copy buttons — null while
+        // muted, so a copy click is a clean no-op (the signal-scaling
+        // T-025 null-sentinel pattern).
+        let last = null;
+
+        function setVal(id, text, live) {
+            const el = $(id);
+            el.className = 'ps-value ' + (live ? 'live' : 'muted');
+            el.textContent = text;
+        }
+
+        function muteAll(msg) {
+            last = null;
+            PIVOT_IDS.forEach((id) => setVal(id, '—', false));
+            CELL_IDS.forEach((id) => { $(id).textContent = '—'; });
+            $('ppt-series-note').hidden = true;
+            calloutEl.textContent = msg;
+            calloutEl.hidden = false;
+        }
+
+        function readState() {
+            const form = formEl.value;
+            if (form === 'parallel') {
+                return {
+                    form: form,
+                    kp: parseFloat($('ppt-kp').value),
+                    kiVal: parseFloat($('ppt-ki-val').value),
+                    kiUnit: $('ppt-ki-unit').value,
+                    kdVal: parseFloat($('ppt-kd-val').value),
+                    kdUnit: $('ppt-kd-unit').value,
+                };
+            }
+            return {
+                form: form,
+                pVal: parseFloat($('ppt-p-val').value),
+                pUnit: $('ppt-p-unit').value,
+                iVal: parseFloat($('ppt-i-val').value),
+                iUnit: $('ppt-i-unit').value,
+                dVal: parseFloat($('ppt-d-val').value),
+                dUnit: $('ppt-d-unit').value,
+            };
+        }
+
+        function calc() {
+            $('ppt-assume-form').textContent = ASSUME[formEl.value];
+            const s = readState();
+
+            if (s.form === 'parallel') {
+                if (!isFinite(s.kp) || !isFinite(s.kiVal) || !isFinite(s.kdVal)) {
+                    muteAll('Enter a value for each parameter to translate.');
+                    return;
+                }
+                if (s.kiVal < 0 || s.kdVal < 0) {
+                    muteAll('Integral and derivative entries can’t be negative — enter 0 to mean that action is off.');
+                    return;
+                }
+                if (s.kp === 0 && (s.kiVal > 0 || s.kdVal > 0)) {
+                    muteAll('This parallel tuning has no standard-form equivalent — with Kp = 0 there is no gain for the standard form to multiply through the integral and derivative terms. A standard or series controller gets integral-heavy behaviour from a small gain and a short integral time, not from zero gain.');
+                    return;
+                }
+                if (s.kp <= 0) {
+                    muteAll('The proportional entry must be greater than zero.');
+                    return;
+                }
+                s.kiPerMin = s.kiUnit === 'persec' ? s.kiVal * 60 : s.kiVal;
+                s.kdMin = s.kdUnit === 's' ? s.kdVal / 60 : s.kdVal;
+            } else {
+                if (!isFinite(s.pVal) || !isFinite(s.iVal) || !isFinite(s.dVal)) {
+                    muteAll('Enter a value for each parameter to translate.');
+                    return;
+                }
+                if (s.iVal < 0 || s.dVal < 0) {
+                    muteAll('Integral and derivative entries can’t be negative — enter 0 to mean that action is off.');
+                    return;
+                }
+                if (s.pVal <= 0) {
+                    muteAll('The proportional entry must be greater than zero.');
+                    return;
+                }
+            }
+
+            const pivot = normalizeToIsa(s);
+            const ser = isaToSeries(pivot);
+            const par = isaToParallel(pivot);
+            const intOff = pivot.rep === 0;
+
+            calloutEl.hidden = true;
+
+            setVal('ppt-out-kc', disp(pivot.Kc), true);
+            setVal('ppt-out-pb', disp(100 / pivot.Kc), true);
+            setVal('ppt-out-rep', intOff ? 'off' : disp(pivot.rep), true);
+            setVal('ppt-out-ti-min', intOff ? 'off' : disp(1 / pivot.rep), true);
+            setVal('ppt-out-ti-s', intOff ? 'off' : disp(60 / pivot.rep), true);
+            setVal('ppt-out-td-min', disp(pivot.tdMin), true);
+            setVal('ppt-out-td-s', disp(pivot.tdMin * 60), true);
+
+            const set = (id, t) => { $(id).textContent = t; };
+            set('ppt-c-p-std', 'Kc ' + disp(pivot.Kc));
+            set('ppt-c-i-std', intOff ? 'off' : 'Ti ' + disp(1 / pivot.rep) + ' min');
+            set('ppt-c-d-std', 'Td ' + disp(pivot.tdMin) + ' min');
+            if (ser === null) {
+                set('ppt-c-p-ser', '—');
+                set('ppt-c-i-ser', '—');
+                set('ppt-c-d-ser', '—');
+            } else {
+                set('ppt-c-p-ser', 'Kc′ ' + disp(ser.Kc));
+                set('ppt-c-i-ser', ser.tiMin === Infinity ? 'off' : 'Ti′ ' + disp(ser.tiMin) + ' min');
+                set('ppt-c-d-ser', 'Td′ ' + disp(ser.tdMin) + ' min');
+            }
+            set('ppt-c-p-par', 'Kp ' + disp(par.kp));
+            set('ppt-c-i-par', intOff ? 'Ki 0' : 'Ki ' + disp(par.kiPerMin) + ' /min · ' + disp(par.kiPerSec) + ' /s');
+            set('ppt-c-d-par', 'Kd ' + disp(par.kdMin) + ' min · ' + disp(par.kdSec) + ' s');
+
+            $('ppt-series-note').hidden = ser !== null;
+            last = { pivot: pivot, ser: ser, par: par };
+        }
+
+        // ── Copy buttons — full precision, no-ops while muted ──────
+        $('ppt-copy-pivot').addEventListener('click', (e) => {
+            if (last === null) return;
+            const p = last.pivot;
+            copyText(e.currentTarget,
+                'Kc = ' + p.Kc + ' · PB = ' + (100 / p.Kc) + ' %'
+                + (p.rep === 0 ? ' · integral off'
+                    : ' · reset = ' + p.rep + ' rep/min · Ti = ' + (1 / p.rep) + ' min = ' + (60 / p.rep) + ' s')
+                + ' · Td = ' + p.tdMin + ' min = ' + (p.tdMin * 60) + ' s');
+        });
+        $('ppt-copy-std').addEventListener('click', (e) => {
+            if (last === null) return;
+            const p = last.pivot;
+            copyText(e.currentTarget,
+                'Kc = ' + p.Kc
+                + (p.rep === 0 ? ' · integral off' : ' · Ti = ' + (1 / p.rep) + ' min')
+                + ' · Td = ' + p.tdMin + ' min');
+        });
+        $('ppt-copy-ser').addEventListener('click', (e) => {
+            if (last === null || last.ser === null) return;
+            const c = last.ser;
+            copyText(e.currentTarget,
+                'Kc′ = ' + c.Kc
+                + (c.tiMin === Infinity ? ' · integral off' : ' · Ti′ = ' + c.tiMin + ' min')
+                + ' · Td′ = ' + c.tdMin + ' min');
+        });
+        $('ppt-copy-par').addEventListener('click', (e) => {
+            if (last === null) return;
+            const c = last.par;
+            copyText(e.currentTarget,
+                'Kp = ' + c.kp + ' · Ki = ' + c.kiPerMin + ' /min · Kd = ' + c.kdMin + ' min');
+        });
+
+        // ── Wiring ─────────────────────────────────────────────────
+        formEl.addEventListener('change', () => {
+            const isPar = formEl.value === 'parallel';
+            stdDiv.classList.toggle('hidden', isPar);
+            parDiv.classList.toggle('hidden', !isPar);
+            calc();
+        });
+        ['ppt-p-unit', 'ppt-i-unit', 'ppt-d-unit', 'ppt-ki-unit', 'ppt-kd-unit'].forEach((id) => {
+            $(id).addEventListener('change', calc);
+        });
+        ['ppt-p-val', 'ppt-i-val', 'ppt-d-val', 'ppt-kp', 'ppt-ki-val', 'ppt-kd-val'].forEach((id) => {
+            $(id).addEventListener('input', calc);
+        });
+
+        calc();
+    })();
+</script>
+{% endblock %}

@@ -21,7 +21,7 @@ nav: tools
 
     <div class="filter-chips" role="group" aria-label="Filter tools by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">31</span>
+            All <span class="filter-chip-count">32</span>
         </button>
         <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
             HVAC <span class="filter-chip-count">8</span>
@@ -30,7 +30,7 @@ nav: tools
             Protocols <span class="filter-chip-count">8</span>
         </button>
         <button type="button" class="filter-chip" data-category="signals" aria-pressed="false">
-            Signals <span class="filter-chip-count">2</span>
+            Signals <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="airflow" aria-pressed="false">
             Airflow <span class="filter-chip-count">6</span>
@@ -60,6 +60,15 @@ nav: tools
             titleFull:  'Thermistor / RTD Calculator',
             desc:       'Temperature ↔ resistance for the common HVAC sensors — 10K Type II / III, Johnson 8.7K, Schneider Type 5, 20K, 3K, 1K Balco, Pt100, Pt1000 — looked up both ways, or identify an unknown sensor from measured readings.',
             pills:      ['Sensors', 'NTC / RTD', 'T ↔ R', 'ID Unknown'],
+            category:   'signals'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/tools/pid-parameter-translator.html',
+            titleShort: 'PID Translator',
+            titleFull:  'PID Parameter Translator',
+            desc:       'One tuning, every dialect — gain ↔ proportional band, repeats/min ↔ integral time (min / s), rate ↔ derivative gain, and standard ↔ series ↔ parallel algorithm forms.',
+            pills:      ['Loops', 'Gain ↔ PB', 'Reset ↔ Ti', 'PID Forms'],
             category:   'signals'
         }) }}
         {{ navCard({
