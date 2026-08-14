@@ -339,7 +339,7 @@ evaporate with it:
   algorithm forms named generically), the algorithm-form assumption
   stated in the tool's output, a damage-stakes-adjacent
   verify-at-the-bench note, and it hangs off the PID Tuner.
-  `[future: tools/pid-parameter-translator.html]`
+  `[future: tools/pid-parameter-translator.html]` *(shipped 2026-08-14)*
 
 - **2026-08-11 — the fold-widening ruling: ACCEPT ALL, flags as
   called.** The owner approved the full widening proposal built from

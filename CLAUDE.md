@@ -616,7 +616,8 @@ section). **Category keys mirror the landing pages' `navCard()`
   failure-callout). Current set: coil-freeze-risk, equipment-airflow,
   refrigerant-pt, air-mixing, economizer-ratio, affinity-laws,
   transformer-sizing, electrical-quick-calc, minimum-outdoor-air,
-  duct-sizer, refrigerant-loop (simulator), ddc-workbench (simulator —
+  duct-sizer, pid-parameter-translator, refrigerant-loop (simulator),
+  ddc-workbench (simulator —
   joined 2026-08-09 when the low-limit stat gained a jumper; its note is
   the canonical `.tool-body-row`-sibling case, since a note living in one
   pane would be absent from half the material it is about). Rationale +

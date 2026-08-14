@@ -6306,7 +6306,10 @@ Vendor-free framing throughout — repeats-per-minute ↔ integral time
 ↔ proportional band ↔ gain, ISA/parallel/series algorithm forms named
 generically; the algorithm-form assumption stated in the output; a
 damage-stakes-adjacent "verify at the bench" note. Hangs off the PID
-Tuner. `[future: tools/pid-parameter-translator.html]`
+Tuner. `[future: tools/pid-parameter-translator.html]` *(shipped
+2026-08-14)* Category ruling (owner, 2026-08-14): ships under
+`signals` for now — "if we build more similar we may start the new
+'controls' category" (the re-raise condition).
 
 **RULED — LON: banked + parked.** The owner wants LON content and
 raised the proprietary concern himself; the analysis is banked so the
