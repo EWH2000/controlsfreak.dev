@@ -261,7 +261,7 @@ faqs:
                 All three are a "no," but they fail at different points, and the difference tells you where to look. A <strong>BACnet-Error</strong> means your request was well-formed and the service ran — the device understood exactly what you asked and refused it, so it hands back an error <em>class</em> (the category) and an error <em>code</em> (the specific reason). This is the common one: unknown-property, write-access-denied, value-out-of-range.
             </p>
             <p class="ref-note">
-                A <strong>BACnet-Reject</strong> means the request never got that far — the APDU was malformed, mis-encoded, or used a service the device does not implement, so it was thrown out at the protocol layer before the service ran. A <strong>BACnet-Abort</strong> means a transaction that had already started was torn down mid-flight — almost always segmentation, a TSM timeout, or the device running out of buffer or resources. Reject points at the message; Abort points at the transport or the device's capacity.
+                A <strong>BACnet-Reject</strong> means the request never got that far — the <button type="button" data-gloss="apdu">APDU</button> was malformed, mis-encoded, or used a service the device does not implement, so it was thrown out at the protocol layer before the service ran. A <strong>BACnet-Abort</strong> means a transaction that had already started was torn down mid-flight — almost always segmentation, a <button type="button" data-gloss="tsm">TSM</button> timeout, or the device running out of buffer or resources. Reject points at the message; Abort points at the transport or the device's capacity.
             </p>
         </section>
 

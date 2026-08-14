@@ -164,7 +164,7 @@ faqs:
         <section class="tool-body-row">
             <h2 class="ps-section-label" id="vendor-ids-in-the-field">Where you see vendor IDs in the field</h2>
             <p class="ref-note" style="margin-top:0;">
-                Three places, usually: the I-Am a device answers during Who-Is discovery (a workstation's discovery log lists it next to the device instance), the Device object's property sheet when you pull up property 120, and the decoded I-Am APDU in a Wireshark capture. In all three it's the same bare number — which is exactly when you want this table.
+                Three places, usually: the I-Am a device answers during Who-Is discovery (a workstation's discovery log lists it next to the device instance), the Device object's property sheet when you pull up property 120, and the decoded I-Am <button type="button" data-gloss="apdu">APDU</button> in a Wireshark capture. In all three it's the same bare number — which is exactly when you want this table.
             </p>
             <p class="ref-note">
                 It also namespaces the proprietary parts of the protocol. Object types 128–1023 and the high property numbers are vendor-specific — see the ranges on the <a href="/tools/bacnet-objects.html">BACnet Object Reference</a> — so "whose device is this" is the first question when a capture shows an object type the standard doesn't define. The vendor ID answers it.
