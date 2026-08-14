@@ -28,7 +28,7 @@ keywords: cfm per ton 400 450 dx icing carryover coil freeze temperature rise wi
         <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
             <summary>Is that airflow inside what the machine can live with?</summary>
             <div class="preamble-rest">
-                A DX coil wants roughly 400&ndash;500&nbsp;CFM per ton of <em>running</em> compressor; a gas heat
+                A <button type="button" data-gloss="dx">DX</button> coil wants roughly 400&ndash;500&nbsp;CFM per ton of <em>running</em> compressor; a gas heat
                 exchanger wants its nameplate temperature rise. Both are pass/fail checks on a number you already
                 measured &mdash; this page runs them. The free-form heat arithmetic (any q / CFM / &Delta;T, any
                 direction) lives on the <a href="/tools/airside-load.html">Airside Load Calculator</a>; this page only
@@ -209,7 +209,7 @@ keywords: cfm per ton 400 450 dx icing carryover coil freeze temperature rise wi
             <section class="tool-body-row">
                 <h2 class="ps-section-label">Worked example</h2>
                 <p class="ref-note worked-intro">
-                    An 80&nbsp;% furnace rated 100&nbsp;MBH input, nameplate rise 30&ndash;60&nbsp;&deg;F. Supply minus
+                    An 80&nbsp;% furnace rated 100&nbsp;<button type="button" data-gloss="mbh">MBH</button> input, nameplate rise 30&ndash;60&nbsp;&deg;F. Supply minus
                     return measures 44&nbsp;&deg;F.
                 </p>
                 <ol class="ref-note worked-list">
@@ -229,7 +229,7 @@ keywords: cfm per ton 400 450 dx icing carryover coil freeze temperature rise wi
         <section class="tool-body-row">
             <h2 class="ps-section-label">Where the limits come from — and the check this page can&rsquo;t do</h2>
             <p class="ref-note">
-                <strong>The CFM/ton window is a design convention, not physics with a derivation.</strong> DX coils
+                <strong>The CFM/ton window is a design convention, not physics with a derivation.</strong> <button type="button" data-gloss="dx">DX</button> coils
                 are engineered around roughly 450&nbsp;CFM per ton of running compressor; the trade&rsquo;s floor
                 sits near 400. Starve a running stage much below ~350 and suction pressure dives, the coil surface
                 drops below freezing, and condensate freezes on instead of dripping off — ice chokes airflow further,
@@ -240,7 +240,7 @@ keywords: cfm per ton 400 450 dx icing carryover coil freeze temperature rise wi
             </p>
             <p class="ref-note">
                 <strong>The rise window protects the heat exchanger from both directions.</strong> Too little air
-                (rise above the window) and the exchanger overheats — the high-limit switch trips and short-cycles
+                (rise above the window) and the exchanger overheats — the high-limit switch trips and <button type="button" data-gloss="short-cycling">short-cycles</button>
                 the burner, and repeated overheating is how heat exchangers crack. Too much air (rise below the
                 window) holds the exchanger surfaces cold enough that flue moisture condenses inside it — on a
                 non-condensing furnace that condensate is mildly acidic and eats the exchanger over seasons, not

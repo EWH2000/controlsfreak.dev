@@ -397,7 +397,7 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                         <label class="ps-label" for="hum-rh">Leaving RH (%)</label>
                         <input class="ps-input" type="number" id="hum-rh" step="1" min="0" max="100" value="50">
                     </div>
-                    <p class="ref-note">Adiabatic (constant wet-bulb) humidification — an evaporative pad or wetted media. Adds moisture; dry-bulb drops a little. Leaving RH must be at or above entering RH.</p>
+                    <p class="ref-note">Adiabatic (constant <button type="button" data-gloss="wet-bulb">wet-bulb</button>) humidification — an evaporative pad or wetted media. Adds moisture; <button type="button" data-gloss="dry-bulb">dry-bulb</button> drops a little. Leaving RH must be at or above entering RH.</p>
                 </div>
 
                 <!-- SA editor (read-only) -->
@@ -416,7 +416,7 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                     <div id="psy-chip" class="psy-chip" hidden aria-hidden="true"></div>
                 </div>
                 <p class="bit-hint" style="margin-bottom:0;line-height:1.65;">
-                    Heavy green = saturation. Light curves rising right = constant RH; light dashed = constant wet-bulb.
+                    Heavy green = saturation. Light curves rising right = constant RH; light dashed = constant <button type="button" data-gloss="wet-bulb">wet-bulb</button>.
                     Process segments are colored: <span style="color:var(--text-dim)">gray</span> = mixing,
                     <span style="color:var(--blue)">blue</span> = cooling / dehumidification,
                     <span style="color:var(--heat)">orange</span> = heating,
@@ -475,7 +475,7 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                 Properties are per pound of dry air, computed internally from the ASHRAE Fundamentals (Chapter 1) IP equations
                 and converted to your selected display units — the formula forms quoted here (0.240, 0.444, CFM·60/v) are
                 that IP formulation; metric readouts are exact conversions of the same math. RH is taken as the partial-pressure ratio (the usual approximation).
-                Mixing is a mass-weighted enthalpy / humidity-ratio combination. Adiabatic humidification holds wet-bulb constant.
+                Mixing is a mass-weighted enthalpy / humidity-ratio combination. Adiabatic humidification holds <button type="button" data-gloss="wet-bulb">wet-bulb</button> constant.
                 Coil capacities use AHU airflow and inlet specific volume:
                 Q = ṁ·Δh with ṁ = CFM·60/v<sub>in</sub>; Q<sub>sens</sub> = ṁ·(0.240 + 0.444·W<sub>in</sub>)·ΔT. For building feel
                 and quick design-day state-point checks — not a substitute for a calibrated load-study tool.

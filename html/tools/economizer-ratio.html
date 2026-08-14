@@ -29,8 +29,8 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
             <summary>How far do I open the outdoor-air damper to hit a mixed-air setpoint at these conditions?</summary>
             <div class="preamble-rest">
                 Dry-bulb tab is the calc a tech runs at the panel. Enthalpy tab adds the full mixed state
-                and the OA-vs-RA enthalpy-changeover verdict a high-end BAS economizer uses to decide
-                whether free cooling is worth running in the first place.
+                and the OA-vs-RA enthalpy-changeover verdict a high-end BAS <button type="button" data-gloss="economizer">economizer</button> uses to decide
+                whether <button type="button" data-gloss="economizer">free cooling</button> is worth running in the first place.
             </div>
         </details>
         <p class="ps-seed-note">Inputs are seeded with an example — edit them to your numbers.</p>
@@ -78,7 +78,7 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
             <section class="tool-body-row">
                 <h2 class="ps-section-label">Worked example</h2>
                 <p class="ref-note worked-intro">
-                    Summer cooling on an economizer-favorable morning —
+                    Summer cooling on an <button type="button" data-gloss="economizer">economizer</button>-favorable morning —
                     OA <span data-us="60 °F" data-metric="15.6 °C">60 °F</span>,
                     RA <span data-us="75 °F" data-metric="23.9 °C">75 °F</span>,
                     mixed-air setpoint <span data-us="65 °F" data-metric="18.3 °C">65 °F</span>.
@@ -96,7 +96,7 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
                     command. Outside that band the mix is physically impossible,
                     so the readout blanks to <code>—</code> and the feasibility
                     line carries the why: below 0 % means OA is hotter than the
-                    setpoint AND than the room — minimum-OA only, no economizer;
+                    setpoint AND than the room — minimum-OA only, no <button type="button" data-gloss="economizer">economizer</button>;
                     above 100 % means OA is cooler than the setpoint but not cold
                     enough to carry the whole load alone (drop the setpoint to
                     <span data-us="55 °F" data-metric="12.8 °C">55 °F</span> to
@@ -203,10 +203,10 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
                     MA setpoint <span data-us="65 °F" data-metric="18.3 °C">65 °F</span>.
                 </p>
                 <ol class="ref-note worked-list">
-                    <li>Dry-bulb is what the damper modulates to.
+                    <li><button type="button" data-gloss="dry-bulb">Dry-bulb</button> is what the damper modulates to.
                         <code><span data-us="% OA = (65 − 75) ÷ (78 − 75) × 100" data-metric="% OA = (18.3 − 23.9) ÷ (25.6 − 23.9) × 100">% OA = (65 − 75) ÷ (78 − 75) × 100</span></code> = a
                         negative number — OA is hotter than RA, so even on
-                        dry-bulb alone the economizer can't help. Minimum-OA
+                        <button type="button" data-gloss="dry-bulb">dry-bulb</button> alone the <button type="button" data-gloss="economizer">economizer</button> can't help. Minimum-OA
                         position.</li>
                     <li>The mixed-state readouts show what the coil would see
                         at the calc's %OA — useful when the answer lands
@@ -214,15 +214,15 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
                     <li>The enthalpy comparison is the real reason a high-end
                         BAS is more conservative: an OA that's two degrees
                         cooler than RA but soaked with moisture carries more
-                        heat per <span data-us="pound" data-metric="kilogram">pound</span> than RA does. Free cooling on dry-bulb
+                        heat per <span data-us="pound" data-metric="kilogram">pound</span> than RA does. <button type="button" data-gloss="economizer">Free cooling</button> on <button type="button" data-gloss="dry-bulb">dry-bulb</button>
                         alone, latent penalty on the coil.</li>
                 </ol>
                 <p class="ref-note">
-                    Most commercial economizer logic is dry-bulb with a
-                    humidity high-limit; enthalpy economizer logic
+                    Most commercial <button type="button" data-gloss="economizer">economizer</button> logic is <button type="button" data-gloss="dry-bulb">dry-bulb</button> with a
+                    humidity high-limit; enthalpy <button type="button" data-gloss="economizer">economizer</button> logic
                     compares <code>h<sub>OA</sub></code> vs.
                     <code>h<sub>RA</sub></code> to gate the damper before
-                    any dry-bulb modulation runs.
+                    any <button type="button" data-gloss="dry-bulb">dry-bulb</button> modulation runs.
                 </p>
             </section>
         </div>
@@ -233,8 +233,8 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
                 command.</strong> Use it to check whether a sequence&rsquo;s
                 arithmetic holds together and to learn the changeover logic —
                 then let the low-limit protections decide how far the dampers
-                actually open. In cold weather the same math that finds free
-                cooling can call for enough outdoor air to
+                actually open. In cold weather the same math that finds <button type="button" data-gloss="economizer">free
+                cooling</button> can call for enough outdoor air to
                 <a href="/tools/coil-freeze-risk.html">freeze a coil</a>; the
                 freezestat and the mixed-air low limit govern, not the
                 calculator.

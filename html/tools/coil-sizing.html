@@ -120,7 +120,7 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
                     <p class="ref-note cs-heat-only">
                         A heating coil rides humidity ratio through unchanged —
                         leaving air carries the entering air's moisture, so only
-                        the leaving dry-bulb is needed.
+                        the leaving <button type="button" data-gloss="dry-bulb">dry-bulb</button> is needed.
                     </p>
 
                     <div class="ps-row">
@@ -185,7 +185,7 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
                         <code>ṁ = CFM × 60 ÷ v<sub>entering</sub></code> (lb dry air / h).</li>
                     <li>Total capacity is the enthalpy swing:
                         <code>q<sub>total</sub> = ṁ × Δh</code>. Sensible is the
-                        dry-bulb swing:
+                        <button type="button" data-gloss="dry-bulb">dry-bulb</button> swing:
                         <code>q<sub>sens</sub> = ṁ × (0.240 + 0.444·W) × ΔDB</code>.
                         Latent is whatever's left: <code>q<sub>total</sub> − q<sub>sens</sub></code>.</li>
                     <li>The sensible heat ratio
@@ -304,10 +304,10 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
                 <ol class="ref-note worked-list">
                     <li>The mass flow <code>ṁ</code> comes from airflow and the
                         entering specific volume, same as the Capacity tab.</li>
-                    <li>For a cooling coil, the sensible load sets the dry-bulb
+                    <li>For a cooling coil, the sensible load sets the <button type="button" data-gloss="dry-bulb">dry-bulb</button>
                         drop: <code>ΔDB = −q<sub>sens</sub> ÷ (ṁ × (0.240 + 0.444·W))</code>.
                         The total load (sensible + latent) sets the enthalpy
-                        drop: <code>Δh = −q<sub>total</sub> ÷ ṁ</code>. Dry-bulb
+                        drop: <code>Δh = −q<sub>total</sub> ÷ ṁ</code>. <button type="button" data-gloss="dry-bulb">Dry-bulb</button>
                         and enthalpy together fix the leaving point.</li>
                     <li>If the latent load is more than the air can shed at that
                         sensible split, the leaving point lands on the saturation

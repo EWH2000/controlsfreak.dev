@@ -99,11 +99,11 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
         <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
             <summary>Dew point at a glance, plus a coil check.</summary>
             <div class="preamble-rest">
-                Dew point at a glance from a dry-bulb and one humidity reading — RH off the
-                space sensor or wet-bulb off a sling psychrometer — with wet-bulb, grains, and
+                Dew point at a glance from a <button type="button" data-gloss="dry-bulb">dry-bulb</button> and one humidity reading — RH off the
+                space sensor or <button type="button" data-gloss="wet-bulb">wet-bulb</button> off a sling psychrometer — with <button type="button" data-gloss="wet-bulb">wet-bulb</button>, grains, and
                 enthalpy alongside. The <em>Coil Check</em> field turns that dew point into the
                 answer you actually want on an over-humidity call: drop in the supply / leaving
-                dry-bulb and it says whether the coil is pulling the air below the entering dew point
+                <button type="button" data-gloss="dry-bulb">dry-bulb</button> and it says whether the coil is pulling the air below the entering dew point
                 (dehumidifying) or just cooling it sensibly while the space rides up.
             </div>
         </details>
@@ -139,7 +139,7 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
                     <input class="ps-input" type="number" id="dew-surface" step="0.5" placeholder="e.g. supply 55">
                 </div>
                 <p class="ref-note">
-                    Your supply / leaving-air dry-bulb (or any cold surface temperature),
+                    Your supply / leaving-air <button type="button" data-gloss="dry-bulb">dry-bulb</button> (or any cold surface temperature),
                     checked against the dew point. Leave it blank for a plain dew-point read.
                 </p>
             </section>
@@ -179,16 +179,16 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
         <section class="tool-body-row">
             <h2 class="ps-section-label">Field notes — the over-humidity call</h2>
             <p class="ref-note">
-                Read the return-air dry-bulb and RH off the space sensor
+                Read the return-air <button type="button" data-gloss="dry-bulb">dry-bulb</button> and RH off the space sensor
                 (<span data-us="75 °F" data-metric="23.9 °C">75 °F</span> / 55 %, say) and the
                 tool gives the return dew point (about <span data-us="57.8 °F" data-metric="14.3 °C">57.8 °F</span>).
-                Now compare your supply / leaving dry-bulb to it. Leaving below that dew point
+                Now compare your supply / leaving <button type="button" data-gloss="dry-bulb">dry-bulb</button> to it. Leaving below that dew point
                 (<span data-us="55 °F" data-metric="12.8 °C">55 °F</span>) means the coil is wringing
                 out moisture; leaving above it means you're cooling sensibly only and space
                 humidity climbs — the failure mode behind most over-humidity complaints.
             </p>
             <p class="ref-note">
-                Why leaving-air dry-bulb is a fair yardstick: the coil's fin surface is colder
+                Why leaving-air <button type="button" data-gloss="dry-bulb">dry-bulb</button> is a fair yardstick: the coil's fin surface is colder
                 than the air leaving it, so if the leaving air is already below the entering
                 dew point, the surface is well below it and condensation is certain. Above the
                 dew point it's a strong sign of little latent removal — a coil whose surface
