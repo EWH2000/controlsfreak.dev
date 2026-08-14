@@ -30,7 +30,7 @@ keywords: bacnet vs modbus comparison difference register object self-describing
             <h2 class="subhead" id="two-philosophies">Two philosophies: registers vs objects</h2>
 
             <p>
-                Modbus exposes <strong>four flat tables of numbered slots</strong> — coils and discrete inputs (single bits), input and holding registers (16-bit words). That is the entire model. Holding register 40012 is sixteen bits and nothing more; the protocol carries no name, no units, no hint of scale. To turn <code>552</code> into "55.2 °F" you need the vendor's register map, off the wire, in a PDF. Read a Modbus device you have never seen and you get a grid of numbers with no legend.
+                Modbus exposes <strong>four flat tables of numbered slots</strong> — coils and discrete inputs (single bits), input and <button type="button" data-gloss="holding-register">holding registers</button> (16-bit words). That is the entire model. <button type="button" data-gloss="holding-register">Holding register</button> 40012 is sixteen bits and nothing more; the protocol carries no name, no units, no hint of scale. To turn <code>552</code> into "55.2 °F" you need the vendor's register map, off the wire, in a PDF. Read a Modbus device you have never seen and you get a grid of numbers with no legend.
             </p>
 
             <p>
@@ -106,7 +106,7 @@ keywords: bacnet vs modbus comparison difference register object self-describing
                         <tr><td>Discovery</td><td>None — you must be handed the addresses</td><td><code>Who-Is</code> / <code>I-Am</code> dynamic binding</td></tr>
                         <tr><td>Addressing</td><td>Unit / slave ID + register number</td><td>Device instance + object identifier (+ network number)</td></tr>
                         <tr><td>Change of value</td><td>None — the client polls, over and over</td><td>COV — subscribe and the device pushes changes</td></tr>
-                        <tr><td>Command arbitration</td><td>Last write wins; one value per register</td><td>16-level priority array + <code>Relinquish_Default</code></td></tr>
+                        <tr><td>Command arbitration</td><td>Last write wins; one value per register</td><td>16-level <button type="button" data-gloss="priority-array">priority array</button> + <code><button type="button" data-gloss="relinquish-default">Relinquish_Default</button></code></td></tr>
                         <tr><td>Alarming</td><td>Not in the protocol — build it in the head end</td><td>Intrinsic / algorithmic events + notification classes</td></tr>
                         <tr><td>Scheduling &amp; trends</td><td>Not in the protocol</td><td>Standard Schedule, Calendar, and Trend Log objects</td></tr>
                         <tr><td>Transports</td><td>RTU / ASCII (RS-485 serial), TCP (Ethernet)</td><td>MS/TP (RS-485), BACnet/IP, Ethernet, BACnet/SC</td></tr>
@@ -130,7 +130,7 @@ keywords: bacnet vs modbus comparison difference register object self-describing
             <h2 class="subhead" id="command-conformance">Commanding a point, and knowing what a device can do</h2>
 
             <p>
-                Writing exposes another split. In Modbus you write a value to a register and it sticks until someone writes again — <strong>last write wins</strong>, with no memory of who wrote or why. If two masters fight over a coil, the register just holds whatever landed last. BACnet wraps a commandable output in a <a href="/tools/bacnet-priority.html">16-level priority array</a>: life-safety near the top, automatic control in the middle, the operator override above that, and a <code>Relinquish_Default</code> at the bottom for when every level releases. Nothing is "just overwritten" — the winning command is the highest active priority, and releasing one lets the next-lower one take back over. It is more machinery, and it exists because a building has more than one thing that legitimately wants to command the same damper.
+                Writing exposes another split. In Modbus you write a value to a register and it sticks until someone writes again — <strong>last write wins</strong>, with no memory of who wrote or why. If two masters fight over a coil, the register just holds whatever landed last. BACnet wraps a <button type="button" data-gloss="priority-array">commandable</button> output in a <a href="/tools/bacnet-priority.html">16-level priority array</a>: life-safety near the top, automatic control in the middle, the operator override above that, and a <code><button type="button" data-gloss="relinquish-default">Relinquish_Default</button></code> at the bottom for when every level releases. Nothing is "just overwritten" — the winning command is the highest active priority, and releasing one lets the next-lower one take back over. It is more machinery, and it exists because a building has more than one thing that legitimately wants to command the same damper.
             </p>
 
             <p>

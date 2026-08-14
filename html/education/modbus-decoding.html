@@ -59,11 +59,16 @@ keywords: 40001 30001 offset endian byte order word swap float scaling exception
             <p>
                 The leading digit <em>names which data table</em> the address lives in —
                 <code>0</code> for coils, <code>1</code> for discrete inputs, <code>3</code>
-                for input registers, <code>4</code> for holding registers. It is not part of
+                for <button type="button" data-gloss="input-register">input
+                registers</button>, <code>4</code> for <button type="button"
+                data-gloss="holding-register">holding registers</button>. It is not part of
                 the wire address. The remaining four digits are the <em>1-based</em> index
-                inside that table. So <code>40001</code> means <em>the first holding
-                register</em> — which on the wire is holding-register address <code>0</code>.
-                <code>40123</code> means the 123rd holding register — wire address
+                inside that table. So <code>40001</code> means <em>the first <button
+                type="button" data-gloss="holding-register">holding
+                register</button></em> — which on the wire is <button type="button"
+                data-gloss="holding-register">holding-register</button> address <code>0</code>.
+                <code>40123</code> means the 123rd <button type="button"
+                data-gloss="holding-register">holding register</button> — wire address
                 <code>122</code>. The off-by-one comes from the 1-based numbering meeting the
                 wire's 0-based addressing.
             </p>
@@ -125,7 +130,8 @@ keywords: 40001 30001 offset endian byte order word swap float scaling exception
                     <code>40001</code> in one vendor's manual and <code>0</code> in
                     another's.</li>
                 <li>When the register count exceeds 9999, some vendors switch to a 6-digit
-                    "extended" form (<code>400001</code> for the first holding register).
+                    "extended" form (<code>400001</code> for the first <button type="button"
+                    data-gloss="holding-register">holding register</button>).
                     Same convention, one more digit of headroom.</li>
             </ul>
 
@@ -325,7 +331,8 @@ keywords: 40001 30001 offset endian byte order word swap float scaling exception
             <p>
                 The last piece — and the one Modbus is most famously dumb about — is the
                 jump from the integer stored in the register to a value with units. A
-                holding register holds a number; the protocol doesn't know whether that
+                <button type="button" data-gloss="holding-register">holding
+                register</button> holds a number; the protocol doesn't know whether that
                 number is in tenths of a degree, in percent times 10, in raw ADC counts, or
                 in something else entirely. The vendor decides; the vendor's docs are the
                 only thing that knows.

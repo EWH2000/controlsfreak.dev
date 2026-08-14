@@ -263,7 +263,8 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
                 up when a specific feature does. The five above carry almost every
                 everyday read, write, and notification across a building. The fuller
                 reference — the confirmed / unconfirmed split, the service families,
-                and how <strong>BIBBs</strong> say which of these a given device
+                and how <strong><button type="button"
+                data-gloss="bibb">BIBBs</button></strong> say which of these a given device
                 actually supports — is <a href="/education/bacnet-services.html">BACnet
                 Services</a>.
             </p>
@@ -281,7 +282,8 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
                 <code>Present_Value</code> is then computed as <em>the value in
                 the lowest-numbered non-null slot</em>, or — if every slot is null
                 — the value of the
-                <code>Relinquish_Default</code> property.
+                <code><button type="button"
+                data-gloss="relinquish-default">Relinquish_Default</button></code> property.
             </p>
 
             <p>
@@ -451,7 +453,8 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
                 program and gives every commandable point a priority array of
                 its own. It commands each point on three levels: the sequence
                 writes slot 16, your hand writes slot 8, and a point the program
-                has no block for falls through to <code>Relinquish_Default</code>.
+                has no block for falls through to <code><button type="button"
+                data-gloss="relinquish-default">Relinquish_Default</button></code>.
                 Un-check a <em>NULL — released</em> box, leave it, and the point
                 reads broken while the sequence underneath it keeps writing
                 correctly — the failure this section describes, with a machine
@@ -474,7 +477,8 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
             <p>
                 Every device that hears the broadcast and matches the range
                 responds with <code>I-Am</code>, an unconfirmed broadcast carrying
-                its own device instance number, its maximum APDU length (how big a
+                its own device instance number, its maximum <button type="button"
+                data-gloss="apdu">APDU</button> length (how big a
                 single message it can accept), its segmentation support, and its
                 vendor ID. The handshake is one-and-done; nothing else is
                 negotiated.
@@ -690,8 +694,10 @@ keywords: object instance device av bv ai ao discovery who-is cov priority
                 form a Read or Write, recognize a priority-array override, and
                 start a Who-Is discovery. The next question is what happens when
                 the device you want to talk to isn't on the same Ethernet segment
-                you're sending from — the broadcast story, the BBMD and Foreign
-                Device Registration machinery, the three layers of addressing,
+                you're sending from — the broadcast story, the <button type="button"
+                data-gloss="bbmd">BBMD</button> and <button type="button"
+                data-gloss="foreign-device">Foreign Device Registration</button>
+                machinery, the three layers of addressing,
                 and the EBO hex blob the
                 <a href="/tools/bacnet-ip-converter.html">BACnet/IP converter</a>
                 tool decodes for you. <a href="/education/bacnet-networking.html">BACnet

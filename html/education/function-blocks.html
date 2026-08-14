@@ -145,7 +145,7 @@ keywords: wiresheet logic and or not pid block wire program
                 </div>
                 <div class="callout">
                     <h3>Boolean logic <span>· true / false</span></h3>
-                    <p><code>AND</code>, <code>OR</code>, <code>NOT</code>, <code>XOR</code> combine true/false signals; an <code>SR latch</code> remembers a state — once set, it stays set until something resets it. This is the family that makes interlocks, permissives, and safety chains.</p>
+                    <p><code>AND</code>, <code>OR</code>, <code>NOT</code>, <code>XOR</code> combine true/false signals; an <code><button type="button" data-gloss="sr-latch">SR latch</button></code> remembers a state — once set, it stays set until something resets it. This is the family that makes interlocks, <button type="button" data-gloss="permissive">permissives</button>, and safety chains.</p>
                 </div>
                 <div class="callout">
                     <h3>Comparators <span>· number → true / false</span></h3>
@@ -157,7 +157,7 @@ keywords: wiresheet logic and or not pid block wire program
                 </div>
                 <div class="callout">
                     <h3>Timers <span>· delay and hold</span></h3>
-                    <p>An <em>on-delay</em> (TON) waits before passing a true signal through; an <em>off-delay</em> (TOF) holds a signal true for a while after it drops. Timers debounce noisy inputs, enforce minimum run times, and stop short-cycling.</p>
+                    <p>An <em>on-delay</em> (TON) waits before passing a true signal through; an <em>off-delay</em> (TOF) holds a signal true for a while after it drops. Timers debounce noisy inputs, enforce minimum run times, and stop <button type="button" data-gloss="short-cycling">short-cycling</button>.</p>
                 </div>
                 <div class="callout">
                     <h3>Control <span>· the loop</span></h3>
@@ -180,7 +180,8 @@ keywords: wiresheet logic and or not pid block wire program
                 the controller evaluates blocks in dependency order — sources first, then
                 whatever depends on them. The interesting case is <em>feedback</em> — a wire
                 that loops a block's output back into its own chain, which is exactly what an
-                <code>SR latch</code> is. A controller handles this by letting the feedback
+                <code><button type="button" data-gloss="sr-latch">SR latch</button></code> is.
+                A controller handles this by letting the feedback
                 wire carry the <em>previous</em> scan's value: the latch reads where it was
                 last scan, decides where it is now, and the loop resolves cleanly instead of
                 chasing itself. That one-scan memory is why a latch can hold a state and why a
@@ -188,10 +189,12 @@ keywords: wiresheet logic and or not pid block wire program
             </p>
 
             <p>
-                The economizer sheet below is a pure feed-forward chain, so there's no loop in
+                The <button type="button" data-gloss="economizer">economizer</button> sheet
+                below is a pure feed-forward chain, so there's no loop in
                 it to show this off. To actually watch the one-scan memory hold tick to tick,
                 open the <a href="/simulators/function-block-editor.html">Function-Block
-                Editor</a> and load its freeze-stat example: an <code>SR latch</code> trips the
+                Editor</a> and load its freeze-stat example: an <code><button type="button"
+                data-gloss="sr-latch">SR latch</button></code> trips the
                 unit on a freeze and keeps it tripped on its own previous-scan value until a
                 reset clears it — the feedback behavior running, not just described.
             </p>
@@ -199,8 +202,9 @@ keywords: wiresheet logic and or not pid block wire program
             <h2 class="subhead" id="worked-sheet">A worked sheet — economizer enable</h2>
 
             <p>
-                Here's a small real sequence. An air handler should use outdoor air for free
-                cooling, but only when two things are true at once: the outdoor air is cool
+                Here's a small real sequence. An air handler should use outdoor air for
+                <button type="button" data-gloss="economizer">free cooling</button>, but only
+                when two things are true at once: the outdoor air is cool
                 enough to actually help, <em>and</em> the unit is calling for cooling in the
                 first place. That's a sentence with an "and" in it — so the sheet has an
                 <code>AND</code> block at its heart.
@@ -212,11 +216,15 @@ keywords: wiresheet logic and or not pid block wire program
                 feed a <em>less-than</em> comparator — is it cool enough? The comparator's
                 true/false answer feeds one input of the <code>AND</code>. The cooling-mode
                 signal (a digital input) feeds the other. Only when both are TRUE does the
-                <code>AND</code> output go true and enable the economizer. Outdoor air at 55 is
+                <code>AND</code> output go true and enable the <button type="button"
+                data-gloss="economizer">economizer</button>. Outdoor air at 55 is
                 below the 60 changeover point and the unit is calling for cooling, so both
-                inputs are satisfied and the economizer is enabled. (That less-than block is a
-                <em>dry-bulb changeover</em> — the simplest version of a decision with real
-                subtlety in it. What the enabled economizer actually does, and when a
+                inputs are satisfied and the <button type="button"
+                data-gloss="economizer">economizer</button> is enabled. (That less-than block is a
+                <em><button type="button" data-gloss="dry-bulb">dry-bulb</button> changeover</em>
+                — the simplest version of a decision with real
+                subtlety in it. What the enabled <button type="button"
+                data-gloss="economizer">economizer</button> actually does, and when a
                 temperature-only comparison gets it badly wrong, is the
                 <a href="/education/economizers.html">Economizers</a> lesson.)
             </p>
@@ -300,7 +308,8 @@ keywords: wiresheet logic and or not pid block wire program
                 Reading about wiresheets only goes so far — the thing clicks when you wire one
                 up and watch it run. The <a href="/simulators/function-block-editor.html">Function-Block
                 Editor</a> is a sandbox for exactly that: drag blocks onto a sheet, wire them,
-                and watch the values move. It ships with the economizer above already built,
+                and watch the values move. It ships with the <button type="button"
+                data-gloss="economizer">economizer</button> above already built,
                 alongside a shelf of other worked sheets — safeties, thermostats, proof
                 alarms, control loops — load one, poke at the inputs, and see the logic
                 respond.
