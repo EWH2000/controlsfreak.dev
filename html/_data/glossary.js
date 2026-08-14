@@ -775,7 +775,15 @@ module.exports = {
            + 'In a humid climate it is the difference between an economizer '
            + 'that saves energy and one that costs it; the price is '
            + 'humidity sensors, and humidity sensors drift.',
-        owners: ['/education/economizers.html'],
+        // economizer-ratio added at the Phase 2 close (owner ruling
+        // 2026-08-14): its enthalpy-tab notes restate this definition
+        // in-viewport, so the M4 lane marked zero occurrences there by
+        // judgment — listing it makes the guard enforce that judgment
+        // instead of leaving it to the next lane's read.
+        owners: [
+            '/education/economizers.html',
+            '/tools/economizer-ratio.html',
+        ],
     },
 
     // dry-bulb / wet-bulb: TWO ids (the definitions differ — plain
