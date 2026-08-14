@@ -50,7 +50,8 @@ keywords: AND OR NOT XOR latch SR interlock permissive safety truth table
                 trouble contact closes. Once the freeze stat trips, keep the unit off until
                 someone resets it.</em> The boolean blocks — <code>AND</code>, <code>OR</code>,
                 <code>NOT</code>, <code>XOR</code>, and the <code>SR latch</code> — are how
-                those sentences become logic on a wiresheet. This page is one question, start
+                those sentences become logic on a <button type="button"
+                data-gloss="wiresheet">wiresheet</button>. This page is one question, start
                 to finish: <em>how do TRUE/FALSE blocks turn equipment rules — interlocks,
                 permissives, safeties — into logic, and how does a latch remember?</em>
             </p>
@@ -60,7 +61,8 @@ keywords: AND OR NOT XOR latch SR interlock permissive safety truth table
                     This page assumes you can already read a sheet at the block level — what a
                     block and its pins are, what the wires carry, and how a scan evaluates.
                     That's <a href="/education/function-blocks.html">Function-Block Basics</a>,
-                    the opening lesson of this chapter; start there if a wiresheet is new to
+                    the opening lesson of this chapter; start there if a <button type="button"
+                    data-gloss="wiresheet">wiresheet</button> is new to
                     you. Everything below lives inside one block family: the true/false logic
                     that makes equipment decisions.
                 </p>
@@ -229,7 +231,8 @@ keywords: AND OR NOT XOR latch SR interlock permissive safety truth table
                 across it, the coil drifts back toward room temperature — so the freeze stat
                 clears itself. If the trip were plain combinational logic, the permit would
                 come right back, the fan would restart, cold air would slam the coil, and the
-                stat would trip again. The unit short-cycles through its own safety,
+                stat would trip again. The unit <button type="button"
+                data-gloss="short-cycling">short-cycles</button> through its own safety,
                 over and over, and nobody ever finds out <em>why the coil was freezing in the
                 first place</em>. The fault clearing is not the same thing as the problem
                 being fixed. A safety trip must <strong>stand</strong> — visible, holding the

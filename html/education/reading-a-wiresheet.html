@@ -57,7 +57,8 @@ keywords: wiresheet trace troubleshoot backward live values scan idiom force ove
                 current value. Nobody reads a sheet like that for pleasure; you read it
                 because something is wrong. The whole skill is one question, start to finish:
                 <em>you didn't write this program and something's wrong — how do you read a
-                live wiresheet to find the block that's lying?</em>
+                live <button type="button" data-gloss="wiresheet">wiresheet</button> to find
+                the block that's lying?</em>
             </p>
 
             <div class="callout">
@@ -116,7 +117,8 @@ keywords: wiresheet trace troubleshoot backward live values scan idiom force ove
                 reaches the wrong output <em>doesn't exist</em> for this trace — you don't
                 owe it a glance, no matter how suspicious it looks. And every hop where the
                 answer is "yes, honest" retires the <em>entire subtree</em> above the healthy
-                input: a TRUE permit leg clears the whole permissive chain that built it in
+                input: a TRUE permit leg clears the whole <button type="button"
+                data-gloss="permissive">permissive</button> chain that built it in
                 one look. Backward tracing isn't just starting at the other end — it's a
                 pruning strategy. The sheet gets smaller at every hop.
             </p>
@@ -224,7 +226,8 @@ keywords: wiresheet trace troubleshoot backward live values scan idiom force ove
             <p style="margin-top:1.25rem;">
                 Each of those has a lesson of its own in this chapter —
                 <a href="/education/boolean-logic-latches.html">Boolean Logic &amp; Latches</a>
-                owns the permissive chain and the latch,
+                owns the <button type="button" data-gloss="permissive">permissive</button>
+                chain and the latch,
                 <a href="/education/comparators-and-deadband.html">Comparators &amp; Deadband</a>
                 owns the band edges,
                 <a href="/education/timers-and-delays.html">Timers &amp; Delays</a>
@@ -246,7 +249,8 @@ keywords: wiresheet trace troubleshoot backward live values scan idiom force ove
                 before the blocks: a <strong>band-edge cluster</strong> across the top
                 building a heating thermostat around the
                 <span data-us="68&nbsp;°F" data-metric="20.0&nbsp;°C">68&nbsp;°F</span>
-                setpoint, a two-proof <strong>permissive chain</strong> at the bottom left,
+                setpoint, a two-proof <strong><button type="button"
+                data-gloss="permissive">permissive</button> chain</strong> at the bottom left,
                 a gate AND joining them into the heat command — and a little branch off the
                 freeze stat driving a trip lamp. Fifteen blocks; four patterns and a stub.
             </p>
@@ -466,7 +470,8 @@ keywords: wiresheet trace troubleshoot backward live values scan idiom force ove
                 FALSE input is telling the truth, so hop upstream.
                 <strong>Step 2 — the gate.</strong> Two legs: the permit reads TRUE, the
                 call reads FALSE. Given TRUE and FALSE, an AND outputting FALSE is honest —
-                and here the pruning pays: the TRUE permit leg retires the entire permissive
+                and here the pruning pays: the TRUE permit leg retires the entire
+                <button type="button" data-gloss="permissive">permissive</button>
                 chain below it. One glance — status ON, freeze stat OK, permit made — and
                 you never read it again. Follow the FALSE leg.
                 <strong>Step 3 — the latch.</strong> <code>Q</code> is FALSE with S FALSE
@@ -487,7 +492,8 @@ keywords: wiresheet trace troubleshoot backward live values scan idiom force ove
             </p>
 
             <p>
-                Count what the trace never touched. The permissive chain: cleared in one
+                Count what the trace never touched. The <button type="button"
+                data-gloss="permissive">permissive</button> chain: cleared in one
                 glance at step 2, never walked. The freeze-trip lamp branch at the bottom:
                 never on the path at all — and it's the sheet's best trap, because every
                 wire on it is grey. A beginner hunting for "dead" wires lands there first;

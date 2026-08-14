@@ -39,7 +39,8 @@ keywords: setpoint reset schedule OAT slope intercept clamp limit min max select
         <div class="tool-body">
 
             <p class="page-intro">
-                Open a running wiresheet and find a setpoint — the number a comparator or a
+                Open a running <button type="button"
+                data-gloss="wiresheet">wiresheet</button> and find a setpoint — the number a comparator or a
                 <a href="/education/pid-basics.html">PID block</a> is holding the process to.
                 Trace the wire feeding that SP pin and, more often than not, it doesn't come
                 from a typed-in constant. It comes out of a little chain of math blocks. This
@@ -432,7 +433,8 @@ keywords: setpoint reset schedule OAT slope intercept clamp limit min max select
                 All of this is sitting in the
                 <a href="/simulators/function-block-editor.html">Function-Block Editor</a>,
                 already wired: open it and click the <em>hot-water reset</em> example. Select
-                the OAT input and walk its value in the inspector. At 30, the output reads
+                the <button type="button" data-gloss="oat">OAT</button> input and walk its
+                value in the inspector. At 30, the output reads
                 160 — the worked point above, live. Now drag the value down past 0 and watch
                 the <code>ADD</code> wire keep climbing while the output pins at 180: that's
                 the <code>LIMIT</code> catching the cold end. Run it up past 60 and the

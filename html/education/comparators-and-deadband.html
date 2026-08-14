@@ -75,7 +75,8 @@ keywords: comparator deadband hysteresis threshold chatter short cycle GT LT set
                 answer out on a green-or-grey one. That's the whole block — and it's the
                 bridge every threshold decision in a building crosses. <em>Start cooling when
                 the space is too warm. Trip the alarm when the static is too high. Enable the
-                economizer when outdoor air is cooler than return air.</em> Each of those
+                <button type="button" data-gloss="economizer">economizer</button> when
+                outdoor air is cooler than return air.</em> Each of those
                 sentences has a number on one side, a decision on the other, and a comparator
                 in the middle.
             </p>
@@ -154,7 +155,8 @@ keywords: comparator deadband hysteresis threshold chatter short cycle GT LT set
                 will hover exactly where the comparator is most unstable. And the output isn't
                 a number on a screen. If it's a compressor call, every flip is a contactor
                 pulling in and dropping out — arcing the contacts toward an eventual weld — and
-                a compressor start with locked-rotor inrush through windings that never get a
+                a compressor start with locked-rotor <button type="button"
+                data-gloss="inrush">inrush</button> through windings that never get a
                 rest, oil that never returns, pressures that never equalize. A compressor is
                 rated for a handful of starts an hour; a chattering threshold can demand ten
                 a <em>minute</em>. Real equipment carries anti-short-cycle timers as a last
@@ -271,7 +273,8 @@ keywords: comparator deadband hysteresis threshold chatter short cycle GT LT set
                 band. In between — stay put.</em> The "stay put" is the giveaway that plain
                 comparators can't do this alone: between the lines, neither condition is
                 true, so something has to <em>remember</em> which side of the story it's in.
-                That something is an <code>SR latch</code> — the one boolean block with
+                That something is an <code><button type="button"
+                data-gloss="sr-latch">SR latch</button></code> — the one boolean block with
                 memory. (What a latch is, why safeties lean on it, and what happens when set
                 and reset collide is <a href="/education/boolean-logic-latches.html#sr-latch">the
                 SR-latch section of Boolean Logic &amp; Latches</a>; here the latch just

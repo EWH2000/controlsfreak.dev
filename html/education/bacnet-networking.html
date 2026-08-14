@@ -234,7 +234,8 @@ keywords: ms/tp mstp baud bbmd foreign device router subnet broadcast who-is
 
             <p>
                 BACnet uses broadcasts heavily — Who-Is, I-Am, the
-                <code>Time-Synchronization</code> service, COV notifications
+                <code>Time-Synchronization</code> service, <button type="button"
+                data-gloss="change-of-value">COV</button> notifications
                 to the network-broadcast address. On a single subnet that's
                 fine: UDP broadcasts are something every Ethernet switch
                 handles. But the moment two BACnet/IP devices sit on different
@@ -630,7 +631,8 @@ keywords: ms/tp mstp baud bbmd foreign device router subnet broadcast who-is
                     to a root cause.</li>
                 <li><strong>Alarms and event notifications.</strong> The
                     confirmed and unconfirmed alarm services, the
-                    Notification Class object, recipient lists, COV-style
+                    Notification Class object, recipient lists, <button type="button"
+                    data-gloss="change-of-value">COV</button>-style
                     push for events. Their own page; touches BACnet's
                     biggest object-model surface outside the
                     analog/binary/multi-state core.</li>
