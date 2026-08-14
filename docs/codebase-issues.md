@@ -14664,6 +14664,17 @@ separate category (long written rationale) and are not part of this
 call. After #197 there is no *undocumented* stray left — this entry
 is the one documented contradiction.
 
+**RESOLVED 2026-08-14 (owner ruling: CONSOLIDATE — PR #567).** The
+#197 shape won: `a.ddcw-unit-link:focus-visible` moved INTO the FOCUS
+INDICATORS block keeping its own inset declaration + rationale
+comment; the old site carries a pointer comment. The convention now
+reads one way: every `:focus-visible` rule lives in the block, and a
+deviating ring keeps its own declaration *there*, with a written
+reason. The touch-floor rule for the same link stays beside its
+component by its own separate rationale. Render-identical, proven
+statically (disjoint selectors, no order interplay) and by live
+computed style on both links.
+
 ### 309. The `.tool-card` fadeUp stagger's comment misreads its own selector — `:nth-of-type` counts elements, not classes *(noticed 2026-08-12, the #178 lane — cosmetic, site-wide comment/behavior mismatch)*
 
 `styles.css`'s entrance-stagger block (`.tool-card:nth-of-type(1)` …
@@ -14694,3 +14705,35 @@ and unrelated to the unit selector the lane was working. If a 320
 class of devices ever matters, the fix is the statusbar's own
 wrap/scroll behavior; until then this records why a 320 tester would
 see a clipped bar. Log-don't-fix.
+
+### 311. pid-tuner still carries vendor names — "EBO style" (L~120) and "Niagara LoopPoint"/"EBO" (L~433) *(noticed 2026-08-14, the C1 build lane — vendor-free-guardrail inconsistency, needs an OWNER RULING on the rewrite)*
+
+The Parameter Style option label reads "Gain · Ti · Td (seconds) —
+EBO style" and the bump-test section's vendor paragraph names Niagara
+LoopPoint and EBO outright. Both predate the vendor-free guardrail
+(and content-audit :1826 shows the dropdown already shed two of three
+vendor names once). The 2026-08-14 owner ruling shipped the
+containment half on PR #569: a pointer sentence now hangs the
+vendor-free PID Parameter Translator off that paragraph, and the new
+tool itself is fully vendor-free. What remains ruled-open is the
+rewrite question: (a) leave the tuner's vendor sentences as
+grandfathered disclosure, or (c) rewrite them vendor-free now that
+the translator carries the algorithm-form axis generically. Owner
+explicitly deferred this to its own ruling — do not fold it into an
+unrelated sweep.
+
+### 312. Unquoted `data-gloss=x` is still invisible to the gloss transform — same dead-affordance mechanism the single-quote guard closed *(noticed 2026-08-14, the H lane while building #567's guard arm — needs an OWNER RULING: extend the arm vs accept the floor)*
+
+`TRIGGER_RE` matches only double-quoted values; #567's new arm makes
+the single-quoted form fail the build loudly, but a bare unquoted
+`data-gloss=sr-latch` (valid HTML) still ships the same styled, dead,
+lying affordance: underline styling from `button[data-gloss]` CSS, no
+panel, no aria splice, runtime `open()` bails silently. Zero
+occurrences site-wide today, and the marking lanes' verification
+battery greps for it (`data-gloss=[^"]`), so the hole is checked-for
+but not guarded. The decision: extend #567's arm to fail on any
+non-double-quoted form (one regex widening, same error register), or
+accept the documented floor (it is written into the transform
+header's floor paragraph honestly). Small either way; the extend
+option is the never-soften house lean, but it is the owner's call
+since it hardens a contract he authors against.

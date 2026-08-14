@@ -413,7 +413,10 @@ section). **Category keys mirror the landing pages' `navCard()`
   `<button type="button" data-gloss="sr-latch">SR latch</button>` — and
   writes nothing else: no class, no `aria-describedby`, no panel
   markup, no script tag. Never inside a JS string, SVG text, an id or
-  a heading. There is **no walker**, deliberately: marking is a
+  a heading — and **never in widget UI captions** (readout labels,
+  line-names, option text; owner ruling 2026-08-14: captions are
+  UI-chrome label register, not prose — the reader's prose path on the
+  same page carries the gloss). There is **no walker**, deliberately: marking is a
   curation act, and `education/vav-systems.html`'s *"thirty dampers
   glide toward minimum"* is the standing exhibit for why a
   context-free matcher would ship a falsehood. Definitions live in
