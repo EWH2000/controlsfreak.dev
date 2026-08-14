@@ -2326,6 +2326,22 @@ details.prose-fold > summary:focus-visible,
     outline: 2px solid var(--accent);
     outline-offset: 1px;
 }
+/* Moved here from the DDC Workbench section (#308), for the reason #197
+   moved the rule above it: this block claims every :focus-visible rule in
+   the sheet lives here, and a rule parked beside its component under a
+   comment asserting the OPPOSITE convention made that claim contradict
+   itself. Consolidation won — a deviating ring keeps its own declaration
+   inside this block rather than earning an exemption from it.
+   Why it deviates: the ring is INSET where the house default is a 3px
+   outset. The two unit links sit against one shared seam inside a single
+   bordered pill, so an outset ring would be drawn over the sibling link
+   (and over the pill's own border). At -2px it lands inside the focused
+   link's own border box, which is the only place it can read as marking
+   ONE of the two. */
+a.ddcw-unit-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
 input[type="range"]:focus-visible::-webkit-slider-thumb {
     box-shadow: 0 0 0 1px var(--accent), 0 0 0 4px var(--accent-glow);
 }
@@ -5082,15 +5098,7 @@ a.ddcw-unit-link[aria-current="page"] {
     color: var(--accent-ink);
     font-weight: 600;
 }
-/* :focus-visible kept beside the component rather than in the
-   consolidated FOCUS INDICATORS block, because the ring deviates:
-   INSET where the house default is a 3px outset — the two links
-   share one seam inside one bordered pill, so an outset ring would
-   be drawn over the sibling link. */
-a.ddcw-unit-link:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-}
+/* a.ddcw-unit-link:focus-visible sits in the FOCUS INDICATORS block (#308). */
 /* Touch floor kept beside the component: it needs justify-content
    on top of the TOUCH-TARGET FLOOR boilerplate. Measured natively
    at 24.42px tall, so the floor is doing real work — and 41–42px
