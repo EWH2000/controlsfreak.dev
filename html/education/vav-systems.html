@@ -274,11 +274,11 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
             <p>
                 The flow sensor is the part worth slowing down for, because it means
                 <strong>the box measures its own airflow</strong>. The pressure difference between the upstream and
-                downstream ports — the <em>velocity pressure</em> — rises with the square of the air's speed, so flow
-                follows a square root: <code>CFM&nbsp;=&nbsp;K&nbsp;×&nbsp;√VP</code>, where K is the manufacturer's
+                downstream ports — the <em><button type="button" data-gloss="velocity-pressure">velocity pressure</button></em> — rises with the square of the air's speed, so flow
+                follows a square root: <code>CFM&nbsp;=&nbsp;K&nbsp;×&nbsp;√<button type="button" data-gloss="velocity-pressure">VP</button></code>, where K is the manufacturer's
                 coefficient for that pickup — literally the CFM it reads at exactly 1.0&nbsp;in.&nbsp;w.c. A box with
                 K&nbsp;=&nbsp;1000 reading 0.36&nbsp;in.&nbsp;w.c. is passing 600&nbsp;CFM. The
-                <a href="/tools/airflow.html">airflow tool</a> runs that math in both directions — flow from K and VP, or
+                <a href="/tools/airflow.html">airflow tool</a> runs that math in both directions — flow from K and <button type="button" data-gloss="velocity-pressure">VP</button>, or
                 K back-solved from a balancer's hood reading — and carries the fine print (K conventions vary by vendor,
                 and the whole frame is US-native; the K printed on a metric box is a different number on a different
                 label).
@@ -351,7 +351,7 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
 
             <p style="margin-top:1.25rem;">
                 Two more parts appear on boxes that can heat: a <em>reheat coil</em> at the discharge — hot water on a
-                small valve, or electric elements in stages — and a <em>discharge-air sensor</em> (DAT) just downstream
+                small valve, or electric elements in stages — and a <em>discharge-air sensor</em> (<button type="button" data-gloss="dat">DAT</button>) just downstream
                 of it, so the controller can see what it's actually sending to the zone. What they're for is a few
                 sections down; first, the question that makes the flow ring earn its place: why does the box measure
                 flow at all, instead of just holding a damper position?
@@ -432,7 +432,7 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
                     designer's numbers for the zone's ventilation share and its design cooling load. Commissioning is
                     where they become real: a balancer puts a flow hood on the diffusers, compares what the box
                     <em>says</em> it's passing against what it actually passes, and calibrates — usually by back-solving
-                    K from the hood reading and the velocity pressure the controller sees (the
+                    K from the hood reading and the <button type="button" data-gloss="velocity-pressure">velocity pressure</button> the controller sees (the
                     <a href="/tools/airflow.html">airflow tool's</a> second mode, and its worked example). A box that
                     was never commissioned obeys its flow loop perfectly — around a number no one ever verified.
                 </p>
@@ -463,7 +463,7 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
                 <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span> air, arriving whether the zone
                 wants cooling or not — and a small interior room at minimum flow will drift cold by mid-morning. That's
                 what the reheat coil is for: the box holds flow at minimum and warms the air on its way out. The better
-                sequences run it as another cascade — the zone loop asks for a discharge temperature, the DAT sensor
+                sequences run it as another cascade — the zone loop asks for a discharge temperature, the <button type="button" data-gloss="dat">DAT</button> sensor
                 closes that loop on the reheat valve, capped somewhere around
                 <span data-us="90&nbsp;°F" data-metric="32.2&nbsp;°C">90&nbsp;°F</span> so the warm air still mixes down
                 into the room instead of stratifying at the ceiling. Yes, it's the plant heating air the plant just paid
@@ -488,21 +488,21 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
                 Every floor so far protected the zone — its fresh air, its comfort. The last one protects the machine,
                 and it's the one this page's author has the scars for. The unit's cooling coil was sized for design
                 airflow, and on a chilled-water coil, part flow is graceful: less air means less heat picked up, the
-                valve throttles back, the water side shrugs — that's the hydronic story again. A <em>DX</em> coil doesn't
+                valve throttles back, the water side shrugs — that's the hydronic story again. A <em><button type="button" data-gloss="dx">DX</button></em> coil doesn't
                 shrug. It's the evaporator of a refrigerant circuit, and a running compressor moves refrigerant whether
                 or not there's warm air to boil it. The field rule of thumb is somewhere near <a href="/tools/equipment-airflow.html">400&nbsp;CFM of air per ton</a>
                 of active cooling (an IP-native number, like the K-factor — it's the frame the trade speaks). Starve a
                 running stage much below that and suction pressure dives, the coil surface drops below freezing, and the
                 condensate that should be dripping off the fins freezes onto them instead. Ice chokes airflow further,
                 which starves the coil further — a runaway with a ratchet. Left alone it ends with a coil iced solid and,
-                eventually, compressors slugging liquid and short-cycling toward the scrap bin.
+                eventually, compressors slugging liquid and <button type="button" data-gloss="short-cycling">short-cycling</button> toward the scrap bin.
             </p>
 
             <p>
                 Now connect that to what the boxes do. On a mild afternoon most zones satisfy, thirty flow setpoints
                 ride down to their minimums, and total airflow across that coil collapses — while a handful of zones
                 still calling keep a compressor stage running. Nothing about the box side is malfunctioning;
-                <em>every box minding its own loop</em> is exactly what starves the coil. So a DX-VAV system has to be
+                <em>every box minding its own loop</em> is exactly what starves the coil. So a <button type="button" data-gloss="dx">DX</button>-VAV system has to be
                 designed with somewhere for the mismatch to go, and the lineup looks like this: box minimums summed
                 generously enough that the coil's floor is never violated; staging <em>interlocked to proven
                 airflow</em>, so a stage locks out rather than run starved — the interlock chooses the compressor over
@@ -518,11 +518,11 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
             <h2 class="subhead" id="drive-the-box">Drive a Box, Watch the Coil</h2>
 
             <p>
-                One box under your hand, twenty-nine siblings and a two-stage DX unit behind it. The slider is the
+                One box under your hand, twenty-nine siblings and a two-stage <button type="button" data-gloss="dx">DX</button> unit behind it. The slider is the
                 zone; the box answers with a flow setpoint between its minimum
                 (<span data-us="200&nbsp;CFM" data-metric="340&nbsp;m³/h">200&nbsp;CFM</span>) and maximum
                 (<span data-us="1,000&nbsp;CFM" data-metric="1,700&nbsp;m³/h">1,000&nbsp;CFM</span>), the flow ring
-                reads its velocity pressure (K&nbsp;=&nbsp;1000 — at max flow the pickup reads exactly
+                reads its <button type="button" data-gloss="velocity-pressure">velocity pressure</button> (K&nbsp;=&nbsp;1000 — at max flow the pickup reads exactly
                 1.0&nbsp;in.&nbsp;w.c.), and the damper lands wherever the flow loop needs it. Change what the
                 siblings are doing and watch the damper move <em>while the flow doesn't</em> — that's pressure
                 independence earning its name. Below the seam, the system strip keeps the coil's books. Then try the

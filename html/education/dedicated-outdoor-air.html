@@ -178,7 +178,7 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
             <p>
                 Here is the load-bearing idea of the whole architecture, stated plainly: <strong>the DOAS owns the latent
                 load; the terminals own the sensible load.</strong> Latent is the moisture — the energy tied up in water
-                vapor. Sensible is the dry-bulb temperature — the part a thermometer reads. A conventional coil does both
+                vapor. Sensible is the <button type="button" data-gloss="dry-bulb">dry-bulb</button> temperature — the part a thermometer reads. A conventional coil does both
                 at once and can't really separate them; a DOAS design deliberately assigns each to the equipment suited for
                 it. And doing the latent half well drives an unusual-looking move at the DOAS coil.
             </p>
@@ -202,7 +202,7 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
                 overcool it and hand the space's <em>heating</em> a fight it never asked for. The usual answer is
                 <strong>reheat</strong>: after the deep coil has wrung the moisture out, a reheat coil warms the air back up
                 to a <em>neutral</em> supply — around <span data-us="70&nbsp;°F" data-metric="21.1&nbsp;°C">70&nbsp;°F</span>
-                dry-bulb, close to room temperature — so the DOAS delivers dry air that is thermally almost invisible to the
+                <button type="button" data-gloss="dry-bulb">dry-bulb</button>, close to room temperature — so the DOAS delivers dry air that is thermally almost invisible to the
                 space. It added no net sensible load; it just handed the room dehumidified ventilation and left the heating
                 and cooling to the terminals, exactly as designed. (Not every DOAS reheats: a <em>cold-air</em> DOAS
                 deliberately skips it and delivers the cool, dry air straight to the zone, using that coldness to knock down
@@ -213,7 +213,7 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
             <p>
                 The diagram below is that process on a stripped-down psychrometric path: the outdoor-air state, the deep
                 coil pulling it down and to the left to the apparatus dew point, and the reheat carrying it straight across —
-                dry-bulb up, moisture unchanged — to a neutral supply. (The full air-state vocabulary — dry bulb, dew point,
+                <button type="button" data-gloss="dry-bulb">dry-bulb</button> up, moisture unchanged — to a neutral supply. (The full air-state vocabulary — <button type="button" data-gloss="dry-bulb">dry bulb</button>, dew point,
                 humidity ratio, enthalpy — lives in <a href="/education/psychrometrics-basics.html">Psychrometrics Basics</a>,
                 and you can plot a real state on the <a href="/tools/psychrometric-chart.html">psychrometric chart</a>.)
             </p>
@@ -279,13 +279,13 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
             <h2 class="subhead" id="how-controlled">How a DOAS Is Controlled</h2>
 
             <p>
-                Because the DOAS exists to control moisture, its primary control loop is not a dry-bulb loop — it is a
+                Because the DOAS exists to control moisture, its primary control loop is not a <button type="button" data-gloss="dry-bulb">dry-bulb</button> loop — it is a
                 <strong>leaving-air dew point (or humidity) setpoint</strong> on the deep coil. The unit modulates its
                 cooling — a chilled-water valve, or compressor staging on a
                 <a href="/education/refrigerant-cycle-basics.html">DX</a> unit — to hold the supply air at a target dew
                 point, measured by a humidity or dew-point sensor in the leaving airstream. That is the number to look for
                 first on the BMS graphic: not "is the supply 55 degrees," but "is the supply dry enough." A separate
-                <strong>reheat</strong> loop then trims the dry-bulb up to the neutral supply setpoint, so the two loops
+                <strong>reheat</strong> loop then trims the <button type="button" data-gloss="dry-bulb">dry-bulb</button> up to the neutral supply setpoint, so the two loops
                 divide the work the same way the whole system does — one owns moisture, the other owns temperature.
             </p>
 
@@ -546,7 +546,7 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
                     <strong>True story.</strong> I service a building with lab spaces that have to hold humidity in a tight
                     band. It is built exactly the way this page describes: a DOAS conditions the ventilation air and hands it
                     to the labs, while fan-coil units — chilled water and hot water, served from the plant's chiller and
-                    boilers — handle each room's sensible load. The DOAS makes its own cold with onboard DX, and it was
+                    boilers — handle each room's sensible load. The DOAS makes its own cold with onboard <button type="button" data-gloss="dx">DX</button>, and it was
                     sized and set to a <em>design leaving dew point</em> chosen for the climate the drawings assumed. The
                     whole split depends on that one number holding: the DOAS delivers air dry enough, and the FCUs — picked
                     for mostly <em>sensible</em> duty — never have to become dehumidifiers. Then the outdoor climate drifted
