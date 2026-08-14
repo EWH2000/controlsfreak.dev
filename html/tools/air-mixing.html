@@ -64,7 +64,7 @@ faqs:
             <summary>Mix three air streams — pick the weight shape your data is in.</summary>
             <div class="preamble-rest">
                 By mass flow when you
-                have CFMs at the panel (outdoor + return + ERV exhaust, economizer + return + makeup).
+                have CFMs at the panel (outdoor + return + ERV exhaust, <button type="button" data-gloss="economizer">economizer</button> + return + makeup).
                 By mass fraction when you have percentages off a schematic. The math is the same
                 mass-weighted blend either way; the tab just picks how you tell the tool what the
                 weights are.
@@ -209,7 +209,7 @@ faqs:
                         humidity ratio and enthalpy:<br>
                         <code>W<sub>mix</sub> = Σ(m<sub>i</sub> · W<sub>i</sub>) ÷ Σm<sub>i</sub></code>,
                         <code>h<sub>mix</sub> = Σ(m<sub>i</sub> · h<sub>i</sub>) ÷ Σm<sub>i</sub></code>.</li>
-                    <li>Recover dry-bulb by inverting the enthalpy formula
+                    <li>Recover <button type="button" data-gloss="dry-bulb">dry-bulb</button> by inverting the enthalpy formula
                         <code>h = (0.240 + 0.444·W)·T + 1061·W</code>:<br>
                         <code>T<sub>mix</sub> = (h<sub>mix</sub> − 1061·W<sub>mix</sub>) ÷ (0.240 + 0.444·W<sub>mix</sub>)</code>.</li>
                     <li>Materialize the full state at the site pressure to read out RH, WB, DP, and v.</li>
@@ -344,7 +344,7 @@ faqs:
                     <li>Mass-weight humidity ratio and enthalpy directly:
                         <code>W<sub>mix</sub> = 0.22·W<sub>1</sub> + 0.67·W<sub>2</sub> + 0.11·W<sub>3</sub></code>,
                         same for <code>h<sub>mix</sub></code>.</li>
-                    <li>Recover dry-bulb the same way and materialize the full state.</li>
+                    <li>Recover <button type="button" data-gloss="dry-bulb">dry-bulb</button> the same way and materialize the full state.</li>
                 </ol>
                 <p class="ref-note">
                     A schedule that lists "fraction OA" alongside DBs and WBs lands here cleanly.
