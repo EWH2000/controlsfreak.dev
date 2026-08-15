@@ -117,7 +117,7 @@ test('pid tuner — bump-test starting gains compute, restyle, and mute', async 
     // on the Decent PI preset: SIMC with λ = 3θ → Kc 2.00, Ti 2 min = reset 0.50.
     await expect(page.locator('#pid-sg-kc')).toHaveText('2.00');
     await expect(page.locator('#pid-sg-ti')).toHaveText('0.50');
-    // Parameter Style flip re-reads the same result in EBO seconds.
+    // Parameter Style flip re-reads the same result in Ti/Td seconds.
     await page.selectOption('#pid-conv', 'timeSec');
     await expect(page.locator('#pid-sg-ti-lbl')).toHaveText('Integral time (Ti, s)');
     await expect(page.locator('#pid-sg-ti')).toHaveText('120');
