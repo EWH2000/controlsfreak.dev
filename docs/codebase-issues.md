@@ -7374,7 +7374,7 @@ keep this branch to one issue.
 Per the orchestrator, not appended to `docs/codebase-issues.md` here — several PRs appending at that file's tail would conflict. Text for the single batched commit:
 
 ```markdown
-### 198. Gutter collage costs ~44% of a CPU core at idle on every page
+### 198. Gutter collage costs ~44% of a CPU core at idle on every page *(addressed 2026-07-24 · PR #427; the open follow-up closed 2026-07-24/25 — addendum below)*
 
 **Status:** fixed (PR #427).
 
@@ -7431,6 +7431,16 @@ no page. `simulators/refrigerant-loop.html` satisfies its contract
 `simulators/hydronic-loop-builder.html` must NOT get it -- it rewrites
 `d` on every `pointermove` and refreshes only on pointer-up, so its
 particles track the dragged pipe because the read is live.
+
+**Follow-up addendum (marker trued 2026-08-15):** the "set on no page"
+sentence above went stale within a day of being written and this
+heading carried no marker at all — the only such heading in the file.
+`refrigerant-loop` adopted the flag in the same arc (`6e1e83b`,
+2026-07-24 — 15 paths, the measured win above), and the
+`flowStaticGuard` (`858292d`, 2026-07-25) now REQUIRES it beside every
+education `data-flow`; `hydronic-loop-builder` remains correctly bare,
+which is exactly why that guard deliberately does not reach
+simulators. Nothing here is open.
 
 **Context for whoever reads this next:** the gutter's `[data-flow]`
 paths are expected to be retired by a future static-"print" background,
@@ -14483,7 +14493,7 @@ survives both themes and paper — the `-fill`-family print trap does
 not apply here. No version bump was spent: `styles.css`'s cache-bust
 bump rides the merge captain's close-out batch.
 
-### 303. `.fcu-point-val.dim` is dead CSS on the FCU workbench *(noticed 2026-08-12, the #298 lane — cleanup, LOW)*
+### 303. `.fcu-point-val.dim` is dead CSS on the FCU workbench *(noticed 2026-08-12, the #298 lane — cleanup, LOW; **RESOLVED 2026-08-12 · PR #555** — deleted, grep re-run at the branch's own HEAD)*
 
 Defined in `ddc-workbench-fcu.html`'s mirror CSS block next to
 `.accent`; nothing in the page, `ddcw-fcu-unit.js`, or any spec ever
@@ -14525,7 +14535,7 @@ removal inside the page's own `{% block head %}`, not `styles.css` or
 a shared script, so there is no cache-busting exposure — the bump
 rides the merge captain's close-out batch.
 
-### 304. Five byte-identical `*-empty td` rules across the lookup tools *(noticed 2026-08-12, the #290 lane — consolidation candidate, LOW)*
+### 304. Five byte-identical `*-empty td` rules across the lookup tools *(noticed 2026-08-12, the #290 lane — consolidation candidate, LOW; **RESOLVED 2026-08-12 · PR #556** — one shared `.ref-empty td` in `styles.css`)*
 
 `bacnet-error-codes` / `bacnet-objects` / `bacnet-units` /
 `bacnet-vendor-ids` / `modbus-functions` each define the same
@@ -14644,7 +14654,7 @@ generalizable rule from the lane, worth keeping: *"the boot tick
 repaints it" holds only for nodes `renderUnit` actually writes.*
 Log-don't-fix until the register key is next open.
 
-### 308. Two opposite documented conventions for deviating focus rings *(noticed 2026-08-12, the #197 lane — convention conflict, needs an OWNER RULING)*
+### 308. Two opposite documented conventions for deviating focus rings *(noticed 2026-08-12, the #197 lane — convention conflict; **RESOLVED 2026-08-14 · PR #567** — owner ruled CONSOLIDATE, the #197 shape won)*
 
 #197 moved `.fbe-palette-btn:focus-visible` INTO the consolidated
 FOCUS INDICATORS block with its deviating declaration preserved
