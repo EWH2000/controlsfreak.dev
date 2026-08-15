@@ -352,6 +352,87 @@
 //                       stakes — the §3b row's own words).
 // ──────────────────────────────────────────────────────────────────────
 
+// ── §5 MULTI-BENIGN PASS (2026-08-15) ─────────────────────────────────
+// The third content tier (scoping record §5): senses differ but context
+// always disambiguates, so a plain entry is safe IF it is written at
+// the shared abstraction AND matched on the right token. What makes
+// that safe is a WRITTEN MATCHING RULE PER TERM — it lives in each §5
+// entry's leading comment below, next to the data it governs, and the
+// marking lanes read it as the contract (briefs are hypotheses; this
+// file is the contract). Inventory: a 13-family read-only fan-out over
+// education / tools / guides / landings prose (2026-08-15), every
+// occurrence classified per page. The §5 premise HELD in all 13
+// families — no §4 demotion anywhere — and the tier is thinner than
+// the scoping record guessed (raw-count overshoot again: ~121 markable
+// sites survive out of ~1,100 raw hits; three families nearly emptied
+// once their teach pages were suppressed).
+//
+// Families inventoried and NOT earning an entry, with the reason:
+//   vfd bypass       — zero markable sites; every electrical-bypass
+//                      occurrence sits on vfds.html §7, its teacher.
+//   hot-gas bypass   — zero occurrences of any kind in scope.
+//   face-and-bypass  — one prose site (coil-freeze-risk:252) whose
+//                      sentence self-defines; an entry would exist only
+//                      to shadow it. NOT foldable into bypass-damper —
+//                      a different device (coil-face modulation vs
+//                      supply-to-return spill).
+//   bypass leg (hyd) — one marginal anaphoric site, already anchored to
+//                      its teacher in the same sentence; deferred to
+//                      the re-triage rather than shipped markless.
+//   DPBV             — its sole occurrence IS its teaching beat
+//                      (pump-control:253).
+//
+// Cross-family surface rulings the fan-out surfaced, recorded once so
+// the per-entry rules can cite them by name:
+//   SWEEP-SCOPE      — §5 marks land on education / tools / guides /
+//                      landings prose ONLY, the phase-2 surface set.
+//                      Simulator pages (workbenches included) and deep
+//                      practice pages are OUT of marking scope; §5
+//                      occurrences there (fcu fold prose, the desktop
+//                      controller-wiring explainer, refrigerant-loop's
+//                      P-h disclaimer at :1354) are sense evidence,
+//                      never mark sites, and the per-entry inventory
+//                      counts are counts WITHIN this scope. The
+//                      verification round re-derived several of them
+//                      site-wide and read the gap as an undercount —
+//                      this line is why it isn't.
+//   ANCHORED-LINK    — text inside an <a> is unmarkable: a button
+//                      cannot nest inside an anchor (invalid HTML,
+//                      interactive-in-interactive). Both standing picv
+//                      cases already anchor into the owner's #picv
+//                      section, so the reader's route to the
+//                      definition exists.
+//   CODE-NOTATION    — FBE block-tag chains inside <code> ('AI → MUL →
+//                      ADD → LIMIT → AO', setpoint-math-reset:256) are
+//                      block-type notation, not the term of trade in
+//                      prose; never marked, and the surrounding
+//                      paragraph spells the types out in full.
+//   FAQ-FRONTMATTER  — `faqs:` strings render via faqBlock() AND feed
+//                      head.njk's FAQPage JSON-LD; permanently
+//                      unmarkable on both grounds (dual consumer).
+//   UNITS-SPAN       — data-us/data-metric span interiors are
+//                      unmarkable: units.js rewrites the span's
+//                      textContent on toggle and would destroy a
+//                      spliced button.
+//   MIXED-RUN        — an enumeration mixing entry terms with
+//                      non-entry siblings ('AI / AO / AV and BI / BO /
+//                      BV') is skipped whole; a half-buttoned list is
+//                      worse than none. Homogeneous runs mark normally.
+//   COINED-COMPOUND  — a hyphenated coinage embedding a term
+//                      ('overshoot-and-hunt', 'regenerative front
+//                      end', 'high-latent designs') is a different
+//                      lexical item; never marked.
+//   NAME-REFERENCE   — a proper-name reference to a page's own example
+//                      ('load its freeze-stat example') is a name, not
+//                      a use; never marked.
+//   JS-PAINTED PROSE — widget-anecdote innerHTML strings render real
+//                      prose the build-time transform can never reach
+//                      (vav-systems:832, air-handlers:782,
+//                      duct-static-control:893). Known floor, per the
+//                      transform header — never "fix" by writing a
+//                      button into a JS string.
+// ──────────────────────────────────────────────────────────────────────
+
 module.exports = {
     'sr-latch': {
         term: 'SR latch',
@@ -1004,5 +1085,573 @@ module.exports = {
            + 'equipment cannot run low, so it cycles — turndown trouble '
            + 'reads as short-cycling on a trend.',
         owners: ['/tools/power-energy-converter.html'],
+    },
+
+    // ── §5 multi-benign (2026-08-15) — supervisory & points ─────────
+
+    // MATCHING RULE: mark the two-word compound "front end" / "head
+    // end" — space or hyphen, any case, singular or plural — where it
+    // names the supervisory workstation; a "head end" token carries
+    // THIS id (one entry, synonym pair — the def supplies the other
+    // name immediately, so the panel heading never whiplashes the
+    // reader). Bare "front"/"head" never mark. Exclusions:
+    // COINED-COMPOUND 'regenerative front end' (drive input stage —
+    // quiz-bank only today, but check the word before the match);
+    // the wiresheet sense — the shared upstream segment of a logic
+    // chain — lives in the quiz banks on the same footing and is
+    // equally never this entry; FAQ-FRONTMATTER
+    // (bacnet-ip-converter:16 — its prose twin at :102 is the
+    // markable copy). owners: [] — no page teaches the term;
+    // the nearest thing to a definition is a B-OWS table cell
+    // (bacnet-services:210) that uses it as the familiar explanans.
+    // Inventory 2026-08-15: 8 markable across 7 pages.
+    'front-end': {
+        term: 'front end',
+        def: 'The supervisory workstation where a building\'s points, '
+           + 'graphics, alarms and trends come together — the screen '
+           + 'the operator lives in. The trade says <em>front end</em> '
+           + 'and <em>head end</em> interchangeably; both name the same '
+           + 'machine, and neither says anything about whose software '
+           + 'is running on it.',
+        owners: [],
+    },
+
+    // The five point-type acronyms share one MATCHING RULE: mark the
+    // bare uppercase acronym at word boundaries, case-sensitive —
+    // \b(AI|AO|BI|BO|UI)\b — including parenthesized "(AO)" and
+    // homogeneous slash runs ("AI / AO"). NEVER mark a tag/terminal
+    // shape — the acronym with an attached designator (UI3, AO1, AI:3,
+    // "AI 3", BO-C) names a specific terminal or schedule point, not
+    // the term of trade; both live in real prose
+    // (controls-commissioning:40, start-stop-commands:62). MIXED-RUN
+    // applies: bacnet-objects:124's "AI / AO / AV and BI / BO / BV"
+    // skips whole (AV/BV have no entry). CODE-NOTATION applies
+    // (setpoint-math-reset:256's block chain). FAQ-FRONTMATTER applies
+    // (bacnet-objects:25 — its :150 body copy is the markable
+    // surface). ANCHORED-LINK and SWEEP-SCOPE apply — the workbench
+    // fold prose and the desktop controller-wiring explainer carry
+    // family tokens and are simulator surfaces, out of marking scope.
+    // Plurals (AIs) would mark but zero exist in scope. Inventory
+    // 2026-08-15: 12 markable after the mixed-run skip (4
+    // commanding-actuators AI + 2 duct-static + 2 status-and-proof +
+    // 1 vfds + 2 bacnet-objects:150 + 1 voltage-drop).
+    'ai': {
+        term: 'AI (analog input)',
+        def: 'A controller input that reads a continuously varying '
+           + 'signal — a temperature, a pressure, a position feedback — '
+           + 'as a number, typically arriving as resistance, voltage or '
+           + 'milliamps. The AI is where the physical world becomes a '
+           + 'value the program can do math on.',
+        owners: [
+            '/education/controls-commissioning.html',
+            '/education/bacnet-basics.html',
+        ],
+    },
+
+    'ao': {
+        term: 'AO (analog output)',
+        def: 'A controller output that commands <em>how much</em> '
+           + 'rather than a state — typically 0–10 V or 4–20 mA '
+           + 'driving a valve or damper to a fraction of its stroke, '
+           + 'or a drive to a speed. An AO says <em>how far</em>, '
+           + 'where a binary output only says <em>run</em>.',
+        owners: [
+            '/education/controller-wiring.html',
+            '/education/controls-commissioning.html',
+            '/education/commanding-actuators.html',
+            '/education/bacnet-basics.html',
+        ],
+    },
+
+    'bi': {
+        term: 'BI (binary input)',
+        def: 'A controller input that reads a two-state signal — a '
+           + 'contact open or closed: a status, a proof, an alarm. No '
+           + 'magnitude, no scaling — just which of two states the '
+           + 'field device is in, and the wiring convention that decides '
+           + 'what open means.',
+        owners: [
+            '/education/controller-wiring.html',
+            '/education/controls-commissioning.html',
+            '/education/bacnet-basics.html',
+        ],
+    },
+
+    // start-stop-commands is an owner on its L68 beat ('The BO is the
+    // decision: a dry contact inside the controller that closes when
+    // the program says run') — it re-defines the BO despite deferring
+    // wiring detail to Controller Wiring, and ~16 prose BO tokens ride
+    // that call.
+    'bo': {
+        term: 'BO (binary output)',
+        def: 'A controller output that switches rather than modulates — '
+           + 'start/stop, open/close, enable/disable — usually a relay '
+           + 'contact or a triac driving a starter or a two-position '
+           + 'device. The decision is one bit; the horsepower comes '
+           + 'from the circuit it switches.',
+        owners: [
+            '/education/controller-wiring.html',
+            '/education/controls-commissioning.html',
+            '/education/start-stop-commands.html',
+            '/education/bacnet-basics.html',
+        ],
+    },
+
+    // UNIVERSAL input, not user interface — the id reads wrong to a
+    // developer, so saying it twice: this is the point type. The
+    // sense-grep verified the user-interface sense never reaches
+    // rendered prose (JS comments only: dew-point-calculator:237,
+    // psychrometric-chart:518/780/972).
+    'ui': {
+        term: 'UI (universal input)',
+        def: 'A controller input that can be software-configured to '
+           + 'read the common input types — a thermistor\'s '
+           + 'resistance, a transducer\'s voltage or milliamps, and on '
+           + 'many controllers a dry contact as well. Universal inputs '
+           + 'are why the same terminal block can land a thermistor '
+           + 'today and a transmitter tomorrow.',
+        owners: ['/education/controller-wiring.html'],
+    },
+
+    // ── §5 multi-benign — devices & safeties ────────────────────────
+
+    // MATCHING RULE: complete device compounds only, case-insensitive,
+    // across space/hyphen/closed spellings and plurals —
+    // /freeze[-\s]?stats?\b/, /low[-\s]limit (thermo)?stat\b/,
+    // /frost[-\s]?stat\b/ (last is zero-in-scope, kept for future
+    // prose). NEVER stem to bare 'low-limit' — that stem is a
+    // three-referent §4 collision (software MA-T override, BACnet
+    // Low_Limit, this device), and four in-scope sentences carry the
+    // device and a bare 'low-limit' side by side (coil-freeze-risk:277,
+    // economizers:398, minimum-outdoor-air:289-290,
+    // economizer-ratio:239). Never mark anaphoric 'the stat'.
+    // NAME-REFERENCE applies (function-blocks:196 'its freeze-stat
+    // example' skips). Owners: coil-freeze-risk (the tool's whole
+    // frame), start-stop-commands (defines it inside the safety-string
+    // beat + manual-reset teaching), boolean-logic-latches (the
+    // device's trip/clear behaviour is the lesson's central motivating
+    // case). Inventory 2026-08-15: 11 markable across 8 pages after
+    // the name-reference skip.
+    'freezestat': {
+        term: 'freezestat',
+        def: 'The hardwired coil-protection safety — a stat whose long '
+           + 'capillary element snakes across the coil face and trips '
+           + 'on the coldest foot of it, stopping the fan and closing '
+           + 'dampers before a water coil can freeze and burst. Also '
+           + 'called a freeze stat or low-limit stat, and commonly '
+           + 'manual-reset: a trip stays tripped until a person finds '
+           + 'out why.',
+        owners: [
+            '/tools/coil-freeze-risk.html',
+            '/education/start-stop-commands.html',
+            '/education/boolean-logic-latches.html',
+        ],
+    },
+
+    // MATCHING RULE: the NOUN only — bare 'interlock'/'interlocks' and
+    // the head of a modified noun phrase ('airflow interlock',
+    // 'software interlocks' — mark just the word 'interlock(s)').
+    // Verb and participle uses never mark ('the sequence interlocks
+    // against', 'staging interlocked to proven airflow' — five live
+    // cases, all flagged in the inventory). Owner: boolean-logic-
+    // latches — it teaches the mechanism an interlock IS (the run
+    // permit / permissive chain / fail-safe NC arc), naming interlocks
+    // in its framing question; start-stop-commands draws the
+    // copper-vs-software line (L313) without defining the word, so its
+    // two tokens there stay markable — the non-owner shape.
+    // vav-systems teaches ONE specific interlock as applied design and
+    // stays a non-owner (the velocity-pressure precedent). Inventory
+    // 2026-08-15: 7 markable across 5 pages.
+    'interlock': {
+        term: 'interlock',
+        def: 'A tie between equipment and a condition it must not run '
+           + 'without — proof of flow before a heater draws, an end '
+           + 'switch before a fan starts — arranged so that losing the '
+           + 'condition drops the equipment, not just blocks the '
+           + 'start. One idea realized two ways: in copper for the '
+           + 'trips that protect life and machines, in software for '
+           + 'the polite coordination.',
+        owners: ['/education/boolean-logic-latches.html'],
+    },
+
+    // ZERO markable sites today — every rendered-prose occurrence of
+    // the phrase sits on its own owner page. The entry ships anyway:
+    // it is the natural target the moment a future page says 'safety
+    // string' in passing, and the palette / JSON-LD consumers read
+    // this file too (the ak-factor shape). MATCHING RULE for that
+    // future page: the exact phrase 'safety string(s)' (hyphenated
+    // accepted). Do NOT auto-match 'safety circuit' — two senses in
+    // scope (a device's wire+contact circuit at boolean-logic-
+    // latches:130 vs the drive enable chain at start-stop-commands:321)
+    // — and do NOT auto-match 'safety chain(s)' (function-blocks:148):
+    // DIFFERENT referent — there it names the software boolean/latch
+    // family the wiresheet builds (quizzes/function-blocks.js q71/78
+    // use it the same way), not the hardwired starter-circuit string
+    // this entry defines; marking it would contradict the sentence it
+    // sits in.
+    'safety-string': {
+        term: 'safety string',
+        def: 'The hardwired series circuit of safety contacts — freeze '
+           + 'stat, high-static switch, firestat, overloads — wired in '
+           + 'line with a starter\'s control power, so any one of them '
+           + 'opening kills the equipment no matter what any software '
+           + 'commands. The string is why a tripped safety outranks '
+           + 'every override on the graphic.',
+        owners: ['/education/start-stop-commands.html'],
+    },
+
+    // ONE combined entry, not two: the poles appear paired or adjacent
+    // at two of the three markable sites (controls-commissioning:63
+    // holds both in one sentence; status-and-proof:196 is the single
+    // token 'NO/NC', which no single-pole entry could resolve), and
+    // the house has combined-abstraction precedent (dry-contact,
+    // installed-characteristic, inrush). MATCHING RULE: the spelled
+    // forms 'normally open'/'normally closed' (space or hyphen, any
+    // case) and the paired token 'NO/NC'. NEVER match bare 'NO' or
+    // 'NC': every bare prose 'NO' outside the owner page is the
+    // English word in emphatic caps (reading-a-wiresheet's trace
+    // idiom — 'The first NO is your block'; the one abbreviation-sense
+    // bare NO, commanding-actuators:280, is suppressed by ownership
+    // anyway), and the dotted forms N.O./N/C have zero
+    // corpus occurrences (do not pre-authorize; verify by hand if one
+    // ever appears). Owner: commanding-actuators — L277-289 IS the
+    // definition ('the word normally is the trap…'). boolean-logic-
+    // latches:126 teaches the NC-safety fail-safe CONVENTION, not the
+    // at-rest abstraction — non-owner, mark stands (the
+    // velocity-pressure shape; flagged to the owner on the drafting
+    // PR). Inventory 2026-08-15: 4 markable across 3 pages.
+    'normally-open-closed': {
+        term: 'normally open / normally closed (NO/NC)',
+        def: 'The at-rest state — what a contact or a valve does with '
+           + 'no actuation. <em>Normally</em> means the position with '
+           + 'no power and no signal, not the position it usually '
+           + 'operates in: a normally-open contact sits open until '
+           + 'driven closed, a normally-closed valve springs shut the '
+           + 'moment control disappears. Which way a device rests is a '
+           + 'design decision about what failure should look like.',
+        owners: ['/education/commanding-actuators.html'],
+    },
+
+    // ── §5 multi-benign — signals ───────────────────────────────────
+
+    // MATCHING RULE: 'live zero' / 'live-zero', any case, wherever it
+    // appears in rendered body prose. Owners: analog-sensing (the
+    // dedicated H2, id=live-zero — the page other pages link into) and
+    // signal-scaling (its ref-note at :242 IS a one-line definition —
+    // the page teaches the term in miniature, so suppression costs
+    // nothing and encodes the relationship). commanding-actuators:76
+    // self-defines in apposition and stays a NON-owner — the page
+    // teaches command spans and points at analog-sensing#live-zero in
+    // the same sentence; its mark stands. Inventory 2026-08-15: the
+    // live-zero half of 7 family marks.
+    'live-zero': {
+        term: 'live zero',
+        def: 'A signal range whose bottom is a real, non-zero value — '
+           + '4 mA in a 4–20 loop, 2 V in 2–10 — so a dead circuit '
+           + 'reads <em>below range</em> instead of as a legitimate '
+           + 'zero. The offset is the diagnostic: a broken wire and an '
+           + 'honest bottom-of-scale reading stop looking identical.',
+        owners: [
+            '/education/analog-sensing.html',
+            '/tools/signal-scaling.html',
+        ],
+    },
+
+    // MATCHING RULE — by PART OF SPEECH, not sense: mark the verbal /
+    // participial family only ('railed', verb 'rails', 'hard-rail')
+    // where a signal, reading or commanded position is pinned at an
+    // extremity of its range — EITHER end (metering-devices:269 rails
+    // a valve command at 0% or 100%). The NOUN 'rail(s)' is NEVER
+    // marked: every noun use in the SWEEP-SCOPE is a drawing-metaphor
+    // number-line rail, a power rail in comments, one guardrail
+    // metaphor (setpoint-math-reset:363) — or the pinned-state concept
+    // in noun form ('pins the reading to a rail',
+    // temperature-sensors:73), which the PoS rule excludes cleanly, so
+    // that line never reads as a missed mark. (Outside the sweep
+    // scope the workbench pages add more noun senses — the
+    // parameter-rail UI region, more guardrail metaphors — all equally
+    // excluded by part of speech.) The last def sentence reuses the analog-sensing
+    // quiz's own correction ('flatline-at-range-top') so the two
+    // surfaces cannot disagree: railed is NOT a failed sensor.
+    'railed': {
+        term: 'railed',
+        def: 'Pinned at the end of its range — either end. A railed '
+           + 'reading is a ceiling or a floor, not a measurement: it '
+           + 'says the truth is <em>at least</em> (or at most) this '
+           + 'much, and nothing more. A railed sensor hasn\'t failed — '
+           + 'it is answering honestly at the edge of what it can say.',
+        owners: ['/education/analog-sensing.html'],
+    },
+
+    // ── §5 multi-benign — air, psychrometrics & TAB ─────────────────
+
+    // MATCHING RULE: mark bare 'enthalpy' (case-insensitive; plural
+    // included, zero prose instances today) in rendered body prose,
+    // including adjectival uses that still denote the moist-air
+    // quantity ('enthalpy economizer logic', 'an enthalpy high
+    // limit'). COMPOUND BOUNDARY: when the next word across a space or
+    // hyphen is 'changeover', the occurrence belongs to the existing
+    // enthalpy-changeover entry, never this one — /enthalpy[- ]
+    // changeover/i. Tab-NAME references in prose ('the Enthalpy tab')
+    // never mark — the unglossed 'Dry-bulb tab' in the same
+    // economizer-ratio:31 sentence is the standing precedent. Owners:
+    // psychrometrics-basics (the definitional callout the rest of the
+    // site defers to) and economizers — its L222 defines inline while
+    // deferring ('total heat per pound of air (Psychrometrics Basics
+    // defines it properly)'), and owners[] is the only mechanism that
+    // can protect that beat: the economizer-ratio/enthalpy-changeover
+    // ruling (2026-08-14, M4) is the precedent, applied here the same
+    // way. psychrometric-chart is NOT an owner — its one prose
+    // occurrence is a methodology footnote using the term (the
+    // scoping-record guess did not reproduce). The refrigerant P-h
+    // sense appears nowhere in SWEEP-SCOPE (its one instance is
+    // refrigerant-loop:1354's disclaimer, a simulator surface), so no
+    // page exclusion is needed — the def stays air-primary with the
+    // moist-air frame stated. DEVICE-NOUN EXCLUSION (verification
+    // ruling 2026-08-15): when 'enthalpy' names an energy-recovery
+    // device class rather than the quantity — the head noun is
+    // device, wheel, core, plate, kind, exchanger
+    // (dedicated-outdoor-air:297-300 is the standing cluster) — it
+    // never marks; the quantity def under a device name is the wrong
+    // panel, the sensible/latent COINED-COMPOUND parallel.
+    // Inventory 2026-08-15: 19 markable across 9 pages after the
+    // device-noun exclusion (dedicated-outdoor-air drops to its :217
+    // quantity use).
+    'enthalpy': {
+        term: 'enthalpy',
+        def: 'Total heat content per pound of dry air — sensible and '
+           + 'latent rolled into one number, the h on a psych chart, '
+           + 'in Btu/lb. It is the property to compare when moisture '
+           + 'matters: two air streams at the same dry-bulb can carry '
+           + 'very different loads, and enthalpy is the number that '
+           + 'says so.',
+        owners: [
+            '/education/psychrometrics-basics.html',
+            '/education/economizers.html',
+        ],
+    },
+
+    // sensible-heat + latent-heat share one MATCHING RULE: mark (1)
+    // the exact compound 'sensible heat' / 'latent heat' — including
+    // the hyphenated-modifier form ('sensible-heat ratio', wrapping
+    // 'sensible heat' inside 'sensible heat ratio' until SHR ever gets
+    // its own entry) and an intervening <em> inside the button — and
+    // (2) the adjective immediately preceding a thermal-quantity noun
+    // (heat, load, capacity, cooling, heating, gain, removal, share,
+    // split, duty, penalty), wrapping the ADJECTIVE only — the
+    // dry-bulb precedent. NEVER mark: ordinary 'sensible' = reasonable
+    // (tell: non-thermal head noun — order, point, match, tightening,
+    // size; 'reasonable' substitutes cleanly); the adverb 'sensibly'
+    // (thermal but compoundless — and NOTE any scan must stem on
+    // 'sensib', the adverb is invisible to a 'sensible' grep);
+    // bare/elliptical uses with no head noun ('Latent is whatever's
+    // left'); distributed enumerations sharing one head ('total /
+    // sensible / latent capacity' — MIXED-RUN's sibling: no clean wrap
+    // exists); COINED-COMPOUND ('high-latent designs',
+    // 'sensible-only wheel'); UNITS-SPAN interiors (airside-load:226,
+    // :237). 'Latent defect'-style non-thermal latent: zero instances
+    // in scope. Owners (both entries): psychrometrics-basics (defines
+    // both as the halves of enthalpy), dedicated-outdoor-air (the
+    // Latent/Sensible Split H2 — the definition beat), economizers
+    // (the deceptive-wedge beat defines both emphatically). The tool
+    // methodology pages (airside-load, coil-sizing, coil-selection)
+    // stay NON-owners by the dry-bulb calibration — methodology notes
+    // don't confer ownership. Inventory 2026-08-15: 16 markable
+    // across 7 pages, the two entries jointly.
+    'sensible-heat': {
+        term: 'sensible heat',
+        def: 'The heat a thermometer sees — energy that moves dry-bulb '
+           + 'temperature when air gains or loses it. Sensible load is '
+           + 'the part ΔT captures, and the word covers sensible '
+           + 'heating, cooling and capacity alike: always the dry-bulb '
+           + 'half of the story, with the moisture half kept separate.',
+        owners: [
+            '/education/psychrometrics-basics.html',
+            '/education/dedicated-outdoor-air.html',
+            '/education/economizers.html',
+        ],
+    },
+
+    'latent-heat': {
+        term: 'latent heat',
+        def: 'The heat riding in water vapor — energy spent evaporating '
+           + 'moisture, which no thermometer in the airstream sees, '
+           + 'paid back when the vapor condenses on a cold coil. Latent '
+           + 'load is why a muggy day works a cooling coil far harder '
+           + 'than the dry-bulb reading alone suggests.',
+        owners: [
+            '/education/psychrometrics-basics.html',
+            '/education/dedicated-outdoor-air.html',
+            '/education/economizers.html',
+        ],
+    },
+
+    // Cross-referenced pair with ak-factor; the two defs each name the
+    // other so a reader landing on either gets the fork. MATCHING
+    // RULE, tested longest-match first: the Ak pattern
+    // \bAk\b(?:[ -][Ff]actors?)? runs FIRST (capital-A lowercase-k
+    // exactly — case is the exclusion mechanism, lowercase 'ak' lives
+    // only in ids and JS); then \bK[ -][Ff]actors?\b where Ak did not
+    // already consume the text. The left boundary before K is
+    // load-bearing twice: it excludes 'risK FACTORs'
+    // (coil-freeze-risk) and the K-factor substring inside
+    // 'AK-FACTOR'. Bare single-letter 'K' is NEVER marked, even in
+    // flow-equation prose ('CFM = K × √VP') — that is the variable
+    // symbol, not the term. Owners: the three pages that teach K's
+    // definition near-verbatim ('literally the CFM it reads at exactly
+    // 1.0 in. w.c.') — airflow (the tool), air-balancing §1,
+    // vav-systems' box-anatomy beat. Inventory 2026-08-15: exactly ONE
+    // markable site survives suppression (equipment-airflow:35);
+    // airside-load:229 renders the term only inside a data-metric
+    // attribute (UNITS-SPAN — structurally unreachable, flagged not
+    // fixed).
+    'k-factor': {
+        term: 'K-factor',
+        def: 'A VAV box\'s flow coefficient: the CFM its '
+           + 'velocity-pressure pickup reads at exactly 1.0 in. w.c., '
+           + 'so flow = K × √VP. It is the whole personality of the '
+           + 'box\'s flow reading — and a different animal from a '
+           + 'diffuser\'s Ak factor, which multiplies a measured '
+           + 'velocity, not √VP.',
+        owners: [
+            '/tools/airflow.html',
+            '/education/air-balancing.html',
+            '/education/vav-systems.html',
+        ],
+    },
+
+    // ZERO markable sites today — duct-traverse owns the entire
+    // corpus. Ships as k-factor's cross-reference target and for the
+    // palette / JSON-LD consumers (the safety-string shape). Matching
+    // rule above under k-factor (the Ak pattern runs first; bare
+    // prose 'Ak' wraps just 'Ak').
+    'ak-factor': {
+        term: 'Ak factor',
+        def: 'A diffuser\'s effective flow area in square feet — for a '
+           + 'stated instrument held in a stated position — so flow = '
+           + 'Ak × the velocity that instrument reads. It is a '
+           + 'calibration artifact, not geometry: not the neck\'s πr², not the face '
+           + 'dimensions, and not the VAV-box K-factor, which '
+           + 'multiplies √VP instead.',
+        owners: ['/tools/duct-traverse.html'],
+    },
+
+    // MATCHING RULE: the air-side compound only — /bypass (damper|
+    // box)(e?s)?/i where the sentence moves air. The other bypass
+    // domains earned no entry (see the §5 pass banner), the verb never
+    // marks in any inflection, the bare anaphoric noun never marks,
+    // and 'face-and-bypass' is a different device excluded by the
+    // entry-set decision. Cross-domain trap on the record: 'bypass
+    // leg' occurs once meaning an AIR stream
+    // (psychrometrics-basics:183, face-and-bypass mixing) — medium
+    // must be verified before marking, which is exactly why marks are
+    // hand-placed. Owner: air-balancing §3 (defines bypass systems,
+    // the box and the damper). Inventory 2026-08-15: 2 markable
+    // (vfds:359, vav-systems:509).
+    'bypass-damper': {
+        term: 'bypass damper',
+        def: 'An air-side spill path — a damper from supply to return '
+           + 'that opens as VAV boxes throttle down, relieving duct '
+           + 'static so the fan keeps moving air without '
+           + 'over-pressurizing the trunk. A different device from '
+           + 'face-and-bypass dampers, which modulate how much air '
+           + 'crosses a coil.',
+        owners: ['/education/air-balancing.html'],
+    },
+
+    // ── §5 multi-benign — staging & loops ───────────────────────────
+
+    // MATCHING RULE: three shapes, prose only — (a) the compound in
+    // any spelling ('lead/lag', 'lead-lag', 'lead lag'), always the
+    // staging sense; (b) role-attributive 'lead <unit>' / 'lag <unit>'
+    // where <unit> is staged equipment (pump, boiler, chiller, unit,
+    // stage); (c) anaphoric 'the lead' / 'the lag' only inside a
+    // passage the page has already established as staging via (a) or
+    // (b). Bare tokens NEVER mark: bare 'lead' is a sensor or motor
+    // conductor (temperature-sensors, voltage-drop, status-and-proof)
+    // or the ordinary verb; bare 'lag' is process lag on pid-basics or
+    // the ordinary verb; 'lagging' is the power-factor sense
+    // (electrical-quick-calc:192); 'leading' is digit-position or
+    // ordinary English. Owner: equipment-staging §3 ('The one that
+    // runs first is the lead; the next to come on is the lag').
+    // pump-control §6 is headed 'Lead/Lag and Parallel Pumps' but
+    // explicitly disclaims teaching and defers by link — the recorded
+    // non-owner shape (the primary-secondary/load-piping precedent),
+    // so its line-689 tokens stay markable. Note pump-control carries
+    // element id="lead-lag" — no collision with the transform's
+    // gloss-tip-lead-lag namespace, verified distinct. Inventory
+    // 2026-08-15: 5 markable across 3 pages.
+    'lead-lag': {
+        term: 'lead/lag',
+        def: 'The staging roles in a multiple-unit plant: the '
+           + '<em>lead</em> runs first, the <em>lag</em> comes on when '
+           + 'the lead can\'t carry the load alone — with three pumps, '
+           + 'first lag and second lag. A good sequence rotates the '
+           + 'roles on runtime or a schedule so the hours spread '
+           + 'across the machines instead of piling onto one.',
+        owners: ['/education/equipment-staging.html'],
+    },
+
+    // MATCHING RULE — the SUBJECT test, corpus-verified with zero
+    // ambiguous cases: mark \b[Hh]unt(s|ing|ed)?\b only where the
+    // thing hunting is equipment or a control entity (loop, valve,
+    // damper, sequence, stage, plant, RTU), used intransitively or
+    // reflexively ('hunts itself to an early grave'), including bare
+    // gerund nominals ('prone to hunting', 'overshoot and hunting').
+    // The ordinary fault-search register always has a human subject
+    // and usually an object or for/in complement ('hunt for what
+    // changed', 'which half to hunt in', 'Hunt downstream') — never
+    // marked. COINED-COMPOUND: pid-basics:92's 'overshoot-and-hunt'
+    // skips (same footing as 'regenerative front end'). Owner:
+    // equipment-staging — L368 introduces the term em-marked with the
+    // full mechanism ('the sequence would <em>hunt</em>, cycling a
+    // pump on and off indefinitely'); pid-basics USES the word twice
+    // but teaches the phenomenon under 'oscillation'/'ringing' and
+    // never defines 'hunting', so its L47 mark is exactly where a
+    // novice wants the definition — non-owner (the scoping-record
+    // guess did not reproduce). economizers:398's apposition
+    // complements rather than shadows — non-owner, mark stands.
+    // Inventory 2026-08-15: 15 markable across 10 pages after the
+    // coined-compound skip.
+    'hunting': {
+        term: 'hunting',
+        def: 'A control loop oscillating instead of settling — the '
+           + 'valve, damper or staging sequence overshoots, corrects, '
+           + 'overshoots the other way, and never comes to rest on '
+           + 'setpoint. Chronic hunting means something in the loop is '
+           + 'wrong — tuning pushed too hard, a deadband too thin, a '
+           + 'valve with poor authority, a sensor reading the wrong '
+           + 'spot — and it wears actuators and equipment on top of '
+           + 'whatever comfort complaint it causes.',
+        owners: ['/education/equipment-staging.html'],
+    },
+
+    // MATCHING RULE: the word-bounded acronym 'PICV'/'PICVs' and the
+    // full compound 'pressure-independent control valve(s)' (space
+    // accepted for the hyphen). When the compound is immediately
+    // followed by its parenthetical acronym — 'pressure-independent
+    // control valves (PICVs)' — that is ONE gloss site: wrap the
+    // compound, leave the parenthetical bare (load-piping:481 and
+    // pump-control:696 are the standing cases). Bare
+    // 'pressure-independent' NEVER marks: it overwhelmingly modifies
+    // VAV boxes (the air-side flow-metering sense those pages teach
+    // themselves) and once relief fans (building-pressure:504).
+    // ANCHORED-LINK applies twice (air-balancing:187 and
+    // vav-systems:383 carry PICV inside <a> tags pointing at the
+    // owner's #picv section). Owner: balancing — the dedicated PICV
+    // section (id=picv) every other mention on the site links into.
+    // Inventory 2026-08-15: 3 markable; coil-selection:305's bare
+    // acronym is the highest-value mark (the other two self-expand in
+    // place).
+    'picv': {
+        term: 'PICV',
+        def: 'A pressure-independent control valve: a modulating valve '
+           + 'with an internal ΔP-compensating cartridge, so a '
+           + 'commanded position maps to a fraction of design '
+           + '<em>flow</em> rather than a fraction of orifice — and '
+           + 'holds that flow as system pressure swings, down to the '
+           + 'cartridge\'s minimum ΔP. The balancing and the control '
+           + 'live in one valve body.',
+        owners: ['/education/balancing.html'],
     },
 };
