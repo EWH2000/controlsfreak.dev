@@ -41,7 +41,7 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
             <summary>One coil, in isolation.</summary>
             <div class="preamble-rest">
                 Capacity tab: enter the air going in and the air coming out,
-                get total / sensible / latent capacity and the sensible heat ratio. Leaving-state tab
+                get total / sensible / latent capacity and the <button type="button" data-gloss="sensible-heat">sensible heat</button> ratio. Leaving-state tab
                 runs it backwards — entering air plus the load the coil has to carry, solve for the
                 leaving-air state. Same math the psychrometric chart runs on its coil stages, surfaced
                 on its own so a quick capacity check doesn't need a whole AHU chain.
@@ -114,7 +114,7 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
                         The seeded leaving state (<span data-us="55 °F" data-metric="12.8 °C">55 °F</span> DB /
                         <span data-us="54 °F" data-metric="12.2 °C">54 °F</span> WB) is an intentionally
                         aggressive, near-saturation dehumidifying coil (~95&nbsp;% RH off the coil),
-                        so it drives a deliberately low sensible-heat ratio. Real leaving air often
+                        so it drives a deliberately low <button type="button" data-gloss="sensible-heat">sensible-heat</button> ratio. Real leaving air often
                         runs a touch drier — edit it to your design condition.
                     </p>
                     <p class="ref-note cs-heat-only">
@@ -179,16 +179,16 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
                     leaving at <span data-us="55 °F / 54 °F WB" data-metric="12.8 °C / 12.2 °C WB">55 °F / 54 °F WB</span>.
                 </p>
                 <ol class="ref-note worked-list">
-                    <li>Each air state fixes its enthalpy <code>h</code> and humidity
+                    <li>Each air state fixes its <button type="button" data-gloss="enthalpy">enthalpy</button> <code>h</code> and humidity
                         ratio <code>W</code> from the ASHRAE chart math.</li>
                     <li>Convert volumetric flow to mass flow of dry air:<br>
                         <code>ṁ = CFM × 60 ÷ v<sub>entering</sub></code> (lb dry air / h).</li>
-                    <li>Total capacity is the enthalpy swing:
+                    <li>Total capacity is the <button type="button" data-gloss="enthalpy">enthalpy</button> swing:
                         <code>q<sub>total</sub> = ṁ × Δh</code>. Sensible is the
                         <button type="button" data-gloss="dry-bulb">dry-bulb</button> swing:
                         <code>q<sub>sens</sub> = ṁ × (0.240 + 0.444·W) × ΔDB</code>.
                         Latent is whatever's left: <code>q<sub>total</sub> − q<sub>sens</sub></code>.</li>
-                    <li>The sensible heat ratio
+                    <li>The <button type="button" data-gloss="sensible-heat">sensible heat</button> ratio
                         <code>SHR = q<sub>sens</sub> ÷ q<sub>total</sub></code> says how
                         much of the coil's work drops temperature versus wringing
                         out water — a low SHR is a coil fighting a humid space.</li>
@@ -304,13 +304,13 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
                 <ol class="ref-note worked-list">
                     <li>The mass flow <code>ṁ</code> comes from airflow and the
                         entering specific volume, same as the Capacity tab.</li>
-                    <li>For a cooling coil, the sensible load sets the <button type="button" data-gloss="dry-bulb">dry-bulb</button>
+                    <li>For a cooling coil, the <button type="button" data-gloss="sensible-heat">sensible</button> load sets the <button type="button" data-gloss="dry-bulb">dry-bulb</button>
                         drop: <code>ΔDB = −q<sub>sens</sub> ÷ (ṁ × (0.240 + 0.444·W))</code>.
-                        The total load (sensible + latent) sets the enthalpy
+                        The total load (sensible + latent) sets the <button type="button" data-gloss="enthalpy">enthalpy</button>
                         drop: <code>Δh = −q<sub>total</sub> ÷ ṁ</code>. <button type="button" data-gloss="dry-bulb">Dry-bulb</button>
-                        and enthalpy together fix the leaving point.</li>
-                    <li>If the latent load is more than the air can shed at that
-                        sensible split, the leaving point lands on the saturation
+                        and <button type="button" data-gloss="enthalpy">enthalpy</button> together fix the leaving point.</li>
+                    <li>If the <button type="button" data-gloss="latent-heat">latent</button> load is more than the air can shed at that
+                        <button type="button" data-gloss="sensible-heat">sensible</button> split, the leaving point lands on the saturation
                         curve — the coil's apparatus dew point. The status line
                         flags it.</li>
                     <li>For a heating coil it's pure sensible: the capacity sets

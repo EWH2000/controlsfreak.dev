@@ -384,7 +384,7 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                         <label class="ps-label" id="hc-val-lbl" for="hc-val">Leaving DB (°F)</label>
                         <input class="ps-input" type="number" id="hc-val" step="0.5" min="-50" max="200" value="75">
                     </div>
-                    <p class="ref-note">Sensible heating only — humidity ratio is unchanged across the coil. Leaving DB must be at or above entering DB.</p>
+                    <p class="ref-note"><button type="button" data-gloss="sensible-heat">Sensible</button> heating only — humidity ratio is unchanged across the coil. Leaving DB must be at or above entering DB.</p>
                 </div>
 
                 <!-- HUM editor -->
@@ -475,7 +475,7 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                 Properties are per pound of dry air, computed internally from the ASHRAE Fundamentals (Chapter 1) IP equations
                 and converted to your selected display units — the formula forms quoted here (0.240, 0.444, CFM·60/v) are
                 that IP formulation; metric readouts are exact conversions of the same math. RH is taken as the partial-pressure ratio (the usual approximation).
-                Mixing is a mass-weighted enthalpy / humidity-ratio combination. Adiabatic humidification holds <button type="button" data-gloss="wet-bulb">wet-bulb</button> constant.
+                Mixing is a mass-weighted <button type="button" data-gloss="enthalpy">enthalpy</button> / humidity-ratio combination. Adiabatic humidification holds <button type="button" data-gloss="wet-bulb">wet-bulb</button> constant.
                 Coil capacities use AHU airflow and inlet specific volume:
                 Q = ṁ·Δh with ṁ = CFM·60/v<sub>in</sub>; Q<sub>sens</sub> = ṁ·(0.240 + 0.444·W<sub>in</sub>)·ΔT. For building feel
                 and quick design-day state-point checks — not a substitute for a calibrated load-study tool.

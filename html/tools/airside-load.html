@@ -71,7 +71,7 @@ keywords: cfm delta t sensible latent total heat grains enthalpy btuh mbh tons 1
                         Enter ΔT as a positive difference — entering-to-leaving on a heating coil, leaving-to-entering on cooling; the math is the same either direction.
                     </p>
                     <p class="ref-note">
-                        <strong>Sensible only</strong> — temperature change alone. A wet cooling coil is also moving latent heat; that&rsquo;s the other two tabs. Tons live on the Total tab, because a ton is <span data-us="12 MBH" data-metric="3.517 kW">12 MBH</span> of <em>total</em> heat.
+                        <strong>Sensible only</strong> — temperature change alone. A wet cooling coil is also moving <button type="button" data-gloss="latent-heat">latent heat</button>; that&rsquo;s the other two tabs. Tons live on the Total tab, because a ton is <span data-us="12 MBH" data-metric="3.517 kW">12 MBH</span> of <em>total</em> heat.
                     </p>
                 </section>
 
@@ -157,7 +157,7 @@ keywords: cfm delta t sensible latent total heat grains enthalpy btuh mbh tons 1
                 <ol class="ref-note worked-list">
                     <li>The latent equation: <code><span data-us="ql = 0.68 × CFM × Δgr/lb, in Btu/h" data-metric="ql = 0.83 × m³/h × Δg/kg, in W">ql = 0.68 × CFM × Δgr/lb, in Btu/h</span></code>.</li>
                     <li>Plug in: <code><span data-us="ql = 0.68 × 2000 × 10 = 13,600 Btu/h = 13.6 MBH" data-metric="ql = 0.83 × 3398 × 1.4 = 3,948 W = 3.9 kW">ql = 0.68 × 2000 × 10 = 13,600 Btu/h = 13.6 MBH</span></code>.</li>
-                    <li>Every <span data-us="grain" data-metric="gram">grain</span> the coil removes is water condensing on the fins and giving up its latent heat — heat the compressor has to move even though no thermometer in the airstream sees it.</li>
+                    <li>Every <span data-us="grain" data-metric="gram">grain</span> the coil removes is water condensing on the fins and giving up its <button type="button" data-gloss="latent-heat">latent heat</button> — heat the compressor has to move even though no thermometer in the airstream sees it.</li>
                 </ol>
             </section>
         </div>
@@ -189,7 +189,7 @@ keywords: cfm delta t sensible latent total heat grains enthalpy btuh mbh tons 1
                         <input class="ps-input" type="number" id="asl-t-load" step="any" min="0" placeholder="56.7" value="56.7">
                     </div>
                     <p class="ref-note">
-                        Δh is entering minus leaving enthalpy. Starting from temperatures and humidity instead? The <a href="/tools/coil-sizing.html">coil-sizing calculator</a> computes the air states and splits the load into sensible + latent for you.
+                        Δh is entering minus leaving <button type="button" data-gloss="enthalpy">enthalpy</button>. Starting from temperatures and humidity instead? The <a href="/tools/coil-sizing.html">coil-sizing calculator</a> computes the air states and splits the load into sensible + latent for you.
                     </p>
                 </section>
 
@@ -215,7 +215,7 @@ keywords: cfm delta t sensible latent total heat grains enthalpy btuh mbh tons 1
             <section class="tool-body-row">
                 <h2 class="ps-section-label">Worked example</h2>
                 <p class="ref-note worked-intro">
-                    Same coil, all in: the entering and leaving air read <span data-us="6.3 Btu/lb" data-metric="14.7 kJ/kg">6.3 Btu/lb</span> apart in enthalpy.
+                    Same coil, all in: the entering and leaving air read <span data-us="6.3 Btu/lb" data-metric="14.7 kJ/kg">6.3 Btu/lb</span> apart in <button type="button" data-gloss="enthalpy">enthalpy</button>.
                 </p>
                 <ol class="ref-note worked-list">
                     <li>The total equation: <code><span data-us="qt = 4.5 × CFM × Δh, in Btu/h" data-metric="qt = 0.33 × m³/h × Δh, in W">qt = 4.5 × CFM × Δh, in Btu/h</span></code>.</li>
