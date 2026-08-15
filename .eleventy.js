@@ -702,10 +702,13 @@ module.exports = function(eleventyConfig) {
     // Read it as *no marked trigger ships unresolved or on its owning
     // page*, never as *every occurrence is marked*.
     //
-    // "Literal" means DOUBLE-quoted. The single-quoted spelling is not
-    // skipped, it is rejected — see the single-quote arm below, which
-    // exists because skipping it ships a styled trigger with no panel.
-    // A value with no quotes at all remains outside the floor.
+    // "Literal" means DOUBLE-quoted. Every other spelling — single-
+    // quoted, unquoted, valueless, a spaced `=` — is not skipped, it is
+    // rejected: see the malformed-form arm below, which exists because
+    // skipping any of them ships a styled trigger with no panel. Since
+    // the #312 widening (owner ruling 2026-08-15) no quoting variant
+    // sits outside the floor; what remains outside is JS-painted prose
+    // only, per the paragraph above.
     eleventyConfig.addTransform("gloss", function (content, outputPath) {
         const out = (this.page && this.page.outputPath) || outputPath;
         if (typeof out !== "string" || !out.endsWith(".html")) return content;
@@ -732,34 +735,52 @@ module.exports = function(eleventyConfig) {
         const blank = (m) => m.replace(/[^\n]/g, " ");
         const scannable = content.replace(/<!--[\s\S]*?-->/g, blank);
 
-        // The single-quote arm, and it runs OUTSIDE the trigger loop
-        // below on purpose: a page whose only mark is single-quoted has
+        // The malformed-form arm, and it runs OUTSIDE the trigger loop
+        // below on purpose: a page whose only mark is misspelled has
         // zero valid triggers, so that loop never executes and nothing
         // else here would ever look at the page. The
         // `content.includes("data-gloss")` precondition above still
-        // admits it — the substring is there whichever quote character
-        // follows the `=`, which is what makes this reachable at all.
+        // admits every spelling — the substring is there however the
+        // value is quoted, which is what makes this reachable at all.
         //
         // Why it fails the build rather than being tolerated: TRIGGER_RE
-        // matches only double-quoted values, so `data-gloss='sr-latch'`
-        // is invisible to every check AND to the splice. The word still
-        // picks up the `button[data-gloss]` underline from styles.css,
-        // so what ships is a styled affordance with no panel, no runtime
-        // and no aria-describedby — a dead trigger that looks live, the
-        // exact silent-drift class this transform exists to make
-        // unrepresentable. Widening TRIGGER_RE to accept both quote
-        // styles would also work, but the markup contract is ONE form;
-        // rejecting the other keeps it that way instead of quietly
-        // blessing a second spelling.
+        // matches only the canonical `data-gloss="…"`, so the
+        // single-quoted, unquoted, valueless and spaced-equals spellings
+        // are all invisible to every check AND to the splice. The word
+        // still picks up the `button[data-gloss]` underline from
+        // styles.css (an attribute-PRESENCE selector — it matches every
+        // spelling alike), so what ships is a styled affordance with no
+        // panel, no runtime and no aria-describedby — a dead trigger
+        // that looks live, the exact silent-drift class this transform
+        // exists to make unrepresentable. Widening TRIGGER_RE to accept
+        // the other forms would also work, but the markup contract is
+        // ONE form; rejecting the rest keeps it that way instead of
+        // quietly blessing alternate spellings. (Ledger #312 — this arm
+        // began as a single-quote check on PR #567 and was widened to
+        // every non-canonical spelling at the owner's ruling,
+        // 2026-08-15.)
         //
-        // Scans `scannable`, so a commented-out single-quoted example is
-        // masked out and does not fail — same courtesy the trigger loop
-        // extends to a parked double-quoted one.
-        const SINGLE_QUOTE_RE = /\bdata-gloss='[^']*'/g;
-        let sq;
-        SINGLE_QUOTE_RE.lastIndex = 0;
-        while ((sq = SINGLE_QUOTE_RE.exec(scannable)) !== null) {
-            offenders.push(`  ${sq[0]} — data-gloss values must be double-quoted — the single-quoted form is invisible to the gloss transform and ships a styled trigger with no panel`);
+        // `(?![\w-])` keeps `data-glossary`-shaped tokens from
+        // matching; `(?!=")` passes the one canonical spelling through
+        // to TRIGGER_RE. A match preceded by `[`, `'` or `"` is a CSS
+        // attribute selector or a quoted string MENTION of the
+        // attribute — neither is an attribute on an element — and both
+        // stay legal: no rendered page carries either today, and the
+        // exclusion is what keeps a future inline `button[data-gloss]`
+        // style rule or a documentation <code> span from tripping a
+        // guard that is about markup.
+        //
+        // Scans `scannable`, so a commented-out example in any spelling
+        // is masked out and does not fail — same courtesy the trigger
+        // loop extends to a parked double-quoted one.
+        const MALFORMED_RE = /\bdata-gloss(?![\w-])(?!=")/g;
+        let mf;
+        MALFORMED_RE.lastIndex = 0;
+        while ((mf = MALFORMED_RE.exec(scannable)) !== null) {
+            const prev = mf.index > 0 ? scannable[mf.index - 1] : "";
+            if (prev === "[" || prev === "'" || prev === '"') continue;
+            const context = scannable.slice(mf.index, mf.index + 48).split(">")[0].trimEnd();
+            offenders.push(`  ${context} — a data-gloss value must be exactly double-quoted (data-gloss="id"); every other spelling (single-quoted, unquoted, valueless, spaced =) is invisible to the gloss transform and ships a styled trigger with no panel`);
         }
 
         // Opening tags carrying a data-gloss attribute. `[^>]*` is the
