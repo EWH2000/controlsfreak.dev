@@ -112,7 +112,7 @@ keywords: mstp ms/tp token ring max master max info frames baud termination eol 
             </p>
 
             <p>
-                A <strong>duplicate MAC</strong> is the addressing failure with the strangest symptom. Two devices both believe it&rsquo;s their turn when the token reaches the shared address; both transmit; the frames collide and corrupt. Depending on timing, one device wins for a while and the other looks dead, then they trade — so the front end shows two controllers <em>taking turns</em> flickering offline, often miles apart in the device list because their instances are nothing alike. Trunk-wide retries and CRC errors climb too: a duplicate MAC degrades everyone, not just the twins. It&rsquo;s a favorite gift of the controller swap — the replacement arrives with a factory default of MAC&nbsp;0 or 1, which is usually the router.
+                A <strong>duplicate MAC</strong> is the addressing failure with the strangest symptom. Two devices both believe it&rsquo;s their turn when the token reaches the shared address; both transmit; the frames collide and corrupt. Depending on timing, one device wins for a while and the other looks dead, then they trade — so the <button type="button" data-gloss="front-end">front end</button> shows two controllers <em>taking turns</em> flickering offline, often miles apart in the device list because their instances are nothing alike. Trunk-wide retries and CRC errors climb too: a duplicate MAC degrades everyone, not just the twins. It&rsquo;s a favorite gift of the controller swap — the replacement arrives with a factory default of MAC&nbsp;0 or 1, which is usually the router.
             </p>
 
             <h2 class="subhead" id="two-wires">The two wires — what the electrical layer needs</h2>
