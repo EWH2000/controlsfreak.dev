@@ -160,7 +160,7 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
                     </div>
                     <p class="ref-note">
                         Atmospheric pressure is fixed at sea level; humidity and
-                        enthalpy match the chart tool at 0 ft altitude. For an
+                        <button type="button" data-gloss="enthalpy">enthalpy</button> match the chart tool at 0 ft altitude. For an
                         altitude-adjusted answer, the
                         <a href="/tools/psychrometric-chart.html">psychrometric chart</a>
                         carries an altitude input.
@@ -211,15 +211,15 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
                     <li>The mixed-state readouts show what the coil would see
                         at the calc's %OA — useful when the answer lands
                         between 0 and 100.</li>
-                    <li>The enthalpy comparison is the real reason a high-end
+                    <li>The <button type="button" data-gloss="enthalpy">enthalpy</button> comparison is the real reason a high-end
                         BAS is more conservative: an OA that's two degrees
                         cooler than RA but soaked with moisture carries more
                         heat per <span data-us="pound" data-metric="kilogram">pound</span> than RA does. <button type="button" data-gloss="economizer">Free cooling</button> on <button type="button" data-gloss="dry-bulb">dry-bulb</button>
-                        alone, latent penalty on the coil.</li>
+                        alone, <button type="button" data-gloss="latent-heat">latent</button> penalty on the coil.</li>
                 </ol>
                 <p class="ref-note">
                     Most commercial <button type="button" data-gloss="economizer">economizer</button> logic is <button type="button" data-gloss="dry-bulb">dry-bulb</button> with a
-                    humidity high-limit; enthalpy <button type="button" data-gloss="economizer">economizer</button> logic
+                    humidity high-limit; <button type="button" data-gloss="enthalpy">enthalpy</button> <button type="button" data-gloss="economizer">economizer</button> logic
                     compares <code>h<sub>OA</sub></code> vs.
                     <code>h<sub>RA</sub></code> to gate the damper before
                     any <button type="button" data-gloss="dry-bulb">dry-bulb</button> modulation runs.
@@ -236,7 +236,7 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
                 actually open. In cold weather the same math that finds <button type="button" data-gloss="economizer">free
                 cooling</button> can call for enough outdoor air to
                 <a href="/tools/coil-freeze-risk.html">freeze a coil</a>; the
-                freezestat and the mixed-air low limit govern, not the
+                <button type="button" data-gloss="freezestat">freezestat</button> and the mixed-air low limit govern, not the
                 calculator.
             </p>
         </section>

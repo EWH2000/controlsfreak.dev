@@ -206,10 +206,10 @@ faqs:
                     <li>Convert volumetric flow to mass: <code>m<sub>i</sub> = CFM<sub>i</sub> ÷ v<sub>i</sub></code>.
                         Cold streams are denser; warm streams less so.</li>
                     <li>Mass-weight the two variables that mix linearly with mass —
-                        humidity ratio and enthalpy:<br>
+                        humidity ratio and <button type="button" data-gloss="enthalpy">enthalpy</button>:<br>
                         <code>W<sub>mix</sub> = Σ(m<sub>i</sub> · W<sub>i</sub>) ÷ Σm<sub>i</sub></code>,
                         <code>h<sub>mix</sub> = Σ(m<sub>i</sub> · h<sub>i</sub>) ÷ Σm<sub>i</sub></code>.</li>
-                    <li>Recover <button type="button" data-gloss="dry-bulb">dry-bulb</button> by inverting the enthalpy formula
+                    <li>Recover <button type="button" data-gloss="dry-bulb">dry-bulb</button> by inverting the <button type="button" data-gloss="enthalpy">enthalpy</button> formula
                         <code>h = (0.240 + 0.444·W)·T + 1061·W</code>:<br>
                         <code>T<sub>mix</sub> = (h<sub>mix</sub> − 1061·W<sub>mix</sub>) ÷ (0.240 + 0.444·W<sub>mix</sub>)</code>.</li>
                     <li>Materialize the full state at the site pressure to read out RH, WB, DP, and v.</li>
@@ -341,7 +341,7 @@ faqs:
                 </p>
                 <ol class="ref-note worked-list">
                     <li>Skip the volumetric-to-mass step — fractions are already in mass units.</li>
-                    <li>Mass-weight humidity ratio and enthalpy directly:
+                    <li>Mass-weight humidity ratio and <button type="button" data-gloss="enthalpy">enthalpy</button> directly:
                         <code>W<sub>mix</sub> = 0.22·W<sub>1</sub> + 0.67·W<sub>2</sub> + 0.11·W<sub>3</sub></code>,
                         same for <code>h<sub>mix</sub></code>.</li>
                     <li>Recover <button type="button" data-gloss="dry-bulb">dry-bulb</button> the same way and materialize the full state.</li>

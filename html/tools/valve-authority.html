@@ -89,7 +89,7 @@ faqs:
         <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
             <summary>A control valve only controls flow if it claims a healthy share of the circuit's pressure drop — that share is its <em>authority</em>.</summary>
             <div class="preamble-rest">
-                Authority <code>β = ΔP<sub>valve, open</sub> ÷ (ΔP<sub>valve, open</sub> + ΔP<sub>rest</sub>)</code> compares the drop across the wide-open valve at design flow to the total drop across the part of the branch that varies as the valve strokes. High authority keeps control across the whole stroke; low authority front-loads it into the first crack of travel, and the loop hunts. Size the valve's <a href="/tools/valve-cv.html">Cv</a> first, then check authority here.
+                Authority <code>β = ΔP<sub>valve, open</sub> ÷ (ΔP<sub>valve, open</sub> + ΔP<sub>rest</sub>)</code> compares the drop across the wide-open valve at design flow to the total drop across the part of the branch that varies as the valve strokes. High authority keeps control across the whole stroke; low authority front-loads it into the first crack of travel, and the loop <button type="button" data-gloss="hunting">hunts</button>. Size the valve's <a href="/tools/valve-cv.html">Cv</a> first, then check authority here.
             </div>
         </details>
         <p class="ps-seed-note">Inputs are seeded with an example — edit them to your numbers.</p>
@@ -169,7 +169,7 @@ faqs:
                 </tbody>
             </table>
             <p class="ref-note">
-                Low authority means the valve does almost all of its throttling in the first sliver of stroke — the loop hunts and the rest of the travel does nothing. Oversizing on <button type="button" data-gloss="cv">Cv</button> is the quiet killer: a valve far bigger than the duty barely cracks open, so it takes almost none of the circuit's drop and authority collapses. Size for the duty, then confirm the valve claims enough of the branch to actually control.
+                Low authority means the valve does almost all of its throttling in the first sliver of stroke — the loop <button type="button" data-gloss="hunting">hunts</button> and the rest of the travel does nothing. Oversizing on <button type="button" data-gloss="cv">Cv</button> is the quiet killer: a valve far bigger than the duty barely cracks open, so it takes almost none of the circuit's drop and authority collapses. Size for the duty, then confirm the valve claims enough of the branch to actually control.
             </p>
         </section>
     </div>
