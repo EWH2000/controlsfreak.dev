@@ -431,6 +431,49 @@ evaporate with it:
   per-context handling, then the §7.2 quiz-bank component lane — the
   brief re-triage follows.
 
+- **2026-08-15 — §5 multi-benign SHIPPED; the close's decision batch
+  cleared.** One session, five merged PRs: #576 (ledger marker
+  true-up — four headings contradicted their bodies), #577 (the #311
+  ruling executed — tuner rewritten vendor-free), #578 (drafting:
+  glossary 42 → 63, a WRITTEN MATCHING RULE per term recorded in
+  glossary.js as the lane contract, plus the #312 arm widening), and
+  the marking fan-out #579 (tools — 38 marks, 15 pages) / #580
+  (education — 72 marks, 22 pages). **Measured end state: 369 marks
+  site-wide — 246 education · 116 tools · 7 landings** (+110 over the
+  phase-2 close; the first pass where lane arithmetic, the per-entry
+  inventory comments, and the reconciliation grep all agree exactly).
+  Decision-batch rulings taken in-session: **#311 → REWRITE
+  vendor-free**; **#312 → EXTEND the arm** (every non-double-quoted
+  `data-gloss` spelling now fails the build).
+  Process notes banked:
+  - The 13-family inventory fan-out sized from per-page prose
+    classification, per the phase-2 lesson — ~1,100 raw hits reduced
+    to 110 shipped marks (the §5 premise held in all 13 families; no
+    §4 demotion anywhere).
+  - A 7-checker adversarial round before the drafting PR: 26
+    findings, 19 applied — 4 BLOCKING, best catch the AO definition
+    narrowed to position commands while its own designated mark site
+    is a VFD speed reference. 4 findings refuted as sweep-scope
+    ambiguity, which became the named **SWEEP-SCOPE** ruling.
+  - New named surface rulings in the §5 banner: SWEEP-SCOPE,
+    ANCHORED-LINK, CODE-NOTATION, plus the **DEVICE-NOUN** exclusion
+    on enthalpy (energy-recovery device-class uses never mark).
+  - **Three entries ship markless by design** (ui, safety-string,
+    ak-factor — cross-reference targets / future-page surface), and
+    the **landings yield zero §5 marks structurally**: landing prose
+    is almost entirely navCard() macro args. Both recorded for the
+    next tier's sizing.
+  - Owner cleared the two lane judgment calls at review:
+    controls-commissioning:128 carries one trigger (freezestat), not
+    two adjacent ones on the same panel; lead-lag's anaphoric marks
+    wrap the role word, not the article.
+  Remaining arc phases per §9: **the collision tier (§4) with
+  per-context handling** (the `kind: 'disambiguation'` component is
+  still deliberately unbuilt — that design is the next phase's first
+  deliverable) → **the §7.2 quiz-bank component lane** → the brief
+  re-triage (the friction file's quiz-expansion entry — owner
+  direction 2026-08-14 — carries the CEO signal into that pick).
+
 ## Open questions
 
 - ~~**Mid-density pilot page for the tooltip component**~~ — settled
