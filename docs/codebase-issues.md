@@ -14716,7 +14716,7 @@ class of devices ever matters, the fix is the statusbar's own
 wrap/scroll behavior; until then this records why a 320 tester would
 see a clipped bar. Log-don't-fix.
 
-### 311. pid-tuner still carries vendor names — "EBO style" (L~120) and "Niagara LoopPoint"/"EBO" (L~433) *(noticed 2026-08-14, the C1 build lane — vendor-free-guardrail inconsistency, needs an OWNER RULING on the rewrite)*
+### 311. pid-tuner still carries vendor names — "EBO style" (L~120) and "Niagara LoopPoint"/"EBO" (L~433) *(noticed 2026-08-14, the C1 build lane — vendor-free-guardrail inconsistency; **RESOLVED 2026-08-15 · PR #577** — owner ruled REWRITE)*
 
 The Parameter Style option label reads "Gain · Ti · Td (seconds) —
 EBO style" and the bump-test section's vendor paragraph names Niagara
@@ -14732,7 +14732,21 @@ the translator carries the algorithm-form axis generically. Owner
 explicitly deferred this to its own ruling — do not fold it into an
 unrelated sweep.
 
-### 312. Unquoted `data-gloss=x` is still invisible to the gloss transform — same dead-affordance mechanism the single-quote guard closed *(noticed 2026-08-14, the H lane while building #567's guard arm — needs an OWNER RULING: extend the arm vs accept the floor)*
+**RESOLVED 2026-08-15 (owner ruling: REWRITE — PR #577).** Option (c)
+taken. The seconds option label dropped its vendor tag (the
+minutes/seconds pair already differentiates the two time options), and
+the bump-test paragraph keeps its full knob-mapping teaching with the
+two vendor names replaced by generic platform framing ("one platform
+exposes… another uses… a proportional-band tradition…"). One
+spec comment updated in the same unit (`tests/smoke.spec.js` — the
+vendor-name ban covers code comments); the spec selects the option by
+`value`, so no assertion moved. The Translator pointer sentence stays
+as shipped. Scope stayed the tuner only — the BACnet chapter's
+deliberate EBO hex-blob teaching and the other standing vendor
+mentions were confirmed out of #311's scope by a site-wide grep before
+the rewrite. Full suite in the lane worktree: 1215 passed / 1 skipped.
+
+### 312. Unquoted `data-gloss=x` is still invisible to the gloss transform — same dead-affordance mechanism the single-quote guard closed *(noticed 2026-08-14, the H lane while building #567's guard arm; **RESOLVED 2026-08-15 · PR #578** — owner ruled EXTEND the arm)*
 
 `TRIGGER_RE` matches only double-quoted values; #567's new arm makes
 the single-quoted form fail the build loudly, but a bare unquoted
@@ -14747,3 +14761,18 @@ accept the documented floor (it is written into the transform
 header's floor paragraph honestly). Small either way; the extend
 option is the never-soften house lean, but it is the owner's call
 since it hardens a contract he authors against.
+
+**RESOLVED 2026-08-15 (owner ruling: EXTEND — PR #578, riding the §5
+drafting PR).** One regex replaces `SINGLE_QUOTE_RE`:
+`\bdata-gloss(?![\w-])(?!=")` fails the build on every
+non-double-quoted spelling — single-quoted, unquoted, valueless, and
+the spaced-`=` form this entry did not even name — with a
+preceded-by-`[`/`'`/`"` exclusion keeping a CSS attribute selector or
+a quoted string mention legal (none exist in rendered pages today;
+future-proofing, fixture-verified). Proven by a six-case fixture
+matrix before commit: the four bad spellings each fail with the arm's
+message, an HTML-commented example and a selector+`querySelector`
+mention both pass, and the clean tree builds 139 pages with zero
+offenders. The transform header's floor paragraph was rewritten in
+the same commit — no quoting variant sits outside the floor now; what
+remains outside is JS-painted prose only.

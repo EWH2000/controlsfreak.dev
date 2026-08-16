@@ -1104,7 +1104,8 @@ module.exports = {
     // markable copy). owners: [] — no page teaches the term;
     // the nearest thing to a definition is a B-OWS table cell
     // (bacnet-services:210) that uses it as the familiar explanans.
-    // Inventory 2026-08-15: 8 markable across 7 pages.
+    // Inventory 2026-08-15: 8 markable across 6 pages (the marking
+    // lanes' measured count; the fan-out's "7 pages" was one high).
     'front-end': {
         term: 'front end',
         def: 'The supervisory workstation where a building\'s points, '
@@ -1453,11 +1454,13 @@ module.exports = {
     // in scope. Owners (both entries): psychrometrics-basics (defines
     // both as the halves of enthalpy), dedicated-outdoor-air (the
     // Latent/Sensible Split H2 — the definition beat), economizers
-    // (the deceptive-wedge beat defines both emphatically). The tool
-    // methodology pages (airside-load, coil-sizing, coil-selection)
-    // stay NON-owners by the dry-bulb calibration — methodology notes
-    // don't confer ownership. Inventory 2026-08-15: 16 markable
-    // across 7 pages, the two entries jointly.
+    // (the deceptive-wedge beat defines both emphatically). The
+    // methodology surfaces — the airside-load and coil-sizing TOOLS,
+    // and the coil-selection EDUCATION page's 1.08-constant
+    // scaffolding — stay NON-owners by the dry-bulb calibration: a
+    // methodology note or scaffolding clause doesn't confer
+    // ownership. Inventory 2026-08-15: 16 markable across 7 pages,
+    // the two entries jointly.
     'sensible-heat': {
         term: 'sensible heat',
         def: 'The heat a thermometer sees — energy that moves dry-bulb '
