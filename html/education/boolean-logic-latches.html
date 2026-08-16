@@ -123,7 +123,7 @@ keywords: AND OR NOT XOR latch SR interlock permissive safety truth table
             <p>
                 <code>NOT</code> earns a longer look, because it's tied to how safeties are
                 wired in the first place. A hardwired safety — a freeze stat, a high-static
-                switch — is almost always <strong>normally closed</strong>: the contact is
+                switch — is almost always <strong><button type="button" data-gloss="normally-open-closed">normally closed</button></strong>: the contact is
                 closed while the device is healthy, so the binary input reads TRUE when
                 everything is fine. That's a deliberate <em>fail-safe</em> choice. If a wire
                 breaks or the device dies, the circuit opens and the point reads FALSE — the

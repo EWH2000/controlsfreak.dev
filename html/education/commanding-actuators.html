@@ -73,7 +73,7 @@ keywords: actuator 2-10V 0-10V 4-20mA span stroke spring return fail position no
             <p>
                 A modulating actuator listens in one of three common command languages: <strong>0–10 V</strong>,
                 <strong>2–10 V</strong>, or <strong>4–20 mA</strong>. All three are linear spans meaning 0–100% of
-                stroke; the difference is the endpoints. The two offset spans carry a <em>live zero</em> — the
+                stroke; the difference is the endpoints. The two offset spans carry a <button type="button" data-gloss="live-zero"><em>live zero</em></button> — the
                 bottom of the range is a real, non-zero signal, so a dead wire (0&nbsp;V, 0&nbsp;mA) is
                 distinguishable from an honest "fully closed" command — the same fault-flag logic
                 <a href="/education/analog-sensing.html#live-zero">Analog Sensing</a> walks on the input side,
@@ -161,7 +161,7 @@ keywords: actuator 2-10V 0-10V 4-20mA span stroke spring return fail position no
                 setting. And near the bottom of the range the offset becomes a <strong>dead zone</strong>: every
                 command below 20% (0–2 V from this AO) means the same thing to a 2–10 V actuator — nothing — so a
                 loop trying to hold a small opening gets no response, winds up its integral through the silence,
-                then overshoots when the signal finally climbs past 2 V. That's the hunting near the end of travel
+                then overshoots when the signal finally climbs past 2 V. That's the <button type="button" data-gloss="hunting">hunting</button> near the end of travel
                 that mismatched spans are famous for. Run the mismatch the other way — an AO scaled 2–10 V into an
                 actuator configured 0–10 V — and everything sits <em>high</em> instead: the AO's "fully closed" is
                 2 V, the actuator reads 2 V as 20%, and the damper never fully closes no matter what the graphics
@@ -285,7 +285,7 @@ keywords: actuator 2-10V 0-10V 4-20mA span stroke spring return fail position no
             <p>
                 The classic example is <strong>freeze protection</strong>, and it's worth spelling out because the
                 convention surprises people: <strong>the hot-water coil's valve is specified normally open.</strong>
-                Picture an air handler in a Northeast January — power fails, a freeze-stat trips, a controller dies.
+                Picture an air handler in a Northeast January — power fails, a <button type="button" data-gloss="freezestat">freeze-stat</button> trips, a controller dies.
                 The outdoor-air damper's spring drives it <em>closed</em>, so the cabinet stops swallowing air below
                 <span data-us="32&nbsp;°F" data-metric="0&nbsp;°C">32&nbsp;°F</span>; the heating valve's spring
                 drives it <em>open</em>, flooding the coil with hot water that the cold can't freeze. The building
@@ -303,18 +303,18 @@ keywords: actuator 2-10V 0-10V 4-20mA span stroke spring return fail position no
             <p>
                 Everything so far assumes the actuator heard the command. The only way to <em>know</em> is
                 <strong>position feedback</strong>: many modulating actuators offer a feedback output — commonly
-                2–10 V across the same stroke — that lands on an AI. Now the graphics can show two numbers: what
+                2–10 V across the same stroke — that lands on an <button type="button" data-gloss="ai">AI</button>. Now the graphics can show two numbers: what
                 was asked, and what the actuator says it did. The command is a hope; the feedback is a
                 measurement.
             </p>
 
             <p>
-                So the AO commands 50% and the feedback AI reads 34% — now what? Work the fork in order of
+                So the AO commands 50% and the feedback <button type="button" data-gloss="ai">AI</button> reads 34% — now what? Work the fork in order of
                 cheapness. <strong>Time first:</strong> actuators are slow on purpose — 90 to 150 seconds for full
                 stroke is ordinary — so a freshly written command and its feedback disagree for a while by design.
                 If the feedback is still climbing, that isn't disagreement, it's transit. <strong>Configuration
-                second:</strong> the feedback signal has a span and the AI reading it has a scaling, and every trap
-                from the command side applies again on the way back — a 2–10 V feedback landed on an AI scaled
+                second:</strong> the feedback signal has a span and the <button type="button" data-gloss="ai">AI</button> reading it has a scaling, and every trap
+                from the command side applies again on the way back — a 2–10 V feedback landed on an <button type="button" data-gloss="ai">AI</button> scaled
                 0–10 V misreports a perfectly healthy actuator. <strong>Mechanical last:</strong> feedback that
                 stops short and <em>holds</em> while the command keeps climbing is the actuator telling you it
                 physically can't get there — a jammed damper blade, a seized valve stem, a motor stalled at its

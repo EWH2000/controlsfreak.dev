@@ -121,7 +121,7 @@ keywords: wiresheet logic and or not pid block wire program
                 documentation and the code, because the wiresheet <em>is</em> both. A tech
                 who has never seen this particular controller can still open the sheet and
                 follow the wires. <strong>You can watch it run.</strong> A live wiresheet
-                shows the current value on every wire — you see the freeze-stat go true, you
+                shows the current value on every wire — you see the <button type="button" data-gloss="freezestat">freeze-stat</button> go true, you
                 see the setpoint arrive at the comparator, you watch the loop output climb.
                 Troubleshooting becomes <em>follow the wire back from the wrong output until
                 the value stops making sense</em>. <strong>The vocabulary travels.</strong>
@@ -145,7 +145,7 @@ keywords: wiresheet logic and or not pid block wire program
                 </div>
                 <div class="callout">
                     <h3>Boolean logic <span>· true / false</span></h3>
-                    <p><code>AND</code>, <code>OR</code>, <code>NOT</code>, <code>XOR</code> combine true/false signals; an <code><button type="button" data-gloss="sr-latch">SR latch</button></code> remembers a state — once set, it stays set until something resets it. This is the family that makes interlocks, <button type="button" data-gloss="permissive">permissives</button>, and safety chains.</p>
+                    <p><code>AND</code>, <code>OR</code>, <code>NOT</code>, <code>XOR</code> combine true/false signals; an <code><button type="button" data-gloss="sr-latch">SR latch</button></code> remembers a state — once set, it stays set until something resets it. This is the family that makes <button type="button" data-gloss="interlock">interlocks</button>, <button type="button" data-gloss="permissive">permissives</button>, and safety chains.</p>
                 </div>
                 <div class="callout">
                     <h3>Comparators <span>· number → true / false</span></h3>
@@ -294,7 +294,7 @@ keywords: wiresheet logic and or not pid block wire program
             </p>
 
             <p>
-                That's the whole idea. Every sequence you'll meet — a freeze-stat
+                That's the whole idea. Every sequence you'll meet — a <button type="button" data-gloss="freezestat">freeze-stat</button>
                 (a coil-temperature safety that latches the fan off if the coil
                 gets near freezing), a staging routine, a reset schedule (sliding
                 a setpoint with outdoor temperature) — is the same move: real-world

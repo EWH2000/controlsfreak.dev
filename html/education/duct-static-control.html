@@ -249,14 +249,14 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 on a typical mid-size system — the same "whole inches" magnitude that <a
                 href="/education/building-pressure.html#measuring-it">building pressure</a> measured its envelope
                 against and found fifty times smaller. And a <em>PID loop</em> whose output is the speed reference to
-                the supply fan's VFD. That's the entire machine: one AI, one AO, one fast loop between them.
+                the supply fan's VFD. That's the entire machine: one <button type="button" data-gloss="ai">AI</button>, one <button type="button" data-gloss="ao">AO</button>, one fast loop between them.
             </p>
 
             <p>
                 <em>Fast</em> is worth pausing on. The zone loops you met last page think in minutes — a room warms
                 slowly, a damper strokes, the world catches up. Duct pressure answers the fan in <em>seconds</em>: touch
                 the speed reference and the sensor feels it almost immediately. Loops that quick are tuned gently or
-                they hunt, and this exact loop — supply fan VFD, duct static — is one of the scenes in the <a
+                they <button type="button" data-gloss="hunting">hunt</button>, and this exact loop — supply fan VFD, duct static — is one of the scenes in the <a
                 href="/simulators/pid-tuner.html">PID tuner</a>. Drive it there and feel how little gain it wants;
                 that's the hands-on pair for this page.
             </p>
@@ -402,11 +402,11 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 that extra fan becomes pressure with nowhere to go. On the trend, duct static climbs, then flatlines at
                 exactly <span data-us="2.5&nbsp;in.&nbsp;w.c." data-metric="625&nbsp;Pa">2.5&nbsp;in.&nbsp;w.c.</span>
                 and sits there, hour after hour, suspiciously smooth. A flatline at a round number near the top of a
-                sensor's range isn't a measurement — <strong>it's the sensor railed at full scale</strong>, a 0–2.5
+                sensor's range isn't a measurement — <strong>it's the sensor <button type="button" data-gloss="railed">railed</button> at full scale</strong>, a 0–2.5
                 in. w.c. transducer wired 0–10&nbsp;V, pegged at 10&nbsp;V, reporting only that the truth is somewhere
                 above it. (That volts-to-inches arithmetic is exactly what the <a
                 href="/tools/signal-scaling.html">signal-scaling tool</a> does; it's worth being fast at, because a
-                railed signal is invisible unless you know where the range ends — the <a
+                <button type="button" data-gloss="railed">railed</button> signal is invisible unless you know where the range ends — the <a
                 href="/education/analog-sensing.html#railed">analog-sensing lesson</a> makes that ceiling-reading
                 literacy its whole third act.) The real static was well past the
                 reading, past where a high-static cutout should have tripped — and there wasn't one. More fan never
@@ -468,7 +468,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 <span data-us="1.5&nbsp;in.&nbsp;w.c." data-metric="375&nbsp;Pa">1.5&nbsp;in.&nbsp;w.c.</span> —
                 hard-wired to stop the fan, usually with a manual reset so a human
                 has to come find out why. Separate is the load-bearing word. It cannot be logic on the transducer,
-                because the moments it exists for are exactly the moments the transducer's number is a lie: a railed
+                because the moments it exists for are exactly the moments the transducer's number is a lie: a <button type="button" data-gloss="railed">railed</button>
                 sensor, a plugged tube, a crashed controller. The building in the story above ran with no cutout at
                 all — the same uninsured posture as its missing low-pressure cutout, one story earlier. Hardware
                 answers when software's number is gone.
@@ -588,7 +588,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
 
             <p class="ref-note">
                 What the widget holds still: loop dynamics (speeds land instantly — the
-                <a href="/simulators/pid-tuner.html">PID tuner</a> has the hunting and the tuning), trim &amp; respond's
+                <a href="/simulators/pid-tuner.html">PID tuner</a> has the <button type="button" data-gloss="hunting">hunting</button> and the tuning), trim &amp; respond's
                 slow walk (reset shows where the setpoint lands, not the minutes of trimming), and the box side (thirty
                 boxes compressed into one demand slider — their own story is the
                 <a href="/education/vav-systems.html">last page</a>). The high-static cutout isn't modeled either;
@@ -632,7 +632,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 href="/tools/airflow.html">airflow calculator</a> is a flow ring with the sheet metal off. The <a
                 href="/tools/affinity-laws.html">affinity-laws tool</a> is this page's savings argument with real
                 numbers in it. The <a href="/simulators/pid-tuner.html">PID tuner's</a> supply-fan scene is the loop
-                you just drove, hunting and all. So here's the field move these pages have been building toward: next
+                you just drove, <button type="button" data-gloss="hunting">hunting</button> and all. So here's the field move these pages have been building toward: next
                 time you stand in front of an air handler, read it the way these pages did — walk the stations,
                 name the unit, find the dampers' minimum, ask where the relief goes, follow the trunk to a box, and
                 put your cursor on two numbers before you believe anything anyone tells you: fan speed, and what the

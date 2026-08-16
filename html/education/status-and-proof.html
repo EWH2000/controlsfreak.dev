@@ -62,7 +62,7 @@ keywords: status proof current switch DP switch aux contact fail-to-start broken
             <h2 class="subhead" id="sap-sources">The status-source menu</h2>
 
             <p>
-                Command is the easy half: the controller closes a binary output and the starter pulls in. Status is the return trip — some device out at the equipment closes a contact to say <em>it worked</em>, and the controller reads it on a BI. What that contact is attached to decides what "it worked" means, and there are three common choices, in rising order of how much they prove.
+                Command is the easy half: the controller closes a binary output and the starter pulls in. Status is the return trip — some device out at the equipment closes a contact to say <em>it worked</em>, and the controller reads it on a <button type="button" data-gloss="bi">BI</button>. What that contact is attached to decides what "it worked" means, and there are three common choices, in rising order of how much they prove.
             </p>
 
             <p>
@@ -82,7 +82,7 @@ keywords: status proof current switch DP switch aux contact fail-to-start broken
             </p>
 
             <p>
-                Whichever source you pick, it reaches the controller the same way: a <button type="button" data-gloss="dry-contact">dry contact</button> landed on a binary input, wetted by the controller's own sensing voltage. The landing rules live in <a href="/education/controller-wiring.html#inputs">Controller Wiring</a>, and the <a href="/simulators/controller-wiring.html">wiring simulator</a> models exactly this case — a dry status contact on a BI you can land yourself and fault on purpose.
+                Whichever source you pick, it reaches the controller the same way: a <button type="button" data-gloss="dry-contact">dry contact</button> landed on a binary input, wetted by the controller's own sensing voltage. The landing rules live in <a href="/education/controller-wiring.html#inputs">Controller Wiring</a>, and the <a href="/simulators/controller-wiring.html">wiring simulator</a> models exactly this case — a dry status contact on a <button type="button" data-gloss="bi">BI</button> you can land yourself and fault on purpose.
             </p>
 
             <svg class="edu-svg sap-svg" id="sap-d1" viewBox="-44 0 764 424" role="img" aria-labelledby="sap-d1-title sap-d1-desc">
@@ -193,7 +193,7 @@ keywords: status proof current switch DP switch aux contact fail-to-start broken
             </p>
 
             <p>
-                <strong>Inverted polarity.</strong> A NO/NC mismatch between the contact and the point's configuration — the device offers both contact types and the wrong one got landed, or the point's polarity flag is set backwards. The point is not dead; it <em>tracks perfectly, inverted</em>. Because most equipment holds one state for hours, it presents as a status stuck at the wrong value: perpetual ON on a unit that sits off, perpetual OFF on one that runs around the clock. The giveaway is the alarm pattern at the transitions — a fail-to-start on every start of a fan you can hear running, and a running-unexpectedly alarm the moment it legitimately stops. Backwards <em>twice</em> is the signature; a genuinely dead point never changes at all.
+                <strong>Inverted polarity.</strong> A <button type="button" data-gloss="normally-open-closed">NO/NC</button> mismatch between the contact and the point's configuration — the device offers both contact types and the wrong one got landed, or the point's polarity flag is set backwards. The point is not dead; it <em>tracks perfectly, inverted</em>. Because most equipment holds one state for hours, it presents as a status stuck at the wrong value: perpetual ON on a unit that sits off, perpetual OFF on one that runs around the clock. The giveaway is the alarm pattern at the transitions — a fail-to-start on every start of a fan you can hear running, and a running-unexpectedly alarm the moment it legitimately stops. Backwards <em>twice</em> is the signature; a genuinely dead point never changes at all.
             </p>
 
             <p>
@@ -289,7 +289,7 @@ keywords: status proof current switch DP switch aux contact fail-to-start broken
                  checkout — owner to supply -->
 
             <p>
-                That is the whole lesson in one drawing: status is not a fact about the fan — it is a fact about whatever the status device watches. Pick the source that proves what the sequence actually needs proven (a duct heater's interlock wants <em>air</em>, not amps), wrap the comparison in a proof window long enough for an honest start, and when command and status disagree, read the direction before you drive out. The graphic's green icon is only ever as truthful as the contact behind it.
+                That is the whole lesson in one drawing: status is not a fact about the fan — it is a fact about whatever the status device watches. Pick the source that proves what the sequence actually needs proven (a duct heater's <button type="button" data-gloss="interlock">interlock</button> wants <em>air</em>, not amps), wrap the comparison in a proof window long enough for an honest start, and when command and status disagree, read the direction before you drive out. The graphic's green icon is only ever as truthful as the contact behind it.
             </p>
 
         </div>
