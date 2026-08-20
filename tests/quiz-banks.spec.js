@@ -50,6 +50,20 @@ for (const file of bankFiles) {
                 expect(q.figure.includes('<'), `${file}/${q.id}: figure carries no markup`).toBe(false);
             }
 
+            // #185: `snippet` is gotcha-only, and the invariant must
+            // hold in BOTH directions. The engine checks one — a gotcha
+            // without a snippet fails the mount — but a snippet on any
+            // other type is silently dropped by the render guard
+            // (`q.type === 'gotcha' && q.snippet`) while head.njk's
+            // FAQPage emitter still concatenates it into the JSON-LD
+            // Question.name: content the page never renders ships as
+            // structured data with no warning anywhere. Mirrors the
+            // resolution-check philosophy `figure` shipped with — a
+            // declared field must never silently no-op.
+            if (q.type !== 'gotcha') {
+                expect(q.snippet, `${file}/${q.id}: snippet on a non-gotcha — rendered never, published to JSON-LD always (#185)`).toBeUndefined();
+            }
+
             if (q.type === 'mcq' || q.type === 'gotcha') {
                 expect(Array.isArray(q.choices), `${file}/${q.id}: choices`).toBe(true);
                 expect(q.choices.length, `${file}/${q.id}: ≥2 choices`).toBeGreaterThanOrEqual(2);
