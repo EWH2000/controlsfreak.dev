@@ -593,7 +593,12 @@ advertises) render only when the reader sets Questions to All.
 quiz-engine, flip this page to 'random' (costs the curated
 difficulty ramp, and makes `responsive.spec.js`'s 375/320 passes
 non-deterministic as to whether a figure is on screen), or present
-all 13]`. Difficulty comes from exactly three
+all 13]` *(resolved the same day it was written — option 1 shipped
+in `8066493` + `a1577bd`, 2026-07-20, v3.71.0: `buildQueue()`
+samples the 13-question bank and 'sequential' presents the drawn
+subset in bank order, so the rotation DOES exist as shipped and the
+bolded sentence above is a snapshot of the pre-fix morning;
+annotated 2026-08-20)*. Difficulty comes from exactly three
 sources, named in the bank header: red-herring branches,
 inverted-safety traps, and plausible-but-wrong configuration.
 **Deliberately excludes feedback loops and execution-order /
@@ -6289,9 +6294,14 @@ What a quiz-expansion arc inherits, already decided elsewhere: banks
 grow past `defaultCount` gradually, one bank at a time, and crossing
 the sampling line is a feature (the #241 ruling — replayability is
 the goal, landing properly around 20+ questions); the engine's
-**shuffle-order change is decided but unbuilt** (2026-07-30) and
-should land with or before a big bank-growth push so the
-replayability payoff arrives together; growing a bank quietly grows
+**shuffle-order (sample-then-present) change is decided AND built** —
+shipped 2026-07-20 as `8066493` + `a1577bd` (v3.71.0), spec'd by
+`tests/quiz-selection.spec.js` *(corrected 2026-08-20: this sentence
+originally read "decided but unbuilt (2026-07-30)", contradicting the
+#241 entry above — "`buildQueue()` … already does it" — and the code;
+the 2026-07-30 date belongs to the bank-growth direction, not the
+engine change; a grown bank starts varying with no code change)*;
+growing a bank quietly grows
 its FAQPage JSON-LD too, so the CEO's favorite feature and the SEO
 trajectory feed each other; and the quiz-bank gloss-component lane
 (§7.2, ruled IN scope 2026-08-12) is sequenced in the same
