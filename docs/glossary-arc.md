@@ -474,6 +474,55 @@ evaporate with it:
   re-triage (the friction file's quiz-expansion entry — owner
   direction 2026-08-14 — carries the CEO signal into that pick).
 
+- **2026-08-20 — the §4 collision tier RULED; the disambiguation
+  component will NOT be built.** One session: the 4-lane inventory
+  fan-out over all 14 families → the disposition proposal (PR #587,
+  merged after a 5-checker adversarial refutation round — 7
+  BLOCKING applied, 2 findings partially refuted; the full
+  applied/refuted ledger is the proposal's §9.1) → the owner's
+  per-family ruling, in-session. The ratified record lives as the
+  governing block atop `docs/glossary-s4-collision-proposal.md`;
+  the shape:
+  - **11 plain entries, glossary 63 → 74, expected ~45–75 marks**
+    (~25–35 outside dew-point's band): modbus-rtu, duct-static,
+    head-pressure, dew-point (bare, plain register — apparatus dew
+    point folded into its closing clause), proof-window,
+    floating-actuator, deadband, differential-pressure,
+    high-static-cutout, mixed-air-low-limit, plus
+    **contactor-coil** — the one owner amendment: bare `coil`
+    stays excluded AND the priced compound option is taken (1–2
+    marks, motivated by the panel-free winding sites on
+    electrical-quick-calc the refutation round surfaced).
+  - **deadband: AMENDED-PLAIN over the kind panel.** The owner was
+    initially leaning C; the deciding argument was that the corpus
+    shows one idea at two scales — his own lesson's framing at
+    comparators-and-deadband:450 — so a plain geometric-register
+    def is true at every surviving site, with the width-convention
+    disclosure fitting a closing clause. **Zero A survives ⇒ the
+    `kind: 'disambiguation'` component is NOT built** — the
+    proposal's §4 stands as the record of the unbuilt design, and
+    `glossary.js:42`'s deferral comment stays.
+  - **5 family-level exclusions, build-enforced** (bare coil,
+    reset, lockout, authority, direct/reverse-acting — plus every
+    B family's reserved bare headword): the EXCLUDED map ships
+    machine-readable with the three-legged guard arm (non-empty
+    once the tier ships, kebab lint, term-equality leg). Q2's
+    restated principle — never a sense-ambiguous visible token
+    under a sense-scoped id — governs the B compounds' written
+    matching rules; Q1/Q3/Q5/Q6 closed as MOOT by the zero-A
+    consequence.
+  - By-catch approved: the commanding-actuators:190 loop-action
+    anchor retarget (a small live-page PR in the execution wave);
+    the electrical-quick-calc coil sites are served by
+    contactor-coil.
+  - **Execution sequence opened:** entry drafting + the EXCLUDED
+    map + guard arm in one PR (which also carries the proposal's
+    §8-rider items — the glossary.js header true-up, the markless
+    annotations, the friction-file re-open marker) → a refutation
+    round on the drafts → the ≤2 concurrent marking lanes. The
+    standing handoff's retirement condition is half-met by this
+    entry; the lanes running satisfies the rest.
+
 ## Open questions
 
 - ~~**Mid-density pilot page for the tooltip component**~~ — settled
