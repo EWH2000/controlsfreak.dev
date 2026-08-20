@@ -14853,3 +14853,29 @@ the id and retargets its bank's links. A guard is NOT proposed — most
 subheads legitimately never need an anchor, so "every subhead has an
 id" would be noise; the invariant that matters (every href resolves)
 is already blocking.
+
+### 315. Vendor names in two shipped quiz questions — owner ruled GRANDFATHER *(noticed 2026-08-20, wave-1 mstp lane + full-bank sweep; RULED same day — accepted as standing mentions, do not re-flag)*
+
+A word-boundary vendor sweep across all 41 banks (run when the mstp
+lane caught one in passing) found exactly two sites outside the
+deliberate-EBO teaching set that #311's resolution had already
+confirmed out of its scope:
+
+- `html/_data/quizzes/controller-swap.js:43` — choice text "Only at
+  the supervisor / JACE."
+- `html/_data/quizzes/modbus-decoding.js:135, :141` — "a Niagara
+  integration" / "valid Niagara ProxyExt config".
+
+("Carrier" hits in surviving-first-months / troubleshooting are the
+VFD carrier-frequency term of art, not the company — false positives;
+the bacnet-networking EBO mentions mirror the lesson's deliberate
+hex-blob teaching, confirmed out of scope at #311.)
+
+**Owner ruling (2026-08-20): GRANDFATHER BOTH** — the #311
+"grandfathered disclosure" option, taken here rather than the rewrite.
+Accepted as standing mentions; a future vendor sweep should treat this
+entry as the standing answer and not re-flag them. If either question
+is ever edited for other reasons, de-vendoring can ride along — note
+the modbus-decoding constraint: `smoke.spec.js` walks that quiz
+deterministically, so any text edit there must verify the spec's
+assertions in the same PR.
