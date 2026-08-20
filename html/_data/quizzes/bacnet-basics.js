@@ -7,7 +7,19 @@
 // Schema lives in html/scripts/quiz-engine.js's header. `id`s are
 // kebab-case and stable across edits — they namespace the
 // cf_quiz_bacnet-basics_* localStorage keys. Pairs with the
-// BACnet Basics lesson; learnMore hrefs deep-link its <h2> anchors.
+// BACnet Basics lesson; learnMore hrefs deep-link its <h2> anchors
+// (the Who-Is / I-Am section has no anchor of its own, so discovery
+// questions land on #services, where the pair is introduced).
+//
+// The bank is deliberately larger than the page's defaultCount (10):
+// the engine samples an overflowing bank, so each run draws a
+// different subset (buildQueue() in quiz-engine.js). Coverage tracks
+// the lesson's sections — the object model (families, the I/O-vs-
+// Value split, 1-based multi-state enumeration, identifiers), the
+// everyday services (RPM, COV and its subscription lifetime, ranged
+// Who-Is discovery), the priority array (resolution, release, the
+// all-null fallback to Relinquish_Default), and the MS/TP-vs-IP
+// transport split.
 
 module.exports = [
     // ── What BACnet is, and isn't ─────────────────────────
@@ -48,6 +60,20 @@ module.exports = [
         learnMore: { href: '/education/bacnet-basics.html#objects', label: 'BACnet Basics — Object families' },
         tags: ['bacnet', 'object-model']
     },
+    {
+        type: 'mcq',
+        id: 'av-software-setpoint',
+        prompt: 'A zone\'s occupied cooling setpoint lives only in the controller\'s program — no sensor behind it, no output terminal driven by it. Which object type should expose it to the network?',
+        choices: [
+            { id: 'a', text: 'Analog Input (AI)' },
+            { id: 'b', text: 'Analog Output (AO)' },
+            { id: 'c', text: 'Analog Value (AV)', correct: true },
+            { id: 'd', text: 'Multi-state Value (MSV)' }
+        ],
+        explain: 'The <em>Value</em> members of each family — AV, BV, MSV — are the software-only points: same properties, no hardware terminal behind them. A setpoint is the textbook AV — a 32-bit float a client can read and write that exists only in the program. AO is the tempting wrong answer: an AO means the controller <em>drives a physical output</em> with that number, so exposing a setpoint as one misstates what the point is and sends an integrator hunting for a terminal that doesn\'t exist. Reading the I/O-versus-Value split is half of reading a point list correctly.',
+        learnMore: { href: '/education/bacnet-basics.html#objects', label: 'BACnet Basics — Object families' },
+        tags: ['bacnet', 'object-model']
+    },
 
     // ── Services ──────────────────────────────────────────
     {
@@ -72,6 +98,35 @@ module.exports = [
         explain: 'Change-of-Value flips the polling model: the client subscribes once and the device sends a notification each time the value moves enough to matter. Where Modbus forces a client to poll fast enough to catch a change, BACnet lets the device announce it. Subscriptions have a lifetime, so the client re-subscribes before it expires.',
         learnMore: { href: '/education/bacnet-basics.html#services', label: 'BACnet Basics — The services you\'ll see' },
         tags: ['bacnet', 'services', 'cov']
+    },
+    {
+        type: 'mcq',
+        id: 'cov-subscription-stale',
+        prompt: 'A supply-air temperature on a graphic is fed by a <code>SubscribeCOV</code> subscription. It hasn\'t moved in hours — but a manual <code>ReadProperty</code> of the same point returns a fresh value, well past the <code>COV_Increment</code>. Most likely cause?',
+        choices: [
+            { id: 'a', text: 'The sensor has failed.' },
+            { id: 'b', text: 'The subscription\'s lifetime expired and the client never re-subscribed.', correct: true },
+            { id: 'c', text: '<code>COV_Increment</code> is set too small.' },
+            { id: 'd', text: 'Someone overrode the point at priority 8.' }
+        ],
+        explain: 'A COV subscription carries a lifetime, and when it lapses the device simply stops sending — nothing errors, the graphic just keeps the last value it was ever pushed. That\'s why the fresh manual read is the tell: the point is alive on the wire and frozen only on the subscription path. Well-behaved clients re-subscribe before the lifetime runs out. The sensor-failure guess fails the same test — a dead input wouldn\'t return a fresh, moving value — and a too-<em>small</em> <code>COV_Increment</code> would flood notifications, not silence them. Frozen on the graphic, alive on a read: suspect the subscription.',
+        learnMore: { href: '/education/bacnet-basics.html#services', label: 'BACnet Basics — The services you\'ll see' },
+        tags: ['bacnet', 'services', 'cov', 'troubleshooting']
+    },
+    {
+        type: 'gotcha',
+        id: 'whois-outside-range',
+        prompt: 'A discovery scan on a single IP subnet comes back one device short: the rooftop unit at <code>device:2050</code> never appears, though it answers a direct <code>ReadProperty</code> without complaint. What happened?',
+        snippet: '<pre class="quiz-snippet">discovery scan:  Who-Is 1000..1999   (same subnet as all three)\nnetwork has:     device:1001   device:1002   device:2050\nscan returns:    device:1001   device:1002</pre>',
+        choices: [
+            { id: 'a', text: 'The RTU has dropped off the network.' },
+            { id: 'b', text: '<code>Who-Is</code> carried a device-instance range, and 2050 sits outside 1000–1999 — the RTU never replied because it was never asked.', correct: true },
+            { id: 'c', text: 'A router between the scan tool and the RTU is dropping the broadcast.' },
+            { id: 'd', text: '<code>I-Am</code> is a confirmed service, and the RTU\'s acknowledgment was lost.' }
+        ],
+        explain: 'A <code>Who-Is</code> can go out with no range — "everybody speak up" — or with low and high device-instance bounds, and a device answers only when its instance falls inside them. This scan asked for 1000–1999, so <code>device:2050</code> stayed silent by design: nothing is offline, blocked, or broken. On the <em>same</em> subnet, check the scan\'s range before suspecting the device. (Across subnets, "missing from discovery" really is a broadcast problem — that story belongs to <a href="/education/bacnet-networking.html">BACnet Networking</a>.) And neither service acknowledges anything: Who-Is and I-Am are both unconfirmed broadcasts.',
+        learnMore: { href: '/education/bacnet-basics.html#services', label: 'BACnet Basics — The services you\'ll see' },
+        tags: ['bacnet', 'services', 'troubleshooting']
     },
 
     // ── Priority array ────────────────────────────────────
@@ -103,6 +158,15 @@ module.exports = [
         learnMore: { href: '/education/bacnet-basics.html#priority-array', label: 'BACnet Basics — The priority array' },
         tags: ['bacnet', 'priority-array', 'troubleshooting']
     },
+    {
+        type: 'tf',
+        id: 'relinquish-default-fallback',
+        prompt: 'Release every slot of a commandable object\'s <code>Priority_Array</code> — all sixteen null — and <code>Present_Value</code> simply holds the last value it was commanded to.',
+        answer: false,
+        explain: 'With the whole array empty the object falls back to its <code>Relinquish_Default</code> property — a configured resting value, not a memory of the last command. That matters at commissioning: release the only override holding a point and, with nothing else writing, it doesn\'t stay put — it goes wherever <code>Relinquish_Default</code> points, which is the classic answer to "why did the valve move overnight when nobody was commanding it?" To watch the fallback happen slot by slot, the <a href="/tools/bacnet-priority.html">Priority Array resolver</a> lets you empty the array and see what wins.',
+        learnMore: { href: '/education/bacnet-basics.html#priority-array', label: 'BACnet Basics — The priority array' },
+        tags: ['bacnet', 'priority-array']
+    },
 
     // ── Object families (gotcha) ──────────────────────────
     {
@@ -117,6 +181,21 @@ module.exports = [
             { id: 'd', text: 'The instance numbers must match for the map to work.' }
         ],
         explain: 'A Binary object is strictly two-state (ACTIVE / INACTIVE). A three-state multi-state command can\'t round-trip through it — you lose the distinction between LOW and HIGH, and the BMS can never command the third state. The fix is to map it to a Multi-state Value and carry the <code>State_Text</code>, or expose the states some other faithful way. Matching the object <em>family</em> to the data is part of reading a point list correctly.',
+        learnMore: { href: '/education/bacnet-basics.html#objects', label: 'BACnet Basics — Object families' },
+        tags: ['bacnet', 'object-model', 'integration']
+    },
+    {
+        type: 'gotcha',
+        id: 'multistate-one-based',
+        prompt: 'An integration commands a three-state fan from a map built the way a programmer counts. What breaks?',
+        snippet: '<pre class="quiz-snippet">target object:   MSV:4  Fan_Mode   State_Text: ["OFF", "LOW", "HIGH"]\nintegration map: OFF=0   LOW=1   HIGH=2      ← values it writes</pre>',
+        choices: [
+            { id: 'a', text: 'Nothing — 0, 1, and 2 are valid states for a three-state object.' },
+            { id: 'b', text: 'Multi-state states are numbered 1 to N, so there is no state 0 — the OFF write fails, and the LOW and HIGH writes land one state low.', correct: true },
+            { id: 'c', text: 'The integration must write the state <em>names</em> ("OFF", "LOW", "HIGH") — numbers are never valid.' },
+            { id: 'd', text: 'MSV objects aren\'t commandable, so none of the writes will take.' }
+        ],
+        explain: 'Multi-state <code>Present_Value</code> is a 1-based enumeration: a three-state object holds state 1, 2, or 3, and <em>there is no state 0</em>. <code>State_Text</code> entry 1 names state 1 — the names are labels, the integer is what you write. A map built on the 0-based habit fails twice: the write of 0 is rejected as out of range, and every remaining command lands one state low — writing 1 for LOW actually selects OFF. Off-by-one enum maps are a classic integration bug precisely because most of the writes "work"; the fan just does the wrong thing.',
         learnMore: { href: '/education/bacnet-basics.html#objects', label: 'BACnet Basics — Object families' },
         tags: ['bacnet', 'object-model', 'integration']
     },
