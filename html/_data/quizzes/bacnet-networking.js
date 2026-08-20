@@ -8,6 +8,12 @@
 // kebab-case and stable across edits — they namespace the
 // cf_quiz_bacnet-networking_* localStorage keys. Pairs with the
 // BACnet Networking lesson; learnMore hrefs deep-link its <h2> anchors.
+// Coverage spans the lesson's sections — Three addresses; the BACnet/IP
+// frame (BVLL + NPDU + APDU); BBMDs; Foreign Device Registration;
+// Reading the hex blob — with scenario questions also drawing on its
+// "When discovery silently fails" checklist (that subhead carries no
+// id, so those questions deep-link the section that teaches the
+// underlying mechanism instead).
 
 module.exports = [
     // ── Three addresses ───────────────────────────────────
@@ -64,6 +70,20 @@ module.exports = [
         learnMore: { href: '/education/bacnet-networking.html#three-addresses', label: 'BACnet Networking — Three addresses, one device' },
         tags: ['bacnet', 'addressing']
     },
+    {
+        type: 'mcq',
+        id: 'network-number-collision',
+        prompt: 'Two buildings\' BAS systems, built years apart, get joined by an IP link. Soon after, the front end starts losing polls to both buildings\' MS/TP trunks unpredictably — and both trunks turn out to be configured as network <code>2001</code>. What rule did the integration break?',
+        choices: [
+            { id: 'a', text: 'Device instance numbers must not repeat between the buildings.' },
+            { id: 'b', text: 'MS/TP trunks must use network numbers of 127 or below.' },
+            { id: 'c', text: 'Trunks joined by IP need a BBMD before their traffic can mix.' },
+            { id: 'd', text: 'Every network number must be unique across the joined internetwork.', correct: true }
+        ],
+        explain: 'A network number is what routing runs on: a message bound for network <code>2001</code> goes wherever the routers believe 2001 lives, and with two segments claiming the same name the choice is ambiguous — messages get thrown away or sent the wrong way, which reads on a graphic as points that come and go. Renumber one trunk. The device-instance rule is real, but nothing here points at it — instances are application-layer names and don\'t steer routing. There\'s no 127 ceiling either: that one-byte limit is the MS/TP <em>station address</em>\'s (masters run 0–127), not the network number\'s, which is a 16-bit value (1–65534) on any medium. And a BBMD manages BACnet/IP broadcast distribution — it plays no part in delivering an addressed message to a trunk.',
+        learnMore: { href: '/education/bacnet-networking.html#three-addresses', label: 'BACnet Networking — Three addresses, one device' },
+        tags: ['bacnet', 'addressing', 'troubleshooting']
+    },
 
     // ── BBMDs ─────────────────────────────────────────────
     {
@@ -118,6 +138,30 @@ module.exports = [
         learnMore: { href: '/education/bacnet-networking.html#bvll-npdu-apdu', label: 'BACnet Networking — The BACnet/IP frame' },
         tags: ['bacnet', 'bvll', 'capture']
     },
+    {
+        type: 'tf',
+        id: 'bdt-vs-fdt',
+        prompt: 'A BBMD\'s Broadcast Distribution Table builds itself automatically as devices come online and register.',
+        answer: false,
+        explain: 'The BDT is static configuration — a hand-entered list of the peer BBMDs, one per participating subnet, that a person builds and maintains. Registration fills a different table: foreign devices land in the <strong>FDT</strong> (Foreign Device Table), which is the dynamic one. Conflating the two has a real field cost — expecting the BDT to populate itself is how a freshly stood-up BBMD ends up with an empty BDT, and absent from every peer\'s, so its subnet\'s broadcasts go nowhere in either direction.',
+        learnMore: { href: '/education/bacnet-networking.html#bbmd', label: 'BACnet Networking — BBMDs' },
+        tags: ['bacnet', 'bbmd']
+    },
+    {
+        type: 'gotcha',
+        id: 'tcp-firewall-rule',
+        prompt: 'Cross-subnet discovery between two BAS subnets finds nothing. The network team points to the firewall rule below — added just for BACnet — and notes its hit counter has never left zero. What\'s wrong?',
+        snippet: '<pre class="quiz-snippet">permit tcp any any eq 47808</pre>',
+        choices: [
+            { id: 'a', text: 'The port must be written in hex — <code>0xBAC0</code> — for the rule to match.' },
+            { id: 'b', text: 'Replies need a second rule opening port 47809.' },
+            { id: 'c', text: 'The rule covers one direction only; the return path needs a mirror rule.' },
+            { id: 'd', text: 'BACnet/IP is UDP — a TCP rule can never match its traffic.', correct: true }
+        ],
+        explain: 'Everything BACnet/IP sends — Who-Is and I-Am broadcasts, <code>ReadProperty</code> unicasts, the Forwarded-NPDUs BBMDs exchange across exactly this kind of boundary — rides <strong>UDP</strong> port 47808. A TCP rule matches none of it, which is what the zero hit counter is saying: the BACnet datagrams arrive as UDP and fall through to the default deny. The counter also acquits the mirror-rule guess — a rule that merely missed the return path would still count outbound matches — and replies come back on the port the request used, so there is nothing to open at 47809. Hex versus decimal is a non-issue: <code>0xBAC0</code> and 47808 are the same number written two ways. Rewrite the rule for UDP and the Forwarded-NPDUs start arriving.',
+        learnMore: { href: '/education/bacnet-networking.html#bvll-npdu-apdu', label: 'BACnet Networking — The BACnet/IP frame' },
+        tags: ['bacnet', 'bacnet-ip', 'troubleshooting']
+    },
 
     // ── Foreign Device Registration ───────────────────────
     {
@@ -134,8 +178,36 @@ module.exports = [
         learnMore: { href: '/education/bacnet-networking.html#fdr', label: 'BACnet Networking — Foreign Device Registration' },
         tags: ['bacnet', 'fdr', 'troubleshooting']
     },
+    {
+        type: 'mcq',
+        id: 'fdr-all-unicast',
+        prompt: 'A remote monitoring server on a subnet with no BBMD registers as a foreign device with a BBMD at the main plant, several router hops away. Broadcasts can\'t cross those routers — so how does the plant\'s broadcast traffic reach the server at all?',
+        choices: [
+            { id: 'a', text: 'It never crosses the routers as a broadcast — every router-crossing leg is a unicast, which routes normally.', correct: true },
+            { id: 'b', text: 'The routers between them carry a UDP broadcast-relay (helper) entry aimed at the server.' },
+            { id: 'c', text: 'The BBMD adds the server\'s subnet to its Broadcast Distribution Table.' },
+            { id: 'd', text: 'Registration temporarily promotes the server to a BBMD for its own subnet.' }
+        ],
+        explain: 'Foreign-device machinery is built so nothing ever needs to cross a router as a broadcast. <code>Register-Foreign-Device</code> is a unicast to the BBMD; once the FDT entry exists, each broadcast the BBMD would re-broadcast locally is sent to the server as a <em>unicast copy</em>, and a broadcast the server itself originates travels to the BBMD the same way — as a unicast (<code>Distribute-Broadcast-To-Network</code>) the BBMD re-broadcasts at the plant. Plain routed IP delivery does all the work — no router configuration, no helper entries. The BDT guess confuses the tables: the BDT lists peer <em>BBMDs</em>, and the server isn\'t one — registration makes it a table <em>entry</em>, not a BBMD; it forwards nothing for anyone. That\'s the design point of FDR: it turns a broadcast problem into ordinary unicast traffic.',
+        learnMore: { href: '/education/bacnet-networking.html#fdr', label: 'BACnet Networking — Foreign Device Registration' },
+        tags: ['bacnet', 'fdr', 'broadcast']
+    },
 
     // ── Reading the hex blob ──────────────────────────────
+    {
+        type: 'mcq',
+        id: 'second-network-next-port',
+        prompt: 'An integrator needs a second, fully separate BACnet/IP network on a subnet that already carries one — same switches, same IP range. What makes the second network distinct from the first?',
+        choices: [
+            { id: 'a', text: 'Its own network number — that alone keeps the two apart.' },
+            { id: 'b', text: 'A reserved device-instance block for its devices.' },
+            { id: 'c', text: 'The next UDP port up — it runs on 47809 (<code>0xBAC1</code>) instead of 47808.', correct: true },
+            { id: 'd', text: 'Nothing can — one subnet supports only one BACnet/IP network.' }
+        ],
+        explain: 'A BACnet/IP network is a broadcast domain <em>on a port</em>: every device bound to 47808 on that wire hears every 47808 broadcast, so as long as both groups share the port they are one network, whatever the configuration sheet says. The separation that works is the sequential-port convention from ASHRAE 135 Annex J — the second network takes <code>0xBAC1</code> (47809), the next <code>0xBAC2</code>, and devices on one port neither hear nor answer Who-Is on another. Each network still gets its own network number, but that\'s the network-layer <em>name</em>, not the separator — and a reserved device-instance block organizes names too: instances are application-layer labels, so every device on the shared port would still hear every broadcast. It\'s also why a discovered hex address can end in <code>BAC1</code> instead of <code>BAC0</code>.',
+        learnMore: { href: '/education/bacnet-networking.html#hex-blob', label: 'BACnet Networking — Reading the hex blob' },
+        tags: ['bacnet', 'bacnet-ip', 'addressing']
+    },
     {
         type: 'gotcha',
         id: 'hex-blob-decode',
