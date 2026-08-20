@@ -3113,3 +3113,23 @@ No page change. The `raw-d1-desc` alt text keeps its wording for the
 same reason: it describes the same branch under the same scoping, so
 changing one and not the other would be the real inconsistency.
 *(accepted — reads correctly as written, 2026-08-07)*
+
+### 88. bacnet-networking lesson attributes the sequential-port convention to Annex J more firmly than the standard supports *(flagged 2026-08-20, quiz-growth wave-1 refutation round)*
+
+**Location:** `html/education/bacnet-networking.html` (the Annex J
+paragraph in *Reading the hex blob*, ~L521: "ASHRAE 135 Annex J's
+sequential-port convention"), echoed verbatim by the new
+`second-network-next-port` quiz question (PR #588), which sources it
+faithfully. **Lens:** working engineer. **Issue:** Annex J designates
+X'BAC0' (47808) as the default port and *permits* other ports for
+additional BACnet/IP networks; the specifically sequential
+0xBAC1/0xBAC2 practice is field convention reinforced by the IANA
+47808–47823 registration block, not a normative Annex J rule. Nothing
+taught is *wrong* — the ports are real, the practice is universal —
+the attribution is just one notch firmer than the text of the annex.
+**Verification:** flagged (checked against the annex's structure by
+the refutation round's technical lane; the owner may want to confirm
+against his copy). **Suggested direction:** soften in BOTH places in
+one pass — e.g. "Annex J's default 0xBAC0, then 0xBAC1, 0xBAC2 by
+convention" — the quiz was deliberately NOT fixed alone, since it must
+stay in sync with the lesson it sources.
