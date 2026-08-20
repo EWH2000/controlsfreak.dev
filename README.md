@@ -877,9 +877,9 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — thirty-four content quizzes (each 10 questions, paired
-1:1 with its lesson and deep-linking the gotchas) plus seven field
-drills:
+Shipped so far — thirty-four content quizzes (each a 10-question run
+drawn from its bank, paired 1:1 with its lesson and deep-linking the
+gotchas) plus seven field drills:
 
 - **Content quizzes — protocols:** Modbus Basics, Modbus Decoding,
   BACnet Basics, BACnet Networking, BACnet MS/TP. The data tables and

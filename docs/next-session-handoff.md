@@ -11,7 +11,11 @@
 
 ## Read this first
 
-Every claim in this file is a hypothesis. The repo is the truth. This
+Every claim in this file is a hypothesis. The repo is the truth.
+*(Verified claim-by-claim 2026-08-20 at `d32b6db`: 44 claims — 37
+verified, 7 corrected in place below, each marked "corrected
+2026-08-20". The biggest: the shuffle-order engine change this file
+called unbuilt shipped 2026-07-20.)* This
 session's own verification round proved the point twice: 4 of 26
 adversarial findings against the §5 drafts were scope misreadings
 (fixed by writing scope INTO the data file — the SWEEP-SCOPE ruling),
@@ -25,8 +29,10 @@ discrepancy.
 `main` @ `759b396`, **v3.89.0**, clean tree, zero open PRs, zero
 worktrees. (Measurements below cite `759b396`, the commit they were
 taken at — that is deliberate, not stale.) Counts: **40 education
-lessons · 34 content quizzes + 7 field drills · 32 tools · 10
-simulators.**
+lessons · 34 content quizzes + 7 field drills · 32 tools · 9 public
+simulators** *(corrected 2026-08-20: "10" was the raw file count,
+which includes the hidden AHU depiction mockup; every on-site count
+surface says 9)*.
 
 Shipped this session, all merged and live-verified:
 
@@ -43,22 +49,36 @@ Shipped this session, all merged and live-verified:
   build, fixture-proven.
 - **#579 / #580** — the marking fan-out: 38 tools marks + 72 education
   marks. **Measured end state: 369 marks site-wide — 246 education ·
-  116 tools · 7 landings** (`grep -ro 'data-gloss="' html/ | wc -l` at
+  116 tools · 7 landings**
+  (`grep -ro 'data-gloss="' --include='*.html' html/ | wc -l` at
   `759b396`). Lane arithmetic, per-entry inventory comments, and the
   reconciliation grep agree exactly — first pass where that happened.
+  *(Corrected 2026-08-20: the command as originally written here
+  lacked `--include='*.html'` and returns 372 — three doc-comment
+  hits at `gloss.js:11`, `glossary.js:36`, `styles.css:1419`. The 369
+  breakdown was right; the command now reproduces it.)*
 - **#581** — close-out: arc decision-log entry, #311/#312 resolution
   blocks, two comment-only glossary.js true-ups.
 
-Three entries are **markless by design** (`ui`, `safety-string`,
-`ak-factor` — cross-reference targets / future-page surface); do not
-"fix" them by hunting for marks.
+Six entries are **markless** *(corrected 2026-08-20 — this file said
+three)*: `ui`, `safety-string`, `ak-factor` are markless **by design**
+(cross-reference targets / future-page surface, annotated in-file);
+`enthalpy-changeover`, `glide`, `hoa` are also zero-mark but carry no
+markless annotation — their dense `owners[]` suppression suggests
+intentional, but nothing labels them. Do not "fix" any of the six by
+hunting for marks; the three unannotated ones need either an in-file
+annotation or an owner call (flagged to the §4/§7 curation lane).
 
 ## Corrections found in flight — do not rediscover these
 
 1. **The open-items sweep's #198 reading was garbled.** It reported
    `data-flow-static="true"` as "set on no page" — 15 education pages
-   plus `refrigerant-loop` (15 paths) carry it, guard-enforced since
-   `858292d`. The ledger entry now carries the addendum (PR #576).
+   plus `refrigerant-loop` (14 paths — *corrected 2026-08-20: the
+   oft-quoted "15" counts a comment line at `:677`; `6e1e83b` added 14
+   attributes*) carry it, guard-enforced since
+   `858292d`; `pid-tuner.html` carries 4 more flagged paths this
+   enumeration originally missed. The ledger entry now carries the
+   addendum (PR #576).
    Lesson: a sweep agent's compressed claim about a flag is a
    hypothesis like any other — one grep settles it.
 2. **Verifiers re-derive scope site-wide unless the scope is written
@@ -114,11 +134,15 @@ numbers have drifted and some cited prose has since gained gloss
 marks. Re-derive every cite before a lane uses it
 (ledger-decay rule).
 
-⚠️ The §5 banner's named surface rulings (SWEEP-SCOPE, ANCHORED-LINK,
-CODE-NOTATION, FAQ-FRONTMATTER, UNITS-SPAN, MIXED-RUN,
-COINED-COMPOUND, NAME-REFERENCE, JS-PAINTED-PROSE, DEVICE-NOUN on
-enthalpy) all bind §4 marking too — accrete new ones there, don't
-re-argue.
+⚠️ The §5 banner's **nine** named surface rulings (SWEEP-SCOPE,
+ANCHORED-LINK, CODE-NOTATION, FAQ-FRONTMATTER, UNITS-SPAN, MIXED-RUN,
+COINED-COMPOUND, NAME-REFERENCE, JS-PAINTED PROSE — *that last one is
+spelled with a space; a hyphenated grep misses it*) all bind §4
+marking too — accrete new ones there, don't re-argue. *(Corrected
+2026-08-20: this list originally counted DEVICE-NOUN as a tenth banner
+ruling — it is entry-local in the enthalpy comment,
+`glossary.js:1411-1419`, so a lane told to "apply the banner rulings"
+misses it unless pointed at that comment too.)*
 
 Pipeline that worked twice (phase 2, §5): read-only inventory fan-out
 sized from per-page prose classification → single-writer drafting →
@@ -138,9 +162,16 @@ Until that lane exists, **no bank counts as in scope for marking**.
 
 The brief is PARKED (friction file, triaged 2026-08-12). The
 **quiz-expansion candidate carries the CEO signal** (owner direction
-2026-08-14). Constraint verified at `759b396`: the engine's
-**shuffle-order change is decided but unbuilt** (2026-07-30 — friction
-file :6292 area) and should land with or before a bank-growth push.
+2026-08-14). *(Corrected 2026-08-20: this file said the engine's
+"shuffle-order change is decided but unbuilt (2026-07-30)" and should
+land before a bank-growth push — **false**. The sample-then-present
+change shipped 2026-07-20: `8066493` + `a1577bd`, v3.71.0;
+`buildQueue()` samples any bank exceeding `defaultCount`, spec'd by
+`tests/quiz-selection.spec.js`. The friction line this cited was
+itself stale — it contradicted its own file's #241 entry — and is now
+annotated. Bank growth needs zero engine work; the genuinely-unbuilt
+neighbors, Questions=5-on-an-at-count-bank and answer-choice shuffle,
+are deliberately deferred product questions, not gates.)*
 
 **Explicitly declined this session — do not carry as open work:**
 `bypass-leg` entry (one marginal anaphoric site, deferred to the

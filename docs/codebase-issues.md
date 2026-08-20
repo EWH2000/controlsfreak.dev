@@ -5188,7 +5188,7 @@ staging-sequencer halves stay **latent-only** — still fixed-px, still
 no fullscreen mode, so no live bug; apply the same pattern if either
 ever gains one. PR: issue-167/psychro-canvas-type.
 
-### 168. Form-label scan hierarchy: shared `label, .field-label` rule dims the scan targets *(open — 2026-07-17, low priority)*
+### 168. Form-label scan hierarchy: shared `label, .field-label` rule dims the scan targets *(2026-07-17 — STANDING ANSWER 2026-07-20: owner ruled working as designed; marker trued 2026-08-20, addendum below)*
 
 The shared rule in `styles.css` sets every form label to 0.7rem
 `--text-dim`, so on control-dense pages the captions you scan FOR are
@@ -5200,6 +5200,18 @@ now overrides page-locally (this PR: controls / presets / fullscreen
 view-toggle captions lifted to `--text`) — precedent to reach for if
 the same read recurs elsewhere before any site-wide retune. Affects
 every `<label>`-bearing page (~46).
+
+**Standing answer (marker trued 2026-08-20):** the owner ruled
+2026-07-20 — working as designed, do not retune site-wide (it would
+flatten the quiet-caption / loud-value scan hierarchy on every
+label-bearing page). The ruling has lived in CLAUDE.md's *Design
+system* section since then ("Form labels are deliberately dimmer than
+their values", which names this entry as its standing answer); this
+heading never picked up the marker — the same heading-contradicts-body
+family PR #576 trued up. The sanctioned pattern when a dense control
+block genuinely inverts the scan: page-local color lift only,
+`refrigerant-loop`'s `.rl-controls` block the reference
+implementation. Nothing here is open.
 
 ### 169. Refrigerant-loop frozen state: suction frost wash kisses the COMPRESSOR label *(addressed 2026-07-18)*
 
@@ -5759,7 +5771,7 @@ written*. A convention that must be consulted before work starts
 belongs where conventions live. Nothing about the finding changed —
 only where it can be found in time to matter.
 
-### 182. Three defect classes this arc that a green build cannot see *(open — 2026-07-18, guard proposals; sub-items 1, 2 + the fourth proposal shipped as PR #398 2026-07-19; stays open for the prose lint — see both Updates)*
+### 182. Three defect classes this arc that a green build cannot see *(2026-07-18, guard proposals; sub-items 1, 2 + the fourth proposal shipped as PR #398 2026-07-19; RESOLVED 2026-08-20 — closed by measurement, the prose lint shipped 2026-07-19; closure addendum below)*
 
 Three classes surfaced during the 2026-07-18 arc that build clean,
 pass the full suite, and ship broken anyway. Logged together because
@@ -6008,6 +6020,21 @@ sanctioned deep-link mechanism, but prose anchors exist and were
 invisible for exactly the same reason `learnMore` was. The shipped guard
 walks **every string value** on every question rather than a maintained
 field list, and names the field trail in the failure message.
+
+**Closure by measurement (2026-08-20):** the one item this entry stayed
+open for — sub-item 3's prose lint — shipped the same day the redesign
+direction above was recorded: `28d0f1f` (2026-07-19, "prose-lint: commit a
+runnable lint for stale terminal/ordinal claims (#182)"), plus follow-ups
+`097cf94` / `5493617`, all `(#182)`-tagged. It shipped exactly as
+prescribed here: report-only (`npm run prose-lint`, deliberately absent
+from `test.yml`), candidates-for-review framing, and the two-section
+append/insertion split the owner ruled 2026-07-20 (documented in
+CLAUDE.md §*Local preview & tests*). The flagship instance this entry
+required be fixed in the same PR is fixed:
+`metering-devices-txv-eev.html:303` now reads "That's the capstone for
+the refrigeration chapter" — append-safe, no surviving `N-page` claim.
+The heading simply never picked up the marker when the lint landed.
+Nothing here is open.
 
 ### 183. Forced-air chapter: `air-handlers` never picked up the two appended lessons *(addressed 2026-08-08 · PR #481)*
 
@@ -7371,9 +7398,6 @@ with its declaration preserved (as here), or the CLAUDE.md convention gains an
 explicit "a deviating ring stays beside its component" carve-out. Left alone to
 keep this branch to one issue.
 
-Per the orchestrator, not appended to `docs/codebase-issues.md` here — several PRs appending at that file's tail would conflict. Text for the single batched commit:
-
-```markdown
 ### 198. Gutter collage costs ~44% of a CPU core at idle on every page *(addressed 2026-07-24 · PR #427; the open follow-up closed 2026-07-24/25 — addendum below)*
 
 **Status:** fixed (PR #427).
@@ -7447,11 +7471,12 @@ paths are expected to be retired by a future static-"print" background,
 at which point the gutter stops being an engine consumer at all. The
 durable value of this work is the CONTENT diagrams -- the education
 lessons and the simulators -- not the collage that motivated it.
-```
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-https://claude.ai/code/session_01LmBziFvEW678CX6zCaCQxx
+*(Formatting trued 2026-08-20: this entry was pasted into the ledger as a
+lane's verbatim commit text — an "install this text" preamble, a
+```` ```markdown ```` fence around the whole entry, and a commit trailer +
+session URL after it, all from `6c02ce1`'s batch. The wrapper is stripped;
+the entry text above is unchanged.)*
 
 ### 199. DDC Workbench: page-local rAF loops ran forever; three idle-gate deferrals *(addressed 2026-07-24)*
 
@@ -7499,12 +7524,9 @@ Three things were deliberately **not** done, each with a revisit trigger:
 
 **Follow-on.** #70 stays open on its own terms — this entry does not close it. What changed is that its cost is now a number anyone can reproduce in one command rather than an assertion inside a deferred issue.
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-https://claude.ai/code/session_01LmBziFvEW678CX6zCaCQxx
-
-Not written to `docs/codebase-issues.md` per the lane brief — reproduced here for the
-owner to file.
+*(Formatting trued 2026-08-20: a commit trailer, session URL and a "reproduced
+here for the owner to file" lane note trailed this entry — the same `6c02ce1`
+paste leakage as #198's. Stripped; the entry text is unchanged.)*
 
 ### 201. PR #427's engine surface landed undocumented in the two records that claim to be exhaustive *(addressed 2026-07-24 · `6c02ce1`)*
 
@@ -14776,3 +14798,15 @@ mention both pass, and the clean tree builds 139 pages with zero
 offenders. The transform header's floor paragraph was rewritten in
 the same commit — no quoting variant sits outside the floor now; what
 remains outside is JS-painted prose only.
+
+### 313. `tests/gloss.spec.js` header still counts "seven gloss guard arms" — predates #312's malformed-spelling arm *(noticed 2026-08-20, session-open verification round; comment true-up next time the spec is touched)*
+
+The spec header enumerates "all SEVEN gloss guard arms" as
+hand-exercised, and its list does not name the malformed-attribute arm
+PR #578 added (`MALFORMED_RE`, `.eleventy.js:776` — the #312 EXTEND
+ruling). The header's own caveat is honest — no spec runs Eleventy with
+broken input, build guards are proven by the build — so nothing is
+under-tested; the arm COUNT is simply stale, the same
+comment-contradicts-code shape as the arm counts #576 trued up
+elsewhere. One-line comment fix; not worth its own PR. Fold into the
+next PR that touches `tests/gloss.spec.js`.
