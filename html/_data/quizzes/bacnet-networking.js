@@ -76,11 +76,11 @@ module.exports = [
         prompt: 'Two buildings\' BAS systems, built years apart, get joined by an IP link. Soon after, the front end starts losing polls to both buildings\' MS/TP trunks unpredictably — and both trunks turn out to be configured as network <code>2001</code>. What rule did the integration break?',
         choices: [
             { id: 'a', text: 'Device instance numbers must not repeat between the buildings.' },
-            { id: 'b', text: 'MS/TP trunks must use network numbers of 254 or below.' },
+            { id: 'b', text: 'MS/TP trunks must use network numbers of 127 or below.' },
             { id: 'c', text: 'Trunks joined by IP need a BBMD before their traffic can mix.' },
             { id: 'd', text: 'Every network number must be unique across the joined internetwork.', correct: true }
         ],
-        explain: 'A network number is what routing runs on: a message bound for network <code>2001</code> goes wherever the routers believe 2001 lives, and with two segments claiming the same name the choice is ambiguous — messages get thrown away or sent the wrong way, which reads on a graphic as points that come and go. Renumber one trunk. The device-instance rule is real, but nothing here points at it — instances are application-layer names and don\'t steer routing. There\'s no 254 ceiling either: that one-byte limit belongs to the MS/TP <em>station address</em>, not the network number. And a BBMD manages BACnet/IP broadcast distribution — it plays no part in delivering an addressed message to a trunk.',
+        explain: 'A network number is what routing runs on: a message bound for network <code>2001</code> goes wherever the routers believe 2001 lives, and with two segments claiming the same name the choice is ambiguous — messages get thrown away or sent the wrong way, which reads on a graphic as points that come and go. Renumber one trunk. The device-instance rule is real, but nothing here points at it — instances are application-layer names and don\'t steer routing. There\'s no 127 ceiling either: that one-byte limit is the MS/TP <em>station address</em>\'s (masters run 0–127), not the network number\'s, which is a 16-bit value (1–65534) on any medium. And a BBMD manages BACnet/IP broadcast distribution — it plays no part in delivering an addressed message to a trunk.',
         learnMore: { href: '/education/bacnet-networking.html#three-addresses', label: 'BACnet Networking — Three addresses, one device' },
         tags: ['bacnet', 'addressing', 'troubleshooting']
     },
@@ -183,17 +183,31 @@ module.exports = [
         id: 'fdr-all-unicast',
         prompt: 'A remote monitoring server on a subnet with no BBMD registers as a foreign device with a BBMD at the main plant, several router hops away. Broadcasts can\'t cross those routers — so how does the plant\'s broadcast traffic reach the server at all?',
         choices: [
-            { id: 'a', text: 'It never crosses as a broadcast — every leg of the exchange is a unicast, which routes normally.', correct: true },
+            { id: 'a', text: 'It never crosses the routers as a broadcast — every router-crossing leg is a unicast, which routes normally.', correct: true },
             { id: 'b', text: 'The routers between them carry a UDP broadcast-relay (helper) entry aimed at the server.' },
             { id: 'c', text: 'The BBMD adds the server\'s subnet to its Broadcast Distribution Table.' },
             { id: 'd', text: 'Registration temporarily promotes the server to a BBMD for its own subnet.' }
         ],
-        explain: 'Foreign-device machinery is built so nothing ever needs to cross a router as a broadcast. <code>Register-Foreign-Device</code> is a unicast to the BBMD; once the FDT entry exists, each broadcast the BBMD would re-broadcast locally is sent to the server as a <em>unicast copy</em>, and the server\'s own requests and their replies are addressed traffic anyway. Plain routed IP delivery does all the work — no router configuration, no helper entries. The BDT guess confuses the tables: the BDT lists peer <em>BBMDs</em>, and the server isn\'t one — it registered instead of being configured, which is exactly what the FDT is for. That\'s the design point of FDR: it turns a broadcast problem into ordinary unicast traffic.',
+        explain: 'Foreign-device machinery is built so nothing ever needs to cross a router as a broadcast. <code>Register-Foreign-Device</code> is a unicast to the BBMD; once the FDT entry exists, each broadcast the BBMD would re-broadcast locally is sent to the server as a <em>unicast copy</em>, and a broadcast the server itself originates travels to the BBMD the same way — as a unicast (<code>Distribute-Broadcast-To-Network</code>) the BBMD re-broadcasts at the plant. Plain routed IP delivery does all the work — no router configuration, no helper entries. The BDT guess confuses the tables: the BDT lists peer <em>BBMDs</em>, and the server isn\'t one — registration makes it a table <em>entry</em>, not a BBMD; it forwards nothing for anyone. That\'s the design point of FDR: it turns a broadcast problem into ordinary unicast traffic.',
         learnMore: { href: '/education/bacnet-networking.html#fdr', label: 'BACnet Networking — Foreign Device Registration' },
         tags: ['bacnet', 'fdr', 'broadcast']
     },
 
     // ── Reading the hex blob ──────────────────────────────
+    {
+        type: 'mcq',
+        id: 'second-network-next-port',
+        prompt: 'An integrator needs a second, fully separate BACnet/IP network on a subnet that already carries one — same switches, same IP range. What makes the second network distinct from the first?',
+        choices: [
+            { id: 'a', text: 'Its own network number — that alone keeps the two apart.' },
+            { id: 'b', text: 'A reserved device-instance block for its devices.' },
+            { id: 'c', text: 'The next UDP port up — it runs on 47809 (<code>0xBAC1</code>) instead of 47808.', correct: true },
+            { id: 'd', text: 'Nothing can — one subnet supports only one BACnet/IP network.' }
+        ],
+        explain: 'A BACnet/IP network is a broadcast domain <em>on a port</em>: every device bound to 47808 on that wire hears every 47808 broadcast, so as long as both groups share the port they are one network, whatever the configuration sheet says. The separation that works is the sequential-port convention from ASHRAE 135 Annex J — the second network takes <code>0xBAC1</code> (47809), the next <code>0xBAC2</code>, and devices on one port neither hear nor answer Who-Is on another. Each network still gets its own network number, but that\'s the network-layer <em>name</em>, not the separator — and a reserved device-instance block organizes names too: instances are application-layer labels, so every device on the shared port would still hear every broadcast. It\'s also why a discovered hex address can end in <code>BAC1</code> instead of <code>BAC0</code>.',
+        learnMore: { href: '/education/bacnet-networking.html#hex-blob', label: 'BACnet Networking — Reading the hex blob' },
+        tags: ['bacnet', 'bacnet-ip', 'addressing']
+    },
     {
         type: 'gotcha',
         id: 'hex-blob-decode',
@@ -208,19 +222,5 @@ module.exports = [
         explain: 'Eight hex characters = four bytes = the IPv4 address alone, with the default port assumed. Byte by byte: <code>C0</code>=192, <code>A8</code>=168, <code>01</code>=1, <code>0A</code>=10 → <strong>192.168.1.10</strong>, port 47808 (<code>0xBAC0</code>). A 12-character string would append the port; one ending in <code>BAC1</code> would mean a non-default port (47809). The <a href="/tools/bacnet-ip-converter.html">BACnet/IP Hex Converter</a> does this both ways.',
         learnMore: { href: '/education/bacnet-networking.html#hex-blob', label: 'BACnet Networking — Reading the hex blob' },
         tags: ['bacnet', 'bacnet-ip', 'hex']
-    },
-    {
-        type: 'mcq',
-        id: 'second-network-next-port',
-        prompt: 'An integrator needs a second, fully separate BACnet/IP network on a subnet that already carries one — same switches, same IP range. What makes the second network distinct from the first?',
-        choices: [
-            { id: 'a', text: 'Its own network number — that alone keeps the two apart.' },
-            { id: 'b', text: 'A reserved device-instance block for its devices.' },
-            { id: 'c', text: 'The next UDP port up — it runs on 47809 (<code>0xBAC1</code>) instead of 47808.', correct: true },
-            { id: 'd', text: 'Nothing can — one subnet supports only one BACnet/IP network.' }
-        ],
-        explain: 'A BACnet/IP network is a broadcast domain <em>on a port</em>: every device bound to 47808 on that wire hears every 47808 broadcast, so as long as both groups share the port they are one network, whatever the configuration sheet says. The separation that works is the sequential-port convention from ASHRAE 135 Annex J — the second network takes <code>0xBAC1</code> (47809), the next <code>0xBAC2</code>, and devices on one port neither hear nor answer Who-Is on another. Each network still gets its own network number, but that\'s the network-layer <em>name</em>, not the separator. It\'s also how a 12-character hex address ending in <code>BAC1</code> comes to exist.',
-        learnMore: { href: '/education/bacnet-networking.html#hex-blob', label: 'BACnet Networking — Reading the hex blob' },
-        tags: ['bacnet', 'bacnet-ip', 'addressing']
     }
 ];
