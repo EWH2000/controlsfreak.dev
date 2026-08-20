@@ -37,10 +37,17 @@
 //
 // CURATION: docs/tooltip-glossary-scoping.md §8, RATIFIED AS AMENDED
 // 2026-08-10 — that blockquote governs, and no term lands here without
-// clearing all three criteria. §4 collision terms are NOT eligible for
-// a plain entry; when phase 5 arrives they get a distinct
-// `kind: 'disambiguation'` flag so the component can render them
-// visibly differently. Deliberately not built now.
+// clearing all three criteria. §4 collision terms: RULED 2026-08-20
+// (docs/glossary-s4-collision-proposal.md is the record; the dated
+// amendment sits beside the scoping record's §8 blockquote). The bare
+// colliding headwords are build-enforced EXCLUDED — the machine-readable
+// map is html/_data/glossaryExcluded.js, guarded by the
+// glossaryExcludedGuard collection in .eleventy.js — while the surviving
+// compounds and the two owner-amended plain entries ship in the §4
+// section at the bottom of this file. The `kind: 'disambiguation'`
+// component was ruled NOT built: zero kind entries survived the ruling,
+// and the proposal's §4 stands as the record of the unbuilt design and
+// its re-open triggers. See the §4 banner above module.exports.
 //
 // ── SENSE-GREPS (criterion 3: single-sense site-wide) ─────────────────
 // Run before drafting, per term, over html/ + src/. Verdicts recorded
@@ -433,6 +440,58 @@
 //                      button into a JS string.
 // ──────────────────────────────────────────────────────────────────────
 
+// ── §4 COLLISION TIER (RULED 2026-08-20) ──────────────────────────────
+// The fourth content tier: true homograph families, where the same bare
+// token carries rival senses in marking scope. Ruled by the owner
+// 2026-08-20 — draft PR #587 (refutation-hardened), ratification PR
+// #590; the governing record is docs/glossary-s4-collision-proposal.md's
+// RATIFIED block plus its per-family sections, and every figure below is
+// that document's, not re-derived here. Shape of the ruling:
+//
+//   - ELEVEN plain entries ship, in the §4 section at the bottom of
+//     this file: contactor-coil, modbus-rtu, duct-static, head-pressure,
+//     dew-point, proof-window, floating-actuator, deadband,
+//     differential-pressure, high-static-cutout, mixed-air-low-limit.
+//     Nine are compound-splits (disposition B — the bare headword ships
+//     nothing; a single-sense compound carries the term); dew-point and
+//     deadband are the two owner-amended PLAIN bare-headword entries
+//     (containment and sense-compatibility, proposal §2's amendment
+//     routes — the dated amendment sits beside the scoping record's §8
+//     blockquote). Every entry's leading comment carries its WRITTEN
+//     MATCHING RULE, the §5 lane contract exactly; Q2's ratified
+//     principle governs them all — never mark a sense-ambiguous visible
+//     token under a sense-scoped id.
+//
+//   - ZERO `kind: 'disambiguation'` entries survived the ruling, so the
+//     disambiguation component is NOT built. Proposal §4 records the
+//     unbuilt design; the re-open triggers live in the EXCLUDED map's
+//     rows and the friction file.
+//
+//   - Every bare colliding headword is RESERVED, machine-readably, in
+//     html/_data/glossaryExcluded.js: the five whole-family exclusions
+//     (coil, reset, lockout, authority, direct-acting/reverse-acting)
+//     plus every B family's bare headword (rtu, static, head, proof,
+//     floating, differential, low-limit, high-limit) — fourteen rows,
+//     each with its reason (hazard first), its ruled date, and its
+//     re-open trigger where the ruling recorded one. The
+//     glossaryExcludedGuard collection (.eleventy.js) build-enforces
+//     the reservation three ways: the map may not be empty (the tier
+//     has shipped — an empty map is a guard watching nothing), every
+//     row passes the kebab + reason + date lint, and no entry in THIS
+//     file may carry an id or a kebab-normalized term equal to a
+//     reserved headword. A future lane that wants one of those words as
+//     an entry must edit the map row — which cites the ruling it would
+//     be overturning — never work around it.
+//
+//   - SWEEP-SCOPE, ANCHORED-LINK, MIXED-RUN and the other §5 surface
+//     rulings above apply to the §4 entries unchanged. The map and its
+//     rules bind every surface — page marks today, the §7.2 quiz-bank
+//     surface when its component lands — and the whole map is
+//     re-examined when that lane opens, because several row reasons are
+//     page-transform mechanics (owners-emptying, MIXED-RUN) whose force
+//     does not transfer to a surface with no owners[] mechanism.
+// ──────────────────────────────────────────────────────────────────────
+
 module.exports = {
     'sr-latch': {
         term: 'SR latch',
@@ -657,6 +716,11 @@ module.exports = {
         owners: [],
     },
 
+    // MARKLESS BY DESIGN (§4 ruling rider, 2026-08-20): every in-scope
+    // prose occurrence sits on start-stop-commands — the owner — or in
+    // navCard args; zero markable sites today. Ships for the §7.2 bank
+    // surface (25 bank occurrences) and the palette / JSON-LD consumers
+    // — the safety-string shape.
     'hoa': {
         term: 'HOA (Hand-Off-Auto)',
         def: 'The Hand-Off-Auto selector on a starter or drive — the switch '
@@ -848,6 +912,10 @@ module.exports = {
     // the relinquish-default reasoning: the panel appears only off the
     // owning page, and repeating the lesson's framing is what keeps the
     // two surfaces from drifting.
+    // MARKLESS BY DESIGN (§4 ruling rider, 2026-08-20): both teach
+    // surfaces are owners, so the corpus has no landing site today;
+    // ships as economizer's mechanism twin and for the future consumers
+    // — the safety-string shape.
     'enthalpy-changeover': {
         term: 'enthalpy changeover',
         def: 'An economizer changeover that compares total heat rather than '
@@ -1030,6 +1098,12 @@ module.exports = {
     // only, in refrigeration context — 'the dampers glide' on the
     // air-side pages is the standing exhibit for why there is no
     // walker.
+    // MARKLESS BY DESIGN (§4 ruling rider, 2026-08-20) — and
+    // load-bearing for the §4 dew-point ruling: its owners are exactly
+    // the three refrigerant teach pages, which is what pre-pays the
+    // blend-dew sense and lets bare dew-point ship as a plain entry
+    // (proposal 3.5). Zero markable sites in scope today; ships for the
+    // future consumers — the safety-string shape.
     'glide': {
         term: 'glide',
         def: 'On a zeotropic blend, the spread between the bubble point '
@@ -1656,5 +1730,377 @@ module.exports = {
            + 'cartridge\'s minimum ΔP. The balancing and the control '
            + 'live in one valve body.',
         owners: ['/education/balancing.html'],
+    },
+
+    // ── §4 collision tier (2026-08-20) — see the banner above ────────
+
+    // RULED 2026-08-20: the one owner amendment to the recommended mix
+    // — bare 'coil' stays EXCLUDED (three senses; start-stop-
+    // commands:313 puts heat-exchange and winding eleven words apart,
+    // the standing exhibit for why no walker may ever touch the word)
+    // AND this priced compound option was TAKEN at 1–2 marks, for the
+    // panel-free winding sites on electrical-quick-calc the refutation
+    // round surfaced. MATCHING RULE: the compounds 'contactor coil' /
+    // 'relay coil' (space or hyphen) where the referent is the
+    // electromagnet winding — NEVER bare 'coil' (reserved headword,
+    // glossaryExcluded.js: heat-exchange is the trade's default reading
+    // and needs no tooltip; the Modbus sense self-defines where it
+    // appears), and never any heat-exchange or Modbus compound however
+    // worded (DX coil, cooling coil, coil face). electrical-quick-
+    // calc:121's 'the coil draws 3 A' is anaphoric bare coil — outside
+    // the rule by design; :114's 'relay coil' is the expected mark.
+    // Owners: start-stop-commands (:72 — 'Last in line is the contactor
+    // coil: the muscle') + controller-wiring (:239 wires a BO to one).
+    // electrical-quick-calc is deliberately NOT an owner: its worked
+    // example uses the winding, it doesn't teach it, and this entry
+    // exists for exactly that page.
+    'contactor-coil': {
+        term: 'contactor / relay coil',
+        def: 'The electromagnet inside a contactor or relay — energize '
+           + 'the coil and the magnetic field pulls the contacts in; '
+           + 'kill it and a spring drops them out. As a load it is '
+           + 'inductive: a burst of inrush when first energized, a '
+           + 'lighter holding draw after, which is why pilot-duty '
+           + 'contacts and control transformers are sized against the '
+           + 'coil\'s ratings rather than its steady draw alone. No '
+           + 'relation to the coils air and water flow through.',
+        owners: [
+            '/education/start-stop-commands.html',
+            '/education/controller-wiring.html',
+        ],
+    },
+
+    // MATCHING RULE: the collocation 'Modbus RTU' ONLY — never bare
+    // 'RTU', a sense-ambiguous token (packaged rooftop unit on the
+    // air-side pages vs this serial framing; the two collide bare
+    // across sibling landings — education/index:259 vs tools/index:88)
+    // and a reserved headword (glossaryExcluded.js). bacnet-vs-
+    // modbus:112's 'RTU / ASCII (RS-485 serial), TCP' is bare AND a
+    // MIXED-RUN (ascii/tcp have no entries) — never mark it. Table-cell
+    // marks are precedented (five existing <td> marks), so vfds:567's
+    // '<td>Modbus RTU</td>' name cell is a marking-lane judgment call;
+    // modbus-decoding:409 is a NAME-REFERENCE. Owners: modbus-basics
+    // (:55 names it, :176 walks the frame anatomy) + the modbus-
+    // functions tool (its CRC-16 tab teaches the RTU frame check).
+    // Expected 1–2 marks (vfds:576 certainly). ≤2-mark-basket member —
+    // the trade is priced once in the proposal's §3 preamble.
+    'modbus-rtu': {
+        term: 'Modbus RTU',
+        def: 'The serial form of Modbus — request and reply ride an '
+           + 'RS-485 pair as compact binary frames, each closed by a '
+           + 'CRC-16 error check, one addressed server answering at a '
+           + 'time. The name is the old telemetry <em>remote terminal '
+           + 'unit</em>, not the machine on the roof: on a drive-network '
+           + 'page RTU means this framing, on an equipment schedule it '
+           + 'means a packaged rooftop unit, and the two never overlap '
+           + 'in one sentence.',
+        owners: [
+            '/education/modbus-basics.html',
+            '/tools/modbus-functions.html',
+        ],
+    },
+
+    // MATCHING RULE: the collocation 'duct static' (incl. 'duct static
+    // pressure') plus the derived collocations 'static setpoint' /
+    // 'static reset' where the referent is the duct loop — NEVER bare
+    // 'static', a reserved headword (glossaryExcluded.js: 46 % of its
+    // raw pool is the data-flow-static build attribute, and the
+    // not-animated homograph lives comment-side). ANCHORED-LINK:
+    // duct-sizer:117's 'static setpoint' sits inside an <a> into the
+    // owner lesson. DEF CONSTRAINT (ratified 3.3): the closing clause
+    // names the building-static fork with the order-of-magnitude
+    // contrast and names the Building Pressure lesson in plain text —
+    // every mark this entry earns lands on a page WITHOUT that
+    // lesson's :515 callout. Owners: duct-static-control (the teacher)
+    // + building-pressure (its :515 callout defines BOTH statics — the
+    // site's own disambiguation; a panel beside it would shadow it,
+    // the enthalpy-changeover judgment-encoding shape). Expected
+    // ~8–12 marks (the proposal's enumerated sites).
+    'duct-static': {
+        term: 'duct static pressure',
+        def: 'The pressure the supply fan maintains inside the duct '
+           + 'trunk — the fan-speed loop\'s control variable, measured '
+           + 'in <span data-us="whole inches of water column" '
+           + 'data-metric="hundreds of pascals">whole inches of water '
+           + 'column</span> at a sensor partway down the duct, so every '
+           + 'VAV box has pressure to throttle against. Not '
+           + '<em>building</em> static — the envelope\'s space-to-'
+           + 'outdoors residual at <span data-us="a few hundredths of '
+           + 'an inch" data-metric="a few pascals">a few hundredths of '
+           + 'an inch</span>, a different magnitude on a different '
+           + 'sensor in a different loop; the Building Pressure lesson '
+           + 'pulls the two apart.',
+        owners: [
+            '/education/duct-static-control.html',
+            '/education/building-pressure.html',
+        ],
+    },
+
+    // owners: [] — the zero-definition stall shape (the ratified §8
+    // amendment's own clause): the term appears undefined in page
+    // intros (refrigerant-cycle-basics:47's 'a head-pressure trip')
+    // while the pages teach the quantity as 'discharge pressure' /
+    // 'high side' and never connect the names — this panel IS the
+    // connection. MATCHING RULE: the compound 'head pressure' /
+    // 'head-pressure' only. NEVER bare 'head' — a reserved headword
+    // (glossaryExcluded.js): hydronic pump head, sensor heads,
+    // '{% block head %}' and ordinary English all share the token in
+    // scope. The hydronic half of the family took C (pump-head was
+    // priced and declined at one honest mark) — never route a hydronic
+    // 'head' through this entry. Expected 3 marks: refrigerant-cycle-
+    // basics:47, superheat-subcooling:176, refrigeration/index:21.
+    'head-pressure': {
+        term: 'head pressure',
+        def: 'The refrigeration trade\'s name for high-side pressure — '
+           + 'what the compressor discharges against, one pressure from '
+           + 'the discharge line through the condenser to the metering '
+           + 'device, and the same quantity a controller graphic labels '
+           + '<em>discharge pressure</em>. A unit tripping on head '
+           + 'pressure has the high side too high: a fouled or '
+           + 'air-starved condenser, a dead condenser fan, an '
+           + 'overcharge.',
+        owners: [],
+    },
+
+    // RULED 2026-08-20: A-as-amended — bare headword, PLAIN register
+    // (proposal 3.5; the dated amendment sits beside the scoping
+    // record's §8 blockquote). MATCHING RULE, and it TRAVELS TO EVERY
+    // FUTURE SURFACE: mark moist-air uses only. NEVER in refrigerant-
+    // blend context — banks included when the §7.2 component lands
+    // (quizzes/refrigerant-cycle-basics.js:114/:121 carry the blend
+    // sense today, and banks have no owners[] mechanism) — and NEVER
+    // inside the compound 'apparatus dew point' (folded into the
+    // closing clause below; coil-sizing:314 self-defines it in place).
+    // Mitigation, stated: the closing clause names both forks, so a
+    // future mis-mark degrades to imprecise rather than flatly wrong.
+    // Fallback, named: if the §7.2 lane finds bare-headword curation
+    // unmanageable there, the kind panel remains what un-amended A
+    // would have bought (the unbuilt design: proposal §4).
+    // owners[], TWO GROUNDS (record per the ratified 3.5):
+    //   teach the moist-air def — psychrometrics-basics (:114),
+    //     dew-point-calculator, dedicated-outdoor-air (:187-190
+    //     teaches the condensation mechanic and the apparatus sense);
+    //   rival-sense containment — refrigerant-pt, superheat-subcooling,
+    //     refrigerant-cycle-basics teach the blend dew sense, and a
+    //     moist-air panel there would contradict their own live
+    //     glide/superheat panels.
+    // Expected ~20–40 marks (planning band; the marking lane fixes it
+    // per the §5 process).
+    'dew-point': {
+        term: 'dew point',
+        def: 'The temperature air has to cool to before its moisture '
+           + 'starts condensing — hold any surface colder than the '
+           + 'air\'s dew point and it sweats, which makes this the '
+           + 'controlling number wherever water on a surface is the '
+           + 'worry. Two cousins share the name: a dehumidifying coil '
+           + 'pulls air toward its <em>apparatus</em> dew point, the '
+           + 'effective coil-surface temperature, and on a zeotropic '
+           + 'refrigerant blend the dew point is the saturated-vapor '
+           + 'end of the glide — a different fluid\'s property '
+           + 'entirely.',
+        owners: [
+            '/education/psychrometrics-basics.html',
+            '/tools/dew-point-calculator.html',
+            '/education/dedicated-outdoor-air.html',
+            '/tools/refrigerant-pt.html',
+            '/education/superheat-subcooling.html',
+            '/education/refrigerant-cycle-basics.html',
+        ],
+    },
+
+    // MATCHING RULE: the two-word collocation 'proof window(s)'
+    // (hyphenated accepted) only. Bare 'proof' / 'prove' / 'proven'
+    // NEVER mark — the ordinary evidentiary register dominates the
+    // corpus (controls-commissioning runs 18-to-2 ordinary-vs-device)
+    // and 'proof' is a reserved headword (glossaryExcluded.js). Honest
+    // page yield 0–1 (reading-a-wiresheet:234's sentence already
+    // anchors the owning lesson three words earlier); the entry banks
+    // for the §7.2 surface, where the term runs 15 occurrences across
+    // four banks — the ≤2-mark-basket trade, priced in the proposal's
+    // §3 preamble. Owners: status-and-proof (:173 defines it) +
+    // timers-and-delays (§2, id=proof, builds it block by block).
+    'proof-window': {
+        term: 'proof window',
+        def: 'The defined wait between commanding equipment on and '
+           + 'expecting its status to prove the start — as long as the '
+           + 'slowest honest start, and no longer. Too short and every '
+           + 'legitimate start trips a nuisance fail-to-start; too long '
+           + 'and the window is a blind spot where a genuinely failed '
+           + 'start runs unreported, along with everything the sequence '
+           + 'interlocks against <em>proven</em>.',
+        owners: [
+            '/education/status-and-proof.html',
+            '/education/timers-and-delays.html',
+        ],
+    },
+
+    // MATCHING RULE: the actuator collocation only — 'floating
+    // actuator(s)', 'floating/tristate', 'floating (tri-state)',
+    // 'floating control' where the referent is actuation. NEVER bare
+    // 'floating' / 'float' — a reserved headword (glossaryExcluded.js)
+    // spanning IEEE-754 floating point, the electrically floating
+    // conductor/contact, physical buoyancy ('warm air … floats',
+    // minimum-outdoor-air:210) and layout homographs — and never
+    // 'floating-point', 'floating common', or any use whose head noun
+    // is a conductor, a value, or air. The one expected mark is
+    // controller-wiring:243, the collision sentence itself
+    // ('floating/tristate actuators … isn\'t a floating, isolated
+    // contact'); wrap the full 'floating/tristate actuators' phrase.
+    // balancing:497's 'floating-point input' is a routed owner
+    // question (proposal Q7) — do not mark it pending his call.
+    // Owner: commanding-actuators (§3 teaches the whole mechanism).
+    // ≤2-mark-basket member.
+    'floating-actuator': {
+        term: 'floating (tri-state) actuator',
+        def: 'An actuator commanded by two binary outputs instead of '
+           + 'one analog signal — one contact drives it open, the other '
+           + 'drives it closed, neither on means hold. It typically '
+           + 'carries no position feedback, so the controller estimates '
+           + 'position from stroke time and its own pulses, and '
+           + 'periodically overdrives to a hard end stop to re-zero the '
+           + 'count. Unrelated to a floating (isolated) contact or to '
+           + 'floating-point numbers — the same word doing electrical '
+           + 'and software work elsewhere.',
+        owners: ['/education/commanding-actuators.html'],
+    },
+
+    // RULED 2026-08-20: A-AS-AMENDED — a PLAIN entry in the geometric
+    // register, chosen over the kind panel (proposal 3.10; zero A
+    // survived anywhere, so the disambiguation component was not
+    // built). TWO HARD DEF CONSTRAINTS, ratified — a future edit must
+    // honor both: (1) NEVER state the arithmetic — the site runs both
+    // width conventions live and correct (comparators-and-deadband:420
+    // and setpoint-math-reset half-band; CLAUDE.md's house-usage block
+    // and the AHU workbench module full-width), so a def stating
+    // either contradicts half the site; (2) NEVER claim the zone
+    // setpoint-separation sense — the site files that under
+    // 'differential' (comparators-and-deadband's #which-sense
+    // paragraph, the canonical disambiguation; the zone sense's
+    // in-scope deadband count is zero). MATCHING RULE: the word
+    // 'deadband' where it names the act/release gap at either scale —
+    // one comparator's band or a staging gap (one geometric idea at
+    // two scales, the owning lesson's own framing at :450). NEVER mark
+    // 'DB' (means deadband only on the owning page, which is
+    // suppressed anyway — see dry-bulb's comment for the collision)
+    // and never the BACnet Deadband property (renders from
+    // bacnetEnums.js, dual-consumer, unreachable anyway). Owners: the
+    // S1/S2 teach set — comparators-and-deadband, function-blocks
+    // (:152), timers-and-delays (:472), equipment-staging (:368).
+    // bacnet-objects is deliberately NOT an owner: zero raw deadband
+    // tokens in its source — a padding owner that could never suppress
+    // anything (proposal 4.3). Expected ~4–7 marks.
+    'deadband': {
+        term: 'deadband',
+        def: 'A deliberate gap between the threshold that acts and the '
+           + 'threshold that releases, so a value drifting near the '
+           + 'line cannot chatter the decision on and off — the same '
+           + 'geometric idea whether the decision is one comparator '
+           + 'switching or a whole plant staging up and down. One '
+           + 'caution before copying a number between platforms: '
+           + 'vendors split on whether a deadband parameter names the '
+           + 'full width of that gap or half of it, and the Comparators '
+           + '&amp; Deadband lesson shows how to read which from the '
+           + 'edges the output actually switches at.',
+        owners: [
+            '/education/comparators-and-deadband.html',
+            '/education/function-blocks.html',
+            '/education/timers-and-delays.html',
+            '/education/equipment-staging.html',
+        ],
+    },
+
+    // MATCHING RULE: the compound 'differential pressure' /
+    // 'differential-pressure' only, including the switch/transducer
+    // compounds that carry it. NEVER bare 'differential' — a reserved
+    // headword (glossaryExcluded.js): the switch's built-in hysteresis
+    // (status-and-proof:200 stops mid-sentence to disambiguate
+    // itself), the changeover arm and the zone setpoint-separation all
+    // share the token. NEVER match 'DP' or 'ΔP' bare — 'DP' is also
+    // dew point on the psychrometrics surfaces. Page-local caution ON
+    // THE RECORD (ratified 3.11): CLAUDE.md's workbench
+    // not-called-a-differential ruling is page-local —
+    // comparators-and-deadband's #which-sense zone sense is correct
+    // and canonical, disclosure not error. Nesting hazard:
+    // economizers:219 carries a dry-bulb button inside the
+    // 'differential dry-bulb' collocation — never split one
+    // collocation across two panels. Owners: status-and-proof (:77
+    // defines the DP switch), pump-control, balancing (the three hold
+    // 12 of the 22 compound occurrences). Expected ~4–6 marks.
+    'differential-pressure': {
+        term: 'differential pressure',
+        def: 'The pressure difference between two points — across a '
+           + 'filter, a coil, a fan, or between supply and return mains '
+           + '— and the quantity a differential-pressure switch or '
+           + 'transducer reads by comparing its two ports. It is how '
+           + 'flow-adjacent facts get proven: a fan really moving air '
+           + 'shows a rise across itself, a loading filter shows a '
+           + 'growing drop. Distinct from a switch\'s built-in '
+           + '<em>differential</em>, the spread between its trip and '
+           + 'release points.',
+        owners: [
+            '/education/status-and-proof.html',
+            '/education/pump-control.html',
+            '/education/balancing.html',
+        ],
+    },
+
+    // MATCHING RULE (the family's written-scope contract, ratified
+    // 3.12): the 'high-static' compound with either device noun —
+    // 'high-static cutout' or 'high-static switch', space or hyphen.
+    // NEVER bare 'high-limit' / 'high limit' — a reserved headword
+    // (glossaryExcluded.js): the modifier pattern attaches to six-plus
+    // referents. 'economizer high limit' is pre-paid (economizer +
+    // enthalpy-changeover own both its pages) and 'high-limit lockout'
+    // must never get an entry — two reserved families in one phrase
+    // (resolution recorded at the economizer entry's comment). Owners:
+    // duct-static-control (:462 teaches the device; its railed-
+    // transducer war story is the case for it) + boolean-logic-latches
+    // (:125/:221 use it as the standing hardwired-safety example).
+    // Expected ~2 marks (controls-commissioning:128/:132).
+    // ≤2-mark-basket member.
+    'high-static-cutout': {
+        term: 'high-static cutout',
+        def: 'A hardwired switch in the supply duct that kills the fan '
+           + 'when duct static climbs past its setting — the last line '
+           + 'against a fan pressurizing ductwork whose dampers have '
+           + 'closed against it, a failure that can pop flex '
+           + 'connections and buckle trunk before any software notices. '
+           + 'It belongs in the safety string precisely because the '
+           + 'loop that should have caught the rise may be the thing '
+           + 'that failed.',
+        owners: [
+            '/education/duct-static-control.html',
+            '/education/boolean-logic-latches.html',
+        ],
+    },
+
+    // MATCHING RULE (ratified 3.12): the compounds 'mixed-air low
+    // limit' / 'mixed-air low-limit' (with or without 'override') and
+    // 'low-limit override' where the referent is the economizer's
+    // mixed-air floor. NEVER bare 'low-limit' / 'low limit' — a
+    // reserved headword (glossaryExcluded.js); the freezestat sense is
+    // pre-paid by freezestat's own def ('Also called a freeze stat or
+    // low-limit stat'), and controls-commissioning:128's 'low-limit
+    // thermostat' sits two words after a live freezestat button.
+    // air-mixing:362's 'low-limit hardware' is a DELIBERATE NEAR-MISS
+    // the written rule does not reach — hardware there means the
+    // freeze stat, not this override. Owners: economizers (:398
+    // defines the override in place) + coil-freeze-risk. Expected ~2
+    // marks (economizer-ratio:239, minimum-outdoor-air:290).
+    // ≤2-mark-basket member.
+    'mixed-air-low-limit': {
+        term: 'mixed-air low-limit override',
+        def: 'The economizer\'s freeze floor — an override that drives '
+           + 'the outdoor dampers back toward minimum when mixed-air '
+           + 'temperature falls too far, whatever the free-cooling '
+           + 'logic is asking for. It is the software half of freeze '
+           + 'protection, catching the cold-morning dive early enough '
+           + 'that the hardwired freeze stat downstream never has to '
+           + 'trip; an economizer without one isn\'t aggressive, it\'s '
+           + 'uninsured.',
+        owners: [
+            '/education/economizers.html',
+            '/tools/coil-freeze-risk.html',
+        ],
     },
 };

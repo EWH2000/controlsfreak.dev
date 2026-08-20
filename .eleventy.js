@@ -684,6 +684,68 @@ module.exports = function(eleventyConfig) {
         return [];
     });
 
+    // Build-time guard: the §4 reserved-headword map
+    // (html/_data/glossaryExcluded.js) — the exclusion half of the
+    // 2026-08-20 §4 collision-tier ruling
+    // (docs/glossary-s4-collision-proposal.md §5; ruled build-enforced,
+    // Q4). Three legs:
+    //   1. Anti-vacuity — the tier has shipped, so an empty map means
+    //      this guard is watching nothing; fail rather than decay into a
+    //      quiet pass (the glossaryGuard-header doctrine).
+    //   2. Row lint — kebab keys (the key IS the reservation, and the
+    //      term-equality leg compares against it), a written non-empty
+    //      `reason` and `ruled` date per row; `reopen` optional but
+    //      non-empty when present.
+    //   3. Collision + term-equality — no glossary entry may carry an id
+    //      OR a kebab-normalized `term` equal to a reserved headword (id
+    //      `reset-value` with term "reset" is the near-id hole the term
+    //      leg closes). A lane that wants a reserved word as an entry
+    //      must edit the map row — which cites the ruling it would be
+    //      overturning — in the same change, never work around this.
+    eleventyConfig.addCollection("glossaryExcludedGuard", () => {
+        const glossary = require("./html/_data/glossary.js");
+        const excluded = require("./html/_data/glossaryExcluded.js");
+        const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+        const offenders = [];
+        const keys = Object.keys(excluded);
+        // Leg 1 — anti-vacuity.
+        if (!keys.length) {
+            offenders.push(
+                "  html/_data/glossaryExcluded.js — empty; the §4 tier shipped " +
+                "2026-08-20 and its reserved headwords must be here, or this " +
+                "guard is watching nothing"
+            );
+        }
+        // Leg 2 — row lint.
+        keys.forEach((key) => {
+            const row = excluded[key] || {};
+            if (!KEBAB.test(key)) offenders.push(`  ${key} — reserved headword is not kebab-case (CLAUDE.md "ID naming"; the term-equality leg compares kebab-normalized terms against these keys)`);
+            if (typeof row.reason !== "string" || !row.reason.trim()) offenders.push(`  ${key} — missing \`reason\`; an exclusion is a decision with a date and a hazard, not an absence`);
+            if (typeof row.ruled !== "string" || !row.ruled.trim()) offenders.push(`  ${key} — missing \`ruled\` date`);
+            if ("reopen" in row && (typeof row.reopen !== "string" || !row.reopen.trim())) offenders.push(`  ${key} — \`reopen\`, when present, must be a non-empty string naming the trigger`);
+        });
+        // Leg 3 — collision + term-equality against the live glossary.
+        const kebabize = (s) => String(s).toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+        Object.keys(glossary).forEach((id) => {
+            const hit = excluded[id] ? id : null;
+            const termKebab = kebabize((glossary[id] || {}).term || "");
+            const termHit = !hit && excluded[termKebab] ? termKebab : null;
+            if (hit) {
+                offenders.push(`  ${id} — this entry id is a RESERVED §4 headword (EXCLUDED, ruled ${excluded[hit].ruled}: docs/glossary-s4-collision-proposal.md §5). Shipping it means overturning that ruling — edit its row in html/_data/glossaryExcluded.js (with the owner's new ruling) in the same change, never around it`);
+            } else if (termHit) {
+                offenders.push(`  ${id} — this entry's term ${JSON.stringify(glossary[id].term)} kebab-normalizes to the RESERVED §4 headword '${termHit}' (EXCLUDED, ruled ${excluded[termHit].ruled}: docs/glossary-s4-collision-proposal.md §5). A different id does not un-reserve the word — edit the map row (with the owner's new ruling) or re-scope the term`);
+            }
+        });
+        if (offenders.length) {
+            throw new Error(
+                `html/_data/glossaryExcluded.js — the §4 reserved-headword guard ` +
+                `(docs/glossary-s4-collision-proposal.md §5, ratified 2026-08-20):\n${offenders.join("\n")}`
+            );
+        }
+        return [];
+    });
+
     // The per-page arm. On every rendered .html page: validate each
     // `data-gloss` mark, splice in the `aria-describedby` that wires the
     // trigger to its panel, then inject one panel per DISTINCT term plus

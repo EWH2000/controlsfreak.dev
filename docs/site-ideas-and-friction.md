@@ -6279,6 +6279,24 @@ of a real reader; do not open it as a general affordance.
 > plan: **`docs/glossary-arc.md`**; this entry stays as the decision
 > history, not the tracking mechanism.
 
+> **[future: §4 EXCLUDED-map re-open triggers]** *(planted 2026-08-20
+> with the §4 execution PR — the map's only watcher is a human, so the
+> triggers live here, where page-adding lanes look.)* The reserved
+> bare headwords in `html/_data/glossaryExcluded.js` (ruled
+> 2026-08-20; record: `docs/glossary-s4-collision-proposal.md`) carry
+> re-open triggers no build guard can watch. Standing ones:
+> **direct-/reverse-acting** returns as a disambiguation entry if a
+> third page uses either compound without defining it, OR when the
+> §7.2 quiz-bank component lane opens (the site's own drill lives on
+> that surface). **The whole map is re-examined at the §7.2 lane's
+> opening** — several row reasons are page-transform mechanics
+> (owners-emptying, MIXED-RUN) whose force does not transfer to a
+> surface with no owners[] mechanism. A **building-static** entry
+> stays declined while every occurrence sits on its teacher
+> (building-pressure) — re-open if the compound spreads. The declined
+> thin entries (**pump-head**, **valve-authority**, **manual-reset**,
+> **apparatus-dew-point**) re-pitch at the §7.2 surface, not before.
+
 ---
 
 ### Quiz expansion — grow the banks + new quizzes *(owner direction 2026-08-14; candidate for the post-glossary re-triage)*
