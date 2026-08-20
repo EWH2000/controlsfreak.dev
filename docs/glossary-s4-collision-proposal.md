@@ -1,5 +1,61 @@
 # The §4 collision tier — disposition proposal
 
+> **RATIFIED, 2026-08-20 — the owner has ruled; this block
+> governs.** Ruling taken in-session (conversation, 2026-08-20),
+> after PR #587 merged the refutation-hardened draft. Per the §8
+> ratify-in-place pattern, the status blockquote below describes
+> the draft when it was written and §3's checkbox lines record the
+> menu as it was put to the owner; the two amended families carry
+> ⟨marked⟩ in-place notes. The ruled table:
+>
+> - 3.1 coil — **C, as amended: the `contactor-coil` compound
+>   option is TAKEN** (1–2 marks; motivated by the panel-free
+>   electrical-quick-calc winding sites the refutation round
+>   surfaced). Bare `coil` stays excluded.
+> - 3.2 RTU — **B, as recommended** (`modbus-rtu`).
+> - 3.3 static — **B, as recommended** (`duct-static`).
+> - 3.4 head — **B, as recommended** (`head-pressure` only;
+>   `pump-head` dropped).
+> - 3.5 dew point — **A as amended, as recommended** (plain
+>   register; apparatus folded into the closing clause).
+> - 3.6 reset — **C, as recommended** (both menu options declined).
+> - 3.7 proof — **B, as recommended** (`proof-window`).
+> - 3.8 lockout — **C, as recommended.**
+> - 3.9 floating — **B, as recommended** (`floating-actuator`).
+> - 3.10 deadband — **A AS AMENDED: the plain geometric-register
+>   entry**, chosen over the kind panel after the full breakdown
+>   (the owner was initially leaning C; the deciding argument was
+>   that the corpus shows one idea at two scales — his own lesson's
+>   framing — and the width-convention disclosure fits a closing
+>   clause). **Consequence, recorded explicitly: zero A survives ⇒
+>   the disambiguation component is NOT built; §4 below stands as
+>   the record of the unbuilt design and `glossary.js:42`'s
+>   deferral comment stays.**
+> - 3.11 differential — **B, as recommended**
+>   (`differential-pressure`).
+> - 3.12 low/high-limit — **B, as recommended**
+>   (`high-static-cutout`, `mixed-air-low-limit`).
+> - 3.13 valve authority — **C, as recommended** (the 0–1-mark B
+>   declined).
+> - 3.14 direct/reverse-acting — **C, as recommended** (the
+>   two-armed re-open trigger stands).
+>
+> Cross-cutting: **Q4 RATIFIED — build-enforced**: the EXCLUDED map
+> ships machine-readable in `glossary.js` with the three-legged
+> guard arm (non-empty once the tier ships, kebab lint,
+> term-equality leg). **Q2 stands** and governs the B compounds'
+> written matching rules. **Q1 / Q3 / Q5 / Q6 are MOOT** — zero A
+> means no kind panel exists to register, link, size or style;
+> closed by consequence, not left unanswered. **Q7** is the table
+> above. By-catch rulings: the commanding-actuators:190 loop-action
+> anchor retarget is **APPROVED** (rides the execution wave as a
+> small live-page PR); the electrical-quick-calc coil sites are
+> served by the new `contactor-coil` entry. Ruled mix: **11 plain
+> entries, glossary 63 → 74, no component, expected ~45–75 marks.**
+> The §8-rider execution items (the `glossary.js:40-43` header
+> true-up, the EXCLUDED map + guard arm) belong to the EXECUTION
+> PR, not this ratification — nothing outside `docs/` changes here.
+
 > **Status: DRAFT — FOR OWNER RULING.** One recommendation per family,
 > argued; the menu exists so the owner can overrule, not so this doc
 > can hedge. The five-checker adversarial refutation round has run on
@@ -228,7 +284,9 @@ empty the Modbus leg, and the contactor compound was pre-paid
 between the note and now. Record start-stop-commands:313 as the
 standing exhibit for why no walker may ever touch this word.
 
-Ruling: `[ ] A  [ ] B  [ ] C  [ ] as amended: ____________`
+Ruling: `[ ] A  [ ] B  [x] C, as amended` ⟨RULED 2026-08-20 — C on
+bare `coil`, AND the priced `contactor-coil` compound option TAKEN
+at 1–2 marks; see the ratification block⟩
 
 ### 3.2 RTU
 
@@ -790,8 +848,10 @@ or C here means zero `kind` entries survive anywhere, so the §4
 component does not get built and `glossary.js:42`'s comment stands —
 the outcome §4 below already calls a feature, not a gap.**
 
-Ruling: `[ ] A  [ ] A as amended (plain, geometric register)
-[ ] B  [ ] C  [ ] as amended: ____________`
+Ruling: `[ ] A  [x] A as amended (plain, geometric register)
+[ ] B  [ ] C` ⟨RULED 2026-08-20 — the plain geometric-register
+entry; zero A survives, the component is not built; see the
+ratification block⟩
 
 ### 3.11 differential
 
@@ -1004,6 +1064,12 @@ zero disambiguation entries has answered the question the comment
 left open. (Under any ruling that ships entries, the header still
 needs its §8-rider true-up — see §8.)
 
+⟨Ruled 2026-08-20: 3.10 took A-as-amended, so **zero A survives —
+the component is NOT built**. This section stands as the record of
+the unbuilt design, for the re-open triggers that could revive it
+(3.14's two arms, the §7.2 lane's re-examination of the EXCLUDED
+map).⟩
+
 ### 4.1 Data shape
 
 Three options priced; the **labels-plus-minimal** middle shape is
@@ -1190,7 +1256,8 @@ list; a fork-first paragraph; a minimal "varies — see the lesson"
 line plus link. **Recommend fork-first paragraph** — the list
 under-uses a two-sense entry, the minimal line wastes the tap, and
 fork-first is the register the site already teaches in
-(`#which-sense` is a fork-first paragraph). See 4.2.
+(`#which-sense` is a fork-first paragraph). See 4.2. ⟨2026-08-20:
+MOOT — zero A; closed by consequence.⟩
 
 **Q2 — context-free vs context-keyed marks (restated at the
 refutation round — the draft's broader rule was contradicted by
@@ -1209,7 +1276,9 @@ attribute the malformed-form arm must police, and disposition B
 already sense-keys the honest way. Note for the record: the §7.2
 bank lane is where these rejected options will get re-pitched
 (banks have no owners[] mechanism), so this rationale is written
-down for that lane to inherit.
+down for that lane to inherit. ⟨2026-08-20: RATIFIED — the
+sense-ambiguous-token principle governs the B compounds' written
+matching rules.⟩
 
 **Q3 — the link line, stated honestly.** The panel is
 `role="tooltip"` (`.eleventy.js:877`), and the ARIA tooltip pattern
@@ -1232,10 +1301,12 @@ describedby no-JS floor the site's design already banks on.
 panel yet", structure kept link-ready), so the kind panel extends a
 precedent rather than spending a new decision. The def-prose vs
 `link`-field drift risk this creates is named in §4.3's
-leading-comment contract.
+leading-comment contract. ⟨2026-08-20: MOOT — zero A; closed by
+consequence.⟩
 
 **Q4 — EXCLUDED enforcement.** See §5. **Recommend build-enforced,
-three-legged.**
+three-legged.** ⟨2026-08-20: RATIFIED — build-enforced, all three
+legs; ships in the execution PR.⟩
 
 **Q5 — panel geometry.** The panel is `max-width: min(21rem,
 calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow-y:
@@ -1243,13 +1314,14 @@ auto` (styles.css:1490-1492) — a taller panel scrolls rather than
 breaks. **Recommend keeping 21rem.** Sense ceiling: **three senses
 in one panel**; anything needing more is a lesson wearing a
 tooltip's clothes. The scroll cap is the safety net, not the plan.
+⟨2026-08-20: MOOT — zero A; closed by consequence.⟩
 
 **Q6 — trigger affordance.** **Recommend identical dotted underline
 for kind and plain triggers; the panel differentiates.** The anchor
 is the styles.css AFFORDANCE comment (:1427-1432): the control for
 marker noise is marking density, a curation policy, "never a louder
 or quieter style here." A second trigger style would leak taxonomy
-into the prose.
+into the prose. ⟨2026-08-20: MOOT — zero A; closed by consequence.⟩
 
 **Q7 — the per-family table.** The main ruling **is** §3's fourteen
 checkbox lines; Q1–Q6 exist so those fourteen can be ruled without
@@ -1260,6 +1332,10 @@ routed out of the families:** `balancing.html:497`'s
 `commanding-actuators.html:190` anchor that sends the loop-action
 reader to pid-basics, which never covers loop action — retarget to
 comparators-and-deadband:435-436 or grow the pid-basics beat (3.14).
+⟨2026-08-20: the table is ruled — see the ratification block. The
+anchor retarget is APPROVED (rides the execution wave as a small
+live-page PR); balancing:497 and the fail-to-start re-triage
+routing remain open owner items.⟩
 
 ---
 
@@ -1290,7 +1366,9 @@ entries** — 9 plain + 1 disambiguation — taking `glossary.js` from
 
 Menu options that add back if the owner takes them: `pump-head`
 (1–2), `valve-authority` (0–1), `apparatus-dew-point` (0–1),
-`manual-reset` (~2), `contactor-coil` (1–2).
+`manual-reset` (~2), `contactor-coil` (1–2). ⟨Ruled 2026-08-20:
+`contactor-coil` TAKEN, the rest declined — ruled mix is 11 plain
+entries, glossary 63 → 74, no component, ~45–75 marks.⟩
 
 **Total expected marks: roughly 45–75**, on top of today's 369 —
 **and outside the dew-point band the whole tier yields ~25–35
@@ -1324,6 +1402,9 @@ rulings — a legitimate close, not a failure.
 ---
 
 ## 8. Housekeeping rider (post-ruling PR — recorded for completeness)
+
+⟨Ruled 2026-08-20: every item below belongs to the **execution PR**
+— the ratification PR touches nothing outside `docs/`.⟩
 
 - Flagged 2026-08-20: of the six markless entries, three carry
   entry-local annotations that explain the shape and three do not:
