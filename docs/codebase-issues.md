@@ -6726,7 +6726,7 @@ below this line. (Recorded 2026-08-09 after a handoff-verification
 round found open entries — #262, #266, #274, #275 — being classified
 as addressed by readers reasoning from the section header.)
 
-### 185. Quiz `snippet` path: one-way invariant publishes content the page never renders *(open — 2026-07-19)*
+### 185. Quiz `snippet` path: one-way invariant publishes content the page never renders *(2026-07-19; authored-bank exposure CLOSED 2026-08-20 — blocking spec check; engine-side asymmetry remains as defense-in-depth debt, addendum below)*
 
 Found by the Lane C review during PR #404 (`figure` field), deliberately
 left unfixed there to keep that PR's scope on the new field.
@@ -6759,6 +6759,23 @@ figure can never silently no-op.
 
 Note the `figure` field shipped in #404 deliberately does **not**
 reproduce this asymmetry.
+
+**Addendum (2026-08-20, prelude to the quiz-bank growth arc):** the
+authored-bank exposure is closed by a **blocking symmetric check in
+`tests/quiz-banks.spec.js`** — any `snippet` on a non-`gotcha` question
+in any bank now fails `npm test`, with a failure message naming this
+entry. Chosen as a test-side check rather than the entry's
+engine-symmetric-validation option because the banks are the only
+production path a question takes to a page (the engine's runtime-injected
+banks exist only inside specs), and bank growth was about to widen
+exactly this authoring surface. What remains is defense-in-depth only:
+`quiz-engine.js`'s mount validator is still one-way, so a hand-built
+bank passed to `Quiz.mount` outside CI's reach could still trip the
+original mechanism — if an engine-touching lane ever opens (#228 /
+§7.2), making the mount check symmetric there is the one-line
+completion. Anti-vacuity was probed before commit: a synthetic
+`snippet` on an `mcq` fails the new check with the #185 message; the
+untouched 41 banks pass.
 
 ---
 
