@@ -14827,3 +14827,29 @@ under-tested; the arm COUNT is simply stale, the same
 comment-contradicts-code shape as the arm counts #576 trued up
 elsewhere. One-line comment fix; not worth its own PR. Fold into the
 next PR that touches `tests/gloss.spec.js`.
+
+### 314. Lesson subheads without `id`s can't receive quiz `learnMore` deep links *(noticed 2026-08-20, quiz-growth wave 1 lanes; log-and-fix-opportunistically)*
+
+The quiz engine's `learnMore.href` convention deep-links a lesson's
+`<h2 class="subhead" id="…">` anchors — but only subheads that HAVE an
+id can be targets, and nothing requires one. Three anchorless subheads
+surfaced in one wave of bank growth, each forcing a new question to
+anchor a broader section than the one it actually tests:
+
+- `html/education/bacnet-basics.html` — the Who-Is/I-Am subhead carries
+  no id; both new service questions (PR #585) anchor `#services`
+  instead.
+- `html/education/bacnet-networking.html` — `When discovery silently
+  fails` and `What this page didn't cover` both lack ids; the wave-1
+  lane-2 questions anchor the mechanism sections and the bank header
+  documents the routing.
+
+Not a defect in any shipped page — every link resolves (and
+`link-integrity.spec.js` proves it) — but a growing-bank arc keeps
+hitting it, and the fix is one attribute per subhead PLUS a re-anchor
+of the affected `learnMore` hrefs in the same PR. Log-and-fix
+opportunistically: any lane already touching one of these lessons adds
+the id and retargets its bank's links. A guard is NOT proposed — most
+subheads legitimately never need an anchor, so "every subhead has an
+id" would be noise; the invariant that matters (every href resolves)
+is already blocking.
