@@ -727,10 +727,14 @@ module.exports = function(eleventyConfig) {
         // Leg 3 — collision + term-equality against the live glossary.
         const kebabize = (s) => String(s).toLowerCase()
             .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+        // hasOwnProperty, not bracket truthiness — a kebab-legal entry id
+        // like 'constructor' would otherwise hit Object.prototype and
+        // throw citing a ruling row that does not exist.
+        const reserved = (key) => Object.prototype.hasOwnProperty.call(excluded, key);
         Object.keys(glossary).forEach((id) => {
-            const hit = excluded[id] ? id : null;
+            const hit = reserved(id) ? id : null;
             const termKebab = kebabize((glossary[id] || {}).term || "");
-            const termHit = !hit && excluded[termKebab] ? termKebab : null;
+            const termHit = !hit && reserved(termKebab) ? termKebab : null;
             if (hit) {
                 offenders.push(`  ${id} — this entry id is a RESERVED §4 headword (EXCLUDED, ruled ${excluded[hit].ruled}: docs/glossary-s4-collision-proposal.md §5). Shipping it means overturning that ruling — edit its row in html/_data/glossaryExcluded.js (with the owner's new ruling) in the same change, never around it`);
             } else if (termHit) {

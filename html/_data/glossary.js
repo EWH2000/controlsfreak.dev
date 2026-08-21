@@ -452,7 +452,8 @@
 //     this file: contactor-coil, modbus-rtu, duct-static, head-pressure,
 //     dew-point, proof-window, floating-actuator, deadband,
 //     differential-pressure, high-static-cutout, mixed-air-low-limit.
-//     Nine are compound-splits (disposition B — the bare headword ships
+//     Nine ship as compound-splits — eight from disposition B, plus
+//     contactor-coil from 3.1's C-as-amended (the bare headword ships
 //     nothing; a single-sense compound carries the term); dew-point and
 //     deadband are the two owner-amended PLAIN bare-headword entries
 //     (containment and sense-compatibility, proposal §2's amendment
@@ -1777,7 +1778,8 @@ module.exports = {
     // and a reserved headword (glossaryExcluded.js). bacnet-vs-
     // modbus:112's 'RTU / ASCII (RS-485 serial), TCP' is bare AND a
     // MIXED-RUN (ascii/tcp have no entries) — never mark it. Table-cell
-    // marks are precedented (five existing <td> marks), so vfds:567's
+    // marks are precedented (seven existing <td> marks across six
+    // cells — the proposal's 'five' undercounted), so vfds:567's
     // '<td>Modbus RTU</td>' name cell is a marking-lane judgment call;
     // modbus-decoding:409 is a NAME-REFERENCE. Owners: modbus-basics
     // (:55 names it, :176 walks the frame anatomy) + the modbus-
@@ -1792,17 +1794,24 @@ module.exports = {
            + 'time. The name is the old telemetry <em>remote terminal '
            + 'unit</em>, not the machine on the roof: on a drive-network '
            + 'page RTU means this framing, on an equipment schedule it '
-           + 'means a packaged rooftop unit, and the two never overlap '
-           + 'in one sentence.',
+           + 'means a packaged rooftop unit — the sentence around it '
+           + 'tells you which.',
         owners: [
             '/education/modbus-basics.html',
             '/tools/modbus-functions.html',
         ],
     },
 
-    // MATCHING RULE: the collocation 'duct static' (incl. 'duct static
-    // pressure') plus the derived collocations 'static setpoint' /
-    // 'static reset' where the referent is the duct loop — NEVER bare
+    // MATCHING RULE: the collocation 'duct static' (space or hyphen —
+    // 'duct-static setpoint' wraps the FULL compound, never half of
+    // it; incl. 'duct static pressure') plus the derived collocations
+    // 'static setpoint' / 'static reset' where the referent is the
+    // duct loop AND a fan-speed loop serves it. air-balancing:212's
+    // bypass-system 'static setpoint' is a deliberate NON-TARGET
+    // (refutation round 2026-08-21): there a constant-volume fan runs
+    // flat-out and a bypass damper holds the setpoint, so this def's
+    // fan-speed clause is false on that page — and the passage
+    // teaches its own loop in place anyway. NEVER bare
     // 'static', a reserved headword (glossaryExcluded.js: 46 % of its
     // raw pool is the data-flow-static build attribute, and the
     // not-animated homograph lives comment-side). ANCHORED-LINK:
@@ -1953,7 +1962,7 @@ module.exports = {
     'floating-actuator': {
         term: 'floating (tri-state) actuator',
         def: 'An actuator commanded by two binary outputs instead of '
-           + 'one analog signal — one contact drives it open, the other '
+           + 'one analog signal — one output drives it open, the other '
            + 'drives it closed, neither on means hold. It typically '
            + 'carries no position feedback, so the controller estimates '
            + 'position from stroke time and its own pulses, and '
@@ -1983,12 +1992,18 @@ module.exports = {
     // 'DB' (means deadband only on the owning page, which is
     // suppressed anyway — see dry-bulb's comment for the collision)
     // and never the BACnet Deadband property (renders from
-    // bacnetEnums.js, dual-consumer, unreachable anyway). Owners: the
+    // bacnetEnums.js, dual-consumer, unreachable anyway). Also a
+    // NON-TARGET: the modulating-loop ERROR deadband — a symmetric
+    // band around setpoint where the loop holds still, no act/release
+    // pair, no memory — building-pressure:511's 'a wide deadband' is
+    // the standing case (refutation round 2026-08-21); this def's
+    // hysteresis framing is wrong for it, so the lane skips it rather
+    // than adjudicating from the def. Owners: the
     // S1/S2 teach set — comparators-and-deadband, function-blocks
     // (:152), timers-and-delays (:472), equipment-staging (:368).
-    // bacnet-objects is deliberately NOT an owner: zero raw deadband
-    // tokens in its source — a padding owner that could never suppress
-    // anything (proposal 4.3). Expected ~4–7 marks.
+    // No BACnet lesson is an owner: zero raw deadband tokens across
+    // all five — a padding owner that could never suppress anything
+    // (proposal 4.3). Expected ~4–7 marks.
     'deadband': {
         term: 'deadband',
         def: 'A deliberate gap between the threshold that acts and the '
@@ -2064,7 +2079,8 @@ module.exports = {
            + 'when duct static climbs past its setting — the last line '
            + 'against a fan pressurizing ductwork whose dampers have '
            + 'closed against it, a failure that can pop flex '
-           + 'connections and buckle trunk before any software notices. '
+           + 'connections and split trunk seams before any software '
+           + 'notices. '
            + 'It belongs in the safety string precisely because the '
            + 'loop that should have caught the rise may be the thing '
            + 'that failed.',
@@ -2096,8 +2112,8 @@ module.exports = {
            + 'logic is asking for. It is the software half of freeze '
            + 'protection, catching the cold-morning dive early enough '
            + 'that the hardwired freeze stat downstream never has to '
-           + 'trip; an economizer without one isn\'t aggressive, it\'s '
-           + 'uninsured.',
+           + 'trip; an economizer without one is running on its last '
+           + 'line of defense.',
         owners: [
             '/education/economizers.html',
             '/tools/coil-freeze-risk.html',
