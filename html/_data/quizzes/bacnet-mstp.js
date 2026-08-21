@@ -72,33 +72,19 @@ module.exports = [
     {
         type: 'mcq',
         id: 'max-master-where-to-set',
-        prompt: 'Commissioning a fresh trunk: the router\'s port at MAC 0, fourteen controllers at MACs 1–14. Where does <code>Max_Master</code> belong?',
+        prompt: 'Commissioning a fresh trunk: the router\'s port at MAC 0, fourteen controllers at MACs 1–14. What <code>Max_Master</code> setting leaves the trunk both fast today and extendable next year?',
         choices: [
-            { id: 'a', text: 'Left at the factory 127 on every device — that\'s the legal ceiling, and lowering it risks stranding a device someone adds later.' },
-            { id: 'b', text: 'Exactly 14 everywhere — the highest MAC in use, so not one poll is wasted on an empty address.' },
+            { id: 'a', text: 'On the router\'s port only — it\'s the device that goes looking for new masters, so its ceiling decides who can join.' },
+            { id: 'b', text: 'A different value on each device, each set just above its own MAC — a master only ever needs to find its next-door successor.' },
             { id: 'c', text: 'One value on every device, a little above the highest MAC — say 20 — so a controller can join later without touching the whole trunk.', correct: true },
-            { id: 'd', text: 'Set on the router only — the field controllers pick the ceiling up from the token as it circulates.' }
+            { id: 'd', text: 'It sets itself — the ceiling tracks the highest MAC that has ever answered a poll, so commissioning never touches it.' }
         ],
-        explain: '<code>Max_Master</code> is a per-device property and nothing propagates it — each device searches only up to its <em>own</em> ceiling, which is why the healthy trunk sets one uniform value everywhere. 127 works, but every rotation then Poll-For-Masters through a hundred-odd addresses nobody owns — the trunk runs, it just spends a chunk of every rotation talking to nobody. Pinning the ceiling exactly at the highest MAC is clean today and a trunk-wide reconfiguration the day MAC 15 shows up. Compact MACs starting low, one ceiling a little above the highest: the search stays short and the trunk stays extendable.',
+        explain: '<code>Max_Master</code> is a configured, per-device property — nothing discovers it, nothing propagates it, and every master takes its turn doing the finding, router or not. Each device polls only up to its <em>own</em> ceiling, which is what makes the nonuniform trunk a trap: a device whose ceiling sits below a peer\'s MAC can never re-find that peer, so who stays visible depends on which master happens to be doing the looking. One uniform value, a little above the highest MAC, keeps the search short and the map extendable. And the factory 127? It works — but the ring then spends part of its maintenance polling walking a hundred-odd addresses nobody owns, over and over, and a newcomer waits longer to be found.',
         learnMore: { href: '/education/bacnet-mstp.html#token-ring', label: 'BACnet MS/TP — The token ring' },
         tags: ['bacnet', 'mstp', 'token-ring']
     },
 
     // ── Two addresses ─────────────────────────────────────
-    {
-        type: 'mcq',
-        id: 'duplicate-mac-flicker',
-        prompt: 'After a controller swap, two devices on the trunk — nowhere near each other in the device list — start taking turns flickering offline, and retry and CRC counts climb trunk-wide. Most likely cause?',
-        choices: [
-            { id: 'a', text: 'The replacement shipped at a factory-default MAC that duplicates an existing device — both transmit on the same token turn and the frames collide.', correct: true },
-            { id: 'b', text: 'The replacement\'s device instance collides with a graphic binding.' },
-            { id: 'c', text: 'The trunk lost one of its EOL terminators during the swap.' },
-            { id: 'd', text: 'The replacement\'s Max_Info_Frames is set too high.' }
-        ],
-        explain: 'Two devices sharing a MAC both believe it\'s their turn when the token reaches that address; both transmit, the frames corrupt, and depending on timing one wins for a while before they trade — so the front end shows two controllers <em>taking turns</em> offline, often far apart in the device list because their instances are nothing alike. Fresh controllers commonly default to MAC 0 or 1, which is usually the router. And a duplicate degrades everyone, not just the twins: MAC and device instance are independent — the MAC only has to be unique on this segment, the instance across the whole site.',
-        learnMore: { href: '/education/bacnet-mstp.html#two-addresses', label: 'BACnet MS/TP — Two addresses' },
-        tags: ['bacnet', 'mstp', 'addressing', 'troubleshooting']
-    },
     {
         type: 'gotcha',
         id: 'instance-names-no-mac',
@@ -113,6 +99,20 @@ module.exports = [
         explain: 'The pairing is arbitrary at the protocol level — MAC 5 can be device 100503 — and BACnet derives nothing in either direction. Plenty of sites <em>do</em> run a numbering convention that encodes trunk and MAC in the instance, and it\'s worth learning the local one — but it\'s a habit, not a rule, and it drifts a little with every controller that got replaced in a hurry. Assuming the pattern is how the wrong controller gets reprogrammed. Physical order proves nothing either: MACs come off DIP switches or a vendor-tool field, set in whatever order commissioning visited the boxes. When it matters, read the MAC from where it\'s recorded and verify at the device.',
         learnMore: { href: '/education/bacnet-mstp.html#two-addresses', label: 'BACnet MS/TP — Two addresses' },
         tags: ['bacnet', 'mstp', 'addressing']
+    },
+    {
+        type: 'mcq',
+        id: 'duplicate-mac-flicker',
+        prompt: 'After a controller swap, two devices on the trunk — nowhere near each other in the device list — start taking turns flickering offline, and retry and CRC counts climb trunk-wide. Most likely cause?',
+        choices: [
+            { id: 'a', text: 'The replacement shipped at a factory-default MAC that duplicates an existing device — both transmit on the same token turn and the frames collide.', correct: true },
+            { id: 'b', text: 'The replacement\'s device instance collides with a graphic binding.' },
+            { id: 'c', text: 'The trunk lost one of its EOL terminators during the swap.' },
+            { id: 'd', text: 'The replacement\'s Max_Info_Frames is set too high.' }
+        ],
+        explain: 'Two devices sharing a MAC both believe it\'s their turn when the token reaches that address; both transmit, the frames corrupt, and depending on timing one wins for a while before they trade — so the front end shows two controllers <em>taking turns</em> offline, often far apart in the device list because their instances are nothing alike. Fresh controllers commonly default to MAC 0 or 1, which is usually the router. And a duplicate degrades everyone, not just the twins: MAC and device instance are independent — the MAC only has to be unique on this segment, the instance across the whole site.',
+        learnMore: { href: '/education/bacnet-mstp.html#two-addresses', label: 'BACnet MS/TP — Two addresses' },
+        tags: ['bacnet', 'mstp', 'addressing', 'troubleshooting']
     },
 
     // ── The two wires ─────────────────────────────────────
@@ -184,10 +184,10 @@ module.exports = [
         choices: [
             { id: 'a', text: 'Any twisted pair — the twist does the work, and impedance is a radio-frequency concern, not a 76800-baud one.' },
             { id: 'b', text: 'Ordinary thermostat wire on short runs — the cable budgets only start to bite as a trunk approaches 4000 ft.' },
-            { id: 'c', text: 'Shielded twisted pair with the shield bonded to ground at both ends, so induced noise has two paths out.' },
+            { id: 'c', text: 'Shielded twisted pair of whatever impedance is on the truck — the 120 Ω terminators are what set the line\'s impedance, not the cable.' },
             { id: 'd', text: 'Shielded twisted pair in the 100–130 Ω impedance class, low capacitance — the cable the segment ratings assume.', correct: true }
         ],
-        explain: 'The standard\'s budgets are rated for proper cable — shielded twisted pair, 100–130 Ω characteristic impedance, low capacitance — and run on anything else, every budget shrinks by an amount nobody publishes. The impedance class isn\'t an RF nicety: it\'s why the 120 Ω terminators match the line and actually absorb reflections. Thermostat wire — no shield, no controlled impedance — may limp through a short bench run, but the ratings were never about it, and a wrong-cable trunk lives in the marginal territory where cable quality, temperature, and one forgotten stub decide whether it holds. And the shield lands on ground at one end only, same rule as sensor wiring — bond both ends and the shield becomes a ground-loop path instead of a drain.',
+        explain: 'The standard\'s budgets are rated for proper cable — shielded twisted pair, 100–130 Ω characteristic impedance, low capacitance — and run on anything else, every budget shrinks by an amount nobody publishes. The impedance class isn\'t an RF nicety, and the terminators don\'t impose it: a terminator can only absorb reflections on a line it matches, which is exactly why the ratings name the class the 120 Ω resistors are built for. Thermostat wire — no shield, no controlled impedance — may limp through a short bench run, but the ratings were never about it, and a wrong-cable trunk lives in the marginal territory where cable quality, temperature, and one forgotten stub decide whether it holds.',
         learnMore: { href: '/education/bacnet-mstp.html#two-wires', label: 'BACnet MS/TP — The two wires' },
         tags: ['bacnet', 'mstp', 'wiring']
     },
@@ -201,7 +201,7 @@ module.exports = [
             { id: 'c', text: 'Keep AHU-4\'s and terminate the new end as well — three terminators beats a missing one.' },
             { id: 'd', text: 'Add a repeater at AHU-4 — an extension is a new segment, and segments don\'t share terminators.' }
         ],
-        explain: 'An EOL marks a position, not a device: the resistors belong across the pair at the two physical ends of the trunk, and the extension just moved one of those ends. Leave AHU-4\'s switch on and the trunk has a terminator mid-run plus, if nobody terminates the last VAV, a floating far end — the count is wrong twice. Three terminators isn\'t insurance either — over-terminating loads the pair down, the classic three-or-four-flipped-on-by-habit failure. And a repeater answers a budget problem, length or device count, not a moved end; three VAVs on the same run is the same segment it always was. Two terminators, at the ends, wherever the ends are today.',
+        explain: 'An EOL marks a position, not a device: the resistors sit wherever the wire physically stops, and the extension just moved one of those stopping points. Leave AHU-4\'s switch on and the trunk has a terminator mid-run plus, if nobody terminates the last VAV, a floating far end — the count is wrong twice. Three terminators isn\'t insurance either — each extra termination loads the pair harder, and a count that\'s wrong high is still a wrong count. And a repeater answers a budget problem, length or device count, not a moved end; three VAVs on the same run is the same segment it always was. Two terminators, at the ends, wherever the ends are today.',
         learnMore: { href: '/education/bacnet-mstp.html#two-wires', label: 'BACnet MS/TP — The two wires' },
         tags: ['bacnet', 'mstp', 'wiring']
     },
@@ -221,7 +221,7 @@ module.exports = [
         id: 'budgets-tighten-with-baud',
         prompt: 'The distance budget isn\'t one number: vendor field guides quote shorter maximum runs at the higher baud rates, so a trunk that\'s comfortable at 19200 can be marginal at 76800.',
         answer: true,
-        explain: 'The 4000 ft (1200 m) figure is the standard\'s ceiling for proper cable; the working numbers are the vendor\'s, and they tighten as the baud climbs — shorter quoted runs, stricter device counts. Everything marginal on a trunk bites harder at speed: the borderline cable, the temperature swing, the one stub nobody remembers. Worth knowing which side of the two-tier line a trunk sits on before raising its baud — past the vendor\'s figure it could be a problem; past the standard\'s, it is one.',
+        explain: 'The 4000 ft (1200 m) figure is the standard\'s ceiling for proper cable; the working numbers are the vendor\'s, and they tighten as the baud climbs — shorter quoted runs, stricter device counts. Everything marginal on a trunk bites harder at speed: the borderline cable, the temperature swing, the one stub nobody remembers. Worth checking a trunk against the vendor\'s numbers before raising its baud — the standard\'s ceiling doesn\'t move, but the working figures underneath it shrink.',
         learnMore: { href: '/education/bacnet-mstp.html#two-wires', label: 'BACnet MS/TP — The two wires' },
         tags: ['bacnet', 'mstp', 'wiring', 'baud']
     },
@@ -248,12 +248,12 @@ module.exports = [
         prompt: 'Which cause fits an everything-at-once outage?',
         snippet: '<pre class="quiz-snippet">complaint:  every device on the trunk offline since this morning\nchecked:    router up and healthy on its IP side\nhistory:    panel work over the weekend</pre>',
         choices: [
-            { id: 'a', text: 'One controller\'s MAC got bumped above the trunk\'s Max_Master ceiling during the work.' },
-            { id: 'b', text: 'Two controllers came back up on the same station address when the panel went back together.' },
-            { id: 'c', text: 'The router restarted with Max_Info_Frames at 1 and is starving the trunk\'s traffic.' },
-            { id: 'd', text: 'A fault the whole pair shares — a polarity swap introduced mid-trunk, a wrong termination count, missing bias, or a dead short.', correct: true }
+            { id: 'a', text: 'One controller\'s MAC got bumped past Max_Master during the panel work.' },
+            { id: 'b', text: 'One of the reworked controllers went back in at the wrong baud rate.' },
+            { id: 'c', text: 'A controller removed during the work left a gap the token can\'t cross — the ring dead-ends where it used to sit.' },
+            { id: 'd', text: 'A fault the whole pair shares — a polarity swap introduced mid-trunk, or a dead short across the pair.', correct: true }
         ],
-        explain: 'When the whole trunk goes down together, suspect what every frame has in common: the pair itself. A polarity swap introduced mid-trunk, no termination at all (or three of them), missing bias leaving the pair floating, a pinched jacket\'s dead short — each one takes everybody out at once. The other three fail the shape test: a MAC above the ceiling silences that one device and nothing else; a duplicate MAC makes a pair of devices take turns flickering while error counts climb; a starved router makes the trunk slow, not silent. Symptom shape is the first sort — one device, two devices, sluggish, or everything — and everything-at-once is an electrical-layer word.',
+        explain: 'When the whole trunk goes down together, suspect what every frame has in common: the pair itself. A polarity swap introduced mid-trunk or a pinched jacket\'s dead short — each one can take everybody out when it bites, because every frame from every device rides the same two conductors. A wrong termination count or missing bias belongs on the suspect list too, but as the marginal cousins — they degrade the pair and pick off devices unevenly more often than they kill the trunk outright. The other three fail the shape test: a MAC above the ceiling silences that one device and nothing else; so does a wrong baud — that controller goes mute, the rest never notice; and a removed master doesn\'t strand the token, because the holder that used to pass to it times out, polls past the gap, and the ring closes without it. Symptom shape is the first sort — one device, two devices, sluggish, or everything — and everything-at-once is an electrical-layer word.',
         learnMore: { href: '/education/bacnet-mstp.html#symptom-layer', label: 'BACnet MS/TP — Reading the symptom' },
         tags: ['bacnet', 'mstp', 'troubleshooting']
     }
