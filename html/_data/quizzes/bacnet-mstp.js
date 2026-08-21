@@ -8,6 +8,12 @@
 // kebab-case and stable across edits — they namespace the
 // cf_quiz_bacnet-mstp_* localStorage keys. Pairs with the BACnet
 // MS/TP lesson; learnMore hrefs deep-link its <h2> anchors.
+//
+// The bank is deliberately larger than the page's defaultCount (10):
+// the engine samples an overflowing bank, so each run draws a
+// different subset (buildQueue() in quiz-engine.js). Coverage tracks
+// the lesson's sections — the token ring, the two addresses, the two
+// wires, and reading the symptom.
 
 module.exports = [
     // ── The token ring ────────────────────────────────────
@@ -24,6 +30,15 @@ module.exports = [
         explain: 'RS-485 is a shared pair with no referee — simultaneous transmitters corrupt each other. BACnet\'s answer is a token passed around a logical ring of masters ordered by MAC address: hold the token, talk; pass it to the next master up; the highest address wraps back to the lowest. On a healthy trunk the token makes hundreds of rotations a minute.',
         learnMore: { href: '/education/bacnet-mstp.html#token-ring', label: 'BACnet MS/TP — The token ring' },
         tags: ['bacnet', 'mstp', 'token-ring']
+    },
+    {
+        type: 'tf',
+        id: 'router-port-is-a-node',
+        prompt: 'The router that links an MS/TP trunk to the rest of the BMS doesn\'t occupy a station address of its own — its trunk port just listens and forwards, so it never takes a turn holding the token.',
+        answer: false,
+        explain: 'The router\'s MS/TP port is a master on the trunk like everything else: it owns a MAC (conventionally a low one — 0 or 1 is typical), joins the token ring, and must hold the token to speak, exactly like the smallest zone controller. Plan the trunk\'s address map with the router\'s port in it, and set its station address at commissioning the same as any device on the pair.',
+        learnMore: { href: '/education/bacnet-mstp.html#token-ring', label: 'BACnet MS/TP — The token ring' },
+        tags: ['bacnet', 'mstp', 'token-ring', 'addressing']
     },
     {
         type: 'gotcha',
@@ -54,8 +69,37 @@ module.exports = [
         learnMore: { href: '/education/bacnet-mstp.html#token-ring', label: 'BACnet MS/TP — The token ring' },
         tags: ['bacnet', 'mstp', 'token-ring']
     },
+    {
+        type: 'mcq',
+        id: 'max-master-where-to-set',
+        prompt: 'Commissioning a fresh trunk: the router\'s port at MAC 0, fourteen controllers at MACs 1–14. What <code>Max_Master</code> setting leaves the trunk both fast today and extendable next year?',
+        choices: [
+            { id: 'a', text: 'On the router\'s port only — it\'s the device that goes looking for new masters, so its ceiling decides who can join.' },
+            { id: 'b', text: 'A different value on each device, each set just above its own MAC — a master only ever needs to find its next-door successor.' },
+            { id: 'c', text: 'One value on every device, a little above the highest MAC — say 20 — so a controller can join later without touching the whole trunk.', correct: true },
+            { id: 'd', text: 'It sets itself — the ceiling tracks the highest MAC that has ever answered a poll, so commissioning never touches it.' }
+        ],
+        explain: '<code>Max_Master</code> is a configured, per-device property — nothing discovers it, nothing propagates it, and every master takes its turn doing the finding, router or not. Each device polls only up to its <em>own</em> ceiling, which is what makes the nonuniform trunk a trap: a device whose ceiling sits below a peer\'s MAC can never re-find that peer, so who stays visible depends on which master happens to be doing the looking. One uniform value, a little above the highest MAC, keeps the search short and the map extendable. And the factory 127? It works — but the ring then spends part of its maintenance polling walking a hundred-odd addresses nobody owns, over and over, and a newcomer waits longer to be found.',
+        learnMore: { href: '/education/bacnet-mstp.html#token-ring', label: 'BACnet MS/TP — The token ring' },
+        tags: ['bacnet', 'mstp', 'token-ring']
+    },
 
     // ── Two addresses ─────────────────────────────────────
+    {
+        type: 'gotcha',
+        id: 'instance-names-no-mac',
+        prompt: 'The graphics know the unit; you need the trunk device. What\'s the reliable way to get RTU-4\'s MAC?',
+        snippet: '<pre class="quiz-snippet">graphics binding:  RTU-4 = device 200304\ntrunk 3:           MACs 1–18 in use\nneeded:            RTU-4\'s MAC address</pre>',
+        choices: [
+            { id: 'a', text: 'Read it out of the instance — sites number instances to encode the MAC, and 200304 ends in 4.' },
+            { id: 'b', text: 'Count boxes down the trunk from the router — station addresses follow the physical daisy-chain order.' },
+            { id: 'c', text: 'Look it up — the front end\'s device properties or the as-builts record the MAC; nothing in the protocol ties it to the instance.', correct: true },
+            { id: 'd', text: 'Drop the site\'s numbering prefix from 200304 — the protocol derives the station address from the digits that remain.' }
+        ],
+        explain: 'The pairing is arbitrary at the protocol level — MAC 5 can be device 100503 — and BACnet derives nothing in either direction. Plenty of sites <em>do</em> run a numbering convention that encodes trunk and MAC in the instance, and it\'s worth learning the local one — but it\'s a habit, not a rule, and it drifts a little with every controller that got replaced in a hurry. Assuming the pattern is how the wrong controller gets reprogrammed. Physical order proves nothing either: MACs come off DIP switches or a vendor-tool field, set in whatever order commissioning visited the boxes. When it matters, read the MAC from where it\'s recorded and verify at the device.',
+        learnMore: { href: '/education/bacnet-mstp.html#two-addresses', label: 'BACnet MS/TP — Two addresses' },
+        tags: ['bacnet', 'mstp', 'addressing']
+    },
     {
         type: 'mcq',
         id: 'duplicate-mac-flicker',
@@ -119,6 +163,49 @@ module.exports = [
         tags: ['bacnet', 'mstp', 'wiring']
     },
     {
+        type: 'gotcha',
+        id: 'bench-fine-stub',
+        prompt: 'The tee saved pulling the daisy chain apart. Why do the errors climb in service when the controller itself tests clean?',
+        snippet: '<pre class="quiz-snippet">install:   new controller tee-tapped mid-trunk on a 30 ft stub\nbench:     same controller, wired direct — runs clean\nin place:  trunk-wide CRC + retry counts climbing at 76800 baud</pre>',
+        choices: [
+            { id: 'a', text: 'The controller\'s transceiver is marginal — the errors track the new hardware, so swap it and the counts settle.' },
+            { id: 'b', text: 'The stub is an unterminated branch — it reflects the signal back into the trunk, corrupting frames in proportion to stub length and baud.', correct: true },
+            { id: 'c', text: '76800 baud is beyond what MS/TP is specified to run; the trunk needs to come down to 38400 or slower.' },
+            { id: 'd', text: 'One more transceiver pushed the segment past its unit-load budget, and the whole trunk pays for it.' }
+        ],
+        explain: 'A branch line looks harmless and works on the bench; electrically it\'s an unterminated reflection generator, corrupting frames in proportion to its length and the baud rate — which is exactly why the bench test (no stub) came up clean and the trunk (30 ft of stub at 76800) didn\'t. The bench run also clears the transceiver, and 76800 is in the standard rate set — a common field pick, not an overreach. Unit loads don\'t care how a device connects: if the budget were the story, landing the same controller in-line would fail the same way, and that swap is the test that separates the two. The fix is the topology rule — break the chain and land the trunk in-and-out at the new controller\'s terminals, stubs as close to zero as the terminal block allows.',
+        learnMore: { href: '/education/bacnet-mstp.html#two-wires', label: 'BACnet MS/TP — The two wires' },
+        tags: ['bacnet', 'mstp', 'wiring', 'troubleshooting']
+    },
+    {
+        type: 'mcq',
+        id: 'trunk-cable-choice',
+        prompt: 'What does an MS/TP trunk actually ask of its cable?',
+        choices: [
+            { id: 'a', text: 'Any twisted pair — the twist does the work, and impedance is a radio-frequency concern, not a 76800-baud one.' },
+            { id: 'b', text: 'Ordinary thermostat wire on short runs — the cable budgets only start to bite as a trunk approaches 4000 ft.' },
+            { id: 'c', text: 'Shielded twisted pair of whatever impedance is on the truck — the 120 Ω terminators are what set the line\'s impedance, not the cable.' },
+            { id: 'd', text: 'Shielded twisted pair in the 100–130 Ω impedance class, low capacitance — the cable the segment ratings assume.', correct: true }
+        ],
+        explain: 'The standard\'s budgets are rated for proper cable — shielded twisted pair, 100–130 Ω characteristic impedance, low capacitance — and run on anything else, every budget shrinks by an amount nobody publishes. The impedance class isn\'t an RF nicety, and the terminators don\'t impose it: a terminator can only absorb reflections on a line it matches, which is exactly why the ratings name the class the 120 Ω resistors are built for. Thermostat wire — no shield, no controlled impedance — may limp through a short bench run, but the ratings were never about it, and a wrong-cable trunk lives in the marginal territory where cable quality, temperature, and one forgotten stub decide whether it holds.',
+        learnMore: { href: '/education/bacnet-mstp.html#two-wires', label: 'BACnet MS/TP — The two wires' },
+        tags: ['bacnet', 'mstp', 'wiring']
+    },
+    {
+        type: 'mcq',
+        id: 'extension-moves-the-end',
+        prompt: 'A trunk ends at AHU-4, its EOL switched on. An electrician extends the run past AHU-4 to three new VAVs. What does the extension demand of the termination?',
+        choices: [
+            { id: 'a', text: 'Nothing — termination is a device setting, and AHU-4 keeps the one it was commissioned with.' },
+            { id: 'b', text: 'AHU-4\'s EOL switches off — it\'s mid-trunk now — and the new last VAV terminates instead.', correct: true },
+            { id: 'c', text: 'Keep AHU-4\'s and terminate the new end as well — three terminators beats a missing one.' },
+            { id: 'd', text: 'Add a repeater at AHU-4 — an extension is a new segment, and segments don\'t share terminators.' }
+        ],
+        explain: 'An EOL marks a position, not a device: the resistors sit wherever the wire physically stops, and the extension just moved one of those stopping points. Leave AHU-4\'s switch on and the trunk has a terminator mid-run plus, if nobody terminates the last VAV, a floating far end — the count is wrong twice. Three terminators isn\'t insurance either — each extra termination loads the pair harder, and a count that\'s wrong high is still a wrong count. And a repeater answers a budget problem, length or device count, not a moved end; three VAVs on the same run is the same segment it always was. Two terminators, at the ends, wherever the ends are today.',
+        learnMore: { href: '/education/bacnet-mstp.html#two-wires', label: 'BACnet MS/TP — The two wires' },
+        tags: ['bacnet', 'mstp', 'wiring']
+    },
+    {
         type: 'numeric',
         id: 'segment-unit-loads',
         prompt: 'ASHRAE 135 rates an MS/TP segment for up to 4000 ft (1200 m) of proper cable and how many full unit loads of transceivers?',
@@ -128,6 +215,15 @@ module.exports = [
         explain: 'The standard\'s budget is 4000 ft (1200 m) of shielded twisted pair and <strong>32 full unit loads</strong> — modern ⅛-load transceivers stretch the device count, though many vendors still draw the line near 32 devices per segment without a repeater. The budgets read in two tiers: past the <em>vendor\'s</em> figure it could be a problem; past the <em>standard\'s</em> figure it is a problem — that\'s a repeater or a second segment, not another reterminating pass.',
         learnMore: { href: '/education/bacnet-mstp.html#two-wires', label: 'BACnet MS/TP — The two wires' },
         tags: ['bacnet', 'mstp', 'wiring']
+    },
+    {
+        type: 'tf',
+        id: 'budgets-tighten-with-baud',
+        prompt: 'The distance budget isn\'t one number: vendor field guides quote shorter maximum runs at the higher baud rates, so a trunk that\'s comfortable at 19200 can be marginal at 76800.',
+        answer: true,
+        explain: 'The 4000 ft (1200 m) figure is the standard\'s ceiling for proper cable; the working numbers are the vendor\'s, and they tighten as the baud climbs — shorter quoted runs, stricter device counts. Everything marginal on a trunk bites harder at speed: the borderline cable, the temperature swing, the one stub nobody remembers. Worth checking a trunk against the vendor\'s numbers before raising its baud — the standard\'s ceiling doesn\'t move, but the working figures underneath it shrink.',
+        learnMore: { href: '/education/bacnet-mstp.html#two-wires', label: 'BACnet MS/TP — The two wires' },
+        tags: ['bacnet', 'mstp', 'wiring', 'baud']
     },
 
     // ── Reading the symptom ───────────────────────────────
@@ -143,6 +239,21 @@ module.exports = [
             { id: 'd', text: 'Application — colliding device instances.' }
         ],
         explain: 'Random drops that track time of day are the electrical layer\'s signature: marginal termination or bias drifting as the building heats up, a VFD\'s EMI arriving with the afternoon load, or the star tap someone added on the last retrofit doing its reflection work. Addressing failures are consistent (the same two devices trade places); ring-tuning failures are steady sluggishness, not random drops. The complaint usually names its layer before the meter comes out — and a freshly extended trunk is often carrying several failures at once, so walk all three layers.',
+        learnMore: { href: '/education/bacnet-mstp.html#symptom-layer', label: 'BACnet MS/TP — Reading the symptom' },
+        tags: ['bacnet', 'mstp', 'troubleshooting']
+    },
+    {
+        type: 'gotcha',
+        id: 'whole-trunk-dead-shape',
+        prompt: 'Which cause fits an everything-at-once outage?',
+        snippet: '<pre class="quiz-snippet">complaint:  every device on the trunk offline since this morning\nchecked:    router up and healthy on its IP side\nhistory:    panel work over the weekend</pre>',
+        choices: [
+            { id: 'a', text: 'One controller\'s MAC got bumped past Max_Master during the panel work.' },
+            { id: 'b', text: 'One of the reworked controllers went back in at the wrong baud rate.' },
+            { id: 'c', text: 'A controller removed during the work left a gap the token can\'t cross — the ring dead-ends where it used to sit.' },
+            { id: 'd', text: 'A fault the whole pair shares — a polarity swap introduced mid-trunk, or a dead short across the pair.', correct: true }
+        ],
+        explain: 'When the whole trunk goes down together, suspect what every frame has in common: the pair itself. A polarity swap introduced mid-trunk or a pinched jacket\'s dead short — each one can take everybody out when it bites, because every frame from every device rides the same two conductors. A wrong termination count or missing bias belongs on the suspect list too, but as the marginal cousins — they degrade the pair and pick off devices unevenly more often than they kill the trunk outright. The other three fail the shape test: a MAC above the ceiling silences that one device and nothing else; so does a wrong baud — that controller goes mute, the rest never notice; and a removed master doesn\'t strand the token, because the holder that used to pass to it times out, polls past the gap, and the ring closes without it. Symptom shape is the first sort — one device, two devices, sluggish, or everything — and everything-at-once is an electrical-layer word.',
         learnMore: { href: '/education/bacnet-mstp.html#symptom-layer', label: 'BACnet MS/TP — Reading the symptom' },
         tags: ['bacnet', 'mstp', 'troubleshooting']
     }
