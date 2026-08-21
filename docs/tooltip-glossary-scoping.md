@@ -681,6 +681,21 @@ it is part of the correctness argument.
 > written; this block governs. The arc's living plan is
 > `docs/glossary-arc.md`.
 
+> **AMENDED 2026-08-20 (owner ruling, the §4 collision tier).** The
+> rule's closing sentence — *"treat a request to gloss a §4 term as a
+> request to write a disambiguation entry, never a definition"* — now
+> carries two owner-ruled, measured exceptions: **dew point** and
+> **deadband** ship as PLAIN bare-headword entries
+> (`docs/glossary-s4-collision-proposal.md` 3.5 and 3.10 — the
+> containment and sense-compatibility amendment routes its §2 names).
+> Zero disambiguation entries survived that ruling, so the
+> `kind: 'disambiguation'` component is NOT built (the proposal's §4
+> records the unbuilt design); every other §4 bare headword is
+> reserved, build-enforced, in `html/_data/glossaryExcluded.js`. The
+> per-compound exception clause above ("each one needs its own written
+> scope") is unchanged — it is what the tier's nine compound entries
+> ship under.
+
 The friction note is explicit that the arc needs a written curation
 rule or it licenses the eleventh-tooltip creep. This is a **draft**,
 derived from what the sweeps and checkers actually found. It is not in

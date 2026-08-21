@@ -334,7 +334,10 @@ headword/trigger-divergence framing, which live house practice
 contradicts). Honest yield: **1–2 marks** (vfds:576 certainly;
 vfds:567's `<td>Modbus RTU</td>` name cell is a marking-lane
 judgment call — table-cell marks are precedented, per the
-refutation round's check of five existing `<td>` marks;
+refutation round's check of five existing `<td>` marks
+*(corrected 2026-08-21, execution-round mechanical audit: the
+measured figure is seven marks across six cells; the precedent
+claim stands either way)*;
 modbus-decoding:409 is a NAME-REFERENCE). A ≤2-mark-basket member —
 the trade is priced in §3's preamble.
 
@@ -1564,7 +1567,8 @@ application. Disposition of every non-cleared finding:
 because they are evidence too): head-pressure survived a dedicated
 attack (owners:[] precedented, all three marks verified);
 modbus-rtu's table-cell mark is precedented (five existing `<td>`
-marks); the dew page-disjointness, zone-sense-zero and
+marks — *corrected 2026-08-21: seven marks across six cells*); the
+dew page-disjointness, zone-sense-zero and
 high-limit-lockout rulings reproduce; all four C families' marquee
 exhibits reproduce; the COLLAPSED_CHROME no-spec-change claim holds
 mechanically; the amber border is CI-clean as fact; the Q3
