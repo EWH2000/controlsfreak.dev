@@ -523,6 +523,37 @@ evaporate with it:
     standing handoff's retirement condition is half-met by this
     entry; the lanes running satisfies the rest.
 
+- **2026-08-21 — §4 EXECUTED: entries merged, marking lanes
+  running; the standing handoff retired.** The execution PR (#594,
+  owner-merged) shipped the eleven entries (glossary 63 → 74), the
+  machine-readable EXCLUDED map (`html/_data/glossaryExcluded.js`,
+  14 rows) and the three-legged guard arm in `.eleventy.js` —
+  every leg probe-proven, twice (once by the drafting lane, once
+  by the refutation round's mechanical auditor after the
+  `hasOwnProperty` hardening). The pre-PR defs refutation round
+  (3 lanes: technical, ratification-compliance, mechanical/Opus)
+  returned **1 BLOCKING + 4 SHOULD-FIX + 7 NIT, all applied**; the
+  BLOCKING was the §5 round's def-contradicts-its-mark-site shape
+  again — the duct-static def (fan-speed loop) was false at
+  air-balancing's bypass-system 'static setpoint', fixed at the
+  RULE level as a named non-target. Second named non-target from
+  the same round: building-pressure:511's modulating-loop error
+  deadband. The ratified core held under attack: deadband's two
+  hard def constraints, the roster, owners[], and the map all
+  verified against the ruling. The approved by-catch shipped as
+  its own PR (#595, owner-merged): commanding-actuators' loop-
+  action anchor now targets comparators-and-deadband#deadband.
+  The **two marking lanes dispatched 2026-08-21** (education ·
+  tools+landings, Opus, worktree-isolated; the written matching
+  rules in glossary.js are the lane contracts, ~45–75 marks
+  expected) — which met the second half of the handoff's
+  retirement condition, so `docs/next-session-handoff.md` is
+  deleted in the same change as this entry; this doc carries the
+  state again. Still open from the §4 round's routing:
+  balancing:497's 'floating-point input' (field usage or copy
+  defect?) and the fail-to-start re-triage candidate — both owner
+  items.
+
 ## Open questions
 
 - ~~**Mid-density pilot page for the tooltip component**~~ — settled
