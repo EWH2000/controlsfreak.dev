@@ -14879,3 +14879,27 @@ is ever edited for other reasons, de-vendoring can ride along — note
 the modbus-decoding constraint: `smoke.spec.js` walks that quiz
 deterministically, so any text edit there must verify the spec's
 assertions in the same PR.
+
+### 316. Contrast sweep never opens the older `<details>` idioms — `details.tool-preamble` / `.pid-spoiler` ink is unmeasured *(noticed 2026-08-21, §4 tools marking lane; decision-class — the spec itself defers this as "a separate call")*
+
+`tests/contrast-sweep.spec.js` force-opens `details.prose-fold` only;
+its own comment (~L459) scopes that deliberately "so the older idioms
+(`details.tool-preamble`, `.pid-spoiler`) keep whatever standing they
+have today; widening it is a separate call." This entry is that call,
+made concrete: a closed `<details>` is closed by the absent `open`
+ATTRIBUTE, so neither COLLAPSED_CHROME arm reaches it and everything
+inside — ~30 tool-preamble bodies across `html/tools/`, plus the
+pid-spoiler — has never had its ink measured in either theme. Newly
+topical because PR #597 placed a `data-gloss` trigger inside
+`psychrometric-chart.html`'s closed preamble: the trigger's ink is
+measured on other pages and the panel via COLLAPSED_CHROME, but this
+page's preamble context is not. The 2026-08-09 owner direction on
+collapsed prose ("add collapsed patterns to contrast-sweep's
+force-open list") argues for widening; the counterargument is
+whatever the original scoping protected (an unmeasured idiom may
+carry latent failures that would redden CI the day it joins the
+walk — budget a fix pass alongside the widening). Suggested shape:
+extend the third arm's selector to
+`details.prose-fold, details.tool-preamble, details.pid-spoiler`
+(or bare `details`), run the sweep, and disposition whatever it
+finds before merging the widened spec.
