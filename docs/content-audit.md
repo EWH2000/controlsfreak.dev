@@ -3133,3 +3133,31 @@ against his copy). **Suggested direction:** soften in BOTH places in
 one pass — e.g. "Annex J's default 0xBAC0, then 0xBAC1, 0xBAC2 by
 convention" — the quiz was deliberately NOT fixed alone, since it must
 stay in sync with the lesson it sources.
+
+### 89. MS/TP lesson + one bank explain overstate the steady-state cost of Max_Master = 127 *(flagged 2026-08-21, quiz-growth wave-1 refutation round — mstp lane)*
+
+**Location:** `html/education/bacnet-mstp.html:105` ("the token holder
+dutifully Poll-For-Masters its way through a hundred-odd empty
+addresses, over and over, forever … spending a chunk of every rotation
+talking to nobody") and the `max-info-frames-allowance` explain in
+`html/_data/quizzes/bacnet-mstp.js` ("every rotation wastes time
+polling a hundred-odd empty addresses" — cite by question id; its line
+number moves when PR #592's growth lands). **Lens:** standards
+accuracy. **Issue:** Clause 9's maintenance Poll-For-Master is
+*amortized* — a token-holding master sends ONE PFM per `Npoll` (50)
+token receipts, borne by the master sitting below the address gap —
+so 127-everywhere does NOT cost a per-rotation walk of the empty
+range. The real costs are occasional ~`Tusage_timeout` stalls as that
+single poll goes unanswered, slower discovery of a newcomer, and
+slower ring re-formation. The direction taught (lower the ceiling to
+a uniform value a little above the highest MAC) is right; the
+mechanism is one notch too dramatic, in the same way #88's attribution
+was one notch too firm. **Verification:** flagged (technical lane of
+the mstp refutation round, against Clause 9's Npoll mechanics; the
+owner may want to confirm against his copy of 135). **Suggested
+direction:** soften BOTH surfaces in one pass to the amortized story —
+the reworked `max-master-where-to-set` explain shipped in PR #592
+("spends part of its maintenance polling walking a hundred-odd
+addresses nobody owns, over and over, and a newcomer waits longer to
+be found") was worded to be compatible with whatever softening these
+two get, so the three surfaces can converge on one mechanism.
