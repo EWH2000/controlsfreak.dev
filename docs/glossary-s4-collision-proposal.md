@@ -29,8 +29,15 @@
 >   framing — and the width-convention disclosure fits a closing
 >   clause). **Consequence, recorded explicitly: zero A survives ⇒
 >   the disambiguation component is NOT built; §4 below stands as
->   the record of the unbuilt design and `glossary.js:42`'s
->   deferral comment stays.**
+>   the record of the unbuilt design and `glossary.js`'s CURATION
+>   header keeps that record.** *(Cite de-pinned 2026-08-27: this
+>   read "`glossary.js:42`'s deferral comment stays". PR #594's
+>   §8-rider rewrote that header, so the line cite is stale and the
+>   surviving text records a settled NOT-BUILT ruling with its
+>   re-open triggers, not a deferral. The three later copies at
+>   §§851 / 1063 / 1401 are left as written — this file's header
+>   declares everything below the governing block a record of the
+>   draft as it stood.)*
 > - 3.11 differential — **B, as recommended**
 >   (`differential-pressure`).
 > - 3.12 low/high-limit — **B, as recommended**
@@ -40,10 +47,17 @@
 > - 3.14 direct/reverse-acting — **C, as recommended** (the
 >   two-armed re-open trigger stands).
 >
-> Cross-cutting: **Q4 RATIFIED — build-enforced**: the EXCLUDED map
-> ships machine-readable in `glossary.js` with the three-legged
+> Cross-cutting: **Q4 RATIFIED — build-enforced at ENTRY
+> DEFINITION**: the EXCLUDED map ships machine-readable as its own
+> file, `html/_data/glossaryExcluded.js`, with the three-legged
 > guard arm (non-empty once the tier ships, kebab lint,
-> term-equality leg). **Q2 stands** and governs the B compounds'
+> term-equality leg). *(Corrected 2026-08-27: this said the map
+> ships "in `glossary.js`". It does not, and cannot — §5 gives the
+> mechanical reason: `glossaryGuard` iterates
+> `Object.keys(glossary)` and would lint every reserved headword as
+> a malformed entry. Scope also pinned: the guard blocks a reserved
+> id or `term`, not a reserved word appearing as trigger TEXT.)*
+> **Q2 stands** and governs the B compounds'
 > written matching rules. **Q1 / Q3 / Q5 / Q6 are MOOT** — zero A
 > means no kind panel exists to register, link, size or style;
 > closed by consequence, not left unanswered. **Q7** is the table

@@ -1,8 +1,10 @@
 # Warm-climate freeze protection — research record
 
 > **Disposition: research record. Feeds future page copy. No page copy
-> has shipped from it.** Written 2026-08-09 against
-> `docs/next-session-handoff.md` **item 3**, which the owner opened with
+> has shipped from it.** Written 2026-08-09 against **item 3** of the
+> then-current rolling handoff (`docs/next-session-handoff.md`, retired
+> 2026-08-21 — the item survives in history at `git show
+> 1a62666^:docs/next-session-handoff.md`), which the owner opened with
 > *"do this properly, with sources — not as a hedge in prose."* Nothing
 > in this file is reader-facing yet, and §5 is the only place that
 > proposes wording; those are **proposals awaiting an owner pick**

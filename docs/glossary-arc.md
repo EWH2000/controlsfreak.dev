@@ -152,6 +152,25 @@ evaporate with it:
 
   Keep the `/sitemap.xml` readiness probe — it turns a squatted port
   into an explicit bind error instead of 100+ opaque failures.
+- **`curl` the live site with `-L`.** The `.html` → clean-URL 301
+  makes a bare `curl | grep` come back empty and read as a failed
+  deploy, when the deploy is fine.
+- **Stacked-lane base branches evaporate on parent merge.** The §5
+  marking lanes were briefed to open PRs against the drafting
+  branch; that branch auto-deleted when its own PR merged
+  mid-flight. A `SendMessage` redirect — *"target main, your base
+  commit is in main's history"* — saved both lanes. If lanes stack
+  on a branch, plan the retarget message at dispatch time. (Note
+  this is the case MEMORY.md's "stacked children auto-retarget on
+  parent merge" does **not** cover: GitHub retargets the open PR,
+  but the lane's local worktree still has a base branch that no
+  longer exists upstream.)
+
+*(Both notes rescued 2026-08-27 from `docs/next-session-handoff.md`,
+which was their only carrier anywhere in the repo — verified with
+`git log -S` — and was deleted at the §4 retirement. The arc doc
+inherited that brief's arc state faithfully and dropped its
+operational state; these two are the whole of what was lost.)*
 
 ## Decision log
 
@@ -501,12 +520,29 @@ evaporate with it:
     disclosure fitting a closing clause. **Zero A survives ⇒ the
     `kind: 'disambiguation'` component is NOT built** — the
     proposal's §4 stands as the record of the unbuilt design, and
-    `glossary.js:42`'s deferral comment stays.
-  - **5 family-level exclusions, build-enforced** (bare coil,
-    reset, lockout, authority, direct/reverse-acting — plus every
-    B family's reserved bare headword): the EXCLUDED map ships
-    machine-readable with the three-legged guard arm (non-empty
-    once the tier ships, kebab lint, term-equality leg). Q2's
+    `glossary.js`'s CURATION header keeps that record.
+    *(Corrected 2026-08-27: this read "`glossary.js:42`'s deferral
+    comment stays", and both halves were invalidated by the very PR
+    this ruling authorized — #594's §8-rider rewrote that header.
+    Line 42 now holds unrelated prose, and the surviving text at the
+    CURATION header records a settled NOT-BUILT ruling with its
+    re-open triggers, not a deferral. Cited by name, not by line, so
+    it cannot decay the same way twice.)*
+  - **5 family-level exclusions, build-enforced at ENTRY
+    DEFINITION** (bare coil, reset, lockout, authority,
+    direct/reverse-acting — plus every B family's reserved bare
+    headword): the EXCLUDED map ships machine-readable with the
+    three-legged guard arm (non-empty once the tier ships, kebab
+    lint, term-equality leg). *(Scope pinned 2026-08-27, by probe:
+    the guard binds entry DEFINITION only — no entry may take a
+    reserved id, or a `term` that kebab-normalizes onto one. It does
+    **not** stop a reserved word shipping as visible trigger TEXT
+    under a different entry's id; the `gloss` transform never reads
+    the map. Measured: a `data-gloss="freezestat"` trigger reading
+    "coil" builds clean, panel and all. Keeping reserved words out of
+    trigger text is the written matching rules' job, which is exactly
+    what Q2's principle below governs — do not read "build-enforced"
+    as "the build will stop me marking a reserved word.")* Q2's
     restated principle — never a sense-ambiguous visible token
     under a sense-scoped id — governs the B compounds' written
     matching rules; Q1/Q3/Q5/Q6 closed as MOOT by the zero-A
@@ -544,7 +580,7 @@ evaporate with it:
   its own PR (#595, owner-merged): commanding-actuators' loop-
   action anchor now targets comparators-and-deadband#deadband.
   The **two marking lanes dispatched 2026-08-21** (education ·
-  tools+landings, Opus, worktree-isolated; the written matching
+  tools+landings, Fable, worktree-isolated; the written matching
   rules in glossary.js are the lane contracts, ~45–75 marks
   expected) — which met the second half of the handoff's
   retirement condition, so `docs/next-session-handoff.md` is
@@ -553,6 +589,57 @@ evaporate with it:
   balancing:497's 'floating-point input' (field usage or copy
   defect?) and the fail-to-start re-triage candidate — both owner
   items.
+
+- **2026-08-27 — §4 MARKING COMPLETE at 27 marks; the yield band
+  was a hedge stripped in transit.** Both lanes merged owner-cleared
+  (#597 tools+landings — 6 marks / 6 pages; #599 education — 21
+  marks / 15 pages), disjoint surfaces, no conflict. **Site-wide
+  marks 369 → 396**, derived, matching the lanes' arithmetic to the
+  unit. The §4 tier is now placed and the phase closes.
+  **27 is the right answer and the expectation is the thing that
+  was wrong** — do not send the lanes back for a second pass. Nine
+  of eleven entries landed in or at their own rule's band; the two
+  that missed by one (duct-static 7, high-static-cutout 1) missed
+  for documented reasons; `proof-window`'s zero is the correct
+  outcome, confirmed by a positive grep over every occurrence site.
+  The entire gap is `dew-point` — 3 marks against an implied ~20–40
+  — and a line-by-line survey of every non-owner dew-point site on
+  the marking surface found **exactly 3 eligible prose sites, the 3
+  that shipped**. The failure type is worth keeping: `glossary.js`'s
+  dew-point rule states the band as *"Expected ~20–40 marks
+  (planning band; the marking lane fixes it per the §5 process)"*,
+  and the 2026-08-20 decision-log entry propagated the number while
+  dropping the parenthetical — **converting a placeholder into an
+  acceptance criterion**. A second, weaker instance of the same
+  family: each lane's PR body reconciled its own dew-point shortfall
+  by pointing at the *other* lane's surface, and neither ever met
+  the band (the reciprocal-deferral shape — harmless only because
+  both lanes were individually right). All 27 marks audited clean
+  against the house conventions: real `<button type="button">`, no
+  hand-written class / `aria-describedby` / panel markup, zero
+  owning-page violations, none in a heading, SVG text or JS string.
+  **Verification round on this doc** (6 lanes + adversarial
+  refutation): 81 claims — 54 verified, 26 corrections proposed, of
+  which **15 upheld and 8 overturned** by the refuters, 1 owner item
+  unverifiable. The upheld corrections are applied in this same
+  change: the de-pinned `glossary.js` CURATION-header cite (two
+  copies), the ENTRY-DEFINITION scoping of "build-enforced" (two
+  copies), the lane-model attribution (Fable, not Opus), the two
+  rescued operational notes in §Process notes, `CLAUDE.md` and
+  `.eleventy.js`'s `GLOSS / GLOSSARY` header (both still said "two
+  halves" and named neither `glossaryExcluded.js` nor its guard),
+  the proposal's "ships in `glossary.js`", and
+  `warm-climate-freeze-protection.md`'s pointer into the deleted
+  handoff. **The named drift pattern: the docs that got trued up
+  were exactly the ones the §8 rider itemized, and every surface
+  outside that list drifted** — worth a standing rider line on the
+  next phase's execution PR.
+  Next per §9: **the §7.2 quiz-bank component lane** → the brief
+  re-triage. Owner items still open, unchanged: balancing:497's
+  'floating-point input', and the fail-to-start re-triage candidate
+  — which is tracked **only** here and in the §4 proposal, i.e. not
+  in the friction file or `codebase-issues.md`, the ledgers the
+  re-triage will actually read.
 
 ## Open questions
 

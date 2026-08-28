@@ -426,18 +426,34 @@ section). **Category keys mirror the landing pages' `navCard()`
   palette / `quiz-engine.js` / JSON-LD later, the quiz-bank reasoning
   exactly. **`owners[]` is the §7.4 suppression list**: the pages that
   TEACH the term, where a gloss would shadow the page's own teaching
-  beat. Two build halves enforce it, both accumulate-then-throw:
+  beat. Three build arms enforce it, all accumulate-then-throw:
   `glossaryGuard` (a collection — it lints entry shape and fails on
-  an `owners` path that names no page, the anti-vacuity probe) and the
+  an `owners` path that names no page, the anti-vacuity probe);
+  **`glossaryExcludedGuard`** (a collection over
+  `html/_data/glossaryExcluded.js`, the machine-readable map of §4
+  RESERVED bare headwords — `coil`, `reset`, `lockout`, `authority`,
+  `static`, … — ruled 2026-08-20, each row carrying its `reason`,
+  `ruled` date and optional `reopen` trigger; three legs: anti-vacuity
+  on an empty map, a per-row lint, and a collision leg); and the
   **`gloss` transform** (the repo's first `addTransform`; post-render,
   so a trigger arriving via a partial is visible at all). The build
   fails **loudly** on an unknown id, a non-`<button>` trigger, a
   trigger without an explicit `type="button"` (a bare `<button>`
   defaults to `type="submit"`), a mark on an owning page, a page that
-  already uses the `gloss-tip-<id>` id, a stale `owners` path, or a
-  non-kebab entry id. Marks inside HTML comments are masked out before
-  the scan, so commented-out example markup neither fails the build nor
-  earns a panel.
+  already uses the `gloss-tip-<id>` id, a stale `owners` path, a
+  non-kebab entry id, a reserved headword used as an entry id **or**
+  reached by an entry's `term` (a different id does not un-reserve the
+  word), and a malformed or empty EXCLUDED row. Marks inside HTML
+  comments are masked out before the scan, so commented-out example
+  markup neither fails the build nor earns a panel.
+  ⚠️ **`glossaryExcludedGuard` binds ENTRY DEFINITION only.** It stops
+  a reserved word becoming an *entry*; it does **not** stop one
+  shipping as visible trigger TEXT under some other entry's id — the
+  transform never reads the map, so
+  `<button type="button" data-gloss="freezestat">coil</button>` builds
+  clean (probed 2026-08-27). Keeping a reserved headword out of
+  trigger text is the **written matching rules'** job, not the
+  build's. Do not read "build-enforced" as "the build will catch me."
   The transform splices the `aria-describedby` — which is the whole
   no-JS screen-reader story, since a description is computed even
   while the panel is `hidden` — then injects one `.gloss-tip` panel
