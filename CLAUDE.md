@@ -166,10 +166,17 @@ Frontmatter:
 
 - `title` — verbatim for `<title>` and `og:title`.
 - `description` — verbatim for `<meta name=description>` and
-  `og:description`. **140–160 chars**, human-written, never reused —
-  enforced by `descriptionLengthGuard` in `.eleventy.js` (fails the
-  build on out-of-range). Renders HTML-autoescaped, so rephrase to
-  avoid `'` and `<` if clean view-source matters.
+  `og:description`. **140–160 chars**, human-written, never reused.
+  `descriptionLengthGuard` in `.eleventy.js` enforces **length and
+  presence only** — 140–160 for any page with a string `description`,
+  and a `description` on every page carrying a `canonical`. It does
+  **not** check uniqueness: a lane proved that by shipping a
+  byte-identical description on two pages through a green build.
+  "Never reused" is therefore authorial convention, not a build gate —
+  it holds today (137 distinct descriptions across 137 pages, derived)
+  purely by hand, so a duplicate will not fail CI. Renders
+  HTML-autoescaped, so rephrase to avoid `'` and `<` if clean
+  view-source matters.
 - `canonical` — full URL with `.html` extension; used for `og:url`.
 - `nav` — one of `home`, `guides`, `tools`, `simulators`, `education`,
   `practice`, `contact`; drives the `.active` marker. Omit on pages
