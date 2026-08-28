@@ -573,7 +573,7 @@ keywords: fla amps hz drive inverter speed torque carrier motor run
                             <td>BACnet MS/TP</td>
                             <td>RS-485, twisted pair, daisy-chained</td>
                             <td>9600 – 76800 baud</td>
-                            <td>Drives on a dedicated MS/TP trunk under a BMS field controller. Same wire as Modbus RTU; different protocol.</td>
+                            <td>Drives on a dedicated MS/TP trunk under a BMS field controller. Same wire as <button type="button" data-gloss="modbus-rtu">Modbus RTU</button>; different protocol.</td>
                         </tr>
                         <tr>
                             <td>BACnet/IP</td>
@@ -728,11 +728,11 @@ keywords: fla amps hz drive inverter speed torque carrier motor run
             <h2 class="subhead">Tying It Back to Load Piping</h2>
 
             <p>
-                On the <a href="/education/load-piping.html">load-piping</a> lesson we set up the variable-flow picture from the load side: every coil is throttled by a two-way valve; the system pump should slow down as the loads close in. The VFD is the answer to the pump side of that picture. The system pump's BMS-facing surface is a run command and a speed reference — exactly the two parameters we just walked through — and the BMS modulates the speed reference to hold whatever variable the sequence cares about (usually a differential pressure across the loop, sometimes a return-temperature setpoint, occasionally a valve-position reset on the most-open valve).
+                On the <a href="/education/load-piping.html">load-piping</a> lesson we set up the variable-flow picture from the load side: every coil is throttled by a two-way valve; the system pump should slow down as the loads close in. The VFD is the answer to the pump side of that picture. The system pump's BMS-facing surface is a run command and a speed reference — exactly the two parameters we just walked through — and the BMS modulates the speed reference to hold whatever variable the sequence cares about (usually a <button type="button" data-gloss="differential-pressure">differential pressure</button> across the loop, sometimes a return-temperature setpoint, occasionally a valve-position reset on the most-open valve).
             </p>
 
             <p>
-                That last part — <em>how</em> the BMS decides what speed reference to send — is its own topic, and it now has a lesson on each fluid. The <a href="/education/pump-control.html">pump-control lesson</a> picks up from here on the water side, walking through pump curves and the operating point, DP-based control with a remote sensor, and DP setpoint reset for the bottom of the cube-law savings; <a href="/education/duct-static-control.html">duct static control</a> is the same story on air — a supply fan slowing against a static setpoint while the VAV boxes throttle.
+                That last part — <em>how</em> the BMS decides what speed reference to send — is its own topic, and it now has a lesson on each fluid. The <a href="/education/pump-control.html">pump-control lesson</a> picks up from here on the water side, walking through pump curves and the operating point, DP-based control with a remote sensor, and DP setpoint reset for the bottom of the cube-law savings; <a href="/education/duct-static-control.html">duct static control</a> is the same story on air — a supply fan slowing against a <button type="button" data-gloss="duct-static">static setpoint</button> while the VAV boxes throttle.
             </p>
 
             <p>
