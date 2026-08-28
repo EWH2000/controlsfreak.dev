@@ -621,11 +621,20 @@ module.exports = function(eleventyConfig) {
     });
 
     // ── GLOSS / GLOSSARY ─────────────────────────────────────────────
-    // Two halves, deliberately split by what each one can see:
+    // Three build-time constructs, deliberately split by what each one
+    // can see — two on the data-file side, one per-page:
     //
     //   glossaryGuard (below)  — the DATA-FILE lint arm. Runs once per
     //       build, inside a collection, because only a collection has the
     //       page list an `owners` path must resolve against.
+    //   glossaryExcludedGuard  — the §4 RESERVED-HEADWORD arm, over
+    //       html/_data/glossaryExcluded.js. Also a collection, also
+    //       data-file-side, and scoped to ENTRY DEFINITION ONLY: no entry
+    //       may take a reserved id, or a `term` that kebab-normalizes
+    //       onto one. It cannot see marks — keeping a reserved word out
+    //       of trigger TEXT is the written matching rules' job, not this
+    //       guard's. (Added by PR #594; this header missed the §8-rider
+    //       true-up and said "two halves" until 2026-08-27.)
     //   the `gloss` transform  — the PER-PAGE arm. Runs after render,
     //       because that is the only point where a trigger arriving via a
     //       partial or an {% include %} is visible at all. (A paired
