@@ -3,5 +3,5 @@
 // prepared; add it only in the commit that completes the full route set.
 
 module.exports = {
-    completeLocales: [],
+    completeLocales: ['ko'],
 };

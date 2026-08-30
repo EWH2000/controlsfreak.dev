@@ -53,11 +53,16 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { test, expect } = require('@playwright/test');
+const i18n = require('../html/_data/i18n.js');
+const { completeLocales } = require('../html/_data/i18nStatus.js');
 
 const SITE = path.join(__dirname, '..', '_site');
 const SRC = path.join(__dirname, '..', 'html');
 
 const CARD_RE = /<a class="nav-card nav-card--[a-z-]+"[^>]*?href="([^"]+)"/g;
+const localeDirs = new Set(i18n.locales
+    .map(({ code }) => code)
+    .filter(code => code !== i18n.defaultLocale));
 
 // A "section" is any non-underscore html/ subdirectory holding an
 // index.html plus at least one other page. That yields exactly the four
@@ -65,7 +70,9 @@ const CARD_RE = /<a class="nav-card nav-card--[a-z-]+"[^>]*?href="([^"]+)"/g;
 // (bacnet, forced-air, guides, hydronics, refrigeration) along with
 // assets/ and scripts/. A future fifth section enrolls itself.
 const sections = fs.readdirSync(SRC, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && !entry.name.startsWith('_'))
+    .filter((entry) => entry.isDirectory()
+        && !entry.name.startsWith('_')
+        && !localeDirs.has(entry.name))
     .map((entry) => entry.name)
     .filter((name) => {
         const pages = fs.readdirSync(path.join(SRC, name)).filter((f) => f.endsWith('.html'));
@@ -80,16 +87,31 @@ test('section discovery finds every card-grid landing', () => {
         .toEqual(['education', 'practice', 'simulators', 'tools']);
 });
 
-for (const section of sections) {
-    test(`${section}/ landing links every page in the section`, () => {
-        const landing = fs.readFileSync(path.join(SITE, section, 'index.html'), 'utf8');
+const landingCases = [
+    ...sections.map(section => ({ locale: '', section })),
+    ...completeLocales.flatMap(locale =>
+        sections.map(section => ({ locale, section }))),
+];
+
+for (const { locale, section } of landingCases) {
+    const root = locale ? `/${locale}` : '';
+    const label = `${root.slice(1)}${root ? '/' : ''}${section}/`;
+    const sourceDir = locale
+        ? path.join(SRC, locale, section)
+        : path.join(SRC, section);
+    const landingPath = locale
+        ? path.join(SITE, locale, section, 'index.html')
+        : path.join(SITE, section, 'index.html');
+
+    test(`${label} landing links every page in the section`, () => {
+        const landing = fs.readFileSync(landingPath, 'utf8');
         const carded = new Set();
         for (const [, href] of landing.matchAll(CARD_RE)) {
             // Landings also carry cross-section cards (a tools landing may
             // point at a simulator); only same-section hrefs count here.
-            if (href.startsWith(`/${section}/`)) carded.add(href);
+            if (href.startsWith(`${root}/${section}/`)) carded.add(href);
         }
-        const onDisk = new Set(fs.readdirSync(path.join(SRC, section))
+        const onDisk = new Set(fs.readdirSync(sourceDir)
             .filter((f) => f.endsWith('.html') && f !== 'index.html')
             // Skip pages deliberately excluded from the site's collections.
             // `eleventyExcludeFromCollections` keeps a page out of the nav,
@@ -100,19 +122,19 @@ for (const section of sections) {
             // and land in the sitemap yet link from nowhere; an excluded page
             // is an intentional one, and is absent from the sitemap besides.
             .filter((f) => !/^eleventyExcludeFromCollections:\s*true\b/m
-                .test(fs.readFileSync(path.join(SRC, section, f), 'utf8')))
-            .map((f) => `/${section}/${f}`));
+                .test(fs.readFileSync(path.join(sourceDir, f), 'utf8')))
+            .map((f) => `${root}/${section}/${f}`));
 
-        expect(carded.size, `sanity: ${section} landing yielded cards`).toBeGreaterThanOrEqual(5);
-        expect(onDisk.size, `sanity: ${section}/ holds pages`).toBeGreaterThanOrEqual(5);
+        expect(carded.size, `sanity: ${label} landing yielded cards`).toBeGreaterThanOrEqual(5);
+        expect(onDisk.size, `sanity: ${label} holds pages`).toBeGreaterThanOrEqual(5);
 
         const offenders = [];
         for (const href of onDisk) {
-            if (!carded.has(href)) offenders.push(`  ${href} exists but has no card on /${section}/`);
+            if (!carded.has(href)) offenders.push(`  ${href} exists but has no card on /${label}`);
         }
         for (const href of carded) {
-            if (!onDisk.has(href)) offenders.push(`  /${section}/ cards ${href} but no such page exists`);
+            if (!onDisk.has(href)) offenders.push(`  /${label} cards ${href} but no such page exists`);
         }
-        expect(offenders, `${section} landing must card every page, and only real pages`).toEqual([]);
+        expect(offenders, `${label} landing must card every page, and only real pages`).toEqual([]);
     });
 }

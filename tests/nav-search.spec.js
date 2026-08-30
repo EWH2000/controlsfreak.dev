@@ -9,28 +9,34 @@ function watchErrors(page) {
     return errors;
 }
 
-test('search-index.json is valid and stays in sync with the sitemap', () => {
-    // Both /search-index.json (searchPages) and /sitemap.xml (sitemapPages)
-    // are built from the same "has a canonical" filter, so a drift between
-    // their counts means the index silently lost (or gained) pages. Read
-    // the build output — the webServer in playwright.config.js builds _site/
-    // before the run.
+test('locale search indexes are valid and stay in sync with the sitemap', () => {
+    // Each locale owns its own search index so a Korean query never ranks an
+    // English duplicate. Together those indexes must still cover every
+    // canonical URL in sitemapPages exactly once.
     const fs = require('fs');
-    const index = JSON.parse(fs.readFileSync('_site/search-index.json', 'utf8'));
+    const indexes = {
+        en: JSON.parse(fs.readFileSync('_site/search-index.json', 'utf8')),
+        ko: JSON.parse(fs.readFileSync('_site/ko/search-index.json', 'utf8')),
+    };
     const sitemap = fs.readFileSync('_site/sitemap.xml', 'utf8');
     const locCount = [...sitemap.matchAll(/<loc>/g)].length;
 
-    expect(Array.isArray(index), 'index parses as an array').toBe(true);
-    expect(index.length, 'one index entry per sitemap <loc>').toBe(locCount);
-    for (const entry of index) {
-        expect(entry.title, 'every entry has a title').toBeTruthy();
-        expect(entry.url, 'every entry has a url').toMatch(/^\//);
-        expect(entry).toHaveProperty('section');
-        expect(entry).toHaveProperty('keywords');
+    expect(indexes.en.length + indexes.ko.length, 'one locale-index entry per sitemap <loc>').toBe(locCount);
+    for (const [locale, index] of Object.entries(indexes)) {
+        expect(Array.isArray(index), `${locale} index parses as an array`).toBe(true);
+        for (const entry of index) {
+            expect(entry.title, `${locale}: every entry has a title`).toBeTruthy();
+            expect(entry.url, `${locale}: every entry has a url`).toMatch(/^\//);
+            expect(entry).toHaveProperty('section');
+            expect(entry).toHaveProperty('keywords');
+            if (locale === 'ko') expect(entry.url).toMatch(/^\/ko\//);
+            else expect(entry.url).not.toMatch(/^\/ko(?:\/|$)/);
+        }
     }
     // The clean title strips the " — controlsfreak.dev" suffix.
-    const sig = index.find((e) => e.url === '/tools/signal-scaling.html');
+    const sig = indexes.en.find((e) => e.url === '/tools/signal-scaling.html');
     expect(sig.title).toBe('Signal Scaling Calculator');
+    expect(indexes.ko.find((e) => e.url === '/ko/').title).toBe('controlsfreak.dev — BMS 현장 참고 자료');
 });
 
 test('"/" opens the palette and Enter navigates to the first result', async ({ page }) => {
