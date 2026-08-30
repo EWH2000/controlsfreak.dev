@@ -1,11 +1,11 @@
 ---
-title: 강제순환 공기 — 현장 참고 자료, 도구 및 학습 — controlsfreak.dev
-description: 강제순환 공기 현장 참고 자료입니다. 공기조화기에서 VAV 박스까지의 학습 자료와 시스템 풍량을 산정하고 점검하는 풍량·코일·팬 도구를 제공합니다.
-sourceContentHash: af4f27d979d75a6aff88b432526eafba180d023ecef1aadb7dded80d6c64bca2
+title: 강제순환식 공조 — 현장 참고 자료, 도구 및 학습 — controlsfreak.dev
+description: 강제순환식 공조 현장 참고 자료입니다. 공기조화기에서 VAV 박스까지의 학습 자료와 시스템 풍량을 산정하고 점검하는 풍량·코일·팬 도구를 제공합니다.
+sourceContentHash: 962dd9af3a0dc33b23fa3ebd9baba7fcb565f31229bc52309adfb6877c51d761
 canonical: https://controlsfreak.dev/ko/forced-air/
 nav: guides
-navLabel: 강제순환 공기
-keywords: 강제순환 공기 공기조화기 ahu rtu 외기냉방 vav 덕트 정압 건물 압력 풍량 속도압 덕트 산정 트래버스 최소 외기량 ashrae 62.1 코일 산정 혼합공기 습공기 팬 상사 법칙
+navLabel: 강제순환식 공조
+keywords: 강제순환식 공조 공기조화기 ahu rtu 외기냉방 vav 덕트 정압 건물 압력 풍량 속도압 덕트 산정 트래버스 최소 외기량 ashrae 62.1 코일 산정 혼합공기 습공기 팬 상사 법칙
 ---
 {% extends "html/forced-air/index.html" %}
 
@@ -13,12 +13,12 @@ keywords: 강제순환 공기 공기조화기 ahu rtu 외기냉방 vav 덕트 �
 <main id="main">
 
     <div class="section-header">
-        <h1 class="section-label">강제순환 공기</h1>
+        <h1 class="section-label">강제순환식 공조</h1>
         <div class="section-line"></div>
     </div>
 
     <p class="landing-intro">
-        강제순환 공기 시스템은 건물에서 <strong>조화된 공기를 이송하는</strong> 부분입니다. 공기조화기(AHU)는 회기를 흡입해 외기와 혼합하고 필터와 코일을 통과시키며, 팬은 덕트를 통해 각 존으로 공기를 보냅니다. 이 경로의 모든 지점은 제어 시스템이 측정하거나 용량을 산정하고 설정값으로 유지해야 하는 대상입니다. 혼합공기 온도, <button type="button" data-gloss="duct-static">덕트 정압</button>, 외기 비율, 코일 용량, 팬 속도가 이에 해당합니다. 이 페이지에서는 공기조화기부터 VAV 박스까지 공기측 전체를 살펴보고 각 지점을 수치로 확인하는 도구를 제공합니다.
+        강제순환식 공조 시스템은 건물에서 <strong>조화된 공기를 이송하는</strong> 부분입니다. 공기조화기(AHU)는 회기를 흡입해 외기와 혼합하고 필터와 코일을 통과시키며, 팬은 덕트를 통해 각 존으로 공기를 보냅니다. 이 경로의 모든 지점은 제어 시스템이 측정하거나 용량을 산정하고 설정값으로 유지해야 하는 대상입니다. 혼합공기 온도, <button type="button" data-gloss="duct-static">덕트 정압</button>, 외기 비율, 코일 용량, 팬 속도가 이에 해당합니다. 이 페이지에서는 공기조화기부터 VAV 박스까지 공기측 전체를 살펴보고 각 지점을 수치로 확인하는 도구를 제공합니다.
     </p>
 
     <p class="landing-intro">
@@ -113,23 +113,23 @@ keywords: 강제순환 공기 공기조화기 ahu rtu 외기냉방 vav 덕트 �
 
     <h2 class="hub-group">직접 구성하기 — 시뮬레이터</h2>
     <p class="hub-group-intro">
-        공기측을 위한 대화형 모델입니다. 장비를 운전하는 기능 블록 프로그램을 한 탭 옆에서 볼 수 있는 실시간 <button type="button" data-gloss="ddc">직접디지털제어기(DDC)</button> 그래픽으로, 학습 자료에서 본 시퀀스·센서 고장·남아 있는 재정의 값을 화면에서 직접 움직여 볼 수 있습니다. 먼저 더 작은 팬코일유닛부터 시작해 보세요.
+        공기측을 위한 대화형 모델입니다. 장비를 운전하는 기능 블록 프로그램을 한 탭 옆에서 볼 수 있는 실시간 <button type="button" data-gloss="ddc">직접 디지털 제어기(DDC)</button> 그래픽으로, 학습 자료에서 본 시퀀스·센서 고장·해제되지 않고 남은 오버라이드를 화면에서 직접 움직여 볼 수 있습니다. 먼저 더 작은 팬코일유닛부터 시작해 보세요.
     </p>
     <div class="card-grid">
         {{ navCard({
             section:    'simulators',
             href:       '/ko/simulators/ddc-workbench.html',
-            titleShort: 'AHU Workbench',
-            titleFull:  'DDC Workbench — 공기조화기',
-            desc:       '단일 존 공기조화기를 실시간 DDC 그래픽으로 다룹니다. 외기냉방 댐퍼, 온수 코일, 2단 DX가 있고 한 탭 옆에서 이를 운전하는 기능 블록 프로그램을 볼 수 있습니다. 센서를 강제 지정하고 실제 우선순위 배열로 포인트를 재정의하면서 화면에 드러나는 장비 상태를 관찰하세요.',
+            titleShort: 'AHU 워크벤치',
+            titleFull:  'DDC 워크벤치 — 공기조화기',
+            desc:       '단일 존 공기조화기를 실시간 DDC 그래픽으로 다룹니다. 외기냉방 댐퍼, 온수 코일, 2단 DX가 있고 한 탭 옆에서 이를 운전하는 기능 블록 프로그램을 볼 수 있습니다. 센서 값을 강제로 지정하고 실제 우선순위 배열을 통해 포인트를 오버라이드하면서 화면에 드러나는 장비 상태를 관찰하세요.',
             pills:      ['실시간 DDC 그래픽', '외기냉방', '우선순위 배열', '와이어시트']
         }) }}
         {{ navCard({
             section:    'simulators',
             href:       '/ko/simulators/ddc-workbench-fcu.html',
-            titleShort: 'FCU Workbench',
-            titleFull:  'DDC Workbench — 팬코일유닛',
-            desc:       '같은 Workbench에서 DX 팬코일유닛을 다룹니다. 장비가 작아 전체 제어 흐름을 쉽게 읽을 수 있습니다. 샘플 시퀀스를 불러오거나 빈 시트에서 직접 배선한 뒤 냉방을 증단하고 팬 운전 확인 신호를 끊어 그래픽에서 로직까지 고장을 추적하세요.',
+            titleShort: 'FCU 워크벤치',
+            titleFull:  'DDC 워크벤치 — 팬코일유닛',
+            desc:       '같은 워크벤치에서 DX 팬코일유닛을 다룹니다. 장비가 작아 전체 제어 흐름을 쉽게 읽을 수 있습니다. 샘플 시퀀스를 불러오거나 빈 시트에서 직접 배선한 뒤 냉방을 증단하고 팬 운전 확인 신호를 끊어 그래픽에서 로직까지 고장을 추적하세요.',
             pills:      ['실시간 DDC 그래픽', 'DX 대수제어', '직접 배선', '고장 프리셋']
         }) }}
     </div>
@@ -258,14 +258,14 @@ keywords: 강제순환 공기 공기조화기 ahu rtu 외기냉방 vav 덕트 �
             href:       '/ko/tools/affinity-laws.html',
             titleShort: '상사 법칙',
             titleFull:  '상사 법칙',
-            desc:       '팬 속도에 따라 풍량, 정압, 동력이 어떻게 변하는지 계산합니다. 축동력이 속도의 세제곱에 비례하므로 VFD는 강제순환 공기 시스템의 에너지를 줄이는 가장 큰 수단입니다. 펌프에도 같은 법칙이 적용됩니다.',
+            desc:       '팬 속도에 따라 풍량, 정압, 동력이 어떻게 변하는지 계산합니다. 축동력이 속도의 세제곱에 비례하므로 VFD는 강제순환식 공조 시스템의 에너지를 줄이는 가장 큰 수단입니다. 펌프에도 같은 법칙이 적용됩니다.',
             pills:      ['팬 법칙', '속도 → 풍량 / 정압', '세제곱 법칙 동력']
         }) }}
     </div>
 
     <h2 class="hub-group">관련 학습 자료</h2>
     <p class="hub-group-intro">
-        공기측의 기반이 되는 두 가지 주제입니다. 모든 코일 계산의 바탕인 공기 상태 용어와 팬 속도를 낮추는 드라이브를 다룹니다.
+        공기측의 기반이 되는 두 가지 주제입니다. 모든 코일 계산의 바탕인 공기 상태 용어와 팬 속도를 낮추는 VFD를 다룹니다.
     </p>
     <div class="card-grid">
         {{ navCard({

@@ -1,7 +1,7 @@
 ---
 title: 인버터(VFD) 모의 인터페이스 — controlsfreak.dev
 description: 범용 인버터(VFD) 키패드에서 파라미터 트리를 탐색하고 운전 지령·속도 지령 소스가 명령을 허용하는 방식을 실시간으로 익히는 시뮬레이터입니다.
-sourceContentHash: 14e66b4dba7fb7738b20c55a192f924912418737058b34745ad4d2f2448104ea
+sourceContentHash: 666ae160958452da126470d1a8bc20ff1d0afdb1f551b7a7cac5bc6a1b1ef5a4
 sourceMessageHash: 42adc8dd4a2fbec2567e792cdc0e008e23ed91dce4b9bec341fa2e9c092cd03d
 canonical: https://controlsfreak.dev/ko/simulators/vfd-mock.html
 nav: simulators
@@ -15,7 +15,7 @@ pageMessages:
   parameters:
     m01:
       lcd: 정격 FLA
-      name: 정격 전부하전류
+      name: 정격 전부하 전류
     m02:
       lcd: 정격 전압
       name: 정격 전압
@@ -54,7 +54,7 @@ pageMessages:
       name: DI1 기능
   options:
     keypad: 키패드
-    terminals: 단자
+    terminals: 단자대
     network: 네트워크
     run: 운전
     jog: 조그
@@ -76,12 +76,12 @@ pageMessages:
     coastingDown: 관성 감속 중
     stopped: 정지
   mode:
-    local: 로컬 — 키패드가 소스 파라미터를 우선합니다
-    remote: 원격 — 인버터가 구성된 소스를 따릅니다
+    local: 로컬 — 키패드가 소스 파라미터보다 우선합니다
+    remote: 원격 — 인버터가 설정된 소스를 따릅니다
   flash:
     runLocal: 운전(로컬)
     runOk: 운전 시작
-    ignoredTerminal: "무시: 소스=단자, L/R"
+    ignoredTerminal: "무시: 소스=단자대, L/R"
     ignoredNetwork: "무시: 소스=NET, L/R"
     stop: 정지
     stopIgnoredDi: "정지 무시: DI 하드웨어"
@@ -132,7 +132,7 @@ pageMessages:
                 <span class="lbl">예시:</span>
                 <button type="button" id="vfdm-try-default">공장 초기값</button>
                 <button type="button" id="vfdm-try-keypad">키패드 시운전</button>
-                <button type="button" id="vfdm-try-bas">BAS 자동 운전(전체 네트워크)</button>
+                <button type="button" id="vfdm-try-bas">BAS 자동 운전(모든 소스를 네트워크로)</button>
                 <button type="button" id="vfdm-try-classic">흔한 설정 실수</button>
             </div>
 
@@ -215,7 +215,7 @@ pageMessages:
                          bezel (a device face has LEDs, not sentences); same
                          ids as before so the JS wiring is unchanged. -->
                     <p class="vfdm-mode-note" id="vfdm-local-rem-ind">
-                        <span id="vfdm-local-rem-txt">원격 — 인버터가 구성된 소스를 따릅니다</span>
+                        <span id="vfdm-local-rem-txt">원격 — 인버터가 설정된 소스를 따릅니다</span>
                     </p>
                 </div>
 

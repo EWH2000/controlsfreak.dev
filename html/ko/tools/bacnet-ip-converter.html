@@ -1,7 +1,7 @@
 ---
 title: BACnet/IP 16진수 변환기 — controlsfreak.dev
 description: BACnet/IP 주소를 16진수와 점으로 구분한 10진수 형식 사이에서 변환하고, 객체 유형 10비트와 인스턴스 22비트를 패킹하거나 언패킹하는 객체 ID 탭도 제공합니다.
-sourceContentHash: de457077e300fe1a9a7f33bd4be9f9012228789432a378bf9322fb876e83da9d
+sourceContentHash: c8fd16061a7eea0bc85bf6ea5f04ecb87f93795f21b9cbaa99c1745056d92ee2
 sourceMessageHash: 7158c3e6511a44bbaf7c820658b68476248bddbcba825d6a1c5d60d595900e5a
 canonical: https://controlsfreak.dev/ko/tools/bacnet-ip-converter.html
 nav: tools
@@ -304,7 +304,7 @@ faqs:
             <section class="tool-body-row">
                 <h2 class="ps-section-label" id="object-identifier">BACnet 객체 식별자 디코더 — 유형 10비트, 인스턴스 22비트</h2>
                 <p class="ref-note" style="margin-top:0;">
-                    32비트 <code>Object_Identifier</code>는 상위 10비트에 객체 유형을, 하위 22비트에 인스턴스를 패킹합니다. raw = type × 4194304 + instance이므로 <code>0x020004D2</code>는 Device, 1234로 해석됩니다. 전체 <code>Object_Type</code> 표는 <a href="/ko/tools/bacnet-objects.html">BACnet 객체 참조</a>에서 확인할 수 있으며, 인스턴스 4194303은 미할당/와일드카드 값입니다.
+                    32비트 <code>Object_Identifier</code>는 상위 10비트에 객체 유형을, 하위 22비트에 인스턴스를 패킹합니다. raw = type × 4194304 + instance이므로 <code>0x020004D2</code>는 Device, 1234로 해석됩니다. 전체 <code>Object_Type</code> 표는 <a href="/ko/tools/bacnet-objects.html">BACnet 객체 참고 자료</a>에서 확인할 수 있으며, 인스턴스 4194303은 미할당/와일드카드 값입니다.
                 </p>
             </section>
         </div>
@@ -339,9 +339,9 @@ faqs:
     {{ faqBlock(faqs, "BACnet/IP 주소 지정 자주 묻는 질문") }}
 
     {{ relatedLinks({
-        hub: {href: '/ko/bacnet/', label: 'BACnet 참조 허브'},
+        hub: {href: '/ko/bacnet/', label: 'BACnet 참고 자료 허브'},
         tools: [
-            {href: '/ko/tools/bacnet-objects.html', label: 'BACnet 객체 참조'},
+            {href: '/ko/tools/bacnet-objects.html', label: 'BACnet 객체 참고 자료'},
             {href: '/ko/tools/bacnet-vendor-ids.html', label: 'BACnet 벤더 ID'},
             {href: '/ko/tools/modbus-register-viewer.html', label: 'Modbus 레지스터 뷰어'}
         ],

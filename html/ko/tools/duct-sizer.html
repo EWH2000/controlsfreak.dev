@@ -1,7 +1,7 @@
 ---
 title: 덕트 치수 계산기 — controlsfreak.dev
 description: 풍량·직경·덕트 마찰률·풍속 중 두 값을 이용해 나머지를 계산하고, 직사각형 덕트를 등마찰 기준의 등가 원형 직경으로 정확히 환산합니다.
-sourceContentHash: 35e9d249cf2e65492dfde8e52b58fcbb2641a03a9f71b89a2e09712394870ac3
+sourceContentHash: 87f946bac4b42ec8de6555ad73ccf58677d70c74862af1767ca14d94756fba09
 sourceMessageHash: b1d6eae404f840da31fe093d847c216886347a8394029ba9769291ab822580d7
 canonical: https://controlsfreak.dev/ko/tools/duct-sizer.html
 nav: tools
@@ -15,7 +15,7 @@ pageMessages:
         side: '변 길이 복사'
     errors:
         roundInputs: '이 계산에는 풍량과 덕트 직경이 필요합니다.'
-        noMeasuredAirflow: '풍량이 없으면 마찰도 없습니다. 덕트가 실제로 운반하는 CFM을 입력하세요(일반적으로 피토관 트래버스 또는 BAS 추세값을 사용합니다).'
+        noMeasuredAirflow: '풍량이 없으면 마찰도 없습니다. 덕트가 실제로 운반하는 CFM을 입력하세요(일반적으로 피토관 트래버스 또는 BAS 트렌드를 사용합니다).'
         diameterRange: '직경이 이 선도 계산식의 적용 범위인 3–120 in.를 벗어났습니다.'
         turbulentMeasured: 'Re ≈ {re}로 층류·천이 영역이며 실제 덕트 유동으로 보기 어렵습니다. 이 선도 계산식은 난류를 가정하므로 CFM과 직경을 확인하세요.'
         diameterInputs: '이 계산에는 풍량과 목표 덕트 마찰률이 필요합니다.'
@@ -65,9 +65,9 @@ keywords: 덕트 계산기 덕트 치수 마찰률 마찰손실 in.w.g. 100ft �
         </div>
 
         <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            <summary>덕트 계산자의 네 가지 계산 방향으로 기존 덕트 상태를 진단합니다.</summary>
+            <summary>덕트 사이저의 네 가지 계산 방향으로 기존 덕트 상태를 진단합니다.</summary>
             <div class="preamble-rest">
-                <em>원형 덕트 마찰</em>은 풍량, 직경, 덕트 마찰률, 풍속 중 계산 가능한 두 값을 이용해 나머지를 구하는 덕트 계산자입니다. 회전식 덕트 계산자로는 번거로운 진단 방향, 즉 <em>기존 덕트와 측정 CFM으로 현재 덕트에 걸리는 부담을 확인하는 계산</em>도 지원합니다. <em>직사각형 ↔ 원형</em>은 실제 치수표에서 사용하는 등가 직경으로 환산합니다. 기준은 등면적이나 등풍속이 아니라 동일한 <em>마찰</em>입니다.
+                <em>원형 덕트 마찰</em>은 풍량, 직경, 덕트 마찰률, 풍속 중 계산 가능한 두 값을 이용해 나머지를 구하는 덕트 사이저입니다. 회전식 덕트 사이저로는 번거로운 진단 방향, 즉 <em>기존 덕트와 측정 CFM으로 현재 덕트에 걸리는 부담을 확인하는 계산</em>도 지원합니다. <em>직사각형 ↔ 원형</em>은 실제 치수표에서 사용하는 등가 직경으로 환산합니다. 기준은 등면적이나 등풍속이 아니라 동일한 <em>마찰</em>입니다.
             </div>
         </details>
         <p class="ps-seed-note">예시 값이 입력되어 있습니다. 현장 값으로 바꾸어 계산하세요.</p>
@@ -109,7 +109,7 @@ keywords: 덕트 계산기 덕트 치수 마찰률 마찰손실 in.w.g. 100ft �
                         <input class="ps-input" type="number" id="dz-vel" step="any" min="0" placeholder="900" value="900">
                     </div>
                     <p class="ref-note">
-                        기본 계산 방향은 진단용입니다. 덕트가 이미 설치되어 있고 <a href="/ko/tools/duct-traverse.html">피토관 트래버스</a> 또는 BAS 추세값으로 실제 풍량을 알 때, 이 덕트에 어느 정도 부담이 걸리는지 확인합니다. 나머지 세 방향은 목표 덕트 마찰률 또는 풍속으로 치수를 정하거나, 기존 치수에서 실제로 운반 가능한 풍량을 구하는 일반적인 덕트 계산입니다.
+                        기본 계산 방향은 진단용입니다. 덕트가 이미 설치되어 있고 <a href="/ko/tools/duct-traverse.html">피토관 트래버스</a> 또는 BAS 트렌드로 실제 풍량을 알 때, 이 덕트에 어느 정도 부담이 걸리는지 확인합니다. 나머지 세 방향은 목표 덕트 마찰률 또는 풍속으로 치수를 정하거나, 기존 치수에서 실제로 운반 가능한 풍량을 구하는 일반적인 덕트 계산입니다.
                     </p>
                 </section>
 
@@ -240,7 +240,7 @@ keywords: 덕트 계산기 덕트 치수 마찰률 마찰손실 in.w.g. 100ft �
         <section class="tool-body-row">
             <h2 class="ps-section-label">이 수치의 근거와 적용 한계</h2>
             <p class="ref-note">
-                <strong>마찰 계산:</strong> 덕트 마찰 선도의 기반인 Colebrook 방정식 대신 ASHRAE Fundamentals에서 제시하는 폐쇄형 마찰계수 근사식 Altshul-Tsal을 사용합니다. 아연도금 덕트 조도(ε&nbsp;=&nbsp;0.0003&nbsp;ft)와 표준 공기(0.075&nbsp;lb/ft³, 해수면·약 70&nbsp;°F) 조건에서 <code>f′ = 0.11 × (12ε/D + 68/Re)^0.25</code>이며, 0.018 미만에서는 <code>f = 0.85f′ + 0.0028</code>로 보정합니다. 또한 <code>Re ≈ 8.50 × D × V</code>이고 100&nbsp;ft당 <code>Δp = (12 × f × 100 ÷ D) × 0.075 × (V ÷ 1097)²</code>입니다. 타당성 기준점으로 직경 12&nbsp;in.에서 1,000&nbsp;FPM일 때 100&nbsp;ft당 0.12&nbsp;in. w.c.가 계산되며, 모든 공개 선도가 이 점에서 일치합니다. 이 도구는 모든 덕트 계산자와 마찰 선도에서 사용하는 미국 단위(in. w.c./100&nbsp;ft, FPM, CFM, inch)를 기준으로 하며, m/s 환산값도 함께 표시합니다.
+                <strong>마찰 계산:</strong> 덕트 마찰 선도의 기반인 Colebrook 방정식 대신 ASHRAE Fundamentals에서 제시하는 폐쇄형 마찰계수 근사식 Altshul-Tsal을 사용합니다. 아연도금 덕트 조도(ε&nbsp;=&nbsp;0.0003&nbsp;ft)와 표준 공기(0.075&nbsp;lb/ft³, 해수면·약 70&nbsp;°F) 조건에서 <code>f′ = 0.11 × (12ε/D + 68/Re)^0.25</code>이며, 0.018 미만에서는 <code>f = 0.85f′ + 0.0028</code>로 보정합니다. 또한 <code>Re ≈ 8.50 × D × V</code>이고 100&nbsp;ft당 <code>Δp = (12 × f × 100 ÷ D) × 0.075 × (V ÷ 1097)²</code>입니다. 타당성 기준점으로 직경 12&nbsp;in.에서 1,000&nbsp;FPM일 때 100&nbsp;ft당 0.12&nbsp;in. w.c.가 계산되며, 모든 공개 선도가 이 점에서 일치합니다. 이 도구는 모든 덕트 사이저와 마찰 선도에서 사용하는 미국 단위(in. w.c./100&nbsp;ft, FPM, CFM, inch)를 기준으로 하며, m/s 환산값도 함께 표시합니다.
             </p>
             <p class="ref-note">
                 <strong>치수 선정 관행은 참고 범위입니다.</strong> 저압 급기 덕트 설계는 대체로 100&nbsp;ft당 0.08–0.10&nbsp;in. w.c., 주덕트는 약 1,000–1,500&nbsp;FPM, 분기덕트는 약 600–900&nbsp;FPM에 모이며 회기 덕트는 이보다 더 느리게 운전합니다. 이는 물리 법칙이나 법규가 아니라 소음과 경제성을 고려한 관행입니다. 기계실의 주덕트는 더 빠르게 운전할 수 있지만 회의실 위 덕트에는 같은 수준을 적용하기 어려우므로, 한계값이 아니라 일반적으로 이견이 적은 범위로 보아야 합니다.
@@ -249,16 +249,16 @@ keywords: 덕트 계산기 덕트 치수 마찰률 마찰손실 in.w.g. 100ft �
                 <strong>직선 아연도금 덕트에만 적용합니다.</strong> 이 페이지는 직선 구간의 손실만 계산합니다. 실제 시스템에서는 엘보, 티, 변환 이음, 밸런싱 댐퍼 같은 부속류의 정압 손실이 그 사이의 덕트보다 큰 경우가 많으므로, 계산값이 0.3&nbsp;in. w.c.인 구간에서 1&nbsp;in. w.c.가 측정될 수 있습니다. 플렉시블 덕트는 이보다 더 불리합니다. 표기된 마찰은 덕트를 완전히 팽팽하게 편 상태를 가정하며, 실제로 압축된 플렉시블 덕트의 마찰은 몇 배 더 큽니다. 따라서 경질 덕트 계산값은 플렉시블 덕트의 정답이 아니라 최소값으로만 보아야 합니다.
             </p>
             <p class="ref-note">
-                <strong>치수 계산 결과는 가설이지 지시가 아닙니다.</strong> 이 페이지는 학습 보조 자료이자 2차 검토 수단으로, 판금을 절단하거나 설정값을 변경하기 전에 덕트에 관한 설명이 타당한지 확인하는 데 사용합니다. 계산 결과를 적용할 때는 양쪽 위험을 모두 고려해야 합니다. 치수가 작은 구간은 정압을 덕트 상한 한계에 가깝게 높이고, 전향곡선형 팬에 연결된 <em>과대</em> 덕트는 팬 휠이 곡선을 따라 모터가 감당하지 못할 풍량과 전류 영역까지 운전하게 할 수 있습니다(<a href="/ko/tools/affinity-laws.html">상사 법칙 페이지</a>에서는 이를 속도 관점에서 설명합니다). 최종 판단 기준은 팬 곡선, 모터 명판, 상한 한계입니다.
+                <strong>치수 계산 결과는 가설이지 지시가 아닙니다.</strong> 이 페이지는 학습 보조 자료이자 2차 검토 수단으로, 판금을 절단하거나 설정값을 변경하기 전에 덕트에 관한 설명이 타당한지 확인하는 데 사용합니다. 계산 결과를 적용할 때는 양쪽 위험을 모두 고려해야 합니다. 치수가 작은 구간은 정압을 고정압 차단 장치가 동작하는 영역까지 높이고, 전향곡선형 팬에 연결된 <em>과대</em> 덕트는 팬 휠이 곡선을 따라 모터가 감당하지 못할 풍량과 전류 영역까지 운전하게 할 수 있습니다(<a href="/ko/tools/affinity-laws.html">상사 법칙 페이지</a>에서는 이를 속도 관점에서 설명합니다). 최종 판단 기준은 팬 곡선, 모터 명판, 고정압 차단 설정값입니다.
             </p>
         </section>
     </div>
 
     {{ relatedLinks({
-        hub: {href: '/ko/forced-air/', label: '공기조화 시스템 참조 허브'},
+        hub: {href: '/ko/forced-air/', label: '강제순환식 공조 참고 자료 허브'},
         tools: [
             {href: '/ko/tools/airflow.html', label: '풍량 및 속도압'},
-            {href: '/ko/tools/duct-traverse.html', label: '피토관 덕트 트래버스 계산기'},
+            {href: '/ko/tools/duct-traverse.html', label: '덕트 트래버스 계산기'},
             {href: '/ko/tools/airside-load.html', label: '공기측 부하 계산기'},
             {href: '/ko/tools/equipment-airflow.html', label: '장비 풍량 점검기'}
         ],

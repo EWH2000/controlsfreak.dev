@@ -1,7 +1,7 @@
 ---
-title: 현장 전기 빠른 계산기 — controlsfreak.dev
+title: 현장 전기 간편 계산기 — controlsfreak.dev
 description: 옴의 법칙과 DC 전력, 단상·삼상 AC 전력, 모터 HP·kW·전부하전류 추정, NEMA 삼상 선간전압 불평형 판정을 한곳에서 계산합니다.
-sourceContentHash: 5e1096e8b172f4659f61bb6d015c11bc6bf9e2336ad628fc17ddd02aa1e8e618
+sourceContentHash: c946faf6759b21e242e58d182af1a87a28154a1ab1644a4472f3ee457b1944c9
 sourceMessageHash: 48d5fb8141d9e4bf857fd0aa1eb4df1131ba0627f59d13d4cb9ab022c2ac2ace
 canonical: https://controlsfreak.dev/ko/tools/electrical-quick-calc.html
 nav: tools
@@ -25,7 +25,7 @@ pageMessages:
         motorFar: "측정값 {measured} A는 추정값 {estimate} A의 {percent}%로 차이가 큽니다. 상, 전압, PF·η 또는 클램프를 다시 확인하세요. CT 범위가 맞는지, 도체 두 개 이상을 함께 감싸지 않았는지도 확인해야 합니다."
         imbalancePrompt: "판정할 세 선간전압 측정값을 입력하세요."
         imbalanceOk: "{percent}% — NEMA MG-1 기준(≤ 1%) 이내이므로 용량 저감이 필요하지 않습니다."
-        imbalanceWarn: "{percent}% — 1%를 초과했습니다. NEMA는 모터 용량 저감을 권장합니다. 전류 불평형은 이 값의 약 6~10배로 권선 발열을 높이므로 느슨한 러그, 불균형한 단상 부하 또는 전력회사 측 원인을 찾아 해결하세요."
+        imbalanceWarn: "{percent}% — 1%를 초과했습니다. NEMA는 모터 용량 저감을 권장합니다. 전류 불평형은 이 값의 약 6~10배로 권선 발열을 높이므로 느슨하게 체결된 러그 단자, 불균형한 단상 부하 또는 전력회사 측 원인을 찾아 해결하세요."
         imbalanceError: "{percent}% — NEMA MG-1은 5%를 초과하는 조건에서 운전하지 않도록 권고합니다. 모터를 운전하기 전에 공급 전원을 바로잡으세요."
     errors:
         ohmNonNegative: "V, I, R, P는 크기값이므로 음수가 아닌 값을 입력하세요."
@@ -70,14 +70,14 @@ keywords: 옴의 법칙 와트 볼트 암페어 삼상 kVA kVAR 역률 모터 FL
 <main id="main">
 
     <div class="section-header">
-        <span class="section-label">도구 · 전기 빠른 계산</span>
+        <span class="section-label">도구 · 전기 간편 계산</span>
         <div class="section-line"></div>
     </div>
 
     <div class="tool-card">
         <div class="tool-card-header">
             <h1 class="tool-card-title">
-                현장 전기 빠른 계산기
+                현장 전기 간편 계산기
                 <span class="tool-tag">전기</span>
             </h1>
         </div>
@@ -439,7 +439,7 @@ keywords: 옴의 법칙 와트 볼트 암페어 삼상 kVA kVAR 역률 모터 FL
                     </thead>
                     <tbody>
                         <tr><td>≤ 1 %</td><td>허용 가능 — 용량 저감이 필요하지 않습니다.</td></tr>
-                        <tr><td>1 – 5 %</td><td>NEMA 곡선에 따라 모터 용량을 낮추고 원인을 찾아 해결합니다.</td></tr>
+                        <tr><td>1 – 5 %</td><td>NEMA 곡선에 따라 모터 허용 부하를 낮추고 원인을 찾아 해결합니다.</td></tr>
                         <tr><td>&gt; 5 %</td><td>운전 금지 — 먼저 공급 전원을 바로잡습니다.</td></tr>
                     </tbody>
                 </table>
@@ -452,7 +452,7 @@ keywords: 옴의 법칙 와트 볼트 암페어 삼상 kVA kVAR 역률 모터 FL
                     <li><code>불평형률 = 5 ÷ 455 × 100 = 1.10 %</code> — 용량 저감 구간에 막 진입한 값입니다.</li>
                 </ol>
                 <p class="ref-note">
-                    전압 불평형은 모터에 큰 부담을 줍니다. <strong>전류</strong> 불평형은 전압 불평형의 약 6–10배이며, 늘어난 전류는 권선에서 그대로 열이 됩니다. 1&nbsp;%가 측정되면 느슨한 러그, 피더의 불균형한 단상 부하 또는 전력회사 측 원인을 추적하세요.
+                    전압 불평형은 모터에 큰 부담을 줍니다. <strong>전류</strong> 불평형은 전압 불평형의 약 6–10배이며, 늘어난 전류는 권선에서 그대로 열이 됩니다. 1&nbsp;%가 측정되면 느슨하게 체결된 러그 단자, 피더의 불균형한 단상 부하 또는 전력회사 측 원인을 추적하세요.
                 </p>
             </section>
         </div>

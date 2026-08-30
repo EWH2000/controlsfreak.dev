@@ -1,7 +1,7 @@
 ---
 title: 연습문제 — controlsfreak.dev
 description: HVAC 빌딩 자동제어 기술자를 위한 능동 인출 퀴즈와 현장 연습문제입니다. 학습 페이지와 함께 보거나 면접 및 자격시험 준비에 활용하세요.
-sourceContentHash: 10959ebeabf843165c348f83ae9289b7d5cc0d6a42b03c1d9ef939d088be3412
+sourceContentHash: eb38953965e72633942c96044014cdeb31778b7955ba530059db36674f84573f
 canonical: https://controlsfreak.dev/ko/practice/
 nav: practice
 ---
@@ -50,7 +50,7 @@ nav: practice
             습공기 상태 <span class="filter-chip-count">1</span>
         </button>
         <button type="button" class="filter-chip" data-category="forced-air" aria-pressed="false">
-            강제순환 공기 시스템 <span class="filter-chip-count">6</span>
+            강제순환식 공조 시스템 <span class="filter-chip-count">6</span>
         </button>
     </div>
 
@@ -72,7 +72,7 @@ nav: practice
             {{ navCard({
                 section: 'practice', href: '/ko/practice/controller-wiring.html',
                 titleShort: '제어기 배선', titleFull: '제어기 배선',
-                desc: '배선 연결과 전원을 기억해 냅니다. 모든 리턴이 COM으로 돌아오는 이유, 공통선 두 개를 가진 변압기 하나, LOOP+와 활선의 차이, 유접점과 무전압 접점, 전원을 공급하지 않은 BO-C를 확인합니다.',
+                desc: '배선 연결과 전원을 기억해 냅니다. 모든 리턴이 COM으로 돌아오는 이유, 공통선 두 개를 가진 변압기 하나, LOOP+와 활선의 차이, 유전압 접점과 무전압 접점, 전원을 공급하지 않은 BO-C를 확인합니다.',
                 pills: ['10문항', '객관식 · OX · 함정 · 수치', '약 5분'], category: 'signals'
             }) }}
             {{ navCard({
@@ -90,7 +90,7 @@ nav: practice
             {{ navCard({
                 section: 'practice', href: '/ko/practice/status-and-proof.html',
                 titleShort: '상태 및 운전 확인', titleFull: '상태 및 운전 확인 신호',
-                desc: '상태 신호를 의심하며 읽습니다. 보조접점·전류·차압 스위치가 각각 입증하는 것, 벨트 파손 판정, 트립 설정값, 운전 확인 시간창, 반전된 극성을 확인합니다.',
+                desc: '상태 신호를 의심하며 읽습니다. 보조접점·전류·차압 스위치가 각각 입증하는 것, 벨트 파손 판정, 트립 설정값, 운전 확인 대기시간, 반전된 극성을 확인합니다.',
                 pills: ['10문항', '객관식 · OX · 함정 · 수치', '약 5분'], category: 'signals'
             }) }}
             {{ navCard({
@@ -120,7 +120,7 @@ nav: practice
             {{ navCard({
                 section: 'practice', href: '/ko/practice/vfds.html',
                 titleShort: 'VFD', titleFull: 'VFD',
-                desc: '정류기, DC 링크, 인버터의 세 전력단을 확인합니다. 세제곱 법칙, 운전 지령 소스와 속도 지령 소스의 혼동, 운전 상태, 고장 범주 읽기를 다룹니다.',
+                desc: '정류기, DC 버스, 인버터의 세 전력단을 확인합니다. 세제곱 법칙, 운전 지령 소스와 속도 지령 소스의 혼동, 운전 상태, 고장 범주 읽기를 다룹니다.',
                 pills: ['10문항', '객관식 · OX · 함정 · 수치', '약 5분'], category: 'controls'
             }) }}
             {{ navCard({
@@ -144,13 +144,13 @@ nav: practice
             {{ navCard({
                 section: 'practice', href: '/ko/practice/refrigerant-cycle-basics.html',
                 titleShort: '냉매 사이클', titleFull: '냉매 사이클 기초',
-                desc: '냉매 사이클 학습 후 네 가지 구성요소, 고압측과 저압측, 압력-온도 포화 관계, 혼합냉매의 온도 활주가 나타나는 지점을 확인합니다.',
+                desc: '냉매 사이클 학습 후 네 가지 구성요소, 고압측과 저압측, 압력-온도 포화 관계, 혼합 냉매의 온도 글라이드가 나타나는 지점을 확인합니다.',
                 pills: ['10문항', '객관식 · OX · 함정 · 수치', '약 5분'], category: 'refrigeration'
             }) }}
             {{ navCard({
                 section: 'practice', href: '/ko/practice/superheat-subcooling.html',
                 titleShort: '과열도 및 과냉도', titleFull: '과열도 및 과냉도',
-                desc: '각 값이 무엇을 어느 배관에서 측정하는지 확인하고, 노점·기포점 계산식과 과열도·과냉도의 높고 낮은 값이 가리키는 원인을 판단합니다.',
+                desc: '각 값이 무엇을 어느 배관에서 측정하는지 확인하고, 이슬점·기포점 계산식과 과열도·과냉도의 높고 낮은 값이 가리키는 원인을 판단합니다.',
                 pills: ['10문항', '객관식 · OX · 함정 · 수치', '약 5분'], category: 'refrigeration'
             }) }}
             {{ navCard({
@@ -222,7 +222,7 @@ nav: practice
             {{ navCard({
                 section: 'practice', href: '/ko/practice/timers-and-delays.html',
                 titleShort: '타이머 및 지연', titleFull: '타이머 및 지연',
-                desc: '타이밍을 기억해 검증합니다. TON과 TOF를 구분하고 ET를 초기화하는 조건, 오작동 트립과 감지 공백 사이에서 정하는 운전 확인 시간창, 시간당 기동 횟수 간격을 확인합니다.',
+                desc: '타이밍을 기억해 검증합니다. TON과 TOF를 구분하고 ET를 초기화하는 조건, 오작동 트립과 감지 공백 사이에서 정하는 운전 확인 대기시간, 시간당 기동 횟수 간격을 확인합니다.',
                 pills: ['10문항', '객관식 · OX · 함정 · 수치', '약 5분'], category: 'programming'
             }) }}
             {{ navCard({
@@ -294,7 +294,7 @@ nav: practice
             {{ navCard({
                 section: 'practice', href: '/ko/practice/field-wiring-sensors.html',
                 titleShort: '현장 배선', titleFull: '현장 배선 및 센서',
-                desc: '로직이 실행되기 전에 문제를 만드는 배선·센서 계층을 다룹니다. 서미스터·RTD 곡선, 2/3/4선식 리드선 보상, AI와 AO, 4-20 mA 라이브 제로, 루프 전원, 실드 접지, 소싱(sourcing)·싱킹(sinking) 입력을 확인합니다.',
+                desc: '로직이 실행되기 전에 문제를 만드는 배선·센서 계층을 다룹니다. 서미스터·RTD 곡선, 2선식·3선식·4선식 리드선 보상, AI와 AO, 4-20 mA 라이브 제로, 루프 전원, 실드 접지, 소싱(sourcing)·싱킹(sinking) 입력을 확인합니다.',
                 pills: ['10문항', '객관식 · OX · 함정 · 수치', '배선 + 센서', '약 5분'], category: 'field'
             }) }}
             {{ navCard({
@@ -312,7 +312,7 @@ nav: practice
             {{ navCard({
                 section: 'practice', href: '/ko/practice/troubleshooting.html',
                 titleShort: '문제 해결', titleFull: '문제 해결',
-                desc: '증상에서 가장 가능성 높은 원인을 찾습니다. Ping은 되지만 탐색되지 않는 BACnet 장치, Modbus 예외 응답과 바이트 순서, 저 ΔT 수배관, 공기가 찬 코일, 과열도·과냉도, VFD 기동 트립을 다룹니다.',
+                desc: '증상에서 가장 가능성 높은 원인을 찾습니다. Ping은 되지만 탐색되지 않는 BACnet 장치, Modbus 예외 응답과 바이트 순서, 저 ΔT 수배관, 공기가 갇힌 코일, 과열도·과냉도, VFD 기동 트립을 다룹니다.',
                 pills: ['10문항', '객관식 · OX · 함정', '증상 → 원인', '약 5분'], category: 'field'
             }) }}
             {{ navCard({

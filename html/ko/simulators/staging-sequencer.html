@@ -1,7 +1,7 @@
 ---
 title: 장비 대수제어 시퀀서 — controlsfreak.dev
-description: 병렬 장비 플랜트의 부하에 따라 증단·감단하고, 선행 장비 교대와 운전시간 균등화, 고장 시 대기 장비 승격 과정을 실시간으로 확인하는 대수제어 시뮬레이터입니다.
-sourceContentHash: 3a5ae40218758d034ea98b0c0397f6945e3af63a9f684c0b58a99b9520181126
+description: 일일 부하곡선에 따라 수요가 변하는 동안 설정 가능한 플랜트가 장비를 증단·감단하고, 선행 장비를 교대하며, 고장을 발생시키고 각 동작을 기록하는 실시간 대수제어 시뮬레이터입니다.
+sourceContentHash: cf3ba90afc05e1ad2cf84b9d8206f73ef4c2a6e06755237e38211b04d88888e9
 sourceMessageHash: 33fa38a5334ab0a28f19ed904f18dd83c2d6fcf52a1ac30cda1f1eca920be326
 canonical: https://controlsfreak.dev/ko/simulators/staging-sequencer.html
 nav: simulators
@@ -35,7 +35,7 @@ pageMessages:
     stageUp: "증단 → {count}대 운전({tag} 기동)"
     stageDown: "감단 → {count}대 운전({tag} 정지)"
     scheduledRotation: "선행 장비 교대 → {tag}(정기 교대)"
-    faultPromoted: "{faulted} 고장 → {promoted} 승격"
+    faultPromoted: "{faulted} 고장 → {promoted} 대체 투입"
     faultShortfall: "{faulted} 고장 → 가용 대기 장비 없음 — 용량 부족"
     faultsCleared: 고장 해제 — 모든 장비 사용 가능
     plantReset: "플랜트 초기화 — {units} {count}대, {strategy}. 재생을 누르세요."
@@ -45,7 +45,7 @@ pageMessages:
     scheduled: 정기 순환 교대
   status:
     capacityShortfall: 용량 부족 — 부하상 장비 한 대를 더 운전해야 하지만 정상 상태로 대기 중인 장비가 없습니다.
-    minimumTimeHeld: "대수 전환 보류 — 최소 운전시간({seconds}초)"
+    minimumTimeHeld: "대수 전환 보류 — 최소 단계 유지시간({seconds}초)"
     adding: "장비 증단 예정 — 대수제어 지연 {seconds}초"
     dropping: "장비 감단 예정 — 대수제어 지연 {seconds}초"
     steady: "{units} {count}대 운전 중 — {condition}"
@@ -140,7 +140,7 @@ pageMessages:
                     <input type="number" id="stg-delay" min="0" max="900" step="5" value="120">
                 </div>
                 <div class="field">
-                    <label for="stg-min">최소 운전시간(초)</label>
+                    <label for="stg-min">최소 단계 유지시간(초)</label>
                     <input type="number" id="stg-min" min="0" max="3600" step="5" value="300">
                 </div>
             </div>
@@ -160,7 +160,7 @@ pageMessages:
             <div class="slider-field" style="margin-bottom:1rem;">
                 <div class="widget-slider-head">
                     <label for="stg-speed">시계 배속</label>
-                    <span class="v"><span id="stg-speed-val">2</span> <span style="font-size:0.7em;color:var(--text-dim);font-weight:500;">시뮬레이션 시간/실제 초</span></span>
+                    <span class="v"><span id="stg-speed-val">2</span> <span style="font-size:0.7em;color:var(--text-dim);font-weight:500;">시뮬레이션 h / 실제 s</span></span>
                 </div>
                 <input class="widget-slider" id="stg-speed" type="range" min="0.5" max="12" step="0.5" value="2" aria-label="시계 배속, 실제 초당 시뮬레이션 시간">
             </div>
@@ -257,18 +257,18 @@ pageMessages:
                     <tr><th class="use">설정</th><th>역할</th></tr>
                 </thead>
                 <tbody>
-                    <tr><td class="use">증단/감단 %</td><td>증단은 운전 중인 장비에 부하를 나눈 장비당 부하가 임계값을 넘으면 장비를 한 대 추가합니다. 감단은 <em>감단 후</em> 상태를 판단합니다. 남은 장비가 각각 부담할 부하가 임계값보다 낮을 때만 한 대를 정지합니다. N대 운전 중 표시되는 장비당 부하를 기준으로 하면 약 감단&nbsp;×&nbsp;(N−1)/N입니다. 감단 후 값을 확인해야 플랜트가 곧바로 다시 증단하는 것을 막을 수 있습니다. 두 임계값 사이가 <em>데드밴드</em>이며, 실제 간격이 없으면 플랜트가 임계점에서 장비를 반복 기동·정지하는 헌팅이 발생합니다.</td></tr>
+                    <tr><td class="use">증단/감단 %</td><td>증단은 운전 중인 장비에 부하를 나눈 장비당 부하가 임계값을 넘으면 장비를 한 대 추가합니다. 감단은 <em>감단 후</em> 상태를 판단합니다. 남은 장비가 각각 부담할 부하가 임계값보다 낮을 때만 한 대를 정지합니다. N대 운전 중 표시되는 장비당 부하를 기준으로 하면 약 감단&nbsp;×&nbsp;(N−1)/N입니다. 감단 후 값을 확인해야 플랜트가 곧바로 다시 증단하는 것을 막을 수 있습니다. 두 임계값 사이가 <em>불감대</em>이며, 실제 간격이 없으면 플랜트가 임계점에서 장비를 반복 기동·정지하는 헌팅이 발생합니다.</td></tr>
                     <tr><td class="use">대수제어 지연</td><td>부하가 임계값을 넘은 상태로 이 시간 동안 유지되어야 시퀀스가 동작하므로 짧은 부하 변동으로 장비가 불필요하게 전환되지 않습니다.</td></tr>
-                    <tr><td class="use">최소 운전시간</td><td>대수가 한 번 바뀐 뒤 일정 시간 다음 전환을 잠급니다. 단주기 운전은 모터와 기동기, 장비에 부담을 줍니다.</td></tr>
+                    <tr><td class="use">최소 단계 유지시간</td><td>대수가 한 번 바뀐 뒤 일정 시간 다음 전환을 잠급니다. 단주기 운전은 모터와 기동기, 장비에 부담을 줍니다.</td></tr>
                     <tr><td class="use">선행 장비 고정</td><td>항상 1번 장비가 선행합니다. 한 장비에 운전시간이 집중되고 나머지는 대기하므로 운전시간 편차가 계속 벌어집니다.</td></tr>
                     <tr><td class="use">운전시간 균등화</td><td>누적 운전시간이 가장 짧은 대기 장비가 다음에 기동하고, 가장 긴 운전 장비가 먼저 정지합니다. 막대가 수렴하며 장비군이 고르게 마모됩니다.</td></tr>
                     <tr><td class="use">정기 순환 교대</td><td>누적 운전시간과 관계없이 설정한 주기마다 선행 역할을 다음 장비로 넘깁니다. 가장 단순한 순환 교대이며 많은 플랜트에 기본 적용됩니다.</td></tr>
-                    <tr><td class="use">선행 장비 고장 발생</td><td>현재 선행 장비를 고장 상태로 만들면 시퀀스가 대기 장비를 즉시 승격합니다. 대신 운전할 정상 장비가 없으면 용량 부족이 발생하며, 이것이 플랜트를 N+1로 구성하는 이유입니다.</td></tr>
+                    <tr><td class="use">선행 장비 고장 발생</td><td>현재 선행 장비를 고장 상태로 만들면 시퀀스가 대기 장비를 즉시 대체 투입합니다. 대신 운전할 정상 장비가 없으면 용량 부족이 발생하며, 이것이 플랜트를 N+1로 구성하는 이유입니다.</td></tr>
                 </tbody>
             </table>
 
             <p class="pid-note">
-                시연을 위해 시계를 가속했습니다. 설정한 대수제어 지연과 최소 운전시간은 <em>시뮬레이션</em> 초이므로 시계 배속이 높을수록 빠르게 지나갑니다. 실제 플랜트에서는 보통 각각 수분 단위로 설정합니다. 일일 부하곡선은 야간에 낮고 정오와 오후에 높은 하나의 완만한 봉우리입니다. <em>일일 부하곡선 추종</em>을 선택하면 플랜트가 자동으로 증단·감단하고 순환 교대하며, <em>수동</em>으로 전환하면 부하 슬라이더를 직접 조작할 수 있습니다.
+                시연을 위해 시계를 가속했습니다. 설정한 대수제어 지연과 최소 단계 유지시간은 <em>시뮬레이션</em> 초이므로 시계 배속이 높을수록 빠르게 지나갑니다. 실제 플랜트에서는 보통 각각 수분 단위로 설정합니다. 일일 부하곡선은 야간에 낮고 정오와 오후에 높은 하나의 완만한 봉우리입니다. <em>일일 부하곡선 추종</em>을 선택하면 플랜트가 자동으로 증단·감단하고 순환 교대하며, <em>수동</em>으로 전환하면 부하 슬라이더를 직접 조작할 수 있습니다.
             </p>
 
         </div>
@@ -281,7 +281,7 @@ pageMessages:
         ],
         simulators: [
             {href: '/ko/simulators/pid-tuner.html', label: 'PID 튜닝 도우미'},
-            {href: '/ko/simulators/function-block-editor.html', label: '함수 블록 편집기'}
+            {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'}
         ]
     }) }}
 

@@ -1,7 +1,7 @@
 ---
 title: TXV와 EEV 비교 — controlsfreak.dev
 description: 기계식 TXV의 힘 평형과 전자식 EEV의 제어 루프를 비교하고, 부하가 변할 때 각 팽창밸브가 목표 과열도를 유지하는 원리를 설명합니다.
-sourceContentHash: 804628e6908b0aa59e9849b1129422f8ef74593451005dd3fd4b0e5d619de251
+sourceContentHash: 2b4b8136b353b7f371452b72c37e78a1b6f07f127f860a5ecf899388a4c5478d
 canonical: https://controlsfreak.dev/ko/education/metering-devices-txv-eev.html
 nav: education
 category: refrigerant
@@ -31,7 +31,7 @@ keywords: TXV EEV 오리피스 피스톤 과열도 감온통 팽창장치 팽창
             <h2 class="subhead" id="what-it-does">팽창장치의 역할</h2>
 
             <p>
-                간단히 복습하겠습니다. 응축기를 떠나는 고압 측 액체는 따뜻하고 가압되어 있으며, 저압 측 증발기는 비등하며 열을 흡수할 차가운 저압 냉매가 필요합니다. 팽창장치는 경계에 놓여 작은 포트를 통해 액체를 교축하고 압력을 급격히 낮춥니다. 포트 상류에는 고압의 따뜻한 액체가, 하류에는 증발기로 향하는 액체와 플래시 증기의 차가운 저압 혼합물이 있습니다. 여기까지는 배관의 제한부일 뿐이며 고정 오리피스나 모세관도 같은 일을 합니다. TXV 또는 EEV가 다른 점은 포트가 고정되어 있지 않다는 것입니다. 두 밸브 모두 하류 상황에 반응해 포트 개도를 <em>조절</em>하며, 조절 목표는 증발기 출구의 <em><button type="button" data-gloss="superheat">과열도</button></em>입니다. 공급이 너무 적으면 코일이 굶주려 SH가 올라가고, 너무 많으면 액체가 코일을 빠져나와 SH가 0에 가까워진 뒤 음수가 됩니다. 밸브는 이 값을 목표에 유지합니다.
+                간단히 복습하겠습니다. 응축기를 떠나는 고압 측 액체는 따뜻하고 가압되어 있으며, 저압 측 증발기는 비등하며 열을 흡수할 차가운 저압 냉매가 필요합니다. 팽창장치는 경계에 놓여 작은 포트를 통해 액체를 교축하고 압력을 급격히 낮춥니다. 포트 상류에는 고압의 따뜻한 액체가, 하류에는 증발기로 향하는 액체와 플래시 가스의 차가운 저압 혼합물이 있습니다. 여기까지는 배관의 제한부일 뿐이며 고정 오리피스나 모세관도 같은 일을 합니다. TXV 또는 EEV가 다른 점은 포트가 고정되어 있지 않다는 것입니다. 두 밸브 모두 하류 상황에 반응해 포트 개도를 <em>조절</em>하며, 조절 목표는 증발기 출구의 <em><button type="button" data-gloss="superheat">과열도</button></em>입니다. 공급이 너무 적으면 코일이 굶주려 SH가 올라가고, 너무 많으면 액체가 코일을 빠져나와 SH가 0에 가까워진 뒤 음수가 됩니다. 밸브는 이 값을 목표에 유지합니다.
             </p>
 
             <h2 class="subhead" id="txv">TXV — 기계식 제어 루프</h2>
@@ -134,7 +134,7 @@ keywords: TXV EEV 오리피스 피스톤 과열도 감온통 팽창장치 팽창
             </p>
 
             <p>
-                제어 루프는 PID 또는 더 단순한 비례 + 데드밴드 방식입니다. 컨트롤러 제조사가 알고리즘을 선택하고 몇 가지 튜닝 파라미터(목표 SH, 이득, 때로는 적분 시간)를 제공합니다. BMS에서는 익숙한 형태의 포인트 목록을 봅니다. <em><button type="button" data-gloss="superheat">실제 과열도</button></em>, <em><button type="button" data-gloss="superheat">과열도 설정값</button></em>, <em>밸브 위치</em>, 때로는 <em>밸브 위치 오버라이드</em>가 있으며 트렌드 선은 다른 피드백 루프와 같습니다. EEV가 TXV보다 유리한 점은 전자장치의 일반적인 장점입니다. 공구 없이 목표를 바꾸고, 부하 변화에 더 빨리 반응하고, 운전 조건별로 다른 SH를 유지할 수 있으며(저부하에서 증발기를 최대한 사용하도록 SH를 낮추는 등), 그래픽에서 위치 값을 볼 수 있습니다. 불리한 점도 전자장치의 일반적인 단점입니다. 센서 드리프트는 하류에서 문제가 생길 때까지 보이지 않고, 고착된 스테퍼는 트렌드의 평평한 선처럼 보이며, <button type="button" data-gloss="hunting">헌팅</button>하는 제어 알고리즘은 기계적 감쇠의 도움 없이 계속 <button type="button" data-gloss="hunting">헌팅</button>합니다.
+                제어 루프는 PID 또는 더 단순한 비례 + 불감대 방식입니다. 컨트롤러 제조사가 알고리즘을 선택하고 몇 가지 튜닝 파라미터(목표 SH, 이득, 때로는 적분 시간)를 제공합니다. BMS에서는 익숙한 형태의 포인트 목록을 봅니다. <em><button type="button" data-gloss="superheat">실제 과열도</button></em>, <em><button type="button" data-gloss="superheat">과열도 설정값</button></em>, <em>밸브 위치</em>, 때로는 <em>밸브 위치 오버라이드</em>가 있으며 트렌드 선은 다른 피드백 루프와 같습니다. EEV가 TXV보다 유리한 점은 전자장치의 일반적인 장점입니다. 공구 없이 목표를 바꾸고, 부하 변화에 더 빨리 반응하고, 운전 조건별로 다른 SH를 유지할 수 있으며(저부하에서 증발기를 최대한 사용하도록 SH를 낮추는 등), 그래픽에서 위치 값을 볼 수 있습니다. 불리한 점도 전자장치의 일반적인 단점입니다. 센서 드리프트는 하류에서 문제가 생길 때까지 보이지 않고, 고착된 스테퍼는 트렌드의 평평한 선처럼 보이며, <button type="button" data-gloss="hunting">헌팅</button>하는 제어 알고리즘은 기계적 감쇠의 도움 없이 계속 <button type="button" data-gloss="hunting">헌팅</button>합니다.
             </p>
 
             <svg class="edu-svg" id="txv-eev-stepper" viewBox="0 0 720 345"
@@ -198,7 +198,7 @@ keywords: TXV EEV 오리피스 피스톤 과열도 감온통 팽창장치 팽창
             <h2 class="subhead" id="surfaces">같은 역할, 서로 다른 두 인터페이스</h2>
 
             <p>
-                주로 BMS에서 일한다면 EEV 인터페이스를 보게 됩니다. 포인트로 표시되는 밸브 위치와 <button type="button" data-gloss="superheat">과열도</button>, 변경할 수 있는 설정값이 있습니다. TXV는 네트워크에 아무 정보도 올리지 않습니다. BMS가 TXV가 있는 패키지 유닛을 볼 때 냉매 측 포인트는 보통 흡입·토출 압력뿐이고 팽창장치는 측정값에 암묵적으로 포함됩니다. 장비에 공구를 사용하는 시간이 많다면 TXV 인터페이스를 봅니다. 시스템 <button type="button" data-gloss="superheat">과열도</button>가 잘못될 때 손에 잡는 장치이며, 문제가 생기면 흡입관 감온통 위치부터 확인합니다. 느슨한 스트랩, 누락된 단열, 감온통 충전 손실이 모두 흔합니다. 제어 기술자와 기계 기술자가 같은 시스템을 두고 의견을 나누면 같은 밸브를 두 방향에서 설명하며 이름이 항상 일치하지 않을 수 있습니다. 두 인터페이스를 모두 알면 그 대화를 연결할 수 있습니다.
+                주로 BMS에서 일한다면 EEV 인터페이스를 보게 됩니다. 포인트로 표시되는 밸브 위치와 <button type="button" data-gloss="superheat">과열도</button>, 변경할 수 있는 설정값이 있습니다. TXV는 네트워크에 아무 정보도 올리지 않습니다. BMS가 TXV가 있는 패키지 유닛을 볼 때 냉매 측 포인트는 보통 흡입·토출 압력뿐이고 팽창장치는 측정값에 암묵적으로 포함됩니다. 장비에 공구를 사용하는 시간이 많다면 TXV 인터페이스를 봅니다. 시스템 <button type="button" data-gloss="superheat">과열도</button>가 비정상일 때 직접 점검하는 장치이며, 문제가 생기면 흡입관 감온통 위치부터 확인합니다. 느슨한 스트랩, 누락된 단열, 감온통 충전 손실이 모두 흔합니다. 제어 기술자와 기계 기술자가 같은 시스템을 두고 의견을 나누면 같은 밸브를 두 방향에서 설명하며 이름이 항상 일치하지 않을 수 있습니다. 두 인터페이스를 모두 알면 그 대화를 연결할 수 있습니다.
             </p>
 
             <h2 class="subhead" id="worked-example">계산 예시 — 부하가 변할 때 과열도 유지</h2>
@@ -226,20 +226,20 @@ keywords: TXV EEV 오리피스 피스톤 과열도 감온통 팽창장치 팽창
             <h2 class="subhead" id="chapter-next">이 장에서 마련한 기초</h2>
 
             <p>
-                이것으로 냉동·냉매 장을 마무리합니다. <a href="/ko/education/refrigerant-cycle-basics.html">냉매 사이클 기초</a>에서 사이클과 포화 관계를 만들었고, <a href="/ko/education/superheat-subcooling.html">과열도와 과냉도</a>에서 그 관계를 사이클이 올바르게 운전되는지 입증하는 두 측정값인 <button type="button" data-gloss="superheat">과열도</button>와 <button type="button" data-gloss="subcooling">과냉도</button>로 바꾸었으며, 이 페이지에서 <button type="button" data-gloss="superheat">과열도</button>를 유지하는 팽창장치의 내부를 열었습니다. 이 세 개념을 알면 <a href="/ko/tools/refrigerant-pt.html">냉매 P-T 및 과열도 계산기</a>가 블랙박스가 아니라 모든 입력과 출력을 사이클 안에 배치하고 포화 곡선과 대조해 읽을 수 있는 도구가 됩니다. 흡입압력, 클램프형 온도계로 잰 흡입관 온도, 냉매 이름을 계산기에 입력하면 냉매 문제 해결에서 측정 절반은 이미 끝난 것이며, 판정 표시는 숫자의 의미를 읽어 줄 뿐입니다.
+                이것으로 냉동·냉매 장을 마무리합니다. <a href="/ko/education/refrigerant-cycle-basics.html">냉매 사이클 기초</a>에서 사이클과 포화 관계를 만들었고, <a href="/ko/education/superheat-subcooling.html">과열도와 과냉도</a>에서 그 관계를 사이클이 올바르게 운전되는지 입증하는 두 측정값인 <button type="button" data-gloss="superheat">과열도</button>와 <button type="button" data-gloss="subcooling">과냉도</button>로 바꾸었으며, 이 페이지에서 <button type="button" data-gloss="superheat">과열도</button>를 유지하는 팽창장치의 내부를 열었습니다. 이 세 개념을 알면 <a href="/ko/tools/refrigerant-pt.html">냉매 P-T 및 과열도 계산기</a>가 블랙박스가 아니라 모든 입력과 출력을 사이클 안에 배치하고 포화 곡선과 대조해 읽을 수 있는 도구가 됩니다. 흡입압력, 클램프형 온도계로 잰 흡입관 온도, 냉매 이름을 계산기에 입력하면 냉매 계통 고장 진단에 필요한 측정의 절반은 이미 끝난 것이며, 판정 표시는 숫자의 의미를 읽어 줄 뿐입니다.
             </p>
 
         </div>
     </div>
 
     {{ relatedLinks({
-        hub: {href: '/ko/refrigeration/', label: '냉동·냉매 참조 허브'},
+        hub: {href: '/ko/refrigeration/', label: '냉동·냉매 참고 자료 허브'},
         tools: [
             {href: '/ko/tools/refrigerant-pt.html', label: '냉매 P-T 및 과열도 계산기'},
             {href: '/ko/tools/coil-sizing.html', label: '코일 용량 계산기'}
         ],
         simulators: [
-            {href: '/ko/simulators/refrigerant-loop.html', label: '냉매 루프 시뮬레이터'}
+            {href: '/ko/simulators/refrigerant-loop.html', label: '냉매 회로 시뮬레이터'}
         ],
         lessons: [
             {href: '/ko/education/refrigerant-cycle-basics.html', label: '냉매 사이클 기초'},

@@ -38,7 +38,7 @@ module.exports = {
         learnMoreLabel: "신호 스케일링 계산기",
     },
     "ai-vs-ao-direction": {
-        prompt: "직접디지털제어기(DDC)에서 AI 포인트와 AO 포인트의 차이는 무엇입니까?",
+        prompt: "직접 디지털 제어기(DDC)에서 AI 포인트와 AO 포인트의 차이는 무엇입니까?",
         explain: "AI는 <strong>Analog Input(아날로그 입력)</strong>입니다. 10K 서미스터, 4–20 mA 트랜스미터, 0–10 V 습도 센서처럼 현장에서 들어오는 연속 신호를 컨트롤러가 <em>측정</em>합니다. AO는 <strong>Analog Output(아날로그 출력)</strong>입니다. 0–10 V 댐퍼 액추에이터, 4–20 mA 밸브, VFD 속도 지령처럼 장치 위치나 출력을 조절할 연속 신호를 컨트롤러가 <em>생성</em>합니다. 하나는 감지하고 다른 하나는 신호를 내보내는 서로 다른 회로이므로 액추에이터를 입력 단자에 연결할 수 없습니다. 두 상태를 다루는 디지털 대응 포인트는 BI/BO입니다.",
         learnMoreLabel: "BACnet 기초 — 객체 모델",
         choices: {

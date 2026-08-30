@@ -2,6 +2,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { test, expect } = require('@playwright/test');
 const PAGES = require('./pages.js');
+const i18n = require('../html/_data/i18n.js');
+const bacnetEnums = require('../html/_data/bacnetEnums.js');
+const bacnetEnumTranslations = require('../html/_data/bacnetEnumTranslations.js');
 const quizTranslations = require('../html/_data/quizTranslations.js');
 const { localizeQuiz } = require('../lib/localize-quiz.js');
 
@@ -29,15 +32,17 @@ function watchErrors(page) {
     return errors;
 }
 
-test('English and Korean canonical routes form an exact sitemap bijection', () => {
+test('configured locales form an exact canonical sitemap bijection', () => {
     const sitemap = fs.readFileSync('_site/sitemap.xml', 'utf8');
     const actual = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)]
         .map(match => match[1])
         .sort();
-    const expected = PAGES.flatMap(({ url }) => [
-        `${SITE}${cleanPath(url)}`,
-        `${SITE}${cleanPath(koreanPath(url))}`,
-    ]).sort();
+    const expected = PAGES.flatMap(({ url }) => i18n.locales.map(({ code }) => {
+        const localized = code === i18n.defaultLocale
+            ? url
+            : url === '/' ? `/${code}/` : `/${code}${url}`;
+        return `${SITE}${cleanPath(localized)}`;
+    })).sort();
 
     expect(actual).toEqual(expected);
     expect(new Set(actual).size, 'canonical URLs are unique').toBe(actual.length);
@@ -61,6 +66,29 @@ test('Korean quiz overlays localize every internal prose link', () => {
     }
 });
 
+test('quiz localization rejects present-but-blank translated copy', () => {
+    const source = [{
+        id: 'blank-guard',
+        prompt: 'Source prompt',
+        explain: 'Source explanation',
+        choices: [{ id: 'a', text: 'Source choice', correct: true }],
+    }];
+    const translations = {
+        ko: {
+            guard: {
+                'blank-guard': {
+                    prompt: '   ',
+                    explain: '번역 설명',
+                    choices: { a: '번역 선택지' },
+                },
+            },
+        },
+    };
+
+    expect(() => localizeQuiz(source, 'ko', 'guard', translations))
+        .toThrow(/prompt must be a non-empty string/);
+});
+
 test('Korean next-quiz links use labels without a duplicated title suffix', () => {
     const quizPages = PAGES.filter(({ url }) =>
         url.startsWith('/practice/') && url !== '/practice/');
@@ -77,6 +105,158 @@ test('Korean next-quiz links use labels without a duplicated title suffix', () =
         expect(next.href, `${name} next quiz stays in Korean`).toMatch(/^\/ko\/practice\//);
         expect(next.label, `${name} next quiz omits the localized title suffix`).not.toMatch(/\s퀴즈$/);
     }
+});
+
+test('Korean article schema references the localized home entities', () => {
+    const html = fs.readFileSync(
+        path.join(__dirname, '..', '_site', 'ko', 'education', 'bacnet-basics.html'),
+        'utf8'
+    );
+    const nodes = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+        .map(match => JSON.parse(match[1]));
+    const article = nodes.find(node => node['@type'] === 'TechArticle');
+
+    expect(article.author['@id']).toBe(`${SITE}/ko/#author`);
+    expect(article.publisher['@id']).toBe(`${SITE}/ko/#website`);
+});
+
+test('language switch uses compact locale codes in both languages', async ({ page }) => {
+    const labels = i18n.locales.map(({ shortLabel }) => shortLabel);
+    expect(i18n.locales.find(({ code }) => code === 'ko').shortLabel).toBe('KO');
+    for (const url of ['/', '/ko/']) {
+        await page.goto(url);
+        await expect(page.locator('.language-switch--desktop a')).toHaveText(labels);
+    }
+});
+
+test('language switch preserves the compact English desktop navigation', async ({ page }) => {
+    for (const [width, maxHeight] of [[1280, 100], [1440, 70]]) {
+        await page.setViewportSize({ width, height: 700 });
+        await page.goto('/');
+        const height = await page.locator('.site-nav').evaluate(nav =>
+            nav.getBoundingClientRect().height);
+        expect(height, `${width}px navigation height`).toBeLessThan(maxHeight);
+    }
+});
+
+test('Korean language switch stays on one line without colliding with navigation', async ({ page }) => {
+    for (const width of [800, 1206, 1225, 1240, 1250, 1280, 1405, 1420, 1430, 1440]) {
+        await page.setViewportSize({ width, height: 700 });
+        await page.goto('/ko/');
+        const geometry = await page.locator('.site-nav').evaluate(nav => {
+            const language = nav.querySelector('.language-switch--desktop');
+            const links = nav.querySelector('.site-nav-links');
+            const languageRect = language.getBoundingClientRect();
+            const collides = [...links.children]
+                .filter(element => element !== language && getComputedStyle(element).display !== 'none')
+                .some(element => {
+                    const rect = element.getBoundingClientRect();
+                    return languageRect.left < rect.right
+                        && languageRect.right > rect.left
+                        && languageRect.top < rect.bottom
+                        && languageRect.bottom > rect.top;
+                });
+            return {
+                whiteSpace: getComputedStyle(language).whiteSpace,
+                collides,
+                linkRects: [...language.querySelectorAll('a')].map(link => ({
+                    width: link.getBoundingClientRect().width,
+                    height: link.getBoundingClientRect().height,
+                    lines: link.getClientRects().length,
+                    textDecoration: getComputedStyle(link).textDecorationLine,
+                    borderStyle: getComputedStyle(link).borderBottomStyle,
+                })),
+            };
+        });
+        expect(geometry.whiteSpace, `${width}px white-space`).toBe('nowrap');
+        expect(geometry.collides, `${width}px language/nav collision`).toBe(false);
+        expect(geometry.linkRects.every(rect => rect.width > 10 && rect.lines === 1),
+            `${width}px compact locale codes`).toBe(true);
+        expect(geometry.linkRects.every(rect =>
+            rect.textDecoration === 'none' && rect.borderStyle === 'solid'),
+        `${width}px locale link styling`).toBe(true);
+    }
+});
+
+test('mobile language switch keeps 44px targets inside the menu sheet', async ({ page }) => {
+    for (const width of [320, 360, 390]) {
+        await page.setViewportSize({ width, height: 700 });
+        await page.goto('/ko/');
+        const closedHeight = await page.locator('.site-nav').evaluate(nav =>
+            nav.getBoundingClientRect().height);
+        await page.click('.nav-hamburger');
+        await expect(page.locator('.language-switch--mobile')).toBeVisible();
+        await expect(page.locator('.language-switch--mobile')).toHaveAttribute('role', 'group');
+        const targets = await page.locator('.language-switch--mobile a').evaluateAll(links =>
+            links.map(link => ({
+                width: link.getBoundingClientRect().width,
+                height: link.getBoundingClientRect().height,
+                text: link.textContent.trim(),
+            })));
+        expect(closedHeight, `${width}px closed navigation height`).toBeLessThan(80);
+        expect(targets.map(target => target.text))
+            .toEqual(i18n.locales.map(({ shortLabel }) => shortLabel));
+        expect(targets.every(target => target.width >= 44 && target.height >= 44),
+            `${width}px locale touch targets`).toBe(true);
+        expect(await page.evaluate(() =>
+            document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
+    }
+});
+
+test('localized card chrome stays aligned when Korean labels wrap', async ({ page }) => {
+    await page.setViewportSize({ width: 1206, height: 700 });
+    await page.goto('/ko/simulators/');
+
+    const simulatorPills = await page.locator('.nav-card-titlebar .ok-pill').evaluateAll(pills =>
+        pills.map(pill => ({
+            height: pill.getBoundingClientRect().height,
+            whiteSpace: getComputedStyle(pill).whiteSpace,
+            wrapped: pill.scrollHeight > pill.clientHeight,
+        })));
+    expect(new Set(simulatorPills.map(pill => pill.height)).size).toBe(1);
+    expect(simulatorPills.every(pill => pill.whiteSpace === 'nowrap' && !pill.wrapped)).toBe(true);
+
+    await page.setViewportSize({ width: 2174, height: 900 });
+    await page.goto('/ko/education/');
+
+    const rows = await page.locator('.nav-card').evaluateAll(cards => {
+        const grouped = new Map();
+        for (const card of cards) {
+            const statusline = card.querySelector('.nav-card-statusline');
+            if (card.hidden || !statusline) continue;
+            const rowKey = card.getBoundingClientRect().top.toFixed(1);
+            const statusRect = statusline.getBoundingClientRect();
+            const row = grouped.get(rowKey) || [];
+            row.push({ top: statusRect.top, height: statusRect.height });
+            grouped.set(rowKey, row);
+        }
+        return [...grouped.values()].filter(row => row.length > 1);
+    });
+    const seams = await page.locator('.nav-card:has(.nav-card-statusline)').evaluateAll(cards =>
+        cards.filter(card => !card.hidden).map(card => {
+            const titlebar = card.querySelector('.nav-card-titlebar').getBoundingClientRect();
+            const body = card.querySelector('.nav-card-body').getBoundingClientRect();
+            const statusline = card.querySelector('.nav-card-statusline').getBoundingClientRect();
+            return {
+                titleToBody: Math.abs(titlebar.bottom - body.top),
+                bodyToStatus: Math.abs(body.bottom - statusline.top),
+            };
+        }));
+
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+        expect(new Set(row.map(item => item.top)).size).toBe(1);
+        expect(new Set(row.map(item => item.height)).size).toBe(1);
+    }
+    expect(seams.every(({ titleToBody, bodyToStatus }) =>
+        titleToBody < 0.1 && bodyToStatus < 0.1),
+    'localized card tracks remain contiguous').toBe(true);
+
+    await page.click('.filter-chip[data-category="signals"]');
+    const hiddenDisplays = await page.locator('.nav-card[hidden]').evaluateAll(cards =>
+        cards.map(card => getComputedStyle(card).display));
+    expect(hiddenDisplays.length).toBeGreaterThan(0);
+    expect(hiddenDisplays.every(display => display === 'none')).toBe(true);
 });
 
 for (const { name, url } of PAGES) {
@@ -103,8 +283,14 @@ for (const { name, url } of PAGES) {
         await expect(page.locator('link[rel="alternate"][hreflang="en"]')).toHaveAttribute('href', englishClean);
         await expect(page.locator('link[rel="alternate"][hreflang="ko"]')).toHaveAttribute('href', koreanClean);
         await expect(page.locator('link[rel="alternate"][hreflang="x-default"]')).toHaveAttribute('href', englishClean);
-        await expect(page.locator('.language-switch a[hreflang="en"]')).toHaveAttribute('href', url);
-        await expect(page.locator('.language-switch a[hreflang="ko"]')).toHaveAttribute('aria-current', 'page');
+        await expect(page.locator('.language-switch--desktop a[hreflang="en"]')).toHaveAttribute('href', url);
+        await expect(page.locator('.language-switch--desktop a[hreflang="ko"]')).toHaveAttribute('aria-current', 'page');
+        const wrongLocaleLinks = await page.locator('a[href^="/"]').evaluateAll(anchors =>
+            anchors
+                .filter(anchor => !anchor.closest('.language-switch'))
+                .map(anchor => anchor.getAttribute('href'))
+                .filter(href => href !== '/ko' && !href.startsWith('/ko/')));
+        expect(wrongLocaleLinks, `${localized} keeps internal links in Korean`).toEqual([]);
         await expect(page.locator('meta[property="og:locale"]')).toHaveAttribute('content', 'ko_KR');
         await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', `${SITE}/assets/og-image-ko.png`);
 
@@ -315,7 +501,33 @@ test('Korean BACnet tools keep localized copy after interactive updates', async 
         scripts.map(script => JSON.parse(script.textContent))
             .filter(node => node['@type'] === 'DefinedTermSet'));
     expect(definedTermSets).toHaveLength(3);
-    expect(definedTermSets[0].hasDefinedTerm[0].description).toContain('아날로그 센싱값');
+    const setsByFragment = Object.fromEntries(definedTermSets.map(set => [set['@id'].split('#')[1], set]));
+    expect(setsByFragment['object-types'].hasDefinedTerm).toHaveLength(bacnetEnums.objectTypes.length);
+    expect(setsByFragment['property-identifiers'].hasDefinedTerm).toHaveLength(bacnetEnums.propertyIds.length);
+    expect(setsByFragment['engineering-units'].hasDefinedTerm).toHaveLength(bacnetEnums.engineeringUnits.length);
+    for (const term of setsByFragment['object-types'].hasDefinedTerm) {
+        expect(term.description).toBe(bacnetEnumTranslations.ko.objectTypes[term.termCode]);
+    }
+    for (const term of setsByFragment['property-identifiers'].hasDefinedTerm) {
+        expect(term.description).toBe(bacnetEnumTranslations.ko.propertyIds[term.termCode]);
+    }
+    expect(setsByFragment['engineering-units'].hasDefinedTerm
+        .every(term => term.description === undefined)).toBe(true);
+
+    const visibleObjectDescriptions = await page.locator(
+        '#bo-table-objects tbody tr:not(.ref-empty) td:last-child'
+    ).allTextContents();
+    const visiblePropertyDescriptions = await page.locator(
+        '#bo-table-props tbody tr:not(.ref-empty) td:last-child'
+    ).allTextContents();
+    const visibleUnitGroups = await page.locator(
+        '#bo-table-units tbody tr:not(.ref-empty) td:last-child'
+    ).allTextContents();
+    expect(visibleObjectDescriptions).toEqual(bacnetEnumTranslations.ko.objectTypes);
+    expect(visiblePropertyDescriptions).toEqual(
+        bacnetEnums.propertyIds.map(({ id }) => bacnetEnumTranslations.ko.propertyIds[id]));
+    expect(visibleUnitGroups).toEqual(
+        bacnetEnums.engineeringUnits.map(({ group }) => bacnetEnumTranslations.ko.unitGroups[group]));
 
     expect(errors, 'Korean BACnet tool interactions should log no errors').toEqual([]);
 });

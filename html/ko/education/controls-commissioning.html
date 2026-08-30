@@ -1,7 +1,7 @@
 ---
 title: 제어 커미셔닝 — controlsfreak.dev
 description: 입출력 포인트를 하나씩 시험해 컨트롤러가 운전 시퀀스대로 동작하는지 확인하는 포인트 투 포인트 점검, 오버라이드 관리, 트렌드 검증을 설명합니다.
-sourceContentHash: 3d3626899fdbcc31d2aadf024a108c2d15cdbe8d731bb0c275b258dcf1347f24
+sourceContentHash: a002687ffc6ef1e52ae96767f514bfe0f1324e49587cdeb94025ddb052415cd1
 canonical: https://controlsfreak.dev/ko/education/controls-commissioning.html
 nav: education
 category: fundamentals
@@ -29,7 +29,7 @@ keywords: 포인트 투 포인트 점검 기능 시험 시운전 운전 시퀀�
 
             <div class="callout">
                 <p style="line-height:1.7;">
-                    "커미셔닝"이라는 말은 현장 일정에서 같은 주에 진행되어 서로 혼동하기 쉬운 세 가지 작업에 쓰입니다. 이 페이지에서는 그중 하나인 <strong>제어 기능 시험</strong>, 즉 <button type="button" data-gloss="ddc">직접디지털제어기(DDC)</button>가 시퀀스대로 동작하는지 포인트별로 입증하는 과정을 다룹니다. 다른 두 작업은 신호가 아니라 유체를 움직입니다. <a href="/ko/education/balancing.html">수배관 밸런싱</a>은 모든 수측 부하에 설계 유량을 맞추고, 별도 학습 자료인 <a href="/ko/education/air-balancing.html">공기 밸런싱</a>은 덕트 계통에서 같은 작업을 합니다. 인계 전에 세 작업이 모두 끝나야 하지만 서로 다른 도구를 쓰는 별개의 업무입니다. 마노미터와 밸런싱 보고서는 노트북과 포인트 목록이 아닙니다. 이 구분을 명확히 하면 나머지 내용도 제어에 집중할 수 있습니다.
+                    "커미셔닝"이라는 말은 현장 일정에서 같은 주에 진행되어 서로 혼동하기 쉬운 세 가지 작업에 쓰입니다. 이 페이지에서는 그중 하나인 <strong>제어 기능 시험</strong>, 즉 <button type="button" data-gloss="ddc">직접 디지털 제어기(DDC)</button>가 시퀀스대로 동작하는지 포인트별로 입증하는 과정을 다룹니다. 다른 두 작업은 신호가 아니라 유체를 움직입니다. <a href="/ko/education/balancing.html">수배관 밸런싱</a>은 모든 수측 부하에 설계 유량을 맞추고, 별도 학습 자료인 <a href="/ko/education/air-balancing.html">공기 밸런싱</a>은 덕트 계통에서 같은 작업을 합니다. 인계 전에 세 작업이 모두 끝나야 하지만 서로 다른 도구를 쓰는 별개의 업무입니다. 마노미터와 밸런싱 보고서는 노트북과 포인트 목록이 아닙니다. 이 구분을 명확히 하면 나머지 내용도 제어에 집중할 수 있습니다.
                 </p>
             </div>
 
@@ -140,7 +140,7 @@ keywords: 포인트 투 포인트 점검 기능 시험 시운전 운전 시퀀�
             </p>
 
             <p>
-                트렌드는 한 시점의 화면으로는 찾을 수 없는 고장을 잡습니다. 살짝 조정할 때는 잘 따라가지만 부하가 바뀐 뒤 20분 동안 <button type="button" data-gloss="hunting">헌팅</button>하는 루프, <button type="button" data-gloss="short-cycling">단주기 운전</button>하는 단계제어(경계가 불분명한 <button type="button" data-gloss="deadband">데드밴드</button>가 원인일 수 있습니다), 폴링하는 쪽을 활성화하지 않아 설계값에서 한 번도 벗어나지 않는 리셋 등을 확인할 수 있습니다. 포인트 투 포인트 점검에서 끝난 커미셔닝 기록은 배관과 배선을 입증한 것입니다. 실제 <em>시퀀스</em>를 입증하는 것은 트렌드입니다. <a href="/ko/simulators/pid-tuner.html">PID 튜너</a>에서 루프를 조정해 보았다면 트렌드가 보여 주는 형태를 이미 알고 있습니다. 같은 오버슈트와 <button type="button" data-gloss="hunting">헌팅</button>이 이제 실제 포인트의 여러 시간 기록에 나타납니다.
+                트렌드는 한 시점의 화면으로는 찾을 수 없는 고장을 잡습니다. 살짝 조정할 때는 잘 따라가지만 부하가 바뀐 뒤 20분 동안 <button type="button" data-gloss="hunting">헌팅</button>하는 루프, <button type="button" data-gloss="short-cycling">단주기 운전</button>하는 단계제어(경계가 불분명한 <button type="button" data-gloss="deadband">불감대</button>가 원인일 수 있습니다), 폴링하는 쪽을 활성화하지 않아 설계값에서 한 번도 벗어나지 않는 리셋 등을 확인할 수 있습니다. 포인트 투 포인트 점검에서 끝난 커미셔닝 기록은 배관과 배선을 입증한 것입니다. 실제 <em>시퀀스</em>를 입증하는 것은 트렌드입니다. <a href="/ko/simulators/pid-tuner.html">PID 튜너</a>에서 루프를 조정해 보았다면 트렌드가 보여 주는 형태를 이미 알고 있습니다. 같은 오버슈트와 <button type="button" data-gloss="hunting">헌팅</button>이 이제 실제 포인트의 여러 시간 기록에 나타납니다.
             </p>
 
             <!-- ───────────────── 6 · Documentation / turnover ───────────────── -->
@@ -208,7 +208,7 @@ keywords: 포인트 투 포인트 점검 기능 시험 시운전 운전 시퀀�
             </svg>
 
             <p style="margin-top:1.25rem;">
-                이 학습 자료의 앞뒤에는 두 개의 관련 자료가 있습니다. <a href="/ko/education/controller-wiring.html">제어기 배선</a>은 점검 전에 단자가 올바르게 연결되는 과정을 다룹니다. 포인트가 올바른 단자에 있어야 올바르게 동작하는지 입증할 수 있으며, <a href="/ko/simulators/controller-wiring.html">배선 시뮬레이터</a>에서는 이 페이지가 찾아내려는 배선 고장을 직접 만들어 볼 수 있습니다. <a href="/ko/education/function-blocks.html">함수 블록</a>은 점검 기준이 되는 시퀀스 자체, 즉 컨트롤러가 따라야 할 로직입니다. 커미셔닝은 둘 사이의 이음부입니다. 배선은 실제 동작이 되고 시퀀스는 사실로 입증됩니다.
+                이 학습 자료의 앞뒤에는 두 개의 관련 자료가 있습니다. <a href="/ko/education/controller-wiring.html">제어기 배선</a>은 점검 전에 단자가 올바르게 연결되는 과정을 다룹니다. 포인트가 올바른 단자에 있어야 올바르게 동작하는지 입증할 수 있으며, <a href="/ko/simulators/controller-wiring.html">배선 시뮬레이터</a>에서는 이 페이지가 찾아내려는 배선 고장을 직접 만들어 볼 수 있습니다. <a href="/ko/education/function-blocks.html">기능 블록</a>은 점검 기준이 되는 시퀀스 자체, 즉 컨트롤러가 따라야 할 로직입니다. 커미셔닝은 둘 사이의 이음부입니다. 배선은 실제 동작이 되고 시퀀스는 사실로 입증됩니다.
             </p>
 
         </div>
@@ -222,11 +222,11 @@ keywords: 포인트 투 포인트 점검 기능 시험 시운전 운전 시퀀�
         simulators: [
             {href: '/ko/simulators/controller-wiring.html', label: '제어기 배선 시뮬레이터'},
             {href: '/ko/simulators/pid-tuner.html', label: 'PID 튜닝 도우미'},
-            {href: '/ko/simulators/function-block-editor.html', label: '함수 블록 편집기'}
+            {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'}
         ],
         lessons: [
             {href: '/ko/education/controller-wiring.html', label: '제어기 배선'},
-            {href: '/ko/education/function-blocks.html', label: '함수 블록 기초'},
+            {href: '/ko/education/function-blocks.html', label: '기능 블록 기초'},
             {href: '/ko/education/pid-basics.html', label: 'PID 기초'},
             {href: '/ko/education/balancing.html', label: '수배관 밸런싱'},
             {href: '/ko/education/air-balancing.html', label: '공기 밸런싱'},

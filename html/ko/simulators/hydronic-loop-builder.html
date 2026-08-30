@@ -1,7 +1,7 @@
 ---
 title: 수배관 루프 빌더 — controlsfreak.dev
-description: 두 입면도에 열원·펌프·코일·밸브를 배치하고 3차원 배관을 연결하여 유량 운전점, 펌프 양정, 수온 전파와 배관 마찰을 실시간으로 해석하는 수배관 시뮬레이터입니다.
-sourceContentHash: f13f767256b9654aae0eb93c9a3d1f3c6f3c38a39ebf8a939d88477c55aec142
+description: 두 입면도 위에 온수 또는 냉수 루프를 구성합니다. 열원·펌프·코일·밸브를 배치하고 3차원으로 배관을 연결하면 유량과 수온이 실시간으로 계산됩니다.
+sourceContentHash: fc1b3519d759f7a10e04d002ae1f9cfd81c305271d59681c7267646ef99ba050
 sourceMessageHash: 8c3bf0710019455e4f6ca0ecee096df2cb2be56ac73c34c4038e93f14a3f79da
 canonical: https://controlsfreak.dev/ko/simulators/hydronic-loop-builder.html
 nav: simulators
@@ -235,7 +235,7 @@ pageMessages:
                 <p>
                     매 틱마다 빌더는 배치를 네트워크로 평면화합니다. 배관과 장비는 압력
                     노드 사이의 유동 분기가 되며, 선형화된 노드 평형을 풉니다. 모든 접합부에서
-                    질량이 보존되고, 각 저항에서 펌프 양정이 k·Q²만큼 손실되며, 펌프는 곡선
+                    질량이 보존되고, 각 저항에서 수두가 k·Q²만큼 감소하며, 펌프는 곡선
                     H = H₀·(speed/100)² − a·Q²에 따라 양정을 더합니다. 유량은 몇 차례 반복
                     계산 후 운전점에 수렴합니다.
                 </p>
@@ -267,7 +267,7 @@ pageMessages:
     </div>
 
     {{ relatedLinks({
-        hub: {href: '/ko/hydronics/', label: '수배관 참조 허브'},
+        hub: {href: '/ko/hydronics/', label: '수배관 참고 자료 허브'},
         simulators: [
             {href: '/ko/simulators/pid-tuner.html', label: 'PID 튜닝 도우미'},
             {href: '/ko/simulators/vfd-mock.html', label: '인버터(VFD) 모의 인터페이스'}

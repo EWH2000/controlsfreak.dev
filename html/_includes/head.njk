@@ -63,5 +63,12 @@
        the top of styles.css, files under /assets/fonts/. No third-party
        origin: Turnstile on contact.html is now the site's only one. #}
     <link rel="stylesheet" href="/styles.css?v={{ site.version }}">
+    {# CSS-generated labels have no text node to translate. Keep their values
+       in the guarded message catalog and expose only quoted CSS strings here. #}
+    <style>:root {
+        --i18n-stage-label: {{ "home.stage" | t(locale) | safeScriptJson | safe }};
+        --i18n-more-label: {{ "disclosure.more" | t(locale) | safeScriptJson | safe }};
+        --i18n-less-label: {{ "disclosure.less" | t(locale) | safeScriptJson | safe }};
+    }</style>
     <script>(function(){try{var u=localStorage.getItem('cf_units');document.documentElement.dataset.units=u==='metric'?'metric':'us';}catch(e){}})();</script>
     <script>(function(){try{var t=localStorage.getItem('cf_theme');if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';}document.documentElement.dataset.theme=t;var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==='light'?'#ffffff':'#13161b';}catch(e){}})();</script>

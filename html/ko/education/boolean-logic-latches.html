@@ -1,12 +1,12 @@
 ---
-title: 불 대수 로직 및 래치 — controlsfreak.dev
+title: 불리언 로직 및 래치 — controlsfreak.dev
 description: AND·OR·NOT로 장비 규칙과 운전 허가·인터록·페일세이프 반전을 구성하고, SR 래치가 안전 트립을 기억하는 원리를 설명합니다.
-sourceContentHash: 1eaff702176e202a7a17ae19010c57556cfdeb19fd7552a9954efcc7b8e064be
+sourceContentHash: 6aebe67e3afab863b62a7b195c134c4cf8accc2eb5da91f096ed1f8ea43bd68d
 canonical: https://controlsfreak.dev/ko/education/boolean-logic-latches.html
 nav: education
 category: programming
 pairedQuiz: https://controlsfreak.dev/ko/practice/boolean-logic-latches.html
-keywords: AND OR NOT XOR 래치 SR 인터록 운전 허가 조건 안전장치 진리표 불 대수 로직
+keywords: AND OR NOT XOR 래치 SR 인터록 운전 허가 조건 안전장치 진리표 불리언 로직
 ---
 {% extends "html/education/boolean-logic-latches.html" %}
 
@@ -14,13 +14,13 @@ keywords: AND OR NOT XOR 래치 SR 인터록 운전 허가 조건 안전장치 �
 <main id="main">
 
     <div class="section-header">
-        <span class="section-label">학습 · 불 대수 로직</span>
+        <span class="section-label">학습 · 불리언 로직</span>
         <div class="section-line"></div>
     </div>
 
     <div class="tool-card">
         <div class="tool-card-header">
-            <h1 class="tool-card-title">불 대수 로직 및 래치 <span class="tool-tag">로직</span></h1>
+            <h1 class="tool-card-title">불리언 로직 및 래치 <span class="tool-tag">로직</span></h1>
         </div>
         <div class="tool-body">
 
@@ -28,7 +28,7 @@ keywords: AND OR NOT XOR 래치 SR 인터록 운전 허가 조건 안전장치 �
                 모든 제어 시퀀스에는 문장이 가득합니다. <em>모든 안전장치가 정상으로 확인되고
                 스케줄이 재실 상태일 때만 팬을 운전합니다. 어느 고장 접점이든 닫히면 경보를
                 켭니다. 동결방지 온도조절기가 트립되면 누군가 재설정할 때까지 장치를 정지
-                상태로 유지합니다.</em> 불 대수 블록인 <code>AND</code>, <code>OR</code>,
+                상태로 유지합니다.</em> 불리언 블록인 <code>AND</code>, <code>OR</code>,
                 <code>NOT</code>, <code>XOR</code>, <code>SR latch</code>는 이러한 문장을
                 <button type="button" data-gloss="wiresheet">와이어시트</button>의 로직으로
                 바꿉니다. 이 페이지는 처음부터 끝까지 한 가지 질문을 다룹니다. <em>TRUE/FALSE
@@ -212,7 +212,7 @@ keywords: AND OR NOT XOR 래치 SR 인터록 운전 허가 조건 안전장치 �
             </p>
 
             <p>
-                이것이 불 대수 계열에서 기억 기능이 있는 유일한 블록인 <strong><code>SR latch</code></strong>의
+                이것이 불리언 계열에서 기억 기능이 있는 유일한 블록인 <strong><code>SR latch</code></strong>의
                 역할입니다. 두 입력에는 다음과 같은 동작이 있습니다. <strong>S</strong>(<em>set</em>)가
                 TRUE이면 출력 <strong>Q</strong>가 TRUE가 되고, 이후 입력이 사라져도 Q는 스스로
                 TRUE를 <em>유지</em>합니다. <strong>R</strong>(<em>reset</em>)이 TRUE가 되면 Q가
@@ -347,7 +347,7 @@ keywords: AND OR NOT XOR 래치 SR 인터록 운전 허가 조건 안전장치 �
             {href: '/ko/education/controls-commissioning.html', label: '제어 커미셔닝'}
         ],
         quizzes: [
-            {href: '/ko/practice/boolean-logic-latches.html', label: '불 대수 로직 및 래치 퀴즈'}
+            {href: '/ko/practice/boolean-logic-latches.html', label: '불리언 로직 및 래치 퀴즈'}
         ]
     }) }}
 

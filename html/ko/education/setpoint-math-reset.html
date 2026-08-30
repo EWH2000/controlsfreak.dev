@@ -44,7 +44,7 @@ pageMessages:
         limitBand:
             us: "140–180 °F"
             metric: "60.0–82.2 °C"
-sourceContentHash: 6d1d61cc8bb92b3224a2ce12053af00bfde39eda9b20729d63daaad3b96c8187
+sourceContentHash: ffff96b70f32249016d8994d2b7072ca3322135e7c41cf0038ffd85bdcf6a833
 sourceMessageHash: 1aebd3bf6361006eb820a203414b596a4860ee8911b0c0fa77caa474deeb2c88
 ---
 {% extends "html/education/setpoint-math-reset.html" %}
@@ -87,7 +87,7 @@ sourceMessageHash: 1aebd3bf6361006eb820a203414b596a4860ee8911b0c0fa77caa474deeb2
                 <span data-us="2&nbsp;°F" data-metric="1.1&nbsp;°C">2&nbsp;°F</span>를 사용하면
                 <code>ADD</code>가 상한을, <code>SUB</code>가 하한을 만듭니다(
                 <span data-us="{{ pageMessages.unitText.offsetEquation.us }}" data-metric="{{ pageMessages.unitText.offsetEquation.metric }}">72 + 2 = 74 및 72 − 2 = 70</span>).
-                함수 블록 편집기의 두 온도조절기 예제도 정확히 이렇게 배선되어 있습니다. SP 상수
+                기능 블록 편집기의 두 온도조절기 예제도 정확히 이렇게 배선되어 있습니다. SP 상수
                 하나와 불감대 상수 하나로 경계를 계산합니다. 설정값을 바꾸면 두 경계가 함께
                 바뀌므로 수정할 숫자가 두 개였다는 사실을 기억할 필요가 없습니다. <em>경계에서</em>의
                 동작, 즉 히스테리시스와 채터링, 불감대가 필요한 이유는 이 장의 별도 수업인
@@ -266,7 +266,7 @@ sourceMessageHash: 1aebd3bf6361006eb820a203414b596a4860ee8911b0c0fa77caa474deeb2
                 곱합니다. <code>ADD</code>가 절편 상수를 더하고, <code>LIMIT</code>가 결과를 설계
                 밴드 안으로 제한합니다. 제한된 값은 루프의 설정값인 아날로그 출력으로 전달됩니다.
                 전체 스케줄은 <code>AI → MUL → ADD → LIMIT → AO</code>이며 m과 b가 상수로
-                함께 연결됩니다. 함수 블록 편집기에는 이 와이어시트가 <em>온수 리셋</em> 예제로
+                함께 연결됩니다. 기능 블록 편집기에는 이 와이어시트가 <em>온수 리셋</em> 예제로
                 제공됩니다. 기울기 상수는 −40/60을 반올림한 −0.667이고 절편은 180입니다.
                 편집기의 기본 외기값인
                 <span data-us="30&nbsp;°F" data-metric="−1.1&nbsp;°C (30&nbsp;°F)">30&nbsp;°F</span>에서는
@@ -281,7 +281,7 @@ sourceMessageHash: 1aebd3bf6361006eb820a203414b596a4860ee8911b0c0fa77caa474deeb2
             <svg class="edu-svg smr-svg wide" viewBox="0 0 850 310" font-family="var(--mono)"
                  role="img" aria-labelledby="smr-chain-title smr-chain-desc">
                 <title id="smr-chain-title">네 개의 연산 블록으로 만든 리셋 스케줄: 아날로그 입력, 곱셈, 덧셈, 제한, 아날로그 출력</title>
-                <desc id="smr-chain-desc">일곱 개 블록으로 구성된 함수 블록 와이어시트입니다. 30을 읽는
+                <desc id="smr-chain-desc">일곱 개 블록으로 구성된 기능 블록 와이어시트입니다. 30을 읽는
                     외기 온도 아날로그 입력이 MULTIPLY 블록에 연결되고, 마이너스 0.667인 기울기 상수가 곱셈
                     블록의 두 번째 입력에 들어갑니다. 곱셈 출력 마이너스 20.0은 ADD 블록에 연결되고, 180인
                     절편 상수가 덧셈 블록의 두 번째 입력에 들어갑니다. 덧셈 출력 160은 140과 180 사이로
@@ -432,7 +432,7 @@ sourceMessageHash: 1aebd3bf6361006eb820a203414b596a4860ee8911b0c0fa77caa474deeb2
             <h2 class="subhead" id="capstone">불러온 뒤 클램프의 제한 동작을 확인하세요</h2>
 
             <p>
-                이 모든 구성은 <a href="/ko/simulators/function-block-editor.html">함수 블록 편집기</a>에
+                이 모든 구성은 <a href="/ko/simulators/function-block-editor.html">기능 블록 편집기</a>에
                 이미 배선되어 있습니다. 편집기를 열고 <em>온수 리셋</em> 예제를 선택하세요.
                 <button type="button" data-gloss="oat">OAT</button> 입력을 선택하고 검사기에서 값을
                 바꿔 보세요. 30에서는 위에서 계산한 지점과 같은 160이 실시간으로 출력됩니다.
@@ -442,7 +442,7 @@ sourceMessageHash: 1aebd3bf6361006eb820a203414b596a4860ee8911b0c0fa77caa474deeb2
                 직선이 계산하고 클램프가 계산값을 설계 범위 안에 유지합니다.
             </p>
 
-            <a class="cta-button" href="/ko/simulators/function-block-editor.html">함수 블록 편집기 열기 →</a>
+            <a class="cta-button" href="/ko/simulators/function-block-editor.html">기능 블록 편집기 열기 →</a>
 
         </div>
     </div>
@@ -452,10 +452,10 @@ sourceMessageHash: 1aebd3bf6361006eb820a203414b596a4860ee8911b0c0fa77caa474deeb2
             {href: '/ko/tools/signal-scaling.html', label: '신호 스케일링'}
         ],
         simulators: [
-            {href: '/ko/simulators/function-block-editor.html', label: '함수 블록 편집기'}
+            {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'}
         ],
         lessons: [
-            {href: '/ko/education/function-blocks.html', label: '함수 블록 기초'},
+            {href: '/ko/education/function-blocks.html', label: '기능 블록 기초'},
             {href: '/ko/education/comparators-and-deadband.html', label: '비교기 및 불감대'},
             {href: '/ko/education/pump-control.html', label: '펌프 제어'},
             {href: '/ko/education/duct-static-control.html', label: '덕트 정압 제어'}

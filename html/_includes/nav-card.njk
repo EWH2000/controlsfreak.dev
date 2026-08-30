@@ -9,7 +9,7 @@
 
     Usage (in a page template):
 
-        {%- from "nav-card.njk" import navCard -%}
+        {%- from "nav-card.njk" import navCard with context -%}
         {{ navCard({
             section:    'tools',
             href:       '/tools/signal-scaling.html',

@@ -1,7 +1,7 @@
 ---
 title: 서미스터 / RTD 계산기 — controlsfreak.dev
-description: NTC 서미스터와 RTD의 온도·저항을 양방향 변환하고, 10K·20K·3K·Balco·Pt100·Pt1000 미상 센서의 곡선 적합도를 비교해 종류를 식별합니다.
-sourceContentHash: 2c7d4ff7e47bb49b0eaa40ed69d059fdb630685d59a8b5ccd01dde644e88ee52
+description: 서미스터와 RTD의 온도·저항을 양방향 변환하거나, 10K·20K·3K·Balco·Pt100·Pt1000 중 종류를 알 수 없는 센서를 식별합니다.
+sourceContentHash: 75326315b42b46b17c956e49c7730c9fd96173f21df25952f53b1a8a5b23e0d8
 sourceMessageHash: c439f715462b398f9b2e933a64f3c51ae9ba0bd8d20016ab2916d2523e81791b
 canonical: https://controlsfreak.dev/ko/tools/thermistor-calculator.html
 nav: tools
@@ -341,7 +341,7 @@ keywords: NTC RTD 저항 옴 10K 20K 3K Balco Pt100 Pt1000 센서 온도 곡선
             </h2>
         </div>
         <div class="tool-body" style="font-size: 0.92rem; line-height: 1.6;">
-            <p><strong>값의 출처.</strong> 각 R/T 표는 소수의 특성 곡선 매개변수—NTC 서미스터의 β와 R25, 선형화된 10K 곡선의 병렬 분로 저항, RTD의 R0와 온도 계수—로부터 <em>생성</em>됩니다. Pt100과 Pt1000 표는 국제 표준인 IEC 60751 Callendar–Van Dusen 다항식을 따릅니다. 500개가 넘는 셀을 한 행씩 검토하는 대신 매개변수를 감사하여 표 전체의 신뢰성을 한번에 확인합니다.</p>
+            <p><strong>값의 출처.</strong> 각 R/T 표는 소수의 특성 곡선 매개변수—NTC 서미스터의 β와 R25, 선형화된 10K 곡선의 병렬 분로 저항, RTD의 R0와 온도 계수—로부터 <em>생성</em>됩니다. Pt100과 Pt1000 표는 국제 표준인 IEC 60751 Callendar–Van Dusen 다항식을 따릅니다. 500개가 넘는 셀을 한 행씩 검토하는 대신 매개변수를 검증하면 표 전체의 신뢰성을 한 번에 확인할 수 있습니다.</p>
 
             <p><strong>검증에 사용한 자료(2026-05 검토).</strong> <em>10K Type II, 10K Type III, 10K Type 5(TAC)</em>는 BAPI 10K-2 / 10K-3 / 10K-3(11K) 출력 표를 기준으로 하고 US Sensor “Curve G”, Sontay 호환성 차트, Vector Controls 다중 곡선 참조 자료와 교차 확인했습니다. <em>20K와 3K</em>는 Vector Controls와 Sontay 자료, <em>1K Balco</em>는 Schneider EcoStruxure Building Operation 저항 차트와 ACI BALCO 데이터시트, <em>Pt100과 Pt1000</em>은 IEC 60751:2008을 직접 기준으로 하여 Vector, Sontay, Fluke 표 생성기, pt100.de와 교차 확인했습니다. 여러 출처의 값이 일치하지 않은 경우에는 다른 기술자와 검토한 뒤 곡선을 결정했습니다.</p>
 

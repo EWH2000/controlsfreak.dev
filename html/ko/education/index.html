@@ -1,7 +1,7 @@
 ---
 title: 학습 — controlsfreak.dev
 description: HVAC 빌딩 자동제어 기술자를 위한 실무 해설입니다. 업계 입문자와 제어 개념을 빠르게 복습하려는 분을 위해 쉽게 구성했습니다.
-sourceContentHash: 7174321f27ff17e244efdd34157134fc550c1f452a6fafe67b6776cd6d9ec3e3
+sourceContentHash: 14b1429533e9961fd5222dcdfb1ff5ba36f77a4ad31bd29ceacb680d8ac3c4ef
 canonical: https://controlsfreak.dev/ko/education/
 nav: education
 ---
@@ -38,7 +38,7 @@ nav: education
             냉매 <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="forced-air" aria-pressed="false">
-            강제순환 공기 시스템 <span class="filter-chip-count">8</span>
+            강제순환식 공조 시스템 <span class="filter-chip-count">8</span>
         </button>
         <button type="button" class="filter-chip" data-category="programming" aria-pressed="false">
             프로그래밍 <span class="filter-chip-count">6</span>
@@ -90,8 +90,8 @@ nav: education
             href:       '/ko/education/status-and-proof.html',
             titleShort: '상태 및 운전 확인',
             titleFull:  '상태 및 운전 확인 신호',
-            desc:       '팬 상태 포인트가 실제로 무엇을 입증하는지 알아봅니다. 보조접점, 전류 스위치, 차압 스위치, 운전 확인 시간창과 기동 실패, 세 방식 중 두 가지를 속이는 벨트 파손을 다룹니다.',
-            pills:      ['신호', '보조접점 / 전류 / 차압', '운전 확인 시간창', '기동 실패'],
+            desc:       '팬 상태 포인트가 실제로 무엇을 입증하는지 알아봅니다. 보조접점, 전류 스위치, 차압 스위치, 운전 확인 대기시간과 기동 실패, 세 방식 중 두 가지를 속이는 벨트 파손을 다룹니다.',
+            pills:      ['신호', '보조접점 / 전류 / 차압', '운전 확인 대기시간', '기동 실패'],
             category:   'signals'
         }) }}
         {{ navCard({
@@ -288,8 +288,8 @@ nav: education
             href:       '/ko/education/dedicated-outdoor-air.html',
             titleShort: 'DOAS',
             titleFull:  '외기전담공조(DOAS)',
-            desc:       '100% 외기를 처리해 환기·잠열 부하를 현열 부하와 분리하는 장비를 알아봅니다. 깊은 코일과 재열, 에너지 회수, 노점 제어, 실내 부하를 담당하는 말단장치를 다룹니다.',
-            pills:      ['공기 시스템', '잠열 / 현열', '깊은 코일 · 재열', '노점 제어'],
+            desc:       '100% 외기를 처리해 환기·잠열 부하를 현열 부하와 분리하는 장비를 알아봅니다. 저노점 냉각과 재열, 에너지 회수, 노점 제어, 실내 부하를 담당하는 말단장치를 다룹니다.',
+            pills:      ['공기 시스템', '잠열 / 현열', '저노점 냉각 · 재열', '노점 제어'],
             category:   'forced-air'
         }) }}
         {{ navCard({
@@ -304,8 +304,8 @@ nav: education
         {{ navCard({
             section:    'education',
             href:       '/ko/education/boolean-logic-latches.html',
-            titleShort: '불 대수 로직',
-            titleFull:  '불 대수 로직 및 래치',
+            titleShort: '불리언 로직',
+            titleFull:  '불리언 로직 및 래치',
             desc:       'AND, OR, NOT으로 인터록·퍼미시브·안전 조건을 와이어시트 로직으로 만드는 방법을 알아봅니다. Set 우선형 SR 래치가 수동 리셋 전까지 트립을 유지하는 원리도 다룹니다.',
             pills:      ['로직', '퍼미시브 체인', 'SR 래치'],
             category:   'programming'
@@ -324,8 +324,8 @@ nav: education
             href:       '/ko/education/timers-and-delays.html',
             titleShort: '타이머 및 지연',
             titleFull:  '타이머 및 지연',
-            desc:       'TON과 TOF의 실제 동작을 알아봅니다. 설정시간과 경과시간, 기동 실패 알람의 운전 확인 시간창, 디바운스, 단주기 운전을 방지하는 최소 운전·정지 시간을 다룹니다.',
-            pills:      ['로직', 'TON / TOF', '운전 확인 시간창', '최소 운전 / 정지'],
+            desc:       'TON과 TOF의 실제 동작을 알아봅니다. 설정시간과 경과시간, 기동 실패 알람의 운전 확인 대기시간, 디바운스, 단주기 운전을 방지하는 최소 운전·정지 시간을 다룹니다.',
+            pills:      ['로직', 'TON / TOF', '운전 확인 대기시간', '최소 운전 / 정지'],
             category:   'programming'
         }) }}
         {{ navCard({

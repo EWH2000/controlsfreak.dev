@@ -6,7 +6,7 @@ nav: education
 category: forced-air
 pairedQuiz: https://controlsfreak.dev/ko/practice/air-handlers.html
 keywords: 공기조화기 AHU 혼합부 혼합공기 회기 배기 외기 급기 팬 필터 코일 토출공기 MA-T DA-T RTU 댐퍼
-sourceContentHash: cb036d14baf6cae7ee7d2217dd8747de9cef58c6fd6a6be062e2b31ea2081f00
+sourceContentHash: 393ebd4a0cceb08e9d278b58ba001a6639c81aa4983afde8e00d1f45d80b6adf
 sourceMessageHash: dcc1674c396a23954d3cab228682c7273b85bbf9877a63b4bfc0322033acd429
 pageMessages:
   widget:
@@ -42,7 +42,7 @@ pageMessages:
         <div class="tool-body">
 
             <p class="page-intro">
-                상업용 건물의 모든 강제순환 공기 시스템은 명판에 무엇이라고 쓰여 있든 같은 과정을 중심으로 구성됩니다. 실내에서
+                상업용 건물의 모든 강제순환식 공조 시스템은 명판에 무엇이라고 쓰여 있든 같은 과정을 중심으로 구성됩니다. 실내에서
                 공기를 끌어내 일부를 외기로 교체하고, 여과하고, 가열하거나 냉각한 뒤 다시 밀어 보냅니다. 이 모든 일을 하는 상자가
                 <em>공기조화기(AHU)</em>입니다. 이 페이지에서는 공기 한 덩어리가 각 구간을 차례로 지나가는 경로를 따라갑니다. 이
                 경로를 이해하면 모든 AHU 그래픽과 혼합공기 경보, “급기 온도가 왜 이상하지?”라는 모든 문의를 더 쉽게 해결할 수
@@ -174,10 +174,10 @@ pageMessages:
 
             <p>
                 첫 번째 구간은 공기를 처리하는 대신 <em>교환하는</em> 유일한 곳이라 혼동하기 쉽습니다. 이곳에는 세 개의 댐퍼가
-                있습니다. 건물 공기를 얼마나 재사용할지 정하는 <em>회기 댐퍼</em>, 신선한 공기를 얼마나 들일지 정하는
+                있습니다. 건물 공기를 얼마나 재사용할지 정하는 <em>회기 댐퍼</em>, 환기용 외기를 얼마나 들일지 정하는
                 <em>외기 댐퍼</em>, 유입 공기가 들어올 자리를 만들기 위해 건물 밖으로 얼마나 내보낼지 정하는
                 <em>배기·릴리프 댐퍼</em>입니다. 외기를 들이는 이유는 무엇일까요? 온도가 아니라 <em>사람</em>을 위해서입니다.
-                사람이 있는 건물은 환기를 위해 신선한 공기를 꾸준히 공급해야 하며, 법규가 최소량을 정합니다. 들어온 공기만큼은
+                사람이 있는 건물은 환기를 위해 일정량의 외기를 계속 공급해야 하며, 법규가 최소량을 정합니다. 들어온 공기만큼은
                 다시 나가야 합니다. 유닛이 외기를 들이면서 아무 공기도 내보내지 않으면 건물이 천천히 풍선처럼 부풀어 로비 문이
                 저절로 열려 있고 출입할 때마다 공기가 거세게 빠져나갑니다. 릴리프 공기가 어디로 가고 공기량 수지가 맞지 않으면
                 어떤 일이 일어나는지는 <a href="/ko/education/building-pressure.html">이 장의 다른 페이지</a>에서 설명합니다. 여기서는
@@ -187,7 +187,7 @@ pageMessages:
                 기본 유닛이 최소 환기량으로 운전할 때 구성은 단순합니다. 외기(OA) 댐퍼는
                 <em>최소 개도</em>, 즉 <a href="/ko/tools/minimum-outdoor-air.html">법정 환기량</a>을 충족할 만큼만 열려 있고,
                 회기(RA) 댐퍼는 대부분 열리며, 릴리프 댐퍼도 이에 맞춰 조금 열립니다. 세 댐퍼는 서로 연동되어 함께 움직입니다.
-                최소 개도보다 더 열어 무료 외기로 건물을 냉방하는 운전은 <em><button type="button" data-gloss="economizer">외기냉방</button></em>
+                최소 개도보다 더 열어 외기로 건물을 무상 냉방하는 운전은 <em><button type="button" data-gloss="economizer">외기냉방</button></em>
                 시퀀스입니다. 이는 자체 로직과 고장 형태를 가진 완전히 별개의 판단이며
                 <a href="/ko/education/economizers.html">이 장의 다음 페이지</a>에서 설명합니다. 이 페이지에서는 모든 댐퍼를 최소
                 개도로 유지합니다.
@@ -428,7 +428,7 @@ pageMessages:
             </div>
 
             <p style="margin-top:1.25rem;">
-                전체 경로를 정리하면 다음과 같습니다. 회기가 들어오고, 혼합부에서 일부를 신선한 외기로 교체하고, 필터로 여과한 뒤,
+                전체 경로를 정리하면 다음과 같습니다. 회기가 들어오고, 혼합부에서 일부를 외기로 교체하고, 필터로 여과한 뒤,
                 코일에서 가열하거나 냉각하며 필요하면 제습하고, 팬이 다시 밀어냅니다. 이 장의 나머지 내용 대부분은 이 구간 중 하나와
                 연결됩니다. 댐퍼를 최소 개도보다 더 열어야 하는 시점은 <a href="/ko/education/economizers.html">외기냉방</a>, 릴리프
                 공기의 행선지는 <a href="/ko/education/building-pressure.html">건물 압력</a>, 급기 덕트 끝의 박스가 하는 일은
@@ -515,7 +515,7 @@ pageMessages:
             </div>
 
             <p class="ref-note">
-                외기 비율을 20&nbsp;%로 고정한 이유는 무엇일까요? 댐퍼를 최소 개도<em>보다 더</em> 열어 무료 외기로 건물을 냉방할
+                외기 비율을 20&nbsp;%로 고정한 이유는 무엇일까요? 댐퍼를 최소 개도<em>보다 더</em> 열어 외기로 건물을 무상 냉방할
                 시점을 판단하는 일은 <button type="button" data-gloss="economizer">외기냉방</button>의 역할이며,
                 <button type="button" data-gloss="economizer">외기냉방</button>은 <a href="/ko/education/economizers.html">별도 페이지</a>에서
                 설명하기 때문입니다. 여기서 중요한 것은 최소 개도가 제공하는 이점입니다. 혼합공기의 80&nbsp;%가
@@ -529,7 +529,7 @@ pageMessages:
     </div>
 
     {{ relatedLinks({
-        hub: {href: '/ko/forced-air/', label: '강제순환 공기 참고 허브'},
+        hub: {href: '/ko/forced-air/', label: '강제순환식 공조 참고 자료 허브'},
         tools: [
             {href: '/ko/tools/psychrometric-chart.html', label: '습공기선도'},
             {href: '/ko/tools/air-mixing.html', label: '공기 혼합 계산기'},

@@ -30,7 +30,7 @@ nav: home
                 "inLanguage": "{{ locale }}",
                 "contactPoint": {
                     "@type": "ContactPoint",
-                    "url": "{{ "/contact.html" | localizedCanonical(locale) }}",
+                    "url": "{{ "/contact.html" | localizedCanonical(locale) | cleanCanonical }}",
                     "contactType": {{ "seo.contactType" | t(locale) | safeScriptJson | safe }}
                 }
             }

@@ -6,7 +6,7 @@ nav: education
 category: forced-air
 pairedQuiz: https://controlsfreak.dev/ko/practice/vav-systems.html
 keywords: VAV 박스 말단 박스 변풍량 댐퍼 풍량 검출 링 풍량 검출 십자관 속도압 K 계수 압력 독립 최소 최대 CFM 재열 바이패스 덤프 존
-sourceContentHash: 1f2d944ea1eb9c37da9e79eacb0aee4611c8adcde68b0b5b768d748cf22ef9a0
+sourceContentHash: a5846e187cbf203c3afd584f328e5faf5bd4ab645ea786154df33feaadf62ca9
 sourceMessageHash: 0a3bd182b638cc9c8c812000193f3bdfa0064b42f91ebf029341866a4fb8a851
 pageMessages:
   widget:
@@ -340,7 +340,7 @@ pageMessages:
 
             <p>
                 존이 식으면서 풍량 설정값이 내려가는 과정을 따라가고 어디에서 멈추는지 살펴보세요. 0이 아닙니다. 모든 박스에는
-                최소값이 있으며, 첫 번째 이유는 이 장에서 계속 다뤄 온 환기입니다. 재실 존은 법규가 요구하는 신선한 공기 중 해당
+                최소값이 있으며, 첫 번째 이유는 이 장에서 계속 다뤄 온 환기입니다. 재실 존은 법규가 요구하는 환기용 외기 중 해당
                 존의 배분량을 받아야 하며, 이 공기는 급기에 실려 들어옵니다. 박스를 완전히 닫으면 온도는 적절할 수 있어도 환기량은
                 소리 없이 부족해집니다. <a href="/ko/education/economizers.html">건물에 사람이 있는 동안에는 환기 하한을 낮출 수
                 없으며</a>, 박스 수준에서는 최소 CFM이 바로 그 하한<em>입니다</em>.
@@ -370,7 +370,7 @@ pageMessages:
             <h2 class="subhead" id="the-coil-floor">장비에도 최소 풍량이 있습니다</h2>
 
             <p>
-                지금까지 살펴본 모든 하한은 존의 신선한 공기와 쾌적성을 보호했습니다. 마지막 하한은 장비를 보호하며, 이 페이지의
+                지금까지 살펴본 모든 하한은 존의 환기와 쾌적성을 보호했습니다. 마지막 하한은 장비를 보호하며, 이 페이지의
                 작성자가 실제로 고생하며 익힌 내용입니다. 유닛의 냉각 코일은 설계 풍량에 맞춰 용량을 선정합니다. 냉수 코일은 부분
                 풍량에 자연스럽게 대응합니다. 풍량이 줄면 흡수하는 열이 줄고 밸브도 닫히므로 수배관 측은 별문제 없이 적응합니다. 다시
                 수배관의 이야기입니다. 그러나 <em><button type="button" data-gloss="dx">직팽식(DX)</button></em> 코일은 그렇지 않습니다.
@@ -379,7 +379,7 @@ pageMessages:
                 K 계수와 마찬가지로 업계에서 사용하는 IP 단위 기반 값입니다. 운전 중인 단수에 이보다 훨씬 적은 풍량을 공급하면
                 흡입압력이 급락하고 코일 표면은 결빙 온도 아래로 내려갑니다. 핀에서 흘러내려야 할 응축수는 대신 핀에 얼어붙습니다.
                 얼음이 풍량을 더 막고 코일의 풍량 부족이 더 심해지는 악순환이 단계적으로 진행됩니다. 그대로 두면 코일 전체가 얼어붙고,
-                결국 압축기에 액냉매가 유입되며 <button type="button" data-gloss="short-cycling">단주기 운전</button>을 반복해 폐기할 지경에 이릅니다.
+                결국 압축기가 액냉매를 빨아들여 액압축(liquid slugging)을 일으키고 <button type="button" data-gloss="short-cycling">단주기 운전</button>을 반복해 폐기할 지경에 이릅니다.
             </p>
 
             <p>
@@ -522,7 +522,7 @@ pageMessages:
     </div>
 
     {{ relatedLinks({
-        hub: {href: '/ko/forced-air/', label: '강제순환 공기 참고 허브'},
+        hub: {href: '/ko/forced-air/', label: '강제순환식 공조 참고 자료 허브'},
         tools: [
             {href: '/ko/tools/airflow.html', label: '풍량 계산기'},
             {href: '/ko/tools/duct-traverse.html', label: '덕트 트래버스 계산기'},
@@ -533,7 +533,7 @@ pageMessages:
             {href: '/ko/tools/duct-sizer.html', label: '덕트 크기 계산기'}
         ],
         simulators: [
-            {href: '/ko/simulators/refrigerant-loop.html', label: '냉매 루프 시뮬레이터'}
+            {href: '/ko/simulators/refrigerant-loop.html', label: '냉매 회로 시뮬레이터'}
         ],
         lessons: [
             {href: '/ko/education/duct-static-control.html', label: '덕트 정압 제어'},

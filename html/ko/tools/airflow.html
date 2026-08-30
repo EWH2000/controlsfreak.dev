@@ -1,7 +1,7 @@
 ---
 title: 풍량 및 속도압 계산기 — controlsfreak.dev
 description: VAV K 계수식 CFM = K × √VP를 양방향으로 계산하고, 직사각형·원형 덕트에서 V = 4005 × √VP로 유속과 풍량을 구합니다.
-sourceContentHash: 99716af33a855101f8c42a38e2d5836e30316c94c629396d61ea53cbc660dec8
+sourceContentHash: b2f5506c2935e5ac12f8b90c5a10717cc20166cc7eef619015299e885a6ce4c5
 sourceMessageHash: 35eac1dfe96db32d5ef8f74538a4938f4fc2f849c4b349ee4f66f56a6420d47c
 canonical: https://controlsfreak.dev/ko/tools/airflow.html
 nav: tools
@@ -150,7 +150,7 @@ pageMessages:
                         <input class="ps-input" type="number" id="vp-d-dia" step="any" min="0" placeholder="16" value="16">
                     </div>
                     <p class="ref-note">
-                        피토관 한 지점의 측정값은 점유속이며, 덕트 유속은 균일하지 않습니다. 중심에서 가장 빠르고 벽에서는 0에 가까워집니다. 서명 가능한 측정값을 얻으려면 덕트를 트래버스하여 등면적 격자의 여러 지점을 측정하고 유속을 평균해야 합니다. <a href="/ko/tools/duct-traverse.html">덕트 트래버스 계산기</a>는 격자 전체를 평균하며 이 탭은 각 지점의 계산을 수행합니다.
+                        피토관 한 지점의 측정값은 점유속이며, 덕트 유속은 균일하지 않습니다. 중심에서 가장 빠르고 벽에서는 0에 가까워집니다. 공식 기록에 사용할 측정값을 얻으려면 덕트를 트래버스하여 등면적 격자의 여러 지점을 측정하고 유속을 평균해야 합니다. <a href="/ko/tools/duct-traverse.html">덕트 트래버스 계산기</a>는 격자 전체를 평균하며 이 탭은 각 지점의 계산을 수행합니다.
                     </p>
                 </section>
 
@@ -206,7 +206,7 @@ pageMessages:
     </div>
 
     {{ relatedLinks({
-        hub: {href: '/ko/forced-air/', label: '강제송풍 공조 시스템 참조 허브'},
+        hub: {href: '/ko/forced-air/', label: '강제순환식 공조 참고 자료 허브'},
         tools: [
             {href: '/ko/tools/duct-traverse.html', label: '덕트 트래버스 계산기'},
             {href: '/ko/tools/airside-load.html', label: '공기측 부하 계산기'},

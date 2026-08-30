@@ -1,11 +1,11 @@
 ---
-title: 냉매 루프 시뮬레이터 — controlsfreak.dev
-description: 냉방·히트펌프 난방 모드에서 냉매 루프를 운전하며 압력, 과열도, 과냉도, 냉매 응축압력, 코일 결빙·착상과 제상 거동을 실시간으로 확인하는 증기압축 시뮬레이터입니다.
-sourceContentHash: 1e8693a00027cd5decc3505f5bd839ff3f8b617308ca2cc8287d9607b43ae815
+title: 냉매 회로 시뮬레이터 — controlsfreak.dev
+description: 냉방 또는 히트펌프 난방 모드에서 실시간 증기압축 냉매 회로를 운전합니다. 사방밸브를 전환하고 실외 코일에 성에를 쌓은 뒤 제상을 운전하면서 시스템의 반응을 확인하세요.
+sourceContentHash: a08377cca9d422e61b4dc8c4e3caa394774094cdec23955bedeffe79b70801a4
 sourceMessageHash: be627f8b2cabbeb209d7440519b8c6eddf06892627f4a51dbe15618569afa394
 canonical: https://controlsfreak.dev/ko/simulators/refrigerant-loop.html
 nav: simulators
-keywords: 증기압축 냉매 루프 흡입압력 냉매 응축압력 과열도 과냉도 TXV 팽창장치 결빙 psig 매니폴드게이지 R410A 히트펌프 사방밸브 제상 착상 저외기
+keywords: 증기압축 냉매 회로 흡입압력 응축압력 과열도 과냉도 TXV 팽창장치 결빙 psig 매니폴드게이지 R410A 히트펌프 사방밸브 제상 착상 저외기
 pageMessages:
   accessibility:
     onSuffix: ", 켜짐"
@@ -17,7 +17,7 @@ pageMessages:
     freezeAirflow: 코일 결빙 — 증발기 풍량이 부족합니다.
     freezeBelow: 코일 결빙 — 증발기가 32 °F (0 °C) 미만에서 운전 중입니다.
     defrost: 제상 — 사방밸브가 냉방 위치로 전환되고 실외 팬이 정지했습니다. 고온 가스가 성에를 녹이는 동안 급기 덕트에서는 찬 공기가 나옵니다. 정상적인 일시 운전입니다.
-    frostChoked: 실외 코일 착상 막힘 — 성에가 풍량을 막고 흡입압력을 낮추고 있습니다. 제상이 지연되었습니다.
+    frostChoked: 실외 코일 성에 막힘 — 성에가 풍량을 막고 흡입압력을 낮추고 있습니다. 제상이 지연되었습니다.
     floodback: 액냉매 유입(floodback, 액백) — 과열도가 무너져 액냉매가 압축기로 유입됩니다.
     starved: 증발기 냉매 공급 부족 — 과열도가 높으므로 냉매 충전량 부족을 의심하세요.
     starvedOutdoor: 실외 코일 풍량 부족 — 실외 공기보다 지나치게 낮은 온도로 운전되어 흡입압력이 무너지고 있습니다(코일 면 막힘 / 팬 성능 저하).
@@ -35,7 +35,7 @@ pageMessages:
     floor: " CFM/ton · 하한 400"
   alarms:
     coilFreeze: 코일 결빙
-    frostChoked: 실외 코일 착상 막힘
+    frostChoked: 실외 코일 성에 막힘
     frost: 실외 코일 착상
     floodback: 액냉매 유입
     highHead: 냉매 응축압력 상승
@@ -54,7 +54,7 @@ pageMessages:
     coolAirIndoors: 찬 공기 → 실내
   states:
     hotVapor: 고온 증기
-    warmLiquid: 고온 액체
+    warmLiquid: 중온 액체
     coldMix: 저온 혼합물
     coolVapor: 저온 증기
   plot:
@@ -66,7 +66,7 @@ pageMessages:
   errors:
     controls: 제어 입력값을 확인하세요.
   diagnostics:
-    tempRingFallback: "refrigerant-loop: 포화온도 눈금 간격이 부족하여 {step}° 단계로 대체했습니다({refrigerant} {curve})"
+    tempRingFallback: "refrigerant-loop: 포화온도 링이 최소 눈금 간격을 충족하지 못해 {step}° 간격으로 대체했습니다({refrigerant} {curve})"
 ---
 {% extends "html/simulators/refrigerant-loop.html" %}
 
@@ -74,7 +74,7 @@ pageMessages:
 <main id="main">
 
     <div class="section-header">
-        <span class="section-label">시뮬레이터 · 냉매 루프</span>
+        <span class="section-label">시뮬레이터 · 냉매 회로</span>
         <div class="section-line"></div>
     </div>
 
@@ -103,7 +103,7 @@ pageMessages:
         </button>
         <div class="tool-card-header">
             <h1 class="tool-card-title">
-                냉매 루프 시뮬레이터
+                냉매 회로 시뮬레이터
                 <span class="tool-tag">HVAC</span>
             </h1>
         </div>
@@ -116,7 +116,7 @@ pageMessages:
             <p class="tool-preamble rl-intro">
                 이 도구는 열역학 물성 모델이 아니라 방향성 모델입니다. 압력은 실제 P-T 표를
                 조회하지만 각 노브가 변화시키는 크기는 상태가 어느 방향으로 이동하는지
-                설명하도록 조정한 예시값입니다. 노브를 돌려 게이지, 루프, 경보의 반응을
+                설명하도록 조정한 예시값입니다. 노브를 돌려 게이지, 회로, 경보의 반응을
                 확인한 다음 모드를 <strong>난방</strong>으로 바꿔 보세요. 사방밸브가 두 코일의
                 역할을 맞바꾸어 실외 코일이 증발기가 되고, 착상이 핵심 현상이 되며, 제상
                 운전은 히트펌프가 하루에 두 차례 찬 공기를 내보내는 이유를 보여 줍니다.
@@ -164,7 +164,7 @@ pageMessages:
             <div class="rl-presets field" role="group" aria-labelledby="rl-try-lbl">
                 <span class="field-label" id="rl-try-lbl">시나리오:</span>
                 <div class="btn-row">
-                    <button type="button" class="copy-btn" data-preset="typical" data-mode="cooling" aria-pressed="false">일반 운전일</button>
+                    <button type="button" class="copy-btn" data-preset="typical" data-mode="cooling" aria-pressed="false">정상 운전</button>
                     <button type="button" class="copy-btn rl-preset-starve" data-preset="starve" data-mode="cooling" aria-pressed="false">코일 풍량 부족</button>
                     <button type="button" class="copy-btn" data-preset="undercharge" data-mode="cooling" aria-pressed="false">냉매 부족</button>
                     <button type="button" class="copy-btn" data-preset="overcharge" data-mode="cooling" aria-pressed="false">냉매 과충전</button>
@@ -201,14 +201,14 @@ pageMessages:
                  rate tracks the stage.
                  The particles + colors are applied by flow-engine.js (loaded
                  site-wide); this page only tags the geometry and recolors. -->
-            <h2 class="subhead">냉매 루프</h2>
+            <h2 class="subhead">냉매 회로</h2>
             <div class="rl-loop rl-stage">
                 <svg class="rl-loop-svg" id="rl-cycle" viewBox="0 0 720 460"
                      role="img" aria-labelledby="rl-cycle-title"
                      aria-describedby="rl-cycle-desc"
                      font-family="var(--mono)">
-                    <title id="rl-cycle-title">실시간 냉매 루프</title>
-                    <desc id="rl-cycle-desc">히트펌프 사방밸브를 갖춘 폐쇄형 사각 증기압축 루프입니다. 위쪽 막대는 항상 실외 코일이고 아래쪽 막대는 항상 실내 코일이며, 어느 코일이 응축기인지는 선택한 모드에 따라 달라집니다. 냉방 모드에서는 루프가 시계 방향으로 흐릅니다. 왼쪽 압축기가 고온·고압 증기를 사방밸브를 거쳐 위쪽 실외 코일로 보내면, 냉매는 실외 공기에 열을 방출하고 고온·고압 액체가 됩니다. 오른쪽 액관은 냉매를 팽창장치로 보내 저온·저압 혼합물로 팽창시킵니다. 이 혼합물은 아래쪽 실내 코일에서 실내 공기의 열을 흡수하여 저온·저압 증기로 비등한 뒤 사방밸브를 거쳐 압축기로 돌아갑니다. 난방 모드에서는 밸브가 전환되어 루프가 반시계 방향으로 흐릅니다. 토출가스가 아래쪽 실내 코일로 내려가 응축하면서 실내 공기를 데우고, 실외 코일은 증발기가 되어 외기보다 낮은 온도에서 운전합니다. 춥고 습한 날 빙점 미만이 되면 위쪽 막대에 성에가 쌓입니다. 제상 시나리오에서는 실외 공기 흐름을 정지하고 밸브를 냉방 방향으로 되돌립니다. 일시적인 냉방사이클 운전으로 성에를 녹이는 동안 실내 덕트에서는 찬 공기가 나옵니다. 네 가지 배관 색상은 흐름을 따라 냉매 상태를 표시합니다. 토출관의 주황색은 고온 증기, 액관의 황색은 고온 액체, 팽창관의 옅은 청색은 저온 혼합물, 흡입관의 청색은 저온 증기를 나타내며, 고온에서 저온으로 바뀌는 지점은 실제와 같이 팽창장치에 놓입니다. 각 코일 막대 안에서 냉매는 실시간 색상 그라데이션으로 칠한 사행 관로를 따라 흐릅니다. 응축 구간은 과냉도에 따라 고온 증기 주황색에서 액체 황색으로 바뀌며, 플래시 가스가 있으면 그라데이션이 출구 너머까지 이어집니다. 증발 구간은 과열도에 따라 저온 혼합물 청색에서 증기 청색으로 바뀝니다. 압축기와 코일 배관 사이에는 사방밸브 기호가 있고 두 압축기 배관은 모든 모드에서 이 밸브에 연결됩니다. 토출은 항상 압축기의 고정 상부 포트에서 밸브로 나가고, 흡입은 항상 밸브에서 압축기의 고정 하부 포트로 돌아옵니다. 모드에 따라 바뀌는 밸브 내부 유로가 각 배관이 연결되는 코일을 맞바꾸며 압축기 포트 자체는 바뀌지 않습니다. 코일에 착상 또는 결빙이 발생하면 해당 코일과 흡입관에 성에 오버레이가 나타납니다. 압축기 기호는 위에서 내려다본 두 개의 맞물린 스크롤로, 움직이는 스크롤이 고정 스크롤 주위를 작은 원으로 공전합니다. 외향 나선과 반대인 압축 방향으로 움직이며 속도는 압축기 단수에 따라 달라집니다. 얇은 파선 공기 유로는 교차류 축을 따라 두 코일 면을 수직으로 통과합니다. 실외 공기는 위쪽 코일을 통과해 상승하고 실내 공기는 아래쪽 코일을 통과해 하강합니다. 입구는 흐린 색이며 출구는 코일 작용에 따라 응축기에서는 따뜻한 주황색, 증발기에서는 차가운 청색, 결빙된 코일에서는 성에색으로 표시되고 제상 중에는 실외 코일 유동이 정지합니다. 각 코일 면의 유동 밀도는 해당 풍량 노브를 따릅니다. 실시간 압력, 과열도, 과냉도와 경보값은 아래 게이지와 계기값에 표시됩니다.</desc>
+                    <title id="rl-cycle-title">실시간 냉매 회로</title>
+                    <desc id="rl-cycle-desc">히트펌프 사방밸브를 갖춘 폐쇄형 사각 증기압축 회로입니다. 위쪽 막대는 항상 실외 코일이고 아래쪽 막대는 항상 실내 코일이며, 어느 코일이 응축기인지는 선택한 모드에 따라 달라집니다. 냉방 모드에서는 회로가 시계 방향으로 흐릅니다. 왼쪽 압축기가 고온·고압 증기를 사방밸브를 거쳐 위쪽 실외 코일로 보내면, 냉매는 실외 공기에 열을 방출하고 중온·고압 액체가 됩니다. 오른쪽 액관은 냉매를 팽창장치로 보내 저온·저압 혼합물로 팽창시킵니다. 이 혼합물은 아래쪽 실내 코일에서 실내 공기의 열을 흡수하여 저온·저압 증기로 비등한 뒤 사방밸브를 거쳐 압축기로 돌아갑니다. 난방 모드에서는 밸브가 전환되어 회로가 반시계 방향으로 흐릅니다. 토출가스가 아래쪽 실내 코일로 내려가 응축하면서 실내 공기를 데우고, 실외 코일은 증발기가 되어 외기보다 낮은 온도에서 운전합니다. 춥고 습한 날 빙점 미만이 되면 위쪽 막대에 성에가 쌓입니다. 제상 시나리오에서는 실외 공기 흐름을 정지하고 밸브를 냉방 방향으로 되돌립니다. 일시적인 냉방사이클 운전으로 성에를 녹이는 동안 실내 덕트에서는 찬 공기가 나옵니다. 네 가지 배관 색상은 흐름을 따라 냉매 상태를 표시합니다. 토출관의 주황색은 고온 증기, 액관의 황색은 중온 액체, 팽창관의 옅은 청색은 저온 혼합물, 흡입관의 청색은 저온 증기를 나타내며, 고온에서 저온으로 바뀌는 지점은 실제와 같이 팽창장치에 놓입니다. 각 코일 막대 안에서 냉매는 실시간 색상 그라데이션으로 칠한 사행 관로를 따라 흐릅니다. 응축 구간은 과냉도에 따라 고온 증기 주황색에서 액체 황색으로 바뀌며, 플래시 가스가 있으면 그라데이션이 출구 너머까지 이어집니다. 증발 구간은 과열도에 따라 저온 혼합물 청색에서 증기 청색으로 바뀝니다. 압축기와 코일 배관 사이에는 사방밸브 기호가 있고 두 압축기 배관은 모든 모드에서 이 밸브에 연결됩니다. 토출은 항상 압축기의 고정 상부 포트에서 밸브로 나가고, 흡입은 항상 밸브에서 압축기의 고정 하부 포트로 돌아옵니다. 모드에 따라 바뀌는 밸브 내부 유로가 각 배관이 연결되는 코일을 맞바꾸며 압축기 포트 자체는 바뀌지 않습니다. 코일에 착상 또는 결빙이 발생하면 해당 코일과 흡입관에 성에 오버레이가 나타납니다. 압축기 기호는 위에서 내려다본 두 개의 맞물린 스크롤로, 움직이는 스크롤이 고정 스크롤 주위를 작은 원으로 공전합니다. 외향 나선과 반대인 압축 방향으로 움직이며 속도는 압축기 단수에 따라 달라집니다. 얇은 파선 공기 유로는 교차류 축을 따라 두 코일 면을 수직으로 통과합니다. 실외 공기는 위쪽 코일을 통과해 상승하고 실내 공기는 아래쪽 코일을 통과해 하강합니다. 입구는 흐린 색이며 출구는 코일 작용에 따라 응축기에서는 따뜻한 주황색, 증발기에서는 차가운 청색, 결빙된 코일에서는 성에색으로 표시되고 제상 중에는 실외 코일 유동이 정지합니다. 각 코일 면의 유동 밀도는 해당 풍량 노브를 따릅니다. 실시간 압력, 과열도, 과냉도와 경보값은 아래 게이지와 계기값에 표시됩니다.</desc>
 
                     <!-- ── STATE GRADIENTS — userSpaceOnUse so the serpentine
                          STROKE and the engine's particle <circle> fills
@@ -756,7 +756,7 @@ pageMessages:
                                 <div class="v" id="rl-lcd-psuc">&#8212;</div>
                             </div>
                             <div class="lcd">
-                                <div class="k">냉매 응축압력</div>
+                                <div class="k">응축압력</div>
                                 <div class="v" id="rl-lcd-pdis">&#8212;</div>
                             </div>
                             <div class="lcd">
@@ -793,7 +793,7 @@ pageMessages:
 
                 <!-- Verdict + CFM/ton -->
                 <div>
-                    <div class="status-pill" id="rl-status" role="status">노브를 조정하여 루프를 운전하세요.</div>
+                    <div class="status-pill" id="rl-status" role="status">노브를 조정하여 회로를 운전하세요.</div>
 
                     <div class="rl-cfm readout" role="status">
                         <div class="readout-label">실내 코일 풍량</div>
@@ -963,7 +963,7 @@ pageMessages:
             <h2 class="subhead">모델 설명</h2>
             <p class="tool-preamble">
                 이 도구는 열역학 모델이 아닌 <strong>방향성</strong> 모델입니다. 압력은 선택한
-                냉매의 공개 P-T 표에서 실제로 조회하며, <a href="/ko/tools/refrigerant-pt.html">P-T
+                냉매의 공표된 P-T 표에서 실제로 조회하며, <a href="/ko/tools/refrigerant-pt.html">P-T
                 계산기</a>와 같은 표를 사용합니다. 과열도와 과냉도도 이슬점·기포점 곡선을
                 기준으로 정확히 뺀 값입니다. 다만 각 노브가 움직이는 <em>크기</em>는 특정
                 장비를 재현하려는 것이 아니라 현장에서와 같은 방향으로 상태가 이동하도록
@@ -989,7 +989,7 @@ pageMessages:
                 난방 중 실외 코일은 외기보다 약
                 <span data-us="20 °F" data-metric="11.1 °C">20&nbsp;°F</span>
                 낮게 운전하므로 추운 날에는 <em>설계상</em> 빙점 미만이 됩니다. 코일 온도가
-                32 미만인 것 자체는 히트펌프의 정상 운전이며 경보가 아닙니다. 고장이 되는
+                32&nbsp;°F(0&nbsp;°C) 미만인 것 자체는 히트펌프의 정상 운전이며 경보가 아닙니다. 고장이 되는
                 조건은 성에의 누적입니다. 외기가 약
                 <span data-us="40 °F" data-metric="4.4 °C">40&nbsp;°F</span>
                 미만이면 코일에 성에가 제거되는 속도보다 빠르게 쌓입니다. 성에가 코일 풍량을
@@ -1025,18 +1025,18 @@ pageMessages:
             </p>
             <p class="tool-preamble">
                 온도 글라이드에 관한 주의사항이 있습니다. 결빙 감지는 이슬점(과열도측)
-                포화온도 하나를 코일 온도의 대표값으로 사용합니다. R-407C처럼 글라이드가 큰
-                혼합냉매에서는 코일 입구가 이 값보다 글라이드만큼 더 차가우므로 실제 코일은
+                포화온도 하나를 코일 온도의 대표값으로 사용합니다. R-407C처럼 온도 글라이드가 큰
+                혼합냉매에서는 코일 입구가 이 값보다 온도 글라이드만큼 더 차가우므로 실제 코일은
                 이 화면의 단일값이 나타내는 시점보다 조금 일찍 착상하기 시작합니다. R-410A와
-                다른 저글라이드 냉매에서는 이 차이가 거의 사라집니다.
+                온도 글라이드가 작은 다른 냉매에서는 이 차이가 거의 사라집니다.
             </p>
             <p class="tool-preamble">
                 두 공기 계기값은 현열만 나타냅니다. 실내측은 건구온도 차이며 설계 조건에서
                 일반적인
                 <span data-us="75 °F" data-metric="23.9 °C">75&nbsp;°F</span>
-                회기가
+                회기 온도가
                 <span data-us="55 °F" data-metric="12.8 °C">55&nbsp;°F</span>
-                급기로 낮아지는 상태를 풍량 대비 능력에 따라 조정합니다. 실외측은 응축기를
+                급기 온도로 낮아지는 상태를 풍량 대비 능력에 따라 조정합니다. 실외측은 응축기를
                 통과하면서 그에 대응하여 토출 공기 온도가 상승하는 모습을 보여 줍니다. 두 값
                 모두 습도 모델을 사용하지 않습니다. 실제 급기 온도는 잠열 부하와 코일 제습의
                 영향을 받으므로 이를 습공기 상태 해석 결과가 아닌 건구온도 변화 방향으로 읽으세요.
@@ -1044,10 +1044,10 @@ pageMessages:
 
             <p class="ref-note">
                 <strong>이론 확인, 학습 보조, 참고 의견을 위한 도구이며 냉매 충전 도구가
-                아닙니다.</strong> 여기의 크기는 예시값이고, 간이 루프가 장비 자체의 보호장치를
+                아닙니다.</strong> 여기의 크기는 예시값이고, 간이 회로 모델이 장비 자체의 보호장치를
                 대신할 수 없습니다. 실제 장비를 보호하는 것은 <strong>저압 차단기, 동결방지
                 온도조절기, 고압 스위치, 제상 제어, 제조사 냉매 충전 차트</strong>입니다. 풍량이
-                부족한 코일은 완전히 얼어 압축기에 액냉매를 보낼 수 있습니다. 냉방에서는 실내
+                부족한 코일은 완전히 얼어 압축기로 액냉매가 한꺼번에 유입되어 액압축을 일으킬 수 있습니다. 냉방에서는 실내
                 코일에서, 난방에서는 착상이 제상 범위를 넘으면 실외 코일에서 발생합니다.
                 냉매를 잘못 충전하면 어느 모드에서든 압축기가 과열되거나 액냉매가 유입됩니다.
                 냉매 충전, 결빙, 제상 문제는 실제 장비의 게이지, 과열도, 과냉도와 명판을 기준으로
@@ -1058,7 +1058,7 @@ pageMessages:
     </div>
 
     {{ relatedLinks({
-        hub: {href: '/ko/refrigeration/', label: '냉동 참조 허브'},
+        hub: {href: '/ko/refrigeration/', label: '냉동 참고 자료 허브'},
         tools: [
             {href: '/ko/tools/refrigerant-pt.html', label: '냉매 P-T·과열도 계산기'}
         ],

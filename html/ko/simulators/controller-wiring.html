@@ -1,11 +1,11 @@
 ---
 title: 컨트롤러 배선 시뮬레이터 — controlsfreak.dev
-description: 24 VAC 전원부터 범용·바이너리 입력과 아날로그·바이너리 출력까지 직접디지털제어기(DDC)에 직접 결선하고, 활선값과 실제와 같은 결선 고장을 확인하는 시뮬레이터입니다.
-sourceContentHash: 4d94fb5a1c73ba2d5c8d89d7856af53f3fcea6183949d213b465bb225c369b1b
+description: 24 VAC 전원부터 범용·바이너리 입력과 아날로그·바이너리 출력까지 직접 디지털 제어기(DDC)에 직접 결선하고, 실시간 값과 실제와 같은 결선 고장을 확인하는 시뮬레이터입니다.
+sourceContentHash: 739424515d9bc99ec6b7ce1ea601b0ce648f474c10b29be5d5778dea78687b0f
 sourceMessageHash: a0a4dce84f06716b652c1838f4ac2032b6d453bb090a602c593bddfb8f0f969b
 canonical: https://controlsfreak.dev/ko/simulators/controller-wiring.html
 nav: simulators
-keywords: 직접디지털제어기 DDC 제어기 배선 24VAC 변압기 공통선 4-20mA 루프전원 범용입력 아날로그출력 바이너리출력 퓨즈
+keywords: 직접 디지털 제어기 DDC 제어기 배선 24VAC 변압기 공통선 4-20mA 루프전원 범용입력 아날로그출력 바이너리출력 퓨즈
 pageMessages:
   groups:
     power: 전원
@@ -115,7 +115,7 @@ pageMessages:
         <div class="tool-body">
 
             <p class="tool-preamble" style="margin-bottom:1rem;">
-                현장에서처럼 범용 DDC 제어기를 결선합니다. 변압기에서 전원을 공급하고 센서와 출력 장치를 배치한 뒤 단자에서 단자로 클릭해 전선을 연결합니다. 올바르게 결선하면 포인트가 실시간 값을 읽고, 잘못 결선하면 실제 하드웨어처럼 센서 개방, 액추에이터 정지, 퓨즈 용단이 발생합니다. 4–20 mA 트랜스미터는 DC 루프 전원 방식이므로 <strong>+</strong>를 24 VAC 활선이 아닌 컨트롤러의 <strong>LOOP+</strong> 단자(내부 24 VDC 루프 전원)에 연결합니다. 활선에 연결하면 실제 장비가 AC로 루프를 구동하지 못하는 것처럼 포인트 고장이 발생합니다. <strong>데스크톱 도구</strong> — 배선에는 마우스와 넓은 화면이 필요합니다. <strong>컨트롤러 결선이 처음이신가요?</strong> <a href="/ko/education/controller-wiring.html">학습 자료부터 읽기 →</a>
+                현장에서처럼 범용 DDC 제어기를 결선합니다. 변압기에서 전원을 공급하고 센서와 출력 장치를 배치한 뒤 단자에서 단자로 클릭해 전선을 연결합니다. 올바르게 결선하면 포인트가 실시간 값을 읽고, 잘못 결선하면 실제 하드웨어처럼 센서 회로 개방, 액추에이터 정지, 퓨즈 용단이 발생합니다. 4–20 mA 트랜스미터는 DC 루프 전원 방식이므로 <strong>+</strong>를 24 VAC 활선이 아닌 컨트롤러의 <strong>LOOP+</strong> 단자(내부 24 VDC 루프 전원)에 연결합니다. 활선에 연결하면 실제 장비가 AC로 루프를 구동하지 못하는 것처럼 포인트 고장이 발생합니다. <strong>데스크톱 도구</strong> — 배선에는 마우스와 넓은 화면이 필요합니다. <strong>컨트롤러 결선이 처음이신가요?</strong> <a href="/ko/education/controller-wiring.html">학습 자료부터 읽기 →</a>
             </p>
 
             <div class="desktop-only-sim">
@@ -187,7 +187,7 @@ pageMessages:
             {href: '/ko/tools/thermistor-calculator.html', label: '서미스터 계산기'}
         ],
         simulators: [
-            {href: '/ko/simulators/function-block-editor.html', label: '함수 블록 편집기'}
+            {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'}
         ],
         lessons: [
             {href: '/ko/education/controller-wiring.html', label: '컨트롤러 배선'}

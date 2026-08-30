@@ -6,7 +6,7 @@ nav: education
 category: hydronics
 pairedQuiz: https://controlsfreak.dev/ko/practice/balancing.html
 keywords: 수배관 밸런싱 설계 유량 회로설정밸브 비례 밸런싱 밸런싱 밸브 TAB CBV ABV PICV 차압 Δp
-sourceContentHash: d744e8aee60a9a7fe40555c1a7f256f9d7fc4ce5c813fa7bb5049419cc463b15
+sourceContentHash: 75f8cdfd60a02466a85236a95141fee966fddce0c8c51a673d687bc716b50f8e
 sourceMessageHash: ee6162c921889e521228d3f8cb16cdeb2524dbda9c6eb0a09c9f7bf53fe531ab
 pageMessages:
   widget:
@@ -32,7 +32,7 @@ pageMessages:
         <div class="tool-body">
 
             <p class="page-intro">
-                <a href="/ko/education/hydronic-loops.html#d1">2관 직접환수</a> 학습은 <em>모든 부하에는 밸런싱 밸브가 필요하고 누군가는 이를 설정해야 합니다</em>라는 짧은 문장을 남긴 채 다음 내용으로 넘어갔습니다. 이 페이지는 바로 그 문장을 다룹니다. 그 아래에는 두 가지 질문이 있습니다. 수배관 시스템의 모든 부하가 선정 기준인 설계 유량을 실제로 받도록 어떻게 보장하며, 그렇지 않을 때는 어떻게 알아낼까요? 첫 번째는 장비와 절차의 문제이고, 두 번째는 첫 번째를 잘못했을 때 이어지는 진단 이야기입니다.
+                <a href="/ko/education/hydronic-loops.html#d1">2관 직접환수</a> 학습은 <em>“모든 부하에는 밸런싱 밸브가 필요하고 누군가는 이를 설정해야 한다”</em>라는 짧은 문장을 남긴 채 다음 내용으로 넘어갔습니다. 이 페이지는 바로 그 문장을 다룹니다. 그 아래에는 두 가지 질문이 있습니다. 수배관 시스템의 모든 부하가 선정 기준인 설계 유량을 실제로 받도록 어떻게 보장하며, 그렇지 않을 때는 어떻게 알아낼까요? 첫 번째는 장비와 절차의 문제이고, 두 번째는 첫 번째를 잘못했을 때 이어지는 진단 이야기입니다.
             </p>
 
             <!-- ───────────────── 1 · The riser — where balance valves live ───────────────── -->
@@ -50,7 +50,7 @@ pageMessages:
             <svg class="edu-svg" viewBox="0 0 800 500" role="img" aria-labelledby="bal-riser-title bal-riser-desc"
                  font-family="var(--mono)">
                 <title id="bal-riser-title">모든 분기에 교정형 밸런싱 밸브가 있는 4층 수배관 입상관</title>
-                <desc id="bal-riser-desc">단순화한 4층 건물 입상관입니다. 펌프는 아래쪽 중앙의 지하에 있습니다. 공급 주관은 건물 왼쪽으로 올라가고 환수 주관은 오른쪽으로 내려오며, 두 관 모두 펌프에서 끝납니다. 두 입상관 사이에 층마다 하나씩 네 개의 수평 분기가 연결됩니다. 아래쪽의 1층은 펌프에서 가장 가깝고 위쪽의 4층은 가장 멉니다. 각 분기에는 시운전 때 선정하고 조정한 코일과 교정형 밸런싱 밸브가 있습니다. 1층은 수리적으로 가장 가까운 부하이므로 밸런싱 밸브로 조이지 않으면 자연히 설계값보다 많은 유량을 받습니다. 4층은 가장 멀어 시스템 압력이 낮아질 때 유량을 잃기 가장 쉽습니다.</desc>
+                <desc id="bal-riser-desc">단순화한 4층 건물 입상관입니다. 펌프는 아래쪽 중앙의 지하에 있습니다. 공급 주관은 건물 왼쪽으로 올라가고 환수 주관은 오른쪽으로 내려오며, 두 관 모두 펌프에서 끝납니다. 두 입상관 사이에 층마다 하나씩 네 개의 수평 분기가 연결됩니다. 아래쪽의 1층은 펌프에서 가장 가깝고 위쪽의 4층은 가장 멉니다. 각 분기에는 시운전 때 선정하고 조정한 코일과 교정형 밸런싱 밸브가 있습니다. 1층은 수배관상 가장 가까운 부하이므로 밸런싱 밸브로 조이지 않으면 자연히 설계값보다 많은 유량을 받습니다. 4층은 가장 멀어 시스템 압력이 낮아질 때 유량을 잃기 가장 쉽습니다.</desc>
 
                 <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
                      header): the engine samples each path's geometry once instead of
@@ -179,7 +179,7 @@ pageMessages:
             </div>
 
             <p style="margin-top:1.25rem;">
-                여기에 그린 밸브는 <em>교정형 밸런싱 밸브</em>입니다. 알아야 할 세 종류 중 가장 오래되고 단순하며 지금도 가장 흔합니다. 나머지 두 종류인 <em>자동</em> 밸런싱 밸브와 <em>차압 독립형 제어밸브</em>는 기술자가 수동으로 하던 작업 일부를 대신합니다. 다음 세 절에서는 각 밸브의 구조와 거동, 건물에서의 적용 위치를 살펴봅니다. 이어지는 작은 위젯에서는 시스템 압력이 변할 때 세 밸브를 나란히 비교할 수 있습니다. 바로 이 조건에서 차이는 더 이상 이론에 머물지 않습니다.
+                여기에 그린 밸브는 <em>교정형 밸런싱 밸브</em>입니다. 알아야 할 세 종류 중 가장 오래되고 단순하며 지금도 가장 흔합니다. 나머지 두 종류인 <em>자동</em> 밸런싱 밸브와 <em>압력 독립형 제어 밸브</em>는 기술자가 수동으로 하던 작업 일부를 대신합니다. 다음 세 절에서는 각 밸브의 구조와 거동, 건물에서의 적용 위치를 살펴봅니다. 이어지는 작은 위젯에서는 시스템 압력이 변할 때 세 밸브를 나란히 비교할 수 있습니다. 바로 이 조건에서 차이는 더 이상 이론에 머물지 않습니다.
             </p>
 
             <!-- ───────────────── 2 · CBVs ───────────────── -->
@@ -275,13 +275,13 @@ pageMessages:
             </p>
 
             <!-- ───────────────── 4 · PICVs ───────────────── -->
-            <h2 class="subhead" id="picv">차압 독립형 제어밸브(PICV)</h2>
+            <h2 class="subhead" id="picv">압력 독립형 제어 밸브(PICV)</h2>
 
             <!-- Per-valve symbol diagram: bowtie + actuator + cartridge stack. -->
             <div class="bal-valve-fig">
                 <svg class="bal-fig" viewBox="0 0 360 150" role="img" aria-labelledby="bal-picv-fig-title bal-picv-fig-desc"
                      font-family="var(--mono)">
-                    <title id="bal-picv-fig-title">차압 독립형 제어밸브 기호</title>
+                    <title id="bal-picv-fig-title">압력 독립형 제어 밸브 기호</title>
                     <desc id="bal-picv-fig-desc">짧은 공급 배관 중앙에 나비넥타이 모양 밸브가 있습니다. 밸브 몸체 위에는 스템이 달린 직사각형 제어 구동기가 있고, 몸체 안의 스프링 카트리지 기호는 자동 차압 보상을 나타냅니다. 이 조합은 시스템 압력 변동과 관계없이 카트리지가 최대 유량을 일정하게 유지하는 비례 제어밸브를 구성합니다.</desc>
 
                     <line x1="20" y1="105" x2="340" y2="105" stroke="var(--blue)" stroke-width="3"/>
@@ -304,7 +304,7 @@ pageMessages:
                     <!-- caption -->
                     <text x="180" y="142" text-anchor="middle" font-size="9" fill="var(--text-dim)">제어밸브 + 밸런싱 밸브 일체형</text>
                 </svg>
-                <span class="cap">차압 독립형 제어밸브 — 자동 밸런싱 카트리지와 비례 제어밸브를 결합한 장치로 CBV와 제어밸브 조합을 대체합니다.</span>
+                <span class="cap">압력 독립형 제어 밸브 — 자동 밸런싱 카트리지와 비례 제어밸브를 결합한 장치로 CBV와 제어밸브 조합을 대체합니다.</span>
             </div>
 
             <p>
@@ -312,7 +312,7 @@ pageMessages:
             </p>
 
             <p>
-                이 한 가지 거동 변화 때문에 PICV는 신규 변유량 시스템의 기본 선택이 되었습니다. 기존 제어밸브에는 <em>밸브 영향도(authority, β)</em> 문제가 있습니다. 다른 부하가 조절되고 펌프 속도가 변해 시스템 Δp가 흔들리면 같은 밸브 위치에서도 다른 유량이 흐르며, BMS 루프는 설정값을 유지하려고 자기 밸브를 계속 추종해야 합니다. PICV는 밸브 자체가 이미 보상하므로 루프에서 그 부담을 없앱니다. 제어 루프는 한 번 튜닝되고 밸브는 명령대로 동작하며, BMS는 수리 조건과 싸우는 대신 실제 부하 추종에 집중합니다.
+                이 한 가지 거동 변화 때문에 PICV는 신규 변유량 시스템의 기본 선택이 되었습니다. 기존 제어밸브에는 <em>밸브 영향도(authority, β)</em> 문제가 있습니다. 다른 부하가 조절되고 펌프 속도가 변해 시스템 Δp가 흔들리면 같은 밸브 위치에서도 다른 유량이 흐르며, BMS 루프는 설정값을 유지하려고 자기 밸브를 계속 추종해야 합니다. PICV는 밸브 자체가 이미 보상하므로 루프에서 그 부담을 없앱니다. 제어 루프는 한 번 튜닝되고 밸브는 명령대로 동작하며, BMS는 수배관의 압력 변동과 싸우는 대신 실제 부하 추종에 집중합니다.
             </p>
 
             <p>
@@ -499,7 +499,7 @@ pageMessages:
     </div>
 
     {{ relatedLinks({
-        hub: {href: '/ko/hydronics/', label: '수배관 참조 허브'},
+        hub: {href: '/ko/hydronics/', label: '수배관 참고 자료 허브'},
         tools: [
             {href: '/ko/tools/valve-cv.html', label: '밸브 Cv 선정'},
             {href: '/ko/tools/waterside-load.html', label: '수배관 부하 계산기'}

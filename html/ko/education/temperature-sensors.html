@@ -1,7 +1,7 @@
 ---
 title: 온도 센서 — controlsfreak.dev
 description: 서미스터 곡선 계열, RTD와 리드선 저항, 실제 배선된 온도 센서 종류를 확인하는 계측기와 표 기반의 점검 절차를 설명합니다.
-sourceContentHash: 72af0eedc1ce63175c564d3cc9907b9e5a1a6417c5287ee268e21ae2e40d7b76
+sourceContentHash: 304d44afa79d1cbbc2801bbb98efe3f086bff974b4414373237e3423a1cfd084
 sourceMessageHash: f4be8adfbb917163994abda32dffd9a4aaa74948ef37ec43658e382838ffee9f
 pageMessages:
     display:
@@ -48,11 +48,11 @@ keywords: 서미스터 RTD 10K Type II Type III PT100 PT1000 Balco 3선식 옴 �
             </p>
 
             <p>
-                여기에 한 가지가 더해져 상황이 복잡해집니다. 여러 제조사가 사용 온도 범위에서 곡선을 완만하게 만들기 위해 10K 소자와 고정 저항을 병렬로 연결한 <strong>분로형</strong> 10K 방식을 사용합니다. JCI 방식은 10K 소자와 8.7&nbsp;k&Omega; 분로 저항을 연결하므로 약 <strong>4.7&nbsp;k&Omega;</strong>만 읽히며, 그 기준점은 <span data-us="77&nbsp;&deg;F" data-metric="25.0&nbsp;&deg;C">77&nbsp;&deg;F</span>입니다. TAC Type&nbsp;5 방식은 Type&nbsp;III 소자와 11&nbsp;k&Omega; 분로 저항을 연결해 같은 지점에서 약 <strong>5.2&nbsp;k&Omega;</strong>을 나타냅니다. 대화에서는 둘 다 여전히 "10K 센서"라고 부르므로 실온에서 10&nbsp;k&Omega;을 예상한 기술자에게는 심하게 고장 난 센서처럼 보입니다. 일반화하면 <strong>상자의 레이블은 이름이고 소프트웨어에서 선택한 곡선은 결정 사항입니다.</strong> 제어기에서는 둘이 일치해야 하며 배선 자체는 이를 강제하지 않습니다.
+                여기에 한 가지가 더해져 상황이 복잡해집니다. 여러 제조사가 사용 온도 범위에서 곡선을 완만하게 만들기 위해 10K 소자와 고정 저항을 병렬로 연결한 <strong>분로형</strong> 10K 방식을 사용합니다. JCI 방식은 10K 소자와 8.7&nbsp;k&Omega; 분로 저항을 연결하므로 약 <strong>4.7&nbsp;k&Omega;</strong>만 읽힙니다. 이는 <span data-us="77&nbsp;&deg;F" data-metric="25.0&nbsp;&deg;C">77&nbsp;&deg;F</span> 기준점에서의 값입니다. TAC Type&nbsp;5 방식은 Type&nbsp;III 소자와 11&nbsp;k&Omega; 분로 저항을 연결해 같은 지점에서 약 <strong>5.2&nbsp;k&Omega;</strong>을 나타냅니다. 대화에서는 둘 다 여전히 "10K 센서"라고 부르므로 실온에서 10&nbsp;k&Omega;을 예상한 기술자에게는 심하게 고장 난 센서처럼 보입니다. 일반화하면 <strong>상자의 레이블은 이름이고 소프트웨어에서 선택한 곡선은 결정 사항입니다.</strong> 제어기에서는 둘이 일치해야 하며 배선 자체는 이를 강제하지 않습니다.
             </p>
 
             <p>
-                이제 이 절이 가르치려는 조용한 고장에 도달했습니다. Type&nbsp;III 센서를 Type&nbsp;II로 구성된 입력에 연결하면 <em>모든 것이 동작하는 것처럼 보입니다</em>. 포인트는 살아 있고 그럴듯한 온도를 표시하며, 트렌드는 매끄럽고, 경보도 발생하지 않습니다. 하지만 값은 틀립니다. 교차점인 <span data-us="77&nbsp;&deg;F" data-metric="25.0&nbsp;&deg;C">77&nbsp;&deg;F</span>에서는 오차가 없지만 약 <span data-us="3&nbsp;&deg;F" data-metric="1.7&nbsp;&deg;C">3&nbsp;&deg;F</span>의 오차가 생기는 실제 온도 지점 중 하나가 <span data-us="40.0&nbsp;&deg;F" data-metric="4.4&nbsp;&deg;C">40.0&nbsp;&deg;F</span>이며, 교차점에서 더 멀어질수록 오차가 커집니다. 누구나 볼 수 있게 측정값이 레일에 고정되는 개방·단락 센서의 명확한 고장과 비교해 보십시오. <a href="/ko/education/controller-wiring.html#inputs">제어기 배선의 서미스터 단자 연결</a>에서 개방은 풀 스케일 저온, 단락은 풀 스케일 고온으로 읽히는 과정을 설명합니다. 곡선 불일치는 정반대입니다. 값이 계속 <em>그럴듯하게</em> 틀립니다. 몇 도 어긋난 외기 센서가 <button type="button" data-gloss="economizer">외기 냉방 제어</button>의 전환과 잠금을 수년간 조용히 왜곡해도 아무도 3&deg;의 거짓값을 추적하지 않습니다.
+                이제 이 절이 가르치려는 조용한 고장에 도달했습니다. Type&nbsp;III 센서를 Type&nbsp;II로 구성된 입력에 연결하면 <em>모든 것이 동작하는 것처럼 보입니다</em>. 포인트는 살아 있고 그럴듯한 온도를 표시하며, 트렌드는 매끄럽고, 경보도 발생하지 않습니다. 하지만 값은 틀립니다. 교차점인 <span data-us="77&nbsp;&deg;F" data-metric="25.0&nbsp;&deg;C">77&nbsp;&deg;F</span>에서는 오차가 없지만 약 <span data-us="3&nbsp;&deg;F" data-metric="1.7&nbsp;&deg;C">3&nbsp;&deg;F</span>의 오차가 생기는 실제 온도 지점 중 하나가 <span data-us="40.0&nbsp;&deg;F" data-metric="4.4&nbsp;&deg;C">40.0&nbsp;&deg;F</span>이며, 교차점에서 더 멀어질수록 오차가 커집니다. 누구나 볼 수 있게 측정값이 레일에 고정되는 개방·단락 센서의 명확한 고장과 비교해 보세요. <a href="/ko/education/controller-wiring.html#inputs">제어기 배선의 서미스터 단자 연결</a>에서 개방은 풀 스케일 저온, 단락은 풀 스케일 고온으로 읽히는 과정을 설명합니다. 곡선 불일치는 정반대입니다. 값이 계속 <em>그럴듯하게</em> 틀립니다. 몇 도 어긋난 외기 센서가 <button type="button" data-gloss="economizer">외기 냉방 제어</button>의 전환과 잠금을 수년간 조용히 왜곡해도 아무도 3&deg;의 거짓값을 추적하지 않습니다.
             </p>
 
             <!-- R/T curve overlay: Type II vs Type III on a log resistance
@@ -205,11 +205,11 @@ keywords: 서미스터 RTD 10K Type II Type III PT100 PT1000 Balco 3선식 옴 �
             </p>
 
             <p>
-                절차는 네 단계입니다. <strong>첫째, 센서를 분리합니다.</strong> 계측기가 입력 자체 회로와 병렬로 연결된 센서가 아니라 센서만 읽도록 입력 단자에서 분리하십시오. <strong>둘째, 저항을 측정합니다.</strong> 센서 리드선 사이의 저항을 측정하십시오. <strong>셋째, 저항을 온도로 변환합니다.</strong> 센서가 사용해야 하는 종류의 R/T 표를 사용합니다. <a href="/ko/tools/thermistor-calculator.html">서미스터 / RTD 계산기</a>의 R/T 표는 이 페이지의 모든 일반 곡선에 대해 양방향 조회를 제공합니다. 센서 종류 자체가 의심스러우면 식별 탭에서 측정 지점과 각 곡선의 일치도를 순위로 보여 줍니다. <strong>넷째, 비교합니다.</strong> 변환한 온도를 센서와 같은 위치에 놓은 기준 온도계와 비교하십시오. <span data-us="70&nbsp;&deg;F" data-metric="21.1&nbsp;&deg;C">70&nbsp;&deg;F</span> 실내에서 정상 10K 센서는 Type&nbsp;II 곡선 기준 약 11.9&nbsp;k&Omega;으로 측정됩니다. 이 부근의 값은 적어도 센서가 사실을 말하는지 확인하는 일상적인 건전성 점검 기준입니다.
+                절차는 네 단계입니다. <strong>첫째, 센서를 분리합니다.</strong> 계측기가 입력 자체 회로와 병렬로 연결된 센서가 아니라 센서만 읽도록 입력 단자에서 분리하세요. <strong>둘째, 저항을 측정합니다.</strong> 센서 리드선 사이의 저항을 측정하세요. <strong>셋째, 저항을 온도로 변환합니다.</strong> 센서가 사용해야 하는 종류의 R/T 표를 사용합니다. <a href="/ko/tools/thermistor-calculator.html">서미스터 / RTD 계산기</a>의 R/T 표는 이 페이지의 모든 일반 곡선에 대해 양방향 조회를 제공합니다. 센서 종류 자체가 의심스러우면 식별 탭에서 측정 지점과 각 곡선의 일치도를 순위로 보여 줍니다. <strong>넷째, 비교합니다.</strong> 변환한 온도를 센서와 같은 위치에 놓은 기준 온도계와 비교하세요. <span data-us="70&nbsp;&deg;F" data-metric="21.1&nbsp;&deg;C">70&nbsp;&deg;F</span> 실내에서 정상 10K 센서는 Type&nbsp;II 곡선 기준 약 11.9&nbsp;k&Omega;으로 측정됩니다. 이 부근의 값은 적어도 센서가 사실을 말하는지 확인하는 일상적인 건전성 점검 기준입니다.
             </p>
 
             <p>
-                판정은 <em>무엇이 일치하지 않는지</em>에 따라 달라집니다. 올바른 표로 변환한 측정 저항이 기준 온도와 일치하지만 그래픽은 여전히 틀리다면 센서는 정상입니다. 입력 또는 더 흔하게는 포인트가 선택한 곡선부터 시작해 <strong>구성</strong>을 의심하십시오. 계측기에 개방 또는 거의 제로에 가까운 값이 나오면 센서나 배선 경로가 고장 난 것입니다. 센서 헤드에서 다시 측정해 위치를 좁히십시오. 헤드에서는 정상 저항인데 패널에서는 개방이면 배선과 단자에 문제가 있고, 헤드에서도 개방이면 센서 자체가 고장입니다. 저항을 변환한 온도가 기준보다 일정하게 몇 도 어긋난다면 이 페이지 첫 절의 문제로 돌아갑니다. <strong>하드웨어를 불량으로 판정하기 전에 곡선 불일치를 의심하십시오.</strong> 소프트웨어의 곡선 선택 확인에는 비용이 들지 않으며 정상 센서를 똑같은 정상 센서로 바꿔도 아무것도 해결되지 않습니다.
+                판정은 <em>무엇이 일치하지 않는지</em>에 따라 달라집니다. 올바른 표로 변환한 측정 저항이 기준 온도와 일치하지만 그래픽은 여전히 틀리다면 센서는 정상입니다. 입력, 더 흔하게는 <strong>구성</strong>을 의심하세요. 먼저 포인트에 선택된 곡선을 확인합니다. 계측기에 개방 또는 거의 제로에 가까운 값이 나오면 센서나 배선 경로가 고장 난 것입니다. 센서 헤드에서 다시 측정해 위치를 좁히세요. 헤드에서는 정상 저항인데 패널에서는 개방이면 배선과 단자에 문제가 있고, 헤드에서도 개방이면 센서 자체가 고장입니다. 저항을 변환한 온도가 기준보다 일정하게 몇 도 어긋난다면 이 페이지 첫 절의 문제로 돌아갑니다. <strong>하드웨어를 불량으로 판정하기 전에 곡선 불일치를 의심하세요.</strong> 소프트웨어의 곡선 선택 확인에는 비용이 들지 않으며 정상 센서를 똑같은 정상 센서로 바꿔도 아무것도 해결되지 않습니다.
             </p>
 
             <p>

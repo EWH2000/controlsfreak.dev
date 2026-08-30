@@ -1,7 +1,7 @@
 ---
 title: 시뮬레이터 — controlsfreak.dev
 description: 빌딩 자동제어 실무를 위한 동작 모델입니다. PID 루프 조정, VFD 키패드 조작, DDC 제어기 배선, 병렬 플랜트 대수제어, 수배관 루프 구성을 연습하세요.
-sourceContentHash: 691fd0794e643ae1935451db3b3d70848f5c3a6902f03ea6a5af60a68a511f7e
+sourceContentHash: 9a43f179b27e03e43682c68c46a54a4da08e1829a0939d534c2910a2d243adfe
 canonical: https://controlsfreak.dev/ko/simulators/
 nav: simulators
 ---
@@ -40,8 +40,8 @@ nav: simulators
         {{ navCard({
             section:    'simulators',
             href:       '/ko/simulators/ddc-workbench.html',
-            titleShort: 'AHU Workbench',
-            titleFull:  'DDC Workbench — 공기조화기',
+            titleShort: 'AHU 워크벤치',
+            titleFull:  'DDC 워크벤치 — 공기조화기',
             desc:       '단일 존 공기조화기를 실시간 DDC 그래픽으로 다룹니다. 외기냉방 댐퍼, 온수 코일, 2단 DX가 있고 한 탭 옆에서 이를 운전하는 기능 블록 프로그램을 볼 수 있습니다. 센서를 강제 지정하고 실제 우선순위 배열로 포인트를 재정의하면서 화면에 드러나는 장비 상태를 관찰하세요.',
             pills:      ['실시간 DDC 그래픽', '외기냉방', '우선순위 배열', '와이어시트'],
             category:   'equipment-systems'
@@ -49,9 +49,9 @@ nav: simulators
         {{ navCard({
             section:    'simulators',
             href:       '/ko/simulators/ddc-workbench-fcu.html',
-            titleShort: 'FCU Workbench',
-            titleFull:  'DDC Workbench — 팬코일유닛',
-            desc:       '같은 Workbench에서 DX 팬코일유닛을 다룹니다. 장비가 작아 전체 제어 흐름을 쉽게 읽을 수 있습니다. 샘플 시퀀스를 불러오거나 빈 시트에서 직접 배선한 뒤 냉방을 증단하고 팬 운전 확인 신호를 끊어 그래픽에서 로직까지 고장을 추적하세요.',
+            titleShort: 'FCU 워크벤치',
+            titleFull:  'DDC 워크벤치 — 팬코일유닛',
+            desc:       '같은 워크벤치에서 DX 팬코일유닛을 다룹니다. 장비가 작아 전체 제어 흐름을 쉽게 읽을 수 있습니다. 샘플 시퀀스를 불러오거나 빈 시트에서 직접 배선한 뒤 냉방을 증단하고 팬 운전 확인 신호를 끊어 그래픽에서 로직까지 고장을 추적하세요.',
             pills:      ['실시간 DDC 그래픽', 'DX 대수제어', '직접 배선', '고장 프리셋'],
             category:   'equipment-systems'
         }) }}
@@ -97,7 +97,7 @@ nav: simulators
             href:       '/ko/simulators/controller-wiring.html',
             titleShort: '제어기 배선',
             titleFull:  '제어기 배선 시뮬레이터',
-            desc:       '일반적인 DDC 제어기를 처음부터 끝까지 배선합니다. 변압기 전원을 연결하고 센서, 액추에이터, 팬을 배치한 뒤 단자와 단자를 클릭해 연결하세요. 올바르게 연결하면 포인트가 실시간으로 값을 읽고, 잘못 연결하면 스파크·단선·퓨즈 단락이 발생합니다.',
+            desc:       '일반적인 DDC 제어기를 처음부터 끝까지 배선합니다. 변압기 전원을 연결하고 센서, 액추에이터, 팬을 배치한 뒤 단자와 단자를 클릭해 연결하세요. 올바르게 연결하면 포인트가 실시간으로 값을 읽고, 잘못 연결하면 스파크·단선·퓨즈 용단이 발생합니다.',
             pills:      ['24 VAC 전원', 'UI / BI / AO / BO', '실시간 고장', '고장 찾기'],
             category:   'panel-wiring',
             desktopOnly: true
@@ -117,8 +117,8 @@ nav: simulators
             href:       '/ko/simulators/refrigerant-loop.html',
             titleShort: '냉매 회로',
             titleFull:  '냉매 회로 시뮬레이터',
-            desc:       '실시간 증기압축 냉동사이클입니다. 풍량, 냉매 충전량, 외기 조건, 팽창장치 과열도 설정을 바꾸고 흡입압력, 응축압력, 과열도, 과냉도, 증발기 냉매 부족이 매니폴드 게이지와 실시간 P-T 표시에서 어떻게 변하는지 관찰하세요. 냉매 학습 자료와 함께 보세요.',
-            pills:      ['증기압축', '흡입 / 응축압력', '과열도 / 과냉도', '증발기 냉매 부족'],
+            desc:       '실시간 증기압축 냉동사이클입니다. 풍량, 냉매 충전량, 외기 조건, 팽창장치 과열도 설정을 바꾸고 흡입압력, 응축압력, 과열도, 과냉도, 코일 풍량 부족 상태가 매니폴드 게이지와 실시간 P-T 표시에서 어떻게 변하는지 관찰하세요. 냉매 학습 자료와 함께 보세요.',
+            pills:      ['증기압축', '흡입 / 응축압력', '과열도 / 과냉도', '코일 풍량 부족'],
             category:   'equipment-systems'
         }) }}
     </div>

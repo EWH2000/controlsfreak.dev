@@ -1,7 +1,7 @@
 ---
 title: 외기냉방 외기 비율 계산기 — controlsfreak.dev
-description: 외기와 회기(RA)를 혼합해 목표 혼합공기 건구온도에 도달하는 외기 비율을 계산하고, 엔탈피 전환 조건과 혼합 상태를 함께 점검합니다.
-sourceContentHash: fa524c6434dfd2c05d2e0ea34259708ab04f336d932bc6efffd6e0d6b51afe34
+description: 외기와 회기(RA)를 혼합해 목표 혼합공기 건구온도 설정값에 도달하는 외기 비율을 계산하고, 엔탈피 절환 조건도 함께 점검합니다.
+sourceContentHash: 2876dbea63d4bd3d559c81772f1c7a6aecae54a8185390e9c5074df89db426c5
 sourceMessageHash: fe7cfa4dbfbb66d25c6657724063457ee9c1bc4c805c2b775a37c43aa97c1e3e
 canonical: https://controlsfreak.dev/ko/tools/economizer-ratio.html
 nav: tools
@@ -10,21 +10,21 @@ pageMessages:
     defineBy:
         rh: "상대습도(%)"
         wb: "습구온도({unit})"
-        dp: "이슬점({unit})"
+        dp: "노점({unit})"
         w: "절대습도(함습비, W)({unit})"
         h: "엔탈피({unit} 건공기)"
     status:
         feasibilityPrompt: "실현 가능성을 확인할 값을 입력하세요."
-        changeoverPrompt: "외기냉방 전환 판정을 확인할 값을 입력하세요."
+        changeoverPrompt: "외기냉방 절환 판정을 확인할 값을 입력하세요."
         statesRequired: "외기와 회기(RA)의 상태가 모두 있어야 비교할 수 있습니다."
         dryBulbEqual: "외기와 회기(RA) 온도가 같으므로 어떤 비율로 혼합해도 온도가 같습니다."
-        dryBulbFeasible: "실현 가능 — 설정값이 외기와 회기(RA) 사이에 있으므로 외기 {percent} %로 혼합하면 설정값에 도달합니다. 약 10 % 미만이면 댐퍼가 최소 개도에 있고, 100 %에 가까우면 혼합공기 이후 부하는 코일이 담당합니다."
+        dryBulbFeasible: "실현 가능 — 설정값이 외기와 회기(RA) 사이에 있으므로 외기 {percent} %로 혼합하면 설정값에 도달합니다. 약 10 % 미만이면 댐퍼가 최소 개도에 있고, 100 %에 가까우면 혼합만으로 부족한 나머지 부하는 코일이 담당합니다."
         dryBulbAboveRange: "범위 초과 — 외기가 설정값보다 차갑지만 회기(RA)를 설정값까지 낮출 만큼 차갑지는 않습니다. 외기 댐퍼를 100 % 열어도 냉각 코일이 외기 비율 환산 {extra} %에 해당하는 나머지 부하를 제거해야 합니다."
         dryBulbInfeasible: "실현 불가 — 외기가 설정값보다 뜨겁습니다. 어떤 혼합 비율로도 도달할 수 없으므로 외기냉방(economizer)을 최소 외기 개도로 닫고 냉각 코일이 부하를 모두 담당하게 하세요."
         enthalpyEqual: "외기와 회기(RA)의 건구온도가 같아 혼합공기 온도가 고정됩니다."
         enthalpyFeasible: "실현 가능 — 설정값이 외기와 회기(RA)의 건구온도 사이에 있으므로 외기 {percent} %로 혼합하면 설정값에 도달합니다."
         enthalpyAboveRange: "범위 초과 — 외기가 설정값보다 차갑지만 회기(RA)를 설정값까지 낮출 만큼 차갑지는 않습니다. 외기 댐퍼를 100 % 열고 나머지는 코일이 담당합니다."
-        enthalpyInfeasible: "실현 불가 — 외기가 설정값보다 뜨겁습니다. 어떤 혼합 비율로도 도달할 수 없으므로 최소 외기 개도로 닫으세요."
+        enthalpyInfeasible: "실현 불가 — 외기가 설정값보다 뜨겁습니다. 어떤 혼합 비율로도 도달할 수 없으므로 외기 댐퍼를 최소 외기 개도까지 닫으세요."
     formula:
         mix: "% OA = (MA − RA) ÷ (OA − RA) × 100 = ({ma} − {ra}) ÷ ({oa} − {ra}) × 100{result}"
         result: " = {percent} %"
@@ -44,13 +44,13 @@ pageMessages:
             rhNegative: "상대습도는 음수일 수 없습니다."
             rhAbove100: "상대습도는 100 %를 초과할 수 없습니다."
             wetBulbAboveDryBulb: "습구온도는 건구온도보다 높을 수 없습니다."
-            dewPointAboveDryBulb: "이슬점은 건구온도보다 높을 수 없습니다."
+            dewPointAboveDryBulb: "노점은 건구온도보다 높을 수 없습니다."
             humidityRatioNegative: "절대습도(함습비, W)는 음수일 수 없습니다."
             enthalpyBelowDryAir: "엔탈피가 이 건구온도의 건공기 엔탈피보다 낮습니다. 물리적으로 불가능합니다."
             propertyRequired: "상태점을 정의할 물성을 선택하세요."
             rhPastSaturation: "이 상태점은 포화선을 벗어납니다(상대습도 100 % 초과). 물리적으로 불가능합니다."
             wetBulbPastSaturation: "입력한 습구온도는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다."
-            dewPointPastSaturation: "입력한 이슬점은 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다."
+            dewPointPastSaturation: "입력한 노점은 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다."
             humidityRatioPastSaturation: "입력한 절대습도(함습비, W)는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다."
             enthalpyPastSaturation: "입력한 엔탈피는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다."
     unitText:
@@ -140,7 +140,7 @@ keywords: OA OAT 외기 비율 외기냉방 무상냉방 전환 혼합공기 댐
         <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
             <summary>현재 조건에서 혼합공기 설정값에 도달하려면 외기 댐퍼를 얼마나 열어야 할까요?</summary>
             <div class="preamble-rest">
-                건구온도 탭은 기술자가 제어반에서 사용하는 계산을 제공합니다. 엔탈피 탭은 전체 혼합공기 상태와 외기(OA)·회기(RA) 엔탈피 전환 판정을 추가하여, 고급 BAS <button type="button" data-gloss="economizer">외기냉방(economizer)</button>이
+                건구온도 탭은 기술자가 제어반에서 사용하는 계산을 제공합니다. 엔탈피 탭은 전체 혼합공기 상태와 외기(OA)·회기(RA) 엔탈피 절환 판정을 추가하여, 고급 BAS <button type="button" data-gloss="economizer">외기냉방(economizer)</button>이
                 <button type="button" data-gloss="economizer">외기냉방</button>을 운전할 가치가 있는지 판단하는 방식을 보여 줍니다.
             </div>
         </details>
@@ -228,7 +228,7 @@ keywords: OA OAT 외기 비율 외기냉방 무상냉방 전환 혼합공기 댐
                         <select class="ps-input" id="er-h-oa-mode">
                             <option value="rh">상대습도</option>
                             <option value="wb" selected>습구온도</option>
-                            <option value="dp">이슬점</option>
+                            <option value="dp">노점</option>
                             <option value="w">절대습도(함습비, W)</option>
                             <option value="h">엔탈피</option>
                         </select>
@@ -248,7 +248,7 @@ keywords: OA OAT 외기 비율 외기냉방 무상냉방 전환 혼합공기 댐
                         <select class="ps-input" id="er-h-ra-mode">
                             <option value="rh">상대습도</option>
                             <option value="wb" selected>습구온도</option>
-                            <option value="dp">이슬점</option>
+                            <option value="dp">노점</option>
                             <option value="w">절대습도(함습비, W)</option>
                             <option value="h">엔탈피</option>
                         </select>
@@ -290,7 +290,7 @@ keywords: OA OAT 외기 비율 외기냉방 무상냉방 전환 혼합공기 댐
                     <div class="ps-row"><span class="ps-label">상대습도(%)</span><span class="ps-value muted" id="er-h-ma-rh">—</span></div>
                     <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.mixedAirEnthalpy.us }}" data-metric="{{ pageMessages.unitText.mixedAirEnthalpy.metric }}">엔탈피(Btu/lb)</span><span class="ps-value muted" id="er-h-ma-h">—</span></div>
 
-                    <h3 class="subhead">엔탈피 외기냉방 전환</h3>
+                    <h3 class="subhead">엔탈피 외기냉방 절환</h3>
                     <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.outdoorEnthalpy.us }}" data-metric="{{ pageMessages.unitText.outdoorEnthalpy.metric }}">OA 엔탈피(Btu/lb)</span><span class="ps-value muted" id="er-h-oa-h">—</span></div>
                     <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.returnEnthalpy.us }}" data-metric="{{ pageMessages.unitText.returnEnthalpy.metric }}">RA 엔탈피(Btu/lb)</span><span class="ps-value muted" id="er-h-ra-h">—</span></div>
                     <div class="status-pill" id="er-h-changeover">{{ pageMessages.status.changeoverPrompt }}</div>
@@ -344,7 +344,7 @@ keywords: OA OAT 외기 비율 외기냉방 무상냉방 전환 혼합공기 댐
     {{ relatedLinks({
         tools: [
             {href: '/ko/tools/air-mixing.html', label: '공기 혼합 계산기'},
-            {href: '/ko/tools/duct-traverse.html', label: '피토관 덕트 트래버스 계산기'},
+            {href: '/ko/tools/duct-traverse.html', label: '덕트 트래버스 계산기'},
             {href: '/ko/tools/psychrometric-chart.html', label: '습공기선도'},
             {href: '/ko/tools/coil-freeze-risk.html', label: '코일 동결 위험 점검기'},
             {href: '/ko/tools/minimum-outdoor-air.html', label: '최소 외기량 계산기'}

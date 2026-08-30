@@ -244,12 +244,13 @@
 }
 
 /* Korean uses the platform's native Hangul face after the existing Latin
-   subsets. keep-all avoids breaking inside ordinary Korean words while
-   overflow-wrap still protects narrow cards from long identifiers/URLs. */
+   subsets. `keep-all` avoids breaking ordinary Korean words, while
+   `overflow-wrap` still protects narrow surfaces from identifiers and URLs. */
 html:lang(ko) {
-    --sans: 'Overpass', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
-    --mono: 'IBM Plex Mono', 'Apple SD Gothic Neo', 'Noto Sans Mono CJK KR', monospace;
+    --sans: 'Overpass', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+    --mono: 'IBM Plex Mono', 'Apple SD Gothic Neo', 'Noto Sans Mono CJK KR', 'Malgun Gothic', monospace;
     word-break: keep-all;
+    line-break: strict;
     overflow-wrap: anywhere;
 }
 
@@ -639,7 +640,21 @@ main { flex: 1; }
     animation: breathe 4s ease-in-out infinite;
 }
 .site-nav-brand:hover { color: var(--text-bright); }
+.site-nav-branding {
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+}
 .site-nav-links { display: flex; flex-wrap: wrap; gap: 1.75rem; }
+@media (min-width: 621px) and (max-width: 1500px) {
+    .site-nav-links { column-gap: 1.25rem; }
+}
+/* The compact locale codes cross the English nav's intrinsic wrap boundary
+   only in this narrow desktop band. Tighten horizontal spacing there while
+   retaining the original 1.75rem row gap and mobile breakpoint. */
+@media (min-width: 638px) and (max-width: 670px) {
+    .site-nav-links { column-gap: 0.875rem; }
+}
 .site-nav-links a {
     font-family: var(--sans);
     font-size: 0.95rem;
@@ -858,14 +873,23 @@ main { flex: 1; }
     color: var(--text-dim);
     font-family: var(--mono);
     font-size: 0.7rem;
+    white-space: nowrap;
 }
-.site-nav-links .language-switch a {
+.language-switch.language-switch--mobile { display: none; }
+.language-switch a {
     padding: 0.12rem 0;
-    border-bottom-width: 1px;
+    color: var(--text-dim);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
     font-family: var(--mono);
     font-size: 0.7rem;
+    transition: color 0.18s, border-color 0.18s;
 }
-.site-nav-links .language-switch a[aria-current="page"] {
+.language-switch a:hover {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+}
+.language-switch a[aria-current="page"] {
     color: var(--accent);
     border-bottom-color: var(--accent);
 }
@@ -1136,6 +1160,7 @@ body.palette-open { overflow: hidden; }
    marker is wanted. */
 .ok-pill {
     display: inline-flex;
+    flex: 0 0 auto;
     align-items: center;
     gap: 0.3rem;
     background: var(--accent-dim);
@@ -1148,9 +1173,11 @@ body.palette-open { overflow: hidden; }
     letter-spacing: 0.07em;
     text-transform: uppercase;
     font-weight: 600;
+    white-space: nowrap;
 }
 .ok-pill::before {
     content: "";
+    flex: 0 0 auto;
     width: 6px;
     height: 6px;
     border-radius: 50%;
@@ -1218,10 +1245,7 @@ h2.section-label[data-stage]::before {
     font-variant-numeric: tabular-nums;
     margin-right: 0.1rem;
     font-weight: 600;
-    content: "STAGE:" attr(data-stage) " · ";
-}
-html:lang(ko) h2.section-label[data-stage]::before {
-    content: "단계:" attr(data-stage) " · ";
+    content: var(--i18n-stage-label, "STAGE") ":" attr(data-stage) " · ";
 }
 
 /* ── TOOL CARD ── */
@@ -1354,16 +1378,14 @@ details.tool-preamble > summary {
 }
 details.tool-preamble > summary::-webkit-details-marker { display: none; }
 details.tool-preamble > summary::after {
-    content: "▸ more";
+    content: "▸ " var(--i18n-more-label, "more");
     color: var(--accent);
     margin-left: 0.5rem;
     white-space: nowrap;
     font-size: 0.7rem;
     letter-spacing: 0.04em;
 }
-details.tool-preamble[open] > summary::after { content: "▾ less"; }
-html:lang(ko) details.tool-preamble > summary::after { content: "▸ 더 보기"; }
-html:lang(ko) details.tool-preamble[open] > summary::after { content: "▾ 접기"; }
+details.tool-preamble[open] > summary::after { content: "▾ " var(--i18n-less-label, "less"); }
 details.tool-preamble > summary:hover { color: var(--text-bright); }
 details.tool-preamble > .preamble-rest {
     font-family: var(--mono);
@@ -1976,7 +1998,7 @@ footer {
     .form-row        { grid-template-columns: 1fr; }
     .bit-grid        { grid-template-columns: repeat(8, 1fr); }
     .bit-readouts    { grid-template-columns: 1fr 1fr; }
-    .site-nav        { padding: 0.7rem 1rem; }
+    .site-nav        { padding: 0.7rem 1rem; column-gap: 0.5rem; }
     main             { padding-left: 1rem; padding-right: 1rem; }
     .hero            { margin-left: 1rem; margin-right: 1rem; width: auto; }
     .console-titlebar,
@@ -1990,7 +2012,8 @@ footer {
     /* Collapse the whole link bar behind the hamburger so the header isn't
        half the screen. Top bar = brand + search + hamburger; the links sheet
        drops to its own full-width column below, only when .nav-open. */
-    .site-nav-brand { margin-right: auto; }   /* group search + burger at right */
+    .site-nav-branding { margin-right: auto; } /* group search + burger at right */
+    .language-switch.language-switch--desktop { display: none; }
     .nav-hamburger { display: inline-flex; }
     .nav-search-btn.nav-search-btn--mobile { display: inline-flex; }
     /* The full search lives in the sheet on desktop; on mobile the top-bar
@@ -2069,7 +2092,23 @@ footer {
     .site-nav.nav-open .nav-submenu .nav-menu-item { padding-left: 2.25rem; }
     .site-nav.nav-open .units-toggle,
     .site-nav.nav-open .theme-toggle,
-    .site-nav.nav-open .language-switch { padding: 0.5rem 0.25rem; }
+    .site-nav.nav-open .language-switch--mobile { padding: 0.5rem 0.25rem; }
+    .site-nav.nav-open .language-switch--mobile {
+        display: flex;
+        flex-wrap: wrap;
+        align-self: stretch;
+        justify-content: center;
+    }
+    .site-nav.nav-open .language-switch--mobile > span[aria-hidden="true"] {
+        display: none;
+    }
+    .site-nav.nav-open .language-switch--mobile a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 44px;
+        min-height: 44px;
+    }
 }
 /* ── COPY BUTTON ── */
 .copy-btn {
@@ -2453,6 +2492,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
        sheet the stretched links would otherwise center. Left-align them to
        match the dropdown rows. */
     .site-nav-links a { padding-inline: 0.2rem; justify-content: flex-start; }
+    .language-switch--mobile a { min-width: 44px; justify-content: center; }
     .quiz-settings-select { min-height: 44px; }
     /* Form-control family (#164 / #172): min-height ONLY — replaced
        elements grow their box directly and vertically center their
@@ -2866,6 +2906,17 @@ p.chip-row-preamble {
     text-decoration: none;
     color: inherit;
     transition: border-color 0.18s, transform 0.18s;
+}
+/* Share the title, body, and status tracks within each visual card row.
+   Localized status pills can wrap at different points; subgrid gives every
+   card in that row the same footer height without reserving arbitrary space. */
+@supports (grid-template-rows: subgrid) {
+    .card-grid > .nav-card:not([hidden]) {
+        grid-row: span 3;
+        display: grid;
+        grid-template-rows: subgrid;
+        row-gap: 0;
+    }
 }
 /* Featured / marquee card — spans the full grid row. Applied via the
    navCard() `wide` param (e.g. the BACnet hub atop the home Browse grid). */

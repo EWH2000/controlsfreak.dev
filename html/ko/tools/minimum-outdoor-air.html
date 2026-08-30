@@ -1,7 +1,7 @@
 ---
 title: 최소 외기량 계산기 — controlsfreak.dev
-description: ASHRAE 62.1의 인당·면적당 외기량과 구역 공기분배 유효도 Ez로 최소 외기량을 계산하고, 급기 풍량 대비 외기 비율과 DCV 조정 가능분을 확인합니다.
-sourceContentHash: 1d9554a1b91196fce05474403204e048a8dfba214323783428a6cc4e0f46efb7
+description: ASHRAE 62.1의 인당·면적당 외기량과 구역 공기분배 유효도 Ez로 최소 외기량을 계산하고, 급기 대비 외기 비율과 DCV 조정 가능분·상시 하한을 구분합니다.
+sourceContentHash: 4826d8798d727b05a4dc3630f08898bf0d2fd0f21a3fc102fa820af01df1140b
 sourceMessageHash: 171891e5d648930d7931f5da65fc1d82f821393c6866a51cccd26dbdb4518090
 canonical: https://controlsfreak.dev/ko/tools/minimum-outdoor-air.html
 nav: tools
@@ -222,17 +222,17 @@ keywords: ASHRAE 62.1 최소 외기량 환기율 절차 호흡역 Vbz Voz Rp Ra 
             </p>
             <p class="ref-note">
                 <strong>반대 방향의 위험도 고려하세요.</strong> 이 페이지에서 계산한 최소 환기량은 클 수 있습니다. 사람이 많은 교실이나 식당은 외기 비율이 30&ndash;50 %에 달합니다. 추운 지역에서 겨울철 최소 외기량이 이렇게 크면 <a href="/ko/tools/coil-freeze-risk.html">코일 동결 위험 점검기</a>가 경고하는 조건이 됩니다. 계산 결과는 혼합공기 계산으로 확인할 가설로 다루고, <button type="button" data-gloss="freezestat">동결방지 온도조절기(freezestat)</button>와
-                <button type="button" data-gloss="mixed-air-low-limit">저온 한계 재정의</button>가 보호 기능을 수행하도록 해야 합니다. 최소 환기량과 동결 방지 하한은 모두 지켜야 하므로 시퀀스는 두 조건을 함께 충족해야 합니다.
+                <button type="button" data-gloss="mixed-air-low-limit">저온한계 오버라이드</button>가 보호 기능을 수행하도록 해야 합니다. 최소 환기량과 동결 방지 하한은 모두 지켜야 하므로 시퀀스는 두 조건을 함께 충족해야 합니다.
             </p>
         </div>
     </div>
 
     {{ relatedLinks({
-        hub: {href: '/ko/forced-air/', label: '공기조화 시스템 참조 허브'},
+        hub: {href: '/ko/forced-air/', label: '강제순환식 공조 참고 자료 허브'},
         tools: [
             {href: '/ko/tools/economizer-ratio.html', label: '외기냉방 외기 비율 계산기'},
             {href: '/ko/tools/airside-load.html', label: '공기측 부하 계산기'},
-            {href: '/ko/tools/duct-traverse.html', label: '피토관 덕트 트래버스 계산기'},
+            {href: '/ko/tools/duct-traverse.html', label: '덕트 트래버스 계산기'},
             {href: '/ko/tools/coil-freeze-risk.html', label: '코일 동결 위험 점검기'}
         ],
         lessons: [

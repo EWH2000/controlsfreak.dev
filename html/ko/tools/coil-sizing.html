@@ -1,7 +1,7 @@
 ---
 title: 코일 용량 계산기 — controlsfreak.dev
-description: 입·출구 공기 상태로 냉난방 코일의 전열·현열·잠열 용량과 현열비(SHR)를 계산하거나 부하에서 출구 습공기 상태를 역산합니다.
-sourceContentHash: b83c9404586e3260aa5a2225a4d745506c03dbb4632228d98a62c2ddfe31378a
+description: 냉방 또는 난방 코일의 입·출구 공기 상태로 전열·현열·잠열 용량을 계산하거나, 알고 있는 부하에서 출구 공기 상태를 역산합니다.
+sourceContentHash: 9843066798a8e3fe72fdc63a8bb2dbc3c00aefaa75ae90f49b8b08b6feed303f
 sourceMessageHash: 333580426bcde01bd0b7248dc9b0f3c93b7adbbfc6c7d8eab8670dec037c51a3
 canonical: https://controlsfreak.dev/ko/tools/coil-sizing.html
 nav: tools
@@ -10,7 +10,7 @@ pageMessages:
     defineBy:
         rh: '상대습도(%)'
         wb: '습구온도({unit})'
-        dp: '이슬점({unit})'
+        dp: '노점({unit})'
         w: '절대습도(함습비, W)({unit})'
         h: '엔탈피({unit} 건공기)'
     status:
@@ -35,13 +35,13 @@ pageMessages:
             rhNegative: '상대습도는 음수일 수 없습니다.'
             rhAbove100: '상대습도는 100 %를 초과할 수 없습니다.'
             wetBulbAboveDryBulb: '습구온도는 건구온도보다 높을 수 없습니다.'
-            dewPointAboveDryBulb: '이슬점은 건구온도보다 높을 수 없습니다.'
+            dewPointAboveDryBulb: '노점은 건구온도보다 높을 수 없습니다.'
             humidityRatioNegative: '절대습도(함습비, W)는 음수일 수 없습니다.'
             enthalpyBelowDryAir: '엔탈피가 이 건구온도의 건공기 엔탈피보다 낮습니다. 물리적으로 불가능합니다.'
             propertyRequired: '상태점을 정의할 물성을 선택하세요.'
             rhPastSaturation: '이 상태점은 포화선을 벗어납니다(상대습도 100 % 초과). 물리적으로 불가능합니다.'
             wetBulbPastSaturation: '입력한 습구온도는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다.'
-            dewPointPastSaturation: '입력한 이슬점은 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다.'
+            dewPointPastSaturation: '입력한 노점은 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다.'
             humidityRatioPastSaturation: '입력한 절대습도(함습비, W)는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다.'
             enthalpyPastSaturation: '입력한 엔탈피는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다.'
             enteringInvalid: '입구 공기 상태가 유효하지 않습니다.'
@@ -108,8 +108,8 @@ pageMessages:
             us: '절대습도(함습비, W)(gr/lb)'
             metric: '절대습도(함습비, W)(g/kg)'
         dewPoint:
-            us: '이슬점(°F)'
-            metric: '이슬점(°C)'
+            us: '노점(°F)'
+            metric: '노점(°C)'
         enthalpy:
             us: '엔탈피(Btu/lb)'
             metric: '엔탈피(kJ/kg)'
@@ -174,7 +174,7 @@ keywords: CFM GPM 델타T MBH BTU 냉동톤 현열 잠열 SHR 코일 용량
                         <select class="ps-input" id="cs-cap-ent-mode">
                             <option value="rh">상대습도</option>
                             <option value="wb" selected>습구온도</option>
-                            <option value="dp">이슬점</option>
+                            <option value="dp">노점</option>
                             <option value="w">절대습도(함습비, W)</option>
                             <option value="h">엔탈피</option>
                         </select>
@@ -194,7 +194,7 @@ keywords: CFM GPM 델타T MBH BTU 냉동톤 현열 잠열 SHR 코일 용량
                         <select class="ps-input" id="cs-cap-lvg-mode">
                             <option value="rh">상대습도</option>
                             <option value="wb" selected>습구온도</option>
-                            <option value="dp">이슬점</option>
+                            <option value="dp">노점</option>
                             <option value="w">절대습도(함습비, W)</option>
                             <option value="h">엔탈피</option>
                         </select>
@@ -303,7 +303,7 @@ keywords: CFM GPM 델타T MBH BTU 냉동톤 현열 잠열 SHR 코일 용량
                         <select class="ps-input" id="cs-lvg-ent-mode">
                             <option value="rh">상대습도</option>
                             <option value="wb" selected>습구온도</option>
-                            <option value="dp">이슬점</option>
+                            <option value="dp">노점</option>
                             <option value="w">절대습도(함습비, W)</option>
                             <option value="h">엔탈피</option>
                         </select>
@@ -357,7 +357,7 @@ keywords: CFM GPM 델타T MBH BTU 냉동톤 현열 잠열 SHR 코일 용량
                         <span class="ps-value muted" id="cs-lvg-out-rh">—</span>
                     </div>
                     <div class="ps-row">
-                        <span class="ps-label" data-us="{{ pageMessages.unitText.dewPoint.us }}" data-metric="{{ pageMessages.unitText.dewPoint.metric }}">이슬점(°F)</span>
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.dewPoint.us }}" data-metric="{{ pageMessages.unitText.dewPoint.metric }}">노점(°F)</span>
                         <span class="ps-value muted" id="cs-lvg-out-dp">—</span>
                     </div>
                     <div class="ps-row">

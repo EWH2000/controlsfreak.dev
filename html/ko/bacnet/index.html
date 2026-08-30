@@ -1,7 +1,7 @@
 ---
 title: BACnet — 현장 참고 자료, 도구 및 학습 — controlsfreak.dev
 description: BACnet 현장 참고 자료입니다. 객체 모델, 서비스, 네트워킹, MS/TP 학습 자료와 장치가 보고하는 단위, 오류, 객체를 해석하는 도구를 제공합니다.
-sourceContentHash: 52cfb347fdb0b017251c1ba4cc34c23c1c37c42ffcbed534e4038d9740883b90
+sourceContentHash: d4d4cded3c7d6806f2729190f3bd5c3d9aba370e26352e9b1fe23de3a48ae74e
 canonical: https://controlsfreak.dev/ko/bacnet/
 nav: guides
 navLabel: BACnet
@@ -52,7 +52,7 @@ keywords: bacnet 참고 자료 허브 도구 학습 객체 모델 서비스 bibb
             href:       '/ko/education/bacnet-services.html',
             titleShort: 'BACnet 서비스',
             titleFull:  'BACnet 서비스',
-            desc:       'BACnet의 동작을 정의하는 확인 응답형(confirmed)·비확인 응답형(unconfirmed) 서비스와 서비스 계열을 알아보고, 장치가 실제로 지원하는 서비스를 나타내는 BIBB와 장치 프로파일을 살펴봅니다.',
+            desc:       'BACnet의 동작을 정의하는 확인형(confirmed)·비확인형(unconfirmed) 서비스와 서비스 계열을 알아보고, 장치가 실제로 지원하는 서비스를 나타내는 BIBB와 장치 프로파일을 살펴봅니다.',
             pills:      ['2단계', '서비스', 'BIBB', '장치 프로파일']
         }) }}
         {{ navCard({
@@ -60,7 +60,7 @@ keywords: bacnet 참고 자료 허브 도구 학습 객체 모델 서비스 bibb
             href:       '/ko/education/bacnet-networking.html',
             titleShort: 'BACnet 네트워킹',
             titleFull:  'BACnet 네트워킹',
-            desc:       '주소 지정의 세 계층, BVLL/NPDU/APDU 프레임, BBMD와 외부 장치 등록(FDR), EBO의 16진수 블롭 장치 주소를 읽는 방법을 알아봅니다.',
+            desc:       '주소 지정의 세 계층, BVLL/NPDU/APDU 프레임, BBMD와 외부 장치 등록(FDR), EBO의 16진수 바이트열 장치 주소를 읽는 방법을 알아봅니다.',
             pills:      ['3단계', '주소 3계층', 'BVLL / NPDU / APDU', 'BBMD / FDR']
         }) }}
         {{ navCard({
@@ -76,7 +76,7 @@ keywords: bacnet 참고 자료 허브 도구 학습 객체 모델 서비스 bibb
             href:       '/ko/education/bacnet-vs-modbus.html',
             titleShort: 'BACnet과 Modbus',
             titleFull:  'BACnet과 Modbus 비교',
-            desc:       '자기 기술형 객체와 원시 레지스터, 탐색, COV와 폴링, 우선순위와 최종 쓰기를 나란히 비교하고 게이트웨이가 두 프로토콜을 연결하는 지점을 알아봅니다.',
+            desc:       '자기 기술형 객체와 원시 레지스터, 탐색, COV와 폴링, 우선순위 방식과 마지막 쓰기 우선 방식을 나란히 비교하고 게이트웨이가 두 프로토콜을 연결하는 지점을 알아봅니다.',
             pills:      ['5단계', '객체와 레지스터', '탐색', '게이트웨이']
         }) }}
     </div>
@@ -101,15 +101,15 @@ keywords: bacnet 참고 자료 허브 도구 학습 객체 모델 서비스 bibb
             href:       '/ko/tools/bacnet-error-codes.html',
             titleShort: 'BACnet 오류',
             titleFull:  'BACnet 오류 코드 디코더',
-            desc:       '장치가 요청을 거부할 때 반환하는 오류 클래스와 코드, reject·abort 사유를 해석합니다. unknown-property, write-access-denied, APDU-too-long abort 등의 의미를 검색할 수 있습니다.',
+            desc:       '장치가 요청을 거부할 때 반환하는 오류 클래스와 코드, Reject·Abort 사유를 해석합니다. unknown-property, write-access-denied, APDU-too-long Abort 등의 의미를 검색할 수 있습니다.',
             pills:      ['Error / Reject / Abort', '클래스 + 코드', '디코딩']
         }) }}
         {{ navCard({
             section:    'tools',
             href:       '/ko/tools/bacnet-vendor-ids.html',
-            titleShort: 'BACnet 공급업체 ID',
-            titleFull:  'BACnet 공급업체 ID 조회',
-            desc:       'ASHRAE가 배정한 공급업체 ID 등록부 전체를 검색 가능한 표로 제공합니다. 장치가 I-Am에서 보고한 Vendor_Identifier를 해석하거나 1,600개가 넘는 제조사를 이름으로 필터링할 수 있습니다.',
+            titleShort: 'BACnet 벤더 ID',
+            titleFull:  'BACnet 벤더 ID 조회',
+            desc:       'ASHRAE가 배정한 벤더 ID 등록부 전체를 검색 가능한 표로 제공합니다. 장치가 I-Am에서 보고한 Vendor_Identifier를 해석하거나 1,600개가 넘는 제조사를 이름으로 필터링할 수 있습니다.',
             pills:      ['Vendor_Identifier', 'Property 120', '등록부']
         }) }}
     </div>
@@ -121,7 +121,7 @@ keywords: bacnet 참고 자료 허브 도구 학습 객체 모델 서비스 bibb
             href:       '/ko/tools/bacnet-ip-converter.html',
             titleShort: 'BACnet/IP 16진수',
             titleFull:  'BACnet/IP 16진수 변환기',
-            desc:       'EBO가 BACnet/IP 장치에 표시하는 16진수 주소 문자열과 점으로 구분한 십진수 IP·UDP 포트를 양방향으로 변환합니다. 10비트 객체 유형과 22비트 인스턴스를 묶고 푸는 Object ID 탭도 제공합니다.',
+            desc:       'EBO가 BACnet/IP 장치에 표시하는 16진수 주소 문자열과 점으로 구분한 십진수 IP·UDP 포트를 양방향으로 변환합니다. 10비트 객체 유형과 22비트 인스턴스를 패킹·언패킹하는 Object ID 탭도 제공합니다.',
             pills:      ['BACnet/IP', 'UDP 47808', '16진수 ↔ 십진수']
         }) }}
         {{ navCard({
@@ -129,8 +129,8 @@ keywords: bacnet 참고 자료 허브 도구 학습 객체 모델 서비스 bibb
             href:       '/ko/tools/bacnet-priority.html',
             titleShort: 'BACnet 우선순위',
             titleFull:  'BACnet 우선순위 배열',
-            desc:       '16개 명령 슬롯에 값 또는 NULL을 설정하고 Present_Value가 가장 낮은 번호의 비어 있지 않은 슬롯으로 결정되는 과정을 확인합니다. 우선순위 스택, Relinquish_Default, NULL 쓰기로 재정의를 해제하는 이유를 다룹니다.',
-            pills:      ['Priority_Array', 'Present_Value', '재정의']
+            desc:       '16개 명령 슬롯에 값 또는 NULL을 설정하고 Present_Value가 NULL이 아닌 슬롯 중 번호가 가장 낮은 슬롯으로 결정되는 과정을 확인합니다. 우선순위 스택, Relinquish_Default, NULL 쓰기로 오버라이드를 해제하는 이유를 다룹니다.',
+            pills:      ['Priority_Array', 'Present_Value', '오버라이드']
         }) }}
     </div>
 

@@ -1,7 +1,7 @@
 ---
 title: BACnet 벤더 ID 조회 — controlsfreak.dev
 description: ASHRAE가 할당한 전체 BACnet 벤더 ID 등록부를 번호 또는 이름으로 검색해 장치가 I-Am에서 보고한 Vendor_Identifier(속성 120)를 디코딩합니다.
-sourceContentHash: 6afe12af78598064bb978981820286442426c742ef263c8de28d3096ddd887cc
+sourceContentHash: c71e55d94ecab8ae985f8e72f6e3db4609b295d19fe395a5923add90943e074b
 sourceMessageHash: e2e727ad2a6af124307728272150ac51b631dc4e9a411b808987bbb697021c56
 pageMessages:
     prompt: "조회할 벤더 ID를 입력하세요."
@@ -130,7 +130,7 @@ faqs:
                 보통 세 곳에서 접합니다. Who-Is 디스커버리 중 장치가 응답하는 I-Am, 즉 워크스테이션의 디스커버리 로그에서 장치 인스턴스 옆에 표시되는 값, Device 객체의 속성 시트에서 확인하는 속성 120, 그리고 Wireshark 캡처에서 디코딩한 I-Am <button type="button" data-gloss="apdu">APDU</button>입니다. 세 경우 모두 가공되지 않은 같은 번호가 표시되며 바로 그럴 때 이 표가 필요합니다.
             </p>
             <p class="ref-note">
-                벤더 ID는 프로토콜의 전용 부분에 네임스페이스도 제공합니다. 객체 유형 128–1023과 번호가 높은 속성은 벤더별로 다릅니다. 범위는 <a href="/ko/tools/bacnet-objects.html">BACnet 객체 참조</a>에서 확인할 수 있습니다. 따라서 캡처에서 표준에 정의되지 않은 객체 유형을 발견하면 가장 먼저 "어느 벤더의 장치인가"를 확인해야 하며, 벤더 ID가 그 답을 줍니다.
+                벤더 ID는 프로토콜의 전용 부분에 네임스페이스도 제공합니다. 객체 유형 128–1023과 번호가 높은 속성은 벤더별로 다릅니다. 범위는 <a href="/ko/tools/bacnet-objects.html">BACnet 객체 참고 자료</a>에서 확인할 수 있습니다. 따라서 캡처에서 표준에 정의되지 않은 객체 유형을 발견하면 가장 먼저 "어느 벤더의 장치인가"를 확인해야 하며, 벤더 ID가 그 답을 줍니다.
             </p>
         </section>
 
@@ -149,9 +149,9 @@ faqs:
     {{ faqBlock(faqs, "BACnet 벤더 ID 자주 묻는 질문") }}
 
     {{ relatedLinks({
-        hub: {href: '/ko/bacnet/', label: 'BACnet 참조 허브'},
+        hub: {href: '/ko/bacnet/', label: 'BACnet 참고 자료 허브'},
         tools: [
-            {href: '/ko/tools/bacnet-objects.html', label: 'BACnet 객체 참조'},
+            {href: '/ko/tools/bacnet-objects.html', label: 'BACnet 객체 참고 자료'},
             {href: '/ko/tools/bacnet-ip-converter.html', label: 'BACnet/IP 16진수 변환기'}
         ],
         lessons: [

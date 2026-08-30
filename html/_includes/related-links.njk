@@ -8,6 +8,7 @@
    {href, label} or an array of them (a page that belongs to two
    clusters, e.g. affinity-laws under hydronics AND forced air):
 
+       {% from "related-links.njk" import relatedLinks with context %}
        {{ relatedLinks({
            hub:        {href: '/bacnet/', label: 'The BACnet reference hub'},
            tools:      [{href: '/tools/foo.html',      label: 'Foo'}],

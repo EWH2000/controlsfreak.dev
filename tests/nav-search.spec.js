@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const i18n = require('../html/_data/i18n.js');
 
 // Shared with smoke.spec.js: capture pageerror + console.error so an
 // error during a real interaction can't slip past a green assertion.
@@ -14,14 +15,21 @@ test('locale search indexes are valid and stay in sync with the sitemap', () => 
     // English duplicate. Together those indexes must still cover every
     // canonical URL in sitemapPages exactly once.
     const fs = require('fs');
-    const indexes = {
-        en: JSON.parse(fs.readFileSync('_site/search-index.json', 'utf8')),
-        ko: JSON.parse(fs.readFileSync('_site/ko/search-index.json', 'utf8')),
-    };
+    const indexes = Object.fromEntries(i18n.locales.map(({ code }) => {
+        const indexPath = code === i18n.defaultLocale
+            ? '_site/search-index.json'
+            : `_site/${code}/search-index.json`;
+        return [code, JSON.parse(fs.readFileSync(indexPath, 'utf8'))];
+    }));
     const sitemap = fs.readFileSync('_site/sitemap.xml', 'utf8');
     const locCount = [...sitemap.matchAll(/<loc>/g)].length;
+    const localizedCodes = i18n.locales
+        .map(({ code }) => code)
+        .filter(code => code !== i18n.defaultLocale);
 
-    expect(indexes.en.length + indexes.ko.length, 'one locale-index entry per sitemap <loc>').toBe(locCount);
+    const indexedPageCount = Object.values(indexes)
+        .reduce((total, index) => total + index.length, 0);
+    expect(indexedPageCount, 'one locale-index entry per sitemap <loc>').toBe(locCount);
     for (const [locale, index] of Object.entries(indexes)) {
         expect(Array.isArray(index), `${locale} index parses as an array`).toBe(true);
         for (const entry of index) {
@@ -29,12 +37,16 @@ test('locale search indexes are valid and stay in sync with the sitemap', () => 
             expect(entry.url, `${locale}: every entry has a url`).toMatch(/^\//);
             expect(entry).toHaveProperty('section');
             expect(entry).toHaveProperty('keywords');
-            if (locale === 'ko') expect(entry.url).toMatch(/^\/ko\//);
-            else expect(entry.url).not.toMatch(/^\/ko(?:\/|$)/);
+            if (locale === i18n.defaultLocale) {
+                expect(localizedCodes).not.toContain(entry.url.split('/')[1]);
+            } else {
+                expect(entry.url.startsWith(`/${locale}/`)).toBe(true);
+            }
         }
     }
     // The clean title strips the " — controlsfreak.dev" suffix.
-    const sig = indexes.en.find((e) => e.url === '/tools/signal-scaling.html');
+    const sig = indexes[i18n.defaultLocale]
+        .find((e) => e.url === '/tools/signal-scaling.html');
     expect(sig.title).toBe('Signal Scaling Calculator');
     expect(indexes.ko.find((e) => e.url === '/ko/').title).toBe('controlsfreak.dev — BMS 현장 참고 자료');
 });

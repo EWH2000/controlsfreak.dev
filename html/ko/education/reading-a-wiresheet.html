@@ -1,7 +1,7 @@
 ---
 title: 와이어시트 읽기 — controlsfreak.dev
 description: 직접 작성하지 않은 실시간 와이어시트를 진단하는 방법을 설명합니다. 잘못된 출력에서 역추적하고, 스캔 값과 반복되는 블록 패턴으로 잘못된 블록을 찾습니다.
-sourceContentHash: c0ff919b26e36b5f2485be6496b629b31b617c35d27c628c97a7666987c32aaa
+sourceContentHash: 2a5fb31c8b3ea4075e1e40c7a93dc007ff0462908e917f2226085fff9c61cc01
 canonical: https://controlsfreak.dev/ko/education/reading-a-wiresheet.html
 nav: education
 category: programming
@@ -171,9 +171,9 @@ keywords: 와이어시트 역방향 추적 문제 해결 실시간 값 스캔 �
                     <p>더하기와 빼기로 경계를 만들고, 비교기 두 개가 감시하며, 래치는 그 사이를 유지합니다. 채터링하는 대신 경계를 지날 때 한 번만 전환하는 온도조절기입니다.</p>
                 </div>
                 <div class="callout">
-                    <h3>운전 확인 시간창 <span>· 기동 실패</span></h3>
+                    <h3>운전 확인 대기시간 <span>· 기동 실패</span></h3>
                     <code class="raw-sig">CMD AND NOT(상태) → TON → 래치</code>
-                    <p>지령은 있지만 운전 확인 신호가 없으면 타이머가 시작됩니다. 정상 기동은 설정시간 전에 완료되고, 시간창보다 오래 지속되는 실패만 경보로 래치됩니다.</p>
+                    <p>지령은 있지만 운전 확인 신호가 없으면 타이머가 시작됩니다. 정상 기동은 설정시간 전에 완료되고, 대기시간보다 오래 지속되는 실패만 경보로 래치됩니다.</p>
                 </div>
                 <div class="callout">
                     <h3>리셋 연산 체인 <span>· 스케줄</span></h3>
@@ -189,12 +189,12 @@ keywords: 와이어시트 역방향 추적 문제 해결 실시간 값 스캔 �
 
             <p style="margin-top:1.25rem;">
                 각 패턴은 이 장의 별도 학습 자료에서 자세히 다룹니다.
-                <a href="/ko/education/boolean-logic-latches.html">불 대수 로직 및 래치</a>에서는
+                <a href="/ko/education/boolean-logic-latches.html">불리언 로직 및 래치</a>에서는
                 <button type="button" data-gloss="permissive">퍼미시브</button> 체인과 래치를,
                 <a href="/ko/education/comparators-and-deadband.html">비교기 및 불감대</a>에서는
                 밴드 경계를,
                 <a href="/ko/education/timers-and-delays.html">타이머 및 지연</a>에서는 운전 확인
-                시간창을,
+                대기시간을,
                 <a href="/ko/education/setpoint-math-reset.html">설정값 연산 및 리셋 스케줄</a>에서는
                 리셋 연산 체인과 SELECT를 설명합니다. 여기서는 이름만 알면 됩니다. 그 이름이 있어야
                 다음 절의 추적이 가능하기 때문입니다.
@@ -505,12 +505,12 @@ keywords: 와이어시트 역방향 추적 문제 해결 실시간 값 스캔 �
     {{ relatedLinks({
         simulators: [
             {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'},
-            {href: '/ko/simulators/ddc-workbench.html', label: 'DDC Workbench — 공기조화기'},
-            {href: '/ko/simulators/ddc-workbench-fcu.html', label: 'DDC Workbench — 팬코일유닛'}
+            {href: '/ko/simulators/ddc-workbench.html', label: 'DDC 워크벤치 — 공기조화기'},
+            {href: '/ko/simulators/ddc-workbench-fcu.html', label: 'DDC 워크벤치 — 팬코일유닛'}
         ],
         lessons: [
             {href: '/ko/education/function-blocks.html', label: '기능 블록 기초'},
-            {href: '/ko/education/boolean-logic-latches.html', label: '불 대수 로직 및 래치'},
+            {href: '/ko/education/boolean-logic-latches.html', label: '불리언 로직 및 래치'},
             {href: '/ko/education/comparators-and-deadband.html', label: '비교기 및 불감대'},
             {href: '/ko/education/timers-and-delays.html', label: '타이머 및 지연'},
             {href: '/ko/education/setpoint-math-reset.html', label: '설정값 연산 및 리셋 스케줄'},

@@ -6,7 +6,7 @@ nav: education
 category: hydronics
 pairedQuiz: https://controlsfreak.dev/ko/practice/pump-control.html
 keywords: 펌프 제어 차압 DP 센서 인버터 VFD 상사 법칙 펌프 곡선 시스템 곡선 운전점 차압 설정값 리셋 최다 개방 밸브
-sourceContentHash: f3e2e665a02c48d7ee0286436e05624b7b19865d61340d2c8dc312d0ae8e6e72
+sourceContentHash: 1d8206bc0239551d32d60a7f50908e11a9724f05402a48a1ab116da7e8d576f0
 sourceMessageHash: 5c97f19bafc796ae385445fd8a85374f2148d865db595c65f33741d55d6e200b
 pageMessages:
   aria:
@@ -249,7 +249,7 @@ pageMessages:
 
             <ul style="margin:0.5rem 0 1rem 1.5rem;">
                 <li><strong>펌프 위치(로컬 DP).</strong> 비용이 낮고 펌프 패널 너머의 현장 배선이 필요하지 않습니다. 펌프 토출 압력에서 흡입 압력을 뺀 값, 즉 펌프가 만드는 양정을 읽습니다. 건물 어느 곳에서 수요가 발생하든 펌프 출력을 설정값 근처로 유지합니다. 단점은 <em>루프 말단</em>의 상태를 전혀 알 수 없다는 것입니다. 오염된 스트레이너나 조여진 밸브로 루프 마찰이 증가해도 로컬 DP는 정상처럼 보이는 동안 최악조건 부하에는 유량이 부족할 수 있습니다.</li>
-                <li><strong>수리적으로 가장 불리한 지점(원격 DP).</strong> 루프 말단, 보통 마지막 대형 부하를 지난 곳의 공급·환수 주관 양단에 현장 센서를 연결합니다. 최악조건 부하가 실제로 사용할 수 있는 압력을 측정합니다. 펌프의 역할은 ‘최악조건 부하에 최소한 이 정도 차압을 제공하는 것’이 되며, 이것이 건물에 실제로 중요한 변수입니다. 소형 시스템보다 큰 설비에서는 거의 항상 더 나은 선택입니다.</li>
+                <li><strong>수배관상 가장 불리한 지점(원격 DP).</strong> 루프 말단, 보통 마지막 대형 부하를 지난 곳의 공급·환수 주관 양단에 현장 센서를 연결합니다. 최악조건 부하가 실제로 사용할 수 있는 압력을 측정합니다. 펌프의 역할은 ‘최악조건 부하에 최소한 이 정도 차압을 제공하는 것’이 되며, 이것이 건물에 실제로 중요한 변수입니다. 소형 시스템보다 큰 설비에서는 거의 항상 더 나은 선택입니다.</li>
             </ul>
 
             <p>
@@ -390,7 +390,7 @@ pageMessages:
                 <text x="80" y="90"  class="edu-caption">공급 주관 →</text>
                 <text x="80" y="324" class="edu-caption">← 환수 주관</text>
                 <text x="50" y="312" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">변속</text>
-                <text x="670" y="93" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim)">원격 DP 센서 — 수리적으로 가장 불리한 지점</text>
+                <text x="670" y="93" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim)">원격 DP 센서 — 수배관상 가장 불리한 지점</text>
             </svg>
             <div class="edu-legend">
                 <span><span class="sw supply"></span>공급수</span>
@@ -497,7 +497,7 @@ pageMessages:
             <h2 class="subhead">전체 제어 연결하기</h2>
 
             <p>
-                세 페이지가 하나의 그림을 이룹니다. <a href="/ko/education/load-piping.html">부하 배관</a>에서는 모든 부하의 유량을 2방 밸브로 조절해 건물 수요에 따라 시스템 유량이 변하는 시스템을 코일 관점에서 구성했습니다. <a href="/ko/education/vfds.html">인버터(VFD)</a>에서는 펌프 모터를 전원 직입으로 켜고 끄는 대신 속도 지령을 따르게 하는 장치를 살펴봤습니다. 이 페이지에서는 <em>BMS가 그 속도 지령으로 하는 일</em>을 채웠습니다. 최악조건 부하 양단의 차압 설정값을 유지하되 가능하면 건물 수요와 함께 낮추고, 하루 동안 시스템 곡선을 따라 펌프 곡선 위의 운전점을 이동합니다. 변속 펌핑은 세 개념을 동시에 이해해야 하며 서로 분리하면 어느 것도 완전하게 설명되지 않습니다. 그 아래에서는 시스템 압력이 변할 때도 각 부하의 연결 밸브가 설계 유량을 유지해야 합니다. 이는 <a href="/ko/education/balancing.html">수배관 밸런싱</a>에서 다루며, 적극적인 차압 리셋에 <button type="button" data-gloss="picv">압력독립제어밸브</button>(PICV)가 자연스럽게 조합되는 이유입니다.
+                세 페이지가 하나의 그림을 이룹니다. <a href="/ko/education/load-piping.html">부하 배관</a>에서는 모든 부하의 유량을 2방 밸브로 조절해 건물 수요에 따라 시스템 유량이 변하는 시스템을 코일 관점에서 구성했습니다. <a href="/ko/education/vfds.html">인버터(VFD)</a>에서는 펌프 모터를 전원 직입으로 켜고 끄는 대신 속도 지령을 따르게 하는 장치를 살펴봤습니다. 이 페이지에서는 <em>BMS가 그 속도 지령으로 하는 일</em>을 채웠습니다. 최악조건 부하 양단의 차압 설정값을 유지하되 가능하면 건물 수요와 함께 낮추고, 하루 동안 시스템 곡선을 따라 펌프 곡선 위의 운전점을 이동합니다. 변속 펌핑은 세 개념을 동시에 이해해야 하며 서로 분리하면 어느 것도 완전하게 설명되지 않습니다. 그 아래에서는 시스템 압력이 변할 때도 각 부하의 연결 밸브가 설계 유량을 유지해야 합니다. 이는 <a href="/ko/education/balancing.html">수배관 밸런싱</a>에서 다루며, 적극적인 차압 리셋에 <button type="button" data-gloss="picv">압력 독립형 제어 밸브</button>(PICV)가 자연스럽게 조합되는 이유입니다.
             </p>
 
             <p>
@@ -508,7 +508,7 @@ pageMessages:
     </div>
 
     {{ relatedLinks({
-        hub: {href: '/ko/hydronics/', label: '수배관 시스템 참고 허브'},
+        hub: {href: '/ko/hydronics/', label: '수배관 참고 자료 허브'},
         tools: [
             {href: '/ko/tools/affinity-laws.html', label: '펌프·팬 상사 법칙'}
         ],

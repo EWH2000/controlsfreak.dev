@@ -1,7 +1,7 @@
 ---
 title: 공기측 부하 계산기 — controlsfreak.dev
 description: 현열 q=1.08×CFM×ΔT, 잠열 0.68×CFM×Δgrains, 전열 4.5×CFM×Δh를 미국식·미터법으로 어느 방향이든 계산합니다.
-sourceContentHash: dbfd63aabfb2c452ac1a987950fc841339f09aba6d0488283890f5ed68079400
+sourceContentHash: 5c58c37b8fc63ddf0c7b7457bf5174baa69af6aeee3ce2f64daccba94b13bfe9
 sourceMessageHash: acdae1fd3a2bd6f79e4ce95daf3dae05120ef5c6ca53824316c7fde4705825a4
 canonical: https://controlsfreak.dev/ko/tools/airside-load.html
 nav: tools
@@ -166,7 +166,7 @@ keywords: CFM 델타T 현열 잠열 총열량 그레인 엔탈피 BTU/h MBH 냉�
 
         <div class="tabs tabs-flush">
             <button class="tab-btn active" data-tab="sensible">현열(ΔT)</button>
-            <button class="tab-btn"        data-tab="latent">잠열(절대습도 Δ)</button>
+            <button class="tab-btn"        data-tab="latent">잠열(함습비 Δ)</button>
             <button class="tab-btn"        data-tab="total">전열(Δh)</button>
         </div>
 
@@ -259,7 +259,7 @@ keywords: CFM 델타T 현열 잠열 총열량 그레인 엔탈피 BTU/h MBH 냉�
                         <input class="ps-input" type="number" id="asl-l-load" step="any" min="0" placeholder="13.6" value="13.6">
                     </div>
                     <p class="ref-note">
-                        Δ는 입구−출구 절대습도(함습비, W)입니다. <span data-us="{{ pageMessages.unitText.moistureDefinition.us }}" data-metric="{{ pageMessages.unitText.moistureDefinition.metric }}">건공기 1파운드당 수분 그레인 수이며 7,000그레인은 1파운드입니다</span>. 두 상태는 <a href="/ko/tools/psychrometric-chart.html">습공기선도</a>나 <a href="/ko/tools/dew-point-calculator.html">이슬점 계산기</a>에서 읽으세요.
+                        Δ는 입구−출구 절대습도(함습비, W)입니다. <span data-us="{{ pageMessages.unitText.moistureDefinition.us }}" data-metric="{{ pageMessages.unitText.moistureDefinition.metric }}">건공기 1파운드당 수분 그레인 수이며 7,000그레인은 1파운드입니다</span>. 두 상태는 <a href="/ko/tools/psychrometric-chart.html">습공기선도</a>나 <a href="/ko/tools/dew-point-calculator.html">노점온도 계산기</a>에서 읽으세요.
                     </p>
                 </section>
 
@@ -355,7 +355,7 @@ keywords: CFM 델타T 현열 잠열 총열량 그레인 엔탈피 BTU/h MBH 냉�
                     <span data-us="{{ pageMessages.unitText.crossCheck.us }}" data-metric="{{ pageMessages.unitText.crossCheck.metric }}">다른 탭과 교차 확인하면 현열 43.2 + 잠열 13.6 = 56.8 MBH인데 여기서는 56.7 MBH입니다. 0.1 차이는 반올림한 Δh 때문이며 선도의 실제 값은 6.31에 가깝습니다.</span> 현열 + 잠열 = 전열이라는 관계는 꼭 확인할 가치가 있습니다. 반올림 이상으로 차이가 나면 세 측정값 중 하나가 잘못된 것입니다.
                 </p>
                 <p class="ref-note">
-                    풍량을 냉동톤으로 나누면 <button type="button" data-gloss="dx">DX</button> 건전성 확인 수치가 됩니다. 여기서는 <span data-us="{{ pageMessages.unitText.cfmPerTon.us }}" data-metric="{{ pageMessages.unitText.cfmPerTon.metric }}">2000 ÷ 4.7 ≈ 425 CFM/냉동톤</span>입니다. 업계의 하한은 약 400 CFM/냉동톤입니다. <a href="/ko/tools/equipment-airflow.html">장비 풍량 점검</a>은 이 수치를 단수별로 판정하고, <a href="/ko/education/vav-systems.html">VAV 시스템 학습 자료</a>는 하한 미만에서 결빙이 악화되는 과정을 설명합니다.
+                    풍량을 냉동톤으로 나누면 <button type="button" data-gloss="dx">DX</button> 풍량 점검값이 됩니다. 여기서는 <span data-us="{{ pageMessages.unitText.cfmPerTon.us }}" data-metric="{{ pageMessages.unitText.cfmPerTon.metric }}">2000 ÷ 4.7 ≈ 425 CFM/냉동톤</span>입니다. 업계의 하한은 약 400 CFM/냉동톤입니다. <a href="/ko/tools/equipment-airflow.html">장비 풍량 점검</a>은 이 수치를 단수별로 판정하고, <a href="/ko/education/vav-systems.html">VAV 시스템 학습 자료</a>는 하한 미만에서 결빙이 악화되는 과정을 설명합니다.
                 </p>
             </section>
         </div>
@@ -375,7 +375,7 @@ keywords: CFM 델타T 현열 잠열 총열량 그레인 엔탈피 BTU/h MBH 냉�
     </div>
 
     {{ relatedLinks({
-        hub: {href: '/ko/forced-air/', label: '강제순환 공기 시스템 참조 허브'},
+        hub: {href: '/ko/forced-air/', label: '강제순환식 공조 참고 자료 허브'},
         tools: [
             {href: '/ko/tools/airflow.html', label: '풍량 및 속도압'},
             {href: '/ko/tools/duct-traverse.html', label: '덕트 트래버스 계산기'},

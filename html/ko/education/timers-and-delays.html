@@ -1,12 +1,12 @@
 ---
 title: 타이머 및 지연 — controlsfreak.dev
-description: 온딜레이(TON)와 오프딜레이(TOF)의 동작, 설정 시간과 경과 시간, 운전 확인 시간창, 기동 실패 경보, 디바운스와 최소 운전·정지 시간을 설명합니다.
+description: 온딜레이(TON)와 오프딜레이(TOF)의 동작, 설정 시간과 경과 시간, 운전 확인 대기시간, 기동 실패 경보, 디바운스와 최소 운전·정지 시간을 설명합니다.
 canonical: https://controlsfreak.dev/ko/education/timers-and-delays.html
 nav: education
 category: programming
 pairedQuiz: https://controlsfreak.dev/ko/practice/timers-and-delays.html
 keywords: TON TOF 온딜레이 오프딜레이 설정 시간 경과 시간 운전 확인 기동 실패 디바운스 최소 운전 단주기 방지
-sourceContentHash: 4a7ff9b7e038eedaff6659ac6e1fb85902f1edbb57843b2bbf6f5251da8cff56
+sourceContentHash: 6a2aed153d417fce30ef0c837cc012070f456ac00b775aaf7c912982a59d2648
 ---
 {% extends "html/education/timers-and-delays.html" %}
 
@@ -193,11 +193,11 @@ sourceContentHash: 4a7ff9b7e038eedaff6659ac6e1fb85902f1edbb57843b2bbf6f5251da8cf
                 TRUE를 제거합니다. 설정 시간이 십 초인 TON에 들어온 육 초 펄스는 하류 블록에서 보면
                 <em>아예 없었던 것</em>과 같습니다. TOF는 설정 시간보다 짧은 모든 FALSE를 제거하여
                 잠깐의 신호 끊김이 하류에 보이지 않게 합니다. 이 관점을 기억하세요. 뒤에서 다룰
-                운전 확인 시간창, 디바운스, 최소 시간은 모두 같은 필터를 서로 다른 판단에 적용한 것입니다.
+                운전 확인 대기시간, 디바운스, 최소 시간은 모두 같은 필터를 서로 다른 판단에 적용한 것입니다.
             </p>
 
             <!-- ───────────────── 2 · The proof window ───────────────── -->
-            <h2 class="subhead" id="proof">운전 확인 시간창: 올바른 기동 실패 판단</h2>
+            <h2 class="subhead" id="proof">운전 확인 대기시간: 올바른 기동 실패 판단</h2>
 
             <p>
                 와이어시트에 시간이 왜 필요할까요? 제어기와 기계 설비가 서로 다른 속도로 움직이기
@@ -205,7 +205,7 @@ sourceContentHash: 4a7ff9b7e038eedaff6659ac6e1fb85902f1edbb57843b2bbf6f5251da8cf
                 팬은 속도가 올라가 운전 확인 스위치를 닫을 만큼 충분한 풍량을 만들기까지 십 초 또는
                 십오 초가 걸립니다. 따라서 <em>완전히 정상적인</em> 기동도 처음 몇 초 동안은 “지령은
                 있지만 운전이 확인되지 않은” 상태가 정확합니다. 이 조건에 즉시 경보를 내는 로직은 모든
-                기동에서 오경보를 발생시킵니다. 해법은 더 나은 비교가 아니라 기다려 주는 시간창이며,
+                기동에서 오경보를 발생시킵니다. 해법은 더 나은 비교가 아니라 기다려 주는 대기시간이며,
                 그 역할을 TON이 수행합니다.
             </p>
 
@@ -214,12 +214,12 @@ sourceContentHash: 4a7ff9b7e038eedaff6659ac6e1fb85902f1edbb57843b2bbf6f5251da8cf
                 있는 전체 패턴인 <strong>기동 실패 경보</strong>입니다. 먼저 문장으로 표현하면
                 “<em>기동 지령이 있고 15초 안에 운전 확인 신호가 들어오지 않으면 이상으로 판단하며, 사람이
                 확인할 때까지 경보를 유지합니다.</em>”입니다.
-                <a href="/ko/simulators/function-block-editor.html">함수 블록 편집기</a>에는 이
+                <a href="/ko/simulators/function-block-editor.html">기능 블록 편집기</a>에는 이
                 와이어시트가 <em>유량 확인 경보</em> 예제로 제공됩니다. 왼쪽에는 팬
                 <strong>지령</strong>과 실제 공기가 흐를 때 닫히는 상태 접점인 <strong>운전 확인 신호</strong>,
                 두 바이너리 입력이 있습니다. <code>NOT</code>이 운전 확인 신호를 “운전 확인이 <em>없음</em>”으로
                 반전하고, <code>AND</code>가 지령 있음과 운전 확인 없음을 결합하여 고장 조건을 만듭니다.
-                이 조건은 설정 시간이 15초인 <code>TON</code>, 즉 <strong>운전 확인 시간창</strong>에
+                이 조건은 설정 시간이 15초인 <code>TON</code>, 즉 <strong>운전 확인 대기시간</strong>에
                 들어갑니다. 타이머 출력은 <code><button type="button" data-gloss="sr-latch">SR
                 래치</button></code>를 설정하고, 래치가 경보 출력을 구동하며 사람이 조작할 리셋
                 입력은 래치의 R에 연결됩니다. 다음은 운전 확인 신호가 사라진 지 팔 초 후의 와이어시트입니다.
@@ -228,7 +228,7 @@ sourceContentHash: 4a7ff9b7e038eedaff6659ac6e1fb85902f1edbb57843b2bbf6f5251da8cf
             <svg class="edu-svg tdl-svg" viewBox="0 0 880 486" role="img"
                  aria-labelledby="tdl-d2-title tdl-d2-desc" font-family="var(--mono)">
                 <title id="tdl-d2-title">유량 확인 경보의 와이어시트</title>
-                <desc id="tdl-d2-desc">여덟 개 블록으로 구성된 함수 블록 와이어시트입니다. 왼쪽의 두 바이너리 입력은 ON인 팬 지령과 OFF인 유량 확인 상태입니다. 상태가 NOT 블록에 들어가므로 운전 확인 없음 출력은 TRUE입니다. 지령과 NOT 출력이 AND 블록에 들어가며, 지령 있음 및 운전 확인 없음 출력은 TRUE가 되어 설정 시간 15초의 TON 온딜레이 타이머에 연결됩니다. 타이머의 경과 시간은 8초이고 계속 증가 중이므로 출력은 아직 FALSE입니다. 타이머 출력은 SR 래치의 설정 입력에 들어가고, 현재 OFF인 리셋 바이너리 입력은 래치의 리셋 입력에 연결됩니다. 여전히 FALSE인 래치 출력은 ALARM이라고 표시된 바이너리 출력을 구동하며 현재 꺼져 있습니다. 번호가 붙은 세 단계가 와이어시트를 설명합니다. 첫 단계 정상 상태에서는 운전 확인 신호가 들어와 AND의 한 입력이 FALSE이고 타이머가 영에 머뭅니다. 그림에 표시된 두 번째 단계에서는 운전 확인 신호가 팔 초 전에 사라져 경과 시간이 설정 시간을 향해 증가합니다. 세 번째 단계에서 경과 시간이 15초에 도달하면 타이머가 래치를 설정하고, 운전 확인 신호가 복귀하더라도 리셋할 때까지 경보가 유지됩니다. 이 와이어시트의 모든 와이어는 디지털이며 TRUE는 녹색, FALSE는 회색입니다.</desc>
+                <desc id="tdl-d2-desc">여덟 개 블록으로 구성된 기능 블록 와이어시트입니다. 왼쪽의 두 바이너리 입력은 ON인 팬 지령과 OFF인 유량 확인 상태입니다. 상태가 NOT 블록에 들어가므로 운전 확인 없음 출력은 TRUE입니다. 지령과 NOT 출력이 AND 블록에 들어가며, 지령 있음 및 운전 확인 없음 출력은 TRUE가 되어 설정 시간 15초의 TON 온딜레이 타이머에 연결됩니다. 타이머의 경과 시간은 8초이고 계속 증가 중이므로 출력은 아직 FALSE입니다. 타이머 출력은 SR 래치의 설정 입력에 들어가고, 현재 OFF인 리셋 바이너리 입력은 래치의 리셋 입력에 연결됩니다. 여전히 FALSE인 래치 출력은 ALARM이라고 표시된 바이너리 출력을 구동하며 현재 꺼져 있습니다. 번호가 붙은 세 단계가 와이어시트를 설명합니다. 첫 단계 정상 상태에서는 운전 확인 신호가 들어와 AND의 한 입력이 FALSE이고 타이머가 영에 머뭅니다. 그림에 표시된 두 번째 단계에서는 운전 확인 신호가 팔 초 전에 사라져 경과 시간이 설정 시간을 향해 증가합니다. 세 번째 단계에서 경과 시간이 15초에 도달하면 타이머가 래치를 설정하고, 운전 확인 신호가 복귀하더라도 리셋할 때까지 경보가 유지됩니다. 이 와이어시트의 모든 와이어는 디지털이며 TRUE는 녹색, FALSE는 회색입니다.</desc>
 
                 <!-- wires (drawn first, behind the blocks) -->
                 <line x1="145" y1="52" x2="205" y2="52" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round"/>
@@ -335,7 +335,7 @@ sourceContentHash: 4a7ff9b7e038eedaff6659ac6e1fb85902f1edbb57843b2bbf6f5251da8cf
                 풍량을 만들고 운전 확인 접점이 닫히면 <code>NOT</code>이 AND의 한 입력을 떨어뜨리고 ET가
                 영으로 초기화됩니다. Q는 한 번도 동작하지 않았고 누구에게도 경보가 전달되지 않습니다.
                 TON은 설정 시간보다 짧은 TRUE를 삭제했습니다. 첫 절에서 설명한 최소 지속시간 필터가
-                그대로 동작한 것입니다. 타이머의 역할은 <em>모든 정상 기동을 허용</em>하고 시간창보다
+                그대로 동작한 것입니다. 타이머의 역할은 <em>모든 정상 기동을 허용</em>하고 대기시간보다
                 오래 지속되는 고장만 포착하는 것입니다.
             </p>
 
@@ -352,21 +352,21 @@ sourceContentHash: 4a7ff9b7e038eedaff6659ac6e1fb85902f1edbb57843b2bbf6f5251da8cf
             </p>
 
             <p>
-                그림만 믿지 말고 <a href="/ko/simulators/function-block-editor.html">함수 블록 편집기</a>에서
+                그림만 믿지 말고 <a href="/ko/simulators/function-block-editor.html">기능 블록 편집기</a>에서
                 실행해 보세요. <em>유량 확인 경보</em> 예제를 불러오면 지령과 운전 확인 신호가 모두 들어온
                 정상 상태로 시작합니다. STATUS 블록을 클릭하여 끄면 벨트가 끊어진 상황이 됩니다.
                 TON의 ET 표시가 올라가는 것을 보며 타이머보다 먼저 복구해 보세요. 15초 전에 STATUS를
-                다시 켜면 카운트가 사라집니다. 시간창 안에서 복구되었으므로 경보가 없습니다. 다시
+                다시 켜면 카운트가 사라집니다. 대기시간 안에서 복구되었으므로 경보가 없습니다. 다시
                 고장을 만들고 그대로 두세요. 15초가 되면 경보가 래치됩니다. 이제 STATUS를 다시
                 켜도 <em>아무것도 바뀌지 않습니다.</em> 래치가 유지하고 있기 때문입니다. RESET을
                 켰다가 다시 끄면 확인 동작이 이루어지고 와이어시트가 정상 상태로 돌아옵니다.
             </p>
 
             <p>
-                운전 확인 시간창은 얼마나 길어야 할까요? 양쪽에 각각 고장 모드가 있는 실제 설계 판단입니다.
+                운전 확인 대기시간은 얼마나 길어야 할까요? 양쪽에 각각 고장 모드가 있는 실제 설계 판단입니다.
                 너무 짧으면 정상 기동마다 불필요한 트립이 발생합니다. 팬은 기동 중이었지만 로직이
                 기다리지 못한 것입니다. 오경보가 반복되면 경보를 무시하거나 더 나쁘게는 비활성화하게
-                됩니다. 너무 길면 시간창이 사각지대가 됩니다. 실제로 기동에 실패해도 설정 시간 전체에
+                됩니다. 너무 길면 대기시간이 사각지대가 됩니다. 실제로 기동에 실패해도 설정 시간 전체에
                 걸쳐 보고되지 않으며, 풍량 없이는 절대 운전하면 안 되는 전기히터처럼 시퀀스가 “운전 확인 완료”
                 조건과 인터록한 모든 설비도 같은 사각지대를 갖게 됩니다. 경험 법칙은 가장 느린
                 <em>정상</em> 기동 시간에 약간의 여유를 더하되 그보다 길게 하지 않는 것입니다.
@@ -449,33 +449,33 @@ sourceContentHash: 4a7ff9b7e038eedaff6659ac6e1fb85902f1edbb57843b2bbf6f5251da8cf
             </p>
 
             <!-- ───────────────── 4 · Capstone ───────────────── -->
-            <h2 class="subhead" id="try-it">직접 운전 확인 시간창과 겨뤄 보세요</h2>
+            <h2 class="subhead" id="try-it">운전 확인 대기시간을 직접 시험해 보세요</h2>
 
             <p>
                 유량 확인 와이어시트는 여덟 블록에 이 수업 전체를 담고 있으며 이미 구성되어 있습니다.
                 <em>유량 확인 경보</em> 예제를 <a href="/ko/simulators/function-block-editor.html">함수
                 블록 편집기</a>에서 불러와 고장을 만들어 보세요. STATUS를 끄고 TON의
-                ET가 증가하는 모습을 봅니다. 한 번은 시간창이 끝나기 전인 12초에 운전 확인 신호를 다시
+                ET가 증가하는 모습을 봅니다. 한 번은 대기시간이 끝나기 전인 12초에 운전 확인 신호를 다시
                 켜 보세요. 카운트가 지워지고 경보는 발생하지 않습니다. 다음에는 시간이 만료되도록
                 두고 래치가 설정되는 모습을 확인하세요. RESET 전에는 운전 확인 신호를 복구해도 아무 변화가 없다는
                 것을 직접 볼 수 있습니다. 마지막으로 TON을 클릭하여 검사기에서 설정 시간을 3초로
-                줄인 뒤 다시 운전 확인 신호를 끊어 보세요. 너무 짧은 시간창이 정상 과도 상태를 얼마나 빠르게
+                줄인 뒤 다시 운전 확인 신호를 끊어 보세요. 너무 짧은 대기시간이 정상 과도 상태를 얼마나 빠르게
                 새벽 2시 긴급 호출로 바꾸는지 체감할 수 있습니다. 이 블록 계열의 핵심은 바로
                 이것입니다. 타이머와 와이어시트는 같고, 설정 시간이 설계자의 판단입니다.
             </p>
 
-            <a class="cta-button" href="/ko/simulators/function-block-editor.html">함수 블록 편집기 열기 →</a>
+            <a class="cta-button" href="/ko/simulators/function-block-editor.html">기능 블록 편집기 열기 →</a>
 
         </div>
     </div>
 
     {{ relatedLinks({
         simulators: [
-            {href: '/ko/simulators/function-block-editor.html', label: '함수 블록 편집기'},
-            {href: '/ko/simulators/ddc-workbench-fcu.html', label: 'DDC 워크벤치 — 팬코일'}
+            {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'},
+            {href: '/ko/simulators/ddc-workbench-fcu.html', label: 'DDC 워크벤치 — 팬코일유닛'}
         ],
         lessons: [
-            {href: '/ko/education/function-blocks.html', label: '함수 블록 기초'},
+            {href: '/ko/education/function-blocks.html', label: '기능 블록 기초'},
             {href: '/ko/education/boolean-logic-latches.html', label: '불리언 로직 및 래치'},
             {href: '/ko/education/comparators-and-deadband.html', label: '비교기 및 불감대'},
             {href: '/ko/education/equipment-staging.html', label: '설비 대수제어'},

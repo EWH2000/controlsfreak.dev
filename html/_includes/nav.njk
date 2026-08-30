@@ -10,7 +10,9 @@
    confusion this label exists to remove. Pinned by
    tests/machine-sweep.spec.js (#261). #}
 <nav class="site-nav" aria-label="{{ "nav.landmark" | t(locale) }}">
-    <a class="site-nav-brand" href="{{ "/" | localePath(locale) }}">controlsfreak<span>.dev</span></a>
+    <div class="site-nav-branding">
+        <a class="site-nav-brand" href="{{ "/" | localePath(locale) }}">controlsfreak<span>.dev</span></a>
+    </div>
     <div class="site-nav-links" id="site-nav-links">
         <a href="{{ "/" | localePath(locale) }}"{% if nav == "home" %} class="active"{% endif %}>{{ "nav.home" | t(locale) }}</a>
         {{ navDropdown('guides', 'nav.guides' | t(locale), '/guides/' | localePath(locale), nav == 'guides', null, collections.navGuides | localeItems(locale), 'nav.blurbs.guides' | t(locale), locale) }}
@@ -26,8 +28,32 @@
             <span class="nav-search-label">{{ "nav.search" | t(locale) }}</span>
             <kbd class="nav-search-kbd">/</kbd>
         </button>
-        {% if canonical or page.fileSlug == "404" %}
-        <span class="language-switch" aria-label="{{ "language.label" | t(locale) }}">
+        {% if canonical %}
+        {% set languageAlternates = collections.sitemapPages | translationAlternates(canonical) %}
+        <span class="language-switch language-switch--desktop" role="group" aria-label="{{ "language.label" | t(locale) }}">
+            {% for language in languageAlternates %}
+            {% if not loop.first %}<span aria-hidden="true">/</span>{% endif %}
+            <a href="{{ language.path }}" hreflang="{{ language.locale }}" lang="{{ language.locale }}"{% if locale == language.locale %} aria-current="page"{% endif %}>{{ language.shortLabel }}</a>
+            {% endfor %}
+        </span>
+        {% elif page.fileSlug == "404" %}
+        <span class="language-switch language-switch--desktop" role="group" aria-label="{{ "language.label" | t(locale) }}">
+            {% for language in i18n.locales %}
+            {% if not loop.first %}<span aria-hidden="true">/</span>{% endif %}
+            <a href="{{ page.url | localePath(language.code) }}" hreflang="{{ language.code }}" lang="{{ language.code }}"{% if locale == language.code %} aria-current="page"{% endif %}>{{ language.shortLabel }}</a>
+            {% endfor %}
+        </span>
+        {% endif %}
+        {% if canonical %}
+        {% set mobileLanguageAlternates = collections.sitemapPages | translationAlternates(canonical) %}
+        <span class="language-switch language-switch--mobile" role="group" aria-label="{{ "language.label" | t(locale) }}">
+            {% for language in mobileLanguageAlternates %}
+            {% if not loop.first %}<span aria-hidden="true">/</span>{% endif %}
+            <a href="{{ language.path }}" hreflang="{{ language.locale }}" lang="{{ language.locale }}"{% if locale == language.locale %} aria-current="page"{% endif %}>{{ language.shortLabel }}</a>
+            {% endfor %}
+        </span>
+        {% elif page.fileSlug == "404" %}
+        <span class="language-switch language-switch--mobile" role="group" aria-label="{{ "language.label" | t(locale) }}">
             {% for language in i18n.locales %}
             {% if not loop.first %}<span aria-hidden="true">/</span>{% endif %}
             <a href="{{ page.url | localePath(language.code) }}" hreflang="{{ language.code }}" lang="{{ language.code }}"{% if locale == language.code %} aria-current="page"{% endif %}>{{ language.shortLabel }}</a>

@@ -1,11 +1,11 @@
 ---
-title: 함수 블록 편집기 — controlsfreak.dev
+title: 기능 블록 편집기 — controlsfreak.dev
 description: 블록을 배치하고 논리·연산·타이머·PID 블록을 와이어로 연결하여 제어 시퀀스가 스캔마다 실시간으로 계산되는 과정을 실습하는 그래픽 와이어시트입니다.
-sourceContentHash: 5373bd9692b8a6055ee984c3923398aba12a766588207e8b069c36e61f032fb6
+sourceContentHash: b1312ab5beff938f1bb605622743144e611a71a1d26bf4b8b984e334d9534d4d
 sourceMessageHash: cdc74d6001fb8c4d2f86261e3b06706acf3679eeb1ac0e8766f69172503b6055
 canonical: https://controlsfreak.dev/ko/simulators/function-block-editor.html
 nav: simulators
-keywords: 와이어시트 논리 블록 and or pid 와이어 프로그램 시퀀스 함수 블록
+keywords: 와이어시트 논리 블록 and or pid 와이어 프로그램 시퀀스 기능 블록
 pageMessages:
   examples:
     freeze:
@@ -25,7 +25,7 @@ pageMessages:
     tstat-cool:
       temp: 실내온도
       sp: 냉방 SP
-      db: 데드밴드
+      db: 불감대
       hi: 냉방 투입
       lo: 냉방 해제
       over: 냉방 설정
@@ -35,7 +35,7 @@ pageMessages:
     tstat-heat:
       temp: 실내온도
       sp: 난방 SP
-      db: 데드밴드
+      db: 불감대
       hi: 난방 해제
       lo: 난방 투입
       over: 난방 복귀
@@ -71,7 +71,7 @@ pageMessages:
 <main id="main">
 
     <div class="section-header">
-        <span class="section-label">시뮬레이터 · 함수 블록 편집기</span>
+        <span class="section-label">시뮬레이터 · 기능 블록 편집기</span>
         <div class="section-line"></div>
     </div>
 
@@ -96,7 +96,7 @@ pageMessages:
             <span class="fs-label-exit">종료</span>
         </button>
         <div class="tool-card-header">
-            <h1 class="tool-card-title">함수 블록 편집기 <span class="tool-tag">논리</span></h1>
+            <h1 class="tool-card-title">기능 블록 편집기 <span class="tool-tag">논리</span></h1>
         </div>
         <div class="tool-body">
 
@@ -104,7 +104,7 @@ pageMessages:
                 Niagara, EBO, Distech에서 사용하는 것과 같은 그래픽 와이어시트 실습 환경입니다.
                 블록을 추가하고 출력 핀과 입력 핀을 연결하면 실시간 스캔 루프가 시트 전체로 값을 전달합니다.
                 특정 제품 하나를 모사하기보다 제어 시퀀스를 구성하는 감각을 익히는 데 목적이 있습니다.
-                처음이신가요? <a href="/ko/education/function-blocks.html">함수 블록 기초부터 시작하기 →</a>
+                처음이신가요? <a href="/ko/education/function-blocks.html">기능 블록 기초부터 시작하기 →</a>
             </p>
 
             <div class="desktop-only-sim">
@@ -121,7 +121,7 @@ pageMessages:
                     <li><strong>블록의 단위는 실제 단위입니다.</strong> PID 블록의 <em>Ti</em>와 <em>Td</em>는 초 단위입니다. 따라서 <a href="/ko/simulators/pid-tuner.html">PID 튜닝 도우미</a>의 기본 리셋 단위(repeats/min)로 조정했다면 값을 옮기기 전에 <em>Ti (s) = 60 ÷ reset</em>으로 변환하세요.</li>
                 </ul>
                 <p class="dos-more">
-                    와이어시트가 처음이신가요? <a href="/ko/education/function-blocks.html">함수 블록 기초</a>에서 같은 개념을 설명하며 휴대전화에서도 편하게 읽을 수 있습니다.
+                    와이어시트가 처음이신가요? <a href="/ko/education/function-blocks.html">기능 블록 기초</a>에서 같은 개념을 설명하며 휴대전화에서도 편하게 읽을 수 있습니다.
                 </p>
             </div>
 
@@ -185,7 +185,7 @@ pageMessages:
             {href: '/ko/simulators/pid-tuner.html', label: 'PID 튜닝 도우미'}
         ],
         lessons: [
-            {href: '/ko/education/function-blocks.html', label: '함수 블록 기초'},
+            {href: '/ko/education/function-blocks.html', label: '기능 블록 기초'},
             {href: '/ko/education/pid-basics.html', label: 'PID 기초'}
         ]
     }) }}

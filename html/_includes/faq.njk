@@ -10,7 +10,7 @@
              a: The share of a circuit's pressure drop the valve takes when
                 wide open. Below ~0.25 the valve barely controls flow.
        ---
-       {% from "faq.njk" import faqBlock %}
+       {% from "faq.njk" import faqBlock with context %}
        ...
        {{ faqBlock(faqs) }}            (default "Common questions" heading)
        {{ faqBlock(faqs, "Cv FAQ") }}  (a custom heading)

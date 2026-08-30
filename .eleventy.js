@@ -11,6 +11,9 @@ const fs = require("fs");
 const path = require("path");
 const i18nData = require("./html/_data/i18n.js");
 const i18nStatus = require("./html/_data/i18nStatus.js");
+const bacnetEnumsData = require("./html/_data/bacnetEnums.js");
+const bacnetEnumTranslationsData = require("./html/_data/bacnetEnumTranslations.js");
+const i18nSourceHashes = require("./html/_data/i18nSourceHashes.js");
 const quizTranslations = require("./html/_data/quizTranslations.js");
 const { localizeQuiz } = require("./lib/localize-quiz.js");
 const {
@@ -32,6 +35,22 @@ const {
 // EXEMPT_TEMPLATES path. Two literals would drift; one can't.
 const INPUT_DIR = "html";
 const INCLUDES_DIR = "_includes";
+
+const glossaryTranslations = Object.fromEntries(
+    i18nData.locales
+        .map(({ code }) => code)
+        .filter((code) => code !== i18nData.defaultLocale)
+        .map((code) => {
+            const translationPath = path.join(
+                __dirname,
+                "html",
+                "_data",
+                "glossary-translations",
+                `${code}.js`
+            );
+            return [code, fs.existsSync(translationPath) ? require(translationPath) : {}];
+        })
+);
 
 module.exports = function(eleventyConfig) {
     // .html files run through Nunjucks so signal-scaling.html →
@@ -70,18 +89,33 @@ module.exports = function(eleventyConfig) {
         localizedSequence(sequence, resolveLocale(locale)));
     eleventyConfig.addFilter("translationAlternates", (pages, canonical) => {
         const key = translationKey(canonical);
+        const localeOrder = new Map(
+            i18nData.locales.map(({ code }, index) => [code, index])
+        );
         return (pages || [])
             .filter((item) => translationKey(item.data.canonical) === key)
-            .map((item) => ({
-                locale: resolveLocale(item.data),
-                url: cleanCanonical(item.data.canonical),
-                og: (i18nData.locales.find((entry) => entry.code === resolveLocale(item.data)) || {}).og,
-            }))
-            .sort((a, b) => a.locale.localeCompare(b.locale));
+            .map((item) => {
+                const locale = resolveLocale(item.data);
+                const meta = i18nData.locales.find((entry) => entry.code === locale) || {};
+                return {
+                    locale,
+                    url: cleanCanonical(item.data.canonical),
+                    path: item.url,
+                    og: meta.og,
+                    shortLabel: meta.shortLabel,
+                };
+            })
+            .sort((a, b) => localeOrder.get(a.locale) - localeOrder.get(b.locale));
     });
     eleventyConfig.addFilter("localeMeta", (locale) =>
         i18nData.locales.find((entry) => entry.code === resolveLocale(locale))
         || i18nData.locales[0]);
+    eleventyConfig.addFilter("runtimeLocales", (locales) =>
+        (locales || []).map(({ code, label, shortLabel }) => ({
+            code,
+            label,
+            shortLabel,
+        })));
     eleventyConfig.addFilter("localizedQuiz", (questions, locale, slug) =>
         localizeQuiz(questions, locale, slug, quizTranslations));
 
@@ -127,17 +161,25 @@ module.exports = function(eleventyConfig) {
     // hook with access to the resolved data cascade; it returns nothing
     // and exists only for the side-effecting length check.
     eleventyConfig.addCollection("descriptionLengthGuard", (collectionApi) => {
+        const boundsFor = (locale) => {
+            const meta = i18nData.locales.find(({ code }) => code === locale);
+            const bounds = meta && meta.descriptionLength;
+            if (!bounds || !Number.isInteger(bounds.min) || !Number.isInteger(bounds.max)) {
+                throw new Error(`Missing integer descriptionLength bounds for locale ${locale}`);
+            }
+            return bounds;
+        };
         const offenders = collectionApi.getAll()
             .filter((item) => typeof item.data.description === "string")
             .filter((item) => {
                 const selected = resolveLocale(item.data);
-                const [min, max] = selected === "ko" ? [70, 110] : [140, 160];
+                const { min, max } = boundsFor(selected);
                 const len = item.data.description.length;
                 return len < min || len > max;
             })
             .map((item) => {
                 const selected = resolveLocale(item.data);
-                const [min, max] = selected === "ko" ? [70, 110] : [140, 160];
+                const { min, max } = boundsFor(selected);
                 return `  ${item.inputPath} — ${item.data.description.length} chars; ${selected} target is ${min}–${max}`;
             });
         // A *missing* description used to pass silently (the typeof
@@ -150,9 +192,15 @@ module.exports = function(eleventyConfig) {
             .map((item) => `  ${item.inputPath} — canonical but no description`);
         const all = offenders.concat(missing);
         if (all.length) {
+            const targets = i18nData.locales
+                .map(({ code }) => {
+                    const { min, max } = boundsFor(code);
+                    return `${code} ${min}–${max}`;
+                })
+                .join(", ");
             throw new Error(
-                `description frontmatter length by locale — en 140–160, ` +
-                `ko 70–110 (CLAUDE.md "Templating"):\n${all.join("\n")}`
+                `description frontmatter length by locale — ${targets} ` +
+                `(CLAUDE.md "Templating"):\n${all.join("\n")}`
             );
         }
         return [];
@@ -163,14 +211,19 @@ module.exports = function(eleventyConfig) {
     // silently falling back or exposing an unresolved `{placeholder}` only
     // after a visitor triggers it in the browser.
     eleventyConfig.addCollection("i18nCatalogGuard", () => {
-        const flatten = (value, prefix = "", output = new Map()) => {
+        const flatten = (value, prefix = "", output = new Map(), label = "catalog") => {
             Object.entries(value || {}).forEach(([key, child]) => {
                 const pathKey = prefix ? `${prefix}.${key}` : key;
-                if (typeof child === "string") output.set(pathKey, child);
+                if (typeof child === "string") {
+                    if (!child.trim()) {
+                        throw new Error(`i18n catalog leaf must be non-empty: ${label}.${pathKey}`);
+                    }
+                    output.set(pathKey, child);
+                }
                 else if (child && typeof child === "object" && !Array.isArray(child)) {
-                    flatten(child, pathKey, output);
+                    flatten(child, pathKey, output, label);
                 } else {
-                    throw new Error(`i18n catalog leaf must be a string: ${pathKey}`);
+                    throw new Error(`i18n catalog leaf must be a string: ${label}.${pathKey}`);
                 }
             });
             return output;
@@ -178,10 +231,63 @@ module.exports = function(eleventyConfig) {
         const placeholders = (message) => [...String(message).matchAll(/\{([A-Za-z][\w-]*)\}/g)]
             .map((match) => match[1])
             .sort();
-        const base = flatten(i18nData.messages[i18nData.defaultLocale]);
+        const base = flatten(
+            i18nData.messages[i18nData.defaultLocale],
+            "",
+            new Map(),
+            i18nData.defaultLocale
+        );
         const offenders = [];
-        i18nData.locales.forEach(({ code }) => {
-            const catalog = flatten(i18nData.messages[code]);
+        const localeCodes = i18nData.locales.map(({ code }) => code);
+        if (new Set(localeCodes).size !== localeCodes.length) {
+            offenders.push("  locale codes must be unique");
+        }
+        if (!localeCodes.includes(i18nData.defaultLocale)) {
+            offenders.push(`  default locale ${i18nData.defaultLocale} is not configured`);
+        }
+        if (new Set(i18nStatus.completeLocales).size !== i18nStatus.completeLocales.length) {
+            offenders.push("  completeLocales entries must be unique");
+        }
+        i18nStatus.completeLocales.forEach((code) => {
+            if (code === i18nData.defaultLocale) {
+                offenders.push(`  completeLocales must omit the default locale ${code}`);
+            } else if (!localeCodes.includes(code)) {
+                offenders.push(`  complete locale ${code} is not configured`);
+            }
+        });
+        i18nData.locales.forEach((locale) => {
+            const { code } = locale;
+            ["code", "label", "shortLabel", "og", "ogImage"].forEach((field) => {
+                if (typeof locale[field] !== "string" || !locale[field].trim()) {
+                    offenders.push(`  ${code || "(missing code)"} — ${field} must be a non-empty string`);
+                }
+            });
+            if (typeof code === "string"
+                && !/^[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-(?:[A-Z]{2}|\d{3}))?$/.test(code)) {
+                offenders.push(`  ${code} — locale code must be a supported BCP 47 language tag (for example en, ko, or pt-BR)`);
+            }
+            if (typeof locale.shortLabel === "string"
+                && [...locale.shortLabel.trim()].length > 5) {
+                offenders.push(`  ${code} — shortLabel must be at most 5 characters`);
+            }
+            if (typeof locale.og === "string"
+                && !/^[a-z]{2,3}_[A-Z]{2}$/.test(locale.og)) {
+                offenders.push(`  ${code} — og must use language_TERRITORY format (for example en_US)`);
+            } else if (typeof code === "string" && typeof locale.og === "string"
+                && locale.og.split("_")[0] !== code.split("-")[0]) {
+                offenders.push(`  ${code} — og language must match the locale code`);
+            }
+            if (typeof locale.ogImage === "string" && locale.ogImage.trim()) {
+                try {
+                    const imageUrl = new URL(locale.ogImage);
+                    if (imageUrl.protocol !== "https:") {
+                        offenders.push(`  ${code} — ogImage must use an absolute https URL`);
+                    }
+                } catch {
+                    offenders.push(`  ${code} — ogImage must be an absolute URL`);
+                }
+            }
+            const catalog = flatten(i18nData.messages[code], "", new Map(), code);
             [...base.keys()].filter((key) => !catalog.has(key))
                 .forEach((key) => offenders.push(`  ${code} — missing ${key}`));
             [...catalog.keys()].filter((key) => !base.has(key))
@@ -200,11 +306,169 @@ module.exports = function(eleventyConfig) {
         return [];
     });
 
+    // Locale overlays are keyed to stable IDs, but an English wording edit can
+    // keep every ID unchanged. Pin each complete locale to the exact quiz,
+    // glossary, and BACnet source revision its translator reviewed so those
+    // prose-only edits cannot pass as an apparently complete translation.
+    eleventyConfig.addCollection("i18nSourceDataGuard", () => {
+        const hash = (value) => crypto.createHash("sha256")
+            .update(JSON.stringify(value))
+            .digest("hex");
+        const quizDir = path.join(__dirname, "html", "_data", "quizzes");
+        const quizSources = Object.fromEntries(
+            fs.readdirSync(quizDir)
+                .filter((file) => file.endsWith(".js"))
+                .sort()
+                .map((file) => [
+                    path.basename(file, ".js"),
+                    require(path.join(quizDir, file)),
+                ])
+        );
+        const glossary = require("./html/_data/glossary.js");
+        const glossarySurface = Object.fromEntries(
+            Object.entries(glossary).map(([id, entry]) => [id, {
+                term: entry.term,
+                def: entry.def,
+            }])
+        );
+        const bacnetSurface = {
+            objectTypes: bacnetEnumsData.objectTypes.map(({ id, desc }) => ({ id, desc })),
+            propertyIds: bacnetEnumsData.propertyIds
+                .filter(({ desc }) => typeof desc === "string" && desc.trim())
+                .map(({ id, desc }) => ({ id, desc })),
+            unitGroups: [...new Set(
+                bacnetEnumsData.engineeringUnits.map(({ group }) => group)
+            )],
+        };
+        const expected = {
+            quizzes: Object.fromEntries(
+                Object.entries(quizSources).map(([slug, questions]) => [slug, hash(questions)])
+            ),
+            glossary: hash(glossarySurface),
+            bacnetEnums: hash(bacnetSurface),
+        };
+        const offenders = [];
+        const exactKeys = (actual, wanted, label) => {
+            if (!actual || Array.isArray(actual) || typeof actual !== "object") {
+                offenders.push(`  ${label} — must be an object`);
+                return false;
+            }
+            const actualKeys = Object.keys(actual).sort();
+            const wantedKeys = [...wanted].sort();
+            if (actualKeys.join("\0") !== wantedKeys.join("\0")) {
+                offenders.push(`  ${label} — keys must be [${wantedKeys.join(", ")}], found [${actualKeys.join(", ")}]`);
+                return false;
+            }
+            return true;
+        };
+
+        exactKeys(i18nSourceHashes, i18nStatus.completeLocales, "source-hash locales");
+        i18nStatus.completeLocales.forEach((locale) => {
+            const pins = i18nSourceHashes[locale];
+            if (!exactKeys(pins, ["quizzes", "glossary", "bacnetEnums"], `${locale} source hashes`)) {
+                return;
+            }
+            if (exactKeys(pins.quizzes, Object.keys(expected.quizzes), `${locale}.quizzes`)) {
+                Object.entries(expected.quizzes).forEach(([slug, expectedHash]) => {
+                    if (pins.quizzes[slug] !== expectedHash) {
+                        offenders.push(`  ${locale}.quizzes.${slug} — source hash must be ${expectedHash}; review the current English quiz before updating it`);
+                    }
+                });
+            }
+            [["glossary", expected.glossary], ["bacnetEnums", expected.bacnetEnums]]
+                .forEach(([name, expectedHash]) => {
+                    if (pins[name] !== expectedHash) {
+                        offenders.push(`  ${locale}.${name} — source hash must be ${expectedHash}; review the current English source before updating it`);
+                    }
+                });
+        });
+
+        if (offenders.length) {
+            throw new Error(`i18n source-data revision contract:\n${offenders.join("\n")}`);
+        }
+        return [];
+    });
+
+    // BACnet enum identifiers remain language-neutral, while explanatory
+    // descriptions and editorial unit-group labels are locale overlays.
+    // Pin overlays to the source IDs/groups so a source-row addition, array
+    // hole, or new locale cannot render an empty cell or fall back to English.
+    eleventyConfig.addCollection("bacnetEnumTranslationGuard", () => {
+        const offenders = [];
+        const localeCodes = i18nData.locales.map(({ code }) => code);
+        const overlayLocales = Object.keys(bacnetEnumTranslationsData).sort();
+        const expectedLocales = [...localeCodes].sort();
+        if (JSON.stringify(overlayLocales) !== JSON.stringify(expectedLocales)) {
+            offenders.push(`  locale overlays must be [${expectedLocales.join(", ")}], found [${overlayLocales.join(", ")}]`);
+        }
+
+        const defaultOverlay = bacnetEnumTranslationsData[i18nData.defaultLocale];
+        if (!defaultOverlay || Array.isArray(defaultOverlay) || typeof defaultOverlay !== "object") {
+            offenders.push(`  ${i18nData.defaultLocale} — default overlay must be an object`);
+        } else if (Object.keys(defaultOverlay).length) {
+            offenders.push(`  ${i18nData.defaultLocale} — default overlay must stay empty so source descriptions remain canonical`);
+        }
+
+        const compareKeys = (actual, expected, label, requireStringValues = true) => {
+            if (!actual || typeof actual !== "object") {
+                offenders.push(`  ${label} — overlay must be an object`);
+                return;
+            }
+            const actualKeys = Object.keys(actual).sort();
+            const expectedKeys = [...expected].sort();
+            if (JSON.stringify(actualKeys) !== JSON.stringify(expectedKeys)) {
+                offenders.push(`  ${label} — keys must be [${expectedKeys.join(", ")}], found [${actualKeys.join(", ")}]`);
+            }
+            if (requireStringValues) {
+                expectedKeys.forEach((key) => {
+                    if (typeof actual[key] !== "string" || !actual[key].trim()) {
+                        offenders.push(`  ${label}.${key} — translation must be a non-empty string`);
+                    }
+                });
+            }
+        };
+
+        const objectTypeIds = bacnetEnumsData.objectTypes.map(({ id }) => String(id));
+        const propertyIds = bacnetEnumsData.propertyIds
+            .filter(({ desc }) => typeof desc === "string" && desc.trim())
+            .map(({ id }) => String(id));
+        const unitGroups = [...new Set(bacnetEnumsData.engineeringUnits.map(({ group }) => group))];
+
+        i18nStatus.completeLocales.forEach((code) => {
+            const overlay = bacnetEnumTranslationsData[code];
+            if (!overlay || Array.isArray(overlay) || typeof overlay !== "object") {
+                offenders.push(`  ${code} — missing BACnet enum overlay`);
+                return;
+            }
+            compareKeys(overlay, ["objectTypes", "propertyIds", "unitGroups"], code, false);
+            if (!Array.isArray(overlay.objectTypes)) {
+                offenders.push(`  ${code}.objectTypes — overlay must be an array indexed by object type ID`);
+            } else if (overlay.objectTypes.length !== bacnetEnumsData.objectTypes.length) {
+                offenders.push(`  ${code}.objectTypes — length must be ${bacnetEnumsData.objectTypes.length}, found ${overlay.objectTypes.length}`);
+            }
+            compareKeys(overlay.objectTypes, objectTypeIds, `${code}.objectTypes`);
+            if (Array.isArray(overlay.propertyIds)) {
+                offenders.push(`  ${code}.propertyIds — overlay must be an ID-keyed object, not an array`);
+            }
+            compareKeys(overlay.propertyIds, propertyIds, `${code}.propertyIds`);
+            if (Array.isArray(overlay.unitGroups)) {
+                offenders.push(`  ${code}.unitGroups — overlay must be a group-keyed object, not an array`);
+            }
+            compareKeys(overlay.unitGroups, unitGroups, `${code}.unitGroups`);
+        });
+
+        if (offenders.length) {
+            throw new Error(`BACnet enum translation contract:\n${offenders.join("\n")}`);
+        }
+        return [];
+    });
+
     // Every translated page is a thin child of its English source: translated
     // frontmatter + one content block, while head/styles/scripts remain a
     // single source in the parent. The sourceContentHash pins the exact parent
-    // content revision reviewed by the translator; changing English prose or
-    // markup invalidates the child until it is reviewed and re-hashed.
+    // content and translatable frontmatter revision reviewed by the translator;
+    // changing English prose or metadata invalidates the child until it is
+    // reviewed and re-hashed.
     eleventyConfig.addCollection("i18nPageGuard", (collectionApi) => {
         const all = collectionApi.getAll();
         const sourcePages = all.filter((item) =>
@@ -228,10 +492,39 @@ module.exports = function(eleventyConfig) {
             }
             return matches[0][1].replace(/\r\n/g, "\n").trim();
         };
-        const contentHash = (source, label) => crypto
+        const translationFrontmatter = (data = {}) => ({
+            title: typeof data.title === "string" ? data.title : null,
+            description: typeof data.description === "string" ? data.description : null,
+            keywords: typeof data.keywords === "string" ? data.keywords : null,
+            navLabel: typeof data.navLabel === "string" ? data.navLabel : null,
+            pageMessages: data.pageMessages && typeof data.pageMessages === "object"
+                ? data.pageMessages
+                : null,
+            faqs: Array.isArray(data.faqs) ? data.faqs.map((faq) => ({
+                q: typeof faq.q === "string" ? faq.q : null,
+                a: typeof faq.a === "string" ? faq.a : null,
+            })) : [],
+            termSets: Array.isArray(data.termSets) ? data.termSets.map((termSet) => ({
+                key: typeof termSet.key === "string" ? termSet.key : null,
+                fragment: typeof termSet.fragment === "string" ? termSet.fragment : null,
+                name: typeof termSet.name === "string" ? termSet.name : null,
+                description: typeof termSet.description === "string" ? termSet.description : null,
+            })) : [],
+        });
+        const contentHash = (source, label, data) => crypto
             .createHash("sha256")
-            .update(extractContent(source, label))
+            .update(JSON.stringify({
+                content: extractContent(source, label),
+                frontmatter: translationFrontmatter(data),
+            }))
             .digest("hex");
+        const frontmatterStrings = (source, fields) => {
+            const frontmatter = (source.match(/^---\r?\n([\s\S]*?)\r?\n---/) || [])[1] || "";
+            return Object.fromEntries(fields.map((field) => {
+                const value = (frontmatter.match(new RegExp(`^${field}:\\s*(.*?)\\s*$`, "m")) || [])[1];
+                return [field, typeof value === "string" ? value.trim() : null];
+            }));
+        };
         const flattenPageMessages = (value, prefix = "", output = new Map(), label = "pageMessages") => {
             Object.entries(value || {}).forEach(([name, child]) => {
                 const key = prefix ? `${prefix}.${name}` : name;
@@ -247,6 +540,17 @@ module.exports = function(eleventyConfig) {
         const messageTokens = (message) => [...String(message).matchAll(/\{([A-Za-z][\w-]*)\}/g)]
             .map((match) => match[1])
             .sort();
+        const assertLocalizedLinks = (source, label, locale) => {
+            const visibleMarkup = source.replace(/<!--[\s\S]*?-->/g, "");
+            const hrefs = [
+                ...[...visibleMarkup.matchAll(/\bhref\s*=\s*(["'])(.*?)\1/gi)].map((match) => match[2]),
+                ...[...visibleMarkup.matchAll(/\bhref\s*:\s*(["'])(.*?)\1/gi)].map((match) => match[2]),
+            ];
+            const prefix = `/${locale}/`;
+            hrefs.filter((href) => href.startsWith("/") && !href.startsWith("//"))
+                .filter((href) => href !== `/${locale}` && !href.startsWith(prefix))
+                .forEach((href) => offenders.push(`  ${label} — root-relative link ${href} must start with ${prefix}`));
+        };
         const structureSignature = (source) => {
             const visibleMarkup = source.replace(/<!--[\s\S]*?-->/g, "");
             const tags = [...visibleMarkup.matchAll(/<(\/)?([a-z][\w:-]*)\b[^>]*>/gi)]
@@ -298,6 +602,9 @@ module.exports = function(eleventyConfig) {
                 offenders.push(`  ${item.inputPath} — no English canonical page owns translation key ${key}`);
                 return;
             }
+            if (typeof item.data.title !== "string" || !item.data.title.trim()) {
+                offenders.push(`  ${item.inputPath} — title must be translated and non-empty`);
+            }
             const expectedCanonical = localizedCanonical(parent.data.canonical, selected);
             if (item.data.canonical !== expectedCanonical) {
                 offenders.push(`  ${item.inputPath} — canonical must be ${expectedCanonical}`);
@@ -312,12 +619,13 @@ module.exports = function(eleventyConfig) {
                 offenders.push(`  ${item.inputPath} — translated child may override only one content block; found [${blocks.join(", ")}]`);
             }
             const translatedContent = extractContent(item.rawInput, item.inputPath);
+            assertLocalizedLinks(item.rawInput, item.inputPath, selected);
             const executableMarkup = translatedContent.replace(/<!--[\s\S]*?-->/g, "");
             if (/<(?:script|style)\b/i.test(executableMarkup)) {
                 offenders.push(`  ${item.inputPath} — translated content may not duplicate script/style; move executable or styling code to the English parent block`);
             }
             const parentSource = fs.readFileSync(parent.inputPath, "utf8");
-            const expectedHash = contentHash(parentSource, parent.inputPath);
+            const expectedHash = contentHash(parentSource, parent.inputPath, parent.data);
             if (item.data.sourceContentHash !== expectedHash) {
                 offenders.push(`  ${item.inputPath} — sourceContentHash must be ${expectedHash}; review the current English content before updating it`);
             }
@@ -404,13 +712,76 @@ module.exports = function(eleventyConfig) {
                 .forEach((messageKey) => offenders.push(`  ${item.inputPath} — extra pageMessages.${messageKey}`));
             [...sourceMessages.keys()].filter((messageKey) => localizedMessages.has(messageKey))
                 .forEach((messageKey) => {
-                    const expected = messageTokens(sourceMessages.get(messageKey));
-                    const actual = messageTokens(localizedMessages.get(messageKey));
+                    const sourceMessage = sourceMessages.get(messageKey);
+                    const localizedMessage = localizedMessages.get(messageKey);
+                    if (sourceMessage.trim() && !localizedMessage.trim()) {
+                        offenders.push(`  ${item.inputPath} — pageMessages.${messageKey} translation must be non-empty`);
+                    }
+                    if (!sourceMessage.trim() && localizedMessage !== sourceMessage) {
+                        offenders.push(`  ${item.inputPath} — intentionally empty pageMessages.${messageKey} must remain exactly empty`);
+                    }
+                    const expected = messageTokens(sourceMessage);
+                    const actual = messageTokens(localizedMessage);
                     if (expected.join("\0") !== actual.join("\0")) {
                         offenders.push(`  ${item.inputPath} — pageMessages.${messageKey} placeholders ` +
                             `[${actual.join(", ")}] must be [${expected.join(", ")}]`);
                     }
                 });
+        });
+
+        // The localized 404 is intentionally outside the sitemap because it
+        // has no canonical URL, but it still carries user-facing copy and must
+        // not drift outside the thin-child contract.
+        const source404Input = "html/404.html";
+        const source404Path = path.join(__dirname, source404Input);
+        const source404 = fs.existsSync(source404Path)
+            ? fs.readFileSync(source404Path, "utf8")
+            : null;
+        i18nStatus.completeLocales.forEach((locale) => {
+            const localized404Input = `html/${locale}/404.html`;
+            const localized404Path = path.join(__dirname, localized404Input);
+            const localized404 = fs.existsSync(localized404Path)
+                ? fs.readFileSync(localized404Path, "utf8")
+                : null;
+            if (!source404 || !localized404) {
+                offenders.push(`  ${locale} localized 404 — English or translated template is missing`);
+                return;
+            }
+            const extendsMatches = [...localized404.matchAll(
+                /\{%\s*extends\s+["']([^"']+)["']\s*%\}/g
+            )];
+            if (extendsMatches.length !== 1 || extendsMatches[0][1] !== source404Input) {
+                offenders.push(`  ${localized404Input} — must extend exactly ${source404Input}`);
+            }
+            const blocks = [...localized404.matchAll(/\{%\s*block\s+([\w-]+)/g)]
+                .map((match) => match[1]);
+            if (blocks.length !== 1 || blocks[0] !== "content") {
+                offenders.push(`  ${localized404Input} — translated 404 may override only one content block; found [${blocks.join(", ")}]`);
+            }
+            const translatedContent = extractContent(localized404, localized404Input);
+            assertLocalizedLinks(localized404, localized404Input, locale);
+            if (/<(?:script|style)\b/i.test(translatedContent.replace(/<!--[\s\S]*?-->/g, ""))) {
+                offenders.push(`  ${localized404Input} — translated 404 may not duplicate script/style`);
+            }
+            const source404Data = frontmatterStrings(source404, ["title", "description"]);
+            const localized404Data = frontmatterStrings(localized404, ["title", "description"]);
+            ["title", "description"].forEach((field) => {
+                if (typeof localized404Data[field] !== "string" || !localized404Data[field].trim()) {
+                    offenders.push(`  ${localized404Input} — ${field} must be translated`);
+                }
+            });
+            const expectedHash = contentHash(source404, source404Input, source404Data);
+            const recordedHash = (localized404.match(
+                /^sourceContentHash:\s*([a-f0-9]+)\s*$/m
+            ) || [])[1];
+            if (recordedHash !== expectedHash) {
+                offenders.push(`  ${localized404Input} — sourceContentHash must be ${expectedHash}; review the current English 404 before updating it`);
+            }
+            compareSignature(
+                extractContent(source404, source404Input),
+                translatedContent,
+                localized404Input
+            );
         });
 
         i18nStatus.completeLocales.forEach((locale) => {
@@ -984,7 +1355,6 @@ module.exports = function(eleventyConfig) {
     // gradually, so entries are allowed to precede their marks.
     eleventyConfig.addCollection("glossaryGuard", (collectionApi) => {
         const glossary = require("./html/_data/glossary.js");
-        const glossaryKo = require("./html/_data/glossary-translations/ko.js");
         const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
         const offenders = [];
         const pagePaths = new Set(
@@ -1012,25 +1382,26 @@ module.exports = function(eleventyConfig) {
                 }
             });
         });
-        if (i18nStatus.completeLocales.includes("ko")) {
-            const translatedKeys = Object.keys(glossaryKo);
+        i18nStatus.completeLocales.forEach((locale) => {
+            const translatedGlossary = glossaryTranslations[locale] || {};
+            const translatedKeys = Object.keys(translatedGlossary);
             if (JSON.stringify(translatedKeys.sort()) !== JSON.stringify([...keys].sort())) {
-                offenders.push(`  Korean glossary keys must exactly match English: expected ${keys.length}, found ${translatedKeys.length}`);
+                offenders.push(`  ${locale} glossary keys must exactly match English: expected ${keys.length}, found ${translatedKeys.length}`);
             }
             keys.forEach((key) => {
-                const translation = glossaryKo[key] || {};
+                const translation = translatedGlossary[key] || {};
                 const fields = Object.keys(translation).sort();
                 if (fields.join("\0") !== "def\0term") {
-                    offenders.push(`  ${key} — Korean glossary overlay must contain exactly \`term\` and \`def\``);
+                    offenders.push(`  ${locale}/${key} — glossary overlay must contain exactly \`term\` and \`def\``);
                 }
                 if (typeof translation.term !== "string" || !translation.term.trim()) {
-                    offenders.push(`  ${key} — Korean glossary overlay has no non-empty \`term\``);
+                    offenders.push(`  ${locale}/${key} — glossary overlay has no non-empty \`term\``);
                 }
                 if (typeof translation.def !== "string" || !translation.def.trim()) {
-                    offenders.push(`  ${key} — Korean glossary overlay has no non-empty \`def\``);
+                    offenders.push(`  ${locale}/${key} — glossary overlay has no non-empty \`def\``);
                 }
             });
-        }
+        });
         if (offenders.length) {
             throw new Error(
                 `html/_data/glossary.js shape + owners resolution ` +
@@ -1137,10 +1508,10 @@ module.exports = function(eleventyConfig) {
         if (!content.includes("data-gloss")) return content;
 
         const glossary = require("./html/_data/glossary.js");
-        const glossaryKo = require("./html/_data/glossary-translations/ko.js");
         const version = require("./package.json").version;
         const pageUrl = (this.page && this.page.url) || "";
-        const pageLocale = /^\/ko(?:\/|$)/.test(pageUrl) ? "ko" : "en";
+        const pageLocale = localeFromCanonical(pageUrl);
+        const translatedGlossary = glossaryTranslations[pageLocale] || {};
         const inputPath = (this.page && this.page.inputPath) || out;
         const offenders = [];
         const used = [];
@@ -1245,8 +1616,8 @@ module.exports = function(eleventyConfig) {
                 offenders.push(`  data-gloss="${id}" — no such glossary entry. Known ids: ${Object.keys(glossary).join(", ")}`);
                 ok = false;
             }
-            if (ok && pageLocale === "ko" && !glossaryKo[id]) {
-                offenders.push(`  data-gloss="${id}" — missing Korean glossary translation`);
+            if (ok && pageLocale !== i18nData.defaultLocale && !translatedGlossary[id]) {
+                offenders.push(`  data-gloss="${id}" — missing ${pageLocale} glossary translation`);
                 ok = false;
             }
             if (ok && entry.owners.some((owner) => translationKey(owner) === translationKey(pageUrl))) {
@@ -1301,8 +1672,8 @@ module.exports = function(eleventyConfig) {
             .replace(/&/g, "&amp;").replace(/</g, "&lt;")
             .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
         const panels = used.map((id) => {
-            const entry = pageLocale === "ko"
-                ? { ...glossary[id], ...glossaryKo[id] }
+            const entry = pageLocale !== i18nData.defaultLocale
+                ? { ...glossary[id], ...translatedGlossary[id] }
                 : glossary[id];
             return `<div class="gloss-tip" role="tooltip" id="gloss-tip-${id}" hidden>\n`
                  + `    <p class="gloss-tip-term"><dfn>${esc(entry.term)}</dfn></p>\n`
@@ -1761,6 +2132,7 @@ module.exports = function(eleventyConfig) {
     eleventyConfig.addFilter("techArticleJsonLd", (canonical, title, description, datePublished, dateModified, pairedQuiz, locale) => {
         if (!canonical) return "";
         const selected = resolveLocale(locale);
+        const localizedRoot = cleanCanonical(localizedCanonical("/", selected));
         const node = {
             "@context": "https://schema.org",
             "@type": "TechArticle",
@@ -1771,8 +2143,8 @@ module.exports = function(eleventyConfig) {
             "inLanguage": selected,
             "datePublished": datePublished,
             "dateModified": dateModified,
-            "author": { "@id": "https://controlsfreak.dev/#author" },
-            "publisher": { "@id": "https://controlsfreak.dev/#website" }
+            "author": { "@id": `${localizedRoot}#author` },
+            "publisher": { "@id": `${localizedRoot}#website` }
         };
         if (pairedQuiz) {
             node.hasPart = { "@type": "FAQPage", "@id": pairedQuiz };

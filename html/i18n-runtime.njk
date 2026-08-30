@@ -6,7 +6,7 @@ eleventyExcludeFromCollections: true
     'use strict';
 
     const DEFAULT_LOCALE = {{ i18n.defaultLocale | safeScriptJson | safe }};
-    const LOCALES = {{ i18n.locales | safeScriptJson | safe }};
+    const LOCALES = {{ i18n.locales | runtimeLocales | safeScriptJson | safe }};
     const MESSAGES = {{ i18n.messages | safeScriptJson | safe }};
     const SUPPORTED = new Set(LOCALES.map(item => item.code));
 

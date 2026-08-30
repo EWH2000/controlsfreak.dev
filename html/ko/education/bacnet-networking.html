@@ -1,7 +1,7 @@
 ---
 title: BACnet 네트워킹 — controlsfreak.dev
 description: BACnet 주소 지정의 세 계층, BVLL/NPDU/APDU 프레임, BBMD와 외부 장치 등록, EBO 16진수 문자열을 읽는 방법을 설명합니다.
-sourceContentHash: 70f120d755b3d31e38c0ef3b6d5c241e92f0a8bd00444330c124e90fffc5f627
+sourceContentHash: 206026f0d7e6c2b4af90c51f76b03a6dbee577da23a3762dffc1888bb8fc0a19
 canonical: https://controlsfreak.dev/ko/education/bacnet-networking.html
 nav: education
 category: protocols
@@ -381,13 +381,13 @@ keywords: ms/tp mstp 보드레이트 bbmd 외부 장치 라우터 서브넷 브�
             <h2 class="subhead">검색이 아무 오류 없이 실패할 때</h2>
 
             <p>
-                BACnet 브로드캐스트에는 "전달하지 못함"이라는 피드백이 없습니다. 검색이 동작하지 않을 때 증상은 거의 항상 "보여야 할 장치가 보이지 않는다"이며 검색할 오류 메시지도 없습니다. 현장에서 자주 발생하는 대략적인 순서대로 다음 항목을 확인하십시오.
+                BACnet 브로드캐스트에는 "전달하지 못함"이라는 피드백이 없습니다. 검색이 동작하지 않을 때 증상은 거의 항상 "보여야 할 장치가 보이지 않는다"이며 검색할 오류 메시지도 없습니다. 현장에서 자주 발생하는 대략적인 순서대로 다음 항목을 확인하세요.
             </p>
 
             <ul>
-                <li><strong>원격 서브넷에 BBMD가 없음.</strong> 대상 장치가 BBMD를 전혀 구성하지 않은 서브넷에 있습니다. 해당 서브넷의 로컬 장치끼리는 잘 보이지만 네트워크 간 검색은 도달하지 않습니다. 해당 서브넷에 BBMD를 구성하고 모든 피어의 BDT에 추가하십시오.</li>
+                <li><strong>원격 서브넷에 BBMD가 없음.</strong> 대상 장치가 BBMD를 전혀 구성하지 않은 서브넷에 있습니다. 해당 서브넷의 로컬 장치끼리는 잘 보이지만 네트워크 간 검색은 도달하지 않습니다. 해당 서브넷에 BBMD를 구성하고 모든 피어의 BDT에 추가하세요.</li>
                 <li><strong>비대칭 BDT.</strong> BBMD A에는 B가 있지만 B의 BDT에는 A가 없습니다. A의 검색은 B에 도달하지만 I-Am 응답은 돌아오지 못합니다. BDT 항목은 대칭으로 구성해야 하며 모든 BBMD의 BDT에 나머지 모든 BBMD가 필요합니다.</li>
-                <li><strong>방화벽이 UDP 47808을 차단함.</strong> BBMD 호스트의 방화벽, 라우터의 네트워크 ACL, 기업 경계 필터 같은 방화벽 규칙이 서브넷 사이의 UDP 47808을 폐기합니다. BBMD는 올바르게 구성되었지만 Forwarded-NPDU가 전혀 도착하지 않는 것이 증상입니다. Wireshark 캡처 또는 두 BBMD 사이의 UDP 47808 통신 확인으로 검증하십시오.</li>
+                <li><strong>방화벽이 UDP 47808을 차단함.</strong> BBMD 호스트의 방화벽, 라우터의 네트워크 ACL, 기업 경계 필터 같은 방화벽 규칙이 서브넷 사이의 UDP 47808을 폐기합니다. BBMD는 올바르게 구성되었지만 Forwarded-NPDU가 전혀 도착하지 않는 것이 증상입니다. Wireshark 캡처 또는 두 BBMD 사이의 UDP 47808 통신 확인으로 검증하세요.</li>
                 <li><strong>네트워크 번호 충돌.</strong> 함께 라우팅되는 두 BACnet 네트워크 세그먼트가 같은 네트워크 번호를 사용합니다. 네트워크 계층이 구분할 수 없어 라우터와 BBMD가 메시지를 폐기하거나 잘못된 방향으로 보냅니다. 인터네트워크의 모든 BACnet 네트워크에는 고유한 번호가 필요합니다.</li>
                 <li><strong>BBMD가 잘못된 VLAN에 있음.</strong> BBMD의 IP가 서비스해야 할 BACnet/IP 장치와 다른 VLAN에 있습니다. BBMD가 실제 브로드캐스트 도메인에 없으므로 아무것도 포착하지 못합니다. BBMD의 NIC를 BAS VLAN에 연결하거나 해당 VLAN을 트렁크로 전달하는 네트워크 구성이 필요합니다.</li>
                 <li><strong>FDR TTL 만료.</strong> 외부 장치로 등록된 워크스테이션이 <code>Register-Foreign-Device</code>를 충분히 자주 다시 보내지 않아 BBMD의 FDT 항목이 만료되었습니다. 대부분의 엔지니어링 도구는 자동으로 처리하지만 사용자 정의 클라이언트는 그렇지 않을 수 있습니다. 재연결 직후에는 잠시 검색되다가 멈추는 것이 증상입니다.</li>
@@ -414,7 +414,7 @@ keywords: ms/tp mstp 보드레이트 bbmd 외부 장치 라우터 서브넷 브�
     </div>
 
     {{ relatedLinks({
-        hub: {href: '/ko/bacnet/', label: 'BACnet 참조 허브'},
+        hub: {href: '/ko/bacnet/', label: 'BACnet 참고 자료 허브'},
         tools: [
             {href: '/ko/tools/bacnet-ip-converter.html', label: 'BACnet/IP 16진수 변환기'},
             {href: '/ko/tools/bacnet-objects.html', label: 'BACnet 객체 참조'},

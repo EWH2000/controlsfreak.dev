@@ -1,7 +1,7 @@
 ---
-title: DDC 워크벤치 — 팬코일 — controlsfreak.dev
-description: 함수 블록 와이어시트가 구동하는 DX 팬코일 DDC 그래픽에서 BACnet 우선순위, 센서 강제, 단계 제어와 고장 시나리오를 실시간으로 실습하는 시뮬레이터입니다.
-sourceContentHash: 9451fd70c147c713423595e3585b2ec58bfaa4f5c7f74d8b4477dee39bd8b074
+title: DDC 워크벤치 — 팬코일유닛 — controlsfreak.dev
+description: 기능 블록 와이어시트로 구동되는 DX 팬코일유닛을 실시간 DDC 그래픽으로 보여 줍니다. 샘플 제어 프로그램을 불러오거나 직접 배선한 뒤 장치가 운전되는 모습을 확인하세요.
+sourceContentHash: e1939986e8e8b8c2b47e21168820bc0c86d60e6bbcd3d3e34d90cd1da6fcaa93
 sourceMessageHash: e3e58cb7d4e4164487f64938e0ead84d6335b1f1ec8752c4a9fad859b352b1a8
 canonical: https://controlsfreak.dev/ko/simulators/ddc-workbench-fcu.html
 nav: simulators
@@ -27,11 +27,11 @@ pageMessages:
     dat: DAT
     fanStatus: 팬 상태
     fanSpeed: 팬 속도
-    fanEnable: 팬 운전
+    fanEnable: 팬 운전 허가
     y1: 냉방 1단
     y2: 냉방 2단
     coolingSetpoint: 냉방 설정값
-    deadband: 데드밴드
+    deadband: 불감대
   programs:
     cool2Stage: 2단 냉방
     cool1Stage: 1단 냉방
@@ -41,10 +41,10 @@ pageMessages:
     stg2Sep: 2단 분리폭
     stg1Make: 1단 투입점
     stg2Make: 2단 투입점
-    stg1Set: 1단 셋
-    stg1Reset: 1단 리셋
-    stg2Set: 2단 셋
-    stg2Reset: 2단 리셋
+    stg1Set: 1단 Set
+    stg1Reset: 1단 Reset
+    stg2Set: 2단 Set
+    stg2Reset: 2단 Reset
     stg1Latch: 1단 래치
     stg2Latch: 2단 래치
     coolCall: 냉방 요구
@@ -57,7 +57,7 @@ pageMessages:
     datLow: DAT 저온
     datRunOk: DAT 운전 허용
     coilSafe: 코일 안전
-    minimumOff: 최소 정지
+    minimumOff: 최소 정지시간
     cycleOk: 사이클 허용
     runPermit: 운전 허가
     stageOff: 단계 정지
@@ -129,9 +129,9 @@ pageMessages:
         <div class="tool-body">
 
             <details class="tool-preamble">
-                <summary>함수 블록 프로그램으로 구동되는 DX 팬코일을 실시간 DDC 그래픽으로 살펴봅니다.</summary>
+                <summary>기능 블록 프로그램으로 구동되는 DX 팬코일유닛을 실시간 DDC 그래픽으로 살펴봅니다.</summary>
                 <div class="preamble-rest">
-                    <strong>장치</strong> 탭은 기술자가 읽고 조정하는 감시 화면입니다. 매개변수 레일의 설정값과 데드밴드는 실행 중인 프로그램에 반영되며,
+                    <strong>장치</strong> 탭은 기술자가 읽고 조정하는 감시 화면입니다. 매개변수 레일의 설정값과 불감대는 실행 중인 프로그램에 반영되며,
                     <strong>와이어시트</strong> 탭에는 장치를 구동하는 제어 프로그램이 있습니다. 워크벤치는 실제 BACnet 우선순위 배열의 세 수준을 통해 각 출력을 지령합니다.
                     <strong>슬롯 8 (Manual Operator)</strong>은 수동 운전자 지령에,
                     <strong>슬롯 16</strong>은 시퀀스에 사용되며, 두 슬롯이 모두 NULL이면
@@ -310,8 +310,8 @@ pageMessages:
                 <svg class="fcu-svg" id="fcu-graphic" viewBox="0 0 720 380"
                      role="img" aria-labelledby="fcu-title fcu-desc"
                      font-family="var(--mono)">
-                    <title id="fcu-title">한 개 존에 서비스를 제공하는 DX 팬코일의 DDC 감시 그래픽</title>
-                    <desc id="fcu-desc">한 개 존을 서비스하는 재순환 직팽식 팬코일을 DDC 감시 그래픽으로 나타냅니다. 회기는 오른쪽 존을 나와 상부 회기 덕트를 따라 왼쪽으로 흐른 다음 짧은 수직 덕트를 통해 팬코일 캐비닛 왼쪽 상부로 내려갑니다. 캐비닛은 각 덕트가 만나는 상부 벽을 열어 두어 수직 덕트 입구와 급기 라이저 입구가 모두 분명하게 보입니다. 캐비닛 내부에서 공기는 DX 냉각 코일과 급기 팬을 차례로 지나며, 팬이 두 번째 개구부 위로 공기를 밀어 올려 급기 덕트를 통해 존으로 되돌려 보냅니다. 방향 표시 화살표가 덕트, 수직 구간, 코일과 팬을 따라 이동하여 공기 흐름을 나타냅니다. 세 개의 포인트 배지는 풍향 순서로 왼쪽부터 표시됩니다. 수직 덕트 옆 회기온도, 코일 하류의 부호 있는 코일 전후 온도차(출구온도에서 입구온도를 뺀 값으로 냉각 중에는 음수), 팬 위의 토출공기온도 순입니다. 존 상자에는 존 온도와 냉방 설정값이 표시되고, 별도 라벨에는 급기 팬 상태와 속도 및 압축기 단계가 표시됩니다. DX 코일과 급기 팬은 상세 시뮬레이터로 이동할 수 있는 두 하위 장치로 그려집니다. 캐비닛 태그는 FCU-1입니다. 감지 장치는 실제 설치 위치에 배치됩니다. 존 안쪽 먼 벽의 실내온도 벽면 센서, 엘보 바로 아래 회기 수직 덕트 외벽을 관통하여 헤드가 왼쪽 빈 공간에 놓인 회기온도 삽입형 센서, 팬 하류 급기 덕트 상부 벽을 관통한 토출공기온도 삽입형 센서가 있으며, 각 장치를 활성화하면 상태 표시줄의 해당 실시간 값 칩을 강조합니다.</desc>
+                    <title id="fcu-title">단일 존에 공기를 공급하는 DX 팬코일유닛의 DDC 감시 그래픽</title>
+                    <desc id="fcu-desc">단일 존에 공기를 공급하는 재순환 직팽식 팬코일유닛을 DDC 감시 그래픽으로 나타냅니다. 회기는 오른쪽 존을 나와 상부 회기 덕트를 따라 왼쪽으로 흐른 다음 짧은 수직 덕트를 통해 팬코일유닛 캐비닛 왼쪽 상부로 내려갑니다. 캐비닛은 각 덕트가 만나는 상부 벽을 열어 두어 수직 덕트 입구와 급기 라이저 입구가 모두 분명하게 보입니다. 캐비닛 내부에서 공기는 DX 냉각 코일과 급기 팬을 차례로 지나며, 팬이 두 번째 개구부 위로 공기를 밀어 올려 급기 덕트를 통해 존으로 되돌려 보냅니다. 방향 표시 화살표가 덕트, 수직 구간, 코일과 팬을 따라 이동하여 공기 흐름을 나타냅니다. 세 개의 포인트 배지는 공기 흐름 순서로 왼쪽부터 표시됩니다. 수직 덕트 옆 회기온도, 코일 하류의 부호 있는 코일 전후 온도차(출구온도에서 입구온도를 뺀 값으로 냉각 중에는 음수), 팬 위의 토출공기온도 순입니다. 존 상자에는 존 온도와 냉방 설정값이 표시되고, 별도 라벨에는 급기 팬 상태와 속도 및 압축기 단계가 표시됩니다. DX 코일과 급기 팬은 상세 시뮬레이터로 이동할 수 있는 두 하위 장치로 그려집니다. 캐비닛 태그는 FCU-1입니다. 감지 장치는 실제 설치 위치에 배치됩니다. 존 안쪽 먼 벽의 실내온도 벽면 센서, 엘보 바로 아래 회기 수직 덕트 외벽을 관통하여 헤드가 왼쪽 빈 공간에 놓인 회기온도 삽입형 센서, 팬 하류 급기 덕트 상부 벽을 관통한 토출공기온도 삽입형 센서가 있으며, 각 장치를 활성화하면 상태 표시줄의 해당 실시간 값 칩을 강조합니다.</desc>
 
                     <!-- ── Ductwork — exterior runs only ──────────────────
                          Return duct body: from the zone face, along the top,
@@ -717,7 +717,7 @@ pageMessages:
                         </span>
                     </div>
                     <div class="fcu-param-row">
-                        <label class="fcu-param-lbl" for="fcu-p-deadband">데드밴드</label>
+                        <label class="fcu-param-lbl" for="fcu-p-deadband">불감대</label>
                         <span class="fcu-param-editwell">
                             <input class="fcu-param-input" type="number" id="fcu-p-deadband" value="3.0" min="1" max="5" step="0.5">
                             <span class="fcu-param-unit" id="fcu-p-deadband-u" aria-hidden="true">°F</span>
@@ -813,7 +813,7 @@ pageMessages:
                          on a resume. -->
                     <div class="slider-field">
                         <div class="slider-head">
-                            <label for="fcu-speed-slider">시뮬레이션 속도(실시간의 ×배)</label>
+                            <label for="fcu-speed-slider">시뮬레이션 속도(실시간 대비 배율)</label>
                             <span class="slider-val" id="fcu-speed-val">20×</span>
                         </div>
                         <input type="range" id="fcu-speed-slider" min="1" max="60" step="1" value="20">
@@ -839,11 +839,11 @@ pageMessages:
                 <div class="field fcu-fanen">
                     <label>
                         <input type="checkbox" id="fcu-fanen-toggle" class="ddcw-tracked" checked>
-                        팬 운전 허용 — G 지령(슬롯 8 — Manual Operator)
+                        팬 운전 허가 — G 지령(슬롯 8 — Manual Operator)
                     </label>
                     <label class="ddcw-null" for="fcu-null-fanen">
                         <input type="checkbox" id="fcu-null-fanen" checked
-                            aria-label="NULL — 해제 — 팬 운전 허용(슬롯 8)">
+                            aria-label="NULL — 해제 — 팬 운전 허가(슬롯 8)">
                         NULL — 해제
                     </label>
                 </div>
@@ -909,14 +909,14 @@ pageMessages:
                 <summary>이 와이어시트의 설정값 규칙</summary>
                 <div class="prose-fold-body">
                     <p class="ref-note">
-                        프로그램이 어떤 규칙을 사용하는지 이해하고 설정값 라벨을 읽어야 합니다. 여기서 라벨은 차단값입니다. 1단은 설정값에 데드밴드를 더한 온도에서 투입되고 설정값에서 해제됩니다. 와이어시트에서는 y1on이 gt1으로 들어가 단계를 투입하고 설정값 자체가 lt1으로 들어가 단계를 해제하므로, 존 온도는 그래픽에 표시된 값보다 데드밴드만큼
-                        <em>위</em>에서 움직입니다. 다른 시퀀스는 설정값을 중심으로 밴드를 배치하며 어느 방식도 틀리지 않습니다. 커미셔닝에서는 해당 용도에 데드밴드의 어느 쪽이 필요한지 확인해야 합니다. 현장에서 알아둘 점도 있습니다. 일부 블록 라이브러리는 데드밴드가 비교기의 어느 쪽에 놓이는지를 고정하므로, 시퀀스에 필요한 위치로 밴드를 옮기기 위해 less-than을 NOT으로 감싸 greater-than을 표현하기도 합니다.
+                        프로그램이 어떤 규칙을 사용하는지 이해하고 설정값 라벨을 읽어야 합니다. 여기서 라벨은 차단값입니다. 1단은 설정값에 불감대를 더한 온도에서 투입되고 설정값에서 해제됩니다. 와이어시트에서는 y1on이 gt1으로 들어가 단계를 투입하고 설정값 자체가 lt1으로 들어가 단계를 해제하므로, 존 온도는 그래픽에 표시된 값보다 불감대만큼
+                        <em>위</em>에서 움직입니다. 다른 시퀀스는 설정값을 중심으로 밴드를 배치하며 어느 방식도 틀리지 않습니다. 커미셔닝에서는 해당 용도에 불감대의 어느 쪽이 필요한지 확인해야 합니다. 현장에서 알아둘 점도 있습니다. 일부 블록 라이브러리는 불감대가 비교기의 어느 쪽에 놓이는지를 고정하므로, 시퀀스에 필요한 위치로 밴드를 옮기기 위해 less-than을 NOT으로 감싸 greater-than을 표현하기도 합니다.
                     </p>
                 </div>
             </details>
 
             <p class="ref-note">
-                이 모델은 방향성을 설명하기 위한 것입니다. 코일 효과는 정격 600 CFM인 약 1.5 ton DX 팬코일의 대략적인 현열 분배이며, 고장 프리셋은 징후를 명확히 보이도록 코일 출력을 완전히 영으로 만듭니다. 실제 무냉방 호출에는 여러 원인이 있을 수 있으므로, 그래픽은 무엇을 수리할지가 아니라 어느 쪽을 점검할지를 보여 줍니다.
+                이 모델은 방향성을 설명하기 위한 것입니다. 코일 효과는 정격 600 CFM인 약 1.5 ton DX 팬코일유닛의 대략적인 현열 분배이며, 고장 프리셋은 징후를 명확히 보이도록 코일 출력을 완전히 영으로 만듭니다. 실제 냉방 불량에는 여러 원인이 있을 수 있으므로, 그래픽은 무엇을 수리할지가 아니라 어느 쪽을 점검할지를 보여 줍니다.
             </p>
 
             <!-- Folded (glossary arc, fold-widening pass 2026-08-11): the
@@ -930,9 +930,9 @@ pageMessages:
                 <summary>응축기 막힘 학습 — 그래픽만으로 판별할 수 없는 경우</summary>
                 <div class="prose-fold-body">
                     <p class="ref-note">
-                        응축기 막힘 시나리오는 충분히 살펴볼 가치가 있습니다. 공기측 값은 모두 정상으로 보입니다. 팬 지령이 있고 운전 확인 스위치가 동작하며 흐름 화살표도 계속 움직입니다. 다만 급기측 색상이 냉각을 뜻하는 파란색에서 일반 회색으로 바뀌고 ΔT 배지는 작은 팬 발열 보정값에 머뭅니다. 도면이 알려 주는 또 하나의 정보는 빨간색으로 바뀐 압축기 LED입니다. 전원은 들어왔지만 냉각 능력을 내지 못한다는 뜻입니다. 정상 공기측과 빨간 압축기의 조합은 고장이 냉매 회로에 있음을 가리킵니다. 이 캐비닛 그래픽은 DX 코일에서 끝나고 열 방출은 화면 밖에서 일어나므로 화면의 다른 정보로는 더 좁힐 수 없습니다. 공기측이 정상이고 코일이 아무 일도 하지 않으면 화면 점검을 멈추고 냉매 회로를 확인하는 습관이 필요합니다. 이 값만으로는 응축기 막힘, 압축기 고장, 이 패널의 냉매 부족 고장을 구분할 수 없으며 점검할 계통만 알려 줍니다. 따라서 냉매 부족 판정은 냉매 부족을 단정하지 않고 가능한 원인으로 제시합니다. 시나리오 버튼은 설정된 고장을 알고 있지만 그래픽은 알지 못하며, 프런트엔드가 이 포인트만으로
+                        응축기 막힘 시나리오는 충분히 살펴볼 가치가 있습니다. 공기측 값은 모두 정상으로 보입니다. 팬 지령이 있고 운전 확인 스위치가 동작하며 흐름 화살표도 계속 움직입니다. 다만 급기측 색상이 냉각을 뜻하는 파란색에서 일반 회색으로 바뀌고 ΔT 배지는 작은 팬 발열분에 머뭅니다. 도면이 알려 주는 또 하나의 정보는 빨간색으로 바뀐 압축기 LED입니다. 전원은 들어왔지만 냉각 능력을 내지 못한다는 뜻입니다. 정상 공기측과 빨간 압축기의 조합은 고장이 냉매 회로에 있음을 가리킵니다. 이 캐비닛 그래픽은 DX 코일에서 끝나고 열 방출은 화면 밖에서 일어나므로 화면의 다른 정보로는 더 좁힐 수 없습니다. 공기측이 정상이고 코일이 아무 일도 하지 않으면 화면 점검을 멈추고 냉매 회로를 확인하는 습관이 필요합니다. 이 값만으로는 응축기 막힘, 압축기 고장, 이 패널의 냉매 부족 고장을 구분할 수 없으며 점검할 계통만 알려 줍니다. 따라서 냉매 부족 판정은 냉매 부족을 단정하지 않고 가능한 원인으로 제시합니다. 시나리오 버튼은 설정된 고장을 알고 있지만 그래픽은 알지 못하며, 프런트엔드가 이 포인트만으로
                         <em>냉매 부족</em>을 경보로 단정하면 사용자를 대신해 추측하는 셈입니다. 그래픽의 코일 기호를 열면
-                        <a href="/ko/simulators/refrigerant-loop.html">냉매 루프 시뮬레이터</a>에서 응축압력, 과냉도와 과열도를 통해 원인을 구분할 수 있습니다.
+                        <a href="/ko/simulators/refrigerant-loop.html">냉매 회로 시뮬레이터</a>에서 응축압력, 과냉도와 과열도를 통해 원인을 구분할 수 있습니다.
                     </p>
                 </div>
             </details>
@@ -956,7 +956,7 @@ pageMessages:
                          drill-down href, so removing it reddens that row. -->
                     <p class="fcu-note">
                         한 가지 실제적인 변수가 있습니다. 토출 센서는 드로스루 방식의 팬 하류에 있으므로 DAT에는 코일 출구온도에 약
-                        <span data-us="0.6&nbsp;°F" data-metric="0.3&nbsp;°C">0.6&nbsp;°F</span>의 팬 발열이 더해집니다. 이는 모터가 한 실제 일이 공기에 전달된 값입니다. 현장 기술자는 바로 이 지점에서 작은 교정 오프셋을 조정하여 포인트가 코일 출구온도를 표시하도록 합니다. 도면의 팬 기호는
+                        <span data-us="0.6&nbsp;°F" data-metric="0.3&nbsp;°C">0.6&nbsp;°F</span>의 팬 발열이 더해집니다. 이는 모터의 실제 일이 공기에 열로 전달된 결과입니다. 현장 기술자는 바로 이 지점에서 작은 교정 오프셋을 조정하여 포인트가 코일 출구온도를 표시하도록 합니다. 도면의 팬 기호는
                         <a href="/ko/simulators/vfd-mock.html">모의 VFD 인터페이스</a>로 이동하는 링크입니다. 기호가 너무 작게 표시되는 화면에서도 같은 상세 화면으로 이동할 수 있도록 본문 링크를 함께 제공합니다.
                     </p>
 
@@ -980,7 +980,7 @@ pageMessages:
                      Rendered only where the live workspace is gated out —
                      see the p.ddcw-sheet-mobile-note rule in styles.css. -->
                 <p class="ddcw-sheet-mobile-note">
-                    이 화면에서 와이어시트는 읽기 전용으로 표시됩니다. 데스크톱 너비에서는 포인터로 실시간 배선을 편집할 수 있으며 장치 탭은 계속 완전히 상호작용할 수 있습니다.
+                    이 화면에서는 와이어시트를 따라 읽어 보는 방식으로 안내합니다. 데스크톱 너비에서는 포인터로 실제 와이어시트를 배선할 수 있으며, 장치 탭은 계속 모든 기능을 사용할 수 있습니다.
                 </p>
 
                 <p class="ddcw-sheet-note">
@@ -997,7 +997,7 @@ pageMessages:
                     <div class="prose-fold-body">
                         <p class="ddcw-sheet-note">
                             단일 단계 예제를 살펴볼 필요가 있습니다. 장치가 정지해도 속도 지령은 전속에 고정되어 있어 그래픽을 읽을 때 흔히 의심하는 모습이 나타납니다. 그러나 고장이 아닙니다.
-                            <a href="/ko/education/commanding-actuators.html">AO는 상태가 아니라 지령을 표시합니다</a>. 팬 운전 허용 BO가 실제로 모터를 정지시킵니다. 다단 예제는 단계 요구에 따라 속도 지령을 움직이지만 이 예제는 의도적으로 전속 지령을 유지합니다.
+                            <a href="/ko/education/commanding-actuators.html">AO는 상태가 아니라 지령을 표시합니다</a>. 팬 운전 허가 BO가 실제로 모터를 정지시킵니다. 다단 예제는 단계 요구에 따라 속도 지령을 움직이지만 이 예제는 의도적으로 전속 지령을 유지합니다.
                         </p>
                     </div>
                 </details>
@@ -1029,7 +1029,7 @@ pageMessages:
                         <p class="ddcw-sheet-note">
                             운전 확인을 먼저 적용해야 하는 이유가 있습니다. 정지한 공기 속의 토출 센서는 코일이 아니라 실내온도를 읽습니다. 공기 흐름을 멈추면 저온 제한은 단순히 트립하지 않는 것이 아니라 코일 상태를 보지 못합니다. 코일 상태와 관계없이 정상처럼 보이는 온도를 보고합니다. 시나리오에서 벨트를 파손해 확인해 보세요. 팬 지령은 유지되지만 날개가 멈추고 DAT 칩은 존 온도까지 올라갑니다. 다만 단계는 계속 유지됩니다. 시나리오는 운전자 기록이며 이 시나리오는 두 단계 모두를 시퀀스보다 우선하는 슬롯 8에 남겨 두기 때문입니다. 압축기 단계 아래의
                             <em>NULL — 해제</em> 확인란으로 단계 지령을 반환하면 다음 틱에 정지합니다. 신뢰할 수 없는 토출공기 값이 아니라 운전 확인 인터록에 의해 정지합니다. 지령, 상태와 운전 확인 신호는 서로 다른 세 정보입니다.
-                            <a href="/ko/education/status-and-proof.html">상태와 운전 확인</a>에서 그 차이를 자세히 설명합니다.
+                            <a href="/ko/education/status-and-proof.html">상태 및 운전 확인 신호</a>에서 그 차이를 자세히 설명합니다.
                         </p>
                     </div>
                 </details>
@@ -1054,7 +1054,7 @@ pageMessages:
                     <summary>정지 타이머가 감시하는 값과 오버라이드의 영향</summary>
                     <div class="prose-fold-body">
                         <p class="ddcw-sheet-note">
-                            정지 타이머가 감시하는 값은 시퀀스 자체의 정지이며 다른 정지는 감시하지 않습니다. 슬롯 8에서 단계를 강제로 정지하면 압축기는 멈추지만 프로그램은 계속 냉방을 요구합니다. 허가 체인은 정지를 감지하지 못하므로 타이머는 영에 머물고, 강제를 해제하는 순간 장치가 재기동합니다. 고장이 아니라 시퀀스가 자신이 아는 정지만 보호하는 것입니다. 포인트를 강제할 때 오버라이드가 하위 로직에 어떤 영향을 주는지 이해하는 습관을 이 화면에서 익혀야 합니다. 프로그램은 장치를 바라보는 자체 관점에서 계속 실행 중인데 사용자가 알리지 않은 채 실제 장치만 바꾼 상태입니다. 팬은 의도적으로 허가 경로 밖에 있습니다. 팬은 냉방 요구를 계속 따르므로 운전 금지 조건이 해제되는 동안에도 코일을 가로질러 공기가 흐릅니다. 팬이 스스로 만든 풍량 운전 확인 신호로 팬을 게이트하면 어떤 장치도 기동할 수 없기 때문입니다. 큰 냉방 요구에서 팬을 저속으로 강제하여 안전 로직의 동작을 확인해 보세요. 기본 예제에서 같은 조작은 안전 로직이 해결하도록 설계된 결빙 방향의 급강하를 만듭니다.
+                            정지 타이머가 감시하는 값은 시퀀스 자체의 정지이며 다른 정지는 감시하지 않습니다. 슬롯 8에서 단계를 강제로 정지하면 압축기는 멈추지만 프로그램은 계속 냉방을 요구합니다. 허가 체인은 정지를 감지하지 못하므로 타이머는 영에 머물고, 강제를 해제하는 순간 장치가 재기동합니다. 고장이 아니라 시퀀스가 자신이 아는 정지만 보호하는 것입니다. 포인트를 강제할 때 오버라이드가 하위 로직에 어떤 영향을 주는지 이해하는 습관을 이 화면에서 익혀야 합니다. 프로그램은 장치를 바라보는 자체 관점에서 계속 실행 중인데 사용자가 알리지 않은 채 실제 장치만 바꾼 상태입니다. 팬은 의도적으로 허가 경로 밖에 있습니다. 팬은 냉방 요구를 계속 따르므로 운전 금지 조건이 해제되는 동안에도 코일을 가로질러 공기가 흐릅니다. 팬이 스스로 만든 풍량 운전 확인 신호로 팬을 게이트하면 어떤 장치도 기동할 수 없기 때문입니다. 큰 냉방 요구에서 팬을 저속으로 강제하여 안전 로직의 동작을 확인해 보세요. 기본 예제에서 같은 조작은 안전 로직이 해결하도록 설계된 코일 온도의 결빙 방향 급락을 만듭니다.
                         </p>
                     </div>
                 </details>
@@ -1069,7 +1069,7 @@ pageMessages:
                 <div class="fbe-live">
                     <div class="fbe-simbar">
                         <button type="button" class="copy-btn" id="ddcw-fbe-run" data-fbe-action="run">일시정지</button>
-                        <button type="button" class="copy-btn" id="ddcw-fbe-reset" data-fbe-action="reset">재설정</button>
+                        <button type="button" class="copy-btn" id="ddcw-fbe-reset" data-fbe-action="reset">초기화</button>
                         <button type="button" class="copy-btn" id="ddcw-fbe-clear" data-fbe-action="clear">모두 지우기</button>
                         <span class="fbe-status" id="ddcw-fbe-status" role="status" aria-live="polite">실행 중</span>
                     </div>
@@ -1099,22 +1099,22 @@ pageMessages:
        economizer, no hydronics — so nothing water- or mixing-related belongs
        in this column even though the AHU page carries it. #}
     {{ relatedLinks({
-        hub: {href: '/ko/forced-air/', label: '공기식 시스템 참고 허브'},
+        hub: {href: '/ko/forced-air/', label: '강제순환식 공조 참고 자료 허브'},
         tools: [
             {href: '/ko/tools/bacnet-priority.html', label: 'BACnet 우선순위 배열'},
             {href: '/ko/tools/equipment-airflow.html', label: '장비 풍량 확인'}
         ],
         simulators: [
             {href: '/ko/simulators/ddc-workbench.html', label: 'DDC 워크벤치 — 공기조화기'},
-            {href: '/ko/simulators/function-block-editor.html', label: '함수 블록 편집기'},
+            {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'},
             {href: '/ko/simulators/controller-wiring.html', label: '컨트롤러 배선 시뮬레이터'}
         ],
         lessons: [
             {href: '/ko/education/reading-a-wiresheet.html', label: '와이어시트 읽기'},
-            {href: '/ko/education/function-blocks.html', label: '함수 블록 기초'},
-            {href: '/ko/education/comparators-and-deadband.html', label: '비교기와 데드밴드'},
+            {href: '/ko/education/function-blocks.html', label: '기능 블록 기초'},
+            {href: '/ko/education/comparators-and-deadband.html', label: '비교기 및 불감대'},
             {href: '/ko/education/timers-and-delays.html', label: '타이머와 지연'},
-            {href: '/ko/education/status-and-proof.html', label: '상태와 운전 확인'},
+            {href: '/ko/education/status-and-proof.html', label: '상태 및 운전 확인 신호'},
             {href: '/ko/education/bacnet-basics.html', label: 'BACnet 기초'}
         ],
         quizzes: [

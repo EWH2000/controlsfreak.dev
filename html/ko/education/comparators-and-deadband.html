@@ -6,7 +6,7 @@ nav: education
 category: programming
 pairedQuiz: https://controlsfreak.dev/ko/practice/comparators-and-deadband.html
 keywords: 비교기 불감대 히스테리시스 임계값 채터링 단주기 운전 GT LT 설정값 밴드
-sourceContentHash: 701a734ae6ea9fea7542434f92151ea0a215fe3c3d0dd77b58ef39e58835ab34
+sourceContentHash: b1f8d5d13791fa1b1b6021a422d2af994fe6938233e77f8eefe667a450342215
 ---
 {% extends "html/education/comparators-and-deadband.html" %}
 
@@ -95,7 +95,7 @@ sourceContentHash: 701a734ae6ea9fea7542434f92151ea0a215fe3c3d0dd77b58ef39e58835a
                 때문이기도 합니다. “같은” 수치에 이르는 두 경로, 예를 들어 72.0으로 입력한
                 설정값과 71.999999…로 계산된 값은 아주 낮은 소수 자리에서 달라질 수 있습니다.
                 따라서 건물의 모든 화면에 72.0으로 표시되어도 비트 단위 등가 검사는 실패합니다.
-                이 사이트의 <a href="/ko/simulators/function-block-editor.html">함수 블록 편집기</a>에는
+                이 사이트의 <a href="/ko/simulators/function-block-editor.html">기능 블록 편집기</a>에는
                 보호 장치가 내장되어 있습니다. <code>A = B</code> 블록은 실제로 “비트가 동일한가?”가
                 아니라 “두 값이 작은 허용오차 이내인가?”를 묻습니다. 실제 제품의 팔레트도 같은
                 방식을 쓰거나 허용오차 매개변수를 제공합니다. 허용오차가 있어도 변하는 측정값의
@@ -250,7 +250,7 @@ sourceContentHash: 701a734ae6ea9fea7542434f92151ea0a215fe3c3d0dd77b58ef39e58835a
             </p>
 
             <p>
-                <a href="/ko/simulators/function-block-editor.html">함수 블록 편집기</a>에는 이
+                <a href="/ko/simulators/function-block-editor.html">기능 블록 편집기</a>에는 이
                 시퀀스가 <em>냉방 온도조절기</em> 예제로 그대로 제공됩니다. 와이어를 하나씩 따라가
                 볼 가치가 있습니다. 왼쪽에는 실내 온도 아날로그 입력,
                 <span data-us="74 °F" data-metric="23.3 °C">74 °F</span> 설정값 상수,
@@ -269,7 +269,7 @@ sourceContentHash: 701a734ae6ea9fea7542434f92151ea0a215fe3c3d0dd77b58ef39e58835a
             <svg class="edu-svg cdb-svg" viewBox="0 0 800 420" role="img"
                  aria-labelledby="cdb-d2-title cdb-d2-desc" font-family="var(--mono)">
                 <title id="cdb-d2-title">불감대 온도조절기의 와이어시트</title>
-                <desc id="cdb-d2-desc">아홉 개 블록으로 구성된 함수 블록 와이어시트입니다. 왼쪽의 세 소스는 76을 읽는 실내 온도 아날로그 입력, 74인 설정값 상수, 1인 불감대 상수입니다. ADD 블록은 설정값과 불감대를 더해 75를 계산하고, SUBTRACT 블록은 설정값에서 불감대를 빼 73을 계산합니다. 초과 비교기는 온도를 75와 비교하여 현재 TRUE이고, 미만 비교기는 73과 비교하여 FALSE입니다. 초과 비교기의 출력은 SR 래치의 설정 입력에, 미만 비교기의 출력은 리셋 입력에 연결됩니다. TRUE인 래치 출력은 COOL이라고 표시된 바이너리 출력을 켭니다. 아날로그 와이어는 파란색, TRUE 디지털 와이어는 녹색, FALSE 와이어는 회색입니다.</desc>
+                <desc id="cdb-d2-desc">아홉 개 블록으로 구성된 기능 블록 와이어시트입니다. 왼쪽의 세 소스는 76을 읽는 실내 온도 아날로그 입력, 74인 설정값 상수, 1인 불감대 상수입니다. ADD 블록은 설정값과 불감대를 더해 75를 계산하고, SUBTRACT 블록은 설정값에서 불감대를 빼 73을 계산합니다. 초과 비교기는 온도를 75와 비교하여 현재 TRUE이고, 미만 비교기는 73과 비교하여 FALSE입니다. 초과 비교기의 출력은 SR 래치의 설정 입력에, 미만 비교기의 출력은 리셋 입력에 연결됩니다. TRUE인 래치 출력은 COOL이라고 표시된 바이너리 출력을 켭니다. 아날로그 와이어는 파란색, TRUE 디지털 와이어는 녹색, FALSE 와이어는 회색입니다.</desc>
 
                 <!-- wires (drawn first, behind the blocks) -->
                 <line x1="145" y1="48"  x2="215" y2="108" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
@@ -446,7 +446,7 @@ sourceContentHash: 701a734ae6ea9fea7542434f92151ea0a215fe3c3d0dd77b58ef39e58835a
             <h2 class="subhead" id="try-it">직접 밴드를 따라가 보세요</h2>
 
             <p>
-                이 수업의 전체 내용을 <a href="/ko/simulators/function-block-editor.html">함수 블록
+                이 수업의 전체 내용을 <a href="/ko/simulators/function-block-editor.html">기능 블록
                 편집기</a>에서 실행해 볼 수 있습니다. <em>냉방 온도조절기</em> 예제를 불러오고
                 TEMP 블록을 클릭한 뒤 검사기에서 값을 올려 보세요. 74에서는 아무 일도 없고,
                 74.9에서도 그대로입니다. 75를 넘으면 초과 비교기의 와이어가 녹색으로 바뀌고 요구가
@@ -458,20 +458,20 @@ sourceContentHash: 701a734ae6ea9fea7542434f92151ea0a215fe3c3d0dd77b58ef39e58835a
                 기본 구조는 동일합니다.
             </p>
 
-            <a class="cta-button" href="/ko/simulators/function-block-editor.html">함수 블록 편집기 열기 →</a>
+            <a class="cta-button" href="/ko/simulators/function-block-editor.html">기능 블록 편집기 열기 →</a>
 
         </div>
     </div>
 
     {{ relatedLinks({
         simulators: [
-            {href: '/ko/simulators/function-block-editor.html', label: '함수 블록 편집기'},
+            {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'},
             {href: '/ko/simulators/pid-tuner.html', label: 'PID 튜닝 도우미'},
             {href: '/ko/simulators/ddc-workbench.html', label: 'DDC 워크벤치 — 공기조화기'},
-            {href: '/ko/simulators/ddc-workbench-fcu.html', label: 'DDC 워크벤치 — 팬코일'}
+            {href: '/ko/simulators/ddc-workbench-fcu.html', label: 'DDC 워크벤치 — 팬코일유닛'}
         ],
         lessons: [
-            {href: '/ko/education/function-blocks.html', label: '함수 블록 기초'},
+            {href: '/ko/education/function-blocks.html', label: '기능 블록 기초'},
             {href: '/ko/education/boolean-logic-latches.html', label: '불리언 로직 및 래치'},
             {href: '/ko/education/timers-and-delays.html', label: '타이머 및 지연'},
             {href: '/ko/education/setpoint-math-reset.html', label: '설정값 연산 및 리셋'},

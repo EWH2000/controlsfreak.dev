@@ -1,7 +1,7 @@
 ---
 title: "습공기선도 — controlsfreak.dev"
-description: "습공기선도에서 외기·회기(RA) 혼합, 냉각·가열·가습 공정을 구성하고 상태점의 건구·습구·이슬점·절대습도(함습비, W)·엔탈피 변화를 분석합니다."
-sourceContentHash: "f196cbe86c31c8adaba1d12fcd108b6f636e2bf82faf462e5488adb5c29585e9"
+description: "공기조화기(AHU)의 습공기 공정을 따라 외기와 회기를 혼합한 뒤 냉각·가열·가습합니다. 선도에서 외기(OA)와 회기(RA) 상태점을 끌어 옮기면 나머지 공정이 함께 갱신됩니다."
+sourceContentHash: 4772ce5ae2b954ef5d86f3dc60121683a78de9b9e304d65a02a4e67a7f245c2f
 sourceMessageHash: "91a770866c8c40bb642f784af141f26b1b987ead6788bd2799014a1ae4f11955"
 canonical: "https://controlsfreak.dev/ko/tools/psychrometric-chart.html"
 nav: "tools"
@@ -13,7 +13,7 @@ pageMessages:
   defineBy:
     rh: "상대습도(%)"
     wb: "습구온도({unit})"
-    dp: "이슬점({unit})"
+    dp: "노점({unit})"
     w: "절대습도(함습비, W)({unit})"
     h: "엔탈피({unit} 건공기)"
   stages:
@@ -57,13 +57,13 @@ pageMessages:
       rhNegative: "상대습도는 음수일 수 없습니다."
       rhAbove100: "상대습도는 100 %를 초과할 수 없습니다."
       wetBulbAboveDryBulb: "습구온도는 건구온도보다 높을 수 없습니다."
-      dewPointAboveDryBulb: "이슬점은 건구온도보다 높을 수 없습니다."
+      dewPointAboveDryBulb: "노점은 건구온도보다 높을 수 없습니다."
       humidityRatioNegative: "절대습도(함습비, W)는 음수일 수 없습니다."
       enthalpyBelowDryAir: "엔탈피가 이 건구온도의 건공기 엔탈피보다 낮습니다. 물리적으로 불가능합니다."
       propertyRequired: "상태점을 정의할 물성을 선택하세요."
       rhPastSaturation: "이 상태점은 포화선을 벗어납니다(상대습도 100 % 초과). 물리적으로 불가능합니다."
       wetBulbPastSaturation: "입력한 습구온도는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다."
-      dewPointPastSaturation: "입력한 이슬점은 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다."
+      dewPointPastSaturation: "입력한 노점은 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다."
       humidityRatioPastSaturation: "입력한 절대습도(함습비, W)는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다."
       enthalpyPastSaturation: "입력한 엔탈피는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다."
   canvas:
@@ -108,8 +108,8 @@ pageMessages:
       us: "습구온도(°F)"
       metric: "습구온도(°C)"
     dewPoint:
-      us: "이슬점(°F)"
-      metric: "이슬점(°C)"
+      us: "노점(°F)"
+      metric: "노점(°C)"
     humidityRatio:
       us: "절대습도(함습비, W)(gr/lb)"
       metric: "절대습도(함습비, W)(g/kg)"
@@ -143,7 +143,7 @@ pageMessages:
     latentCapacity:
       us: "Q 잠열(MBH)"
       metric: "Q 잠열(kW)"
-keywords: "습공기선도 습공기 상태 해석 절대습도 함습비 엔탈피 습구온도 이슬점 외기 회기 혼합공기 코일 AHU OA RA"
+keywords: "습공기선도 습공기 상태 해석 절대습도 함습비 엔탈피 습구온도 노점온도 노점 외기 회기 혼합공기 코일 AHU OA RA"
 ---
 {% extends "html/tools/psychrometric-chart.html" %}
 
@@ -192,7 +192,7 @@ keywords: "습공기선도 습공기 상태 해석 절대습도 함습비 엔탈
                 외기(OA)와 회기(RA)를 혼합한 다음 냉각, 가열,
                 가습합니다. 단계 버튼으로 공정을 선택해 패널에서 매개변수를 수정하거나 선도에서 <strong>OA</strong>와
                 <strong>RA</strong> 상태점을 끌어 옮기세요. 급기(SA) 상태와 모든 중간 상태점이 함께 갱신됩니다.
-                <strong>습공기선도가 처음인가요?</strong> <a href="/ko/education/psychrometrics-basics.html">습공기선도 기초</a> 레슨에서 선도의 일곱 가지 물성과 특히 주의할 <button type="button" data-gloss="dew-point">이슬점</button>을 먼저 설명합니다.
+                <strong>습공기선도가 처음인가요?</strong> <a href="/ko/education/psychrometrics-basics.html">습공기선도 기초 학습 자료</a>에서 선도의 일곱 가지 물성과 특히 주의할 <button type="button" data-gloss="dew-point">노점</button>을 먼저 설명합니다.
             </div>
         </details>
         <p class="ps-seed-note">입력란에는 예제가 미리 채워져 있습니다. 확인하려는 값으로 수정하세요.</p>
@@ -260,7 +260,7 @@ keywords: "습공기선도 습공기 상태 해석 절대습도 함습비 엔탈
                         <select class="ps-input" id="oa-mode">
                             <option value="rh">상대습도</option>
                             <option value="wb" selected>습구온도</option>
-                            <option value="dp">이슬점</option>
+                            <option value="dp">노점</option>
                             <option value="w">절대습도(함습비, W)</option>
                             <option value="h">엔탈피</option>
                         </select>
@@ -283,7 +283,7 @@ keywords: "습공기선도 습공기 상태 해석 절대습도 함습비 엔탈
                         <select class="ps-input" id="ra-mode">
                             <option value="rh">상대습도</option>
                             <option value="wb" selected>습구온도</option>
-                            <option value="dp">이슬점</option>
+                            <option value="dp">노점</option>
                             <option value="w">절대습도(함습비, W)</option>
                             <option value="h">엔탈피</option>
                         </select>
@@ -322,7 +322,7 @@ keywords: "습공기선도 습공기 상태 해석 절대습도 함습비 엔탈
                         <select class="ps-input" id="cc-mode">
                             <option value="rh">상대습도</option>
                             <option value="wb" selected>습구온도</option>
-                            <option value="dp">이슬점</option>
+                            <option value="dp">노점</option>
                             <option value="w">절대습도(함습비, W)</option>
                             <option value="h">엔탈피</option>
                         </select>
@@ -364,7 +364,7 @@ keywords: "습공기선도 습공기 상태 해석 절대습도 함습비 엔탈
                         <label class="ps-label" for="hum-rh">출구 상대습도(%)</label>
                         <input class="ps-input" type="number" id="hum-rh" step="1" min="0" max="100" value="50">
                     </div>
-                    <p class="ref-note">증발식 패드나 습윤 메디어를 사용한 단열(일정한 <button type="button" data-gloss="wet-bulb">습구온도</button>) 가습입니다. 수분을 더하면 <button type="button" data-gloss="dry-bulb">건구온도</button>가 약간 내려갑니다. 출구 상대습도는 입구 값 이상이어야 합니다.</p>
+                    <p class="ref-note">증발식 패드나 습윤 매체를 사용한 단열(일정한 <button type="button" data-gloss="wet-bulb">습구온도</button>) 가습입니다. 수분을 더하면 <button type="button" data-gloss="dry-bulb">건구온도</button>가 약간 내려갑니다. 출구 상대습도는 입구 값 이상이어야 합니다.</p>
                 </div>
 
                 <!-- SA editor (read-only) -->
@@ -445,14 +445,14 @@ keywords: "습공기선도 습공기 상태 해석 절대습도 함습비 엔탈
                 혼합은 질량 가중 <button type="button" data-gloss="enthalpy">엔탈피</button> / 절대습도(함습비, W) 조합으로 계산하며, 단열 가습에서는 <button type="button" data-gloss="wet-bulb">습구온도</button>가 일정합니다.
                 코일 용량은 AHU 풍량과 입구 비체적으로 계산합니다.
                 Q = ṁ·Δh, ṁ = CFM·60/v<sub>in</sub>; Q<sub>sens</sub> = ṁ·(0.240 + 0.444·W<sub>in</sub>)·ΔT. 건물의 습공기 상태를 직관적으로 파악하고
-                설계일 상태점을 신속히 점검하기 위한 용도이며, 교정된 부하 해석 도구를 대체하지 않습니다.
+                설계일 상태점을 신속히 점검하기 위한 용도이며, 보정된 부하 해석 도구를 대체하지 않습니다.
             </p>
         </div>
     </div>
 
     {{ relatedLinks({
         tools: [
-            {href: '/ko/tools/dew-point-calculator.html', label: '이슬점 계산기'},
+            {href: '/ko/tools/dew-point-calculator.html', label: '노점온도 계산기'},
             {href: '/ko/tools/air-mixing.html', label: '공기 혼합 계산기'},
             {href: '/ko/tools/coil-sizing.html', label: '코일 용량 계산기'},
             {href: '/ko/tools/economizer-ratio.html', label: '외기냉방 비율 도우미'}

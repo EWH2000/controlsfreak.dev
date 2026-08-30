@@ -1,7 +1,7 @@
 ---
 title: 장비 풍량 점검기 — controlsfreak.dev
-description: DX 냉방의 운전 냉동톤당 측정 풍량과 결빙·응축수 비산 위험을 판정하고, 가스 퍼니스 명판 온도상승 범위를 허용 풍량대로 환산합니다.
-sourceContentHash: 662ee994a89c6024d849c8ac1bd413cde67f1383d96bfe2c6043d9f09e46fcb8
+description: DX 냉방에서 운전 중인 용량 1냉동톤당 측정 풍량을 결빙·응축수 비산 기준과 비교하고, 가스 퍼니스의 명판 온도상승 범위를 허용 풍량대로 환산합니다.
+sourceContentHash: 6a4a80b9576f3e77f81e514aaf2f7801e220454a3bf8f14f7e04173c73b9be9d
 sourceMessageHash: b4156272521a1648e3602ccda30ff7680dea953c5d51b6380d4013923a8f2e56
 canonical: https://controlsfreak.dev/ko/tools/equipment-airflow.html
 nav: tools
@@ -44,7 +44,7 @@ pageMessages:
         measuredRise: " · 측정 온도상승 {rise} °F: {heat} ÷ {denominator} = {airflow} CFM"
     verdict:
         dxIcing: "운전 냉동톤당 {value} CFM — 결빙 위험 영역입니다. 약 350 미만이면 운전 중인 단계가 코일 표면 온도를 빙점 아래로 낮춰 응축수가 배수되지 않고 얼어붙습니다. 결빙은 풍량을 더 막아 코일의 풍량 부족을 악화합니다. 풍량 측정값을 확인한 다음 필터, 팬 속도, 단계 운전과 풍량 확인 신호의 인터록을 점검하세요."
-        dxThin: "운전 냉동톤당 {value} CFM — 여유가 작습니다. 고잠열 설계는 제습을 위해 의도적으로 350–400에서 운전하지만, 그 아래 구간은 모두 결빙 여유입니다. 설계 의도인지, 막힌 필터나 낮아진 팬 속도 때문인지 확인하세요."
+        dxThin: "운전 냉동톤당 {value} CFM — 여유가 작습니다. 고잠열 설계는 제습을 위해 의도적으로 350–400에서 운전하지만, 400 미만은 모두 결빙 여유를 깎아 먹는 구간입니다. 설계 의도인지, 막힌 필터나 낮아진 팬 속도 때문인지 확인하세요."
         dxHealthy: "운전 냉동톤당 {value} CFM — 400–500 범위 안입니다(일반적인 공칭값은 약 450). 현재 운전 중인 단계에 적합한 풍량입니다."
         dxHigh: "운전 냉동톤당 {value} CFM — 풍량이 높습니다. 코일 온도가 높아져 제습량이 줄고, 약 500을 넘으면 면풍속이 핀의 응축수를 급기 덕트로 날려 보낼 수 있습니다. 일부 단계가 잠겨 있는데 팬은 전속으로 운전할 때 흔히 발생합니다."
         gasHighRise: "측정 온도상승 {rise} °F가 명판 범위 {minimumRise}–{maximumRise} °F보다 높아 풍량이 부족합니다(추정 {airflow} CFM, 최소 풍량 {floor} CFM 대비). 과열 제한 스위치 트립 위험 영역입니다. 열교환기가 과열되고 상한 스위치가 버너를 단주기 운전시키며, 반복 과열은 열교환기 균열을 일으킵니다. 필터, 송풍기 속도 탭, 덕트 저항을 확인하세요."
@@ -90,7 +90,7 @@ keywords: 냉동톤당 CFM 400 450 DX 결빙 응축수 비산 코일 동결 온�
                 <section>
                     <h2 class="ps-section-label">입력</h2>
                     <div class="ps-row">
-                        <label class="ps-label" for="ea-dx-cap-units">용량 입력 단위</label>
+                        <label class="ps-label" for="ea-dx-cap-units">냉방용량 입력 단위</label>
                         <select class="ps-input" id="ea-dx-cap-units">
                             <option value="tons">냉동톤</option>
                             <option value="mbh">MBH</option>
@@ -293,10 +293,10 @@ keywords: 냉동톤당 CFM 400 450 DX 결빙 응축수 비산 코일 동결 온�
     </div>
 
     {{ relatedLinks({
-        hub: {href: '/ko/forced-air/', label: '공기조화 시스템 참조 허브'},
+        hub: {href: '/ko/forced-air/', label: '강제순환식 공조 참고 자료 허브'},
         tools: [
             {href: '/ko/tools/airside-load.html', label: '공기측 부하 계산기'},
-            {href: '/ko/tools/duct-traverse.html', label: '피토관 덕트 트래버스 계산기'},
+            {href: '/ko/tools/duct-traverse.html', label: '덕트 트래버스 계산기'},
             {href: '/ko/tools/airflow.html', label: '풍량 및 속도압'},
             {href: '/ko/tools/affinity-laws.html', label: '펌프·팬 상사 법칙'},
             {href: '/ko/tools/coil-freeze-risk.html', label: '코일 동결 위험 점검기'},

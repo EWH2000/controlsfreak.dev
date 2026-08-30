@@ -1,7 +1,7 @@
 ---
 title: 도구 — controlsfreak.dev
 description: HVAC 제어 실무를 위한 무료 계산기와 변환기입니다. BACnet/IP·Modbus 도구, 신호 스케일링, 습공기 상태, 서미스터 곡선, 냉매 P-T를 제공합니다.
-sourceContentHash: daff1dec23ad7428e6b5c91c7e68136d6c6d9e332312ec04e3d684709a662f58
+sourceContentHash: 15440b13096bd45ee60b4d2940f01c82b4b474ded9144b3c1cdbb2ddcca0e2c8
 canonical: https://controlsfreak.dev/ko/tools/
 nav: tools
 ---
@@ -110,9 +110,9 @@ nav: tools
         {{ navCard({
             section:    'tools',
             href:       '/ko/tools/bacnet-vendor-ids.html',
-            titleShort: 'BACnet 공급업체 ID',
-            titleFull:  'BACnet 공급업체 ID 조회',
-            desc:       'ASHRAE가 배정한 공급업체 ID 등록부 전체를 검색 가능한 표로 제공합니다. 장치가 I-Am에서 보고한 Vendor_Identifier를 해석하거나 1,600개가 넘는 제조사를 이름으로 필터링할 수 있습니다.',
+            titleShort: 'BACnet 벤더 ID',
+            titleFull:  'BACnet 벤더 ID 조회',
+            desc:       'ASHRAE가 배정한 벤더 ID 등록부 전체를 검색 가능한 표로 제공합니다. 장치가 I-Am에서 보고한 Vendor_Identifier를 해석하거나 1,600개가 넘는 제조사를 이름으로 필터링할 수 있습니다.',
             pills:      ['BACnet', 'Vendor_Identifier', 'Property 120', '등록부'],
             category:   'protocols'
         }) }}
@@ -130,7 +130,7 @@ nav: tools
             href:       '/ko/tools/bacnet-error-codes.html',
             titleShort: 'BACnet 오류',
             titleFull:  'BACnet 오류 코드 디코더',
-            desc:       '장치가 요청을 거부할 때 반환하는 오류 클래스와 코드, reject·abort 사유를 해석합니다. unknown-property, write-access-denied, APDU-too-long abort 등의 의미를 검색할 수 있습니다.',
+            desc:       '장치가 요청을 거부할 때 반환하는 오류 클래스와 코드, Reject·Abort 사유를 해석합니다. unknown-property, write-access-denied, APDU-too-long Abort 등의 의미를 검색할 수 있습니다.',
             pills:      ['BACnet', 'Error / Reject / Abort', '클래스 + 코드', '디코딩'],
             category:   'protocols'
         }) }}
@@ -139,8 +139,8 @@ nav: tools
             href:       '/ko/tools/bacnet-priority.html',
             titleShort: 'BACnet 우선순위',
             titleFull:  'BACnet 우선순위 배열',
-            desc:       '16개 명령 슬롯에 값 또는 NULL을 설정하고 Present_Value가 가장 낮은 번호의 비어 있지 않은 슬롯으로 결정되는 과정을 확인합니다. 우선순위 스택, Relinquish_Default, NULL 쓰기로 재정의를 해제하는 이유를 다룹니다.',
-            pills:      ['BACnet', 'Priority_Array', 'Present_Value', '재정의'],
+            desc:       '16개 명령 슬롯에 값 또는 NULL을 설정하고 Present_Value가 NULL이 아닌 슬롯 중 번호가 가장 낮은 슬롯으로 결정되는 과정을 확인합니다. 우선순위 스택, Relinquish_Default, NULL 쓰기로 오버라이드를 해제하는 이유를 다룹니다.',
+            pills:      ['BACnet', 'Priority_Array', 'Present_Value', '오버라이드'],
             category:   'protocols'
         }) }}
         {{ navCard({
@@ -202,17 +202,17 @@ nav: tools
             href:       '/ko/tools/refrigerant-pt.html',
             titleShort: '냉매 P-T',
             titleFull:  '냉매 P-T 및 과열도 계산기',
-            desc:       'R-410A, R-22, R-134a, R-407C, R-404A, R-454B의 포화압력과 온도를 양방향으로 변환합니다. 기포점과 노점을 모두 표시해 혼합냉매의 온도 활주를 확인하고, 측정한 배관 온도로 과열도·과냉도를 점검합니다.',
-            pills:      ['HVAC', '냉매 6종', '기포점 / 노점', '과열도 / 과냉도'],
+            desc:       'R-410A, R-22, R-134a, R-407C, R-404A, R-454B의 포화압력과 온도를 양방향으로 변환합니다. 기포점과 이슬점을 모두 표시해 혼합냉매의 온도 글라이드를 확인하고, 측정한 배관 온도로 과열도·과냉도를 점검합니다.',
+            pills:      ['HVAC', '냉매 6종', '기포점 / 이슬점', '과열도 / 과냉도'],
             category:   'hvac'
         }) }}
         {{ navCard({
             section:    'tools',
             href:       '/ko/tools/power-energy-converter.html',
-            titleShort: '동력 및 에너지',
-            titleFull:  '동력 및 에너지 변환기',
-            desc:       'W, kW, BTU/hr, MBH, 냉동톤, hp, 보일러 hp, joules, kWh, therms, MMBtu 등 모든 동력·에너지 단위를 상호 변환합니다. 시간을 이용해 동력과 에너지를 연결하고 보일러 입력이 버너 턴다운비에 맞는지도 점검합니다.',
-            pills:      ['HVAC', 'BTU / kW / hp', '동력 × 시간', '보일러 턴다운비'],
+            titleShort: '전력 및 에너지',
+            titleFull:  '전력 및 에너지 변환기',
+            desc:       'W, kW, BTU/hr, MBH, 냉동톤, hp, 보일러 hp, J, kWh, therm, MMBtu 등 모든 전력·에너지 단위를 상호 변환합니다. 시간을 이용해 전력과 에너지를 연결하고 보일러 입력이 버너 턴다운비에 맞는지도 점검합니다.',
+            pills:      ['HVAC', 'BTU / kW / hp', '전력 × 시간', '보일러 턴다운비'],
             category:   'hvac'
         }) }}
         {{ navCard({
@@ -283,7 +283,7 @@ nav: tools
             href:       '/ko/tools/valve-authority.html',
             titleShort: '밸브 영향도',
             titleFull:  '밸브 영향도 계산기',
-            desc:       '완전 개방 밸브와 나머지 분기의 압력강하로 영향도 β를 구합니다. 양호·주의·불량 판정과 β가 낮아질 때 설치 유량 특성이 왜곡되는 모습을 실시간 그래프로 표시합니다.',
+            desc:       '완전 개방 밸브와 나머지 분기의 압력강하로 영향도 β를 구합니다. 양호·한계·불량 판정과 β가 낮아질 때 설치 유량 특성이 왜곡되는 모습을 실시간 그래프로 표시합니다.',
             pills:      ['수배관', '영향도 β', '설치 특성곡선', '판정'],
             category:   'hydronics'
         }) }}

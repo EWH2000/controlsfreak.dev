@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const i18n = require('../html/_data/i18n.js');
 
 // The vendor-ID tests derive their expectations from the generated
 // registry snapshot instead of pinning org strings — upstream renames
@@ -35,9 +36,13 @@ test('PAGES array stays in sync with the English half of the generated sitemap',
     // compare membership on the extension-stripped path — a drift in the set
     // of pages still fails, but the deliberate .html-vs-clean form gap doesn't.
     const norm = (u) => u.replace(/^https?:\/\/[^/]+/, '').replace(/\.html$/, '');
+    const localizedPrefixes = i18n.locales
+        .map(({ code }) => code)
+        .filter(code => code !== i18n.defaultLocale)
+        .map(code => `/${code}/`);
     const sitemapPaths = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)]
         .map(m => norm(m[1]))
-        .filter(path => !path.startsWith('/ko/'))
+        .filter(path => !localizedPrefixes.some(prefix => path.startsWith(prefix)))
         .sort();
     const pagesPaths = PAGES
         .map(p => norm(p.url))
