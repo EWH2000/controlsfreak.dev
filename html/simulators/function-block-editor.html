@@ -4,9 +4,67 @@ description: A graphical function-block sandbox — wire logic, math, timer, and
 canonical: https://controlsfreak.dev/simulators/function-block-editor.html
 nav: simulators
 keywords: wiresheet logic block and or pid wire program sequence
+pageMessages:
+  examples:
+    freeze:
+      fz: Freezestat
+      rst: Man Reset
+      latch: Trip Latch
+      inv: Fan Permit
+      fan: Fan Cmd
+      alarm: Frz Alarm
+    econ:
+      oat: OAT
+      oasp: Econ Lock
+      cool: Cool Call
+      cmp: Lock OK
+      gate: Econ Permit
+      econ: Econ Cmd
+    tstat-cool:
+      temp: Space
+      sp: Cool SP
+      db: Deadband
+      hi: Cool Make
+      lo: Cool Break
+      over: Cool Set
+      under: Cool Reset
+      stat: Cool Latch
+      cool: Cool Cmd
+    tstat-heat:
+      temp: Space
+      sp: Heat SP
+      db: Deadband
+      hi: Heat Break
+      lo: Heat Make
+      over: Heat Reset
+      under: Heat Set
+      stat: Heat Latch
+      heat: Heat Cmd
+    pid:
+      pv: Space
+      sp: Heat SP
+      ctl: Heat Loop
+      rd: HW Vlv
+    proof:
+      cmd: Fan Cmd
+      sts: Fan Sts
+      rst: Man Reset
+      inv: No Proof
+      fail: Cmd No Flow
+      tmr: Fail Delay
+      latch: Fail Latch
+      alarm: Fan Alarm
+    reset:
+      oat: OAT
+      slope: Rst Slope
+      icpt: Base SP
+      scale: Rst Offset
+      sum: Raw HWSP
+      clamp: HWSP Clamp
+      hwsp: HWSP
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <script>
@@ -442,6 +500,15 @@ keywords: wiresheet logic block and or pid wire program sequence
                 ],
             },
         };
+
+        // Instance names are authored display copy, not graph identifiers.
+        // Keep the graph shape and its stable ids in this one source while
+        // resolving each visible name from the page locale.
+        Object.entries(EXAMPLES).forEach(([exampleKey, example]) => {
+            example.blocks.forEach((block) => {
+                block.name = CFI18n.page(`examples.${exampleKey}.${block.id}`);
+            });
+        });
 
         const editor = FBEEditor.createEditor({
             engine: FBE,

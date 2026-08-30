@@ -1,0 +1,292 @@
+---
+title: 수배관 루프 빌더 — controlsfreak.dev
+description: 두 입면도에 열원·펌프·코일·밸브를 배치하고 3차원 배관을 연결하여 유량 운전점, 펌프 양정, 수온 전파와 배관 마찰을 실시간으로 해석하는 수배관 시뮬레이터입니다.
+sourceContentHash: f13f767256b9654aae0eb93c9a3d1f3c6f3c38a39ebf8a939d88477c55aec142
+sourceMessageHash: 8c3bf0710019455e4f6ca0ecee096df2cb2be56ac73c34c4038e93f14a3f79da
+canonical: https://controlsfreak.dev/ko/simulators/hydronic-loop-builder.html
+nav: simulators
+keywords: 수배관 시스템 루프 펌프 코일 밸브 Cv 밸런싱 델타T 정수두 운전점 펌프 양정 전개 길이 배관 마찰 UA 입면도
+pageMessages:
+  categories:
+    plant: 열원
+    pumps: 펌프
+    terminals: 말단 장치
+    valves: 밸브
+    fittings: 관 이음쇠
+  components:
+    plant: 열원
+    pump: 펌프
+    coil: 코일
+    valve2: 2방 밸브
+    valve3: 3방 밸브
+    balanceValve: 밸런싱 밸브
+    tee: 티
+  params:
+    plant:
+      mode: 운전 모드
+      lwt: 출수 온도 °F
+      qmax: 용량 (MBH)
+      k: 저항계수 k
+      srcmode: 열원 제어 모드
+    pump:
+      h0: 체절 양정 (ft)
+      a: 곡선계수 a
+      speed: 속도 (%)
+      on: 사용
+    coil:
+      coilmode: 열전달 모델
+      k: 저항계수 k
+      qdesign: 부하 (MBH)
+      ua: UA (Btu/h·°F)
+      tspace: 실내 온도 °F
+    valve2:
+      cv: Cv (전개방)
+      pos: 개도 (%)
+      eqpct: 등비 특성
+      rangeability: 레인지어빌리티 R
+    valve3:
+      cv: Cv (전개방)
+      pos: 개도 (%)
+    balanceValve:
+      cv: Cv (전개방)
+      setting: 설정 개도 (%)
+  options:
+    heat: 난방
+    cool: 냉방
+    setpoint: 설정값 유지
+    capacity: 정격 용량
+    load: 고정 부하
+    ua: UA 모델
+  status:
+    pipingFrom: "{component}.{port}에서 배관을 시작했습니다. 연결할 다른 포트를 클릭하세요."
+    differentComponent: 다른 구성요소의 포트를 선택하세요.
+    running: 운전 중
+    paused: 일시정지
+  component:
+    offSuffix: " · 정지"
+  readouts:
+    pumpTitle: "펌프 {id}"
+    plantTitle: "열원 {id}"
+    loopTitle: 루프
+    flow: 유량
+    head: 펌프 양정
+    speed: 속도
+    leaving: 출수
+    entering: 환수
+    load: 부하
+    pipeRun: 배관 전개 길이
+    segments: 구간 수
+    empty: 실시간 계기값을 확인하려면 펌프와 열원을 추가하세요.
+  inspector:
+    empty: 구성요소를 클릭하여 편집합니다 · 두 포트를 클릭하여 배관합니다 · 동쪽 입면도에서 끌어 깊이를 정합니다 · Delete로 삭제합니다 · Esc로 취소합니다
+    pipeTitle: "배관 {id}"
+    developedLength: 전개 길이
+    frictionHeadLoss: 마찰 양정 손실
+    deletePipe: 배관 삭제
+    componentTitle: "{component} · {id}"
+    delete: 삭제
+  controls:
+    pause: 일시정지
+    run: 운전
+  view:
+    restoreSplitTitle: 분할 보기로 복원
+    maximizeTitle: 이 보기를 최대화
+    restoreAria: "{view} 입면도를 분할 보기로 복원"
+    maximizeAria: "{view} 입면도 최대화"
+    north: 북쪽
+    east: 동쪽
+---
+{% extends "html/simulators/hydronic-loop-builder.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">시뮬레이터 · 수배관 루프 빌더</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <button type="button" class="tool-card-fullscreen-btn fs-desktop-only"
+                data-fullscreen-target=".tool-card"
+                aria-pressed="false" aria-label="전체 화면으로 전환"
+                title="전체 화면 전환 — Esc로 종료">
+            <svg class="fs-icon-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="15 3 21 3 21 9"/>
+                <polyline points="9 21 3 21 3 15"/>
+                <line x1="21" y1="3" x2="14" y2="10"/>
+                <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+            <svg class="fs-icon-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="4 14 10 14 10 20"/>
+                <polyline points="20 10 14 10 14 4"/>
+                <line x1="14" y1="10" x2="21" y2="3"/>
+                <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+            <span class="fs-label-enter">전체 화면</span>
+            <span class="fs-label-exit">종료</span>
+        </button>
+
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">수배관 루프 빌더</h1>
+            <span class="tool-tag">수배관</span>
+        </div>
+
+        <div class="tool-body">
+            <p class="tool-preamble tight">
+                두 입면도에 장비를 배치하고 포트끼리 클릭하여 배관한 다음 운전하세요.
+                루프는 매 틱마다 실제 정상상태 유체·열 평형을 계산하므로 유량이 운전점을
+                찾아가고 수온이 회로를 따라 전파됩니다. 동기화된 두 보기(북쪽과 동쪽)에서
+                루프를 3D로 배치할 수 있으며, 배관 마찰은 전개 길이에 따라 달라집니다.
+                개념이 처음이라면
+                <a href="/ko/education/hydronic-loops.html">수배관 루프</a>,
+                <a href="/ko/education/load-piping.html">부하 배관</a>,
+                <a href="/ko/education/balancing.html">수배관 밸런싱</a>부터 살펴보세요.
+            </p>
+
+            <div class="desktop-only-sim">
+                <h2 class="dos-label">데스크톱 도구</h2>
+                <p>
+                    입면도에서 장비를 끌어 옮기고 포트끼리 클릭하여 배관하려면 포인터와
+                    넓은 캔버스가 필요합니다. 노트북이나 데스크톱에서 열어 루프를 구성하고
+                    운전하세요. 손가락 하나로 구성요소 이동과 도면 이동을 동시에 할 수 없어
+                    포인터 전용으로 설계했습니다. 다음 원리를 익힐 수 있습니다.
+                </p>
+                <ul>
+                    <li><strong>루프는 하나의 운전점을 찾습니다.</strong> 펌프 곡선과 시스템 저항이 한 유량에서 만납니다. 밸브를 열면 특정 분기만이 아니라 전체 루프의 유량이 달라집니다.</li>
+                    <li><strong>2방 밸브는 스로틀링하고 3방 밸브는 분기합니다.</strong> 2방 밸브는 전체 루프 유량을 바꾸며, 3방 밸브는 펌프 유량을 거의 일정하게 유지하면서 나머지를 바이패스로 보냅니다.</li>
+                    <li><strong>병렬 분기는 밸런싱이 필요합니다.</strong> 저항이 낮은 분기로 유량이 몰리므로 밸런싱 밸브로 저항을 더해 유량 분배를 맞춥니다.</li>
+                    <li><strong>열은 물을 따라 이동합니다.</strong> q = 500 · GPM · ΔT이므로 유량이 줄면 ΔT가 커집니다. 열원의 열이 순환하면서 차가운 루프가 몇 초에 걸쳐 데워지는 과정을 확인하세요.</li>
+                    <li><strong>배관 길이는 펌프 양정을 소모합니다.</strong> 두 입면도(폭 × 높이 및 깊이 × 높이)에서 루프를 3D로 배치합니다. 배관 전개 길이가 길수록 필요한 펌프 양정이 커집니다. 다만 폐회로에서는 팽창 탱크가 압력 기준을 유지하므로 정수두가 상쇄됩니다.</li>
+                </ul>
+                <p class="dos-more">
+                    수배관 시스템이 처음이신가요? <a href="/ko/education/hydronic-loops.html">수배관 루프 학습 자료</a>에서 같은 개념을 모바일로 편하게 읽을 수 있습니다.
+                </p>
+            </div>
+
+            <div class="hlb-live">
+                <!-- Real <button>s, not bare <a>s: these load a loop, they
+                     don't navigate, and an anchor with no href is invisible to
+                     the keyboard (#297). Same .widget-try look either way — the
+                     shared stylesheet already carries the button twin. -->
+                <div class="widget-try" id="hlb-examples">
+                    <span class="lbl">예제:</span>
+                    <button type="button" data-example="single">단일 루프</button>
+                    <button type="button" data-example="parallel">병렬 코일 + 밸런싱</button>
+                    <button type="button" data-example="threeway">3방 바이패스</button>
+                </div>
+
+                <div class="hlb-simbar">
+                    <button class="copy-btn" id="hlb-run"   data-action="run">일시정지</button>
+                    <button class="copy-btn" id="hlb-step"  data-action="step">한 단계</button>
+                    <button class="copy-btn" id="hlb-reset" data-action="reset">초기화</button>
+                    <button class="copy-btn" id="hlb-clear" data-action="clear">모두 지우기</button>
+                    <span class="hlb-status" id="hlb-status" role="status" aria-live="polite">운전 중</span>
+                </div>
+
+                <div class="hlb-readouts" id="hlb-readouts" aria-label="실시간 장비 계기값"></div>
+
+                <p class="status-pill warn hlb-converge-warn" id="hlb-converge" role="status" aria-live="polite" hidden>해석기가 수렴하지 않았습니다. 표시된 유량이 물리적으로 타당하지 않을 수 있습니다. 펌프 양정이나 곡선계수&nbsp;a를 낮추어 펌프 곡선을 완만하게 하거나 밸브를 여세요.</p>
+
+                <div class="hlb-workspace">
+                    <div class="hlb-palette" id="hlb-palette" aria-label="구성요소 팔레트"></div>
+                    <div class="hlb-canvases" id="hlb-canvases">
+                        <div class="hlb-view" id="hlb-view-n">
+                            <div class="hlb-view-bar">
+                                <span class="hlb-view-label">북쪽 <span class="hlb-view-axis">· 폭 × 높이 (X–Z)</span></span>
+                                <button type="button" class="hlb-view-max" id="hlb-max-n" data-max="n" aria-pressed="false" aria-label="북쪽 입면도 최대화" title="이 보기를 최대화">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+                                        <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="hlb-canvas" id="hlb-canvas-n" tabindex="0" role="region" aria-label="북쪽 입면도, 폭과 높이">
+                                <div class="hlb-canvas-inner" id="hlb-inner-n"></div>
+                            </div>
+                        </div>
+                        <div class="hlb-view" id="hlb-view-e">
+                            <div class="hlb-view-bar">
+                                <span class="hlb-view-label">동쪽 <span class="hlb-view-axis">· 깊이 × 높이 (Y–Z)</span></span>
+                                <button type="button" class="hlb-view-max" id="hlb-max-e" data-max="e" aria-pressed="false" aria-label="동쪽 입면도 최대화" title="이 보기를 최대화">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+                                        <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="hlb-canvas" id="hlb-canvas-e" tabindex="0" role="region" aria-label="동쪽 입면도, 깊이와 높이">
+                                <div class="hlb-canvas-inner" id="hlb-inner-e"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hlb-inspector" id="hlb-inspector"></div>
+
+                <div class="hlb-legend">
+                    <span><span class="hlb-swatch hlb-sw-supply"></span> 따뜻한 물</span>
+                    <span><span class="hlb-swatch hlb-sw-return"></span> 차가운 물</span>
+                    <span class="hlb-legend-note">입자는 유동 방향과 유량을 나타냅니다</span>
+                    <span class="hlb-legend-note">북쪽 = 폭 · 동쪽 = 깊이 · 위쪽 = 높이</span>
+                </div>
+
+                <h2 class="subhead">작동 원리</h2>
+                <p>
+                    매 틱마다 빌더는 배치를 네트워크로 평면화합니다. 배관과 장비는 압력
+                    노드 사이의 유동 분기가 되며, 선형화된 노드 평형을 풉니다. 모든 접합부에서
+                    질량이 보존되고, 각 저항에서 펌프 양정이 k·Q²만큼 손실되며, 펌프는 곡선
+                    H = H₀·(speed/100)² − a·Q²에 따라 양정을 더합니다. 유량은 몇 차례 반복
+                    계산 후 운전점에 수렴합니다.
+                </p>
+                <p>
+                    두 입면도는 수직(높이)축을 공유합니다. 북쪽 보기는 가로 방향에 폭을,
+                    동쪽 보기는 가로 방향에 깊이를 표시하므로 어느 창에서든 구성요소를 끌어
+                    3D 위치를 지정할 수 있습니다. 각 배관의 저항은 3D 전개 길이에 비례하여
+                    길거나 높은 경로일수록 더 많은 펌프 양정이 필요합니다. 한편 라이저의
+                    <em>정수두</em>는 하강 구간에서 상쇄됩니다. 폐회로 수주는 팽창 탱크를
+                    기준으로 평형을 이루기 때문입니다. 이어지는 열 계산은 이 유량을 따라
+                    온도를 전달합니다. 각 코일은 q = 500 · GPM · ΔT를 따르고, 각 티에서는
+                    유량 가중 혼합이 이루어집니다. 루프는 이전 틱의 상류 온도를 읽으므로 실제
+                    시스템처럼 차가운 루프가 몇 초에 걸쳐 데워집니다.
+                </p>
+                <p class="ref-note">
+                    이 모델은 교육용이며 설계 도구가 아닙니다. 매 틱마다 표준 미국 단위
+                    (GPM, 양정 ft, °F)로 정상상태 평형을 풀고 표시 단계에서 반올림합니다.
+                    배관 마찰은 고정된 공칭 관경과 전개 길이로 계산하며 아직 관경 선정은
+                    지원하지 않습니다. 코일은 고정 설계 부하 또는 접근 온도차에 따라 열량이
+                    변하는 UA 모델로 운전할 수 있습니다. 닫힌 밸브는 무한대가 아닌 큰 유한
+                    저항으로 처리하여 계산값을 항상 유한하게 유지합니다. 또한 팽창 탱크를
+                    압력 기준으로 삼는 <strong>폐회로</strong>를 가정하므로 정수두가 상쇄되고,
+                    양정 계기값은 절대 시스템 압력이 아니라 마찰 손실 + 펌프 양정입니다.
+                    개방형 시스템의 충수 압력 거동은 아직 모델링하지 않습니다.
+                </p>
+            </div>
+            <!-- /.hlb-live -->
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/hydronics/', label: '수배관 참조 허브'},
+        simulators: [
+            {href: '/ko/simulators/pid-tuner.html', label: 'PID 튜닝 도우미'},
+            {href: '/ko/simulators/vfd-mock.html', label: '인버터(VFD) 모의 인터페이스'}
+        ],
+        lessons: [
+            {href: '/ko/education/hydronic-loops.html', label: '수배관 루프'},
+            {href: '/ko/education/load-piping.html', label: '부하 배관'},
+            {href: '/ko/education/balancing.html', label: '수배관 밸런싱'},
+            {href: '/ko/education/pump-control.html', label: '펌프 제어'},
+            {href: '/ko/education/coil-selection.html', label: '코일 선정'}
+        ],
+        tools: [
+            {href: '/ko/tools/valve-cv.html', label: '밸브 Cv 선정'},
+            {href: '/ko/tools/waterside-load.html', label: '수측 부하 계산기'},
+            {href: '/ko/tools/affinity-laws.html', label: '펌프·팬 상사 법칙'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/simulators/">← 모든 시뮬레이터</a>
+
+</main>
+{% endblock %}

@@ -1,0 +1,1075 @@
+---
+title: 냉매 루프 시뮬레이터 — controlsfreak.dev
+description: 냉방·히트펌프 난방 모드에서 냉매 루프를 운전하며 압력, 과열도, 과냉도, 냉매 응축압력, 코일 결빙·착상과 제상 거동을 실시간으로 확인하는 증기압축 시뮬레이터입니다.
+sourceContentHash: 1e8693a00027cd5decc3505f5bd839ff3f8b617308ca2cc8287d9607b43ae815
+sourceMessageHash: be627f8b2cabbeb209d7440519b8c6eddf06892627f4a51dbe15618569afa394
+canonical: https://controlsfreak.dev/ko/simulators/refrigerant-loop.html
+nav: simulators
+keywords: 증기압축 냉매 루프 흡입압력 냉매 응축압력 과열도 과냉도 TXV 팽창장치 결빙 psig 매니폴드게이지 R410A 히트펌프 사방밸브 제상 착상 저외기
+pageMessages:
+  accessibility:
+    onSuffix: ", 켜짐"
+    offSuffix: ", 꺼짐"
+  led:
+    outdoorFrost: 실외 코일 착상
+    coilFreeze: 코일 결빙
+  verdict:
+    freezeAirflow: 코일 결빙 — 증발기 풍량이 부족합니다.
+    freezeBelow: 코일 결빙 — 증발기가 32 °F (0 °C) 미만에서 운전 중입니다.
+    defrost: 제상 — 사방밸브가 냉방 위치로 전환되고 실외 팬이 정지했습니다. 고온 가스가 성에를 녹이는 동안 급기 덕트에서는 찬 공기가 나옵니다. 정상적인 일시 운전입니다.
+    frostChoked: 실외 코일 착상 막힘 — 성에가 풍량을 막고 흡입압력을 낮추고 있습니다. 제상이 지연되었습니다.
+    floodback: 액냉매 유입(floodback, 액백) — 과열도가 무너져 액냉매가 압축기로 유입됩니다.
+    starved: 증발기 냉매 공급 부족 — 과열도가 높으므로 냉매 충전량 부족을 의심하세요.
+    starvedOutdoor: 실외 코일 풍량 부족 — 실외 공기보다 지나치게 낮은 온도로 운전되어 흡입압력이 무너지고 있습니다(코일 면 막힘 / 팬 성능 저하).
+    frost: 실외 코일이 빙점 미만입니다. 현재 외기에서는 성에가 쌓이고 흡입압력이 낮아지면서 난방능력이 감소합니다. 실제 장비는 이 구간에서 제상 운전과 보조 난방을 사용합니다.
+    highHeadHeating: 냉매 응축압력 상승 — 실내 코일이 열을 방출하지 못합니다(실내 풍량 부족 / 과충전).
+    highHeadCooling: 냉매 응축압력 상승 — 응축기가 열을 방출하지 못합니다(코일 오염 / 과충전 / 고외기).
+    highSubcool: 과냉도가 높습니다. 과충전을 의심하세요.
+    lowSubcool: 과냉도가 낮습니다. 냉매 충전량 부족 / 플래시 가스를 의심하세요.
+    outOfRange: P-T 선도 범위를 벗어나 표의 끝값으로 제한하여 표시합니다.
+    lowHeadHeating: 냉매 응축압력 저하 — 응축온도가 무너져 미지근한 공기가 공급됩니다.
+    lowHeadCooling: 냉매 응축압력 저하 — 저외기 때문에 팽창장치의 ΔP가 부족합니다.
+    balanced: 정상 평형 — 과열도와 과냉도가 정상 범위입니다.
+  cfm:
+    design: " CFM/ton · 설계값 400"
+    floor: " CFM/ton · 하한 400"
+  alarms:
+    coilFreeze: 코일 결빙
+    frostChoked: 실외 코일 착상 막힘
+    frost: 실외 코일 착상
+    floodback: 액냉매 유입
+    highHead: 냉매 응축압력 상승
+  summary:
+    defrost: 제상 운전 중 — 사방밸브가 냉방 위치이고 실외 팬은 정지 상태입니다.
+    alarms: "경보: {alarms}."
+    clamped: 측정값이 P-T 선도 끝값으로 제한되었습니다.
+  cycle:
+    highSideHot: 고압측 · 고온
+    lowSideCool: 저압측 · 저온
+    condenser: 응축기
+    evaporator: 증발기
+    warmAirOutdoors: 따뜻한 공기 → 실외
+    coolAirOutdoors: 찬 공기 → 실외
+    warmAirIndoors: 따뜻한 공기 → 실내
+    coolAirIndoors: 찬 공기 → 실내
+  states:
+    hotVapor: 고온 증기
+    warmLiquid: 고온 액체
+    coldMix: 저온 혼합물
+    coolVapor: 저온 증기
+  plot:
+    frost: 착상
+    freeze: 결빙
+    frostSuffix: ° 착상
+    freezeSuffix: ° 결빙
+    flashGas: (플래시 가스)
+  errors:
+    controls: 제어 입력값을 확인하세요.
+  diagnostics:
+    tempRingFallback: "refrigerant-loop: 포화온도 눈금 간격이 부족하여 {step}° 단계로 대체했습니다({refrigerant} {curve})"
+---
+{% extends "html/simulators/refrigerant-loop.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">시뮬레이터 · 냉매 루프</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <!-- .fs-desktop-only: fullscreen is a desktop "see-everything-at-once"
+             cockpit; on phones the stacked scroll layout is the intended
+             experience, so the button is hidden below 1000px / on touch. -->
+        <button type="button" class="tool-card-fullscreen-btn fs-desktop-only"
+                data-fullscreen-target=".tool-card"
+                aria-pressed="false" aria-label="전체 화면으로 전환"
+                title="전체 화면 전환 — Esc로 종료">
+            <svg class="fs-icon-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="15 3 21 3 21 9"/>
+                <polyline points="9 21 3 21 3 15"/>
+                <line x1="21" y1="3" x2="14" y2="10"/>
+                <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+            <svg class="fs-icon-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="4 14 10 14 10 20"/>
+                <polyline points="20 10 14 10 14 4"/>
+                <line x1="14" y1="10" x2="21" y2="3"/>
+                <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+            <span class="fs-label-enter">전체 화면</span>
+            <span class="fs-label-exit">종료</span>
+        </button>
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                냉매 루프 시뮬레이터
+                <span class="tool-tag">HVAC</span>
+            </h1>
+        </div>
+        <!-- Custom stacked layout on purpose (like the PID tuner / staging
+             sequencer / VFD mock): a running vapor-compression model — the
+             live loop, two manifold gauges, LCD readouts, and the knob bank
+             — doesn't fit the Input / Output / Reference column pattern. -->
+        <div class="tool-body">
+
+            <p class="tool-preamble rl-intro">
+                이 도구는 열역학 물성 모델이 아니라 방향성 모델입니다. 압력은 실제 P-T 표를
+                조회하지만 각 노브가 변화시키는 크기는 상태가 어느 방향으로 이동하는지
+                설명하도록 조정한 예시값입니다. 노브를 돌려 게이지, 루프, 경보의 반응을
+                확인한 다음 모드를 <strong>난방</strong>으로 바꿔 보세요. 사방밸브가 두 코일의
+                역할을 맞바꾸어 실외 코일이 증발기가 되고, 착상이 핵심 현상이 되며, 제상
+                운전은 히트펌프가 하루에 두 차례 찬 공기를 내보내는 이유를 보여 줍니다.
+                <strong>냉동사이클이 처음이신가요?</strong>
+                <a href="/ko/education/refrigerant-cycle-basics.html">기초부터 살펴보기 →</a>
+            </p>
+
+            <!-- ── Interactive cockpit ─────────────────────────────────────
+                 Everything below (presets, loop, gauges, P-T plot, controls) is
+                 the live model. In normal + mobile flow .rl-cockpit is
+                 `display: contents` — a transparent wrapper, so the stacked
+                 layout is exactly as before. In DESKTOP fullscreen it becomes a
+                 grid that fills one viewport with no scrolling (see the
+                 FULLSCREEN COCKPIT block). The reading-only prose (the preamble
+                 above and "About this model" below) stays OUTSIDE this wrapper
+                 and is hidden in fullscreen. -->
+            <div class="rl-cockpit">
+
+            <!-- ── Cool / Heat mode — the reversing valve. Flipping it swaps
+                 which coil receives discharge gas: the engine re-anchors
+                 (RefrigLoop mode axis), the loop re-routes its legs and
+                 serpentines, the ambient + return-air sliders re-range to the
+                 mode's CLAMPS, and the preset row swaps its scenario set.
+                 Session-only, no cf_* key (the view-toggle precedent). -->
+            <div class="rl-mode field" role="group" aria-labelledby="rl-mode-lbl">
+                <span class="field-label" id="rl-mode-lbl">운전 모드</span>
+                <div class="btn-row">
+                    <button type="button" class="copy-btn active" id="rl-mode-cool" aria-pressed="true">냉방</button>
+                    <button type="button" class="copy-btn" id="rl-mode-heat" aria-pressed="false">난방</button>
+                </div>
+            </div>
+
+            <!-- ── "Try this" scenario presets — one per RefrigLoop.PRESETS
+                 key. A click writes the whole knob set (keeping the selected
+                 refrigerant — the tells are refrigerant-independent), marks
+                 the scenario active, and eases the loop / gauges / plot to
+                 the new equilibrium. The row FILTERS by mode (data-mode +
+                 hidden): only the active mode's scenarios show, so a click
+                 never flips the reversing valve; the engine presets carry a
+                 mode key for the tests, and the page ignores it the same way
+                 it ignores refrig. Typical first, then the headline starve;
+                 in heating the frosted coil leads, with Defrost as the
+                 honest cooling-cycle flip. Moving any knob by hand clears
+                 the active mark (and steps out of defrost). -->
+            <div class="rl-presets field" role="group" aria-labelledby="rl-try-lbl">
+                <span class="field-label" id="rl-try-lbl">시나리오:</span>
+                <div class="btn-row">
+                    <button type="button" class="copy-btn" data-preset="typical" data-mode="cooling" aria-pressed="false">일반 운전일</button>
+                    <button type="button" class="copy-btn rl-preset-starve" data-preset="starve" data-mode="cooling" aria-pressed="false">코일 풍량 부족</button>
+                    <button type="button" class="copy-btn" data-preset="undercharge" data-mode="cooling" aria-pressed="false">냉매 부족</button>
+                    <button type="button" class="copy-btn" data-preset="overcharge" data-mode="cooling" aria-pressed="false">냉매 과충전</button>
+                    <button type="button" class="copy-btn" data-preset="dirtyCondenser" data-mode="cooling" aria-pressed="false">응축기 오염</button>
+                    <button type="button" class="copy-btn" data-preset="lowAmbient" data-mode="cooling" aria-pressed="false">저외기</button>
+                    <button type="button" class="copy-btn rl-preset-frost" data-preset="frostedOutdoorCoil" data-mode="heating" aria-pressed="false" hidden>실외 코일 착상</button>
+                    <button type="button" class="copy-btn" data-preset="defrost" data-mode="heating" aria-pressed="false" hidden>제상</button>
+                    <button type="button" class="copy-btn" data-preset="lowAmbientHeating" data-mode="heating" aria-pressed="false" hidden>저외기 난방</button>
+                </div>
+            </div>
+
+            <!-- ── Hero: the animated loop ─────────────────────────────────
+                 Geometry re-id'd (rl-*) from the refrigerant-cycle-basics
+                 lesson's rc-cycle: a closed loop, compressor (left) /
+                 outdoor coil (top) / metering (right) / indoor coil
+                 (bottom), clockwise in cooling. The markup below is the
+                 COOLING state; heating re-routes the six flow elements +
+                 flips the arrows/labels via MODE_GEOM / applyCycleVisuals
+                 in the page script (elements are FUNCTION-keyed — the ids
+                 follow the hot gas, not the cabinet).
+                 Six data-flow segments in four state inks — discharge
+                 --rl-hot, liquid --rl-liq (page tokens: the global
+                 --heat / --amber in dark, a punchier pair in light),
+                 expansion --blue-cool, suction
+                 --blue (frost tint when the coil ices) — plus a serpentine
+                 coil run through each bar whose stroke AND particles ride a
+                 live userSpaceOnUse state gradient (see the STATE GRADIENTS
+                 note in the defs). Eight airside lane segments cross
+                 the two coil faces on the vertical crossflow axis — outdoor
+                 air rises through the condenser, indoor air drops through
+                 the evaporator — their density banded to the airflow knobs
+                 (see the AIRSIDE LANES note in the SVG). The
+                 compressor circle carries a top-down scroll set whose orbit
+                 rate tracks the stage.
+                 The particles + colors are applied by flow-engine.js (loaded
+                 site-wide); this page only tags the geometry and recolors. -->
+            <h2 class="subhead">냉매 루프</h2>
+            <div class="rl-loop rl-stage">
+                <svg class="rl-loop-svg" id="rl-cycle" viewBox="0 0 720 460"
+                     role="img" aria-labelledby="rl-cycle-title"
+                     aria-describedby="rl-cycle-desc"
+                     font-family="var(--mono)">
+                    <title id="rl-cycle-title">실시간 냉매 루프</title>
+                    <desc id="rl-cycle-desc">히트펌프 사방밸브를 갖춘 폐쇄형 사각 증기압축 루프입니다. 위쪽 막대는 항상 실외 코일이고 아래쪽 막대는 항상 실내 코일이며, 어느 코일이 응축기인지는 선택한 모드에 따라 달라집니다. 냉방 모드에서는 루프가 시계 방향으로 흐릅니다. 왼쪽 압축기가 고온·고압 증기를 사방밸브를 거쳐 위쪽 실외 코일로 보내면, 냉매는 실외 공기에 열을 방출하고 고온·고압 액체가 됩니다. 오른쪽 액관은 냉매를 팽창장치로 보내 저온·저압 혼합물로 팽창시킵니다. 이 혼합물은 아래쪽 실내 코일에서 실내 공기의 열을 흡수하여 저온·저압 증기로 비등한 뒤 사방밸브를 거쳐 압축기로 돌아갑니다. 난방 모드에서는 밸브가 전환되어 루프가 반시계 방향으로 흐릅니다. 토출가스가 아래쪽 실내 코일로 내려가 응축하면서 실내 공기를 데우고, 실외 코일은 증발기가 되어 외기보다 낮은 온도에서 운전합니다. 춥고 습한 날 빙점 미만이 되면 위쪽 막대에 성에가 쌓입니다. 제상 시나리오에서는 실외 공기 흐름을 정지하고 밸브를 냉방 방향으로 되돌립니다. 일시적인 냉방사이클 운전으로 성에를 녹이는 동안 실내 덕트에서는 찬 공기가 나옵니다. 네 가지 배관 색상은 흐름을 따라 냉매 상태를 표시합니다. 토출관의 주황색은 고온 증기, 액관의 황색은 고온 액체, 팽창관의 옅은 청색은 저온 혼합물, 흡입관의 청색은 저온 증기를 나타내며, 고온에서 저온으로 바뀌는 지점은 실제와 같이 팽창장치에 놓입니다. 각 코일 막대 안에서 냉매는 실시간 색상 그라데이션으로 칠한 사행 관로를 따라 흐릅니다. 응축 구간은 과냉도에 따라 고온 증기 주황색에서 액체 황색으로 바뀌며, 플래시 가스가 있으면 그라데이션이 출구 너머까지 이어집니다. 증발 구간은 과열도에 따라 저온 혼합물 청색에서 증기 청색으로 바뀝니다. 압축기와 코일 배관 사이에는 사방밸브 기호가 있고 두 압축기 배관은 모든 모드에서 이 밸브에 연결됩니다. 토출은 항상 압축기의 고정 상부 포트에서 밸브로 나가고, 흡입은 항상 밸브에서 압축기의 고정 하부 포트로 돌아옵니다. 모드에 따라 바뀌는 밸브 내부 유로가 각 배관이 연결되는 코일을 맞바꾸며 압축기 포트 자체는 바뀌지 않습니다. 코일에 착상 또는 결빙이 발생하면 해당 코일과 흡입관에 성에 오버레이가 나타납니다. 압축기 기호는 위에서 내려다본 두 개의 맞물린 스크롤로, 움직이는 스크롤이 고정 스크롤 주위를 작은 원으로 공전합니다. 외향 나선과 반대인 압축 방향으로 움직이며 속도는 압축기 단수에 따라 달라집니다. 얇은 파선 공기 유로는 교차류 축을 따라 두 코일 면을 수직으로 통과합니다. 실외 공기는 위쪽 코일을 통과해 상승하고 실내 공기는 아래쪽 코일을 통과해 하강합니다. 입구는 흐린 색이며 출구는 코일 작용에 따라 응축기에서는 따뜻한 주황색, 증발기에서는 차가운 청색, 결빙된 코일에서는 성에색으로 표시되고 제상 중에는 실외 코일 유동이 정지합니다. 각 코일 면의 유동 밀도는 해당 풍량 노브를 따릅니다. 실시간 압력, 과열도, 과냉도와 경보값은 아래 게이지와 계기값에 표시됩니다.</desc>
+
+                    <!-- ── STATE GRADIENTS — userSpaceOnUse so the serpentine
+                         STROKE and the engine's particle <circle> fills
+                         (positioned by cx/cy in root user space, no
+                         transforms) sample the same ramp at the same spot.
+                         Each spans its bar along the flow direction (the
+                         evaporator reversed: right→left). The two middle
+                         stops (-hold / -done) move on every solve — see the
+                         setGradient block in the page script for the
+                         s.subcool / s.superheat mapping; the fixed outer
+                         stops pad the ends. When a blend runs past the coil
+                         exit (flash gas / floodback), setGradient stretches
+                         x2 past the bar instead of clamping the stops, so
+                         the exit paints a genuinely unfinished blend; the
+                         markup x2 values are the settled design state. Stop
+                         colors are var() tokens (the sparkline trend-grad
+                         pattern), so both themes come for free — the warm
+                         pair through the page-local --rl-hot / --rl-liq. ── -->
+                    <defs>
+                        <linearGradient id="rl-grad-cond" gradientUnits="userSpaceOnUse"
+                                        x1="200" y1="85" x2="520" y2="85">
+                            <stop offset="0" stop-color="var(--rl-hot)"/>
+                            <stop id="rl-grad-cond-hold" offset="0.45" stop-color="var(--rl-hot)"/>
+                            <stop id="rl-grad-cond-done" offset="0.75" stop-color="var(--rl-liq)"/>
+                            <stop offset="1" stop-color="var(--rl-liq)"/>
+                        </linearGradient>
+                        <linearGradient id="rl-grad-evap" gradientUnits="userSpaceOnUse"
+                                        x1="520" y1="345" x2="200" y2="345">
+                            <stop offset="0" stop-color="var(--blue-cool)"/>
+                            <stop id="rl-grad-evap-hold" offset="0.5" stop-color="var(--blue-cool)"/>
+                            <stop id="rl-grad-evap-done" offset="0.8" stop-color="var(--blue)"/>
+                            <stop offset="1" stop-color="var(--blue)"/>
+                        </linearGradient>
+                        <!-- Frost crystals — two sizes of 6-arm snowflake
+                             asterisk (the + arms full length, the × arms at
+                             60%), origin-centered so the frost kits place
+                             them with <use x= y=>. Stroke/ink inherit from
+                             .rl-frost-mark. -->
+                        <path id="rl-flake-lg" fill="none"
+                              d="M 0 -10 V 10 M -10 0 H 10 M -4.2 -4.2 L 4.2 4.2 M -4.2 4.2 L 4.2 -4.2"/>
+                        <path id="rl-flake-sm" fill="none"
+                              d="M 0 -7 V 7 M -7 0 H 7 M -3 -3 L 3 3 M -3 3 L 3 -3"/>
+                    </defs>
+
+                    <!-- ── REVERSING VALVE (4-way) ── the heat-pump glyph, on
+                         the left column between the compressor and the top
+                         coil's leg. A true four-port re-plumb (2026-07-18 —
+                         it used to be a one-pipe glyph whose modes swapped
+                         the COMPRESSOR's ports, backwards vs real hardware):
+                         all four ports are FIXED and function-constant in
+                         both cycles —
+                           top    (120,142)  outdoor-coil leg (up to the bar);
+                           bottom (120,172)  compressor discharge stub, down
+                                             to the fixed top port (120,193);
+                           bottom (152,172)  compressor suction take-off,
+                                             down the shell's right flank and
+                                             under it into the fixed bottom
+                                             port (120,237);
+                           bottom (162,172)  indoor-coil leg (down to the
+                                             bar).
+                         INVARIANT (pinned by the engine spec §14): the
+                         compressor-side endpoints of rl-discharge and
+                         rl-suction are identical between the cooling and
+                         heating MODE_GEOM entries — only the coil-side ends
+                         re-route, i.e. the VALVE does all the swapping.
+                         ONE-ELEMENT RULE (also §14, the 2026-07-18 owner
+                         review): the capsule's visible interior lines ARE
+                         the flow paths — this group paints BEFORE
+                         rl-discharge / rl-suction in doc order, so their
+                         strokes (and the particles riding them) draw the
+                         selected internal passages directly. There is no
+                         separate slide overlay to drift from the flow:
+                         cooling shows the straight-through at x=120 plus the
+                         suction hairpin (up the indoor-coil port, over, down
+                         the take-off); heating shows the crossover — the
+                         suction diagonal from the outdoor-coil port to the
+                         take-off crossing the discharge run at mid-capsule.
+                         Particles (the SVG's last-child layer) ride over the
+                         face, which is exactly what flow through a valve
+                         should do. -->
+                    <g id="rl-revvalve">
+                        <rect x="96" y="142" width="78" height="30" rx="10" fill="var(--surface)"
+                              stroke="var(--text-dim)" stroke-width="2"/>
+                        <text class="rl-comp-label" x="88" y="153" text-anchor="end" font-size="9"
+                              fill="var(--text-dim)">사방</text>
+                        <text class="rl-comp-label" x="88" y="164" text-anchor="end" font-size="9"
+                              fill="var(--text-dim)">밸브</text>
+                    </g>
+
+                    <!-- ── HIGH-SIDE pipes — hot-gas --rl-hot discharge into the
+                         condenser, warm-liquid --rl-liq out of it (the coil's
+                         serpentine gradient bridges the two states). ── -->
+                    <!-- data-flow-static on every flow element on this page is
+                         an ASSERTION, not a hint (flow-engine.js header): the
+                         engine caches a sampled point table per path instead of
+                         calling getPointAtLength() per particle per frame, and
+                         it is only correct while EVERY mutation of that path's
+                         `d` is followed immediately by FlowEngine.refreshPath()
+                         on it. This page holds to that — applyCycleVisuals() is
+                         the ONLY `d` write on a flow path (the cycle re-route),
+                         and it refreshes each element inside the same loop
+                         iteration. The air lanes never move at all. If a future
+                         change writes `d` anywhere else here, either refresh in
+                         the same breath or drop this attribute — see
+                         hydronic-loop-builder.html for the page that cannot
+                         have it (mid-drag `d` rewrites, refresh on pointer-up). -->
+                    <path id="rl-discharge" data-flow="supply" data-flow-static="true" d="M 120 193 V 85 H 200" fill="none"
+                          stroke="var(--rl-hot)" stroke-width="3"/>
+                    <path id="rl-liquid"    data-flow="supply" data-flow-static="true" d="M 520 85 H 600 V 195" fill="none"
+                          stroke="var(--rl-liq)" stroke-width="3"/>
+
+                    <!-- ── LOW-SIDE pipes — cold-mix --blue-cool expansion into
+                         the evaporator, cool-vapor --blue suction out of it
+                         (updateLoop re-applies the particle inks every solve;
+                         the dasharray is the reduced-motion / print fallback —
+                         the screen+animation rule in styles.css drops the
+                         dashes once .flow-active lands). The suction run goes
+                         coil → reversing valve (hairpin inside the capsule)
+                         → down the compressor's right flank → under the
+                         shell → up into the fixed bottom port at (120,237):
+                         both compressor lines terminate at the valve, in
+                         both modes, and their strokes draw the valve's
+                         interior passages themselves (see the REVERSING
+                         VALVE note above — the body paints first). ── -->
+                    <path id="rl-expansion" data-flow="return" data-flow-static="true" d="M 600 235 V 345 H 520" fill="none"
+                          stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                    <path id="rl-suction"   data-flow="return" data-flow-static="true" d="M 200 345 H 162 V 152 H 152 V 256 H 120 V 237" fill="none"
+                          stroke="var(--blue)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                    <!-- Direction arrows — one per leg so direction reads under
+                         reduced-motion and on paper; each pair carries its own
+                         leg's state ink (four inks, four states). Two complete
+                         sets, CSS-toggled by the cycle (.rl-heating): in
+                         heating every COIL-SIDE leg reverses AND swaps sides
+                         of the loop — the hot pair moves to the indoor-coil
+                         leg (x=162 + the y=345 stub), the liquid pair to the
+                         bottom-right, and so on — mirrored positions, same
+                         inks. The compressor stubs are NOT in these sets:
+                         their arrows live in the mode-invariant group below,
+                         because the ports never swap. -->
+                    <g class="rl-dir-cool">
+                        <g fill="var(--rl-hot)">
+                            <polygon points="120,122 115,133 125,133"/>
+                            <polygon points="155,80 164,85 155,90"/>
+                        </g>
+                        <g fill="var(--rl-liq)">
+                            <polygon points="555,80 564,85 555,90"/>
+                            <polygon points="595,140 600,151 605,140"/>
+                        </g>
+                        <g fill="var(--blue-cool)">
+                            <polygon points="595,290 600,301 605,290"/>
+                            <polygon points="560,350 551,345 560,340"/>
+                        </g>
+                        <g fill="var(--blue)">
+                            <polygon points="195,350 186,345 195,340"/>
+                            <polygon points="162,290 157,301 167,301"/>
+                        </g>
+                    </g>
+                    <g class="rl-dir-heat">
+                        <g fill="var(--rl-hot)">
+                            <polygon points="157,290 167,290 162,301"/>
+                            <polygon points="186,340 195,345 186,350"/>
+                        </g>
+                        <g fill="var(--rl-liq)">
+                            <polygon points="555,340 564,345 555,350"/>
+                            <polygon points="600,290 595,301 605,301"/>
+                        </g>
+                        <g fill="var(--blue-cool)">
+                            <polygon points="600,140 595,151 605,151"/>
+                            <polygon points="551,85 560,80 560,90"/>
+                        </g>
+                        <g fill="var(--blue)">
+                            <polygon points="151,85 160,80 160,90"/>
+                            <polygon points="115,122 125,122 120,133"/>
+                        </g>
+                    </g>
+                    <!-- Mode-invariant arrows on the two compressor stubs —
+                         visible in BOTH cycles because the ports are fixed:
+                         discharge always rises out of the top port into the
+                         valve (up-arrow on the x=120 stub), suction always
+                         drops out of the valve and wraps under the shell
+                         into the bottom port (down-arrow on the x=152
+                         drop). The constancy IS the story — the valve does
+                         the swapping, the compressor never does. -->
+                    <g class="rl-dir-fixed">
+                        <polygon fill="var(--rl-hot)" points="120,177 115,188 125,188"/>
+                        <polygon fill="var(--blue)" points="147,210 157,210 152,221"/>
+                    </g>
+
+                    <!-- HIGH / LOW SIDE region labels — the halves swap with
+                         the cycle (JS rewrites the text per mode: heating
+                         puts the high side on the BOTTOM). -->
+                    <text class="rl-region-label" id="rl-region-top" x="360" y="165" text-anchor="middle" font-size="11"
+                          letter-spacing="0.15em" fill="var(--text-dim)">고압측 · 고온</text>
+                    <text class="rl-region-label" id="rl-region-bottom" x="360" y="275" text-anchor="middle" font-size="11"
+                          letter-spacing="0.15em" fill="var(--text-dim)">저압측 · 저온</text>
+
+                    <!-- Faint equator divider (x1 clears the indoor-coil leg
+                         at x=162 + its frost wash, like it cleared the
+                         compressor before the re-plumb). -->
+                    <line x1="176" y1="215" x2="580" y2="215" stroke="var(--text-dim)" stroke-width="1"
+                          stroke-dasharray="2 5" opacity="0.45"/>
+
+                    <!-- ── AIRSIDE LANES — the streams the two airflow knobs
+                         drive. Two thin dashed lanes cross each coil face
+                         VERTICALLY, on the physical crossflow axis: air moves
+                         through a fin-tube face perpendicular to the tubes,
+                         so outdoor air rises through the condenser and out
+                         the top while indoor air drops through the evaporator
+                         and out the bottom. The lanes also replace the old
+                         static heat arrows — the dim→tinted flip carries the
+                         heat story, and the italic labels read as airflow
+                         statements. Each lane splits at the tube row (y=85 /
+                         y=345) into an IN half (neutral dim ink) and an OUT
+                         half tinted by the coil's work: warmed --heat off the
+                         condenser (opacity-quieted — the air is supporting
+                         cast next to the pipes), cooled --blue-cool off the
+                         evaporator (recolored to the frost tint when the coil
+                         ices, exactly like the suction line). Both halves run
+                         the same direction, so one path per segment is fine —
+                         the converging-flow two-path gotcha only applies when
+                         directions oppose; each d runs source→exit, so path
+                         order IS the flow direction (no data-flow-reverse).
+                         DRAW ORDER: this group paints BEFORE the coil groups,
+                         so each lane's in-bar run hides behind the bar face
+                         (no dashed stroke fighting the serpentine) — only the
+                         stubs + arrowheads show statically, while the moving
+                         air particles still cross the face because the
+                         engine's particle layer is the SVG's last child.
+                         SAFE COLUMNS: those particles paint above everything,
+                         so a lane must never share an x with text — x=260 /
+                         x=460 clear the CONDENSER / EVAPORATOR names
+                         (~x 318–402, on the open interior band at y≈123–133 /
+                         297–307 — between the lane columns, and the lanes'
+                         in-band runs cross those rows at x=260/460 only),
+                         the HIGH/LOW SIDE region labels (~x 295–425), the
+                         pipe-leg state annotations, and the evaporator frost
+                         marks (x 224–326, seated between serpentine legs and
+                         outside this corridor). Keep that
+                         constraint when nudging. data-flow="air" makes the
+                         particle fill follow each lane's stroke; density
+                         bands track the two knobs from updateLoop. The dashes
+                         are the static / reduced-motion / print encoding —
+                         .flow-active drops them while particles run (the
+                         shared air-duct rule in styles.css). -->
+                    <g>
+                        <!-- Condenser face: outdoor air rises — in (dim) from below, out (warmed) above. -->
+                        <path id="rl-air-c-in-a"  data-flow="air" data-flow-static="true" d="M 260 200 V 85" fill="none"
+                              stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
+                        <path id="rl-air-c-out-a" data-flow="air" data-flow-static="true" d="M 260 85 V 25" fill="none"
+                              stroke="var(--heat)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
+                        <path id="rl-air-c-in-b"  data-flow="air" data-flow-static="true" d="M 460 200 V 85" fill="none"
+                              stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
+                        <path id="rl-air-c-out-b" data-flow="air" data-flow-static="true" d="M 460 85 V 25" fill="none"
+                              stroke="var(--heat)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
+                        <g id="rl-air-c-heads" fill="var(--heat)" opacity="0.6">
+                            <polygon points="260,18 255,28 265,28"/>
+                            <polygon points="460,18 455,28 465,28"/>
+                        </g>
+                        <!-- Evaporator face: indoor air drops — in (dim) from above, out (cooled) below. -->
+                        <path id="rl-air-e-in-a"  data-flow="air" data-flow-static="true" d="M 260 230 V 345" fill="none"
+                              stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
+                        <path id="rl-air-e-out-a" data-flow="air" data-flow-static="true" d="M 260 345 V 430" fill="none"
+                              stroke="var(--blue-cool)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.75"/>
+                        <path id="rl-air-e-in-b"  data-flow="air" data-flow-static="true" d="M 460 230 V 345" fill="none"
+                              stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.6"/>
+                        <path id="rl-air-e-out-b" data-flow="air" data-flow-static="true" d="M 460 345 V 430" fill="none"
+                              stroke="var(--blue-cool)" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.75"/>
+                        <g id="rl-air-e-heads" fill="var(--blue-cool)" opacity="0.75">
+                            <polygon points="260,438 255,428 265,428"/>
+                            <polygon points="460,438 455,428 465,428"/>
+                        </g>
+                    </g>
+
+                    <!-- ── COMPRESSOR (circle + top-down scroll set) ──
+                         The classic scroll-compressor cross-section: two
+                         identical spirals, one fixed, one orbiting (circular
+                         translation — it never spins). Generator: alternating
+                         semicircular arcs about two centers (0,0)/(3.5,0),
+                         radii 2.5 / 6 / 9.5 / 13 / 16.5 (half-pitch 3.5,
+                         2.5 turns, outer radius 16.5 — clears the r24 housing
+                         at the orbit's widest reach, translate 5.25). The
+                         orbiting copy is the same path with a baked
+                         rotate(180) about the compressor center; that
+                         rotation lands it meshed — walls concentric with the
+                         fixed set, 3.5 apart — at translate(3.5 0), so
+                         frame() orbits THAT offset in a 1.75px circle: wall
+                         gap stays 3.5 − 1.75 = 1.75 against the 2px stroke,
+                         a constant touch-and-slide kiss, never a crossing
+                         (an origin-centered orbit swings 3.5 ± r from mesh
+                         and passes clean through at the far phase). Ink
+                         reuses the retired fan glyph's palette: fixed scroll
+                         in its base tint (blue-cool), orbiting scroll in its
+                         running tint (blue), same 2px weight. -->
+                    <g id="rl-compressor">
+                        <circle cx="120" cy="215" r="24" fill="var(--surface)"
+                                stroke="var(--text-dim)" stroke-width="2"/>
+                        <g transform="translate(120 215)" fill="none"
+                           stroke-width="2" stroke-linecap="round">
+                            <path id="rl-scroll-fixed" stroke="var(--blue-cool)" d="M 2.5 0 A 2.5 2.5 0 0 1 -2.5 0 A 6 6 0 0 1 9.5 0 A 9.5 9.5 0 0 1 -9.5 0 A 13 13 0 0 1 16.5 0 A 16.5 16.5 0 0 1 -16.5 0"/>
+                            <g id="rl-compressor-orbit" transform="translate(5.25 0)">
+                                <path stroke="var(--blue)" d="M 2.5 0 A 2.5 2.5 0 0 1 -2.5 0 A 6 6 0 0 1 9.5 0 A 9.5 9.5 0 0 1 -9.5 0 A 13 13 0 0 1 16.5 0 A 16.5 16.5 0 0 1 -16.5 0" transform="rotate(180)"/>
+                            </g>
+                        </g>
+                        <!-- Label nudged 6px left (x 80 → 74, codebase-issues
+                             #169): measured with the site fonts the text's
+                             right edge lands ≈113.4. Since the valve
+                             re-plumb the frost wash rides the indoor-coil
+                             leg at x=162 (nowhere near), and the nearest
+                             pipe is the suction under-shell wrap at x=120 —
+                             its stroke/particle edge ≈118.5 clears the text
+                             by ~5px. Outside the four frost-overlay
+                             placement constraints (those bound the marks,
+                             not this label). -->
+                        <text class="rl-comp-label" x="74" y="257" text-anchor="middle" font-size="12"
+                              font-weight="600" fill="var(--text-bright)">압축기</text>
+                    </g>
+
+                    <!-- ── OUTDOOR COIL (top bar) ── -->
+                    <g id="rl-condenser">
+                        <rect x="200" y="55" width="320" height="60" rx="2" fill="var(--surface)"
+                              stroke="var(--text-dim)" stroke-width="2"/>
+                        <!-- Name sits on open canvas below the bar (the DOAS
+                             label-below-rect precedent), in the loop's
+                             interior band — off the serpentine AND out of
+                             the particle streams, so no halo needed. The
+                             bars keep HARDWARE identity (top = outdoor coil,
+                             always); this FUNCTION label and the air caption
+                             swap with the mode (JS rewrites the text). -->
+                        <text id="rl-bar-top-name" x="360" y="133" text-anchor="middle" font-size="14"
+                              font-weight="600" fill="var(--text-bright)">응축기</text>
+                        <text id="rl-air-cap-top" x="535" y="38" font-size="10.5" font-style="italic" fill="var(--text-dim)">
+                            따뜻한 공기 &#8594; 실외
+                        </text>
+                    </g>
+
+                    <!-- ── METERING DEVICE (diamond) ── -->
+                    <g id="rl-metering">
+                        <polygon points="600,200 615,215 600,230 585,215" fill="var(--surface)"
+                                 stroke="var(--text-dim)" stroke-width="2"/>
+                        <text x="630" y="219" font-size="12" font-weight="600"
+                              fill="var(--text-bright)">팽창장치</text>
+                    </g>
+
+                    <!-- ── INDOOR COIL (bottom bar) ── -->
+                    <g id="rl-evaporator">
+                        <rect x="200" y="315" width="320" height="60" rx="2" fill="var(--surface)"
+                              stroke="var(--text-dim)" stroke-width="2"/>
+                        <!-- Name above the bar, mirroring the condenser's
+                             below-bar placement into the same interior band.
+                             Function label + caption swap with the mode,
+                             like the top bar's. -->
+                        <text id="rl-bar-bottom-name" x="360" y="307" text-anchor="middle" font-size="14"
+                              font-weight="600" fill="var(--text-bright)">증발기</text>
+                        <text id="rl-air-cap-bottom" x="535" y="430" font-size="10.5" font-style="italic" fill="var(--text-dim)">
+                            찬 공기 &#8594; 실내
+                        </text>
+                    </g>
+
+                    <!-- ── SERPENTINE TUBE CIRCUITS — square-wave H/V legs
+                         (the DOAS coil motif, flipped: vertical legs
+                         progressing horizontally), each entering and leaving
+                         at its bar's pipe joints so the particle streams
+                         hand off with no teleport; draw order = flow
+                         direction. Stroke AND particles ride the rl-grad-*
+                         state gradients (the stroke reads statically / under
+                         reduced motion; updateLoop re-applies the particle
+                         fill every solve; an icing coil overrides PARTICLES
+                         to --rl-frost while the stroke keeps its gradient —
+                         the frost wash carries the static look). The two
+                         paths live OUTSIDE the bar groups, after both, on
+                         purpose: they are function-keyed (cond = the
+                         condensing run) and the mode flip re-routes each to
+                         the other BAR (MODE_GEOM) — drawn inside its
+                         cooling bar's group, a re-routed run would paint
+                         underneath the other bar's face rect. The markup ds
+                         are the COOLING state (pinned by the engine spec). -->
+                    <path id="rl-coil-cond" data-flow="supply" data-flow-static="true" fill="none"
+                          stroke="url(#rl-grad-cond)" stroke-width="1.5"
+                          d="M 200 85 H 220 V 67 H 248 V 103 H 276 V 67 H 304 V 103 H 332 V 67 H 360 V 103 H 388 V 67 H 416 V 103 H 444 V 67 H 472 V 103 H 500 V 85 H 520"/>
+                    <path id="rl-coil-evap" data-flow="return" data-flow-static="true" fill="none"
+                          stroke="url(#rl-grad-evap)" stroke-width="1.5"
+                          d="M 520 345 H 500 V 327 H 472 V 363 H 444 V 327 H 416 V 363 H 388 V 327 H 360 V 363 H 332 V 327 H 304 V 363 H 276 V 327 H 248 V 363 H 220 V 345 H 200"/>
+
+                    <!-- State annotations on each pipe leg — each in its own
+                         leg's state ink. Positions are corner-fixed (tl / tr
+                         / br / bl); text + ink swap with the cycle since the
+                         states travel around the loop with the valve (JS
+                         rewrites both). -->
+                    <!-- tl sits ABOVE its horizontal run, tucked into the
+                         loop's top-left corner (owner review 2026-07-18 —
+                         it used to float beside the vertical, crowding the
+                         valve). Baseline 74 keeps descenders ~3px off the
+                         leg arrows at y 80–90; x=124 keeps the wider
+                         heating text ("cool vapor", 10 mono chars ≈ 66px)
+                         ~9px clear of the top bar's left edge. -->
+                    <text id="rl-ann-tl" x="124" y="74" font-size="11" fill="var(--rl-hot)">고온 증기</text>
+                    <text id="rl-ann-tr" x="585" y="140" text-anchor="end" font-size="11" fill="var(--rl-liq)">고온 액체</text>
+                    <text id="rl-ann-br" x="585" y="290" text-anchor="end" font-size="11" fill="var(--blue-cool)">저온 혼합물</text>
+                    <text id="rl-ann-bl" x="170" y="290" font-size="11" fill="var(--blue)">저온 증기</text>
+
+                    <!-- ── FROST OVERLAYS ── two kits, one per coil bar.
+                         #rl-frost (bottom / indoor) fades in on the cooling
+                         coil-freeze alarm; #rl-frost-top (top / outdoor) on
+                         the heating frost flag, and shows half-faded during
+                         the Defrost scenario (the melt). CRYSTAL SEATING IS
+                         DERIVED, not ad-hoc (owner catch 2026-07-18: three
+                         hand-seated crosses had been left clustered on the
+                         bar's left third across two geometry redraws and
+                         read as a bug): serpentine legs sit at x=220+28k
+                         (k 0–10), so the inter-leg bay mids are 234+28k
+                         (k 0–9); EVERY bay carries a 6-arm flake
+                         (defs #rl-flake-lg / -sm, alternating along the
+                         bar) EXCEPT k=1 (mid 262) and k=8 (mid 458), whose
+                         mids land in the x≈253–267 / 453–467 air-lane
+                         corridors where particles paint on top. Flake reach
+                         (±10 large, ±7 small) clears the legs by ≥4px
+                         (half-pitch 14), the entry/exit stubs by ≥4px, and
+                         stays between the serpentine rows (tube row ±18) —
+                         all by construction. The bay-mid derivation is
+                         pinned by the engine spec (§13, frost-crystal
+                         seating), so a serpentine redraw can't strand the
+                         crystals again. Each kit adds one small flake on
+                         its iced suction leg. Ink/weight from
+                         .rl-frost-mark; opacity rides the kit fade. -->
+                    <g class="rl-frost" id="rl-frost">
+                        <rect class="rl-frost-fill" x="200" y="315" width="320" height="60" rx="2"/>
+                        <g class="rl-frost-mark">
+                            <use href="#rl-flake-lg" x="234" y="345"/>
+                            <use href="#rl-flake-sm" x="290" y="345"/>
+                            <use href="#rl-flake-lg" x="318" y="345"/>
+                            <use href="#rl-flake-sm" x="346" y="345"/>
+                            <use href="#rl-flake-lg" x="374" y="345"/>
+                            <use href="#rl-flake-sm" x="402" y="345"/>
+                            <use href="#rl-flake-lg" x="430" y="345"/>
+                            <use href="#rl-flake-sm" x="486" y="345"/>
+                            <use href="#rl-flake-sm" x="162" y="320"/>
+                        </g>
+                        <!-- Suction-leg wash rides the indoor-coil leg at
+                             x=162 (the cooling suction run since the valve
+                             re-plumb) and STOPS below the valve body at
+                             y=174, mirroring the top kit's stop-at-the-valve
+                             rule. -->
+                        <rect class="rl-frost-fill" x="158" y="174" width="8" height="171"/>
+                    </g>
+                    <!-- Top kit — the bottom kit mirrored to the outdoor bar
+                         (y 55–115, tube row y=85; same x columns, so the
+                         seating constraints hold by construction). Its leg
+                         flake sits on the top-left suction run at (120,112),
+                         3px above the upper-leg mode arrows (y 122–133).
+                         The suction-leg wash rides that leg and STOPS above
+                         the reversing valve body at y=142 so the wash never
+                         paints over the valve face. -->
+                    <g class="rl-frost" id="rl-frost-top">
+                        <rect class="rl-frost-fill" x="200" y="55" width="320" height="60" rx="2"/>
+                        <g class="rl-frost-mark">
+                            <use href="#rl-flake-lg" x="234" y="85"/>
+                            <use href="#rl-flake-sm" x="290" y="85"/>
+                            <use href="#rl-flake-lg" x="318" y="85"/>
+                            <use href="#rl-flake-sm" x="346" y="85"/>
+                            <use href="#rl-flake-lg" x="374" y="85"/>
+                            <use href="#rl-flake-sm" x="402" y="85"/>
+                            <use href="#rl-flake-lg" x="430" y="85"/>
+                            <use href="#rl-flake-sm" x="486" y="85"/>
+                            <use href="#rl-flake-sm" x="120" y="112"/>
+                        </g>
+                        <rect class="rl-frost-fill" x="116" y="85" width="8" height="55"/>
+                    </g>
+                </svg>
+            </div>
+
+            <!-- ── Equipment register: manifold gauges + LCDs + LEDs + verdict ──
+                 The sim depicts real hardware, so everything here uses the
+                 equipment register (warm device face, dot-matrix LCDs, glowing
+                 LEDs). The two round gauges are manifold-style: LOW side needle
+                 -> suction psig, HIGH side -> head psig, each with a per-refrigerant
+                 saturation-temperature ring drawn from REFRIGERANT_TYPES (the
+                 P-T curve, on the gauge face). Needles ease on the page rAF. -->
+            <h2 class="subhead">게이지와 계기값</h2>
+            <div class="rl-register">
+
+                <!-- Manifold gauges + LCD cluster -->
+                <div class="device">
+                    <div class="device-inner">
+                        <div class="device-tb">
+                            <span class="led led--run" id="rl-led-run" aria-hidden="true"></span>
+                            <span class="title">매니폴드</span>
+                            <span class="badge" id="rl-refrig-badge">R-410A</span>
+                        </div>
+
+                        <div class="rl-gauges">
+                            <svg class="rl-gauge rl-gauge-low" id="rl-gauge-low" viewBox="0 -20 200 202"
+                                 role="img" aria-labelledby="rl-gauge-low-t">
+                                <title id="rl-gauge-low-t">저압측 흡입압력 게이지</title>
+                                <text class="rl-gauge-side" x="100" y="-6">저압측</text>
+                                <circle class="rl-gauge-face" cx="100" cy="94" r="86"/>
+                                <path class="rl-gauge-arc" id="rl-gauge-low-arc" d=""/>
+                                <line class="rl-gauge-needle-low" id="rl-gauge-low-needle"
+                                      x1="100" y1="110" x2="100" y2="18"/>
+                                <g id="rl-gauge-low-scale"></g>
+                                <circle class="rl-gauge-hub" cx="100" cy="94" r="6.5"/>
+                                <text class="rl-gauge-val" x="100" y="150"><tspan
+                                    id="rl-gauge-low-num">&#8212;</tspan><tspan
+                                    class="rl-gauge-val-unit" id="rl-gauge-low-unit" dx="4">psig</tspan></text>
+                                <text class="rl-gauge-cap" x="100" y="167">흡입압력</text>
+                            </svg>
+
+                            <svg class="rl-gauge rl-gauge-high" id="rl-gauge-high" viewBox="0 -20 200 202"
+                                 role="img" aria-labelledby="rl-gauge-high-t">
+                                <title id="rl-gauge-high-t">고압측 토출압력 게이지</title>
+                                <text class="rl-gauge-side" x="100" y="-6">고압측</text>
+                                <circle class="rl-gauge-face" cx="100" cy="94" r="86"/>
+                                <path class="rl-gauge-arc" id="rl-gauge-high-arc" d=""/>
+                                <line class="rl-gauge-needle-high" id="rl-gauge-high-needle"
+                                      x1="100" y1="110" x2="100" y2="18"/>
+                                <g id="rl-gauge-high-scale"></g>
+                                <circle class="rl-gauge-hub" cx="100" cy="94" r="6.5"/>
+                                <text class="rl-gauge-val" x="100" y="150"><tspan
+                                    id="rl-gauge-high-num">&#8212;</tspan><tspan
+                                    class="rl-gauge-val-unit" id="rl-gauge-high-unit" dx="4">psig</tspan></text>
+                                <text class="rl-gauge-cap" x="100" y="167">응축압력</text>
+                            </svg>
+                        </div>
+
+                        <!-- LCD cluster — role="status" so the live numbers reach AT. -->
+                        <div class="rl-lcds" role="status" aria-live="polite" aria-label="실시간 냉동사이클 계기값">
+                            <div class="lcd">
+                                <div class="k">과열도</div>
+                                <div class="v" id="rl-lcd-sh">&#8212;</div>
+                            </div>
+                            <div class="lcd">
+                                <div class="k">과냉도</div>
+                                <div class="v" id="rl-lcd-sc">&#8212;</div>
+                            </div>
+                            <div class="lcd">
+                                <div class="k">증발 포화온도</div>
+                                <div class="v" id="rl-lcd-evap">&#8212;</div>
+                            </div>
+                            <div class="lcd">
+                                <div class="k">응축 포화온도</div>
+                                <div class="v" id="rl-lcd-cond">&#8212;</div>
+                            </div>
+                            <div class="lcd">
+                                <div class="k">흡입압력</div>
+                                <div class="v" id="rl-lcd-psuc">&#8212;</div>
+                            </div>
+                            <div class="lcd">
+                                <div class="k">냉매 응축압력</div>
+                                <div class="v" id="rl-lcd-pdis">&#8212;</div>
+                            </div>
+                            <div class="lcd">
+                                <div class="k">실내 공기 입구 &#8594; 출구</div>
+                                <div class="v rl-lcd-pair" id="rl-lcd-air-evap">&#8212;</div>
+                            </div>
+                            <div class="lcd">
+                                <div class="k">실외 공기 입구 &#8594; 출구</div>
+                                <div class="v rl-lcd-pair" id="rl-lcd-air-cond">&#8212;</div>
+                            </div>
+                            <!-- Visually-hidden alarm mirror: the pill names only
+                                 the top-priority fault, so this line carries the
+                                 FULL alarm set (plus the P-T-chart clamp note)
+                                 through the same live region as the LCDs. The
+                                 pressures now sit in visible LCD cells above —
+                                 inside this same live region — so repeating them
+                                 here would double-speak. -->
+                            <div class="sr-only" id="rl-sr-summary"></div>
+                        </div>
+
+                        <!-- Status LEDs -->
+                        <!-- The dots are color-only, so each label carries a
+                             visually-hidden on/off suffix (setLed keeps it in
+                             step) — the state is readable in browse mode
+                             without turning the bank into a live region. -->
+                        <div class="dev-leds">
+                            <span><span class="led led--run"  id="rl-led-run2" aria-hidden="true"></span>운전<span class="sr-only" id="rl-led-run2-state">, 켜짐</span></span>
+                            <span><span class="led led--off"  id="rl-led-freeze" aria-hidden="true"></span><span id="rl-led-freeze-label">코일 결빙</span><span class="sr-only" id="rl-led-freeze-state">, 꺼짐</span></span>
+                            <span><span class="led led--off"  id="rl-led-flood" aria-hidden="true"></span>액냉매 유입<span class="sr-only" id="rl-led-flood-state">, 꺼짐</span></span>
+                            <span><span class="led led--off"  id="rl-led-head" aria-hidden="true"></span>응축압력 상승<span class="sr-only" id="rl-led-head-state">, 꺼짐</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Verdict + CFM/ton -->
+                <div>
+                    <div class="status-pill" id="rl-status" role="status">노브를 조정하여 루프를 운전하세요.</div>
+
+                    <div class="rl-cfm readout" role="status">
+                        <div class="readout-label">실내 코일 풍량</div>
+                        <div class="readout-value"><span class="rl-cfm-val" id="rl-cfm-val">&#8212;</span>
+                            <span class="rl-cfm-unit" id="rl-cfm-unit"> CFM/ton · 하한 400</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Full-width register footnote — how to read the gauges. A
+                 sibling of .rl-register (still inside .rl-cockpit), so the
+                 fullscreen prose hide (.is-fullscreen .tool-body .ref-note)
+                 drops it in the cockpit like every other note. -->
+            <p class="ref-note">
+                두 게이지는 매니폴드 세트처럼 읽습니다. 저압측 바늘은 흡입압력을, 고압측
+                바늘은 냉매 응축압력을 나타냅니다. 각 다이얼의 안쪽 눈금은 해당 냉매의
+                포화온도 링, 즉 게이지 면에 그린 P-T 곡선입니다. 과열도는 이슬점 곡선을,
+                과냉도는 기포점 곡선을 기준으로 합니다. 공기측 풍량이 부족한 코일은
+                과열도가 <em>정상</em>이어도 결빙될 수 있습니다. 냉매측은 정상으로 보이는
+                동안 코일이 얼기 때문에 결빙 경보가 독립적으로 작동합니다. 난방 모드에서는
+                같은 함정이 실외로 옮겨갑니다. 성에로 막힌 실외 코일 역시 과열도가 정상인
+                상태에서 풍량이 부족해질 수 있으며, 낮아지는 흡입압력만이 문제를 드러냅니다.
+            </p>
+
+            <!-- ── Live P-T state plot ─────────────────────────────────────
+                 The superheat / subcooling P-T diagram, live and data-driven.
+                 Y = pressure (psig), X = temperature (°F). The refrigerant's
+                 saturation curve comes straight from REFRIGERANT_TYPES (dew
+                 always; bubble too when the glide is visible). Four live
+                 points: low-side sat (tEvap, pSuc) + suction-line (tSucLine,
+                 pSuc) to its right — the gap is superheat; high-side sat
+                 (tCond, pDis) + liquid-line (tLiqLine, pDis) to its left — the
+                 gap is subcooling. A vertical 32 °F freeze line turns red when
+                 the low-side sat point slides left past it. Redrawn on every
+                 solve — no easing, so the reduced-motion frame is simply the
+                 settled state. -->
+            <h2 class="subhead">P-T 선도에서 보기</h2>
+            <p class="ref-note compact">
+                냉동사이클이 해당 냉매의 포화 곡선에서 어디에 놓이는지 보여 줍니다.
+                저압측 점은 이슬점 곡선 위에 있고 오른쪽 간격이 과열도이며, 고압측 점은
+                기포점 곡선 위에 있고 왼쪽 간격이 과냉도입니다. 코일 풍량이 부족해지면
+                저압측 점이 왼쪽으로 이동하여
+                <span data-us="32 °F" data-metric="0 °C">32&nbsp;°F</span>
+                결빙선을 넘어갑니다. 난방 모드에서는 같은 선을 <em>착상</em>선으로 읽습니다.
+                추운 날 실외 코일이 이 선 왼쪽에서 운전하는 것은 정상이므로, 외기가 착상
+                온도대에 있고 실제로 성에가 쌓일 때만 선이 빨간색으로 바뀝니다.
+            </p>
+            <div class="narrow-width-note">
+                P-T 선도는 넓은 화면에서 가장 잘 보입니다. 휴대전화 너비에서는 온도축이
+                압축되지만 모든 계기값은 계속 갱신됩니다. 노트북에서는 곡선을 더 넓게 볼 수 있습니다.
+            </div>
+            <div class="rl-fs-plot">
+                <div class="sim-canvas-wrap rl-plot-wrap">
+                    <canvas id="rl-plot" role="img" aria-label="실시간 압력-온도 선도: 선택한 냉매의 이슬점 포화 곡선과 온도 글라이드가 뚜렷한 혼합냉매의 파선 기포점 곡선, 저압측·고압측 상태점, 과열도·과냉도 간격, 화씨 32도 선을 표시합니다. 냉방 모드에서는 코일 결빙 경보선이고 난방 모드에서는 착상선입니다. 추운 날 실외 코일이 이 선 왼쪽에 놓이는 것은 정상이며 외기가 착상 온도대일 때만 선이 빨간색으로 바뀝니다"></canvas>
+                </div>
+                <div class="sim-legend rl-plot-legend">
+                    <span><span class="swatch sat"></span>포화 곡선</span>
+                    <span><span class="swatch sh"></span>과열도</span>
+                    <span><span class="swatch sc"></span>과냉도</span>
+                    <span><span class="swatch freeze"></span><span data-us="32 °F" data-metric="0 °C">32&nbsp;°F</span> <span id="rl-plot-freeze-word">결빙</span></span>
+                </div>
+            </div>
+
+            <!-- ── Controls (knobs) ─────────────────────────────────────────
+                 Slider min/max/step mirror RefrigLoop.CLAMPS exactly (single
+                 source of truth). Temp / ΔT sliders stay in canonical °F so the
+                 engine reads them unchanged; only the readout converts on a unit
+                 flip (U.onChange re-renders). -->
+            <div class="rl-controls">
+                <h2 class="subhead">제어 입력</h2>
+
+                <div class="form-row">
+                    <div class="field">
+                        <label for="rl-refrigerant">냉매</label>
+                        <select id="rl-refrigerant">
+                            <option value="r410a" selected>R-410A</option>
+                            <option value="r22">R-22</option>
+                            <option value="r134a">R-134a</option>
+                            <option value="r407c">R-407C</option>
+                            <option value="r404a">R-404A</option>
+                            <option value="r454b">R-454B</option>
+                        </select>
+                    </div>
+                    <div class="field" role="group" aria-labelledby="rl-stage-lbl">
+                        <span id="rl-stage-lbl" class="field-label">압축기 단수</span>
+                        <div class="btn-row">
+                            <button type="button" class="copy-btn"        id="rl-stage-1" aria-pressed="false">1단</button>
+                            <button type="button" class="copy-btn active" id="rl-stage-2" aria-pressed="true">2단</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rl-knob-grid">
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label id="rl-airflow-lbl" for="rl-airflow">실내 코일 풍량</label>
+                            <span class="slider-val" id="rl-airflow-val">100%</span>
+                        </div>
+                        <input type="range" id="rl-airflow" min="0.40" max="1.20" step="0.05" value="1.00">
+                        <span class="slider-sub rl-slider-sub" id="rl-airflow-sub"></span>
+                    </div>
+
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label id="rl-charge-lbl" for="rl-charge">냉매 충전량</label>
+                            <span class="slider-val" id="rl-charge-val">100%</span>
+                        </div>
+                        <input type="range" id="rl-charge" min="0.60" max="1.20" step="0.05" value="1.00">
+                        <span class="slider-sub rl-slider-sub" id="rl-charge-sub"></span>
+                    </div>
+
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label id="rl-returnt-lbl" for="rl-returnt">실내 회기 온도</label>
+                            <span class="slider-val" id="rl-returnt-val">75 °F</span>
+                        </div>
+                        <input type="range" id="rl-returnt" min="65" max="85" step="1" value="75">
+                        <span class="slider-sub rl-slider-sub" id="rl-returnt-sub"></span>
+                    </div>
+
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label id="rl-shtarget-lbl" for="rl-shtarget">팽창장치 목표 과열도</label>
+                            <span class="slider-val" id="rl-shtarget-val">10 °F</span>
+                        </div>
+                        <input type="range" id="rl-shtarget" min="4" max="25" step="1" value="10">
+                        <span class="slider-sub rl-slider-sub" id="rl-shtarget-sub"></span>
+                    </div>
+
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label id="rl-ambient-lbl" for="rl-ambient">실외 온도</label>
+                            <span class="slider-val" id="rl-ambient-val">90 °F</span>
+                        </div>
+                        <input type="range" id="rl-ambient" min="55" max="115" step="1" value="90">
+                        <span class="slider-sub rl-slider-sub" id="rl-ambient-sub"></span>
+                    </div>
+
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label id="rl-condair-lbl" for="rl-condair">실외 코일 풍량</label>
+                            <span class="slider-val" id="rl-condair-val">100%</span>
+                        </div>
+                        <input type="range" id="rl-condair" min="0.40" max="1.20" step="0.05" value="1.00">
+                        <span class="slider-sub rl-slider-sub" id="rl-condair-sub"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Fullscreen view toggle — only shown inside fullscreen on a
+                 viewport too SHORT to fit the loop and the P-T plot at once
+                 (e.g. a 1920×1080 landscape). "System" keeps the loop on screen;
+                 "Curve" swaps in the P-T plot. Both keep the gauges, readouts
+                 and controls. Hidden in normal flow and on a tall/portrait
+                 fullscreen (where everything fits). Session-only, no cf_* key. -->
+            <div class="rl-fs-viewtoggle field" role="group" aria-labelledby="rl-fs-view-lbl">
+                <span class="field-label" id="rl-fs-view-lbl">전체 화면 보기</span>
+                <div class="btn-row">
+                    <button type="button" class="copy-btn active" id="rl-fs-view-system" aria-pressed="true">시스템</button>
+                    <button type="button" class="copy-btn" id="rl-fs-view-curve" aria-pressed="false">곡선</button>
+                </div>
+            </div>
+
+            </div><!-- /.rl-cockpit -->
+
+            <!-- ── About this model + damage-stakes scope note ──────────── -->
+            <h2 class="subhead">모델 설명</h2>
+            <p class="tool-preamble">
+                이 도구는 열역학 모델이 아닌 <strong>방향성</strong> 모델입니다. 압력은 선택한
+                냉매의 공개 P-T 표에서 실제로 조회하며, <a href="/ko/tools/refrigerant-pt.html">P-T
+                계산기</a>와 같은 표를 사용합니다. 과열도와 과냉도도 이슬점·기포점 곡선을
+                기준으로 정확히 뺀 값입니다. 다만 각 노브가 움직이는 <em>크기</em>는 특정
+                장비를 재현하려는 것이 아니라 현장에서와 같은 방향으로 상태가 이동하도록
+                조정한 예시값입니다. 엔탈피나 P-h 데이터는 사용하지 않으므로 변화 방향과
+                관계를 이해하는 데 활용하세요. 실제 물성 모델은 향후 개선 사항입니다.
+                비교 기준을 맞추기 위해 모든 냉매는 모드별로 같은 설계 사이클을 사용합니다.
+                냉방에서는
+                <span data-us="40 °F" data-metric="4.4 °C">40&nbsp;°F</span>
+                증발기와
+                <span data-us="105 °F" data-metric="40.6 °C">105&nbsp;°F</span>
+                응축기를 사용하고, 난방에서는 공통 기준점(약
+                <span data-us="27 °F" data-metric="-2.8 °C">27&nbsp;°F</span> /
+                <span data-us="105 °F" data-metric="40.6 °C">105&nbsp;°F</span>
+                )을
+                <span data-us="47 °F" data-metric="8.3 °C">47&nbsp;°F</span>
+                정격점에서 사용합니다. 따라서 냉매 간 압력을 같은 조건에서 비교할 수 있습니다.
+                실제 R-404A는 일반적으로 더 낮은 온도의 냉동 장비에 사용됩니다.
+            </p>
+            <p class="tool-preamble">
+                <strong>난방 모드는 같은 장비에서 사방밸브만 전환한 상태입니다.</strong> 막대의
+                물리적 위치는 유지되어 위쪽은 항상 실외 코일, 아래쪽은 항상 실내 코일입니다.
+                밸브가 실제로 바꾸는 것은 기능이므로 응축기 / 증발기 표기가 서로 바뀝니다.
+                난방 중 실외 코일은 외기보다 약
+                <span data-us="20 °F" data-metric="11.1 °C">20&nbsp;°F</span>
+                낮게 운전하므로 추운 날에는 <em>설계상</em> 빙점 미만이 됩니다. 코일 온도가
+                32 미만인 것 자체는 히트펌프의 정상 운전이며 경보가 아닙니다. 고장이 되는
+                조건은 성에의 누적입니다. 외기가 약
+                <span data-us="40 °F" data-metric="4.4 °C">40&nbsp;°F</span>
+                미만이면 코일에 성에가 제거되는 속도보다 빠르게 쌓입니다. 성에가 코일 풍량을
+                막으면 코일은 더 차가워지고, 제상 운전이 이 악순환을 끊을 때까지 착상이
+                심해집니다. <strong>제상</strong> 시나리오는 이 과정을 그대로 보여 줍니다.
+                제상은 <em>실제로</em> 일시적인 냉방 모드 운전입니다. 밸브가 되돌아가고 실외 팬이
+                정지하여 뜨거워진 코일이 얼음을 녹이는 동안 사이클이 끝날 때까지 실내
+                덕트에서는 찬 공기가 나옵니다. “히트펌프에서 찬 공기가 나오고 김이 납니다”라는
+                서비스 문의는 장비가 설계대로 작동하는 상황일 수 있습니다. 추운 날의 난방능력
+                저하도 모델링했습니다. 흡입압력이 낮아지면 실내 코일에 전달되는 열이 줄어들므로
+                <span data-us="47 °F" data-metric="8.3 °C">47&nbsp;°F</span>
+                정격점 아래에서는 외기가 낮아질수록 응축온도도 낮아집니다. 먼저 냉매 응축압력
+                게이지를 확인한 다음 급기 온도가
+                <span data-us="95 °F" data-metric="35.0 °C">95&nbsp;°F</span>
+                에서 약
+                <span data-us="88 °F" data-metric="31.1 °C">88&nbsp;°F</span>
+                로 낮아지는 과정을 확인하세요.
+                <span data-us="17 °F" data-metric="-8.3 °C">17&nbsp;°F</span>
+                정격점에서는 이 값에 도달하고 혹한에서는 더 낮아집니다. 이 능력 저하를 보완하기
+                위해 보조 난방이 필요합니다.
+            </p>
+            <p class="tool-preamble">
+                핵심은 공기측과 냉매측을 구분하는 것입니다. <strong>코일 풍량을 부족하게</strong>
+                만들면 흡입압력이 급락하고 증발 포화온도가 빙점 아래로 내려가 코일이 얼지만,
+                과열도는 완전히 <em>정상</em>인
+                <span data-us="10 °F" data-metric="5.6 °C">10&nbsp;°F</span>에 머뭅니다.
+                냉매측에는 문제가 없고 코일이 공기를 통과시키지 못할 뿐입니다.
+                그래서 결빙 경보는 과열도와 독립적으로 작동합니다. 이는
+                <a href="/ko/education/vav-systems.html#the-coil-floor">VAV 시스템</a>에서 코일
+                최소 풍량을 두는 이유와 같은 함정입니다. <a href="/ko/tools/equipment-airflow.html">장비
+                풍량 확인 도구</a>로 풍량 자체를 확인하세요. 과열도가 정상으로 보여도 시스템
+                전체가 정상이라는 뜻은 아닙니다.
+            </p>
+            <p class="tool-preamble">
+                온도 글라이드에 관한 주의사항이 있습니다. 결빙 감지는 이슬점(과열도측)
+                포화온도 하나를 코일 온도의 대표값으로 사용합니다. R-407C처럼 글라이드가 큰
+                혼합냉매에서는 코일 입구가 이 값보다 글라이드만큼 더 차가우므로 실제 코일은
+                이 화면의 단일값이 나타내는 시점보다 조금 일찍 착상하기 시작합니다. R-410A와
+                다른 저글라이드 냉매에서는 이 차이가 거의 사라집니다.
+            </p>
+            <p class="tool-preamble">
+                두 공기 계기값은 현열만 나타냅니다. 실내측은 건구온도 차이며 설계 조건에서
+                일반적인
+                <span data-us="75 °F" data-metric="23.9 °C">75&nbsp;°F</span>
+                회기가
+                <span data-us="55 °F" data-metric="12.8 °C">55&nbsp;°F</span>
+                급기로 낮아지는 상태를 풍량 대비 능력에 따라 조정합니다. 실외측은 응축기를
+                통과하면서 그에 대응하여 토출 공기 온도가 상승하는 모습을 보여 줍니다. 두 값
+                모두 습도 모델을 사용하지 않습니다. 실제 급기 온도는 잠열 부하와 코일 제습의
+                영향을 받으므로 이를 습공기 상태 해석 결과가 아닌 건구온도 변화 방향으로 읽으세요.
+            </p>
+
+            <p class="ref-note">
+                <strong>이론 확인, 학습 보조, 참고 의견을 위한 도구이며 냉매 충전 도구가
+                아닙니다.</strong> 여기의 크기는 예시값이고, 간이 루프가 장비 자체의 보호장치를
+                대신할 수 없습니다. 실제 장비를 보호하는 것은 <strong>저압 차단기, 동결방지
+                온도조절기, 고압 스위치, 제상 제어, 제조사 냉매 충전 차트</strong>입니다. 풍량이
+                부족한 코일은 완전히 얼어 압축기에 액냉매를 보낼 수 있습니다. 냉방에서는 실내
+                코일에서, 난방에서는 착상이 제상 범위를 넘으면 실외 코일에서 발생합니다.
+                냉매를 잘못 충전하면 어느 모드에서든 압축기가 과열되거나 액냉매가 유입됩니다.
+                냉매 충전, 결빙, 제상 문제는 실제 장비의 게이지, 과열도, 과냉도와 명판을 기준으로
+                진단하고 시뮬레이터만으로 판단하지 마세요.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/refrigeration/', label: '냉동 참조 허브'},
+        tools: [
+            {href: '/ko/tools/refrigerant-pt.html', label: '냉매 P-T·과열도 계산기'}
+        ],
+        lessons: [
+            {href: '/ko/education/refrigerant-cycle-basics.html', label: '냉동사이클 기초'},
+            {href: '/ko/education/superheat-subcooling.html', label: '과열도와 과냉도'},
+            {href: '/ko/education/metering-devices-txv-eev.html', label: 'TXV와 EEV'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/simulators/">← 모든 시뮬레이터</a>
+
+</main>
+{% endblock %}

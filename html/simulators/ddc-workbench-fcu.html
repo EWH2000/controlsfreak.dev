@@ -4,9 +4,92 @@ description: A DX fan coil shown as a live DDC graphic, driven by a function-blo
 canonical: https://controlsfreak.dev/simulators/ddc-workbench-fcu.html
 nav: simulators
 keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
+pageMessages:
+  shell:
+    binaryOn: "ON"
+    binaryOff: "OFF"
+    customProgram: Custom (edited)
+    listSeparator: " · "
+    idSeparator: ", "
+    idLastSeparator: " or "
+    releasedOne: "{points} — slot 16 is NULL (no {blockIds} block on the wiresheet) — holding Relinquish_Default."
+    releasedMany: "{points} — slot 16 is NULL (no {blockIds} blocks on the wiresheet) — all holding Relinquish_Default."
+    slot8One: "{points} — commanded by slot 8 (Manual Operator) — write NULL to release."
+    slot8Many: "{points} — all commanded by slot 8 (Manual Operator) — write NULL to release."
+    otherSlotOne: "{points} — commanded by slot {slot}."
+    otherSlotMany: "{points} — all commanded by slot {slot}."
+    resumedResetHint: "Use the {label} button to reset it."
+  points:
+    spaceTemp: Zone Temp
+    rat: RAT
+    dat: DAT
+    fanStatus: Fan Sts
+    fanSpeed: Fan Spd
+    fanEnable: Fan En
+    y1: Clg Stg 1
+    y2: Clg Stg 2
+    coolingSetpoint: Cool SP
+    deadband: Deadband
+  programs:
+    cool2Stage: 2-stage cooling
+    cool1Stage: 1-stage cooling
+    cool2StageFanOn: "2-stage, continuous fan"
+    cool2StageSafeties: 2-stage + safeties
+  blocks:
+    stg2Sep: Stg 2 Sep
+    stg1Make: Stg 1 Make
+    stg2Make: Stg 2 Make
+    stg1Set: Stg 1 Set
+    stg1Reset: Stg 1 Reset
+    stg2Set: Stg 2 Set
+    stg2Reset: Stg 2 Reset
+    stg1Latch: Stg 1 Latch
+    stg2Latch: Stg 2 Latch
+    coolCall: Cool Call
+    stg2Call: Stg 2 Call
+    continuousFan: Cont Fan
+    speedReference: Spd Ref
+    datClear: DAT Clear
+    datTrip: DAT Trip
+    datOk: DAT OK
+    datLow: DAT Low
+    datRunOk: DAT Run OK
+    coilSafe: Coil Safe
+    minimumOff: Min Off
+    cycleOk: Cycle OK
+    runPermit: Run Permit
+    stageOff: Stage Off
+    stg1Gate: Stg 1 Gate
+    stg2Gate: Stg 2 Gate
+    sixtyPercent: 60%
+    hundredPercent: 100%
+  unit:
+    enterValue: Enter a value.
+    fanOn: "{percent}% · ON"
+    compressorOn: "Stage {stage} · ON"
+    compressorOnShort: "STG {stage} · ON"
+    verdict:
+      commandedNoAirDeadCoil: Fan commanded on but no air moving — compressor on a dead coil
+      fanOffActiveCoil: Fan off with compressor on — no airflow across an active coil
+      commandedNoAirProofDown: Fan commanded on but no air moving — airflow proof is down
+      idle: No cooling call — fan off (idle)
+      lowLimitLatched: DAT low-limit annunciator latched — stages off, fan moving air
+      fanOnly: Compressor off — fan only, no ΔT across the coil
+      lowChargeCandidate: No ΔT across coil — air moving; low charge is one candidate, gauges settle it
+      condenserSide: No ΔT across coil — air moving; look condenser-side, off this graphic
+      compressorNotCooling: No ΔT across coil — compressor not cooling
+      freezeWatch: Cooling — but ΔT is high / airflow low (coil-freeze watch)
+      clearCooling: Cooling — clear ΔT across the coil
+    zoneReadout: "zone {value} {unit}"
+    overrideState: "Program reads {sensed} {unit} — zone is actually {actual} {unit}. The controller is staging on the forced value."
+    forceSensor: Force sensor
+    releaseSensor: Release
+    missingBlock: "The running sheet has no {blockId} block, so there is nothing to write — the value shown is the last one read."
+    invalidParameter: "{point} takes {range} — reverted to the live value."
+    clampedParameter: "{point} accepts {range} — held at the limit."
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -2411,13 +2494,44 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
             },
         };
 
+        const msg = function (key, values) { return window.CFI18n.page(key, values); };
         DDCWShell.createWorkbench(DDCWFcuUnit.create({
+            message: msg,
             programs: FCU_PROGRAMS,
             programLabels: {
-                'cool-2stage':          '2-stage cooling',
-                'cool-1stage':          '1-stage cooling',
-                'cool-2stage-fanon':    '2-stage, continuous fan',
-                'cool-2stage-safeties': '2-stage + safeties',
+                'cool-2stage':          msg('programs.cool2Stage'),
+                'cool-1stage':          msg('programs.cool1Stage'),
+                'cool-2stage-fanon':    msg('programs.cool2StageFanOn'),
+                'cool-2stage-safeties': msg('programs.cool2StageSafeties'),
+            },
+            blockLabels: {
+                'Stg 2 Sep': msg('blocks.stg2Sep'),
+                'Stg 1 Make': msg('blocks.stg1Make'),
+                'Stg 2 Make': msg('blocks.stg2Make'),
+                'Stg 1 Set': msg('blocks.stg1Set'),
+                'Stg 1 Reset': msg('blocks.stg1Reset'),
+                'Stg 2 Set': msg('blocks.stg2Set'),
+                'Stg 2 Reset': msg('blocks.stg2Reset'),
+                'Stg 1 Latch': msg('blocks.stg1Latch'),
+                'Stg 2 Latch': msg('blocks.stg2Latch'),
+                'Cool Call': msg('blocks.coolCall'),
+                'Stg 2 Call': msg('blocks.stg2Call'),
+                'Cont Fan': msg('blocks.continuousFan'),
+                'Spd Ref': msg('blocks.speedReference'),
+                'DAT Clear': msg('blocks.datClear'),
+                'DAT Trip': msg('blocks.datTrip'),
+                'DAT OK': msg('blocks.datOk'),
+                'DAT Low': msg('blocks.datLow'),
+                'DAT Run OK': msg('blocks.datRunOk'),
+                'Coil Safe': msg('blocks.coilSafe'),
+                'Min Off': msg('blocks.minimumOff'),
+                'Cycle OK': msg('blocks.cycleOk'),
+                'Run Permit': msg('blocks.runPermit'),
+                'Stage Off': msg('blocks.stageOff'),
+                'Stg 1 Gate': msg('blocks.stg1Gate'),
+                'Stg 2 Gate': msg('blocks.stg2Gate'),
+                '60%': msg('blocks.sixtyPercent'),
+                '100%': msg('blocks.hundredPercent'),
             },
             defaultProgram: 'cool-2stage',
             // Candidate-A canvas (#205): 8 columns at a 175px pitch — last

@@ -1,0 +1,318 @@
+---
+title: 인버터(VFD) 모의 인터페이스 — controlsfreak.dev
+description: 범용 인버터(VFD) 키패드에서 파라미터 트리를 탐색하고 운전 지령·속도 지령 소스가 명령을 허용하는 방식을 실시간으로 익히는 시뮬레이터입니다.
+sourceContentHash: 14e66b4dba7fb7738b20c55a192f924912418737058b34745ad4d2f2448104ea
+sourceMessageHash: 42adc8dd4a2fbec2567e792cdc0e008e23ed91dce4b9bec341fa2e9c092cd03d
+canonical: https://controlsfreak.dev/ko/simulators/vfd-mock.html
+nav: simulators
+keywords: 인버터 VFD 드라이브 키패드 전부하전류 가속 감속 속도지령 운전지령 파라미터
+pageMessages:
+  groups:
+    motorData: 모터 데이터
+    ramps: 가감속
+    sources: 소스
+    io: I/O
+  parameters:
+    m01:
+      lcd: 정격 FLA
+      name: 정격 전부하전류
+    m02:
+      lcd: 정격 전압
+      name: 정격 전압
+    m03:
+      lcd: 정격 주파수
+      name: 정격 주파수
+    m04:
+      lcd: 정격 RPM
+      name: 정격 회전속도
+    r01:
+      lcd: 가속 시간
+      name: 가속 시간
+    r02:
+      lcd: 감속 시간
+      name: 감속 시간
+    s01:
+      lcd: 운전 지령 소스
+      name: 운전 지령 소스
+    s02:
+      lcd: 속도 지령 소스
+      name: 속도 지령 소스
+    s03:
+      lcd: 최소 주파수
+      name: 최소 주파수
+    s04:
+      lcd: 최대 주파수
+      name: 최대 주파수
+    i01:
+      lcd: 키패드 속도
+      name: 키패드 속도 설정값
+    i02:
+      lcd: 프리셋 속도 1
+      name: 프리셋 속도 1
+    i03:
+      lcd: DI1 기능
+      name: DI1 기능
+  options:
+    keypad: 키패드
+    terminals: 단자
+    network: 네트워크
+    run: 운전
+    jog: 조그
+    reset: 리셋
+  lcd:
+    local: 로컬
+    remote: 원격
+    running: 운전 중
+    stopped: 정지
+    actual: 실제
+    reference: 지령
+    menu: 메뉴
+    edit: 편집
+    saveCancel: ENT 저장  ESC 취소
+  state:
+    atSpeed: 속도 도달
+    rampingUp: 가속 중
+    rampingDown: 감속 중
+    coastingDown: 관성 감속 중
+    stopped: 정지
+  mode:
+    local: 로컬 — 키패드가 소스 파라미터를 우선합니다
+    remote: 원격 — 인버터가 구성된 소스를 따릅니다
+  flash:
+    runLocal: 운전(로컬)
+    runOk: 운전 시작
+    ignoredTerminal: "무시: 소스=단자, L/R"
+    ignoredNetwork: "무시: 소스=NET, L/R"
+    stop: 정지
+    stopIgnoredDi: "정지 무시: DI 하드웨어"
+    local: "> 로컬"
+    remote: "> 원격"
+    networkRunSent: NET RUN 전송
+    networkStopSent: NET STOP 전송
+    preset: "> 프리셋"
+---
+{% extends "html/simulators/vfd-mock.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">시뮬레이터 · 모의 VFD</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">인버터(VFD) 모의 인터페이스 <span class="tool-tag">인버터</span></h1>
+        </div>
+        <!-- Custom two-column layout (not .tool-body-3col) — keypad + display
+             on the left, motor response + external inputs on the right. The
+             3-col Input/Output/Reference pattern doesn't fit a simulator;
+             same precedent as the PID tuner page keeping its stacked layout.
+             A small parameter reference table at the bottom is the one piece
+             of reference content the page does have, so it gets the ref-table
+             treatment below the simulator grid. -->
+        <div class="tool-body">
+
+            <p class="tool-preamble" style="margin-bottom:0.85rem;">
+                특정 제조사의 제품을 본뜨지 않은 범용 인버터 키패드입니다.
+                실제 가동 중인 인버터 앞에 서기 전에 파라미터 트리를 탐색하고,
+                소스 파라미터가 각 명령을 허용하는 방식을 체감하도록 구성했습니다.
+                모터 응답은 지령 속도까지 선형으로 가감속하는 단순 모형이며,
+                V/Hz 곡선·전류·토크·고장 모델은 포함하지 않습니다(고장 LED는 실제 장비의 외형을 재현하기 위한 것입니다).
+                따라서 전기적 모터 특성이 아니라 소스 파라미터에 따른 명령 허용 관계를 학습합니다.
+                인버터가 처음이신가요? <a href="/ko/education/vfds.html">VFD 학습 자료부터 읽기 →</a>
+            </p>
+
+            <!-- Real <button>s, not bare <a>s: these write the drive's source
+                 parameters, they don't navigate, and an anchor with no href is
+                 invisible to the keyboard (#299). Same .widget-try look either
+                 way — the shared stylesheet carries the button twin. -->
+            <div class="widget-try" id="vfdm-try">
+                <span class="lbl">예시:</span>
+                <button type="button" id="vfdm-try-default">공장 초기값</button>
+                <button type="button" id="vfdm-try-keypad">키패드 시운전</button>
+                <button type="button" id="vfdm-try-bas">BAS 자동 운전(전체 네트워크)</button>
+                <button type="button" id="vfdm-try-classic">흔한 설정 실수</button>
+            </div>
+
+            <div class="vfdm-grid">
+
+                <!-- ── LEFT COLUMN: drive front panel ── -->
+                <!-- Equipment register: a real device face. The warm .device
+                     bezel + olive dot-matrix LCD + plastic keypad mark this
+                     as HARDWARE — distinct from the software-register panel
+                     in the right column that monitors it. -->
+                <div>
+                    <div class="widget-section-label">인버터 전면 패널</div>
+
+                    <div class="device vfdm-device">
+                        <div class="device-inner">
+
+                            <!-- Titlebar: powered/online comm LED + generic
+                                 model badge (manufacturer-neutral, like the
+                                 rest of the page). -->
+                            <div class="device-tb">
+                                <span class="led led--comm" aria-hidden="true"></span>
+                                <span class="title">인버터 키패드</span>
+                                <span class="badge">CF-MOCK 100</span>
+                            </div>
+
+                            <!-- LCD: 20-char × 4-line fixed mono grid, set by
+                                 the render() loop as plain text (line 4 carries
+                                 the L/R footer / flash). -->
+                            <div class="vfdm-lcd">
+                                <div class="vfdm-lcd-inner" id="vfdm-lcd"
+                                     role="status" aria-live="polite" aria-label="인버터 표시창">
+                                    <span class="vfdm-lcd-line"></span>
+                                    <span class="vfdm-lcd-line"></span>
+                                    <span class="vfdm-lcd-line"></span>
+                                    <span class="vfdm-lcd-line"></span>
+                                </div>
+                            </div>
+
+                            <!-- Keypad: 4 nav buttons (up/down/enter/escape),
+                                 then a second row with RUN/STOP/LOCAL-REMOTE.
+                                 Sub-labels under glyphs follow real-drive
+                                 keypad legends. -->
+                            <div class="vfdm-keypad" role="group" aria-label="인버터 키패드">
+                                <button class="vfdm-key" id="vfdm-key-up"    type="button" aria-label="위로">
+                                    <span class="glyph">▲</span><span class="sub">UP</span>
+                                </button>
+                                <button class="vfdm-key" id="vfdm-key-down"  type="button" aria-label="아래로">
+                                    <span class="glyph">▼</span><span class="sub">DOWN</span>
+                                </button>
+                                <button class="vfdm-key" id="vfdm-key-enter" type="button" aria-label="확인">
+                                    <span class="glyph">↵</span><span class="sub">ENT</span>
+                                </button>
+                                <button class="vfdm-key" id="vfdm-key-esc"   type="button" aria-label="취소">
+                                    <span class="glyph">×</span><span class="sub">ESC</span>
+                                </button>
+                                <button class="vfdm-key run" id="vfdm-key-run"  type="button" aria-label="운전">
+                                    <span class="glyph">▶</span><span class="sub">RUN</span>
+                                </button>
+                                <button class="vfdm-key stop" id="vfdm-key-stop" type="button" aria-label="정지">
+                                    <span class="glyph">■</span><span class="sub">STOP</span>
+                                </button>
+                                <button class="vfdm-key" id="vfdm-key-local" type="button" aria-label="로컬/원격 전환" style="grid-column: span 2;">
+                                    <span class="glyph">⇄</span><span class="sub">L / R</span>
+                                </button>
+                            </div>
+
+                            <!-- Status LEDs on the face: RUN lights green
+                                 while running, LOC lights amber in LOCAL,
+                                 FAULT stays off (no fault model in v1 —
+                                 it's here for face realism). -->
+                            <div class="dev-leds">
+                                <span><span class="led led--off" id="vfdm-led-run" aria-hidden="true"></span>운전</span>
+                                <span><span class="led led--off" id="vfdm-led-loc" aria-hidden="true"></span>로컬</span>
+                                <span><span class="led led--off" aria-hidden="true"></span>고장</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- The written-out mode explanation lives outside the
+                         bezel (a device face has LEDs, not sentences); same
+                         ids as before so the JS wiring is unchanged. -->
+                    <p class="vfdm-mode-note" id="vfdm-local-rem-ind">
+                        <span id="vfdm-local-rem-txt">원격 — 인버터가 구성된 소스를 따릅니다</span>
+                    </p>
+                </div>
+
+                <!-- ── RIGHT COLUMN: motor response + external inputs ── -->
+                <div>
+                    <div class="widget-section-label">모터 응답</div>
+                    <div class="vfdm-readouts">
+                        <div class="vfdm-readout">
+                            <span>지령 주파수</span>
+                            <span class="v"><span id="vfdm-cmd-hz">0.0</span> Hz</span>
+                        </div>
+                        <div class="vfdm-readout">
+                            <span>실제 주파수</span>
+                            <span class="v" id="vfdm-act-wrap"><span id="vfdm-act-hz">0.0</span> Hz</span>
+                        </div>
+                        <div class="vfdm-gauge" aria-hidden="true">
+                            <div class="vfdm-gauge-fill" id="vfdm-gauge-fill"></div>
+                        </div>
+                        <div class="vfdm-readout">
+                            <span>상태</span>
+                            <span class="v" id="vfdm-state-wrap">
+                                <span class="bas-led" id="vfdm-state-led" aria-hidden="true"></span>
+                                <span id="vfdm-state-text">정지</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="vfdm-ext">
+                        <div class="widget-section-label">외부 입력</div>
+
+                        <!-- Terminal DI run input. Active when run source = TERMINALS;
+                             gray out otherwise (still operable — the wire is wired,
+                             the drive just isn't listening). -->
+                        <div class="vfdm-ext-row" id="vfdm-di-row">
+                            <span class="vfdm-ext-lbl">단자 DI(운전)</span>
+                            <div>
+                                <span class="vfdm-di-toggle" role="group" aria-label="DI 운전 입력 상태">
+                                    <button id="vfdm-di-open"   type="button" class="on">개방</button>
+                                    <button id="vfdm-di-closed" type="button">폐쇄</button>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Network run command. Active when run source = NETWORK. -->
+                        <div class="vfdm-ext-row" id="vfdm-net-row">
+                            <span class="vfdm-ext-lbl">네트워크 RUN 지령</span>
+                            <div class="vfdm-net-btns">
+                                <button class="vfdm-net-btn" id="vfdm-net-run"  type="button">RUN 전송</button>
+                                <button class="vfdm-net-btn" id="vfdm-net-stop" type="button">STOP 전송</button>
+                            </div>
+                        </div>
+
+                        <!-- External speed reference. Active when speed source =
+                             TERMINALS or NETWORK (the simulator treats those as the
+                             same "something outside the drive is writing this Hz
+                             value" — real drives have separate AI and network
+                             registers, but the pedagogy doesn't need that
+                             distinction). -->
+                        <div class="vfdm-ext-row" id="vfdm-ext-spd-row">
+                            <span class="vfdm-ext-lbl">외부 속도 지령</span>
+                            <div style="display:flex;align-items:center;gap:0.55rem;">
+                                <input type="range" id="vfdm-ext-spd" min="0" max="60" step="1" value="30" aria-label="외부 속도 지령"/>
+                                <span class="vfdm-ext-val"><span id="vfdm-ext-spd-val">30</span> Hz</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Parameter reference at the bottom — same value the keypad
+                 can edit, here for at-a-glance reading without having to
+                 navigate. Reference content alongside an active tool,
+                 just stacked rather than side-by-side because the simulator
+                 above already uses the horizontal real estate. -->
+            <h2 class="subhead">파라미터 참조표</h2>
+            <p class="tool-preamble" style="margin-bottom:0.85rem;">
+                실제 인버터의 전체 파라미터 트리가 아니라 학습 범위에 맞춘 네 그룹의 파라미터 열세 개입니다. 키패드에서 값을 편집하면 이 표도 실시간으로 갱신됩니다.
+            </p>
+            <table class="ref-table vfdm-params">
+                <thead>
+                    <tr><th style="width:7rem;">그룹 · ID</th><th>이름</th><th style="width:8rem;text-align:right;">값</th></tr>
+                </thead>
+                <tbody id="vfdm-params-tbody"></tbody>
+            </table>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/ko/education/vfds.html', label: '인버터(VFD)'},
+            {href: '/ko/education/pump-control.html', label: '펌프 제어'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/simulators/">← 모든 시뮬레이터</a>
+
+</main>
+{% endblock %}

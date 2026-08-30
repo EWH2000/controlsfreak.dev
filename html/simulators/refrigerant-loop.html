@@ -4,9 +4,70 @@ description: Run a live vapor-compression loop in cooling or heat-pump heating �
 canonical: https://controlsfreak.dev/simulators/refrigerant-loop.html
 nav: simulators
 keywords: vapor compression suction discharge head pressure superheat subcooling txv metering freeze psig manifold gauge r410a heat pump reversing valve defrost frost low ambient heating
+pageMessages:
+  accessibility:
+    onSuffix: ", on"
+    offSuffix: ", off"
+  led:
+    outdoorFrost: Outdoor frost
+    coilFreeze: Coil freeze
+  verdict:
+    freezeAirflow: Coil freezing — evaporator airflow starved.
+    freezeBelow: Coil freezing — evaporator running below 32 °F (0 °C).
+    defrost: Defrost — reversing valve flipped to cooling, outdoor fan off; hot gas melts the frost while the supply duct blows cool. Normal, and temporary.
+    frostChoked: Outdoor coil frosted over — frost is choking its airflow and dragging suction down. Defrost overdue.
+    floodback: Floodback — superheat collapsed, liquid reaching the compressor.
+    starved: Evaporator starved — high superheat, suspect low charge.
+    starvedOutdoor: Outdoor coil starved — running far below the outdoor air, suction collapsing (blocked coil face / weak fan).
+    frost: Outdoor coil below freezing — frost will build at this ambient, and capacity fades with the falling suction. Real units lean on defrost cycles and auxiliary heat here.
+    highHeadHeating: High head — the indoor coil cannot reject heat (weak indoor airflow / overcharge).
+    highHeadCooling: High head — condenser cannot reject heat (dirty coil / overcharge / hot day).
+    highSubcool: High subcooling — suspect overcharge.
+    lowSubcool: Low subcooling — suspect undercharge / flash gas.
+    outOfRange: Off the P-T chart — reading clamped to the table end.
+    lowHeadHeating: Head low — condensing temp collapsed, supply air running lukewarm.
+    lowHeadCooling: Head low — low ambient weakens the metering ΔP.
+    balanced: Balanced — superheat and subcooling nominal.
+  cfm:
+    design: " CFM/ton · design 400"
+    floor: " CFM/ton · floor 400"
+  alarms:
+    coilFreeze: coil freeze
+    frostChoked: outdoor coil frosted over
+    frost: outdoor coil frosting
+    floodback: floodback
+    highHead: high head
+  summary:
+    defrost: Defrost running — reversing valve in the cooling position, outdoor fan off.
+    alarms: "Alarms: {alarms}."
+    clamped: Reading clamped at the edge of the P-T chart.
+  cycle:
+    highSideHot: HIGH SIDE · HOT
+    lowSideCool: LOW SIDE · COOL
+    condenser: CONDENSER
+    evaporator: EVAPORATOR
+    warmAirOutdoors: warm air → outdoors
+    coolAirOutdoors: cool air → outdoors
+    warmAirIndoors: warm air → indoors
+    coolAirIndoors: cool air → indoors
+  states:
+    hotVapor: hot vapor
+    warmLiquid: warm liquid
+    coldMix: cold mix
+    coolVapor: cool vapor
+  plot:
+    frost: frost
+    freeze: freeze
+    frostSuffix: ° frost
+    freezeSuffix: ° freeze
+    flashGas: (flash gas)
+  errors:
+    controls: Check the controls.
+  diagnostics:
+    tempRingFallback: "refrigerant-loop: temp ring fell back to step {step}° under the separation floor ({refrigerant} {curve})"
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -1516,6 +1577,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         const U   = window.Units;
         const CL  = RefrigLoop.CLAMPS;
         const $   = id => document.getElementById(id);
+        const msg = (key, values) => window.CFI18n.page(key, values);
         const SVG_NS = 'http://www.w3.org/2000/svg';
         const reduceMotion = window.matchMedia &&
             window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1685,9 +1747,9 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                     if (run.length >= 2) { majors = run; step = steps[si]; }
                 }
                 majors = majors || runAt(step, false);
-                console.warn('refrigerant-loop: temp ring fell back to step ' +
-                    step + '° under the separation floor (' + refrig + ' ' +
-                    g.curve + ')');
+                console.warn(msg('diagnostics.tempRingFallback', {
+                    step: step, refrigerant: refrig, curve: g.curve,
+                }));
             }
             return { majors: majors, minors: runAt(step / 2, true) };
         }
@@ -1786,7 +1848,34 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             // Paired visually-hidden state suffix — the dot itself is
             // aria-hidden color, so the label text carries on/off for AT.
             const state = $(id + '-state');
-            if (state) state.textContent = on ? ', on' : ', off';
+            if (state) state.textContent = msg(on ? 'accessibility.onSuffix' : 'accessibility.offSuffix');
+        }
+
+        // refrigerant-loop-engine.js retains stable flags and English debug
+        // prose. Select the localized verdict from those machine-facing
+        // fields so no engine sentence crosses the presentation boundary.
+        function verdictText(s) {
+            const f = s.flags;
+            if (f.freeze) {
+                return msg(s.cfmPerTon < RefrigLoop.DESIGN.CFM_PER_TON_DESIGN
+                    ? 'verdict.freezeAirflow' : 'verdict.freezeBelow');
+            }
+            if (f.defrost) return msg('verdict.defrost');
+            if (f.frostChoked) return msg('verdict.frostChoked');
+            if (f.floodback) return msg('verdict.floodback');
+            if (f.starved) return msg('verdict.starved');
+            if (f.starvedOutdoor) return msg('verdict.starvedOutdoor');
+            if (f.frost) return msg('verdict.frost');
+            if (f.highHead) return msg(s.mode === 'heating'
+                ? 'verdict.highHeadHeating' : 'verdict.highHeadCooling');
+            if (f.highSubcool) return msg('verdict.highSubcool');
+            if (f.lowSubcool) return msg('verdict.lowSubcool');
+            if (f.outOfRange) return msg('verdict.outOfRange');
+            if (s.tCond < RefrigLoop.DESIGN.LOW_HEAD_T) {
+                return msg(s.mode === 'heating'
+                    ? 'verdict.lowHeadHeating' : 'verdict.lowHeadCooling');
+            }
+            return msg('verdict.balanced');
         }
 
         function renderRegister(s) {
@@ -1822,7 +1911,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             setLed('rl-led-run2', running, 'led--run');
             $('rl-led-run').classList.toggle('led--run', running);
             $('rl-led-run').classList.toggle('led--off', !running);
-            $('rl-led-freeze-label').textContent = mode === 'heating' ? 'Outdoor frost' : 'Coil freeze';
+            $('rl-led-freeze-label').textContent = msg(mode === 'heating' ? 'led.outdoorFrost' : 'led.coilFreeze');
             $('rl-led-freeze').classList.remove('led--alarm', 'led--warn');
             if (mode === 'heating') {
                 setLed('rl-led-freeze', s.flags.frost, s.flags.frostChoked ? 'led--alarm' : 'led--warn');
@@ -1835,7 +1924,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             // Verdict pill
             const kind = s.verdict.kind === 'ok' ? 'ok' : s.verdict.kind === 'error' ? 'error' : 'warn';
             const pill = $('rl-status');
-            pill.textContent = s.verdict.text;
+            pill.textContent = verdictText(s);
             pill.className = 'status-pill ' + kind;
 
             // CFM/ton — colored against the 400 design (matches the VAV
@@ -1847,8 +1936,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             cv.textContent = cfm;
             cv.classList.remove('ok', 'mid', 'bad');
             cv.classList.add(cfm >= 400 ? 'ok' : cfm >= 350 ? 'mid' : 'bad');
-            $('rl-cfm-unit').textContent = mode === 'heating'
-                ? ' CFM/ton · design 400' : ' CFM/ton · floor 400';
+            $('rl-cfm-unit').textContent = msg(mode === 'heating' ? 'cfm.design' : 'cfm.floor');
 
             // Visually-hidden alarm mirror (see the markup note): every lit
             // alarm — the pill alone names only the top-priority fault, so
@@ -1858,15 +1946,15 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             // narrated as a state, not listed as an alarm — it is normal
             // operation that merely looks wrong.
             const alarms = [];
-            if (s.flags.freeze)      alarms.push('coil freeze');
-            if (s.flags.frostChoked) alarms.push('outdoor coil frosted over');
-            else if (s.flags.frost)  alarms.push('outdoor coil frosting');
-            if (s.flags.floodback)   alarms.push('floodback');
-            if (s.flags.highHead)    alarms.push('high head');
+            if (s.flags.freeze)      alarms.push(msg('alarms.coilFreeze'));
+            if (s.flags.frostChoked) alarms.push(msg('alarms.frostChoked'));
+            else if (s.flags.frost)  alarms.push(msg('alarms.frost'));
+            if (s.flags.floodback)   alarms.push(msg('alarms.floodback'));
+            if (s.flags.highHead)    alarms.push(msg('alarms.highHead'));
             const srBits = [];
-            if (defrostActive) srBits.push('Defrost running — reversing valve in the cooling position, outdoor fan off.');
-            if (alarms.length) srBits.push('Alarms: ' + alarms.join(', ') + '.');
-            if (s.flags.outOfRange) srBits.push('Reading clamped at the edge of the P-T chart.');
+            if (defrostActive) srBits.push(msg('summary.defrost'));
+            if (alarms.length) srBits.push(msg('summary.alarms', { alarms: alarms.join(', ') }));
+            if (s.flags.outOfRange) srBits.push(msg('summary.clamped'));
             $('rl-sr-summary').textContent = srBits.join(' ');
         }
 
@@ -2030,10 +2118,10 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
         // Corner state annotations: [text, ink] per corner, per cycle — the
         // states travel around the loop with the valve.
         const ANNOTATIONS = {
-            cooling: { tl: ['hot vapor', 'var(--rl-hot)'], tr: ['warm liquid', 'var(--rl-liq)'],
-                       br: ['cold mix', 'var(--blue-cool)'], bl: ['cool vapor', 'var(--blue)'] },
-            heating: { tl: ['cool vapor', 'var(--blue)'], tr: ['cold mix', 'var(--blue-cool)'],
-                       br: ['warm liquid', 'var(--rl-liq)'], bl: ['hot vapor', 'var(--rl-hot)'] },
+            cooling: { tl: ['states.hotVapor', 'var(--rl-hot)'], tr: ['states.warmLiquid', 'var(--rl-liq)'],
+                       br: ['states.coldMix', 'var(--blue-cool)'], bl: ['states.coolVapor', 'var(--blue)'] },
+            heating: { tl: ['states.coolVapor', 'var(--blue)'], tr: ['states.coldMix', 'var(--blue-cool)'],
+                       br: ['states.warmLiquid', 'var(--rl-liq)'], bl: ['states.hotVapor', 'var(--rl-hot)'] },
         };
 
         // Re-route the loop for a cycle ('cooling' | 'heating'). Note the
@@ -2058,18 +2146,18 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
                 $(id).setAttribute('y2', GRAD_Y[cycle][id]);
             });
             // Region labels swap halves (heating's high side is the bottom).
-            $('rl-region-top').textContent    = heat ? 'LOW SIDE · COOL' : 'HIGH SIDE · HOT';
-            $('rl-region-bottom').textContent = heat ? 'HIGH SIDE · HOT' : 'LOW SIDE · COOL';
+            $('rl-region-top').textContent    = msg(heat ? 'cycle.lowSideCool' : 'cycle.highSideHot');
+            $('rl-region-bottom').textContent = msg(heat ? 'cycle.highSideHot' : 'cycle.lowSideCool');
             // Bars keep hardware identity; the FUNCTION labels + air-story
             // captions swap (owner decision — top is always the outdoor coil).
-            $('rl-bar-top-name').textContent    = heat ? 'EVAPORATOR' : 'CONDENSER';
-            $('rl-bar-bottom-name').textContent = heat ? 'CONDENSER' : 'EVAPORATOR';
-            $('rl-air-cap-top').textContent     = heat ? 'cool air → outdoors' : 'warm air → outdoors';
-            $('rl-air-cap-bottom').textContent  = heat ? 'warm air → indoors'  : 'cool air → indoors';
+            $('rl-bar-top-name').textContent    = msg(heat ? 'cycle.evaporator' : 'cycle.condenser');
+            $('rl-bar-bottom-name').textContent = msg(heat ? 'cycle.condenser' : 'cycle.evaporator');
+            $('rl-air-cap-top').textContent     = msg(heat ? 'cycle.coolAirOutdoors' : 'cycle.warmAirOutdoors');
+            $('rl-air-cap-bottom').textContent  = msg(heat ? 'cycle.warmAirIndoors'  : 'cycle.coolAirIndoors');
             const ann = ANNOTATIONS[cycle];
             Object.keys(ann).forEach(k => {
                 const el = $('rl-ann-' + k);
-                el.textContent = ann[k][0];
+                el.textContent = msg(ann[k][0]);
                 el.setAttribute('fill', ann[k][1]);
             });
             // Air-lane OUT tints swap faces: in heating the outdoor (top)
@@ -2365,7 +2453,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             //    line instead and only reddens when the frost flag says ice
             //    is actually accumulating (ambient in the frost band). ──
             const freezing = s.flags.freeze || s.flags.frost;
-            const freezeWord = s.mode === 'heating' ? '° frost' : '° freeze';
+            const freezeWord = msg(s.mode === 'heating' ? 'plot.frostSuffix' : 'plot.freezeSuffix');
             const xF = xOf(FREEZE_LINE_F);
             if (xF >= padL && xF <= cssW - padR) {
                 ctx.save();
@@ -2445,7 +2533,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             const flashGas = s.subcool < 0;
             gap(s.tEvap, s.tSucLine, s.pSuc, cHeat, 'SH', dispDT(s.superheat) + dtU(), 'dew');
             gap(s.tCond, s.tLiqLine, s.pDis, cCool, 'SC', dispDT(s.subcool) + dtU(),
-                glideVisible ? 'bubble' : 'dew', flashGas ? '(flash gas)' : null);
+                glideVisible ? 'bubble' : 'dew', flashGas ? msg('plot.flashGas') : null);
 
             // ── State points. Saturation points ride the curve (neutral, red
             //    on the low side when freezing); the line-state points carry
@@ -2525,7 +2613,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             if (bad) {
                 ['rl-lcd-sh', 'rl-lcd-sc', 'rl-lcd-evap', 'rl-lcd-cond',
                  'rl-lcd-psuc', 'rl-lcd-pdis', 'rl-lcd-air-evap', 'rl-lcd-air-cond'].forEach(id => { $(id).textContent = '—'; });
-                $('rl-status').textContent = 'Check the controls.';
+                $('rl-status').textContent = msg('errors.controls');
                 $('rl-status').className = 'status-pill warn';
                 return;
             }
@@ -2754,7 +2842,7 @@ keywords: vapor compression suction discharge head pressure superheat subcooling
             clearActivePreset();
             updatePresetRow();
             applyCycleVisuals(heat ? 'heating' : 'cooling');
-            $('rl-plot-freeze-word').textContent = heat ? 'frost' : 'freeze';
+            $('rl-plot-freeze-word').textContent = msg(heat ? 'plot.frost' : 'plot.freeze');
             renderControls();
             applyRefrigerant();   // gauge rings are pressure-keyed — rebuild + repaint
         }

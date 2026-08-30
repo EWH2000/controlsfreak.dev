@@ -4,9 +4,92 @@ description: Wire a generic DDC controller — 24 VAC power, universal/binary in
 canonical: https://controlsfreak.dev/simulators/controller-wiring.html
 nav: simulators
 keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals fuse
+pageMessages:
+  groups:
+    power: Power
+    loopPower: Loop Power
+    signalCommon: Signal Common
+    universalInputs: Universal Inputs
+    binaryInputs: Binary Inputs
+    analogOutputs: Analog Outputs
+    binaryOutputs: Binary Outputs
+    network: Network
+  fuse:
+    ok: FUSE OK
+    blown: FUSE BLOWN
+  aria:
+    inputType: "{terminal} input type"
+    command: "{terminal} command"
+    terminal: "terminal {terminal}"
+  binary:
+    on: "ON"
+    off: "OFF"
+  devices:
+    xfmr: 24 VAC XFMR
+    therm10k: 10K THERMISTOR
+    xmtr010: 0-10V XMTR
+    xmtr420: 4-20mA XMTR
+    dryContact: DRY CONTACT
+    act010: 0-10V ACTUATOR
+    relayFan: FAN CONTACTOR
+  captions:
+    therm10k: "sensing {temperature}°F"
+    xmtr010: "3-wire · {percent}% of range"
+    xmtr420: "2-wire loop · {percent}% of range"
+    act010: needs 24 VAC + signal
+    relayFan: switched by a BO
+    xfmr: 40 VA · hot + common
+    contactClosed: "contact: CLOSED"
+    contactOpen: "contact: OPEN"
+  status:
+    added: "Added {device} — wire its terminals to the controller."
+    wiringFrom: "Wiring from {terminal} — click another terminal to land it."
+    wireCancelled: Wire cancelled.
+    alreadyWired: Those terminals are already wired.
+    wired: "Wired {from} → {to}."
+    removed: Removed.
+    cleared: Cleared.
+    loaded: "Loaded: {name}. Trace it — what reads, what fails?"
+    emptyPanel: Empty panel — add a 24 VAC transformer and land it on 24V~ / 24COM to start.
+  point:
+    noSensor: no sensor
+    noInput: no input
+    short: SHORT
+    open: OPEN
+    closed: CLOSED
+    dead: DEAD
+    noPower: NO PWR
+  modes:
+    resistance: Resistance
+    voltage: Voltage
+    current: Current
+  faults:
+    allGood: ✓ All landings check out — nothing faulted.
+    empty: Drop a transformer and a sensor, then wire them up. Faults show here.
+    shortTransformer: Dead short across the transformer — 24V~ tied straight to COM. The fuse blows.
+    transformerFight: Two transformers tied together — mismatched phase fights across the trunk. The fuse blows.
+    reversed: "Power leads reversed — 24V~ and 24COM are swapped. On its own transformer it still runs (24 VAC has no fixed polarity), but it breaks the R/C convention every other tech expects, and the moment 24COM is shared with a correctly-phased device it dead-shorts the secondary. Swap the leads: 24V~ on the hot leg, 24COM on common."
+    openCommon: 24COM is not landed back to the transformer — the controller has no common reference. Nothing reads.
+    noPower: No transformer wired — land 24V~ and 24COM from a control transformer to power the controller.
+    noHot: 24V~ is not landed from the transformer hot leg — the controller is unpowered.
+    uiShort: "{point}: both thermistor leads on the same point — shorted, reads full-scale hot."
+    uiOpen: "{point}: thermistor return not landed on COM — open circuit, reads full-scale cold."
+    uiTransmitterUnpowered: "{point}: 0-10V transmitter has no power — land +24 to the hot leg and COM to the common. Reads 0."
+    uiLoopAc: "{point}: a 4-20mA loop needs DC loop power — land + on LOOP+, not the 24 VAC hot leg. Reads 0 mA."
+    uiLoopUnpowered: "{point}: 4-20mA loop has no power — the + leg must come from the LOOP+ (DC loop-power) terminal. Reads 0 mA."
+    uiModeThermistor: "{point} is set to {mode} but a 10K thermistor is a resistance sensor — set the input to Resistance."
+    uiModeVoltage: "{point} is set to {mode} but the transmitter is a 0-10V signal — set the input to Voltage."
+    uiModeCurrent: "{point} is set to {mode} but this is a 4-20mA loop — set the input to Current."
+    biOpen: "{point}: contact return not landed on COM — the input can never make. Stuck OPEN."
+    aoUnpowered: "{point}: actuator has no 24 VAC power — it sees the signal but can't drive. Dead at 0%."
+    aoSignalCommon: "{point}: actuator signal common not landed on COM — no shared reference, the command floats."
+    boNoReturn: "{point}: the load has no return to COM — the circuit never completes."
+    boNoPower: "{point}: BO-C is not fed from 24V~ — the relay clicks but no power reaches the load. Commands but stays dead."
+    overload: "Transformer overloaded — {used} VA on a {budget} VA transformer. The fuse blows."
+    unknown: "Wiring fault detected ({id})."
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -482,6 +565,7 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
         'use strict';
 
         const W = window.Wiring;
+        const msg = (key, values) => window.CFI18n.page(key, values);
         const reduceMotion = window.matchMedia &&
             window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -511,17 +595,77 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
 
         // Controller faceplate layout — display order + group headers.
         const GROUPS = [
-            { label: 'Power', terms: ['24v', '24com'] },
-            { label: 'Loop Power', terms: ['loop'] },
-            { label: 'Signal Common', terms: ['com-a', 'com-b'] },
-            { label: 'Universal Inputs', terms: ['ui1', 'ui2', 'ui3', 'ui4'] },
-            { label: 'Binary Inputs', terms: ['bi1', 'bi2'] },
-            { label: 'Analog Outputs', terms: ['ao1', 'ao2'] },
-            { label: 'Binary Outputs', terms: ['boc', 'bo1', 'bo2'] },
-            { label: 'Network', terms: ['net+', 'net-', 'ref'] },
+            { label: msg('groups.power'), terms: ['24v', '24com'] },
+            { label: msg('groups.loopPower'), terms: ['loop'] },
+            { label: msg('groups.signalCommon'), terms: ['com-a', 'com-b'] },
+            { label: msg('groups.universalInputs'), terms: ['ui1', 'ui2', 'ui3', 'ui4'] },
+            { label: msg('groups.binaryInputs'), terms: ['bi1', 'bi2'] },
+            { label: msg('groups.analogOutputs'), terms: ['ao1', 'ao2'] },
+            { label: msg('groups.binaryOutputs'), terms: ['boc', 'bo1', 'bo2'] },
+            { label: msg('groups.network'), terms: ['net+', 'net-', 'ref'] },
         ];
         const TERM = {};
         W.CONTROLLER.terminals.forEach((t) => { TERM[t.id] = t; });
+
+        function deviceLabel(type) { return msg('devices.' + type); }
+
+        function pointDisplay(value) {
+            const keys = {
+                'no sensor': 'point.noSensor',
+                'no input': 'point.noInput',
+                'SHORT': 'point.short',
+                'OPEN': 'point.open',
+                'CLOSED': 'point.closed',
+                'DEAD': 'point.dead',
+                'NO PWR': 'point.noPower',
+                'ON': 'binary.on',
+                'OFF': 'binary.off',
+            };
+            return keys[value] ? msg(keys[value]) : value;
+        }
+
+        function modeLabel(mode) {
+            if (mode === 'r') return msg('modes.resistance');
+            if (mode === 'v') return msg('modes.voltage');
+            return msg('modes.current');
+        }
+
+        function faultText(fault, res) {
+            const point = (fault.term || '').toUpperCase();
+            if (fault.id === 'short-xfmr') return msg('faults.shortTransformer');
+            if (fault.id === 'xfmr-fight') return msg('faults.transformerFight');
+            if (fault.id === 'reversed') return msg('faults.reversed');
+            if (fault.id === 'open-common') return msg('faults.openCommon');
+            if (fault.id === 'no-power') return msg('faults.noPower');
+            if (fault.id === 'no-hot') return msg('faults.noHot');
+            if (fault.id.startsWith('ui-short-')) return msg('faults.uiShort', { point: point });
+            if (fault.id.startsWith('ui-open-')) return msg('faults.uiOpen', { point: point });
+            if (fault.id.startsWith('ui-unpwr-')) return msg('faults.uiTransmitterUnpowered', { point: point });
+            if (fault.id.startsWith('ui-loop-')) {
+                const key = fault.text.includes('not the 24 VAC hot leg')
+                    ? 'faults.uiLoopAc'
+                    : 'faults.uiLoopUnpowered';
+                return msg(key, { point: point });
+            }
+            if (fault.id.startsWith('ui-mode-')) {
+                const values = { point: point, mode: modeLabel(state.uiMode[fault.term]) };
+                if (fault.text.includes('10K thermistor')) return msg('faults.uiModeThermistor', values);
+                if (fault.text.includes('0-10V signal')) return msg('faults.uiModeVoltage', values);
+                return msg('faults.uiModeCurrent', values);
+            }
+            if (fault.id.startsWith('bi-open-')) return msg('faults.biOpen', { point: point });
+            if (fault.id.startsWith('ao-unpwr-')) return msg('faults.aoUnpowered', { point: point });
+            if (fault.id.startsWith('ao-scom-')) return msg('faults.aoSignalCommon', { point: point });
+            if (fault.id.startsWith('bo-noret-')) return msg('faults.boNoReturn', { point: point });
+            if (fault.id.startsWith('bo-unpwr-')) return msg('faults.boNoPower', { point: point });
+            if (fault.id === 'overload') {
+                return msg('faults.overload', {
+                    used: Math.round(res.power.vaUsed),
+                    budget: res.power.vaBudget,
+                });
+            }
+            return msg('faults.unknown', { id: fault.id });
+        }
 
         // ── build the controller object (once) ──────────────────────
         function buildController() {
@@ -537,7 +681,7 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
             tb.className = 'cw-ctrl-tb';
             tb.innerHTML = '<span class="title">' + W.CONTROLLER.label + '</span>' +
                 '<span class="cw-fuse" id="cw-fuse"><span class="led led--run"></span>' +
-                '<span class="tag">FUSE OK</span></span>';
+                '<span class="tag">' + msg('fuse.ok') + '</span></span>';
             dinner.appendChild(tb);
 
             GROUPS.forEach((g) => {
@@ -580,7 +724,7 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
                 const sel = document.createElement('select');
                 sel.className = 'cw-mode';
                 sel.dataset.ui = tid;
-                sel.setAttribute('aria-label', def.label + ' input type');
+                sel.setAttribute('aria-label', msg('aria.inputType', { terminal: def.label }));
                 [['r', 'R'], ['v', 'V'], ['ma', 'mA']].forEach((o) => {
                     const op = document.createElement('option');
                     op.value = o[0]; op.textContent = o[1];
@@ -594,7 +738,7 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
                 sld.type = 'range'; sld.min = '0'; sld.max = '100'; sld.value = '0';
                 sld.className = 'cw-ao-slider';
                 sld.dataset.ao = tid;
-                sld.setAttribute('aria-label', def.label + ' command');
+                sld.setAttribute('aria-label', msg('aria.command', { terminal: def.label }));
                 sld.addEventListener('input', () => { state.ao[tid] = +sld.value; refresh(); });
                 row.appendChild(sld);
             } else if (group === 'bo') {
@@ -602,10 +746,10 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
                 btn.type = 'button';
                 btn.className = 'cw-bo-toggle';
                 btn.dataset.bo = tid;
-                btn.textContent = 'OFF';
+                btn.textContent = msg('binary.off');
                 btn.addEventListener('click', () => {
                     state.bo[tid] = !state.bo[tid];
-                    btn.textContent = state.bo[tid] ? 'ON' : 'OFF';
+                    btn.textContent = state.bo[tid] ? msg('binary.on') : msg('binary.off');
                     btn.classList.toggle('cw-on', state.bo[tid]);
                     refresh();
                 });
@@ -626,7 +770,7 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
             pin.className = 'cw-pin cw-pin--' + side;
             pin.dataset.node = node;
             pin.dataset.term = term;
-            pin.setAttribute('aria-label', 'terminal ' + term);
+            pin.setAttribute('aria-label', msg('aria.terminal', { terminal: term }));
             const dot = document.createElement('span');
             dot.className = 'cw-pin-dot';
             pin.appendChild(dot);
@@ -651,7 +795,7 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
 
             const head = document.createElement('div');
             head.className = 'cw-dev-head';
-            head.textContent = def.label;
+            head.textContent = deviceLabel(d.type);
             el.appendChild(head);
 
             const body = document.createElement('div');
@@ -669,21 +813,21 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
             el.appendChild(body);
 
             // device caption + any field control
-            if (d.type === 'therm10k') addCap(el, 'sensing ' + d.field.tempF.toFixed(1) + '°F');
-            else if (d.type === 'xmtr010') addCap(el, '3-wire · ' + d.field.pct + '% of range');
-            else if (d.type === 'xmtr420') addCap(el, '2-wire loop · ' + d.field.pct + '% of range');
-            else if (d.type === 'act010') addCap(el, 'needs 24 VAC + signal');
-            else if (d.type === 'relayFan') addCap(el, 'switched by a BO');
-            else if (d.type === 'xfmr') addCap(el, '40 VA · hot + common');
+            if (d.type === 'therm10k') addCap(el, msg('captions.therm10k', { temperature: d.field.tempF.toFixed(1) }));
+            else if (d.type === 'xmtr010') addCap(el, msg('captions.xmtr010', { percent: d.field.pct }));
+            else if (d.type === 'xmtr420') addCap(el, msg('captions.xmtr420', { percent: d.field.pct }));
+            else if (d.type === 'act010') addCap(el, msg('captions.act010'));
+            else if (d.type === 'relayFan') addCap(el, msg('captions.relayFan'));
+            else if (d.type === 'xfmr') addCap(el, msg('captions.xfmr'));
             else if (d.type === 'dryContact') {
                 const tgl = document.createElement('button');
                 tgl.type = 'button';
                 tgl.className = 'cw-dev-toggle';
-                tgl.textContent = d.field.closed ? 'contact: CLOSED' : 'contact: OPEN';
+                tgl.textContent = d.field.closed ? msg('captions.contactClosed') : msg('captions.contactOpen');
                 tgl.addEventListener('click', (e) => {
                     e.stopPropagation();
                     d.field.closed = !d.field.closed;
-                    tgl.textContent = d.field.closed ? 'contact: CLOSED' : 'contact: OPEN';
+                    tgl.textContent = d.field.closed ? msg('captions.contactClosed') : msg('captions.contactOpen');
                     refresh();
                 });
                 el.appendChild(tgl);
@@ -719,7 +863,7 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
             renderDevices();
             drawWires();
             refresh();
-            setStatus('Added ' + W.DEVICES[type].label + ' — wire its terminals to the controller.');
+            setStatus(msg('status.added', { device: deviceLabel(type) }));
         }
 
         function onDevicePointerDown(e, d, el) {
@@ -757,10 +901,10 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
                 pending = { node: node, term: term };
                 clearPendingMarks();
                 pinEl.classList.add('cw-pin--pending');
-                setStatus('Wiring from ' + termName(node, term) + ' — click another terminal to land it.');
+                setStatus(msg('status.wiringFrom', { terminal: termName(node, term) }));
                 return;
             }
-            if (pending.node === node && pending.term === term) { cancelWire(); setStatus('Wire cancelled.'); return; }
+            if (pending.node === node && pending.term === term) { cancelWire(); setStatus(msg('status.wireCancelled')); return; }
             // de-dupe identical conductor
             const dup = panel.wires.some((w) =>
                 (sameEnd(w.a, pending) && sameEnd(w.b, { node: node, term: term })) ||
@@ -772,7 +916,7 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
             cancelWire();
             drawWires();
             refresh();
-            setStatus(dup ? 'Those terminals are already wired.' : 'Wired ' + from + ' → ' + termName(node, term) + '.');
+            setStatus(dup ? msg('status.alreadyWired') : msg('status.wired', { from: from, to: termName(node, term) }));
         }
 
         function sameEnd(arr, o) { return arr[0] === o.node && arr[1] === o.term; }
@@ -787,7 +931,7 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
             const d = panel.devices.find((x) => x.id === node);
             const def = d && W.DEVICES[d.type];
             const t = def && def.terminals.find((x) => x.id === term);
-            return (def ? def.label : node) + '·' + (t ? t.label : term);
+            return (def ? deviceLabel(d.type) : node) + '·' + (t ? t.label : term);
         }
 
         // ── wire rendering ──────────────────────────────────────────
@@ -889,7 +1033,7 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
             selected = null;
             drawWires();
             refresh();
-            setStatus('Removed.');
+            setStatus(msg('status.removed'));
         }
 
         // ── evaluation + paint ──────────────────────────────────────
@@ -901,7 +1045,7 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
                 const p = res.points[ro.dataset.readout];
                 ro.classList.remove('cw-readout--idle', 'cw-readout--alarm');
                 if (!p) { ro.textContent = '—'; ro.classList.add('cw-readout--idle'); return; }
-                ro.textContent = p.display;
+                ro.textContent = pointDisplay(p.display);
                 if (p.state === 'idle') ro.classList.add('cw-readout--idle');
                 if (p.led === 'alarm') ro.classList.add('cw-readout--alarm');
             });
@@ -915,11 +1059,11 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
             const fuse = document.getElementById('cw-fuse');
             const blown = res.power.blownFuse;
             fuse.classList.toggle('cw-fuse--blown', blown);
-            fuse.querySelector('.tag').textContent = blown ? 'FUSE BLOWN' : 'FUSE OK';
+            fuse.querySelector('.tag').textContent = blown ? msg('fuse.blown') : msg('fuse.ok');
             fuse.querySelector('.led').className = 'led ' + (blown ? 'cw-fuse-led--blown' : 'led--run');
 
             // faults
-            paintFaults(res.faults);
+            paintFaults(res);
 
             // wire colours (role may shift as power lands)
             drawWires();
@@ -940,7 +1084,8 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
             lastBlown = blown;
         }
 
-        function paintFaults(faults) {
+        function paintFaults(res) {
+            const faults = res.faults;
             faultsList.innerHTML = '';
             const anyWired = panel.wires.length > 0 || panel.devices.length > 0;
             // Red only for a genuine failure (short/fault); a warn-level advisory
@@ -952,15 +1097,15 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
                 const li = document.createElement('li');
                 li.className = 'cw-ok';
                 li.textContent = anyWired
-                    ? '✓ All landings check out — nothing faulted.'
-                    : 'Drop a transformer and a sensor, then wire them up. Faults show here.';
+                    ? msg('faults.allGood')
+                    : msg('faults.empty');
                 faultsList.appendChild(li);
                 return;
             }
             faults.forEach((f) => {
                 const li = document.createElement('li');
                 li.className = 'cw-sev-' + f.severity;
-                li.textContent = f.text;
+                li.textContent = faultText(f, res);
                 faultsList.appendChild(li);
             });
         }
@@ -1006,7 +1151,7 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
             // slug ("Loaded: broken-fuse." — audit-2026-06 polish).
             const btn = document.querySelector('[data-preset="' + key + '"]');
             const name = btn ? btn.textContent.trim() : key;
-            setStatus(key === 'clear' ? 'Cleared.' : 'Loaded: ' + name + '. Trace it — what reads, what fails?');
+            setStatus(key === 'clear' ? msg('status.cleared') : msg('status.loaded', { name: name }));
         }
 
         function resetState() {
@@ -1023,7 +1168,7 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
             inner.querySelectorAll('.cw-ao-slider').forEach((s) => { s.value = state.ao[s.dataset.ao]; });
             inner.querySelectorAll('.cw-bo-toggle').forEach((b) => {
                 const on = state.bo[b.dataset.bo];
-                b.textContent = on ? 'ON' : 'OFF';
+                b.textContent = on ? msg('binary.on') : msg('binary.off');
                 b.classList.toggle('cw-on', on);
             });
         }
@@ -1148,7 +1293,7 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
             } else if (e.key === 'Escape') {
                 const had = !!pending;
                 cancelWire();
-                if (had) { e.stopPropagation(); setStatus('Wire cancelled.'); }
+                if (had) { e.stopPropagation(); setStatus(msg('status.wireCancelled')); }
             }
         });
 
@@ -1181,7 +1326,7 @@ keywords: 24vac com transformer 4-20ma loop dc loop power ui ai ao bo terminals 
         renderDevices();
         drawWires();
         refresh();
-        setStatus('Empty panel — add a 24 VAC transformer and land it on 24V~ / 24COM to start.');
+        setStatus(msg('status.emptyPanel'));
     })();
 </script>
 {% endblock %}

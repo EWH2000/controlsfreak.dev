@@ -1,0 +1,196 @@
+---
+title: 함수 블록 편집기 — controlsfreak.dev
+description: 블록을 배치하고 논리·연산·타이머·PID 블록을 와이어로 연결하여 제어 시퀀스가 스캔마다 실시간으로 계산되는 과정을 실습하는 그래픽 와이어시트입니다.
+sourceContentHash: 5373bd9692b8a6055ee984c3923398aba12a766588207e8b069c36e61f032fb6
+sourceMessageHash: cdc74d6001fb8c4d2f86261e3b06706acf3679eeb1ac0e8766f69172503b6055
+canonical: https://controlsfreak.dev/ko/simulators/function-block-editor.html
+nav: simulators
+keywords: 와이어시트 논리 블록 and or pid 와이어 프로그램 시퀀스 함수 블록
+pageMessages:
+  examples:
+    freeze:
+      fz: 동결방지
+      rst: 수동 복귀
+      latch: 트립 래치
+      inv: 팬 허가
+      fan: 팬 지령
+      alarm: 동결 경보
+    econ:
+      oat: OAT
+      oasp: 외기냉방 잠금
+      cool: 냉방 요구
+      cmp: 잠금 조건
+      gate: 외기냉방 허가
+      econ: 외기냉방 지령
+    tstat-cool:
+      temp: 실내온도
+      sp: 냉방 SP
+      db: 데드밴드
+      hi: 냉방 투입
+      lo: 냉방 해제
+      over: 냉방 설정
+      under: 냉방 복귀
+      stat: 냉방 래치
+      cool: 냉방 지령
+    tstat-heat:
+      temp: 실내온도
+      sp: 난방 SP
+      db: 데드밴드
+      hi: 난방 해제
+      lo: 난방 투입
+      over: 난방 복귀
+      under: 난방 설정
+      stat: 난방 래치
+      heat: 난방 지령
+    pid:
+      pv: 실내온도
+      sp: 난방 SP
+      ctl: 난방 루프
+      rd: 온수 밸브
+    proof:
+      cmd: 팬 지령
+      sts: 팬 상태
+      rst: 수동 복귀
+      inv: 확인 없음
+      fail: 지령·풍량 불일치
+      tmr: 고장 지연
+      latch: 고장 래치
+      alarm: 팬 경보
+    reset:
+      oat: OAT
+      slope: 리셋 기울기
+      icpt: 기준 SP
+      scale: 리셋 오프셋
+      sum: 원시 HWSP
+      clamp: HWSP 제한
+      hwsp: HWSP
+---
+{% extends "html/simulators/function-block-editor.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">시뮬레이터 · 함수 블록 편집기</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <button type="button" class="tool-card-fullscreen-btn fs-desktop-only"
+                data-fullscreen-target=".tool-card"
+                aria-pressed="false" aria-label="전체 화면으로 전환"
+                title="전체 화면 전환 — Esc 키로 종료">
+            <svg class="fs-icon-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="15 3 21 3 21 9"/>
+                <polyline points="9 21 3 21 3 15"/>
+                <line x1="21" y1="3" x2="14" y2="10"/>
+                <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+            <svg class="fs-icon-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="4 14 10 14 10 20"/>
+                <polyline points="20 10 14 10 14 4"/>
+                <line x1="14" y1="10" x2="21" y2="3"/>
+                <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+            <span class="fs-label-enter">전체 화면</span>
+            <span class="fs-label-exit">종료</span>
+        </button>
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">함수 블록 편집기 <span class="tool-tag">논리</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="tool-preamble tight">
+                Niagara, EBO, Distech에서 사용하는 것과 같은 그래픽 와이어시트 실습 환경입니다.
+                블록을 추가하고 출력 핀과 입력 핀을 연결하면 실시간 스캔 루프가 시트 전체로 값을 전달합니다.
+                특정 제품 하나를 모사하기보다 제어 시퀀스를 구성하는 감각을 익히는 데 목적이 있습니다.
+                처음이신가요? <a href="/ko/education/function-blocks.html">함수 블록 기초부터 시작하기 →</a>
+            </p>
+
+            <div class="desktop-only-sim">
+                <h2 class="dos-label">데스크톱 도구</h2>
+                <p>
+                    와이어시트의 블록 연결은 포인터와 넓은 화면이 필요한 드래그 작업입니다. 노트북이나 데스크톱에서 이 페이지를 열어 시퀀스를 구성하고 실행하세요. 손가락 하나로 블록을 끌면서 시트를 동시에 이동할 수 없으므로 의도적으로 포인터 전용으로 설계했습니다. 다음 개념을 익힐 수 있습니다.
+                </p>
+                <ul>
+                    <li><strong>시트는 왼쪽에서 오른쪽으로 흐릅니다.</strong> 센서와 상수 같은 소스는 왼쪽, 논리와 연산은 가운데, 출력은 오른쪽에 둡니다. 와이어시트를 신호가 이동하는 경로로 읽으세요.</li>
+                    <li><strong>출력에서 입력으로, 같은 형식끼리 연결합니다.</strong> 블록 오른쪽의 출력 핀을 다른 블록 왼쪽의 입력 핀에 연결합니다. 아날로그는 아날로그에, 디지털은 디지털에만 연결할 수 있습니다.</li>
+                    <li><strong>비교 블록은 아날로그를 디지털로 바꿉니다.</strong> 초과 또는 미만 블록이 두 숫자를 비교해 TRUE 또는 FALSE를 출력합니다. 측정값을 켜짐·꺼짐 판단으로 바꾸는 다리입니다.</li>
+                    <li><strong>래치는 상태를 유지하고, 루프는 안정됩니다.</strong> SR 래치는 마지막 설정 또는 복귀 상태를 기억합니다. 피드백 와이어는 이전 스캔의 값을 전달하므로 루프가 멈추지 않고 매 틱마다 안정됩니다.</li>
+                    <li><strong>약 초당 10회 스캔으로 실행됩니다.</strong> 소스를 바꾸면 실제 제어기가 프로그램을 반복 실행하듯 시트 전체를 다시 계산합니다.</li>
+                    <li><strong>블록의 단위는 실제 단위입니다.</strong> PID 블록의 <em>Ti</em>와 <em>Td</em>는 초 단위입니다. 따라서 <a href="/ko/simulators/pid-tuner.html">PID 튜닝 도우미</a>의 기본 리셋 단위(repeats/min)로 조정했다면 값을 옮기기 전에 <em>Ti (s) = 60 ÷ reset</em>으로 변환하세요.</li>
+                </ul>
+                <p class="dos-more">
+                    와이어시트가 처음이신가요? <a href="/ko/education/function-blocks.html">함수 블록 기초</a>에서 같은 개념을 설명하며 휴대전화에서도 편하게 읽을 수 있습니다.
+                </p>
+            </div>
+
+            <div class="fbe-live">
+                <!-- These buttons load programs rather than navigating. -->
+                <div class="widget-try" id="fbe-examples">
+                    <span class="lbl">예제:</span>
+                    <button type="button" data-example="freeze">동결방지 스위치 정지</button>
+                    <button type="button" data-example="econ">외기냉방 허가</button>
+                    <button type="button" data-example="tstat-cool">냉방 온도조절기</button>
+                    <button type="button" data-example="tstat-heat">난방 온도조절기</button>
+                    <button type="button" data-example="pid">난방 PID</button>
+                    <button type="button" data-example="proof">풍량 확인 경보</button>
+                    <button type="button" data-example="reset">온수 설정값 리셋</button>
+                </div>
+
+                <div class="fbe-simbar">
+                    <button type="button" class="copy-btn" id="fbe-run" data-action="run">일시 정지</button>
+                    <button type="button" class="copy-btn" id="fbe-step" data-action="step">한 단계 실행</button>
+                    <button type="button" class="copy-btn" id="fbe-reset" data-action="reset">초기화</button>
+                    <button type="button" class="copy-btn" id="fbe-clear" data-action="clear">모두 지우기</button>
+                    <span class="fbe-status" id="fbe-status" role="status" aria-live="polite">실행 중</span>
+                </div>
+
+                <div class="fbe-workspace">
+                    <!-- Palette — filled from FBE.CATEGORIES / FBE.BLOCKS. -->
+                    <div class="fbe-palette" id="fbe-palette" aria-label="블록 팔레트"></div>
+
+                    <!-- Blocks use positioned divs and wires use an SVG overlay. -->
+                    <div class="fbe-canvas" id="fbe-canvas" tabindex="0" role="region" aria-label="와이어시트 캔버스">
+                        <div class="fbe-canvas-inner" id="fbe-inner"></div>
+                    </div>
+                </div>
+
+                <!-- Inspector — selected block's editable parameters. -->
+                <div class="fbe-inspector" id="fbe-inspector"></div>
+
+                <div class="fbe-legend">
+                    <span><span class="fbe-swatch fbe-sw-num"></span> 아날로그(숫자)</span>
+                    <span><span class="fbe-swatch fbe-sw-on"></span> 디지털 TRUE</span>
+                    <span><span class="fbe-swatch fbe-sw-off"></span> 디지털 FALSE</span>
+                </div>
+
+                <h2 class="subhead">사용 방법</h2>
+                <p>
+                    팔레트의 블록을 클릭해 시트에 놓고 제목 표시줄을 끌어 위치를 옮깁니다. 와이어를 연결하려면 <strong>출력</strong> 핀(오른쪽 가장자리)을 클릭한 다음 호환되는 <strong>입력</strong> 핀(왼쪽 가장자리)을 클릭하세요. 아날로그끼리, 디지털끼리 같은 형식만 연결됩니다. 블록이나 와이어를 클릭해 선택하고 <code>Delete</code> 키로 삭제하거나 <code>Escape</code> 키로 진행 중인 와이어 연결을 취소할 수 있습니다. 캔버스 아래의 속성 편집기에서는 선택한 블록의 매개변수를 즉시 변경합니다. 블록 배치와 연결에는 마우스 또는 트랙패드가 필요하지만, 예제 버튼과 속성 편집기, 시뮬레이션 버튼은 키보드로도 조작할 수 있습니다.
+                </p>
+                <p>
+                    시퀀스는 초당 10회 계산됩니다. 순수 논리는 한 번의 패스에서 안정되며, 출력이 자체 연산 체인으로 되돌아가는 피드백 루프는 이전 틱의 값을 전달하므로 래치가 상태를 유지하고 루프가 멈추지 않습니다. 소스와 출력 블록에는 현재 값이 표시되고, TRUE를 전달하는 디지털 와이어는 녹색으로 바뀝니다. 작업 내용은 저장되지 않습니다. 새로 시작하려면 페이지를 다시 불러오거나 <em>예제</em>를 선택하세요.
+                </p>
+                <p class="ref-note">
+                    <strong>DIVIDE</strong> 블록은 제수가 <code>0</code>이면 <code>0</code>을 출력합니다. 이는 하위 비교 블록이 <code>Infinity</code> 또는 <code>NaN</code>을 읽지 않도록 하는 보호 기능입니다.
+                </p>
+            </div><!-- .fbe-live -->
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/ko/simulators/pid-tuner.html', label: 'PID 튜닝 도우미'}
+        ],
+        lessons: [
+            {href: '/ko/education/function-blocks.html', label: '함수 블록 기초'},
+            {href: '/ko/education/pid-basics.html', label: 'PID 기초'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/simulators/">← 모든 시뮬레이터</a>
+
+</main>
+{% endblock %}

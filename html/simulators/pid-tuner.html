@@ -4,9 +4,72 @@ description: Interactive PID loop simulator with a tuning cheat sheet, loop-spee
 canonical: https://controlsfreak.dev/simulators/pid-tuner.html
 nav: simulators
 keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bump test starting gains time constant tau
+pageMessages:
+  metrics:
+    none: none
+    announcement: "Overshoot {overshoot}, settling time {settling}, steady-state error {error}."
+  equipment:
+    fast:
+      title: Duct Static
+      reading: Static
+      unit: in.wc
+    med:
+      title: Disch. Air
+      reading: Supply Temp
+      unit: °F
+    slow:
+      title: Space Temp
+      reading: Zone Temp
+      unit: °F
+    vhigh:
+      title: Reheat Disch
+      reading: Downstream
+      unit: °F
+  loop:
+    speed:
+      fast: fast loop
+      med: medium loop
+      slow: slow loop
+      vhigh: dead-time-dominant
+    detail: "This loop — {speed}: τ ≈ {tau}, dead time ≈ {dead}, dead ÷ τ ≈ {ratio}. {guidance}"
+    guidance:
+      easy: Easy to control — dead time is a small fraction of the lag.
+      careful: Be careful — dead time is a real fraction of the lag; slower gain, longer reset.
+      dominated: Dead-time dominated — you are fighting transport delay; back gain way off and lean on reset, or it rings then runs away.
+  labels:
+    gain: Gain (Kc)
+    proportionalBand: Prop. band (PB %)
+    reset: Reset (rep/min)
+    rateMinutes: Rate (Td, min)
+    integralMinutes: Integral time (Ti, min)
+    derivativeMinutes: Derivative time (Td, min)
+    integralSeconds: Integral time (Ti, s)
+    derivativeSeconds: Derivative time (Td, s)
+    off: off
+  summaries:
+    proportional: "Kc {kc} · PB {pb}"
+    integralOff: integral off · 0.00 rep/min
+    integral: "Ti {tiMin} min · {tiSec} s · {reset} rep/min"
+    derivative: "Td {tdMin} min · {tdSec} s"
+  bump:
+    exampleUs: an 8 °F rise on a 0–100 °F span
+    exampleMetric: a 4 °C rise on a 0–50 °C span
+    regimes:
+      wellBehaved: well-behaved
+      careful: dead time is a real fraction of the lag — commission gently
+      dominated: dead-time dominated — back the gain off further if it rings, and lean on reset
+    deadTimeRequired: Dead time must be above zero — if the trend shows none, enter the controller's sample interval.
+    result: "Process gain K ≈ {gain} · dead ÷ τ ≈ {ratio} — {regime}."
+    negativeGain: " PV moved against the output — negative process gain (cooling-style): set the loop direct-acting. The gains here use the magnitude."
+    highGain: " Unusually high gain for an HVAC loop — check that ΔPV is a percent of span (not engineering units) and that τ and θ match the unit toggle."
+    announcement: "Starting gains: {gainLabel} {gain}, {integralLabel} {integral}."
+    clearedAnnouncement: Starting gains cleared — waiting on valid bump-test inputs.
+  units:
+    secondsShort: s
+    minutesShort: min
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -442,7 +505,7 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
                 how long before the PV clearly starts to move — and <strong>time constant (τ)</strong> — from
                 that first movement to about 63&nbsp;% of the total change (let the PV settle fully so the
                 total is real). Enter the PV change as a percentage of the loop's span:
-                <span data-us="an 8 °F rise on a 0–100 °F span" data-metric="a 4 °C rise on a 0–50 °C span">an
+                <span data-us="{{ pageMessages.bump.exampleUs }}" data-metric="{{ pageMessages.bump.exampleMetric }}">an
                 8&nbsp;°F rise on a 0–100&nbsp;°F span</span> is 8&nbsp;%. Signs follow the trend — a downward
                 output step or a falling PV go in as negatives. Every real loop has some dead time — if the
                 trend shows none, use the controller's sample interval.
@@ -563,6 +626,12 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
         };
         let pidLast = null;   // last sim result, kept so a window resize can redraw
 
+        function formatDuration(sec) {
+            return fmtDur(sec)
+                .replace(/\bmin$/, CFI18n.page('units.minutesShort'))
+                .replace(/\bs$/, CFI18n.page('units.secondsShort'));
+        }
+
         function pidPreset(name, btn) {
             const p = PID_PRESETS[name];
             document.getElementById('pid-kc').value = p.kc;
@@ -610,10 +679,14 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
             const setEl  = document.getElementById('pid-settle');
             const errEl  = document.getElementById('pid-err');
 
-            overEl.textContent = sim.overshoot < 0.05 ? 'none' : sim.overshoot.toFixed(1) + '%';
+            overEl.textContent = sim.overshoot < 0.05
+                ? CFI18n.page('metrics.none')
+                : sim.overshoot.toFixed(1) + '%';
             overEl.classList.toggle('warn', sim.overshoot > 20);
 
-            setEl.textContent = sim.settled === null ? '> ' + fmtDur(sim.win) : fmtDur(sim.settled);
+            setEl.textContent = sim.settled === null
+                ? '> ' + formatDuration(sim.win)
+                : formatDuration(sim.settled);
             setEl.classList.toggle('warn', sim.settled === null);
 
             // The engine's ssErr is SP − PV: positive = PV settled BELOW SP.
@@ -636,9 +709,11 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
             srTimer = setTimeout(function () {
                 const sr = document.getElementById('pid-sr-status');
                 if (!sr) return;
-                sr.textContent = 'Overshoot ' + document.getElementById('pid-over').textContent
-                    + ', settling time ' + document.getElementById('pid-settle').textContent
-                    + ', steady-state error ' + document.getElementById('pid-err').textContent + '.';
+                sr.textContent = CFI18n.page('metrics.announcement', {
+                    overshoot: document.getElementById('pid-over').textContent,
+                    settling: document.getElementById('pid-settle').textContent,
+                    error: document.getElementById('pid-err').textContent,
+                });
             }, 800);
         }
 
@@ -750,14 +825,27 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
         // units (°F / in. w.c.) — the rigorously unit-toggled value is the
         // Steady-State Error metric below; this device face is illustrative.
         const PID_EQ = {
-            fast:  { title: 'Duct Static',  k: 'Static',      unit: 'in.wc', actuator: 'fan' },
-            med:   { title: 'Disch. Air',   k: 'Supply Temp', unit: '°F',    actuator: 'valve' },
-            slow:  { title: 'Space Temp',   k: 'Zone Temp',   unit: '°F',    actuator: 'valve' },
-            vhigh: { title: 'Reheat Disch', k: 'Downstream',  unit: '°F',    actuator: 'valve' },
+            fast:  { title: CFI18n.page('equipment.fast.title'),
+                     k: CFI18n.page('equipment.fast.reading'),
+                     unit: CFI18n.page('equipment.fast.unit'), actuator: 'fan' },
+            med:   { title: CFI18n.page('equipment.med.title'),
+                     k: CFI18n.page('equipment.med.reading'),
+                     unit: CFI18n.page('equipment.med.unit'), actuator: 'valve' },
+            slow:  { title: CFI18n.page('equipment.slow.title'),
+                     k: CFI18n.page('equipment.slow.reading'),
+                     unit: CFI18n.page('equipment.slow.unit'), actuator: 'valve' },
+            vhigh: { title: CFI18n.page('equipment.vhigh.title'),
+                     k: CFI18n.page('equipment.vhigh.reading'),
+                     unit: CFI18n.page('equipment.vhigh.unit'), actuator: 'valve' },
         };
         // Loop-speed word for the spoiler sidenote (the bucket the dropdown no
         // longer names — it's a spoiler now).
-        const PID_SPEED = { fast: 'fast loop', med: 'medium loop', slow: 'slow loop', vhigh: 'dead-time-dominant' };
+        const PID_SPEED = {
+            fast: CFI18n.page('loop.speed.fast'),
+            med: CFI18n.page('loop.speed.med'),
+            slow: CFI18n.page('loop.speed.slow'),
+            vhigh: CFI18n.page('loop.speed.vhigh'),
+        };
         let phFanAngle = 0, phReadoutLast = 0, phFlowBand = -1;
         const elText = (id, t) => { const e = document.getElementById(id); if (e) e.textContent = t; };
 
@@ -775,18 +863,23 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
             const proc = PID_PROC[key];
             if (proc) {
                 const ratio = proc.dead / proc.tau;
-                elText('pid-loop-detail',
-                    'This loop — ' + PID_SPEED[key] + ': τ ≈ ' + fmtDur(proc.tau) +
-                    ', dead time ≈ ' + fmtDur(proc.dead) + ', dead ÷ τ ≈ ' + ratio.toFixed(2) + '. ' +
+                elText('pid-loop-detail', CFI18n.page('loop.detail', {
+                    speed: PID_SPEED[key],
+                    tau: formatDuration(proc.tau),
+                    dead: formatDuration(proc.dead),
+                    ratio: ratio.toFixed(2),
                     // Buckets match the spoiler note's regimes: under ~0.2
                     // well-behaved, around 0.5 "be careful", past 1.0
                     // dead-time dominated. The vhigh preset (0.50) gets the
                     // be-careful message, not the past-1.0 one — the detail
                     // line used to contradict the note three paragraphs
                     // down (audit-2026-06 polish).
-                    (ratio < 0.2 ? 'Easy to control — dead time is a small fraction of the lag.'
-                     : ratio < 1.0 ? 'Be careful — dead time is a real fraction of the lag; slower gain, longer reset.'
-                     : 'Dead-time dominated — you are fighting transport delay; back gain way off and lean on reset, or it rings then runs away.'));
+                    guidance: CFI18n.page(
+                        ratio < 0.2 ? 'loop.guidance.easy'
+                        : ratio < 1.0 ? 'loop.guidance.careful'
+                        : 'loop.guidance.dominated'
+                    ),
+                }));
             }
             phFanAngle = 0;
             phFlowBand = -1;
@@ -864,30 +957,45 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
             const tiMin = intOff ? null : fmtTiMin(rep), tiSec = intOff ? null : fmtSec(60 / rep);
             const pb = propOff ? null : Math.round(100 / Kc);
 
-            let kcLbl = 'Gain (Kc)', kcVal = Kc.toFixed(1);
-            if (conv === 'pbSec') { kcLbl = 'Prop. band (PB %)'; kcVal = pb === null ? '—' : String(pb); }
+            let kcLbl = CFI18n.page('labels.gain'), kcVal = Kc.toFixed(1);
+            if (conv === 'pbSec') {
+                kcLbl = CFI18n.page('labels.proportionalBand');
+                kcVal = pb === null ? '—' : String(pb);
+            }
 
             let kiLbl, kiVal, kdLbl, kdVal;
             if (conv === 'field') {
-                kiLbl = 'Reset (rep/min)';         kiVal = rep.toFixed(2);
-                kdLbl = 'Rate (Td, min)';          kdVal = tdMin;
+                kiLbl = CFI18n.page('labels.reset');         kiVal = rep.toFixed(2);
+                kdLbl = CFI18n.page('labels.rateMinutes');   kdVal = tdMin;
             } else if (conv === 'timeMin') {
-                kiLbl = 'Integral time (Ti, min)'; kiVal = intOff ? 'off' : tiMin;
-                kdLbl = 'Derivative time (Td, min)'; kdVal = tdMin;
+                kiLbl = CFI18n.page('labels.integralMinutes');
+                kiVal = intOff ? CFI18n.page('labels.off') : tiMin;
+                kdLbl = CFI18n.page('labels.derivativeMinutes'); kdVal = tdMin;
             } else { // timeSec, pbSec
-                kiLbl = 'Integral time (Ti, s)';   kiVal = intOff ? 'off' : tiSec;
-                kdLbl = 'Derivative time (Td, s)'; kdVal = tdSec;
+                kiLbl = CFI18n.page('labels.integralSeconds');
+                kiVal = intOff ? CFI18n.page('labels.off') : tiSec;
+                kdLbl = CFI18n.page('labels.derivativeSeconds'); kdVal = tdSec;
             }
 
             set('pid-kc-lbl', kcLbl); set('pid-kc-val', kcVal);
             set('pid-ki-lbl', kiLbl); set('pid-ki-val', kiVal);
             set('pid-kd-lbl', kdLbl); set('pid-kd-val', kdVal);
 
-            set('pid-kc-sub', `Kc ${Kc.toFixed(1)}  ·  PB ${propOff ? '—' : pb + '%'}`);
+            set('pid-kc-sub', CFI18n.page('summaries.proportional', {
+                kc: Kc.toFixed(1),
+                pb: propOff ? '—' : pb + '%',
+            }));
             set('pid-ki-sub', intOff
-                ? `integral off  ·  0.00 rep/min`
-                : `Ti ${tiMin} min  ·  ${tiSec} s  ·  ${rep.toFixed(2)} rep/min`);
-            set('pid-kd-sub', `Td ${tdMin} min  ·  ${tdSec} s`);
+                ? CFI18n.page('summaries.integralOff')
+                : CFI18n.page('summaries.integral', {
+                    tiMin: tiMin,
+                    tiSec: tiSec,
+                    reset: rep.toFixed(2),
+                }));
+            set('pid-kd-sub', CFI18n.page('summaries.derivative', {
+                tdMin: tdMin,
+                tdSec: tdSec,
+            }));
         }
 
         // ── Starting gains from a bump test (S-001) ──────────────────
@@ -898,9 +1006,11 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
         let sgUnit = 's';
 
         function sgRegime(ratio) {
-            return ratio < 0.2 ? 'well-behaved'
-                 : ratio < 1.0 ? 'dead time is a real fraction of the lag — commission gently'
-                 : 'dead-time dominated — back the gain off further if it rings, and lean on reset';
+            return CFI18n.page(
+                ratio < 0.2 ? 'bump.regimes.wellBehaved'
+                : ratio < 1.0 ? 'bump.regimes.careful'
+                : 'bump.regimes.dominated'
+            );
         }
 
         function runStartCalc() {
@@ -911,11 +1021,13 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
 
             // Labels track the Parameter Style even while the values are muted.
             document.getElementById('pid-sg-kc-lbl').textContent =
-                conv === 'pbSec' ? 'Prop. band (PB %)' : 'Gain (Kc)';
+                conv === 'pbSec'
+                    ? CFI18n.page('labels.proportionalBand')
+                    : CFI18n.page('labels.gain');
             document.getElementById('pid-sg-ti-lbl').textContent =
-                conv === 'field'   ? 'Reset (rep/min)'
-              : conv === 'timeMin' ? 'Integral time (Ti, min)'
-              :                      'Integral time (Ti, s)';
+                conv === 'field'   ? CFI18n.page('labels.reset')
+              : conv === 'timeMin' ? CFI18n.page('labels.integralMinutes')
+              :                      CFI18n.page('labels.integralSeconds');
 
             const dco = parseFloat(document.getElementById('pid-sg-dco').value);
             const dpv = parseFloat(document.getElementById('pid-sg-dpv').value);
@@ -933,7 +1045,7 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
                 // silence: the intro warns that θ = 0 means "use the
                 // controller's sample interval," so say it again here.
                 note.textContent = (isFinite(dead) && dead <= 0 && isFinite(tau) && tau > 0)
-                    ? 'Dead time must be above zero — if the trend shows none, enter the controller\'s sample interval.'
+                    ? CFI18n.page('bump.deadTimeRequired')
                     : '';
                 announceStartGains(false);
                 return;
@@ -960,10 +1072,13 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
             // the cooling-style case: direct-acting, output rises as PV
             // climbs above setpoint. (fbe-engine.js states the convention.)
             const ratio = dead / tau;
-            note.textContent = 'Process gain K ≈ ' + K.toFixed(2)
-                + ' · dead ÷ τ ≈ ' + ratio.toFixed(2) + ' — ' + sgRegime(ratio) + '.'
-                + (gain < 0 ? ' PV moved against the output — negative process gain (cooling-style): set the loop direct-acting. The gains here use the magnitude.' : '')
-                + (kc >= 50 ? ' Unusually high gain for an HVAC loop — check that ΔPV is a percent of span (not engineering units) and that τ and θ match the unit toggle.' : '');
+            note.textContent = CFI18n.page('bump.result', {
+                gain: K.toFixed(2),
+                ratio: ratio.toFixed(2),
+                regime: sgRegime(ratio),
+            })
+                + (gain < 0 ? CFI18n.page('bump.negativeGain') : '')
+                + (kc >= 50 ? CFI18n.page('bump.highGain') : '');
             announceStartGains(true);
         }
 
@@ -977,17 +1092,19 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
                 const sr = document.getElementById('pid-sg-sr');
                 if (!sr) return;
                 sr.textContent = valid
-                    ? 'Starting gains: ' + document.getElementById('pid-sg-kc-lbl').textContent + ' '
-                        + document.getElementById('pid-sg-kc').textContent + ', '
-                        + document.getElementById('pid-sg-ti-lbl').textContent + ' '
-                        + document.getElementById('pid-sg-ti').textContent + '.'
-                    : 'Starting gains cleared — waiting on valid bump-test inputs.';
+                    ? CFI18n.page('bump.announcement', {
+                        gainLabel: document.getElementById('pid-sg-kc-lbl').textContent,
+                        gain: document.getElementById('pid-sg-kc').textContent,
+                        integralLabel: document.getElementById('pid-sg-ti-lbl').textContent,
+                        integral: document.getElementById('pid-sg-ti').textContent,
+                    })
+                    : CFI18n.page('bump.clearedAnnouncement');
             }, 800);
         }
 
         function sgUnitChanged(unit, btn) {
             sgUnit = unit;
-            const u = unit === 's' ? 's' : 'min';
+            const u = CFI18n.page(unit === 's' ? 'units.secondsShort' : 'units.minutesShort');
             document.getElementById('pid-sg-tau-unit').textContent  = u;
             document.getElementById('pid-sg-dead-unit').textContent = u;
             document.querySelectorAll('[data-sg-unit]').forEach(b => {
