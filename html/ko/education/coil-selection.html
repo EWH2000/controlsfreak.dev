@@ -1,0 +1,258 @@
+---
+title: 코일 선정 — controlsfreak.dev
+description: 밸런싱에서 맞추는 설계 유량의 출처를 부하-유량 관계로 추적하고, 설계 ΔT가 유량을 정하는 이유와 필요한 용량의 코일을 고르는 원리를 설명합니다.
+sourceContentHash: 91dd0c2b25ca1f1ced64426e4c3ff293748770ee55fa9dd012e74d5b8223da1f
+sourceMessageHash: dd9493d65e3a8224ad3c2dcfa8d7cc7c2e171e18a192d4dda7128a8b4da7555e
+pageMessages:
+    unitText:
+        derivation:
+            us: "ΔT = 180 − 160 = 20 °F  ·  부하 = 120,000 Btu/h"
+            metric: "ΔT = 82.2 − 71.1 = 11.1 °C  ·  부하 = 35.2 kW"
+        result:
+            us: "→ 12 GPM — 밸런싱에서 맞출 값"
+            metric: "→ 0.76 L/s — 밸런싱에서 맞출 값"
+canonical: https://controlsfreak.dev/ko/education/coil-selection.html
+nav: education
+category: hydronics
+keywords: 코일 선정 코일 용량 설계 유량 GPM ΔT 질량유량 열수 행수 면풍속 LMTD 어프로치
+---
+{% extends "html/education/coil-selection.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">학습 · 코일 선정</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">코일 선정 <span class="tool-tag">수배관 시스템</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                <a href="/ko/education/balancing.html">밸런싱</a> 학습 자료에서는 모든 부하에 <em>설계 유량</em>, 즉 기술자가 각 분기에서 마노미터로 맞추는 <span data-us="GPM" data-metric="L/s">GPM</span>을 공급하는 방법을 다룹니다. 그러나 그 값은 이미 주어진 것으로 봅니다. 실제로 어디에서 나온 값일까요? 누구도 임의로 정하지 않습니다. 엔지니어가 선정한 코일에서 나오며, 그 뒤에는 짧은 물리 관계가 있습니다. 코일이 전달해야 하는 부하, 그 부하를 전달하도록 선택한 온도차, 그리고 그 조합이 요구하는 유량입니다. 이 페이지에서는 그 관계를 따라갑니다. 다음에 밸런싱 기술자가 "이 분기의 설계값이 얼마입니까?"라고 물으면 그 답을 만든 근거를 알 수 있습니다.
+            </p>
+
+            <h2 class="subhead">부하에서 유량으로 이어지는 관계</h2>
+
+            <p>
+                모든 코일은 열교환기이며, 모든 열교환기는 같은 원리를 따릅니다. 움직이는 유체가 운반하는 열은 질량유량, 비열, 유체가 겪는 온도변화의 곱입니다. 식으로 쓰면 <code>q = ṁ · c<sub>p</sub> · ΔT</code>입니다. 질량유량은 <code>ṁ</code>, 비열은 <code>c<sub>p</sub></code>, 온도차는 <code>ΔT</code>입니다. 이 관계 하나가 핵심입니다. 유량에 대해 정리하면 부하와 온도차가 주어질 때 유량은 <em>정해집니다</em>. 유량만 따로 선택할 수 없습니다.
+            </p>
+
+            <p>
+                하지만 현장에서 시간당 파운드 단위의 질량유량을 들고 다니지는 않습니다. 업계에서는 유체 물성을 하나의 상수에 포함해 게이지에서 쓰는 단위로 계산할 수 있도록 이 식을 두 가지 간편식으로 줄였습니다. 하나는 물, 다른 하나는 공기용입니다.
+            </p>
+
+            <p><strong>물.</strong> 수배관 코일의 유량은 GPM으로 계산합니다.</p>
+
+            <code class="csel-eq">
+                GPM = Btu/h ÷ (500 × ΔT<sub>water</sub>)
+                <span class="csel-eq-note">IP 단위계에서 계산하며 표시 단계에서 유량을 L/s로 변환합니다.</span>
+            </code>
+
+            <p>
+                <span class="csel-const">500</span>은 물의 밀도와 비열을 하나의 숫자로 합친 값입니다.
+                <span class="csel-const">8.33 lb/gal × 60 min/h × 1.0 Btu/lb·°F</span>는 갤런당 물의 무게, 시간당 분, 물 1파운드의 온도를 1도 올리는 데 필요한 Btu를 곱합니다. 결과는 499.8이며 업계 전반에서 500으로 반올림합니다. 완전한 IP 상수이므로 깔끔한 "미터법 500"은 없습니다. 계산은 IP 단위로 수행하고 화면에 표시할 때 <span data-us="GPM" data-metric="L/s">GPM</span>을 변환합니다. 주의할 점은 500이 <em>물</em>을 가정한다는 것입니다. 글리콜 혼합액은 더 무겁고 비열은 낮아 갤런당 운반하는 열이 적습니다. 보정하지 않으면 간편식이 부하당 유량을 실제보다 크게 보고합니다. <a href="/ko/education/hydronic-loops.html">글리콜 루프</a>에 별도 수치가 필요한 주요 이유입니다.
+            </p>
+
+            <p><strong>공기.</strong> 공기 코일에서도 같은 관계로 CFM을 계산하며 <button type="button" data-gloss="sensible-heat">현열</button> 식을 사용합니다.</p>
+
+            <code class="csel-eq">
+                CFM = Btu/h<sub>sensible</sub> ÷ (1.08 × ΔT<sub>air</sub>)
+                <span class="csel-eq-note">해수면의 표준 공기 기준이며 IP 단위로 계산한 뒤 표시 단계에서 m³/h로 변환합니다.</span>
+            </code>
+
+            <p>
+                <span class="csel-const">1.08</span>은 공기에서 500과 같은 역할을 합니다.
+                <span class="csel-const">0.075 lb/ft³ × 0.24 Btu/lb·°F × 60 min/h</span>는 표준 공기의 밀도, 공기의 비열, 시간당 분을 곱하며 결과는 1.08입니다. 이는 <button type="button" data-gloss="sensible-heat"><em>현열</em></button>만 계산하며, 현열은 <button type="button" data-gloss="dry-bulb">건구온도</button>를 바꾸는 부분입니다. 냉각 코일이 공기에서 수분도 제거할 때 총열량(현열 + 잠열)은 <button type="button" data-gloss="enthalpy">엔탈피</button> 식 <code>Btu/h<sub>total</sub> = 4.5 × CFM × Δh</code>로 계산합니다. 여기서 <span class="csel-const">4.5 = 60 × 0.075</span>이고 <code>Δh</code>는 코일 전후의 <button type="button" data-gloss="enthalpy">엔탈피</button> 차이(Btu/lb)입니다. <a href="/ko/tools/coil-sizing.html">코일 용량 계산기</a>가 현열과 잠열 전체를 나누어 계산합니다. 여기서 중요한 점은 공기 유량도 물과 마찬가지로 부하를 ΔT로 나누는 관계에서 나온다는 것입니다.
+            </p>
+
+            <p>
+                두 현장 간편식은 서로 다른 형태로 같은 개념을 표현합니다. <strong>분자에는 부하, 분모에는 ΔT가 있습니다.</strong> 셋 중 둘을 정하면 나머지 하나가 결정됩니다. 다음 절에서는 바로 이 조정 수단을 설명합니다.
+            </p>
+
+            <h2 class="subhead">ΔT가 설계 조정 수단인 이유</h2>
+
+            <p>
+                부하는 설계자가 마음대로 고를 수 없습니다. 설계일에 공간이 요구하는 만큼 필요합니다. 상수는 물리법칙입니다. 따라서 설계자가 실제로 조정하는 하나의 값은 <em>설계 ΔT</em>, 즉 코일의 공급과 환수 사이에서 만들기로 정한 온도차입니다. 넓은 ΔT를 선택하면 같은 부하에 필요한 유량이 줄고, 좁은 ΔT를 선택하면 유량이 늘어납니다. 배관 크기, 펌프 크기, 펌핑 에너지, 밸런싱에서 맞출 값까지 하류의 모든 조건이 이 선택 하나에 연결됩니다.
+            </p>
+
+            <p>
+                예시를 계산해 보겠습니다. 온수 난방 코일이 설계일에 <span data-us="120,000 Btu/h" data-metric="35.2 kW">120,000 Btu/h</span>, 즉 120 <button type="button" data-gloss="mbh">MBH</button>를 전달해야 합니다. 전통적인 온수 설계 ΔT인 <span data-us="20 °F" data-metric="11.1 °C">20 °F</span>, 즉 공급/환수 180/160 조건을 사용하면 수측 식에서 유량이 바로 나옵니다.
+            </p>
+
+            <code class="csel-eq">
+                GPM = 120,000 ÷ (500 × 20) = 12 GPM
+                <span class="csel-eq-note">IP 단위 고유 계산이며, 미터법 사용자는 같은 코일 유량을 <span data-us="12 GPM" data-metric="0.76 L/s">12 GPM</span>(0.76 L/s)으로 봅니다.</span>
+            </code>
+
+            <p>
+                분당 12갤런입니다. 이것이 이 분기의 설계 유량이며, 밸런싱 기술자가 마노미터로 정확히 맞추고 커미셔닝 담당자가 나중에 검증할 값입니다. 이제 운전 조건만 바꿔 보겠습니다. 응축 보일러가 충분히 운전할 수 있는 180/150 조건인 <span data-us="30 °F" data-metric="16.7 °C">30 °F</span> ΔT로 설계하면 같은 120,000 Btu/h에 <span data-us="8 GPM" data-metric="0.50 L/s">8 GPM</span>만 필요합니다.
+            </p>
+
+            <div class="csel-lever">
+                <div class="csel-lever-cell">
+                    <div class="csel-lever-dt">ΔT = <span data-us="20 °F" data-metric="11.1 °C">20 °F</span></div>
+                    <div class="csel-lever-flow"><span data-us="12 GPM" data-metric="0.76 L/s">12 GPM</span></div>
+                    <div class="csel-lever-sub">전통적인 180/160 조건</div>
+                </div>
+                <div class="csel-lever-cell wide">
+                    <div class="csel-lever-dt">ΔT = <span data-us="30 °F" data-metric="16.7 °C">30 °F</span></div>
+                    <div class="csel-lever-flow"><span data-us="8 GPM" data-metric="0.50 L/s">8 GPM</span></div>
+                    <div class="csel-lever-sub">더 넓은 180/150 조건 — 물은 3분의 2</div>
+                </div>
+            </div>
+
+            <p>
+                더 큰 온도차에 맞춰 코일을 설계하면 같은 열을 물 3분의 2로 전달합니다. 유량이 적으면 배관과 펌프를 작게 만들 수 있고, 건물 수명 동안 물을 순환시키는 에너지도 줄어듭니다. 그래서 냉수 설계 ΔT가 과거의 <span data-us="10–12 °F" data-metric="5.6–6.7 °C">10–12 °F</span>에서 <span data-us="16–20 °F" data-metric="8.9–11.1 °C">16–20 °F</span>로 오랫동안 넓어져 왔습니다. 코일이 설계 ΔT를 만들지 못해 계획보다 훨씬 많은 유량을 요구하는 "낮은 ΔT 증후군"은 플랜트가 유량 부족과 과도한 펌핑을 동시에 겪는 대표적인 원인입니다.
+            </p>
+
+            <p>
+                공기 측에도 정확히 같은 조정 수단이 있습니다. <span data-us="54,000 Btu/h" data-metric="15.8 kW">54,000 Btu/h</span>의 <button type="button" data-gloss="sensible-heat">현열</button> 부하를 <span data-us="25 °F" data-metric="13.9 °C">25 °F</span>의 급기 ΔT로 처리하는 냉각 코일은 <code>54,000 ÷ (1.08 × 25) = </code> <span data-us="2,000 CFM" data-metric="3,400 m³/h">2,000 CFM</span>이 필요합니다. 공기 측 ΔT를 넓히면 같은 냉방량을 더 적은 풍량으로 전달하고, 좁히면 더 많은 풍량이 필요합니다. <a href="/ko/tools/waterside-load.html">수측 부하</a>와 <a href="/ko/tools/airside-load.html">공기 측 부하</a> 계산기에서 원하는 숫자로 양방향 계산을 해 볼 수 있습니다.
+            </p>
+
+            <h2 class="subhead">코일 자체가 결정하는 요소</h2>
+
+            <p>
+                부하와 ΔT가 유량을 정합니다. 그러나 그 아래에는 두 번째 질문이 있습니다. 실제 코일이 그 유량과 마주할 공기·수온 조건에서 해당 ΔT를 <em>실제로 만들 수 있을까요?</em> 이 지점부터 식이 아니라 물리적 코일이 역할을 합니다. 선정 프로그램은 유한한 핀 튜브 묶음이 선택한 유량과 입구 조건에서 필요한 용량을 내도록 몇 가지 요소를 함께 조정합니다.
+            </p>
+
+            <p>
+                <strong>열수(rows).</strong> 공기 흐름 방향으로 배치된 튜브 열의 수입니다. 열수가 많으면 열전달 면적과 공기가 지나가는 경로가 늘어나 코일이 공기 온도를 수온에 더 가깝게 만들 수 있습니다. 용량은 늘고 다음 절에서 설명하는 어프로치는 작아집니다. 난방 코일은 흔히 1열이나 2열이고, 깊은 제습 냉각 코일은 6열이나 8열일 수 있습니다. 열수가 늘 때마다 공기 측 압력강하가 생기므로 그 대가는 팬이 치릅니다.
+            </p>
+
+            <p>
+                <strong>핀 밀도.</strong> 튜브의 인치당 핀 수이며 흔히 8~14 정도입니다. 핀이 많으면 열당 표면적이 늘어나 때로는 핀 밀도와 열수를 서로 바꿀 수 있습니다. 그러나 촘촘한 핀은 오염물이 쉽게 쌓이고 청소하기 어려우며 공기 측 압력강하를 빠르게 높이므로 실용적인 상한이 있습니다.
+            </p>
+
+            <p>
+                <strong>회로 구성.</strong> 튜브 내부의 배관 방식, 즉 유량을 나누는 병렬 수로의 수입니다. 회로 구성은 튜브 안 수속을 정하고, 수속은 수측 열전달과 수측 압력강하를 결정합니다. 회로가 너무 적으면 물이 높은 양정 손실을 만들며 매우 빠르게 흐릅니다. 너무 많으면 물이 느리게 흐르고 층류가 되어 열전달이 줄어듭니다. 공기 측의 핀/열수 상충 관계에 대응하는 수측 요소입니다.
+            </p>
+
+            <p>
+                <strong>면풍속.</strong> 코일 전면 면적을 통과하는 공기 속도, 즉 풍량을 코일 정면 면적으로 나눈 값이며 분당 피트로 표시합니다. 놓치기 쉬운 제한입니다. 습식 냉각 코일에는 약 <span data-us="500 fpm" data-metric="2.5 m/s">500 fpm</span>의 명확한 상한이 있습니다. 이보다 면풍속을 크게 높이면 공기 흐름이 핀에서 응축수 방울을 떼어 하류로 운반하는 <em>수분 비산(moisture carryover)</em>이 발생합니다. 덕트, 하류 필터, 공기 흐름에 놓인 다른 장치를 적시며 코일의 제습 기능을 방해할 수 있습니다. 약 <span data-us="550 fpm" data-metric="2.8 m/s">550 fpm</span>를 넘으면 위험이 빠르게 커집니다. 건식 난방 코일에는 비산할 응축수가 없어 더 높은 면풍속을 허용하지만 공기 측 압력강하라는 대가는 여전히 있습니다. 면풍속 때문에 코일에는 합리적인 최소 <em>크기</em>가 있습니다. 면적을 끝없이 줄이면 물이 코일 밖으로 날립니다.
+            </p>
+
+            <p>
+                이 내용은 코일 선정 프로그램이 아니며 그렇게 만들려는 것도 아닙니다. 제조사 소프트웨어가 실제 튜브·핀 카탈로그 데이터와 모든 요소를 조정해 실제 부품 번호를 정합니다. 여기서 필요한 것은 방향 감각입니다. 이제 "부하를 ΔT로 나눈 값"으로 이해한 설계 GPM은 엔지니어가 선정한 코일이 해당 유량에서 실제 용량을 낼 수 있을 때만 성립하며, 앞의 요소들이 이를 가능하게 합니다.
+            </p>
+
+            <h2 class="subhead">어프로치 — 유한한 코일이 무한한 ΔT를 만들 수 없는 이유</h2>
+
+            <p>
+                ΔT를 대가 없이 계속 넓힐 수 없는 이유가 있습니다. 코일은 물과 공기의 온도가 달라 열을 전달합니다. 코일을 따라 두 온도의 차이가 클수록 표면적당 더 많은 열이 이동합니다. 그러나 한 유체의 온도가 다른 유체에 가까워질수록 열전달을 구동하는 온도차가 줄어들며, 두 온도가 가까워질수록 1도를 더 줄이는 데 필요한 표면적이 크게 늘어납니다. 출구 유체와 반대쪽 입구 유체의 온도차를 <em>어프로치(approach)</em> 온도라고 합니다. 유한한 코일은 어프로치를 작게 만들 수 있지만 0으로 만들 수는 없습니다. 0을 만들려면 표면적이 무한해야 합니다. 앞의 난방 코일은 열수를 아무리 늘려도 출구 공기 온도가 입구 수온과 같아질 수 없으며 가까워질 수만 있습니다.
+            </p>
+
+            <p>
+                "평균 열전달 구동 온도차"의 정식 표현은 대수평균온도차이며 <code>LMTD = (ΔT₁ − ΔT₂) ÷ ln(ΔT₁ ÷ ΔT₂)</code>입니다. 여기서 <code>ΔT₁</code>과 <code>ΔT₂</code>는 코일 양 끝에서 두 유체 사이의 온도차입니다. 직접 계산할 일은 드물고 선정 소프트웨어가 처리하지만 식의 형태가 핵심입니다. 양 끝의 온도차가 가까워져 어프로치가 작아지면 LMTD가 줄어들고 필요한 표면적이 급격히 커집니다. 이 벽 때문에 "더 넓은 ΔT로 설계"하는 것이 공짜가 아닙니다. 어느 지점을 넘으면 필요한 코일이 크고 깊고 비싸지며, 공기 측 압력강하 때문에 팬에서 드는 비용이 펌프에서 아낀 비용보다 커지기 시작합니다.
+            </p>
+
+            <h2 class="subhead">한 그림으로 보는 전체 관계</h2>
+
+            <p>
+                계산 예시의 온수 코일을 대향류 열교환기로 그렸습니다. 공기는 핀 튜브를 한 방향으로 지나고 물은 반대 방향으로 흐릅니다. 공급·환수 온도가 수측 ΔT를 정하고, ΔT와 부하가 유량을 정하며, 그 유량이 밸런싱 기술자가 분기에서 맞추는 값입니다. 이것이 왼쪽에서 오른쪽, 위에서 아래로 이어지는 전체 관계입니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 720 380" role="img" aria-labelledby="csel-coil-title csel-coil-desc"
+                 font-family="var(--mono)">
+                <title id="csel-coil-title">부하-유량 관계를 표시한 대향류 온수 코일</title>
+                <desc id="csel-coil-desc">대향류 열교환기로 그린 온수 난방 코일입니다. 공기는 왼쪽에서 화씨 55도로 들어와 오른쪽으로 화씨 95도의 따뜻한 공기로 나갑니다. 화씨 180도의 온수 공급수가 코일 오른쪽으로 들어와 공기 흐름과 반대로 튜브를 따라 왼쪽으로 흐르고, 화씨 160도의 환수로 왼쪽에서 나갑니다. 물의 온도차는 화씨 20도입니다. 코일 아래 설명 상자에 설계 유량 계산을 표시합니다. 코일 부하를 상수 500과 수온차의 곱으로 나눕니다. 시간당 120,000 Btu 부하와 화씨 20도 수측 ΔT에서 설계 유량은 12 GPM이며, 밸런싱 기술자가 이 분기에서 맞추는 값입니다.</desc>
+
+                <rect x="270" y="110" width="180" height="140" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                <g stroke="var(--border-faint)" stroke-width="1.5">
+                    <line x1="290" y1="116" x2="290" y2="244"/>
+                    <line x1="308" y1="116" x2="308" y2="244"/>
+                    <line x1="326" y1="116" x2="326" y2="244"/>
+                    <line x1="344" y1="116" x2="344" y2="244"/>
+                    <line x1="362" y1="116" x2="362" y2="244"/>
+                    <line x1="380" y1="116" x2="380" y2="244"/>
+                    <line x1="398" y1="116" x2="398" y2="244"/>
+                    <line x1="416" y1="116" x2="416" y2="244"/>
+                    <line x1="434" y1="116" x2="434" y2="244"/>
+                </g>
+                <text x="360" y="102" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">난방 코일</text>
+
+                <line x1="60" y1="180" x2="258" y2="180" stroke="var(--text-dim)" stroke-width="3"/>
+                <polygon points="258,174 270,180 258,186" fill="var(--text-dim)"/>
+                <line x1="450" y1="180" x2="648" y2="180" stroke="var(--text-dim)" stroke-width="3"/>
+                <polygon points="648,174 660,180 648,186" fill="var(--text-dim)"/>
+                <text x="150" y="162" text-anchor="middle" font-size="11" fill="var(--text)">입구 공기</text>
+                <text x="150" y="202" text-anchor="middle" font-size="11" fill="var(--text-dim)" data-us="55 °F" data-metric="12.8 °C">55 °F</text>
+                <text x="555" y="162" text-anchor="middle" font-size="11" fill="var(--text)">출구 공기</text>
+                <text x="555" y="202" text-anchor="middle" font-size="11" fill="var(--text-dim)" data-us="95 °F" data-metric="35.0 °C">95 °F</text>
+
+                <line x1="415" y1="48" x2="415" y2="110" stroke="var(--blue)" stroke-width="3"/>
+                <polygon points="409,100 415,112 421,100" fill="var(--blue)"/>
+                <text x="415" y="40" text-anchor="middle" font-size="11" font-weight="600" fill="var(--blue)">공급</text>
+                <text x="431" y="82" font-size="11" fill="var(--text)" data-us="180 °F" data-metric="82.2 °C">180 °F</text>
+
+                <line x1="305" y1="110" x2="305" y2="48" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <polygon points="299,58 305,46 311,58" fill="var(--blue-cool)"/>
+                <text x="305" y="40" text-anchor="middle" font-size="11" font-weight="600" fill="var(--blue-cool)">환수</text>
+                <text x="289" y="82" text-anchor="end" font-size="11" fill="var(--text)" data-us="160 °F" data-metric="71.1 °C">160 °F</text>
+
+                <text x="360" y="270" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">대향류: 물은 공기 흐름과 반대로 오른쪽 → 왼쪽 이동</text>
+
+                <rect x="140" y="292" width="440" height="72" rx="3" fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
+                <rect x="140" y="292" width="4" height="72" fill="var(--blue)"/>
+                <text x="164" y="316" font-size="12" fill="var(--text-bright)">설계 유량 = 코일 부하 ÷ (500 × 수측 ΔT)</text>
+                <text x="164" y="336" font-size="11" fill="var(--text-dim)" data-us="{{ pageMessages.unitText.derivation.us }}" data-metric="{{ pageMessages.unitText.derivation.metric }}">{{ pageMessages.unitText.derivation.us }}</text>
+                <text x="164" y="356" font-size="12" font-weight="700" fill="var(--blue)" data-us="{{ pageMessages.unitText.result.us }}" data-metric="{{ pageMessages.unitText.result.metric }}">{{ pageMessages.unitText.result.us }}</text>
+            </svg>
+
+            <p class="ref-note" style="margin-top:0.25rem;">
+                축척을 따르지 않은 참조 계통도입니다. 실제 코일에는 여러 열의 튜브와 수백 개의 핀이 있습니다. 온도는 US/미터법 전환을 따르고 유량은 IP 단위로 계산한 뒤 선택한 단위로 표시합니다.
+            </p>
+
+            <h2 class="subhead">이 값이 다음으로 가는 곳</h2>
+
+            <p>
+                설계 유량은 이야기의 끝이 아니라 두 이야기의 시작입니다. <a href="/ko/education/balancing.html">밸런싱</a> 작업이 비율을 맞추는 기준값입니다. 루프의 교정 밸브, 자동 유량 조절 밸브, <button type="button" data-gloss="picv">PICV</button>는 이 관계에서 나온 유량이 해당 분기에 실제로 공급되도록 존재합니다. 밸런싱 기술자가 분기를 "설계 대비"로 읽을 때 말하는 설계가 바로 <em>이 값</em>입니다. 커미셔닝 담당자가 확인하는 설계 의도이기도 합니다. 코일을 선정할 때 사용한 유량이 실제 분기에 공급되어야 루프 커미셔닝이 완료됩니다.
+            </p>
+
+            <p>
+                따라서 관계는 양방향으로 이어집니다. 하류에서 분기 유량이 틀리면 밸런싱 밸브를 확인합니다. 하지만 애초에 말이 되지 않는 유량값, 다른 유량을 빼앗는 분기, 설계 유량에서도 부하를 따라가지 못하는 코일은 여기까지 거슬러 올라올 수 있습니다. 부하를 잘못 추정했거나 실제 코일이 설계 ΔT를 만들지 못한 경우입니다. 밸런싱 기술자는 설계 GPM을 맞추지만, 그 설계 GPM은 계산에 사용한 부하와 ΔT만큼만 정확합니다.
+            </p>
+
+            <p>
+                가정은 부하와 ΔT보다 넓습니다. 모든 코일은 마주할 <em>입구 조건</em>, 즉 공기와 수온 그리고 공기가 가진 수분량에 맞춰 선정합니다. 이 가정에는 유효기간이 있습니다. 설계일 조건이 달라질 수 있고, 그 조건을 유지해야 하는 상류 장비가 조용히 성능을 잃을 수도 있습니다. 그러면 크기를 올바르게 선정한 코일도 아무도 손대지 않았는데 기능상 용량 부족 상태가 됩니다.
+            </p>
+
+            <div class="callout" style="margin-top:1.5rem;">
+                <p style="font-size:0.9rem;line-height:1.75;">
+                    <strong>실제 사례.</strong> 습도를 엄격히 유지해야 하는 실험실 공간에 전용외기 시스템(DOAS)이 팬코일 유닛으로 공기를 공급하는 시설이 있습니다. 각 구역의 FCU에는 건물 냉동기와 보일러에서 공급받는 냉수 코일과 온수 코일이 있습니다. 이것이 이 페이지에서 다루는 수배관 측입니다. 별도의 DOAS는 자체 <button type="button" data-gloss="dx">직팽식(DX)</button> 냉방으로 환기 공기를 조절하고 제습합니다. 의도적으로 역할을 나눈 것입니다. DOAS가 <button type="button" data-gloss="latent-heat">잠열</button> 부하를 담당해 구역에 충분히 건조한 외기를 공급하고, FCU 코일은 주로 현열을 처리하도록 선정했습니다. 이때 입구 공기 조건은 DOAS가 설계값을 유지한다고 <em>가정</em>했으며, 그 설계값은 <button type="button" data-gloss="dew-point">이슬점</button>입니다. 이후 기후가 도면의 범위를 벗어났습니다. 이곳의 여름은 시스템 설계 외기 조건을 넘어 더 덥고 훨씬 습해졌고, DOAS의 설계 출구 이슬점보다 실제 입구 이슬점이 높아져 환기 공기를 목표까지 낮추지 못합니다. 구역에는 FCU 선정 조건보다 습한 공기가 들어오고 실험실은 습도를 유지하지 못합니다. "FCU가 부하를 따라가지 못한다"는 신고가 들어오며 실제로 그렇습니다. 그러나 튜닝이 잘못되어서가 아니라 상류 유닛이 더 이상 만들지 못하는 입구 조건을 기준으로 코일을 선정했기 때문입니다. 루프를 아무리 튜닝해도 선정하지 않은 용량을 만들어 낼 수는 없습니다. 하나의 건물에 이 학습 자료의 전체 교훈이 담겨 있습니다. 코일 선정은 가정한 조건이 유효할 때만 유효하며, 그중 일부 조건은 상류에 있는 다른 장비가 정합니다.
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/hydronics/', label: '수배관 시스템 참조 허브'},
+        tools: [
+            {href: '/ko/tools/waterside-load.html', label: '수측 부하 계산기'},
+            {href: '/ko/tools/airside-load.html', label: '공기 측 부하 계산기'},
+            {href: '/ko/tools/coil-sizing.html', label: '코일 용량 계산기'},
+            {href: '/ko/tools/coil-freeze-risk.html', label: '코일 동결 위험 점검기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/hydronic-loop-builder.html', label: '수배관 루프 구성 도구'}
+        ],
+        lessons: [
+            {href: '/ko/education/balancing.html', label: '수배관 밸런싱'},
+            {href: '/ko/education/load-piping.html', label: '부하 배관'},
+            {href: '/ko/education/hydronic-loops.html', label: '수배관 루프'},
+            {href: '/ko/education/controls-commissioning.html', label: '제어 커미셔닝'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/balancing.html', label: '수배관 밸런싱'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 학습 자료로 돌아가기</a>
+
+</main>
+{% endblock %}

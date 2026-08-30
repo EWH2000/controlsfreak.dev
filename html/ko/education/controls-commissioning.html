@@ -1,0 +1,245 @@
+---
+title: 제어 커미셔닝 — controlsfreak.dev
+description: 입출력 포인트를 하나씩 시험해 컨트롤러가 운전 시퀀스대로 동작하는지 확인하는 포인트 투 포인트 점검, 오버라이드 관리, 트렌드 검증을 설명합니다.
+sourceContentHash: 3d3626899fdbcc31d2aadf024a108c2d15cdbe8d731bb0c275b258dcf1347f24
+canonical: https://controlsfreak.dev/ko/education/controls-commissioning.html
+nav: education
+category: fundamentals
+keywords: 포인트 투 포인트 점검 기능 시험 시운전 운전 시퀀스 오버라이드 트렌드 검증 BAS 커미셔닝 인터록 동결방지 온도조절기
+---
+{% extends "html/education/controls-commissioning.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">학습 · 제어 커미셔닝</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">제어 커미셔닝 <span class="tool-tag">커미셔닝</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                운전 시퀀스는 하나의 약속입니다. 냉방 요구가 생기면 밸브가 열리고, 동결 트립이 발생하면 팬이 정지하며, 오전 6시에는 유닛이 비재실 모드에서 벗어납니다. 커미셔닝(기능 성능 검증)은 컨트롤러가 그 약속을 실제로 지키는지 누군가 입증하는 과정입니다. 초록색 표시를 만드는 데 아무 비용도 들지 않는 그래픽이 아니라 물리적 포인트에서 확인해야 합니다. 핵심 절차는 <strong>포인트 투 포인트 점검(point-to-point checkout)</strong>입니다. 모든 입력과 출력을 처음부터 끝까지 따라가 시험하고, 컨트롤러가 시퀀스에서 정한 대로 동작하는지 확인합니다. 이 페이지 전체를 관통하는 질문은 하나입니다. <em>컨트롤러가 운전 시퀀스에서 정한 동작을 실제로 수행하는지 어떻게 검증할까요?</em>
+            </p>
+
+            <div class="callout">
+                <p style="line-height:1.7;">
+                    "커미셔닝"이라는 말은 현장 일정에서 같은 주에 진행되어 서로 혼동하기 쉬운 세 가지 작업에 쓰입니다. 이 페이지에서는 그중 하나인 <strong>제어 기능 시험</strong>, 즉 <button type="button" data-gloss="ddc">직접디지털제어기(DDC)</button>가 시퀀스대로 동작하는지 포인트별로 입증하는 과정을 다룹니다. 다른 두 작업은 신호가 아니라 유체를 움직입니다. <a href="/ko/education/balancing.html">수배관 밸런싱</a>은 모든 수측 부하에 설계 유량을 맞추고, 별도 학습 자료인 <a href="/ko/education/air-balancing.html">공기 밸런싱</a>은 덕트 계통에서 같은 작업을 합니다. 인계 전에 세 작업이 모두 끝나야 하지만 서로 다른 도구를 쓰는 별개의 업무입니다. 마노미터와 밸런싱 보고서는 노트북과 포인트 목록이 아닙니다. 이 구분을 명확히 하면 나머지 내용도 제어에 집중할 수 있습니다.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · What point-to-point is ───────────────── -->
+            <h2 class="subhead" id="ccx-p2p">포인트 투 포인트 점검의 핵심 개념</h2>
+
+            <p>
+                포인트 투 포인트 점검은 이름 그대로입니다. 승인도서의 I/O 스케줄, 즉 UI3은 혼합공기 센서이고 BO2는 배기팬이라고 적힌 포인트 목록을 가져와 각 줄을 물리적 세계와 하나씩 대조합니다. 여기서 가장 중요한 단어는 <em>물리적</em>입니다. 그래픽이 <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span>를 표시하는지만 보는 것이 아닙니다. 혼합공기 센서가 실제로 <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span>일 때 컨트롤러가 그 값을 읽는지, UI3의 전선이 스케줄에 적힌 센서로 연결되는지, 시퀀스가 참조하는 객체가 실제로 동작하는 객체인지 확인합니다.
+            </p>
+
+            <p>
+                그래픽은 잘못된 이유로도 올바르게 보일 수 있습니다. 잘못된 객체에 매핑된 포인트가 그럴듯한 값을 표시하고, 잘못된 범위로 스케일링한 트랜스미터가 올바른 방향으로 움직이면서 크기는 틀리게 보고하며, 서로 바뀐 두 전선이 각각 믿을 만한 숫자를 표시할 수 있습니다. 이런 문제는 <button type="button" data-gloss="front-end">프런트엔드</button>만 보아서는 드러나지 않습니다. 현장 장치 앞에서 알고 있는 상태를 만들고, 컨트롤러가 보고하는 값이 실제 상태와 같은지 확인할 때 드러납니다. 그래서 점검은 반대 방향이 아니라 <strong>현장에서 <button type="button" data-gloss="front-end">프런트엔드</button> 쪽으로</strong> 진행합니다. 현장이 기준값이고 그래픽은 검증 대상입니다.
+            </p>
+
+            <!-- ───────────────── 2 · The method, per point type ───────────────── -->
+            <h2 class="subhead" id="ccx-method">포인트 유형별 점검 방법</h2>
+
+            <p>
+                모든 포인트는 같은 원칙으로 시험합니다. 현장 쪽에서 알고 있는 상태를 만들고 컨트롤러가 일치하는지 확인합니다. 다만 세부 방법은 포인트 유형마다 다릅니다. 거의 모든 컨트롤러에서 만나는 네 유형은 아날로그 및 바이너리 입력·출력(<strong>AI / AO / BI / BO</strong>)이며, 각 유형마다 잘못된 값을 그럴듯하게 보이게 만드는 방식이 다릅니다.
+            </p>
+
+            <p>
+                <strong>아날로그 입력(AI).</strong> <em>알고 있는</em> 입력을 인가하고 공학 단위 값이 맞는지 확인합니다. RTD나 10K 서미스터 같은 저항식 센서에서는 입력 단자에 저항 박스(decade box)를 연결하거나 저항값을 대입하고, 해당 센서의 특성 곡선으로 그 저항이 나타내야 할 온도를 확인합니다. 트랜스미터에서는 신호 발생기를 사용합니다. 루프 교정기로 알고 있는 전류를 인가하거나 0&ndash;10&nbsp;V 장치에 전압원을 연결해 범위의 하단, 중간, 상단을 차례로 시험하면서 컨트롤러가 같은 값을 표시하는지 확인합니다. 이때 스케일링 오류가 드러납니다. <a href="/ko/tools/signal-scaling.html">신호 스케일링 도구</a>가 그 계산 원리를 보여 줍니다. 잘못된 범위로 스케일링한 객체에서 트랜스미터를 읽으면 방향은 맞지만 모든 지점의 값이 틀립니다. <button type="button" data-gloss="live-zero">라이브 제로</button>도 기억하세요. 4&ndash;20&nbsp;mA 루프에서 4&nbsp;mA는 실제 신호이고 0&nbsp;mA는 단선된 루프입니다. 따라서 AI가 범위 최하단에 고정되어 있다면 단순한 낮은 측정값이 아니라 배선을 확인해야 합니다.
+            </p>
+
+            <p>
+                <strong>아날로그 출력(AO).</strong> 포인트에 0, 50, 100&nbsp;%를 명령하고 액추에이터, 밸브 또는 드라이브가 움직이는지 현장에서 확인합니다. 이 시험으로 두 가지, 즉 <em>방향</em>과 <em>스팬</em>을 입증합니다. 방향 시험은 동작 반전을 찾아냅니다. 감각 방향이 반대로 배선되거나 설정된 액추에이터는 0&nbsp;% 명령에서 완전히 열리는 등 반대로 움직이며, 제어 루프가 계절 내내 자기 자신과 싸우게 됩니다. 스팬 시험은 액추에이터의 범위 설정과 소프트웨어 범위가 달라 전체 행정 중 일부만 움직이는 문제를 찾아냅니다. 드라이브에도 같은 세 명령을 주고 회전 방향까지 이때 한 번 확인합니다. 필요해진 뒤가 아니라 점검 중에 확인해야 합니다.
+            </p>
+
+            <p>
+                <strong>바이너리 입력(BI).</strong> 실제 현장 접점을 작동시켜 포인트의 상태가 바뀌는지, 그리고 <em>논리 방향</em>이 맞는지 확인합니다. 유량 운전 확인 스위치, 모터 전선의 전류 스위치, <button type="button" data-gloss="differential-pressure">차압</button> 상태 등에서 실제 조건을 만들거나 정확히 무엇을 하는지 파악한 상태로 장치 접점을 점퍼하고, OPEN / CLOSED가 시퀀스에서 기대하는 상태로 들어오는지 확인합니다. 극성이 함정입니다. <button type="button" data-gloss="normally-open-closed">정상 닫힘</button> 접점을 소프트웨어에서 <button type="button" data-gloss="normally-open-closed">정상 열림</button>으로 읽으면 의미 전체가 뒤집힙니다. "팬 운전"이 "팬 고장"으로 표시되고, 시퀀스는 정확히 반대인 상태에 충실하게 반응합니다.
+            </p>
+
+            <p>
+                <strong>바이너리 출력(BO).</strong> 켜기와 끄기를 명령하고 의도한 부하가 실제로 전환되는지 확인합니다. 대표적인 문제는 라벨이 틀리거나 두 출력이 서로 바뀐 경우입니다. 배기팬을 명령했는데 급기팬이 기동한다면 두 출력의 결선이 바뀌었거나 패널과 스케줄이 일치하지 않는 것입니다. 포인트에 명령을 내리고 장비를 직접 보아야만 찾을 수 있습니다. 그래픽은 실제로 급기팬이 회전하는 동안에도 배기팬이 운전 중이라고 아무렇지 않게 표시합니다.
+            </p>
+
+            <div class="table-scroll">
+                <table class="ref-table">
+                    <thead>
+                        <tr><th>포인트</th><th>시험 방법</th><th>확인 사항</th><th>흔한 문제</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>AI</strong></td>
+                            <td>RTD 또는 서미스터에 저항 박스/저항값 대입, 트랜스미터에 mA 또는 V 신호원을 연결해 범위 전체를 단계별 시험</td>
+                            <td>각 지점에서 컨트롤러가 올바른 공학 단위 값을 읽음</td>
+                            <td>잘못된 스케일링/범위, 잘못된 센서 특성 곡선, 라이브 제로 루프를 실제 낮은 값으로 해석</td>
+                        </tr>
+                        <tr>
+                            <td><strong>AO</strong></td>
+                            <td>0 / 50 / 100&nbsp;%를 명령하고 장치를 관찰</td>
+                            <td>액추에이터, 밸브 또는 드라이브가 전체 스팬에서 올바른 방향으로 움직임</td>
+                            <td>동작 반전(0&nbsp;% 명령에서 반대로 동작), 불완전한 스팬, 잘못된 회전 방향</td>
+                        </tr>
+                        <tr>
+                            <td><strong>BI</strong></td>
+                            <td>실제 현장 접점(운전 확인/상태/전류 스위치)을 작동</td>
+                            <td>포인트 상태가 바뀌고 극성이 시퀀스와 일치함</td>
+                            <td>정상 열림과 정상 닫힘이 반전되어 상태를 거꾸로 읽음</td>
+                        </tr>
+                        <tr>
+                            <td><strong>BO</strong></td>
+                            <td>켜기/끄기 명령</td>
+                            <td>릴레이 또는 접촉기가 스케줄에 적힌 부하를 여자함</td>
+                            <td>라벨이 틀리거나 서로 바뀐 출력이 다른 장비를 구동함</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ───────────────── 3 · Override discipline ───────────────── -->
+            <h2 class="subhead" id="ccx-overrides">오버라이드 관리 — 안전의 중심축</h2>
+
+            <p>
+                앞의 시험은 모두 오버라이드입니다. AO를 100&nbsp;%로 강제하고, BI를 서비스 제외 상태로 바꿔 전환하며, 논리 검증 전에 배선을 확인하기 위해 <button type="button" data-gloss="interlock">인터록</button>을 무효화하고 BO를 켭니다. 오버라이드와 강제값은 <em>점검을 수행하는 방법</em>입니다. 시퀀스가 요구하는 값에서 벗어난 명령을 주지 않고는 출력을 시험할 수 없습니다. 중요한 규율은 이를 피하는 것이 아니라 모두 <strong>기록하고 관리</strong>하는 것입니다.
+            </p>
+
+            <p>
+                두 가지 규칙이면 충분합니다. <strong>오버라이드를 설정할 때마다 기록</strong>하여 현재 자동 제어에서 벗어난 항목의 문서 목록을 만드세요. <strong>인계 전에 하나도 빠짐없이 해제</strong>하세요. 목록을 다시 처음부터 확인하며 각 포인트가 정상 자동 운전으로 복귀했는지 검증합니다. 강제된 포인트는 위장한 실제 위험입니다. 100&nbsp;%에 남겨 둔 AO는 여름철 코일의 난방 밸브를 완전히 열어 둡니다. 무효화한 동결 <button type="button" data-gloss="interlock">인터록</button>은 추운 밤과 코일 동파 사이의 마지막 보호를 없앱니다. 강제로 켠 BO는 시퀀스가 정지했다고 믿는 모터를 계속 돌립니다. 일반 버그보다 더 위험한 이유는 <em>로직에서 보이지 않기</em> 때문입니다. 시퀀스는 올바르게 실행되지만 그 명령이 무시됩니다. 잊힌 강제값은 인계 시 발생하는 대표적인 결함이며, 보통 몇 주 뒤 트렌드가 아니라 장비가 먼저 발견합니다.
+            </p>
+
+            <!-- Owner war story (real), rendered in house voice. Override discipline:
+                 a correct, deliberate override that slipped through because it never
+                 surfaced on the graphics. -->
+            <div class="callout" style="margin-top:1.25rem;">
+                <p style="margin:0;line-height:1.7;">
+                    <strong>실제 사례.</strong> 어느 겨울 외기온이 약 <span data-us="&minus;20&nbsp;°F" data-metric="&minus;28.9&nbsp;°C">&minus;20&nbsp;°F</span>일 때 컨트롤러를 교체했습니다. 교체 전에 모든 <button type="button" data-gloss="dx">직팽식(DX)</button> 냉방을 강제로 껐습니다. 이 정도 추위에서는 압축기를 순간 기동하면 안 되며, 해당 유닛에는 작은 크랭크케이스 히터 밴드만 있었기 때문에 기동 시 압축기가 손상될 수 있었습니다. 그날 내린 판단은 옳았습니다. 문제는 그래픽이었습니다. 강제로 꺼 둔 냉방 출력이 <button type="button" data-gloss="front-end">프런트엔드</button>에 오버라이드 상태로 표시되지 않았습니다. 교체가 끝나자 눈에 띄지 않았고 아무도 발견하지 못했습니다. 여름까지 조용히 강제 OFF 상태로 남아 있다가, 첫 더운 날 바로 그 컨트롤러에서 냉방 불능 신고가 들어왔습니다. 현장까지는 짧은 거리였고 도착한 뒤 해결도 간단했습니다. 오버라이드를 해제했습니다. 교훈은 "오버라이드를 사용하지 말라"가 아닙니다. 그 오버라이드는 올바른 조치였습니다. 올바른 이유로 설정한 오버라이드도 기록하고 인계 전에 해제해야 하며, 그래픽에 표시되지 않는 항목일수록 문제를 일으키기 쉽다는 뜻입니다. 교체한 포인트를 포인트 투 포인트로 점검했다면 강제 OFF 상태의 냉방 출력을 즉시 찾았을 것입니다.
+                </p>
+            </div>
+
+            <!-- ───────────────── 4 · Interlocks + sequence logic ───────────────── -->
+            <h2 class="subhead" id="ccx-interlocks">설계 의도에 따른 인터록과 시퀀스 로직 검증</h2>
+
+            <p>
+                각 포인트가 움직인다는 사실은 반드시 입증해야 하지만 그것만으로 충분하지 않습니다. 시퀀스는 조건이 트립되면 해당 출력이 반응하는 <em>관계</em>의 집합입니다. 트리거 포인트가 단순히 값을 읽는지만 확인하지 말고, 실제 트리거 조건을 만들고 프로그램이 정한 반응이 일어나는지 확인해야 합니다. <button type="button" data-gloss="freezestat">동결방지 온도조절기(freezestat)</button>, 즉 빙점보다 조금 높게 설정한 저온 제한 온도조절기를 트립하고 시퀀스가 약속한 모든 동작을 수행하는지 확인하세요. 팬 정지, 외기 댐퍼 닫힘, 난방 밸브 완전 열림, 경보 표시까지 전체 반응을 봐야 하며 "동결 포인트가 ALARM으로 바뀌었다"는 것만 보면 안 됩니다. <button type="button" data-gloss="high-static-cutout">고정압 차단 스위치</button>를 트립해 급기팬이 실제로 정지하는지 확인하세요. 유닛을 비재실 모드로 두고 설정값 완화, 댐퍼 위치, 팬 상태가 모두 따르는지 확인하세요. 리셋 입력을 전체 범위에서 움직여 리셋 출력이 시퀀스에 그려진 방향으로 변하는지 확인하세요.
+            </p>
+
+            <p>
+                하드와이어 안전장치는 소프트웨어를 신뢰할 수 없는 바로 그 순간을 위해 존재하므로 특별히 주의해야 합니다. 팬을 하드웨어 회로로 차단하도록 배선한 <button type="button" data-gloss="freezestat">동결방지 온도조절기</button>나 고정압 스위치는 팬을 실제로 <em>하드웨어를 통해</em> 차단한다는 사실을 입증해야 합니다. 컨트롤러는 상태를 감시하되 차단 경로에 있어서는 안 됩니다. 하드와이어 안전장치의 목적은 소프트웨어 값이 거짓일 때도 동작하는 것입니다. <button type="button" data-gloss="railed">레일 고정</button>된 센서, 정지한 컨트롤러, 하류에서 오류를 알아챌 수 없는 값 고정 상황에서도 작동해야 합니다. 실제로 요구받을 방식 그대로 시험하세요.
+            </p>
+
+            <!-- ───────────────── 5 · Trends ───────────────── -->
+            <h2 class="subhead" id="ccx-trends">트렌드 로그 — 시간에 걸친 입증</h2>
+
+            <p>
+                포인트 투 포인트 점검은 한 포인트가 한 번 움직였음을 입증합니다. 새벽 3시에 루프가 설정값을 유지하는지, <button type="button" data-gloss="lead-lag">주/예비(lead/lag)</button> 교대가 일정에 따라 실제로 전환되는지, 온화한 저녁에 <button type="button" data-gloss="duct-static">정압 리셋</button>이 낮아졌다가 설계 외기 조건의 오후에 다시 높아지는지는 입증하지 못합니다. 그 증거는 <strong>트렌드</strong>에 있습니다. 시퀀스에서 중요한 포인트에 <button type="button" data-gloss="change-of-value">값 변경(COV)</button> 또는 짧은 주기의 트렌드 로그를 설정하고, 실제 운전 변화가 지나갈 동안 기록한 뒤 다시 읽어 보세요.
+            </p>
+
+            <p>
+                트렌드는 한 시점의 화면으로는 찾을 수 없는 고장을 잡습니다. 살짝 조정할 때는 잘 따라가지만 부하가 바뀐 뒤 20분 동안 <button type="button" data-gloss="hunting">헌팅</button>하는 루프, <button type="button" data-gloss="short-cycling">단주기 운전</button>하는 단계제어(경계가 불분명한 <button type="button" data-gloss="deadband">데드밴드</button>가 원인일 수 있습니다), 폴링하는 쪽을 활성화하지 않아 설계값에서 한 번도 벗어나지 않는 리셋 등을 확인할 수 있습니다. 포인트 투 포인트 점검에서 끝난 커미셔닝 기록은 배관과 배선을 입증한 것입니다. 실제 <em>시퀀스</em>를 입증하는 것은 트렌드입니다. <a href="/ko/simulators/pid-tuner.html">PID 튜너</a>에서 루프를 조정해 보았다면 트렌드가 보여 주는 형태를 이미 알고 있습니다. 같은 오버슈트와 <button type="button" data-gloss="hunting">헌팅</button>이 이제 실제 포인트의 여러 시간 기록에 나타납니다.
+            </p>
+
+            <!-- ───────────────── 6 · Documentation / turnover ───────────────── -->
+            <h2 class="subhead" id="ccx-turnover">문서화와 인계</h2>
+
+            <p>
+                점검의 산출물은 단순히 작동하는 건물이 아니라, 건물이 포인트별로 작동한다고 입증했으며 담당자 이름과 날짜가 적힌 <em>기록</em>입니다. 완료된 포인트 투 포인트 체크리스트가 그 기록입니다. 모든 I/O 포인트, 시험에 사용한 방법, 관찰한 값 또는 상태, 합격 또는 불합격, 수정이 필요했던 항목의 메모를 담습니다. 인계 시점에도 남아 있는 항목은 <strong>이슈 로그</strong>, 즉 보류 항목 목록에 올려야 합니다. 그래야 "커미셔닝 완료"와 "입주" 사이의 틈에서 아무것도 조용히 빠지지 않습니다.
+            </p>
+
+            <p>
+                좋은 기록의 나머지 절반은 <em>다음</em> 기술자가 다시 검증할 수 있게 하는 것입니다. 1년 뒤 센서가 드리프트하거나 컨트롤러를 교체했을 때 패널 앞에 선 사람이 처음 입증한 날의 "정상" 상태를 확인할 수 있어야 합니다. 체크리스트와 트렌드를 남기고, 오버라이드는 모두 해제하며 해제 사실도 기록하세요. 마지막 항목이 시스템 인계의 실제 의미입니다. "운전한다"가 아니라 "운전한다는 증거가 여기 있고, 정지했을 때 알아낼 방법도 여기 있다"는 뜻입니다.
+            </p>
+
+            <!-- ───────────────── 7 · Capstone ───────────────── -->
+            <h2 class="subhead" id="ccx-loop">각 포인트마다 한 번씩 실행하는 작은 루프</h2>
+
+            <p>
+                이 페이지를 하나의 형태로 줄이면 목록의 각 포인트마다 한 번씩 실행하는 단일 루프가 됩니다. 맨 위의 운전 시퀀스가 판단 기준이고, 그 아래 루프가 실제 작업입니다. 포인트를 시험하고, 현장 장치를 관찰하고, 시퀀스와 대조해 확인한 다음, 다음 포인트로 넘어가기 전에 문서화하고 강제값을 해제합니다. I/O 스케줄의 모든 줄에 이 작업을 수행하면 제어 커미셔닝이 완료됩니다. 한 줄을 건너뛰면 장비가 대신 찾아낼 결함 하나를 남기게 됩니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 810 300" role="img" aria-labelledby="ccx-cap-title ccx-cap-desc"
+                 font-family="var(--mono)">
+                <title id="ccx-cap-title">포인트 투 포인트 검증 루프</title>
+                <desc id="ccx-cap-desc">맨 위 배너에는 모든 포인트를 대조하는 설계 의도인 운전 시퀀스라고 적혀 있습니다. 아래에는 왼쪽에서 오른쪽으로 이어지는 네 상자가 루프를 이룹니다. 첫 번째는 포인트를 인가하거나 명령하는 시험, 두 번째는 물리적 반응을 보이는 현장 장치, 세 번째는 값·상태·동작을 확인하는 검증, 네 번째는 기록하고 강제값을 해제하는 문서화입니다. 실선 화살표가 상자를 왼쪽에서 오른쪽으로 연결합니다. 검증 상자에서는 시퀀스와 일치하는지 묻는 점선 화살표가 운전 시퀀스 배너로 올라갑니다. 문서화 상자에서는 목록의 모든 포인트를 처음부터 끝까지 확인한다는 점선 화살표가 시험 상자로 돌아갑니다.</desc>
+
+                <!-- Sequence banner: the yardstick every point is checked against -->
+                <rect x="20" y="28" width="770" height="46" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="405" y="50" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">운전 시퀀스</text>
+                <text x="405" y="66" text-anchor="middle" class="edu-caption">모든 포인트를 대조하는 설계 의도</text>
+
+                <!-- Four loop stages -->
+                <rect x="30" y="150" width="150" height="72" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="105" y="184" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">1 · 시험</text>
+                <text x="105" y="203" text-anchor="middle" class="edu-caption">인가하거나 명령</text>
+
+                <rect x="230" y="150" width="150" height="72" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="305" y="184" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">2 · 현장 장치</text>
+                <text x="305" y="203" text-anchor="middle" class="edu-caption">물리적 반응</text>
+
+                <rect x="430" y="150" width="150" height="72" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="505" y="184" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">3 · 검증</text>
+                <text x="505" y="203" text-anchor="middle" class="edu-caption">값 · 상태 · 동작</text>
+
+                <rect x="630" y="150" width="150" height="72" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="705" y="184" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">4 · 문서화</text>
+                <text x="705" y="203" text-anchor="middle" class="edu-caption">기록 · 강제값 해제</text>
+
+                <!-- Forward arrows between the stages (accent = action) -->
+                <line x1="180" y1="186" x2="223" y2="186" stroke="var(--accent)" stroke-width="2.5"/>
+                <polygon points="223,181 233,186 223,191" fill="var(--accent)"/>
+                <line x1="380" y1="186" x2="423" y2="186" stroke="var(--accent)" stroke-width="2.5"/>
+                <polygon points="423,181 433,186 423,191" fill="var(--accent)"/>
+                <line x1="580" y1="186" x2="623" y2="186" stroke="var(--accent)" stroke-width="2.5"/>
+                <polygon points="623,181 633,186 623,191" fill="var(--accent)"/>
+
+                <!-- Compare arrow: Confirm up to the Sequence banner (blue = the check) -->
+                <line x1="505" y1="150" x2="505" y2="83" stroke="var(--blue)" stroke-width="2" stroke-dasharray="5 4"/>
+                <polygon points="500,83 510,83 505,74" fill="var(--blue)"/>
+                <text x="495" y="116" text-anchor="end" font-size="10.5" font-style="italic" fill="var(--blue)">시퀀스와 일치합니까?</text>
+
+                <!-- Return arrow: Document back to Exercise, once per point -->
+                <path d="M705 222 V262 H105 V229" fill="none" stroke="var(--text-dim)" stroke-width="2" stroke-dasharray="6 4"/>
+                <polygon points="100,231 110,231 105,222" fill="var(--text-dim)"/>
+                <text x="405" y="282" text-anchor="middle" class="edu-caption">목록의 모든 포인트를 처음부터 끝까지 확인</text>
+            </svg>
+
+            <p style="margin-top:1.25rem;">
+                이 학습 자료의 앞뒤에는 두 개의 관련 자료가 있습니다. <a href="/ko/education/controller-wiring.html">제어기 배선</a>은 점검 전에 단자가 올바르게 연결되는 과정을 다룹니다. 포인트가 올바른 단자에 있어야 올바르게 동작하는지 입증할 수 있으며, <a href="/ko/simulators/controller-wiring.html">배선 시뮬레이터</a>에서는 이 페이지가 찾아내려는 배선 고장을 직접 만들어 볼 수 있습니다. <a href="/ko/education/function-blocks.html">함수 블록</a>은 점검 기준이 되는 시퀀스 자체, 즉 컨트롤러가 따라야 할 로직입니다. 커미셔닝은 둘 사이의 이음부입니다. 배선은 실제 동작이 되고 시퀀스는 사실로 입증됩니다.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/signal-scaling.html', label: '신호 스케일링'},
+            {href: '/ko/tools/thermistor-calculator.html', label: '서미스터 / RTD 계산기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/controller-wiring.html', label: '제어기 배선 시뮬레이터'},
+            {href: '/ko/simulators/pid-tuner.html', label: 'PID 튜닝 도우미'},
+            {href: '/ko/simulators/function-block-editor.html', label: '함수 블록 편집기'}
+        ],
+        lessons: [
+            {href: '/ko/education/controller-wiring.html', label: '제어기 배선'},
+            {href: '/ko/education/function-blocks.html', label: '함수 블록 기초'},
+            {href: '/ko/education/pid-basics.html', label: 'PID 기초'},
+            {href: '/ko/education/balancing.html', label: '수배관 밸런싱'},
+            {href: '/ko/education/air-balancing.html', label: '공기 밸런싱'},
+            {href: '/ko/education/coil-selection.html', label: '코일 선정'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/controls-commissioning.html', label: '제어 커미셔닝'},
+            {href: '/ko/practice/controller-swap.html', label: '컨트롤러 교체'},
+            {href: '/ko/practice/field-wiring-sensors.html', label: '현장 배선 — 센서'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 학습 자료로 돌아가기</a>
+
+</main>
+{% endblock %}

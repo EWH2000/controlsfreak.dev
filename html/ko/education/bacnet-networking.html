@@ -1,0 +1,437 @@
+---
+title: BACnet 네트워킹 — controlsfreak.dev
+description: BACnet 주소 지정의 세 계층, BVLL/NPDU/APDU 프레임, BBMD와 외부 장치 등록, EBO 16진수 문자열을 읽는 방법을 설명합니다.
+sourceContentHash: 70f120d755b3d31e38c0ef3b6d5c241e92f0a8bd00444330c124e90fffc5f627
+canonical: https://controlsfreak.dev/ko/education/bacnet-networking.html
+nav: education
+category: protocols
+pairedQuiz: https://controlsfreak.dev/ko/practice/bacnet-networking.html
+keywords: ms/tp mstp 보드레이트 bbmd 외부 장치 라우터 서브넷 브로드캐스트 who-is
+---
+{% extends "html/education/bacnet-networking.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">학습 · BACnet 네트워킹</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">BACnet 네트워킹 <span class="tool-tag">BACnet</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                <a href="/ko/education/bacnet-basics.html">BACnet 기초</a>에서는 객체 모델을, <a href="/ko/education/bacnet-services.html">BACnet 서비스</a>에서는 속성을 읽고 우선순위 배열 슬롯에 쓰며 같은 네트워크의 장치를 검색하는 요청을 설명했습니다. 이 페이지는 그 다음 단계인 <em>서로 다른 네트워크의 장치가 서로를 찾는 방법</em>, 일반 Ethernet 브로드캐스트가 라우터를 넘지 못하는 이유, BBMD와 외부 장치 등록이 실제로 수행하는 일을 다룹니다. 또한 <a href="/ko/tools/bacnet-ip-converter.html">BACnet/IP 16진수 변환기</a>가 디코딩하는 EBO 16진수 문자열을 풀어 각 바이트의 역할을 설명합니다.
+            </p>
+
+            <h2 class="subhead" id="three-addresses">하나의 장치, 세 가지 주소</h2>
+
+            <p>
+                모든 BACnet 통신은 결국 특정 장치의 특정 객체에 있는 특정 속성을 대상으로 합니다. <em>속성</em>과 <em>객체</em>는 <a href="/ko/education/bacnet-basics.html">BACnet 기초</a>에서 이미 설명한 응용 계층 개념입니다. <em>장치</em>의 주소를 지정하려면 스택의 서로 다른 계층에 속한 세 가지 식별자가 필요합니다.
+            </p>
+
+            <ul>
+                <li><strong>장치 인스턴스 번호.</strong> BACnet 인터네트워크 전체에서 컨트롤러를 고유하게 식별하는 22비트 부호 없는 정수(범위 0~4,194,302)입니다. 응용 계층이 사용하는 식별자로, <code>device:1001</code>은 장치 인스턴스를 뜻합니다. 위치나 토폴로지를 인코딩하지 않습니다. 건물의 서로 반대편에 물리적으로 설치된 두 컨트롤러라도 같은 BMS에서 보인다면 서로 다른 인스턴스 번호를 사용해야 합니다.</li>
+                <li><strong>네트워크 번호.</strong> 하나의 데이터 링크를 공유하는 장치 그룹, 즉 BACnet 네트워크 <em>세그먼트</em>를 지정하는 16비트 정수입니다. 데이터 링크는 MS/TP 버스 하나 또는 BACnet/IP UDP 브로드캐스트 도메인 하나일 수 있습니다. 네트워크 번호 <code>0</code>은 "이 메시지가 시작된 로컬 네트워크"를 뜻하고, <code>65535</code>는 "모든 네트워크로 브로드캐스트"를 뜻합니다. 사용할 수 있는 네트워크 번호는 1~65534이며 시스템 설계자가 할당합니다. 메시지가 네트워크 사이를 이동할 때 모든 BACnet 메시지의 네트워크 계층 헤더에 출발지와 목적지 네트워크 번호가 들어갑니다.</li>
+                <li><strong>MAC 주소.</strong> 특정 전송 방식이 메시지를 전달하는 데 사용하는 데이터 링크 식별자입니다. <strong>BACnet/IP</strong>에서 MAC은 IPv4 주소 4바이트와 UDP 포트 2바이트를 합친 6바이트입니다. UDP 포트는 거의 항상 <code>0xBAC0</code>, 즉 47808입니다. <strong>MS/TP</strong>에서 MAC은 RS-485 버스상 장치의 스테이션 주소인 1바이트이며 범위는 0~127입니다.</li>
+            </ul>
+
+            <svg class="bac-svg" viewBox="0 0 620 240" role="img"
+                 aria-labelledby="bn-addr-title bn-addr-desc">
+                <title id="bn-addr-title">하나의 BACnet 장치를 나타내는 세 가지 주소</title>
+                <desc id="bn-addr-desc">가운데에 "VAV-101"이라고 표시된 컨트롤러 상자가 있습니다. 이름표가 붙은 세 선이 상자 바깥에서 안쪽을 가리킵니다. 위쪽 이름표는 "device:1001 — 응용 계층 장치 인스턴스", 가운데 이름표는 "net 5 — 네트워크 계층 세그먼트 번호", 아래쪽 이름표는 "192.168.1.100 : 47808 — 데이터 링크 IP와 UDP 포트"입니다. 각 이름표는 스택의 서로 다른 계층에 놓입니다.</desc>
+
+                <!-- Centre device box -->
+                <rect x="220" y="90" width="180" height="80" rx="4" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                <text x="310" y="125" text-anchor="middle" font-family="var(--mono)" font-size="14" font-weight="600" fill="var(--text-bright)">VAV-101</text>
+                <text x="310" y="145" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">(컨트롤러 하나)</text>
+
+                <!-- Top label: device instance -->
+                <line x1="310" y1="46" x2="310" y2="88" stroke="var(--accent)" stroke-width="1.6"/>
+                <polygon points="305,82 310,90 315,82" fill="var(--accent)"/>
+                <text x="310" y="25" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--accent)">device:1001</text>
+                <text x="310" y="40" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">응용 계층 — 장치 인스턴스</text>
+
+                <!-- Left label: network number -->
+                <line x1="218" y1="130" x2="138" y2="130" stroke="var(--accent)" stroke-width="1.6"/>
+                <polygon points="222,125 218,131 222,135" fill="var(--accent)"/>
+                <text x="78"  y="125" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--accent)">net 5</text>
+                <text x="78"  y="140" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">네트워크</text>
+                <text x="78"  y="153" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">세그먼트</text>
+
+                <!-- Right + bottom label: data-link -->
+                <line x1="402" y1="130" x2="482" y2="130" stroke="var(--accent)" stroke-width="1.6"/>
+                <polygon points="398,125 402,131 398,135" fill="var(--accent)"/>
+                <text x="542" y="125" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--accent)">192.168.1.100</text>
+                <text x="542" y="140" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--accent)">: 47808</text>
+                <text x="542" y="155" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">데이터 링크 MAC</text>
+
+                <!-- caption -->
+                <text x="310" y="210" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">식별자 세 개 · 스택 계층 세 개 — 장치 인스턴스만 계속 유지됨</text>
+            </svg>
+
+            <p>
+                어느 계층을 사용해야 하는지 생각하는 유용한 방법은 다음과 같습니다. 장치 인스턴스는 BMS 그래픽이 기억하고 제어 시퀀스가 대상으로 삼는 값입니다. 네트워크 번호는 라우터가 메시지를 보낼 방향을 결정하는 데 사용합니다. MAC은 케이블, 스위치, RS-485 칩이 실제로 메시지를 전달하는 데 사용합니다. 새 BBMD 설치, IP 재설정, 컨트롤러 이동처럼 네트워크 토폴로지가 바뀌면 MAC과 네트워크 번호는 달라질 수 있지만 장치 인스턴스 번호는 그대로 유지됩니다.
+            </p>
+
+            <h2 class="subhead" id="bvll-npdu-apdu">BACnet/IP 프레임 — BVLL + NPDU + APDU</h2>
+
+            <p>
+                BACnet/IP 세그먼트를 Wireshark로 캡처하면 모든 BACnet 메시지에서 표준 UDP/IP 래핑 위에 중첩된 세 계층이 보입니다. 바깥쪽부터 안쪽 순서는 다음과 같습니다.
+            </p>
+
+            <ul>
+                <li><strong>BVLL — BACnet 가상 링크 계층.</strong> BACnet/IP 패킷의 종류를 나타내는 4바이트 헤더입니다. 첫 번째 바이트는 항상 <code>0x81</code>이며 BACnet/IP용 BVLL 유형 표시입니다. 두 번째 바이트는 BVLL 기능입니다. <code>0x0A</code>는 <em>Original-Unicast-NPDU</em>, <code>0x0B</code>는 <em>Original-Broadcast-NPDU</em>, <code>0x04</code>는 <em>Forwarded-NPDU</em>를 뜻합니다. Forwarded-NPDU는 BBMD가 피어로 유니캐스트한 브로드캐스트입니다. 세 번째와 네 번째 바이트는 전체 BVLL 메시지 길이입니다. Forwarded-NPDU에는 이어지는 6바이트에 원래 출발지 IP와 포트가 추가되므로 전달 후에도 원래 출발지를 알 수 있습니다.</li>
+                <li><strong>NPDU — 네트워크 프로토콜 데이터 단위.</strong> BACnet 네트워크 계층 헤더입니다. 버전 바이트, 목적지/출발지/응답 예상 필드의 존재 여부를 나타내는 플래그가 담긴 제어 바이트가 들어갑니다. 플래그가 설정되면 목적지 네트워크 번호, 목적지 MAC 길이와 바이트, 홉 수, 출발지 네트워크 번호, 출발지 MAC 길이와 바이트도 들어갑니다. 로컬 네트워크 메시지는 짧고, 네트워크 간 메시지에는 전체 주소 쌍이 들어갑니다.</li>
+                <li><strong>APDU — 응용 프로토콜 데이터 단위.</strong> <code>ReadProperty</code> 요청, <code>I-Am</code> 알림, <code>SubscribeCOV</code> 메시지 같은 실제 서비스입니다. APDU의 첫 번째 바이트는 PDU 유형(확인 요청, 미확인 요청, simple-ACK, complex-ACK, 오류, 거부, 중단)과 세그먼테이션 플래그를 인코딩하며, 나머지에는 인코딩된 서비스 매개변수가 들어갑니다.</li>
+            </ul>
+
+            <svg class="bac-svg wide" viewBox="0 0 760 290" role="img"
+                 aria-labelledby="bn-frame-title bn-frame-desc">
+                <title id="bn-frame-title">통신 회선상의 Forwarded-NPDU Who-Is</title>
+                <desc id="bn-frame-desc">BBMD가 전달한 Who-Is 브로드캐스트의 프레임이 가로로 분해되어 있습니다. 왼쪽부터 IP 헤더(20바이트), 목적지 포트 47808이 있는 UDP 헤더, 강조색으로 표시된 BVLL 블록이 이어집니다. BVLL 블록에는 유형 0x81, Forwarded-NPDU 기능 0x04, 길이, 원래 출발지 IP와 포트(6바이트)가 표시됩니다. 다음은 목적지가 BACnet의 모든 네트워크 브로드캐스트 번호인 65535로 설정된 NPDU 블록입니다. 마지막은 Who-Is 서비스 본문이 있는 APDU 블록입니다. BVLL 블록 위의 괄호는 기능 바이트가 이 패킷을 원래 브로드캐스트가 아닌 전달된 패킷으로 만드는 요소임을 나타냅니다.</desc>
+
+                <!-- Headers -->
+                <text x="380" y="22" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="600" fill="var(--text-bright)">BBMD가 전달한 Who-Is</text>
+
+                <!-- IP header -->
+                <rect x="20" y="50" width="80" height="60" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="60" y="74" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-bright)">IP 헤더</text>
+                <text x="60" y="91" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">20 B</text>
+
+                <!-- UDP header -->
+                <rect x="100" y="50" width="80" height="60" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="140" y="71" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-bright)">UDP 헤더</text>
+                <text x="140" y="86" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">목적지 포트</text>
+                <text x="140" y="99" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">47808</text>
+
+                <!-- BVLL: highlighted -->
+                <rect x="180" y="50" width="240" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.8"/>
+                <text x="300" y="68" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--accent)">BVLL · 10 B</text>
+                <line x1="225" y1="74" x2="225" y2="105" stroke="var(--text-dim)" stroke-width="0.6" stroke-dasharray="2 2"/>
+                <line x1="270" y1="74" x2="270" y2="105" stroke="var(--text-dim)" stroke-width="0.6" stroke-dasharray="2 2"/>
+                <line x1="315" y1="74" x2="315" y2="105" stroke="var(--text-dim)" stroke-width="0.6" stroke-dasharray="2 2"/>
+                <text x="203" y="86" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-bright)">0x81</text>
+                <text x="203" y="99" text-anchor="middle" font-family="var(--mono)" font-size="8.5" fill="var(--text-dim)">유형</text>
+                <text x="247" y="86" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-bright)">0x04</text>
+                <text x="247" y="99" text-anchor="middle" font-family="var(--mono)" font-size="8.5" fill="var(--text-dim)">전달</text>
+                <text x="292" y="86" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-bright)">길이</text>
+                <text x="292" y="99" text-anchor="middle" font-family="var(--mono)" font-size="8.5" fill="var(--text-dim)">2 B</text>
+                <text x="367" y="86" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-bright)">원본 IP+포트</text>
+                <text x="367" y="99" text-anchor="middle" font-family="var(--mono)" font-size="8.5" fill="var(--text-dim)">6 B</text>
+
+                <!-- NPDU -->
+                <rect x="420" y="50" width="160" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>
+                <text x="500" y="68" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="600" fill="var(--accent)">NPDU</text>
+                <text x="500" y="86" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">버전 · 제어</text>
+                <text x="500" y="99" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">목적지 네트워크 65535 · 홉</text>
+
+                <!-- APDU -->
+                <rect x="580" y="50" width="160" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>
+                <text x="660" y="68" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="600" fill="var(--accent)">APDU</text>
+                <text x="660" y="86" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">미확인 요청</text>
+                <text x="660" y="99" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">Who-Is 서비스</text>
+
+                <!-- Bracket pointing at BVLL function byte -->
+                <g stroke="var(--accent)" stroke-width="1.3" fill="none">
+                    <path d="M 247 130 V 145 L 380 145 L 380 165"/>
+                </g>
+                <polygon points="376,160 380,170 384,160" fill="var(--accent)"/>
+                <text x="380" y="186" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--accent)">0x04 = Forwarded-NPDU</text>
+                <text x="380" y="201" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">BBMD가 Original-Broadcast를 포착해 이곳으로 유니캐스트함</text>
+                <text x="380" y="214" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">원래 IP+포트가 BVLL에 실리므로 출발지 정보가 유지됨</text>
+
+                <!-- Caption -->
+                <text x="380" y="258" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">중첩된 세 계층: BVLL은 패킷 종류를 표시하고</text>
+                <text x="380" y="273" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">NPDU는 네트워크 간 라우팅을 담당하며 APDU는 서비스임</text>
+            </svg>
+
+            <p>
+                정상적인 네트워크에서 대부분의 BACnet/IP 트래픽은 알려진 장치에 대한 일반 읽기·쓰기인 <code>Original-Unicast-NPDU</code> 또는 로컬 세그먼트의 Who-Is나 I-Am인 <code>Original-Broadcast-NPDU</code>입니다. Forwarded-NPDU는 BBMD가 원래라면 도달하지 못할 곳으로 브로드캐스트를 전달하고 있다는 분명한 증거입니다. 다음 절에서 이 과정을 설명합니다.
+            </p>
+
+            <h2 class="subhead" id="bbmd">BBMD — L3 경계를 넘는 브로드캐스트</h2>
+
+            <p>
+                BACnet은 Who-Is, I-Am, <code>Time-Synchronization</code> 서비스, 네트워크 브로드캐스트 주소로 보내는 <button type="button" data-gloss="change-of-value">COV</button> 알림처럼 브로드캐스트를 많이 사용합니다. 단일 서브넷에서는 문제가 없습니다. 모든 Ethernet 스위치가 UDP 브로드캐스트를 처리합니다. 그러나 두 BACnet/IP 장치가 라우터를 사이에 둔 서로 다른 IP 서브넷에 놓이는 순간 브로드캐스트 전달이 끊깁니다. 라우터는 설계상 UDP 브로드캐스트를 전달하지 않습니다. 별도의 도움이 없으면 서브넷 A에서 보낸 Who-Is는 서브넷 B의 모든 장치에 보이지 않습니다.
+            </p>
+
+            <p>
+                이 역할을 하는 것이 <strong>BBMD — BACnet/IP 브로드캐스트 관리 장치</strong>입니다. BBMD는 다른 서브넷에 있는 피어 BBMD의 IP 주소를 나열한 <strong>브로드캐스트 배포 테이블</strong>, 즉 BDT가 구성된 BACnet/IP 노드입니다. 흔히 JACE나 EBO 서버 또는 컨트롤러에서 실행되는 소프트웨어 서비스가 이 역할을 합니다. BBMD가 자기 서브넷의 로컬 브로드캐스트를 감지하면 메시지를 포착하고 원래 출발지 IP와 포트가 유지되도록 <em>Forwarded-NPDU</em> BVLL 헤더로 감싼 다음 BDT에 있는 각 피어 BBMD로 사본을 유니캐스트합니다. 각 피어 BBMD는 메시지를 <em>자기</em> 서브넷에 다시 브로드캐스트하고, 로컬 장치는 평소와 같은 방식으로 메시지를 받습니다.
+            </p>
+
+            <svg class="bac-svg wide" viewBox="0 0 760 320" role="img"
+                 aria-labelledby="bn-bbmd-title bn-bbmd-desc">
+                <title id="bn-bbmd-title">BBMD를 통해 두 서브넷을 건너는 Who-Is</title>
+                <desc id="bn-bbmd-desc">가운데 라우터를 사이에 두고 두 서브넷 패널이 있습니다. 왼쪽 서브넷은 192.168.1.0/24이며 워크스테이션, 컨트롤러, 192.168.1.10의 BBMD가 있습니다. 오른쪽 서브넷은 10.0.5.0/24이며 대상 컨트롤러와 10.0.5.10의 BBMD가 있습니다. 각 BBMD 옆에는 상대 BBMD의 IP 주소가 나열된 브로드캐스트 배포 테이블이 표시됩니다. 번호가 붙은 네 화살표가 왼쪽 워크스테이션에서 보낸 Who-Is의 경로를 보여 줍니다. 1단계는 로컬 BBMD가 포착한 왼쪽 서브넷 브로드캐스트, 2단계는 BBMD가 라우터를 넘어 오른쪽 BBMD로 Forwarded-NPDU를 유니캐스트하는 과정, 3단계는 오른쪽 BBMD가 로컬 서브넷에 다시 브로드캐스트하는 과정, 4단계는 대상 컨트롤러가 메시지를 받는 과정입니다.</desc>
+
+                <!-- Left subnet panel -->
+                <rect x="20" y="60" width="280" height="220" rx="4" fill="var(--surface-3)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="160" y="80" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">서브넷 A · 192.168.1.0/24</text>
+
+                <!-- Workstation -->
+                <rect x="40"  y="100" width="100" height="40" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="90"  y="120" text-anchor="middle" font-family="var(--mono)" font-size="10" font-weight="600" fill="var(--text-bright)">워크스테이션</text>
+                <text x="90"  y="133" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">.50</text>
+
+                <!-- BBMD (left) -->
+                <rect x="160" y="100" width="120" height="40" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.8"/>
+                <text x="220" y="120" text-anchor="middle" font-family="var(--mono)" font-size="10" font-weight="600" fill="var(--accent)">BBMD A</text>
+                <text x="220" y="133" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">192.168.1.10</text>
+
+                <!-- BDT (left) -->
+                <rect x="40"  y="180" width="240" height="60" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1"/>
+                <text x="160" y="198" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">BBMD A의 BDT</text>
+                <text x="160" y="215" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-bright)">10.0.5.10 : 47808</text>
+                <text x="160" y="231" text-anchor="middle" font-family="var(--mono)" font-size="8.5" fill="var(--text-dim)">(BBMD B의 IP)</text>
+
+                <!-- Router (middle) -->
+                <rect x="320" y="140" width="100" height="80" rx="4" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                <text x="370" y="175" text-anchor="middle" font-family="var(--mono)" font-size="12" font-weight="600" fill="var(--text-bright)">라우터</text>
+                <text x="370" y="195" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">브로드캐스트 폐기</text>
+
+                <!-- Right subnet panel -->
+                <rect x="440" y="60" width="300" height="220" rx="4" fill="var(--surface-3)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="590" y="80" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">서브넷 B · 10.0.5.0/24</text>
+
+                <!-- BBMD (right) -->
+                <rect x="460" y="100" width="120" height="40" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.8"/>
+                <text x="520" y="120" text-anchor="middle" font-family="var(--mono)" font-size="10" font-weight="600" fill="var(--accent)">BBMD B</text>
+                <text x="520" y="133" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">10.0.5.10</text>
+
+                <!-- Target controller (right) -->
+                <rect x="600" y="100" width="120" height="40" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="660" y="120" text-anchor="middle" font-family="var(--mono)" font-size="10" font-weight="600" fill="var(--text-bright)">VAV-101</text>
+                <text x="660" y="133" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">10.0.5.42</text>
+
+                <!-- BDT (right) -->
+                <rect x="460" y="180" width="260" height="60" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1"/>
+                <text x="590" y="198" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">BBMD B의 BDT</text>
+                <text x="590" y="215" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-bright)">192.168.1.10 : 47808</text>
+                <text x="590" y="231" text-anchor="middle" font-family="var(--mono)" font-size="8.5" fill="var(--text-dim)">(BBMD A의 IP)</text>
+
+                <!-- Step 1: workstation broadcast on subnet A -->
+                <line x1="90" y1="100" x2="160" y2="100" stroke="var(--blue)" stroke-width="2"/>
+                <polygon points="152,96 160,100 152,104" fill="var(--blue)"/>
+                <text x="125" y="90" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--blue)">1</text>
+
+                <!-- Step 2: unicast Forwarded-NPDU across router. Label is
+                     just "Forwarded-NPDU" — the parenthetical "(unicast)"
+                     was wide enough that the BBMD A and B corners bracketed
+                     it on both sides; the prose and the caption below
+                     already make the unicast aspect explicit. -->
+                <line x1="280" y1="120" x2="460" y2="120" stroke="var(--blue)" stroke-width="2"/>
+                <polygon points="452,116 460,120 452,124" fill="var(--blue)"/>
+                <text x="370" y="92" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--blue)">2 · Forwarded-NPDU</text>
+
+                <!-- Step 3: BBMD B re-broadcasts -->
+                <line x1="580" y1="120" x2="600" y2="120" stroke="var(--blue)" stroke-width="2"/>
+                <polygon points="592,116 600,120 592,124" fill="var(--blue)"/>
+                <text x="590" y="92" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--blue)">3 · 서브넷 B에 재브로드캐스트</text>
+
+                <!-- Step 4: target receives + replies (I-Am path implied)  -->
+                <text x="644" y="166" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--blue-cool)">4 · 대상이 Who-Is 수신</text>
+
+                <!-- Caption -->
+                <text x="380" y="302" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">로컬 브로드캐스트 → 라우터를 넘는 유니캐스트 → 반대편의 로컬 브로드캐스트</text>
+            </svg>
+
+            <p>
+                BBMD 두 개가 가장 단순한 사례입니다. 실제 설치에는 3개, 4개, 또는 12개가 있을 수 있습니다. BACnet/IP 장치가 있고 네트워크 간 브로드캐스트에 참여하려는 모든 서브넷에는 BBMD 하나가 필요하며, 각 BBMD의 BDT에는 나머지 모든 BBMD의 IP가 들어가야 합니다. BDT는 대칭을 유지해야 합니다. BBMD A의 BDT에 BBMD B가 있지만 BBMD B의 BDT에 BBMD A가 없으면 A에서 보낸 브로드캐스트는 B에 도달하지만 반대 방향은 아무런 오류 없이 실패합니다. 비대칭 BDT는 현장에서 가장 흔한 BBMD 구성 오류 중 하나입니다.
+            </p>
+
+            <p>
+                서브넷 하나에는 BBMD 하나만 있어야 합니다. 같은 서브넷에 BBMD가 두 개 있으면 브로드캐스트 루프가 생깁니다. 피어에서 도착한 모든 Forwarded-NPDU를 두 BBMD가 모두 다시 브로드캐스트하고, 각 브로드캐스트를 상대 BBMD가 포착해 다시 전달합니다. 이 상태는 피어 수에 따라 커지는 조용하지만 지속적인 스톰을 만들며, 보통 Wireshark 캡처에서 중복 프레임이 보인 뒤에야 발견됩니다.
+            </p>
+
+            <h2 class="subhead" id="fdr">외부 장치 등록 — 외부에서 참여하기</h2>
+
+            <p>
+                BBMD는 각자 BBMD가 있는 서브넷 <em>사이</em>의 브로드캐스트를 처리합니다. 그렇다면 게스트 Wi-Fi의 노트북, VPN 터널로 접속한 엔지니어링 워크스테이션, 다른 건물의 원격 모니터링 서버처럼 로컬 BBMD가 <em>없는</em> 서브넷의 장치는 어떻게 해야 할까요? 해당 서브넷에서는 아무도 BACnet을 사용하지 않으므로 로컬 브로드캐스트를 들을 수 없고, 전달을 맡길 로컬 BBMD도 없습니다.
+            </p>
+
+            <p>
+                해답은 <strong>외부 장치 등록</strong>입니다. 원격 장치는 BAS 네트워크에서 접근할 수 있는 BBMD로 유니캐스트인 <code>Register-Foreign-Device</code> BVLL 메시지를 보냅니다. 요청에는 등록을 유효하게 유지할 시간(초)인 <em>Time-to-Live</em>가 들어갑니다. BBMD는 원격 장치의 IP, 포트, TTL을 포함한 항목을 자기 <strong>FDT — 외부 장치 테이블</strong>에 추가합니다. 그 순간부터 BBMD가 로컬에 재브로드캐스트할 모든 브로드캐스트가 외부 장치에도 유니캐스트됩니다. 원격 장치는 자체 BBMD 없이도 로컬에 연결된 것처럼 BAS 네트워크의 브로드캐스트를 볼 수 있습니다.
+            </p>
+
+            <svg class="bac-svg wide" viewBox="0 0 760 280" role="img"
+                 aria-labelledby="bn-fdr-title bn-fdr-desc">
+                <title id="bn-fdr-title">BBMD를 통한 외부 장치 등록</title>
+                <desc id="bn-fdr-desc">왼쪽에는 원격 엔지니어링 워크스테이션이 있고 오른쪽에는 BBMD와 컨트롤러가 있는 BAS 서브넷이 있습니다. 워크스테이션은 WAN을 통해 BBMD로 유니캐스트인 Register-Foreign-Device 요청을 보냅니다. BBMD의 외부 장치 테이블에 워크스테이션 IP, 포트 47808, 유효 시간 600초가 포함된 항목이 추가됩니다. 그 뒤부터 BBMD가 로컬에 재브로드캐스트할 브로드캐스트도 워크스테이션으로 유니캐스트됩니다. 워크스테이션은 로컬 서브넷에 있지 않아도 브로드캐스트를 볼 수 있습니다.</desc>
+
+                <!-- Remote workstation (left) -->
+                <rect x="20" y="100" width="160" height="80" rx="4" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                <text x="100" y="125" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="600" fill="var(--text-bright)">원격 워크스테이션</text>
+                <text x="100" y="143" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">203.0.113.55</text>
+                <text x="100" y="158" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">(VPN, 로컬 BBMD 없음)</text>
+
+                <!-- WAN cloud / divider — sits between the two arrows so it
+                     doesn't obscure either label. -->
+                <ellipse cx="270" cy="143" rx="42" ry="12" fill="var(--surface-3)" stroke="var(--text-dim)" stroke-width="1.2" stroke-dasharray="4 3"/>
+                <text x="270" y="147" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">WAN</text>
+
+                <!-- BAS subnet panel -->
+                <rect x="360" y="60" width="380" height="180" rx="4" fill="var(--surface-3)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="550" y="80" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">BAS 서브넷 · 192.168.1.0/24</text>
+
+                <!-- BBMD -->
+                <rect x="380" y="100" width="130" height="50" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.8"/>
+                <text x="445" y="122" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="600" fill="var(--accent)">BBMD</text>
+                <text x="445" y="138" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">192.168.1.10</text>
+
+                <!-- FDT box -->
+                <rect x="380" y="170" width="220" height="58" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1"/>
+                <text x="490" y="188" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">BBMD의 FDT</text>
+                <text x="490" y="205" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-bright)">203.0.113.55 : 47808</text>
+                <text x="490" y="220" text-anchor="middle" font-family="var(--mono)" font-size="8.5" fill="var(--text-dim)">TTL 600 s</text>
+
+                <!-- Controller -->
+                <rect x="620" y="100" width="100" height="50" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="670" y="122" text-anchor="middle" font-family="var(--mono)" font-size="10" font-weight="600" fill="var(--text-bright)">VAV-101</text>
+                <text x="670" y="138" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">192.168.1.42</text>
+
+                <!-- Registration arrow (workstation -> BBMD) -->
+                <line x1="180" y1="125" x2="378" y2="125" stroke="var(--accent)" stroke-width="2"/>
+                <polygon points="370,121 378,125 370,129" fill="var(--accent)"/>
+                <text x="270" y="116" text-anchor="middle" font-family="var(--mono)" font-size="10" font-weight="700" fill="var(--accent)">1 · Register-Foreign-Device</text>
+
+                <!-- Forwarded broadcast arrow (BBMD -> workstation). Label
+                     is just "forwarded broadcasts" — the longer "…to
+                     workstation" variant ran into the FDT box's left edge
+                     (label right edge x≈387 vs FDT box at x=380), and the
+                     dashed arrow already carries the direction. -->
+                <line x1="378" y1="160" x2="180" y2="160" stroke="var(--blue-cool)" stroke-width="1.8" stroke-dasharray="5 4"/>
+                <polygon points="188,156 180,160 188,164" fill="var(--blue-cool)"/>
+                <text x="270" y="192" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--blue-cool)">2 · 전달된 브로드캐스트</text>
+
+                <!-- Caption -->
+                <text x="380" y="262" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">TTL로 등록 · 만료 전 재등록 · BBMD가 계속 전달</text>
+            </svg>
+
+            <p>
+                주의할 점은 TTL입니다. 외부 장치가 이전 TTL이 만료되기 전에 새 <code>Register-Foreign-Device</code>를 보내지 못하면 BBMD가 아무 알림 없이 FDT 항목을 삭제하고 브로드캐스트가 더 이상 도착하지 않습니다. 오류나 알림 없이 원격 도구의 검색만 멈춥니다. 대부분의 워크스테이션과 엔지니어링 도구는 자동으로 재등록하지만 실험실에서 만든 클라이언트와 임시 스크립트는 그렇지 않은 경우가 많습니다. 잊어버린 TTL은 "어제는 이 장치가 보였는데 오늘은 보이지 않는다"라는 문제의 대표적인 원인입니다.
+            </p>
+
+            <h2 class="subhead" id="hex-blob">EBO가 표시하는 16진수 문자열 읽기</h2>
+
+            <p>
+                EBO를 비롯한 여러 BAS 워크스테이션은 검색한 BACnet/IP 장치 주소를 점으로 구분한 십진수 대신 16진수 문자열로 표시합니다. 이 문자열은 장치의 MAC, 즉 4바이트 IPv4 주소와 선택적으로 뒤따르는 2바이트 UDP 포트입니다. 다음과 같이 디코딩합니다.
+            </p>
+
+            <svg class="bac-svg" viewBox="0 0 620 260" role="img"
+                 aria-labelledby="bn-hex-title bn-hex-desc">
+                <title id="bn-hex-title">C0A80164BAC0을 IP와 포트로 디코딩</title>
+                <desc id="bn-hex-desc">위쪽에 12자리 16진수 문자열 C0A80164BAC0이 있습니다. 앞의 여덟 자리는 강조색으로 묶인 IP 주소 바이트이고, 뒤의 네 자리는 다른 색으로 묶인 UDP 포트 바이트입니다. 아래에서 첫 번째 그룹은 192.168.1.100으로 디코딩되며, 바이트별로 C0은 192, A8은 168, 01은 1, 64는 100이 됩니다. 두 번째 그룹은 포트 47808, 즉 16진수 0xBAC0으로 디코딩됩니다. 8자리 16진수 문자열에는 IP만, 12자리에는 포트까지 들어간다는 설명이 있습니다.</desc>
+
+                <!-- Big hex string -->
+                <text x="310" y="32" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)">EBO 검색 결과</text>
+                <g font-family="var(--mono)" font-size="22" font-weight="700" text-anchor="middle">
+                    <text x="170" y="68"><tspan fill="var(--accent)">C0 A8 01 64</tspan></text>
+                    <text x="430" y="68"><tspan fill="var(--blue)">BA C0</tspan></text>
+                </g>
+
+                <!-- IP bytes decoding -->
+                <g font-family="var(--mono)" font-size="11">
+                    <rect x="60"  y="108" width="50" height="34" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.4"/>
+                    <text x="85"  y="129" text-anchor="middle" font-weight="700" fill="var(--accent)">C0</text>
+                    <text x="85"  y="160" text-anchor="middle" fill="var(--text-bright)">192</text>
+
+                    <rect x="120" y="108" width="50" height="34" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.4"/>
+                    <text x="145" y="129" text-anchor="middle" font-weight="700" fill="var(--accent)">A8</text>
+                    <text x="145" y="160" text-anchor="middle" fill="var(--text-bright)">168</text>
+
+                    <rect x="180" y="108" width="50" height="34" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.4"/>
+                    <text x="205" y="129" text-anchor="middle" font-weight="700" fill="var(--accent)">01</text>
+                    <text x="205" y="160" text-anchor="middle" fill="var(--text-bright)">1</text>
+
+                    <rect x="240" y="108" width="50" height="34" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.4"/>
+                    <text x="265" y="129" text-anchor="middle" font-weight="700" fill="var(--accent)">64</text>
+                    <text x="265" y="160" text-anchor="middle" fill="var(--text-bright)">100</text>
+                </g>
+                <text x="175" y="184" text-anchor="middle" font-family="var(--mono)" font-size="12" font-weight="700" fill="var(--accent)">192.168.1.100</text>
+                <text x="175" y="200" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">IPv4 주소 (4바이트)</text>
+
+                <!-- Port bytes decoding -->
+                <g font-family="var(--mono)" font-size="11">
+                    <rect x="370" y="108" width="50" height="34" rx="3" fill="var(--surface)" stroke="var(--blue)" stroke-width="1.4"/>
+                    <text x="395" y="129" text-anchor="middle" font-weight="700" fill="var(--blue)">BA</text>
+
+                    <rect x="430" y="108" width="50" height="34" rx="3" fill="var(--surface)" stroke="var(--blue)" stroke-width="1.4"/>
+                    <text x="455" y="129" text-anchor="middle" font-weight="700" fill="var(--blue)">C0</text>
+                </g>
+                <text x="425" y="184" text-anchor="middle" font-family="var(--mono)" font-size="12" font-weight="700" fill="var(--blue)">포트 47808</text>
+                <text x="425" y="200" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">0xBAC0 — 기본 BACnet/IP 포트</text>
+
+                <!-- Caption -->
+                <text x="310" y="234" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">16진수 8자리 = IP만 · 12자리 = IP + 포트 · 기본 포트 접미사는 보통 생략</text>
+            </svg>
+
+            <p>
+                표시되는 16진수에서는 기본 포트(<code>0xBAC0</code> = 47808)를 거의 항상 생략하므로 8자리 문자열이 정상입니다. <code>BAC0</code>으로 끝나는 12자리 문자열은 기본 포트의 IP를 긴 형식으로 쓴 것입니다. 다른 값으로 끝나는 12자리 문자열, 예를 들어 <code>BAC1</code> = 47809는 장치가 기본값이 아닌 BACnet/IP 포트를 사용한다는 뜻입니다. 보통 ASHRAE 135 부속서 J의 순차 포트 관례를 사용해 같은 호스트에 두 번째 논리 BACnet/IP 네트워크를 구성한 경우입니다.
+            </p>
+
+            <p>
+                <a href="/ko/tools/bacnet-ip-converter.html">BACnet/IP 16진수 변환기</a> 도구는 같은 디코딩을 양방향으로 수행합니다. EBO 검색 대화상자의 16진수 문자열을 붙여 넣어 IP와 포트를 확인하거나, IP와 포트에서 구성 필드에 붙여 넣을 16진수 문자열을 만들 수 있습니다. 계산 자체는 간단하지만 수작업 때문에 작업 흐름을 끊지 않도록 마련된 도구입니다.
+            </p>
+
+            <h2 class="subhead">검색이 아무 오류 없이 실패할 때</h2>
+
+            <p>
+                BACnet 브로드캐스트에는 "전달하지 못함"이라는 피드백이 없습니다. 검색이 동작하지 않을 때 증상은 거의 항상 "보여야 할 장치가 보이지 않는다"이며 검색할 오류 메시지도 없습니다. 현장에서 자주 발생하는 대략적인 순서대로 다음 항목을 확인하십시오.
+            </p>
+
+            <ul>
+                <li><strong>원격 서브넷에 BBMD가 없음.</strong> 대상 장치가 BBMD를 전혀 구성하지 않은 서브넷에 있습니다. 해당 서브넷의 로컬 장치끼리는 잘 보이지만 네트워크 간 검색은 도달하지 않습니다. 해당 서브넷에 BBMD를 구성하고 모든 피어의 BDT에 추가하십시오.</li>
+                <li><strong>비대칭 BDT.</strong> BBMD A에는 B가 있지만 B의 BDT에는 A가 없습니다. A의 검색은 B에 도달하지만 I-Am 응답은 돌아오지 못합니다. BDT 항목은 대칭으로 구성해야 하며 모든 BBMD의 BDT에 나머지 모든 BBMD가 필요합니다.</li>
+                <li><strong>방화벽이 UDP 47808을 차단함.</strong> BBMD 호스트의 방화벽, 라우터의 네트워크 ACL, 기업 경계 필터 같은 방화벽 규칙이 서브넷 사이의 UDP 47808을 폐기합니다. BBMD는 올바르게 구성되었지만 Forwarded-NPDU가 전혀 도착하지 않는 것이 증상입니다. Wireshark 캡처 또는 두 BBMD 사이의 UDP 47808 통신 확인으로 검증하십시오.</li>
+                <li><strong>네트워크 번호 충돌.</strong> 함께 라우팅되는 두 BACnet 네트워크 세그먼트가 같은 네트워크 번호를 사용합니다. 네트워크 계층이 구분할 수 없어 라우터와 BBMD가 메시지를 폐기하거나 잘못된 방향으로 보냅니다. 인터네트워크의 모든 BACnet 네트워크에는 고유한 번호가 필요합니다.</li>
+                <li><strong>BBMD가 잘못된 VLAN에 있음.</strong> BBMD의 IP가 서비스해야 할 BACnet/IP 장치와 다른 VLAN에 있습니다. BBMD가 실제 브로드캐스트 도메인에 없으므로 아무것도 포착하지 못합니다. BBMD의 NIC를 BAS VLAN에 연결하거나 해당 VLAN을 트렁크로 전달하는 네트워크 구성이 필요합니다.</li>
+                <li><strong>FDR TTL 만료.</strong> 외부 장치로 등록된 워크스테이션이 <code>Register-Foreign-Device</code>를 충분히 자주 다시 보내지 않아 BBMD의 FDT 항목이 만료되었습니다. 대부분의 엔지니어링 도구는 자동으로 처리하지만 사용자 정의 클라이언트는 그렇지 않을 수 있습니다. 재연결 직후에는 잠시 검색되다가 멈추는 것이 증상입니다.</li>
+                <li><strong>한 서브넷에 BBMD가 두 개 있음.</strong> 이미 BBMD가 있는 서브넷에 두 번째 BBMD를 추가했습니다. 피어에서 도착한 모든 Forwarded-NPDU를 두 장치가 모두 재브로드캐스트하고, 그 재브로드캐스트를 상대 BBMD가 포착해 다시 전달합니다. 느리지만 비용이 큰 루프입니다. 서브넷당 BBMD 하나가 원칙입니다.</li>
+                <li><strong>세그먼트 응답의 Max APDU 불일치.</strong> 클라이언트가 APDU 하나에 담기에는 값이 너무 큰 속성을 요청하고 장치가 세그먼트 응답을 보내려 하지만, 세그먼테이션이 비활성화되어 있거나 클라이언트의 <code>Max APDU</code>가 장치가 I-Am에서 알린 값과 일치하지 않습니다. 통신은 응답 없이 끝납니다. 일상 업무에서는 드물지만 Device 객체에서 매우 큰 객체-속성 목록을 읽을 때 흔합니다.</li>
+            </ul>
+
+            <h2 class="subhead">이 페이지에서 다루지 않은 내용</h2>
+
+            <p>
+                이 사이트의 BACnet 학습 자료는 대부분의 BMS 기술자가 포인트 목록을 읽고, 요청을 구성하고, 라우터를 넘어 메시지를 라우팅하며, 장치가 검색 결과에 나타나지 않는 원인을 추론하는 데 필요한 내용을 다룹니다. 다음 내용은 의도적으로 범위에서 제외했습니다.
+            </p>
+
+            <ul>
+                <li><strong>통신 회선상의 MS/TP.</strong> 토큰 순환, 마스터 토큰 전달 방식, <code>Max_Master</code>와 <code>Max_Info_Frames</code>, 보드레이트, 세그먼트별 케이블 길이와 장치 수 제한입니다. 이제 별도의 <a href="/ko/education/bacnet-mstp.html">BACnet MS/TP</a> 페이지에서 다룹니다.</li>
+                <li><strong>긴 메시지의 세그먼테이션.</strong> APDU가 한 프레임에 담기에는 너무 클 때 세그먼테이션으로 나누고 수신자가 다시 조립하는 방법입니다. 위의 검색 실패 목록에서 간단히 언급했지만 자세한 설명은 별도 페이지에 적합합니다.</li>
+                <li><strong>BACnet/SC — Secure Connect.</strong> 새로운 TLS-WebSocket 전송 방식입니다. 프레이밍과 검색 방식이 다르며 브로드캐스트 없이 허브 앤드 스포크 구조를 사용합니다. BAS 업무에서 충분히 일반화되면 별도 페이지로 다룰 가치가 있습니다.</li>
+                <li><strong>패킷 캡처 기반 문제 해결.</strong> Wireshark나 Yabe를 사용해 캡처의 Who-Is를 확인하고, Forwarded-NPDU를 식별하며, Abort 또는 Reject PDU의 의미를 해석하는 과정입니다. 캡처가 근본 원인을 찾는 가장 빠른 방법인 경우가 많으므로 별도로 다룰 가치가 있습니다.</li>
+                <li><strong>경보와 이벤트 알림.</strong> 확인·미확인 경보 서비스, Notification Class 객체, 수신자 목록, 이벤트를 위한 <button type="button" data-gloss="change-of-value">COV</button> 방식의 푸시입니다. 아날로그·바이너리·다중 상태 핵심 영역을 제외하면 BACnet 객체 모델에서 가장 큰 영역이므로 별도 페이지가 필요합니다.</li>
+                <li><strong>제조사 프로파일 차이.</strong> 같은 객체 유형을 지원한다고 알리는 두 BACnet 장치라도 실제로는 매우 다른 속성 집합과 명령 동작을 노출할 수 있습니다. 제조사별 참고 사항은 일반 학습 페이지에 적합하지 않으며 향후 Niagara, EBO 등의 플랫폼별 페이지에서 다뤄야 합니다.</li>
+            </ul>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/bacnet/', label: 'BACnet 참조 허브'},
+        tools: [
+            {href: '/ko/tools/bacnet-ip-converter.html', label: 'BACnet/IP 16진수 변환기'},
+            {href: '/ko/tools/bacnet-objects.html', label: 'BACnet 객체 참조'},
+            {href: '/ko/tools/bacnet-vendor-ids.html', label: 'BACnet 제조사 ID'}
+        ],
+        lessons: [
+            {href: '/ko/education/bacnet-basics.html', label: 'BACnet 기초'},
+            {href: '/ko/education/bacnet-services.html', label: 'BACnet 서비스'},
+            {href: '/ko/education/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/bacnet-networking.html', label: 'BACnet 네트워킹'},
+            {href: '/ko/practice/troubleshooting.html', label: '문제 해결'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 학습 자료로 돌아가기</a>
+
+</main>
+{% endblock %}

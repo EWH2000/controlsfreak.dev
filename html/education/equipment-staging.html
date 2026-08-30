@@ -6,9 +6,28 @@ nav: education
 category: fundamentals
 pairedQuiz: https://controlsfreak.dev/practice/equipment-staging.html
 keywords: lead lag stage up down rotation runtime hysteresis
+pageMessages:
+  pump:
+    label: 'Pump {number}'
+    running: Running
+    standby: Standby
+    one: pump
+    many: pumps
+  status:
+    held: 'Stage change held — minimum stage time ({seconds} s)'
+    adding: 'Adding a pump — stage delay {seconds} s'
+    dropping: 'Dropping a pump — stage delay {seconds} s'
+    steady: '{count} {noun} running — {condition}'
+    nearCapacity: demand near capacity
+    loadSteady: load steady
+  rotation:
+    lead: Lead
+    hour: h
+    anecdote: >-
+      Twelve-plus weeks of fixed-lead operation and one pump has logged over two thousand hours while the other two have logged none. The lead wears out — bearings, seals, the parts that only age under running — while the standby pumps age sitting still, bearings taking a set and seals drying out. The day the lead finally fails, the pump that takes over has never turned, and you find out whether it works at the worst possible time. Switch to <strong>Runtime-equalized</strong> and keep stepping: the sequence hands the lead to the lowest-hour pump each week and the bars converge. Three pumps that wear as one — that is the whole point of rotation.
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -572,8 +591,8 @@ keywords: lead lag stage up down rotation runtime hysteresis
             cell.className = 'es-pump';
             cell.setAttribute('data-on', 'false');
             cell.innerHTML =
-                '<div class="num">Pump ' + (i + 1) + '</div>' +
-                '<div class="state">Standby</div>';
+                '<div class="num">' + CFI18n.page('pump.label', { number: i + 1 }) + '</div>' +
+                '<div class="state">' + CFI18n.page('pump.standby') + '</div>';
             pumpsWrap.appendChild(cell);
             pumpCells.push({ cell: cell, stateEl: cell.querySelector('.state') });
         }
@@ -632,7 +651,7 @@ keywords: lead lag stage up down rotation runtime hysteresis
             for (let i = 0; i < 3; i++) {
                 const on = i < state.running;
                 pumpCells[i].cell.setAttribute('data-on', on ? 'true' : 'false');
-                pumpCells[i].stateEl.textContent = on ? 'Running' : 'Standby';
+                pumpCells[i].stateEl.textContent = CFI18n.page(on ? 'pump.running' : 'pump.standby');
             }
 
             const want = wantedDirection();
@@ -640,18 +659,22 @@ keywords: lead lag stage up down rotation runtime hysteresis
             let kind, msg;
             if (want !== 0 && locked) {
                 kind = 'held';
-                msg = 'Stage change held — minimum stage time ('
-                    + ((state.lockUntil - now) / 1000).toFixed(1) + ' s)';
+                msg = CFI18n.page('status.held', {
+                    seconds: ((state.lockUntil - now) / 1000).toFixed(1)
+                });
             } else if (state.pending) {
                 kind = 'pending';
                 const left = ((state.pending.readyAt - now) / 1000).toFixed(1);
-                msg = (state.pending.dir > 0 ? 'Adding a pump' : 'Dropping a pump')
-                    + ' — stage delay ' + left + ' s';
+                msg = CFI18n.page(state.pending.dir > 0 ? 'status.adding' : 'status.dropping', {
+                    seconds: left
+                });
             } else {
                 kind = 'steady';
-                const noun = state.running === 1 ? ' pump' : ' pumps';
-                msg = state.running + noun + ' running — '
-                    + (state.demand > capPct ? 'demand near capacity' : 'load steady');
+                msg = CFI18n.page('status.steady', {
+                    count: state.running,
+                    noun: CFI18n.page(state.running === 1 ? 'pump.one' : 'pump.many'),
+                    condition: CFI18n.page(state.demand > capPct ? 'status.nearCapacity' : 'status.loadSteady')
+                });
             }
             statusEl.setAttribute('data-kind', kind);
             statusEl.textContent = msg;
@@ -697,17 +720,7 @@ keywords: lead lag stage up down rotation runtime hysteresis
 
         const WEEK_HOURS = 168;
 
-        const ANECDOTE =
-            'Twelve-plus weeks of fixed-lead operation and one pump has logged ' +
-            'over two thousand hours while the other two have logged none. The ' +
-            'lead wears out — bearings, seals, the parts that only age under ' +
-            'running — while the standby pumps age sitting still, bearings taking ' +
-            'a set and seals drying out. The day the lead finally fails, the pump ' +
-            'that takes over has never turned, and you find out whether it works ' +
-            'at the worst possible time. Switch to <strong>Runtime-equalized</strong> ' +
-            'and keep stepping: the sequence hands the lead to the lowest-hour pump ' +
-            'each week and the bars converge. Three pumps that wear as one — that ' +
-            'is the whole point of rotation.';
+        const ANECDOTE = CFI18n.page('rotation.anecdote');
 
         const strategyFixed = document.getElementById('es-w2-fixed');
         const strategyEqual = document.getElementById('es-w2-equal');
@@ -727,9 +740,9 @@ keywords: lead lag stage up down rotation runtime hysteresis
             cell.className = 'es-runtime';
             cell.setAttribute('data-lead', 'false');
             cell.innerHTML =
-                '<div class="head"><span class="num">Pump ' + (i + 1) + '</span>' +
-                '<span class="lead-tag">Lead</span></div>' +
-                '<div class="hrs"><span class="h">0</span> <span class="u">h</span></div>' +
+                '<div class="head"><span class="num">' + CFI18n.page('pump.label', { number: i + 1 }) + '</span>' +
+                '<span class="lead-tag">' + CFI18n.page('rotation.lead') + '</span></div>' +
+                '<div class="hrs"><span class="h">0</span> <span class="u">' + CFI18n.page('rotation.hour') + '</span></div>' +
                 '<div class="bar"><span></span></div>';
             pumpsWrap.appendChild(cell);
             cells.push({

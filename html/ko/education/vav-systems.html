@@ -1,0 +1,557 @@
+---
+title: VAV 시스템 — controlsfreak.dev
+description: 하나의 공기조화기가 여러 존을 지원하는 방식과 VAV 박스의 댐퍼·풍량 검출 링·압력 독립 제어·최소 풍량 재열·코일 하한을 설명합니다.
+canonical: https://controlsfreak.dev/ko/education/vav-systems.html
+nav: education
+category: forced-air
+pairedQuiz: https://controlsfreak.dev/ko/practice/vav-systems.html
+keywords: VAV 박스 말단 박스 변풍량 댐퍼 풍량 검출 링 풍량 검출 십자관 속도압 K 계수 압력 독립 최소 최대 CFM 재열 바이패스 덤프 존
+sourceContentHash: 1f2d944ea1eb9c37da9e79eacb0aee4611c8adcde68b0b5b768d748cf22ef9a0
+sourceMessageHash: 0a3bd182b638cc9c8c812000193f3bdfa0064b42f91ebf029341866a4fb8a851
+pageMessages:
+  widget:
+    reheat:
+      open: 열림
+      'off': 닫힘
+    stages:
+      count: "2개 중 {count}개"
+      held: 투입 보류
+    coil:
+      protected: 보호됨
+      idle: 정지
+      ok: 정상
+      thin: 여유 부족
+      starving: 심각한 풍량 부족
+    status:
+      starving: "{value} CFM/ton에서 단수 운전 — 흡입압력이 떨어지고 코일이 결빙됩니다. 이 설계에는 정지 조건이 없습니다."
+      held: 풍량이 단수 운전 하한 미만 — 인터록이 압축기 운전을 차단합니다. 존은 기다리지만 코일은 보호됩니다.
+      reheat: 존 과냉 — 풍량은 최소값을 유지하고 재열이 실내 부하를 담당합니다.
+      satisfied: 존 요구 충족 — 박스가 환기용 최소 풍량으로 운전합니다.
+      tracking: 박스가 존 요구를 추종 — 코일 풍량이 충분합니다.
+    anecdote: >-
+      이 프리셋은 제가 아직도 관리 중인 공기조화기 두 대의 실제 사례입니다. 제가 맡기 전에 폐기된 냉동기를 현장에서 두 개의 DX 회로로 개조해 만든 임시 플랜트가 대형 VAV 유닛 두 대를 운전하고 있었습니다. 이 유닛이 연결된 건물의 박스에는 바이패스도, 덤프 존도, 풍량 인터록도 없었고 저압 차단도 어디에도 없었습니다. 물리 스위치도, 로직 한 줄도 없었지만 흡입압력 값은 제어기에 그대로 들어오고 있었습니다. 온화한 날에는 존 요구가 충족되며 박스 풍량이 내려갔고, 코일을 통과하는 공기가 부족해졌습니다. 기계팀은 완전히 결빙된 코일을 발견했고, 제어기 자체 트렌드에는 매일 오후 흡입압력이 급락하는 모습이 남아 있었습니다. 단수는 헌팅하며 단주기 운전했고 건물은 이 문제로 압축기를 계속 잃고 있었습니다. 로직 상태가 너무 나빠 제가 다시 작성했습니다. 덕트 보수가 이뤄질 때까지는 임시방편도 제 몫입니다. 모든 박스를 최대 풍량에 고정하고, 이름만 VAV일 뿐 소프트웨어에서는 정풍량으로 운전하며, 회기 온도에 따라 단수 운전을 보류하고, 과냉된 존이 재열로 온도를 회복할 수 있도록 7월에도 보일러를 운전합니다. 매우 비효율적이라는 점은 알고 있습니다. 그러나 근본적인 해결책이 적용될 때까지 압축기를 보호하고 재실자의 쾌적성을 유지하는 것이 지금 해야 할 일입니다.
+---
+{% extends "html/education/vav-systems.html" %}
+
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">교육 · VAV 시스템</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">VAV 시스템 <span class="tool-tag">공기 시스템</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                <a href="/ko/education/air-unit-identification.html">이전 페이지</a>는 유닛에서 멀어지는 방향으로 급기 덕트를 따라가면
+                액추에이터가 달린 박스를 만나며, 그 박스가 실제로 하는 일은 별도 페이지에서 설명하겠다고 마쳤습니다. 바로 이 페이지가
+                그 내용입니다. 처음부터 끝까지 한 가지 질문에 답합니다. <em>요구가 서로 다른 30개 존을 하나의 공기조화기가 어떻게
+                지원하며, 존에서 요구가 발생할 때 VAV 박스는 실제로 무엇을 할까요?</em>
+            </p>
+
+            <div class="callout">
+                <p style="line-height:1.7;">
+                    이 페이지는 회기, 혼합, 필터, 코일, 팬으로 이어지는 공기조화기 자체의 경로를 이미 알고 있다고 가정합니다.
+                    이 경로는 <a href="/ko/education/air-handlers.html#air-path">이 장의 첫 페이지</a>에서 설명합니다. 덕트에 공기를
+                    공급하는 유닛이 실제로 VAV 방식인지 판단하는 세 가지 기준은 드라이브, 말단 박스<em>와</em>
+                    <button type="button" data-gloss="duct-static">덕트 정압 설정값</button>이며, 이전 페이지의
+                    <a href="/ko/education/air-unit-identification.html#the-lineup">CV 또는 VAV 판단 설명</a>에서 다룹니다. 두 주제 중
+                    하나라도 익숙하지 않다면 해당 페이지부터 읽으세요.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · The shape ───────────────── -->
+
+            <h2 class="subhead" id="one-to-thirty">하나의 주 덕트, 30개의 요구</h2>
+
+            <p>
+                먼저 문제부터 살펴보겠습니다. 유닛은 하나이고 급기 온도도 하나이지만, 30개 존의 요구는 한 번도 같지 않습니다.
+                오후 햇볕에 달아오르는 모서리 사무실, 두 문 건너편의 사람이 가득 찬 회의실, 건물이 완공된 뒤 햇빛을 받은 적 없는
+                북측 벽이 함께 있습니다. 정풍량 시스템은 이 차이를 무시하는 방식으로 해결합니다. 밸런싱할 때 각 존의 풍량을 고정하고,
+                온도조절기와 가장 가까운 사람이 온도 다툼에서 이깁니다. 변풍량(VAV) 시스템은 다르게 해결합니다. 각 존에 자체 조절
+                장치를 부여합니다.
+            </p>
+
+            <p>
+                핵심은 무엇이 일정하게 유지되는지에 있습니다. 공기조화기는 모든 존에 공급하는 급기를 하루 종일 약
+                <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span>로 차갑고 일정하게 유지하며, 각 존의 박스가
+                해당 공기를 <em>얼마나 많이</em> 공급받을지 결정합니다. 부하가 크면 차가운 공기를 더 많이, 부하가 작으면 더 적게
+                공급합니다. 박스는 공기의 상태를 바꾸지 않고 양만 바꿉니다. <strong>VAV 박스는 온도가 아니라 풍량을 조절합니다</strong>.
+                서로 다른 30개 부하에 하나의 급기 온도와 30개의 서로 다른 풍량이 적용됩니다.
+            </p>
+
+            <p>
+                이 설명이 익숙하게 들리는 것은 당연합니다. 유체만 바꾼 <a href="/ko/education/load-piping.html">부하 배관</a>의
+                이야기이기 때문입니다. 그곳에서는 모든 코일에 2방 밸브를 달아 수량을 조절하고 플랜트가 이에 대응했습니다. 여기서는
+                모든 존에 박스를 설치해 풍량을 조절합니다. 부하가 조절하면 상류의 무언가가 이에 대응해야 합니다. 반대편에서 대응하는
+                역할은 <a href="/ko/education/duct-static-control.html">덕트 정압 제어</a>가 맡으며, 이는 밸브에
+                <a href="/ko/education/pump-control.html">펌프 제어</a>가 대응하는 것과 같습니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 110 540 240" role="img" aria-labelledby="vav-d1-title vav-d1-desc" font-family="var(--mono)">
+                <title id="vav-d1-title">여러 VAV 박스에 공기를 공급하는 하나의 공기조화기</title>
+                <desc id="vav-d1-desc">왼쪽의 공기조화기에서 하나의 차가운 급기 주 덕트가 그림 전체로 이어집니다. 주 덕트에서 세 개의 분기 덕트가 내려오며 각각 작은 VAV 박스를 지나 자체 존으로 연결됩니다. 생략 부호는 그리지 않은 27개 박스를 나타냅니다. 아래쪽의 회기(RA) 경로가 각 존의 공기를 모아 유닛으로 되돌립니다. 급기는 진한 파란색 실선, 회기는 더 옅은 파란색으로 표시되어 있습니다.</desc>
+
+                <!-- Air handler -->
+                <rect x="16" y="118" width="110" height="66" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="71" y="146" font-size="14" fill="var(--text-bright)" text-anchor="middle">AHU</text>
+                <text x="71" y="164" font-size="11" fill="var(--text-dim)" text-anchor="middle">코일 + 팬</text>
+
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes duct geometry — the box-walker widget is page
+                     math over HTML readouts. A future geometry write must refresh in the
+                     same breath, or the page must opt out via the `flowGeometryLive`
+                     frontmatter (flowStaticGuard, .eleventy.js). -->
+                <!-- Supply trunk (animated, full density) -->
+                <path id="vav-d1-trunk" data-flow="air" data-flow-static="true" d="M126 150 H520" fill="none" stroke="var(--blue)" stroke-width="4"/>
+                <text x="240" y="140" font-size="13" fill="var(--text)">하나의 차가운 주 덕트</text>
+                <polygon points="500,145 500,155 510,150" fill="var(--blue)"/>
+
+                <!-- Branch 1 -->
+                <path id="vav-d1-br1" data-flow="air" data-flow-static="true" data-flow-density="0.35" d="M200 150 V196" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="182" y="196" width="36" height="20" fill="var(--surface)" stroke="var(--text)"/>
+                <line x1="192" y1="212" x2="208" y2="200" stroke="var(--text)" stroke-width="2"/>
+                <path id="vav-d1-dr1" data-flow="air" data-flow-static="true" data-flow-density="0.35" d="M200 216 V256" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="165" y="256" width="70" height="36" fill="none" stroke="var(--border)"/>
+                <text x="200" y="278" font-size="12" fill="var(--text)" text-anchor="middle">존</text>
+                <text x="172" y="209" font-size="12" fill="var(--text)" text-anchor="end">VAV 박스</text>
+
+                <!-- Branch 2 -->
+                <path id="vav-d1-br2" data-flow="air" data-flow-static="true" data-flow-density="0.35" d="M320 150 V196" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="302" y="196" width="36" height="20" fill="var(--surface)" stroke="var(--text)"/>
+                <line x1="312" y1="212" x2="328" y2="200" stroke="var(--text)" stroke-width="2"/>
+                <path id="vav-d1-dr2" data-flow="air" data-flow-static="true" data-flow-density="0.35" d="M320 216 V256" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="285" y="256" width="70" height="36" fill="none" stroke="var(--border)"/>
+                <text x="320" y="278" font-size="12" fill="var(--text)" text-anchor="middle">존</text>
+
+                <!-- Branch 3 -->
+                <path id="vav-d1-br3" data-flow="air" data-flow-static="true" data-flow-density="0.35" d="M440 150 V196" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="422" y="196" width="36" height="20" fill="var(--surface)" stroke="var(--text)"/>
+                <line x1="432" y1="212" x2="448" y2="200" stroke="var(--text)" stroke-width="2"/>
+                <path id="vav-d1-dr3" data-flow="air" data-flow-static="true" data-flow-density="0.35" d="M440 216 V256" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="405" y="256" width="70" height="36" fill="none" stroke="var(--border)"/>
+                <text x="440" y="278" font-size="12" fill="var(--text)" text-anchor="middle">존</text>
+                <text x="497" y="210" font-size="13" fill="var(--text-dim)">… ×30</text>
+
+                <!-- Return path (animated, lighter) -->
+                <path id="vav-d1-ret" data-flow="air" data-flow-static="true" data-flow-density="0.6" d="M460 316 H71 V184" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <line x1="200" y1="292" x2="200" y2="316" stroke="var(--blue-cool)" stroke-width="2"/>
+                <line x1="320" y1="292" x2="320" y2="316" stroke="var(--blue-cool)" stroke-width="2"/>
+                <line x1="440" y1="292" x2="440" y2="316" stroke="var(--blue-cool)" stroke-width="2"/>
+                <text x="250" y="334" font-size="11" fill="var(--text-dim)">회기 — 다시 한 바퀴 돌기 위해 복귀</text>
+                <polygon points="110,311 110,321 100,316" fill="var(--blue-cool)"/>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw sa"></span>급기</span>
+                <span><span class="sw ra"></span>회기</span>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                각 존이 이렇게 운전할 때 주 덕트가 겪는 변화를 살펴보세요. 전체 급기량은 30개 박스가 취하는 풍량의 합이며, 이 합계는
+                하루 종일 변합니다. 아침 예냉 시간에는 거의 모든 박스가 완전히 열리고, 온화한 오후에는 대부분의 박스가 최소 풍량
+                근처에서 운전합니다. 급기 팬에는 <a href="/ko/education/vfds.html#cube-law">가변주파수 드라이브(VFD)</a>가 적용되어
+                건물 부하와 함께 속도를 낮춥니다. VAV의 경제성은 여기서 나옵니다. 세제곱 법칙이 팬의 부분부하 운전비를 줄여 줍니다.
+                팬이 얼마나 속도를 낮출지 <em>판단하는</em> 방식은 <a href="/ko/education/duct-static-control.html">덕트 정압 제어</a>입니다.
+                이 페이지는 박스에 집중합니다. 팬이 대응해야 하는 모든 변화는 박스의 동작에서 시작하기 때문입니다.
+            </p>
+
+            <!-- ───────────────── 2 · Box anatomy ───────────────── -->
+
+            <h2 class="subhead" id="box-anatomy">박스 내부</h2>
+
+            <p>
+                기계 도면에서 큰 역할을 맡는 것에 비해 VAV 박스의 판금 구조는 놀랄 만큼 단순합니다. 원형 흡입구 칼라, 직사각형
+                본체, 존 디퓨저로 이어지는 토출부로 구성됩니다. 세 부품이 모든 일을 합니다. 첫째는 액추에이터가 축에 달린 하나의
+                날개를 돌리는 <em>댐퍼</em>입니다. 둘째는 흡입구를 가로지르는 <em>풍량 센서</em>입니다. 기류를 향하는 포트와 반대쪽을
+                향하는 포트가 있는 링 또는 십자형 평균값 검출 장치에서 두 개의 작은 튜브가 압력 변환기로 연결됩니다. 셋째는 소형
+                BAS 장치인 <em>제어기</em>입니다. 보통 건물 전체에서 가장 수가 많은 제어기 계열이므로 네트워크 예제마다 장치 이름이
+                VAV-101로 나타납니다.
+            </p>
+
+            <p>
+                풍량 센서는 자세히 살펴볼 가치가 있습니다. 이 센서 덕분에 <strong>박스가 자체 풍량을 측정하기 때문입니다</strong>.
+                상류와 하류 포트 사이의 압력차인 <em><button type="button" data-gloss="velocity-pressure">속도압</button></em>은 풍속의 제곱에
+                비례해 증가하므로 풍량은 제곱근을 따릅니다. 식은
+                <code>CFM&nbsp;=&nbsp;K&nbsp;×&nbsp;√<button type="button" data-gloss="velocity-pressure">VP</button></code>입니다. 여기서 K는 해당
+                검출 장치에 대해 제조사가 정한 계수로, 정확히 1.0&nbsp;in.&nbsp;w.c.에서 읽는 CFM 값입니다. K&nbsp;=&nbsp;1000인 박스가
+                0.36&nbsp;in.&nbsp;w.c.를 읽으면 600&nbsp;CFM이 흐릅니다. <a href="/ko/tools/airflow.html">풍량 계산기</a>는 K와
+                <button type="button" data-gloss="velocity-pressure">VP</button>로 풍량을 구하거나, 밸런싱 작업자의 후드 측정값으로 K를
+                역산하는 양방향 계산을 제공합니다. 또한 K 표기 방식은 제조사마다 다르고 이 계산 체계 전체가 US 단위 기반이므로,
+                미터법 박스에 표시된 K는 다른 라벨에 다른 숫자로 표기된다는 주의사항도 포함합니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 34 540 266" role="img" aria-labelledby="vav-d2-title vav-d2-desc" font-family="var(--mono)">
+                <title id="vav-d2-title">VAV 말단 박스 내부</title>
+                <desc id="vav-d2-desc">VAV 박스 한 대를 절개한 그림입니다. 공기는 왼쪽 원형 흡입구로 들어와 두 감지 배관이 박스 제어기로 연결된 풍량 검출 링을 지나고, 액추에이터가 구동하는 댐퍼 날개와 공급·환수 배관 접속부가 있는 선택 사양 온수 재열 코일을 차례로 통과한 뒤 오른쪽 존으로 나갑니다. 토출부에는 토출공기 센서가 있고, 점선이 제어기와 벽의 존 온도 센서를 연결합니다.</desc>
+
+                <!-- Controller -->
+                <rect x="150" y="44" width="140" height="34" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="220" y="66" font-size="13" fill="var(--text-bright)" text-anchor="middle">박스 제어기</text>
+
+                <!-- Air path through the box (animated) -->
+                <path id="vav-d2-air" data-flow="air" data-flow-static="true" d="M20 180 H520" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <polygon points="30,175 30,185 40,180" fill="var(--blue)"/>
+                <polygon points="495,175 495,185 505,180" fill="var(--blue)"/>
+
+                <!-- Box casing -->
+                <rect x="130" y="146" width="270" height="68" fill="none" stroke="var(--text)" stroke-width="1.5"/>
+
+                <!-- Flow ring + sensing lines -->
+                <line x1="160" y1="156" x2="160" y2="204" stroke="var(--teal)" stroke-width="2.5"/>
+                <path d="M160 156 V96 H178" fill="none" stroke="var(--text-dim)" stroke-width="1"/>
+                <path d="M168 180 V104 H178" fill="none" stroke="var(--text-dim)" stroke-width="1"/>
+                <text x="152" y="238" font-size="12" fill="var(--text)">풍량 검출 링</text>
+                <text x="150" y="112" font-size="11" fill="var(--text-dim)" text-anchor="end">감지 배관</text>
+
+                <!-- Damper + actuator -->
+                <line x1="226" y1="208" x2="254" y2="152" stroke="var(--text-bright)" stroke-width="2.5"/>
+                <circle cx="240" cy="180" r="3" fill="var(--text-bright)"/>
+                <rect x="226" y="118" width="28" height="18" fill="var(--surface)" stroke="var(--border)"/>
+                <line x1="240" y1="136" x2="240" y2="146" stroke="var(--text-dim)" stroke-width="1"/>
+                <path d="M240 118 V78 H236" fill="none" stroke="var(--text-dim)" stroke-width="1"/>
+                <text x="248" y="110" font-size="12" fill="var(--text)">액추에이터</text>
+                <text x="252" y="230" font-size="12" fill="var(--text)">댐퍼</text>
+
+                <!-- Reheat coil + water stubs -->
+                <rect x="316" y="152" width="40" height="56" fill="none" stroke="var(--heat)"/>
+                <line x1="322" y1="152" x2="336" y2="208" stroke="var(--heat)" stroke-width="1"/>
+                <line x1="334" y1="152" x2="348" y2="208" stroke="var(--heat)" stroke-width="1"/>
+                <path id="vav-d2-hws" data-flow="supply" data-flow-static="true" d="M326 252 V214" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+                <path id="vav-d2-hwr" data-flow="return" data-flow-static="true" d="M346 214 V252" fill="none" stroke="var(--blue-cool)" stroke-width="2.5" stroke-dasharray="7 4"/>
+                <text x="336" y="270" font-size="11" fill="var(--text-dim)" text-anchor="middle">온수</text>
+                <text x="336" y="140" font-size="12" fill="var(--text)" text-anchor="middle">재열 코일</text>
+
+                <!-- Discharge sensor -->
+                <circle cx="440" cy="180" r="4" fill="none" stroke="var(--teal)" stroke-width="2"/>
+                <path d="M440 176 V88 H290" fill="none" stroke="var(--text-dim)" stroke-width="1"/>
+                <text x="452" y="164" font-size="11" fill="var(--text-dim)">DAT</text>
+
+                <!-- Zone sensor -->
+                <rect x="472" y="238" width="34" height="26" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="489" y="255" font-size="11" fill="var(--text-dim)" text-anchor="middle">조절기</text>
+                <path d="M472 251 H220 V78" fill="none" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="3 4"/>
+                <text x="382" y="242" font-size="11" fill="var(--text-dim)">존 센서</text>
+
+                <text x="20" y="168" font-size="12" fill="var(--text)">흡입구</text>
+                <text x="518" y="204" font-size="12" fill="var(--text)" text-anchor="end">존으로</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw sa"></span>급기</span>
+                <span><span class="sw supply"></span>온수 공급</span>
+                <span><span class="sw return"></span>온수 환수</span>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                난방 가능한 박스에는 부품이 두 개 더 있습니다. 토출부에는 소형 밸브로 제어하는 온수 또는 여러 단수의 전기히터를
+                사용하는 <em>재열 코일</em>이 있고, 바로 하류에는 <em>토출공기 센서</em>(<button type="button" data-gloss="dat">DAT</button>)가
+                있어 제어기가 존에 실제로 보내는 공기 상태를 확인합니다. 이 부품들의 목적은 몇 개 절 뒤에서 설명하겠습니다. 먼저 풍량
+                검출 링이 필요한 이유를 묻겠습니다. 박스가 댐퍼 위치만 유지하지 않고 풍량을 측정하는 이유는 무엇일까요?
+            </p>
+
+            <!-- ───────────────── 3 · Pressure independence ───────────────── -->
+
+            <h2 class="subhead" id="pressure-independence">박스가 위치가 아닌 풍량을 추종하는 이유</h2>
+
+            <p>
+                단순한 방식을 시험해 보겠습니다. 댐퍼를 50&nbsp;% 열도록 명령하고 그대로 둡니다. 존에는 얼마나 많은 공기가
+                공급될까요? 알 수 없으며 그 값은 일정하게 유지되지도 않습니다. 댐퍼 위치는 통로 형상만 고정합니다. 이 통로를 지나는
+                풍량은 뒤쪽 압력에 따라 달라지고, 그 압력은 주 덕트의 모든 <em>다른</em> 박스가 하는 일과 팬이 얼마나 강하게 미는지에
+                따라 달라집니다. 이웃 박스들이 풍량을 줄이면 해당 박스의 흡입 압력이 올라가고, 부하가 전혀 변하지 않은 존에 50&nbsp;%
+                열린 댐퍼가 한 시간 전보다 더 많은 공기를 조용히 공급합니다. <strong>댐퍼 위치는 어떤 제어의 설정값도 아닙니다.</strong>
+            </p>
+
+            <p>
+                그래서 박스는 대신 두 개의 캐스케이드 루프를 운전합니다. 첫 번째 루프는 존 온도와 설정값을 비교하며, 출력은 댐퍼
+                명령이 아니라 박스 최소값과 최대값 사이의 CFM인 <em>풍량 설정값</em>입니다. 존이 더우면 풍량을 높이고 식으면
+                낮춥니다. 두 번째 루프는 풍량 검출 링을 감시합니다. 측정 CFM과 설정값을 비교해 차이를 없애는 위치까지 댐퍼를
+                구동합니다. 오늘 30&nbsp;%, 오늘 밤 55&nbsp;%일 수도 있지만 위치 자체는 중요하지 않습니다. 주 덕트 압력이 흔들리면
+                풍량 측정값도 흔들리고, 두 번째 루프가 존에 영향이 도달하기 전에 이 외란을 흡수합니다. 이것이 <em>압력 독립</em>의
+                의미입니다. 건물의 나머지 부분이 덕트 압력을 어떻게 바꾸든 존은 요구한 풍량을 공급받습니다. 수배관 측에서는 같은 이유로
+                위치가 아닌 유량을 계측하는 밸브인 <a href="/ko/education/balancing.html#picv">PICV</a>가 같은 역할을 합니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 28 540 202" role="img" aria-labelledby="vav-d3-title vav-d3-desc" font-family="var(--mono)">
+                <title id="vav-d3-title">VAV 박스 제어 캐스케이드</title>
+                <desc id="vav-d3-desc">서로 연결된 두 제어 루프의 블록 다이어그램입니다. 존 루프가 존 온도와 설정값을 비교해 박스 최소값과 최대값 사이의 풍량 설정값을 출력합니다. 풍량 루프는 이 설정값과 풍량 검출 링에서 측정한 풍량을 비교해 댐퍼에 명령합니다. 흡입 압력이라고 표시된 외란 화살표가 댐퍼로 들어가고, 피드백 화살표가 댐퍼에서 측정 풍량을 풍량 루프로 되돌립니다.</desc>
+
+                <!-- Blocks -->
+                <rect x="20" y="78" width="140" height="52" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="90" y="100" font-size="13" fill="var(--text-bright)" text-anchor="middle">존 루프</text>
+                <text x="90" y="118" font-size="11" fill="var(--text-dim)" text-anchor="middle">온도 대 설정값</text>
+
+                <rect x="220" y="78" width="140" height="52" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="290" y="100" font-size="13" fill="var(--text-bright)" text-anchor="middle">풍량 루프</text>
+                <text x="290" y="118" font-size="11" fill="var(--text-dim)" text-anchor="middle">검출 링 대 설정값</text>
+
+                <rect x="420" y="78" width="100" height="52" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="470" y="108" font-size="13" fill="var(--text-bright)" text-anchor="middle">댐퍼</text>
+
+                <!-- Forward arrows -->
+                <line x1="160" y1="104" x2="212" y2="104" stroke="var(--text)" stroke-width="1.5"/>
+                <polygon points="212,99 212,109 220,104" fill="var(--text)"/>
+                <text x="186" y="66" font-size="11" fill="var(--text-dim)" text-anchor="middle">풍량 설정값</text>
+                <text x="190" y="94" font-size="11" fill="var(--text-dim)" text-anchor="middle">최소…최대</text>
+
+                <line x1="360" y1="104" x2="412" y2="104" stroke="var(--text)" stroke-width="1.5"/>
+                <polygon points="412,99 412,109 420,104" fill="var(--text)"/>
+                <text x="386" y="94" font-size="11" fill="var(--text-dim)" text-anchor="middle">명령</text>
+
+                <!-- Disturbance -->
+                <line x1="470" y1="52" x2="470" y2="70" stroke="var(--heat)" stroke-width="1.5"/>
+                <polygon points="465,70 475,70 470,78" fill="var(--heat)"/>
+                <text x="462" y="46" font-size="11" fill="var(--text-dim)" text-anchor="end">흡입 압력 — 나머지 29개 박스</text>
+
+                <!-- Feedback -->
+                <path d="M470 130 V178 H290 V138" fill="none" stroke="var(--teal)" stroke-width="1.5"/>
+                <polygon points="285,138 295,138 290,130" fill="var(--teal)"/>
+                <text x="380" y="196" font-size="11" fill="var(--text-dim)" text-anchor="middle">측정 풍량 — 검출 링의 신호</text>
+            </svg>
+
+            <div class="callout">
+                <h3>최소·최대 풍량의 출처 <span>· 도면에서 시작해 후드로 확인</span></h3>
+                <p>
+                    모든 박스의 최소·최대 CFM은 기계 장비 일람표의 두 열에서 시작합니다. 설계자가 존의 환기 배분량과 설계 냉방
+                    부하에 따라 정한 숫자입니다. 커미셔닝 과정에서 이 값이 실제 조건과 맞춰집니다. 밸런싱 작업자는 디퓨저에 풍량
+                    후드를 대고 박스가 통과한다고 <em>표시하는</em> 풍량과 실제 풍량을 비교해 교정합니다. 보통 후드 측정값과 제어기가
+                    읽는 <button type="button" data-gloss="velocity-pressure">속도압</button>으로 K를 역산합니다. 이는
+                    <a href="/ko/tools/airflow.html">풍량 계산기</a>의 두 번째 모드와 계산 예제에 해당합니다. 커미셔닝을 거치지 않은
+                    박스도 풍량 루프를 완벽하게 추종하지만, 아무도 검증하지 않은 숫자를 중심으로 제어합니다.
+                </p>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                다음으로 넘어가기 전에 한 가지 경계를 분명히 해야 합니다. 박스 댐퍼는 오직 <em>해당 존의</em> 풍량만 제어합니다.
+                덕트 압력을 유지하지도, 이웃 박스를 돕지도, 서로 조율하지도 않습니다. 30개 박스가 각자 자체 루프만 관리하는 것이
+                전체 동작이며, 시스템이 잘하거나 잘못하는 모든 일이 여기에서 비롯됩니다.
+            </p>
+
+            <!-- ───────────────── 4 · Minimums + reheat ───────────────── -->
+
+            <h2 class="subhead" id="minimums">하한: 환기, 그리고 재열</h2>
+
+            <p>
+                존이 식으면서 풍량 설정값이 내려가는 과정을 따라가고 어디에서 멈추는지 살펴보세요. 0이 아닙니다. 모든 박스에는
+                최소값이 있으며, 첫 번째 이유는 이 장에서 계속 다뤄 온 환기입니다. 재실 존은 법규가 요구하는 신선한 공기 중 해당
+                존의 배분량을 받아야 하며, 이 공기는 급기에 실려 들어옵니다. 박스를 완전히 닫으면 온도는 적절할 수 있어도 환기량은
+                소리 없이 부족해집니다. <a href="/ko/education/economizers.html">건물에 사람이 있는 동안에는 환기 하한을 낮출 수
+                없으며</a>, 박스 수준에서는 최소 CFM이 바로 그 하한<em>입니다</em>.
+            </p>
+
+            <p>
+                그러나 최소 풍량 자체도 문제를 만듭니다. 최소 풍량으로 들어오는 공기도 존의 냉방 요구 여부와 관계없이 여전히
+                <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span>입니다. 작은 내주부 실은 최소 풍량만으로도 오전
+                중반이면 추워질 수 있습니다. 재열 코일은 이 문제를 해결합니다. 박스가 풍량을 최소값으로 유지하면서 토출 전에 공기를
+                데웁니다. 더 나은 시퀀스는 이를 또 하나의 캐스케이드로 운전합니다. 존 루프가 토출온도를 요구하고
+                <button type="button" data-gloss="dat">DAT</button> 센서가 재열 밸브 루프를 닫습니다. 따뜻한 공기가 천장에 성층되지 않고
+                실내까지 섞여 내려오도록 상한은 약 <span data-us="90&nbsp;°F" data-metric="32.2&nbsp;°C">90&nbsp;°F</span>로 제한합니다.
+                플랜트가 비용을 들여 방금 냉각한 공기를 다시 데우는 것은 사실입니다. 그래서 재열량을 세심하게 계측하며, 재열 운전의
+                최소 풍량도 넉넉하게 잡기보다 정확하게 정해야 합니다.
+            </p>
+
+            <p>
+                박스가 아니라 유닛에 있는 하한도 하나 있습니다. <a href="/ko/education/building-pressure.html#dampers-pressure">건물 압력
+                페이지에서 설명한 문제</a>입니다. VAV 유닛에서는 박스가 풍량을 줄이면 급기 팬도 느려지고, 팬 속도가 낮을 때 고정된
+                외기 댐퍼 위치가 통과시키는 <em>실제 외기량도 줄어듭니다</em>. 설계 풍량에서 정확했던 최소 외기 설정도 절반 풍량에서는
+                사실과 달라집니다. 그래서 제대로 설계된 VAV 유닛은 최대 속도로 운전하던 어느 날 오후에 정한 댐퍼 각도를 믿지 않고
+                외기량을 측정하거나 목표값에 맞춰 능동적으로 제어합니다.
+            </p>
+
+            <!-- ───────────────── 5 · The coil floor ───────────────── -->
+
+            <h2 class="subhead" id="the-coil-floor">장비에도 최소 풍량이 있습니다</h2>
+
+            <p>
+                지금까지 살펴본 모든 하한은 존의 신선한 공기와 쾌적성을 보호했습니다. 마지막 하한은 장비를 보호하며, 이 페이지의
+                작성자가 실제로 고생하며 익힌 내용입니다. 유닛의 냉각 코일은 설계 풍량에 맞춰 용량을 선정합니다. 냉수 코일은 부분
+                풍량에 자연스럽게 대응합니다. 풍량이 줄면 흡수하는 열이 줄고 밸브도 닫히므로 수배관 측은 별문제 없이 적응합니다. 다시
+                수배관의 이야기입니다. 그러나 <em><button type="button" data-gloss="dx">직팽식(DX)</button></em> 코일은 그렇지 않습니다.
+                이 코일은 냉매 회로의 증발기이며, 압축기가 운전하면 냉매를 끓일 따뜻한 공기가 충분한지와 관계없이 냉매가 흐릅니다.
+                현장 경험칙은 운전 중인 냉방 용량 1 ton당 약 <a href="/ko/tools/equipment-airflow.html">400&nbsp;CFM의 풍량</a>입니다.
+                K 계수와 마찬가지로 업계에서 사용하는 IP 단위 기반 값입니다. 운전 중인 단수에 이보다 훨씬 적은 풍량을 공급하면
+                흡입압력이 급락하고 코일 표면은 결빙 온도 아래로 내려갑니다. 핀에서 흘러내려야 할 응축수는 대신 핀에 얼어붙습니다.
+                얼음이 풍량을 더 막고 코일의 풍량 부족이 더 심해지는 악순환이 단계적으로 진행됩니다. 그대로 두면 코일 전체가 얼어붙고,
+                결국 압축기에 액냉매가 유입되며 <button type="button" data-gloss="short-cycling">단주기 운전</button>을 반복해 폐기할 지경에 이릅니다.
+            </p>
+
+            <p>
+                이제 이를 박스 동작과 연결해 보겠습니다. 온화한 오후에는 대부분의 존 요구가 충족되어 30개 풍량 설정값이 최소값까지
+                내려가고, 코일을 지나는 전체 풍량이 급격히 줄어듭니다. 한편 계속 요구하는 몇 개 존 때문에 압축기 단수는 운전 중입니다.
+                박스 측에는 아무 고장도 없습니다. <em>모든 박스가 각자 자체 루프를 관리하는</em> 바로 그 동작이 코일 풍량을 부족하게
+                만듭니다. 따라서 <button type="button" data-gloss="dx">DX</button>-VAV 시스템은 이 불일치를 처리할 방안을 설계해야 합니다.
+                방법은 다음과 같습니다. 모든 박스의 최소 풍량 합계를 코일 하한을 절대 위반하지 않을 만큼 충분히 크게 정합니다. 단수
+                운전을 <em>확인된 풍량과 인터록</em>해 풍량 부족 상태로 운전하는 대신 해당 단수를 차단합니다. 이때
+                <button type="button" data-gloss="interlock">인터록</button>은 존 불만보다 압축기 보호를 우선합니다. 급기에서 회기로
+                연결되는 <button type="button" data-gloss="bypass-damper">바이패스 댐퍼</button>를 설치해 존에는 변풍량을 공급하면서
+                코일에는 정풍량이 흐르게 할 수도 있습니다. 이는 자체 문제가 있는 오래된 해법입니다. 또는 풍량이 급감할 때 로비나
+                복도로 열리는 박스인 덤프 존을 둘 수 있습니다. 제대로 설계된 유닛에는 이 중 하나 이상이 있습니다. 어느 방법도 없으면
+                시스템은 설계일에는 문제없이 운전하지만 온화한 날에는 스스로 손상됩니다. 위젯의 마지막 프리셋이 바로 그 건물입니다.
+            </p>
+
+            <!-- ───────────────── 6 · Widget ───────────────── -->
+
+            <h2 class="subhead" id="drive-the-box">박스를 조작하며 코일 관찰하기</h2>
+
+            <p>
+                직접 조작하는 박스 한 대와 나머지 29개 박스, 그 뒤에 2단 <button type="button" data-gloss="dx">DX</button> 유닛이 있습니다.
+                슬라이더는 존을 나타냅니다. 박스는 최소 풍량
+                (<span data-us="200&nbsp;CFM" data-metric="340&nbsp;m³/h">200&nbsp;CFM</span>)과 최대 풍량
+                (<span data-us="1,000&nbsp;CFM" data-metric="1,700&nbsp;m³/h">1,000&nbsp;CFM</span>) 사이의 풍량 설정값으로 대응합니다.
+                풍량 검출 링은 <button type="button" data-gloss="velocity-pressure">속도압</button>을 읽고, K&nbsp;=&nbsp;1000이므로 최대
+                풍량에서 검출 장치가 정확히 1.0&nbsp;in.&nbsp;w.c.를 읽습니다. 댐퍼는 풍량 루프가 요구하는 위치에 놓입니다. 나머지 박스의
+                동작을 바꾸고 <em>풍량은 변하지 않는 동안 댐퍼가 움직이는</em> 모습을 살펴보세요. 이것이 압력 독립의 의미입니다. 구분선
+                아래의 시스템 표시부는 코일의 상태를 집계합니다. 마지막으로 이 페이지 작성자가 아직 관리 중인 공기조화기 두 대를
+                재현한 마지막 프리셋을 실행해 보세요.
+            </p>
+
+            <div class="widget" id="vav-widget">
+                <div class="widget-try">
+                    <span class="lbl">실행 예:</span>
+                    <button type="button" data-vav-preset="design">설계 부하 오후</button>
+                    <button type="button" data-vav-preset="typical">일반적인 날</button>
+                    <button type="button" data-vav-preset="meeting">과냉된 회의실</button>
+                    <button type="button" data-vav-preset="starved">코일 풍량 부족</button>
+                </div>
+
+                <div class="widget-slider-head">
+                    <label for="vav-w-zone-slider">존 온도</label>
+                    <span class="v" id="vav-w-zone-value">75.0 °F</span>
+                </div>
+                <input class="widget-slider" id="vav-w-zone-slider" type="range" min="66" max="80" step="0.5" value="75"/>
+
+                <div class="vav-w-top">
+                    <div>
+                        <div class="widget-readout-label" id="vav-w-sib-lbl">나머지 29개 박스</div>
+                        <div class="vav-w-modes" role="group" aria-labelledby="vav-w-sib-lbl">
+                            <button type="button" class="vav-w-mode-btn" data-vav-sib="calling" aria-pressed="false">모두 요구 중</button>
+                            <button type="button" class="vav-w-mode-btn" data-vav-sib="mixed" aria-pressed="true">요구 상태 혼재</button>
+                            <button type="button" class="vav-w-mode-btn" data-vav-sib="satisfied" aria-pressed="false">거의 모두 충족</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="widget-readout-label" id="vav-w-il-lbl">DX 단수 풍량 인터록</div>
+                        <div class="vav-w-modes" role="group" aria-labelledby="vav-w-il-lbl">
+                            <button type="button" class="vav-w-mode-btn" data-vav-il="on" aria-pressed="true">인터록 적용</button>
+                            <button type="button" class="vav-w-mode-btn" data-vav-il="none" aria-pressed="false">없음</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vav-w-strip">
+                    <div class="vav-w-line">
+                        <div class="vav-w-line-name">이 박스 · 풍량</div>
+                        <div class="vav-w-line-value" id="vav-w-flow">400 CFM</div>
+                    </div>
+                    <div class="vav-w-line">
+                        <div class="vav-w-line-name">풍량 검출 링 · VP</div>
+                        <div class="vav-w-line-value" id="vav-w-vp">0.16 in. w.c.</div>
+                    </div>
+                    <div class="vav-w-line">
+                        <div class="vav-w-line-name">댐퍼</div>
+                        <div class="vav-w-line-value" id="vav-w-damper">32<span class="unit"> %</span></div>
+                    </div>
+                    <div class="vav-w-line">
+                        <div class="vav-w-line-name">재열 밸브</div>
+                        <div class="vav-w-line-value" id="vav-w-reheat">{{ pageMessages.widget.reheat.off }}</div>
+                    </div>
+                </div>
+
+                <div class="vav-w-seam">한편 유닛에서는</div>
+
+                <div class="vav-w-strip">
+                    <div class="vav-w-line">
+                        <div class="vav-w-line-name">전체 풍량 · 박스 30개</div>
+                        <div class="vav-w-line-value" id="vav-w-total">16,300 CFM</div>
+                    </div>
+                    <div class="vav-w-line">
+                        <div class="vav-w-line-name">운전 중인 DX 단수</div>
+                        <div class="vav-w-line-value" id="vav-w-stages">2개 중 1개</div>
+                    </div>
+                    <div class="vav-w-line">
+                        <div class="vav-w-line-name">코일 풍량</div>
+                        <div class="vav-w-line-value" id="vav-w-coil">435 CFM/ton · {{ pageMessages.widget.coil.ok }}</div>
+                    </div>
+                </div>
+
+                <div class="vav-w-status" id="vav-w-status" aria-live="polite">{{ pageMessages.widget.status.tracking }}</div>
+                <div class="vav-w-alert" id="vav-w-alert"></div>
+            </div>
+
+            <p class="ref-note">
+                위젯에서 고정한 항목은 덕트 정압 루프입니다. 팬은 요구에 대응할 수 있다고 가정하며 이 제어는
+                <a href="/ko/education/duct-static-control.html">다음 페이지</a>에서 설명합니다. 습도와
+                <button type="button" data-gloss="latent-heat">잠열</button> 부하, 실제 단수 제어 로직도 고정합니다. 실제 명판의 운전
+                방식을 대신해 단순한 두 개 단수를 사용합니다. 나머지 29개 박스는 29개의
+                슬라이더 대신 대략적인 세 가지 상태로 나타냅니다. 속도압과 ton당 CFM은 <a href="/ko/tools/airflow.html">풍량 계산기</a>와
+                마찬가지로 현장 IP 단위를 유지하고, 풍량과 온도는 단위 전환 설정을 따릅니다.
+            </p>
+
+            <!-- ───────────────── 7 · Closing ───────────────── -->
+
+            <h2 class="subhead" id="loads-throttle">부하가 조절하면 이송 장치가 대응합니다</h2>
+
+            <p>
+                박스 관점에서 본 VAV 시스템을 정리하면 다음과 같습니다. 하나의 차가운 주 덕트와 30개의 조절 장치가 있고, 박스는
+                자체 풍량을 측정해 댐퍼 위치가 아니라 CFM을 추종합니다. 모든 항목에는 하한이 있습니다. 박스에는 환기 하한, 최소 풍량을
+                쾌적하게 유지하는 재열, 유닛에는 측정 외기량, 장비가 부분부하 운전일에도 견딜 수 있게 하는 코일 풍량 하한이 있습니다.
+                이 구조는 이 사이트에서 전에 살펴본 <a href="/ko/education/load-piping.html">부하가 조절하고</a>
+                <a href="/ko/education/pump-control.html">이송 장치가 대응하는</a> 관계 중 공기측 절반입니다. 이 페이지에서는 조절하는
+                쪽을 살펴봤습니다.
+            </p>
+
+            <div class="callout">
+                <h3>남은 한 가지 질문 <span>· 압력은 어디로 갈까요?</span></h3>
+                <p>
+                    오후 6시입니다. 건물에서 사람이 빠져나가고 같은 30분 안에 30개 존 루프의 요구가 모두 충족되며, 30개 댐퍼가
+                    함께 최소 개도로 이동합니다. 팬은 주먹처럼 닫혀 가는 덕트 안으로 계속 공기를 밀고 있습니다. 모든 박스는 제 역할을
+                    하지만 주 덕트 압력은 올라가서는 안 될 수준을 향해 상승합니다. 무엇을 양보할지, 팬이 이를 어떻게 알아차릴지, 얼마나
+                    부드럽게 속도를 낮출지를 결정하는 것이 <em><a href="/ko/education/duct-static-control.html">덕트 정압 제어</a></em>입니다.
+                    이 장의 다음 페이지이며, 대응하는 쪽에 해당합니다.
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/forced-air/', label: '강제순환 공기 참고 허브'},
+        tools: [
+            {href: '/ko/tools/airflow.html', label: '풍량 계산기'},
+            {href: '/ko/tools/duct-traverse.html', label: '덕트 트래버스 계산기'},
+            {href: '/ko/tools/airside-load.html', label: '공기측 부하 계산기'},
+            {href: '/ko/tools/equipment-airflow.html', label: '장비 풍량 점검'},
+            {href: '/ko/tools/coil-sizing.html', label: '코일 용량 선정 계산기'},
+            {href: '/ko/tools/minimum-outdoor-air.html', label: '최소 외기량 계산기'},
+            {href: '/ko/tools/duct-sizer.html', label: '덕트 크기 계산기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/refrigerant-loop.html', label: '냉매 루프 시뮬레이터'}
+        ],
+        lessons: [
+            {href: '/ko/education/duct-static-control.html', label: '덕트 정압 제어'},
+            {href: '/ko/education/air-handlers.html', label: '공기조화기'},
+            {href: '/ko/education/air-unit-identification.html', label: '공조 유닛 식별'},
+            {href: '/ko/education/building-pressure.html', label: '건물 압력'},
+            {href: '/ko/education/load-piping.html', label: '부하 배관'},
+            {href: '/ko/education/vfds.html', label: '가변주파수 드라이브(VFD)'},
+            {href: '/ko/education/balancing.html', label: '밸런싱'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/vav-systems.html', label: 'VAV 시스템'},
+            {href: '/ko/practice/duct-static-control.html', label: '덕트 정압 제어'},
+            {href: '/ko/practice/air-unit-identification.html', label: '공조 유닛 식별'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 교육 목록으로 돌아가기</a>
+
+</main>
+{% endblock %}

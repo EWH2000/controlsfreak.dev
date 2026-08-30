@@ -1,0 +1,308 @@
+---
+title: 기능 블록 기초 — controlsfreak.dev
+description: 기능 블록과 와이어시트의 의미, 빌딩 제어 시퀀스를 상자와 배선으로 구성하는 이유, 그리고 시트가 반복 실행되는 방식을 설명합니다.
+sourceContentHash: 6121a74ca1ca54f578c6cbea1f59723f913d1146af333e79a9a2ea52f1a7c231
+canonical: https://controlsfreak.dev/ko/education/function-blocks.html
+nav: education
+category: programming
+pairedQuiz: https://controlsfreak.dev/ko/practice/function-blocks.html
+keywords: 와이어시트 로직 AND OR NOT PID 블록 배선 프로그램 기능 블록 스캔
+---
+{% extends "html/education/function-blocks.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">학습 · 기능 블록</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">기능 블록 기초 <span class="tool-tag">로직</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Niagara, EBO, Distech 등 거의 모든 최신 건물 자동화 제어기를 열어 보면
+                제어 프로그램은 코드 줄로 되어 있지 않습니다. 작은 상자들을 배선으로 연결한
+                시트입니다. 이 시트가 <em>기능 블록 프로그램</em>이며, 이를 읽는 방법을 익히면
+                제어기가 실제로 무엇을 하는지 대부분 이해할 수 있습니다. PLC 래더 로직을
+                다뤄 왔거나, IT 분야에서 왔거나, 이를 차근차근 설명해 준 사람이 없었다면
+                이 페이지를 따라가 보세요. 블록이 무엇인지, 배선은 무엇을 뜻하는지,
+                업계 전반에서 왜 이런 방식으로 시퀀스를 구성하는지 설명합니다.
+            </p>
+
+            <h2 class="subhead" id="blocks">블록과 와이어시트</h2>
+
+            <p>
+                <strong>기능 블록</strong>은 한 가지 작업을 수행하는 작은 상자입니다. 값이
+                왼쪽으로 들어오면 블록이 이를 처리하고 결과가 오른쪽으로 나갑니다. 연결 지점을
+                <em>핀</em>이라고 합니다. 왼쪽 가장자리에는 입력 핀, 오른쪽에는 출력 핀이 있습니다.
+                <code>AND</code> 블록은 두 개의 참/거짓 입력을 받아 두 입력이 모두 TRUE일 때만
+                TRUE를 출력합니다. <code>ADD</code> 블록은 두 숫자를 받아 합을 출력합니다. 블록은
+                한 번 실행되고 끝나지 않습니다. 초당 여러 번 계속 다시 평가되므로 출력은 언제나
+                그 순간의 입력을 반영합니다.
+            </p>
+
+            <svg class="fb-svg" viewBox="0 0 520 190" role="img"
+                 aria-labelledby="fb-anat-title fb-anat-desc">
+                <title id="fb-anat-title">기능 블록의 구조</title>
+                <desc id="fb-anat-desc">상자로 그린 AND 기능 블록입니다. A와 B라고 표시된 두 입력 핀이 왼쪽 가장자리로 들어오고, Q라고 표시된 출력 핀 하나가 오른쪽 가장자리에서 나갑니다. 설명에는 A와 B가 모두 TRUE일 때만 Q가 TRUE라고 적혀 있습니다.</desc>
+
+                <text x="140" y="34" text-anchor="middle" font-family="var(--mono)" font-size="10" font-style="italic" fill="var(--text-dim)">입력 핀</text>
+                <text x="392" y="59" text-anchor="middle" font-family="var(--mono)" font-size="10" font-style="italic" fill="var(--text-dim)">출력 핀</text>
+
+                <line x1="95" y1="80"  x2="185" y2="80"  stroke="var(--accent)" stroke-width="2.4"/>
+                <line x1="95" y1="110" x2="185" y2="110" stroke="var(--accent)" stroke-width="2.4"/>
+                <circle cx="185" cy="80"  r="4.5" fill="var(--accent)"/>
+                <circle cx="185" cy="110" r="4.5" fill="var(--accent)"/>
+                <text x="84" y="84"  text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--text)">A</text>
+                <text x="84" y="114" text-anchor="end" font-family="var(--mono)" font-size="12" fill="var(--text)">B</text>
+
+                <rect x="185" y="55" width="150" height="80" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                <text x="260" y="92"  text-anchor="middle" font-family="var(--mono)" font-size="17" font-weight="600" fill="var(--text-bright)">AND</text>
+                <text x="260" y="112" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">기능 블록</text>
+
+                <line x1="335" y1="95" x2="425" y2="95" stroke="var(--accent)" stroke-width="2.4"/>
+                <circle cx="335" cy="95" r="4.5" fill="var(--accent)"/>
+                <text x="437" y="99" font-family="var(--mono)" font-size="12" fill="var(--text)">Q</text>
+
+                <text x="260" y="168" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">A와 B가 모두 TRUE일 때만 Q가 TRUE</text>
+            </svg>
+
+            <p>
+                <strong>와이어시트</strong>(Niagara에서 유래한 용어이며 다른 도구에서는 단순히
+                프로그램 또는 기능 다이어그램이라고 합니다)는 이러한 블록으로 가득한 페이지이며,
+                각 핀은 <em>배선</em>으로 연결됩니다. 배선은 한 블록의 출력을 다른 블록의 입력으로
+                전달합니다. 신호에는 두 종류가 있으며 도구에서는 서로 다른 종류를 연결하지 못하게
+                합니다. 하나는 <em>디지털</em>(바이너리 또는 불리언이라고도 하며 단순한 참/거짓),
+                다른 하나는 <em>아날로그</em>(온도, 백분율, 설정값과 같은 숫자)입니다. 데이터는
+                실제 세계를 읽는 입력에서 시작해 로직을 거쳐 장비에 명령하는 출력까지 시트의
+                왼쪽에서 오른쪽으로 흐릅니다.
+            </p>
+
+            <h2 class="subhead" id="why">제어 분야에서 이 방식을 사용하는 이유</h2>
+
+            <p>
+                그래픽 프로그래밍만이 시퀀스를 작성하는 유일한 방법은 아닙니다. PLC에는 래더와
+                구조적 텍스트가 있고, 스크립트 작성이 가능한 제어기도 많습니다. 하지만 기능 블록이
+                건물 자동화 분야의 주된 방식이 된 데에는 현장에서 중요한 이유가 있습니다.
+            </p>
+
+            <p>
+                <strong>다이어그램 자체가 프로그램입니다.</strong> 와이어시트가 문서이자 코드 <em>그 자체</em>이므로
+                문서와 코드 사이에 간극이 없습니다. 특정 제어기를 처음 보는 기술자도 시트를 열어
+                배선을 따라갈 수 있습니다. <strong>실행되는 모습을 볼 수 있습니다.</strong> 실시간
+                와이어시트에는 모든 배선의 현재 값이 표시됩니다. <button type="button" data-gloss="freezestat">동결 방지 온도조절기</button>가
+                TRUE가 되는 모습, 설정값이 비교기에 도달하는 모습, 루프 출력이 상승하는 모습을
+                볼 수 있습니다. 문제 해결은 <em>잘못된 출력에서 배선을 거꾸로 따라가며 값이
+                타당하지 않게 되는 지점을 찾는 일</em>이 됩니다. <strong>어디서나 같은 어휘를
+                사용합니다.</strong> <code>AND</code>, 비교기, PID 블록, 온지연 타이머는 모든
+                플랫폼에서 같은 의미입니다. 블록을 한 번 익히면 처음 다루는 제어기의 시트도
+                읽을 수 있습니다.
+            </p>
+
+            <h2 class="subhead" id="families">블록 계열</h2>
+
+            <p>
+                제어기의 블록 팔레트에는 수십 가지 유형이 있을 수 있지만, 몇 가지 계열로
+                분류할 수 있습니다. 계열을 익히면 마주치는 거의 모든 블록을 이미 아는 블록의
+                변형으로 이해할 수 있습니다.
+            </p>
+
+            <div class="callout-grid loose">
+                <div class="callout">
+                    <h3>입력과 출력 <span>· 실제 세계</span></h3>
+                    <p>물리적 포인트 및 상수와 시트를 연결합니다. 아날로그 또는 바이너리 <em>입력</em>은 센서나 접점의 값을 가져오고, 아날로그 또는 바이너리 <em>출력</em>은 댐퍼, 밸브, 릴레이에 명령합니다. <em>상수</em>는 시트에 입력한 고정 숫자로, 설정값·불감대·한계값 등이 있습니다.</p>
+                </div>
+                <div class="callout">
+                    <h3>불리언 로직 <span>· 참 / 거짓</span></h3>
+                    <p><code>AND</code>, <code>OR</code>, <code>NOT</code>, <code>XOR</code>는 참/거짓 신호를 조합하고, <code><button type="button" data-gloss="sr-latch">SR latch</button></code>는 상태를 기억합니다. 한 번 설정되면 어떤 신호가 재설정할 때까지 그 상태를 유지합니다. <button type="button" data-gloss="interlock">인터록</button>, <button type="button" data-gloss="permissive">허가 조건</button>, 안전 체인을 만드는 계열입니다.</p>
+                </div>
+                <div class="callout">
+                    <h3>비교기 <span>· 숫자 → 참 / 거짓</span></h3>
+                    <p>초과, 미만, 같음을 판단합니다. 비교기는 아날로그 영역과 디지털 영역을 잇는 다리입니다. 숫자를 임계값과 비교해 로직 블록이 사용할 수 있는 참/거짓을 출력합니다. 대부분의 실제 제품 팔레트에는 <em>불감대</em>(히스테리시스) 비교기도 있습니다. 켜짐과 꺼짐 임계값 사이에 간격이 있는 블록 하나로, 비교기 두 개를 래치에 직접 연결하지 않아도 채터링 없는 켜짐/꺼짐 동작을 구현합니다.</p>
+                </div>
+                <div class="callout">
+                    <h3>수학 <span>· 값 계산</span></h3>
+                    <p>더하기, 빼기, 곱하기, 나누기, 최솟값, 최댓값을 계산합니다. 수학 블록은 기준값과 오프셋으로 설정값을 만들고, 센서 한 쌍의 평균을 내거나, 리셋을 계산하는 등 시퀀스에 필요한 일상적인 산술을 수행합니다.</p>
+                </div>
+                <div class="callout">
+                    <h3>타이머 <span>· 지연 및 유지</span></h3>
+                    <p><em>온지연</em>(TON)은 TRUE 신호를 통과시키기 전에 기다리고, <em>오프지연</em>(TOF)은 신호가 사라진 뒤에도 잠시 TRUE로 유지합니다. 타이머는 노이즈가 있는 입력의 바운스를 제거하고, 최소 운전 시간을 강제하며, <button type="button" data-gloss="short-cycling">쇼트 사이클링</button>을 방지합니다.</p>
+                </div>
+                <div class="callout">
+                    <h3>제어 <span>· 루프</span></h3>
+                    <p><code>PID</code> 블록은 하나의 상자에 전체 제어 루프가 들어 있습니다. 설정값과 측정값을 입력하면 측정값을 설정값으로 이끄는 0&ndash;100&nbsp;% 명령을 출력합니다. <a href="/ko/education/pid-basics.html">PID 기초</a>에서 내부 동작을 설명합니다.</p>
+                </div>
+            </div>
+
+            <h2 class="subhead" id="scan">와이어시트의 실행 방식</h2>
+
+            <p>
+                제어기는 정해진 주기인 <em>스캔</em>에 따라 전체 시트를 계속 반복해 평가합니다.
+                매 스캔마다 입력을 읽고, 블록을 처리하고, 출력을 쓴 다음 다시 반복합니다.
+                스캔 속도는 다양하지만 초당 수 회에서 열 번 정도라고 생각하면 됩니다.
+            </p>
+
+            <p>
+                한 번의 스캔 안에서 단순한 로직 체인은 한꺼번에 정리됩니다. 제어기는 소스를 먼저,
+                그다음 소스에 의존하는 블록을 처리하는 의존성 순서로 블록을 평가하므로 비교기의
+                결과가 같은 스캔에서 하류의 <code>AND</code>에 도달합니다. 흥미로운 경우는
+                <em>피드백</em>, 즉 블록의 출력을 자체 체인으로 되돌리는 배선이며 바로
+                <code><button type="button" data-gloss="sr-latch">SR latch</button></code>가
+                이에 해당합니다. 제어기는 피드백 배선에 <em>이전</em> 스캔 값을 전달하는 방식으로
+                이를 처리합니다. 래치는 지난 스캔의 상태를 읽고 현재 상태를 결정하므로, 루프가
+                자신을 끝없이 쫓지 않고 깔끔하게 정리됩니다. 이 한 스캔 분량의 기억 덕분에 래치는
+                상태를 유지할 수 있고, 루프가 있는 시트도 멈추지 않습니다.
+            </p>
+
+            <p>
+                아래 <button type="button" data-gloss="economizer">외기냉방(economizer)</button> 시트는
+                순수한 피드포워드 체인이므로 이러한 동작을 보여 줄 루프가 없습니다. 한 스캔의
+                기억이 매 틱마다 유지되는 모습을 직접 보려면 <a href="/ko/simulators/function-block-editor.html">기능 블록
+                편집기</a>를 열고 동결 방지 온도조절기 예제를 불러오세요. <code><button type="button"
+                data-gloss="sr-latch">SR latch</button></code>는 동결 시 장치를 트립하고,
+                재설정 신호로 해제될 때까지 이전 스캔의 자체 값을 이용해 트립 상태를 유지합니다.
+                설명에 그치지 않고 피드백 동작을 실행해 볼 수 있습니다.
+            </p>
+
+            <h2 class="subhead" id="worked-sheet">와이어시트 예제 — 외기냉방 활성화</h2>
+
+            <p>
+                다음은 작은 실제 시퀀스입니다. 공기조화기는 외기를 이용해
+                <button type="button" data-gloss="economizer">무상 냉방</button>을 해야 하지만,
+                두 조건이 동시에 참일 때만 가능합니다. 외기가 실제로 도움이 될 만큼 충분히
+                서늘하고, <em>또한</em> 장치가 냉방을 요구하고 있어야 합니다. 이 문장에는 "그리고"가
+                있으므로 시트의 중심에도 <code>AND</code> 블록이 있습니다.
+            </p>
+
+            <p>
+                아래 다이어그램을 왼쪽에서 오른쪽으로 읽어 보겠습니다. 외기 온도(아날로그 입력,
+                이 예제에서는 55)와 전환 설정값(상수, 60)이 <em>미만</em> 비교기에 입력됩니다.
+                충분히 서늘한지를 판단하는 것입니다. 비교기의 참/거짓 결과는 <code>AND</code>의
+                한쪽 입력으로 들어가고, 냉방 모드 신호(디지털 입력)는 다른 쪽으로 들어갑니다.
+                두 조건이 모두 TRUE일 때만 <code>AND</code> 출력이 TRUE가 되어
+                <button type="button" data-gloss="economizer">외기냉방</button>을 활성화합니다.
+                외기 온도 55는 전환점 60보다 낮고 장치는 냉방을 요구하고 있으므로 두 입력이
+                모두 충족되어 <button type="button" data-gloss="economizer">외기냉방</button>이
+                활성화됩니다. 이 미만 블록은 <em><button type="button" data-gloss="dry-bulb">건구 온도</button>
+                전환</em>으로, 실제로는 매우 미묘한 판단의 가장 단순한 형태입니다. 활성화된
+                <button type="button" data-gloss="economizer">외기냉방</button>이 실제로 무엇을 하고
+                온도만 비교하면 언제 크게 잘못되는지는 <a href="/ko/education/economizers.html">외기냉방</a>
+                학습 자료에서 설명합니다.
+            </p>
+
+            <svg class="fb-svg wide" viewBox="0 0 740 290" role="img"
+                 aria-labelledby="fb-econ-title fb-econ-desc">
+                <title id="fb-econ-title">외기냉방 활성화 와이어시트</title>
+                <desc id="fb-econ-desc">블록 여섯 개로 구성된 기능 블록 시트입니다. 값이 55인 외기 온도 아날로그 입력과 값이 60인 설정값 상수가 미만 비교기에 연결됩니다. 비교기의 출력과 냉방 모드 디지털 입력은 AND 블록에 연결됩니다. AND 블록의 출력은 외기냉방 활성화 디지털 출력에 연결됩니다. 외기가 설정값보다 낮고 냉방 모드가 켜져 있어 모든 디지털 신호가 TRUE이며 외기냉방이 활성화됩니다.</desc>
+
+                <!-- wires (drawn first, behind the blocks) -->
+                <line x1="145" y1="48"  x2="255" y2="62"  stroke="var(--blue)"   stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="145" y1="138" x2="255" y2="82"  stroke="var(--blue)"   stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="385" y1="72"  x2="470" y2="136" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="145" y1="228" x2="470" y2="156" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="600" y1="146" x2="610" y2="146" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+
+                <!-- OAT -->
+                <g id="fb-econ-oat">
+                    <rect x="15" y="20" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="39" font-family="var(--mono)" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">아날로그 입력</text>
+                    <text x="27" y="60" font-family="var(--mono)" font-size="13" font-weight="600" fill="var(--text-bright)">OAT  55</text>
+                    <circle cx="145" cy="48" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- SETPOINT -->
+                <g id="fb-econ-sp">
+                    <rect x="15" y="110" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="129" font-family="var(--mono)" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">상수</text>
+                    <text x="27" y="150" font-family="var(--mono)" font-size="13" font-weight="600" fill="var(--text-bright)">SP  60</text>
+                    <circle cx="145" cy="138" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- COOLING MODE -->
+                <g id="fb-econ-cool">
+                    <rect x="15" y="200" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="219" font-family="var(--mono)" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">바이너리 입력</text>
+                    <text x="27" y="240" font-family="var(--mono)" font-size="13" font-weight="600" fill="var(--accent)">COOL  ON</text>
+                    <circle cx="145" cy="228" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- COMPARATOR -->
+                <g id="fb-econ-cmp">
+                    <rect x="255" y="44" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="320" y="68" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="600" fill="var(--text-bright)">OAT &lt; SP</text>
+                    <text x="320" y="86" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">비교</text>
+                    <circle cx="255" cy="62" r="3.8" fill="var(--blue)"/>
+                    <circle cx="255" cy="82" r="3.8" fill="var(--blue)"/>
+                    <circle cx="385" cy="72" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- AND -->
+                <g id="fb-econ-and">
+                    <rect x="470" y="118" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="535" y="151" text-anchor="middle" font-family="var(--mono)" font-size="15" font-weight="600" fill="var(--text-bright)">AND</text>
+                    <circle cx="470" cy="136" r="3.8" fill="var(--accent)"/>
+                    <circle cx="470" cy="156" r="3.8" fill="var(--accent)"/>
+                    <circle cx="600" cy="146" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- ECON ENABLE -->
+                <g id="fb-econ-out">
+                    <rect x="610" y="118" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="622" y="137" font-family="var(--mono)" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">바이너리 출력</text>
+                    <text x="622" y="158" font-family="var(--mono)" font-size="12" font-weight="600" fill="var(--accent)">ECON  ON</text>
+                    <circle cx="610" cy="146" r="3.8" fill="var(--accent)"/>
+                </g>
+            </svg>
+
+            <p class="ref-note compact" style="text-align:center;">
+                녹색 배선은 TRUE 디지털 신호를 전달합니다(FALSE 신호는 편집기에서 회색으로
+                표시됩니다). 파란색 배선은 아날로그 값을 전달합니다.
+            </p>
+
+            <p>
+                이것이 전부입니다. 앞으로 접할 모든 시퀀스, 즉 코일이 동결점에 가까워지면 팬을
+                래치해 끄는 코일 온도 안전장치인 <button type="button" data-gloss="freezestat">동결 방지 온도조절기</button>,
+                단계 제어 루틴, 외기 온도에 따라 설정값을 이동하는 리셋 스케줄도 같은 방식입니다.
+                왼쪽에는 실제 세계의 신호가 들어오고, 각 블록은 작은 작업 하나씩을 수행하며,
+                오른쪽으로 명령이 나갑니다. 큰 시트도 작고 읽기 쉬운 단계가 많이 모인 것뿐입니다.
+            </p>
+
+            <h2 class="subhead">직접 만들어 보기</h2>
+
+            <p>
+                와이어시트는 읽기만 해서는 충분하지 않습니다. 직접 배선하고 실행되는 모습을 볼 때
+                비로소 이해가 분명해집니다. <a href="/ko/simulators/function-block-editor.html">기능 블록
+                편집기</a>는 바로 이를 위한 샌드박스입니다. 블록을 시트에 끌어 놓고 배선한 다음
+                값이 변하는 모습을 확인하세요. 위의 <button type="button"
+                data-gloss="economizer">외기냉방</button> 예제가 이미 구성되어 있고,
+                안전장치·온도조절기·운전 확인 경보·제어 루프와 같은 다른 완성 예제도 함께
+                제공됩니다. 예제를 불러와 입력을 바꾸고 로직이 반응하는 모습을 확인해 보세요.
+            </p>
+
+            <a class="cta-button" href="/ko/simulators/function-block-editor.html">기능 블록 편집기 열기 →</a>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'},
+            {href: '/ko/simulators/pid-tuner.html', label: 'PID 튜닝 도우미'},
+            {href: '/ko/simulators/ddc-workbench-fcu.html', label: 'DDC 워크벤치 — 팬코일유닛'}
+        ],
+        lessons: [
+            {href: '/ko/education/boolean-logic-latches.html', label: '불 대수 로직 및 래치'},
+            {href: '/ko/education/comparators-and-deadband.html', label: '비교기 및 불감대'},
+            {href: '/ko/education/timers-and-delays.html', label: '타이머 및 지연'},
+            {href: '/ko/education/setpoint-math-reset.html', label: '설정값 연산 및 리셋 스케줄'},
+            {href: '/ko/education/economizers.html', label: '외기냉방'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/function-blocks.html', label: '기능 블록 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 학습 자료로 돌아가기</a>
+
+</main>
+{% endblock %}

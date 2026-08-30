@@ -6,9 +6,15 @@ nav: education
 category: hydronics
 pairedQuiz: https://controlsfreak.dev/practice/balancing.html
 keywords: gpm delta p flow circuit setter proportional balance valve tab
+pageMessages:
+  widget:
+    state:
+      starved: STARVED
+      over: OVER
+      holding: HOLDING
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -549,7 +555,7 @@ keywords: gpm delta p flow circuit setter proportional balance valve tab
                             </div>
                             <div class="bal-w-bch-bar" aria-hidden="true"><span id="bal-cbv-bar"></span></div>
                         </div>
-                        <div class="bal-w-bch-state" id="bal-cbv-state"><span class="bas-led active" aria-hidden="true"></span><span>HOLDING</span></div>
+                        <div class="bal-w-bch-state" id="bal-cbv-state"><span class="bas-led active" aria-hidden="true"></span><span>{{ pageMessages.widget.state.holding }}</span></div>
                     </div>
 
                     <!-- ABV branch -->
@@ -562,7 +568,7 @@ keywords: gpm delta p flow circuit setter proportional balance valve tab
                             </div>
                             <div class="bal-w-bch-bar" aria-hidden="true"><span id="bal-abv-bar"></span></div>
                         </div>
-                        <div class="bal-w-bch-state" id="bal-abv-state"><span class="bas-led active" aria-hidden="true"></span><span>HOLDING</span></div>
+                        <div class="bal-w-bch-state" id="bal-abv-state"><span class="bas-led active" aria-hidden="true"></span><span>{{ pageMessages.widget.state.holding }}</span></div>
                     </div>
 
                     <!-- PICV branch -->
@@ -575,7 +581,7 @@ keywords: gpm delta p flow circuit setter proportional balance valve tab
                             </div>
                             <div class="bal-w-bch-bar" aria-hidden="true"><span id="bal-picv-bar"></span></div>
                         </div>
-                        <div class="bal-w-bch-state" id="bal-picv-state"><span class="bas-led active" aria-hidden="true"></span><span>HOLDING</span></div>
+                        <div class="bal-w-bch-state" id="bal-picv-state"><span class="bas-led active" aria-hidden="true"></span><span>{{ pageMessages.widget.state.holding }}</span></div>
                     </div>
 
                 </div>
@@ -789,9 +795,9 @@ keywords: gpm delta p flow circuit setter proportional balance valve tab
             return 'holding';
         }
         function stateLabel(state) {
-            if (state === 'starved') return 'STARVED';
-            if (state === 'over')    return 'OVER';
-            return 'HOLDING';
+            if (state === 'starved') return CFI18n.page('widget.state.starved');
+            if (state === 'over')    return CFI18n.page('widget.state.over');
+            return CFI18n.page('widget.state.holding');
         }
 
         // ── Display formatting ────────────────────────────────────────

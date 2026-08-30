@@ -1,0 +1,209 @@
+---
+title: BACnet과 Modbus 비교 — controlsfreak.dev
+description: 자기 기술형 BACnet 객체와 원시 Modbus 레지스터를 비교하고 장치 탐색, 값 변경, 명령 우선순위, 적합성의 차이를 설명합니다.
+sourceContentHash: 0efca1b37b62bba950a0553dc16e3cc7e39194aa67bf07b4fa803e4c58fdf0f9
+canonical: https://controlsfreak.dev/ko/education/bacnet-vs-modbus.html
+nav: education
+category: protocols
+keywords: bacnet modbus 비교 차이 레지스터 객체 자기 기술형 who-is i-am cov 폴링 우선순위 배열 마지막 쓰기 pics bibbs 공급업체 맵 게이트웨이 rs485 tcp mstp bacnet/ip 상호운용성
+---
+{% extends "html/education/bacnet-vs-modbus.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">학습 · BACnet과 Modbus 비교</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">BACnet과 Modbus 비교 <span class="tool-tag">BACnet</span> <span class="tool-tag">Modbus</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                시스템 통합 담당자가 가장 자주 접하는 두 프로토콜입니다. 둘 다 배선을 통해 장치 사이에 값을 전달한다는 같은 문제를 정반대 방향에서 해결합니다. <a href="/ko/education/modbus-basics.html">Modbus</a>는 1979년 공장 현장에서 등장했으며 작고 단순하고 보편적입니다. <a href="/ko/education/bacnet-basics.html">BACnet</a>은 1995년 건물을 위해 만들어졌으며 규모가 크고 명확한 구조를 가지며 스스로를 설명합니다. 현장 장비가 이미 프로토콜을 정해 두므로 둘 중 하나를 직접 <em>선택</em>할 일은 드뭅니다. 하지만 차이를 정확히 알면 배선 전에 통합 비용을 가늠할 수 있습니다. <strong>가장 근본적인 차이는 Modbus 레지스터에는 의미 정보가 없지만 BACnet 객체는 자신을 설명한다는 점입니다.</strong>
+            </p>
+
+            <h2 class="subhead" id="two-philosophies">두 가지 철학: 레지스터와 객체</h2>
+
+            <p>
+                Modbus는 <strong>번호가 붙은 슬롯으로 이루어진 네 개의 평면 테이블</strong>을 노출합니다. 단일 비트인 코일과 이산 입력, 16비트 워드인 입력 레지스터와 <button type="button" data-gloss="holding-register">홀딩 레지스터</button>가 전부입니다. <button type="button" data-gloss="holding-register">홀딩 레지스터</button> 40012는 16비트일 뿐이며, 프로토콜에는 이름이나 단위, 스케일 정보가 없습니다. <code>552</code>를 "55.2&nbsp;°F"로 변환하려면 통신 외부의 PDF에 있는 제조사 레지스터 맵이 필요합니다. 처음 보는 Modbus 장치를 읽으면 범례 없는 숫자 격자만 얻습니다.
+            </p>
+
+            <p>
+                BACnet은 <strong>이름이 있는 속성을 가진 형식 지정 객체</strong>를 노출합니다. 온도는 <code>Present_Value</code>가 실수이고 <code>Units</code> 속성에 <code>degrees-fahrenheit</code>가 명시되며 <code>Object_Name</code>과 <code>Description</code>이 용도를 설명하는 Analog Input 객체입니다. 설명은 <em>데이터와 함께</em> 전달됩니다. 처음 보는 BACnet 장치를 탐색해도 각 포인트가 무엇인지 장치가 알려 줍니다. 자기 기술 정보가 별도 문서가 아니라 프로토콜의 일부이기 때문입니다. 이 한 가지 설계 선택이 이 페이지의 거의 모든 다른 차이로 이어집니다.
+            </p>
+
+            <svg class="bac-svg wide" viewBox="0 0 760 350" role="img"
+                 aria-labelledby="bvm-point-title bvm-point-desc">
+                <title id="bvm-point-title">하나의 물리 포인트를 두 방식으로 표현</title>
+                <desc id="bvm-point-desc">화씨 55.2도를 측정하는 급기 온도 센서 하나가 위쪽에서 두 패널로 연결됩니다. 왼쪽 Modbus 패널은 홀딩 레지스터 40012에 값 552가 들어 있음을 보여 주며, 이 값이 부호 있는 화씨 온도에 10을 곱한 값이라는 정보는 별도로 받아야 한다고 설명합니다. 오른쪽 BACnet 패널은 Present Value 55.2, Units degrees-fahrenheit, Object Name SA-T, Description 급기 온도 속성을 가진 Analog Input 객체를 보여 줍니다. 객체가 자신을 설명합니다.</desc>
+
+                <!-- shared physical point -->
+                <rect x="270" y="12" width="220" height="52" fill="var(--surface-2)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                <text x="380" y="34" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--text-bright)">동일한 물리 포인트</text>
+                <text x="380" y="52" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)">급기 온도 = 55.2 °F</text>
+
+                <line x1="330" y1="64" x2="200" y2="112" stroke="var(--blue)" stroke-width="1.6" marker-end="url(#bvm-arrow-blue)"/>
+                <line x1="430" y1="64" x2="560" y2="112" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#bvm-arrow-acc)"/>
+
+                <!-- MODBUS panel -->
+                <rect x="24" y="114" width="336" height="222" fill="none" stroke="var(--blue)" stroke-width="1.4"/>
+                <text x="40" y="140" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--blue)">MODBUS</text>
+                <text x="40" y="158" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">홀딩 레지스터 40012</text>
+
+                <rect x="40" y="172" width="304" height="46" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="192" y="194" text-anchor="middle" font-family="var(--mono)" font-size="15" fill="var(--text-bright)">0x0228</text>
+                <text x="192" y="210" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)">= 552  (16비트, 레이블 없음)</text>
+
+                <text x="40" y="246" font-family="var(--mono)" font-size="10.5" fill="var(--text)">통신 외부에서 알아야 할 정보:</text>
+                <text x="40" y="266" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">• 온도 값임</text>
+                <text x="40" y="284" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">• 스케일은 °F × 10</text>
+                <text x="40" y="302" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">• 부호 있는 값임</text>
+                <text x="40" y="324" font-family="var(--mono)" font-size="10.5" fill="var(--heat)">잘못된 맵 → 잘못된 숫자</text>
+
+                <!-- BACNET panel -->
+                <rect x="400" y="114" width="336" height="222" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
+                <text x="416" y="140" font-family="var(--mono)" font-size="13" font-weight="700" fill="var(--accent)">BACNET</text>
+                <text x="416" y="158" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">Analog Input, 인스턴스 2</text>
+
+                <rect x="416" y="172" width="304" height="128" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                <text x="428" y="192" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">Present_Value</text>
+                <text x="708" y="192" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--text-bright)">55.2</text>
+                <text x="428" y="214" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">Units</text>
+                <text x="708" y="214" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--text-bright)">degrees-fahrenheit</text>
+                <text x="428" y="236" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">Object_Name</text>
+                <text x="708" y="236" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--text-bright)">SA-T</text>
+                <text x="428" y="258" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">Description</text>
+                <text x="708" y="258" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--text-bright)">급기 온도</text>
+                <text x="428" y="286" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">Status_Flags / Reliability도 함께 전달</text>
+
+                <text x="416" y="324" font-family="var(--mono)" font-size="10.5" fill="var(--accent)">객체가 자신을 설명합니다.</text>
+
+                <defs>
+                    <marker id="bvm-arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--blue)"/></marker>
+                    <marker id="bvm-arrow-acc" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/></marker>
+                </defs>
+            </svg>
+
+            <h2 class="subhead" id="comparison">항목별 비교</h2>
+
+            <p>
+                같은 작업에 서로 다른 도구를 사용합니다. 아래 표는 현장에 관련된 항목을 요약하며, 이어지는 절에서는 실제 업무 방식에 영향을 주는 차이를 자세히 설명합니다.
+            </p>
+
+            <div class="table-scroll">
+                <table class="ref-table-dense rt-stack">
+                    <thead><tr><th>항목</th><th>Modbus</th><th>BACnet</th></tr></thead>
+                    <tbody>
+                        <tr><td>기원</td><td>Modicon, 1979 — 산업용 PLC</td><td>ASHRAE, 1995(현재 ISO 16484-5) — 건물 자동화</td></tr>
+                        <tr><td>데이터 모델</td><td>번호가 붙은 레지스터·비트의 평면 테이블 네 개</td><td>이름이 있는 속성을 가진 형식 지정 객체</td></tr>
+                        <tr><td>자기 기술</td><td>없음 — 의미 정보는 제조사 레지스터 맵에 존재</td><td>내장 — <code>Object_Name</code>, <code>Units</code>, <code>Description</code>이 값과 함께 전달</td></tr>
+                        <tr><td>데이터 형식</td><td>원시 16비트 워드와 비트, 사용자가 해석</td><td>형식 지정 — 실수, 부호 없는 정수, 불리언, 열거형, 문자열</td></tr>
+                        <tr><td>장치 탐색</td><td>없음 — 주소를 별도로 전달받아야 함</td><td><code>Who-Is</code> / <code>I-Am</code> 동적 바인딩</td></tr>
+                        <tr><td>주소 지정</td><td>유닛/슬레이브 ID + 레지스터 번호</td><td>장치 인스턴스 + 객체 식별자(+ 네트워크 번호)</td></tr>
+                        <tr><td>값 변경</td><td>없음 — 클라이언트가 계속 폴링</td><td>COV — 구독 후 장치가 변경값을 푸시</td></tr>
+                        <tr><td>명령 조정</td><td>마지막 쓰기가 우선, 레지스터당 값 하나</td><td>16단계 <button type="button" data-gloss="priority-array">우선순위 배열</button> + <code><button type="button" data-gloss="relinquish-default">Relinquish_Default</button></code></td></tr>
+                        <tr><td>경보</td><td>프로토콜에 없음 — 상위 관리 시스템에서 구현</td><td>고유/알고리즘 이벤트 + 알림 클래스</td></tr>
+                        <tr><td>스케줄·트렌드</td><td>프로토콜에 없음</td><td>표준 Schedule, Calendar, Trend Log 객체</td></tr>
+                        <tr><td>전송 방식</td><td>RTU / ASCII(RS-485 직렬), TCP(Ethernet)</td><td>MS/TP(RS-485), BACnet/IP, Ethernet, BACnet/SC</td></tr>
+                        <tr><td>적합성</td><td>사실상 제조사 레지스터 맵이 계약 역할</td><td>공식 체계 — <a href="/ko/education/bacnet-services.html">BIBB</a>, 장치 프로파일, 공개 PICS</td></tr>
+                        <tr><td>일반 장비</td><td>각종 계량기, VFD, BTU 계량기, 게이트웨이, 특수 장비</td><td>HVAC 컨트롤러, VAV 박스, 플랜트 컨트롤러, BMS</td></tr>
+                        <tr><td>바이트 순서 함정</td><td>악명 높음 — 32비트 값의 레지스터 쌍에서 워드 순서와 바이트 스왑이 정의되지 않음</td><td>형식 지정 값에 인코딩 포함, 스왑을 추측할 필요 없음</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 class="subhead" id="discovery-cov">매일 체감하는 장치 탐색과 값 변경</h2>
+
+            <p>
+                위 표의 두 항목은 모든 현장에서 문제를 일으킬 수 있습니다. 첫 번째는 <strong>장치 탐색</strong>입니다. 도구를 BACnet 네트워크에 연결해 <code>Who-Is</code>를 보내면 모든 장치가 자신의 장치 인스턴스를 담은 <code>I-Am</code>으로 응답하므로 몇 초 만에 목록을 만들 수 있습니다. Modbus에는 "어떤 장치가 있는가"에 해당하는 기능이 없습니다. 유닛 ID와 레지스터 맵을 <em>전달받아</em> Modbus 장치를 커미셔닝합니다. 계량기의 DIP 스위치는 슬레이브 7인데 도면에는 슬레이브 3이라고 적혀 있어도 통신망에서 이를 바로잡아 주지 않습니다. <a href="/ko/education/modbus-decoding.html">5자리 레지스터 함정</a>과 바이트 순서 추측도 같은 사실에서 비롯됩니다. 자기 기술 정보가 없으면 모든 숫자를 문서에 의존해 해석해야 합니다.
+            </p>
+
+            <p>
+                두 번째는 <strong>폴링과 푸시</strong>입니다. Modbus는 엄격한 폴링·응답 방식입니다. 클라이언트가 레지스터 40012를 요청하면 서버가 응답하고, 변경을 확인하려면 클라이언트가 다시 요청합니다. 그래픽 화면을 실시간처럼 보이게 하려면 초당 백 번 요청할 수도 있습니다. BACnet도 폴링하지만 <strong>COV</strong>, 즉 값 변경(Change of Value) 기능도 제공합니다. 포인트를 구독하고 유효 기간이 끝나기 전에 구독을 갱신하면, 아날로그 값이 <code>COV_Increment</code>보다 크게 변할 때 장치가 알립니다. 바이너리와 다중 상태 포인트는 상태가 바뀔 때마다 알립니다. 트래픽이 많은 트렁크에서는 계속 메시지를 주고받는 것과 변화가 있을 때만 통신하는 것의 차이가 됩니다. 다만 항상 지원되는 것은 아닙니다. 장치의 <a href="/ko/education/bacnet-services.html">BIBB</a>에 서버 역할이 포함되어야 COV를 푸시하므로 사용하기 전에 확인해야 합니다.
+            </p>
+
+            <h2 class="subhead" id="command-conformance">포인트 명령과 장치 기능 확인</h2>
+
+            <p>
+                쓰기 방식에서도 차이가 드러납니다. Modbus에서는 레지스터에 값을 쓰면 누군가 다시 쓸 때까지 유지됩니다. <strong>마지막 쓰기가 우선</strong>하며 누가 왜 썼는지는 기억하지 않습니다. 두 마스터가 한 코일을 두고 충돌해도 레지스터에는 마지막에 도착한 값만 남습니다. BACnet은 <button type="button" data-gloss="priority-array">명령 가능</button> 출력을 <a href="/ko/tools/bacnet-priority.html">16단계 우선순위 배열</a>로 감쌉니다. 위쪽에는 인명 안전 명령, 중간에는 자동 제어, 그보다 높은 위치에는 운영자 강제 조작이 있으며, 모든 단계가 해제됐을 때 사용할 <code><button type="button" data-gloss="relinquish-default">Relinquish_Default</button></code>가 맨 아래에 있습니다. 값은 "그냥 덮어써지는" 것이 아닙니다. 활성 명령 중 우선순위가 가장 높은 명령이 적용되고, 하나를 해제하면 다음으로 낮은 명령이 제어권을 되찾습니다. 구조가 더 복잡한 이유는 건물에서 같은 댐퍼에 정당하게 명령하려는 주체가 여럿이기 때문입니다.
+            </p>
+
+            <p>
+                마지막은 <strong>장치가 수행할 수 있는 기능을 파악하는 방법</strong>입니다. Modbus에서는 제조사 PDF가 그 정보를 제공합니다. 레지스터 맵 <em>자체가</em> 인터페이스 계약이며, PICS 같은 기능 명세나 확인할 장치 프로파일이 없습니다. 따라서 두 "Modbus" 장치의 공통점은 프레이밍뿐입니다. Modbus Organization도 적합성 인증 프로그램을 운영하지만 장치별 기능 선언이 아니라 TCP 서버 동작을 시험합니다. BACnet은 바로 이 정보를 공식화합니다. 장치는 <strong>PICS</strong>(Protocol Implementation Conformance Statement, 프로토콜 구현 적합성 명세서)를 공개하며, 그 안에 장치 프로파일, 정확한 <a href="/ko/education/bacnet-services.html">BIBB</a>, 지원 객체 유형을 나열하므로 배선 전에 통합 가능 여부를 판단할 수 있습니다. 어느 방식이든 문서를 읽어야 하지만 BACnet은 문서에 포함할 내용을 표준화합니다.
+            </p>
+
+            <h2 class="subhead" id="which-and-when">어느 쪽이 더 적합한가</h2>
+
+            <p>
+                어느 쪽도 절대적으로 우수하지 않으며 서로 다른 작업에 최적화되어 있습니다. Modbus는 <em>적용 범위</em>가 강점입니다. 프로세서가 있는 거의 모든 장치에 넣을 수 있을 만큼 작아서 계량기, 드라이브, 특수 장비에 널리 탑재됩니다. BACnet은 <em>건물</em>에 강합니다. BMS에 필요한 장치 탐색, 형식 지정 포인트, 우선순위 명령, 경보, 스케줄, 트렌드가 프로토콜에 포함되어 있습니다. 어느 쪽이 "더 낫다"고 묻는 것은 렌치와 드라이버 중 무엇이 더 낫냐고 묻는 것과 같습니다.
+            </p>
+
+            <p>
+                현장에서는 전력량계, VFD, BTU 계량기, 자체 컨트롤러를 갖춘 패키지 장비 같은 <strong>말단에서 Modbus</strong>를 접합니다. <strong>중앙에서는 BACnet</strong>이 HVAC 컨트롤러와 <button type="button" data-gloss="front-end">상위 관리 시스템</button>을 연결합니다. 두 영역의 접점에는 <strong>게이트웨이</strong>가 있습니다. 한쪽에서 Modbus 장치의 레지스터를 폴링하고 다른 쪽에서 BACnet 객체로 다시 제공합니다. 레지스터 맵은 게이트웨이 구성에 <em>한 번</em>만 입력하며, 건물의 나머지 시스템에는 명확한 자기 기술형 포인트가 보입니다.
+            </p>
+
+            <svg class="bac-svg wide" viewBox="0 0 720 160" role="img"
+                 aria-labelledby="bvm-gw-title bvm-gw-desc">
+                <title id="bvm-gw-title">Modbus와 BACnet을 연결하는 게이트웨이</title>
+                <desc id="bvm-gw-desc">왼쪽의 Modbus RTU 전력량계가 가운데 프로토콜 게이트웨이에 연결되고, 게이트웨이는 오른쪽의 BACnet/IP 건물 관리 시스템에 연결됩니다. 게이트웨이가 레지스터 맵을 한 번 저장하고 계량기의 레지스터를 BACnet 객체로 다시 제공한다고 설명합니다.</desc>
+
+                <rect x="20" y="40" width="180" height="60" fill="var(--surface)" stroke="var(--blue)" stroke-width="1.6"/>
+                <text x="110" y="66" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--text-bright)">kW 계량기</text>
+                <text x="110" y="84" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--blue)">Modbus RTU</text>
+
+                <line x1="200" y1="70" x2="266" y2="70" stroke="var(--text-dim)" stroke-width="1.6" marker-end="url(#bvm-gw-arrow)"/>
+                <text x="233" y="60" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">폴링</text>
+
+                <rect x="270" y="34" width="180" height="72" fill="var(--surface-2)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                <text x="360" y="60" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--text-bright)">게이트웨이</text>
+                <text x="360" y="78" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">레지스터 맵</text>
+                <text x="360" y="92" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">여기에 한 번 저장</text>
+
+                <line x1="450" y1="70" x2="516" y2="70" stroke="var(--text-dim)" stroke-width="1.6" marker-end="url(#bvm-gw-arrow)"/>
+                <text x="483" y="60" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--text-dim)">객체</text>
+
+                <rect x="520" y="40" width="180" height="60" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>
+                <text x="610" y="66" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--text-bright)">BMS</text>
+                <text x="610" y="84" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--accent)">BACnet/IP</text>
+
+                <text x="360" y="138" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">레지스터 입력, 자기 기술형 객체 출력 — 맵은 게이트웨이에 한 번만 입력</text>
+
+                <defs>
+                    <marker id="bvm-gw-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--text-dim)"/></marker>
+                </defs>
+            </svg>
+
+            <p>
+                실무적인 결론은 "하나를 고르라"는 것이 아닙니다. 눈앞의 프로토콜을 구분하고, Modbus 포인트에는 맵이 필요하지만 BACnet 포인트는 자체 정보를 포함한다는 점을 이해하며, 두 프로토콜이 만나는 곳에는 게이트웨이가 필요하다고 예상해야 합니다. <a href="/ko/education/modbus-basics.html">Modbus</a>와 <a href="/ko/education/bacnet-basics.html">BACnet</a> 기초 페이지에서는 각 프로토콜을 자세히 설명하고, 이 페이지는 둘 사이를 연결합니다.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/bacnet/', label: 'BACnet 참조 허브'},
+        tools: [
+            {href: '/ko/tools/modbus-register-viewer.html', label: 'Modbus 레지스터 뷰어'},
+            {href: '/ko/tools/bacnet-objects.html', label: 'BACnet 객체 참조표'},
+            {href: '/ko/tools/bacnet-priority.html', label: 'BACnet 우선순위 배열'}
+        ],
+        lessons: [
+            {href: '/ko/education/modbus-basics.html', label: 'Modbus 기초'},
+            {href: '/ko/education/bacnet-basics.html', label: 'BACnet 기초'},
+            {href: '/ko/education/bacnet-services.html', label: 'BACnet 서비스'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/modbus-basics.html', label: 'Modbus 기초'},
+            {href: '/ko/practice/bacnet-basics.html', label: 'BACnet 기초'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 학습으로 돌아가기</a>
+
+</main>
+{% endblock %}

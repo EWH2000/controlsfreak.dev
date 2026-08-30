@@ -6,9 +6,24 @@ nav: education
 category: forced-air
 pairedQuiz: https://controlsfreak.dev/practice/air-handlers.html
 keywords: ahu mixing box mixed air return relief outside air supply fan filter coil discharge mat dat rtu damper
+pageMessages:
+  widget:
+    fraction:
+      failedOpen: damper failed open
+      fixedMinimum: fixed minimum
+    status:
+      freezeRisk: Mixed air near freezing — freeze-stat territory
+      damperFailed: OA damper failed open — mixed air is tracking outdoors
+      coolingActive: Cooling — coil holding its leaving-air target
+      coolingIdle: Cooling coil idle — the mix is already below its target
+      heatingActive: Heating — coil holding its leaving-air target
+      heatingIdle: Heating coil idle — the mix is already above its target
+      fanOnly: Fan only — supply is the mix plus fan heat
+    anecdote: >-
+      The MA-T is the tell here — and it can lie, too. I once chased an RTU that hunted all through a sunny spring morning: economizer dampers swinging, compressor short-cycling, each 'correcting' the other. The trends gave it away — MA-T sawtoothing in lockstep with the compressor stage — because the mixed-air sensor sat too close to the DX coil, reading the coil instead of the mix every time a stage kicked on. An averaging element across the mixing plenum ended it. Mixing happens where it happens; the sensor only reports where it sits.
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -518,7 +533,7 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
                 <div class="ah-w-top">
                     <div>
                         <div class="widget-readout-label">Outside-air fraction</div>
-                        <div class="widget-readout-value" id="ah-w-frac">20<span class="unit"> %</span> <span class="unit">— fixed minimum</span></div>
+                        <div class="widget-readout-value" id="ah-w-frac">20<span class="unit"> %</span> <span class="unit">— {{ pageMessages.widget.fraction.fixedMinimum }}</span></div>
                     </div>
                     <div>
                         <div class="widget-readout-label" id="ah-w-mode-lbl">Coil mode</div>
@@ -567,7 +582,7 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
                     </div>
                 </div>
 
-                <div class="ah-w-status" id="ah-w-status" aria-live="polite">Cooling — coil holding its leaving-air target</div>
+                <div class="ah-w-status" id="ah-w-status" aria-live="polite">{{ pageMessages.widget.status.coolingActive }}</div>
                 <div class="ah-w-alert" id="ah-w-alert"></div>
             </div>
 
@@ -744,8 +759,8 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
             // OA-fraction readout. Fixed structure → safe innerHTML for
             // the unit spans.
             fracEl.innerHTML = state.damperFailed
-                ? '100<span class="unit"> %</span> <span class="unit">— damper failed open</span>'
-                : '20<span class="unit"> %</span> <span class="unit">— fixed minimum</span>';
+                ? '100<span class="unit"> %</span> <span class="unit">— ' + CFI18n.page('widget.fraction.failedOpen') + '</span>'
+                : '20<span class="unit"> %</span> <span class="unit">— ' + CFI18n.page('widget.fraction.fixedMinimum') + '</span>';
 
             // Status line. Failure states outrank mode states; the
             // freeze fault keys off the calculated MA-T so the text
@@ -753,23 +768,23 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
             let statusClass, statusText;
             if (state.damperFailed && maT < FREEZE_AT) {
                 statusClass = 'fault';
-                statusText  = 'Mixed air near freezing — freeze-stat territory';
+                statusText  = CFI18n.page('widget.status.freezeRisk');
             } else if (state.damperFailed) {
                 statusClass = 'warn';
-                statusText  = 'OA damper failed open — mixed air is tracking outdoors';
+                statusText  = CFI18n.page('widget.status.damperFailed');
             } else if (state.mode === 'cool') {
                 statusClass = '';
                 statusText  = maT > SP_COOL
-                    ? 'Cooling — coil holding its leaving-air target'
-                    : 'Cooling coil idle — the mix is already below its target';
+                    ? CFI18n.page('widget.status.coolingActive')
+                    : CFI18n.page('widget.status.coolingIdle');
             } else if (state.mode === 'heat') {
                 statusClass = '';
                 statusText  = maT < SP_HEAT
-                    ? 'Heating — coil holding its leaving-air target'
-                    : 'Heating coil idle — the mix is already above its target';
+                    ? CFI18n.page('widget.status.heatingActive')
+                    : CFI18n.page('widget.status.heatingIdle');
             } else {
                 statusClass = '';
-                statusText  = 'Fan only — supply is the mix plus fan heat';
+                statusText  = CFI18n.page('widget.status.fanOnly');
             }
             statusEl.className = 'ah-w-status' + (statusClass ? ' ' + statusClass : '');
             statusEl.textContent = statusText;
@@ -779,7 +794,7 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
             // the session once seen (vfds precedent).
             if (state.damperFailed && maT < FREEZE_AT) state.anecdoteShown = true;
             if (state.anecdoteShown) {
-                alertEl.innerHTML = '<div class="widget-anecdote warn">The MA-T is the tell here — and it can lie, too. I once chased an RTU that hunted all through a sunny spring morning: economizer dampers swinging, compressor short-cycling, each \'correcting\' the other. The trends gave it away — MA-T sawtoothing in lockstep with the compressor stage — because the mixed-air sensor sat too close to the DX coil, reading the coil instead of the mix every time a stage kicked on. An averaging element across the mixing plenum ended it. Mixing happens where it happens; the sensor only reports where it sits.</div>';
+                alertEl.innerHTML = '<div class="widget-anecdote warn">' + CFI18n.page('widget.anecdote') + '</div>';
             } else {
                 alertEl.innerHTML = '';
             }

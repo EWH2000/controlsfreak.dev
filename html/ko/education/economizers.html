@@ -1,0 +1,385 @@
+---
+title: 외기냉방(Economizer) — controlsfreak.dev
+description: 공기조화기가 코일 대신 외기로 냉방해야 하는 조건과 연동 댐퍼, 건구온도·엔탈피 전환 판단, 최소 외기량, 현장 고장을 설명합니다.
+canonical: https://controlsfreak.dev/ko/education/economizers.html
+nav: education
+category: forced-air
+pairedQuiz: https://controlsfreak.dev/ko/practice/economizers.html
+keywords: 외기냉방 economizer 전환 건구온도 엔탈피 상한 제한 댐퍼 혼합공기 통합 냉방 동파방지
+sourceContentHash: bcced8b9e1b1dd641d775f7ccc1ad84bd3efaa41272b1aa3bc097d0ecc885f90
+sourceMessageHash: 9ef4517b75ad25731c0e79d6b2ab3ae5bfcfe8d77996aa02525cb8199f4f06c2
+pageMessages:
+  verdict:
+    economize: 외기냉방 — 무상 냉방
+    wash: 차이 없음 — 최소 외기량 유지
+    lockout: 외기냉방 금지 — 최소 외기량 유지
+  status:
+    deceptive: 오판 구간 — 온도는 더 낮지만 실제 총열량은 더 큽니다
+    missed: 놓친 무상 냉방 — 더 따뜻하지만 건조하여 회기보다 총열량이 작습니다
+    wash: 판단하기 어려운 차이입니다. 최소 외기량을 유지하고 코일로 제어하세요
+    freeCooling: 두 판단이 일치합니다 — 실제로 유리한 무상 냉방입니다
+    mechanical: 두 판단이 일치합니다 — 기계 냉방이 부하를 담당해야 합니다
+  anecdote:
+    deceptive: >-
+      <div class="widget-anecdote warn">이 구간 때문에 실제 현장에서 꽤 오래 고생한 적이 있습니다. 조립형 공기조화기(AHU)가 설치된 건물이었고 모든 센서가 건구온도 센서뿐이라 외기와 실내의 습도를 전혀 알 수 없었습니다. 온화한 아침이면 전환 로직은 외기가 회기보다 몇 도 낮다는 이유로 ‘무상 냉방’을 시작했습니다. 트렌드에는 외기냉방 댐퍼가 완전히 열리고 실내온도가 내려가지 않고 오히려 오르는 모습만 보였습니다. 나머지 단서는 사람들에게서 들었습니다. 실내가 후텁지근했고 재실자가 건물의 유일한 습도 센서였던 셈입니다. 엔탈피를 비교할 수 없으므로 종이 위에서 습공기 상태를 계산해 해결했습니다. 최악의 습도를 가정하고 포화 외기의 총열량조차 회기보다 작아지는 건구온도를 찾아 전환 한계를 그 값까지 낮췄습니다. 바로 이 위젯이 구하는 수치입니다. 그 선 아래에서는 외기가 반드시 유리하지만, 위에서는 습도 센서 없이 운에 맡기는 셈입니다.</div>
+---
+{% extends "html/education/economizers.html" %}
+{% from "related-links.njk" import relatedLinks with context %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">교육 · 외기냉방</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">외기냉방(Economizer) <span class="tool-tag">공조 시스템</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                공기조화기(AHU)의 냉방 수단은 코일만이 아닙니다. 아침, 간절기, 온화한 날씨가 이어지는 시기에는 흡입 후드 밖의 공기가 건물에서 가장 저렴한 냉방원입니다. <em>외기냉방(economizer)</em>은 최소 개도보다 외기 댐퍼를 더 열고, 차가운 외기가 부하를 담당하게 하며, 압축기나 냉수 플랜트는 정말 필요한 날씨에만 운전하는 제어 시퀀스입니다. 개념은 단순하지만 잘못 구현되기 쉽습니다. 이 페이지는 한 가지 질문을 처음부터 끝까지 다룹니다. <em>공기조화기는 언제 코일 대신 외기로 냉방해야 하며, 댐퍼와 전환 판단, 최소 외기량 하한은 어떻게 그 결정을 안전하게 만듭니까?</em>
+            </p>
+
+            <div class="callout">
+                <p style="line-height:1.7;">
+                    이 페이지는 <a href="/ko/education/air-handlers.html#mixing-box">공기조화기</a>의 연동 댐퍼 세 개가 최소 개도를 유지하는 혼합상자에서 이어집니다. 이 장면이 익숙하지 않다면 먼저 공기 흐름을 살펴보세요. 아래 내용은 이를 이해했다고 전제합니다.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · The damper assembly ───────────────── -->
+            <h2 class="subhead" id="damper-assembly">하나의 신호, 세 개의 댐퍼</h2>
+
+            <p>
+                기계적으로 외기냉방 장치에 새로운 것은 없습니다. 혼합상자의 댐퍼 세 개를 더 적극적으로 사용할 뿐입니다. 일반 장비에서는 고정 위치에 머물지만 외기냉방에서는 하나의 <em>비례제어 조립체</em>가 됩니다. 외기 댐퍼가 열리면 회기 댐퍼가 그만큼 닫히고, 늘어난 공기가 빠져나가도록 배기·릴리프 댐퍼가 열립니다. 세 댐퍼는 <em>지금 급기 중 몇 퍼센트를 외기로 구성할 것인가?</em>라는 하나의 결정을 서로 다른 면에서 구현하므로 제어 신호 하나로 함께 움직입니다. 장비를 통과하는 총풍량은 거의 변하지 않고 공기의 혼합 비율만 달라집니다.
+            </p>
+            <p>
+                그 신호를 만드는 것은 일반적인 온도 제어 루프입니다. 무상 냉방 중에는 외기냉방 장치가 혼합 비율을 조절해 <em>혼합공기 온도</em>를 설정값으로 유지합니다. 보통 냉각 코일이 만들도록 요구받는 <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span> 안팎입니다. 서늘한 아침에 부하가 작다면 댐퍼는 <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span> 외기와 <span data-us="75&nbsp;°F" data-metric="23.9&nbsp;°C">75&nbsp;°F</span> 회기를 설정값에 맞는 비율로 혼합하고 코일 밸브는 열리지 않습니다. 비례제어에는 두 가지 확실한 한계가 있습니다. 재실 중 환기 하한은 포기할 수 없으므로 댐퍼는 <em>최소 개도</em> 아래로 닫히지 않으며, 반대쪽 끝의 혼합 비율은 외기 100&nbsp;%입니다. 외기 댐퍼가 추가로 들이는 공기는 모두 건물 밖으로 빠져나갈 길이 필요하므로 릴리프 댐퍼도 함께 열립니다. 릴리프 경로가 따라가지 못할 때의 결과는 이 장의 다음 글인 <a href="/ko/education/building-pressure.html">건물 압력</a>에서 다룹니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 520 400" role="img" aria-labelledby="eco-d1-title eco-d1-desc"
+                 font-family="var(--mono)">
+                <title id="eco-d1-title">무상 냉방을 위해 비례제어되는 댐퍼 조립체</title>
+                <desc id="eco-d1-desc">공기조화기 강의와 같은 혼합상자에서 외기냉방이 작동합니다. 외기 댐퍼는 열리면서 풍량 대부분을 담당하고, 회기 댐퍼는 닫히며, 늘어난 외기가 건물 밖으로 빠져나가도록 배기·릴리프 댐퍼가 함께 열립니다. 출구 덕트의 혼합공기 온도 센서가 외기냉방 루프에 신호를 보내고 하나의 제어 신호가 세 댐퍼를 함께 비례제어합니다.</desc>
+
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes duct geometry — the changeover widget writes
+                     HTML readouts, and psychro-engine.js is pure moist-air math. The
+                     data-pulse wire below is unaffected either way: pulses always read
+                     geometry live. A future geometry write must refresh in the same
+                     breath, or the page must opt out via the `flowGeometryLive`
+                     frontmatter (flowStaticGuard, .eleventy.js). -->
+                <!-- ducts. Same geometry as the air-handlers mixing box; the
+                     densities now encode free cooling — OA carries most of
+                     the flow, RA is throttled down. -->
+                <path id="eco-d1-ra" data-flow="air" data-flow-static="true" data-flow-density="0.4" d="M490 150 H370" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="eco-d1-oa" data-flow="air" data-flow-static="true" d="M10 225 H150" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <path id="eco-d1-ea" data-flow="air" data-flow-static="true" d="M260 100 V15" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="eco-d1-ma" data-flow="air" data-flow-static="true" d="M260 300 V385" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+
+                <!-- econ loop signal wire: MA-T sensor → the damper actuators -->
+                <path id="eco-d1-sig" data-pulse="signal" data-pulse-interval="6000" d="M312 340 H470 V212" fill="none" stroke="var(--amber)" stroke-width="2"/>
+                <polygon points="465,218 475,218 470,207" fill="var(--amber)"/>
+
+                <!-- flow arrows (static — carry direction for reduced-motion / print) -->
+                <g id="eco-d1-flow-arrows">
+                    <polygon points="475,145 466,150 475,155" fill="var(--blue-cool)"/>
+                    <polygon points="35,220 44,225 35,230" fill="var(--teal)"/>
+                    <polygon points="255,90 265,90 260,79" fill="var(--text-dim)"/>
+                    <polygon points="255,335 265,335 260,346" fill="var(--blue-cool)"/>
+                    <!-- convergence inside the chamber -->
+                    <polygon points="335,145 326,150 335,155" fill="var(--blue-cool)"/>
+                    <polygon points="171,220 180,225 171,230" fill="var(--teal)"/>
+                    <polygon points="255,270 265,270 260,281" fill="var(--blue-cool)"/>
+                </g>
+
+                <!-- chamber -->
+                <rect x="150" y="100" width="220" height="200" fill="none" stroke="var(--text-dim)" stroke-width="2"/>
+
+                <!-- dampers: frame + parallel blades. Blade angle carries the
+                     position — near-parallel to flow = open, steep = throttled.
+                     Compare the air-handlers lesson's minimum-position set. -->
+                <g id="eco-d1-oa-damper">
+                    <rect x="70" y="207" width="30" height="36" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="73" y1="216" x2="97" y2="220" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="73" y1="225" x2="97" y2="229" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="73" y1="234" x2="97" y2="238" stroke="var(--text-bright)" stroke-width="1.5"/>
+                </g>
+                <g id="eco-d1-ra-damper">
+                    <rect x="410" y="132" width="30" height="36" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="415" y1="136" x2="429" y2="150" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="415" y1="147" x2="429" y2="161" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="421" y1="156" x2="433" y2="165" stroke="var(--text-bright)" stroke-width="1.5"/>
+                </g>
+                <g id="eco-d1-ea-damper">
+                    <rect x="242" y="40" width="36" height="30" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="249" y1="44" x2="252" y2="66" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="259" y1="44" x2="262" y2="66" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="269" y1="44" x2="272" y2="66" stroke="var(--text-bright)" stroke-width="1.5"/>
+                </g>
+
+                <!-- MA-T sensor: taps off the mixed-air duct into the loop -->
+                <g id="eco-d1-mat">
+                    <line x1="262" y1="340" x2="288" y2="340" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <circle cx="300" cy="340" r="12" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="300" y="344" text-anchor="middle" font-size="12" fill="var(--text-bright)">T</text>
+                    <text x="300" y="368" text-anchor="middle" font-size="12" fill="var(--text-dim)">MA-T</text>
+                </g>
+
+                <!-- labels -->
+                <text x="430" y="122" text-anchor="middle" font-size="15" fill="var(--text)">← 회기</text>
+                <text x="425" y="186" text-anchor="middle" font-size="12" fill="var(--text-dim)">닫히는 중</text>
+                <text x="80" y="196" text-anchor="middle" font-size="15" fill="var(--text)">외기 →</text>
+                <text x="85" y="260" text-anchor="middle" font-size="12" fill="var(--text-dim)">열리는 중</text>
+                <text x="300" y="30" text-anchor="start" font-size="13" fill="var(--text)">배기 / 릴리프 ↑</text>
+                <text x="300" y="62" text-anchor="start" font-size="12" fill="var(--text-dim)">연동하여 열림</text>
+                <text x="260" y="190" text-anchor="middle" font-size="16" font-weight="600" fill="var(--text-bright)">혼합상자</text>
+                <text x="260" y="246" text-anchor="middle" font-size="11" fill="var(--text-dim)">연동 댐퍼 비례제어 —</text>
+                <text x="260" y="262" text-anchor="middle" font-size="11" fill="var(--text-dim)">무상 냉방 운전 중</text>
+                <text x="245" y="345" text-anchor="end" font-size="14" fill="var(--text)">혼합공기 ↓</text>
+                <text x="462" y="308" text-anchor="end" font-size="12" fill="var(--text-dim)">외기냉방 루프 —</text>
+                <text x="462" y="324" text-anchor="end" font-size="12" fill="var(--text-dim)">하나의 신호, 세 댐퍼</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw oa"></span>외기</span>
+                <span><span class="sw ra"></span>회기 / 혼합공기</span>
+                <span><span class="sw ea"></span>배기 / 릴리프</span>
+            </div>
+
+            <div class="callout" style="margin-top:1.5rem;">
+                <h3>계산 예시 <span>· 얼마나 열어야 ‘열림’일까?</span></h3>
+                <p>비례제어는 혼합상자 계산식을 역으로 푼 것입니다. 외기가 <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span>, 회기가 <span data-us="75&nbsp;°F" data-metric="23.9&nbsp;°C">75&nbsp;°F</span>이고 루프가 <span data-us="60&nbsp;°F" data-metric="15.6&nbsp;°C">60&nbsp;°F</span> 혼합공기를 요구한다고 가정합니다. °F 기준으로 %&nbsp;OA = (60&nbsp;−&nbsp;75)&nbsp;÷&nbsp;(55&nbsp;−&nbsp;75)&nbsp;×&nbsp;100 = 75&nbsp;%이고, °C로도 (15.6&nbsp;−&nbsp;23.9)&nbsp;÷&nbsp;(12.8&nbsp;−&nbsp;23.9)&nbsp;×&nbsp;100&nbsp;≈&nbsp;75&nbsp;%입니다. 즉 급기의 4분의 3이 외기이고 코일은 닫힌 상태를 유지합니다. <a href="/ko/tools/economizer-ratio.html">외기냉방 비율 도우미</a>는 해가 불가능한 경우까지 포함해 이 계산을 수행합니다. 역으로 푼 직선 혼합 법칙은 <a href="/ko/education/psychrometrics-basics.html#processes">습공기 상태 해석 기초</a>에서 설명합니다.</p>
+            </div>
+
+            <!-- ───────────────── 2 · The changeover decision ───────────────── -->
+            <h2 class="subhead" id="changeover">외기냉방 전환 판단</h2>
+
+            <p>
+                비례제어를 허용하기 전에 먼저 <em>지금 외기가 회기보다 정말 유리한가?</em>라는 게이트가 열려야 합니다. 이것이 <em>전환(changeover)</em> 판단입니다. 반대로 게이트를 닫는 조건은 <em>상한 차단(high-limit lockout)</em>이라고도 합니다. 가장 단순한 방식은 온도를 비교합니다. 외기온도가 고정 한곗값 또는 회기온도보다 낮을 때 외기냉방을 허용하는 <em>차온 <button type="button" data-gloss="dry-bulb">건구온도</button></em> 전환입니다. 장비에 이미 있는 센서 하나면 되고 로직도 단순합니다. 건조한 기후에서는 충분히 잘 작동합니다.
+            </p>
+            <p>
+                함정은 <strong>온도계가 부하의 절반만 본다</strong>는 점입니다. 공기는 <em>현열</em>을 <button type="button" data-gloss="dry-bulb">건구온도</button> 센서로 측정할 수 있고, 수분에 실린 <em>잠열</em>도 운반합니다. 실내를 쾌적하게 만들려면 냉각 코일이 둘 다 제거해야 합니다. 두 열을 한 번에 나타내는 물성값이 공기 단위 질량당 총열량인 <em>엔탈피</em>입니다(<a href="/ko/education/psychrometrics-basics.html#properties">습공기 상태 해석 기초</a>에서 정확히 정의합니다). 습한 공기의 수분에는 예상보다 많은 열이 들어 있습니다. 후텁지근한 아침에 외기 <span data-us="68&nbsp;°F" data-metric="20.0&nbsp;°C">68&nbsp;°F</span>, 85&nbsp;% RH와 회기 <span data-us="75&nbsp;°F" data-metric="23.9&nbsp;°C">75&nbsp;°F</span>, 50&nbsp;% RH를 비교해 보세요. 외기는 <span data-us="7&nbsp;°F" data-metric="3.9&nbsp;°C">7&nbsp;°F</span> <em>더 낮지만</em> 총열량은 약 <span data-us="1.8&nbsp;Btu/lb" data-metric="4.2&nbsp;kJ/kg">1.8&nbsp;Btu/lb</span> <em>더 큽니다</em>. <button type="button" data-gloss="dry-bulb">건구온도</button> 전환은 아침 내내 이 공기로 외기냉방을 합니다. 댐퍼가 열려 ‘무상 냉방’ 공기가 들어오면 실내는 더 습해지고 코일은 감당하기 어려운 잠열부하를 떠안습니다. 트렌드에는 외기냉방이 돕는다고 판단하는 동안 냉방이 최대 출력으로 운전하는 모습이 나타납니다.
+            </p>
+            <p>
+                <em>엔탈피 전환</em>은 이 함정을 막습니다. h<sub>OA</sub>와 h<sub>RA</sub> 또는 고정 엔탈피 한계를 비교해 외기의 실제 총열량이 더 작을 때만 외기냉방을 허용합니다. 습한 기후에서는 에너지를 절감하는 장치와 오히려 낭비하는 장치를 가르는 차이입니다. 대신 습도 센서가 필요하고, 차동 방식이면 두 개가 필요합니다. 습도 센서는 드리프트가 생기기 쉬워 지능적인 엔탈피 외기냉방이 단순한 <button type="button" data-gloss="dry-bulb">건구온도</button> 방식보다 성능이 나빠지는 대표적인 원인이 됩니다. 어떤 방식을 사용하든 구조는 같습니다. 전환 판단은 <em>제어 루프 위의 게이트</em>입니다. 허용하지 않으면 혼합공기 루프가 아무리 댐퍼를 열려고 해도 최소 개도를 유지합니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 520 380" role="img" aria-labelledby="eco-d2-title eco-d2-desc"
+                 font-family="var(--mono)">
+                <title id="eco-d2-title">건구온도 전환이 오판하는 구간</title>
+                <desc id="eco-d2-desc">아래 축은 건구온도, 옆 축은 수분량이며 포화곡선으로 둘러싸인 단순화한 습공기선도입니다. 회기 상태가 가운데 점으로 표시됩니다. 이 점을 지나는 수직 점선은 건구온도가 같은 공기, 대각 점선은 총열량이 같은 공기를 뜻합니다. 두 선 사이에는 건구온도는 더 낮지만 총열량은 더 커서 건구온도 전환이 잘못 받아들이는 구간과, 더 따뜻하지만 건조해 총열량은 더 작아서 잘못 거부하는 구간이 있습니다. 등엔탈피선과 포화곡선의 교점 왼쪽은 습도와 관계없이 외기가 유리한 최악조건 건구온도 한계입니다.</desc>
+
+                <!-- shaded wedges first, so lines and text draw over them -->
+                <polygon points="340,234 340,100 320,120 300,140 280,155 260,168 245,178" fill="var(--heat)" fill-opacity="0.16" stroke="none"/>
+                <polygon points="340,234 450,300 450,330 340,330" fill="var(--teal)" fill-opacity="0.16" stroke="none"/>
+
+                <!-- axes -->
+                <line x1="60" y1="330" x2="490" y2="330" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <polygon points="484,325 493,330 484,335" fill="var(--text-dim)"/>
+                <line x1="60" y1="330" x2="60" y2="45" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <polygon points="55,51 60,42 65,51" fill="var(--text-dim)"/>
+                <text x="488" y="352" text-anchor="end" font-size="13" fill="var(--text)">건구온도 →</text>
+                <text x="72" y="42" text-anchor="start" font-size="13" fill="var(--text)">수분량</text>
+
+                <!-- saturation curve -->
+                <path d="M60 270 C 140 250, 220 210, 300 140 S 365 70 385 52" fill="none" stroke="var(--text)" stroke-width="2"/>
+                <text x="395" y="58" text-anchor="start" font-size="12" fill="var(--text-dim)">포화곡선</text>
+
+                <!-- the two boundaries through the return-air point -->
+                <!-- ends at the return-air point — below it the teal fill's
+                     hard left edge carries the same-dry-bulb boundary -->
+                <line x1="340" y1="96" x2="340" y2="234" stroke="var(--text-dim)" stroke-width="1.5" stroke-dasharray="2 4"/>
+                <text x="348" y="110" text-anchor="start" font-size="12" fill="var(--text-dim)">회기와 같은 건구온도</text>
+                <line x1="245" y1="178" x2="435" y2="291" stroke="var(--text-dim)" stroke-width="1.5" stroke-dasharray="6 4"/>
+                <text x="238" y="163" text-anchor="end" font-size="12" fill="var(--text-dim)">같은 총열량</text>
+
+                <!-- worst-case-limit drop line -->
+                <line x1="245" y1="178" x2="245" y2="330" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="2 4"/>
+                <text x="245" y="348" text-anchor="middle" font-size="12" fill="var(--text-dim)">최악조건 한계</text>
+
+                <!-- return-air state point -->
+                <circle cx="340" cy="234" r="5" fill="var(--text-bright)"/>
+                <text x="352" y="230" text-anchor="start" font-size="13" fill="var(--text-bright)">회기</text>
+
+                <!-- region labels. The deceptive wedge only fits one short
+                     word per line at its widest point; the prose below the
+                     SVG carries the full reading. -->
+                <text x="302" y="186" text-anchor="middle" font-size="12" fill="var(--text)">오판</text>
+                <text x="302" y="200" text-anchor="middle" font-size="12" fill="var(--text)">구간</text>
+                <text x="395" y="310" text-anchor="middle" font-size="12" fill="var(--text)">더 따뜻하지만 건조 —</text>
+                <text x="395" y="325" text-anchor="middle" font-size="12" fill="var(--text)">놓친 무상 냉방</text>
+                <text x="150" y="296" text-anchor="middle" font-size="12" fill="var(--text-dim)">항상 무상 냉방 —</text>
+                <text x="150" y="312" text-anchor="middle" font-size="12" fill="var(--text-dim)">모든 습도에서 유리</text>
+                <text x="430" y="138" text-anchor="middle" font-size="12" fill="var(--text-dim)">기계 냉방 —</text>
+                <text x="430" y="154" text-anchor="middle" font-size="12" fill="var(--text-dim)">두 판단 모두 금지</text>
+            </svg>
+
+            <p style="margin-top:1.25rem;">
+                음영 구간은 <button type="button" data-gloss="dry-bulb">건구온도</button>가 오판하는 곳입니다. 이 안의 모든 공기는 온도계상 회기보다 낮지만 실제 총열량은 더 큽니다. 등엔탈피선과 포화곡선이 만나는 지점을 보세요. <strong>그 <button type="button" data-gloss="dry-bulb">건구온도</button>보다 낮으면 습도가 아무리 높아도 외기가 불리할 수 없습니다.</strong> 포화공기조차 회기보다 총열량이 작기 때문입니다. 이 교점은 습도 센서가 없는 건물의 해법입니다. 습공기 상태를 한 번 계산하고 <button type="button" data-gloss="dry-bulb">건구온도</button> 전환 한계를 <em>최악조건</em>에 설정합니다. <span data-us="75&nbsp;°F" data-metric="23.9&nbsp;°C">75&nbsp;°F</span>, 50&nbsp;% 회기라면 약 <span data-us="62.4&nbsp;°F" data-metric="16.9&nbsp;°C">62.4&nbsp;°F</span>입니다. 더 따뜻하지만 건조한 아침의 무상 냉방은 포기하지만 외기냉방이 ‘무상 냉방’으로 건물을 가열하는 일은 막을 수 있습니다. 직접 측정한 공기는 <a href="/ko/tools/economizer-ratio.html">외기냉방 비율 도우미</a>의 엔탈피 탭이나 <a href="/ko/tools/psychrometric-chart.html">습공기선도</a>에서 확인하세요.
+            </p>
+
+            <!-- ───────────────── 3 · Changeover-explorer widget ───────────────── -->
+            <h2 class="subhead" id="changeover-explorer">두 전환 판단이 엇갈리는 지점</h2>
+
+            <p>
+                외기 상태를 움직여 두 방식의 판단을 비교해 보세요. 회기는 <span data-us="75&nbsp;°F" data-metric="23.9&nbsp;°C">75&nbsp;°F</span>, 50&nbsp;% RH로 고정되어 있고 엔탈피 계산에는 습공기 도구와 같은 ASHRAE 습공기 엔진을 사용합니다. 두 판정이 엇갈리는 구간을 찾고 최악조건 한계선이 무엇을 뜻하는지 확인하세요.
+            </p>
+
+            <div class="widget" id="eco-widget">
+                <div class="widget-try">
+                    <span class="lbl">예시:</span>
+                    <button type="button" data-eco-preset="spring">건조한 봄 아침(<span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span> / 40&nbsp;%)</button>
+                    <button type="button" data-eco-preset="muggy">후텁지근한 아침(<span data-us="68&nbsp;°F" data-metric="20&nbsp;°C">68&nbsp;°F</span> / 85&nbsp;%)</button>
+                    <button type="button" data-eco-preset="hot">더운 오후(<span data-us="88&nbsp;°F" data-metric="31.1&nbsp;°C">88&nbsp;°F</span> / 40&nbsp;%)</button>
+                    <button type="button" data-eco-preset="desert">고지대 사막의 저녁(<span data-us="78&nbsp;°F" data-metric="25.6&nbsp;°C">78&nbsp;°F</span> / 15&nbsp;%)</button>
+                </div>
+
+                <div class="widget-slider-head">
+                    <label for="eco-w-oat-slider">외기온도</label>
+                    <span class="v" id="eco-w-oat-value">55.0 °F</span>
+                </div>
+                <input class="widget-slider" id="eco-w-oat-slider" type="range" min="40" max="95" step="1" value="55"/>
+
+                <div class="widget-slider-head">
+                    <label for="eco-w-rh-slider">외기 상대습도</label>
+                    <span class="v" id="eco-w-rh-value">40 %</span>
+                </div>
+                <input class="widget-slider" id="eco-w-rh-slider" type="range" min="5" max="100" step="5" value="40"/>
+
+                <div class="eco-w-top">
+                    <div>
+                        <div class="widget-readout-label">외기 · 총열량</div>
+                        <div class="widget-readout-value" id="eco-w-oa-h">17.2<span class="unit"> Btu/lb</span></div>
+                    </div>
+                    <div>
+                        <div class="widget-readout-label">회기 · 총열량(<span data-us="75&nbsp;°F" data-metric="23.9&nbsp;°C">75&nbsp;°F</span> / 50&nbsp;%로 고정)</div>
+                        <div class="widget-readout-value" id="eco-w-ra-h">28.1<span class="unit"> Btu/lb</span></div>
+                    </div>
+                </div>
+
+                <div class="eco-w-verdicts">
+                    <div class="eco-w-verdict">
+                        <div class="widget-readout-label">건구온도 전환 — 온도만 비교</div>
+                        <div class="status-pill ok" id="eco-w-db-pill">{{ pageMessages.verdict.economize }}</div>
+                    </div>
+                    <div class="eco-w-verdict">
+                        <div class="widget-readout-label">엔탈피 전환 — 총열량 비교</div>
+                        <div class="status-pill ok" id="eco-w-h-pill">{{ pageMessages.verdict.economize }}</div>
+                    </div>
+                </div>
+
+                <div class="eco-w-limit">이 회기의 최악조건 건구온도 한계: <strong id="eco-w-limit-v">62.4 °F</strong> — 이 값 아래에서는 포화 외기조차 회기보다 총열량이 작습니다.</div>
+
+                <div class="eco-w-status" id="eco-w-status" aria-live="polite">{{ pageMessages.status.freeCooling }}</div>
+                <div class="eco-w-alert" id="eco-w-alert"></div>
+            </div>
+
+            <p class="ref-note">
+                이 위젯은 회기 상태, 해수면 기압, 정확히 교정된 깨끗한 센서를 고정합니다. 실제 차동 전환은 실내 상태에 따라 움직이는 <em>실시간</em> 회기와 비교하며, 센서가 정확하다는 가정은 현장에서 가장 자주 무너집니다. 두 판정은 이 강의의 두 관점입니다. <button type="button" data-gloss="dry-bulb">건구온도</button>는 물성 하나만 비교하고 엔탈피는 전체 부하를 비교합니다. 두 판단의 불일치가 <em>바로</em> 위 그림의 쐐기 구간입니다.
+            </p>
+
+            <!-- ───────────────── 4 · First stage of cooling ───────────────── -->
+            <h2 class="subhead" id="first-stage">냉방 1단</h2>
+
+            <p>
+                냉방 시퀀스에서 외기냉방은 어디에 놓일까요? <em>첫 번째</em>입니다. 장비에 냉방 요구가 있고 전환 게이트가 열리면 무상 냉방이 1단입니다. 댐퍼는 최소 개도에서부터 비례제어되어 혼합공기 설정값을 유지하고 기계 냉방은 정지합니다. 댐퍼가 외기 100&nbsp;%까지 열렸는데도 부하를 <em>충족하지 못할 때만</em> 압축기나 냉수 밸브가 함께 운전합니다. 이 로직의 허가 조건은 이미 <button type="button" data-gloss="wiresheet">와이어시트</button>에서 보았습니다. <a href="/ko/education/function-blocks.html#worked-sheet">펑션 블록의 외기냉방 허가 예제</a>는 ‘냉방 요구’와 ‘전환 허가’의 AND입니다. 이 페이지는 허가된 장치가 실제로 수행하는 동작을 설명합니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 300" role="img" aria-labelledby="eco-d3-title eco-d3-desc"
+                 font-family="var(--mono)">
+                <title id="eco-d3-title">냉방 1단으로 작동하는 외기냉방</title>
+                <desc id="eco-d3-desc">오른쪽으로 갈수록 냉방부하가 증가하는 대수제어 차트입니다. 외기냉방이 먼저 시작되어 댐퍼가 완전 열림까지 비례제어됩니다. 부하가 계속 증가하면 외기냉방을 유지한 채 DX 1단이 함께 운전하는 통합 외기냉방이 되고, 그다음 DX 2단이 운전됩니다. 다음 냉방원이 추가되어도 기존 냉방원은 계속 운전합니다.</desc>
+
+                <!-- changeover gate at the left edge -->
+                <line x1="80" y1="45" x2="80" y2="240" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="2 4"/>
+                <text x="78" y="30" text-anchor="start" font-size="12" fill="var(--text-dim)">전환 조건 허가</text>
+
+                <!-- stage ticks — drawn before the bands so the band fills
+                     paint over the dotted lines. The full-open tick is split
+                     around the ECONOMIZER label's text row: the 0.22-opacity
+                     band fill can't hide the tick and text can't paint over
+                     a line, so the gap is drawn into the tick itself. -->
+                <line x1="250" y1="45" x2="250" y2="60" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="2 4"/>
+                <line x1="250" y1="79" x2="250" y2="240" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="2 4"/>
+                <line x1="360" y1="145" x2="360" y2="240" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="2 4"/>
+                <text x="256" y="50" text-anchor="start" font-size="12" fill="var(--text-dim)">댐퍼 완전 열림</text>
+
+                <!-- stage bands -->
+                <rect x="80" y="55" width="380" height="26" fill="var(--teal)" fill-opacity="0.22" stroke="var(--teal)" stroke-width="1.5"/>
+                <text x="90" y="72" text-anchor="start" font-size="13" fill="var(--text-bright)">외기냉방 — 댐퍼 비례제어</text>
+
+                <rect x="250" y="105" width="210" height="26" fill="var(--blue)" fill-opacity="0.22" stroke="var(--blue)" stroke-width="1.5"/>
+                <text x="260" y="122" text-anchor="start" font-size="13" fill="var(--text-bright)">DX 1단 추가</text>
+
+                <rect x="360" y="155" width="100" height="26" fill="var(--blue)" fill-opacity="0.22" stroke="var(--blue)" stroke-width="1.5"/>
+                <text x="370" y="172" text-anchor="start" font-size="13" fill="var(--text-bright)">DX 2단</text>
+
+                <!-- load axis -->
+                <line x1="70" y1="240" x2="500" y2="240" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <polygon points="494,235 503,240 494,245" fill="var(--text-dim)"/>
+                <text x="500" y="262" text-anchor="end" font-size="13" fill="var(--text)">냉방부하 →</text>
+
+                <!-- integration note -->
+                <text x="270" y="284" text-anchor="middle" font-size="12" fill="var(--text-dim)">다음 냉방원이 추가되어도 기존 냉방원 유지 — 통합 외기냉방</text>
+            </svg>
+
+            <p style="margin-top:1.25rem;">
+                차트는 요구할 가치가 있는 구성인 <em>통합</em> 외기냉방을 보여 줍니다. 댐퍼가 완전히 열린 상태에서 기계 냉방이 <em>함께</em> 운전하므로 외기가 담당할 수 있는 몫은 계속 외기가 맡고 압축기는 차이만 보충합니다. 오래되거나 단순한 장비는 <em>비통합</em> 방식입니다. 압축기 1단이 시작되는 순간 댐퍼가 최소 개도로 돌아가 건물에 냉방이 가장 필요한 때 무상 냉방을 버립니다. 커미셔닝 중인 장비가 이렇게 동작한다면 설정 문제인지 오래된 설계인지 확인할 가치가 있습니다. 기계 냉방의 <button type="button" data-gloss="lead-lag">선행/후행</button>, <button type="button" data-gloss="deadband">데드밴드</button>, 최소 운전시간 등은 <a href="/ko/education/equipment-staging.html">장비 대수제어</a>와 같은 원칙을 따릅니다. 또 하나의 게이트가 모든 조건보다 우선합니다. 운전 중 날이 더워지거나 습해져 상한 조건이 동작하면 댐퍼는 최소 개도로 돌아가고 기계 냉방이 전체 부하를 단독으로 담당합니다.
+            </p>
+
+            <!-- ───────────────── 5 · Field failures ───────────────── -->
+            <h2 class="subhead" id="field-failures">현장의 외기냉방 고장</h2>
+
+            <p>
+                외기냉방 장치는 현장에서 평판이 좋지 않은데 이유가 있습니다. 여러 조사에서 상당수가 전혀 외기냉방을 하지 못하는 것으로 나타납니다. 고장 형태를 확실히 알아둘 필요가 있습니다. 가장 흔한 것은 <strong>고착된 댐퍼</strong>입니다. 액추에이터가 붙거나 링크가 부러지고, 오래전에 고정 나사가 풀렸을 수 있습니다. 단서는 트렌드에 있고 계산은 혼합상자와 같습니다. 댐퍼에 명령을 내리고 <em><button type="button" data-gloss="mat">MA-T</button></em>를 보세요. 서늘한 날 100&nbsp;% 명령인데 <button type="button" data-gloss="mat">MA-T</button>가 <button type="button" data-gloss="rat">RA-T</button>와 같다면 블레이드가 움직이지 않은 것입니다. 추운 아침 최소 개도 명령인데 <button type="button" data-gloss="mat">MA-T</button>가 <button type="button" data-gloss="oat">OA-T</button>를 따라간다면 열린 상태로 고착되어 난방 코일이 겨울 내내 그 대가를 치릅니다. 명령은 희망사항이고 <button type="button" data-gloss="mat">MA-T</button>가 증거입니다.
+            </p>
+            <p>
+                두 번째는 정착하지 않고 댐퍼가 계속 움직이는 <strong><button type="button" data-gloss="hunting">헌팅</button></strong>입니다. 보통 제어 루프가 지나치게 빠르거나 혼합공기 센서가 대표성 없는 위치의 온도를 읽을 때 생깁니다. <a href="/ko/education/air-handlers.html#sensor-strip">공기조화기 강의의 위젯</a>에는 바로 이 문제의 현장 사례가 있습니다. <strong>동파방지</strong>는 모든 로직의 기반입니다. 무상 냉방에도 한계가 있고, 몹시 추운 아침에 낮은 급기 설정값을 따라가면 혼합공기가 <a href="/ko/tools/coil-freeze-risk.html">코일 파열 위험</a>에 이를 수 있습니다. 냉방 로직의 요구와 관계없이 <button type="button" data-gloss="mat">MA-T</button>가 너무 낮아지면 댐퍼를 최소 개도로 되돌리는 하한 오버라이드와 <button type="button" data-gloss="freezestat">동결방지 온도조절기</button>의 하드 트립이 ‘안전할 때 서늘한 공기를 사용한다’는 원칙에서 ‘안전할 때’를 담당합니다. 이 기능이 없는 장비는 적극적인 것이 아니라 보호받지 못한 것입니다.
+            </p>
+
+            <div class="callout" style="margin-top:1.5rem;">
+                <h3>진단 예시 <span>· 후텁지근한 아침의 불만</span></h3>
+                <p>요청 내용은 “밖은 온화한데 실내가 따뜻하고 끈적합니다. 에어컨이 왜 감당하지 못하나요?”입니다. 화면에는 외기냉방 100&nbsp;%, 냉각 코일 밸브 100&nbsp;%가 표시되고 실내온도는 설정값을 넘어 서서히 오릅니다. 강의 순서대로 확인합니다. <em>댐퍼가 정말 명령 위치에 있습니까?</em> <button type="button" data-gloss="mat">MA-T</button>가 <button type="button" data-gloss="oat">OA-T</button>와 비슷하므로 외기가 실제로 들어옵니다. <em>들어와야 합니까?</em> <button type="button" data-gloss="oat">OA-T</button>가 <button type="button" data-gloss="rat">RA-T</button>보다 낮아 <button type="button" data-gloss="dry-bulb">건구온도</button>는 외기냉방을 허가합니다. <button type="button" data-gloss="dry-bulb">건구온도</button> 전환이 확인할 수 있는 것은 여기까지입니다. 이제 습공기 상태를 봅니다. 밤새 비가 와 아침 공기가 습하고 이 온도의 포화에 가까운 외기는 회기보다 총열량이 <em>더 큽니다</em>. 오판 구간이 실제로 나타난 것입니다. 외기냉방은 부하를 들여오고 코일은 그중 잠열부하를 감당하지 못합니다. 해결 대상은 코일이 아니라 전환 로직입니다. 신뢰할 수 있는 습도 센서가 있거나 추가할 수 있으면 엔탈피 상한을 사용하고, 그렇지 않으면 이 페이지에서 한 번 계산한 최악조건 <button type="button" data-gloss="dry-bulb">건구온도</button> 한계를 사용합니다.</p>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                외기냉방의 전체 흐름은 이렇습니다. 연동 댐퍼 조립체가 혼합 방정식을 역으로 풀고, 현열과 잠열을 모두 고려해야 하는 전환 게이트가 앞에 놓이며, 절약하려는 기계 냉방보다 먼저 대수제어됩니다. 어느 쪽에도 치우치지 않고 실제 상태를 보여 주는 <button type="button" data-gloss="mat">MA-T</button>로 결과를 확인합니다. 아직 한 가지가 남았습니다. 아침 내내 릴리프 댐퍼는 외기 댐퍼가 들인 풍량만큼 조용히 공기를 내보냈습니다. 이 균형이 틀어졌을 때 문이 닫히지 않고 로비에 바람이 불며 배기팬과 공기조화기가 서로 싸우는 현상은 다음 글인 <a href="/ko/education/building-pressure.html">건물 압력</a>에서 다룹니다.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/forced-air/', label: '공조 시스템 참고 자료 허브'},
+        tools: [
+            {href: '/ko/tools/economizer-ratio.html', label: '외기냉방 비율 도우미'},
+            {href: '/ko/tools/psychrometric-chart.html', label: '습공기선도'},
+            {href: '/ko/tools/air-mixing.html', label: '공기 혼합 계산기'},
+            {href: '/ko/tools/dew-point-calculator.html', label: '노점온도 계산기'},
+            {href: '/ko/tools/coil-freeze-risk.html', label: '코일 동결 위험 점검기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/ddc-workbench.html', label: 'DDC 워크벤치 — 공기조화기'}
+        ],
+        lessons: [
+            {href: '/ko/education/air-handlers.html', label: '공기조화기'},
+            {href: '/ko/education/building-pressure.html', label: '건물 압력'},
+            {href: '/ko/education/psychrometrics-basics.html', label: '습공기 상태 해석 기초'},
+            {href: '/ko/education/function-blocks.html', label: '펑션 블록'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/economizers.html', label: '외기냉방'},
+            {href: '/ko/practice/sequencing-scenarios.html', label: '시퀀스 시나리오'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 교육으로 돌아가기</a>
+
+</main>
+{% endblock %}

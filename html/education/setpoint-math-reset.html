@@ -6,9 +6,47 @@ nav: education
 category: programming
 pairedQuiz: https://controlsfreak.dev/practice/setpoint-math-reset.html
 keywords: setpoint reset schedule OAT slope intercept clamp limit min max select occupied offset y=mx+b
+pageMessages:
+    unitText:
+        offsetEquation:
+            us: "72 + 2 = 74 and 72 − 2 = 70"
+            metric: "22.2 + 1.1 = 23.3 and 22.2 − 1.1 = 21.1"
+        interceptNote:
+            us: "This schedule's cold end happens to sit at 0 °F, so the intercept is the design endpoint itself — which is why reset schedules are so often quoted from a zero-degree design day: the b comes for free."
+            metric: "(In °F the cold end of this schedule sits at 0°, so the intercept is the design endpoint itself — restated in °C the same line anchors at 70.4.)"
+        outdoorAxis:
+            us: "outdoor-air temperature (°F)"
+            metric: "outdoor-air temperature (°C)"
+        waterAxis:
+            us: "hot-water setpoint (°F)"
+            metric: "hot-water setpoint (°C)"
+        run:
+            us: "run: 60 °F"
+            metric: "run: 33.4 °C"
+        rise:
+            us: "rise: −40 °F"
+            metric: "rise: −22.2 °C"
+        coldDesign:
+            us: "design: 180 °F at 0 °F (= b)"
+            metric: "design: 82.2 °C at −17.8 °C"
+        warmDesign:
+            us: "design: 140 °F at 60 °F"
+            metric: "design: 60.0 °C at 15.6 °C"
+        highClamp:
+            us: "LIMIT holds 180"
+            metric: "LIMIT holds 82.2"
+        lowClamp:
+            us: "LIMIT holds 140"
+            metric: "LIMIT holds 60.0"
+        unclamped:
+            us: "unclamped, −10 °F asks 186.7 °F"
+            metric: "unclamped, −23.3 °C asks 85.9 °C"
+        limitBand:
+            us: "140 and 180 °F"
+            metric: "60.0 and 82.2 °C"
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -64,7 +102,7 @@ keywords: setpoint reset schedule OAT slope intercept clamp limit min max select
                 <button type="button" data-gloss="deadband">deadband</button> constant of
                 <span data-us="2&nbsp;°F" data-metric="1.1&nbsp;°C">2&nbsp;°F</span>: an
                 <code>ADD</code> builds the upper edge and a <code>SUB</code> builds the lower
-                (<span data-us="72 + 2 = 74 and 72 − 2 = 70" data-metric="22.2 + 1.1 = 23.3 and 22.2 − 1.1 = 21.1">72 + 2 = 74 and 72 − 2 = 70</span>).
+                (<span data-us="{{ pageMessages.unitText.offsetEquation.us }}" data-metric="{{ pageMessages.unitText.offsetEquation.metric }}">72 + 2 = 74 and 72 − 2 = 70</span>).
                 The Function-Block Editor's two thermostat examples are wired exactly this
                 way — one SP constant, one deadband constant, the edges computed. Change the
                 setpoint and both edges follow; nobody has to remember there were two numbers
@@ -130,7 +168,7 @@ keywords: setpoint reset schedule OAT slope intercept clamp limit min max select
                 air <em>rises</em>, so a reset slope is negative. Then anchor the line with
                 the intercept, from either endpoint:
                 <span data-us="b = 180 − (−0.667 × 0) = 180" data-metric="b = 82.2 − (−0.665 × (−17.8)) = 82.2 − 11.8 = 70.4">b = 180 − (−0.667 × 0) = 180</span>.
-                <span data-us="This schedule's cold end happens to sit at 0&nbsp;°F, so the intercept is the design endpoint itself — which is why reset schedules are so often quoted from a zero-degree design day: the b comes for free." data-metric="(In °F the cold end of this schedule sits at 0°, so the intercept is the design endpoint itself — restated in °C the same line anchors at 70.4.)">This schedule's cold end happens to sit at 0&nbsp;°F, so the intercept is the design endpoint itself — which is why reset schedules are so often quoted from a zero-degree design day: the b comes for free.</span>
+                <span data-us="{{ pageMessages.unitText.interceptNote.us }}" data-metric="{{ pageMessages.unitText.interceptNote.metric }}">This schedule's cold end happens to sit at 0&nbsp;°F, so the intercept is the design endpoint itself — which is why reset schedules are so often quoted from a zero-degree design day: the b comes for free.</span>
                 The whole schedule is one formula:
                 <code><span data-us="SP = −0.667 × OAT + 180" data-metric="SP = −0.665 × OAT + 70.4">SP = −0.667 × OAT + 180</span></code>.
                 Check it in the middle: on a
@@ -196,9 +234,9 @@ keywords: setpoint reset schedule OAT slope intercept clamp limit min max select
 
                 <!-- axis captions -->
                 <text x="350" y="380" font-size="11" fill="var(--text)" text-anchor="middle"
-                      data-us="outdoor-air temperature (°F)" data-metric="outdoor-air temperature (°C)">outdoor-air temperature (°F)</text>
+                      data-us="{{ pageMessages.unitText.outdoorAxis.us }}" data-metric="{{ pageMessages.unitText.outdoorAxis.metric }}">outdoor-air temperature (°F)</text>
                 <text x="24" y="195" font-size="11" fill="var(--text)" text-anchor="middle" transform="rotate(-90 24 195)"
-                      data-us="hot-water setpoint (°F)" data-metric="hot-water setpoint (°C)">hot-water setpoint (°F)</text>
+                      data-us="{{ pageMessages.unitText.waterAxis.us }}" data-metric="{{ pageMessages.unitText.waterAxis.metric }}">hot-water setpoint (°F)</text>
 
                 <!-- the unclamped line, dashed, past both ends (drawn first, behind) -->
                 <line x1="182" y1="105" x2="126" y2="75" stroke="var(--amber)" stroke-width="2" stroke-dasharray="6 5"/>
@@ -214,9 +252,9 @@ keywords: setpoint reset schedule OAT slope intercept clamp limit min max select
                 <line x1="182" y1="105" x2="518" y2="105" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="4 3"/>
                 <line x1="518" y1="105" x2="518" y2="285" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="4 3"/>
                 <text x="445" y="94" font-size="10" fill="var(--text-dim)" text-anchor="middle"
-                      data-us="run: 60 °F" data-metric="run: 33.4 °C">run: 60 °F</text>
+                      data-us="{{ pageMessages.unitText.run.us }}" data-metric="{{ pageMessages.unitText.run.metric }}">run: 60 °F</text>
                 <text x="528" y="199" font-size="10" fill="var(--text-dim)" text-anchor="start"
-                      data-us="rise: −40 °F" data-metric="rise: −22.2 °C">rise: −40 °F</text>
+                      data-us="{{ pageMessages.unitText.rise.us }}" data-metric="{{ pageMessages.unitText.rise.metric }}">rise: −40 °F</text>
                 <text x="330" y="130" font-size="11" fill="var(--text-bright)" text-anchor="middle"
                       data-us="m = −40 ÷ 60 ≈ −0.667" data-metric="m = −22.2 ÷ 33.4 ≈ −0.665">m = −40 ÷ 60 ≈ −0.667</text>
 
@@ -224,19 +262,19 @@ keywords: setpoint reset schedule OAT slope intercept clamp limit min max select
                 <circle cx="182" cy="105" r="5" fill="var(--accent)" stroke="var(--bg)" stroke-width="1.5"/>
                 <circle cx="518" cy="285" r="5" fill="var(--accent)" stroke="var(--bg)" stroke-width="1.5"/>
                 <text x="196" y="86" font-size="11" fill="var(--text)" text-anchor="start"
-                      data-us="design: 180 °F at 0 °F (= b)" data-metric="design: 82.2 °C at −17.8 °C">design: 180 °F at 0 °F (= b)</text>
+                      data-us="{{ pageMessages.unitText.coldDesign.us }}" data-metric="{{ pageMessages.unitText.coldDesign.metric }}">design: 180 °F at 0 °F (= b)</text>
                 <text x="512" y="312" font-size="11" fill="var(--text)" text-anchor="end"
-                      data-us="design: 140 °F at 60 °F" data-metric="design: 60.0 °C at 15.6 °C">design: 140 °F at 60 °F</text>
+                      data-us="{{ pageMessages.unitText.warmDesign.us }}" data-metric="{{ pageMessages.unitText.warmDesign.metric }}">design: 140 °F at 60 °F</text>
 
                 <!-- clamp callouts -->
                 <text x="76" y="126" font-size="10" fill="var(--text-dim)" text-anchor="start"
-                      data-us="LIMIT holds 180" data-metric="LIMIT holds 82.2">LIMIT holds 180</text>
+                      data-us="{{ pageMessages.unitText.highClamp.us }}" data-metric="{{ pageMessages.unitText.highClamp.metric }}">LIMIT holds 180</text>
                 <text x="626" y="272" font-size="10" fill="var(--text-dim)" text-anchor="end"
-                      data-us="LIMIT holds 140" data-metric="LIMIT holds 60.0">LIMIT holds 140</text>
+                      data-us="{{ pageMessages.unitText.lowClamp.us }}" data-metric="{{ pageMessages.unitText.lowClamp.metric }}">LIMIT holds 140</text>
 
                 <!-- unclamped-ask callout (cold end) -->
                 <text x="138" y="58" font-size="10" fill="var(--amber)" text-anchor="start"
-                      data-us="unclamped, −10 °F asks 186.7 °F" data-metric="unclamped, −23.3 °C asks 85.9 °C">unclamped, −10 °F asks 186.7 °F</text>
+                      data-us="{{ pageMessages.unitText.unclamped.us }}" data-metric="{{ pageMessages.unitText.unclamped.metric }}">unclamped, −10 °F asks 186.7 °F</text>
 
                 <!-- worked point -->
                 <line x1="350" y1="195" x2="350" y2="330" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="3 4"/>
@@ -362,7 +400,7 @@ keywords: setpoint reset schedule OAT slope intercept clamp limit min max select
                 that commands water past all of that just because the weather left the design
                 range. The <code>LIMIT</code> is the safety rail that keeps the math inside
                 the engineering: everything between
-                <span data-us="140 and 180&nbsp;°F" data-metric="60.0 and 82.2&nbsp;°C">140 and 180&nbsp;°F</span>
+                <span data-us="{{ pageMessages.unitText.limitBand.us }}" data-metric="{{ pageMessages.unitText.limitBand.metric }}">140 and 180&nbsp;°F</span>
                 passes through untouched, and outside that band the clamp holds the nearer
                 endpoint. The same clamp catches the other end too — on a
                 <span data-us="70&nbsp;°F" data-metric="21.1&nbsp;°C">70&nbsp;°F</span>

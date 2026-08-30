@@ -1,0 +1,237 @@
+---
+title: 과열도와 과냉도 — controlsfreak.dev
+description: 과열도와 과냉도가 무엇을 나타내는지, BMS에서 어떤 센서값으로 계산하는지, 비정상 측정값이 어떤 문제 방향을 가리키는지 설명합니다.
+sourceContentHash: fd65ad4820ea4fcbd67fe8a6fa9932c598493cc8886fdc82df588b79472a3477
+sourceMessageHash: ccfacab73728910372d996797d878d5046168e2b93d6b830f04e62fd7e4ffebf
+pageMessages:
+    formulas:
+        superheat: 과열도
+        subcooling: 과냉도
+canonical: https://controlsfreak.dev/ko/education/superheat-subcooling.html
+nav: education
+category: refrigerant
+pairedQuiz: https://controlsfreak.dev/ko/practice/superheat-subcooling.html
+keywords: 과열도 과냉도 psig 포화 흡입관 액관 냉매 충전량 TXV 증발기 응축기
+---
+{% extends "html/education/superheat-subcooling.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">학습 · 과열도와 과냉도</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">과열도와 과냉도 <span class="tool-tag">HVAC</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                <a href="/ko/education/refrigerant-cycle-basics.html">냉매 사이클 기초</a>는 포화 상태의 관계로 마무리했습니다. 냉매가 실제로 비등하거나 응축하는 동안에는 냉매의 공인 압력-온도(P-T) 표에 따라 압력과 온도가 서로 묶입니다. 여기서는 자연스럽게 이어지는 질문을 다룹니다. 배관에서 측정한 온도가 그 배관 압력의 <em>포화온도와 일치하지 않으면</em> 무엇을 뜻할까요? 그 차이를 현장에서는 증기 측의 <em>과열도(superheat)</em>, 액체 측의 <em>과냉도(subcooling)</em>라고 합니다. 이 두 측정값은 냉매 사이클이 단순히 운전 중인지를 넘어 제대로 운전되는지를 입증하며, 유닛 컨트롤러나 건물 관리 시스템(BMS)이 시스템 건전성을 판단할 때 의존하는 값입니다.
+            </p>
+
+            <h2 class="subhead" id="definitions">사이클의 건전성을 입증하는 두 측정값</h2>
+
+            <p>
+                <strong>과열도</strong>는 냉매 <em>증기</em>가 포화온도보다 몇 도 더 높은지를 나타냅니다. 증발기를 떠나 압축기로 돌아가는 저온 증기 배관인 흡입관에서 측정합니다. 흡입관 압력에 해당하는 포화온도를 조회하고, 증기를 다루므로 <em>이슬점(dew)</em> 열을 사용한 뒤, 측정한 흡입관 온도에서 그 값을 뺍니다. 공식은 <code>과열도 = 배관 T − 이슬점 T</code>이며, 게이지와 온도계가 동일한 단위를 사용하는 한 화씨 또는 섭씨 온도차로 계산할 수 있습니다.
+            </p>
+
+            <p>
+                <strong>과냉도</strong>는 고압 측에서 이와 반대되는 값입니다. 냉매 <em>액체</em>가 포화온도보다 몇 도 더 낮은지를 나타냅니다. 응축기를 떠나 팽창 장치로 향하는 따뜻한 액체 배관인 액관에서 측정합니다. 액관 압력에 해당하는 포화온도를 조회하고, 액체를 다루므로 <em>기포점(bubble)</em> 열을 사용한 뒤, <em>그 값</em>에서 측정한 액관 온도를 뺍니다. 공식은 <code>과냉도 = 기포점 T − 배관 T</code>입니다. 시스템이 정상이라면 두 값은 모두 양수입니다. 증기는 포화온도보다 따뜻하고 액체는 포화온도보다 차갑습니다.
+            </p>
+
+            <p>
+                이 두 값을 만드는 네 가지 측정값, 즉 흡입관 압력, 흡입관 온도, 액관 압력, 액관 온도는 패키지 유닛의 컨트롤러 그래픽에서 흔히 볼 수 있는 네 지점입니다. 압력은 배관에 연결한 압력 트랜스듀서에서, 온도는 동관 외부에 부착한 클램프형(또는 스트랩형) 서미스터나 RTD에서 얻습니다. 컨트롤러가 표를 조회하고 뺄셈을 수행하며, 사용자는 시스템이 운전되는 동안 과열도와 과냉도가 변하는 모습을 확인합니다.
+            </p>
+
+            <h2 class="subhead" id="curve">포화 곡선에서의 위치</h2>
+
+            <p>
+                P-T 선도와 같은 압력-온도 그래프에서 보면 이해하기 쉽습니다. 임의의 압력, 즉 그래프의 수평선을 하나 고르면 선도의 포화 곡선이 그 압력의 포화온도 하나를 알려 줍니다. 같은 압력선 위의 실제 냉매 상태는 곡선 위에 있거나(포화 상태로 아직 상변화 중), 곡선 오른쪽에 있거나(더 따뜻한 과열 증기), 곡선 왼쪽에 있습니다(더 차가운 과냉 액체). 과열도와 과냉도는 상태점과 곡선 사이의 수평 거리입니다.
+            </p>
+
+            <!-- Conceptual P-T saturation diagram. No data tied to a specific
+                 refrigerant; the geometry IS the lesson. Page-id prefix shsc-*.
+                 Static SVG only — flow-engine particles wouldn't read on a
+                 state-space plot (no flowing refrigerant to animate). Cubic
+                 Bezier saturation curve, concave-up; two tinted regions for
+                 the vapor (right of curve, --heat tint) and liquid (left of
+                 curve, --blue-cool tint) sides; two example state points,
+                 each with the sat-side point on the curve and an arrow
+                 labelled with the formula. -->
+            <svg class="edu-svg" id="shsc-pt" viewBox="0 0 720 420"
+                 role="img" aria-labelledby="shsc-pt-title shsc-pt-desc"
+                 font-family="var(--mono)">
+                <title id="shsc-pt-title">냉매 포화 곡선에 표시한 과열도와 과냉도</title>
+                <desc id="shsc-pt-desc">압력-온도 그래프입니다. x축의 왼쪽에서 오른쪽으로 온도가 증가하고 y축의 아래에서 위로 압력이 증가합니다. 아래 왼쪽에서 위 오른쪽으로 오목하게 올라가는 포화 곡선 하나가 그래프를 두 영역으로 나눕니다. 같은 압력의 포화온도보다 따뜻한 곡선 오른쪽은 주황색으로 칠하고 과열 증기라고 표시했습니다. 포화온도보다 차가운 곡선 왼쪽은 차분한 파란색으로 칠하고 과냉 액체라고 표시했습니다. 두 가지 예시 상태도 표시합니다. 첫 번째는 저압의 증기 영역에 있으며, 곡선 위 이슬점과 그 오른쪽 증기 영역의 배관 온도점 사이 화살표에 과열도 공식을 표시합니다. 두 번째는 고압의 액체 영역에 있으며, 곡선 위 기포점과 그 왼쪽 액체 영역의 배관 온도점 사이 화살표에 과냉도 공식을 표시합니다.</desc>
+
+                <!-- Tinted regions. Drawn first so the curve, axes, and markers paint on top. -->
+                <path d="M 70 360 C 280 360 480 280 660 50 L 660 360 Z" fill="var(--heat)" fill-opacity="0.08"/>
+                <path d="M 70 360 L 70 50 L 660 50 C 480 280 280 360 70 360 Z" fill="var(--blue-cool)" fill-opacity="0.08"/>
+
+                <!-- Plot border -->
+                <rect x="70" y="50" width="590" height="310" fill="none" stroke="var(--border)" stroke-width="1"/>
+
+                <!-- Axes with arrows. Axis-end arrowheads show direction
+                     (temperature increases right, pressure increases up);
+                     the labels themselves sit centred outside the plot. -->
+                <line x1="70" y1="360" x2="660" y2="360" stroke="var(--text)" stroke-width="1.5"/>
+                <line x1="70" y1="360" x2="70" y2="50"  stroke="var(--text)" stroke-width="1.5"/>
+                <polygon points="664,355 676,360 664,365" fill="var(--text)"/>
+                <polygon points="65,46 70,34 75,46" fill="var(--text)"/>
+                <text x="365" y="395" text-anchor="middle" font-size="11" font-style="italic" fill="var(--text-dim)">온도 →</text>
+                <text x="35" y="205" text-anchor="middle" font-size="11" font-style="italic" fill="var(--text-dim)" transform="rotate(-90 35 205)">↑ 압력</text>
+
+                <!-- Saturation curve (drawn after regions so it paints on top of the tints) -->
+                <path d="M 70 360 C 280 360 480 280 660 50" fill="none" stroke="var(--text)" stroke-width="2.5"/>
+                <text x="583" y="170" font-size="11" font-style="italic" fill="var(--text)">포화</text>
+                <text x="583" y="184" font-size="11" font-style="italic" fill="var(--text)">곡선</text>
+
+                <!-- Region labels — placed well clear of the example markers. -->
+                <text x="570" y="345" text-anchor="middle" font-size="11" letter-spacing="0.14em" fill="var(--heat)">과열 증기</text>
+                <text x="195" y="95"  text-anchor="middle" font-size="11" letter-spacing="0.14em" fill="var(--blue-cool)">과냉 액체</text>
+
+                <!-- ── SUPERHEAT EXAMPLE — low pressure (y=280), suction-line side ── -->
+                <!-- Faint constant-pressure dash between the two points -->
+                <line x1="400" y1="280" x2="485" y2="280" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="2 4" opacity="0.55"/>
+                <!-- Dew point on curve -->
+                <circle cx="400" cy="280" r="4.5" fill="var(--text)" stroke="var(--surface)" stroke-width="1.5"/>
+                <text x="388" y="276" text-anchor="end" font-size="10" fill="var(--text-dim)">이슬점 T</text>
+                <!-- Line-temp point in the vapor region -->
+                <circle cx="485" cy="280" r="5.5" fill="var(--heat)" stroke="var(--surface)" stroke-width="2"/>
+                <text x="497" y="276" font-size="10" fill="var(--heat)">배관 T</text>
+                <!-- Arrow dew → line, labelled with the formula -->
+                <line x1="405" y1="296" x2="478" y2="296" stroke="var(--heat)" stroke-width="2"/>
+                <polygon points="478,291 487,296 478,301" fill="var(--heat)"/>
+                <text x="442" y="318" text-anchor="middle" font-size="10" fill="var(--heat)">과열도 = 배관 T − 이슬점 T</text>
+
+                <!-- ── SUBCOOLING EXAMPLE — high pressure (y=160), liquid-line side ──
+                     The curve is steep through this y-band, so the arrow and the
+                     formula are placed where the curve cannot cross them: arrow
+                     ABOVE the markers (curve at y=144 has already swept right past
+                     x=578); formula well below in the open liquid region (curve at
+                     y=195 sits at x=521, label entirely left of it). The "bubble T"
+                     label is shifted right past where the curve crosses y≈146-159. -->
+                <line x1="480" y1="160" x2="560" y2="160" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="2 4" opacity="0.55"/>
+                <!-- Line-temp point in the liquid region -->
+                <circle cx="480" cy="160" r="5.5" fill="var(--blue-cool)" stroke="var(--surface)" stroke-width="2"/>
+                <text x="468" y="156" text-anchor="end" font-size="10" fill="var(--blue-cool)">배관 T</text>
+                <!-- Bubble point on curve -->
+                <circle cx="560" cy="160" r="4.5" fill="var(--text)" stroke="var(--surface)" stroke-width="1.5"/>
+                <text x="583" y="156" font-size="10" fill="var(--text-dim)">기포점 T</text>
+                <!-- Arrow bubble → line (leftward), placed ABOVE the markers so
+                     the line stays entirely in the liquid region (clear of the
+                     curve which is at x=578+ along the y-band of this arrow). -->
+                <line x1="555" y1="144" x2="487" y2="144" stroke="var(--blue-cool)" stroke-width="2"/>
+                <polygon points="487,139 478,144 487,149" fill="var(--blue-cool)"/>
+                <!-- Formula in the open lower-left of the liquid region, well
+                     clear of where the curve passes (x=521 at y=195). Colour
+                     ties it back to the matching arrow. -->
+                <text x="400" y="195" text-anchor="middle" font-size="10" fill="var(--blue-cool)">과냉도 = 기포점 T − 배관 T</text>
+            </svg>
+            <div class="edu-legend shsc-leg">
+                <span><span class="sw sat"></span>포화 곡선</span>
+                <span><span class="sw vapour"></span>증기 영역(곡선 오른쪽)</span>
+                <span><span class="sw liquid"></span>액체 영역(곡선 왼쪽)</span>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                선도에서 몇 가지를 짚어 보겠습니다. 두 예시의 압력은 같지 않습니다. 과열도는 낮은 압력인 흡입관 조건에서, 과냉도는 높은 압력인 액관 조건에서 표시했습니다. 실제 시스템에서도 흡입관은 저압 측에, 액관은 고압 측에 있습니다. 압력마다 포화온도가 다르므로 곡선 위 모든 점은 각자의 온도 T를 가지며, 두 측정값에도 각각 별도의 기준이 있습니다. 화살표 길이는 편차의 크기입니다. 간격이 클수록 과열도 또는 과냉도가 큽니다.
+            </p>
+
+            <p>
+                이 개념 선도가 단순화한 점도 있습니다. R-407C, R-454B와 같은 <em>비공비(zeotropic)</em> 혼합 냉매에서는 포화 "곡선"이 실제로 서로 가까운 두 곡선입니다. 액체 측의 <em>기포점</em> 곡선과 증기 측의 <em>이슬점</em> 곡선 사이에는 냉매의 <em>온도 활주(glide)</em>가 존재합니다. 따라서 과열도는 이슬점 곡선을, 과냉도는 기포점 곡선을 기준으로 하며 위 공식에 두 이름이 모두 등장합니다. 순수 냉매나 R-410A, R-404A 같은 근공비 혼합 냉매에서는 두 곡선이 거의 겹치므로 이 구분의 영향이 사라집니다. <a href="/ko/tools/refrigerant-pt.html">P-T 도구</a>는 항상 두 온도를 모두 표시하므로, 관련된 경우 그 차이를 확인할 수 있습니다.
+            </p>
+
+            <h2 class="subhead" id="abnormal">비정상 측정값이 알려 주는 것</h2>
+
+            <p>
+                이 두 값이 현장 표준으로 쓰이는 이유는 편차의 각 방향이 서로 다른 문제군을 가리키기 때문입니다. 제어 담당자는 유닛 컨트롤러 그래픽의 과열도와 과냉도를 함께 살펴 장비를 분해하지 않고도 <em>무엇이 잘못되었는지</em> 범위를 좁힙니다. 어느 값도 그 자체로 확정 진단은 아닙니다. 문제의 <em>방향</em>을 알려 줄 뿐이며, 명판이나 설치 설명서에 적힌 장비 제조사의 목표값이 경험칙보다 항상 우선합니다. 다만 그 방향은 여러 시스템에서 충분히 일관되므로 기술자가 첫 가설을 세우는 데 강한 단서가 됩니다.
+            </p>
+
+            <p>
+                <strong>과열도가 낮거나 음수인 경우.</strong> 포화온도보다 높은 증기 온도의 여유가 너무 작거나, 더 심하면 액체가 증발기를 통과했다는 뜻입니다. 액체 냉매가 압축기에 도달하는 현상을 <em>액냉매 유입(floodback, 액백)</em>이라고 하며 압축기를 손상시킵니다. 압축기는 증기용 펌프이지 액체용 펌프가 아닙니다. 보통 팽창 장치가 냉매를 지나치게 많이 공급하거나, 증발기 부하가 줄어드는 속도를 팽창 장치가 따라가지 못해 개도를 충분히 낮추지 못할 때 발생합니다. 운전 중인 시스템의 과열도가 음수라면 즉시 대응해야 할 방향입니다. 대부분의 장비에서 <span data-us="5 °F" data-metric="2.8 °C">5 °F</span> 미만으로 계속 낮게 유지되는 경우도 문제가 생길 가능성이 큽니다.
+            </p>
+
+            <p>
+                <strong>과열도가 높은 경우.</strong> 포화온도보다 높은 증기 온도의 여유가 너무 커서, 흡입 증기가 압축기에 닿기 전에 포화온도를 훨씬 넘어 가열되었다는 뜻입니다. 원인은 <em>냉매 공급이 부족한 증발기(starved evaporator)</em>입니다. 코일로 들어가 부하를 흡수할 냉매가 충분하지 않습니다. 냉매 충전량이 부족하거나, 액관이 막혔거나(막힌 필터 드라이어가 대표적), 팽창 장치의 공급량이 너무 적을 때 발생합니다. 증발기 코일 표면 대부분에 비등하는 액체 대신 과열 증기가 흐르게 되므로 면적당 냉방량이 줄고 유닛 성능도 떨어집니다.
+            </p>
+
+            <p>
+                <strong>과냉도가 낮거나 음수인 경우.</strong> 액체가 포화온도 아래로 충분히 냉각되지 않았다는 뜻입니다. 과냉도가 음수라면 응축기 출구에 액봉이 형성되지 않아 액관에 증기, 즉 플래시 가스가 존재하며 팽창 장치가 이를 올바르게 처리할 수 없습니다. 원인은 다시 냉매 충전량 부족이거나, 응축기가 열을 충분히 방출하지 못하는 상태(오염된 코일, 약한 팬, 바이패스 공기, 높은 외기온)입니다. 다른 상태는 정상으로 보이는데 과냉도만 계속 낮다면 대개 냉매를 추가해야 한다는 방향을 가리킵니다.
+            </p>
+
+            <p>
+                <strong>과냉도가 높은 경우.</strong> 액체가 포화온도 아래로 지나치게 냉각되었으며, 보통 응축기에 필요한 양보다 많은 액체가 머물고 있다는 뜻입니다. 명확한 원인은 과충전입니다. 덜 명확한 원인은 하류 액관의 막힘으로, 막힌 지점 때문에 액체가 응축기로 역류해 쌓이고 <button type="button" data-gloss="head-pressure">응축압력</button>도 높아집니다. 높은 과냉도와 높은 토출 압력이 함께 나타나는 것은 액관 막힘의 대표적인 징후입니다.
+            </p>
+
+            <p>
+                위의 모든 방향에서 팽창 장치를 언급했으므로 한 가지 덧붙이겠습니다. 온도식 팽창밸브(TXV)와 전자식 팽창밸브(EEV)는 모두 사이클이 변할 때 개도를 조절해 목표 과열도를 <em>능동적으로 유지</em>합니다. 고정 오리피스가 아니라 피드백 루프입니다. 따라서 TXV 시스템에서 과열도가 계속 높다면 보통 밸브가 필요한 정보를 얻지 못하거나(벌브 이탈, 충전 손실) 요구량을 따라갈 만큼 공급하지 못한다는 뜻입니다. 고정 오리피스나 모세관 시스템에는 이런 피드백이 없으므로 운전 조건이 만드는 과열도로 운전합니다. 목표값은 외기온, 실내 부하, 설계 가정에 따라 달라집니다. <a href="/ko/education/metering-devices-txv-eev.html">이 장의 3페이지</a>에서는 각 팽창 장치가 매 순간 개도를 어떻게 결정하는지 바로 그 메커니즘을 설명합니다.
+            </p>
+
+            <h2 class="subhead" id="worked-example">계산 예시</h2>
+
+            <p>
+                이전 학습 자료와 같은 R-410A 에어컨을 사용하겠습니다. 흡입 측 게이지는 <strong><span data-us="118 psig" data-metric="814 kPag">118 psig</span></strong>, 클램프형 흡입관 온도계는 <strong><span data-us="50 °F" data-metric="10.0 °C">50 °F</span></strong>를 가리킵니다. R-410A P-T 표에서 이슬점 온도는 약 <span data-us="40 °F" data-metric="4.4 °C">40 °F</span>이며, 이 값은 <span data-us="118 psig" data-metric="814 kPag">118 psig</span>에 해당합니다. 따라서 다음과 같습니다.
+            </p>
+
+            <p>
+                <code><span data-us="{{ pageMessages.formulas.superheat }} = 50&nbsp;°F − 40&nbsp;°F = 10&nbsp;°F" data-metric="{{ pageMessages.formulas.superheat }} = 10.0&nbsp;°C − 4.4&nbsp;°C = 5.6&nbsp;°C">{{ pageMessages.formulas.superheat }} = 50&nbsp;°F − 40&nbsp;°F = 10&nbsp;°F</span></code>
+            </p>
+
+            <p>
+                액체 측 게이지는 <strong><span data-us="340 psig" data-metric="2344 kPag">340 psig</span></strong>, 클램프형 액관 온도계는 <strong><span data-us="95 °F" data-metric="35.0 °C">95 °F</span></strong>를 가리킵니다. R-410A P-T 표에서 기포점 온도는 약 <span data-us="105 °F" data-metric="40.6 °C">105 °F</span>이며, 이 값은 <span data-us="340 psig" data-metric="2344 kPag">340 psig</span>에 해당합니다. 따라서 다음과 같습니다.
+            </p>
+
+            <p>
+                <code><span data-us="{{ pageMessages.formulas.subcooling }} = 105&nbsp;°F − 95&nbsp;°F = 10&nbsp;°F" data-metric="{{ pageMessages.formulas.subcooling }} = 40.6&nbsp;°C − 35.0&nbsp;°C = 5.6&nbsp;°C">{{ pageMessages.formulas.subcooling }} = 105&nbsp;°F − 95&nbsp;°F = 10&nbsp;°F</span></code>
+            </p>
+
+            <p>
+                일반적인 운전일의 주거용 또는 소형 상업용 분리형 시스템에서는 두 값 모두 정상 범위에 있습니다. R-410A를 선택한 <a href="/ko/tools/refrigerant-pt.html">P-T 도구</a>의 과열도/과냉도 탭에 각 측정값 쌍을 입력하고 배관 전환 버튼을 흡입관과 액관 사이에서 바꾸면 어느 쪽이든 약 <span data-us="10 °F" data-metric="5.6 °C">10 °F</span>가 표시됩니다. 도구가 표의 행 사이를 보간하므로 이 정수 단위 표 값과 수십 분의 몇 도 차이가 날 수 있으며, 판정 표시에는 결과가 정상 범위라고 나옵니다.
+            </p>
+
+            <p>
+                이 값을 그대로 외우기 전에 주의할 점이 있습니다. 여기서 두 값이 정상인 것은 <em>이 시스템의 이날 조건</em>에서이며, 모든 장비에 적용되는 보편적인 목표가 아닙니다. 각 시스템에는 충전 차트, 명판 또는 설치 설명서에 정해진 고유한 설계 과열도와 과냉도가 있습니다. 더운 오후의 고정 오리피스 유닛은 이 값에서 크게 벗어나도 정상일 수 있습니다. 이 예시는 외울 숫자 두 개가 아니라 배관 온도와 포화온도를 비교하는 <em>방법</em>을 가르칩니다.
+            </p>
+
+            <p>
+                이제 같은 냉매의 비정상 상황을 보겠습니다. 흡입 측 게이지는 여전히 <strong><span data-us="118 psig" data-metric="814 kPag">118 psig</span></strong>이고 포화온도도 여전히 <span data-us="40 °F" data-metric="4.4 °C">40 °F</span>입니다. 그러나 클램프형 흡입관 온도계는 <strong><span data-us="90 °F" data-metric="32.2 °C">90 °F</span></strong>를 가리킵니다. 따라서 다음과 같습니다.
+            </p>
+
+            <p>
+                <code><span data-us="{{ pageMessages.formulas.superheat }} = 90&nbsp;°F − 40&nbsp;°F = 50&nbsp;°F" data-metric="{{ pageMessages.formulas.superheat }} = 32.2&nbsp;°C − 4.4&nbsp;°C = 27.8&nbsp;°C">{{ pageMessages.formulas.superheat }} = 90&nbsp;°F − 40&nbsp;°F = 50&nbsp;°F</span></code>
+            </p>
+
+            <p>
+                <span data-us="50 °F" data-metric="27.8 °C">50 °F</span>는 어떤 정상 목표에서도 크게 벗어납니다. 더운 오후에 낮은 부하로 운전하는 고정 오리피스 시스템도 이렇게 높아서는 안 됩니다. 이 값이 가리키는 방향은 <em>냉매 공급이 부족한 증발기</em>입니다. 냉매 충전량 부족, 팽창 장치의 공급 부족, 액관 막힘을 의심할 수 있습니다. 과열도 하나만으로 어느 원인도 확정할 수는 없습니다. 다음으로 과냉도와 토출 압력을 확인해야 합니다. 과냉도도 낮다면 충전량 부족 가능성이 높고, 높은 과냉도와 높은 토출 압력이 함께 나타난다면 액관 막힘 설명이 잘 맞습니다. P-T 도구의 과열도/과냉도 탭도 같은 문제 방향 표현을 사용합니다. 이 페이지의 목표는 도구를 사용하기 전에 그 표현의 의미를 이해하는 것입니다.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/refrigeration/', label: '냉동·냉매 참조 허브'},
+        tools: [
+            {href: '/ko/tools/refrigerant-pt.html', label: '냉매 P-T 및 과열도 계산기'},
+            {href: '/ko/tools/coil-sizing.html', label: '코일 용량 계산기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/refrigerant-loop.html', label: '냉매 루프 시뮬레이터'}
+        ],
+        lessons: [
+            {href: '/ko/education/refrigerant-cycle-basics.html', label: '냉매 사이클 기초'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/superheat-subcooling.html', label: '과열도와 과냉도 퀴즈'},
+            {href: '/ko/practice/troubleshooting.html', label: '문제 해결'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 학습 자료로 돌아가기</a>
+
+</main>
+{% endblock %}

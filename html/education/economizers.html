@@ -6,9 +6,23 @@ nav: education
 category: forced-air
 pairedQuiz: https://controlsfreak.dev/practice/economizers.html
 keywords: economizer free cooling changeover dry bulb enthalpy high limit lockout damper mixed air integrated dx freeze stat
+pageMessages:
+  verdict:
+    economize: Economize — free cooling
+    wash: A wash — take minimum OA
+    lockout: Lock out — minimum OA
+  status:
+    deceptive: Deceptive air — cooler on the thermometer, more total heat in fact
+    missed: Free cooling missed — warmer but drier, less total heat than return
+    wash: Too close to call — take minimum OA and let the coil decide
+    freeCooling: Both checks agree — genuine free cooling
+    mechanical: Both checks agree — mechanical cooling carries the load
+  anecdote:
+    deceptive: >-
+      <div class="widget-anecdote warn">This wedge cost me real time once, in a building of built-up AHUs where every sensor in the place was a dry-bulb — no outdoor humidity, no indoor humidity, nothing. On mild mornings the changeover saw outside air a few degrees cooler than return and opened up for 'free cooling.' The trends told half the story: economizers wide open, space temps drifting up instead of down. The other half came by word of mouth — it felt muggy in there, and the occupants were the only humidity sensor the building had. With nothing to compare enthalpy against, the fix was psychrometrics on paper: assume worst-case moisture, find the dry-bulb where even saturated air carries less heat than return, and pull the changeover limit down to it — the number this widget derives. Below that line, outside air can't lose. Above it, without a humidity sensor, you're gambling.</div>
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -321,17 +335,17 @@ keywords: economizer free cooling changeover dry bulb enthalpy high limit lockou
                 <div class="eco-w-verdicts">
                     <div class="eco-w-verdict">
                         <div class="widget-readout-label">Dry-bulb changeover — temperature only</div>
-                        <div class="status-pill ok" id="eco-w-db-pill">Economize — free cooling</div>
+                        <div class="status-pill ok" id="eco-w-db-pill">{{ pageMessages.verdict.economize }}</div>
                     </div>
                     <div class="eco-w-verdict">
                         <div class="widget-readout-label">Enthalpy changeover — total heat</div>
-                        <div class="status-pill ok" id="eco-w-h-pill">Economize — free cooling</div>
+                        <div class="status-pill ok" id="eco-w-h-pill">{{ pageMessages.verdict.economize }}</div>
                     </div>
                 </div>
 
                 <div class="eco-w-limit">Worst-case dry-bulb limit for this return air: <strong id="eco-w-limit-v">62.4 °F</strong> — below it, even saturated outside air carries less total heat than the return.</div>
 
-                <div class="eco-w-status" id="eco-w-status" aria-live="polite">Both checks agree — genuine free cooling</div>
+                <div class="eco-w-status" id="eco-w-status" aria-live="polite">{{ pageMessages.status.freeCooling }}</div>
                 <div class="eco-w-alert" id="eco-w-alert"></div>
             </div>
 
@@ -516,13 +530,13 @@ keywords: economizer free cooling changeover dry bulb enthalpy high limit lockou
         function setPill(pill, verdict) {
             if (verdict === 'go') {
                 pill.className = 'status-pill ok';
-                pill.textContent = 'Economize — free cooling';
+                pill.textContent = CFI18n.page('verdict.economize');
             } else if (verdict === 'wash') {
                 pill.className = 'status-pill warn';
-                pill.textContent = 'A wash — take minimum OA';
+                pill.textContent = CFI18n.page('verdict.wash');
             } else {
                 pill.className = 'status-pill error';
-                pill.textContent = 'Lock out — minimum OA';
+                pill.textContent = CFI18n.page('verdict.lockout');
             }
         }
 
@@ -547,16 +561,16 @@ keywords: economizer free cooling changeover dry bulb enthalpy high limit lockou
             let statusClass = '', statusText;
             if (dbVerdict === 'go' && hVerdict === 'no') {
                 statusClass = 'warn';
-                statusText  = 'Deceptive air — cooler on the thermometer, more total heat in fact';
+                statusText  = CFI18n.page('status.deceptive');
             } else if (dbVerdict === 'no' && hVerdict === 'go') {
                 statusClass = 'warn';
-                statusText  = 'Free cooling missed — warmer but drier, less total heat than return';
+                statusText  = CFI18n.page('status.missed');
             } else if (hVerdict === 'wash') {
-                statusText  = 'Too close to call — take minimum OA and let the coil decide';
+                statusText  = CFI18n.page('status.wash');
             } else if (hVerdict === 'go') {
-                statusText  = 'Both checks agree — genuine free cooling';
+                statusText  = CFI18n.page('status.freeCooling');
             } else {
-                statusText  = 'Both checks agree — mechanical cooling carries the load';
+                statusText  = CFI18n.page('status.mechanical');
             }
             statusEl.className = 'eco-w-status' + (statusClass ? ' ' + statusClass : '');
             statusEl.textContent = statusText;
@@ -566,7 +580,7 @@ keywords: economizer free cooling changeover dry bulb enthalpy high limit lockou
             // air-handlers / vfds precedent).
             if (dbVerdict === 'go' && hVerdict === 'no') state.anecdoteShown = true;
             if (state.anecdoteShown) {
-                alertEl.innerHTML = '<div class="widget-anecdote warn">This wedge cost me real time once, in a building of built-up AHUs where every sensor in the place was a dry-bulb — no outdoor humidity, no indoor humidity, nothing. On mild mornings the changeover saw outside air a few degrees cooler than return and opened up for \'free cooling.\' The trends told half the story: economizers wide open, space temps drifting up instead of down. The other half came by word of mouth — it felt muggy in there, and the occupants were the only humidity sensor the building had. With nothing to compare enthalpy against, the fix was psychrometrics on paper: assume worst-case moisture, find the dry-bulb where even saturated air carries less heat than return, and pull the changeover limit down to it — the number this widget derives. Below that line, outside air can\'t lose. Above it, without a humidity sensor, you\'re gambling.</div>';
+                alertEl.innerHTML = CFI18n.page('anecdote.deceptive');
             } else {
                 alertEl.innerHTML = '';
             }

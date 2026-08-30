@@ -1,0 +1,234 @@
+---
+title: 냉매 사이클 기초 — controlsfreak.dev
+description: 증기 압축식 냉매 사이클의 네 구성요소와 고압·저압 측, 모든 센서 측정값의 기준이 되는 압력-온도 관계를 제어 관점에서 설명합니다.
+sourceContentHash: 211249ec031304c47d77489557d00fc6a681ef747e1b657e15179aa90330d1b5
+canonical: https://controlsfreak.dev/ko/education/refrigerant-cycle-basics.html
+nav: education
+category: refrigerant
+pairedQuiz: https://controlsfreak.dev/ko/practice/refrigerant-cycle-basics.html
+keywords: 냉매 사이클 압축기 응축기 증발기 TXV EEV psig 냉동 응축압력 압력 온도 포화
+---
+{% extends "html/education/refrigerant-cycle-basics.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">학습 · 냉매 사이클 기초</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">냉매 사이클 기초 <span class="tool-tag">HVAC</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                냉매 계통은 많은 제어 담당자가 어렴풋이 알지만 명확히 이해하는 사람은 적은 분야입니다. 저흡입압 경보, <button type="button" data-gloss="head-pressure">응축압력</button> 트립, 이상해 보이는 토출온도처럼 센서 측정값을 통해 사이클을 접하고, 시스템이 정상인지 센서가 잘못된 것인지 판단해야 합니다. 사이클이 블랙박스가 아니게 되면 그 판단이 훨씬 쉬워집니다. 구성요소는 네 개이고, 압력과 온도 사이에는 전체를 지탱하는 관계 하나가 있습니다. 이를 이해하면 유닛 컨트롤러 그래픽의 값은 단순히 불이 들어오는 숫자가 아니라 시스템의 이야기를 들려줍니다.
+            </p>
+
+            <h2 class="subhead" id="components">네 가지 구성요소</h2>
+
+            <p>
+                냉매는 히터가 공기를 <em>가열</em>하는 방식으로 공기를 <em>냉각</em>하지 않습니다. 냉방 모드에서는 건물 내부의 열을 외부로 옮기며, 서로 다른 두 장소에서 상변화를 이용합니다. 액체는 증기로 비등하면서 열을 흡수하고, 증기는 다시 액체로 응축하면서 열을 방출합니다. 네 구성요소는 이 비등과 응축 과정이 계속되도록 순서를 맞춥니다.
+            </p>
+
+            <p>
+                <strong>압축기</strong>는 루프의 펌프입니다. 차갑고 저압인 증기가 입구인 <em>흡입관</em>으로 들어오면 압축기가 이를 압축해 반대편 <em>토출관</em>으로 뜨겁고 고압인 증기를 밀어냅니다. 압축기는 저압 측과 고압 측의 경계이기도 하며 압축기를 지나며 압력이 상승합니다. 일반적인 패키지 유닛에는 밀폐 용기 안에 스크롤 또는 왕복동식 압축기가 있습니다. 제어 관점에서는 운전하거나 정지하는 장비이고, 전류값, 흡입압력, 토출압력으로 그 동작이 정상인지 판단합니다.
+            </p>
+
+            <p>
+                <strong>응축기</strong>에서는 고압 증기가 열을 방출합니다. 팬이 코일에 외기를 통과시키며, 수냉식 냉동기에서는 물이 통과합니다. 코일 안의 냉매는 외부 공기보다 뜨거우므로 공기로 열을 내보내고 고압 액체로 응축합니다. 응축기는 고압 측에 있으며, 압축기 토출구부터 다음 구성요소의 입구까지 압력이 높게 유지됩니다.
+            </p>
+
+            <p>
+                <strong>팽창 장치</strong>는 배관에 의도적으로 만든 제한부입니다. 고압 액체가 작은 오리피스를 통과하며 압력이 급격히 떨어집니다. 상류에는 고압의 따뜻한 액체가 있고, 하류에는 액체와 플래시 증기가 섞인 차가운 저압 혼합물이 있습니다. 흔한 두 유형은 기계적으로 스스로 조절하는 <em>온도식 팽창밸브(TXV)</em>와 스테퍼 모터로 구동되고 유닛 컨트롤러 또는 BMS의 명령을 받는 <em>전자식 팽창밸브(EEV)</em>입니다. 둘 다 같은 역할을 합니다. <a href="/ko/education/metering-devices-txv-eev.html">이 장의 3페이지</a>에서 각 장치가 개도를 결정하는 방법을 설명합니다.
+            </p>
+
+            <p>
+                <strong>증발기</strong>는 실제 냉각 일을 하는 저온 코일입니다. 공조 공간 안에 있으며 흔히 간단히 "차가운 코일"이라고 부릅니다. 팬이 회기(RA)를 코일에 통과시키면 코일 안의 차가운 냉매가 공기보다 온도가 낮으므로 공기의 열이 냉매로 이동하고, 그 과정에서 냉매가 비등합니다. 증발기 출구를 떠날 때 냉매는 압축기가 흡입관에서 요구하는 차가운 저압 증기로 돌아옵니다. 이렇게 루프가 닫힙니다.
+            </p>
+
+            <h2 class="subhead" id="high-low-side">고압 측과 저압 측</h2>
+
+            <p>
+                압축기와 팽창 장치는 루프를 두 압력 영역으로 나눕니다. 압축기 토출구에서 응축기를 지나 팽창 장치 입구까지가 모두 토출압력인 <strong>고압 측</strong>입니다. 팽창 장치 출구에서 증발기를 지나 압축기 흡입구까지가 모두 흡입압력인 <strong>저압 측</strong>입니다. 압축기는 냉매를 저압에서 고압으로 올리고, 팽창 장치는 다시 고압에서 저압으로 낮춥니다. 그 사이의 나머지는 배관입니다.
+            </p>
+
+            <p>
+                그래서 유닛 컨트롤러는 압력 하나가 아니라 <em>두 개</em>를 읽습니다. 흡입압력인 저압 측은 시스템의 차가운 절반에서 일어나는 일을 알려 주고, 토출압력인 고압 측은 뜨거운 절반에서 일어나는 일을 알려 줍니다. 두 압력은 결합되어 있어 하나가 변하면 다른 하나도 몇 초 안에 반응하지만, 별도로 측정할 수 있고 서로 다른 정보를 줍니다. 흡입압력이 높고 토출압력이 정상인 상황은 토출압력이 높고 흡입압력이 정상인 상황과 전혀 다른 의미입니다.
+            </p>
+
+            <h2 class="subhead" id="pt-lock">압력-온도 관계</h2>
+
+            <p>
+                이 장의 나머지 내용을 지탱하는 핵심 개념입니다. <strong>냉매가 포화 상태, 즉 어느 구성요소에서 실제로 비등하거나 응축하고 있을 때 압력과 온도는 서로 고정된 관계를 가집니다.</strong> 둘 중 하나를 알면 해당 냉매의 공인 P-T 선도에서 다른 하나를 알 수 있습니다. R-410A는 <span data-us="118.4 psig" data-metric="816 kPag">118.4 psig</span>에서 <span data-us="40 °F" data-metric="4.4 °C">40 °F</span>로 비등합니다. "약 <span data-us="40 °F" data-metric="4.4 °C">40 °F</span>"가 아니라 정확히 <span data-us="40 °F" data-metric="4.4 °C">40 °F</span>입니다. 계통에 공기가 섞이지 않은 상태에서 같은 냉매를 같은 압력으로 측정하면 매번 <span data-us="40 °F" data-metric="4.4 °C">40 °F</span>가 나옵니다. 순수 냉매나 R-410A 같은 근공비 혼합 냉매에서는 정확히 그렇고, 비공비 혼합 냉매에는 약간의 <em>온도 활주(glide)</em>가 있으며 두 문단 뒤에서 설명합니다.
+            </p>
+
+            <p>
+                이 관계 덕분에 제어 측 측정값이 의미를 가집니다. R-410A 유닛에서 흡입압력이 <span data-us="118 psig" data-metric="814 kPag">118 psig</span>라면 증발기 내부의 포화온도가 <span data-us="40 °F" data-metric="4.4 °C">40 °F</span>임을 알 수 있습니다. 토출압력이 <span data-us="340 psig" data-metric="2344 kPag">340 psig</span>라면 응축기 내부의 포화온도가 약 <span data-us="105 °F" data-metric="40.6 °C">105 °F</span>임을 알 수 있습니다. 두 온도를 직접 측정하지 않아도 됩니다. 이 사이트의 <a href="/ko/tools/refrigerant-pt.html">냉매 P-T 도구</a>와 같은 방식으로 냉매 표가 변환해 줍니다.
+            </p>
+
+            <p>
+                두 가지 중요한 주의사항이 있습니다. 첫째, 이 고정 관계는 <em>포화 상태에서만</em> 성립합니다. 흡입관과 토출관처럼 냉매가 순수 증기인 배관 구간이나 액관처럼 순수 액체인 구간에서는 압력과 온도가 서로 달라지며, 그 차이가 2페이지에서 <em><button type="button" data-gloss="superheat">과열도</button></em>와 <em><button type="button" data-gloss="subcooling">과냉도</button></em>라는 측정값이 됩니다. 둘째, R-407C 같은 혼합 냉매에는 뚜렷한 <em>온도 활주</em>가 있습니다. 포화온도가 하나가 아니라 <em>기포점</em>과 <em>이슬점</em> 사이의 작은 범위이며 측정 종류에 따라 서로 다른 쪽을 사용합니다. 순수 냉매와 R-410A 같은 근공비 혼합 냉매에는 이런 복잡성이 거의 없지만 비공비 혼합 냉매에는 존재합니다. P-T 도구는 기포점과 이슬점을 항상 함께 표시하므로 온도 활주를 기본적으로 확인할 수 있습니다.
+            </p>
+
+            <h2 class="subhead" id="cycle">처음부터 끝까지 보는 사이클</h2>
+
+            <p>
+                네 구성요소와 두 압력 영역을 합쳐 보겠습니다. 냉매는 루프를 한 방향으로 흐르며 두 번 상태가 바뀝니다. 응축기에서 증기 → 액체, 증발기에서 액체 → 증기로 변하고, 압축기와 팽창 장치가 압력 경계를 이룹니다. 아래 그림은 흐름을 따라가며 두 측을 색으로 구분합니다. 주황색은 고압 측, 차분한 파란색은 저압 측입니다. 실내 공기의 열이 증발기로 들어와 공간을 냉각하고, 시스템이 실외로 운반한 열은 응축기에서 외기로 방출됩니다.
+            </p>
+
+            <svg class="edu-svg" id="rc-cycle" viewBox="0 0 720 460"
+                 role="img" aria-labelledby="rc-cycle-title rc-cycle-desc"
+                 font-family="var(--mono)">
+                <title id="rc-cycle-title">네 구성요소로 이루어진 증기 압축식 사이클</title>
+                <desc id="rc-cycle-desc">닫힌 직사각형 루프입니다. 왼쪽에는 원으로 표시한 압축기가 있고, 위쪽에는 외기로 열을 방출하는 화살표가 있는 직사각형 응축기가 놓여 있습니다. 오른쪽에는 작은 마름모 모양의 팽창 장치가 있고, 아래쪽에는 실내 공기에서 열을 흡수하는 화살표가 있는 직사각형 증발기가 놓여 있습니다. 냉매는 압축기를 위쪽으로 떠나 응축기로 들어가고 아래쪽의 증발기에서 돌아오는 시계 방향으로 흐릅니다. 압축기에서 올라가는 토출관, 응축기, 팽창 장치까지 내려가는 액관으로 이루어진 루프 상단은 주황색으로 그린 고압·고온 측입니다. 팽창 장치에서 내려오는 팽창관, 증발기, 압축기로 올라가는 흡입관으로 이루어진 루프 하단은 차분한 파란색으로 그린 저압·저온 측입니다. 네 배관 구간에는 토출 측 고온 증기, 액관의 따뜻한 액체, 팽창관의 차가운 혼합물, 흡입관의 차가운 증기 상태를 표시합니다. 루프 가운데의 작은 점선은 고압 측과 저압 측의 경계를 나타냅니다.</desc>
+
+                <path id="rc-discharge" data-flow="supply" data-flow-static="true" d="M 120 193 V 85 H 200" fill="none"
+                      stroke="var(--heat)" stroke-width="3"/>
+                <path id="rc-liquid"    data-flow="supply" data-flow-static="true" d="M 520 85 H 600 V 195" fill="none"
+                      stroke="var(--heat)" stroke-width="3"/>
+
+                <path id="rc-expansion" data-flow="return" data-flow-static="true" d="M 600 235 V 345 H 520" fill="none"
+                      stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="rc-suction"   data-flow="return" data-flow-static="true" d="M 200 345 H 120 V 237" fill="none"
+                      stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <g id="rc-arrows-hot" fill="var(--heat)">
+                    <polygon points="120,135 115,146 125,146"/>
+                    <polygon points="155,80 164,85 155,90"/>
+                    <polygon points="555,80 564,85 555,90"/>
+                    <polygon points="595,140 600,151 605,140"/>
+                </g>
+                <g id="rc-arrows-cold" fill="var(--blue-cool)">
+                    <polygon points="595,290 600,301 605,290"/>
+                    <polygon points="560,350 551,345 560,340"/>
+                    <polygon points="160,350 151,345 160,340"/>
+                    <polygon points="120,290 115,301 125,301"/>
+                </g>
+
+                <text x="360" y="165" text-anchor="middle" font-size="10" letter-spacing="0.15em"
+                      fill="var(--text-dim)">고압 측 · 고온</text>
+                <text x="360" y="275" text-anchor="middle" font-size="10" letter-spacing="0.15em"
+                      fill="var(--text-dim)">저압 측 · 저온</text>
+
+                <line x1="160" y1="215" x2="580" y2="215" stroke="var(--text-dim)" stroke-width="1"
+                      stroke-dasharray="2 5" opacity="0.45"/>
+
+                <g id="rc-compressor">
+                    <circle cx="120" cy="215" r="22" fill="var(--surface)"
+                            stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="113,225 127,225 120,209" fill="var(--text-dim)"/>
+                    <text x="80" y="219" text-anchor="end" font-size="11" font-weight="600"
+                          fill="var(--text-bright)">압축기</text>
+                </g>
+
+                <g id="rc-condenser">
+                    <rect x="200" y="55" width="320" height="60" rx="2" fill="var(--surface)"
+                          stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="360" y="91" text-anchor="middle" font-size="14" font-weight="600"
+                          fill="var(--text-bright)">응축기</text>
+                    <g fill="var(--heat)" stroke="var(--heat)" stroke-width="1.4">
+                        <line x1="250" y1="55" x2="250" y2="36"/>
+                        <polygon points="250,30 245,40 255,40"/>
+                        <line x1="310" y1="55" x2="310" y2="36"/>
+                        <polygon points="310,30 305,40 315,40"/>
+                        <line x1="370" y1="55" x2="370" y2="36"/>
+                        <polygon points="370,30 365,40 375,40"/>
+                        <line x1="430" y1="55" x2="430" y2="36"/>
+                        <polygon points="430,30 425,40 435,40"/>
+                        <line x1="490" y1="55" x2="490" y2="36"/>
+                        <polygon points="490,30 485,40 495,40"/>
+                    </g>
+                    <text x="535" y="38" font-size="9" font-style="italic" fill="var(--text-dim)">
+                        열 → 외기
+                    </text>
+                </g>
+
+                <g id="rc-metering">
+                    <polygon points="600,200 615,215 600,230 585,215" fill="var(--surface)"
+                             stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="630" y="219" font-size="11" font-weight="600"
+                          fill="var(--text-bright)">팽창 장치</text>
+                </g>
+
+                <g id="rc-evaporator">
+                    <rect x="200" y="315" width="320" height="60" rx="2" fill="var(--surface)"
+                          stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="360" y="351" text-anchor="middle" font-size="14" font-weight="600"
+                          fill="var(--text-bright)">증발기</text>
+                    <g fill="var(--blue-cool)" stroke="var(--blue-cool)" stroke-width="1.4">
+                        <line x1="250" y1="395" x2="250" y2="376"/>
+                        <polygon points="250,370 245,380 255,380"/>
+                        <line x1="310" y1="395" x2="310" y2="376"/>
+                        <polygon points="310,370 305,380 315,380"/>
+                        <line x1="370" y1="395" x2="370" y2="376"/>
+                        <polygon points="370,370 365,380 375,380"/>
+                        <line x1="430" y1="395" x2="430" y2="376"/>
+                        <polygon points="430,370 425,380 435,380"/>
+                        <line x1="490" y1="395" x2="490" y2="376"/>
+                        <polygon points="490,370 485,380 495,380"/>
+                    </g>
+                    <text x="535" y="395" font-size="9" font-style="italic" fill="var(--text-dim)">
+                        열 ← 실내 공기
+                    </text>
+                </g>
+
+                <text x="135" y="140" font-size="10" fill="var(--heat)">고온 증기</text>
+                <text x="585" y="140" text-anchor="end" font-size="10" fill="var(--heat)">따뜻한 액체</text>
+                <text x="585" y="290" text-anchor="end" font-size="10" fill="var(--blue-cool)">저온 혼합물</text>
+                <text x="135" y="290" font-size="10" fill="var(--blue-cool)">저온 증기</text>
+            </svg>
+            <div class="edu-legend rc-leg">
+                <span><span class="sw hot"></span>고압 측 · 고온</span>
+                <span><span class="sw cold"></span>저압 측 · 저온</span>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                실제 숫자를 대입해 보겠습니다. 일반적인 여름 오후의 R-410A 에어컨에서 흡입 측 게이지는 약 <strong><span data-us="118 psig" data-metric="814 kPag">118 psig</span></strong>, 포화온도는 <span data-us="40 °F" data-metric="4.4 °C">40 °F</span>로 나타날 수 있습니다. 증발기 안에서 코일 표면을 따라 비등하는 냉매는 <span data-us="40 °F" data-metric="4.4 °C">40 °F</span>입니다. 이 온도 덕분에 실내 코일은 통과 공기의 수분을 제거하고 냉각할 만큼 차갑습니다. 토출 측 게이지는 약 <strong><span data-us="340 psig" data-metric="2344 kPag">340 psig</span></strong>, 포화온도는 약 <span data-us="105 °F" data-metric="40.6 °C">105 °F</span>일 수 있습니다. 응축기 안에서 관 표면을 따라 응축하는 냉매는 <span data-us="105 °F" data-metric="40.6 °C">105 °F</span>이며, 핀을 지나는 외기가 열을 가져갈 만큼 뜨겁습니다. R-410A를 선택한 <a href="/ko/tools/refrigerant-pt.html">냉매 P-T 도구</a>에 어느 압력이든 입력하면 같은 포화온도가 표시됩니다. 이 값은 모델이 아니라 공인 P-T 선도에서 가져옵니다.
+            </p>
+
+            <p>
+                두 압력은 서로 다른 두 현상을 독립적으로 측정한 값이 아닙니다. 시스템이 한 장소에서 다른 장소로 열을 옮기는 방식입니다. 저압 측은 실내 공기에서 열을 <em>흡수할</em> 만큼 차갑고, 고압 측은 외기로 열을 <em>방출할</em> 만큼 뜨거우며, 압축기는 두 영역 사이로 냉매를 이동시키는 일을 합니다. 외기온, 실내 부하, 냉매 충전량 중 하나가 변하면 두 압력은 특징적인 방식으로 함께 움직입니다. 그 패턴을 알아보는 것은 더 긴 이야기입니다. 여기서 필요한 기초는 압축기와 팽창 장치가 나누는 두 압력 영역에서 포화 상태의 압력과 온도가 서로 고정된다는 사실입니다.
+            </p>
+
+            <h2 class="subhead" id="what-next">다음 내용을 위한 기초</h2>
+
+            <p>
+                위 내용에서 두 질문이 바로 나옵니다. 첫째, 포화 상태의 압력과 온도가 서로 고정되어 있다면 배관에서 측정한 온도가 그 배관 압력의 포화온도와 <em>일치하지 않을</em> 때는 무엇을 뜻할까요? 바로 <a href="/ko/education/superheat-subcooling.html"><em>과열도</em>와 <em>과냉도</em>에 관한 이야기</a>입니다. 이 두 현장 측정값은 사이클이 단순히 운전 중인지를 넘어 실제로 올바르게 운전되는지를 입증합니다. 이 장의 다음 페이지에서 다룹니다.
+            </p>
+
+            <p>
+                둘째, 매 순간 개도를 결정하는 팽창 장치 안에는 무엇이 있을까요? TXV는 흡입관의 감온통을 이용해 기계적으로 결정하고, EEV는 스테퍼 모터와 유닛 컨트롤러 알고리즘으로 전자적으로 결정합니다. BMS 쪽에서는 주로 EEV를 만나고, 서비스 기술자 쪽에서는 주로 TXV를 만납니다. 제어 용어를 공유할 만큼 동작은 비슷하지만 서로 혼동하면 곤란할 만큼 차이도 있습니다. 그 내용은 <a href="/ko/education/metering-devices-txv-eev.html">3페이지</a>에서 다룹니다.
+            </p>
+
+            <p>
+                그전에 <a href="/ko/tools/refrigerant-pt.html">냉매 P-T 및 과열도 계산기</a>에서 이미 냉매 여섯 종류의 포화온도 조회와 <button type="button" data-gloss="superheat">과열도</button> / <button type="button" data-gloss="subcooling">과냉도</button> 계산을 수행할 수 있으며 온도 활주도 반영합니다. 흡입압력과 클램프형 온도계로 측정한 흡입관 온도를 계산기에 입력하면 두 측정값 중 첫 번째 값을 바로 얻을 수 있습니다.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/refrigeration/', label: '냉동·냉매 참조 허브'},
+        tools: [
+            {href: '/ko/tools/refrigerant-pt.html', label: '냉매 P-T 및 과열도 계산기'},
+            {href: '/ko/tools/coil-sizing.html', label: '코일 용량 계산기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/refrigerant-loop.html', label: '냉매 루프 시뮬레이터'}
+        ],
+        lessons: [
+            {href: '/ko/education/air-handlers.html', label: '공기조화기'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/refrigerant-cycle-basics.html', label: '냉매 사이클 기초 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 학습 자료로 돌아가기</a>
+
+</main>
+{% endblock %}

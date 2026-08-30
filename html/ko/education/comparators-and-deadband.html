@@ -1,0 +1,488 @@
+---
+title: 비교기 및 불감대 — controlsfreak.dev
+description: 비교기가 수치를 판단으로 바꾸는 원리와 단일 임계값에서 채터링이 생기는 이유, 두 비교기와 래치로 안정적인 불감대를 구현하는 방법을 설명합니다.
+canonical: https://controlsfreak.dev/ko/education/comparators-and-deadband.html
+nav: education
+category: programming
+pairedQuiz: https://controlsfreak.dev/ko/practice/comparators-and-deadband.html
+keywords: 비교기 불감대 히스테리시스 임계값 채터링 단주기 운전 GT LT 설정값 밴드
+sourceContentHash: 701a734ae6ea9fea7542434f92151ea0a215fe3c3d0dd77b58ef39e58835ab34
+---
+{% extends "html/education/comparators-and-deadband.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">교육 · 비교기 및 불감대</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">비교기 및 불감대 <span class="tool-tag">로직</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                제어기는 동시에 두 세계에서 작동합니다. 센서는 실내 온도, 덕트 압력,
+                밸브 위치 같은 <em>수치</em>를 전달하지만, 설비가 주로 요구하는 것은
+                운전할지 말지, 열지 닫을지, 경보를 낼지 조용히 있을지 같은 <em>판단</em>입니다.
+                이 간극을 넘어 값을 전달하는 블록이 <strong>비교기</strong>입니다.
+                A가 B보다 큰가라는 단순한 질문처럼 보여 그 안의 함정을 놓치기 쉽습니다.
+                이 페이지에서는 처음부터 끝까지 한 가지를 다룹니다. <em>수치가 어떻게
+                판단이 되며, 단일 임계값에서는 왜 채터링이 발생할까요?</em>
+            </p>
+
+            <div class="callout">
+                <p style="line-height:1.7;">
+                    이 페이지는 핀, 와이어, 스캔 등 블록 수준에서 와이어시트를 읽을 수 있다고
+                    가정합니다. 이 장의 첫 수업인 <a href="/ko/education/function-blocks.html">함수
+                    블록 기초</a>에서 배울 수 있습니다. 비교기의 답을 AND, OR, 래치가
+                    <em>어떻게 처리하는지</em>와 같은 TRUE/FALSE 측면은 이 장의 별도 수업인
+                    <a href="/ko/education/boolean-logic-latches.html">불리언 로직 및 래치</a>에서
+                    다룹니다. 먼저 읽어야 하는 것은 아니지만 서로 이어지는 내용입니다.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · The comparator family ───────────────── -->
+            <h2 class="subhead" id="comparators">비교기 계열: 수치를 입력받아 판단을 출력합니다</h2>
+
+            <p>
+                비교기는 파란색 와이어로 두 아날로그 값을 입력받고 녹색 또는 회색 와이어로
+                하나의 디지털 답을 출력합니다. 이것이 블록의 전부이자, 건물의 모든 임계값
+                판단이 건너는 다리입니다. <em>실내가 너무 더우면 냉방을 시작합니다. 정압이
+                너무 높으면 경보를 발생시킵니다. 외기가 회기(RA)보다 차가우면
+                <button type="button" data-gloss="economizer">외기냉방(economizer)</button>을
+                활성화합니다.</em> 이 문장들은 모두 한쪽에 수치, 다른 쪽에 판단이 있고
+                그 사이에 비교기가 있습니다.
+            </p>
+
+            <p>
+                이 계열의 주력 블록은 초과, 미만과 경계를 포함한 각각의 짝까지 네 가지이며,
+                생각보다 훨씬 드물게 사용하는 등가 비교 두 가지가 더 있습니다.
+            </p>
+
+            <div class="cdb-table">
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr><th>블록</th><th>의미</th><th>대표 용도</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>A &gt; B</td><td>경계선 위에서 TRUE</td><td>상한 경보, 증단 조건 확인, 냉방 요구</td></tr>
+                        <tr><td>A &lt; B</td><td>경계선 아래에서 TRUE</td><td>하한 경보, 동결 방지, 절환</td></tr>
+                        <tr><td>A ≥ B&nbsp;·&nbsp;A ≤ B</td><td>동일하되 경계를 포함</td><td>측정값에서는 &gt; / &lt;와 사실상 호환</td></tr>
+                        <tr><td>A = B&nbsp;·&nbsp;A ≠ B</td><td>같음(허용오차 이내)</td><td>모드, 개수, 정수 포인트 등 이산값 전용</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                세 번째 행을 살펴보겠습니다. 이론상 <code>A &gt; B</code>와 <code>A ≥ B</code>는
+                두 값이 <em>정확히</em> 같을 때만 다릅니다. 실제 측정값에서는 칼날처럼 좁은
+                경우입니다. 실내 온도는 연속적인 범위 안을 오가는 부동소수점 값입니다.
+                설정값과 정확히 일치하는 순간은 무한히 많은 값 중 하나일 뿐이며, 어느 스캔이
+                우연히 그 값을 포착하더라도 다음 스캔은 그렇지 않습니다. 현장에서
+                <code>&gt;</code>를 <code>≥</code>로 바꿔도 관찰할 수 있는 차이는 없습니다.
+                비교기에서 실제로 중요한 것은 경계선 어느 쪽이 TRUE인지 정하는 <em>방향</em>과
+                경계선을 어디에 두는지입니다. 여기에 주의를 기울여야 합니다.
+            </p>
+
+            <p>
+                등가 비교에는 별도의 경고가 필요합니다. <strong>아날로그 값에 EQ를 사용하는
+                것은 함정</strong>이기 때문입니다. 측정 온도는 결코 <em>정확히</em> 72.0에
+                머물지 않습니다. 값 자체가 계속 변하기도 하고, 컴퓨터가 소수를 저장하는 방식
+                때문이기도 합니다. “같은” 수치에 이르는 두 경로, 예를 들어 72.0으로 입력한
+                설정값과 71.999999…로 계산된 값은 아주 낮은 소수 자리에서 달라질 수 있습니다.
+                따라서 건물의 모든 화면에 72.0으로 표시되어도 비트 단위 등가 검사는 실패합니다.
+                이 사이트의 <a href="/ko/simulators/function-block-editor.html">함수 블록 편집기</a>에는
+                보호 장치가 내장되어 있습니다. <code>A = B</code> 블록은 실제로 “비트가 동일한가?”가
+                아니라 “두 값이 작은 허용오차 이내인가?”를 묻습니다. 실제 제품의 팔레트도 같은
+                방식을 쓰거나 허용오차 매개변수를 제공합니다. 허용오차가 있어도 변하는 측정값의
+                등가 판정은 값이 통과하는 한두 스캔 동안만 TRUE이므로 시퀀스를 맡기기에는 적합하지
+                않습니다. EQ는 모드 번호, 단수, 정수형 소프트웨어 포인트처럼 실제로 이산적인 값에만
+                사용합니다.
+            </p>
+
+            <!-- ───────────────── 2 · Chatter ───────────────── -->
+            <h2 class="subhead" id="chatter">채터링: 단일 임계값의 함정</h2>
+
+            <p>
+                가장 직관적인 온도조절기를 배선해 보겠습니다. 실내 온도를 <code>A</code>에,
+                <span data-us="74 °F" data-metric="23.3 °C">74 °F</span> 설정값을
+                <code>B</code>에 연결하고, <code>A &gt; B</code>가 냉방 요구를 구동합니다.
+                실내 온도가 설정값에 <em>도달하기</em> 전까지는 잘 작동합니다. 냉방이 운전되어
+                온도가 설정값까지 떨어지면 비교기가 FALSE가 되고 냉방이 멈춥니다. 온도가 조금
+                올라가면 다시 TRUE가 됩니다. 여기에 실제 아날로그 입력의 세부 특성을 더해
+                보겠습니다. 약간의 노이즈와 센서 분해능 단계 때문에 값은 스캔마다 몇 십분의
+                일 도씩 흔들립니다. 온도가 <em>경계선을 타고 있을 때</em> 이 흔들림은 몇 번의
+                스캔마다 다른 답을 만들고, 와이어시트는 초당 여러 번 평가됩니다. 출력은 단순히
+                주기 운전하는 것이 아니라 <strong>채터링</strong>합니다.
+            </p>
+
+            <p>
+                이것이 예외 상황이 아니라 함정인 이유가 있습니다. 제어 변수는 대부분의 시간을
+                <em>설정값 근처</em>에서 보냅니다. 그것이 제어의 목적입니다. 설정값에 단일 임계값을
+                두면 비교기가 가장 불안정한 곳에 값이 머물도록 보장하는 셈입니다. 출력은 화면의
+                숫자에 그치지 않습니다. 압축기 요구라면 출력이 바뀔 때마다 접촉기가 투입되고
+                해제되어 접점에 아크가 생기며 결국 용착될 수 있습니다. 또한 쉴 틈 없는 권선으로
+                회전자 구속 <button type="button" data-gloss="inrush">돌입전류</button>가 흐르고,
+                오일은 복귀하지 못하며, 압력은 평형을 이루지 못한 상태에서 압축기가 다시 기동합니다.
+                압축기는 시간당 몇 회의 기동을 기준으로 설계되지만, 채터링하는 임계값은
+                <em>분당</em> 열 번을 요구할 수 있습니다. 실제 설비에는 이를 막는 최후 방어선으로
+                단주기 운전 방지 타이머가 있으며, 이 장 뒤의
+                <a href="/ko/education/timers-and-delays.html#min-times">최소 운전/정지 시간</a> 수업에서
+                따로 다룹니다. 그러나 자체 채터링을 안전 타이머에 의존해 정리하는 시퀀스에는
+                결함이 있습니다.
+            </p>
+
+            <!-- // anecdote slot: a chattered/short-cycled casualty the owner has met in
+                 the field (welded contactor, compressor that cycled itself to death,
+                 hunting stage) — owner to supply; do not draft. -->
+
+            <p>
+                아래 그림에서 문제 전체를 한눈에 볼 수 있습니다. 파란색 트레이스는 실제 센서
+                노이즈를 포함한 실내 온도가 밴드를 지나 상승했다가 다시 내려오는 모습입니다.
+                그 아래에는 같은 신호를 서로 다른 두 판단에 넣은 결과가 있습니다. 하나는 설정값의
+                단일 <code>A &gt; B</code>이고, 다른 하나는 다음 절에서 만드는 두 경계선의 설정/리셋
+                쌍입니다. 입력과 노이즈는 같지만 한 출력은 교차할 때마다 채터링하고, 다른 출력은
+                정확히 두 번만 전환됩니다.
+            </p>
+
+            <svg class="edu-svg cdb-svg" viewBox="0 0 740 444" role="img"
+                 aria-labelledby="cdb-d1-title cdb-d1-desc" font-family="var(--mono)">
+                <title id="cdb-d1-title">단일 임계값에서는 채터링이 발생하지만 불감대에서는 안정적으로 전환됩니다</title>
+                <desc id="cdb-d1-desc">서로 정렬된 세 개의 트레이스입니다. 위쪽 트레이스는 노이즈가 섞인 실내 온도가 설정값을 지나 상승했다가 다시 내려오는 모습입니다. 수평 기준선은 설정값과 그 위아래로 밴드 폭의 절반만큼 떨어진 두 경계를 나타냅니다. 가운데 트레이스는 설정값에서 단일 초과 비교기의 출력입니다. 노이즈가 섞인 온도가 설정값을 지날 때마다 빠르게 오가며 상승할 때와 하강할 때 각각 채터링 구간이 생깁니다. 아래쪽 트레이스는 상한에서 설정되고 하한에서 리셋되며 그 사이에서 래치되는 불감대 출력입니다. 온도가 상한을 지날 때 정확히 한 번 켜지고 하한 아래로 떨어질 때 정확히 한 번 꺼집니다. 같은 입력이지만 여러 번이 아니라 두 번만 전환됩니다.</desc>
+
+                <!-- threshold reference lines -->
+                <line x1="130" y1="92"  x2="710" y2="92"  stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="5 4"/>
+                <line x1="130" y1="120" x2="710" y2="120" stroke="var(--amber)"  stroke-width="1.2" stroke-dasharray="5 4"/>
+                <line x1="130" y1="148" x2="710" y2="148" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="5 4"/>
+                <text x="134" y="86"  font-size="10" fill="var(--text-dim)">설정선 — SP + ½ 밴드</text>
+                <text x="134" y="114" font-size="10" fill="var(--amber)">단일 임계값(SP)</text>
+                <text x="460" y="162" text-anchor="middle" font-size="10" fill="var(--text-dim)">리셋선 — SP − ½ 밴드</text>
+
+                <!-- set / reset event guides tying the panes together -->
+                <line x1="370" y1="92"  x2="370" y2="355" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 4"/>
+                <line x1="670" y1="148" x2="670" y2="355" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 4"/>
+
+                <!-- trace labels -->
+                <text x="112" y="124" text-anchor="end" font-size="11" fill="var(--text)">TEMP</text>
+                <text x="112" y="244" text-anchor="end" font-size="11" fill="var(--text)">단일 GT</text>
+                <text x="112" y="258" text-anchor="end" font-size="11" fill="var(--text)">SP 기준</text>
+                <text x="112" y="334" text-anchor="end" font-size="11" fill="var(--text)">설정 / 리셋</text>
+                <text x="112" y="348" text-anchor="end" font-size="11" fill="var(--text)">밴드 + 래치</text>
+
+                <!-- temperature trace (generated: slow sine + deterministic ripple) -->
+                <polyline fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linejoin="round" points="
+                    130,147.0 132,145.2 134,146.0 136,149.3 138,154.6 140,160.7 142,166.5 144,170.6 146,172.4 148,171.5 150,168.2 152,163.3
+                    154,158.0 156,153.6 158,151.1 160,151.2 162,153.8 164,158.6 166,164.4 168,170.0 170,174.3 172,176.3 174,175.6 176,172.4
+                    178,167.4 180,161.9 182,156.9 184,153.8 186,153.1 188,155.0 190,159.1 192,164.6 194,170.1 196,174.4 198,176.6 200,176.1
+                    202,173.0 204,168.0 206,162.2 208,156.8 210,153.0 212,151.5 214,152.7 216,156.2 218,161.2 220,166.5 222,170.9 224,173.2
+                    226,173.0 228,170.1 230,165.1 232,159.1 234,153.2 236,148.8 238,146.6 240,147.1 242,150.0 244,154.6 246,159.6 248,164.0
+                    250,166.5 252,166.5 254,163.9 256,159.0 258,152.8 260,146.6 262,141.6 264,138.8 266,138.5 268,140.8 270,145.0 272,149.9
+                    274,154.2 276,157.0 278,157.3 280,154.9 282,150.2 284,144.0 286,137.5 288,132.0 290,128.6 292,127.7 294,129.4 296,133.2
+                    298,137.9 300,142.3 302,145.3 304,145.9 306,143.9 308,139.4 310,133.3 312,126.7 314,120.9 316,116.9 318,115.5 320,116.7
+                    322,120.0 324,124.6 326,129.1 328,132.3 330,133.4 332,131.8 334,127.7 336,121.8 338,115.1 340,109.1 342,104.7 344,102.7
+                    346,103.4 348,106.5 350,110.9 352,115.5 354,119.1 356,120.7 358,119.6 360,115.9 362,110.3 364,103.8 366,97.5 368,92.8
+                    370,90.5 372,90.8 374,93.5 376,97.9 378,102.7 380,106.6 382,108.7 384,108.2 386,105.1 388,99.9 390,93.6 392,87.3
+                    394,82.4 396,79.7 398,79.7 400,82.2 402,86.5 404,91.4 406,95.8 408,98.5 410,98.6 412,96.2 414,91.5 416,85.4
+                    418,79.3 420,74.2 422,71.3 424,71.0 426,73.3 428,77.5 430,82.7 432,87.4 434,90.7 436,91.6 438,89.8 440,85.7
+                    442,80.1 444,74.1 446,69.0 448,65.8 450,65.3 452,67.4 454,71.6 456,76.9 458,82.1 460,86.0 462,87.6 464,86.6
+                    466,83.1 468,78.0 470,72.2 472,67.1 474,63.8 476,63.1 478,65.0 480,69.2 482,74.7 484,80.3 486,84.7 488,87.1
+                    490,86.8 492,84.0 494,79.4 496,73.9 498,68.9 500,65.5 502,64.5 504,66.2 506,70.3 508,75.9 510,81.9 512,86.9
+                    514,90.0 516,90.5 518,88.4 520,84.2 522,79.1 524,74.1 526,70.6 528,69.4 530,70.9 532,74.9 534,80.6 536,86.8
+                    538,92.3 540,96.0 542,97.3 544,95.8 546,92.3 548,87.4 550,82.6 552,79.0 554,77.5 556,78.7 558,82.5 560,88.1
+                    562,94.6 564,100.5 566,104.8 568,106.7 570,105.9 572,102.9 574,98.3 576,93.6 578,89.8 580,88.1 582,89.0 584,92.5
+                    586,98.0 588,104.5 590,110.7 592,115.6 594,118.0 596,117.9 598,115.3 600,111.1 602,106.3 604,102.4 606,100.3 608,100.8
+                    610,103.9 612,109.2 614,115.7 616,122.2 618,127.4 620,130.4 622,130.8 624,128.6 626,124.6 628,119.9 630,115.8 632,113.3
+                    634,113.3 636,116.0 638,121.0 640,127.3 642,133.8 644,139.3 646,142.8 648,143.6 650,141.8 652,138.1 654,133.4 656,129.0
+                    658,126.1 660,125.5 662,127.6 664,132.2 666,138.2 668,144.8 670,150.4 672,154.2 674,155.4 676,154.0 678,150.4 680,145.6
+                    682,141.0 684,137.6 686,136.4 688,137.9 690,141.9 692,147.6 694,154.0 696,159.7 698,163.7 700,165.3 702,164.1 704,160.7
+                    706,155.8 708,150.9 710,147.0"/>
+
+                <!-- single-threshold output: derived from the same samples, GT at SP -->
+                <text x="260" y="213" text-anchor="middle" font-size="10" fill="var(--text-dim)">노이즈가 흔들릴 때마다 전환</text>
+                <path d="M130 265 H316 V225 H322 V265 H338 V225 H356 V265 H358 V225 H616 V265 H628 V225 H638 V265 H710"
+                      fill="none" stroke="var(--amber)" stroke-width="2.4" stroke-linejoin="round"/>
+
+                <!-- deadband output: set > SP+½band, reset < SP−½band, latched between -->
+                <text x="520" y="303" text-anchor="middle" font-size="10" fill="var(--text-dim)">한 번 기동, 한 번 정지 — 노이즈 흡수</text>
+                <path d="M130 355 H370 V315 H670 V355 H710"
+                      fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"/>
+
+                <!-- ON / OFF level cues -->
+                <text x="716" y="228" font-size="8.5" fill="var(--text-dim)">ON</text>
+                <text x="716" y="268" font-size="8.5" fill="var(--text-dim)">OFF</text>
+                <text x="716" y="318" font-size="8.5" fill="var(--text-dim)">ON</text>
+                <text x="716" y="358" font-size="8.5" fill="var(--text-dim)">OFF</text>
+
+                <text x="710" y="374" text-anchor="end" font-size="10" fill="var(--text-dim)">시간 →</text>
+
+                <text x="370" y="415" text-anchor="middle" font-size="10.5" fill="var(--text)">노이즈가 같은 입력에서 단일 임계값은 여덟 번 전환되지만,</text>
+                <text x="370" y="431" text-anchor="middle" font-size="10.5" fill="var(--text)">설정/리셋 쌍은 두 번만 전환됩니다. 설정선에서 켜지고 리셋선에서 꺼집니다</text>
+            </svg>
+
+            <p style="margin-top:1.25rem;">
+                가운데 트레이스를 위쪽 트레이스와 비교해 보겠습니다. 모든 채터링 구간은 노이즈가
+                섞인 온도가 설정값을 지나는 곳 바로 아래에 있습니다. 비교기가 고장 난 것이 아니라,
+                십분의 일 도 단위로 계속 마음을 바꾸는 값에 대해 요청받은 질문을 초당 여러 번 정확히
+                답하고 있습니다. 아래쪽 트레이스는 이 흔들림을 모두 무시합니다. 온도가
+                <em>상한</em>을 확실히 넘을 때까지 아무 일도 일어나지 않고, <em>하한</em> 아래로
+                확실히 내려갈 때까지 상태가 해제되지 않습니다. 두 경계선 사이의 간격이
+                <strong>불감대</strong>이며, 이를 만드는 데에는 정확히 세 블록이 필요합니다.
+            </p>
+
+            <!-- ───────────────── 3 · Building the deadband ───────────────── -->
+            <h2 class="subhead" id="deadband">불감대 구현: 두 비교기와 래치</h2>
+
+            <p>
+                해결 방법은 하나의 경계선을 둘로 나누고 그 사이에 기억 기능을 두는 것입니다.
+                <em>설정값에 밴드의 절반을 더한 값보다 높으면 켭니다. 설정값에서 밴드의 절반을
+                뺀 값보다 낮으면 끕니다. 그 사이에서는 현재 상태를 유지합니다.</em> “현재 상태를
+                유지한다”는 말은 일반 비교기만으로 이 기능을 구현할 수 없다는 단서입니다. 두
+                경계선 사이에서는 어느 조건도 참이 아니므로, 현재 어느 상태인지 무언가가
+                <em>기억</em>해야 합니다. 그것이 기억 기능을 가진 불리언 블록인
+                <code><button type="button" data-gloss="sr-latch">SR 래치</button></code>입니다.
+                래치의 원리, 안전 로직에서 래치를 사용하는 이유, 설정과 리셋이 동시에 들어올 때의
+                동작은 <a href="/ko/education/boolean-logic-latches.html#sr-latch">불리언 로직 및
+                래치의 SR 래치 절</a>에서 다룹니다. 여기서는 래치의 기본 역할만 사용합니다.
+            </p>
+
+            <p>
+                <a href="/ko/simulators/function-block-editor.html">함수 블록 편집기</a>에는 이
+                시퀀스가 <em>냉방 온도조절기</em> 예제로 그대로 제공됩니다. 와이어를 하나씩 따라가
+                볼 가치가 있습니다. 왼쪽에는 실내 온도 아날로그 입력,
+                <span data-us="74 °F" data-metric="23.3 °C">74 °F</span> 설정값 상수,
+                <span data-us="1 °F" data-metric="0.6 °C">1 °F</span> 불감대 상수가 있습니다.
+                와이어시트의 단위 없는 숫자는 °F로 읽습니다. <code>ADD</code>와
+                <code>SUBTRACT</code>가 SP + DB =
+                <span data-us="75 °F" data-metric="23.9 °C">75 °F</span>, SP − DB =
+                <span data-us="73 °F" data-metric="22.7 °C">73 °F</span>인 두 경계선을 만듭니다.
+                초과 비교기는 온도가 상한보다 높은지 감시하여 래치의 <strong>S</strong>를
+                구동하고, 미만 비교기는 하한보다 낮은지 감시하여 <strong>R</strong>을 구동합니다.
+                래치 출력은 냉방 요구를 구동합니다. 다음은 실내가
+                <span data-us="76 °F" data-metric="24.4 °C">76 °F</span>까지 올라간 순간의
+                와이어시트입니다.
+            </p>
+
+            <svg class="edu-svg cdb-svg" viewBox="0 0 800 420" role="img"
+                 aria-labelledby="cdb-d2-title cdb-d2-desc" font-family="var(--mono)">
+                <title id="cdb-d2-title">불감대 온도조절기의 와이어시트</title>
+                <desc id="cdb-d2-desc">아홉 개 블록으로 구성된 함수 블록 와이어시트입니다. 왼쪽의 세 소스는 76을 읽는 실내 온도 아날로그 입력, 74인 설정값 상수, 1인 불감대 상수입니다. ADD 블록은 설정값과 불감대를 더해 75를 계산하고, SUBTRACT 블록은 설정값에서 불감대를 빼 73을 계산합니다. 초과 비교기는 온도를 75와 비교하여 현재 TRUE이고, 미만 비교기는 73과 비교하여 FALSE입니다. 초과 비교기의 출력은 SR 래치의 설정 입력에, 미만 비교기의 출력은 리셋 입력에 연결됩니다. TRUE인 래치 출력은 COOL이라고 표시된 바이너리 출력을 켭니다. 아날로그 와이어는 파란색, TRUE 디지털 와이어는 녹색, FALSE 와이어는 회색입니다.</desc>
+
+                <!-- wires (drawn first, behind the blocks) -->
+                <line x1="145" y1="48"  x2="215" y2="108" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
+                <path d="M145 48 L178 48 L178 268 L215 268" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M145 338 L192 338 L192 128 L215 128" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <line x1="145" y1="338" x2="215" y2="288" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
+                <path d="M145 193 H368 V48 H400"  fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M145 193 H368 V318 H400" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <line x1="335" y1="118" x2="400" y2="68"  stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="335" y1="278" x2="400" y2="338" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="520" y1="58"  x2="570" y2="183" stroke="var(--accent)"   stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="520" y1="328" x2="570" y2="203" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="680" y1="193" x2="695" y2="193" stroke="var(--accent)"   stroke-width="2.4" stroke-linecap="round"/>
+
+                <!-- SP -->
+                <g id="cdb-d2-sp">
+                    <rect x="15" y="20" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="39" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">CONSTANT</text>
+                    <text x="27" y="60" font-size="13" font-weight="600" fill="var(--text-bright)">SP  74</text>
+                    <circle cx="145" cy="48" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- TEMP -->
+                <g id="cdb-d2-temp">
+                    <rect x="15" y="165" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="184" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">ANALOG IN</text>
+                    <text x="27" y="205" font-size="13" font-weight="600" fill="var(--text-bright)">TEMP  76</text>
+                    <circle cx="145" cy="193" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- DB -->
+                <g id="cdb-d2-db">
+                    <rect x="15" y="310" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="329" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">CONSTANT</text>
+                    <text x="27" y="350" font-size="13" font-weight="600" fill="var(--text-bright)">DB  1</text>
+                    <circle cx="145" cy="338" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- ADD (upper band edge) -->
+                <g id="cdb-d2-hi">
+                    <rect x="215" y="90" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="275" y="114" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">ADD</text>
+                    <text x="275" y="132" text-anchor="middle" font-size="9" fill="var(--text-dim)">SP + DB = 75</text>
+                    <circle cx="215" cy="108" r="3.8" fill="var(--blue)"/>
+                    <circle cx="215" cy="128" r="3.8" fill="var(--blue)"/>
+                    <circle cx="335" cy="118" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- SUBTRACT (lower band edge) -->
+                <g id="cdb-d2-lo">
+                    <rect x="215" y="250" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="275" y="274" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">SUBTRACT</text>
+                    <text x="275" y="292" text-anchor="middle" font-size="9" fill="var(--text-dim)">SP − DB = 73</text>
+                    <circle cx="215" cy="268" r="3.8" fill="var(--blue)"/>
+                    <circle cx="215" cy="288" r="3.8" fill="var(--blue)"/>
+                    <circle cx="335" cy="278" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- GT (set side) -->
+                <g id="cdb-d2-over">
+                    <rect x="400" y="30" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="460" y="54" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">A &gt; B</text>
+                    <text x="460" y="72" text-anchor="middle" font-size="9" fill="var(--accent)">76 &gt; 75 → TRUE</text>
+                    <circle cx="400" cy="48" r="3.8" fill="var(--blue)"/>
+                    <circle cx="400" cy="68" r="3.8" fill="var(--blue)"/>
+                    <circle cx="520" cy="58" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- LT (reset side) -->
+                <g id="cdb-d2-under">
+                    <rect x="400" y="300" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="460" y="324" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">A &lt; B</text>
+                    <text x="460" y="342" text-anchor="middle" font-size="9" fill="var(--text-dim)">76 &lt; 73 → FALSE</text>
+                    <circle cx="400" cy="318" r="3.8" fill="var(--blue)"/>
+                    <circle cx="400" cy="338" r="3.8" fill="var(--blue)"/>
+                    <circle cx="520" cy="328" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- SR latch -->
+                <g id="cdb-d2-stat">
+                    <rect x="570" y="165" width="110" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="578" y="187" font-size="9" fill="var(--text-dim)">S</text>
+                    <text x="578" y="207" font-size="9" fill="var(--text-dim)">R</text>
+                    <text x="629" y="189" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">SR LATCH</text>
+                    <text x="629" y="207" text-anchor="middle" font-size="9" fill="var(--accent)">Q = TRUE</text>
+                    <circle cx="570" cy="183" r="3.8" fill="var(--accent)"/>
+                    <circle cx="570" cy="203" r="3.8" fill="var(--text-dim)"/>
+                    <circle cx="680" cy="193" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- COOL -->
+                <g id="cdb-d2-cool">
+                    <rect x="695" y="165" width="95" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="707" y="184" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">BINARY OUT</text>
+                    <text x="707" y="205" font-size="12" font-weight="600" fill="var(--accent)">COOL ON</text>
+                    <circle cx="695" cy="193" r="3.8" fill="var(--accent)"/>
+                </g>
+
+                <text x="400" y="396" text-anchor="middle" font-size="10.5" fill="var(--text)">75를 넘어 더워지면 초과 비교기가 SET을 구동하고 냉방이 ON으로 래치됩니다 —</text>
+                <text x="400" y="412" text-anchor="middle" font-size="10.5" fill="var(--text)">TEMP가 73 아래로 떨어질 때까지 밴드 전체를 지나며 그대로 유지됩니다</text>
+            </svg>
+
+            <p class="ref-note compact" style="text-align:center;">
+                파란색 와이어는 아날로그 값을, 녹색 와이어는 TRUE 디지털 신호를,
+                회색 와이어는 FALSE 신호를 전달합니다. 편집기의 실시간 색상과 같습니다.
+            </p>
+
+            <p>
+                이제 이후 동작을 따라가 보겠습니다. 냉방이 실내 온도를 다시
+                <span data-us="75 °F" data-metric="23.9 °C">75 °F</span> 아래로 낮추면 초과
+                비교기가 FALSE로 바뀌지만 <em>아무 일도 일어나지 않습니다.</em> 설정이나 리셋
+                신호가 없는 래치는 상태를 그대로 유지하기 때문입니다. 설정값 아래로 내려가도
+                여전히 켜져 있습니다. <span data-us="73 °F" data-metric="22.7 °C">73 °F</span>
+                아래에서만 미만 비교기가 R을 구동하여 요구를 해제합니다. 밴드 안에서는 두 비교기가
+                모두 FALSE이며, 래치의 기억 기능 자체가 “현재 상태 유지”라는 와이어시트의 답인
+                <em>불감대</em>가 됩니다. 위 그림에서 단일 임계값을 여덟 번 전환시킨 노이즈도
+                <span data-us="1 °F" data-metric="0.6 °C">1 °F</span> 떨어진 경계선에는 접근하지
+                못합니다. 따라서 설비는 노이즈의 속도가 아니라 건물의 변화 속도에 맞춰 주기
+                운전합니다.
+            </p>
+
+            <p>
+                주의할 수치가 하나 있습니다. 여기서 DB 상수는 밴드 폭의 <em>절반</em>입니다.
+                위아래에 한 번씩 적용되므로 설정에서 리셋까지 실내 온도의 실제 변화 폭은
+                <span data-us="2 °F" data-metric="1.2 °C">2 °F</span>입니다. 제조사마다 정의가
+                다릅니다. 일부 불감대 매개변수는 전체 폭을, 일부는 절반 폭을 뜻합니다. 확인하지
+                않고 플랫폼 간 값을 복사하면 자신도 모르게 밴드가 두 배 또는 절반이 됩니다.
+                블록 문서를 읽거나, 더 확실하게는 이 와이어시트처럼 경계값을 외부에 명시적으로
+                구성하여 직접 확인할 수 있게 합니다.
+            </p>
+
+            <p>
+                이 구성이 덤으로 주는 기능도 있습니다. 래치에 들어가는 두 와이어를 서로 바꾸어
+                저온 조건이 <strong>S</strong>를, 고온 조건이 <strong>R</strong>을 구동하게 하면
+                같은 아홉 블록이 <em>난방</em> 온도조절기가 됩니다. 실내가 추우면 요구가 켜지고
+                따뜻하면 꺼집니다. 이것이 <strong>정동작</strong> 제어(측정값이 올라갈 때 출력도
+                올라가는 냉방)와 <strong>역동작</strong> 제어(측정값이 내려갈 때 출력이 올라가는
+                난방)의 전체 차이입니다. 비교기는 바뀌지 않으며 어느 비교기가 설정하고 어느
+                비교기가 리셋하는지만 달라집니다. 편집기가 두 온도조절기를 한 쌍으로 제공하는
+                이유도 바로 이것입니다.
+            </p>
+
+            <p>
+                밴드는 얼마나 넓어야 할까요? 모든 규모에서 같은 상충관계가 있습니다. 좁으면
+                쾌적성을 정밀하게 유지하지만 설비가 자주 동작하고, 넓으면 설비는 쉬지만 재실자는
+                온도 변동을 체감합니다. 실내 온도조절기의 전체 밴드는 보통
+                <span data-us="1–2 °F" data-metric="0.6–1.2 °C">1–2 °F</span> 정도입니다.
+                규모를 키워도 패턴은 같습니다. <a href="/ko/education/equipment-staging.html#staging">설비
+                대수제어</a> 수업의 증단·감단 임계값은 플랜트 규모에서 이 구성을 그대로 적용한
+                것입니다. 두 값의 의도적인 불감대는 전체 펌프 플랜트의
+                <button type="button" data-gloss="hunting">헌팅</button>을 방지합니다. 설비가 단순히
+                켜지고 꺼지는 대신 <em>연속 제어</em>할 수 있다면, 경계선을 없애고 설정값을 중심으로
+                <a href="/ko/education/pid-basics.html">PID 루프</a>를 폐루프로 구성하는 것이 가장
+                깔끔한 해법입니다.
+            </p>
+
+            <p>
+                실제 팔레트에서 이 기능을 만날 때 알아둘 점이 있습니다. 대부분의 상용 환경은
+                전체 구성을 하나의 <em>불감대</em> 또는 <em>히스테리시스</em> 비교기로 묶어
+                제공합니다. 하나의 블록에 설정값과 밴드를 넣으면 채터링 없는 출력이 나옵니다.
+                그 용도에 맞게 사용하면 됩니다. 이제는 블록 내부가 두 경계선과 기억 기능으로
+                이루어졌다는 것도 압니다. 통합 블록이 제대로 동작하지 않거나 팔레트에 해당 블록이
+                없다면 직접 구성할 수 있으며, 더 중요한 것은 다른 사람의 와이어시트에 펼쳐진
+                구성을 발견했을 때 <em>읽을 수 있다는 것</em>입니다.
+            </p>
+
+            <p id="which-sense">
+                이 구성을 읽을 때 관례가 혼란을 일으킵니다. 상수의 의미뿐 아니라 배치도 시퀀스마다,
+                작성자마다 달라집니다. 이 와이어시트는 밴드의 절반을 설정값 위와 아래에 두어
+                설정값을 중심으로 삼습니다. 그러나 많은 시퀀스는 밴드 전체를 한쪽에 두어 설정값이
+                변동 범위의 가운데가 아니라 한쪽 경계가 되게 합니다. 같은 상수라도 경계가 다릅니다.
+                밴드의 다른 이름도 비슷하게 의미가 달라집니다. 온도조절기의 <strong>동작차</strong>는
+                이 간격을 뜻하고, 기계식 스위치에서는 트립 값과 복귀 값 사이의 차이를 뜻하며,
+                존에서는 난방과 냉방 설정값 사이의 간격을 뜻합니다. 그러나 대부분은 팬이나 펌프
+                양단의 <a href="/ko/education/status-and-proof.html#sap-sources">차압</a>처럼 두 측정값의
+                차이만을 뜻합니다. 어떤 경우든 읽는 방법은 같습니다. 출력이 실제로 전환되는 경계,
+                즉 빼고 있는 두 양을 찾아 이름이 아니라 그 값에서 관례를 파악합니다. 직접 시퀀스를
+                작성할 때에는 어떤 의미인지 명시합니다.
+            </p>
+
+            <!-- ───────────────── 4 · Capstone ───────────────── -->
+            <h2 class="subhead" id="try-it">직접 밴드를 따라가 보세요</h2>
+
+            <p>
+                이 수업의 전체 내용을 <a href="/ko/simulators/function-block-editor.html">함수 블록
+                편집기</a>에서 실행해 볼 수 있습니다. <em>냉방 온도조절기</em> 예제를 불러오고
+                TEMP 블록을 클릭한 뒤 검사기에서 값을 올려 보세요. 74에서는 아무 일도 없고,
+                74.9에서도 그대로입니다. 75를 넘으면 초과 비교기의 와이어가 녹색으로 바뀌고 요구가
+                ON으로 래치됩니다. 이제 값을 다시 내리며 해제 지점을 확인하세요. 75도 아니고 74도
+                아니며, 73 아래에서만 해제됩니다. 서로 <em>다른 값</em>에서 설정과 리셋이 구동되는
+                모습이 와이어에서 실시간으로 보이는 불감대입니다. 다음으로 <em>난방 온도조절기</em>
+                예제를 불러와 <em>로직</em>에서 바뀐 부분을 찾아보세요. 아홉 블록과 배치는 그대로이며,
+                S와 R에 들어가는 두 와이어의 위치만 바뀌었습니다. 상수와 블록 이름은 난방에 맞지만
+                기본 구조는 동일합니다.
+            </p>
+
+            <a class="cta-button" href="/ko/simulators/function-block-editor.html">함수 블록 편집기 열기 →</a>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/ko/simulators/function-block-editor.html', label: '함수 블록 편집기'},
+            {href: '/ko/simulators/pid-tuner.html', label: 'PID 튜닝 도우미'},
+            {href: '/ko/simulators/ddc-workbench.html', label: 'DDC 워크벤치 — 공기조화기'},
+            {href: '/ko/simulators/ddc-workbench-fcu.html', label: 'DDC 워크벤치 — 팬코일'}
+        ],
+        lessons: [
+            {href: '/ko/education/function-blocks.html', label: '함수 블록 기초'},
+            {href: '/ko/education/boolean-logic-latches.html', label: '불리언 로직 및 래치'},
+            {href: '/ko/education/timers-and-delays.html', label: '타이머 및 지연'},
+            {href: '/ko/education/setpoint-math-reset.html', label: '설정값 연산 및 리셋'},
+            {href: '/ko/education/pid-basics.html', label: 'PID 기초'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/comparators-and-deadband.html', label: '비교기 및 불감대 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 교육 목록으로 돌아가기</a>
+
+</main>
+{% endblock %}

@@ -1,0 +1,523 @@
+---
+title: 수배관 밸런싱 — controlsfreak.dev
+description: 수배관 시스템의 모든 부하에 설계 유량을 확보하는 방법과 수동·자동 밸런싱 밸브, PICV의 원리 및 불균형 진단 절차를 설명합니다.
+canonical: https://controlsfreak.dev/ko/education/balancing.html
+nav: education
+category: hydronics
+pairedQuiz: https://controlsfreak.dev/ko/practice/balancing.html
+keywords: 수배관 밸런싱 설계 유량 회로설정밸브 비례 밸런싱 밸런싱 밸브 TAB CBV ABV PICV 차압 Δp
+sourceContentHash: d744e8aee60a9a7fe40555c1a7f256f9d7fc4ce5c813fa7bb5049419cc463b15
+sourceMessageHash: ee6162c921889e521228d3f8cb16cdeb2524dbda9c6eb0a09c9f7bf53fe531ab
+pageMessages:
+  widget:
+    state:
+      starved: 부족
+      over: 과다
+      holding: 유지
+---
+{% extends "html/education/balancing.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">교육 · 밸런싱</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">수배관 밸런싱 <span class="tool-tag">수배관</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                <a href="/ko/education/hydronic-loops.html#d1">2관 직접환수</a> 학습은 <em>모든 부하에는 밸런싱 밸브가 필요하고 누군가는 이를 설정해야 합니다</em>라는 짧은 문장을 남긴 채 다음 내용으로 넘어갔습니다. 이 페이지는 바로 그 문장을 다룹니다. 그 아래에는 두 가지 질문이 있습니다. 수배관 시스템의 모든 부하가 선정 기준인 설계 유량을 실제로 받도록 어떻게 보장하며, 그렇지 않을 때는 어떻게 알아낼까요? 첫 번째는 장비와 절차의 문제이고, 두 번째는 첫 번째를 잘못했을 때 이어지는 진단 이야기입니다.
+            </p>
+
+            <!-- ───────────────── 1 · The riser — where balance valves live ───────────────── -->
+            <h2 class="subhead">모든 분기에 밸런싱 밸브가 있는 실제 입상관</h2>
+
+            <p>
+                하나의 온수 입상관을 둔 4층 건물을 떠올려 보세요. 지하에 펌프가 있고, 왼쪽으로 공급관이 올라가며 오른쪽으로 환수관이 내려옵니다. 그 사이에서 층마다 코일 하나가 분기됩니다. 각 분기에는 코일 옆에 밸런싱 밸브가 있습니다. 이것이 일반적인 현장 배관 형상이며 밸런싱이 중요한 이유이기도 합니다. 펌프와 가장 가까운 부하는 물이 가장 쉽게 흐르고 가장 먼 부하는 가장 어렵게 흐릅니다. 그대로 두면 건물은 먼 부하를 희생해 가까운 부하에 조용히 더 많은 유량을 보냅니다.
+            </p>
+
+            <!-- Riser diagram. .edu-svg + flow-engine animated. Four floors, all CBVs (the page's
+                 main pipe-flow diagram exists to show WHERE balance valves sit in real building
+                 geometry, not to compare types — that's the widget's job). Bowtie balance-valve
+                 symbol at each branch, matching the lp-2w / lp-tt 2-port valve symbol used
+                 elsewhere on the site. Bowtie + small "CBV" annotation underneath each. -->
+            <svg class="edu-svg" viewBox="0 0 800 500" role="img" aria-labelledby="bal-riser-title bal-riser-desc"
+                 font-family="var(--mono)">
+                <title id="bal-riser-title">모든 분기에 교정형 밸런싱 밸브가 있는 4층 수배관 입상관</title>
+                <desc id="bal-riser-desc">단순화한 4층 건물 입상관입니다. 펌프는 아래쪽 중앙의 지하에 있습니다. 공급 주관은 건물 왼쪽으로 올라가고 환수 주관은 오른쪽으로 내려오며, 두 관 모두 펌프에서 끝납니다. 두 입상관 사이에 층마다 하나씩 네 개의 수평 분기가 연결됩니다. 아래쪽의 1층은 펌프에서 가장 가깝고 위쪽의 4층은 가장 멉니다. 각 분기에는 시운전 때 선정하고 조정한 코일과 교정형 밸런싱 밸브가 있습니다. 1층은 수리적으로 가장 가까운 부하이므로 밸런싱 밸브로 조이지 않으면 자연히 설계값보다 많은 유량을 받습니다. 4층은 가장 멀어 시스템 압력이 낮아질 때 유량을 잃기 가장 쉽습니다.</desc>
+
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes pipe geometry — the three-valve widget is all
+                     HTML readouts, bars and LEDs. A future geometry write must refresh
+                     in the same breath, or the page must opt out via the
+                     `flowGeometryLive` frontmatter (flowStaticGuard, .eleventy.js). -->
+                <!-- piping: supply (solid, --blue) -->
+                <path id="bal-riser-supply" data-flow="supply" data-flow-static="true" d="M200 460 V60" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <line id="bal-riser-pump-to-supply" data-flow="supply" data-flow-static="true" x1="385" y1="460" x2="200" y2="460" stroke="var(--blue)" stroke-width="3"/>
+
+                <!-- Branch supply legs (left of valve), one per floor -->
+                <line id="bal-riser-f4-sup-a" data-flow="supply" data-flow-static="true" x1="200" y1="100" x2="248" y2="100" stroke="var(--blue)" stroke-width="3"/>
+                <line id="bal-riser-f4-sup-b" data-flow="supply" data-flow-static="true" x1="272" y1="100" x2="340" y2="100" stroke="var(--blue)" stroke-width="3"/>
+                <line id="bal-riser-f3-sup-a" data-flow="supply" data-flow-static="true" x1="200" y1="190" x2="248" y2="190" stroke="var(--blue)" stroke-width="3"/>
+                <line id="bal-riser-f3-sup-b" data-flow="supply" data-flow-static="true" x1="272" y1="190" x2="340" y2="190" stroke="var(--blue)" stroke-width="3"/>
+                <line id="bal-riser-f2-sup-a" data-flow="supply" data-flow-static="true" x1="200" y1="280" x2="248" y2="280" stroke="var(--blue)" stroke-width="3"/>
+                <line id="bal-riser-f2-sup-b" data-flow="supply" data-flow-static="true" x1="272" y1="280" x2="340" y2="280" stroke="var(--blue)" stroke-width="3"/>
+                <line id="bal-riser-f1-sup-a" data-flow="supply" data-flow-static="true" x1="200" y1="370" x2="248" y2="370" stroke="var(--blue)" stroke-width="3"/>
+                <line id="bal-riser-f1-sup-b" data-flow="supply" data-flow-static="true" x1="272" y1="370" x2="340" y2="370" stroke="var(--blue)" stroke-width="3"/>
+
+                <!-- piping: return (dashed, --blue-cool) -->
+                <path id="bal-riser-return" data-flow="return" data-flow-static="true" d="M600 60 V460" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="bal-riser-pump-to-return" data-flow="return" data-flow-static="true" x1="600" y1="460" x2="415" y2="460" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- Branch return legs, one per floor -->
+                <line id="bal-riser-f4-ret" data-flow="return" data-flow-static="true" x1="460" y1="100" x2="600" y2="100" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="bal-riser-f3-ret" data-flow="return" data-flow-static="true" x1="460" y1="190" x2="600" y2="190" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="bal-riser-f2-ret" data-flow="return" data-flow-static="true" x1="460" y1="280" x2="600" y2="280" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="bal-riser-f1-ret" data-flow="return" data-flow-static="true" x1="460" y1="370" x2="600" y2="370" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- flow arrows: riser direction cues + per-branch -->
+                <g id="bal-riser-arrows">
+                    <!-- supply riser up -->
+                    <polygon points="195,260 200,249 205,260" fill="var(--blue)"/>
+                    <polygon points="195,420 200,409 205,420" fill="var(--blue)"/>
+                    <!-- return riser down -->
+                    <polygon points="595,260 600,271 605,260" fill="var(--blue-cool)"/>
+                    <polygon points="595,420 600,431 605,420" fill="var(--blue-cool)"/>
+                    <!-- pump return leg (flows LEFT from return riser to pump) -->
+                    <polygon points="500,455 491,460 500,465" fill="var(--blue-cool)"/>
+                    <!-- pump supply leg (flows LEFT from pump to supply riser; apex at x=300 points left) -->
+                    <polygon points="309,455 300,460 309,465" fill="var(--blue)"/>
+                    <!-- per-floor supply arrows (right) and return arrows (right) -->
+                    <polygon points="225,95 234,100 225,105" fill="var(--blue)"/>
+                    <polygon points="540,95 549,100 540,105" fill="var(--blue-cool)"/>
+                    <polygon points="225,185 234,190 225,195" fill="var(--blue)"/>
+                    <polygon points="540,185 549,190 540,195" fill="var(--blue-cool)"/>
+                    <polygon points="225,275 234,280 225,285" fill="var(--blue)"/>
+                    <polygon points="540,275 549,280 540,285" fill="var(--blue-cool)"/>
+                    <polygon points="225,365 234,370 225,375" fill="var(--blue)"/>
+                    <polygon points="540,365 549,370 540,375" fill="var(--blue-cool)"/>
+                </g>
+
+                <!-- Equipment: pump (bottom centre), four coils, four balance valves (bowtie) -->
+                <g id="bal-riser-pump">
+                    <circle cx="400" cy="460" r="15" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="406,452 392,460 406,468" fill="var(--text-dim)"/>
+                    <text x="400" y="492" text-anchor="middle" font-size="10" fill="var(--text)">펌프</text>
+                </g>
+
+                <!-- Per-floor valve (bowtie) + coil -->
+                <g id="bal-riser-f4-valve">
+                    <polygon points="248,93 268,93 260,100" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="248,107 268,107 260,100" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                </g>
+                <g id="bal-riser-f4-coil">
+                    <rect x="340" y="82" width="120" height="36" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="400" y="105" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">코일</text>
+                </g>
+                <g id="bal-riser-f3-valve">
+                    <polygon points="248,183 268,183 260,190" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="248,197 268,197 260,190" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                </g>
+                <g id="bal-riser-f3-coil">
+                    <rect x="340" y="172" width="120" height="36" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="400" y="195" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">코일</text>
+                </g>
+                <g id="bal-riser-f2-valve">
+                    <polygon points="248,273 268,273 260,280" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="248,287 268,287 260,280" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                </g>
+                <g id="bal-riser-f2-coil">
+                    <rect x="340" y="262" width="120" height="36" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="400" y="285" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">코일</text>
+                </g>
+                <g id="bal-riser-f1-valve">
+                    <polygon points="248,363 268,363 260,370" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="248,377 268,377 260,370" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                </g>
+                <g id="bal-riser-f1-coil">
+                    <rect x="340" y="352" width="120" height="36" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="400" y="375" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">코일</text>
+                </g>
+
+                <!-- Floor labels (far left) and per-floor "near/far" annotations (far right).
+                     Near-vs-far is hydraulic distance from the pump, not building floor — the
+                     pump is in the basement, so Floor 1 (bottom) is nearest and Floor 4 (top)
+                     is farthest. -->
+                <text x="180" y="105" text-anchor="end" font-size="11" fill="var(--text)">4층</text>
+                <text x="180" y="195" text-anchor="end" font-size="11" fill="var(--text)">3층</text>
+                <text x="180" y="285" text-anchor="end" font-size="11" fill="var(--text)">2층</text>
+                <text x="180" y="375" text-anchor="end" font-size="11" fill="var(--text)">1층</text>
+
+                <!-- Per-valve "CBV" annotation underneath each valve symbol so the role of the
+                     bowtie reads clearly. The valves on the riser are all the same type — the
+                     widget below compares types; this diagram is purely about WHERE they sit. -->
+                <text x="260" y="125" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">CBV</text>
+                <text x="260" y="215" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">CBV</text>
+                <text x="260" y="305" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">CBV</text>
+                <text x="260" y="395" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">CBV</text>
+
+                <!-- Hydraulic distance callouts on the right -->
+                <text x="620" y="105" font-size="9" font-style="italic" fill="var(--text-dim)">펌프에서 가장 멂</text>
+                <text x="620" y="375" font-size="9" font-style="italic" fill="var(--text-dim)">펌프에서 가장 가까움</text>
+
+                <!-- Supply/return main labels -->
+                <text x="155" y="55" text-anchor="end" font-size="11" fill="var(--text)">공급 ↑</text>
+                <text x="645" y="55" font-size="11" fill="var(--text)">↓ 환수</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw supply"></span>공급수</span>
+                <span><span class="sw return"></span>환수</span>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                여기에 그린 밸브는 <em>교정형 밸런싱 밸브</em>입니다. 알아야 할 세 종류 중 가장 오래되고 단순하며 지금도 가장 흔합니다. 나머지 두 종류인 <em>자동</em> 밸런싱 밸브와 <em>차압 독립형 제어밸브</em>는 기술자가 수동으로 하던 작업 일부를 대신합니다. 다음 세 절에서는 각 밸브의 구조와 거동, 건물에서의 적용 위치를 살펴봅니다. 이어지는 작은 위젯에서는 시스템 압력이 변할 때 세 밸브를 나란히 비교할 수 있습니다. 바로 이 조건에서 차이는 더 이상 이론에 머물지 않습니다.
+            </p>
+
+            <!-- ───────────────── 2 · CBVs ───────────────── -->
+            <h2 class="subhead" id="cbv">교정형 밸런싱 밸브(CBV)</h2>
+
+            <!-- Per-valve symbol diagram: bowtie + handle wheel + locking position indicator. -->
+            <div class="bal-valve-fig">
+                <svg class="bal-fig" viewBox="0 0 360 130" role="img" aria-labelledby="bal-cbv-fig-title bal-cbv-fig-desc"
+                     font-family="var(--mono)">
+                    <title id="bal-cbv-fig-title">교정형 밸런싱 밸브 기호</title>
+                    <desc id="bal-cbv-fig-desc">짧은 공급 배관 중앙에 나비넥타이 모양 밸런싱 밸브가 있습니다. 밸브 몸체 위에는 작은 위치 잠금 표시기가 달린 핸드휠이 있고, 시운전 중 차압을 측정하도록 상류측과 하류측에 압력·온도 시험 포트(P/T 포트) 두 개가 연결되어 있습니다.</desc>
+
+                    <line x1="20" y1="90" x2="340" y2="90" stroke="var(--blue)" stroke-width="3"/>
+                    <!-- bowtie -->
+                    <polygon points="160,75 200,75 180,90" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="160,105 200,105 180,90" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <!-- stem + handle wheel + lock indicator -->
+                    <line x1="180" y1="75" x2="180" y2="48" stroke="var(--text-dim)" stroke-width="2"/>
+                    <circle cx="180" cy="38" r="12" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <circle cx="180" cy="38" r="3" fill="var(--text-dim)"/>
+                    <text x="200" y="42" font-size="9" font-style="italic" fill="var(--text-dim)">위치 잠금</text>
+                    <!-- PT ports -->
+                    <line x1="130" y1="90" x2="130" y2="74" stroke="var(--text-dim)" stroke-width="2"/>
+                    <circle cx="130" cy="71" r="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <line x1="230" y1="90" x2="230" y2="74" stroke="var(--text-dim)" stroke-width="2"/>
+                    <circle cx="230" cy="71" r="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="105" y="125" font-size="9" fill="var(--text-dim)">P/T 포트</text>
+                    <text x="255" y="125" font-size="9" fill="var(--text-dim)">P/T 포트</text>
+                </svg>
+                <span class="cap">교정형 밸런싱 밸브 — 수동 핸들, 시운전 때 위치 잠금, 마노미터로 유량을 측정하는 P/T 포트가 있습니다.</span>
+            </div>
+
+            <p>
+                물리적으로 보면 CBV는 정교한 오리피스입니다. 위쪽 핸들을 돌리면 스템이 플러그를 유로 안팎으로 움직여 주어진 압력 강하에서 통과할 수 있는 물의 양을 제한합니다. 상류와 하류에 하나씩 있는 작은 슈레이더형 피팅인 압력·온도 포트에 기술자가 마노미터 프로브를 꽂아 조정부 양단의 차압(Δp)을 읽습니다. 밸브 제조사는 밸브 몸체별 유량·Δp·핸들 위치 표를 제공합니다. 이 표를 이용해 교정된 측정값을 유량으로 환산합니다. 핸들의 잠금 링이나 메모리 스톱은 설정 후 위치를 유지합니다.
+            </p>
+
+            <p>
+                조정 위치가 이 밸브의 모든 특성을 결정합니다. 한번 설정하면 CBV를 통과하는 유량은 가용 Δp의 제곱근에 비례합니다. Δp가 두 배면 유량은 약 41&nbsp;% 늘고, 절반이면 원래 유량의 약 71&nbsp;%가 됩니다. 보상 기구도, 스프링도, 구동기도 없습니다. 다른 존이 닫히거나 펌프 곡선이 이동하거나 루프에 공기 덩어리가 생기는 등 어떤 이유로든 시스템 압력이 오르내리면 CBV 유량도 함께 변합니다. 밸브는 목표 동작을 알지 못하며 오리피스 방정식이 허용하는 만큼만 통과시킵니다.
+            </p>
+
+            <p>
+                잘 알려진 어려움은 설정 작업입니다. 가까운 부하를 조이면 압력이 먼 부하로 이동해 측정값이 달라지는 식으로 부하끼리 상호작용하므로, 입상관을 한 번 돌며 각 밸브를 설계 유량에 맞추는 것으로 끝나지 않습니다. 절차는 <em>비례 밸런싱</em>입니다. 기준 분기를 정하고 보통 시스템에서 가장 지배적인 먼 끝의 기준 회로, 즉 가장 길고 저항이 큰 분기를 택합니다. 그 유량을 설계값 대비 비율로 측정한 다음 루프의 나머지 밸브를 같은 비율로 조정합니다. 첫 번째 조정이 기준 분기까지 바꾸므로 돌아가서 반복합니다. 보통 두세 차례 반복하고 복잡한 시스템은 더 많이 필요합니다. 작은 시스템은 반나절, 큰 시스템은 일주일이 걸리는 실제 작업이며, 나머지 두 밸브 종류가 대신하려는 일이 바로 이것입니다.
+            </p>
+
+            <p>
+                CBV는 정유량 시스템에 가장 잘 맞습니다. <a href="/ko/education/load-piping.html">3방 밸브 부하</a>는 설계상 시스템 루프의 Δp를 일정하게 유지하므로, 부하가 설계자의 예상대로 바이패스 유량을 조절하는 한 시운전 때 설정한 CBV 조정값이 정확하게 유지됩니다. 변유량(2방 밸브) 시스템에 CBV를 쓰는 것도 기술적으로 가능하지만 다루기 어렵습니다. 부하가 조절될 때마다 하루 종일 운전점이 움직이고, 설계 조건에서 완벽했던 CBV도 설계 외 조건에서는 맞지 않으며, 펌프와 가장 불리한 밸브의 동작에 따라 루프가 균형과 불균형 사이를 오갑니다. 수십 년 동안 CBV가 유일한 선택지였으므로 이를 쓰는 변유량 시스템도 많지만, 자동식 대안에 비해 에너지 절감 기회를 놓칩니다.
+            </p>
+
+            <p>
+                문제는 조정값이 틀어지는 것입니다. 유지보수 담당자가 옆 스트레이너에 접근하다 핸들을 건드리거나, 진동으로 잠금 링이 풀리거나, 누군가 <em>한 분기만</em> 다시 맞춘 뒤 나머지를 재조정하지 않을 수 있습니다. P/T 포트가 녹이나 스케일로 막히면 다음 기술자가 유량을 측정하려 해도 값을 얻지 못합니다. 가장 심각한 경우는 시스템 자체가 바뀌는 것입니다. 보일러 교체, 신규 부하 연결, 펌프 임펠러 트리밍이 일어나면 밸브가 움직이지 않았어도 기존 교정값은 조용히 무효가 됩니다. 아무도 밸브를 건드리지 않았는데 전체 루프가 다시 스스로 불균형해지고 몇 달 뒤 재실 공간에서 증상이 나타납니다.
+            </p>
+
+            <!-- ───────────────── 3 · ABVs ───────────────── -->
+            <h2 class="subhead" id="abv">자동 밸런싱 밸브(ABV)</h2>
+
+            <!-- Per-valve symbol diagram: bowtie + internal cartridge / spring. -->
+            <div class="bal-valve-fig">
+                <svg class="bal-fig" viewBox="0 0 360 130" role="img" aria-labelledby="bal-abv-fig-title bal-abv-fig-desc"
+                     font-family="var(--mono)">
+                    <title id="bal-abv-fig-title">자동 밸런싱 밸브 기호</title>
+                    <desc id="bal-abv-fig-desc">짧은 공급 배관 중앙에 나비넥타이 모양 밸런싱 밸브가 있습니다. 밸브 몸체 안의 스프링 기호는 차압에 따라 자동으로 조절되어 밸브의 보상 범위 안에서 유량을 일정하게 유지하는 내부 카트리지를 나타냅니다.</desc>
+
+                    <line x1="20" y1="90" x2="340" y2="90" stroke="var(--blue)" stroke-width="3"/>
+                    <!-- bowtie -->
+                    <polygon points="155,72 205,72 180,90" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="155,108 205,108 180,90" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <!-- spring symbol inside body (vertical zigzag suggesting compensation) -->
+                    <polyline points="172,82 188,86 172,90 188,94 172,98" fill="none" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <!-- label arrow + text -->
+                    <line x1="225" y1="90" x2="265" y2="55" stroke="var(--text-dim)" stroke-width="1"/>
+                    <text x="270" y="50" font-size="9" font-style="italic" fill="var(--text-dim)">스프링식</text>
+                    <text x="270" y="62" font-size="9" font-style="italic" fill="var(--text-dim)">카트리지</text>
+                    <!-- design-flow label -->
+                    <text x="180" y="122" text-anchor="middle" font-size="9" fill="var(--text-dim)">Δp 범위에서 설계 Q 유지</text>
+                </svg>
+                <span class="cap">자동 밸런싱 밸브 — Δp가 상승하면 내부 카트리지가 닫혀 기술자의 조정 없이 설계 유량을 유지합니다.</span>
+            </div>
+
+            <p>
+                ABV는 겉모습은 CBV와 같지만 내부가 다릅니다. 유로에 스프링식 카트리지가 있으며 밸브 양단 Δp 변화에 따라 움직입니다. Δp가 높아지면 카트리지가 밀려 오리피스를 좁히고, 낮아지면 열립니다. 카트리지 선정에 따라 일반적으로 Δp 약 1~22&nbsp;psi인 밸브의 <em>보상 범위</em> 안에서는 통과 유량이 거의 일정합니다. 원하는 설계 유량에 맞는 밸브 몸체와 카트리지를 골라 설치하면 끝입니다. 조정도, 절차도, 마노미터도 필요하지 않습니다.
+            </p>
+
+            <p>
+                핵심은 보상 범위입니다. 카트리지의 최소 설계 Δp보다 낮으면 스프링이 카트리지를 더 열 수 없습니다. 이미 완전히 열린 밸브는 단순한 오리피스처럼 거동하며 유량은 CBV와 같은 Δp 제곱근 곡선을 따릅니다. 최대 설계 Δp보다 높으면 스프링이 완전히 압축되고 카트리지는 최대한 닫힌 상태가 되어 유량이 다시 Δp의 제곱근에 따라 증가합니다. 그 사이에서는 ABV를 구입하는 목적 자체인 일정 유량 특성을 얻습니다. 따라서 선정이 중요합니다. 실제 운전에서 발생할 Δp 변동을 충분히 포함하는 보상 범위의 카트리지를 고르면 밸브가 제 역할을 하지만, 범위가 너무 좁으면 더 비싼 카트리지가 대부분의 시간을 작동 범위 밖에서 보내게 됩니다.
+            </p>
+
+            <p>
+                ABV는 약간의 추가 비용으로 설정 후 손댈 필요 없는 운전을 원할 때 CBV를 쓸 모든 위치에 적용할 수 있습니다. 증축, 개보수, 단계별 공사처럼 서로 다른 시기에 부하를 선정한 시스템에 특히 적합합니다. 주변 부하가 어떻게 동작하든 각 부하의 ABV가 자체 유량을 유지하기 때문입니다. 합리적인 범위에서는 변유량 시스템과도 잘 맞으며, 보상 범위가 보통 실제 부하 변동을 처리할 만큼 넓은 Δp 구간을 포괄합니다. 다만 보상 범위를 벗어난 펌프 곡선 변화는 처리하지 못합니다. 시스템 압력이 충분히 낮아져 건물의 모든 ABV가 보상 Δp 아래로 떨어지면 정유량 특성이 사라지고 모든 밸브가 다시 오리피스처럼 동작합니다.
+            </p>
+
+            <p>
+                대표적인 문제는 카트리지 고착입니다. 스케일, 이물질, 녹 또는 노후화로 카트리지가 반쯤 닫힌 채 움직이지 않을 수 있습니다. 밸브 몸체 밖에서는 이를 볼 수 없고 CBV처럼 조정부 양단의 Δp를 측정할 시험 포트도 없습니다. 진단하려면 보통 분기 배관에 외부 유량계나 P/T 포트를 설치해야 합니다. 즉, ABV를 구입해 피하려 했던 장비가 다시 필요합니다. 또 다른 고장은 카트리지 과소·과대 선정입니다. 부분 부하에서의 실제 Δp 범위를 확인하지 않고 설계 조건만으로 밸브를 지정하면 현장 운전의 절반이 보상 범위 밖에 놓일 수 있습니다.
+            </p>
+
+            <!-- ───────────────── 4 · PICVs ───────────────── -->
+            <h2 class="subhead" id="picv">차압 독립형 제어밸브(PICV)</h2>
+
+            <!-- Per-valve symbol diagram: bowtie + actuator + cartridge stack. -->
+            <div class="bal-valve-fig">
+                <svg class="bal-fig" viewBox="0 0 360 150" role="img" aria-labelledby="bal-picv-fig-title bal-picv-fig-desc"
+                     font-family="var(--mono)">
+                    <title id="bal-picv-fig-title">차압 독립형 제어밸브 기호</title>
+                    <desc id="bal-picv-fig-desc">짧은 공급 배관 중앙에 나비넥타이 모양 밸브가 있습니다. 밸브 몸체 위에는 스템이 달린 직사각형 제어 구동기가 있고, 몸체 안의 스프링 카트리지 기호는 자동 차압 보상을 나타냅니다. 이 조합은 시스템 압력 변동과 관계없이 카트리지가 최대 유량을 일정하게 유지하는 비례 제어밸브를 구성합니다.</desc>
+
+                    <line x1="20" y1="105" x2="340" y2="105" stroke="var(--blue)" stroke-width="3"/>
+                    <!-- bowtie -->
+                    <polygon points="155,87 205,87 180,105" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="155,123 205,123 180,105" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <!-- spring symbol inside body -->
+                    <polyline points="172,97 188,101 172,105 188,109 172,113" fill="none" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <!-- actuator stem + box -->
+                    <line x1="180" y1="87" x2="180" y2="60" stroke="var(--text-dim)" stroke-width="2"/>
+                    <rect x="158" y="32" width="44" height="28" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="180" y="51" text-anchor="middle" font-size="9" font-weight="600" fill="var(--text-bright)">구동기</text>
+                    <!-- labels -->
+                    <line x1="210" y1="46" x2="248" y2="38" stroke="var(--text-dim)" stroke-width="1"/>
+                    <text x="252" y="34" font-size="9" font-style="italic" fill="var(--text-dim)">비례 제어</text>
+                    <text x="252" y="46" font-size="9" font-style="italic" fill="var(--text-dim)">제어부</text>
+                    <line x1="225" y1="105" x2="248" y2="74" stroke="var(--text-dim)" stroke-width="1"/>
+                    <text x="252" y="68" font-size="9" font-style="italic" fill="var(--text-dim)">내부</text>
+                    <text x="252" y="80" font-size="9" font-style="italic" fill="var(--text-dim)">밸런싱 카트리지</text>
+                    <!-- caption -->
+                    <text x="180" y="142" text-anchor="middle" font-size="9" fill="var(--text-dim)">제어밸브 + 밸런싱 밸브 일체형</text>
+                </svg>
+                <span class="cap">차압 독립형 제어밸브 — 자동 밸런싱 카트리지와 비례 제어밸브를 결합한 장치로 CBV와 제어밸브 조합을 대체합니다.</span>
+            </div>
+
+            <p>
+                PICV는 ABV의 자동 밸런싱 카트리지를 비례 제어밸브 몸체 안에 넣은 장치입니다. 위쪽 구동기는 다른 제어밸브와 마찬가지로 BMS가 구동하는 아날로그 또는 플로팅 입력 방식이며 0~100&nbsp;%로 개도를 조절합니다. 차이는 100&nbsp;% 열림의 의미입니다. 방해물이 전혀 없는 오리피스가 아니라 해당 카트리지의 선정 설계 유량을 통과시킨다는 뜻입니다. 내부 카트리지가 시스템 Δp와 관계없이 유량을 그 최대값으로 유지하고 구동기는 그 값을 비례 조절합니다. PICV에 50&nbsp;% 개도를 명령하면 시스템 Δp가 설계값이든 카트리지 운전 범위 안의 다른 값이든 설계 유량의 50&nbsp;%를 얻습니다.
+            </p>
+
+            <p>
+                이 한 가지 거동 변화 때문에 PICV는 신규 변유량 시스템의 기본 선택이 되었습니다. 기존 제어밸브에는 <em>밸브 영향도(authority, β)</em> 문제가 있습니다. 다른 부하가 조절되고 펌프 속도가 변해 시스템 Δp가 흔들리면 같은 밸브 위치에서도 다른 유량이 흐르며, BMS 루프는 설정값을 유지하려고 자기 밸브를 계속 추종해야 합니다. PICV는 밸브 자체가 이미 보상하므로 루프에서 그 부담을 없앱니다. 제어 루프는 한 번 튜닝되고 밸브는 명령대로 동작하며, BMS는 수리 조건과 싸우는 대신 실제 부하 추종에 집중합니다.
+            </p>
+
+            <p>
+                <a href="/ko/education/pump-control.html">DP 설정값 리셋</a>과의 조합도 PICV가 확산된 또 다른 이유입니다. 각 밸브는 분기에서 카트리지의 최소 운전 Δp만 확보하면 자체 유량을 유지하므로, PICV를 사용하면 펌프 압력을 고정 DP 제어보다 더 낮출 수 있습니다. PICV를 적용한 건물은 수요가 낮은 시간에 어떤 부하도 굶기지 않으면서 시스템 펌프를 매우 낮은 Δp로 운전할 수 있으며, 여기서 의미 있는 에너지 절감이 발생합니다. 또한 이 구성에서는 최대 개도 밸브 리셋이 위태로운 줄타기가 아니라 당연한 방법으로 보입니다.
+            </p>
+
+            <p>
+                정유량(3방 밸브) 시스템에서 PICV는 대체로 과도한 선택입니다. 시스템 Δp가 크게 변하지 않아 ABV나 잘 설정한 CBV가 더 저렴하게 같은 일을 하기 때문입니다. PICV에도 최소 운전 Δp가 있으며, 그 아래에서는 카트리지가 기능하지 못해 유량이 감소합니다. 카트리지가 단순 밸런싱이 아니라 제어밸브 조절용으로 설계되어 최소값은 보통 ABV보다 낮지만 0은 아닙니다. 또한 다른 제어밸브처럼 PICV 구동기도 고장 나거나 내부 피드백에 비해 위치가 틀어질 수 있어 단순한 밸런싱 밸브에는 없는 고장 형태가 추가됩니다.
+            </p>
+
+            <p>
+                ABV와 마찬가지로 카트리지 오염이 생길 수 있으며 진단은 더 어렵습니다. 몸체가 제어밸브처럼 보여 자연스럽게 구동기나 BMS 신호부터 추적하게 되기 때문입니다. 구동기와 위치 피드백의 기계적 일치도 틀어질 수 있습니다. 50&nbsp;% 명령이면 설계 유량의 50&nbsp;%가 나와야 하지만 그렇지 않을 때 루프에는 밸브 문제가 아니라 유량 문제처럼 보입니다. 마지막 진단 수단은 분기 유량계지만 상시 사용하도록 설치된 경우는 드뭅니다. 다행히 고장 난 PICV는 대개 잘못된 방향의 유량보다 유량 감소 쪽으로 고장 나므로 은밀하게 진행되기보다 증상이 눈에 띕니다.
+            </p>
+
+            <!-- ───────────────── 5 · The Widget ───────────────── -->
+            <h2 class="subhead">변하는 Δp에서 나란히 비교하기</h2>
+
+            <p>
+                세 분기는 모두 동일하며 같은 설계 유량 <span data-us="30 GPM" data-metric="1.9 L/s">30 GPM</span>, 설계 Δp <span data-us="20 ft" data-metric="6.1 m">20 ft</span> 수두로 선정되었습니다. 각각 CBV, ABV, PICV가 하나씩 있습니다. 슬라이더를 움직여 분기 양단의 가용 Δp를 바꾸고 각 밸브의 통과 유량을 확인하세요. <span class="bal-w-tag-holding">유지</span>는 유량이 설계값의 ±15&nbsp;% 이내임을, <span class="bal-w-tag-starved">부족</span>은 85&nbsp;% 미만임을, <span class="bal-w-tag-over">과다</span>는 115&nbsp;% 초과임을 뜻합니다.
+            </p>
+
+            <div class="widget" id="bal-widget">
+
+                <div class="widget-section-label">부하 분기 양단의 가용 Δp</div>
+                <div class="widget-slider-head">
+                    <span>시스템 Δp</span>
+                    <span><span class="v" id="bal-dp-val">20</span> <span id="bal-dp-unit">ft</span></span>
+                </div>
+                <input class="widget-slider" id="bal-dp-slider" type="range" min="1" max="60" step="1" value="20"
+                       aria-label="부하 분기 양단의 시스템 차압"/>
+                <div class="bal-w-slider-foot">
+                    <span data-us="1 ft" data-metric="0.3 m">1 ft</span>
+                    <span data-us="60 ft" data-metric="18 m">60 ft</span>
+                </div>
+                <div class="bal-w-design-tick">
+                    설계 Δp = <em><span data-us="20 ft" data-metric="6.1 m">20 ft</span></em> · 각 분기의 선정 유량 <em><span data-us="30 GPM" data-metric="1.9 L/s">30 GPM</span></em>
+                </div>
+
+                <div class="bal-w-branches">
+
+                    <!-- CBV branch -->
+                    <div class="bal-w-branch" id="bal-bch-cbv" data-state="holding">
+                        <div class="bal-w-bch-tag">CBV</div>
+                        <div class="bal-w-bch-mid">
+                            <div class="bal-w-bch-flow">
+                                <span id="bal-cbv-q">30.0</span> <span data-us="GPM" data-metric="L/s">GPM</span>
+                                <span class="pct">설계값의 <span id="bal-cbv-pct">100</span>%</span>
+                            </div>
+                            <div class="bal-w-bch-bar" aria-hidden="true"><span id="bal-cbv-bar"></span></div>
+                        </div>
+                        <div class="bal-w-bch-state" id="bal-cbv-state"><span class="bas-led active" aria-hidden="true"></span><span>{{ pageMessages.widget.state.holding }}</span></div>
+                    </div>
+
+                    <!-- ABV branch -->
+                    <div class="bal-w-branch" id="bal-bch-abv" data-state="holding">
+                        <div class="bal-w-bch-tag">ABV</div>
+                        <div class="bal-w-bch-mid">
+                            <div class="bal-w-bch-flow">
+                                <span id="bal-abv-q">30.0</span> <span data-us="GPM" data-metric="L/s">GPM</span>
+                                <span class="pct">설계값의 <span id="bal-abv-pct">100</span>%</span>
+                            </div>
+                            <div class="bal-w-bch-bar" aria-hidden="true"><span id="bal-abv-bar"></span></div>
+                        </div>
+                        <div class="bal-w-bch-state" id="bal-abv-state"><span class="bas-led active" aria-hidden="true"></span><span>{{ pageMessages.widget.state.holding }}</span></div>
+                    </div>
+
+                    <!-- PICV branch -->
+                    <div class="bal-w-branch" id="bal-bch-picv" data-state="holding">
+                        <div class="bal-w-bch-tag">PICV</div>
+                        <div class="bal-w-bch-mid">
+                            <div class="bal-w-bch-flow">
+                                <span id="bal-picv-q">30.0</span> <span data-us="GPM" data-metric="L/s">GPM</span>
+                                <span class="pct">설계값의 <span id="bal-picv-pct">100</span>%</span>
+                            </div>
+                            <div class="bal-w-bch-bar" aria-hidden="true"><span id="bal-picv-bar"></span></div>
+                        </div>
+                        <div class="bal-w-bch-state" id="bal-picv-state"><span class="bas-led active" aria-hidden="true"></span><span>{{ pageMessages.widget.state.holding }}</span></div>
+                    </div>
+
+                </div>
+
+                <!-- Reveal anecdote when DP drops critically low. Reserved height prevents
+                     reflow of the page below when the callout appears. Once shown in a
+                     session, stays pinned — yanking it back on the next slider tweak would
+                     undo the discovery. -->
+                <div class="widget-anecdote-wrap">
+                    <div class="widget-anecdote warn" id="bal-anecdote" hidden>
+                        <strong>실제 이야기입니다.</strong> 여러 층의 난방 시스템을 몇 년 전 CBV로 밸런싱한 뒤 다시 손대지 않았습니다. 어느 해 누군가 에너지 수치를 줄이려다 펌프 설정값을 낮췄고, 먼 분기의 가용 Δp가 줄어 마지막 부하의 유량이 급격히 떨어졌습니다. 추운 밤의 낮은 유량 때문에 말단 코일이 완전히 얼어 파열되었습니다. 제 잘못은 아니었지만 뒷수습은 제가 맡았습니다. 위젯에 같은 양상이 보입니다. CBV는 설계 압력과 그 절반을 구분하지 못하고 오리피스 방정식이 허용하는 유량만 통과시킵니다. PICV였다면 낮은 압력까지 최소 유량을 유지했을 것입니다.
+                    </div>
+                </div>
+
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                슬라이더에서 세 가지를 확인할 수 있습니다. 첫째, 설계 Δp에서는 세 밸브가 모두 똑같아 보입니다. 기술 차이는 시운전 당일이 아니라 시스템이 변한 날 드러납니다. 둘째, CBV의 거동은 Δp의 제곱근에 비례하므로 작은 변동도 눈에 띄는 변화를 만들고 큰 변동은 훨씬 큰 변화를 만듭니다. 셋째, PICV는 가장 넓은 범위에서 유량을 유지하지만 만능은 아닙니다. 최소 운전 Δp 아래에서는 PICV도 유량을 유지하지 못합니다. 이 모든 것이 작동하려면 펌프가 제 역할을 해야 합니다. 밸런싱 밸브는 일반적인 시스템 변동을 막을 뿐 펌프 고장까지 보호하지는 않습니다.
+            </p>
+
+            <!-- ───────────────── 6 · Diagnostics ───────────────── -->
+            <h2 class="subhead" id="diagnose">루프가 불균형한지 어떻게 알 수 있을까요?</h2>
+
+            <p>
+                밸런싱 문제는 재실 공간과 열원측 두 곳에서 나타납니다. 재실 공간의 증상은 너무 덥거나 춥고 특정 구역에 불만이 집중되는 등 분명하며 보통 가장 먼저 발견됩니다. 열원측 증상은 더 미묘하고 BMS 트렌드와 마노미터 측정값에 나타납니다. 재실 공간에서 불만이 생기는 <em>이유</em>를 알려 주므로 실제 진단은 여기에 있습니다.
+            </p>
+
+            <p>
+                아래 표는 간단한 요약입니다. 어느 항목도 단독으로 결론을 내릴 수 없으므로 다음 확인 대상을 정하는 출발점으로 사용하세요. 실제 확인에는 거의 항상 밸런싱 밸브 P/T 포트의 마노미터, 분기의 외부 유량계 또는 기대보다 일을 덜 하는 코일 양단의 온도차 측정이 필요합니다. 모든 행은 분기 유량을 <em>설계</em> 유량과 비교합니다. 이 수치는 임의로 정한 값이 아니라 코일 선정의 상류 결과, 즉 코일이 담당하는 부하를 설계 ΔT로 나눈 값입니다. 추적 중인 GPM의 출처는 <a href="/ko/education/coil-selection.html">코일 선정</a>에서 설명합니다.
+            </p>
+
+            <div class="table-scroll">
+                <table class="ref-table">
+                    <thead>
+                        <tr><th>증상</th><th>일반적인 의미</th><th>확인 방법</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>가까운 부하는 냉난방 요구를 쉽게 충족하지만 먼 부하는 따라가지 못함</td>
+                            <td>전형적인 루프 불균형 — 가까운 부하가 유량을 독점하고 먼 부하는 유량 부족</td>
+                            <td>먼 분기의 밸런싱 밸브에서 마노미터 측정. 먼 분기는 설계값보다 훨씬 낮고 가까운 분기는 높음</td>
+                        </tr>
+                        <tr>
+                            <td>한 부하의 코일 ΔT가 작음 — 공급수는 뜨겁고 환수도 거의 같은 온도</td>
+                            <td>코일 과유량. 물이 열을 충분히 방출하기 전에 너무 빨리 통과함 — 보통 설계값보다 많은 유량을 받는 가까운 부하</td>
+                            <td>해당 분기의 유량을 측정해 설계값과 비교</td>
+                        </tr>
+                        <tr>
+                            <td>코일 ΔT가 큼 — 공급수는 뜨겁고 환수는 차갑지만 공간 성능이 계속 부족함</td>
+                            <td>코일 유량 부족. 물이 모든 열을 내놓은 뒤 정체됨 — 보통 유량이 부족한 먼 부하</td>
+                            <td>마찬가지로 해당 분기의 유량을 측정해 설계값과 비교</td>
+                        </tr>
+                        <tr>
+                            <td>시스템 펌프가 최고 속도 한계로 계속 운전하지만 일부 존은 정상이고 일부는 불량</td>
+                            <td>유량 분배가 잘못되어 펌프가 모든 곳에 설계 Δp를 전달하지 못함 — 펌프를 손봐도 해결되지 않음</td>
+                            <td>펌프 Hz가 최대인데 기준 회로의 시스템 Δp는 설정값 미만. 해답은 더 큰 펌프가 아니라 밸런싱</td>
+                        </tr>
+                        <tr>
+                            <td>유지보수 후 존 거동이 갑자기 변함(보일러 교체, 펌프 재조립, 시스템 재충수, 부하 추가)</td>
+                            <td>시스템 곡선이 이동해 밸런싱 밸브를 건드리지 않았어도 기존 균형이 무효가 됨</td>
+                            <td>마노미터로 루프를 다시 측정하고 시운전 기록이 있다면 비교함(대개 없음)</td>
+                        </tr>
+                        <tr>
+                            <td>한 분기의 스트레이너 압력 강하가 비정상적으로 큼</td>
+                            <td>스트레이너 막힘 — 밸런싱 밸브 설정은 맞아도 해당 분기 유량을 제한함</td>
+                            <td>스트레이너를 청소하거나 교체한 뒤 유량 재확인</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                표가 많은 내용을 압축하므로 사례를 끝까지 살펴보겠습니다. 모든 분기를 CBV로 시운전 밸런싱한 4층 소형 사무실 건물을 가정합니다. 2년 후 보일러 튜브 번들의 스케일을 제거하고 시스템을 다시 충수했지만 아무도 재밸런싱하지 않았습니다. 새 시스템 곡선은 이전과 완전히 같지 않습니다. 마찰이 조금 달라지고 펌프 운전점도 약간 이동했습니다. 1층은 여전히 정상입니다. 펌프와 가장 가까워 그렇지 않으면 유량을 독점하므로 시운전 때 밸런싱 밸브를 넉넉하게 설정했습니다. 반대 이유로 4층 밸브는 1층이 유량을 독점하지 못하도록 거의 닫힌 상태로 설정했습니다. 이제 4층의 가용 Δp가 이전보다 조금 낮아졌고 이미 많이 조인 4층 CBV는 더 열어 보상할 수 없습니다. 겨울 아침마다 4층 임차인이 춥다고 연락하기 시작합니다. 열원측 BMS에는 이상이 없습니다. 공급 온도도 맞고 펌프도 정상 운전하며 고장도 없습니다. 누군가 마노미터를 들고 입상관을 돌며 1층과 4층 밸브의 Δp를 측정하고 나서야 진단이 내려집니다. 1층은 정확하지만 4층은 크게 부족합니다. 해결책은 스케일 제거 후의 시스템에 맞춰 비례 밸런싱 절차를 처음부터 다시 수행하는 것입니다.
+            </p>
+
+            <!-- ───────────────── 7 · Tying it all back ───────────────── -->
+            <h2 class="subhead">앞선 내용과 연결하기</h2>
+
+            <p>
+                앞선 세 학습 페이지가 이 페이지로 이어지는 단서를 남겼습니다. <a href="/ko/education/hydronic-loops.html#d1">직접환수</a>는 배관 형상상 가까운 부하와 먼 부하 사이의 유량이 비대칭이므로 밸런싱 밸브가 필요했습니다. <a href="/ko/education/hydronic-loops.html#d2">역환수</a>는 자체 밸런싱 특성이 충분해 밸브가 필수 요소보다 미세 조정 역할을 하지만, 역환수 루프도 보통 정밀 조정을 위해 각 분기에 CBV를 둡니다.
+            </p>
+
+            <p>
+                <a href="/ko/education/load-piping.html">부하 배관</a>에서는 3방 밸브(정유량) 시스템이 시스템 펌프에 일정한 요구를 준다고 설명했습니다. 루프 수준에서는 시스템 유량이 일정하므로 맞는 말이지만, 개별 부하 수준에서는 모든 분기가 밸런싱되어야만 성립합니다. 그렇지 않으면 어떤 부하는 유량이 너무 많고 다른 부하는 너무 적으며, 펌프는 평균을 충족해도 양극단의 부하는 문제를 일으킵니다. 여기에는 보통 CBV와 ABV가 적합합니다. 3방 밸브 시스템은 Δp 변동이 PICV가 필요할 만큼 크지 않아 PICV의 이점이 적습니다.
+            </p>
+
+            <p>
+                <a href="/ko/education/pump-control.html">펌프 제어</a>에서는 변유량 시스템의 DP 설정값 리셋이 가장 불리한 위치의 밸브가 허용하는 만큼 펌프 압력을 낮출 수 있다고 설명했습니다. 가장 불리한 밸브는 가장 길고 저항이 큰 분기인 기준 회로에 있으며, 허용 범위는 그 밸브가 낮은 Δp에서도 설계 유량을 유지할 수 있는지에 달려 있습니다. CBV는 유지하지 못하므로 리셋을 보수적으로 해야 합니다. PICV는 유지할 수 있으므로 적극적으로 리셋해 실제 에너지 절감을 얻을 수 있습니다. 이 때문에 PICV와 DP 리셋은 현대 변유량 시스템의 짝이 되었고, 여전히 흔한 구형 CBV와 고정 DP 조합은 에너지 절감 기회를 남겨 둡니다.
+            </p>
+
+            <p>
+                이 페이지에서는 시운전 때 시스템을 실제로 밸런싱하는 현장 절차, 즉 필요한 도구와 기준 자료, 확인 서명 방식, 비례 밸런싱 반복 작업의 실제 수행 과정은 다루지 않습니다. 이는 장비가 아니라 절차에 관한 다른 종류의 내용이므로 작성되면 별도 학습 페이지에서 다룰 예정입니다. 이 페이지는 개념 편이고 향후 페이지는 실무 편이라고 생각하세요.
+            </p>
+
+            <!-- Cross-link to the now-shipped commissioning lesson. That page frames
+                 commissioning as three efforts — controls functional testing, hydronic
+                 balancing, air balancing — so this balancing lesson is one of them (the
+                 water side). The hands-on proportional-balancing walk is still its own
+                 future follow-up, per the paragraph above. -->
+            <div class="callout" style="margin-top:1.5rem;">
+                <p style="margin:0;font-size:0.92rem;line-height:1.75;color:var(--text);">
+                    <strong style="color:var(--text-bright);">함께 보기:</strong> <a href="/ko/education/controls-commissioning.html">제어 시스템 커미셔닝</a> — 커미셔닝은 세 가지 작업으로 구성되며 이 페이지의 수배관측 밸런싱도 그중 하나입니다. 해당 학습에서는 세 작업의 틀을 세우고 포인트 투 포인트 점검, 오버라이드 원칙, 트렌드 로그를 이용한 시퀀스 검증 등 제어측을 자세히 설명합니다. 이 페이지에 해당하는 현장 비례 밸런싱 반복 작업과 확인 서명은 향후 별도 내용으로 다룰 예정입니다.
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/hydronics/', label: '수배관 참조 허브'},
+        tools: [
+            {href: '/ko/tools/valve-cv.html', label: '밸브 Cv 선정'},
+            {href: '/ko/tools/waterside-load.html', label: '수배관 부하 계산기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/hydronic-loop-builder.html', label: '수배관 루프 빌더'}
+        ],
+        lessons: [
+            {href: '/ko/education/load-piping.html', label: '부하 배관'},
+            {href: '/ko/education/hydronic-loops.html', label: '수배관 루프'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/balancing.html', label: '수배관 밸런싱'},
+            {href: '/ko/practice/troubleshooting.html', label: '문제 해결'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 교육 목록으로</a>
+
+</main>
+{% endblock %}

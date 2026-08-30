@@ -6,9 +6,22 @@ nav: education
 category: fundamentals
 pairedQuiz: https://controlsfreak.dev/practice/psychrometrics-basics.html
 keywords: wb wbt db rh dew point grains enthalpy wet bulb humidity
+pageMessages:
+    status:
+        bad:
+            label: "CONDENSATION ON GLASS"
+            detail: "Dew point is at or above the surface — water is already growing on the cold side."
+        watch:
+            label: "WATCH THE GLASS"
+            detail: "Margin is thin — a small drop in surface temperature or a small humidity climb will start condensation."
+        ok:
+            label: "GLASS STAYS DRY"
+            detail: "Margin is healthy — surface temperature comfortably above dew point."
+    anecdote: >-
+        This is the regime a natatorium lives in — warm pool space, cold winter glazing, an air condition that doesn't leave much margin. <strong>The "tight tolerance" on the engineer's drawing is a dew-point ceiling, dressed up as RH.</strong> The chart tool's cooling-coil stage is where this fight gets won: drive coil leaving-air dew point well below the coldest surface in the room and the building stays dry.
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -423,16 +436,16 @@ keywords: wb wbt db rh dew point grains enthalpy wet bulb humidity
             let st, lbl, sub;
             if (margin <= 0) {
                 st  = 'bad';
-                lbl = 'CONDENSATION ON GLASS';
-                sub = 'Dew point is at or above the surface — water is already growing on the cold side.';
+                lbl = CFI18n.page('status.bad.label');
+                sub = CFI18n.page('status.bad.detail');
             } else if (margin <= 5) {
                 st  = 'watch';
-                lbl = 'WATCH THE GLASS';
-                sub = 'Margin is thin — a small drop in surface temperature or a small humidity climb will start condensation.';
+                lbl = CFI18n.page('status.watch.label');
+                sub = CFI18n.page('status.watch.detail');
             } else {
                 st  = 'ok';
-                lbl = 'GLASS STAYS DRY';
-                sub = 'Margin is healthy — surface temperature comfortably above dew point.';
+                lbl = CFI18n.page('status.ok.label');
+                sub = CFI18n.page('status.ok.detail');
             }
             el('pool-status').dataset.state    = st;
             el('pool-readouts').dataset.state  = st;
@@ -449,7 +462,7 @@ keywords: wb wbt db rh dew point grains enthalpy wet bulb humidity
             if (inPoolRegime && !wrap.firstChild) {
                 const cb = document.createElement('div');
                 cb.className = 'widget-anecdote';
-                cb.innerHTML = 'This is the regime a natatorium lives in — warm pool space, cold winter glazing, an air condition that doesn\'t leave much margin. <strong>The "tight tolerance" on the engineer\'s drawing is a dew-point ceiling, dressed up as RH.</strong> The chart tool\'s cooling-coil stage is where this fight gets won: drive coil leaving-air dew point well below the coldest surface in the room and the building stays dry.';
+                cb.innerHTML = CFI18n.page('anecdote');
                 wrap.appendChild(cb);
             } else if (!inPoolRegime && wrap.firstChild) {
                 wrap.textContent = '';

@@ -1,0 +1,357 @@
+---
+title: 불 대수 로직 및 래치 — controlsfreak.dev
+description: AND·OR·NOT로 장비 규칙과 운전 허가·인터록·페일세이프 반전을 구성하고, SR 래치가 안전 트립을 기억하는 원리를 설명합니다.
+sourceContentHash: 1eaff702176e202a7a17ae19010c57556cfdeb19fd7552a9954efcc7b8e064be
+canonical: https://controlsfreak.dev/ko/education/boolean-logic-latches.html
+nav: education
+category: programming
+pairedQuiz: https://controlsfreak.dev/ko/practice/boolean-logic-latches.html
+keywords: AND OR NOT XOR 래치 SR 인터록 운전 허가 조건 안전장치 진리표 불 대수 로직
+---
+{% extends "html/education/boolean-logic-latches.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">학습 · 불 대수 로직</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">불 대수 로직 및 래치 <span class="tool-tag">로직</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                모든 제어 시퀀스에는 문장이 가득합니다. <em>모든 안전장치가 정상으로 확인되고
+                스케줄이 재실 상태일 때만 팬을 운전합니다. 어느 고장 접점이든 닫히면 경보를
+                켭니다. 동결방지 온도조절기가 트립되면 누군가 재설정할 때까지 장치를 정지
+                상태로 유지합니다.</em> 불 대수 블록인 <code>AND</code>, <code>OR</code>,
+                <code>NOT</code>, <code>XOR</code>, <code>SR latch</code>는 이러한 문장을
+                <button type="button" data-gloss="wiresheet">와이어시트</button>의 로직으로
+                바꿉니다. 이 페이지는 처음부터 끝까지 한 가지 질문을 다룹니다. <em>TRUE/FALSE
+                블록은 인터록·운전 허가 조건·안전장치 같은 장비 규칙을 어떻게 로직으로 바꾸고,
+                래치는 어떻게 이를 기억할까요?</em>
+            </p>
+
+            <div class="callout">
+                <p style="line-height:1.7;">
+                    이 페이지는 블록과 핀이 무엇인지, 배선이 무엇을 전달하는지, 스캔이 어떻게
+                    평가되는지 등 블록 수준에서 시트를 읽을 수 있다고 전제합니다. 이 장의 첫
+                    학습 자료인 <a href="/ko/education/function-blocks.html">기능 블록 기초</a>에서
+                    설명하므로 <button type="button" data-gloss="wiresheet">와이어시트</button>가
+                    낯설다면 먼저 읽어 보세요. 아래 내용은 모두 한 블록 계열, 즉 장비의 판단을
+                    만드는 참/거짓 로직에 속합니다.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · AND / OR / NOT in equipment terms ───────────────── -->
+            <h2 class="subhead" id="permissives">운전 허가 조건 체인: AND, OR, NOT</h2>
+
+            <p>
+                거의 모든 장치에서 마주치는 문장부터 시작해 보겠습니다. <em>모든 안전장치가
+                정상으로 확인되고 건물이 재실 상태이며 외기가 코일을 얼리지 않을 때만 팬을
+                운전할 수 있습니다.</em> 이 문장의 모든 "…일 때만, 그리고"가 <code>AND</code>입니다.
+                조건을 하나의 <code>AND</code>로 연결하면 출력은 <strong>운전 허가</strong>가 됩니다.
+                <em>모든 입력</em>이 TRUE인 동안에만 TRUE입니다. 현장에서는 이 구조를
+                <strong>운전 허가 조건 체인(permissive chain)</strong>이라고 합니다. 일부러
+                엄격하게 구성한 것입니다. 어느 한 곳이라도 FALSE이면, 즉 안전장치 하나가
+                정상으로 확인되지 않거나 접점 하나가 열리면 운전 허가가 해제됩니다. 운전 허가
+                조건 체인은 확인 신호의 연쇄이며, 확보하지 못한 확인 신호는 불충족으로 간주됩니다.
+            </p>
+
+            <p>
+                <code>OR</code>는 반대 문장입니다. <em>이 중 어느 하나만으로 충분합니다.</em>
+                필터, 응축수 넘침, 연기와 같은 고장 접점 세 개를 하나의 <code>OR</code>에
+                연결하면 <em>어느 하나라도</em> 트립될 때 켜지는 공통 경보가 됩니다. <code>NOT</code>은
+                "아니다"라는 말입니다. TRUE를 FALSE로, FALSE를 TRUE로 뒤집습니다. 이 세
+                블록만으로 시트에서 접할 로직의 대부분을 처리할 수 있습니다.
+            </p>
+
+            <p>
+                교재에서는 이 블록을 모든 입력 조합과 그 출력을 격자로 정리한 <strong>진리표</strong>로
+                소개합니다. 아래 표는 한 번 볼 만하지만 격자 자체를 외울 필요는 없습니다. 실시간
+                시트 앞에서는 실제로 문장으로 사용하므로 각 열을 <strong>문장</strong>으로 읽으세요.
+                <code>AND</code>는 <em>모든 입력이 TRUE일 때만 TRUE</em>입니다. <code>OR</code>는
+                <em>입력이 하나라도 TRUE이면 TRUE</em>입니다. <code>XOR</code>는 <em>입력들이
+                서로 다르면 TRUE</em>입니다. <code>NOT</code>은 <em>반대</em>입니다.
+            </p>
+
+            <div class="bll-truth">
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr><th>A</th><th>B</th><th>A AND B</th><th>A OR B</th><th>A XOR B</th><th>NOT A</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>F</td><td>F</td><td>F</td><td>F</td><td>F</td><td>T</td></tr>
+                        <tr><td>F</td><td>T</td><td>F</td><td>T</td><td>T</td><td>T</td></tr>
+                        <tr><td>T</td><td>F</td><td>F</td><td>T</td><td>T</td><td>F</td></tr>
+                        <tr><td>T</td><td>T</td><td>T</td><td>T</td><td>F</td><td>F</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="ref-note compact" style="text-align:center;">
+                T = TRUE, F = FALSE입니다. 격자의 행이 아니라 각 열을 문장으로 읽으세요.
+            </p>
+
+            <p>
+                <code>NOT</code>은 안전장치가 처음부터 어떻게 배선되는지와 관련되므로 더 자세히
+                살펴볼 필요가 있습니다. 동결방지 온도조절기나 고정압 상한 스위치 같은 하드와이어드
+                안전장치는 거의 항상 <strong><button type="button" data-gloss="normally-open-closed">정상 닫힘</button></strong>으로
+                구성됩니다. 장치가 정상일 때 접점이 닫혀 있으므로 모든 것이 정상이라면 바이너리
+                입력은 TRUE를 읽습니다. 이는 의도적인 <em>페일세이프</em> 선택입니다. 배선이
+                끊어지거나 장치가 고장 나면 회로가 열리고 포인트는 트립과 같은 FALSE를 읽습니다.
+                따라서 안전 회로 고장은 보호 기능이 있다고 조용히 오인되는 대신 장비를 정지시킵니다.
+                정상인 안전장치는 매 스캔마다 스스로 정상 상태를 <em>입증</em>하며, 신호가 없으면
+                트립으로 처리됩니다.
+            </p>
+
+            <p>
+                이렇게 배선하면 "정상" 신호를 운전 허가 <code>AND</code>에 직접 넣을 수 있습니다.
+                하지만 모든 포인트가 정상 상태를 TRUE로 표시하는 것은 아닙니다. 경보형 접점이나
+                소프트웨어 포인트는 종종 <em>트립 시</em> TRUE를 읽으며, 이는 반대 극성입니다.
+                이때 <code>NOT</code>을 사용합니다. 트립 감지 신호를 정상 감지 신호로 뒤집은 뒤
+                체인에 넣습니다. 신호의 의미를 반대로 해석하거나 이를 바로잡는 <code>NOT</code>을
+                빠뜨리는 일은 커미셔닝 첫날 흔히 발생하는 오류입니다. 모든 장치가 정상인데도
+                체인이 정상 상태의 FALSE를 계속된 트립으로 읽어 팬이 기동하지 않습니다.
+            </p>
+
+            <p>
+                다음은 이 체인을 시트로 그린 것입니다. 안전 확인 신호 세 개가 <code>AND</code>에
+                입력됩니다. 두 개는 정상으로 확인되지만 하나는 그렇지 않으며, 실시간 편집기처럼
+                배선 색상만으로도 상황을 한눈에 알 수 있습니다. 이 <code>AND</code>는 입력이 세
+                개인 형태로 그렸습니다. 실제 제품 팔레트에는 보통 다중 입력 <code>AND</code>/
+                <code>OR</code> 블록이 있습니다. 이 사이트의 <a href="/ko/simulators/function-block-editor.html">
+                기능 블록 편집기</a>처럼 입력이 두 개인 블록만 제공하는 팔레트에서는 블록을
+                연쇄 연결합니다. <code>AND</code>들을 <code>AND</code>로 묶어도 여전히
+                <code>AND</code>입니다.
+            </p>
+
+            <svg class="edu-svg bll-svg" viewBox="0 0 740 300" role="img"
+                 aria-labelledby="bll-d1-title bll-d1-desc" font-family="var(--mono)">
+                <title id="bll-d1-title">와이어시트의 운전 허가 조건 체인</title>
+                <desc id="bll-d1-desc">기능 블록 시트입니다. 왼쪽의 바이너리 입력 세 개, 즉 TRUE를 읽는 FREEZE OK, TRUE를 읽는 PROOF OK, FALSE를 읽는 HI-STATIC OK가 입력이 세 개인 AND 블록에 연결됩니다. AND 블록 출력은 RUN PERMIT이라고 표시되고 OFF를 읽는 바이너리 출력에 연결됩니다. 두 TRUE 배선은 녹색, FALSE 배선은 회색으로 그려 실시간 편집기의 색상과 일치합니다. 입력 하나가 FALSE이므로 운전 허가는 꺼집니다. 입력 하나가 FALSE인 것만으로 충분합니다.</desc>
+
+                <!-- wires (drawn first, behind the blocks) -->
+                <line x1="185" y1="56"  x2="340" y2="118" stroke="var(--accent)"   stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="185" y1="146" x2="340" y2="146" stroke="var(--accent)"   stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="185" y1="236" x2="340" y2="174" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="460" y1="146" x2="560" y2="146" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round"/>
+
+                <!-- FREEZE OK -->
+                <g id="bll-d1-frz">
+                    <rect x="15" y="28" width="170" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="47" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">바이너리 입력</text>
+                    <text x="27" y="68" font-size="12" font-weight="600" fill="var(--accent)">FREEZE OK  TRUE</text>
+                    <circle cx="185" cy="56" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- PROOF OK -->
+                <g id="bll-d1-prf">
+                    <rect x="15" y="118" width="170" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="137" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">바이너리 입력</text>
+                    <text x="27" y="158" font-size="12" font-weight="600" fill="var(--accent)">PROOF OK  TRUE</text>
+                    <circle cx="185" cy="146" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- HI-STATIC OK -->
+                <g id="bll-d1-hst">
+                    <rect x="15" y="208" width="170" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="227" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">바이너리 입력</text>
+                    <text x="27" y="248" font-size="12" font-weight="600" fill="var(--text-dim)">HI-STATIC OK  FALSE</text>
+                    <circle cx="185" cy="236" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- AND -->
+                <g id="bll-d1-and">
+                    <rect x="340" y="102" width="120" height="88" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="400" y="150" text-anchor="middle" font-size="16" font-weight="600" fill="var(--text-bright)">AND</text>
+                    <text x="400" y="168" text-anchor="middle" font-size="9" fill="var(--text-dim)">운전 허가</text>
+                    <circle cx="340" cy="118" r="3.8" fill="var(--accent)"/>
+                    <circle cx="340" cy="146" r="3.8" fill="var(--accent)"/>
+                    <circle cx="340" cy="174" r="3.8" fill="var(--text-dim)"/>
+                    <circle cx="460" cy="146" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- RUN PERMIT -->
+                <g id="bll-d1-out">
+                    <rect x="560" y="118" width="165" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="572" y="137" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">바이너리 출력</text>
+                    <text x="572" y="158" font-size="12" font-weight="600" fill="var(--text-dim)">RUN PERMIT  OFF</text>
+                    <circle cx="560" cy="146" r="3.8" fill="var(--text-dim)"/>
+                </g>
+
+                <text x="370" y="288" text-anchor="middle" font-size="10.5" fill="var(--text)">입력 하나가 FALSE인 것만으로 충분합니다. 모든 확인 신호가 TRUE일 때까지 운전 허가는 OFF입니다.</text>
+            </svg>
+
+            <p class="ref-note compact" style="text-align:center;">
+                녹색 배선은 TRUE 디지털 신호, 회색 배선은 FALSE를 전달합니다. 실시간 편집기와
+                같은 색상입니다. 아날로그 값은 파란색 배선을 사용하지만 이 시트에는 없습니다.
+            </p>
+
+            <!-- ───────────────── 2 · The SR latch ───────────────── -->
+            <h2 class="subhead" id="sr-latch">SR 래치: 로직이 기억하는 방식</h2>
+
+            <p>
+                지금까지 살펴본 것은 모두 <em>조합</em> 로직입니다. 출력은 <em>현재</em> 입력만으로
+                결정됩니다. 고정압 상한 스위치가 다시 닫히면 어떤 일이 있었는지 기억하지 않고
+                운전 허가가 자동으로 즉시 복구됩니다. 쾌적성 로직에서는 보통 이것이 원하는
+                동작입니다. 존이 더워졌다가 다시 시원해졌다면 그대로 넘어가면 됩니다. 하지만
+                안전장치에는 정확히 잘못된 동작입니다.
+            </p>
+
+            <p>
+                동결방지 온도조절기 사례를 따라가 보면 이유를 알 수 있습니다. 코일이 동결점에
+                가까워져 온도조절기가 트립되면 운전 허가가 해제되고 팬이 정지합니다. 그러나
+                공기 흐름이 없어지면 코일 온도가 다시 실온 쪽으로 이동해 동결방지 온도조절기가
+                스스로 해제됩니다. 트립이 단순한 조합 로직이라면 운전 허가가 곧바로 복구되고,
+                팬이 재기동하며, 차가운 공기가 코일에 세게 닿아 온도조절기가 다시 트립됩니다.
+                장치는 자체 안전장치를 통해 계속 <button type="button"
+                data-gloss="short-cycling">단주기 운전</button>하고, 처음부터 <em>코일이 왜
+                얼고 있었는지</em> 아무도 알아내지 못합니다. 고장 신호가 사라졌다고 해서 문제가
+                해결된 것은 아닙니다. 안전 트립은 사람이 이를 확인하고 원인을 찾을 때까지 눈에
+                보이는 상태로 장비를 정지시키며 <strong>유지</strong>되어야 합니다.
+            </p>
+
+            <p>
+                이것이 불 대수 계열에서 기억 기능이 있는 유일한 블록인 <strong><code>SR latch</code></strong>의
+                역할입니다. 두 입력에는 다음과 같은 동작이 있습니다. <strong>S</strong>(<em>set</em>)가
+                TRUE이면 출력 <strong>Q</strong>가 TRUE가 되고, 이후 입력이 사라져도 Q는 스스로
+                TRUE를 <em>유지</em>합니다. <strong>R</strong>(<em>reset</em>)이 TRUE가 되면 Q가
+                다시 FALSE로 떨어집니다. 동결 트립을 S에 연결하면 앞의 설명에서 요구한 대로
+                온도조절기가 해제된 뒤에도 트립을 기억하며, 의도적인 재설정이 있어야만 해제됩니다.
+            </p>
+
+            <p>
+                이 블록은 진리표에서 피할 수 없는 질문 하나에 답해야 합니다. <em>같은 스캔에서
+                S와 R이 모두 TRUE이면 어떻게 될까요?</em> 이 사이트 편집기의 래치는
+                <strong>Set 우선형</strong>입니다. S가 우선하므로 Q는 TRUE를 유지합니다. 장비
+                관점에서 해석하면 안전장치에 적합한 답입니다. 고장이 <em>계속 발생 중</em>인
+                동안에는 재설정으로 이를 무시할 수 없습니다. 재설정 버튼을 계속 눌러도 동결방지
+                온도조절기 자체가 해제될 때까지 아무 일도 일어나지 않습니다. 고장이 사라진 뒤에야
+                재설정이 작동합니다. 팔레트에 따라 다르며, R이 우선하는 Reset 우선형을 제공하는
+                제조사도 있습니다. 이는 중요한 차이입니다. 유지형 재설정 스위치 뒤에서는 Reset
+                우선형 래치가 트립을 전혀 유지하지 못합니다. 안전장치에 사용하기 전에 팔레트에서
+                제공하는 유형을 확인하세요.
+            </p>
+
+            <p>
+                이것이 <strong>래치 + 수동 재설정 패턴</strong>입니다. 고장이 Set하고 운전자가
+                Reset합니다. S는 안전장치에서, R은 사람에게서 옵니다. 그래픽의 재설정 버튼,
+                BMS가 쓰는 소프트웨어 포인트, 물리 스위치가 될 수 있습니다. 아래 타임라인은
+                한 번의 트립이 진행되는 전체 과정을 네 신호에 동시에 나타낸 것입니다. 실시간
+                시트를 볼 때 머릿속으로 구성하게 되는 그림과 같습니다.
+            </p>
+
+            <svg class="edu-svg bll-svg" viewBox="0 0 740 372" role="img"
+                 aria-labelledby="bll-d2-title bll-d2-desc" font-family="var(--mono)">
+                <title id="bll-d2-title">타이밍 다이어그램에 나타낸 래치된 동결 트립</title>
+                <desc id="bll-d2-desc">정렬된 네 타이밍 파형입니다. 래치 Set 입력의 동결방지 온도조절기, Reset 입력의 재설정 버튼, 래치 출력 Q, Q를 반전한 팬 명령을 표시합니다. 동결방지 온도조절기가 트립되면 같은 순간 Q가 상승하고 팬은 정지합니다. 온도조절기가 여전히 트립된 동안의 재설정 펄스는 무시됩니다. 래치가 Set 우선형이므로 Set이 우선합니다. 이후 온도조절기가 해제되어도 Q가 유지되고 팬은 꺼진 상태입니다. 래치가 이를 기억합니다. 고장이 해제된 뒤 두 번째 재설정 펄스가 들어와야 Q가 떨어지고 팬이 복구됩니다.</desc>
+
+                <!-- event annotations (staggered rows) -->
+                <text x="240" y="30" text-anchor="middle" font-size="10" fill="var(--text)">동결 트립</text>
+                <text x="470" y="30" text-anchor="middle" font-size="10" fill="var(--text)">고장 해제 — Q 유지</text>
+                <text x="340" y="46" text-anchor="middle" font-size="10" fill="var(--text-dim)">재설정 무시 — S 우선</text>
+                <text x="600" y="46" text-anchor="middle" font-size="10" fill="var(--text-dim)">재설정 도달 — Q 해제</text>
+
+                <!-- event guide lines -->
+                <line x1="240" y1="52" x2="240" y2="312" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 4"/>
+                <line x1="340" y1="52" x2="340" y2="312" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 4"/>
+                <line x1="470" y1="52" x2="470" y2="312" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 4"/>
+                <line x1="600" y1="52" x2="600" y2="312" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 4"/>
+
+                <!-- trace labels -->
+                <text x="112" y="84"  text-anchor="end" font-size="11" fill="var(--text)">FREEZE (S)</text>
+                <text x="112" y="154" text-anchor="end" font-size="11" fill="var(--text)">RESET (R)</text>
+                <text x="112" y="224" text-anchor="end" font-size="11" fill="var(--text)">LATCH Q</text>
+                <text x="112" y="294" text-anchor="end" font-size="11" fill="var(--text)">FAN (NOT Q)</text>
+
+                <!-- traces -->
+                <path d="M130 92 H240 V64 H470 V92 H710" fill="none" stroke="var(--heat)" stroke-width="2.4" stroke-linejoin="round"/>
+                <path d="M130 162 H340 V134 H375 V162 H600 V134 H635 V162 H710" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linejoin="round"/>
+                <path d="M130 232 H240 V204 H600 V232 H710" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"/>
+                <path d="M130 274 H240 V302 H600 V274 H710" fill="none" stroke="var(--teal)" stroke-width="2.4" stroke-linejoin="round"/>
+
+                <text x="710" y="326" text-anchor="end" font-size="10" fill="var(--text-dim)">시간 →</text>
+
+                <text x="370" y="346" text-anchor="middle" font-size="10.5" fill="var(--text)">래치는 트립과 함께 상승하고, 고장이 지속되면 재설정을 무시하며,</text>
+                <text x="370" y="362" text-anchor="middle" font-size="10.5" fill="var(--text)">고장 해제 뒤에도 유지되다가 재설정이 도달해야만 해제됩니다.</text>
+            </svg>
+
+            <p>
+                네 파형을 서로 비교해 읽으세요. 트립과 래치가 함께 상승하고, Q가
+                <code>NOT</code>을 통과한 팬은 같은 스캔에서 떨어집니다. 첫 번째 재설정 펄스는
+                고장이 여전히 발생 중이고 Set이 우선하므로 아무것도 바꾸지 않습니다. 그다음
+                온도조절기가 해제되어도 <em>시트에서는 아무것도 움직이지 않습니다.</em> 두 입력이
+                모두 FALSE인데 Q가 TRUE로 평평하게 유지되는 구간이 바로 기억이며, 이 블록이
+                존재하는 이유입니다. 고장이 사라진 뒤 들어오는 두 번째 재설정만 Q를 떨어뜨리고
+                팬을 복구합니다.
+            </p>
+
+            <!-- ───────────────── 3 · Small idioms ───────────────── -->
+            <h2 class="subhead" id="idioms">작은 패턴: XOR와 피드백 배선</h2>
+
+            <p>
+                두 가지 작은 동작을 더하면 이 계열이 완성됩니다. 첫째는 <strong><code>XOR</code></strong>입니다.
+                입력이 <em>서로 다를 때</em> TRUE이므로 시트의 <strong>불일치 검출기</strong>로
+                사용할 수 있습니다. 대표적인 용도는 명령과 상태 비교입니다. 팬의 명령과 운전
+                확인 접점을 <code>XOR</code>에 연결하면 두 값이 일치하지 않을 때 정확히 TRUE가
+                됩니다. 명령은 ON인데 운전 확인 신호가 없는 경우(벨트 파손, 과부하 트립)나 명령은
+                없는데 운전 중으로 확인되는 경우(접촉기 용착, HAND에 둔 수동 스위치)입니다.
+                반드시 달라야 하는 두 상태도 같은 형태로 검사할 수 있습니다. 두 위치 댐퍼의 열림
+                및 닫힘 엔드 스위치는 항상 달라야 하므로 <code>XOR</code> TRUE는 정상, FALSE는
+                스위치 또는 액추에이터가 거짓 상태를 보내고 있음을 뜻합니다. 실제 불일치 경보는
+                장비가 움직일 시간을 주기 위해 보통 몇 초 기다린 뒤 울립니다.
+                <a href="/ko/education/timers-and-delays.html">지연과 바운스 제거</a>는 이 장의
+                별도 학습 자료에서 다룹니다.
+            </p>
+
+            <p>
+                둘째는 래치를 처음 자세히 볼 때 알아차리게 되는 내용을 한 문장으로 표현한
+                것입니다. 래치는 사실 <em>루프</em>이며, 블록의 출력이 자체 판단으로 되돌아갑니다.
+                시트는 모든 피드백 배선에 <strong>지난 스캔 값</strong>을 전달하는 방식으로 해결합니다.
+                이것이 래치가 상태를 유지하게 하는 한 스캔 분량의 기억입니다. 스캔 자체는
+                <a href="/ko/education/function-blocks.html#scan">와이어시트의 실행 방식</a>에서
+                설명합니다. 이 한 문장만 이해해도 많은 도움이 됩니다. 루프와 피드백을 포함해
+                <a href="/ko/education/reading-a-wiresheet.html">전체 시트를 처음부터 끝까지 읽는
+                방법</a>은 이 장의 별도 학습 자료입니다.
+            </p>
+
+            <!-- ───────────────── 4 · Capstone ───────────────── -->
+            <h2 class="subhead" id="try-it">상태가 유지되는 모습 보기</h2>
+
+            <p>
+                이 페이지의 모든 내용은 지금 <a href="/ko/simulators/function-block-editor.html">기능
+                블록 편집기</a>에서 실행되고 있습니다. <em>동결방지 온도조절기 정지</em> 예제를
+                불러오면 이 학습 자료를 실시간 시트로 볼 수 있습니다. 동결 바이너리 입력이
+                <code>SR latch</code>를 Set하고, <code>NOT</code>이 팬 출력을 떨어뜨리며, 경보
+                출력은 켜집니다. 동결방지 온도조절기를 트립하고 래치가 이를 잡는 모습을 확인하세요.
+                그런 다음 온도조절기를 해제해도 래치는 <em>개의치 않고</em> 유지됩니다. 팬은 꺼져
+                있고 경보는 계속 켜지며, 돌아가는 유일한 방법은 Reset 입력입니다. 편집기에서
+                온도조절기가 계속 트립된 상태로 Reset을 TRUE로 유지해 보세요. 고장이 해제될
+                때까지 래치는 이를 무시하며 배선에서 Set 우선 동작을 직접 확인할 수 있습니다.
+            </p>
+
+            <a class="cta-button" href="/ko/simulators/function-block-editor.html">기능 블록 편집기 열기 →</a>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'}
+        ],
+        lessons: [
+            {href: '/ko/education/function-blocks.html', label: '기능 블록 기초'},
+            {href: '/ko/education/comparators-and-deadband.html', label: '비교기 및 불감대'},
+            {href: '/ko/education/timers-and-delays.html', label: '타이머 및 지연'},
+            {href: '/ko/education/equipment-staging.html', label: '장비 대수제어'},
+            {href: '/ko/education/controls-commissioning.html', label: '제어 커미셔닝'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/boolean-logic-latches.html', label: '불 대수 로직 및 래치 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 학습 자료로 돌아가기</a>
+
+</main>
+{% endblock %}

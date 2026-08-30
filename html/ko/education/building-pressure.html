@@ -1,0 +1,462 @@
+---
+title: 건물 압력 — controlsfreak.dev
+description: 외기·배기·릴리프의 공기 수지로 건물 양압과 음압이 생기는 원인, 릴리프 장치와 배기팬 제어 및 정확한 측정 방법을 설명합니다.
+canonical: https://controlsfreak.dev/ko/education/building-pressure.html
+nav: education
+category: forced-air
+pairedQuiz: https://controlsfreak.dev/ko/practice/building-pressure.html
+keywords: 건물 압력 정압 릴리프 배기팬 동력 배기 중력식 릴리프 댐퍼 양압 음압 침기 누기 출입문 보충 공기
+sourceContentHash: 4bd11162adccc1cff5ee00f51f0d81fb4ac63071cf852b5ce3349a0894144113
+sourceMessageHash: 9d7724bb66f3cf7acc298ba45b8e679213616f3407642f708de362cf020d7bc3
+pageMessages:
+  unitText:
+    targetPressureRange:
+      us: "+0.02~+0.05 in. w.c."
+      metric: "+5~+12 Pa"
+    buildingPressureExample:
+      us: 수주 수백분의 1인치
+      metric: 수 Pa
+    ductStaticMagnitude:
+      us: 수주 수 인치
+      metric: 수백 Pa
+    buildingStaticMagnitude:
+      us: 수주 수백분의 1인치
+      metric: 수 Pa
+  widget:
+    minimumSuffix: " · 최소"
+    direction:
+      out: 유출
+      in: 유입
+    stages:
+      interlocked: 동력 배기 단수 — 급기팬 인터록
+      following: 동력 배기 단수 — 댐퍼 추종
+    status:
+      strongPositive: 강한 양압 — 출입문이 열린 채로 버티며 건물이 자체 릴리프 경로를 만들었습니다
+      positive: 양압 — 출입문이 저절로 열리고 조화 공기가 밖으로 밀려납니다
+      slightlyPositive: 약한 양압 — 원하는 상태입니다
+      neutral: 거의 중립 — 허용 가능하지만 바람과 연돌효과에 대한 여유가 없습니다
+      negative: 음압 — 모든 틈으로 외기가 들어옵니다
+      strongNegative: 강한 음압 — 문이 무거워지고 웨더스트립에서 휘파람 소리가 납니다
+      barometricShutOutward: " · 중력식 릴리프 날개 닫힘 — 바깥쪽으로만 릴리프할 수 있습니다"
+      barometricShutBelow: " · 중력식 릴리프 날개 닫힘 — 개방 설정 압력 미만입니다"
+      barometricRelieving: " · 중력식 릴리프 작동 — 수동식이라 압력 오차를 유지합니다"
+      powerExhaustMistake: " · 댐퍼가 아니라 급기팬을 따라 단수가 운전 중입니다 — 이것이 잘못입니다"
+      powerExhaustStages: " · 4개 단수 중 {count}개 운전"
+      trackingHood: " · 후드가 포함되지 않은 시운전 당시 오프셋을 추종 중입니다 — 공기 수지는 바뀌었지만 오프셋은 그대로입니다"
+      trackingNormal: " · 릴리프팬이 시운전 당시 오프셋으로 급기량을 추종합니다"
+    anecdote: >-
+      이 프리셋은 제 경험담입니다. 초기에 저는 동력 배기를 회기팬처럼 다뤘습니다. 둘이 전혀 다른 장치라는 말을 아무도 해 주지 않았고, 회기측에 있는 팬은 다 같은 팬처럼 보였기 때문입니다. 그래서 회기팬처럼 급기팬과 인터록하여 유닛이 켜질 때마다 운전하도록 프로그램했습니다. 겨울 내내 최소 외기 상태에서 그 배기팬은 댐퍼가 들여오지도 않는 공기를 성실하게 버렸습니다. 트렌드보다 건물이 먼저 문제를 알렸습니다. 현관문은 스프링이 걸린 듯 당겨졌고, 전실 건너편에서도 웨더스트립의 휘파람 소리가 들렸습니다. 수정은 로직 한 줄이었습니다. 팬을 유닛이 아니라 <em>댐퍼</em>와 함께 기동하는 것입니다. 회기팬은 기류 안에 있으므로 유닛이 운전할 때마다 운전하지만, 동력 배기는 릴리프 장치이므로 댐퍼가 최소 개도보다 더 열릴 때만 할 일이 있습니다. 같은 위치에 있어도 제어 규칙은 정반대입니다.
+---
+{% extends "html/education/building-pressure.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">교육 · 건물 압력</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">건물 압력 <span class="tool-tag">공기 시스템</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                이 장에서는 댐퍼가 들여온 공기는 건물 어딘가로 빠져나가야 한다고 여러 번 설명했습니다. 이 페이지에서는 그 공기가 어디로 나가는지 다룹니다. 건물 압력은 전체 시스템에서 가장 조용한 포인트로, 대부분의 게이지가 보지 못할 만큼 작은 신호입니다. 하지만 고장은 말 그대로 현관문에서 드러납니다. 문이 저절로 열린 채 있거나, 스프링이 걸린 듯 당겨지거나, 웨더스트립에서 휘파람 소리가 납니다. 처음부터 끝까지 한 가지 질문에 답합니다. <em>건물은 왜 양압 또는 음압이 되며, 댐퍼가 움직일 때 릴리프팬·회기팬·동력 배기팬은 어떻게 압력을 중립 부근으로 유지할까요?</em>
+            </p>
+
+            <div class="callout">
+                <p style="line-height:1.7;">
+                    이 페이지는 <a href="/ko/education/air-handlers.html#mixing-box">공기조화기</a>의 혼합부와 <a href="/ko/education/economizers.html#damper-assembly">외기냉방</a>의 비례 댐퍼 어셈블리를 바탕으로 합니다. 릴리프 댐퍼가 외기(OA) 댐퍼와 함께 열린다는 말이 익숙하지 않다면 먼저 두 페이지를 읽으세요. 여기서는 그 약속이 실제로 어떻게 지켜지는지 설명합니다.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · The air ledger ───────────────── -->
+            <h2 class="subhead" id="air-ledger">공기 수지</h2>
+
+            <p>
+                건물은 약간 새는 상자이며 팬은 외피 양쪽 방향으로 공기를 밀어냅니다. 건물 압력은 그 공기의 수지에 불과합니다. 장부처럼 적어 보겠습니다. <em>유입:</em> 공기조화기가 들여오는 외기이며 대부분 건물에서 의도적인 유입은 이것뿐입니다. <em>유출:</em> 유닛을 통해 다시 빠져나가는 릴리프 공기, AHU 운전과 관계없이 가동되는 전용 배기팬(화장실, 주방 후드, 청소도구실), 그리고 외피의 모든 균열·접합부·문틈으로 밀려 나가는 <em>누기</em>입니다. 급기와 회기는 외피 <em>안에서</em> 순환하며 외피를 통과하지 않고 방 사이로 공기를 옮기므로 수지에 전혀 나타나지 않습니다. 건물 압력은 팬이 공기를 움직인 뒤 남은 불균형, 즉 잔여 공기를 외피의 틈으로 밀어내는 데 필요한 아주 작은 압력입니다.
+            </p>
+            <p>
+                목표는 0이 아닙니다. 설계자는 건물을 <em>약한 양압</em>, 즉 외기 대비 약 <span data-us="{{ pageMessages.unitText.targetPressureRange.us }}" data-metric="{{ pageMessages.unitText.targetPressureRange.metric }}">+0.02~+0.05&nbsp;in. w.c.</span>의 설정값으로 유지합니다. 그러면 여과·조화되지 않은 습한 공기가 들어오는 대신 조화된 공기가 틈으로 스며 나가 누기가 항상 바깥쪽을 향합니다. 어느 방향이든 잘못되면 건물이 출입문으로 알려 줍니다. 양압이 너무 크면 외부 출입문이 도어 클로저를 이기고 저절로 열리며 닫으려고 당길 때 밀어냅니다. 음압이 너무 크면 문이 무거워지고 사람 뒤에서 세게 닫히며 틈에서 휘파람 소리가 납니다. 습한 날씨에는 침기 공기가 벽체 공동으로 수분을 끌고 들어갑니다. 엘리베이터 로비와 계단실 문도 같은 이유로 문제를 일으킵니다. 샤프트는 압력이 다른 층들을 연결하는 매우 높은 덕트와 같습니다.
+            </p>
+            <p>
+                그림을 보기 전에 큰 유닛에서 특히 문제가 되는 비대칭을 짚어야 합니다. <strong>회기 덕트는 급기 덕트가 보낸 공기를 전부 되돌려 보내지 않습니다.</strong> 여러 층을 담당하는 공기조화기는 같은 공간에서 빼내는 전용 배기, 대표적으로 여러 화장실의 배기팬에 급기의 일정 부분을 잃습니다. 그 공기는 순환 도중 루프를 떠나 혼합부로 돌아오지 않고 지붕으로 빠져나갑니다. 이렇게 빠진 몫은 선택적 환기가 아니라 유닛이 반드시 보충해야 하는 상시 유출입니다. 최소 외기량을 이보다 작게 선정하면 댐퍼는 명령 위치에 멀쩡히 있어도 매일 아침부터 공기 수지가 음수로 시작합니다. 실무 원칙은 다음과 같습니다. <em>최소 외기량 ≥ 유닛 담당 구역의 모든 배기팬 유량 + 건물 양압 유지용 잉여량.</em>
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 420" role="img" aria-labelledby="bp-d1-title bp-d1-desc"
+                 font-family="var(--mono)">
+                <title id="bp-d1-title">공기 수지로 나타낸 건물</title>
+                <desc id="bp-d1-desc">왼쪽 벽에 공기조화기가 있는 상자 형태의 건물입니다. 유일하게 의도된 유입인 외기가 공기조화기로 들어옵니다. 세 가지 유출이 건물에서 나갑니다. 유닛을 통해 되돌아 나가는 릴리프 공기, 지붕의 배기팬, 오른쪽 벽 출입문 주변 틈의 누기입니다. 급기와 회기 덕트는 외피를 통과하지 않고 건물 안에서 순환합니다. 중앙의 게이지는 공기 수지의 잔여량인 건물 압력을 나타냅니다.</desc>
+
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes duct geometry — the ledger widget's one
+                     transform write moves the needle inside the separate gauge SVG,
+                     which holds no data-flow element. A future geometry write must
+                     refresh in the same breath, or the page must opt out via the
+                     `flowGeometryLive` frontmatter (flowStaticGuard, .eleventy.js). -->
+                <!-- ledger flows. data-flow="air" hooks flow-engine.js; particle
+                     color follows each duct's stroke. Densities: OA carries the
+                     deliberate deposit, relief / exhaust carry fractions. -->
+                <path id="bp-d1-oa" data-flow="air" data-flow-static="true" d="M5 240 H80" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <path id="bp-d1-rel" data-flow="air" data-flow-static="true" data-flow-density="0.5" d="M80 150 V68 H20" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="bp-d1-ef" data-flow="air" data-flow-static="true" data-flow-density="0.5" d="M350 100 V52" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- interior circulation: supply / return — inside the envelope -->
+                <path id="bp-d1-sa" data-flow="air" data-flow-static="true" d="M150 240 H230" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="bp-d1-ra" data-flow="air" data-flow-static="true" d="M230 180 H150" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+
+                <!-- flow arrows (static — carry direction for reduced-motion / print) -->
+                <g id="bp-d1-flow-arrows">
+                    <polygon points="28,235 37,240 28,245" fill="var(--teal)"/>
+                    <polygon points="75,110 85,110 80,99" fill="var(--text-dim)"/>
+                    <polygon points="34,63 43,68 34,73" fill="var(--text-dim)" transform="rotate(180 38.5 68)"/>
+                    <polygon points="345,72 355,72 350,61" fill="var(--text-dim)"/>
+                    <polygon points="196,235 205,240 196,245" fill="var(--blue)"/>
+                    <polygon points="196,175 187,180 196,185" fill="var(--blue-cool)"/>
+                </g>
+
+                <!-- the building envelope -->
+                <rect x="150" y="100" width="300" height="240" fill="none" stroke="var(--text-dim)" stroke-width="2"/>
+
+                <!-- the AHU on the left wall -->
+                <g id="bp-d1-ahu">
+                    <rect x="80" y="150" width="70" height="120" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="115" y="216" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text-bright)">AHU</text>
+                </g>
+
+                <!-- roof exhaust fan -->
+                <g id="bp-d1-ef-fan">
+                    <circle cx="350" cy="78" r="12" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="345,73 356,78 345,83" fill="var(--text-dim)"/>
+                </g>
+
+                <!-- the door + exfiltration on the right wall -->
+                <g id="bp-d1-door">
+                    <rect x="446" y="255" width="8" height="65" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="452" y1="250" x2="490" y2="250" stroke="var(--text-dim)" stroke-width="1.5" stroke-dasharray="2 3"/>
+                    <polygon points="488,246 496,250 488,254" fill="var(--text-dim)"/>
+                    <line x1="452" y1="325" x2="490" y2="325" stroke="var(--text-dim)" stroke-width="1.5" stroke-dasharray="2 3"/>
+                    <polygon points="488,321 496,325 488,329" fill="var(--text-dim)"/>
+                </g>
+
+                <!-- pressure gauge — the residual -->
+                <g id="bp-d1-gauge">
+                    <circle cx="350" cy="222" r="20" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="350" y1="222" x2="361" y2="209" stroke="var(--text-bright)" stroke-width="2"/>
+                    <circle cx="350" cy="222" r="2.5" fill="var(--text-bright)"/>
+                </g>
+
+                <!-- labels -->
+                <text x="5" y="216" text-anchor="start" font-size="13" fill="var(--text)">외기</text>
+                <text x="5" y="231" text-anchor="start" font-size="13" fill="var(--text)">유입</text>
+                <text x="92" y="42" text-anchor="start" font-size="13" fill="var(--text)">릴리프 공기</text>
+                <text x="92" y="57" text-anchor="start" font-size="12" fill="var(--text-dim)">유닛을 통해 배출</text>
+                <text x="350" y="25" text-anchor="middle" font-size="12" fill="var(--text)">배기팬 — 화장실, 후드</text>
+                <text x="236" y="184" text-anchor="start" font-size="12" fill="var(--text-dim)">회기</text>
+                <text x="236" y="244" text-anchor="start" font-size="12" fill="var(--text-dim)">급기</text>
+                <text x="300" y="135" text-anchor="middle" font-size="16" font-weight="600" fill="var(--text-bright)">건물</text>
+                <text x="300" y="265" text-anchor="middle" font-size="13" fill="var(--text)">압력 = 남은 공기</text>
+                <text x="300" y="295" text-anchor="middle" font-size="12" fill="var(--text-dim)">급기와 회기는 내부 순환 —</text>
+                <text x="300" y="311" text-anchor="middle" font-size="12" fill="var(--text-dim)">외피를 통과하지 않음</text>
+                <text x="498" y="352" text-anchor="end" font-size="12" fill="var(--text-dim)">누기 —</text>
+                <text x="498" y="368" text-anchor="end" font-size="12" fill="var(--text-dim)">모든 틈이 수지 항목</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw oa"></span>외기</span>
+                <span><span class="sw ra"></span>회기</span>
+                <span><span class="sw sa"></span>급기</span>
+                <span><span class="sw ea"></span>릴리프 / 배기</span>
+            </div>
+
+            <div class="callout" style="margin-top:1.5rem;">
+                <h3>계산 예 <span>· 한 줄 산술</span></h3>
+                <!-- Metric supply is stated as 17,000 m³/h (exact: 16,990) so
+                     the 20 % worked chain closes on displayed operands
+                     (17,000 × 0.20 = 3,400); the widget's nearest-10 rounding
+                     shows 16,990 at 100 % OA. Accepted daylight — closure of
+                     the taught math outranks matching that one widget state. -->
+                <p>정풍량 유닛이 <span data-us="10,000&nbsp;CFM" data-metric="17,000&nbsp;m³/h">10,000&nbsp;CFM</span>을 공급하고 댐퍼가 최소 개도에서 외기 20&nbsp;%를 들여오면 <span data-us="2,000&nbsp;CFM" data-metric="3,400&nbsp;m³/h">2,000&nbsp;CFM</span>이 유입됩니다. 실제 혼합부에서 댐퍼 <em>위치</em>와 유량 <em>비율</em>은 같지 않습니다. 위치와 유량의 관계는 비선형이며 변하지만, 이 페이지에서는 수지 계산을 쉽게 읽도록 둘을 같다고 가정합니다. 화장실 배기팬은 <span data-us="800&nbsp;CFM" data-metric="1,360&nbsp;m³/h">800&nbsp;CFM</span>을 빼냅니다. 남은 <span data-us="1,200&nbsp;CFM" data-metric="2,040&nbsp;m³/h">1,200&nbsp;CFM</span>은 외피를 통해 밖으로 나갈 수밖에 없습니다. 그 잉여 공기를 틈으로 밀어내는 데 필요한 작은 압력인 <span data-us="{{ pageMessages.unitText.buildingPressureExample.us }}" data-metric="{{ pageMessages.unitText.buildingPressureExample.metric }}">수주 수백분의 1인치</span>가 <em>바로</em> 건물 압력입니다. 이 페이지의 모든 시나리오는 수치만 다른 같은 뺄셈입니다. 주방·실험실 전용 배기와 인명 안전용 제연도 더 엄격한 규칙으로 같은 수지를 계산하며 각각 별도의 주제입니다.</p>
+            </div>
+
+            <!-- ───────────────── 2 · The relief lineup ───────────────── -->
+            <h2 class="subhead" id="relief-lineup">릴리프 장치의 종류</h2>
+
+            <p>
+                혼합부에서 본 릴리프 댐퍼는 공기를 움직이는 장치가 아니라 개구부입니다. 이 차이가 이 절의 핵심입니다. 최소 외기에서는 잉여량이 매우 적어 수동 개구부로 충분합니다. 그러나 <button type="button" data-gloss="economizer">외기냉방</button>을 위해 댐퍼를 열면 계산이 가혹해집니다. 외기 100&nbsp;%에서는 급기팬이 보내는 <em>모든</em> 공기가 건물을 빠져나가야 하며, 수동 개구부로 그만큼의 공기를 통과시키려면 밀어내는 압력차가 필요합니다. 바로 생기지 않게 하려는 압력입니다. 그래서 건물에는 가장 단순한 것부터 가장 정교한 것까지 여러 릴리프 장치가 적용됩니다. 어떤 장치를 보고 있는지 알면 제어 방법도 알 수 있습니다.
+            </p>
+            <p>
+                <strong>중력식 릴리프</strong>는 가장 단순하고 정직합니다. 조절 추를 단 힌지형 날개이며 모터도, 배선도, BMS 포인트도 없습니다. 실내 압력이 추의 힘을 이기면 날개가 열려 공기가 나가고, 이기지 못하면 중력이 날개를 닫습니다. 물리적으로 두 가지 결과가 따릅니다. 동작하려면 건물이 <em>이미 양압</em>이어야 합니다. 압력 오차 자체가 구동기이므로 큰 풍량에서는 압력이 높게 유지됩니다. 또한 엄격한 일방향 밸브입니다. 양압은 낮출 수 있지만 음압에서는 날개가 더 단단히 닫히므로 음압 건물을 절대 바로잡을 수 없습니다. <strong>동력 배기</strong>는 중력식 릴리프가 감당하지 못할 때 설치합니다. 압력이 생길 때까지 기다리는 대신 릴리프 개구부의 팬이 공기를 밖으로 <em>밀어냅니다</em>. 현장에서 자주 잘못 제어하므로 다음 절에서 따로 다룹니다. <strong>회기/릴리프팬</strong>은 조립형 유닛의 해법입니다. 급기팬과 비슷한 크기의 두 번째 팬을 회기 덕트 안에 설치해 공간의 공기가 돌아오도록 돕고 릴리프 개구부 뒤에 실제 압력을 제공합니다. 제어 방식은 <em>추종</em>입니다. <em>측정 유량</em> 기준으로 급기팬보다 일정 오프셋 낮게 운전해 두 팬의 차이가 수지 균형이 되도록 연속 제어합니다. 단수도 없고 오차가 생길 때까지 기다리지도 않습니다. 속도가 아니라 유량을 추종해야 합니다. 고정 속도 오프셋은 특정 CFM 차이를 유지하지 못합니다. 두 팬은 서로 독립적으로 변하는 저항에 대해 서로 다른 곡선 위에서 운전하므로 속도 오프셋 추종은 이 방식을 망치는 대표적인 방법입니다. 이 오프셋도 임의 보정값이 아니라 수지입니다. 건물의 전용 배기팬이 유닛 담당 구역에서 빼내는 유량에 건물 양압 유지용 잉여량을 더한 값입니다. 시운전을 소홀히 하면 추종 팬은 작성되지도 않은 수지를 맞추게 됩니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 460" role="img" aria-labelledby="bp-d2-title bp-d2-desc"
+                 font-family="var(--mono)">
+                <title id="bp-d2-title">릴리프 장치 비교: 중력식, 동력 배기, 회기팬</title>
+                <desc id="bp-d2-desc">세 가지 릴리프 장치가 세로로 배치되어 있습니다. 위쪽은 중력식 릴리프로, 벽 개구부의 무게추 달린 힌지형 날개가 실내 압력에 밀릴 때만 열립니다. 가운데는 같은 형태의 릴리프 개구부에 팬을 설치해 공기를 밖으로 밀어내는 동력 배기이며 외기 댐퍼와 함께 단수 제어됩니다. 아래쪽은 회기 덕트 안에 있는 회기·릴리프팬으로 유닛 운전 중 항상 가동되며, 팬 하류에서 릴리프 분기가 갈라집니다.</desc>
+
+                <!-- ── row 1 · barometric ── -->
+                <line x1="360" y1="30" x2="360" y2="70" stroke="var(--text-dim)" stroke-width="3"/>
+                <line x1="360" y1="110" x2="360" y2="150" stroke="var(--text-dim)" stroke-width="3"/>
+                <path id="bp-d2-baro-flow" data-flow="air" data-flow-static="true" data-flow-density="0.4" d="M300 90 H420" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <polygon points="410,85 419,90 410,95" fill="var(--text-dim)"/>
+                <g id="bp-d2-baro-blades">
+                    <circle cx="358" cy="72" r="2" fill="var(--text-bright)"/>
+                    <line x1="358" y1="72" x2="374" y2="82" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <circle cx="358" cy="88" r="2" fill="var(--text-bright)"/>
+                    <line x1="358" y1="88" x2="374" y2="98" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <circle cx="358" cy="104" r="2" fill="var(--text-bright)"/>
+                    <line x1="358" y1="104" x2="374" y2="114" stroke="var(--text-bright)" stroke-width="1.5"/>
+                </g>
+                <text x="316" y="44" text-anchor="middle" font-size="11" fill="var(--text-dim)">실내</text>
+                <text x="404" y="44" text-anchor="middle" font-size="11" fill="var(--text-dim)">실외</text>
+                <text x="20" y="62" text-anchor="start" font-size="14" font-weight="600" fill="var(--text-bright)">중력식 릴리프</text>
+                <text x="20" y="84" text-anchor="start" font-size="12" fill="var(--text-dim)">무게추 날개 — 모터·배선 없음</text>
+                <text x="20" y="100" text-anchor="start" font-size="12" fill="var(--text-dim)">실내 압력이 이길 때만 열림</text>
+                <text x="20" y="116" text-anchor="start" font-size="12" fill="var(--text-dim)">건물 음압은 해결할 수 없음</text>
+
+                <line x1="20" y1="162" x2="520" y2="162" stroke="var(--border)" stroke-width="1"/>
+
+                <!-- ── row 2 · power exhaust ── -->
+                <line x1="360" y1="180" x2="360" y2="220" stroke="var(--text-dim)" stroke-width="3"/>
+                <line x1="360" y1="260" x2="360" y2="300" stroke="var(--text-dim)" stroke-width="3"/>
+                <path id="bp-d2-pe-flow" data-flow="air" data-flow-static="true" data-flow-density="0.6" d="M300 240 H420" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <polygon points="410,235 419,240 410,245" fill="var(--text-dim)"/>
+                <g id="bp-d2-pe-fan">
+                    <circle cx="360" cy="240" r="16" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="354,233 369,240 354,247" fill="var(--text-dim)"/>
+                </g>
+                <text x="20" y="212" text-anchor="start" font-size="14" font-weight="600" fill="var(--text-bright)">동력 배기</text>
+                <text x="20" y="234" text-anchor="start" font-size="12" fill="var(--text-dim)">릴리프 개구부의 팬 —</text>
+                <text x="20" y="250" text-anchor="start" font-size="12" fill="var(--text-dim)">기다리지 않고 공기를 밀어냄</text>
+                <text x="20" y="266" text-anchor="start" font-size="12" fill="var(--text-dim)">OA 댐퍼와 단수 제어</text>
+
+                <line x1="20" y1="312" x2="520" y2="312" stroke="var(--border)" stroke-width="1"/>
+
+                <!-- ── row 3 · return / relief fan ── -->
+                <path id="bp-d2-rf-duct" data-flow="air" data-flow-static="true" d="M40 400 H500" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="bp-d2-rf-branch" data-flow="air" data-flow-static="true" data-flow-density="0.4" d="M300 400 V352 H430" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <g id="bp-d2-rf-arrows">
+                    <polygon points="100,395 109,400 100,405" fill="var(--blue-cool)"/>
+                    <polygon points="450,395 459,400 450,405" fill="var(--blue-cool)"/>
+                    <polygon points="420,347 429,352 420,357" fill="var(--text-dim)"/>
+                </g>
+                <g id="bp-d2-rf-fan">
+                    <circle cx="200" cy="400" r="16" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="194,393 209,400 194,407" fill="var(--text-dim)"/>
+                </g>
+                <text x="20" y="338" text-anchor="start" font-size="14" font-weight="600" fill="var(--text-bright)">회기 / 릴리프팬</text>
+                <text x="20" y="360" text-anchor="start" font-size="12" fill="var(--text-dim)">회기 기류 안에 설치 —</text>
+                <text x="20" y="376" text-anchor="start" font-size="12" fill="var(--text-dim)">유닛 운전 중 항상 가동</text>
+                <text x="436" y="345" text-anchor="start" font-size="12" fill="var(--text-dim)">릴리프 배출</text>
+                <text x="40" y="428" text-anchor="start" font-size="12" fill="var(--text-dim)">공간에서</text>
+                <text x="500" y="428" text-anchor="end" font-size="12" fill="var(--text-dim)">혼합부로 →</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw ra"></span>회기</span>
+                <span><span class="sw ea"></span>릴리프 / 배기</span>
+            </div>
+
+            <!-- ───────────────── 3 · Power exhaust ───────────────── -->
+            <h2 class="subhead" id="power-exhaust">동력 배기: 댐퍼를 추종하는 팬</h2>
+
+            <p>
+                이 절의 핵심 문장은 다음과 같습니다. <strong>동력 배기팬은 회기팬이 아닙니다.</strong> 도면에서는 유닛 회기측 근처의 팬으로 비슷해 보일 수 있지만 서로 반대 규칙을 따릅니다. 회기팬은 <em>기류 안에</em> 있어 혼합부로 돌아가는 모든 공기가 통과하므로 급기팬이 운전할 때마다 항상 운전합니다. 동력 배기팬은 회기 경로에서 갈라진 측면 출구인 <em>릴리프 개구부 안에</em> 있으며 버릴 잉여 공기가 있을 때만 할 일이 있습니다. 최소 외기에서는 잉여량이 거의 없습니다. 이때 동력 배기팬을 돌리면 건물을 릴리프하는 것이 아니라 공기를 <em>빼내</em> 더 많은 외기를 요구하지 않은 댐퍼에 맞서 압력을 음압으로 만듭니다. 두 팬은 위치가 비슷할 뿐입니다.
+            </p>
+            <p>
+                그러면 무엇으로 동력 배기팬을 켜야 할까요? 회기팬 규칙인 급기팬 연동은 아닙니다. 전형적인 방식은 <em>외기 댐퍼 위치</em>에 따라 단수 제어하는 것입니다. <button type="button" data-gloss="economizer">외기냉방</button>이 댐퍼를 첫 임계값 너머로 열면 1단이 기동하고, 더 열리면 2단이 추가되며, 댐퍼가 닫힐 때는 같은 순서를 거꾸로 내려갑니다. 팬이 건물 압력을 실제로 측정하지 않고 댐퍼 위치로 잉여량을 <em>추정</em>하는 개루프 방식입니다. 댐퍼는 부드럽게 움직이지만 팬은 큰 단위로 투입되므로 압력이 단수 사이에서 완만한 톱니 모양을 보입니다. 더 정교한 시스템은 폐루프를 구성합니다. 건물 정압 센서가 배기팬의 VFD를 구동하고 다른 <a href="/ko/education/vfds.html">드라이브</a>와 마찬가지로 직접 설정값을 유지하도록 비례 제어합니다. 어느 방식이든 기동 로직은 <em>댐퍼</em> 또는 댐퍼가 만드는 압력을 따르며 급기팬 상태 포인트를 기동 조건으로 삼지 않습니다. 팬 상태를 운전 <em><button type="button" data-gloss="permissive">허가 조건</button></em>으로 쓰는 것은 적절합니다. 정지한 유닛에서 릴리프 장치가 운전해서는 안 되지만, 팬 상태가 배기를 시작하는 <em>이유</em>가 되어서는 안 됩니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 320" role="img" aria-labelledby="bp-d3-title bp-d3-desc"
+                 font-family="var(--mono)">
+                <title id="bp-d3-title">댐퍼 위치에 따른 동력 배기 단수 제어</title>
+                <desc id="bp-d3-desc">외기 댐퍼 위치가 닫힘에서 완전 열림까지 오른쪽으로 증가하는 단수 제어 차트입니다. 수동식 릴리프 댐퍼는 최소 개도부터 열립니다. 동력 배기 1단은 댐퍼가 첫 임계값을 지날 때 투입되고, 댐퍼가 더 열리면 2단, 3단, 4단이 차례로 투입됩니다. 다음 단수가 투입되어도 앞 단수는 계속 운전합니다. 기동 신호는 급기팬이 아니라 댐퍼라는 주석이 있습니다.</desc>
+
+                <!-- thesis line -->
+                <text x="315" y="30" text-anchor="middle" font-size="13" fill="var(--text-bright)">기동 신호는 급기팬이 아니라 댐퍼</text>
+
+                <!-- minimum-position marker (drawn before the bands so band
+                     fills and labels paint over the dotted line) -->
+                <line x1="204" y1="58" x2="204" y2="290" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="2 4"/>
+                <text x="204" y="50" text-anchor="middle" font-size="12" fill="var(--text-dim)">최소 개도</text>
+
+                <!-- stage bands -->
+                <rect x="204" y="70" width="296" height="26" fill="var(--teal)" fill-opacity="0.22" stroke="var(--teal)" stroke-width="1.5"/>
+                <rect x="222" y="115" width="278" height="26" fill="var(--blue)" fill-opacity="0.22" stroke="var(--blue)" stroke-width="1.5"/>
+                <rect x="296" y="160" width="204" height="26" fill="var(--blue)" fill-opacity="0.22" stroke="var(--blue)" stroke-width="1.5"/>
+                <rect x="370" y="205" width="130" height="26" fill="var(--blue)" fill-opacity="0.22" stroke="var(--blue)" stroke-width="1.5"/>
+                <rect x="444" y="250" width="56" height="26" fill="var(--blue)" fill-opacity="0.22" stroke="var(--blue)" stroke-width="1.5"/>
+
+                <!-- row labels -->
+                <text x="122" y="87" text-anchor="end" font-size="12" fill="var(--text-dim)">릴리프 댐퍼</text>
+                <text x="122" y="132" text-anchor="end" font-size="12" fill="var(--text-dim)">동력 배기 1단</text>
+                <text x="122" y="177" text-anchor="end" font-size="12" fill="var(--text-dim)">2단</text>
+                <text x="122" y="222" text-anchor="end" font-size="12" fill="var(--text-dim)">3단</text>
+                <text x="122" y="267" text-anchor="end" font-size="12" fill="var(--text-dim)">4단</text>
+
+                <!-- damper-position axis -->
+                <line x1="120" y1="290" x2="510" y2="290" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <polygon points="504,285 513,290 504,295" fill="var(--text-dim)"/>
+                <line x1="222" y1="284" x2="222" y2="296" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="296" y1="284" x2="296" y2="296" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="370" y1="284" x2="370" y2="296" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="444" y1="284" x2="444" y2="296" stroke="var(--text-dim)" stroke-width="1"/>
+                <text x="130" y="312" text-anchor="start" font-size="12" fill="var(--text-dim)">닫힘</text>
+                <text x="508" y="312" text-anchor="end" font-size="13" fill="var(--text)">OA 댐퍼 위치 →</text>
+            </svg>
+
+            <p style="margin-top:1.25rem;">
+                이 차트 한 장이 제어 원칙 전체를 보여 줍니다. 댐퍼가 더 열리면 릴리프를 늘리고 덜 열리면 줄이며, 최소 개도에서는 <em>동력 배기를 전혀 운전하지 않고</em> 수동 릴리프 경로가 소량의 공기를 처리합니다. 앞 페이지의 <a href="/ko/education/economizers.html#first-stage">외기냉방 단수 차트</a>와 닮은 점을 살펴보세요. 우연이 아니라 서로 맞물린 관계입니다. <button type="button" data-gloss="economizer">외기냉방</button>은 부하에 따라 냉방 단수를 제어하고, 동력 배기는 <button type="button" data-gloss="economizer">외기냉방</button>에 따라 릴리프 단수를 제어합니다. 시퀀스를 올바르게 결합하면 댐퍼가 열리고 릴리프가 따라가며 압력이 유지되어 전체 시스템이 자연스럽게 호흡합니다. 건물 안에서는 아무도 이를 의식하지 않습니다. 아래 위젯에서는 실제 현장에서 이 결합이 깨지는 방식으로 직접 깨뜨려 볼 수 있습니다.
+            </p>
+
+            <!-- ───────────────── 4 · Dampers and pressure ───────────────── -->
+            <h2 class="subhead" id="dampers-pressure">댐퍼가 움직이면 건물 압력이 반응합니다</h2>
+
+            <p>
+                이제 <a href="/ko/education/economizers.html#damper-assembly">외기냉방 페이지</a>에서 남긴 약속을 확인하겠습니다. OA 댐퍼가 추가로 들이는 모든 공기는 건물 어딘가로 나가야 합니다. 공기 수지가 무너지는 대표적인 두 방식이 현장에서 볼 수 있는 문제의 양끝을 이룹니다. <strong>작동하는 릴리프 경로 없이 <button type="button" data-gloss="economizer">외기냉방</button>을 최대로 운전하는 경우:</strong> 댐퍼가 100&nbsp;%까지 열리고 유닛은 전체 급기량을 외기로 건물에 밀어 넣지만, 고착된 댐퍼·정지한 배기팬·용량이 작은 중력식 날개 같은 릴리프 장치는 그 유량을 통과시키지 못합니다. 자체 누기가 유량을 감당할 때까지 건물이 부풀어 외부 출입문이 도어 클로저에 맞서 열린 채 있고 천장 타일이 들리며 로비에서는 사람이 들어올 때마다 바람이 몰아칩니다. <strong>최소 외기량에 비해 배기 부하가 큰 경우:</strong> 댐퍼가 최소 환기 개도에 있는 동안 주방 후드가 최대 풍량으로 기동하면 수지가 음수가 됩니다. 후드는 외피의 모든 틈을 통해 보충 공기를 역방향으로 끌어들이고 문이 무거워지며 파일럿 불꽃과 엘리베이터 문이 오작동합니다. 비대칭에 주의하세요. 릴리프 장치는 공기를 <em>밖으로만</em> 뺄 수 있습니다. 음압 건물에는 더 높은 OA 최소값이나 전용 보충공기 유닛처럼 더 많은 공기를 <em>안으로</em> 들이는 장치가 필요하며 릴리프 장비로는 공급할 수 없습니다.
+            </p>
+            <p>
+                나중을 위해 기억할 변수가 하나 있습니다. VAV 시스템에서는 급기팬 자체의 속도가 변하므로 수지의 유입 항목이 댐퍼 위치뿐 아니라 팬 속도에 따라서도 움직입니다. 이 상호작용은 <a href="/ko/education/vav-systems.html#minimums">이 장의 VAV 페이지</a>에서 다룹니다. 아래 시나리오는 댐퍼와 릴리프 장치에만 집중하도록 급기팬을 일정하게 유지합니다.
+            </p>
+
+            <!-- ───────────────── 5 · Pressure-ledger widget ───────────────── -->
+            <h2 class="subhead" id="pressure-ledger">공기 수지를 직접 맞춰 보세요</h2>
+
+            <p>
+                하나의 건물을 실시간으로 계산합니다. 유닛은 일정한 <span data-us="10,000&nbsp;CFM" data-metric="17,000&nbsp;m³/h">10,000&nbsp;CFM</span>을 공급합니다. 외기 비율과 운전할 배기 장치, 건물의 릴리프 장치를 선택하세요. 게이지는 공기 수지가 정착하는 압력을 보여 줍니다. 동력 배기를 선택한 채 댐퍼를 천천히 움직여 톱니 모양 변화를 관찰한 다음, 이 페이지 작성자가 실제로 했던 실수를 재현하는 마지막 프리셋을 실행해 보세요.
+            </p>
+
+            <div class="widget" id="bp-widget">
+                <div class="widget-try">
+                    <span class="lbl">실행 예:</span>
+                    <button type="button" data-bp-preset="baseline">최소 OA, 조용한 날</button>
+                    <button type="button" data-bp-preset="econ-open">외기냉방, 릴리프 경로 없음</button>
+                    <button type="button" data-bp-preset="hood">최소 OA에서 대형 후드</button>
+                    <button type="button" data-bp-preset="interlock">인터록 실수</button>
+                </div>
+
+                <div class="bp-w-top">
+                    <div>
+                        <div class="widget-readout-label" id="bp-w-relief-lbl">릴리프 장치</div>
+                        <div class="bp-w-modes" role="group" aria-labelledby="bp-w-relief-lbl">
+                            <button type="button" class="bp-w-mode-btn" data-bp-relief="none" aria-pressed="false">없음</button>
+                            <button type="button" class="bp-w-mode-btn" data-bp-relief="baro" aria-pressed="false">중력식</button>
+                            <button type="button" class="bp-w-mode-btn" data-bp-relief="pe" aria-pressed="true">동력 배기</button>
+                            <button type="button" class="bp-w-mode-btn" data-bp-relief="track" aria-pressed="false">회기팬 추종</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="widget-readout-label" id="bp-w-ef-lbl">배기 부하</div>
+                        <div class="bp-w-modes" role="group" aria-labelledby="bp-w-ef-lbl">
+                            <button type="button" class="bp-w-mode-btn" data-bp-ef="rr" aria-pressed="true">화장실 · <span data-us="800&nbsp;CFM" data-metric="1,360&nbsp;m³/h">800&nbsp;CFM</span></button>
+                            <button type="button" class="bp-w-mode-btn" data-bp-ef="hood" aria-pressed="false">주방 후드 · <span data-us="3,600&nbsp;CFM" data-metric="6,120&nbsp;m³/h">3,600&nbsp;CFM</span></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="widget-slider-head">
+                    <label for="bp-w-oa-slider">외기 비율</label>
+                    <span class="v" id="bp-w-oa-value">20 %{{ pageMessages.widget.minimumSuffix }}</span>
+                </div>
+                <input class="widget-slider" id="bp-w-oa-slider" type="range" min="20" max="100" step="1" value="20"/>
+
+                <div class="bp-w-strip">
+                    <div class="bp-w-line">
+                        <div class="bp-w-line-name">공기 유입 · 외기</div>
+                        <div class="bp-w-line-value" id="bp-w-in">2,000 CFM</div>
+                    </div>
+                    <div class="bp-w-line">
+                        <div class="bp-w-line-name">공기 유출 · 배기팬</div>
+                        <div class="bp-w-line-value" id="bp-w-ef">800 CFM</div>
+                    </div>
+                    <div class="bp-w-line">
+                        <div class="bp-w-line-name">공기 유출 · 릴리프 장치</div>
+                        <div class="bp-w-line-value" id="bp-w-relief">0 CFM</div>
+                    </div>
+                    <div class="bp-w-line">
+                        <div class="bp-w-line-name">잔여량 · 외피</div>
+                        <div class="bp-w-line-value" id="bp-w-leak">1,200 CFM {{ pageMessages.widget.direction.out }}</div>
+                    </div>
+                </div>
+
+                <div class="bp-w-stages" id="bp-w-stages">
+                    <span class="widget-readout-label" id="bp-w-stages-lbl">{{ pageMessages.widget.stages.following }}</span>
+                    <span class="bp-w-stage" id="bp-w-st1">1</span>
+                    <span class="bp-w-stage" id="bp-w-st2">2</span>
+                    <span class="bp-w-stage" id="bp-w-st3">3</span>
+                    <span class="bp-w-stage" id="bp-w-st4">4</span>
+                </div>
+
+                <div>
+                    <div class="widget-readout-label">건물 압력</div>
+                    <div class="widget-readout-value" id="bp-w-dp">+0.022<span class="unit"> in. w.c.</span></div>
+                </div>
+
+                <svg class="bp-w-gauge" viewBox="0 0 540 84" aria-hidden="true" font-family="var(--mono)">
+                    <rect x="288" y="34" width="28" height="24" fill="var(--accent)" fill-opacity="0.25" stroke="var(--accent)" stroke-width="1"/>
+                    <line x1="40" y1="46" x2="500" y2="46" stroke="var(--border)" stroke-width="2"/>
+                    <line x1="270" y1="34" x2="270" y2="58" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <polygon id="bp-w-needle" points="270,34 265,22 275,22" fill="var(--text-bright)"/>
+                    <text x="40" y="76" text-anchor="start" font-size="12" fill="var(--text-dim)">음압</text>
+                    <text x="302" y="76" text-anchor="middle" font-size="12" fill="var(--text-dim)">목표</text>
+                    <text x="500" y="76" text-anchor="end" font-size="12" fill="var(--text-dim)">양압</text>
+                </svg>
+
+                <div class="bp-w-status" id="bp-w-status" aria-live="polite">{{ pageMessages.widget.status.slightlyPositive }}</div>
+                <div class="bp-w-alert" id="bp-w-alert"></div>
+            </div>
+
+            <p class="ref-note">
+                위젯에서 고정한 조건은 바람과 연돌효과(여기서는 0이지만 현장에서는 절대 0이 아님), 하나의 외피 누기 곡선, 정풍량 급기팬입니다. 릴리프 개구부 자체에는 수동 용량이 없습니다. 실제 연동형 릴리프 댐퍼는 뒤쪽에 팬이 없어도 일부 공기를 빼내므로 릴리프 장치 없음 조건은 실제보다 조금 과장됩니다. 여기서는 릴리프팬도 압력과 무관한 정풍량으로 가정하지만 실제 배기팬의 CFM은 건물 압력이 맞설수록 감소합니다. 방향과 교훈은 그대로입니다. 릴리프는 공기를 뺄 수만 있고, 단수 제어는 거칠지만 댐퍼를 추종하면 정직하며, 추종 제어는 시운전 때 설정한 수지만 정확히 맞춥니다. 회기팬 추종 상태에서 주방 후드를 켜고 오래된 오프셋이 변한 공기 수지를 만나는 모습을 확인하세요.
+            </p>
+
+            <!-- ───────────────── 6 · Measuring it ───────────────── -->
+            <h2 class="subhead" id="measuring-it">미세한 압력 측정하기</h2>
+
+            <p>
+                위의 모든 설명은 건물 압력을 실제로 볼 수 있다고 가정했지만 신호가 속삭임처럼 작으므로 측정 자체를 따로 다뤄야 합니다. <span data-us="+0.03&nbsp;in. w.c." data-metric="+7.5&nbsp;Pa">+0.03&nbsp;in. w.c.</span> 설정값은 급기 덕트에서 사용할 수 있는 <span data-us="1.5&nbsp;in. w.c." data-metric="375&nbsp;Pa">1.5&nbsp;in. w.c.</span>보다 50배 작습니다. 잘못된 벽면에 부는 한 줄기 바람이 전체 설정값보다 큽니다. 따라서 설치 위치가 측정 품질의 대부분을 결정합니다. <em>실내 프로브</em>는 건물 중앙부의 복도나 개방형 사무실처럼 크고 대표적인 공간에 설치하고, 외부 출입문·엘리베이터 로비·움직이거나 돌풍을 만드는 모든 것에서 멀리 둡니다. 사람이 문을 통과할 때마다 루프가 추종해서는 안 되는 압력 스파이크가 생깁니다. <em>실외 기준</em>은 더 어렵습니다. 바람을 받는 벽의 노출 튜브는 압력이 아니라 바람을 읽으므로 차폐된 정압 평균 팁을 사용하고 가능하면 여러 면에서 샘플링해야 합니다. 그래도 바람과 겨울 연돌효과는 제어할 정보가 아니라 필터링할 노이즈로 신호에 섞입니다. 따라서 강한 필터링, 넓은 불감대, 느린 루프 동작, 충분한 지연의 알람으로 제어하세요. 건물 압력 포인트가 즉각 갱신되고 자신 있게 크게 흔들린다면 보통 건물보다 센서 설치 위치를 보여 주는 것입니다.
+            </p>
+
+            <div class="callout" style="margin-top:1.5rem;">
+                <h3>서로 다른 압력 <span>· 건물 정압 ≠ 덕트 정압</span></h3>
+                <p>현장에서 바로 구분해야 할 대표적인 혼동입니다. <em>덕트 정압</em>은 급기팬의 제어 변수로 덕트 안에서 <span data-us="{{ pageMessages.unitText.ductStaticMagnitude.us }}" data-metric="{{ pageMessages.unitText.ductStaticMagnitude.metric }}">수주 수 인치</span> 단위로 측정합니다. <em>건물 정압</em>은 외피의 잔여 압력으로 실내와 실외 사이에서 <span data-us="{{ pageMessages.unitText.buildingStaticMagnitude.us }}" data-metric="{{ pageMessages.unitText.buildingStaticMagnitude.metric }}">수주 수백분의 1인치</span> 단위로 측정합니다. 크기, 센서, 루프, 고장 증상이 모두 다릅니다. 덕트 정압이 정상이어도 공기 수지는 알 수 없고, 건물이 중립이어도 팬 상태는 알 수 없습니다. 급기팬이 덕트 정압을 유지하는 방법은 <a href="/ko/education/duct-static-control.html">별도 페이지</a>에서 설명합니다.</p>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                이것이 공기 수지입니다. 외기는 유입, 배기·릴리프·누기는 유출이며 압력은 외피가 느끼는 잔여량입니다. 중력식 릴리프는 양압을 낮추고, 동력 배기는 급기팬이 아니라 댐퍼를 추종하며, 회기팬은 연속 추종합니다. 어느 하나라도 잘못되면 출입문이 증거를 보여 줍니다. 이 장의 다음 내용에서는 <a href="/ko/education/air-unit-identification.html">처음 보는 유닛 앞에서 실제 장비 형식을 판별하는 <em>유닛 식별</em></a>을 다룬 뒤 <a href="/ko/education/vav-systems.html">VAV 시스템</a>과 <a href="/ko/education/duct-static-control.html">팬 속도 제어</a>로 이어집니다.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/forced-air/', label: '공기 시스템 참조 허브'},
+        tools: [
+            {href: '/ko/tools/economizer-ratio.html', label: '외기냉방 비율 도우미'},
+            {href: '/ko/tools/airflow.html', label: '풍량 계산기'},
+            {href: '/ko/tools/duct-traverse.html', label: '덕트 트래버스 계산기'},
+            {href: '/ko/tools/minimum-outdoor-air.html', label: '최소 외기량 계산기'}
+        ],
+        lessons: [
+            {href: '/ko/education/air-handlers.html', label: '공기조화기'},
+            {href: '/ko/education/economizers.html', label: '외기냉방'},
+            {href: '/ko/education/air-unit-identification.html', label: '유닛 식별'},
+            {href: '/ko/education/vav-systems.html', label: 'VAV 시스템'},
+            {href: '/ko/education/duct-static-control.html', label: '덕트 정압 제어'},
+            {href: '/ko/education/vfds.html', label: 'VFD'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/building-pressure.html', label: '건물 압력'},
+            {href: '/ko/practice/air-handlers.html', label: '공기조화기'},
+            {href: '/ko/practice/economizers.html', label: '외기냉방'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 교육 목록으로</a>
+
+</main>
+{% endblock %}

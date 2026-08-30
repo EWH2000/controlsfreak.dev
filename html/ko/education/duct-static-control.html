@@ -1,0 +1,540 @@
+---
+title: 덕트 정압 제어 — controlsfreak.dev
+description: VAV 시스템의 덕트 정압 센서·급기팬 VFD 루프·설정값 리셋 원리와 정상 정압이 풍량 부족을 가리는 이유를 자세히 설명합니다.
+canonical: https://controlsfreak.dev/ko/education/duct-static-control.html
+nav: education
+category: forced-air
+pairedQuiz: https://controlsfreak.dev/ko/practice/duct-static-control.html
+keywords: 덕트 정압 급기팬 VFD 속도 제어 정압 센서 위치 3분의 2 설정값 리셋 트림 앤드 리스폰드 고정압 차단 감지 튜브 트랜스듀서 포화 풀스케일
+sourceContentHash: 248c45dddef4532500f1ad6f0684a5ee69e948a1c5f0ab686220b60e8a425b7f
+sourceMessageHash: 0253ecdac41255d184c0bb28fe44783e2065bbb8f083e9ffdc63deca947b6f14
+pageMessages:
+  widget:
+    demandOf: "30개 중 {count}개"
+    overridden: 수동 고정
+    status:
+      sensorRailed: "센서가 {limit}에서 포화되었습니다. 풀스케일입니다. 실제 덕트 정압은 {actual} 부근이며 여기에는 정지시킬 장치가 없습니다."
+      fanPegged: 팬이 60 Hz에 고정되었지만 정압은 설정값보다 낮습니다. 박스는 완전히 열리고 풍량은 무너집니다. 앞 페이지의 악순환을 팬 관점에서 본 모습입니다.
+      fanPinned: 팬 속도가 고정되었습니다. 박스가 댐퍼를 조여 대응하므로 존 요구 풍량은 유지되고 추가 속도는 압력으로만 바뀝니다.
+      pinnedAtSetpoint: 60 Hz에 고정된 상태에서 설정값에 도달합니다. 설계 풍량에서는 오버라이드가 드러나지 않지만 다른 시간에는 그렇지 않습니다.
+      restrictionHigh: "정압은 설정값이고 풍량도 그대로지만 팬은 깨끗한 유닛보다 {hz} Hz를 더 사용합니다. 루프가 막힘을 감추고 있습니다."
+      restrictionLow: "정압은 설정값이며 이 풍량에서 결빙으로 더 필요한 속도는 {hz} Hz뿐입니다. 코일 위험이 가장 클 때 문제가 가장 깊이 가려집니다."
+      reset: "설정값이 {setpoint}까지 낮아졌습니다. 팬은 실제 사용 중인 만큼의 압력만 만듭니다. 다시 한번 세제곱 법칙입니다."
+      onSetpoint: 정압이 설정값에 도달했습니다. 하나의 수치가 30개 요구를 대표합니다.
+    anecdote: >-
+      이 프리셋은 앞 페이지에 나온 두 대의 공기조화기, 즉 DX 코일 풍량이 부족했던 건물을 팬 관점에서 본 것입니다. 진단 전에 먼저 시도한 수정은 눈앞의 수단을 택했습니다. 코일에 공기가 부족하니 팬을 더 돌려 공기를 늘리자는 것이었습니다. 압력 독립형 박스는 늘 그렇듯 댐퍼를 조여 설정 풍량을 유지했고 실제 풍량은 거의 변하지 않았습니다. 늘어난 팬 출력은 모두 압력으로 바뀌었고, 덕트 정압 트렌드는 정확히 2.5 in. w.c.에서 평평해진 채 몇 시간이고 지나치게 매끈하게 이어졌습니다. 그 평평한 선은 측정값이 아니라 측정 범위의 끝이었습니다. 0–10 V로 배선된 0–2.5 in. w.c. 트랜스듀서가 10 V에서 포화되어 실제 값이 그 위에 있다는 사실만 알려 준 것입니다. 센서가 말하지 못하는 상태를 잡아 줄 고정압 차단 장치도 없었습니다. 한 이야기 전의 저압 차단 장치 누락과 같은 무방비 상태였습니다. 실제 해결책은 정반대 방향이었습니다. 팬은 압력을 만들고 박스는 풍량을 결정하므로 팬은 애초에 문제가 아니었고, 코일에 필요한 것은 더 많은 <em>풍량</em>이었습니다. 그래서 판금 공사를 기다리는 동안 이 건물의 모든 박스는 최대 풍량으로 고정되었습니다.
+---
+{% extends "html/education/duct-static-control.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">교육 · 덕트 정압 제어</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">덕트 정압 제어 <span class="tool-tag">공기 시스템</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                <a href="/ko/education/vav-systems.html#loads-throttle">앞 페이지</a>가 끝난 지점에서 바로 이어갑니다.
+                오후 6시, 30개 존 루프가 같은 30분 안에 요구를 충족했고 30개 댐퍼가 동시에 최소 개도로 움직입니다.
+                팬은 주먹처럼 닫혀 가는 덕트 안으로 계속 공기를 밀고 있습니다. 무엇인가는 양보해야 하며 이 페이지는
+                바로 그 대상을 다룹니다. 처음부터 끝까지 한 가지 질문에 답합니다. <em>급기팬은 건물이 원하는 공기량을
+                어떻게 알며, 왜 풍량이 아니라 덕트 정압을 유지할까요?</em>
+            </p>
+
+            <div class="callout">
+                <p style="line-height:1.7;">
+                    이 페이지는 <a href="/ko/education/vav-systems.html">앞 페이지</a>에서 다룬 풍량 검출 링, 압력 독립성,
+                    최소 풍량 등 VAV 박스의 기본 구조와, <a href="/ko/education/air-handlers.html#air-path">이 장 첫 페이지의
+                    공기 경로</a> 마지막 구간인 팬이 <a href="/ko/education/vfds.html">VFD</a>로 구동된다는 내용을 전제로 합니다.
+                    수배관측의 <a href="/ko/education/pump-control.html">펌프 제어</a>를 읽었다면 이 페이지의 구조를 이미 알고 있습니다.
+                    유체만 바꾼 같은 내용이며 이를 여러 번 확인하게 됩니다.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · The signal ───────────────── -->
+
+            <h2 class="subhead" id="the-signal">덕트가 박스의 요구를 대신 전달합니다</h2>
+
+            <p>
+                먼저 팬이 할 수 없는 일을 보겠습니다. 팬은 각 존에 필요한 풍량을 물을 수 없습니다. 30개 풍량 검출 링은
+                각자 자기 루프를 담당하는 30개 박스 컨트롤러에 속하며 <a href="/ko/education/vav-systems.html#pressure-independence">박스
+                수준에서는 아무도 주덕트를 관리하지 않습니다</a>. 총풍량을 합산할 수 있더라도 이를 추종해서는 안 됩니다.
+                총풍량은 팬이 지켜야 할 약속이 아닙니다. 이동할 공기량은 존이 결정하며 이것이 앞 페이지의 핵심이었습니다.
+                박스가 팬에 요구하는 것은 더 단순합니다. <strong>어느 박스든 필요한 풍량을 가져갈 수 있도록 주덕트에 충분한
+                압력을 제공하는 것</strong>입니다. 팬은 압력을 만들고 박스는 풍량을 결정합니다.
+            </p>
+
+            <p>
+                덕트가 계산을 대신하므로 압력은 매우 정직한 전달 수단입니다. 30개 박스가 모두 하나의 주덕트에서 공기를
+                가져갑니다. 박스가 유량을 줄이면 팬은 갑자기 더 작은 개구부에 같은 힘으로 공기를 밀어 주덕트 압력이
+                상승합니다. 박스가 열리면 주덕트 압력이 낮아집니다. <strong>박스가 닫히면 정압이 올라 팬이 감속하고,
+                박스가 열리면 정압이 내려 팬이 가속합니다.</strong> 압력 센서 하나가 30개 요구를 요약합니다. 폴링도,
+                합산도, 오래되어 틀릴 계산도 없습니다. 팬은 시계가 아니라 건물 요구에 반응합니다.
+            </p>
+
+            <p>
+                이 네 박자 문장이 익숙하다면 <a href="/ko/education/pump-control.html">펌프 제어</a>에서 물을 대상으로 먼저 배웠기
+                때문입니다. 밸브가 닫히면 DP가 상승하고 펌프가 감속합니다. 방향과 로직, 세제곱 법칙에 따른 이익이 모두
+                같습니다. 수배관 학습에서는 <a href="/ko/education/load-piping.html">부하가 조절되고</a> 이송 장치가 반응한다는
+                대칭 구조를 두 페이지로 그렸습니다. 이제 공기 시스템에서도 두 절반이 완성됩니다. 앞 페이지는 조절,
+                이 페이지는 반응입니다. 오후 6시의 장면은 미완의 위기가 아니라 하나의 시퀀스가 됩니다. 댐퍼가 닫히고,
+                주덕트 압력이 오르며, 루프가 이를 감지하고, 팬은 올라왔던 방식대로 감속합니다. 이 페이지의 루프가 제 역할을
+                한다면 팬이 부드럽게 양보합니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 76 540 156" role="img" aria-labelledby="ds-d1-title ds-d1-desc" font-family="var(--mono)">
+                <title id="ds-d1-title">급기 주덕트를 중심으로 닫힌 덕트 정압 루프</title>
+                <desc id="ds-d1-desc">왼쪽의 공기조화기에는 급기팬과 VFD가 표시되어 있고, 급기 주덕트가 그림을 가로질러
+                    VAV 박스 분기 세 개를 지납니다. 생략 부호는 그리지 않은 박스를 나타냅니다. 정압 센서는 주덕트 길이의
+                    약 3분의 2 지점에 연결되며, 점선 신호선이 센서에서 유닛 VFD로 돌아가 속도 기준값을 전달합니다.
+                    급기는 파란색 실선으로 표시됩니다.</desc>
+
+                <!-- Air handler -->
+                <rect x="16" y="118" width="110" height="66" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="71" y="146" font-size="14" fill="var(--text-bright)" text-anchor="middle">AHU</text>
+                <text x="71" y="164" font-size="11" fill="var(--text-dim)" text-anchor="middle">급기팬 · VFD</text>
+
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes duct geometry — the static-loop widget is page
+                     math over HTML readouts. A future geometry write must refresh in the
+                     same breath, or the page must opt out via the `flowGeometryLive`
+                     frontmatter (flowStaticGuard, .eleventy.js). -->
+                <!-- Supply trunk (animated, full density) -->
+                <path id="ds-d1-trunk" data-flow="air" data-flow-static="true" d="M126 150 H510" fill="none" stroke="var(--blue)" stroke-width="4"/>
+                <polygon points="490,145 490,155 500,150" fill="var(--blue)"/>
+
+                <!-- Three box branches -->
+                <path id="ds-d1-br1" data-flow="air" data-flow-static="true" data-flow-density="0.35" d="M190 150 V190" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="176" y="190" width="28" height="16" fill="var(--surface)" stroke="var(--text)"/>
+                <path id="ds-d1-br2" data-flow="air" data-flow-static="true" data-flow-density="0.35" d="M290 150 V190" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="276" y="190" width="28" height="16" fill="var(--surface)" stroke="var(--text)"/>
+                <path id="ds-d1-br3" data-flow="air" data-flow-static="true" data-flow-density="0.35" d="M450 150 V190" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="436" y="190" width="28" height="16" fill="var(--surface)" stroke="var(--text)"/>
+                <text x="240" y="224" font-size="12" fill="var(--text)">VAV 박스</text>
+                <text x="480" y="224" font-size="13" fill="var(--text-dim)">… ×30</text>
+
+                <!-- Static sensor, two-thirds out -->
+                <line x1="382" y1="148" x2="382" y2="134" stroke="var(--teal)" stroke-width="2"/>
+                <circle cx="382" cy="126" r="8" fill="none" stroke="var(--teal)" stroke-width="2"/>
+                <text x="368" y="118" font-size="12" fill="var(--text)" text-anchor="end">정압 센서</text>
+                <text x="368" y="132" font-size="11" fill="var(--text-dim)" text-anchor="end">주덕트 3분의 2 지점</text>
+
+                <!-- Signal wire back to the VFD (dashed = wire, not duct) -->
+                <path d="M382 118 V96 H71 V114" fill="none" stroke="var(--text-dim)" stroke-width="1.5" stroke-dasharray="5 4"/>
+                <polygon points="66,110 76,110 71,118" fill="var(--text-dim)"/>
+                <text x="140" y="90" font-size="11" fill="var(--text-dim)">속도 기준값 — 폐루프</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw sa"></span>급기</span>
+            </div>
+
+            <!-- ───────────────── 2 · The loop ───────────────── -->
+
+            <h2 class="subhead" id="the-loop">덕트 3분의 2 지점의 센서 하나</h2>
+
+            <p>
+                루프는 세 부분으로 이루어지며 특별한 장치는 없습니다. 급기 주덕트에는 <em>압력 트랜스듀서</em>가 있습니다.
+                덕트 벽을 관통한 플라스틱 감지 튜브가 연결된 작은 상자로, 주변 공간을 기준으로 덕트 압력을 읽어 아날로그
+                신호로 보냅니다. 일반적인 중형 시스템의 <em>설정값</em>은 약 <span data-us="1.5&nbsp;in.&nbsp;w.c."
+                data-metric="375&nbsp;Pa">1.5&nbsp;in.&nbsp;w.c.</span>입니다. <a href="/ko/education/building-pressure.html#measuring-it">건물
+                압력</a>이 외피에서 측정한 값보다 50배 큰 수주 인치 단위입니다. 마지막은 출력으로 급기팬 VFD의 속도
+                기준값을 만드는 <em>PID 루프</em>입니다. 장치 전체는 <button type="button" data-gloss="ai">AI</button> 하나,
+                <button type="button" data-gloss="ao">AO</button> 하나, 그 사이의 빠른 루프 하나입니다.
+            </p>
+
+            <p>
+                <em>빠르다</em>는 점을 짚어야 합니다. 앞 페이지의 존 루프는 분 단위로 움직입니다. 실내가 천천히 따뜻해지고
+                댐퍼가 움직인 뒤 주변 조건이 따라옵니다. 덕트 압력은 팬에 <em>초 단위</em>로 반응합니다. 속도 기준값을
+                건드리면 센서가 거의 즉시 감지합니다. 이렇게 빠른 루프는 완만하게 튜닝하지 않으면 <button type="button"
+                data-gloss="hunting">헌팅</button>합니다. 급기팬 VFD와 덕트 정압으로 이루어진 이 루프는 <a
+                href="/ko/simulators/pid-tuner.html">PID 튜너</a>의 시나리오 중 하나입니다. 직접 운전해 얼마나 작은 게인이
+                필요한지 확인해 보세요. 이 페이지의 실습 도구입니다.
+            </p>
+
+            <p>
+                센서 위치는 중요한 설계 결정입니다. 팬 토출부에 설치하면 루프는 아무도 사용하지 않는 위치의 압력을
+                유지합니다. 설계 부하 오후에는 마지막 박스에 도달하기 전에 주덕트 먼 끝까지의 덕트 마찰로 압력 대부분을
+                소비합니다. 센서는 최악 조건을 볼 수도 없는데 이를 보호하려고 하루 종일 높은 값을 유지해야 합니다. 이는
+                수배관측 <a href="/ko/education/pump-control.html#dp-control">펌프 제어</a>에서 지적한 것과 같은 실수입니다.
+                펌프 근처의 국부 DP는 루프 말단 상태를 알려 주지 않습니다. 수배관에서는 센서를 가장 먼 부하로 옮깁니다.
+                공기 시스템은 같은 논리의 절충안인 <strong>주덕트 길이의 약 3분의 2 지점</strong>을 사용합니다. 박스가 실제로
+                느끼는 값과 비슷할 만큼 멀고, 센서 하나가 여러 분기를 대표할 만큼 가깝습니다. 중요하지 않은 곳에서 큰 값을
+                유지하는 대신 필요한 곳에서 적정 값을 유지하면 하루 모든 시간의 비용이 줄어듭니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 60 540 196" role="img" aria-labelledby="ds-d2-title ds-d2-desc" font-family="var(--mono)">
+                <title id="ds-d2-title">서로 다른 두 날의 주덕트 정압 분포</title>
+                <desc id="ds-d2-desc">아래쪽에 급기 덕트가 있고 왼쪽에는 팬, 오른쪽에는 말단이 있으며 정압 센서는 약
+                    3분의 2 지점에 표시되어 있습니다. 덕트 위에는 두 개의 압력 분포가 있습니다. 설계일 선은 팬에서 높게
+                    시작해 덕트를 따라 급격히 낮아지고, 온화한 날의 선은 거의 평평합니다. 어느 날이든 두 선은 센서 위치,
+                    즉 유지되는 설정값에서 교차합니다.</desc>
+
+                <!-- Pressure axis hint -->
+                <polygon points="24,72 32,72 28,62" fill="var(--text-dim)"/>
+                <text x="38" y="74" font-size="11" fill="var(--text-dim)">정압</text>
+
+                <!-- Design-day profile -->
+                <path d="M60 90 L353 120 L500 138" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+                <text x="88" y="84" font-size="13" fill="var(--text)">설계일 — 마찰로 크게 감소</text>
+
+                <!-- Mild-day profile -->
+                <path d="M60 118 L353 120 L500 121" fill="none" stroke="var(--blue-cool)" stroke-width="2.5"/>
+                <text x="88" y="140" font-size="13" fill="var(--text)">온화한 날 — 손실이 거의 없음</text>
+
+                <!-- The pivot: the sensor's held point -->
+                <circle cx="353" cy="120" r="6" fill="var(--bg)" stroke="var(--teal)" stroke-width="2.5"/>
+                <line x1="353" y1="128" x2="353" y2="224" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="4 4"/>
+                <text x="344" y="156" font-size="12" fill="var(--text-bright)" text-anchor="end">두 날 모두 설정값 유지</text>
+
+                <!-- The duct along the bottom -->
+                <line x1="60" y1="230" x2="500" y2="230" stroke="var(--border)" stroke-width="5"/>
+                <rect x="20" y="216" width="40" height="28" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="40" y="234" font-size="11" fill="var(--text-dim)" text-anchor="middle">팬</text>
+                <line x1="353" y1="224" x2="353" y2="236" stroke="var(--teal)" stroke-width="3"/>
+                <text x="345" y="252" font-size="11" fill="var(--text-dim)">센서</text>
+                <text x="500" y="252" font-size="11" fill="var(--text-dim)" text-anchor="end">말단</text>
+            </svg>
+
+            <p style="margin-top:1.25rem;">
+                이 압력 분포 그림을 기억해 두세요. 설계 부하 오후의 주덕트는 팬에서 높고 경로를 따라 압력을 소비하는 가파른
+                언덕과 같습니다. 온화한 저녁에는 거의 평평합니다. 움직이지 않는 한 지점은 센서 위치입니다. 루프는 유지하는
+                값을 중심으로 전체 분포를 회전시킵니다. 그 지점의 상류는 팬이 담당하고 하류는 박스가 담당합니다. 곧 이 구분이
+                중요해집니다.
+            </p>
+
+            <!-- ───────────────── 3 · Reset ───────────────── -->
+
+            <h2 class="subhead" id="reset">설정값 리셋: 다시 한번 세제곱 법칙</h2>
+
+            <p>
+                고정 설정값은 물에서와 같은 조용한 결함을 공기에서도 가집니다. 거의 발생하지 않는 최악 조건에 맞춰
+                선정됩니다. <span data-us="1.5&nbsp;in.&nbsp;w.c." data-metric="375&nbsp;Pa">1.5&nbsp;in.&nbsp;w.c.</span>는
+                연중 가장 더운 오후에도 가장 먼 박스가 설계 유량을 낼 수 있도록 정한 값입니다. 나머지 300일 동안 박스는
+                반쯤 닫혀 주덕트에 훨씬 적은 압력만 필요하지만 루프는 계속 설계값을 유지하고 각 박스는 자체 댐퍼에서 차이를
+                조절해 없앱니다. 팬이 세제곱 법칙에 따른 비용을 들여 만든 압력을 30개 댐퍼가 하루 종일 의도적으로 버립니다.
+            </p>
+
+            <p>
+                해결책은 <a href="/ko/education/pump-control.html#dp-reset">펌프 제어</a>와 같습니다. 아무도 필요로 하지 않을 때
+                설정값을 낮춥니다. 공기측 방식은 보통 <em>트림 앤드 리스폰드</em>라고 합니다. BMS가 박스 댐퍼를 폴링하고,
+                완전 열림에 가까운 박스가 없는 동안 정압 설정값을 조금씩 낮춥니다. 어느 박스가 주덕트가 제공하는 것보다
+                더 많은 압력을 요구해 완전 열림 한계로 움직이면 즉시 다시 높입니다. 정상 상태는 단순합니다. 설정값은
+                <strong>건물에서 가장 많이 열린 댐퍼가 거의 완전 열림인</strong> 위치에 정착합니다. 그 박스는 사실상 조절을
+                하지 않고 팬은 누군가 실제로 사용하는 압력만 만듭니다. 설정값 하강에는 하한이 있습니다. 정압이 너무 낮으면
+                먼 박스가 최소 환기량조차 만들지 못합니다. 하한과 설계값 사이에서는 설정값이 건물 요구를 따라갑니다.
+            </p>
+
+            <p>
+                이렇게 해야 하는 이유는 팬이 유닛에서 가장 큰 모터이고 동력이 속도의 <em>세제곱</em>에 비례하기 때문입니다.
+                속도를 절반으로 낮추면 동력은 8분의 1(약 13&nbsp;%)이 됩니다. 설정값이 0.1인치씩 낮아질 때마다 같은 급기량에서
+                팬을 그만큼 더 느리게 운전할 수 있고, 절감량은 <a href="/ko/tools/affinity-laws.html">상사 법칙 도구</a>의 계산처럼
+                누적됩니다. 고정 설정값 VAV 시스템도 세제곱 법칙의 이익 일부를 얻지만, 리셋을 적용하면 나머지까지 얻습니다.
+                아래 위젯에서 리셋 스위치는 온화한 저녁에 팬이 설계 동력의 약 5분의 1로 공회전하는 경우와 20분의 1로
+                공회전하는 경우의 차이를 만듭니다.
+            </p>
+
+            <!-- ───────────────── 4 · The war story ───────────────── -->
+
+            <h2 class="subhead" id="static-is-not-flow">정압은 풍량이 아닙니다</h2>
+
+            <p>
+                이제 이 페이지가 존재하는 이유인 어려운 교훈을 살펴보겠습니다. 위의 모든 내용에서 팬은 압력 측정값 하나로
+                건물 요구를 <em>추론</em>합니다. 추론의 신뢰성은 전제의 신뢰성에 달려 있으며, 핵심 전제는 팬과 박스 사이의
+                경로가 설계자가 그린 그대로라는 것입니다. 이 전제가 깨지면 루프는 완벽하게 작동해도 루프가 유지하는 수치는
+                의미를 잃습니다. <strong>덕트 정압은 압력을 보장할 뿐 풍량을 보장하지 않습니다.</strong> 문제가 되는 세 가지
+                경우를 심각도 순서로 살펴보겠습니다.
+            </p>
+
+            <p>
+                <em>첫째 — 설계 자체의 특성입니다.</em>
+                <span data-us="1.5&nbsp;in.&nbsp;w.c." data-metric="375&nbsp;Pa">1.5&nbsp;in.&nbsp;w.c.</span>, 즉 풍량
+                <span data-us="30,000&nbsp;CFM" data-metric="51,000&nbsp;m³/h">30,000&nbsp;CFM</span>에서의 값과
+                <span data-us="1.5&nbsp;in.&nbsp;w.c." data-metric="375&nbsp;Pa">1.5&nbsp;in.&nbsp;w.c.</span>, 즉 풍량
+                <span data-us="7,600&nbsp;CFM" data-metric="12,900&nbsp;m³/h">7,600&nbsp;CFM</span>에서의 값은
+                <em>센서에서 구분할 수 없습니다</em>. 이는 고장이 아니라 설계 의도입니다. 존 요구가 줄면 풍량이 자유롭게
+                감소하도록 루프가 압력을 일정하게 유지합니다. 그러나 정압 측정값이 정상이어도 풍량은 알 수 없다는 뜻입니다.
+                그래서 <a href="/ko/education/vav-systems.html#the-coil-floor">앞 페이지의 DX 인터록</a>은 정압이 아니라 반드시
+                <em>풍량</em>으로 검증해야 했습니다. 해당 건물에서는 정압 트렌드가 설정값에 평평하고 정상 상태로 머무는 동안
+                오후 내내 코일 풍량이 부족했습니다.
+            </p>
+
+            <p>
+                <em>둘째 — 막힘이 있을 때입니다.</em> 앞 건물처럼 코일이 결빙되었다고 가정합니다. 코일은 팬 상류에 있고 얼음은
+                저항입니다. 막혀 가는 코일로 같은 공기를 통과시키려면 이전보다 더 많은 팬 출력이 필요합니다. 그러나 루프는
+                코일을 알지 못합니다. 센서 값이 설정값보다 약간 낮다는 것만 알고 제 역할을 수행합니다. <em>정압이 설정값으로
+                돌아올 때까지 팬 속도를 높입니다.</em> 풍량과 정압은 같고 속도만 높아집니다. 루프가 고장을 적극적으로 가리며,
+                마찰 손실이 작아 추가 출력이 반올림하면 사라지는 저풍량에서 가장 깊이 가려집니다. 바로 코일 위험이 가장 큰
+                시간입니다. 루프가 정압 트렌드를 지키고 있으므로 여기서는 고장을 찾을 수 없습니다. 해당 건물의 트렌드에서
+                결국 드러난 <a href="/ko/education/vav-systems.html#the-coil-floor">흡입 압력</a>이나 팬 속도에서 찾아야 합니다.
+                <strong>주어진 풍량에서의 Hz가 정직한 수치</strong>이며, 같은 부하에서 주마다 Hz가 조금씩 오른다면 센서가 보지
+                못하는 위치에서 저항이 커지고 있다는 뜻입니다.
+            </p>
+
+            <p>
+                <em>셋째 — 이전에 시도한 수정입니다.</em> 같은 건물의 더 이른 이야기입니다. 코일에 공기가 부족하자 누군가
+                눈앞의 수단을 택합니다. 팬을 더 돌려 공기를 늘리는 것입니다. 하지만 박스는 압력 독립형입니다. 각 박스가
+                풍량 설정값을 유지하므로 주덕트 압력이 올라가면 댐퍼를 <em>조입니다</em>. 존이 이미 풍량을 정했으므로 실제
+                풍량은 거의 변하지 않고 추가 팬 출력은 갈 곳 없는 압력으로 바뀝니다. 트렌드에서 덕트 정압이 상승하다 정확히
+                <span data-us="2.5&nbsp;in.&nbsp;w.c." data-metric="625&nbsp;Pa">2.5&nbsp;in.&nbsp;w.c.</span>에서 평평해져
+                몇 시간이고 지나치게 매끄럽게 유지됩니다. 센서 범위 상단 부근의 둥근 수치에서 평평한 선은 측정값이 아닙니다.
+                <strong>센서가 풀스케일에서 <button type="button" data-gloss="railed">포화</button>된 것입니다.</strong> 0–10&nbsp;V로
+                배선된 0–2.5 in. w.c. 트랜스듀서가 10&nbsp;V에 고정되어 실제 값이 그 위에 있다는 사실만 보고합니다.
+                전압을 수주 인치로 바꾸는 계산은 <a href="/ko/tools/signal-scaling.html">신호 스케일링 도구</a>가 수행합니다.
+                범위 끝을 모르면 <button type="button" data-gloss="railed">포화</button> 신호가 보이지 않으므로 빠르게 계산할 수
+                있어야 합니다. <a href="/ko/education/analog-sensing.html#railed">아날로그 센싱 학습</a>의 세 번째 부분은 이 상한값
+                판독 능력을 다룹니다. 실제 정압은 표시값을 훨씬 넘어 고정압 차단 장치가 동작해야 할 수준이었지만 차단 장치가
+                없었습니다. 팬 출력을 높이는 것은 애초에 해답이 아니었습니다. <strong>팬은 압력을 만들고 박스는 풍량을
+                결정하며</strong>, 압력을 아무리 높여도 존 요구는 바뀌지 않습니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 64 540 166" role="img" aria-labelledby="ds-d3-title ds-d3-desc" font-family="var(--mono)">
+                <title id="ds-d3-title">정압 측정값은 같지만 풍량은 크게 다른 두 상태</title>
+                <desc id="ds-d3-desc">두 급기 덕트가 위아래로 그려져 있고 각각 같은 측정값을 가리키는 동일한 압력 게이지가
+                    연결되어 있습니다. 위쪽 덕트에는 설계 부하 오후의 많은 급기가 흐릅니다. 아래쪽 덕트에는 온화한 저녁의
+                    최소 풍량만 흐릅니다. 게이지는 두 상태를 구분할 수 없습니다.</desc>
+
+                <!-- Design afternoon: the river -->
+                <path id="ds-d3-full" data-flow="air" data-flow-static="true" d="M40 100 H420" fill="none" stroke="var(--blue)" stroke-width="5"/>
+                <polygon points="402,94 402,106 414,100" fill="var(--blue)"/>
+                <text x="40" y="82" font-size="13" fill="var(--text)">설계 부하 오후 — 많은 유량</text>
+
+                <!-- Mild evening: the trickle -->
+                <path id="ds-d3-min" data-flow="air" data-flow-static="true" data-flow-density="0.15" d="M40 200 H420" fill="none" stroke="var(--blue)" stroke-width="5"/>
+                <polygon points="402,194 402,206 414,200" fill="var(--blue)"/>
+                <text x="40" y="182" font-size="13" fill="var(--text)">온화한 저녁 — 적은 유량</text>
+
+                <!-- Two identical gauges, same needle -->
+                <line x1="452" y1="100" x2="470" y2="100" stroke="var(--teal)" stroke-width="2"/>
+                <circle cx="492" cy="100" r="22" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+                <line x1="492" y1="100" x2="480" y2="84" stroke="var(--text-bright)" stroke-width="2"/>
+                <circle cx="492" cy="100" r="2.5" fill="var(--text-bright)"/>
+
+                <line x1="452" y1="200" x2="470" y2="200" stroke="var(--teal)" stroke-width="2"/>
+                <circle cx="492" cy="200" r="22" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+                <line x1="492" y1="200" x2="480" y2="184" stroke="var(--text-bright)" stroke-width="2"/>
+                <circle cx="492" cy="200" r="2.5" fill="var(--text-bright)"/>
+
+                <text x="492" y="146" font-size="12" fill="var(--text-dim)" text-anchor="middle">같은 지시값</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw sa"></span>급기</span>
+            </div>
+
+            <!-- ───────────────── 5 · Safeties ───────────────── -->
+
+            <h2 class="subhead" id="safeties">루프가 보호할 수 없는 경우</h2>
+
+            <p>
+                위의 모든 제어는 하나의 작은 압력 신호를 전적으로 신뢰합니다. 따라서 알아야 할 고장은 모두 그 신호가
+                잘못되는 형태이며, 갖춰야 할 보호 장치는 그 신호에 의존하지 않는 장치입니다.
+            </p>
+
+            <p>
+                <em>고정압 차단 장치.</em> 루프가 작동하지 않는 오후 6시 상황, 즉 팬은 운전하지만 덕트가 주먹처럼 닫히는
+                상황은 덕트가 견디도록 설계되지 않은 압력으로 끝납니다. 이음부가 큰 소리를 내고 플렉시블 덕트가 연결부에서
+                빠지며 점검문이 휘어집니다. 해답은 <strong>별도의 기계식 압력 스위치</strong>입니다.
+                설정값보다 훨씬 높은 값, 예를 들어 <span data-us="4&nbsp;in.&nbsp;w.c." data-metric="1,000&nbsp;Pa">4&nbsp;in.&nbsp;w.c.</span> 수준으로
+                설정합니다. 이는 <span data-us="1.5&nbsp;in.&nbsp;w.c." data-metric="375&nbsp;Pa">1.5&nbsp;in.&nbsp;w.c.</span>를 유지하는 시스템에 충분한 여유를 둔 값입니다. 팬을 정지시키도록
+                하드와이어링하며, 보통 사람이 원인을 확인해야 복귀하도록 수동 리셋을 사용합니다. 핵심은 별도 장치라는 점입니다.
+                트랜스듀서 값을 이용한 로직이어서는 안 됩니다. 이 장치가 필요한 순간은 <button type="button" data-gloss="railed">포화</button>된
+                센서, 막힌 튜브, 정지한 컨트롤러처럼 트랜스듀서 값이 거짓인 순간이기 때문입니다. 앞 이야기의 건물에는 차단
+                장치가 전혀 없었으며 한 이야기 전의 저압 차단 장치 누락과 같은 무방비 상태였습니다. 소프트웨어 수치가 사라질
+                때 하드웨어가 대응합니다.
+            </p>
+
+            <p>
+                <em>감지 튜브.</em> 트랜스듀서의 정확도는 연결된 플라스틱 튜브의 상태에 달려 있습니다. 튜브는 패널에 눌리고,
+                먼지로 막히며, 피팅에서 꺾이고, 차가운 구간을 지나면 응축수가 얼어 막힙니다. <em>낮은</em> 값에 고정되는 방향이
+                위험합니다. 루프는 덕트 압력이 부족하다고 판단해 팬을 100&nbsp;%로 올리고, 센서는 계속 낮다고 보고하는 동안
+                실제 정압은 제어 없이 상승합니다. 이때 차단 장치가 값을 합니다. <em>높은</em> 값에 고정되면 조용한 반대 현상이
+                생깁니다. 팬은 저속 운전하고 먼 존의 풍량이 부족해 가장 긴 덕트 말단부터 불만이 접수됩니다. 펌프 제어의
+                <a href="/ko/education/pump-control.html#dp-control">트랜스듀서 드리프트 경고</a>도 배관만 다를 뿐 같은 내용입니다.
+                작은 센서 하나를 전적으로 신뢰하므로 교정하고 보호해야 합니다.
+            </p>
+
+            <p>
+                <em>덕트 자체.</em> 센서 상류의 파손된 플렉시블 연결부나 열린 채 방치된 점검문은 루프가 부하와 구분할 수 없는
+                구멍입니다. 정압이 형성되지 않아 팬은 100&nbsp;%에 고정되고 천장 플리넘을 계속 조화합니다. 앞서 본 정직한
+                수치인 부하와 더 이상 맞지 않는 팬 속도, 그리고 파손 지점 하류의 존들이 동시에 조용해지는 현상이 단서입니다.
+                루프는 원인을 판단하지 못한 채 더 이상 도달할 수 없는 설정값을 계속 유지하려 합니다.
+            </p>
+
+            <!-- ───────────────── 6 · Widget ───────────────── -->
+
+            <h2 class="subhead" id="drive-the-loop">팬을 운전하고 덕트를 관찰하세요</h2>
+
+            <p>
+                슬라이더 하나로 페이지 전체를 확인할 수 있습니다. 냉방을 요구하는 박스 수를 30개 중에서 조절하고 루프의
+                반응을 보세요. 정압을 유지하면서 건물 요구가 줄면 팬 속도도 내려갑니다. 설정값을 리셋으로 바꾸면 같은 저녁의
+                운전비가 더 낮아집니다. 이어서 이야기에서 발생한 두 방식으로 시스템을 고장 내 보세요. 코일을 결빙시키면
+                풍량과 정압은 같은데 속도만 높아지고 두 번째 표시줄의 정직한 수치와 달리 루프가 고장을 <em>가립니다</em>.
+                마지막 프리셋은 앞서 본 두 공기조화기에 시도했던 초기 수정 방법을 재현합니다.
+            </p>
+
+            <div class="widget" id="ds-widget">
+                <div class="widget-try">
+                    <span class="lbl">실행 예:</span>
+                    <button type="button" data-ds-preset="design">설계 부하 오후</button>
+                    <button type="button" data-ds-preset="six-oclock">오후 6시</button>
+                    <button type="button" data-ds-preset="reset">리셋 적용</button>
+                    <button type="button" data-ds-preset="restriction">가려진 막힘</button>
+                    <button type="button" data-ds-preset="old-fix">이전 수정</button>
+                </div>
+
+                <div class="widget-slider-head">
+                    <label for="ds-w-demand-slider">냉방 요구 중인 박스</label>
+                    <span class="v" id="ds-w-demand-value">{{ pageMessages.widget.demandOf | replace("{count}", "12") }}</span>
+                </div>
+                <input class="widget-slider" id="ds-w-demand-slider" type="range" min="0" max="30" step="1" value="12"/>
+
+                <div class="ds-w-top">
+                    <div>
+                        <div class="widget-readout-label" id="ds-w-sp-lbl">정압 설정값</div>
+                        <div class="ds-w-modes" role="group" aria-labelledby="ds-w-sp-lbl">
+                            <button type="button" class="ds-w-mode-btn" data-ds-sp="fixed" aria-pressed="true">고정</button>
+                            <button type="button" class="ds-w-mode-btn" data-ds-sp="reset" aria-pressed="false">트림 앤드 리스폰드</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="widget-readout-label" id="ds-w-coil-lbl">상류 코일</div>
+                        <div class="ds-w-modes" role="group" aria-labelledby="ds-w-coil-lbl">
+                            <button type="button" class="ds-w-mode-btn" data-ds-coil="clean" aria-pressed="true">깨끗함</button>
+                            <button type="button" class="ds-w-mode-btn" data-ds-coil="iced" aria-pressed="false">결빙</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="widget-readout-label" id="ds-w-fan-lbl">팬 제어</div>
+                        <div class="ds-w-modes" role="group" aria-labelledby="ds-w-fan-lbl">
+                            <button type="button" class="ds-w-mode-btn" data-ds-fan="auto" aria-pressed="true">루프 제어</button>
+                            <button type="button" class="ds-w-mode-btn" data-ds-fan="pinned" aria-pressed="false">60 Hz 고정</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ds-w-strip">
+                    <div class="ds-w-line">
+                        <div class="ds-w-line-name">덕트 정압 · 센서</div>
+                        <div class="ds-w-line-value" id="ds-w-static">1.50 in. w.c.</div>
+                    </div>
+                    <div class="ds-w-line">
+                        <div class="ds-w-line-name">설정값 · 현재</div>
+                        <div class="ds-w-line-value" id="ds-w-sp">1.50 in. w.c.</div>
+                    </div>
+                    <div class="ds-w-line">
+                        <div class="ds-w-line-name">팬 속도</div>
+                        <div class="ds-w-line-value" id="ds-w-hz">42.2 Hz</div>
+                    </div>
+                    <div class="ds-w-line">
+                        <div class="ds-w-line-name">팬 동력 · 설계 대비</div>
+                        <div class="ds-w-line-value" id="ds-w-power">35<span class="unit"> %</span></div>
+                    </div>
+                </div>
+
+                <div class="ds-w-seam">한편 덕트에서는</div>
+
+                <div class="ds-w-strip">
+                    <div class="ds-w-line">
+                        <div class="ds-w-line-name">총풍량 · 박스 30개</div>
+                        <div class="ds-w-line-value" id="ds-w-flow">16,560 CFM</div>
+                    </div>
+                    <div class="ds-w-line">
+                        <div class="ds-w-line-name">풍량 · 설계 대비</div>
+                        <div class="ds-w-line-value" id="ds-w-pct">55<span class="unit"> %</span></div>
+                    </div>
+                    <div class="ds-w-line">
+                        <div class="ds-w-line-name">깨끗한 유닛 · 같은 풍량</div>
+                        <div class="ds-w-line-value" id="ds-w-clean">42.2 Hz</div>
+                    </div>
+                </div>
+
+                <div class="ds-w-status" id="ds-w-status" aria-live="polite">{{ pageMessages.widget.status.onSetpoint }}</div>
+                <div class="ds-w-alert" id="ds-w-alert"></div>
+            </div>
+
+            <p class="ref-note">
+                위젯에서 고정한 조건은 루프 동특성(속도는 즉시 정착하며 <a href="/ko/simulators/pid-tuner.html">PID 튜너</a>에서
+                <button type="button" data-gloss="hunting">헌팅</button>과 튜닝을 다룸), 트림 앤드 리스폰드의 느린 조정 과정
+                (리셋은 설정값이 정착하는 위치만 보여 주며 조정에 걸리는 시간은 생략), 박스측(박스 30개를 요구 슬라이더 하나로
+                압축하며 자세한 내용은 <a href="/ko/education/vav-systems.html">앞 페이지</a>)입니다. 고정압 차단 장치도 모델링하지
+                않았으며 마지막 프리셋은 이 장치가 없을 때의 상태를 보여 줍니다. 정압은 <a href="/ko/education/building-pressure.html">건물
+                압력</a>과 마찬가지로 단위 전환을 따르지만 트랜스듀서의 0–2.5 in. w.c. 범위와 팬의 Hz는 IP 기반 현장 표기를
+                그대로 유지합니다.
+            </p>
+
+            <!-- ───────────────── 7 · Arc recap + handoff ───────────────── -->
+
+            <h2 class="subhead" id="the-whole-path">전체 경로 다시 살펴보기</h2>
+
+            <p>
+                유닛에서 루프까지의 흐름을 공기가 이동하는 순서대로 다시 살펴보겠습니다. 먼저 회기 그릴, 혼합부, 필터, 코일,
+                팬으로 이어지는 경로를 <a href="/ko/education/air-handlers.html">공기조화기</a>에서 모든 구성요소의 지도로 그렸습니다.
+                이어서 혼합부의 핵심 기능을 배웠습니다. 외기가 회기보다 유리할 때 <a href="/ko/education/economizers.html">댐퍼를 열어
+                무료로 냉방</a>합니다. 버린 공기는 <a href="/ko/education/building-pressure.html">건물 압력</a>에서 별도 수지 항목이 되어
+                외피가 균형을 맞춰야 했습니다. 그 과정에서 명판이 불분명해도 <a href="/ko/education/air-unit-identification.html">눈앞의
+                유닛 형식을 식별하는 법</a>을 배웠습니다. 급기 덕트 먼 끝에서는 <a href="/ko/education/vav-systems.html">30개 VAV 박스</a>가
+                각 실의 요구에 반응하며 아무도 주덕트를 관리하지 않았습니다. 이 페이지는 덕트 시작점에 해답을 놓았습니다.
+                길이의 3분의 2 지점에서 하나의 압력을 유지하는 팬이 30개 박스가 필요한 풍량을 가져가도록 합니다. 부하가
+                조절되고 이송 장치가 반응하는 구조를 물에서 한 번, 이제 공기에서 한 번 그렸습니다.
+            </p>
+
+            <p>
+                이 흐름은 작동해야 하는 시스템을 보여 줍니다. 다음 내용은 <em>작동해야 함</em>과 <em>실제로 작동함</em> 사이의
+                차이입니다. <a href="/ko/education/air-balancing.html">공기 밸런싱</a>은 존별로 모든 박스가 도면의 설계 유량을 실제로
+                받는지 검증합니다. 한 구역의 풍량이 부족해도 주덕트는 설정값에 정확히 머물 수 있으며 이 페이지의 루프는
+                그 고장을 볼 수 없습니다. <a href="/ko/education/dedicated-outdoor-air.html">외기전담공조</a>는 이 유닛에서 환기 역할을
+                완전히 분리해 그 일만 하도록 만든 장치에 맡기며, 이에 따라 여기 코일의 요구 조건도 달라집니다.
+            </p>
+
+            <p>
+                이 흐름을 이해하면 여러 도구가 더 이상 블랙박스로 보이지 않습니다. <a href="/ko/tools/airflow.html">풍량 계산기</a>는
+                판금을 벗긴 풍량 검출 링과 같습니다. <a href="/ko/tools/affinity-laws.html">상사 법칙 도구</a>는 이 페이지의 절감 논리를
+                실제 수치로 계산합니다. <a href="/ko/simulators/pid-tuner.html">PID 튜너</a>의 급기팬 시나리오는 <button type="button"
+                data-gloss="hunting">헌팅</button>까지 포함해 방금 운전한 루프입니다. 이 페이지들이 준비한 현장 방법은 다음과 같습니다.
+                다음에 공기조화기 앞에 서면 구성 구간을 따라가고, 유닛 형식을 식별하고, 댐퍼 최소 개도를 찾고, 릴리프가 어디로
+                가는지 확인하고, 주덕트를 따라 박스까지 간 다음, 누구의 말을 믿기 전에 팬 속도와 실제 풍량이라는 두 수치에
+                커서를 놓으세요. 정압은 설정값에 있을 것입니다. 대개 그렇습니다.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/forced-air/', label: '공기 시스템 참조 허브'},
+        tools: [
+            {href: '/ko/tools/affinity-laws.html', label: '상사 법칙'},
+            {href: '/ko/tools/signal-scaling.html', label: '신호 스케일링'},
+            {href: '/ko/tools/airflow.html', label: '풍량 계산기'},
+            {href: '/ko/tools/duct-traverse.html', label: '덕트 트래버스 계산기'},
+            {href: '/ko/tools/duct-sizer.html', label: '덕트 크기 계산기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/pid-tuner.html', label: 'PID 튜닝 도우미'},
+            {href: '/ko/simulators/vfd-mock.html', label: 'VFD 모의 인터페이스'}
+        ],
+        lessons: [
+            {href: '/ko/education/vav-systems.html', label: 'VAV 시스템'},
+            {href: '/ko/education/air-handlers.html', label: '공기조화기'},
+            {href: '/ko/education/building-pressure.html', label: '건물 압력'},
+            {href: '/ko/education/pump-control.html', label: '펌프 제어'},
+            {href: '/ko/education/vfds.html', label: 'VFD'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/duct-static-control.html', label: '덕트 정압 제어'},
+            {href: '/ko/practice/vav-systems.html', label: 'VAV 시스템'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 교육 목록으로</a>
+
+</main>
+{% endblock %}

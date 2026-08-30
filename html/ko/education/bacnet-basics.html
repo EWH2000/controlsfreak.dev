@@ -1,0 +1,510 @@
+---
+title: BACnet 기초 — controlsfreak.dev
+description: BACnet 통신의 자기 기술형 객체 모델, 속성을 읽고 쓰는 서비스, 우선순위 배열, Who-Is / I-Am 장치 탐색을 설명합니다.
+sourceContentHash: 75f56c734a40951e8fe2009f9fad2cd05c66d1553b32af3ac80365c72bf1d063
+canonical: https://controlsfreak.dev/ko/education/bacnet-basics.html
+nav: education
+category: protocols
+pairedQuiz: https://controlsfreak.dev/ko/practice/bacnet-basics.html
+keywords: 객체 인스턴스 장치 av bv ai ao 탐색 who-is cov 우선순위
+---
+{% extends "html/education/bacnet-basics.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">학습 · BACnet 기초</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">BACnet 기초 <span class="tool-tag">BACnet</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                BACnet은 현대 건물 자동화 시스템 대부분에서 사용하는 프로토콜입니다. 냉동기 플랜트 제어반, VAV(가변 풍량) 박스
+                컨트롤러, <abbr title="자바 애플리케이션 제어 엔진(Tridium Niagara 컨트롤러)">JACE</abbr>
+                또는 <abbr title="EcoStruxure 빌딩 오퍼레이션(Schneider Electric)">EBO</abbr> 상위 관리 장치
+                (건물의 컨트롤러를 관리하는 게이트웨이와 서버), Distech 액추에이터, Honeywell 옥상형 공조기를 다룬다면 거의 확실히 BACnet으로 통신하고 있습니다. 배경을 간단히 살펴보면, ASHRAE는 특정 제조사에 종속되지 않는 건물 제어용 공통 언어를 만들기 위해 1987년에 개발을 시작했습니다. BACnet을 정의하는 ASHRAE 135 표준은 산업의 요구 변화에 따라 새로운 객체 유형과 서비스를 계속 추가하며 발전해 왔습니다. 이 페이지는
+                <a href="/ko/tools/bacnet-ip-converter.html">BACnet/IP 16진수 변환기</a>
+                도구의 각주에서 안내하는 기초 설명입니다.
+            </p>
+
+            <h2 class="subhead" id="what-bacnet-is">BACnet인 것과 아닌 것</h2>
+
+            <p>
+                BACnet을 규정하는 핵심 개념은 <em>장치가 자신을 스스로 설명한다</em>는 것입니다.
+                네트워크의 BACnet 장치는 숫자로 가득 찬 메모리 블록만 노출하지 않습니다. 이름과 형식이 지정된 <em>객체</em> 목록을 제공하며, 각 객체에는 다시 이름과 형식이 지정된 <em>속성</em>이 있습니다. 장치에 어떤 객체가 있는지 물으면 답하고, 개별 객체의 이름, 단위, 현재 값을 물어도 답합니다. 프로토콜 자체에 충분한 메타데이터가 포함되어 있으므로 클라이언트는 처음 방문한 건물에서도 컨트롤러에 질의해 실제로 사용할 수 있는 포인트 목록을 만들 수 있습니다. 이 특성만으로도 기존 프로토콜과 뚜렷이 구별됩니다.
+            </p>
+
+            <p>
+                가장 자주 비교되는 대상은 Modbus입니다.
+                <a href="/ko/education/modbus-basics.html">Modbus</a>는 의도적으로 단순합니다. 레지스터는 16비트에 불과하며, 그 비트가 십분의 일 도 단위 온도인지 여러 상태를 묶은 워드인지는 제조사 매뉴얼을 봐야만 알 수 있습니다. BACnet은 반대입니다. BACnet의 Analog Input 객체는 <em>자신에 대해</em> <code>Object_Name</code>, <code>Units</code>,
+                <code>Description</code>, 현재 <code>Present_Value</code>, 상한과 하한, 그 밖의 수십 가지 속성을 알고 있습니다. 이 정보를 별도 문서에 둘 필요가 없습니다. 프로토콜이 레이블과 값을 함께 전달합니다.
+            </p>
+
+            <p>
+                BACnet은 특정 배선 하나를 뜻하지도 않습니다. ASHRAE 135는 객체, 속성, 서비스, 주소 지정으로 구성된 프로토콜 논리를 한 번 정의한 뒤, 이를 여러 물리 매체로 전달할 수 있도록 몇 가지 <em>데이터 링크 옵션</em>을 정의합니다. 현장에서 주로 접하는 두 방식은 일반 Ethernet/IP 네트워크의 UDP 데이터그램을 사용하는 <strong>BACnet/IP</strong>와, 토큰을 전달하는 마스터 링을 구성해 RS-485 연선에서 동작하는 <strong>BACnet <abbr title="Master-Slave/Token-Passing(마스터-슬레이브/토큰 패싱)">MS/TP</abbr></strong>입니다.
+                TLS WebSocket을 사용하는 최신 <strong>BACnet/SC</strong>(Secure Connect)와 기존 <strong>BACnet/Ethernet</strong>도 있지만 건물 자동화 시스템(BAS) 업무에서는 비교적 드뭅니다. 어떤 데이터 링크를 사용하더라도 상위 객체 모델과 서비스는 같습니다.
+            </p>
+
+            <h2 class="subhead" id="objects">장치, 객체, 속성</h2>
+
+            <p>
+                모든 정보는 세 개의 중첩 계층에 담깁니다. <strong>장치</strong>는 JACE, VAV 박스 컨트롤러, 냉동기 내장 BACnet 카드, MS/TP 온도조절기 같은 컨트롤러입니다. 각 장치는 BACnet 네트워크 전체에서 고유한 <em>장치 인스턴스 번호</em> 하나를 가집니다. 값의 범위는 0부터 4,194,302까지이며 흔히 <code>device:1001</code>처럼 표기합니다. 장치는 자신을 하나의 <strong>Device 객체</strong>로 노출합니다.
+            </p>
+
+            <p>
+                장치 안에는 <strong>객체</strong>가 있습니다. 장치가 네트워크에 노출하려는 모든 입력, 출력, 설정값, 스케줄, 경보, 달력 항목, 파일, 논리 포인트는 객체입니다. 각 객체는 유형(<code>Analog Input</code>, <code>Binary Output</code>, <code>Multi-state Value</code>, <code>Schedule</code> 등)과 <em>장치 내부에서</em> 고유한 인스턴스 번호를 가집니다. 이 두 값이 객체의 <code>Object_Identifier</code>를 구성합니다. 내부적으로는 객체 유형 10비트와 인스턴스 번호 22비트를 하나의 32비트 값에 담지만, 사람이 읽을 때는 항상 <code>analog-input,3</code> 또는 <code>AI:3</code>처럼 두 값을 함께 표기합니다.
+            </p>
+
+            <p>
+                객체 안에는 <strong>속성</strong>이 있습니다. 모든 객체는 최소한 <code>Object_Identifier</code>, <code>Object_Name</code>, <code>Object_Type</code>, 현재 <code>Present_Value</code>를 가집니다. 대부분은 이외에도 열두 개 이상의 속성을 제공합니다. Analog Input은 일반적으로 <code>Units</code>, <code>Description</code>, <code>Status_Flags</code>, <code>High_Limit</code>, <code>Low_Limit</code>, <code>COV_Increment</code> 등도 노출합니다. 실제 데이터는 속성에 들어 있으며, 모든 읽기와 쓰기는 특정 장치의 특정 객체에 있는 특정 속성을 대상으로 합니다.
+            </p>
+
+            <svg class="bac-svg" viewBox="0 0 620 270" role="img"
+                 aria-labelledby="bb-hier-title bb-hier-desc">
+                <title id="bb-hier-title">장치, 객체, 속성의 계층 구조</title>
+                <desc id="bb-hier-desc">"device:1001"이라고 표시된 장치 상자에 analog-input,1, analog-output,1, binary-value,3, device,1001 객체 상자 네 개가 들어 있습니다. analog-input,1 객체에서 오른쪽의 펼쳐진 속성 목록으로 화살표가 이어집니다. 목록에는 Object_Identifier, "OAT"로 설정된 Object_Name, ANALOG_INPUT으로 설정된 Object_Type, 58.4인 Present_Value, DEGREES_FAHRENHEIT인 Units, Status_Flags가 표시됩니다. 장치에는 객체가 들어 있고 각 객체에는 이름과 형식이 지정된 속성이 들어 있음을 보여 줍니다.</desc>
+
+                <!-- Device box (outer) -->
+                <rect x="20" y="40" width="240" height="220" rx="4" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                <text x="140" y="60" text-anchor="middle" font-family="var(--mono)" font-size="12" font-weight="600" fill="var(--text-bright)">device:1001</text>
+                <text x="140" y="74" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">(컨트롤러)</text>
+
+                <!-- Object boxes inside the device. AI:1 sits in the top-right
+                     position so the explode arrow to the property panel has a
+                     clean path with no other object boxes in the way. -->
+                <g font-family="var(--mono)" font-size="11" text-anchor="middle">
+                    <rect x="38"  y="92"  width="100" height="34" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="88"  y="113" fill="var(--text-bright)">AO:1</text>
+
+                    <rect x="142" y="92"  width="100" height="34" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>
+                    <text x="192" y="113" font-weight="600" fill="var(--accent)">AI:1</text>
+
+                    <rect x="38"  y="134" width="100" height="34" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="88"  y="155" fill="var(--text-bright)">BV:3</text>
+
+                    <rect x="142" y="134" width="100" height="34" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="192" y="155" fill="var(--text-bright)">SCHED:1</text>
+
+                    <rect x="38"  y="176" width="204" height="34" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="140" y="197" fill="var(--text-bright)">DEV:1001</text>
+                </g>
+                <text x="140" y="232" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">장치 내부 객체</text>
+
+                <!-- Arrow: AI:1 exploded to property list -->
+                <line x1="242" y1="109" x2="335" y2="109" stroke="var(--accent)" stroke-width="1.6"/>
+                <polygon points="325,104 335,109 325,114" fill="var(--accent)"/>
+
+                <!-- Property list (right) -->
+                <rect x="335" y="50" width="265" height="200" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>
+                <text x="467" y="68" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--accent)">analog-input,1 · 속성</text>
+
+                <g font-family="var(--mono)" font-size="10.5">
+                    <text x="345" y="92"  fill="var(--text-dim)">Object_Identifier</text><text x="595" y="92"  text-anchor="end" fill="var(--text-bright)">AI:1</text>
+                    <text x="345" y="113" fill="var(--text-dim)">Object_Name</text>      <text x="595" y="113" text-anchor="end" fill="var(--text-bright)">"OAT"</text>
+                    <text x="345" y="134" fill="var(--text-dim)">Object_Type</text>      <text x="595" y="134" text-anchor="end" fill="var(--text-bright)">ANALOG_INPUT</text>
+                    <text x="345" y="155" fill="var(--text-dim)">Present_Value</text>    <text x="595" y="155" text-anchor="end" fill="var(--blue)">58.4</text>
+                    <text x="345" y="176" fill="var(--text-dim)">Units</text>            <text x="595" y="176" text-anchor="end" fill="var(--text-bright)">DEGREES_FAHRENHEIT</text>
+                    <text x="345" y="197" fill="var(--text-dim)">Description</text>     <text x="595" y="197" text-anchor="end" fill="var(--text-bright)">"외기 온도"</text>
+                    <text x="345" y="218" fill="var(--text-dim)">Status_Flags</text>     <text x="595" y="218" text-anchor="end" fill="var(--text-bright)">{F, F, F, F}</text>
+                    <text x="345" y="239" fill="var(--text-dim)">COV_Increment</text>    <text x="595" y="239" text-anchor="end" fill="var(--text-bright)">0.5</text>
+                </g>
+            </svg>
+
+            <p>
+                객체 유형은 몇 가지 익숙한 계열로 묶을 수 있습니다. 그중 아날로그, 바이너리, 다중 상태의 구분을 기억해 두세요.
+            </p>
+
+            <div class="callout-grid loose">
+                <div class="callout">
+                    <h3>아날로그 <span>· AI · AO · AV</span></h3>
+                    <p>32비트 부동소수점 값입니다. <code>Analog Input</code>은 센서 측정값, <code>Analog Output</code>은 컨트롤러가 구동하는 하드웨어 출력, <code>Analog Value</code>는 소프트웨어에만 존재하는 설정값 또는 계산값에 사용합니다.</p>
+                </div>
+                <div class="callout">
+                    <h3>바이너리 <span>· BI · BO · BV</span></h3>
+                    <p>두 가지 상태값(ACTIVE / INACTIVE)입니다. <code>Binary Input</code>은 접점 입력, <code>Binary Output</code>은 컨트롤러가 구동하는 릴레이, <code>Binary Value</code>는 소프트웨어에서만 사용하는 활성화 또는 강제 조작 플래그에 사용합니다.</p>
+                </div>
+                <div class="callout">
+                    <h3>다중 상태 <span>· MSI · MSO · MSV</span></h3>
+                    <p>OFF / LOW / HIGH 또는 AUTO / HEAT / COOL / OFF처럼 이름이 있는 세 가지 이상의 열거형 상태값입니다. 상태 이름은 객체의 <code>State_Text</code> 속성에 저장되며 1부터 시작하는 정수로 지정합니다.</p>
+                </div>
+                <div class="callout">
+                    <h3>장치 <span>· DEV</span></h3>
+                    <p>컨트롤러 자체를 객체로 노출합니다. 장치 인스턴스 번호, <a href="/ko/tools/bacnet-vendor-ids.html">공급업체 ID</a>, 모델, 펌웨어 버전, 컨트롤러가 제공하는 다른 모든 객체 목록을 담습니다.</p>
+                </div>
+            </div>
+
+            <p>
+                이외에도 <code>Schedule</code>, <code>Calendar</code>, <code>Trend Log</code>, <code>Notification Class</code>, <code>File</code>, <code>Loop</code>, <code>Group</code> 등 여러 객체가 있으며 각각 고유한 속성 집합을 가집니다. 대부분의 BAS 업무에서는 아날로그·바이너리·다중 상태 계열, 장치 탐색을 위한 Device 객체, 시간대별 로직을 위한 Schedule 계열을 주로 다룹니다. 나머지는 특정 기능이 필요할 때 나타납니다.
+            </p>
+
+            <h2 class="subhead" id="services">현장에서 접하는 서비스</h2>
+
+            <p>
+                <em>서비스</em>는 객체 모델에 수행하는 동작입니다. 클라이언트가 속성을 읽거나 쓰고, 경보를 확인하거나, 값 변경 알림을 구독하기 위해 통신망에 보내는 요청입니다. ASHRAE 135에는 약 서른다섯 가지 서비스가 정의되어 있지만 일반적인 BAS의 거의 모든 작업은 다음 몇 가지가 처리합니다.
+            </p>
+
+            <ul>
+                <li><strong><code>ReadProperty</code></strong> — 한 객체의 속성 하나를 가져옵니다. 일상적인 읽기 요청은 "<code>device:1001</code>의 <code>AI:3</code>에 있는 <code>Present_Value</code>는 무엇인가?"와 같습니다. 응답에는 해당 속성이 보유한 형식 지정 값(실수, 정수, 불리언, 열거형, 문자열)이 들어 있습니다.</li>
+                <li><strong><code>WriteProperty</code></strong> — 한 객체의 속성 하나를 설정합니다. 일상적인 쓰기 요청은 "<code>AO:1</code>의 <code>Present_Value</code>를 우선순위 16에서 75&nbsp;%로 설정하라"와 같습니다. 명령 가능 객체에서는 우선순위도 쓰기 요청의 일부입니다. 다음 절에서 자세히 설명합니다.</li>
+                <li><strong><code>ReadPropertyMultiple</code> /
+                    <code>WritePropertyMultiple</code></strong> — 여러 속성을 한 요청으로 가져오거나 설정합니다. 그래픽 화면에 필요한 포인트를 컨트롤러에서 폴링할 때 수많은 개별 ReadProperty 호출 대신 이 서비스를 사용합니다. 속성 하나를 요청하든 서른 개를 요청하든 네트워크 오버헤드는 같습니다.</li>
+                <li><strong><code>SubscribeCOV</code> +
+                    <code>ConfirmedCOV-Notification</code></strong> —
+                    <em>Change of Value(COV, 값 변경)</em>입니다. 클라이언트가 폴링하는 대신 한 번 구독하면, 값이 해당 속성의 <code>COV_Increment</code>보다 크게 변할 때마다 장치가 알림을 보냅니다. 가져오는 방식이 아니라 푸시 방식입니다. Modbus에서는 값 변경을 놓치지 않도록 클라이언트가 충분히 자주 폴링해야 하지만, BACnet에서는 변경이 발생했을 때 장치가 클라이언트에 알릴 수 있습니다. 구독에는 유효 기간이 있으므로 클라이언트는 만료 전에 다시 구독합니다.</li>
+                <li><strong><code>Who-Is</code> / <code>I-Am</code></strong> — 장치 탐색을 처리하는 비확인형 브로드캐스트 쌍입니다. 다음 절에서 따로 설명합니다.</li>
+            </ul>
+
+            <p>
+                <code>AcknowledgeAlarm</code>, <code>ReinitializeDevice</code>, <code>AtomicReadFile</code>, <code>CreateObject</code>, 시간 동기화 서비스 등은 관련 기능을 사용할 때 나타납니다. 위 다섯 가지가 건물 전체에서 이루어지는 일상적인 읽기, 쓰기, 알림의 거의 전부를 처리합니다. 확인형과 비확인형의 구분, 서비스 계열, 특정 장치가 실제로 어떤 서비스를 지원하는지 나타내는 <strong><button type="button" data-gloss="bibb">BIBB</button></strong>는 <a href="/ko/education/bacnet-services.html">BACnet 서비스</a>에서 더 자세히 설명합니다.
+            </p>
+
+            <h2 class="subhead" id="priority-array">우선순위 배열 — BACnet 명령 스택</h2>
+
+            <p>
+                모든 <em>명령 가능</em> 객체, 즉 Analog Output, Binary Output과 명령 가능으로 구성된 Analog/Binary/Multi-state Value에는 <code>Priority_Array</code>라는 특수 속성이 있습니다. 대기 중인 명령을 보관하는 16슬롯 배열이며 인덱스는 1부터 16까지입니다. <code>Present_Value</code>에 대한 <code>WriteProperty</code>는 값을 단순히 덮어쓰지 않고 선택한 우선순위의 배열 슬롯에 기록합니다. 그러면 객체의 실제 <code>Present_Value</code>는 <em>번호가 가장 낮은 null이 아닌 슬롯의 값</em>으로 결정됩니다. 모든 슬롯이 null이면 <code><button type="button" data-gloss="relinquish-default">Relinquish_Default</button></code> 속성값을 사용합니다.
+            </p>
+
+            <p>
+                슬롯 1의 우선순위가 가장 높고 슬롯 16이 가장 낮습니다. 업계 관행상 번호가 낮은 슬롯은 중요한 명령을 위해 예약합니다. 슬롯 1은 수동 인명 안전 명령, 슬롯 5와 6은 중요 설비 및 최소 켜짐·꺼짐 명령에 사용합니다. 슬롯 8은 운영자의 수동 강제 조작, 슬롯 16은 BMS의 일반 제어 시퀀스가 기록하는 슬롯입니다. 슬롯 9–15는 주로 애플리케이션별 용도로 사용할 수 있습니다. 전체 예약표는 ASHRAE 135에 있습니다. 일상적인 고장 진단에서는 "슬롯 8이 슬롯 16보다 우선하며, 슬롯 8에 null을 쓰면 슬롯 16이 제어권을 넘겨받는다"는 원칙을 기억하면 됩니다.
+            </p>
+
+            <p>
+                예제를 따라가 보겠습니다. BMS 제어 시퀀스가 슬롯 16에 댐퍼 개도 65&nbsp;%를 씁니다. 기술자가 운영자 워크스테이션에서 같은 댐퍼를 슬롯 8의 0&nbsp;%로 수동 강제 조작합니다. 이제 객체의 <code>Present_Value</code>는 0&nbsp;%로 결정됩니다. 슬롯 8의 인덱스가 슬롯 16의 시퀀스보다 낮아 우선순위가 더 높기 때문입니다. 작업이 끝나면 기술자는 슬롯 8에 <em>null</em>을 쓰는 같은 <code>WriteProperty</code> 요청을 보냅니다. 슬롯 8이 비고, null이 아닌 가장 낮은 번호의 슬롯이 16이 되면서 댐퍼는 다시 65&nbsp;%로 돌아갑니다. 제어 시퀀스에 별도 알림을 보낼 필요 없이 시퀀스 값이 새로운 최종값이 됩니다.
+            </p>
+
+            <svg class="bac-svg" viewBox="0 0 620 380" role="img"
+                 aria-labelledby="bb-pri-title bb-pri-desc">
+                <title id="bb-pri-title">우선순위 배열 — 슬롯 8 강제 조작이 슬롯 16 시퀀스보다 우선</title>
+                <desc id="bb-pri-desc">위쪽 1부터 아래쪽 16까지 번호가 붙은 슬롯 열여섯 개가 세로로 쌓여 있습니다. 슬롯 1은 "인명 안전"으로 표시되고 null을 담고 있습니다. 슬롯 8은 "수동 강제 조작"으로 표시되며 강조색으로 표시된 0퍼센트 값을 담고 있습니다. 슬롯 2–7과 9–15는 null이며 흐리게 표시됩니다. 슬롯 16은 "BMS 시퀀스"로 표시되고 65퍼센트를 담고 있습니다. 슬롯 8의 화살표는 오른쪽의 0퍼센트 Present_Value 상자를 가리키며 "번호가 가장 낮은 null 아닌 슬롯이 우선"이라고 표시됩니다. 아래쪽 주석은 슬롯 8에 null을 쓰면 슬롯 16이 null이 아닌 가장 낮은 번호의 슬롯이 되어 값이 65퍼센트로 바뀐다고 설명합니다.</desc>
+
+                <!-- Header -->
+                <text x="135" y="22" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">AO:1의 Priority_Array</text>
+                <text x="475" y="22" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text-dim)">Present_Value</text>
+
+                <!-- 16 slot rows -->
+                <g font-family="var(--mono)" font-size="10.5">
+                    <!-- Helper: each row is 18px tall, starting at y=36 -->
+                    <!-- slot 1: life safety, null -->
+                    <rect x="20"  y="36"  width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="49" fill="var(--text-dim)">1</text>
+                    <text x="55"  y="49" fill="var(--text-dim)">인명 안전</text>
+                    <text x="268" y="49" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 2 -->
+                    <rect x="20"  y="54"  width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="67" fill="var(--text-dim)">2</text>
+                    <text x="268" y="67" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 3 -->
+                    <rect x="20"  y="72"  width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="85" fill="var(--text-dim)">3</text>
+                    <text x="268" y="85" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 4 -->
+                    <rect x="20"  y="90"  width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="103" fill="var(--text-dim)">4</text>
+                    <text x="268" y="103" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 5 -->
+                    <rect x="20"  y="108" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="121" fill="var(--text-dim)">5</text>
+                    <text x="55"  y="121" fill="var(--text-dim)">중요 설비</text>
+                    <text x="268" y="121" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 6 -->
+                    <rect x="20"  y="126" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="139" fill="var(--text-dim)">6</text>
+                    <text x="55"  y="139" fill="var(--text-dim)">최소 켜짐/꺼짐</text>
+                    <text x="268" y="139" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 7 -->
+                    <rect x="20"  y="144" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="157" fill="var(--text-dim)">7</text>
+                    <text x="268" y="157" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 8: manual override — populated, highlighted -->
+                    <rect x="20"  y="162" width="260" height="20" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.8"/>
+                    <text x="32"  y="176" font-weight="700" fill="var(--accent)">8</text>
+                    <text x="55"  y="176" font-weight="600" fill="var(--accent)">수동 강제 조작</text>
+                    <text x="268" y="176" text-anchor="end" font-weight="700" fill="var(--accent)">0 %</text>
+
+                    <!-- slot 9 -->
+                    <rect x="20"  y="182" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="195" fill="var(--text-dim)">9</text>
+                    <text x="268" y="195" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 10 -->
+                    <rect x="20"  y="200" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="213" fill="var(--text-dim)">10</text>
+                    <text x="268" y="213" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 11 -->
+                    <rect x="20"  y="218" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="231" fill="var(--text-dim)">11</text>
+                    <text x="268" y="231" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 12 -->
+                    <rect x="20"  y="236" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="249" fill="var(--text-dim)">12</text>
+                    <text x="268" y="249" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 13 -->
+                    <rect x="20"  y="254" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="267" fill="var(--text-dim)">13</text>
+                    <text x="268" y="267" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 14 -->
+                    <rect x="20"  y="272" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="285" fill="var(--text-dim)">14</text>
+                    <text x="268" y="285" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 15 -->
+                    <rect x="20"  y="290" width="260" height="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="0.8"/>
+                    <text x="32"  y="303" fill="var(--text-dim)">15</text>
+                    <text x="268" y="303" text-anchor="end" fill="var(--text-dim)">null</text>
+
+                    <!-- slot 16: BMS sequence — populated, lighter highlight -->
+                    <rect x="20"  y="308" width="260" height="20" fill="var(--surface)" stroke="var(--blue-cool)" stroke-width="1.4"/>
+                    <text x="32"  y="322" fill="var(--blue-cool)">16</text>
+                    <text x="55"  y="322" fill="var(--blue-cool)">BMS 시퀀스</text>
+                    <text x="268" y="322" text-anchor="end" fill="var(--blue-cool)">65 %</text>
+                </g>
+
+                <!-- Arrow from slot 8 -> Present_Value box -->
+                <line x1="285" y1="172" x2="395" y2="172" stroke="var(--accent)" stroke-width="2"/>
+                <polygon points="385,167 395,172 385,177" fill="var(--accent)"/>
+                <text x="340" y="151" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--accent)">번호가 가장 낮은</text>
+                <text x="340" y="163" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--accent)">non-null 우선</text>
+
+                <!-- Present_Value box -->
+                <rect x="395" y="138" width="160" height="70" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.8"/>
+                <text x="475" y="158" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">Present_Value</text>
+                <text x="475" y="190" text-anchor="middle" font-family="var(--mono)" font-size="22" font-weight="700" fill="var(--accent)">0 %</text>
+
+                <!-- Caption -->
+                <text x="310" y="354" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">슬롯 8에 null 쓰기 → 슬롯 16 우선 → Present_Value가 65 %로 변경</text>
+            </svg>
+
+            <p>
+                명령 가능 BACnet 포인트를 읽을 때 두 가지를 기억해야 합니다. 첫째, 그래픽 화면에 보이는 값은 <em>우선순위에 따라 결정된</em> 값이며 BMS 제어 시퀀스가 쓰는 값과 같지 않을 수 있습니다. 제어 시퀀스가 우선순위 16에 65&nbsp;%를 쓰고 있어도, 누군가 몇 년 전에 슬롯 8에 쓴 강제 조작을 해제하지 않았다면 시퀀스가 "고장 난" 것처럼 보입니다. 둘째, <em>null을 쓰면 명령이 해제</em>되며 다른 값으로 덮어쓰는 것이 아닙니다. 강제 조작을 해제하지 않는 것은 현장에서 우선순위 배열 로직에 문제가 생기는 가장 흔한 원인입니다.
+            </p>
+
+            <p>
+                슬롯에 값을 입력하고 <strong>×</strong>를 눌러 명령을 해제한 뒤 <code>Present_Value</code>가 다음 우선 슬롯의 값으로 바뀌는 과정을 직접 확인하려면 <a href="/ko/tools/bacnet-priority.html">우선순위 배열 결정 도구</a>를 사용하세요. 이 절의 대화형 실습 도구이며 16개 슬롯의 전체 예약표도 함께 제공합니다.
+            </p>
+
+            <p>
+                빈 배열이 아니라 실제로 운전 중인 장비에서 같은 결정 규칙을 확인하려면 <a href="/ko/simulators/ddc-workbench.html">DDC 워크벤치</a>를 사용하세요. 기능 블록 프로그램으로 공기조화기(AHU)를 운전하며 모든 명령 가능 포인트에 개별 우선순위 배열을 제공합니다. 각 포인트는 세 단계로 명령됩니다. 제어 시퀀스는 슬롯 16에, 사용자의 수동 조작은 슬롯 8에 쓰며, 프로그램에 해당 블록이 없는 포인트는 <code><button type="button" data-gloss="relinquish-default">Relinquish_Default</button></code>로 넘어갑니다. <em>NULL — 해제됨</em> 상자의 선택을 해제한 채 두면, 하위 제어 시퀀스가 계속 올바르게 값을 써도 포인트가 고장 난 것처럼 보입니다. 이 절에서 설명한 장애를 실제 장비가 연결된 형태로 재현하는 것입니다. 먼저 더 작은 장비인 <a href="/ko/simulators/ddc-workbench-fcu.html">팬코일 워크벤치</a>에서 시험해 볼 수 있습니다.
+            </p>
+
+            <h2 class="subhead">Who-Is / I-Am — 장치가 자신을 알리는 방법</h2>
+
+            <p>
+                두 비확인형 서비스가 장치 탐색을 처리합니다. 클라이언트(BMS, 엔지니어링 도구, JACE)가 <code>Who-Is</code> 요청을 네트워크 전체에 브로드캐스트합니다. 요청의 의미는 <em>이 범위에 포함되는 인스턴스 번호의 장치는 자신을 식별하라</em>는 것입니다. 요청에 특정 범위, 즉 장치 인스턴스의 하한과 상한을 넣을 수도 있고 범위를 생략해 "네트워크의 모든 장치는 응답하라"고 요청할 수도 있습니다.
+            </p>
+
+            <p>
+                브로드캐스트를 수신하고 범위에 해당하는 모든 장치는 <code>I-Am</code>으로 응답합니다. 이 비확인형 브로드캐스트에는 장치 자신의 인스턴스 번호, 최대 <button type="button" data-gloss="apdu">APDU</button> 길이(한 메시지로 수신할 수 있는 최대 크기), 세그멘테이션 지원 여부, 공급업체 ID가 들어 있습니다. 이 교환은 한 번으로 끝나며 그 밖의 항목을 협상하지 않습니다.
+            </p>
+
+            <svg class="bac-svg" viewBox="0 0 620 240" role="img"
+                 aria-labelledby="bb-who-title bb-who-desc">
+                <title id="bb-who-title">Who-Is 브로드캐스트와 I-Am 응답</title>
+                <desc id="bb-who-desc">상자 네 개가 있습니다. 가장 왼쪽에는 "JACE — Who-Is 송신자"라고 표시된 클라이언트가 있습니다. 오른쪽에는 device:1001, device:1002, device:2050 장치 상자 세 개가 있습니다. 클라이언트에서 시작하는 "Who-Is 브로드캐스트" 화살표가 세 장치 모두에 도달합니다. 각 장치는 자신의 장치 인스턴스 번호, 최대 APDU, 공급업체 ID를 담은 "I-Am" 응답을 돌려보냅니다.</desc>
+
+                <!-- Client (left) -->
+                <rect x="20" y="80" width="130" height="80" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                <text x="85" y="115" text-anchor="middle" font-family="var(--mono)" font-size="13" font-weight="600" fill="var(--text-bright)">JACE</text>
+                <text x="85" y="135" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--text-dim)">(탐색 중)</text>
+
+                <!-- Three devices (right) -->
+                <g font-family="var(--mono)" font-size="10.5">
+                    <rect x="430" y="32"  width="170" height="48" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="515" y="52"  text-anchor="middle" font-weight="600" fill="var(--text-bright)">device:1001</text>
+                    <text x="515" y="69"  text-anchor="middle" font-size="9.5" fill="var(--text-dim)">VAV-101</text>
+
+                    <rect x="430" y="100" width="170" height="48" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="515" y="120" text-anchor="middle" font-weight="600" fill="var(--text-bright)">device:1002</text>
+                    <text x="515" y="137" text-anchor="middle" font-size="9.5" fill="var(--text-dim)">VAV-102</text>
+
+                    <rect x="430" y="168" width="170" height="48" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="515" y="188" text-anchor="middle" font-weight="600" fill="var(--text-bright)">device:2050</text>
+                    <text x="515" y="205" text-anchor="middle" font-size="9.5" fill="var(--text-dim)">RTU-1</text>
+                </g>
+
+                <!-- Who-Is broadcast: client → all three. Arrowhead polygons
+                     are rotated to match each line's slope — a symmetric
+                     horizontal triangle reads as misaligned on a tilted line. -->
+                <g stroke="var(--blue)" stroke-width="2" fill="none">
+                    <line x1="150" y1="105" x2="425" y2="56"/>
+                    <line x1="150" y1="120" x2="425" y2="124"/>
+                    <line x1="150" y1="135" x2="425" y2="192"/>
+                </g>
+                <polygon points="414,53 425,56 416,63" fill="var(--blue)"/>
+                <polygon points="415,119 425,124 415,129" fill="var(--blue)"/>
+                <polygon points="416,185 425,192 414,195" fill="var(--blue)"/>
+                <text x="240" y="68" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--blue)">Who-Is (브로드캐스트)</text>
+
+                <!-- I-Am replies: each device → client. Arrowhead polygons
+                     rotated to match each line's slope, same as above. -->
+                <g stroke="var(--blue-cool)" stroke-width="1.6" fill="none" stroke-dasharray="5 4">
+                    <line x1="425" y1="68"  x2="155" y2="100"/>
+                    <line x1="425" y1="132" x2="155" y2="125"/>
+                    <line x1="425" y1="204" x2="155" y2="150"/>
+                </g>
+                <polygon points="164,94 155,100 166,104" fill="var(--blue-cool)"/>
+                <polygon points="165,120 155,125 165,130" fill="var(--blue-cool)"/>
+                <polygon points="166,147 155,150 164,157" fill="var(--blue-cool)"/>
+                <text x="240" y="195" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--blue-cool)">I-Am (장치별 1회)</text>
+
+                <!-- caption -->
+                <text x="310" y="232" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">"어떤 장치가 있는가?" → 장치 세 대가 각자의 식별 정보로 응답</text>
+            </svg>
+
+            <p>
+                실제로는 EBO의 탐색 대화상자, N4 Workbench의 BACnet 네트워크 스캔, Yabe 같은 도구에서 이 과정을 볼 수 있습니다. 도구가 Who-Is를 보내고 I-Am 응답으로 장치 목록을 채운 다음, 이어지는 <code>ReadProperty</code> 호출을 바탕으로 나머지 포인트 브라우저를 구성합니다. 목록에 나타나지 않는 장치는 거의 항상 Who-Is / I-Am 과정에 문제가 있습니다. 브로드캐스트가 장치에 도달하지 않았거나 응답이 되돌아오지 못한 것입니다. 장치 탐색이 라우터를 넘지 못하는 이유는 <a href="/ko/education/bacnet-networking.html">BACnet 네트워킹</a>에서 먼저 설명합니다.
+            </p>
+
+            <h2 class="subhead" id="mstp-vs-ip">MS/TP와 BACnet/IP — 같은 프로토콜, 다른 전송 방식</h2>
+
+            <p>
+                현장에서 접하는 두 BACnet 데이터 링크는 MS/TP와 BACnet/IP입니다. 객체 모델, 속성 이름, 서비스, 우선순위 배열은 두 방식에서 완전히 같으며 각 메시지를 둘러싼 프레이밍만 달라집니다.
+            </p>
+
+            <p>
+                <strong>BACnet MS/TP</strong>는 2선식 RS-485 버스에서 동작합니다. 약 서른 대까지의 마스터가 토큰을 전달하며 버스를 공유합니다. 토큰을 보유한 컨트롤러만 송신할 수 있고, 메시지를 보내거나 할당된 프레임 수를 모두 사용하면 주소 번호 순서상 다음 마스터로 토큰을 넘깁니다. 버스는 몇 가지 정해진 보드레이트 중 하나로 동작하며 일반적으로 38400 또는 76800을 사용합니다. 버스 전체는 하나의 16비트 네트워크 번호를 공유하는 BACnet <em>네트워크</em>입니다. Ethernet보다 느리지만 저렴하고 견고해 대부분의 VAV 컨트롤러, 여러 소형 유닛 컨트롤러, MS/TP 전용 온도조절기에서 사용합니다.
+            </p>
+
+            <p>
+                <strong>BACnet/IP</strong>는 동일한 BACnet 메시지를 일반 Ethernet 네트워크의 UDP 데이터그램 안에 넣습니다. IANA에 등록된 포트는 <strong>UDP 47808</strong>이며, 16진수로 <strong>0xBAC0</strong>입니다. 이 값에서 "BACnet" 포트를 기억하기 위한 연상 표기가 나왔습니다. BACnet/IP 컨트롤러에는 IP 주소와 포트로 접근하며, 동일한 장치 인스턴스 번호로 자신을 식별하고 같은 서비스를 모두 사용합니다. 달라지는 것은 각 메시지를 감싸는 프레이밍입니다. 작은 BACnet 가상 링크 계층(BVLL) 헤더, BACnet 네트워크 계층 헤더, 실제 서비스 순서로 구성됩니다. 브로드캐스트 방식의 차이는 <a href="/ko/education/bacnet-networking.html">BACnet 네트워킹</a>에서 먼저 다룹니다.
+            </p>
+
+            <svg class="bac-svg wide" viewBox="0 0 740 230" role="img"
+                 aria-labelledby="bb-frame-title bb-frame-desc">
+                <title id="bb-frame-title">MS/TP 프레이밍과 BACnet/IP 프레이밍 비교</title>
+                <desc id="bb-frame-desc">두 개의 수평 프레이밍 스택이 나란히 있습니다. 왼쪽 MS/TP 스택은 왼쪽부터 프리앰블 2바이트, 프레임 유형 1바이트, 목적지 1바이트, 출발지 1바이트, 길이 2바이트, 헤더 CRC 1바이트, 데이터 CRC 2바이트를 표시합니다. 따라서 MS/TP 프레임에는 체크섬 두 개가 있습니다. 헤더 CRC는 길이 필드 다음에 위치해 헤더를 보호하고, 데이터 CRC는 마지막에 위치해 페이로드를 보호합니다. BACnet NPDU와 APDU로 이루어진 공통 페이로드는 헤더 CRC와 데이터 CRC 사이에 실리며 아래쪽에 공유 영역으로 그려집니다. 오른쪽 BACnet/IP 스택은 IP 헤더, UDP 헤더(포트 47808 = 0xBAC0), BVLL 4바이트, BACnet NPDU, APDU의 다섯 구간을 표시합니다. 각 스택 위쪽의 괄호는 NPDU와 APDU를 제외한 부분이 데이터 링크 래퍼임을 강조하며, 괄호 아래의 NPDU와 APDU는 두 전송 방식에서 공통입니다.</desc>
+
+                <!-- Headers -->
+                <text x="180" y="22" text-anchor="middle" font-family="var(--mono)" font-size="12" font-weight="600" fill="var(--text-bright)">BACnet MS/TP</text>
+                <text x="560" y="22" text-anchor="middle" font-family="var(--mono)" font-size="12" font-weight="600" fill="var(--text-bright)">BACnet/IP</text>
+
+                <!-- MS/TP stack -->
+                <g font-family="var(--mono)" font-size="10" text-anchor="middle">
+                    <rect x="50"  y="40" width="55" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="77.5" y="60" fill="var(--text-bright)">프리앰블</text>
+                    <text x="77.5" y="73" font-size="9" fill="var(--text-dim)">2 B</text>
+
+                    <rect x="105" y="40" width="40" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="125" y="58" fill="var(--text-bright)">프레임</text>
+                    <text x="125" y="69" fill="var(--text-bright)">유형</text>
+
+                    <rect x="145" y="40" width="35" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="162.5" y="60" fill="var(--text-bright)">목적지</text>
+
+                    <rect x="180" y="40" width="35" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="197.5" y="60" fill="var(--text-bright)">출발지</text>
+
+                    <rect x="215" y="40" width="40" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="235" y="60" fill="var(--text-bright)">길이</text>
+
+                    <rect x="255" y="40" width="48" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="279" y="60" fill="var(--text-bright)">헤더 CRC</text>
+                    <text x="279" y="73" font-size="9" fill="var(--text-dim)">1 B</text>
+
+                    <rect x="303" y="40" width="56" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="331" y="60" fill="var(--text-bright)">데이터 CRC</text>
+                    <text x="331" y="73" font-size="9" fill="var(--text-dim)">2 B</text>
+                </g>
+
+                <!-- BACnet/IP stack -->
+                <g font-family="var(--mono)" font-size="10" text-anchor="middle">
+                    <rect x="380" y="40" width="60" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="410" y="60" fill="var(--text-bright)">IP 헤더</text>
+                    <text x="410" y="73" font-size="9" fill="var(--text-dim)">20 B</text>
+
+                    <rect x="440" y="40" width="80" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="480" y="58" fill="var(--text-bright)">UDP 헤더</text>
+                    <text x="480" y="71" font-size="8.5" fill="var(--text-dim)">포트 47808</text>
+
+                    <rect x="520" y="40" width="60" height="38" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <text x="550" y="60" fill="var(--accent)">BVLL</text>
+                    <text x="550" y="73" font-size="9" fill="var(--text-dim)">4 B</text>
+                </g>
+
+                <!-- "data-link wrapper" brackets -->
+                <g stroke="var(--text-dim)" stroke-width="1.2" fill="none">
+                    <path d="M 50 92 V 100 H 359 V 92"/>
+                    <path d="M 380 92 V 100 H 580 V 92"/>
+                </g>
+                <text x="205" y="116" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">데이터 링크 래퍼 (전송 방식별로 다름)</text>
+                <text x="480" y="116" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">데이터 링크 래퍼 (전송 방식별로 다름)</text>
+
+                <!-- Shared NPDU + APDU -->
+                <text x="370" y="146" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)">↓ 아래 페이로드는 동일 ↓</text>
+
+                <g font-family="var(--mono)" font-size="11" text-anchor="middle">
+                    <rect x="170" y="160" width="180" height="44" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>
+                    <text x="260" y="180" font-weight="600" fill="var(--accent)">NPDU</text>
+                    <text x="260" y="196" font-size="9.5" fill="var(--text-dim)">네트워크 계층 헤더</text>
+
+                    <rect x="390" y="160" width="180" height="44" fill="var(--surface)" stroke="var(--accent)" stroke-width="1.6"/>
+                    <text x="480" y="180" font-weight="600" fill="var(--accent)">APDU</text>
+                    <text x="480" y="196" font-size="9.5" fill="var(--text-dim)">실제 서비스</text>
+                </g>
+
+                <!-- caption -->
+                <text x="370" y="223" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--text)">프로토콜 논리는 같고 래퍼만 달라짐</text>
+            </svg>
+
+            <p>
+                이 구분은 통신이 <em>어디에서</em> 가능한지를 결정하므로 실무적으로 중요합니다. MS/TP 버스는 폐쇄된 저속 직렬 루프입니다. 커미셔닝은 빠르지만 모든 장치가 물리적으로 같은 루프에 있어야 합니다. BACnet/IP는 건물에 이미 구축된 라이저, 스위치, VLAN 등의 Ethernet을 사용하며 같은 IP 세그먼트에 있는 두 장치 사이에서 통신할 수 있습니다. 라우터나 다른 서브넷 같은 L3 경계를 넘을 때는 별도의 브로드캐스트 규칙이 적용됩니다. <a href="/ko/education/bacnet-networking.html">BACnet 네트워킹</a>은 이 내용부터 설명합니다.
+            </p>
+
+            <p>
+                토큰 순환, 마스터/슬레이브 토큰 패싱 동작, <code>Max_Master</code>와 <code>Max_Info_Frames</code>, 세그먼트별 장치 수와 케이블 길이 제한 등 MS/TP의 세부 내용은 <a href="/ko/education/bacnet-mstp.html">BACnet MS/TP</a>에서 다룹니다. BMS 기술자가 주로 접하는 커미셔닝과 버스 장애 진단을 중심으로 구성했습니다.
+            </p>
+
+            <h2 class="subhead">이 페이지에서 다루지 않은 내용</h2>
+
+            <p>
+                지금까지 설명한 프로토콜 구조만 알아도 BACnet 포인트 목록을 읽고, 읽기 또는 쓰기 요청을 구성하고, 우선순위 배열의 강제 조작을 알아차리고, Who-Is 장치 탐색을 시작할 수 있습니다. 다음 질문은 통신하려는 장치가 송신 측과 같은 Ethernet 세그먼트에 없을 때 어떤 일이 생기는가입니다. 브로드캐스트 동작, <button type="button" data-gloss="bbmd">BBMD</button>와 <button type="button" data-gloss="foreign-device">외부 장치 등록(Foreign Device Registration)</button>, 세 계층의 주소 체계, <a href="/ko/tools/bacnet-ip-converter.html">BACnet/IP 변환기</a>가 해석하는 EBO 16진수 데이터가 여기에 포함됩니다. <a href="/ko/education/bacnet-networking.html">BACnet 네트워킹</a>에서 각각을 차례로 설명합니다.
+            </p>
+
+            <p>
+                MS/TP 토큰의 세부 동작(토큰 순환, <code>Max_Master</code>, <code>Max_Info_Frames</code>, 보드레이트와 케이블 길이 허용 한도)은 <a href="/ko/education/bacnet-mstp.html">BACnet MS/TP</a>에서 다루므로 이 페이지에서는 제외했습니다. 긴 메시지의 세그멘테이션, 경보와 이벤트 알림, 독립 객체 유형인 스케줄과 달력, 트렌드 로그, File/Group/Loop/Notification Class 객체도 범위에 포함하지 않았습니다. 나머지 주제는 향후 별도 페이지에서 다루며, 이 페이지는 객체 모델, 서비스, 우선순위 배열에 집중합니다.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/bacnet/', label: 'BACnet 참조 허브'},
+        tools: [
+            {href: '/ko/tools/bacnet-priority.html', label: 'BACnet 우선순위 배열'},
+            {href: '/ko/tools/bacnet-objects.html', label: 'BACnet 객체 참조표'},
+            {href: '/ko/tools/bacnet-ip-converter.html', label: 'BACnet/IP 16진수 변환기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/ddc-workbench.html', label: 'DDC 워크벤치 — 공기조화기'},
+            {href: '/ko/simulators/ddc-workbench-fcu.html', label: 'DDC 워크벤치 — 팬코일'}
+        ],
+        lessons: [
+            {href: '/ko/education/bacnet-services.html', label: 'BACnet 서비스'},
+            {href: '/ko/education/bacnet-networking.html', label: 'BACnet 네트워킹'},
+            {href: '/ko/education/bacnet-vs-modbus.html', label: 'BACnet과 Modbus 비교'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/bacnet-basics.html', label: 'BACnet 기초'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 학습으로 돌아가기</a>
+
+</main>
+{% endblock %}

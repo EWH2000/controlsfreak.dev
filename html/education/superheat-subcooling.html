@@ -6,9 +6,13 @@ nav: education
 category: refrigerant
 pairedQuiz: https://controlsfreak.dev/practice/superheat-subcooling.html
 keywords: psig saturation suction liquid line charge txv evaporator condenser
+pageMessages:
+    formulas:
+        superheat: superheat
+        subcooling: subcooling
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -187,7 +191,7 @@ keywords: psig saturation suction liquid line charge txv evaporator condenser
             </p>
 
             <p>
-                <code><span data-us="superheat = 50&nbsp;°F − 40&nbsp;°F = 10&nbsp;°F" data-metric="superheat = 10.0&nbsp;°C − 4.4&nbsp;°C = 5.6&nbsp;°C">superheat = 50&nbsp;°F − 40&nbsp;°F = 10&nbsp;°F</span></code>
+                <code><span data-us="{{ pageMessages.formulas.superheat }} = 50&nbsp;°F − 40&nbsp;°F = 10&nbsp;°F" data-metric="{{ pageMessages.formulas.superheat }} = 10.0&nbsp;°C − 4.4&nbsp;°C = 5.6&nbsp;°C">{{ pageMessages.formulas.superheat }} = 50&nbsp;°F − 40&nbsp;°F = 10&nbsp;°F</span></code>
             </p>
 
             <p>
@@ -195,7 +199,7 @@ keywords: psig saturation suction liquid line charge txv evaporator condenser
             </p>
 
             <p>
-                <code><span data-us="subcooling = 105&nbsp;°F − 95&nbsp;°F = 10&nbsp;°F" data-metric="subcooling = 40.6&nbsp;°C − 35.0&nbsp;°C = 5.6&nbsp;°C">subcooling = 105&nbsp;°F − 95&nbsp;°F = 10&nbsp;°F</span></code>
+                <code><span data-us="{{ pageMessages.formulas.subcooling }} = 105&nbsp;°F − 95&nbsp;°F = 10&nbsp;°F" data-metric="{{ pageMessages.formulas.subcooling }} = 40.6&nbsp;°C − 35.0&nbsp;°C = 5.6&nbsp;°C">{{ pageMessages.formulas.subcooling }} = 105&nbsp;°F − 95&nbsp;°F = 10&nbsp;°F</span></code>
             </p>
 
             <p>
@@ -211,7 +215,7 @@ keywords: psig saturation suction liquid line charge txv evaporator condenser
             </p>
 
             <p>
-                <code><span data-us="superheat = 90&nbsp;°F − 40&nbsp;°F = 50&nbsp;°F" data-metric="superheat = 32.2&nbsp;°C − 4.4&nbsp;°C = 27.8&nbsp;°C">superheat = 90&nbsp;°F − 40&nbsp;°F = 50&nbsp;°F</span></code>
+                <code><span data-us="{{ pageMessages.formulas.superheat }} = 90&nbsp;°F − 40&nbsp;°F = 50&nbsp;°F" data-metric="{{ pageMessages.formulas.superheat }} = 32.2&nbsp;°C − 4.4&nbsp;°C = 27.8&nbsp;°C">{{ pageMessages.formulas.superheat }} = 90&nbsp;°F − 40&nbsp;°F = 50&nbsp;°F</span></code>
             </p>
 
             <p>
