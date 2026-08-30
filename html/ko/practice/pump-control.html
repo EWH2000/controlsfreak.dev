@@ -1,0 +1,53 @@
+---
+title: 펌프 제어 퀴즈 — controlsfreak.dev
+description: 펌프와 시스템 곡선의 운전점, 상사 법칙과 세제곱 법칙, 차압 센서 위치 및 차압 설정값 리셋을 점검하는 10문항 퀴즈입니다.
+sourceContentHash: 7afac1554253464d35c042a79158f3c1c2b2ca373278dec5a4e2acc318963d1d
+canonical: https://controlsfreak.dev/ko/practice/pump-control.html
+nav: practice
+category: hydronics
+pairedLesson: https://controlsfreak.dev/ko/education/pump-control.html
+---
+{% extends "html/practice/pump-control.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 펌프 제어</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">펌프 제어 퀴즈 <span class="tool-tag">수배관 시스템</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저
+                <a href="/ko/education/pump-control.html">펌프 제어</a> 학습 자료를 읽은 뒤 스스로 확인해
+                보세요. BMS가 수배관 펌프를 제어하는 방식을 다루는 10문항입니다. 펌프 곡선과 시스템 곡선이
+                만나는 운전점, 상사 법칙과 세제곱 에너지 절감 효과, 차압(DP) 센서를 수리적으로 가장 불리한
+                지점에 설치해야 하는 이유, 차압 설정값 리셋으로 추가 절감을 얻는 방법을 점검합니다. 각
+                문항의 해설에는 해당 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/ko/simulators/vfd-mock.html', label: 'VFD 모의 인터페이스'}
+        ],
+        lessons: [
+            {href: '/ko/education/pump-control.html', label: '펌프 제어'},
+            {href: '/ko/education/vfds.html', label: '가변주파수 드라이브(VFD)'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

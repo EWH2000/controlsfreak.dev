@@ -1,0 +1,53 @@
+---
+title: 기능 블록 퀴즈 — controlsfreak.dev
+description: 기능 블록과 와이어시트, 디지털·아날로그 신호와 블록 계열, 스캔의 피드백 처리 및 외기냉방 와이어시트 예제를 점검하는 10문항 퀴즈입니다.
+sourceContentHash: 4b3675ac4e9b6b4377f93a8c234d677e36990a227c7e60877407a8b8821a3a71
+canonical: https://controlsfreak.dev/ko/practice/function-blocks.html
+nav: practice
+category: programming
+pairedLesson: https://controlsfreak.dev/ko/education/function-blocks.html
+---
+{% extends "html/practice/function-blocks.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 기능 블록</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">기능 블록 퀴즈 <span class="tool-tag">제어</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/function-blocks.html">기능 블록 기초</a> 학습 자료를 읽은 뒤 자가 점검해 보세요. 와이어시트 읽기를 다루는 10문항입니다. 블록과 핀의 의미, 디지털·아날로그 신호의 구분, 비교기·SR 래치·타이머·PID 등 블록 계열, 스캔이 멈추지 않고 피드백 루프를 처리하는 방식, 외기냉방 활성화 와이어시트 예제를 확인합니다. 각 문항의 해설에는 해당 내용이 나온 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/ko/education/function-blocks.html', label: '기능 블록 기초'},
+            {href: '/ko/education/pid-basics.html', label: 'PID 기초'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'},
+            {href: '/ko/simulators/ddc-workbench-fcu.html', label: 'DDC Workbench — 팬코일유닛'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/pid-basics.html', label: 'PID 기초 퀴즈'},
+            {href: '/ko/practice/vfds.html', label: 'VFD 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

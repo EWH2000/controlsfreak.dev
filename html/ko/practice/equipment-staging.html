@@ -1,0 +1,56 @@
+---
+title: 장비 대수제어 퀴즈 — controlsfreak.dev
+description: 병렬 장비의 턴다운과 N+1 이중화, 증단·감단 불감대와 타이머, 선행 순환 교대 및 운전시간 균등화를 점검하는 10문항 퀴즈입니다.
+sourceContentHash: 1c897ebfed0f0e72a8ff2ab8a4ad7009a690a2d20e3755b16e8c930fa0aebd59
+canonical: https://controlsfreak.dev/ko/practice/equipment-staging.html
+nav: practice
+category: hydronics
+pairedLesson: https://controlsfreak.dev/ko/education/equipment-staging.html
+---
+{% extends "html/practice/equipment-staging.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 장비 대수제어</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">장비 대수제어 퀴즈 <span class="tool-tag">시퀀스 제어</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/equipment-staging.html">장비 대수제어</a> 학습 자료를 읽은 뒤 스스로
+                확인해 보세요. 동일한 여러 장비를 운전하는 시퀀스를 다루는 10문항입니다. 플랜트가 펌프를 병렬로
+                운전하는 이유인 턴다운과 N+1 이중화, 헌팅을 방지하는 증단·감단 임계값과 데드밴드, 대수제어 지연과
+                최소 운전시간이 각각 보호하는 대상, 마모를 고르게 하는 선행 순환 교대를 점검합니다. 각 문항의 해설에는 해당 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/equipment-airflow.html', label: '장비 풍량 점검'}
+        ],
+        lessons: [
+            {href: '/ko/education/equipment-staging.html', label: '장비 대수제어'},
+            {href: '/ko/education/pump-control.html', label: '펌프 제어'},
+            {href: '/ko/education/vfds.html', label: 'VFD'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/pump-control.html', label: '펌프 제어 퀴즈'},
+            {href: '/ko/practice/vfds.html', label: 'VFD 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

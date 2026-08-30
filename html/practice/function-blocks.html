@@ -7,7 +7,7 @@ category: programming
 pairedLesson: https://controlsfreak.dev/education/function-blocks.html
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -64,12 +64,12 @@ pairedLesson: https://controlsfreak.dev/education/function-blocks.html
 
         // Question bank lives in html/_data/quizzes/function-blocks.js so the
         // FAQPage JSON-LD emitted from head.njk can read the same source.
-        const questions = {{ quizzes['function-blocks'] | safeScriptJson | safe }};
+        const questions = {{ quizzes['function-blocks'] | localizedQuiz(locale, 'function-blocks') | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
-            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            next: {{ page.fileSlug | nextQuiz(locale, collections.navPractice) | safeScriptJson | safe }},
             slug: 'function-blocks',
-            title: 'Function Blocks',
+            title: {{ title | cleanTitle | safeScriptJson | safe }},
             defaultCount: 10,
             defaultOrder: 'sequential'
         });

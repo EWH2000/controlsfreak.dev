@@ -7,7 +7,7 @@ category: programming
 pairedLesson: https://controlsfreak.dev/education/setpoint-math-reset.html
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -65,12 +65,12 @@ pairedLesson: https://controlsfreak.dev/education/setpoint-math-reset.html
 
         // Question bank lives in html/_data/quizzes/setpoint-math-reset.js so
         // the FAQPage JSON-LD emitted from head.njk can read the same source.
-        const questions = {{ quizzes['setpoint-math-reset'] | safeScriptJson | safe }};
+        const questions = {{ quizzes['setpoint-math-reset'] | localizedQuiz(locale, 'setpoint-math-reset') | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
-            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            next: {{ page.fileSlug | nextQuiz(locale, collections.navPractice) | safeScriptJson | safe }},
             slug: 'setpoint-math-reset',
-            title: 'Setpoint Math & Reset',
+            title: {{ title | cleanTitle | safeScriptJson | safe }},
             defaultCount: 10,
             defaultOrder: 'sequential'
         });

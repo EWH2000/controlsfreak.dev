@@ -7,7 +7,7 @@ category: hydronics
 pairedLesson: https://controlsfreak.dev/education/hydronic-loops.html
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -57,12 +57,12 @@ pairedLesson: https://controlsfreak.dev/education/hydronic-loops.html
 
         // Question bank lives in html/_data/quizzes/hydronic-loops.js so the
         // FAQPage JSON-LD emitted from head.njk can read the same source.
-        const questions = {{ quizzes['hydronic-loops'] | safeScriptJson | safe }};
+        const questions = {{ quizzes['hydronic-loops'] | localizedQuiz(locale, 'hydronic-loops') | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
-            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            next: {{ page.fileSlug | nextQuiz(locale, collections.navPractice) | safeScriptJson | safe }},
             slug: 'hydronic-loops',
-            title: 'Hydronic Loops',
+            title: {{ title | cleanTitle | safeScriptJson | safe }},
             defaultCount: 10,
             defaultOrder: 'sequential'
         });

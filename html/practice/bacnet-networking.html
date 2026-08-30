@@ -7,7 +7,7 @@ category: bacnet
 pairedLesson: https://controlsfreak.dev/education/bacnet-networking.html
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -66,12 +66,12 @@ pairedLesson: https://controlsfreak.dev/education/bacnet-networking.html
 
         // Question bank lives in html/_data/quizzes/bacnet-networking.js so the
         // FAQPage JSON-LD emitted from head.njk can read the same source.
-        const questions = {{ quizzes['bacnet-networking'] | safeScriptJson | safe }};
+        const questions = {{ quizzes['bacnet-networking'] | localizedQuiz(locale, 'bacnet-networking') | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
-            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            next: {{ page.fileSlug | nextQuiz(locale, collections.navPractice) | safeScriptJson | safe }},
             slug: 'bacnet-networking',
-            title: 'BACnet Networking',
+            title: {{ title | cleanTitle | safeScriptJson | safe }},
             defaultCount: 10,
             defaultOrder: 'sequential'
         });

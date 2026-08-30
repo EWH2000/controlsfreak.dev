@@ -1,0 +1,55 @@
+---
+title: 냉매 사이클 기초 퀴즈 — controlsfreak.dev
+description: 냉매 사이클의 네 구성요소와 고압측·저압측, 포화 상태의 압력-온도 관계 및 혼합 냉매의 글라이드를 점검하는 10문항 퀴즈입니다.
+sourceContentHash: 27eab49e206581d4a9cdbe0efcc86ad041f92c332fac9ebf17897ea90389ec18
+canonical: https://controlsfreak.dev/ko/practice/refrigerant-cycle-basics.html
+nav: practice
+category: refrigeration
+pairedLesson: https://controlsfreak.dev/ko/education/refrigerant-cycle-basics.html
+---
+{% extends "html/practice/refrigerant-cycle-basics.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 냉매 사이클 기초</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">냉매 사이클 기초 퀴즈 <span class="tool-tag">냉동</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저
+                <a href="/ko/education/refrigerant-cycle-basics.html">냉매 사이클 기초</a> 학습 자료를 읽은 뒤
+                스스로 확인해 보세요. 네 구성요소와 모든 센서 판독의 토대가 되는 핵심 관계를 다루는
+                10문항입니다. 압축기·응축기·팽창 장치·증발기의 역할, 사이클이 고압측과 저압측으로 나뉘는
+                방식, 포화 상태에서 압력과 온도가 서로 고정되는 원리를 혼합 냉매의 글라이드까지 포함해
+                점검합니다. 각 문항의 해설에는 해당 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/ko/education/refrigerant-cycle-basics.html', label: '냉매 사이클 기초'},
+            {href: '/ko/education/superheat-subcooling.html', label: '과열도 및 과냉도'},
+            {href: '/ko/education/metering-devices-txv-eev.html', label: 'TXV와 EEV 비교'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/superheat-subcooling.html', label: '과열도 및 과냉도 퀴즈'},
+            {href: '/ko/practice/metering-devices-txv-eev.html', label: 'TXV와 EEV 비교 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

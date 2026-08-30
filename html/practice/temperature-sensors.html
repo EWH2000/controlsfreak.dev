@@ -7,7 +7,7 @@ category: signals
 pairedLesson: https://controlsfreak.dev/education/temperature-sensors.html
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -61,12 +61,12 @@ pairedLesson: https://controlsfreak.dev/education/temperature-sensors.html
 
         // Question bank lives in html/_data/quizzes/temperature-sensors.js so
         // the FAQPage JSON-LD emitted from head.njk can read the same source.
-        const questions = {{ quizzes['temperature-sensors'] | safeScriptJson | safe }};
+        const questions = {{ quizzes['temperature-sensors'] | localizedQuiz(locale, 'temperature-sensors') | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
-            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            next: {{ page.fileSlug | nextQuiz(locale, collections.navPractice) | safeScriptJson | safe }},
             slug: 'temperature-sensors',
-            title: 'Temperature Sensors',
+            title: {{ title | cleanTitle | safeScriptJson | safe }},
             defaultCount: 10,
             defaultOrder: 'sequential'
         });

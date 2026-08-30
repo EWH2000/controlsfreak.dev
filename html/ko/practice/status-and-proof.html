@@ -1,0 +1,51 @@
+---
+title: 상태 및 운전 확인 신호 퀴즈 — controlsfreak.dev
+description: 상태 신호원별 확인 범위, 벨트 파손 판정, 전류 트립값, 운전 확인 시간창, 채터링과 반전된 극성을 점검하는 10문항 퀴즈입니다.
+sourceContentHash: aba5cc62dc2523291411a7bc2fc5453b18f3b3e706f4347336e6b8c145a54d52
+canonical: https://controlsfreak.dev/ko/practice/status-and-proof.html
+nav: practice
+category: signals
+pairedLesson: https://controlsfreak.dev/ko/education/status-and-proof.html
+---
+{% extends "html/practice/status-and-proof.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 상태 및 운전 확인 신호</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">상태 및 운전 확인 신호 퀴즈 <span class="tool-tag">신호</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/status-and-proof.html">상태 및 운전 확인 신호</a> 학습 자료를 읽은 뒤 자가 점검해 보세요. 상태 포인트가 실제로 무엇을 확인하는지 다루는 10문항입니다. 보조 접점·전류 스위치·DP 스위치의 차이, 벨트 파손 판정, 전류 스위치 트립값의 적정 범위, 운전 확인 시간창의 절충점, 지령과 상태가 각 방향으로 불일치할 때의 의미, 반전된 극성과 채터링 스위치의 고장 패턴을 확인합니다. 각 문항의 해설에는 해당 내용이 나온 절의 링크가 있습니다. 이 접점들을 BI에 실제로 연결하는 방법은 함께 보는 <a href="/ko/practice/controller-wiring.html">제어기 배선 퀴즈</a>에서 다룹니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/ko/simulators/controller-wiring.html', label: '컨트롤러 배선 시뮬레이터'},
+            {href: '/ko/simulators/ddc-workbench.html', label: 'DDC Workbench — 공기조화기'},
+            {href: '/ko/simulators/ddc-workbench-fcu.html', label: 'DDC Workbench — 팬코일유닛'}
+        ],
+        lessons: [
+            {href: '/ko/education/status-and-proof.html', label: '상태 및 운전 확인 신호'},
+            {href: '/ko/education/controller-wiring.html', label: '제어기 배선'},
+            {href: '/ko/education/controls-commissioning.html', label: '제어 커미셔닝'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

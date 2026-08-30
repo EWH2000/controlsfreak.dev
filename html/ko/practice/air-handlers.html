@@ -1,0 +1,57 @@
+---
+title: 공기조화기 퀴즈 — controlsfreak.dev
+description: 공기조화기 내부 순서, 최소 외기량과 릴리프, 혼합공기 계산과 고착 댐퍼 진단, 필터 ΔP 및 급기 팬의 영향을 점검하는 10문항 퀴즈입니다.
+sourceContentHash: 692573e5ee4b439460078a4ea95491725febbac66168612e59766068ca7d94ee
+canonical: https://controlsfreak.dev/ko/practice/air-handlers.html
+nav: practice
+category: forced-air
+pairedLesson: https://controlsfreak.dev/ko/education/air-handlers.html
+---
+{% extends "html/practice/air-handlers.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 공기조화기</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">공기조화기 퀴즈 <span class="tool-tag">공기 시스템</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/air-handlers.html">공기조화기</a> 학습 자료를 읽은 뒤 장치 내부를 기억해 따라가 보세요. 공기 이동 경로를 다루는 10문항입니다.
+                구성 요소의 순서, 최소 외기가 필요한 이유와 릴리프 공기가 나가는 곳, 혼합공기 계산과 고착된 댐퍼를 드러내는 BMS 측정값,
+                코일 앞 필터와 ΔP 신호, 팬이 공기에 더하는 영향, RTU와의 관계를 확인합니다. 각 문항의 해설에는
+                해당 내용이 나온 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/air-mixing.html', label: '혼합공기 온도 계산기'},
+            {href: '/ko/tools/psychrometric-chart.html', label: '습공기선도'},
+            {href: '/ko/tools/coil-freeze-risk.html', label: '코일 동결 위험 점검'},
+            {href: '/ko/tools/minimum-outdoor-air.html', label: '최소 외기량 계산기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/ddc-workbench.html', label: 'DDC Workbench — 공기조화기'}
+        ],
+        lessons: [
+            {href: '/ko/education/air-handlers.html', label: '공기조화기'},
+            {href: '/ko/education/psychrometrics-basics.html', label: '습공기 상태 해석 기초'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

@@ -1,0 +1,51 @@
+---
+title: 설정값 연산 및 리셋 퀴즈 — controlsfreak.dev
+description: 설계 끝점으로 리셋 스케줄을 보간하고 기울기·절편과 선택 블록을 구하며, 부호가 뒤집힌 연산 체인을 진단하는 10문항 퀴즈입니다.
+sourceContentHash: e2a37f539d5890160e1010cd7c231c71ee5695ba95aacd6588ea7010f0cf2d42
+canonical: https://controlsfreak.dev/ko/practice/setpoint-math-reset.html
+nav: practice
+category: programming
+pairedLesson: https://controlsfreak.dev/ko/education/setpoint-math-reset.html
+---
+{% extends "html/practice/setpoint-math-reset.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 설정값 연산</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">설정값 연산 및 리셋 퀴즈 <span class="tool-tag">로직</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/setpoint-math-reset.html">설정값 연산 및 리셋 스케줄</a> 학습 자료를 읽은 뒤 자가 점검해 보세요. 계산된 설정값을 다루는 10문항입니다. 두 설계 끝점에서 리셋 스케줄 보간하기, 기울기 구하기, 연산 체인에서 각 블록의 역할 확인하기, 여러 요구값과 장비 상한에 맞는 선택 블록 고르기, 기울기 부호가 뒤집힌 리셋 체인 진단하기를 확인합니다. 학습 자료와 다른 끝점을 사용하므로 암기한 답이 아니라 계산 방법을 적용해야 합니다. 각 문항의 해설에는 해당 내용이 나온 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/signal-scaling.html', label: '신호 스케일링 계산기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'}
+        ],
+        lessons: [
+            {href: '/ko/education/setpoint-math-reset.html', label: '설정값 연산 및 리셋 스케줄'},
+            {href: '/ko/education/function-blocks.html', label: '기능 블록 기초'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

@@ -1,0 +1,66 @@
+---
+title: 제어 시스템 커미셔닝 실습 — controlsfreak.dev
+description: 포인트 유형별 현장 점검, 전체 프로그램 응답으로 확인하는 인터록, 하드와이어 안전장치, 시간에 따른 추세 증거와 인수인계 기록을 다루는 현장 실습입니다.
+sourceContentHash: 7ca7c440b671de32733b16f01ad7663235ddddb0b2567d64213533cd96fb2724
+canonical: https://controlsfreak.dev/ko/practice/controls-commissioning.html
+nav: practice
+category: field
+keywords: 포인트 간 점검 기능 시험 시운전 커미셔닝 오버라이드 트렌드 검증 인터록 동결 방지 온도조절기 인수인계 펀치리스트
+---
+{% extends "html/practice/controls-commissioning.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 제어 시스템 커미셔닝</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">제어 시스템 커미셔닝 실습 <span class="tool-tag">현장 실습</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                컨트롤러가 실제로 운전 시퀀스의 요구대로 동작하는지 입증하는 10문항입니다.
+                <strong>방법</strong>: 현장측에서 AI, AO, BI, BO를 작동시키는 절차와 이 단계를 건너뛸 때
+                각 포인트 유형이 감추는 문제를 다룹니다. <strong>관계</strong>: 인터록을 전체 프로그램 응답으로
+                검증하고, 옆에서 동작하는 소프트웨어가 아니라 구리 배선을 통해 하드와이어 안전장치를 입증합니다.
+                현장 점검보다 오래 남는 <strong>추세</strong>는 실제 운전 변화에 대한 증거가 되고,
+                <strong>기록</strong>은 인수인계하는 납품물이 됩니다. 해설은 문항 안에 제공되며 각 문항의 출처인
+                <a href="/ko/education/controls-commissioning.html">제어 시스템 커미셔닝</a> 학습 자료의 해당 절로
+                연결됩니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/signal-scaling.html', label: '신호 스케일링 계산기'},
+            {href: '/ko/tools/thermistor-calculator.html', label: '서미스터 / RTD 계산기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/controller-wiring.html', label: '제어기 배선 시뮬레이터'},
+            {href: '/ko/simulators/pid-tuner.html', label: 'PID 튜닝 도우미'}
+        ],
+        lessons: [
+            {href: '/ko/education/controls-commissioning.html', label: '제어 시스템 커미셔닝'},
+            {href: '/ko/education/controller-wiring.html', label: '제어기 배선'},
+            {href: '/ko/education/function-blocks.html', label: '기능 블록 기초'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/controller-swap.html', label: '제어기 교체'},
+            {href: '/ko/practice/field-wiring-sensors.html', label: '현장 배선 및 센서'},
+            {href: '/ko/practice/sequencing-scenarios.html', label: '시퀀싱 시나리오'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

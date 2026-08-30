@@ -1,0 +1,53 @@
+---
+title: 비교기 및 불감대 퀴즈 — controlsfreak.dev
+description: GT·LT 비교기 선택, 불감대 경계 계산, 채터링과 단주기 운전, 경계 사이를 유지하는 Set/Reset 래치를 점검하는 10문항 퀴즈입니다.
+sourceContentHash: 29c0f03b85bc9a0ae62a61a0cdfed489184633973322a5cf8c189bd792a97918
+canonical: https://controlsfreak.dev/ko/practice/comparators-and-deadband.html
+nav: practice
+category: programming
+pairedLesson: https://controlsfreak.dev/ko/education/comparators-and-deadband.html
+---
+{% extends "html/practice/comparators-and-deadband.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 비교기 및 불감대</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">비교기 및 불감대 퀴즈 <span class="tool-tag">로직</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/comparators-and-deadband.html">비교기 및 불감대</a> 학습 자료를 읽은 뒤 자가 점검해 보세요. 숫자를 판단으로 바꾸는 과정을 다루는 10문항입니다. 문장에 맞는 비교기 선택, 아날로그 값에 EQ를 사용하는 함정, 단일 임계값이 압축기에 만드는 현상, Set/Reset 불감대 경계 계산, 정동작과 역동작, 두 경계 사이에서 상태를 유지하는 래치의 기억을 확인합니다. 각 문항의 해설에는 해당 내용이 나온 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/ko/education/comparators-and-deadband.html', label: '비교기 및 불감대'},
+            {href: '/ko/education/function-blocks.html', label: '기능 블록 기초'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'},
+            {href: '/ko/simulators/ddc-workbench.html', label: 'DDC Workbench — 공기조화기'},
+            {href: '/ko/simulators/ddc-workbench-fcu.html', label: 'DDC Workbench — 팬코일유닛'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/function-blocks.html', label: '기능 블록 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

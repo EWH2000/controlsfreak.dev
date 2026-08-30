@@ -5,7 +5,7 @@ canonical: https://controlsfreak.dev/practice/
 nav: practice
 ---
 {% extends "layouts/page.njk" %}
-{% from "nav-card.njk" import navCard %}
+{% from "nav-card.njk" import navCard with context %}
 
 {% block head %}
     <style>
@@ -571,7 +571,8 @@ nav: practice
         // page. Paint a small badge on every card with a recorded best.
         // All client-side, no accounts — inside the hard-no lines in
         // docs/audits/2026-05-quiz-section/quiz-section-plan.md.
-        document.querySelectorAll('.nav-card[href^="/practice/"]').forEach(card => {
+        const practicePrefix = window.CFI18n.path('/practice/');
+        document.querySelectorAll('.nav-card[href^="' + practicePrefix + '"]').forEach(card => {
             const slug = (card.getAttribute('href').match(/\/practice\/([a-z-]+)\.html/) || [])[1];
             if (!slug) return;
             let best, total;
@@ -584,7 +585,10 @@ nav: practice
             if (!line) return;
             const badge = document.createElement('span');
             badge.className = 'nav-card-pill quiz-best-pill' + (best === total ? ' perfect' : '');
-            badge.textContent = 'Best ' + best + '/' + total;
+            badge.textContent = window.CFI18n.t('practice.bestScoreBadge', {
+                score: best,
+                total: total
+            });
             line.appendChild(badge);
         });
     })();

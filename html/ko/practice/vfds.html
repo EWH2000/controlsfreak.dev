@@ -1,0 +1,57 @@
+---
+title: 가변 주파수 드라이브(VFD) 퀴즈 — controlsfreak.dev
+description: VFD의 정류기·DC 버스·인버터 단계와 세제곱 법칙, 운전 지령·속도 기준값의 구분, 상태 피드백 및 고장 범주를 점검하는 10문항 퀴즈입니다.
+sourceContentHash: 932efe290590f9cf3be889c8b2e1e706a4c7177e5569b39d8467c0fcd9a3e493
+canonical: https://controlsfreak.dev/ko/practice/vfds.html
+nav: practice
+category: controls
+pairedLesson: https://controlsfreak.dev/ko/education/vfds.html
+---
+{% extends "html/practice/vfds.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 가변 주파수 드라이브(VFD)</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">가변 주파수 드라이브(VFD) 퀴즈 <span class="tool-tag">제어</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저
+                <a href="/ko/education/vfds.html">가변 주파수 드라이브(VFD)</a> 학습 자료를 읽은 뒤 스스로
+                확인해 보세요. 제어 기술자가 지령하는 모든 드라이브를 다루는 10문항입니다. 세 가지 전력
+                변환 단계, 세제곱 법칙으로 펌프와 팬마다 VFD를 적용하게 된 이유, 가장 많은 기술자를
+                곤란하게 하는 운전 지령과 속도 기준값의 구분, 신뢰할 수 있는 유일한 피드백인 운전 상태,
+                고장 범주를 읽는 방법을 점검합니다. 각 문항의 해설에는 해당 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/ko/education/vfds.html', label: '가변 주파수 드라이브(VFD)'},
+            {href: '/ko/education/pump-control.html', label: '펌프 제어'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/vfd-mock.html', label: 'VFD 모의 인터페이스'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/pid-basics.html', label: 'PID 기초 퀴즈'},
+            {href: '/ko/practice/function-blocks.html', label: '기능 블록 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

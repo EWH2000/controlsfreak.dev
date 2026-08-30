@@ -7,7 +7,7 @@ category: bacnet
 pairedLesson: https://controlsfreak.dev/education/bacnet-mstp.html
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -63,12 +63,12 @@ pairedLesson: https://controlsfreak.dev/education/bacnet-mstp.html
 
         // Question bank lives in html/_data/quizzes/bacnet-mstp.js so the
         // FAQPage JSON-LD emitted from head.njk can read the same source.
-        const questions = {{ quizzes['bacnet-mstp'] | safeScriptJson | safe }};
+        const questions = {{ quizzes['bacnet-mstp'] | localizedQuiz(locale, 'bacnet-mstp') | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
-            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            next: {{ page.fileSlug | nextQuiz(locale, collections.navPractice) | safeScriptJson | safe }},
             slug: 'bacnet-mstp',
-            title: 'BACnet MS/TP',
+            title: {{ title | cleanTitle | safeScriptJson | safe }},
             defaultCount: 10,
             defaultOrder: 'sequential'
         });

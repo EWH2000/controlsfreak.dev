@@ -1,0 +1,57 @@
+---
+title: TXV와 EEV 퀴즈 — controlsfreak.dev
+description: TXV의 기계식 힘 평형과 외부 균압관, EEV의 디지털 과열도 제어 및 스테퍼 위치를 현장에서 정확히 진단하는 10문항 퀴즈입니다.
+sourceContentHash: a716866abe2a268b406bf36fc8a42c4680c603bf7d0da9343d8c7246ea8212c9
+canonical: https://controlsfreak.dev/ko/practice/metering-devices-txv-eev.html
+nav: practice
+category: refrigeration
+pairedLesson: https://controlsfreak.dev/ko/education/metering-devices-txv-eev.html
+---
+{% extends "html/practice/metering-devices-txv-eev.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · TXV와 EEV</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">TXV와 EEV 퀴즈 <span class="tool-tag">냉동 시스템</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/metering-devices-txv-eev.html">TXV와 EEV</a> 학습 자료를 읽은 뒤
+                스스로 확인해 보세요. 과열도를 유지하는 두 팽창장치를 다루는 10문항입니다. 감온통, 스프링,
+                다이어프램, 균압관으로 이루어진 TXV의 기계식 힘 평형, 트랜스듀서, 센서, 스테퍼 모터로 이루어진
+                EEV의 전자식 제어 루프, 시스템 상태가 변할 때 각 장치의 동작이 알려 주는 내용을 점검합니다.
+                각 문항의 해설에는 해당 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/ko/education/metering-devices-txv-eev.html', label: 'TXV와 EEV'},
+            {href: '/ko/education/refrigerant-cycle-basics.html', label: '냉매 사이클 기초'},
+            {href: '/ko/education/superheat-subcooling.html', label: '과열도와 과냉도'}
+        ],
+        tools: [
+            {href: '/ko/tools/refrigerant-pt.html', label: '냉매 P-T 및 과열도 계산기'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/refrigerant-cycle-basics.html', label: '냉매 사이클 기초 퀴즈'},
+            {href: '/ko/practice/superheat-subcooling.html', label: '과열도와 과냉도 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

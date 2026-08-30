@@ -1,0 +1,48 @@
+---
+title: 온도 센서 퀴즈 — controlsfreak.dev
+description: 온도 센서의 특성곡선 선택 오류, RTD 리드선 저항과 3선식 보상, 미터 및 표를 이용한 고장 판정을 점검하는 10문항 퀴즈입니다.
+sourceContentHash: 27e02aaa4f4995cc46598abd2a005a9e0ee843eefba2c9567420525863b92b81
+canonical: https://controlsfreak.dev/ko/practice/temperature-sensors.html
+nav: practice
+category: signals
+pairedLesson: https://controlsfreak.dev/ko/education/temperature-sensors.html
+---
+{% extends "html/practice/temperature-sensors.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 온도 센서</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">온도 센서 퀴즈 <span class="tool-tag">신호</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/temperature-sensors.html">온도 센서</a> 학습 자료를 읽은 뒤 자가 점검해 보세요. 모든 저항값 뒤에 있는 곡선을 다루는 10문항입니다. Type II와 Type III를 잘못 선택했을 때의 증상, 제조사별 션트 규격, 온도로 읽히는 RTD 리드선 저항, 센서·입력·설정 중 고장 위치를 판정하는 미터 및 표 점검 절차를 확인합니다. 각 문항의 해설에는 해당 내용이 나온 절의 링크가 있습니다. 단자 결선, 실드, 루프 전원 같은 배선 기초는 함께 보는 <a href="/ko/practice/field-wiring-sensors.html">현장 배선 및 센서 연습문제</a>에서 다룹니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/thermistor-calculator.html', label: '서미스터 / RTD 계산기'}
+        ],
+        lessons: [
+            {href: '/ko/education/temperature-sensors.html', label: '온도 센서'},
+            {href: '/ko/education/controller-wiring.html', label: '제어기 배선'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

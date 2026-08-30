@@ -7,7 +7,7 @@ category: programming
 pairedLesson: https://controlsfreak.dev/education/timers-and-delays.html
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -65,12 +65,12 @@ pairedLesson: https://controlsfreak.dev/education/timers-and-delays.html
         // Question bank lives in html/_data/quizzes/timers-and-delays.js
         // so the FAQPage JSON-LD emitted from head.njk can read the same
         // source.
-        const questions = {{ quizzes['timers-and-delays'] | safeScriptJson | safe }};
+        const questions = {{ quizzes['timers-and-delays'] | localizedQuiz(locale, 'timers-and-delays') | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
-            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            next: {{ page.fileSlug | nextQuiz(locale, collections.navPractice) | safeScriptJson | safe }},
             slug: 'timers-and-delays',
-            title: 'Timers & Delays',
+            title: {{ title | cleanTitle | safeScriptJson | safe }},
             defaultCount: 10,
             defaultOrder: 'sequential'
         });

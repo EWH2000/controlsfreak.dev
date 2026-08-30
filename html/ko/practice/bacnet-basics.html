@@ -1,0 +1,59 @@
+---
+title: BACnet 기초 퀴즈 — controlsfreak.dev
+description: BACnet의 자기 기술형 객체 모델, 장치 인스턴스, 주요 서비스와 우선순위 배열에서 null이 아닌 최하위 슬롯 규칙을 점검하는 10문항 퀴즈입니다.
+sourceContentHash: 0975830b43d63f2d377b4517a20404643490459f6bc8eed37fe8cc507bacd227
+canonical: https://controlsfreak.dev/ko/practice/bacnet-basics.html
+nav: practice
+category: bacnet
+pairedLesson: https://controlsfreak.dev/ko/education/bacnet-basics.html
+---
+{% extends "html/practice/bacnet-basics.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · BACnet 기초</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">BACnet 기초 퀴즈 <span class="tool-tag">BACnet</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/bacnet-basics.html">BACnet 기초</a> 학습 자료를 읽은 뒤 자가 점검해 보세요. 자기 기술형 장치 / 객체 / 속성 모델, 아날로그 / 바이너리 / 다중 상태 객체 계열, 일상적으로 사용하는 서비스, 우선순위 배열에서 null이 아닌 최하위 슬롯을 적용하는 규칙과 null 쓰기로 강제 지정을 해제하는 방법 등 기초 내용을 다룬 10문항입니다. 각 문항의 해설에는 해당 내용이 나온 학습 자료의 절 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/bacnet-ip-converter.html', label: 'BACnet/IP 16진수 변환기'},
+            {href: '/ko/tools/bacnet-objects.html', label: 'BACnet 객체 참조표'},
+            {href: '/ko/tools/bacnet-vendor-ids.html', label: 'BACnet 공급업체 ID'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/ddc-workbench.html', label: 'DDC Workbench — 공기조화기'},
+            {href: '/ko/simulators/ddc-workbench-fcu.html', label: 'DDC Workbench — 팬코일유닛'}
+        ],
+        lessons: [
+            {href: '/ko/education/bacnet-basics.html', label: 'BACnet 기초'},
+            {href: '/ko/education/bacnet-networking.html', label: 'BACnet 네트워킹'},
+            {href: '/ko/education/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/bacnet-networking.html', label: 'BACnet 네트워킹'},
+            {href: '/ko/practice/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

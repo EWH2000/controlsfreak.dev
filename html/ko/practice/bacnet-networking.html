@@ -1,0 +1,55 @@
+---
+title: BACnet 네트워킹 퀴즈 — controlsfreak.dev
+description: BACnet의 세 주소 계층, BBMD와 비대칭 BDT 함정, Foreign Device TTL, EBO 16진수 디코딩을 점검하는 10문항 퀴즈입니다.
+sourceContentHash: 783830b8f4f98d70eed8f7124ace482f2c2c9a6309d469c4d3ccfc133f7aea88
+canonical: https://controlsfreak.dev/ko/practice/bacnet-networking.html
+nav: practice
+category: bacnet
+pairedLesson: https://controlsfreak.dev/ko/education/bacnet-networking.html
+---
+{% extends "html/practice/bacnet-networking.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · BACnet 네트워킹</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">BACnet 네트워킹 퀴즈 <span class="tool-tag">BACnet</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/bacnet-networking.html">BACnet 네트워킹</a> 학습 자료를 읽은 뒤 자가 점검해 보세요. 주소 지정과 브로드캐스트를 다루는 10문항입니다. 세 식별자 계층(장치 인스턴스, 네트워크 번호, MAC), 라우터가 브로드캐스트를 차단하는 이유, BBMD / BDT 구조와 비대칭 BDT 함정, Foreign Device Registration TTL, EBO 16진수 데이터 읽기를 확인합니다. 각 문항의 해설에는 해당 내용이 나온 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/bacnet-ip-converter.html', label: 'BACnet/IP 16진수 변환기'},
+            {href: '/ko/tools/bacnet-objects.html', label: 'BACnet 객체 참조표'},
+            {href: '/ko/tools/bacnet-vendor-ids.html', label: 'BACnet 공급업체 ID'}
+        ],
+        lessons: [
+            {href: '/ko/education/bacnet-networking.html', label: 'BACnet 네트워킹'},
+            {href: '/ko/education/bacnet-basics.html', label: 'BACnet 기초'},
+            {href: '/ko/education/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/bacnet-basics.html', label: 'BACnet 기초'},
+            {href: '/ko/practice/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

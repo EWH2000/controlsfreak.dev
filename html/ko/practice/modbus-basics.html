@@ -1,0 +1,48 @@
+---
+title: Modbus 기초 퀴즈 — controlsfreak.dev
+description: Modbus의 네 데이터 테이블, FC03과 FC04, 단순한 데이터 모델, 예외 응답과 상위 비트 표시를 점검하는 10문항 퀴즈입니다.
+sourceContentHash: 13ec1fde4868f837db4f9790567b6145428caade1a6bb33e8882026db1b9d65d
+canonical: https://controlsfreak.dev/ko/practice/modbus-basics.html
+nav: practice
+category: modbus
+pairedLesson: https://controlsfreak.dev/ko/education/modbus-basics.html
+---
+{% extends "html/practice/modbus-basics.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · Modbus 기초</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Modbus 기초 퀴즈 <span class="tool-tag">Modbus</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/modbus-basics.html">Modbus 기초</a> 학습 자료를 읽은 뒤 자가 점검해 보세요. 네 데이터 테이블과 서로 독립적인 주소 체계, FC03 / FC04 / FC16 기능 코드 조합, 클라이언트가 폴링하고 서버가 응답하는 모델, 예외 응답이 상위 비트를 설정해 실패를 알리는 방식을 다루는 10문항입니다. 각 문항의 해설에는 해당 내용이 나온 학습 자료의 절 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/modbus-register-viewer.html', label: 'Modbus 레지스터 뷰어'}
+        ],
+        lessons: [
+            {href: '/ko/education/modbus-basics.html', label: 'Modbus 기초'},
+            {href: '/ko/education/modbus-decoding.html', label: 'Modbus 디코딩'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

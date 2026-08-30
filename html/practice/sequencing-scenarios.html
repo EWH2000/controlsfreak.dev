@@ -6,7 +6,7 @@ nav: practice
 category: field
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -71,12 +71,12 @@ category: field
         // Question bank lives in html/_data/quizzes/sequencing-scenarios.js
         // so the FAQPage JSON-LD emitted from head.njk can read the same
         // source.
-        const questions = {{ quizzes['sequencing-scenarios'] | safeScriptJson | safe }};
+        const questions = {{ quizzes['sequencing-scenarios'] | localizedQuiz(locale, 'sequencing-scenarios') | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
-            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            next: {{ page.fileSlug | nextQuiz(locale, collections.navPractice) | safeScriptJson | safe }},
             slug: 'sequencing-scenarios',
-            title: 'Sequencing Scenarios',
+            title: {{ title | cleanTitle | safeScriptJson | safe }},
             defaultCount: 10,
             defaultOrder: 'sequential'
         });

@@ -1,0 +1,54 @@
+---
+title: 습공기 상태 해석 기초 퀴즈 — controlsfreak.dev
+description: 습공기의 일곱 가지 상태량과 두 상태량으로 나머지를 정하는 원리, 네 가지 공기 처리 과정 및 상대습도·노점온도의 함정을 점검하는 10문항 퀴즈입니다.
+sourceContentHash: 8e64baad174114d571087b7fbf0e8c4a26e0c60abb61119709ffa1849c0b51bb
+canonical: https://controlsfreak.dev/ko/practice/psychrometrics-basics.html
+nav: practice
+category: psychrometrics
+pairedLesson: https://controlsfreak.dev/ko/education/psychrometrics-basics.html
+---
+{% extends "html/practice/psychrometrics-basics.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 습공기 상태 해석 기초</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">습공기 상태 해석 기초 퀴즈 <span class="tool-tag">습공기 상태 해석</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저
+                <a href="/ko/education/psychrometrics-basics.html">습공기 상태 해석 기초</a> 학습 자료를 읽은 뒤
+                스스로 확인해 보세요. 습공기선도를 어렵지 않게 읽는 법을 다루는 10문항입니다. 일곱 가지
+                상태량이 각각 무엇을 나타내는지, 두 상태량으로 나머지 다섯 상태량을 정할 수 있는 이유,
+                코일이 거치는 네 가지 공기 처리 과정, 상대습도·노점온도·엔탈피에 숨어 있는 함정을
+                점검합니다. 각 문항의 해설에는 해당 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/ko/education/psychrometrics-basics.html', label: '습공기 상태 해석 기초'}
+        ],
+        tools: [
+            {href: '/ko/tools/psychrometric-chart.html', label: '습공기선도'},
+            {href: '/ko/tools/air-mixing.html', label: '공기 혼합 계산기'},
+            {href: '/ko/tools/economizer-ratio.html', label: '외기냉방 비율 도우미'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

@@ -1,0 +1,64 @@
+---
+title: 문제 해결 실습 — controlsfreak.dev
+description: BACnet·Modbus 통신 장애, 수배관 저온도차, 냉매 과열도·과냉도, VFD 기동 트립의 증상에서 가능성 높은 원인을 추론하는 현장 실습입니다.
+sourceContentHash: bb3c0aa7cbba88a12ec2d64712428f9116642eb189e950001599c90e880b50c4
+canonical: https://controlsfreak.dev/ko/practice/troubleshooting.html
+nav: practice
+category: field
+---
+{% extends "html/practice/troubleshooting.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 문제 해결</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">문제 해결 실습 <span class="tool-tag">현장 실습</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                여러 분야에 걸친 10개의 <strong>증상 → 가능성이 가장 높은 원인</strong> 문항입니다. 하나의
+                해결책을 외우기보다 증상이 어떤 원인을 지지하고(<em>포함</em>) 어떤 원인을 <em>배제</em>하는지
+                읽는 능력을 연습합니다. 핑은 되지만 검색되지 않는 BACnet 장치, Modbus 예외 응답,
+                여러 레지스터로 구성된 실수의 잘못된 값, 저온도차 증후군, 공기가 찬 코일, 낮은 과열도와
+                높은 과냉도가 각각 가리키는 원인, 0 Hz에서 "운전" 중인 VFD를 다룹니다. 정답 확인 패널에서
+                바로 해설하고 각 증상의 기반이 되는 학습 자료로 연결합니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/bacnet-ip-converter.html', label: 'BACnet/IP 16진수 변환기'},
+            {href: '/ko/tools/modbus-register-viewer.html', label: 'Modbus 레지스터 뷰어'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/ddc-workbench.html', label: 'DDC 워크벤치 — 공기조화기'},
+            {href: '/ko/simulators/ddc-workbench-fcu.html', label: 'DDC 워크벤치 — 팬코일유닛'}
+        ],
+        lessons: [
+            {href: '/ko/education/bacnet-networking.html', label: 'BACnet 네트워킹'},
+            {href: '/ko/education/modbus-decoding.html', label: 'Modbus 디코딩'},
+            {href: '/ko/education/balancing.html', label: '수배관 밸런싱'},
+            {href: '/ko/education/superheat-subcooling.html', label: '과열도와 과냉도'},
+            {href: '/ko/education/vfds.html', label: '가변주파수 드라이브(VFD)'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/sequencing-scenarios.html', label: '시퀀싱 시나리오'},
+            {href: '/ko/practice/field-wiring-sensors.html', label: '현장 배선 및 센서'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

@@ -1,0 +1,56 @@
+---
+title: 불 대수 로직 및 래치 퀴즈 — controlsfreak.dev
+description: 장비 퍼미시브 체인, 페일세이프 NOT 반전, Set 우선형 SR 래치와 수동 리셋, XOR 명령·상태 불일치 검사를 점검하는 10문항 퀴즈입니다.
+sourceContentHash: 27c394134f97c8a5d0cda79f4ce1c2eb84ee8928ed8c4135f7e514b1042de7b2
+canonical: https://controlsfreak.dev/ko/practice/boolean-logic-latches.html
+nav: practice
+category: programming
+pairedLesson: https://controlsfreak.dev/ko/education/boolean-logic-latches.html
+---
+{% extends "html/practice/boolean-logic-latches.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 불 대수 로직</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">불 대수 로직 및 래치 퀴즈 <span class="tool-tag">로직</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저
+                <a href="/ko/education/boolean-logic-latches.html">불 대수 로직 및 래치</a> 학습 자료를 읽은 뒤
+                자가 점검해 보세요. 장비가 판단을 내리는 로직을 다루는 10문항입니다. 퍼미시브 체인을
+                읽는 방법, 페일세이프 상시 닫힘 배선과 트립 감지 신호를 바로잡는 NOT, 안전 조건이
+                자동 해제되지 않고 래치되는 이유, Set과 Reset이 동시에 들어올 때의 Set 우선형 SR 동작,
+                XOR 명령·상태 불일치 검사를 확인합니다. 각 문항의 해설에는 해당 내용이 나온 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/ko/education/boolean-logic-latches.html', label: '불 대수 로직 및 래치'},
+            {href: '/ko/education/function-blocks.html', label: '기능 블록 기초'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/function-blocks.html', label: '기능 블록 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

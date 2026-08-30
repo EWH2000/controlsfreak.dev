@@ -1,0 +1,48 @@
+---
+title: 아날로그 센싱 퀴즈 — controlsfreak.dev
+description: 아날로그 원시 신호의 공학 단위 스케일링, 범위 불일치, 상한 고정 트렌드와 단선된 라이브 제로 루프를 점검하는 10문항 퀴즈입니다.
+sourceContentHash: 01ab89deacf6188bd5f3c06a8bebbf5a6c839b86326dffbd9da626f3c28f432f
+canonical: https://controlsfreak.dev/ko/practice/analog-sensing.html
+nav: practice
+category: signals
+pairedLesson: https://controlsfreak.dev/ko/education/analog-sensing.html
+---
+{% extends "html/practice/analog-sensing.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 아날로그 센싱</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">아날로그 센싱 퀴즈 <span class="tool-tag">신호</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/analog-sensing.html">아날로그 센싱</a> 학습 자료를 읽은 뒤 자가 점검해 보세요. 아날로그 신호를 읽는 측면을 다루는 10문항입니다. 공표된 범위가 보장하는 내용, 원시 mA 값을 공학 단위로 스케일링하는 방법, 계속 그럴듯하지만 잘못된 값을 만드는 스팬 불일치, 그래픽에서 라이브 제로가 주는 이점, 범위 상한에 고정된 값이 측정값이 아니라 한계값인 이유를 확인합니다. 각 문항의 해설에는 해당 내용이 나온 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/signal-scaling.html', label: '신호 스케일링 계산기'}
+        ],
+        lessons: [
+            {href: '/ko/education/analog-sensing.html', label: '아날로그 센싱'},
+            {href: '/ko/education/controller-wiring.html', label: '제어기 배선'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

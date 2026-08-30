@@ -6,7 +6,7 @@ nav: practice
 category: field
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -71,12 +71,12 @@ category: field
 
         // Question bank lives in html/_data/quizzes/troubleshooting.js so the
         // FAQPage JSON-LD emitted from head.njk can read the same source.
-        const questions = {{ quizzes['troubleshooting'] | safeScriptJson | safe }};
+        const questions = {{ quizzes['troubleshooting'] | localizedQuiz(locale, 'troubleshooting') | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
-            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            next: {{ page.fileSlug | nextQuiz(locale, collections.navPractice) | safeScriptJson | safe }},
             slug: 'troubleshooting',
-            title: 'Troubleshooting',
+            title: {{ title | cleanTitle | safeScriptJson | safe }},
             defaultCount: 10,
             defaultOrder: 'sequential'
         });

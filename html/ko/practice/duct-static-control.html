@@ -1,0 +1,56 @@
+---
+title: 덕트 정압 제어 퀴즈 — controlsfreak.dev
+description: 정압 신호의 방향과 센서 위치, 트림 앤드 리스폰드 설정값 리셋, 상한 고정 트랜스듀서, 풍량을 결정하는 제어기와 고정압 차단을 점검하는 10문항 퀴즈입니다.
+sourceContentHash: 2ab38b2bc0268abe2e738ec74be03aa2ac3bda789a5be647d20d400f25584bbd
+canonical: https://controlsfreak.dev/ko/practice/duct-static-control.html
+nav: practice
+category: forced-air
+pairedLesson: https://controlsfreak.dev/ko/education/duct-static-control.html
+---
+{% extends "html/practice/duct-static-control.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 덕트 정압 제어</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">덕트 정압 제어 퀴즈 <span class="tool-tag">공기 시스템</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/duct-static-control.html">덕트 정압 제어</a> 학습 자료를 읽은 뒤
+                정압 루프를 기억해 운전해 보세요. 학습 순서를 따르는 10문항입니다. 팬이 풍량 대신 정압을 유지하는 이유,
+                박스가 닫힐 때 신호가 움직이는 방향, 센서 위치, 트림 앤드 리스폰드(trim &amp; respond)의 실제 동작,
+                커지는 저항을 숨기는 추세, 팬으로 만들 수 없었던 풍량, 루프 밖에 있어야 하는 고정압 차단을
+                확인합니다. 각 문항의 해설에는 해당 내용이 나온 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/affinity-laws.html', label: '펌프 및 팬 상사 법칙 계산기'},
+            {href: '/ko/tools/signal-scaling.html', label: '신호 스케일링 계산기'},
+            {href: '/ko/tools/duct-traverse.html', label: '덕트 트래버스 계산기'},
+            {href: '/ko/tools/duct-sizer.html', label: '덕트 치수 산정 도구'}
+        ],
+        lessons: [
+            {href: '/ko/education/duct-static-control.html', label: '덕트 정압 제어'},
+            {href: '/ko/education/vav-systems.html', label: 'VAV 시스템'},
+            {href: '/ko/education/pump-control.html', label: '펌프 제어'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}
