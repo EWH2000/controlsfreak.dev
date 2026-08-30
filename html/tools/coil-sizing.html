@@ -4,10 +4,117 @@ description: Size a cooling or heating coil — total, sensible, and latent capa
 canonical: https://controlsfreak.dev/tools/coil-sizing.html
 nav: tools
 category: hvac
+pageMessages:
+    defineBy:
+        rh: 'Relative humidity (%)'
+        wb: 'Wet-bulb ({unit})'
+        dp: 'Dew point ({unit})'
+        w: 'Humidity ratio ({unit})'
+        h: 'Enthalpy ({unit} dry air)'
+    status:
+        capacityPrompt: 'Enter values to size the coil.'
+        leavingPrompt: 'Enter values to solve the leaving state.'
+        coolingCapacity: 'Cooling coil — {capacity} {unit} total, SHR {shr}.'
+        heatingCapacity: 'Heating coil — {capacity} {unit} sensible.'
+        leavingSaturated: 'Leaving point lands on the saturation curve — the coil’s apparatus dew point. It can’t shed that much latent load at this sensible split; drop the latent load or accept fully-saturated leaving air.'
+        coolingLeavingSolved: 'Cooling coil — leaving state solved.'
+        heatingLeavingSolved: 'Heating coil — leaving state solved.'
+    warnings:
+        coolingLooksHeating: 'Leaving air is warmer than entering — that’s a heating process. Switch the coil type to Heating.'
+        heatingLooksCooling: 'Leaving air is cooler than entering — that’s a cooling process. Switch the coil type to Cooling.'
+        coolingAddsMoisture: 'Leaving air carries more moisture than entering — a cooling coil removes water, it can’t add it.'
+    errors:
+        engineUnavailable: 'Psychrometric engine unavailable — reload the page.'
+        enteringPrefix: 'Entering air — {message}'
+        leavingPrefix: 'Leaving air — {message}'
+        positiveAirflow: 'Airflow must be a positive number.'
+        psychro:
+            numeric: 'Enter numeric values.'
+            rhNegative: 'Relative humidity can’t be negative.'
+            rhAbove100: 'Relative humidity can’t exceed 100%.'
+            wetBulbAboveDryBulb: 'Wet-bulb can’t exceed dry-bulb.'
+            dewPointAboveDryBulb: 'Dew point can’t exceed dry-bulb.'
+            humidityRatioNegative: 'Humidity ratio can’t be negative.'
+            enthalpyBelowDryAir: 'Enthalpy is below dry air at this dry-bulb — impossible.'
+            propertyRequired: 'Pick a property to define the point by.'
+            rhPastSaturation: 'That point is past saturation (RH over 100%) — impossible.'
+            wetBulbPastSaturation: 'That wet-bulb is past saturation — more moisture than air can hold at this dry-bulb and pressure.'
+            dewPointPastSaturation: 'That dew point is past saturation — more moisture than air can hold at this dry-bulb and pressure.'
+            humidityRatioPastSaturation: 'That humidity ratio is past saturation — more moisture than air can hold at this dry-bulb and pressure.'
+            enthalpyPastSaturation: 'That enthalpy is past saturation — more moisture than air can hold at this dry-bulb and pressure.'
+            enteringInvalid: 'Entering-air state is invalid.'
+            positiveAirflowEngine: 'Enter a positive airflow.'
+            sensibleNegative: 'Sensible load can’t be negative.'
+            latentNegative: 'Latent load can’t be negative.'
+            boneDry: 'That load drives the air past bone-dry — check the inputs.'
+    formula:
+        capacity: 'ṁ = {airTerm} = {massFlow} {massUnit} (v = {specificVolume} {volumeUnit} at entering {enteringDb}/{enteringWb} {tempUnit}) · total = ṁ × Δh = {capacity} {capacityUnit}'
+        leaving: 'ΔDB = {deltaDb} {tempUnit} · leaving {leavingDb} {tempUnit} / {rh} % RH'
+    unitText:
+        dryBulb:
+            us: 'Dry-bulb (°F)'
+            metric: 'Dry-bulb (°C)'
+        seededLeavingDb:
+            us: '55 °F'
+            metric: '12.8 °C'
+        seededLeavingWb:
+            us: '54 °F'
+            metric: '12.2 °C'
+        airflow:
+            us: 'Airflow (CFM)'
+            metric: 'Airflow (m³/h)'
+        totalCapacity:
+            us: 'Total capacity (MBH)'
+            metric: 'Total capacity (kW)'
+        sensibleCapacity:
+            us: 'Sensible capacity (MBH)'
+            metric: 'Sensible capacity (kW)'
+        latentCapacity:
+            us: 'Latent capacity (MBH)'
+            metric: 'Latent capacity (kW)'
+        deltaDryBulb:
+            us: 'Δ Dry-bulb (°F)'
+            metric: 'Δ Dry-bulb (°C)'
+        deltaHumidityRatio:
+            us: 'Δ Humidity ratio (gr/lb)'
+            metric: 'Δ Humidity ratio (g/kg)'
+        deltaEnthalpy:
+            us: 'Δ Enthalpy (Btu/lb)'
+            metric: 'Δ Enthalpy (kJ/kg)'
+        exampleAirflow:
+            us: '2000 CFM'
+            metric: '3400 m³/h'
+        exampleEntering:
+            us: '80 °F / 67 °F WB'
+            metric: '26.7 °C / 19.4 °C WB'
+        exampleLeaving:
+            us: '55 °F / 54 °F WB'
+            metric: '12.8 °C / 12.2 °C WB'
+        sensibleLoad:
+            us: 'Sensible load (MBH)'
+            metric: 'Sensible load (kW)'
+        latentLoad:
+            us: 'Latent load (MBH)'
+            metric: 'Latent load (kW)'
+        coilCapacity:
+            us: 'Coil capacity (MBH)'
+            metric: 'Coil capacity (kW)'
+        wetBulb:
+            us: 'Wet-bulb (°F)'
+            metric: 'Wet-bulb (°C)'
+        humidityRatio:
+            us: 'Humidity ratio (gr/lb)'
+            metric: 'Humidity ratio (g/kg)'
+        dewPoint:
+            us: 'Dew point (°F)'
+            metric: 'Dew point (°C)'
+        enthalpy:
+            us: 'Enthalpy (Btu/lb)'
+            metric: 'Enthalpy (kJ/kg)'
 keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -73,7 +180,7 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
 
                     <h3 class="subhead">Entering air</h3>
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="cs-cap-ent-tdb">Dry-bulb (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="cs-cap-ent-tdb">Dry-bulb (°F)</label>
                         <input class="ps-input" type="number" id="cs-cap-ent-tdb" step="0.5" min="-50" max="200" value="80">
                     </div>
                     <div class="ps-row">
@@ -93,7 +200,7 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
 
                     <h3 class="subhead">Leaving air</h3>
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="cs-cap-lvg-tdb">Dry-bulb (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="cs-cap-lvg-tdb">Dry-bulb (°F)</label>
                         <input class="ps-input" type="number" id="cs-cap-lvg-tdb" step="0.5" min="-50" max="200" value="55">
                     </div>
                     <div class="ps-row cs-cool-only">
@@ -111,8 +218,8 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
                         <input class="ps-input" type="number" id="cs-cap-lvg-second" step="0.5" value="54">
                     </div>
                     <p class="ref-note cs-cool-only">
-                        The seeded leaving state (<span data-us="55 °F" data-metric="12.8 °C">55 °F</span> DB /
-                        <span data-us="54 °F" data-metric="12.2 °C">54 °F</span> WB) is an intentionally
+                        The seeded leaving state (<span data-us="{{ pageMessages.unitText.seededLeavingDb.us }}" data-metric="{{ pageMessages.unitText.seededLeavingDb.metric }}">55 °F</span> DB /
+                        <span data-us="{{ pageMessages.unitText.seededLeavingWb.us }}" data-metric="{{ pageMessages.unitText.seededLeavingWb.metric }}">54 °F</span> WB) is an intentionally
                         aggressive, near-saturation dehumidifying coil (~95&nbsp;% RH off the coil),
                         so it drives a deliberately low <button type="button" data-gloss="sensible-heat">sensible-heat</button> ratio. Real leaving air often
                         runs a touch drier — edit it to your design condition.
@@ -124,24 +231,24 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
                     </p>
 
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Airflow (CFM)" data-metric="Airflow (m³/h)" for="cs-cap-cfm">Airflow (CFM)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.airflow.us }}" data-metric="{{ pageMessages.unitText.airflow.metric }}" for="cs-cap-cfm">Airflow (CFM)</label>
                         <input class="ps-input" type="number" id="cs-cap-cfm" step="50" min="0" value="2000">
                     </div>
                 </section>
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="status-pill" id="cs-cap-status">Enter values to size the coil.</div>
+                    <div class="status-pill" id="cs-cap-status">{{ pageMessages.status.capacityPrompt }}</div>
                     <div class="ps-row primary">
-                        <span class="ps-label" data-us="Total capacity (MBH)" data-metric="Total capacity (kW)">Total capacity (MBH)</span>
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.totalCapacity.us }}" data-metric="{{ pageMessages.unitText.totalCapacity.metric }}">Total capacity (MBH)</span>
                         <span class="ps-value muted" id="cs-cap-q-total">—</span>
                     </div>
                     <div class="ps-row cs-cool-only">
-                        <span class="ps-label" data-us="Sensible capacity (MBH)" data-metric="Sensible capacity (kW)">Sensible capacity (MBH)</span>
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.sensibleCapacity.us }}" data-metric="{{ pageMessages.unitText.sensibleCapacity.metric }}">Sensible capacity (MBH)</span>
                         <span class="ps-value muted" id="cs-cap-q-sens">—</span>
                     </div>
                     <div class="ps-row cs-cool-only">
-                        <span class="ps-label" data-us="Latent capacity (MBH)" data-metric="Latent capacity (kW)">Latent capacity (MBH)</span>
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.latentCapacity.us }}" data-metric="{{ pageMessages.unitText.latentCapacity.metric }}">Latent capacity (MBH)</span>
                         <span class="ps-value muted" id="cs-cap-q-lat">—</span>
                     </div>
                     <div class="ps-row cs-cool-only">
@@ -151,15 +258,15 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
 
                     <h3 class="subhead">Process change (signed: − = cooling)</h3>
                     <div class="ps-row">
-                        <span class="ps-label" data-us="Δ Dry-bulb (°F)" data-metric="Δ Dry-bulb (°C)">Δ Dry-bulb (°F)</span>
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.deltaDryBulb.us }}" data-metric="{{ pageMessages.unitText.deltaDryBulb.metric }}">Δ Dry-bulb (°F)</span>
                         <span class="ps-value muted" id="cs-cap-ddb">—</span>
                     </div>
                     <div class="ps-row cs-cool-only">
-                        <span class="ps-label" data-us="Δ Humidity ratio (gr/lb)" data-metric="Δ Humidity ratio (g/kg)">Δ Humidity ratio (gr/lb)</span>
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.deltaHumidityRatio.us }}" data-metric="{{ pageMessages.unitText.deltaHumidityRatio.metric }}">Δ Humidity ratio (gr/lb)</span>
                         <span class="ps-value muted" id="cs-cap-dw">—</span>
                     </div>
                     <div class="ps-row">
-                        <span class="ps-label" data-us="Δ Enthalpy (Btu/lb)" data-metric="Δ Enthalpy (kJ/kg)">Δ Enthalpy (Btu/lb)</span>
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.deltaEnthalpy.us }}" data-metric="{{ pageMessages.unitText.deltaEnthalpy.metric }}">Δ Enthalpy (Btu/lb)</span>
                         <span class="ps-value muted" id="cs-cap-dh">—</span>
                     </div>
 
@@ -174,9 +281,9 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
             <section class="tool-body-row">
                 <h2 class="ps-section-label">Worked example</h2>
                 <p class="ref-note worked-intro">
-                    A cooling coil — <span data-us="2000 CFM" data-metric="3400 m³/h">2000 CFM</span>
-                    of entering air at <span data-us="80 °F / 67 °F WB" data-metric="26.7 °C / 19.4 °C WB">80 °F / 67 °F WB</span>,
-                    leaving at <span data-us="55 °F / 54 °F WB" data-metric="12.8 °C / 12.2 °C WB">55 °F / 54 °F WB</span>.
+                    A cooling coil — <span data-us="{{ pageMessages.unitText.exampleAirflow.us }}" data-metric="{{ pageMessages.unitText.exampleAirflow.metric }}">2000 CFM</span>
+                    of entering air at <span data-us="{{ pageMessages.unitText.exampleEntering.us }}" data-metric="{{ pageMessages.unitText.exampleEntering.metric }}">80 °F / 67 °F WB</span>,
+                    leaving at <span data-us="{{ pageMessages.unitText.exampleLeaving.us }}" data-metric="{{ pageMessages.unitText.exampleLeaving.metric }}">55 °F / 54 °F WB</span>.
                 </p>
                 <ol class="ref-note worked-list">
                     <li>Each air state fixes its <button type="button" data-gloss="enthalpy">enthalpy</button> <code>h</code> and humidity
@@ -215,7 +322,7 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
 
                     <h3 class="subhead">Entering air</h3>
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="cs-lvg-ent-tdb">Dry-bulb (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="cs-lvg-ent-tdb">Dry-bulb (°F)</label>
                         <input class="ps-input" type="number" id="cs-lvg-ent-tdb" step="0.5" min="-50" max="200" value="80">
                     </div>
                     <div class="ps-row">
@@ -234,21 +341,21 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
                     </div>
 
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Airflow (CFM)" data-metric="Airflow (m³/h)" for="cs-lvg-cfm">Airflow (CFM)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.airflow.us }}" data-metric="{{ pageMessages.unitText.airflow.metric }}" for="cs-lvg-cfm">Airflow (CFM)</label>
                         <input class="ps-input" type="number" id="cs-lvg-cfm" step="50" min="0" value="2000">
                     </div>
 
                     <h3 class="subhead">Coil load</h3>
                     <div class="ps-row cs-cool-only">
-                        <label class="ps-label" data-us="Sensible load (MBH)" data-metric="Sensible load (kW)" for="cs-lvg-q-sens">Sensible load (MBH)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.sensibleLoad.us }}" data-metric="{{ pageMessages.unitText.sensibleLoad.metric }}" for="cs-lvg-q-sens">Sensible load (MBH)</label>
                         <input class="ps-input" type="number" id="cs-lvg-q-sens" step="1" min="0" value="40">
                     </div>
                     <div class="ps-row cs-cool-only">
-                        <label class="ps-label" data-us="Latent load (MBH)" data-metric="Latent load (kW)" for="cs-lvg-q-lat">Latent load (MBH)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.latentLoad.us }}" data-metric="{{ pageMessages.unitText.latentLoad.metric }}" for="cs-lvg-q-lat">Latent load (MBH)</label>
                         <input class="ps-input" type="number" id="cs-lvg-q-lat" step="1" min="0" value="15">
                     </div>
                     <div class="ps-row cs-heat-only">
-                        <label class="ps-label" data-us="Coil capacity (MBH)" data-metric="Coil capacity (kW)" for="cs-lvg-q-heat">Coil capacity (MBH)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.coilCapacity.us }}" data-metric="{{ pageMessages.unitText.coilCapacity.metric }}" for="cs-lvg-q-heat">Coil capacity (MBH)</label>
                         <input class="ps-input" type="number" id="cs-lvg-q-heat" step="1" min="0" value="50">
                     </div>
                     <p class="ref-note">
@@ -260,18 +367,18 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="status-pill" id="cs-lvg-status">Enter values to solve the leaving state.</div>
+                    <div class="status-pill" id="cs-lvg-status">{{ pageMessages.status.leavingPrompt }}</div>
                     <h3 class="subhead">Leaving air</h3>
                     <div class="ps-row primary">
-                        <span class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span>
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}">Dry-bulb (°F)</span>
                         <span class="ps-value muted" id="cs-lvg-out-db">—</span>
                     </div>
                     <div class="ps-row">
-                        <span class="ps-label" data-us="Wet-bulb (°F)" data-metric="Wet-bulb (°C)">Wet-bulb (°F)</span>
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.wetBulb.us }}" data-metric="{{ pageMessages.unitText.wetBulb.metric }}">Wet-bulb (°F)</span>
                         <span class="ps-value muted" id="cs-lvg-out-wb">—</span>
                     </div>
                     <div class="ps-row">
-                        <span class="ps-label" data-us="Humidity ratio (gr/lb)" data-metric="Humidity ratio (g/kg)">Humidity ratio (gr/lb)</span>
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.humidityRatio.us }}" data-metric="{{ pageMessages.unitText.humidityRatio.metric }}">Humidity ratio (gr/lb)</span>
                         <span class="ps-value muted" id="cs-lvg-out-w">—</span>
                     </div>
                     <div class="ps-row">
@@ -279,11 +386,11 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
                         <span class="ps-value muted" id="cs-lvg-out-rh">—</span>
                     </div>
                     <div class="ps-row">
-                        <span class="ps-label" data-us="Dew point (°F)" data-metric="Dew point (°C)">Dew point (°F)</span>
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.dewPoint.us }}" data-metric="{{ pageMessages.unitText.dewPoint.metric }}">Dew point (°F)</span>
                         <span class="ps-value muted" id="cs-lvg-out-dp">—</span>
                     </div>
                     <div class="ps-row">
-                        <span class="ps-label" data-us="Enthalpy (Btu/lb)" data-metric="Enthalpy (kJ/kg)">Enthalpy (Btu/lb)</span>
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.enthalpy.us }}" data-metric="{{ pageMessages.unitText.enthalpy.metric }}">Enthalpy (Btu/lb)</span>
                         <span class="ps-value muted" id="cs-lvg-out-h">—</span>
                     </div>
 
@@ -385,8 +492,49 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
         const getVal    = id       => document.getElementById(id).value;
 
         // Define-by catalog — rebuilt on unitschange so labels and steps
-        // follow the active unit system. See /scripts/psy-widget.js.
-        let SECOND_PROP = PsyWidget.buildSecondProp();
+        // follow the active unit system. Preserve the shared widget's
+        // machine fields and replace only its user-visible labels.
+        function buildSecondProp() {
+            const base = PsyWidget.buildSecondProp();
+            return {
+                rh: { ...base.rh, label: CFI18n.page('defineBy.rh') },
+                wb: { ...base.wb, label: CFI18n.page('defineBy.wb', { unit: U.suffix.temp() }) },
+                dp: { ...base.dp, label: CFI18n.page('defineBy.dp', { unit: U.suffix.temp() }) },
+                w:  { ...base.w,  label: CFI18n.page('defineBy.w', { unit: U.suffix.humidityRatio() }) },
+                h:  { ...base.h,  label: CFI18n.page('defineBy.h', { unit: U.suffix.enthalpy() }) }
+            };
+        }
+
+        let SECOND_PROP = buildSecondProp();
+
+        // Exact adapters for solveState() and invertProcess(). Unknown source
+        // text fails closed instead of reaching translated status regions.
+        const PSYCHRO_ERROR_KEYS = Object.freeze({
+            'Enter numeric values.': 'numeric',
+            'Relative humidity can’t be negative.': 'rhNegative',
+            'Relative humidity can’t exceed 100%.': 'rhAbove100',
+            'Wet-bulb can’t exceed dry-bulb.': 'wetBulbAboveDryBulb',
+            'Dew point can’t exceed dry-bulb.': 'dewPointAboveDryBulb',
+            'Humidity ratio can’t be negative.': 'humidityRatioNegative',
+            'Enthalpy is below dry air at this dry-bulb — impossible.': 'enthalpyBelowDryAir',
+            'Pick a property to define the point by.': 'propertyRequired',
+            'That point is past saturation (RH over 100%) — impossible.': 'rhPastSaturation',
+            'That wet-bulb is past saturation — more moisture than air can hold at this dry-bulb and pressure.': 'wetBulbPastSaturation',
+            'That dew point is past saturation — more moisture than air can hold at this dry-bulb and pressure.': 'dewPointPastSaturation',
+            'That humidity ratio is past saturation — more moisture than air can hold at this dry-bulb and pressure.': 'humidityRatioPastSaturation',
+            'That enthalpy is past saturation — more moisture than air can hold at this dry-bulb and pressure.': 'enthalpyPastSaturation',
+            'Entering-air state is invalid.': 'enteringInvalid',
+            'Enter a positive airflow.': 'positiveAirflowEngine',
+            'Sensible load can’t be negative.': 'sensibleNegative',
+            'Latent load can’t be negative.': 'latentNegative',
+            'That load drives the air past bone-dry — check the inputs.': 'boneDry'
+        });
+
+        function psychroErrorMessage(error) {
+            const key = PSYCHRO_ERROR_KEYS[error];
+            if (!key) throw new Error('Uncataloged psychrometric engine error.');
+            return CFI18n.page('errors.psychro.' + key);
+        }
 
         const isCool = () => document.getElementById('cs-coil-type').value === 'cool';
 
@@ -440,7 +588,7 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
             // Engine guard (codebase-issues #139): degrade to the muted state
             // with a clear message if psychro-engine.js failed to load, rather
             // than throwing on the undefined Psychro global inside readState.
-            if (typeof Psychro === 'undefined') { clearCap('Psychrometric engine unavailable — reload the page.', 'error'); return; }
+            if (typeof Psychro === 'undefined') { clearCap(CFI18n.page('errors.engineUnavailable'), 'error'); return; }
             refreshSecondLabel('cs-cap-ent');
             refreshSecondLabel('cs-cap-lvg');
             const cool = isCool();
@@ -463,19 +611,25 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
             }
 
             if (!entR.ok || !lvgInputsOk || !isFinite(cfmD)) {
-                clearCap('Enter values to size the coil.');
+                clearCap(CFI18n.page('status.capacityPrompt'));
                 return;
             }
-            if (!entR.state.ok) { clearCap('Entering air — ' + entR.state.error, 'error'); return; }
+            if (!entR.state.ok) {
+                clearCap(CFI18n.page('errors.enteringPrefix', { message: psychroErrorMessage(entR.state.error) }), 'error');
+                return;
+            }
             const entState = entR.state;
             if (cool) {
-                if (!lvgState.ok) { clearCap('Leaving air — ' + lvgState.error, 'error'); return; }
+                if (!lvgState.ok) {
+                    clearCap(CFI18n.page('errors.leavingPrefix', { message: psychroErrorMessage(lvgState.error) }), 'error');
+                    return;
+                }
             } else {
                 lvgState = Psychro.buildState(U.toCanonical.temp(lvgState.pendingTdb), entState.W, P_STD);
             }
 
             const cfm = U.toCanonical.airflow(cfmD);
-            if (!(cfm > 0)) { clearCap('Airflow must be a positive number.', 'error'); return; }
+            if (!(cfm > 0)) { clearCap(CFI18n.page('errors.positiveAirflow'), 'error'); return; }
 
             const res = Psychro.computeProcess({ inlet: entState, outlet: lvgState, type }, cfm);
             const totMbh  = Math.abs(res.qTotal) / 1000;
@@ -505,26 +659,37 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
             const airTerm = U.current() === 'us'
                 ? `${cfmD} ${flowU()} × 60 ÷ v`
                 : `${cfmD} ${flowU()} ÷ v`;
-            document.getElementById('cs-cap-formula').textContent =
-                `ṁ = ${airTerm} = ${Math.round(U.display.massFlow(mDot))} ${massU()} ` +
-                `(v = ${dispV(entState.v)} ${vU()} at entering ${dispT(entState.tdb)}/${dispT(entState.twb)} ${tU()}) · ` +
-                `total = ṁ × Δh = ${dispCap(totMbh)} ${capU()}`;
+            document.getElementById('cs-cap-formula').textContent = CFI18n.page('formula.capacity', {
+                airTerm,
+                massFlow: Math.round(U.display.massFlow(mDot)),
+                massUnit: massU(),
+                specificVolume: dispV(entState.v),
+                volumeUnit: vU(),
+                enteringDb: dispT(entState.tdb),
+                enteringWb: dispT(entState.twb),
+                tempUnit: tU(),
+                capacity: dispCap(totMbh),
+                capacityUnit: capU()
+            });
 
             // Direction sanity check — coil type vs. what the numbers say.
             if (cool && res.dDb > 0.05) {
-                setStatus('cs-cap-status',
-                    'Leaving air is warmer than entering — that’s a heating process. Switch the coil type to Heating.', 'warn');
+                setStatus('cs-cap-status', CFI18n.page('warnings.coolingLooksHeating'), 'warn');
             } else if (!cool && res.dDb < -0.05) {
-                setStatus('cs-cap-status',
-                    'Leaving air is cooler than entering — that’s a cooling process. Switch the coil type to Cooling.', 'warn');
+                setStatus('cs-cap-status', CFI18n.page('warnings.heatingLooksCooling'), 'warn');
             } else if (cool && res.dW > 1e-5) {
-                setStatus('cs-cap-status',
-                    'Leaving air carries more moisture than entering — a cooling coil removes water, it can’t add it.', 'warn');
+                setStatus('cs-cap-status', CFI18n.page('warnings.coolingAddsMoisture'), 'warn');
             } else if (cool) {
-                setStatus('cs-cap-status',
-                    `Cooling coil — ${dispCap(totMbh)} ${capU()} total, SHR ${isFinite(res.shr) ? res.shr.toFixed(2) : '—'}.`, 'ok');
+                setStatus('cs-cap-status', CFI18n.page('status.coolingCapacity', {
+                    capacity: dispCap(totMbh),
+                    unit: capU(),
+                    shr: isFinite(res.shr) ? res.shr.toFixed(2) : '—'
+                }), 'ok');
             } else {
-                setStatus('cs-cap-status', `Heating coil — ${dispCap(totMbh)} ${capU()} sensible.`, 'ok');
+                setStatus('cs-cap-status', CFI18n.page('status.heatingCapacity', {
+                    capacity: dispCap(totMbh),
+                    unit: capU()
+                }), 'ok');
             }
         }
 
@@ -541,7 +706,7 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
             // Engine guard (codebase-issues #139): degrade to the muted state
             // with a clear message if psychro-engine.js failed to load, rather
             // than throwing on the undefined Psychro global inside readState.
-            if (typeof Psychro === 'undefined') { clearLvg('Psychrometric engine unavailable — reload the page.', 'error'); return; }
+            if (typeof Psychro === 'undefined') { clearLvg(CFI18n.page('errors.engineUnavailable'), 'error'); return; }
             refreshSecondLabel('cs-lvg-ent');
             const cool = isCool();
             const type = cool ? 'cool' : 'heat';
@@ -552,10 +717,13 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
             const qLatMbh  = cool ? parseFloat(getVal('cs-lvg-q-lat'))  : 0;
 
             if (!entR.ok || !isFinite(cfmD) || !isFinite(qSensMbh) || !isFinite(qLatMbh)) {
-                clearLvg('Enter values to solve the leaving state.');
+                clearLvg(CFI18n.page('status.leavingPrompt'));
                 return;
             }
-            if (!entR.state.ok) { clearLvg('Entering air — ' + entR.state.error, 'error'); return; }
+            if (!entR.state.ok) {
+                clearLvg(CFI18n.page('errors.enteringPrefix', { message: psychroErrorMessage(entR.state.error) }), 'error');
+                return;
+            }
 
             const entState = entR.state;
             const cfm   = U.toCanonical.airflow(cfmD);
@@ -563,7 +731,7 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
             const qLat  = U.toCanonical.heatCapacity(qLatMbh) * 1000;
 
             const out = Psychro.invertProcess(entState, { type, cfm, qSens, qLat });
-            if (!out.ok) { clearLvg(out.error, 'error'); return; }
+            if (!out.ok) { clearLvg(psychroErrorMessage(out.error), 'error'); return; }
 
             setLive('cs-lvg-out-db', dispT(out.tdb) + ' ' + tU());
             setLive('cs-lvg-out-wb', isFinite(out.twb) ? dispT(out.twb) + ' ' + tU() : '—');
@@ -573,16 +741,19 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
             setLive('cs-lvg-out-h',  dispH(out.h) + ' ' + hU());
 
             const ddb = out.tdb - entState.tdb;
-            document.getElementById('cs-lvg-formula').textContent =
-                `ΔDB = ${signed(U.display.deltaTemp(ddb), 1)} ${tU()} · ` +
-                `leaving ${dispT(out.tdb)} ${tU()} / ${out.rh.toFixed(0)} % RH`;
+            document.getElementById('cs-lvg-formula').textContent = CFI18n.page('formula.leaving', {
+                deltaDb: signed(U.display.deltaTemp(ddb), 1),
+                tempUnit: tU(),
+                leavingDb: dispT(out.tdb),
+                rh: out.rh.toFixed(0)
+            });
 
             if (out.saturated) {
-                setStatus('cs-lvg-status',
-                    'Leaving point lands on the saturation curve — the coil’s apparatus dew point. It can’t shed that much latent load at this sensible split; drop the latent load or accept fully-saturated leaving air.', 'warn');
+                setStatus('cs-lvg-status', CFI18n.page('status.leavingSaturated'), 'warn');
             } else {
-                setStatus('cs-lvg-status',
-                    cool ? 'Cooling coil — leaving state solved.' : 'Heating coil — leaving state solved.', 'ok');
+                setStatus('cs-lvg-status', CFI18n.page(cool
+                    ? 'status.coolingLeavingSolved'
+                    : 'status.heatingLeavingSolved'), 'ok');
             }
         }
 
@@ -658,7 +829,7 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
                 const q = quantityForMode(document.getElementById(prefix + '-mode').value);
                 if (q) rewriteInput(prefix + '-second', q, oldUnits, newUnits);
             }
-            SECOND_PROP = PsyWidget.buildSecondProp();
+            SECOND_PROP = buildSecondProp();
             calcCapacity();
             calcLeaving();
         });

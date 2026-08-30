@@ -5,6 +5,30 @@ canonical: https://controlsfreak.dev/tools/bacnet-priority.html
 nav: tools
 category: protocols
 keywords: bacnet priority array present value relinquish default commandable override write null release 16 slots manual operator life safety minimum on off writeproperty
+pageMessages:
+  slot:
+    withUse: slot {number} ({use})
+    plain: slot {number}
+    useLabels:
+      '1': Manual Life-Safety
+      '2': Automatic Life-Safety
+      '5': Critical Equipment Control
+      '6': Minimum On/Off
+      '8': Manual Operator
+  active:
+    status: Commanded by {slot}
+    explanation: Present_Value is the value in <strong>{slot}</strong> — the lowest-numbered slot that is not NULL.
+    lowerHeldBack: ' Lower-priority slots below it are held back.'
+    nextSlot: Release {current} and {next} takes over at {value}.
+    nextDefault: Release {current} and Present_Value falls to Relinquish_Default ({value}).
+    nextNull: Release {current} and every slot is NULL — Present_Value becomes NULL.
+  defaultValue:
+    status: From Relinquish_Default
+    explanation: Every slot is NULL, so Present_Value falls back to <strong>Relinquish_Default</strong> — the resting state.
+    next: Write any slot to command a value that overrides the default.
+  nullValue:
+    status: NULL — no commandable value
+    explanation: Every slot is NULL and Relinquish_Default is empty — Present_Value is NULL.
 faqs:
     - q: What is the BACnet priority array?
       a: A 16-slot property (<code>Priority_Array</code>) on every <em>commandable</em> object — Analog Output, Binary Output, and Analog / Binary / Multi-state Value when configured commandable. A <code>WriteProperty</code> to <code>Present_Value</code> does not overwrite the value; it writes into one slot, at a chosen priority. Slot 1 is the highest priority and slot 16 the lowest.
@@ -20,8 +44,8 @@ faqs:
       a: Almost always a forgotten override sitting at a higher priority than the sequence. The program writes at, say, slot 16, but slot 8 still holds a hand value someone set months ago — so <code>Present_Value</code> resolves to the old override and the point looks "broken" even though the sequence is writing correctly. Read the whole priority array; release the stale slot with a NULL write.
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
-{% from "faq.njk" import faqBlock %}
+{% from "related-links.njk" import relatedLinks with context %}
+{% from "faq.njk" import faqBlock with context %}
 
 {% set prioritySlots = [
     { n: 1,  use: "Manual Life-Safety",         short: "life-safety",      tag: "std",   note: "The highest priority — reserved for manual life-safety commands. Nothing outranks it." },
@@ -331,8 +355,11 @@ faqs:
         function slotLabel(idx) {
             const row = slotRows[idx];
             return row.dataset.tag === 'std'
-                ? 'slot ' + (idx + 1) + ' (' + row.dataset.use + ')'
-                : 'slot ' + (idx + 1);
+                ? CFI18n.page('slot.withUse', {
+                    number: idx + 1,
+                    use: CFI18n.page('slot.useLabels.' + (idx + 1)),
+                })
+                : CFI18n.page('slot.plain', { number: idx + 1 });
         }
 
         function setStatus(kind, text) {
@@ -357,36 +384,39 @@ faqs:
                 slotRows[win].classList.add('bpri-win');
                 pvEl.textContent = pv;
                 pvEl.classList.remove('muted');
-                setStatus('ok', 'Commanded by ' + slotLabel(win));
-                explainEl.innerHTML = 'Present_Value is the value in <strong>' + slotLabel(win)
-                    + '</strong> — the lowest-numbered slot that is not NULL.'
-                    + (win < 15 ? ' Lower-priority slots below it are held back.' : '');
+                setStatus('ok', CFI18n.page('active.status', { slot: slotLabel(win) }));
+                explainEl.innerHTML = CFI18n.page('active.explanation', { slot: slotLabel(win) })
+                    + (win < 15 ? CFI18n.page('active.lowerHeldBack') : '');
                 lastCopy = pv;
 
                 const nxt = firstActive(win + 1);
                 if (nxt >= 0) {
-                    nextEl.textContent = 'Release ' + slotLabel(win) + ' and ' + slotLabel(nxt)
-                        + ' takes over at ' + val(slotEls[nxt]) + '.';
+                    nextEl.textContent = CFI18n.page('active.nextSlot', {
+                        current: slotLabel(win),
+                        next: slotLabel(nxt),
+                        value: val(slotEls[nxt]),
+                    });
                 } else if (val(rdEl) !== '') {
-                    nextEl.textContent = 'Release ' + slotLabel(win)
-                        + ' and Present_Value falls to Relinquish_Default (' + val(rdEl) + ').';
+                    nextEl.textContent = CFI18n.page('active.nextDefault', {
+                        current: slotLabel(win),
+                        value: val(rdEl),
+                    });
                 } else {
-                    nextEl.textContent = 'Release ' + slotLabel(win)
-                        + ' and every slot is NULL — Present_Value becomes NULL.';
+                    nextEl.textContent = CFI18n.page('active.nextNull', { current: slotLabel(win) });
                 }
             } else if (val(rdEl) !== '') {
                 const pv = val(rdEl);
                 pvEl.textContent = pv;
                 pvEl.classList.remove('muted');
-                setStatus('ok', 'From Relinquish_Default');
-                explainEl.innerHTML = 'Every slot is NULL, so Present_Value falls back to <strong>Relinquish_Default</strong> — the resting state.';
-                nextEl.textContent = 'Write any slot to command a value that overrides the default.';
+                setStatus('ok', CFI18n.page('defaultValue.status'));
+                explainEl.innerHTML = CFI18n.page('defaultValue.explanation');
+                nextEl.textContent = CFI18n.page('defaultValue.next');
                 lastCopy = pv;
             } else {
                 pvEl.textContent = '—';
                 pvEl.classList.add('muted');
-                setStatus('warn', 'NULL — no commandable value');
-                explainEl.innerHTML = 'Every slot is NULL and Relinquish_Default is empty — Present_Value is NULL.';
+                setStatus('warn', CFI18n.page('nullValue.status'));
+                explainEl.innerHTML = CFI18n.page('nullValue.explanation');
                 nextEl.textContent = '';
                 lastCopy = '';
             }

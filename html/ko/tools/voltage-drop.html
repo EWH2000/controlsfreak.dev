@@ -1,0 +1,209 @@
+---
+title: 배선 길이 및 전압강하 — controlsfreak.dev
+description: AWG와 배선 길이로 왕복 저항을 구하고 4–20 mA 루프 전원 여유, 0–10 V 입력 전압강하, 온도센서 리드선 오차를 계산합니다.
+sourceContentHash: dfb6fa1833ffe6d41a924cfd5a2194b5bfc60a4e3bf42aa144541dd61c373df3
+sourceMessageHash: ae484400c67c82169a2866365edcbade1edee56e3ce673130d6e020c84201b57
+canonical: https://controlsfreak.dev/ko/tools/voltage-drop.html
+nav: tools
+category: electrical
+keywords: awg 전선 굵기 옴 전압강하 4-20ma 루프 0-10v 서미스터 리드선 저항 배선 길이
+pageMessages:
+    validation:
+        runLength: "편도 배선 길이를 입력하세요."
+        runNegative: "배선 길이는 음수일 수 없습니다."
+        loopInputs: "루프 전원, 트랜스미터 최소 전압, 센스 저항을 입력하세요."
+        loopNegative: "루프 값은 음수일 수 없습니다."
+        impedance: "AI 입력 임피던스를 입력하세요."
+        impedancePositive: "입력 임피던스는 0보다 커야 합니다."
+    output:
+        noRun: "이 전원에서는 허용 길이 없음"
+        voltageError: "{millivolts} mV(스팬의 {percent}%)"
+        sensorCold: "{error} °F 낮게 표시"
+    formula:
+        loop: "R = 2 × {length} × {ohms} ÷ 1000 = {wire} Ω · 강하 = 0.020 × ({wire} + {sense}) = {drop} V · V_트랜스미터 = {supply} − {drop} = {transmitter} V"
+        voltage: "R = 2 × {length} × {ohms} ÷ 1000 = {wire} Ω · 오차 = 10 × {wire} ÷ ({wire} + {impedance}) = {millivolts} mV"
+        sensor: "R = 2 × {length} × {ohms} ÷ 1000 = {wire} Ω · 오차 = 센서 곡선의 {temperature} °F 부근에서 R_wire ÷ |dR/dT|"
+    verdict:
+        loopUnder: "최소 미달 — 트랜스미터 전압이 {voltage} V로 최소 {minimum} V보다 낮습니다. 루프가 전 범위에 도달하기 전에 제한되어 측정값이 포화됩니다. 전원 전압을 높이거나 센스 저항을 낮추거나 더 굵은 전선을 사용하세요."
+        loopMarginal: "여유 부족 — 트랜스미터 전압이 {voltage} V로 최소 {minimum} V와의 차이가 1 V 이내입니다. 고온에서의 전원 저하나 접속부 하나만 추가되어도 최소값 아래로 내려갑니다."
+        loopOk: "정상 — 트랜스미터 전압이 {voltage} V로 최소 {minimum} V보다 높습니다. 전류가 신호이므로 구리 저항은 정확도가 아니라 공급 전압 여유를 소모합니다."
+        voltage: "고임피던스 AI에서 IR 강하는 {millivolts} mV로 오차보다 잡음 수준입니다. 패널의 0–10 V 값이 틀리면 전선 저항보다 패널 간 접지 전위차나 배선에 유도된 잡음을 의심하세요."
+        sensorOk: "10K NTC에서 이 배선의 오차는 {thermistor} °F로 잡음 수준입니다. 곡선이 1도당 수백 Ω 변하기 때문입니다. 같은 전선을 2선식 Pt100에 연결하면 {rtd} °F의 오차가 생깁니다. Pt100을 장거리 2선식으로 연결하지 말고 Pt1000, 3선식 또는 트랜스미터를 사용하세요."
+        sensorLong: "이 배선에서는 10K NTC도 {thermistor} °F의 오차가 생깁니다. 길이가 지나치게 길거나 전선이 너무 가늘 수 있으므로 값을 확인하거나 센서 위치에 트랜스미터를 설치하세요."
+        sensorUnavailable: "센서 곡선 데이터를 사용할 수 없습니다. 위의 저항 계산 결과는 그대로 유효합니다."
+---
+{% extends "html/tools/voltage-drop.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 전압강하</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                배선 길이 및 전압강하
+                <span class="tool-tag">전기</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>긴 홈런 배선에는 구리 저항이 더해지고, 그 저항의 영향은 배선에 실린 신호에 따라 완전히 달라집니다.</summary>
+            <div class="preamble-rest">
+                신호 유형, 전선 굵기, 편도 길이를 선택하세요. 4–20&nbsp;mA에서는 루프 공급 전압 여유, 0–10&nbsp;V에서는 실제 오차와 오해하기 쉬운 오차, 온도센서에서는 온도로 환산한 리드선 오차를 해당 신호에 맞게 판정합니다.
+            </div>
+        </details>
+        <p class="ps-seed-note">입력란에는 예제가 미리 채워져 있습니다. 확인하려는 값으로 수정하세요.</p>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">입력</h2>
+                <div class="ps-row">
+                    <label class="ps-label" for="vd-type">신호 유형</label>
+                    <select class="ps-input" id="vd-type">
+                        <option value="loop">4–20 mA, 2선식 루프</option>
+                        <option value="volt">0–10 V</option>
+                        <option value="therm">온도센서</option>
+                    </select>
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="vd-awg">전선 굵기(AWG)</label>
+                    <select class="ps-input" id="vd-awg">
+                        <option value="14">14 AWG</option>
+                        <option value="16">16 AWG</option>
+                        <option value="18" selected>18 AWG</option>
+                        <option value="20">20 AWG</option>
+                        <option value="22">22 AWG</option>
+                    </select>
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="vd-len">편도 배선 길이(ft)</label>
+                    <input class="ps-input" type="number" id="vd-len" step="any" min="0" placeholder="500" value="500">
+                </div>
+                <div class="ps-row vd-loop-only">
+                    <label class="ps-label" for="vd-supply">루프 전원(VDC)</label>
+                    <input class="ps-input" type="number" id="vd-supply" step="any" min="0" placeholder="24" value="24">
+                </div>
+                <div class="ps-row vd-loop-only">
+                    <label class="ps-label" for="vd-vmin">트랜스미터 최소 전압(VDC)</label>
+                    <input class="ps-input" type="number" id="vd-vmin" step="any" min="0" placeholder="12" value="12">
+                </div>
+                <div class="ps-row vd-loop-only">
+                    <label class="ps-label" for="vd-rsense">수신기 센스 저항(Ω)</label>
+                    <input class="ps-input" type="number" id="vd-rsense" step="any" min="0" placeholder="250" value="250">
+                </div>
+                <div class="ps-row vd-volt-only hidden">
+                    <label class="ps-label" for="vd-rin">AI 입력 임피던스(Ω)</label>
+                    <input class="ps-input" type="number" id="vd-rin" step="any" min="0" placeholder="100000" value="100000">
+                </div>
+                <p class="ref-note vd-loop-only">
+                    트랜스미터 최소 전압은 데이터시트에 있으며 2선식 트랜스미터에서는 12&nbsp;V가 일반적인 하한입니다. 센스 저항은 <button type="button" data-gloss="ai">AI</button>가 전류를 읽기 위해 사용하는 저항입니다. 250&nbsp;Ω(1–5&nbsp;V)이 일반적이고 일부 입력은 100&nbsp;Ω을 사용합니다.
+                </p>
+                <p class="ref-note vd-th-only hidden">
+                    리드선 저항은 컨트롤러가 측정하는 저항에 그대로 더해지며 NTC는 증가한 저항을 <em>더 낮은 온도</em>로 해석합니다. 같은 구리 저항도 센서 종류에 따라 오차가 크게 달라진다는 점을 세 행에서 확인할 수 있습니다.
+                </p>
+            </section>
+
+            <section role="status" aria-atomic="false">
+                <h2 class="ps-section-label">출력</h2>
+                <div class="status-pill" id="vd-status">배선 길이를 입력하면 판정 결과가 표시됩니다.</div>
+                <div class="ps-row primary">
+                    <span class="ps-label">왕복 전선 저항</span>
+                    <span class="ps-value muted" id="vd-rwire">—</span>
+                </div>
+                <div class="ps-row vd-loop-only">
+                    <span class="ps-label">최악 조건 20 mA에서 트랜스미터 전압</span>
+                    <span class="ps-value muted" id="vd-vxmtr">—</span>
+                </div>
+                <div class="ps-row vd-loop-only">
+                    <span class="ps-label">현재 굵기의 최대 편도 길이</span>
+                    <span class="ps-value muted" id="vd-maxlen">—</span>
+                </div>
+                <div class="ps-row vd-volt-only hidden">
+                    <span class="ps-label">최악 조건 측정 오차</span>
+                    <span class="ps-value muted" id="vd-verr">—</span>
+                </div>
+                <div class="ps-row vd-th-only hidden">
+                    <span class="ps-label">10K Type II 서미스터 오차</span>
+                    <span class="ps-value muted" id="vd-terr-10k">—</span>
+                </div>
+                <div class="ps-row vd-th-only hidden">
+                    <span class="ps-label">1K Balco 오차</span>
+                    <span class="ps-value muted" id="vd-terr-balco">—</span>
+                </div>
+                <div class="ps-row vd-th-only hidden">
+                    <span class="ps-label">Pt100 RTD 오차</span>
+                    <span class="ps-value muted" id="vd-terr-pt100">—</span>
+                </div>
+                <p class="ref-note vd-th-only hidden">
+                    실온(약 72&nbsp;°F) 부근에서 계산합니다. 다른 온도에서는 각 센서 곡선의 기울기에 따라 리드선 오차가 달라지므로 고정 오프셋이 아니라 실온 부근의 값으로 보세요.
+                </p>
+                <div class="btn-row">
+                    <button class="copy-btn" id="vd-copy">저항 복사</button>
+                </div>
+                <div class="result-formula wrap" id="vd-formula"></div>
+            </section>
+
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">계산 예시 — 장거리 배선에 4–20 mA를 사용하는 이유</h2>
+            <p class="ref-note worked-intro">
+                루프 전원식 압력 트랜스듀서가 패널에서 500&nbsp;ft 떨어져 있고 18&nbsp;AWG로 연결되어 있으며 250&nbsp;Ω 센스 저항을 거쳐 24&nbsp;VDC를 공급받습니다.
+            </p>
+            <ol class="ref-note worked-list">
+                <li>왕복 구리 저항: <code>R = 2 × 500 × 6.385 ÷ 1000 = 6.4 Ω</code></li>
+                <li>최악 조건은 전 범위인 20&nbsp;mA입니다: <code>강하 = 0.020 × (6.4 + 250) = 5.1 V</code></li>
+                <li>트랜스미터 전압: <code>24 − 5.1 = 18.9 V</code>로 12&nbsp;V 하한보다 충분히 높습니다.</li>
+            </ol>
+            <p class="ref-note">
+                <em>바로 이 여유</em> 때문에 장거리 배선에는 4–20&nbsp;mA를 사용합니다. 전류 자체가 신호이므로 구리 저항은 정확도가 아니라 공급 전압 여유를 소모하며 수천 ft의 길이 여유를 확보할 수 있습니다.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">구리 저항 참고표</h2>
+            <table class="ref-table-dense">
+                <thead>
+                    <tr><th>AWG</th><th>1000 ft당 Ω(도체 한 가닥)</th><th>왕복 100 ft당 Ω</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>14</td><td>2.525</td><td>0.51</td></tr>
+                    <tr><td>16</td><td>4.016</td><td>0.80</td></tr>
+                    <tr><td>18</td><td>6.385</td><td>1.28</td></tr>
+                    <tr><td>20</td><td>10.15</td><td>2.03</td></tr>
+                    <tr><td>22</td><td>16.14</td><td>3.23</td></tr>
+                </tbody>
+            </table>
+            <p class="ref-note">
+                20&nbsp;°C 단선 구리의 표준 AWG 값입니다. 이 도구는 AWG 및 Ω/1000&nbsp;ft를 사용하는 미국 단위계 기반이며 미터법의 mm² 및 Ω/km 옵션은 후속 작업으로 계획되어 있습니다. 구리 저항은 온도가 1&nbsp;°C 높아질 때 약 0.4% 증가하므로 여름철 천장 플리넘 배선은 표보다 조금 높게 측정됩니다.
+            </p>
+        </section>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/signal-scaling.html', label: '신호 스케일링'},
+            {href: '/ko/tools/thermistor-calculator.html', label: '서미스터 계산기'},
+            {href: '/ko/tools/transformer-sizing.html', label: '변압기 VA 용량'},
+            {href: '/ko/tools/electrical-quick-calc.html', label: '현장 전기 빠른 계산'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/controller-wiring.html', label: '컨트롤러 배선 시뮬레이터'}
+        ],
+        lessons: [
+            {href: '/ko/education/controller-wiring.html', label: '제어기 배선'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/field-wiring-sensors.html', label: '현장 배선 및 센서'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

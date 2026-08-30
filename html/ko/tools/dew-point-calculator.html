@@ -1,0 +1,201 @@
+---
+title: 이슬점 계산기 및 코일 점검 — controlsfreak.dev
+description: 건구온도와 상대습도 또는 습구온도로 이슬점·습구온도·절대습도(함습비, W)·엔탈피를 계산하고 코일 제습 가능 여부를 확인합니다.
+sourceContentHash: c77b69d6ce344945f572123519ddc662e64feaba41381168253d8f08abeaf6b2
+sourceMessageHash: 9859d340c979cdfe6c9884160e0124f0b89d07259499bd264e06d2d20646e62b
+canonical: https://controlsfreak.dev/ko/tools/dew-point-calculator.html
+nav: tools
+category: hvac
+pageMessages:
+    labels:
+        secondRh: '상대습도(%)'
+        secondWetBulb: '습구온도({unit})'
+        enteringDryBulb: '입구 공기 건구온도({unit})'
+        altitude: '고도({unit})'
+        coilSurface: '코일 출구/표면 온도({unit})'
+        wetBulb: '습구온도({unit})'
+        humidityRatio: '절대습도(함습비, W)({unit})'
+        enthalpy: '엔탈피({unit})'
+    verdict:
+        below: '✓ 코일 출구 온도가 이슬점보다 {margin} 낮습니다. 코일이 공기를 입구 이슬점 아래로 내려 수분을 응축해 제거하고 있습니다. 이 온도의 표면에는 응축수가 생깁니다.'
+        above: '⚠ 코일 출구 온도가 이슬점보다 {margin} 높습니다. 공기가 포화 상태에 이르지 않아 잠열 제거가 거의 또는 전혀 없으며 실내 습도가 올라갑니다.'
+        edge: '≈ 코일 출구 온도가 이슬점과 같습니다. 응축이 시작되는 경계이며 어느 쪽이든 잠열 제거량은 거의 없습니다.'
+    errors:
+        rhZero: '상대습도 0 % — 건공기에는 이슬점이 없습니다.'
+        engineUnavailable: '습공기 상태 해석 엔진을 사용할 수 없습니다. 페이지를 새로고침하세요.'
+        noMoisture: '이 공기에는 수분이 없어 계산할 이슬점이 없습니다.'
+        psychro:
+            numeric: '숫자 값을 입력하세요.'
+            rhNegative: '상대습도는 음수일 수 없습니다.'
+            rhAbove100: '상대습도는 100 %를 초과할 수 없습니다.'
+            wetBulbAboveDryBulb: '습구온도는 건구온도보다 높을 수 없습니다.'
+            rhPastSaturation: '이 상태점은 포화선을 벗어납니다(상대습도 100 % 초과). 물리적으로 불가능합니다.'
+            wetBulbPastSaturation: '입력한 습구온도는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다.'
+    unitText:
+        enteringDryBulb:
+            us: '입구 공기 건구온도(°F)'
+            metric: '입구 공기 건구온도(°C)'
+        altitude:
+            us: '고도(ft)'
+            metric: '고도(m)'
+        coilSurface:
+            us: '코일 출구/표면 온도(°F)'
+            metric: '코일 출구/표면 온도(°C)'
+        wetBulb:
+            us: '습구온도(°F)'
+            metric: '습구온도(°C)'
+        humidityRatio:
+            us: '절대습도(함습비, W)(gr/lb)'
+            metric: '절대습도(함습비, W)(g/kg)'
+        enthalpy:
+            us: '엔탈피(Btu/lb)'
+            metric: '엔탈피(kJ/kg)'
+        exampleEntering:
+            us: '75 °F'
+            metric: '23.9 °C'
+        exampleDewPoint:
+            us: '57.8 °F'
+            metric: '14.3 °C'
+        exampleCoilLeaving:
+            us: '55 °F'
+            metric: '12.8 °C'
+keywords: 이슬점 습구온도 WBT RH 상대습도 그레인 엔탈피 결로 코일 표면결로
+---
+{% extends "html/tools/dew-point-calculator.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 이슬점</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                이슬점 계산기
+                <span class="tool-tag">코일 점검</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>이슬점을 한눈에 계산하고 코일까지 점검합니다.</summary>
+            <div class="preamble-rest">
+                <button type="button" data-gloss="dry-bulb">건구온도</button>와 습도 값 하나, 즉 실내 센서의 상대습도 또는 건습구 습도계의 <button type="button" data-gloss="wet-bulb">습구온도</button>로 이슬점을 계산하며 <button type="button" data-gloss="wet-bulb">습구온도</button>, 절대습도(함습비, W),
+                <button type="button" data-gloss="enthalpy">엔탈피</button>도 함께 표시합니다. <em>코일 점검</em> 입력란은 과습 문제에서 실제로 필요한 답을 줍니다. 급기/코일 출구
+                <button type="button" data-gloss="dry-bulb">건구온도</button>를 입력하면 코일이 공기를 입구 이슬점 아래로 내려 제습하는지, 아니면 현열만 제거해 실내 습도가 올라가는지 판정합니다.
+            </div>
+        </details>
+        <p class="ps-seed-note">입력란에는 예제가 미리 채워져 있습니다. 확인하려는 값으로 수정하세요.</p>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">입력</h2>
+                <div class="ps-row">
+                    <label class="ps-label" data-us="{{ pageMessages.unitText.enteringDryBulb.us }}" data-metric="{{ pageMessages.unitText.enteringDryBulb.metric }}" for="dew-db">입구 공기 건구온도(°F)</label>
+                    <input class="ps-input" type="number" id="dew-db" step="0.5" min="-50" max="200" value="75">
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label" id="dew-mode-label">두 번째 입력값</span>
+                    <div class="dew-seg" role="group" aria-labelledby="dew-mode-label">
+                        <button type="button" class="dew-seg-btn" id="dew-mode-rh" data-mode="rh" aria-pressed="true">상대습도</button>
+                        <button type="button" class="dew-seg-btn" id="dew-mode-wb" data-mode="wb" aria-pressed="false">습구온도</button>
+                    </div>
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" id="dew-second-label" for="dew-second">상대습도(%)</label>
+                    <input class="ps-input" type="number" id="dew-second" step="1" value="55">
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" data-us="{{ pageMessages.unitText.altitude.us }}" data-metric="{{ pageMessages.unitText.altitude.metric }}" for="dew-alt">고도(ft)</label>
+                    <input class="ps-input" type="number" id="dew-alt" step="100" min="0" value="0">
+                </div>
+
+                <h3 class="subhead">코일 점검 — 선택 사항</h3>
+                <div class="ps-row">
+                    <label class="ps-label" data-us="{{ pageMessages.unitText.coilSurface.us }}" data-metric="{{ pageMessages.unitText.coilSurface.metric }}" for="dew-surface">코일 출구/표면 온도(°F)</label>
+                    <input class="ps-input" type="number" id="dew-surface" step="0.5" placeholder="예: 급기 55">
+                </div>
+                <p class="ref-note">
+                    급기/코일 출구 <button type="button" data-gloss="dry-bulb">건구온도</button>(또는 차가운 표면 온도)를
+                    이슬점과 비교합니다. 이슬점만 확인하려면 비워 두세요.
+                </p>
+            </section>
+
+            <section role="status" aria-atomic="false">
+                <h2 class="ps-section-label">출력</h2>
+                <div class="status-pill dew-verdict" id="dew-verdict" hidden></div>
+                <div class="dew-hero-wrap">
+                    <span class="dew-hero-label">이슬점</span>
+                    <span class="dew-hero muted" id="dew-out-dp">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label" data-us="{{ pageMessages.unitText.wetBulb.us }}" data-metric="{{ pageMessages.unitText.wetBulb.metric }}">습구온도(°F)</span>
+                    <span class="ps-value muted" id="dew-out-wb">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label" data-us="{{ pageMessages.unitText.humidityRatio.us }}" data-metric="{{ pageMessages.unitText.humidityRatio.metric }}">절대습도(함습비, W)(gr/lb)</span>
+                    <span class="ps-value muted" id="dew-out-gr">—</span>
+                </div>
+                <div class="ps-row hidden" id="dew-out-rh-row">
+                    <span class="ps-label">상대습도(%)</span>
+                    <span class="ps-value muted" id="dew-out-rh">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label" data-us="{{ pageMessages.unitText.enthalpy.us }}" data-metric="{{ pageMessages.unitText.enthalpy.metric }}">엔탈피(Btu/lb)</span>
+                    <span class="ps-value muted" id="dew-out-h">—</span>
+                </div>
+
+                <div class="btn-row">
+                    <button class="copy-btn" id="dew-copy">이슬점 복사</button>
+                </div>
+                <div class="failure-callout" id="dew-callout" hidden></div>
+            </section>
+
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">현장 참고 — 과습 문제</h2>
+            <p class="ref-note">
+                실내 센서에서 회기(RA) <button type="button" data-gloss="dry-bulb">건구온도</button>와 상대습도를 읽습니다(예:
+                <span data-us="{{ pageMessages.unitText.exampleEntering.us }}" data-metric="{{ pageMessages.unitText.exampleEntering.metric }}">75 °F</span>/55 %). 그러면 이 도구가 회기 이슬점(약 <span data-us="{{ pageMessages.unitText.exampleDewPoint.us }}" data-metric="{{ pageMessages.unitText.exampleDewPoint.metric }}">57.8 °F</span>)을 계산합니다.
+                이제 급기/코일 출구 <button type="button" data-gloss="dry-bulb">건구온도</button>와 비교하세요. 출구 온도가 이슬점보다 낮으면
+                (<span data-us="{{ pageMessages.unitText.exampleCoilLeaving.us }}" data-metric="{{ pageMessages.unitText.exampleCoilLeaving.metric }}">55 °F</span>) 코일이 수분을 응축해 제거하고 있습니다. 이슬점보다 높으면 현열 냉각만 일어나 실내
+                습도가 상승합니다. 대부분의 과습 민원을 일으키는 운전 상태입니다.
+            </p>
+            <p class="ref-note">
+                코일 출구 <button type="button" data-gloss="dry-bulb">건구온도</button>를 기준으로 삼을 수 있는 이유는 코일 핀 표면이 출구 공기보다 더 차갑기 때문입니다.
+                출구 공기 자체가 입구 이슬점보다 낮다면 표면은 확실히 더 낮으므로 응축이 일어납니다. 출구 온도가
+                이슬점보다 높으면 <button type="button" data-gloss="latent-heat">잠열</button> 제거가 거의 없다는 강한 신호입니다. 다만 표면 온도만 이슬점 바로 아래인 코일도 소량의 수분은 제거할 수 있습니다. 능동 제습
+                시퀀스는 의도적으로 급기 온도를 실내 이슬점보다 몇 도 낮게 유지합니다.
+                전체 공기조화기(AHU) 공정과 고도 보정 코일 용량은
+                <a href="/ko/tools/psychrometric-chart.html">습공기선도</a>에서 확인하세요.
+            </p>
+            <p class="ref-note">
+                <strong>수치의 근거:</strong> 공통 ASHRAE 습공기 상태 해석
+                엔진을 사용합니다. Fundamentals 제1장의 IP 단위계 식, 건공기 1파운드 기준 물성, 수증기
+                분압비로 정의한 상대습도를 적용하며 습공기선도와 코일 용량 계산기에 쓰는 수식과 같습니다.
+            </p>
+        </section>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/psychrometric-chart.html', label: '습공기선도'},
+            {href: '/ko/tools/coil-sizing.html', label: '코일 용량 계산기'},
+            {href: '/ko/tools/airside-load.html', label: '공기측 부하 계산기'}
+        ],
+        lessons: [
+            {href: '/ko/education/psychrometrics-basics.html', label: '습공기 상태 해석 기초'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/psychrometrics-basics.html', label: '습공기 상태 해석 기초 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

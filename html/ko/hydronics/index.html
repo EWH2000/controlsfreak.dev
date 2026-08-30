@@ -1,0 +1,170 @@
+---
+title: 수배관 시스템 — 현장 참고 자료, 도구 및 학습 — controlsfreak.dev
+description: 수배관 시스템 현장 참고 자료입니다. 루프 유형과 부하 배관부터 펌프 제어와 밸런싱까지의 학습 자료, 수측 밸브·유량·펌프 도구를 제공합니다.
+sourceContentHash: cb946de588b46f06168944b42fd8e7d497931a47d44bf97c8563cf3c75ac8dec
+canonical: https://controlsfreak.dev/ko/hydronics/
+nav: guides
+navLabel: 수배관 시스템
+keywords: 수배관 시스템 냉수 온수 1차 2차 직접환수 역환수 가변속 펌프 부하 배관 2방 3방 제어 밸브 영향도 cv kv 수측 부하 gpm delta-t 밸런싱 picv 차압 펌프 상사 법칙 코일 선정
+---
+{% extends "html/hydronics/index.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <h1 class="section-label">수배관 시스템</h1>
+        <div class="section-line"></div>
+    </div>
+
+    <p class="landing-intro">
+        수배관 시스템은 건물에서 <strong>물로 열을 운반하는</strong> 부분입니다. 펌프가 온수나 냉수를 배관을 통해 각 존의 코일 또는 말단장치로 보내고, 각 부하의 제어 밸브가 해당 부하가 가져가는 열량에 맞춰 유량을 조절하며, 물은 열을 전달한 뒤 다시 순환합니다. 이 루프의 모든 지점에서 제어 시스템이 용량을 산정하거나 계측·밸런싱해야 합니다. 펌프 양정과 속도, 밸브 <button type="button" data-gloss="cv">Cv</button>와 영향도, 각 부하의 필요 유량, 플랜트의 공급·환수 온도차가 그 대상입니다. 이 페이지에서는 루프 구성부터 코일까지 수측 전체를 살펴보고 각 지점을 수치로 확인하는 도구를 제공합니다.
+    </p>
+
+    <p class="landing-intro">
+        처음 접한다면 아래 학습 자료를 순서대로 보세요. 루프 유형에서 시작해 부하 배관, 펌프 제어, 밸런싱을 거쳐 밸런싱 작업자가 맞추는 설계 유량의 산정 근거까지 이어집니다. 시스템이 이미 앞에 있다면 도구로 바로 이동해 제어 밸브를 선정하고, 실제 제어 성능을 확인하고, 수측 유량을 계산하거나, 속도 변화에 따른 펌프 성능 변화를 예측할 수 있습니다. 모든 자료는 공개되어 있으며 로그인이나 추적 기능이 없습니다.
+    </p>
+
+    <h2 class="hub-group">여기서 시작 — 순서대로 보는 학습 자료</h2>
+    <p class="hub-path">
+        <span class="hub-step">1</span> <a href="/ko/education/hydronic-loops.html">수배관 루프</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">2</span> <a href="/ko/education/load-piping.html">부하 배관</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">3</span> <a href="/ko/education/pump-control.html">펌프 제어</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">4</span> <a href="/ko/education/balancing.html">밸런싱</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">5</span> <a href="/ko/education/coil-selection.html">코일 선정</a>
+    </p>
+
+    <div class="card-grid">
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/hydronic-loops.html',
+            titleShort: '수배관 루프',
+            titleFull:  '수배관 루프',
+            desc:       '건물이 물을 분배하는 방법을 알아봅니다. 직접환수와 역환수, 주입 티를 사용하는 1차·2차 배관을 비교하고 각 루프 구성이 유량과 제어에 미치는 영향을 살펴봅니다. 이 장의 출발점입니다.',
+            pills:      ['1단계', '루프 유형', '1차·2차 배관']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/load-piping.html',
+            titleShort: '부하 배관',
+            titleFull:  '부하 배관',
+            desc:       '각 부하를 루프에 연결하는 방법을 알아봅니다. 가변 유량 시스템의 2방 밸브와 정유량 시스템의 3방 밸브를 비교하고 코일에서 내린 선택 하나가 전체 시스템에 미치는 영향을 살펴봅니다.',
+            pills:      ['2단계', '2방과 3방', '가변 유량']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/pump-control.html',
+            titleShort: '펌프 제어',
+            titleFull:  '펌프 제어',
+            desc:       '물을 순환시키는 방법을 알아봅니다. 펌프 곡선과 운전점, 차압 센서를 이용한 가변속(VFD) 제어, 펌프 에너지를 절감하는 차압 설정값 리셋을 다룹니다.',
+            pills:      ['3단계', '펌프 곡선', '차압 리셋']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/balancing.html',
+            titleShort: '밸런싱',
+            titleFull:  '수배관 밸런싱',
+            desc:       '모든 부하에 설계 유량을 공급하는 방법을 알아봅니다. 교정형 밸런싱 밸브와 PICV, 비례 밸런싱 현장 절차, 루프 말단의 유량 부족과 펌프 근처의 과유량을 진단하는 법을 다룹니다.',
+            pills:      ['4단계', 'CBV · PICV', '설계 유량']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/coil-selection.html',
+            titleShort: '코일 선정',
+            titleFull:  '코일 선정',
+            desc:       '밸런싱의 목표인 설계 유량이 어디서 나오는지 알아봅니다. 부하에서 유량으로 이어지는 계산, 선택한 온도차가 GPM을 결정하는 이유, 입구 조건에서 필요한 용량을 만족하는 코일 선정 방법을 다룹니다.',
+            pills:      ['5단계', '부하 → ΔT → GPM', '입구 조건']
+        }) }}
+    </div>
+
+    <h2 class="hub-group">직접 구성하기 — 시뮬레이터</h2>
+    <p class="hub-group-intro">
+        수측을 위한 대화형 모델입니다. 루프를 조립하고 계산 결과를 실시간으로 확인하여 학습 자료에서 본 루프 유형과 펌프 거동을 직접 관찰할 수 있습니다.
+    </p>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'simulators',
+            href:       '/ko/simulators/hydronic-loop-builder.html',
+            titleShort: '루프 빌더',
+            titleFull:  '수배관 루프 빌더',
+            desc:       '두 높이 레벨에 플랜트, 펌프, 코일, 밸브를 배치하고 3D로 배관을 연결해 유량과 수온이 실시간으로 계산되는 모습을 확인합니다. 학습 자료의 루프 구성을 직접 시험하는 샌드박스입니다.',
+            pills:      ['샌드박스', '루프 빌더', '실시간 계산']
+        }) }}
+    </div>
+
+    <h2 class="hub-group">도구</h2>
+    <p class="hub-group-intro">
+        수측을 위한 네 가지 현장 도구입니다. 제어 밸브를 선정하고 실제 제어 성능을 확인하며, 부하에 필요한 유량과 펌프 속도 변화에 따른 성능 변화를 계산할 수 있습니다. 로그인이나 설치가 필요 없습니다.
+    </p>
+
+    <h3 class="hub-sub">수측 용량 산정</h3>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/waterside-load.html',
+            titleShort: '수측 부하',
+            titleFull:  '수측 부하 계산기',
+            desc:       '수배관 코일에 필요한 유량을 계산합니다. q = 500 × GPM × ΔT를 부하, 유량, 온도차 중 원하는 값에 대해 풀고 냉동톤도 함께 표시합니다. 밸런싱 작업에서 맞춰야 할 GPM의 근거입니다.',
+            pills:      ['500 · GPM · ΔT', '부하 ↔ 유량', '냉동톤']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/valve-cv.html',
+            titleShort: '밸브 Cv',
+            titleFull:  '제어 밸브 Cv 계산기',
+            desc:       '유량계수로 제어 밸브를 선정합니다. Cv = Q√(SG/ΔP)를 Cv, 유량, 압력강하 중 원하는 값에 대해 풀며 Kv/Kvs 등가값과 밸브 영향도 점검을 함께 제공합니다.',
+            pills:      ['Cv = Q√(SG/ΔP)', 'Kv / Kvs', '밸브 선정']
+        }) }}
+    </div>
+
+    <h3 class="hub-sub">제어 밸브와 펌프</h3>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/valve-authority.html',
+            titleShort: '밸브 영향도',
+            titleFull:  '밸브 영향도 계산기',
+            desc:       '제어 밸브가 실제로 제어할 수 있는지 확인합니다. 완전 개방 밸브의 압력강하와 나머지 분기 압력강하로 영향도 β를 구하고 양호·주의·불량 판정과 설치 유량 특성을 표시합니다.',
+            pills:      ['영향도 β', '양호 / 불량', '설치 특성']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/affinity-laws.html',
+            titleShort: '상사 법칙',
+            titleFull:  '상사 법칙',
+            desc:       '펌프 속도에 따라 유량, 양정, 동력이 어떻게 변하는지 계산합니다. 동력이 속도의 세제곱에 비례하므로 VFD는 수배관 시스템의 에너지를 줄이는 가장 큰 수단입니다. 팬에도 같은 법칙이 적용됩니다.',
+            pills:      ['펌프 법칙', '속도 → 유량 / 양정', '세제곱 법칙 동력']
+        }) }}
+    </div>
+
+    <h2 class="hub-group">관련 학습 자료</h2>
+    <p class="hub-group-intro">
+        수측의 기반이 되는 두 가지 주제입니다. 루프에 열원을 공급하는 플랜트의 대수제어와 펌프 속도를 낮추는 드라이브를 다룹니다.
+    </p>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/equipment-staging.html',
+            titleShort: '장비 대수제어',
+            titleFull:  '장비 대수제어',
+            desc:       '여러 대의 동일한 펌프, 보일러 또는 냉동기를 병렬로 운전하는 하나의 대수제어 시퀀스를 알아봅니다. BMS가 운전 대수, 증단·감단 시점, 선행 장비를 결정하는 방법을 다룹니다.',
+            pills:      ['기초', '선행 / 후행', '증단 / 감단']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/vfds.html',
+            titleShort: 'VFD',
+            titleFull:  'VFD',
+            desc:       '가변주파수 드라이브(VFD)가 펌프나 팬 모터의 속도를 낮추는 방법을 알아봅니다. 펌프 속도 제어와 모든 차압 리셋 루프의 기반이 되는 V/Hz 원리를 다룹니다.',
+            pills:      ['기초', 'V / Hz', '펌프 / 팬 속도']
+        }) }}
+    </div>
+
+    <a class="back-link" href="/ko/education/">← 학습으로 돌아가기</a>
+
+</main>
+{% endblock %}

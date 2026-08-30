@@ -5,6 +5,99 @@ canonical: https://controlsfreak.dev/tools/bacnet-ip-converter.html
 nav: tools
 category: protocols
 keywords: hex dotted decimal address network number MAC APDU UDP port 47808 BAC0 EBO object identifier instance 4194303 device id 0xBAC0 47809 wildcard decoder
+pageMessages:
+  hexToIp:
+    invalid: Hex must be 8 characters (IP only) or 12 characters (IP + port). Hex digits only; spaces, dashes, and colons are ignored.
+    characterOne: '{count} character'
+    characterOther: '{count} characters'
+    formatIpOnly: IP only
+    formatIpAndPort: IP + port
+    addressOnlyNoPortInString: '{bytes} → {ip} · address only (no port in this string)'
+    decodedWithPort: '{ipBytes} → {ip}  ·  {portBytes} → port {port}'
+    defaultPortSuffix: ' (default BACnet/IP port)'
+  ipToHex:
+    invalid: IP must be four dotted decimals each 0–255. UDP port (if entered) must be a whole number from 0 to 65535.
+    formAddressOnly: address only
+    formAddressAndPort: address + port
+    lengthEight: 8 characters
+    lengthTwelve: 12 characters
+    addressOnlyNoPort: '{ip} → {hex} · address only (no port)'
+    encodedWithPort: '{ip} : {port} → {ipHex} {portHex}  ·  port {port} = 0x{portHex}'
+  port:
+    defaultBacnetIp: default BACnet/IP
+  objectId:
+    vendorProprietary: vendor-proprietary (128–1023)
+    reservedAshrae: reserved (ASHRAE)
+    formula: raw = type × 2²² + instance = {type} × 4194304 + {instance} = {raw}  ·  reads as {name}, {instance}
+    wildcardSuffix: '  ·  instance 4194303 is the unassigned/wildcard value'
+    invalidRaw: Enter the 32-bit Object_Identifier as decimal (0–4294967295) or hex (0x00000000–0xFFFFFFFF).
+    invalidParts: Type is a whole number 0–1023 (10 bits); instance is 0–4194303 (22 bits).
+    typeNames:
+      '0': Analog Input (AI)
+      '1': Analog Output (AO)
+      '2': Analog Value (AV)
+      '3': Binary Input (BI)
+      '4': Binary Output (BO)
+      '5': Binary Value (BV)
+      '6': Calendar
+      '7': Command
+      '8': Device
+      '9': Event Enrollment
+      '10': File
+      '11': Group
+      '12': Loop
+      '13': Multi-state Input (MSI)
+      '14': Multi-state Output (MSO)
+      '15': Notification Class
+      '16': Program
+      '17': Schedule
+      '18': Averaging
+      '19': Multi-state Value (MSV)
+      '20': Trend Log
+      '21': Life Safety Point
+      '22': Life Safety Zone
+      '23': Accumulator
+      '24': Pulse Converter
+      '25': Event Log
+      '26': Global Group
+      '27': Trend Log Multiple
+      '28': Load Control
+      '29': Structured View
+      '30': Access Door
+      '31': Timer
+      '32': Access Credential
+      '33': Access Point
+      '34': Access Rights
+      '35': Access User
+      '36': Access Zone
+      '37': Credential Data Input
+      '38': Network Security
+      '39': BitString Value
+      '40': CharacterString Value
+      '41': DatePattern Value
+      '42': Date Value
+      '43': DateTimePattern Value
+      '44': DateTime Value
+      '45': Integer Value
+      '46': Large Analog Value
+      '47': OctetString Value
+      '48': Positive Integer Value
+      '49': TimePattern Value
+      '50': Time Value
+      '51': Notification Forwarder
+      '52': Alert Enrollment
+      '53': Channel
+      '54': Lighting Output
+      '55': Binary Lighting Output
+      '56': Network Port
+      '57': Elevator Group
+      '58': Escalator
+      '59': Lift
+      '60': Staging
+      '61': Audit Log
+      '62': Audit Reporter
+      '63': Color
+      '64': Color Temperature
 faqs:
     - q: What port does BACnet/IP use?
       a: UDP 47808 — 0xBAC0 in hex. It is the IANA-registered BACnet port and the default everywhere. Additional logical BACnet/IP networks on one host conventionally take 47809 (0xBAC1) and up, but those are not IANA-registered.
@@ -16,8 +109,8 @@ faqs:
       a: BACnet/IP identifies a device by six bytes — four for the IPv4 address, two for the UDP port — and some front ends display those bytes raw. C0A80164BAC0 is 192.168.1.100 on port 47808.
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
-{% from "faq.njk" import faqBlock %}
+{% from "related-links.njk" import relatedLinks with context %}
+{% from "faq.njk" import faqBlock with context %}
 
 {% block content %}
 <main id="main">
@@ -284,6 +377,7 @@ faqs:
         // BACnet/IP packs the device address as 4 bytes IPv4, optionally
         // followed by 2 bytes of UDP port. The default port is 47808 = 0xBAC0.
         const BACNET_DEFAULT_PORT = 47808;   // 0xBAC0
+        const pageMessage = (key, values) => CFI18n.page(key, values);
 
         // group a hex string into space-separated byte pairs for the worked line
         function groupHexBytes(hex) {
@@ -305,7 +399,7 @@ faqs:
                 notesEl.textContent = '—';
                 fmtEl.textContent   = '—';
                 fEl.textContent = '';
-                calloutEl.textContent = 'Hex must be 8 characters (IP only) or 12 characters (IP + port). Hex digits only; spaces, dashes, and colons are ignored.';
+                calloutEl.textContent = pageMessage('hexToIp.invalid');
                 calloutEl.hidden = false;
             };
 
@@ -313,7 +407,9 @@ faqs:
             const hex = document.getElementById('b2i-hex').value
                 .trim().replace(/^0x/i, '').replace(/[\s.:_-]/g, '').toUpperCase();
 
-            lenEl.textContent = hex.length ? `${hex.length} character${hex.length === 1 ? '' : 's'}` : '—';
+            lenEl.textContent = hex.length
+                ? pageMessage(hex.length === 1 ? 'hexToIp.characterOne' : 'hexToIp.characterOther', { count: hex.length })
+                : '—';
 
             if (!/^[0-9A-F]+$/.test(hex) || (hex.length !== 8 && hex.length !== 12)) { mute(); return; }
             calloutEl.hidden = true;
@@ -325,8 +421,11 @@ faqs:
             if (hex.length === 8) {
                 portEl.className = 'ps-value muted'; portEl.textContent = '—';
                 notesEl.textContent = '—';
-                fmtEl.textContent = 'IP only';
-                fEl.textContent = `${groupHexBytes(hex)} → ${ip} · address only (no port in this string)`;
+                fmtEl.textContent = pageMessage('hexToIp.formatIpOnly');
+                fEl.textContent = pageMessage('hexToIp.addressOnlyNoPortInString', {
+                    bytes: groupHexBytes(hex),
+                    ip,
+                });
                 return;
             }
 
@@ -334,11 +433,14 @@ faqs:
             const portHex = hex.slice(8);
             const isDefault = port === BACNET_DEFAULT_PORT;
             portEl.className = 'ps-value live'; portEl.textContent = port;
-            notesEl.textContent = isDefault ? 'default BACnet/IP' : '—';
-            fmtEl.textContent = 'IP + port';
-            fEl.textContent =
-                `${groupHexBytes(hex.slice(0, 8))} → ${ip}  ·  ${groupHexBytes(portHex)} → port ${port}` +
-                (isDefault ? ' (default BACnet/IP port)' : '');
+            notesEl.textContent = isDefault ? pageMessage('port.defaultBacnetIp') : '—';
+            fmtEl.textContent = pageMessage('hexToIp.formatIpAndPort');
+            fEl.textContent = pageMessage('hexToIp.decodedWithPort', {
+                ipBytes: groupHexBytes(hex.slice(0, 8)),
+                ip,
+                portBytes: groupHexBytes(portHex),
+                port,
+            }) + (isDefault ? pageMessage('hexToIp.defaultPortSuffix') : '');
         }
 
         function bacnetIpToHex() {
@@ -354,13 +456,15 @@ faqs:
                 lenEl.textContent   = '—';
                 notesEl.textContent = '—';
                 fEl.textContent = '';
-                calloutEl.textContent = 'IP must be four dotted decimals each 0–255. UDP port (if entered) must be a whole number from 0 to 65535.';
+                calloutEl.textContent = pageMessage('ipToHex.invalid');
                 calloutEl.hidden = false;
             };
 
             const ipRaw   = document.getElementById('i2h-ip').value.trim();
             const portRaw = document.getElementById('i2h-port').value.trim();
-            formEl.textContent = portRaw === '' ? 'address only' : 'address + port';
+            formEl.textContent = pageMessage(portRaw === ''
+                ? 'ipToHex.formAddressOnly'
+                : 'ipToHex.formAddressAndPort');
 
             const m = ipRaw.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
             if (!m) { mute(); return; }
@@ -372,9 +476,12 @@ faqs:
 
             if (portRaw === '') {
                 hexEl.className = 'ps-value live'; hexEl.textContent = ipHex;
-                lenEl.textContent = '8 characters';
+                lenEl.textContent = pageMessage('ipToHex.lengthEight');
                 notesEl.textContent = '—';
-                fEl.textContent = `${octets.join('.')} → ${ipHex} · address only (no port)`;
+                fEl.textContent = pageMessage('ipToHex.addressOnlyNoPort', {
+                    ip: octets.join('.'),
+                    hex: ipHex,
+                });
                 return;
             }
 
@@ -384,11 +491,14 @@ faqs:
             const isDefault = port === BACNET_DEFAULT_PORT;
 
             hexEl.className = 'ps-value live'; hexEl.textContent = ipHex + portHex;
-            lenEl.textContent = '12 characters';
-            notesEl.textContent = isDefault ? 'default BACnet/IP' : '—';
-            fEl.textContent =
-                `${octets.join('.')} : ${port} → ${ipHex} ${portHex}` +
-                `  ·  port ${port} = 0x${portHex}` + (isDefault ? ' (default BACnet/IP port)' : '');
+            lenEl.textContent = pageMessage('ipToHex.lengthTwelve');
+            notesEl.textContent = isDefault ? pageMessage('port.defaultBacnetIp') : '—';
+            fEl.textContent = pageMessage('ipToHex.encodedWithPort', {
+                ip: octets.join('.'),
+                port,
+                ipHex,
+                portHex,
+            }) + (isDefault ? pageMessage('hexToIp.defaultPortSuffix') : '');
         }
 
         // ── Object ID tab ──
@@ -401,11 +511,11 @@ faqs:
         // /tools/bacnet-objects.html (both render from it at build
         // time). Unassigned numbers below 128 are reserved to ASHRAE,
         // 128–1023 vendor-proprietary.
-        const BACNET_OBJECT_TYPES = {{ bacnetEnums.objectTypeNames | safeScriptJson | safe }};
-
         function objTypeName(t) {
-            if (BACNET_OBJECT_TYPES[t]) return BACNET_OBJECT_TYPES[t];
-            return t >= 128 ? 'vendor-proprietary (128–1023)' : 'reserved (ASHRAE)';
+            if (t >= 0 && t <= 64) return pageMessage('objectId.typeNames.' + t);
+            return pageMessage(t >= 128
+                ? 'objectId.vendorProprietary'
+                : 'objectId.reservedAshrae');
         }
 
         const boiRaw      = document.getElementById('boi-raw');
@@ -442,10 +552,12 @@ faqs:
             boiOutDec.textContent = String(raw);
             boiOutHex.className = 'ps-value live';
             boiOutHex.textContent = '0x' + raw.toString(16).toUpperCase().padStart(8, '0');
-            boiFormula.textContent =
-                'raw = type × 2²² + instance = ' + type + ' × 4194304 + ' + instance +
-                ' = ' + raw + '  ·  reads as ' + objTypeName(type) + ', ' + instance +
-                (instance === 4194303 ? '  ·  instance 4194303 is the unassigned/wildcard value' : '');
+            boiFormula.textContent = pageMessage('objectId.formula', {
+                type,
+                instance,
+                raw,
+                name: objTypeName(type),
+            }) + (instance === 4194303 ? pageMessage('objectId.wildcardSuffix') : '');
         }
 
         function boiFromRaw() {
@@ -453,12 +565,12 @@ faqs:
             if (t === '') { boiMute(null); return; }
             // Whole-token match — parseInt alone would accept "12ab" as 12.
             if (!/^(0x[0-9a-f]{1,8}|\d{1,10})$/i.test(t)) {
-                boiMute('Enter the 32-bit Object_Identifier as decimal (0–4294967295) or hex (0x00000000–0xFFFFFFFF).');
+                boiMute(pageMessage('objectId.invalidRaw'));
                 return;
             }
             const raw = /^0x/i.test(t) ? parseInt(t.replace(/^0x/i, ''), 16) : parseInt(t, 10);
             if (!isFinite(raw) || raw < 0 || raw > 4294967295) {
-                boiMute('Enter the 32-bit Object_Identifier as decimal (0–4294967295) or hex (0x00000000–0xFFFFFFFF).');
+                boiMute(pageMessage('objectId.invalidRaw'));
                 return;
             }
             const type = Math.floor(raw / 4194304);
@@ -473,7 +585,7 @@ faqs:
             const instance = parseFloat(boiInstance.value);
             if (!isFinite(type) || type !== Math.floor(type) || type < 0 || type > 1023 ||
                 !isFinite(instance) || instance !== Math.floor(instance) || instance < 0 || instance > 4194303) {
-                boiMute('Type is a whole number 0–1023 (10 bits); instance is 0–4194303 (22 bits).');
+                boiMute(pageMessage('objectId.invalidParts'));
                 return;
             }
             const raw = type * 4194304 + instance;

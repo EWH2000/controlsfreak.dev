@@ -1,0 +1,252 @@
+---
+title: 최소 외기량 계산기 — controlsfreak.dev
+description: ASHRAE 62.1의 인당·면적당 외기량과 구역 공기분배 유효도 Ez로 최소 외기량을 계산하고, 급기 풍량 대비 외기 비율과 DCV 조정 가능분을 확인합니다.
+sourceContentHash: 1d9554a1b91196fce05474403204e048a8dfba214323783428a6cc4e0f46efb7
+sourceMessageHash: 171891e5d648930d7931f5da65fc1d82f821393c6866a51cccd26dbdb4518090
+canonical: https://controlsfreak.dev/ko/tools/minimum-outdoor-air.html
+nav: tools
+category: airflow
+pageMessages:
+    status:
+        initial: "계산할 값을 입력하세요."
+        validInputs: "계산에 필요한 유효한 입력값을 입력하세요."
+        supplyPrompt: "최소 외기 비율을 확인하려면 구역 급기 풍량(Vpz)을 입력하세요."
+        supplyInvalid: "외기 비율을 확인하려면 양의 급기 풍량이 필요합니다. 구역의 설계 또는 측정 CFM을 입력하세요."
+        exceedsSupply: "이 구역에는 급기 풍량의 {percent} %가 외기로 필요하며, 100 % 외기로도 충족할 수 없습니다. 댐퍼를 완전히 열어도 환기량이 부족하므로 댐퍼 개도가 아니라 급기 풍량을 늘려야 합니다."
+        fitsSupply: "Voz가 급기 풍량 범위 안에 있습니다. 외기 {percent} %가 이 구역의 최소 환기량입니다."
+    errors:
+        zoneInputs: "호흡구역 계산에는 네 값이 모두 필요합니다. Rp와 Ra는 프리셋 또는 날인된 환기 일정표에서, Pz와 Az는 구역 정보에서 입력하세요."
+        nonNegative: "환기율, 인원수, 면적은 음수일 수 없습니다. 최소 환기량에는 각 항이 더해지기만 합니다."
+        customEz: "사용자 지정 Ez 값을 입력하세요. 천장 급기 냉방의 기본값은 1.0입니다."
+        effectivenessPositive: "유효도가 0 이하이면 급기가 호흡구역에 전혀 도달하지 않는다는 뜻입니다. 실제 시스템의 Ez는 대체로 0.5~1.2입니다."
+    formula:
+        ventilation: "Vbz = {person} + {area} = {vbz} cfm · Voz = {vbz} ÷ {effectiveness} = {voz} cfm"
+        percentOutdoorAir: " · % OA = {voz} ÷ {supply} × 100 = {percent} %"
+keywords: ASHRAE 62.1 최소 외기량 환기율 절차 호흡역 Vbz Voz Rp Ra 인당 CFM 존 공기분배 유효도 Ez 수요제어환기 DCV 최소 댐퍼 개도 IMC 403
+---
+{% extends "html/tools/minimum-outdoor-air.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 최소 외기량</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                최소 외기량 계산기
+                <span class="tool-tag">풍량</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>최소 외기 20 %라는 값은 실제로 어디에서 나올까요?</summary>
+            <div class="preamble-rest">
+                거의 모든 공조기에는 누군가 오래전에 설정한 최소 외기 개도가 남아 있습니다. 이 페이지는 그 값의 근거가 되어야 하는 ASHRAE 62.1 호흡구역 방정식을 계산합니다. 인당 외기량과 면적당 외기량을 더한 뒤, 급기가 재실자에게 얼마나 효과적으로 도달하는지 보정합니다. 단일 구역 장비에만 적용하며, 여기서는 계산만 확인할 수 있습니다. 법규 준수 기준은 날인된 환기 일정표입니다. 아래의 <em>이 값에 관하여</em>를 참고하세요.
+            </div>
+        </details>
+        <p class="ps-seed-note">예시 값이 입력되어 있습니다. 현장 값으로 바꾸어 계산하세요.</p>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">입력</h2>
+                <div class="ps-row">
+                    <label class="ps-label" for="vo-occupancy">재실 용도 분류</label>
+                    <select class="ps-input" id="vo-occupancy">
+                        <option value="office" selected>사무실</option>
+                        <option value="conference">회의실</option>
+                        <option value="classroom">교실(9세 이상)</option>
+                        <option value="lecture">강의실</option>
+                        <option value="retail">소매점 판매 구역</option>
+                        <option value="dining">식당 객석</option>
+                        <option value="gym">헬스클럽·웨이트실</option>
+                        <option value="lobby">로비</option>
+                        <option value="corridor">복도(면적 기준만 적용)</option>
+                        <option value="breakroom">휴게실</option>
+                        <option value="custom">사용자 지정 — 일정표의 환기율 입력</option>
+                    </select>
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="vo-rp">인당 외기량 Rp(cfm/인)</label>
+                    <input class="ps-input" type="number" id="vo-rp" step="any" min="0" value="5">
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="vo-pz">구역 설계 재실 인원 Pz(명)</label>
+                    <input class="ps-input" type="number" id="vo-pz" step="1" min="0" value="12">
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="vo-ra">면적당 외기량 Ra(cfm/ft²)</label>
+                    <input class="ps-input" type="number" id="vo-ra" step="any" min="0" value="0.06">
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="vo-az">구역 바닥면적 Az(ft²)</label>
+                    <input class="ps-input" type="number" id="vo-az" step="any" min="0" value="1500">
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="vo-ez">구역 공기분배 유효도 Ez</label>
+                    <select class="ps-input" id="vo-ez">
+                        <option value="1" selected>1.0 — 천장 급기, 냉방</option>
+                        <option value="0.8">0.8 — 천장 급기, 난방</option>
+                        <option value="1.2">1.2 — 바닥 급기, 치환 환기</option>
+                        <option value="custom">사용자 지정 Ez…</option>
+                    </select>
+                </div>
+                <div class="ps-row hidden" id="vo-row-ez-custom">
+                    <label class="ps-label" for="vo-ez-custom">사용자 지정 Ez</label>
+                    <input class="ps-input" type="number" id="vo-ez-custom" step="0.05" min="0" max="2" value="1">
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="vo-vpz">구역 급기 풍량 Vpz(CFM, 선택 입력)</label>
+                    <input class="ps-input" type="number" id="vo-vpz" step="any" min="0" value="1200">
+                </div>
+                <p class="ref-note">
+                    용도 분류를 선택하면 일반적으로 사용하는 62.1-2022의 Rp와 Ra 값이 입력됩니다(<em>이 값에 관하여</em> 참고). 두 값은 직접 수정할 수 있으며, 하나라도 수정하면 분류가 사용자 지정으로 바뀝니다. Pz는 현재 시점의 실제 인원이 아니라 해당 구역의 환기를 위해 정한 설계 재실 인원입니다.
+                </p>
+            </section>
+
+            <section role="status" aria-atomic="false">
+                <h2 class="ps-section-label">출력</h2>
+                <div class="status-pill" id="vo-pill">{{ pageMessages.status.initial }}</div>
+                <div class="ps-row">
+                    <span class="ps-label">인원 기준분 — Rp × Pz</span>
+                    <span class="ps-value muted" id="vo-person">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label">면적 기준분 — Ra × Az</span>
+                    <span class="ps-value muted" id="vo-area">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label">호흡구역 외기량(Vbz)</span>
+                    <span class="ps-value muted" id="vo-vbz">—</span>
+                </div>
+                <div class="ps-row primary">
+                    <span class="ps-label">디퓨저 공급 외기량(Voz)</span>
+                    <span class="ps-value muted" id="vo-voz">—</span>
+                </div>
+                <div class="ps-row" id="vo-row-pct">
+                    <span class="ps-label">급기 중 외기 비율</span>
+                    <span class="ps-value muted" id="vo-pct">—</span>
+                </div>
+                <div class="btn-row">
+                    <button class="copy-btn" id="vo-copy">Vbz + Voz 복사</button>
+                </div>
+                <div class="result-formula wrap" id="vo-formula"></div>
+                <div class="failure-callout" id="vo-callout" hidden></div>
+                <p class="ref-note">
+                    두 항을 구분하는 데에는 이유가 있습니다. 인원 기준분은 재실 인원이 줄어들 때 수요제어 환기(DCV) 시퀀스가 조정할 수 있지만, 면적 기준분은 구역이 재실 모드로 운전하는 동안 비어 있더라도 유지해야 하는 최소값입니다.
+                </p>
+            </section>
+
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">계산 예시</h2>
+            <p class="ref-note worked-intro">
+                면적 1,500 ft², 설계 재실 인원 12명인 개방형 사무실에 기본 사무실 환기율 Rp 5 cfm/인, Ra 0.06 cfm/ft²를 적용하고 급기 풍량은 1,200 CFM입니다.
+            </p>
+            <ol class="ref-note worked-list">
+                <li><strong>인원 기준분:</strong> <code>5 × 12 = 60 cfm</code>입니다. 재실 인원이 줄어들 때 수요제어 환기 시퀀스가 줄일 수 있는 외기량입니다.</li>
+                <li><strong>면적 기준분:</strong> <code>0.06 × 1500 = 90 cfm</code>입니다. 실제 출입 인원과 관계없이 구역이 재실 모드로 운전하는 동안 유지해야 합니다. 어느 항이 더 큰지 주목하세요. 일반적인 사무실에서는 면적 기준분이 인원 기준분보다 큽니다.</li>
+                <li><strong>호흡구역에서 디퓨저까지:</strong>
+                    <code>Vbz = 60 + 90 = 150 cfm</code>입니다. 냉방 중인 천장 디퓨저는 실내 공기를 충분히 혼합하므로 Ez = 1.0이고
+                    <code>Voz = 150 ÷ 1.0 = 150 cfm</code>입니다.</li>
+                <li><strong>최소 댐퍼 개도 기준:</strong> 급기 풍량 1,200 CFM에 대해
+                    외기 비율은 <code>150 ÷ 1200 × 100 = 12.5 %</code>입니다. 이전 제어 시공업체가 남겨 둔 20 %가 아니라 이 값에서 최소 개도 설정을 시작해야 합니다. 단, 12.5 %는 댐퍼 날개 각도가 아닌 <em>풍량</em> 비율입니다. 댐퍼 풍량은 스트로크에 선형 비례하지 않으므로 12.5 % 명령만 주는 것이 아니라 풍량 측정 스테이션이나
+                    <a href="/ko/tools/duct-traverse.html">피토관 트래버스</a>로 최소값을 확인해야 합니다.</li>
+            </ol>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">출력값을 두 항으로 나누는 이유</h2>
+            <p class="ref-note">
+                62.1의 호흡구역 방정식은 두 가지 발생원을 더합니다. 사람의 호흡과 활동에서 발생하는 오염물질(Rp × Pz), 그리고 사람이 없어도 카펫·가구·청소용 화학제품 등 건물 자체에서 방출되는 오염물질(Ra × Az)입니다. 두 번째 항 때문에 수요제어 환기를 0까지 낮출 수 없습니다. CO₂ 센서는 사람이 떠났다는 사실은 보여 주지만 카펫이 사라졌다고 증명할 수는 없습니다. CO₂가 낮을 때 외기 댐퍼를 닫는 DCV 시퀀스는 <em>인원 기준분만</em> 조정합니다. 면적 기준분은 조정 가능한 최저값이므로 CO₂ 추세가 아무리 양호해도 그 아래로 내려가면 안 됩니다.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">Ez의 의미와 난방 시 보정이 필요한 이유</h2>
+            <!-- Ez values verified 2026-07-13 against ASHRAE 62.1-2022 Table 6-4 (§6.2.1.2). -->
+            <table class="ref-table-dense">
+                <thead>
+                    <tr><th>공기분배 구성</th><th>Ez</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>천장에서 냉기 급기</td><td>1.0</td></tr>
+                    <tr><td>실내 온도보다 15 °F 이상 높은 온기로 천장 급기, 천장 회기</td><td>0.8</td></tr>
+                    <tr><td>실내 온도보다 15 °F 미만 높은 온기로 천장 급기, 천장 회기, 바닥에서 4.5 ft 이내 위치의 제트 풍속 ≥ 150 fpm</td><td>1.0</td></tr>
+                    <tr><td>바닥에서 냉기를 저속 치환 방식으로 급기</td><td>1.2</td></tr>
+                </tbody>
+            </table>
+            <p class="ref-note">
+                Ez는 디퓨저를 떠난 공기 중 실제로 호흡구역에 도달하는 비율을 나타냅니다. 천장 디퓨저의 냉기는 아래로 내려와 혼합되므로 전량을 인정합니다. 같은 디퓨저에서 나온 온기는 상승해 천장에 머물다가 회기로 단락되므로, 난방 시 재실자에게 같은 외기량을 전달하려면 디퓨저에서 25 % 더 공급해야 합니다(위 예시에서는 150 ÷ 0.8 = 187.5 cfm). 치환 환기 시스템은 재실자 아래에서 낮고 느리게 공급하므로 1.0보다 높은 값을 인정받습니다. Table 6-4의 각 행에는 급기 ΔT, 회기 위치, 제트가 실제로 바닥까지 도달하는지 등 조건이 붙어 있으므로 디퓨저 유형만 보지 말고 표준의 전체 행과 일치시켜야 합니다. 예를 들어 바닥 회기는 ΔT와 관계없이 천장 온기 급기에 1.0을 적용하게 합니다. 이는 <a href="/ko/education/vav-systems.html">VAV 시스템
+                학습 자료</a>의 재열 상한과 같은 성층화 원리입니다. 온기가 아래로 혼합되지 않고 천장에 머무르는 영향을 환기량 계산에 반영한 것입니다.
+            </p>
+        </section>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h2 class="tool-card-title">이 값에 관하여</h2>
+        </div>
+        <div class="tool-body">
+            <p>
+                프리셋 Rp와 Ra는 <strong>ASHRAE 62.1-2022, Table 6-1</strong>에서 일반적으로 사용하는 값입니다. Rp 단위는 인당 cfm, Ra 단위는 ft²당 cfm입니다. 이 값을 채택한 공개 기계설비 법규인 IMC Table 403.3.1.1에도 용도별로 같은 수치가 있어 대부분의 관할 기관은 이를 통해 집행합니다. 일반 용도의 값은 판이 바뀌어도 거의 변하지 않지만, 특정 건물에 적용할 기준은 날인된 도면의 환기 일정표입니다.
+            </p>
+            <!-- Rp/Ra values verified 2026-07-13 against ASHRAE 62.1-2022 Table 6-1. -->
+            <table class="ref-table-dense">
+                <thead>
+                    <tr><th>재실 용도 분류</th><th>Rp(cfm/인)</th><th>Ra(cfm/ft²)</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>사무실</td><td>5</td><td>0.06</td></tr>
+                    <tr><td>회의실</td><td>5</td><td>0.06</td></tr>
+                    <tr><td>교실(9세 이상)</td><td>10</td><td>0.12</td></tr>
+                    <tr><td>강의실</td><td>7.5</td><td>0.06</td></tr>
+                    <tr><td>소매점 판매 구역</td><td>7.5</td><td>0.12</td></tr>
+                    <tr><td>식당 객석</td><td>7.5</td><td>0.18</td></tr>
+                    <tr><td>헬스클럽·웨이트실</td><td>20</td><td>0.06</td></tr>
+                    <tr><td>로비</td><td>5</td><td>0.06</td></tr>
+                    <tr><td>복도</td><td>—</td><td>0.06</td></tr>
+                    <tr><td>휴게실</td><td>5</td><td>0.12</td></tr>
+                </tbody>
+            </table>
+            <p>
+                <strong>이 페이지는 계산을 확인할 뿐 법규 준수를 입증하지 않습니다.</strong> 날인된 설계도서의 환기 일정표와 관할 기관의 기준을 따라야 합니다. 현장에서는 기존 최소 개도가 타당한지 확인하고, 수요제어 시퀀스가 법적으로 줄일 수 있는 외기량을 파악하며, 답답한 구역에 대한 민원이 환기량과 관련될 가능성이 있는지 판단하는 데 이 계산을 활용할 수 있습니다.
+            </p>
+            <p>
+                <strong>단일 구역 계산에만 적용합니다.</strong> 한 공간을 담당하는 루프탑 장비나 교실용 유닛 벤틸레이터처럼 한 구역에 급기하는 장비는 Vbz → Voz 계산으로 충분합니다. 하나의 외기 흡입구로 여러 구역에 급기하는 VAV 시스템에는 시스템 환기 효율과 임계 구역 계산을 포함한 다중 구역 계산이 필요하므로 이 페이지에는 의도적으로 포함하지 않았습니다.
+            </p>
+            <p class="ref-note">
+                <strong>반대 방향의 위험도 고려하세요.</strong> 이 페이지에서 계산한 최소 환기량은 클 수 있습니다. 사람이 많은 교실이나 식당은 외기 비율이 30&ndash;50 %에 달합니다. 추운 지역에서 겨울철 최소 외기량이 이렇게 크면 <a href="/ko/tools/coil-freeze-risk.html">코일 동결 위험 점검기</a>가 경고하는 조건이 됩니다. 계산 결과는 혼합공기 계산으로 확인할 가설로 다루고, <button type="button" data-gloss="freezestat">동결방지 온도조절기(freezestat)</button>와
+                <button type="button" data-gloss="mixed-air-low-limit">저온 한계 재정의</button>가 보호 기능을 수행하도록 해야 합니다. 최소 환기량과 동결 방지 하한은 모두 지켜야 하므로 시퀀스는 두 조건을 함께 충족해야 합니다.
+            </p>
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/forced-air/', label: '공기조화 시스템 참조 허브'},
+        tools: [
+            {href: '/ko/tools/economizer-ratio.html', label: '외기냉방 외기 비율 계산기'},
+            {href: '/ko/tools/airside-load.html', label: '공기측 부하 계산기'},
+            {href: '/ko/tools/duct-traverse.html', label: '피토관 덕트 트래버스 계산기'},
+            {href: '/ko/tools/coil-freeze-risk.html', label: '코일 동결 위험 점검기'}
+        ],
+        lessons: [
+            {href: '/ko/education/building-pressure.html', label: '건물 압력'},
+            {href: '/ko/education/air-handlers.html', label: '공조기'},
+            {href: '/ko/education/vav-systems.html', label: 'VAV 시스템'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/building-pressure.html', label: '건물 압력 퀴즈'},
+            {href: '/ko/practice/air-handlers.html', label: '공조기 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

@@ -5,6 +5,9 @@ canonical: https://controlsfreak.dev/tools/bacnet-objects.html
 nav: tools
 category: protocols
 keywords: av bv ai ao bi bo msv priority array object type instance property identifier present value engineering units enum trend log schedule notification class accumulator
+pageMessages:
+  table:
+    copyTitle: Copy {code}
 termSets:
     - key: objectTypes
       fragment: object-types
@@ -29,8 +32,8 @@ faqs:
       a: The 32-bit Object_Identifier carries the object type in its top 10 bits and the instance in the bottom 22. Paste the raw value into the <a href="/tools/bacnet-ip-converter.html">BACnet/IP Hex Converter</a>'s Object ID tab and it unpacks both.
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
-{% from "faq.njk" import faqBlock %}
+{% from "related-links.njk" import relatedLinks with context %}
+{% from "faq.njk" import faqBlock with context %}
 
 {% block head %}
     <style>
@@ -264,7 +267,7 @@ faqs:
                 cell.classList.add('bo-copyable');
                 cell.setAttribute('role', 'button');
                 cell.setAttribute('tabindex', '0');
-                cell.setAttribute('title', 'Copy ' + cell.dataset.code);
+                cell.setAttribute('title', CFI18n.page('table.copyTitle', { code: cell.dataset.code }));
             });
             table.addEventListener('click', e => {
                 const cell = e.target.closest('td.bo-id');

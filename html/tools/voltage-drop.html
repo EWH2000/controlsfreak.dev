@@ -5,9 +5,33 @@ canonical: https://controlsfreak.dev/tools/voltage-drop.html
 nav: tools
 category: electrical
 keywords: awg wire gauge ohms voltage drop 4-20ma loop 0-10v thermistor lead resistance run length
+pageMessages:
+    validation:
+        runLength: "Enter the one-way run length."
+        runNegative: "Run length can’t be negative."
+        loopInputs: "Enter supply, transmitter minimum, and sense resistance."
+        loopNegative: "Loop values can’t be negative."
+        impedance: "Enter the AI input impedance."
+        impedancePositive: "Input impedance must be greater than 0."
+    output:
+        noRun: "none at this supply"
+        voltageError: "{millivolts} mV ({percent} % of span)"
+        sensorCold: "{error} °F reads cold"
+    formula:
+        loop: "R = 2 × {length} × {ohms} ÷ 1000 = {wire} Ω · drop = 0.020 × ({wire} + {sense}) = {drop} V · V_xmtr = {supply} − {drop} = {transmitter} V"
+        voltage: "R = 2 × {length} × {ohms} ÷ 1000 = {wire} Ω · err = 10 × {wire} ÷ ({wire} + {impedance}) = {millivolts} mV"
+        sensor: "R = 2 × {length} × {ohms} ÷ 1000 = {wire} Ω · error = R_wire ÷ |dR/dT| near {temperature} °F, per sensor curve"
+    verdict:
+        loopUnder: "Under the floor — {voltage} V at the transmitter against a {minimum} V minimum. The loop will clip below full scale and the reading saturates. Raise the supply, drop the sense resistance, or upsize the wire."
+        loopMarginal: "Marginal — {voltage} V at the transmitter, within 1 V of its {minimum} V floor. A warm supply sag or an extra junction takes it under."
+        loopOk: "OK — {voltage} V at the transmitter against a {minimum} V floor. Current is the signal; the copper costs supply headroom, not accuracy."
+        voltage: "Into a high-impedance AI the IR drop is {millivolts} mV — noise, not error. If a 0-10 V reading is wrong at the panel, suspect a ground offset between panels or induced noise on the run, not wire resistance."
+        sensorOk: "On a 10K NTC this run is noise ({thermistor} °F) — the curve is hundreds of ohms per degree. The same copper on a bare Pt100 lies by {rtd} °F: never home-run a Pt100 two-wire; use Pt1000, 3-wire, or a transmitter."
+        sensorLong: "Even the 10K NTC sees {thermistor} °F on this run — that’s an extreme length or gauge. Check the numbers, or move to a transmitter at the sensor."
+        sensorUnavailable: "Sensor curve data unavailable — resistance result above still stands."
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -265,8 +289,8 @@ keywords: awg wire gauge ohms voltage drop 4-20ma loop 0-10v thermistor lead res
 
             const ohmsKft = OHMS_PER_KFT[awgEl.value];
             const len = parseFloat(lenEl.value);
-            if (!isFinite(len)) { muteAll('Enter the one-way run length.'); return; }
-            if (len < 0) { muteAll('Run length can’t be negative.'); return; }
+            if (!isFinite(len)) { muteAll(CFI18n.page('validation.runLength')); return; }
+            if (len < 0) { muteAll(CFI18n.page('validation.runNegative')); return; }
 
             const rwireExact = 2 * len * ohmsKft / 1000;
             const rwire = parseFloat(tidy(rwireExact, 1));   // chain off the displayed value
@@ -276,8 +300,8 @@ keywords: awg wire gauge ohms voltage drop 4-20ma loop 0-10v thermistor lead res
                 const supply = parseFloat(supplyEl.value);
                 const vmin   = parseFloat(vminEl.value);
                 const rsense = parseFloat(rsenseEl.value);
-                if (!isFinite(supply) || !isFinite(vmin) || !isFinite(rsense)) { muteAll('Enter supply, transmitter minimum, and sense resistance.'); return; }
-                if (supply < 0 || vmin < 0 || rsense < 0) { muteAll('Loop values can’t be negative.'); return; }
+                if (!isFinite(supply) || !isFinite(vmin) || !isFinite(rsense)) { muteAll(CFI18n.page('validation.loopInputs')); return; }
+                if (supply < 0 || vmin < 0 || rsense < 0) { muteAll(CFI18n.page('validation.loopNegative')); return; }
                 setLive(rwireEl, tidy(rwire, 1) + ' Ω');
 
                 const drop = parseFloat(tidy(0.020 * (rwire + rsense), 1));
@@ -293,34 +317,36 @@ keywords: awg wire gauge ohms voltage drop 4-20ma loop 0-10v thermistor lead res
 
                 const maxWireR = (supply - vmin) / 0.020 - rsense;
                 const maxLen = maxWireR * 1000 / (2 * ohmsKft);
-                setLive(maxlenEl, maxLen > 0 ? Math.floor(maxLen).toLocaleString('en-US') + ' ft' : 'none at this supply');
+                setLive(maxlenEl, maxLen > 0 ? Math.floor(maxLen).toLocaleString('en-US') + ' ft' : CFI18n.page('output.noRun'));
 
-                formulaEl.textContent =
-                    `R = 2 × ${tidy(len, 1)} × ${ohmsKft} ÷ 1000 = ${tidy(rwire, 1)} Ω · ` +
-                    `drop = 0.020 × (${tidy(rwire, 1)} + ${tidy(rsense, 1)}) = ${tidy(drop, 1)} V · ` +
-                    `V_xmtr = ${tidy(supply, 1)} − ${tidy(drop, 1)} = ${tidy(vxmtr, 1)} V`;
+                formulaEl.textContent = CFI18n.page('formula.loop', {
+                    length: tidy(len, 1), ohms: ohmsKft, wire: tidy(rwire, 1),
+                    sense: tidy(rsense, 1), drop: tidy(drop, 1), supply: tidy(supply, 1),
+                    transmitter: tidy(vxmtr, 1)
+                });
 
                 if (vxmtr < vmin) {
-                    setStatus(`Under the floor — ${tidy(vxmtrShown, 1)} V at the transmitter against a ${tidy(vmin, 1)} V minimum. The loop will clip below full scale and the reading saturates. Raise the supply, drop the sense resistance, or upsize the wire.`, 'error');
+                    setStatus(CFI18n.page('verdict.loopUnder', { voltage: tidy(vxmtrShown, 1), minimum: tidy(vmin, 1) }), 'error');
                 } else if (vxmtr < vmin + 1) {
-                    setStatus(`Marginal — ${tidy(vxmtr, 1)} V at the transmitter, within 1 V of its ${tidy(vmin, 1)} V floor. A warm supply sag or an extra junction takes it under.`, 'warn');
+                    setStatus(CFI18n.page('verdict.loopMarginal', { voltage: tidy(vxmtr, 1), minimum: tidy(vmin, 1) }), 'warn');
                 } else {
-                    setStatus(`OK — ${tidy(vxmtr, 1)} V at the transmitter against a ${tidy(vmin, 1)} V floor. Current is the signal; the copper costs supply headroom, not accuracy.`, 'ok');
+                    setStatus(CFI18n.page('verdict.loopOk', { voltage: tidy(vxmtr, 1), minimum: tidy(vmin, 1) }), 'ok');
                 }
             } else if (mode === 'volt') {
                 const rin = parseFloat(rinEl.value);
-                if (!isFinite(rin)) { muteAll('Enter the AI input impedance.'); return; }
-                if (rin <= 0) { muteAll('Input impedance must be greater than 0.'); return; }
+                if (!isFinite(rin)) { muteAll(CFI18n.page('validation.impedance')); return; }
+                if (rin <= 0) { muteAll(CFI18n.page('validation.impedancePositive')); return; }
                 setLive(rwireEl, tidy(rwire, 1) + ' Ω');
 
                 const verrV = 10 * rwire / (rwire + rin);
                 const verrPct = verrV / 10 * 100;
-                setLive(verrEl, tidy(verrV * 1000, 2) + ' mV (' + tidy(verrPct, 3) + ' % of span)');
-                formulaEl.textContent =
-                    `R = 2 × ${tidy(len, 1)} × ${ohmsKft} ÷ 1000 = ${tidy(rwire, 1)} Ω · ` +
-                    `err = 10 × ${tidy(rwire, 1)} ÷ (${tidy(rwire, 1)} + ${rin.toLocaleString('en-US')}) = ${tidy(verrV * 1000, 2)} mV`;
+                setLive(verrEl, CFI18n.page('output.voltageError', { millivolts: tidy(verrV * 1000, 2), percent: tidy(verrPct, 3) }));
+                formulaEl.textContent = CFI18n.page('formula.voltage', {
+                    length: tidy(len, 1), ohms: ohmsKft, wire: tidy(rwire, 1),
+                    impedance: rin.toLocaleString('en-US'), millivolts: tidy(verrV * 1000, 2)
+                });
 
-                setStatus(`Into a high-impedance AI the IR drop is ${tidy(verrV * 1000, 2)} mV — noise, not error. If a 0-10 V reading is wrong at the panel, suspect a ground offset between panels or induced noise on the run, not wire resistance.`, 'ok');
+                setStatus(CFI18n.page('verdict.voltage', { millivolts: tidy(verrV * 1000, 2) }), 'ok');
             } else {
                 const rows = [
                     ['10k-2', terr10kEl],
@@ -334,20 +360,22 @@ keywords: awg wire gauge ohms voltage drop 4-20ma loop 0-10v thermistor lead res
                     const errF = rwire / slope;
                     if (id === '10k-2') err10k = errF;
                     if (id === 'pt100') errPt = errF;
-                    setLive(el, (errF < 0.05 ? '< 0.1' : tidy(errF, 1)) + ' °F reads cold');
+                    setLive(el, CFI18n.page('output.sensorCold', { error: errF < 0.05 ? '< 0.1' : tidy(errF, 1) }));
                 }
-                formulaEl.textContent =
-                    `R = 2 × ${tidy(len, 1)} × ${ohmsKft} ÷ 1000 = ${tidy(rwire, 1)} Ω · ` +
-                    `error = R_wire ÷ |dR/dT| near ${SENSOR_EVAL_F} °F, per sensor curve`;
+                formulaEl.textContent = CFI18n.page('formula.sensor', {
+                    length: tidy(len, 1), ohms: ohmsKft, wire: tidy(rwire, 1), temperature: SENSOR_EVAL_F
+                });
 
                 if (err10k !== null && errPt !== null) {
                     if (err10k < 0.5) {
-                        setStatus(`On a 10K NTC this run is noise (${err10k < 0.05 ? 'under 0.1' : tidy(err10k, 1)} °F) — the curve is hundreds of ohms per degree. The same copper on a bare Pt100 lies by ${tidy(errPt, 1)} °F: never home-run a Pt100 two-wire; use Pt1000, 3-wire, or a transmitter.`, 'ok');
+                        setStatus(CFI18n.page('verdict.sensorOk', {
+                            thermistor: err10k < 0.05 ? 'under 0.1' : tidy(err10k, 1), rtd: tidy(errPt, 1)
+                        }), 'ok');
                     } else {
-                        setStatus(`Even the 10K NTC sees ${tidy(err10k, 1)} °F on this run — that's an extreme length or gauge. Check the numbers, or move to a transmitter at the sensor.`, 'warn');
+                        setStatus(CFI18n.page('verdict.sensorLong', { thermistor: tidy(err10k, 1) }), 'warn');
                     }
                 } else {
-                    setStatus('Sensor curve data unavailable — resistance result above still stands.', '');
+                    setStatus(CFI18n.page('verdict.sensorUnavailable'), '');
                 }
             }
         }

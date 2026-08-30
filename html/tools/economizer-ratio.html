@@ -4,10 +4,121 @@ description: Find the percent outdoor air needed to mix OA and return air to a t
 canonical: https://controlsfreak.dev/tools/economizer-ratio.html
 nav: tools
 category: hvac
+pageMessages:
+    defineBy:
+        rh: 'Relative humidity (%)'
+        wb: 'Wet-bulb ({unit})'
+        dp: 'Dew point ({unit})'
+        w: 'Humidity ratio ({unit})'
+        h: 'Enthalpy ({unit} dry air)'
+    status:
+        feasibilityPrompt: 'Enter values to see feasibility.'
+        changeoverPrompt: 'Enter values to see the changeover verdict.'
+        statesRequired: 'Need both OA and RA states to compare.'
+        dryBulbEqual: 'OA and RA are identical; any mix is identical too.'
+        dryBulbFeasible: 'Feasible — setpoint is between OA and RA, so a {percent} %OA mix lands on it. Below ~10 %, the damper is at minimum-position; near 100 %, the coil picks up everything past the mix.'
+        dryBulbAboveRange: 'Out of range — OA is cooler than the setpoint, but not cold enough to drag RA down on its own. Damper goes 100 % OA; the cooling coil still has to remove the remaining {extra} %OA-equivalent of load.'
+        dryBulbInfeasible: 'Infeasible — OA is hotter than the setpoint. No mix gets you there; close the economizer to minimum OA and let the cooling coil do all the work.'
+        enthalpyEqual: 'OA and RA dry-bulbs are identical; mix temperature is fixed.'
+        enthalpyFeasible: 'Feasible — setpoint is between OA and RA dry-bulbs; a {percent} %OA mix lands on it.'
+        enthalpyAboveRange: 'Out of range — OA is cooler than the setpoint, but not cold enough to drag RA down alone. Damper goes 100 % OA and the coil picks up the rest.'
+        enthalpyInfeasible: 'Infeasible — OA is hotter than the setpoint. No mix gets you there; close to minimum OA.'
+    formula:
+        mix: '% OA = (MA − RA) ÷ (OA − RA) × 100 = ({ma} − {ra}) ÷ ({oa} − {ra}) × 100{result}'
+        result: ' = {percent} %'
+        dryBulbEqual: 'OA equals RA — mixing changes nothing, no unique %OA.'
+        enthalpyEqual: 'OA and RA have identical dry-bulb — no unique %OA.'
+    changeover:
+        wash: 'OA and RA enthalpies are within 0.5 {unit} — call it a wash; minimum-OA is the safer call.'
+        favorable: 'Favorable — OA carries {difference} {unit} less heat per pound of dry air than RA. Bringing in OA reduces total coil load.'
+        unfavorable: 'Unfavorable — OA carries {difference} {unit} more heat per pound of dry air than RA. Even if it’s cooler on dry-bulb, the latent load makes it a net loss. Minimum-OA.'
+    errors:
+        engineUnavailable: 'Psychrometric engine unavailable — reload the page.'
+        outdoorPrefix: 'Outdoor air — {message}'
+        returnPrefix: 'Return air — {message}'
+        mixedOutOfRange: 'Mixed state out of range — check inputs.'
+        psychro:
+            numeric: 'Enter numeric values.'
+            rhNegative: 'Relative humidity can’t be negative.'
+            rhAbove100: 'Relative humidity can’t exceed 100%.'
+            wetBulbAboveDryBulb: 'Wet-bulb can’t exceed dry-bulb.'
+            dewPointAboveDryBulb: 'Dew point can’t exceed dry-bulb.'
+            humidityRatioNegative: 'Humidity ratio can’t be negative.'
+            enthalpyBelowDryAir: 'Enthalpy is below dry air at this dry-bulb — impossible.'
+            propertyRequired: 'Pick a property to define the point by.'
+            rhPastSaturation: 'That point is past saturation (RH over 100%) — impossible.'
+            wetBulbPastSaturation: 'That wet-bulb is past saturation — more moisture than air can hold at this dry-bulb and pressure.'
+            dewPointPastSaturation: 'That dew point is past saturation — more moisture than air can hold at this dry-bulb and pressure.'
+            humidityRatioPastSaturation: 'That humidity ratio is past saturation — more moisture than air can hold at this dry-bulb and pressure.'
+            enthalpyPastSaturation: 'That enthalpy is past saturation — more moisture than air can hold at this dry-bulb and pressure.'
+    unitText:
+        outdoorDryBulb:
+            us: 'Outdoor air dry-bulb (°F)'
+            metric: 'Outdoor air dry-bulb (°C)'
+        returnDryBulb:
+            us: 'Return air dry-bulb (°F)'
+            metric: 'Return air dry-bulb (°C)'
+        mixedAirSetpoint:
+            us: 'Mixed-air setpoint (°F)'
+            metric: 'Mixed-air setpoint (°C)'
+        exampleOutdoor:
+            us: '60 °F'
+            metric: '15.6 °C'
+        exampleReturn:
+            us: '75 °F'
+            metric: '23.9 °C'
+        exampleSetpoint:
+            us: '65 °F'
+            metric: '18.3 °C'
+        exampleDryBulbFormula:
+            us: '(65 − 75) ÷ (60 − 75) × 100 = 66.7 %'
+            metric: '(18.3 − 23.9) ÷ (15.6 − 23.9) × 100 = 67.5 %'
+        exampleLowSetpoint:
+            us: '55 °F'
+            metric: '12.8 °C'
+        dryBulb:
+            us: 'Dry-bulb (°F)'
+            metric: 'Dry-bulb (°C)'
+        enthalpySetpoint:
+            us: 'MA setpoint (°F)'
+            metric: 'MA setpoint (°C)'
+        mixedAirDryBulb:
+            us: 'MA dry-bulb (°F)'
+            metric: 'MA dry-bulb (°C)'
+        mixedAirWetBulb:
+            us: 'MA wet-bulb (°F)'
+            metric: 'MA wet-bulb (°C)'
+        humidityRatio:
+            us: 'Humidity ratio (gr/lb)'
+            metric: 'Humidity ratio (g/kg)'
+        mixedAirEnthalpy:
+            us: 'Enthalpy (Btu/lb)'
+            metric: 'Enthalpy (kJ/kg)'
+        outdoorEnthalpy:
+            us: 'OA enthalpy (Btu/lb)'
+            metric: 'OA enthalpy (kJ/kg)'
+        returnEnthalpy:
+            us: 'RA enthalpy (Btu/lb)'
+            metric: 'RA enthalpy (kJ/kg)'
+        exampleOutdoorState:
+            us: '78 °F / 68 °F WB'
+            metric: '25.6 °C / 20 °C WB'
+        exampleReturnState:
+            us: '75 °F / 63 °F WB'
+            metric: '23.9 °C / 17.2 °C WB'
+        exampleEnthalpySetpoint:
+            us: '65 °F'
+            metric: '18.3 °C'
+        exampleEnthalpyFormula:
+            us: '% OA = (65 − 75) ÷ (78 − 75) × 100'
+            metric: '% OA = (18.3 − 23.9) ÷ (25.6 − 23.9) × 100'
+        massWord:
+            us: 'pound'
+            metric: 'kilogram'
 keywords: oa oat percent outdoor air free cooling changeover mixed air damper
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -47,22 +158,22 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
                 <section>
                     <h2 class="ps-section-label">Input</h2>
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Outdoor air dry-bulb (°F)" data-metric="Outdoor air dry-bulb (°C)" for="er-db-oa">Outdoor air dry-bulb (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.outdoorDryBulb.us }}" data-metric="{{ pageMessages.unitText.outdoorDryBulb.metric }}" for="er-db-oa">Outdoor air dry-bulb (°F)</label>
                         <input class="ps-input" type="number" id="er-db-oa" step="0.5" min="-50" max="200" value="60">
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Return air dry-bulb (°F)" data-metric="Return air dry-bulb (°C)" for="er-db-ra">Return air dry-bulb (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.returnDryBulb.us }}" data-metric="{{ pageMessages.unitText.returnDryBulb.metric }}" for="er-db-ra">Return air dry-bulb (°F)</label>
                         <input class="ps-input" type="number" id="er-db-ra" step="0.5" min="-50" max="200" value="75">
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Mixed-air setpoint (°F)" data-metric="Mixed-air setpoint (°C)" for="er-db-ma">Mixed-air setpoint (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.mixedAirSetpoint.us }}" data-metric="{{ pageMessages.unitText.mixedAirSetpoint.metric }}" for="er-db-ma">Mixed-air setpoint (°F)</label>
                         <input class="ps-input" type="number" id="er-db-ma" step="0.5" min="-50" max="200" value="65">
                     </div>
                 </section>
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="status-pill" id="er-db-feas">Enter values to see feasibility.</div>
+                    <div class="status-pill" id="er-db-feas">{{ pageMessages.status.feasibilityPrompt }}</div>
                     <div class="ps-row primary">
                         <span class="ps-label">Required outdoor air</span>
                         <span class="ps-value muted" id="er-db-pct">—</span>
@@ -79,15 +190,15 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
                 <h2 class="ps-section-label">Worked example</h2>
                 <p class="ref-note worked-intro">
                     Summer cooling on an <button type="button" data-gloss="economizer">economizer</button>-favorable morning —
-                    OA <span data-us="60 °F" data-metric="15.6 °C">60 °F</span>,
-                    RA <span data-us="75 °F" data-metric="23.9 °C">75 °F</span>,
-                    mixed-air setpoint <span data-us="65 °F" data-metric="18.3 °C">65 °F</span>.
+                    OA <span data-us="{{ pageMessages.unitText.exampleOutdoor.us }}" data-metric="{{ pageMessages.unitText.exampleOutdoor.metric }}">60 °F</span>,
+                    RA <span data-us="{{ pageMessages.unitText.exampleReturn.us }}" data-metric="{{ pageMessages.unitText.exampleReturn.metric }}">75 °F</span>,
+                    mixed-air setpoint <span data-us="{{ pageMessages.unitText.exampleSetpoint.us }}" data-metric="{{ pageMessages.unitText.exampleSetpoint.metric }}">65 °F</span>.
                 </p>
                 <ol class="ref-note worked-list">
                     <li>Setpoint sits between OA and RA → feasible.</li>
                     <li>The damper has to bring in enough OA to drag the mix down to setpoint:<br>
                         <code>% OA = (MA − RA) ÷ (OA − RA) × 100</code></li>
-                    <li>Plug in: <code><span data-us="(65 − 75) ÷ (60 − 75) × 100 = 66.7 %" data-metric="(18.3 − 23.9) ÷ (15.6 − 23.9) × 100 = 67.5 %">(65 − 75) ÷ (60 − 75) × 100 = 66.7 %</span></code>.</li>
+                    <li>Plug in: <code><span data-us="{{ pageMessages.unitText.exampleDryBulbFormula.us }}" data-metric="{{ pageMessages.unitText.exampleDryBulbFormula.metric }}">(65 − 75) ÷ (60 − 75) × 100 = 66.7 %</span></code>.</li>
                     <li>Two-thirds outdoor air, one-third return — that's the
                         damper command.</li>
                 </ol>
@@ -99,7 +210,7 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
                     setpoint AND than the room — minimum-OA only, no <button type="button" data-gloss="economizer">economizer</button>;
                     above 100 % means OA is cooler than the setpoint but not cold
                     enough to carry the whole load alone (drop the setpoint to
-                    <span data-us="55 °F" data-metric="12.8 °C">55 °F</span> to
+                    <span data-us="{{ pageMessages.unitText.exampleLowSetpoint.us }}" data-metric="{{ pageMessages.unitText.exampleLowSetpoint.metric }}">55 °F</span> to
                     see it — the damper goes wide open and the coil makes up the
                     rest).
                 </p>
@@ -115,7 +226,7 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
 
                     <h3 class="subhead">Outdoor air</h3>
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="er-h-oa-tdb">Dry-bulb (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="er-h-oa-tdb">Dry-bulb (°F)</label>
                         <input class="ps-input" type="number" id="er-h-oa-tdb" step="0.5" min="-50" max="200" value="78">
                     </div>
                     <div class="ps-row">
@@ -135,7 +246,7 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
 
                     <h3 class="subhead">Return air</h3>
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="er-h-ra-tdb">Dry-bulb (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="er-h-ra-tdb">Dry-bulb (°F)</label>
                         <input class="ps-input" type="number" id="er-h-ra-tdb" step="0.5" min="-50" max="200" value="75">
                     </div>
                     <div class="ps-row">
@@ -155,7 +266,7 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
 
                     <h3 class="subhead">Mixed-air target</h3>
                     <div class="ps-row">
-                        <label class="ps-label" data-us="MA setpoint (°F)" data-metric="MA setpoint (°C)" for="er-h-ma">MA setpoint (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.enthalpySetpoint.us }}" data-metric="{{ pageMessages.unitText.enthalpySetpoint.metric }}" for="er-h-ma">MA setpoint (°F)</label>
                         <input class="ps-input" type="number" id="er-h-ma" step="0.5" min="-50" max="200" value="65">
                     </div>
                     <p class="ref-note">
@@ -169,7 +280,7 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="status-pill" id="er-h-feas">Enter values to see feasibility.</div>
+                    <div class="status-pill" id="er-h-feas">{{ pageMessages.status.feasibilityPrompt }}</div>
                     <div class="ps-row primary">
                         <span class="ps-label">Required outdoor air</span>
                         <span class="ps-value muted" id="er-h-pct">—</span>
@@ -180,16 +291,16 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
                     <div class="result-formula wrap" id="er-h-formula"></div>
 
                     <h3 class="subhead">Resulting mixed-air state</h3>
-                    <div class="ps-row"><span class="ps-label" data-us="MA dry-bulb (°F)" data-metric="MA dry-bulb (°C)">MA dry-bulb (°F)</span><span class="ps-value muted" id="er-h-ma-db">—</span></div>
-                    <div class="ps-row"><span class="ps-label" data-us="MA wet-bulb (°F)" data-metric="MA wet-bulb (°C)">MA wet-bulb (°F)</span><span class="ps-value muted" id="er-h-ma-wb">—</span></div>
-                    <div class="ps-row"><span class="ps-label" data-us="Humidity ratio (gr/lb)" data-metric="Humidity ratio (g/kg)">Humidity ratio (gr/lb)</span><span class="ps-value muted" id="er-h-ma-w">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.mixedAirDryBulb.us }}" data-metric="{{ pageMessages.unitText.mixedAirDryBulb.metric }}">MA dry-bulb (°F)</span><span class="ps-value muted" id="er-h-ma-db">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.mixedAirWetBulb.us }}" data-metric="{{ pageMessages.unitText.mixedAirWetBulb.metric }}">MA wet-bulb (°F)</span><span class="ps-value muted" id="er-h-ma-wb">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.humidityRatio.us }}" data-metric="{{ pageMessages.unitText.humidityRatio.metric }}">Humidity ratio (gr/lb)</span><span class="ps-value muted" id="er-h-ma-w">—</span></div>
                     <div class="ps-row"><span class="ps-label">Rel. humidity (%)</span><span class="ps-value muted" id="er-h-ma-rh">—</span></div>
-                    <div class="ps-row"><span class="ps-label" data-us="Enthalpy (Btu/lb)" data-metric="Enthalpy (kJ/kg)">Enthalpy (Btu/lb)</span><span class="ps-value muted" id="er-h-ma-h">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.mixedAirEnthalpy.us }}" data-metric="{{ pageMessages.unitText.mixedAirEnthalpy.metric }}">Enthalpy (Btu/lb)</span><span class="ps-value muted" id="er-h-ma-h">—</span></div>
 
                     <h3 class="subhead">Enthalpy changeover</h3>
-                    <div class="ps-row"><span class="ps-label" data-us="OA enthalpy (Btu/lb)" data-metric="OA enthalpy (kJ/kg)">OA enthalpy (Btu/lb)</span><span class="ps-value muted" id="er-h-oa-h">—</span></div>
-                    <div class="ps-row"><span class="ps-label" data-us="RA enthalpy (Btu/lb)" data-metric="RA enthalpy (kJ/kg)">RA enthalpy (Btu/lb)</span><span class="ps-value muted" id="er-h-ra-h">—</span></div>
-                    <div class="status-pill" id="er-h-changeover">Enter values to see the changeover verdict.</div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.outdoorEnthalpy.us }}" data-metric="{{ pageMessages.unitText.outdoorEnthalpy.metric }}">OA enthalpy (Btu/lb)</span><span class="ps-value muted" id="er-h-oa-h">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.returnEnthalpy.us }}" data-metric="{{ pageMessages.unitText.returnEnthalpy.metric }}">RA enthalpy (Btu/lb)</span><span class="ps-value muted" id="er-h-ra-h">—</span></div>
+                    <div class="status-pill" id="er-h-changeover">{{ pageMessages.status.changeoverPrompt }}</div>
                 </section>
 
             </div>
@@ -198,13 +309,13 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
                 <h2 class="ps-section-label">Worked example</h2>
                 <p class="ref-note worked-intro">
                     Mild-but-muggy morning — OA
-                    <span data-us="78 °F / 68 °F WB" data-metric="25.6 °C / 20 °C WB">78 °F / 68 °F WB</span>,
-                    RA <span data-us="75 °F / 63 °F WB" data-metric="23.9 °C / 17.2 °C WB">75 °F / 63 °F WB</span>,
-                    MA setpoint <span data-us="65 °F" data-metric="18.3 °C">65 °F</span>.
+                    <span data-us="{{ pageMessages.unitText.exampleOutdoorState.us }}" data-metric="{{ pageMessages.unitText.exampleOutdoorState.metric }}">78 °F / 68 °F WB</span>,
+                    RA <span data-us="{{ pageMessages.unitText.exampleReturnState.us }}" data-metric="{{ pageMessages.unitText.exampleReturnState.metric }}">75 °F / 63 °F WB</span>,
+                    MA setpoint <span data-us="{{ pageMessages.unitText.exampleEnthalpySetpoint.us }}" data-metric="{{ pageMessages.unitText.exampleEnthalpySetpoint.metric }}">65 °F</span>.
                 </p>
                 <ol class="ref-note worked-list">
                     <li><button type="button" data-gloss="dry-bulb">Dry-bulb</button> is what the damper modulates to.
-                        <code><span data-us="% OA = (65 − 75) ÷ (78 − 75) × 100" data-metric="% OA = (18.3 − 23.9) ÷ (25.6 − 23.9) × 100">% OA = (65 − 75) ÷ (78 − 75) × 100</span></code> = a
+                        <code><span data-us="{{ pageMessages.unitText.exampleEnthalpyFormula.us }}" data-metric="{{ pageMessages.unitText.exampleEnthalpyFormula.metric }}">% OA = (65 − 75) ÷ (78 − 75) × 100</span></code> = a
                         negative number — OA is hotter than RA, so even on
                         <button type="button" data-gloss="dry-bulb">dry-bulb</button> alone the <button type="button" data-gloss="economizer">economizer</button> can't help. Minimum-OA
                         position.</li>
@@ -214,7 +325,7 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
                     <li>The <button type="button" data-gloss="enthalpy">enthalpy</button> comparison is the real reason a high-end
                         BAS is more conservative: an OA that's two degrees
                         cooler than RA but soaked with moisture carries more
-                        heat per <span data-us="pound" data-metric="kilogram">pound</span> than RA does. <button type="button" data-gloss="economizer">Free cooling</button> on <button type="button" data-gloss="dry-bulb">dry-bulb</button>
+                        heat per <span data-us="{{ pageMessages.unitText.massWord.us }}" data-metric="{{ pageMessages.unitText.massWord.metric }}">pound</span> than RA does. <button type="button" data-gloss="economizer">Free cooling</button> on <button type="button" data-gloss="dry-bulb">dry-bulb</button>
                         alone, <button type="button" data-gloss="latent-heat">latent</button> penalty on the coil.</li>
                 </ol>
                 <p class="ref-note">
@@ -291,8 +402,41 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
         const tCanon = x       => U.toCanonical.temp(x);
 
         // Define-by catalog — rebuilt on unitschange so labels and input
-        // steps follow the active unit system. See /scripts/psy-widget.js.
-        let SECOND_PROP = PsyWidget.buildSecondProp();
+        // steps follow the active unit system while machine fields stay shared.
+        function buildSecondProp() {
+            const base = PsyWidget.buildSecondProp();
+            return {
+                rh: { ...base.rh, label: CFI18n.page('defineBy.rh') },
+                wb: { ...base.wb, label: CFI18n.page('defineBy.wb', { unit: U.suffix.temp() }) },
+                dp: { ...base.dp, label: CFI18n.page('defineBy.dp', { unit: U.suffix.temp() }) },
+                w:  { ...base.w,  label: CFI18n.page('defineBy.w', { unit: U.suffix.humidityRatio() }) },
+                h:  { ...base.h,  label: CFI18n.page('defineBy.h', { unit: U.suffix.enthalpy() }) }
+            };
+        }
+
+        let SECOND_PROP = buildSecondProp();
+
+        const PSYCHRO_ERROR_KEYS = Object.freeze({
+            'Enter numeric values.': 'numeric',
+            'Relative humidity can’t be negative.': 'rhNegative',
+            'Relative humidity can’t exceed 100%.': 'rhAbove100',
+            'Wet-bulb can’t exceed dry-bulb.': 'wetBulbAboveDryBulb',
+            'Dew point can’t exceed dry-bulb.': 'dewPointAboveDryBulb',
+            'Humidity ratio can’t be negative.': 'humidityRatioNegative',
+            'Enthalpy is below dry air at this dry-bulb — impossible.': 'enthalpyBelowDryAir',
+            'Pick a property to define the point by.': 'propertyRequired',
+            'That point is past saturation (RH over 100%) — impossible.': 'rhPastSaturation',
+            'That wet-bulb is past saturation — more moisture than air can hold at this dry-bulb and pressure.': 'wetBulbPastSaturation',
+            'That dew point is past saturation — more moisture than air can hold at this dry-bulb and pressure.': 'dewPointPastSaturation',
+            'That humidity ratio is past saturation — more moisture than air can hold at this dry-bulb and pressure.': 'humidityRatioPastSaturation',
+            'That enthalpy is past saturation — more moisture than air can hold at this dry-bulb and pressure.': 'enthalpyPastSaturation'
+        });
+
+        function psychroErrorMessage(error) {
+            const key = PSYCHRO_ERROR_KEYS[error];
+            if (!key) throw new Error('Uncataloged psychrometric engine error.');
+            return CFI18n.page('errors.psychro.' + key);
+        }
 
         // ── Dry-bulb tab ──────────────────────────────────────────────
         const DB_IDS = ['er-db-oa', 'er-db-ra', 'er-db-ma'];
@@ -314,14 +458,14 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
                 outEl.className = 'ps-value muted';
                 outEl.textContent = '—';
                 formulaEl.textContent = '';
-                setFeas(feasEl, 'Enter values to see feasibility.', '');
+                setFeas(feasEl, CFI18n.page('status.feasibilityPrompt'), '');
                 return;
             }
             if (oa === ra) {
                 outEl.className = 'ps-value muted error';
                 outEl.textContent = '—';
-                formulaEl.textContent = 'OA equals RA — mixing changes nothing, no unique %OA.';
-                setFeas(feasEl, 'OA and RA are identical; any mix is identical too.', 'warn');
+                formulaEl.textContent = CFI18n.page('formula.dryBulbEqual');
+                setFeas(feasEl, CFI18n.page('status.dryBulbEqual'), 'warn');
                 return;
             }
 
@@ -361,25 +505,19 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
             // assert that exact impossible result one line down (T-014). Show
             // the substituted operands and stop at × 100; the feasibility
             // callout carries the why.
-            formulaEl.textContent =
-                `% OA = (MA − RA) ÷ (OA − RA) × 100 ` +
-                `= (${maD} − ${raD}) ÷ (${oaD} − ${raD}) × 100` +
-                (within ? ` = ${pctShown.toFixed(1)} %` : '');
+            formulaEl.textContent = CFI18n.page('formula.mix', {
+                ma: maD, ra: raD, oa: oaD,
+                result: within ? CFI18n.page('formula.result', { percent: pctShown.toFixed(1) }) : ''
+            });
 
             // Three feasibility regimes (within computed above).
             if (within) {
-                setFeas(feasEl,
-                    `Feasible — setpoint is between OA and RA, so a ${pct.toFixed(1)} %OA mix lands on it. Below ~10 %, the damper is at minimum-position; near 100 %, the coil picks up everything past the mix.`,
-                    'ok');
+                setFeas(feasEl, CFI18n.page('status.dryBulbFeasible', { percent: pct.toFixed(1) }), 'ok');
             } else if (pct > 100) {
                 const extra = ((ma - oa) / (oa - ra) * 100).toFixed(1);
-                setFeas(feasEl,
-                    `Out of range — OA is cooler than the setpoint, but not cold enough to drag RA down on its own. Damper goes 100 % OA; the cooling coil still has to remove the remaining ${Math.abs(extra)} %OA-equivalent of load.`,
-                    'warn');
+                setFeas(feasEl, CFI18n.page('status.dryBulbAboveRange', { extra: Math.abs(extra) }), 'warn');
             } else {
-                setFeas(feasEl,
-                    'Infeasible — OA is hotter than the setpoint. No mix gets you there; close the economizer to minimum OA and let the cooling coil do all the work.',
-                    'error');
+                setFeas(feasEl, CFI18n.page('status.dryBulbInfeasible'), 'error');
             }
         }
 
@@ -413,7 +551,7 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
             }
             document.getElementById('er-h-formula').textContent = '';
             setFeas(document.getElementById('er-h-feas'), msg, '');
-            setFeas(document.getElementById('er-h-changeover'), 'Need both OA and RA states to compare.', '');
+            setFeas(document.getElementById('er-h-changeover'), CFI18n.page('status.statesRequired'), '');
         }
 
         function setLive(id, text) {
@@ -429,7 +567,7 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
             // muted state with a clear message rather than throwing on the
             // undefined Psychro global inside readState.
             if (typeof Psychro === 'undefined') {
-                clearEnthalpyOutputs('Psychrometric engine unavailable — reload the page.');
+                clearEnthalpyOutputs(CFI18n.page('errors.engineUnavailable'));
                 return;
             }
             refreshSecondLabel('er-h-oa');
@@ -440,15 +578,15 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
             const maD = parseFloat(document.getElementById('er-h-ma').value);
 
             if (!oaR.ok || !raR.ok || !isFinite(maD)) {
-                clearEnthalpyOutputs('Enter values to see feasibility.');
+                clearEnthalpyOutputs(CFI18n.page('status.feasibilityPrompt'));
                 return;
             }
             if (!oaR.state.ok) {
-                clearEnthalpyOutputs('Outdoor air — ' + oaR.state.error);
+                clearEnthalpyOutputs(CFI18n.page('errors.outdoorPrefix', { message: psychroErrorMessage(oaR.state.error) }));
                 return;
             }
             if (!raR.state.ok) {
-                clearEnthalpyOutputs('Return air — ' + raR.state.error);
+                clearEnthalpyOutputs(CFI18n.page('errors.returnPrefix', { message: psychroErrorMessage(raR.state.error) }));
                 return;
             }
 
@@ -464,17 +602,15 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
             const dh = oa.h - ra.h;
             const changeoverEl = document.getElementById('er-h-changeover');
             if (Math.abs(dh) < 0.5) {
-                setFeas(changeoverEl,
-                    `OA and RA enthalpies are within 0.5 ${hU()} — call it a wash; minimum-OA is the safer call.`,
-                    'warn');
+                setFeas(changeoverEl, CFI18n.page('changeover.wash', { unit: hU() }), 'warn');
             } else if (oa.h < ra.h) {
-                setFeas(changeoverEl,
-                    `Favorable — OA carries ${Math.abs(dh).toFixed(1)} ${hU()} less heat per pound of dry air than RA. Bringing in OA reduces total coil load.`,
-                    'ok');
+                setFeas(changeoverEl, CFI18n.page('changeover.favorable', {
+                    difference: Math.abs(dh).toFixed(1), unit: hU()
+                }), 'ok');
             } else {
-                setFeas(changeoverEl,
-                    `Unfavorable — OA carries ${dh.toFixed(1)} ${hU()} more heat per pound of dry air than RA. Even if it's cooler on dry-bulb, the latent load makes it a net loss. Minimum-OA.`,
-                    'error');
+                setFeas(changeoverEl, CFI18n.page('changeover.unfavorable', {
+                    difference: dh.toFixed(1), unit: hU()
+                }), 'error');
             }
 
             // Damper calc is on dry-bulb (what the BAS actually modulates to).
@@ -485,8 +621,8 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
             if (oa.tdb === ra.tdb) {
                 pctEl.className = 'ps-value muted error';
                 pctEl.textContent = '—';
-                formulaEl.textContent = 'OA and RA have identical dry-bulb — no unique %OA.';
-                setFeas(feasEl, 'OA and RA dry-bulbs are identical; mix temperature is fixed.', 'warn');
+                formulaEl.textContent = CFI18n.page('formula.enthalpyEqual');
+                setFeas(feasEl, CFI18n.page('status.enthalpyEqual'), 'warn');
                 return;
             }
 
@@ -508,24 +644,18 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
             const maDD = U.display.temp(maTarget).toFixed(1);
             // See the dry-bulb tab: suppress the trailing result out of range
             // so the formula can't contradict the muted headline (T-014).
-            formulaEl.textContent =
-                `% OA = (MA − RA) ÷ (OA − RA) × 100 ` +
-                `= (${maDD} − ${raD}) ÷ (${oaD} − ${raD}) × 100` +
-                (within ? ` = ${pct.toFixed(1)} %` : '');
+            formulaEl.textContent = CFI18n.page('formula.mix', {
+                ma: maDD, ra: raD, oa: oaD,
+                result: within ? CFI18n.page('formula.result', { percent: pct.toFixed(1) }) : ''
+            });
 
             // Feasibility — same regimes as the dry-bulb tab (within above).
             if (within) {
-                setFeas(feasEl,
-                    `Feasible — setpoint is between OA and RA dry-bulbs; a ${pct.toFixed(1)} %OA mix lands on it.`,
-                    'ok');
+                setFeas(feasEl, CFI18n.page('status.enthalpyFeasible', { percent: pct.toFixed(1) }), 'ok');
             } else if (pct > 100) {
-                setFeas(feasEl,
-                    'Out of range — OA is cooler than the setpoint, but not cold enough to drag RA down alone. Damper goes 100 % OA and the coil picks up the rest.',
-                    'warn');
+                setFeas(feasEl, CFI18n.page('status.enthalpyAboveRange'), 'warn');
             } else {
-                setFeas(feasEl,
-                    'Infeasible — OA is hotter than the setpoint. No mix gets you there; close to minimum OA.',
-                    'error');
+                setFeas(feasEl, CFI18n.page('status.enthalpyInfeasible'), 'error');
             }
 
             // Resulting mixed state — clamp ratio to [0, 1] before building so
@@ -537,7 +667,7 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
             const maTdb  = ratio * oa.tdb + (1 - ratio) * ra.tdb;
             const maState = Psychro.buildState(maTdb, maW, P_STD);
             if (!maState || !isFinite(maState.h)) {
-                clearEnthalpyOutputs('Mixed state out of range — check inputs.');
+                clearEnthalpyOutputs(CFI18n.page('errors.mixedOutOfRange'));
                 return;
             }
             setLive('er-h-ma-db', dispT(maState.tdb) + ' ' + tU());
@@ -602,7 +732,7 @@ keywords: oa oat percent outdoor air free cooling changeover mixed air damper
                 const q    = quantityForMode(mode);
                 if (q) rewriteInput(prefix + '-second', q, oldUnits, newUnits);
             }
-            SECOND_PROP = PsyWidget.buildSecondProp();
+            SECOND_PROP = buildSecondProp();
             refreshSecondLabel('er-h-oa');
             refreshSecondLabel('er-h-ra');
             calcDryBulb();

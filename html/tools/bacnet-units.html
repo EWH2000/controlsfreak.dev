@@ -5,6 +5,19 @@ canonical: https://controlsfreak.dev/tools/bacnet-units.html
 nav: tools
 category: protocols
 keywords: units enumeration property 117 present value degrees celsius fahrenheit cfm engineering units enum decode reverse lookup ashrae 135 no-units percent kilopascals
+pageMessages:
+  decode:
+    prompt: Enter a units value to look it up.
+    invalid: The Units value is a whole number 0–65535 — the Unsigned range the enumeration lives in.
+    standard: Standard engineering unit
+    snapshotMissing: Standard range, no name in this snapshot
+    snapshotFormula: '{id} → within 0–{max} but unnamed here — a newer-edition value, check ASHRAE 135'
+    reserved: Reserved ceiling — not an assigned unit
+    reservedFormula: '{id} → reserved boundary of the standard range (0–{max}), not a unit'
+    proprietary: Proprietary/vendor range — no standard name
+    proprietaryFormula: '{id} → {min}+ is vendor-specific; the meaning is in the manufacturer’s docs'
+  table:
+    copyTitle: Copy {code}
 faqs:
     - q: What is the BACnet Units property?
       a: Property 117 (<code>Units</code>) carries the engineering units of an object's <code>Present_Value</code> — degrees-Celsius, cubic-feet-per-minute, percent, and so on. It is an enumeration — the wire carries an integer, and the workstation maps the number to a unit name. This page is that map. See the <a href="/tools/bacnet-objects.html">BACnet Object Reference</a> for the property list it belongs to.
@@ -18,8 +31,8 @@ faqs:
       a: 95 is no-units — the value the Units property takes for a dimensionless point like a ratio, a count, or a raw setpoint with no engineering unit. 98 is percent, the other value you see constantly on damper and valve commands.
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
-{% from "faq.njk" import faqBlock %}
+{% from "related-links.njk" import relatedLinks with context %}
+{% from "faq.njk" import faqBlock with context %}
 
 {% block head %}
     <style>
@@ -258,7 +271,7 @@ faqs:
             groupEl.className = 'ps-value muted';
             groupEl.textContent = '—';
             formulaEl.textContent = '';
-            setStatus('', 'Enter a units value to look it up.');
+            setStatus('', CFI18n.page('decode.prompt'));
             if (msg) { calloutEl.textContent = msg; calloutEl.hidden = false; }
             else calloutEl.hidden = true;
         }
@@ -268,7 +281,7 @@ faqs:
             if (raw === '') { mute(null); return; }
             const id = parseFloat(raw);
             if (!isFinite(id) || id !== Math.floor(id) || id < 0 || id > 65535) {
-                mute('The Units value is a whole number 0–65535 — the Unsigned range the enumeration lives in.');
+                mute(CFI18n.page('decode.invalid'));
                 return;
             }
             calloutEl.hidden = true;
@@ -278,29 +291,29 @@ faqs:
                 nameEl.textContent = hit.display;
                 groupEl.className = hit.group ? 'ps-value live' : 'ps-value muted';
                 groupEl.textContent = hit.group || '—';
-                setStatus('ok', 'Standard engineering unit');
+                setStatus('ok', CFI18n.page('decode.standard'));
                 formulaEl.textContent = id + ' → ' + hit.name;
             } else if (id <= maxStd) {
                 nameEl.className = 'ps-value muted';
                 nameEl.textContent = '—';
                 groupEl.className = 'ps-value muted';
                 groupEl.textContent = '—';
-                setStatus('warn', 'Standard range, no name in this snapshot');
-                formulaEl.textContent = id + ' → within 0–' + maxStd + ' but unnamed here — a newer-edition value, check ASHRAE 135';
+                setStatus('warn', CFI18n.page('decode.snapshotMissing'));
+                formulaEl.textContent = CFI18n.page('decode.snapshotFormula', { id, max: maxStd });
             } else if (id < propMin) {
                 nameEl.className = 'ps-value muted';
                 nameEl.textContent = '—';
                 groupEl.className = 'ps-value muted';
                 groupEl.textContent = '—';
-                setStatus('warn', 'Reserved ceiling — not an assigned unit');
-                formulaEl.textContent = id + ' → reserved boundary of the standard range (0–' + maxStd + '), not a unit';
+                setStatus('warn', CFI18n.page('decode.reserved'));
+                formulaEl.textContent = CFI18n.page('decode.reservedFormula', { id, max: maxStd });
             } else {
                 nameEl.className = 'ps-value muted';
                 nameEl.textContent = '—';
                 groupEl.className = 'ps-value muted';
                 groupEl.textContent = '—';
-                setStatus('warn', 'Proprietary/vendor range — no standard name');
-                formulaEl.textContent = id + ' → ' + propMin + '+ is vendor-specific; the meaning is in the manufacturer’s docs';
+                setStatus('warn', CFI18n.page('decode.proprietary'));
+                formulaEl.textContent = CFI18n.page('decode.proprietaryFormula', { id, min: propMin });
             }
         }
 
@@ -349,7 +362,7 @@ faqs:
             cell.classList.add('bunit-copyable');
             cell.setAttribute('role', 'button');
             cell.setAttribute('tabindex', '0');
-            cell.setAttribute('title', 'Copy ' + cell.dataset.code);
+            cell.setAttribute('title', CFI18n.page('table.copyTitle', { code: cell.dataset.code }));
         });
         function copyCell(cell) {
             copyText(cell, cell.dataset.code);

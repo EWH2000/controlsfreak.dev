@@ -5,6 +5,15 @@ canonical: https://controlsfreak.dev/tools/valve-authority.html
 nav: tools
 category: hydronics
 keywords: beta ratio control valve installed characteristic equal percentage oversizing hunting delta p authority
+pageMessages:
+    validation:
+        prompt: "Enter both pressure drops to see the verdict."
+        negative: "Pressure drops can’t be negative."
+        zero: "Total drop is zero — there’s no circuit to take authority over."
+    verdict:
+        good: "Good authority (β = {beta}). The valve keeps real control over flow across its stroke; 0.5 is the common design floor."
+        marginal: "Marginal authority (β = {beta}). Control turns nonlinear — most of the throttling happens early in the stroke. Aim for more drop across the valve."
+        poor: "Poor authority (β = {beta}). The valve barely controls flow and the loop will hunt. Resize for a larger share of the circuit drop, or check for oversizing."
 faqs:
     - q: What is valve authority?
       a: Valve authority (β) is the share of a controlled circuit's pressure drop that the wide-open control valve takes — β = ΔP valve, open ÷ (ΔP valve, open + ΔP rest). It measures how much real control the valve has over flow across its stroke.
@@ -18,8 +27,8 @@ faqs:
       a: An oversized valve — Cv far larger than the duty — barely cracks open at design flow, so it takes very little of the circuit's pressure drop and authority collapses. Size the Cv to the actual duty first, then confirm authority.
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
-{% from "faq.njk" import faqBlock %}
+{% from "related-links.njk" import relatedLinks with context %}
+{% from "faq.njk" import faqBlock with context %}
 
 {% block head %}
     <style>
@@ -261,16 +270,16 @@ faqs:
             const rest  = parseFloat(restEl.value);
 
             if (!isFinite(valve) || !isFinite(rest)) {
-                muteBeta('Enter both pressure drops to see the verdict.', '');
+                muteBeta(CFI18n.page('validation.prompt'), '');
                 return;
             }
             if (valve < 0 || rest < 0) {
-                muteBeta('Pressure drops can’t be negative.', 'error');
+                muteBeta(CFI18n.page('validation.negative'), 'error');
                 return;
             }
             const total = valve + rest;
             if (total === 0) {
-                muteBeta('Total drop is zero — there’s no circuit to take authority over.', 'error');
+                muteBeta(CFI18n.page('validation.zero'), 'error');
                 return;
             }
 
@@ -282,11 +291,11 @@ faqs:
             installedPath.setAttribute('points', curve((h) => installed(h, beta)));
 
             if (beta >= 0.5) {
-                setVerdict(`Good authority (β = ${beta.toFixed(2)}). The valve keeps real control over flow across its stroke; 0.5 is the common design floor.`, 'ok');
+                setVerdict(CFI18n.page('verdict.good', { beta: beta.toFixed(2) }), 'ok');
             } else if (beta >= 0.25) {
-                setVerdict(`Marginal authority (β = ${beta.toFixed(2)}). Control turns nonlinear — most of the throttling happens early in the stroke. Aim for more drop across the valve.`, 'warn');
+                setVerdict(CFI18n.page('verdict.marginal', { beta: beta.toFixed(2) }), 'warn');
             } else {
-                setVerdict(`Poor authority (β = ${beta.toFixed(2)}). The valve barely controls flow and the loop will hunt. Resize for a larger share of the circuit drop, or check for oversizing.`, 'error');
+                setVerdict(CFI18n.page('verdict.poor', { beta: beta.toFixed(2) }), 'error');
             }
         }
 

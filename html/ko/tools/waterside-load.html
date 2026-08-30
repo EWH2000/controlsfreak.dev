@@ -1,0 +1,165 @@
+---
+title: 수측 부하 계산기 — controlsfreak.dev
+description: 수배관 코일의 유량·공급과 환수 온도차·부하 관계를 US·미터법 단위로 계산하며, q = 500 × GPM × ΔT를 부하·유량·ΔT 방향으로 풉니다.
+sourceContentHash: e07a6467d01012737444b27853b6069aa9c4c948e6ef18b8e8e722bdaefaa4a0
+sourceMessageHash: 89a454a98af1254df5d74099801489c3c7b5f59247762f0cef5cdf7ce54ad200
+canonical: https://controlsfreak.dev/ko/tools/waterside-load.html
+nav: tools
+category: hydronics
+keywords: gpm delta t mbh tons btuh 물 유량 500 냉수 온수 코일 수측 부하 환수
+pageMessages:
+    display:
+        preambleEquationUs: "q = 500 × GPM × ΔT"
+        preambleEquationMetric: "q = 4.187 × L/s × ΔT"
+        flowLabelUs: "유량 (GPM)"
+        flowLabelMetric: "유량 (L/s)"
+        deltaTLabelUs: "코일 전후 ΔT (°F)"
+        deltaTLabelMetric: "코일 전후 ΔT (°C)"
+        loadLabelUs: "부하 (MBH)"
+        loadLabelMetric: "부하 (kW)"
+        exampleFlowUs: "20 GPM"
+        exampleFlowMetric: "1.26 L/s"
+        exampleDeltaUs: "12 °F"
+        exampleDeltaMetric: "6.7 °C"
+        workedEquationUs: "q = 500 × GPM × ΔT°F(Btu/h)"
+        workedEquationMetric: "q = 4.187 × L/s × ΔT°C(kW)"
+        workedPlugUs: "q = 500 × 20 × 12 = 120,000 Btu/h = 120 MBH"
+        workedPlugMetric: "q = 4.187 × 1.26 × 6.7 = 35.3 kW"
+        workedTonsUs: "120 ÷ 12 = 10 tons"
+        workedTonsMetric: "35.3 ÷ 3.517 ≈ 10 tons"
+        constantDetailUs: "8.33 lb/gal × 60 min/h × 1.0 Btu/lb·°F — 물의 밀도와 비열을 하나의 상수로 합친 값입니다."
+        constantDetailMetric: "물의 비열 4.187 kJ/kg·K와 약 1 kg/L의 밀도 — 밀도와 비열을 하나의 상수로 합친 값입니다."
+    labels:
+        load: "부하 ({unit})"
+        flow: "유량 ({unit})"
+        deltaT: "ΔT ({unit})"
+    validation:
+        loadInputs: "부하를 계산하려면 유량과 ΔT를 입력하세요."
+        flowDeltaNonnegative: "유량과 ΔT는 음수일 수 없습니다. ΔT는 양의 차이로 입력하세요."
+        flowInputs: "유량을 계산하려면 부하와 ΔT를 입력하세요."
+        loadNonnegative: "부하는 음수일 수 없습니다."
+        deltaTPositiveForFlow: "유량을 계산하려면 ΔT가 0보다 커야 합니다. ΔT = 0이면 어떤 유량도 부하를 전달하지 않습니다."
+        deltaTInputs: "ΔT를 계산하려면 부하와 유량을 입력하세요."
+        flowPositiveForDeltaT: "ΔT를 계산하려면 유량이 0보다 커야 합니다. 정지된 물에서는 부하에 해당하는 ΔT를 계산할 수 없습니다."
+---
+{% extends "html/tools/waterside-load.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 수측 부하</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                수측 부하 계산기
+                <span class="tool-tag">수배관</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>수측 부하의 기본식을 어느 방향으로든 계산합니다.</summary>
+            <div class="preamble-rest">
+                수측 부하의 기본식 <code><span data-us="{{ pageMessages.display.preambleEquationUs }}" data-metric="{{ pageMessages.display.preambleEquationMetric }}">q = 500 × GPM × ΔT</span></code>는 코일의 수량, 코일 전후 온도차, 전달 부하를 연결합니다.
+                계측한 유량과 ΔT가 나타내는 부하, 설계 부하에 필요한 유량 또는 정상 회로에서 확인해야 할 ΔT를 계산하세요.
+            </div>
+        </details>
+        <p class="ps-seed-note">입력란에는 예제가 미리 채워져 있습니다. 확인하려는 값으로 수정하세요.</p>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">입력</h2>
+                <div class="ps-row">
+                    <label class="ps-label" for="wl-solve">계산 대상</label>
+                    <select class="ps-input" id="wl-solve">
+                        <option value="load">부하</option>
+                        <option value="flow">유량</option>
+                        <option value="dt">ΔT</option>
+                    </select>
+                </div>
+                <div class="ps-row" id="wl-row-flow">
+                    <label class="ps-label" data-us="{{ pageMessages.display.flowLabelUs }}" data-metric="{{ pageMessages.display.flowLabelMetric }}" for="wl-flow">유량 (GPM)</label>
+                    <input class="ps-input" type="number" id="wl-flow" step="any" min="0" placeholder="20" value="20">
+                </div>
+                <div class="ps-row" id="wl-row-dt">
+                    <label class="ps-label" data-us="{{ pageMessages.display.deltaTLabelUs }}" data-metric="{{ pageMessages.display.deltaTLabelMetric }}" for="wl-dt">코일 전후 ΔT (°F)</label>
+                    <input class="ps-input" type="number" id="wl-dt" step="any" min="0" placeholder="12" value="12">
+                </div>
+                <div class="ps-row" id="wl-row-load">
+                    <label class="ps-label" data-us="{{ pageMessages.display.loadLabelUs }}" data-metric="{{ pageMessages.display.loadLabelMetric }}" for="wl-load">부하 (MBH)</label>
+                    <input class="ps-input" type="number" id="wl-load" step="any" min="0" placeholder="120" value="120">
+                </div>
+                <p class="ref-note">
+                    ΔT는 양의 차이로 입력하세요. 냉각 코일은 공급-환수, 난방 코일은 환수-공급 온도차를 사용하며 계산식은 어느 방향이든 같습니다.
+                </p>
+                <p class="ref-note">
+                    <strong>물만 해당합니다.</strong> 이 상수에는 물의 밀도와 비열이 포함되어 있습니다. 글리콜 혼합액은 두 값이 모두 낮습니다. 프로필렌글리콜 30&nbsp;% 회로는 이 간이식의 결과보다 갤런당 전달 열량이 상당히 적습니다. 글리콜 보정 행은 후속 기능으로 계획되어 있으며, 글리콜의 동결·파열 관련 내용은 <a href="/ko/tools/coil-freeze-risk.html">코일 동결 위험 점검</a>에서 확인할 수 있습니다.
+                </p>
+            </section>
+
+            <section role="status" aria-atomic="false">
+                <h2 class="ps-section-label">출력</h2>
+                <div class="ps-row primary">
+                    <span class="ps-label" id="wl-out-label">부하 (MBH)</span>
+                    <span class="ps-value muted" id="wl-out">—</span>
+                </div>
+                <div class="ps-row" id="wl-row-tons">
+                    <span class="ps-label">냉동톤</span>
+                    <span class="ps-value muted" id="wl-tons">—</span>
+                </div>
+                <div class="btn-row">
+                    <button class="copy-btn" id="wl-copy">값 복사</button>
+                </div>
+                <div class="result-formula wrap" id="wl-formula"></div>
+                <div class="failure-callout" id="wl-callout" hidden></div>
+            </section>
+
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">계산 예</h2>
+            <p class="ref-note worked-intro">
+                냉수 코일에 <span data-us="{{ pageMessages.display.exampleFlowUs }}" data-metric="{{ pageMessages.display.exampleFlowMetric }}">20 GPM</span>이 흐르고, 환수 배관의 온도가 공급 배관보다 <span data-us="{{ pageMessages.display.exampleDeltaUs }}" data-metric="{{ pageMessages.display.exampleDeltaMetric }}">12 °F</span> 높습니다.
+            </p>
+            <ol class="ref-note worked-list">
+                <li>수측 부하식: <code><span data-us="{{ pageMessages.display.workedEquationUs }}" data-metric="{{ pageMessages.display.workedEquationMetric }}">q = 500 × GPM × ΔT°F(Btu/h)</span></code>.</li>
+                <li>값 대입: <code><span data-us="{{ pageMessages.display.workedPlugUs }}" data-metric="{{ pageMessages.display.workedPlugMetric }}">q = 500 × 20 × 12 = 120,000 Btu/h = 120 MBH</span></code>.</li>
+                <li>냉동기 단위로 환산: <code><span data-us="{{ pageMessages.display.workedTonsUs }}" data-metric="{{ pageMessages.display.workedTonsMetric }}">120 ÷ 12 = 10 tons</span></code>의 부하가 이 코일 하나를 통해 전달됩니다.</li>
+            </ol>
+            <p class="ref-note">
+                <em>계산 대상</em>을 바꾸면 반대 방향으로 계산할 수 있습니다. 설계 ΔT에서 예정 부하에 필요한 유량 또는 알려진 유량에서 나타나야 할 ΔT는 저 ΔT 문제를 현장에서 확인하는 기본값입니다. 코일에 설계 유량이 흐르지만 ΔT가 설계값의 절반이면 전달 부하도 목표의 절반입니다. 이후 점검 과정은 <a href="/ko/education/balancing.html">밸런싱 학습 자료</a>에서 설명합니다.
+            </p>
+            <p class="ref-note">
+                <span data-us="500" data-metric="4.187">500</span>의 유도 과정: <span data-us="{{ pageMessages.display.constantDetailUs }}" data-metric="{{ pageMessages.display.constantDetailMetric }}">8.33 lb/gal × 60 min/h × 1.0 Btu/lb·°F — 물의 밀도와 비열을 하나의 상수로 합친 값입니다.</span>
+            </p>
+        </section>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/hydronics/', label: '수배관 시스템 참고 허브'},
+        tools: [
+            {href: '/ko/tools/airside-load.html', label: '공기측 부하 계산기'},
+            {href: '/ko/tools/valve-cv.html', label: '밸브 Cv 선정'},
+            {href: '/ko/tools/coil-sizing.html', label: '코일 선정 계산기'},
+            {href: '/ko/tools/power-energy-converter.html', label: '동력 및 에너지 변환기'},
+            {href: '/ko/tools/coil-freeze-risk.html', label: '코일 동결 위험 점검'}
+        ],
+        lessons: [
+            {href: '/ko/education/balancing.html', label: '수배관 밸런싱'},
+            {href: '/ko/education/pump-control.html', label: '펌프 제어'},
+            {href: '/ko/education/hydronic-loops.html', label: '수배관 회로'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/balancing.html', label: '수배관 밸런싱'},
+            {href: '/ko/practice/pump-control.html', label: '펌프 제어'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

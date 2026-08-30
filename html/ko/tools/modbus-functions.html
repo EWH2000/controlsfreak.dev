@@ -1,0 +1,185 @@
+---
+title: Modbus 기능 코드 및 CRC — controlsfreak.dev
+description: Modbus 기능 코드와 예외 코드를 이름 또는 번호로 디코딩하고, 모든 직렬 Modbus 프레임에 포함되는 RTU CRC-16 체크섬을 계산하거나 검증합니다.
+sourceContentHash: ec833e1571f1867bf2e8a36c679f79e6b3facd249afb05e7cfa749b2c4f8298c
+sourceMessageHash: 76cf0cd9794a20746363bd4ed65e45e1a9b8a6723e77b5afe6976dd66738c6b8
+pageMessages:
+    crc:
+        minimum: "기존 CRC를 검증하려면 바이트를 3개 이상 입력하세요."
+        empty: "RTU 프레임을 16진수 바이트로 붙여 넣으세요. 예: 01 03 00 00 00 0A"
+        odd: "16진수 자릿수는 짝수여야 합니다. 바이트 하나는 두 자리입니다."
+        valid: "유효한 프레임 — 마지막 두 바이트가 앞선 모든 바이트의 CRC와 일치합니다. ✓"
+        invalid: "마지막 두 바이트가 앞선 바이트들의 CRC와 일치하지 않습니다. 입력한 바이트가 모두 데이터라면 {lo} {hi}를 덧붙여 프레임을 완성하세요."
+canonical: https://controlsfreak.dev/ko/tools/modbus-functions.html
+nav: tools
+category: protocols
+keywords: Modbus 기능 코드 예외 CRC CRC-16 RTU 체크섬 레지스터 코일 홀딩 입력 프레임
+---
+{% extends "html/tools/modbus-functions.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · Modbus 코드</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                Modbus 기능 코드 및 CRC
+                <span class="tool-tag">Modbus</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>Modbus 통신을 구성하는 코드와 각 직렬 프레임을 감싸는 체크섬을 확인합니다.</summary>
+            <div class="preamble-rest">
+                <em>기능 코드</em>는 요청이 수행하려는 작업을 나타냅니다. 코일 읽기, 레지스터 쓰기와 10진수/16진수 혼동 주의점(FC 15 = 0x0F, FC 16 = 0x10)을 다룹니다.
+                <em>예외 코드</em>는 서버가 요청을 거부할 때 상위 비트가 설정된 기능 코드와 함께 돌려주는 값입니다.
+                <em>CRC-16</em>은 RTU 프레임에 포함되는 오류 검사 바이트 2개를 생성하거나 확인합니다.
+            </div>
+        </details>
+
+        <div class="mf-controls">
+            <label class="mf-search-label" for="mf-search">이름 또는 번호로 코드 필터링</label>
+            <input class="ps-input" type="search" id="mf-search" placeholder="예: 16, write, illegal, 0x10">
+        </div>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="fc">기능 코드 <span class="mf-count" data-count="fc" aria-hidden="true"></span></button>
+            <button class="tab-btn"        data-tab="exc">예외 코드 <span class="mf-count" data-count="exc" aria-hidden="true"></span></button>
+            <button class="tab-btn"        data-tab="crc">CRC-16</button>
+        </div>
+
+        <!-- ── Function codes ── -->
+        <div id="tab-fc" class="tab-pane active">
+            <section class="tool-body-row">
+                <div class="table-scroll">
+                    <table class="ref-table-dense rt-stack" id="mf-table-fc">
+                        <thead>
+                            <tr><th>코드</th><th>이름</th><th>동작</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="mf-id">1 <span class="mf-hex">0x01</span></td><td>코일 읽기(Read Coils)</td><td>읽고 쓸 수 있는 이산 출력 비트인 코일 1–2000개를 읽습니다.</td></tr>
+                            <tr><td class="mf-id">2 <span class="mf-hex">0x02</span></td><td>이산 입력 읽기(Read Discrete Inputs)</td><td>읽기 전용 비트인 이산 입력 1–2000개를 읽습니다.</td></tr>
+                            <tr><td class="mf-id">3 <span class="mf-hex">0x03</span></td><td>홀딩 레지스터 읽기(Read Holding Registers)</td><td>읽고 쓸 수 있는 16비트 워드인 홀딩 레지스터 1–125개를 읽습니다.</td></tr>
+                            <tr><td class="mf-id">4 <span class="mf-hex">0x04</span></td><td>입력 레지스터 읽기(Read Input Registers)</td><td>읽기 전용 16비트 워드인 입력 레지스터 1–125개를 읽습니다.</td></tr>
+                            <tr><td class="mf-id">5 <span class="mf-hex">0x05</span></td><td>단일 코일 쓰기(Write Single Coil)</td><td>코일 하나를 ON(0xFF00) 또는 OFF(0x0000)로 강제합니다.</td></tr>
+                            <tr><td class="mf-id">6 <span class="mf-hex">0x06</span></td><td>단일 레지스터 쓰기(Write Single Register)</td><td>홀딩 레지스터 하나에 씁니다.</td></tr>
+                            <tr><td class="mf-id">7 <span class="mf-hex">0x07</span></td><td>예외 상태 읽기(Read Exception Status)</td><td>직렬 통신 전용으로, 장치의 예외 상태 비트 8개를 읽습니다.</td></tr>
+                            <tr><td class="mf-id">8 <span class="mf-hex">0x08</span></td><td>진단(Diagnostics)</td><td>직렬 통신 전용으로, 회선 진단과 루프백 하위 기능을 수행합니다.</td></tr>
+                            <tr><td class="mf-id">11 <span class="mf-hex">0x0B</span></td><td>통신 이벤트 카운터 가져오기(Get Comm Event Counter)</td><td>직렬 통신 전용으로, 상태 워드와 이벤트 개수를 읽습니다.</td></tr>
+                            <tr><td class="mf-id">12 <span class="mf-hex">0x0C</span></td><td>통신 이벤트 로그 가져오기(Get Comm Event Log)</td><td>직렬 통신 전용으로, 상태와 개수, 최근 이벤트 바이트를 읽습니다.</td></tr>
+                            <tr><td class="mf-id">15 <span class="mf-hex">0x0F</span></td><td>다중 코일 쓰기(Write Multiple Coils)</td><td>연속된 코일 블록을 한 번의 요청으로 씁니다.</td></tr>
+                            <tr><td class="mf-id">16 <span class="mf-hex">0x10</span></td><td>다중 레지스터 쓰기(Write Multiple Registers)</td><td>연속된 홀딩 레지스터 블록을 씁니다. 10진수&nbsp;16은 16진수&nbsp;<strong>0x10</strong>입니다. 이를 16진수&nbsp;16으로 잘못 해석하면 아래의 Mask Write 행과 혼동하게 됩니다.</td></tr>
+                            <tr><td class="mf-id">17 <span class="mf-hex">0x11</span></td><td>서버 ID 보고(Report Server ID)</td><td>직렬 통신 전용으로, 장치 ID 문자열과 실행 상태 바이트를 읽습니다.</td></tr>
+                            <tr><td class="mf-id">22 <span class="mf-hex">0x16</span></td><td>마스크 레지스터 쓰기(Mask Write Register)</td><td>홀딩 레지스터 하나에서 선택한 비트에 AND/OR 마스크를 적용합니다.</td></tr>
+                            <tr><td class="mf-id">23 <span class="mf-hex">0x17</span></td><td>다중 레지스터 읽기/쓰기(Read/Write Multiple Registers)</td><td>한 트랜잭션에서 한 블록을 읽고 다른 블록에 씁니다.</td></tr>
+                            <tr><td class="mf-id">43 <span class="mf-hex">0x2B</span></td><td>캡슐화 인터페이스 전송(Encapsulated Interface Transport)</td><td>장치 식별 정보(MEI 유형 0x0E), 즉 벤더와 모델을 읽습니다.</td></tr>
+                            <tr class="ref-empty mf-empty" hidden><td colspan="3">이 필터와 일치하는 기능 코드가 없습니다.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="ref-note">
+                    코드는 네 가지 데이터 표에 걸쳐 나뉩니다. 코일과 이산 입력은 비트이고 홀딩 레지스터와 입력 레지스터는 16비트 워드입니다. 주소가 어느 표에 속하는지와 그 표를 나타내는 5자리 접두어는 <a href="/ko/education/modbus-decoding.html">Modbus 디코딩</a>에서 설명합니다.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Exception codes ── -->
+        <div id="tab-exc" class="tab-pane">
+            <section class="tool-body-row">
+                <div class="table-scroll">
+                    <table class="ref-table-dense rt-stack" id="mf-table-exc">
+                        <thead>
+                            <tr><th>코드</th><th>이름</th><th>의미</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="mf-id">1 <span class="mf-hex">0x01</span></td><td>잘못된 기능(Illegal Function)</td><td>서버가 해당 기능 코드를 지원하지 않습니다.</td></tr>
+                            <tr><td class="mf-id">2 <span class="mf-hex">0x02</span></td><td>잘못된 데이터 주소(Illegal Data Address)</td><td>주소 또는 요청한 범위가 이 장치에서 유효하지 않습니다.</td></tr>
+                            <tr><td class="mf-id">3 <span class="mf-hex">0x03</span></td><td>잘못된 데이터 값(Illegal Data Value)</td><td>값 또는 수량이 해당 주소에서 허용하는 범위를 벗어났습니다.</td></tr>
+                            <tr><td class="mf-id">4 <span class="mf-hex">0x04</span></td><td>서버 장치 고장(Server Device Failure)</td><td>요청을 실행하는 중 복구할 수 없는 오류가 발생했습니다.</td></tr>
+                            <tr><td class="mf-id">5 <span class="mf-hex">0x05</span></td><td>승인(Acknowledge)</td><td>요청을 수락했지만 실행 시간이 깁니다. 다시 보내지 말고 완료 여부를 폴링하세요.</td></tr>
+                            <tr><td class="mf-id">6 <span class="mf-hex">0x06</span></td><td>서버 장치 사용 중(Server Device Busy)</td><td>긴 프로그램 명령을 처리 중이므로 나중에 요청을 다시 보내세요.</td></tr>
+                            <tr><td class="mf-id">7 <span class="mf-hex">0x07</span></td><td>부정 승인(Negative Acknowledge, NAK)</td><td>서버가 쿼리로 받은 프로그램 기능을 실행할 수 없습니다(FC 08/13/14 프로그램 명령).</td></tr>
+                            <tr><td class="mf-id">8 <span class="mf-hex">0x08</span></td><td>메모리 패리티 오류(Memory Parity Error)</td><td>확장 파일 레코드 메모리에서 패리티 오류가 발생했습니다(FC 20/21).</td></tr>
+                            <tr><td class="mf-id">10 <span class="mf-hex">0x0A</span></td><td>게이트웨이 경로 사용 불가(Gateway Path Unavailable)</td><td>게이트웨이가 잘못 구성되었거나 과부하 상태라 대상까지 가는 경로가 없습니다.</td></tr>
+                            <tr><td class="mf-id">11 <span class="mf-hex">0x0B</span></td><td>게이트웨이 대상 응답 실패(Gateway Target Failed to Respond)</td><td>대상 장치에서 응답이 없습니다. 유닛 ID가 잘못된 경우가 많습니다.</td></tr>
+                            <tr class="ref-empty mf-empty" hidden><td colspan="3">이 필터와 일치하는 예외 코드가 없습니다.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="ref-note">
+                    예외 응답은 원래 기능 코드의 상위 비트를 설정해 되돌려 줍니다. 즉 <code>FC + 0x80</code>입니다. 홀딩 레지스터 읽기(FC 3, 0x03)가 실패하면 <code>0x83</code>으로 돌아오고, 그 다음 바이트가 위 표의 예외 코드입니다.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── CRC-16 ── -->
+        <div id="tab-crc" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="mf-crc-in">RTU 프레임(16진수 바이트)</label>
+                        <input class="ps-input mf-mono" type="text" id="mf-crc-in" placeholder="01 03 00 00 00 0A" value="01 03 00 00 00 0A">
+                    </div>
+                    <p class="ref-note">
+                        프레임을 16진수 바이트로 붙여 넣으세요. 공백, 쉼표, <code>0x</code>는 무시됩니다. Modbus RTU는 CRC-16(다항식 <code>0xA001</code>, 초기값 <code>0xFFFF</code>)을 사용합니다. ASCII 모드는 대신 LRC를 사용하고, Modbus TCP는 MBAP 헤더를 사용하므로 체크섬을 완전히 생략합니다.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="ps-row primary">
+                        <span class="ps-label">표시된 바이트의 CRC-16</span>
+                        <span class="ps-value muted" id="mf-crc-word">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">추가 순서(하위 바이트 먼저)</span>
+                        <span class="ps-value muted mf-mono" id="mf-crc-append">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">전체 프레임 + CRC</span>
+                        <span class="ps-value muted mf-mono" id="mf-crc-frame">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="mf-crc-copy-append">CRC 바이트 복사</button>
+                        <button class="copy-btn" id="mf-crc-copy">프레임 복사</button>
+                    </div>
+                    <div class="failure-callout" id="mf-crc-callout" hidden></div>
+                    <div class="mf-verify" id="mf-crc-verify">기존 CRC를 확인하려면 바이트를 3개 이상 입력하세요.</div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">검사 방식</h2>
+                <p class="ref-note">
+                    CRC는 유닛 ID, 기능 코드, 데이터를 포함한 프레임의 모든 바이트에 대해 계산한 다음 <em>하위 바이트부터</em> 추가합니다. 수신기는 CRC를 포함한 프레임 전체에 대해 같은 계산을 실행하며, 정상 프레임에서는 나머지가 0이 됩니다. 위의 <em>추가 순서</em>에는 프레임을 만들 때 추가할 두 바이트가 표시됩니다. 아래 판정은 붙여 넣은 값의 마지막 두 바이트를 CRC로 간주하고 캡처한 프레임이 유효한지 알려 줍니다.
+                </p>
+            </section>
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/modbus-register-viewer.html', label: 'Modbus 레지스터 뷰어'}
+        ],
+        lessons: [
+            {href: '/ko/education/modbus-basics.html', label: 'Modbus 기초'},
+            {href: '/ko/education/modbus-decoding.html', label: 'Modbus 디코딩'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/modbus-basics.html', label: 'Modbus 기초'},
+            {href: '/ko/practice/modbus-decoding.html', label: 'Modbus 디코딩'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

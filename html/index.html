@@ -5,7 +5,7 @@ canonical: https://controlsfreak.dev/
 nav: home
 ---
 {% extends "layouts/page.njk" %}
-{% from "nav-card.njk" import navCard %}
+{% from "nav-card.njk" import navCard with context %}
 
 {% block head %}
     <script type="application/ld+json">
@@ -14,22 +14,24 @@ nav: home
         "@graph": [
             {
                 "@type": "WebSite",
-                "@id": "https://controlsfreak.dev/#website",
-                "url": "https://controlsfreak.dev/",
+                "@id": "{{ canonical | cleanCanonical }}#website",
+                "url": "{{ canonical | cleanCanonical }}",
                 "name": "controlsfreak.dev",
-                "description": "Field-reference calculators and practical explainers for controls and the HVAC and mechanical trades — airflow, hydronics, BACnet, Modbus, HVAC."
+                "description": {{ "seo.siteDescription" | t(locale) | safeScriptJson | safe }},
+                "inLanguage": "{{ locale }}"
             },
             {
                 "@type": "Person",
-                "@id": "https://controlsfreak.dev/#author",
+                "@id": "{{ canonical | cleanCanonical }}#author",
                 "name": "Controls Freak",
-                "jobTitle": "Controls Programmer",
-                "knowsAbout": ["BACnet", "Modbus", "HVAC", "Building Automation", "Niagara", "EBO", "Psychrometrics", "PID control"],
-                "url": "https://controlsfreak.dev/",
+                "jobTitle": {{ "seo.authorJobTitle" | t(locale) | safeScriptJson | safe }},
+                "knowsAbout": ["BACnet", "Modbus", "HVAC", {{ "seo.buildingAutomation" | t(locale) | safeScriptJson | safe }}, "Niagara", "EBO", {{ "seo.psychrometrics" | t(locale) | safeScriptJson | safe }}, {{ "seo.pidControl" | t(locale) | safeScriptJson | safe }}],
+                "url": "{{ canonical | cleanCanonical }}",
+                "inLanguage": "{{ locale }}",
                 "contactPoint": {
                     "@type": "ContactPoint",
-                    "url": "https://controlsfreak.dev/contact.html",
-                    "contactType": "general inquiry"
+                    "url": "{{ "/contact.html" | localizedCanonical(locale) | cleanCanonical }}",
+                    "contactType": {{ "seo.contactType" | t(locale) | safeScriptJson | safe }}
                 }
             }
         ]
@@ -749,7 +751,10 @@ nav: home
             packetVal.textContent = satS + ' ' + tU();
             // Accessible / visible readout (not aria-live — the slider self-
             // announces via aria-valuetext, so this stays a quiet display).
-            if (readout) readout.textContent = 'supply air ' + satS + ' ' + tU() + ' · valve ' + ao + ' %';
+            if (readout) readout.textContent = window.CFI18n.t('home.heroReadout', {
+                temperature: satS + ' ' + tU(),
+                output: ao
+            });
             // While auto-demoing, let the slider thumb track the stepping
             // setpoint so it never looks stale; stop once the visitor grabs
             // it. The slider VALUE stays canonical °F (its min/max/step are

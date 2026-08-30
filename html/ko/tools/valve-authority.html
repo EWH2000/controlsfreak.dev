@@ -1,0 +1,157 @@
+---
+title: 밸브 영향도 계산기 — controlsfreak.dev
+description: 완전 개방 제어 밸브와 나머지 분기의 압력강하로 밸브 영향도 β를 계산하고, 양호·한계·불량 판정과 설치 특성 곡선의 왜곡을 확인합니다.
+sourceContentHash: 3ab93766b11cc87dcdeec4f6bda23d386f2250e2bb9b2a66a89fc1aeb0bf5abf
+sourceMessageHash: 70d52bf0fe7a5f4c83363339f9a66cb71cf5b4faa14a8a02fea48dfa710d38fb
+canonical: https://controlsfreak.dev/ko/tools/valve-authority.html
+nav: tools
+category: hydronics
+keywords: beta 비율 제어 밸브 설치 특성 등비율 과대선정 헌팅 delta p 영향도
+pageMessages:
+    validation:
+        prompt: "두 압력강하를 모두 입력하면 판정 결과가 표시됩니다."
+        negative: "압력강하는 음수일 수 없습니다."
+        zero: "총 압력강하가 0입니다. 영향도를 형성할 회로가 없습니다."
+    verdict:
+        good: "영향도 양호(β = {beta}). 밸브가 전체 스트로크에서 유량을 실질적으로 제어합니다. 일반적인 설계 하한은 0.5입니다."
+        marginal: "영향도 한계(β = {beta}). 제어가 비선형이 되어 대부분의 조절이 스트로크 초반에 일어납니다. 밸브의 압력강하 비율을 높이세요."
+        poor: "영향도 불량(β = {beta}). 밸브가 유량을 거의 제어하지 못해 회로가 헌팅합니다. 밸브가 회로 압력강하에서 더 큰 비율을 차지하도록 다시 선정하거나 과대선정 여부를 확인하세요."
+faqs:
+    - q: 밸브 영향도(authority)란 무엇인가요?
+      a: 밸브 영향도(β)는 완전 개방된 제어 밸브가 제어 회로의 압력강하에서 차지하는 비율입니다. β = ΔP 밸브, 개방 ÷ (ΔP 밸브, 개방 + ΔP 나머지)로 계산하며, 밸브가 전체 스트로크에서 유량을 얼마나 실질적으로 제어할 수 있는지를 나타냅니다.
+    - q: 양호한 밸브 영향도는 얼마인가요?
+      a: β ≥ 0.5를 목표로 하세요. 0.25–0.5에서는 제어가 한계 상태이고 설치 특성이 왜곡됩니다. 0.25 미만에서는 밸브가 유량을 거의 제어하지 못해 회로가 헌팅하기 쉽습니다.
+    - q: 밸브 영향도는 어떻게 계산하나요?
+      a: 설계 유량에서 완전 개방된 밸브의 압력강하를, 밸브 스트로크에 따라 압력강하가 달라지는 분기 부분 전체의 압력강하로 나누세요. 이 부분에는 밸브, 코일, 밸런싱 밸브와 해당 회로의 부속이 포함됩니다. β = ΔP 밸브 ÷ (ΔP 밸브 + ΔP 나머지)이며 비율이므로 일관된 압력 단위는 무엇이든 사용할 수 있습니다.
+    - q: 밸브 영향도가 낮으면 왜 헌팅이 발생하나요?
+      a: 영향도가 낮으면 밸브 스트로크의 아주 작은 초반 구간에서 유량 변화 대부분이 일어나 작은 움직임에도 유량이 크게 변합니다. 밸브가 사실상 온/오프처럼 동작해 제어 회로가 설정값을 지나치고 그 주위에서 진동합니다.
+    - q: 밸브 과대선정은 영향도에 어떤 영향을 주나요?
+      a: 요구 조건보다 Cv가 훨씬 큰 밸브는 설계 유량에서 조금만 열리므로 회로 압력강하를 거의 차지하지 않아 영향도가 무너집니다. 먼저 실제 요구 조건에 맞는 Cv를 선정한 뒤 영향도를 확인하세요.
+---
+{% extends "html/tools/valve-authority.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 밸브 영향도</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                밸브 영향도 계산기
+                <span class="tool-tag">수배관</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>제어 밸브가 회로 압력강하에서 충분한 비율을 차지해야 유량을 제어할 수 있습니다. 이 비율이 <em>영향도</em>입니다.</summary>
+            <div class="preamble-rest">
+                영향도 <code>β = ΔP<sub>밸브, 개방</sub> ÷ (ΔP<sub>밸브, 개방</sub> + ΔP<sub>나머지</sub>)</code>는 설계 유량에서 완전 개방된 밸브의 압력강하와 밸브 스트로크에 따라 변하는 분기 부분의 총 압력강하를 비교합니다. 영향도가 높으면 전체 스트로크에서 제어가 유지됩니다. 영향도가 낮으면 제어가 밸브가 처음 열리는 구간에 집중되어 회로가 <button type="button" data-gloss="hunting">헌팅</button>합니다. 먼저 밸브의 <a href="/ko/tools/valve-cv.html">Cv</a>를 선정한 뒤 여기에서 영향도를 확인하세요.
+            </div>
+        </details>
+        <p class="ps-seed-note">입력란에는 예제가 미리 채워져 있습니다. 확인하려는 값으로 수정하세요.</p>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">입력</h2>
+                <div class="ps-row">
+                    <label class="ps-label" for="va-valve">설계 유량·완전 개방 시 밸브 전후 ΔP</label>
+                    <input class="ps-input" type="number" id="va-valve" step="any" min="0" placeholder="7" value="7">
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="va-rest">제어 분기의 나머지 부분 전후 ΔP</label>
+                    <input class="ps-input" type="number" id="va-rest" step="any" min="0" placeholder="3" value="3">
+                </div>
+                <p class="ref-note">
+                    일관된 압력 단위라면 무엇이든 사용할 수 있습니다. 영향도는 비율이므로 단위가 소거됩니다. &ldquo;분기의 나머지 부분&rdquo;은 밸브 스트로크에 따라 압력강하가 달라지는 코일, 밸런싱 밸브와 해당 제어 회로의 부속 전체입니다.
+                </p>
+            </section>
+
+            <section role="status" aria-atomic="false">
+                <h2 class="ps-section-label">출력</h2>
+                <div class="ps-row primary">
+                    <span class="ps-label">밸브 영향도 β</span>
+                    <span class="ps-value muted" id="va-beta">—</span>
+                </div>
+                <div class="result-formula wrap" id="va-formula"></div>
+                <div class="status-pill" id="va-verdict">두 압력강하를 모두 입력하면 판정 결과가 표시됩니다.</div>
+            </section>
+
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">설치 특성</h2>
+            <p class="ref-note worked-intro">
+                <button type="button" data-gloss="equal-percentage">등비율</button> 밸브는 회로 저항이 커지는 조건에서 <em>설치</em> 특성이 선형 대각선에 가깝도록 선택합니다. 이는 영향도가 높을 때만 성립합니다. β가 낮아질수록 녹색 곡선이 대각선에서 멀어집니다. 약 0.25 미만에서는 곡선이 크게 위로 휘어 밸브가 스트로크의 첫 1/4 구간에서 대부분의 일을 합니다.
+            </p>
+            <svg class="va-chart" viewBox="0 0 340 250" role="img" aria-labelledby="va-chart-title va-chart-desc">
+                <title id="va-chart-title">계산된 영향도에서의 설치 특성</title>
+                <desc id="va-chart-desc">밸브 스트로크에 따른 유량입니다. 점선 대각선은 이상적인 선형 제어, 파란색 곡선은 밸브의 본래 등비율 특성, 녹색 곡선은 계산된 영향도 β에서의 실제 설치 특성입니다.</desc>
+                <!-- gridlines at the 50% marks -->
+                <line class="va-grid" x1="186" y1="16" x2="186" y2="216"></line>
+                <line class="va-grid" x1="44" y1="116" x2="328" y2="116"></line>
+                <!-- axes -->
+                <line class="va-axis" x1="44" y1="16" x2="44" y2="216"></line>
+                <line class="va-axis" x1="44" y1="216" x2="328" y2="216"></line>
+                <!-- curves (points set by the IIFE) -->
+                <polyline class="va-linear" id="va-linear-path" points=""></polyline>
+                <polyline class="va-inherent" id="va-inherent-path" points=""></polyline>
+                <polyline class="va-installed" id="va-installed-path" points=""></polyline>
+                <!-- ticks + titles -->
+                <text class="va-tick" x="40" y="219" text-anchor="end">0</text>
+                <text class="va-tick" x="40" y="20" text-anchor="end">100</text>
+                <text class="va-tick" x="44" y="232" text-anchor="middle">0</text>
+                <text class="va-tick" x="328" y="232" text-anchor="middle">100</text>
+                <text class="va-axis-title" x="186" y="246" text-anchor="middle">밸브 스트로크 %</text>
+                <text class="va-axis-title" x="14" y="116" text-anchor="middle" transform="rotate(-90 14 116)">유량 %</text>
+            </svg>
+            <div class="va-legend" aria-hidden="true">
+                <span class="va-legend-item"><span class="va-swatch linear"></span>선형(이상적)</span>
+                <span class="va-legend-item"><span class="va-swatch inherent"></span>본래 등비율</span>
+                <span class="va-legend-item"><span class="va-swatch installed"></span>β에서의 설치 특성</span>
+            </div>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">수치의 의미</h2>
+            <table class="ref-table-dense">
+                <thead>
+                    <tr><th>β</th><th>제어 품질</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>≥&nbsp;0.5</td><td>양호 — 설치 특성이 선형에 가깝게 유지됩니다.</td></tr>
+                    <tr><td>0.25&nbsp;–&nbsp;0.5</td><td>한계 — 왜곡되어 제어가 스트로크 초반에 집중됩니다.</td></tr>
+                    <tr><td>&lt;&nbsp;0.25</td><td>불량 — 실질적인 제어력이 작고 헌팅하기 쉽습니다.</td></tr>
+                </tbody>
+            </table>
+            <p class="ref-note">
+                영향도가 낮으면 밸브 스트로크의 아주 작은 초반 구간에서 조절 대부분이 일어나 회로가 <button type="button" data-gloss="hunting">헌팅</button>하고 나머지 스트로크는 역할을 하지 못합니다. <button type="button" data-gloss="cv">Cv</button> 과대선정은 눈에 잘 띄지 않는 주요 원인입니다. 요구 조건보다 훨씬 큰 밸브는 조금만 열려 회로 압력강하를 거의 차지하지 않으므로 영향도가 무너집니다. 요구 조건에 맞게 선정한 뒤 밸브가 분기 압력강하에서 실제 제어에 충분한 비율을 차지하는지 확인하세요.
+            </p>
+        </section>
+    </div>
+
+    {{ faqBlock(faqs, "밸브 영향도 FAQ") }}
+
+    {{ relatedLinks({
+        hub: {href: '/ko/hydronics/', label: '수배관 시스템 참고 허브'},
+        tools: [
+            {href: '/ko/tools/valve-cv.html', label: '밸브 Cv 계산기'},
+            {href: '/ko/tools/waterside-load.html', label: '수측 부하 계산기'}
+        ],
+        lessons: [
+            {href: '/ko/education/balancing.html', label: '수배관 밸런싱'},
+            {href: '/ko/education/load-piping.html', label: '부하 배관'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/balancing.html', label: '수배관 밸런싱'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

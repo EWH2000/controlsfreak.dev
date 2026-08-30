@@ -1,0 +1,273 @@
+---
+title: 피토관 덕트 트래버스 계산기 — controlsfreak.dev
+description: 각 속도압의 제곱근을 먼저 구해 평균하는 피토관 트래버스와 덕트 면적을 통한 CFM, 디퓨저 Ak 계수 풍량을 정확히 계산합니다.
+sourceContentHash: 7dcd6d350af39558f08897bbc3c0887a5da6f1cfab9ab80963721cea921776cf
+sourceMessageHash: e9ab83cf330b2a2e46aac00800ec094c2b201b0a545aafaa19459eb92909935d
+canonical: https://controlsfreak.dev/ko/tools/duct-traverse.html
+nav: tools
+category: airflow
+pageMessages:
+    labels:
+        readingsVp: "측정값 — 속도압(VP, in. w.c.), 측정점당 하나"
+        readingsVelocity: "측정값 — 풍속(FPM), 측정점당 하나"
+        flow: "풍량"
+        akFactor: "Ak 계수"
+    count:
+        one: "측정값 1개"
+        many: "측정값 {count}개"
+    errors:
+        readingInvalid: "{index}번 측정값 “{token}”은 숫자가 아닙니다. 수정하거나 삭제하면 평균을 다시 계산합니다."
+        readingsRequired: "피토관 트래버스 측정값을 붙여 넣으세요. 측정점마다 숫자 하나를 입력하고 공백, 쉼표 또는 줄바꿈으로 구분합니다."
+        negativeVp: "{index}번 측정값이 음수입니다. 트래버스 측정점에서 속도압(VP)이 0보다 작으면 보통 상류 피팅 때문에 유동이 역류하거나 소용돌이친다는 뜻입니다. 평균에 포함하지 말고 측정면을 옮기세요(직관부 약 7.5 덕트 직경 확보 권장)."
+        negativeVelocity: "{index}번 측정값이 음수입니다. 풍속은 음수일 수 없습니다. 계기가 실제로 그 지점의 역류를 표시했다면 평균에 포함하지 말고 측정면을 옮기세요(직관부 약 7.5 덕트 직경 확보 권장)."
+        diameterRequired: "덕트 직경을 입력하세요."
+        diameterPositive: "직경은 0보다 커야 합니다."
+        dimensionsRequired: "덕트 폭과 높이를 입력하세요."
+        dimensionsPositive: "덕트 치수는 0보다 커야 합니다."
+        faceVelocityRequired: "면풍속을 입력하세요."
+        faceVelocityNegative: "풍속은 음수일 수 없습니다. 풍속계 방향을 바꾸거나 실제 공기 흐름 방향을 확인하세요."
+        akRequired: "풍량을 계산할 Ak 계수를 입력하세요."
+        akPositive: "Ak는 유효 유동 면적이므로 0보다 커야 합니다."
+        hoodFlowRequired: "Ak를 역산할 후드 풍량을 입력하세요."
+        hoodFlowNegative: "풍량은 음수일 수 없습니다."
+        zeroVelocity: "면풍속이 0이면 Ak를 역산할 수 없습니다. 공기가 흐르지 않으므로 교정 기준이 없습니다."
+    formula:
+        roundArea: "A = π × ({diameter} ÷ 24)² = {area} ft²"
+        rectangularArea: "A = ({width} ÷ 12) × ({height} ÷ 12) = {area} ft²"
+        velocityPressure: "mean(√VP), 측정점 {count}개 = {meanRoot} · V̄ = 4005 × {meanRoot} = {velocity} FPM"
+        velocityReadings: "V̄, 측정값 {count}개의 평균 = {velocity} FPM"
+        traverse: "{velocityPart} · {areaPart} · Q = {velocity} × {area} = {airflow} CFM"
+        akFlow: "Q = {ak} × {velocity} = {flow} CFM"
+        akBacksolve: "Ak = {flow} ÷ {velocity} = {ak} ft²"
+    orderCheck:
+        high: "계산 순서 확인: 속도압을 먼저 평균내면 mean VP = {meanVp}, 한 번 제곱근을 취하면 {root}이므로 {naive} FPM이 되어 {percent} % 높게 읽습니다. 잘못된 순서는 항상 높게 계산하며, 속도 분포가 불균일할수록 차이가 커집니다."
+        uniform: "계산 순서 확인: 이 속도 분포는 매우 균일해 표시 정밀도에서는 두 순서의 결과가 같습니다. 잘못된 순서로 생기는 오차는 항상 양수이고 분포가 불균일할수록 커지지만, 여기서는 표시값의 반올림보다 작습니다."
+    copy:
+        flow: "CFM 복사"
+        ak: "Ak 복사"
+keywords: 피토관 트래버스 TAB 공기 밸런싱 등면적 격자 로그체비쇼프 Ak 계수 디퓨저 후드 속도압 측정점 4005
+---
+{% extends "html/tools/duct-traverse.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 덕트 트래버스</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                피토관 덕트 트래버스 계산기
+                <span class="tool-tag">풍량</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>한 측정점이 아니라 전체 트래버스를 계산하며, 평균보다 제곱근을 먼저 구합니다.</summary>
+            <div class="preamble-rest">
+                <em>트래버스 평균</em>은 전체 격자의 피토관 측정값 각각에 제곱근을 취한 뒤 그 값을 평균내어 <code>V̄ = 4005 × mean(√VP)</code>로 풍속을 구하고, 덕트 면적을 곱해 CFM을 계산합니다. 속도압을 먼저 평균낸 뒤 한 번만 제곱근을 취하면 항상 실제보다 높게 계산됩니다.
+                <em>Ak 계수 풍량</em>은 카탈로그의 유효 면적을 이용해 디퓨저 면풍속을 <code>Q = Ak × V</code>로 환산하거나, 후드 측정값에서 Ak를 역산합니다.
+            </div>
+        </details>
+        <p class="ps-seed-note">예시 값이 입력되어 있습니다. 현장 값으로 바꾸어 계산하세요.</p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="traverse">트래버스 평균</button>
+            <button class="tab-btn"        data-tab="ak">Ak 계수 풍량</button>
+        </div>
+
+        <!-- ── Traverse average ── -->
+        <div id="tab-traverse" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="tr-t-type">측정값 유형</label>
+                        <select class="ps-input" id="tr-t-type">
+                            <option value="vp">속도압(VP, in. w.c.)</option>
+                            <option value="vel">풍속(FPM)</option>
+                        </select>
+                    </div>
+                    <div class="ps-row tr-stack">
+                        <label class="ps-label" id="tr-t-readings-label" for="tr-t-readings">측정값 — 속도압(VP, in. w.c.), 측정점당 하나</label>
+                        <div>
+                            <textarea class="ps-input" id="tr-t-readings" rows="6" spellcheck="false" autocomplete="off">0.0196 0.0400 0.0484 0.0400 0.0196
+0.0400 0.0625 0.0729 0.0625 0.0400
+0.0484 0.0729 0.0841 0.0729 0.0484
+0.0400 0.0625 0.0729 0.0625 0.0400
+0.0196 0.0400 0.0484 0.0400 0.0196</textarea>
+                            <p class="ref-note tr-count" id="tr-t-count">측정값 25개</p>
+                        </div>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="tr-t-shape">덕트 형상</label>
+                        <select class="ps-input" id="tr-t-shape">
+                            <option value="rect">직사각형</option>
+                            <option value="round">원형</option>
+                        </select>
+                    </div>
+                    <div class="ps-row tr-rect-only">
+                        <label class="ps-label" for="tr-t-w">덕트 폭(in.)</label>
+                        <input class="ps-input" type="number" id="tr-t-w" step="any" min="0" placeholder="24" value="24">
+                    </div>
+                    <div class="ps-row tr-rect-only">
+                        <label class="ps-label" for="tr-t-h">덕트 높이(in.)</label>
+                        <input class="ps-input" type="number" id="tr-t-h" step="any" min="0" placeholder="12" value="12">
+                    </div>
+                    <div class="ps-row tr-round-only hidden">
+                        <label class="ps-label" for="tr-t-dia">덕트 직경(in.)</label>
+                        <input class="ps-input" type="number" id="tr-t-dia" step="any" min="0" placeholder="16" value="16">
+                    </div>
+                    <p class="ref-note">
+                        측정 기록의 값을 그대로 붙여 넣으세요. 공백, 쉼표, 줄바꿈으로 측정점을 구분하므로 덕트 격자의 한 행을 텍스트 영역의 한 줄에 입력하면 알아보기 쉽습니다. 계기가 이미 FPM으로 환산한다면(열선식 또는 회전익식 풍속계), 측정값 유형을 풍속으로 바꾸고 값을 붙여 넣으세요. 이 경우 제곱근을 취하지 않고 풍속을 직접 평균냅니다.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="ps-row">
+                        <span class="ps-label">평균 풍속(FPM)</span>
+                        <span class="ps-value muted" id="tr-t-vel">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">풍속(m/s 환산)</span>
+                        <span class="ps-value muted" id="tr-t-ms">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">덕트 면적(ft²)</span>
+                        <span class="ps-value muted" id="tr-t-area">—</span>
+                    </div>
+                    <div class="ps-row primary">
+                        <span class="ps-label">풍량(CFM)</span>
+                        <span class="ps-value muted" id="tr-t-cfm">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="tr-t-copy">CFM 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="tr-t-formula"></div>
+                    <p class="ref-note" id="tr-t-jensen" hidden></p>
+                    <div class="failure-callout" id="tr-t-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">계산 예시</h2>
+                <p class="ref-note worked-intro">
+                    24&nbsp;×&nbsp;12&nbsp;in. 급기 덕트를 5&nbsp;×&nbsp;5 격자로 트래버스합니다. 기본으로 입력된 측정값 25개는 실제 기록 방식처럼 덕트 격자의 한 행마다 텍스트 영역의 한 줄을 사용합니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>각 측정값에 <em>먼저</em> 제곱근을 취합니다. <code>√0.0196 = 0.14</code>, <code>√0.0625 = 0.25</code>, <code>√0.0841 = 0.29</code> 등 총 25개의 제곱근을 구합니다.</li>
+                    <li>제곱근 값을 평균냅니다. 합계는 5.41이므로 <code>mean(√VP) = 5.41 ÷ 25 = 0.2164</code>입니다.</li>
+                    <li>평균 풍속은 <code>V̄ = 4005 × 0.2164 = 867 FPM</code>입니다.</li>
+                    <li>면적과 풍량은 <code>A = (24 ÷ 12) × (12 ÷ 12) = 2.0 ft²</code>이므로 <code>Q = 867 × 2.0 = 1734 CFM</code>입니다.</li>
+                </ol>
+                <p class="ref-note">
+                    비교를 위해 잘못된 순서로 계산해 봅니다. 속도압을 먼저 평균내면 <code>mean(VP) = 1.2177 ÷ 25 = 0.0487</code>이고, 한 번만 제곱근을 취하면 <code>4005 × √0.0487 = 4005 × 0.2207 = 884 FPM</code>으로 <strong>2&nbsp;% 높게</strong> 계산됩니다. 이 덕트 하나에서만 존재하지 않는 풍량 34&nbsp;CFM이 더해진 셈입니다. 제곱근 함수는 아래로 굽어 있으므로 평균의 제곱근은 항상 제곱근의 평균 이상입니다. 따라서 잘못된 순서는 항상 <em>높게</em> 계산하며 속도 분포가 불균일할수록 차이가 커집니다. 모든 측정값이 같을 때만 두 방식의 결과가 일치하지만, 실제 덕트에서는 그런 분포가 나타나지 않습니다.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Ak-factor flow ── -->
+        <div id="tab-ak" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="tr-a-solve">계산 대상</label>
+                        <select class="ps-input" id="tr-a-solve">
+                            <option value="flow">풍량 — Ak + 풍속에서 계산</option>
+                            <option value="ak">Ak — 후드 풍량 + 풍속에서 계산</option>
+                        </select>
+                    </div>
+                    <div class="ps-row" id="tr-a-row-ak">
+                        <label class="ps-label" for="tr-a-ak">Ak 계수(ft²)</label>
+                        <input class="ps-input" type="number" id="tr-a-ak" step="any" min="0" placeholder="0.65" value="0.65">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="tr-a-vel">면풍속(FPM)</label>
+                        <input class="ps-input" type="number" id="tr-a-vel" step="any" placeholder="400" value="400">
+                    </div>
+                    <div class="ps-row" id="tr-a-row-cfm">
+                        <label class="ps-label" for="tr-a-cfm">후드 풍량(CFM)</label>
+                        <input class="ps-input" type="number" id="tr-a-cfm" step="any" min="0" placeholder="260" value="260">
+                    </div>
+                    <p class="ref-note">
+                        Ak는 제조사가 지정한 계기를 지정 위치에 두고 측정할 때 해당 디퓨저에 적용하는 <em>유효</em> 유동 면적입니다. 넥의 <code>πr²</code>이나 전면 치수가 아닙니다. 계기마다 측정 기준이 다르므로 두 번째 계산 방향이 필요합니다. 디퓨저 하나를 후드로 측정해 사용 중인 풍속계에 맞는 Ak를 역산한 뒤, 나머지 동일한 디퓨저에 적용합니다.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="ps-row primary">
+                        <span class="ps-label" id="tr-a-out-label">풍량</span>
+                        <span class="ps-value muted" id="tr-a-out">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="tr-a-copy">CFM 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="tr-a-formula"></div>
+                    <div class="failure-callout" id="tr-a-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">계산 예시</h2>
+                <p class="ref-note worked-intro">
+                    현장에 루버형 전면을 가진 동일한 디퓨저 20개가 있습니다. 카탈로그에는 전면에서 회전익식 풍속계로 측정할 때 Ak&nbsp;=&nbsp;0.65&nbsp;ft²라고 명시되어 있습니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>측정 면풍속이 400&nbsp;FPM일 때 풍량식은 <code>Q = Ak × V = 0.65 × 400 = 260 CFM</code>입니다.</li>
+                    <li>이번에는 교정 방향으로 계산합니다. 첫 번째 디퓨저를 후드로 측정하면 <code>273 CFM</code>, 풍속계 평균값은 <code>420 FPM</code>입니다. 역산하면 <code>Ak = 273 ÷ 420 = 0.65</code>이므로 사용 중인 계기에서도 카탈로그 값이 맞음을 확인할 수 있고, 나머지 19개는 각각 한 번의 곱셈으로 환산할 수 있습니다.</li>
+                </ol>
+                <p class="ref-note">
+                    이 탭에서 주의할 점은 Ak가 기하학적 면적이 아니라는 사실입니다. 같은 디퓨저라도 넥에서 열선식 프로브로 측정할 때의 Ak와 전면에서 회전익식 풍속계로 측정할 때의 Ak가 다르며, 넥의 <code>πr²</code>(12&nbsp;in. 넥은 0.79&nbsp;ft²)는 이와 전혀 다른 세 번째 값입니다. 이 예시에서 0.65 대신 넥 면적을 곱하면 약 20&nbsp;% 높게 계산됩니다. 해당 모델과 <em>계기</em>에 맞는 카탈로그 값을 사용하거나 직접 Ak를 역산해야 합니다.
+                </p>
+            </section>
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">측정 격자, 측정면 위치, 표준 공기</h2>
+            <p class="ref-note">
+                <strong>측정점 수:</strong> 직사각형 덕트는 단면을 동일 면적의 격자로 나누고 각 셀의 중심에서 측정합니다. 최소 25개 지점(변당 5개)을 사용하고, 한 변이 30&nbsp;in.를 넘으면 변당 6개, 36&nbsp;in.를 넘으면 7개로 늘립니다. 원형 덕트는 서로 90° 떨어진 측정구를 통해 수직인 두 직경을 따라 각 직경에서 6~10개 지점을 측정합니다. 덕트 형상과 관계없이 표준 수준의 간격 배치(직사각형은 log-Tchebycheff, 원형은 log-linear)는 경계층을 포착하기 위해 측정점을 벽면 가까이에 더 촘촘히 둡니다. 위치표는 ASHRAE&nbsp;111과 계기 설명서에 있으며 덕트가 작을수록 그 중요성이 커집니다.
+            </p>
+            <p class="ref-note">
+                <strong>측정면 위치:</strong> 격자를 잘 구성해도 측정면 위치가 나쁘면 보완할 수 없습니다. 마지막 엘보, 댐퍼, 분기부의 하류에서 최소 7.5&nbsp;덕트 직경, 다음 피팅의 상류에서 3&nbsp;덕트 직경만큼 떨어진 직관부를 확보하는 것이 좋습니다. 대개 그런 길이가 없으므로 측정점을 늘리고 편차를 예상해야 합니다. <em>음수</em> 측정값은 해당 지점에서 유동이 역류하거나 소용돌이친다는 신호이므로 평균에 포함하지 말고 측정면을 옮기세요.
+            </p>
+            <p class="ref-note">
+                <strong>표준 공기:</strong> 상수 4005에는 표준 공기 밀도(0.075&nbsp;lb/ft³, 해수면·약 70&nbsp;°F)가 <code>V&nbsp;=&nbsp;√(2&nbsp;·&nbsp;ΔP&nbsp;/&nbsp;ρ)</code>에 반영되어 있으며, <a href="/ko/tools/airflow.html">풍량 도구</a>와 같은 상수를 사용합니다. 고도가 높으면 공기 밀도가 낮아져 같은 <button type="button" data-gloss="velocity-pressure">속도압(VP)</button>에서도 실제 풍속은 더 높고, 이 계산식은 고도 수천 ft마다 실제보다 몇 % 낮게 표시합니다. 대부분의 밸런싱 계기는 내부에서 밀도를 보정하므로 해당 기능이 있다면 이 페이지보다 계기값을 우선하세요. 풍속형 측정값에는 값을 생성한 계기의 밀도 보정 방식이 그대로 반영됩니다. 이 도구는 피토관 선도와 Ak 카탈로그에 쓰이는 미국 단위(in.&nbsp;w.c., FPM, CFM)를 기준으로 하며 m/s 환산값도 함께 표시합니다.
+            </p>
+        </section>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/forced-air/', label: '공기조화 시스템 참조 허브'},
+        tools: [
+            {href: '/ko/tools/airflow.html', label: '풍량 및 속도압'},
+            {href: '/ko/tools/airside-load.html', label: '공기측 부하 계산기'},
+            {href: '/ko/tools/equipment-airflow.html', label: '장비 풍량 점검기'},
+            {href: '/ko/tools/economizer-ratio.html', label: '외기냉방 외기 비율 계산기'},
+            {href: '/ko/tools/minimum-outdoor-air.html', label: '최소 외기량 계산기'},
+            {href: '/ko/tools/duct-sizer.html', label: '덕트 치수 계산기'}
+        ],
+        lessons: [
+            {href: '/ko/education/vav-systems.html', label: 'VAV 시스템'},
+            {href: '/ko/education/duct-static-control.html', label: '덕트 정압 제어'},
+            {href: '/ko/education/building-pressure.html', label: '건물 압력'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/vav-systems.html', label: 'VAV 시스템 퀴즈'},
+            {href: '/ko/practice/duct-static-control.html', label: '덕트 정압 제어 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

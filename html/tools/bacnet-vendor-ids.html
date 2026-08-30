@@ -5,6 +5,21 @@ canonical: https://controlsfreak.dev/tools/bacnet-vendor-ids.html
 nav: tools
 category: protocols
 keywords: vendor identifier property 120 who-is i-am manufacturer ashrae registry proprietary device object wireshark discovery
+pageMessages:
+    prompt: "Enter a vendor ID to look it up."
+    validation: "Vendor ID is a whole number 0–65535 — the Unsigned16 range of the Vendor_Identifier property."
+    status:
+        registered: "Registered vendor ID"
+        reserved: "Reserved for ASHRAE — never assigned"
+        unassigned: "Unassigned — withdrawn or never issued"
+        snapshot: "Unassigned in this snapshot — registry ran through {maxId} on {retrieved}"
+    formula:
+        registered: "{id} → {organization}"
+        reserved: "{id} → reserved for ASHRAE, never assigned to a vendor"
+        unassigned: "{id} → no registration (IDs are never reassigned, so the number stays empty)"
+        snapshot: "{id} → beyond this snapshot (0–{maxId}) — a newer device, or check the live registry"
+    copy:
+        cellTitle: "Copy {value}"
 faqs:
     - q: How do I find the vendor ID of a BACnet device?
       a: Read property 120 (Vendor_Identifier) of the Device object — every workstation exposes it on the device property sheet. Devices also announce it in the I-Am they send during Who-Is discovery, so a discovery log or a packet capture shows it without touching the device. <a href="/education/bacnet-basics.html">BACnet Basics</a> covers how discovery works.
@@ -18,8 +33,8 @@ faqs:
       a: 555, 666, 777, 888, 911, 999, and 1111 are set aside by ASHRAE and never assigned. If a capture or a device config shows one of these, you are looking at a placeholder or a misconfigured stack, not a real manufacturer.
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
-{% from "faq.njk" import faqBlock %}
+{% from "related-links.njk" import relatedLinks with context %}
+{% from "faq.njk" import faqBlock with context %}
 
 {% block head %}
     <style>
@@ -251,7 +266,7 @@ faqs:
             orgEl.className = 'ps-value muted';
             orgEl.textContent = '—';
             formulaEl.textContent = '';
-            setStatus('', 'Enter a vendor ID to look it up.');
+            setStatus('', CFI18n.page('prompt'));
             if (msg) { calloutEl.textContent = msg; calloutEl.hidden = false; }
             else calloutEl.hidden = true;
         }
@@ -261,7 +276,7 @@ faqs:
             if (raw === '') { mute(null); return; }
             const id = parseFloat(raw);
             if (!isFinite(id) || id !== Math.floor(id) || id < 0 || id > 65535) {
-                mute('Vendor ID is a whole number 0–65535 — the Unsigned16 range of the Vendor_Identifier property.');
+                mute(CFI18n.page('validation'));
                 return;
             }
             calloutEl.hidden = true;
@@ -269,23 +284,23 @@ faqs:
             if (hit && !hit.reserved) {
                 orgEl.className = 'ps-value live';
                 orgEl.textContent = hit.org;
-                setStatus('ok', 'Registered vendor ID');
-                formulaEl.textContent = id + ' → ' + hit.org;
+                setStatus('ok', CFI18n.page('status.registered'));
+                formulaEl.textContent = CFI18n.page('formula.registered', { id, organization: hit.org });
             } else if (hit) {
                 orgEl.className = 'ps-value live';
                 orgEl.textContent = hit.org;
-                setStatus('warn', 'Reserved for ASHRAE — never assigned');
-                formulaEl.textContent = id + ' → reserved for ASHRAE, never assigned to a vendor';
+                setStatus('warn', CFI18n.page('status.reserved'));
+                formulaEl.textContent = CFI18n.page('formula.reserved', { id });
             } else if (id <= maxId) {
                 orgEl.className = 'ps-value muted';
                 orgEl.textContent = '—';
-                setStatus('warn', 'Unassigned — withdrawn or never issued');
-                formulaEl.textContent = id + ' → no registration (IDs are never reassigned, so the number stays empty)';
+                setStatus('warn', CFI18n.page('status.unassigned'));
+                formulaEl.textContent = CFI18n.page('formula.unassigned', { id });
             } else {
                 orgEl.className = 'ps-value muted';
                 orgEl.textContent = '—';
-                setStatus('warn', 'Unassigned in this snapshot — registry ran through ' + maxId + ' on ' + retrieved);
-                formulaEl.textContent = id + ' → beyond this snapshot (0–' + maxId + ') — a newer device, or check the live registry';
+                setStatus('warn', CFI18n.page('status.snapshot', { maxId, retrieved }));
+                formulaEl.textContent = CFI18n.page('formula.snapshot', { id, maxId });
             }
         }
 
@@ -334,7 +349,7 @@ faqs:
             cell.classList.add('bvid-copyable');
             cell.setAttribute('role', 'button');
             cell.setAttribute('tabindex', '0');
-            cell.setAttribute('title', 'Copy ' + cell.dataset.code);
+            cell.setAttribute('title', CFI18n.page('copy.cellTitle', { value: cell.dataset.code }));
         });
         function copyCell(cell) {
             copyText(cell, cell.dataset.code);

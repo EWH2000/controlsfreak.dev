@@ -5,6 +5,53 @@ canonical: https://controlsfreak.dev/tools/bacnet-error-codes.html
 nav: tools
 category: protocols
 keywords: bacnet error class code reject abort pdu decode unknown-object unknown-property write-access-denied timeout segmentation tsm-timeout apdu-too-long ashrae 135 wireshark
+pageMessages:
+    hints:
+        error: "An <strong>Error</strong> is a class + code pair — the service ran and the device refused it."
+        reject: "A <strong>Reject</strong> means the request PDU was malformed or unsupported — thrown out before the service ran."
+        abort: "An <strong>Abort</strong> tears down a transaction in progress — usually segmentation, a timeout, or resources."
+    labels:
+        errorCode: "Error code"
+        rejectReason: "Reject reason"
+        abortReason: "Abort reason"
+    validation:
+        errorPair: "Error class and code are whole numbers 0–65535 (the Unsigned range these enumerations live in)."
+        rejectReason: "Reject reason is a whole number 0–{max}."
+        abortReason: "Abort reason is a whole number 0–{max}."
+    prompts:
+        errorPair: "Enter an error class and code."
+        rejectReason: "Enter a reject reason."
+        abortReason: "Enter an abort reason."
+    markers:
+        proprietary: "— (proprietary)"
+        unnamed: "— (unnamed)"
+    states:
+        proprietary: "proprietary"
+        unnamed: "unnamed"
+        vendorProprietary: "vendor-proprietary"
+    status:
+        decoded: "Decoded"
+        partlyDecoded: "Partly decoded — see notes"
+        proprietaryRange: "Proprietary range"
+        unnamedSnapshot: "Unnamed in this snapshot"
+    descriptions:
+        codeProprietary: "Code {code} is in the vendor-proprietary range — see the manufacturer’s docs."
+        codeUnnamed: "Code {code} is in the standard range but unnamed in this snapshot — a newer-edition code."
+        singleProprietary: "{value} is in the vendor-proprietary range — see the manufacturer’s docs."
+        singleUnnamed: "{value} is in the standard range but unnamed in this snapshot."
+    formula:
+        errorPair: "class {classValue} / code {codeValue}  →  {className} / {codeName}"
+        decodedSingle: "{value}  →  {name}"
+        proprietarySingle: "{value}  →  vendor-proprietary"
+        unnamedSingle: "{value}  →  unnamed"
+    copy:
+        errorPair: "class {classValue} ({className}) / code {codeValue} ({codeName})"
+        decodedSingle: "{value} ({name})"
+        proprietarySingle: "{value} (proprietary)"
+        unnamedSingle: "{value} (unnamed)"
+        cellTitle: "Copy {value}"
+    filter:
+        total: "· {count} total"
 faqs:
     - q: What is the difference between a BACnet Error, Reject, and Abort?
       a: All three say a request failed, but at different stages. An <strong>Error</strong> means the service ran and the device refused it — it returns an error class plus an error code (unknown-property, write-access-denied). A <strong>Reject</strong> means the request could not be serviced at the protocol layer — malformed, mis-encoded, or asking for a service the device does not implement — thrown out before the service ran, and it returns a reject reason. An <strong>Abort</strong> tears down a transaction already in progress, usually over segmentation, a timeout, or resources — it returns an abort reason.
@@ -18,8 +65,8 @@ faqs:
       a: A workstation usually shows the decoded text, but a discovery log, an integration error dialog, or a Wireshark decode of the BACnet-Error / Reject / Abort APDU shows the bare numbers. That is when you paste them here.
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
-{% from "faq.njk" import faqBlock %}
+{% from "related-links.njk" import relatedLinks with context %}
+{% from "faq.njk" import faqBlock with context %}
 
 {% block head %}
     <style>
@@ -358,12 +405,6 @@ faqs:
         let mode = 'error';
         let lastCopy = '';
 
-        const HINTS = {
-            error:  'An <strong>Error</strong> is a class + code pair — the service ran and the device refused it.',
-            reject: 'A <strong>Reject</strong> means the request PDU was malformed or unsupported — thrown out before the service ran.',
-            abort:  'An <strong>Abort</strong> tears down a transaction in progress — usually segmentation, a timeout, or resources.',
-        };
-
         function setStatus(kind, text) {
             statusEl.className = 'status-pill' + (kind ? ' ' + kind : '');
             statusEl.textContent = text;
@@ -403,18 +444,18 @@ faqs:
 
         function decodeError() {
             contextRow.hidden = false;
-            primaryLabel.textContent = 'Error code';
+            primaryLabel.textContent = CFI18n.page('labels.errorCode');
             const cls = readInt(classEl);
             const code = readInt(codeEl);
             if (cls === null || code === null) {
                 resetOut();
-                calloutEl.textContent = 'Error class and code are whole numbers 0–65535 (the Unsigned range these enumerations live in).';
+                calloutEl.textContent = CFI18n.page('validation.errorPair');
                 calloutEl.hidden = false;
-                setStatus('', 'Enter an error class and code.');
+                setStatus('', CFI18n.page('prompts.errorPair'));
                 return;
             }
             calloutEl.hidden = true;
-            if (isNaN(cls) || isNaN(code)) { resetOut(); setStatus('', 'Enter an error class and code.'); return; }
+            if (isNaN(cls) || isNaN(code)) { resetOut(); setStatus('', CFI18n.page('prompts.errorPair')); return; }
 
             const clsHit = lookup('classes', cls, 63);
             const codeHit = lookup('codes', code, 255);
@@ -426,70 +467,78 @@ faqs:
                 descEl.textContent = codeHit.desc || '';
             } else if (codeHit.state === 'prop') {
                 primaryEl.className = 'ps-value muted';
-                primaryEl.textContent = '— (proprietary)';
-                descEl.textContent = 'Code ' + code + ' is in the vendor-proprietary range — see the manufacturer’s docs.';
+                primaryEl.textContent = CFI18n.page('markers.proprietary');
+                descEl.textContent = CFI18n.page('descriptions.codeProprietary', { code });
             } else {
                 primaryEl.className = 'ps-value muted';
-                primaryEl.textContent = '— (unnamed)';
-                descEl.textContent = 'Code ' + code + ' is in the standard range but unnamed in this snapshot — a newer-edition code.';
+                primaryEl.textContent = CFI18n.page('markers.unnamed');
+                descEl.textContent = CFI18n.page('descriptions.codeUnnamed', { code });
             }
             // context = class
-            const clsName = clsHit.state === 'ok' ? clsHit.name : (clsHit.state === 'prop' ? 'proprietary' : 'unnamed');
+            const clsName = clsHit.state === 'ok' ? clsHit.name : (
+                clsHit.state === 'prop' ? CFI18n.page('states.proprietary') : CFI18n.page('states.unnamed')
+            );
             contextEl.className = clsHit.state === 'ok' ? 'ps-value live' : 'ps-value muted';
             contextEl.textContent = cls + ' · ' + clsName;
 
-            if (codeHit.state === 'ok' && clsHit.state === 'ok') setStatus('ok', 'Decoded');
-            else setStatus('warn', 'Partly decoded — see notes');
+            if (codeHit.state === 'ok' && clsHit.state === 'ok') setStatus('ok', CFI18n.page('status.decoded'));
+            else setStatus('warn', CFI18n.page('status.partlyDecoded'));
             // Word the code the same way the class half does (line above) —
             // a proprietary/unnamed code has no `name`, so fall back to the
             // state word rather than a bare 'unnamed' that mislabels proprietary.
-            const codeWord = codeHit.state === 'ok' ? codeHit.name : (codeHit.state === 'prop' ? 'proprietary' : 'unnamed');
-            formulaEl.textContent = 'class ' + cls + ' / code ' + code + '  →  ' + clsName + ' / ' + codeWord;
-            lastCopy = 'class ' + cls + ' (' + clsName + ') / code ' + code + ' (' + codeWord + ')';
+            const codeWord = codeHit.state === 'ok' ? codeHit.name : (
+                codeHit.state === 'prop' ? CFI18n.page('states.proprietary') : CFI18n.page('states.unnamed')
+            );
+            formulaEl.textContent = CFI18n.page('formula.errorPair', {
+                classValue: cls, codeValue: code, className: clsName, codeName: codeWord,
+            });
+            lastCopy = CFI18n.page('copy.errorPair', {
+                classValue: cls, codeValue: code, className: clsName, codeName: codeWord,
+            });
         }
 
-        function decodeSingle(kind, el, stdMax, label, fieldMax) {
+        function decodeSingle(kind, el, stdMax, messageKey, fieldMax) {
             contextRow.hidden = true;
-            primaryLabel.textContent = label;
+            primaryLabel.textContent = CFI18n.page('labels.' + messageKey);
             const val = readInt(el, fieldMax);
             if (val === null) {
                 resetOut();
-                calloutEl.textContent = label + ' is a whole number 0–' + fieldMax + '.';
+                calloutEl.textContent = CFI18n.page('validation.' + messageKey, { max: fieldMax });
                 calloutEl.hidden = false;
-                setStatus('', 'Enter a ' + label.toLowerCase() + '.');
+                setStatus('', CFI18n.page('prompts.' + messageKey));
                 return;
             }
             calloutEl.hidden = true;
-            if (isNaN(val)) { resetOut(); setStatus('', 'Enter a ' + label.toLowerCase() + '.'); return; }
+            if (isNaN(val)) { resetOut(); setStatus('', CFI18n.page('prompts.' + messageKey)); return; }
             const hit = lookup(kind, val, stdMax);
             if (hit.state === 'ok') {
                 primaryEl.className = 'ps-value live';
                 primaryEl.textContent = hit.name;
                 descEl.textContent = hit.desc || '';
-                setStatus('ok', 'Decoded');
-                formulaEl.textContent = val + '  →  ' + hit.name;
-                lastCopy = val + ' (' + hit.name + ')';
+                setStatus('ok', CFI18n.page('status.decoded'));
+                formulaEl.textContent = CFI18n.page('formula.decodedSingle', { value: val, name: hit.name });
+                lastCopy = CFI18n.page('copy.decodedSingle', { value: val, name: hit.name });
             } else if (hit.state === 'prop') {
                 primaryEl.className = 'ps-value muted';
-                primaryEl.textContent = '— (proprietary)';
-                descEl.textContent = val + ' is in the vendor-proprietary range — see the manufacturer’s docs.';
-                setStatus('warn', 'Proprietary range');
-                formulaEl.textContent = val + '  →  vendor-proprietary';
-                lastCopy = val + ' (proprietary)';
+                primaryEl.textContent = CFI18n.page('markers.proprietary');
+                descEl.textContent = CFI18n.page('descriptions.singleProprietary', { value: val });
+                setStatus('warn', CFI18n.page('status.proprietaryRange'));
+                formulaEl.textContent = CFI18n.page('formula.proprietarySingle', { value: val });
+                lastCopy = CFI18n.page('copy.proprietarySingle', { value: val });
             } else {
                 primaryEl.className = 'ps-value muted';
-                primaryEl.textContent = '— (unnamed)';
-                descEl.textContent = val + ' is in the standard range but unnamed in this snapshot.';
-                setStatus('warn', 'Unnamed in this snapshot');
-                formulaEl.textContent = val + '  →  unnamed';
-                lastCopy = val + ' (unnamed)';
+                primaryEl.textContent = CFI18n.page('markers.unnamed');
+                descEl.textContent = CFI18n.page('descriptions.singleUnnamed', { value: val });
+                setStatus('warn', CFI18n.page('status.unnamedSnapshot'));
+                formulaEl.textContent = CFI18n.page('formula.unnamedSingle', { value: val });
+                lastCopy = CFI18n.page('copy.unnamedSingle', { value: val });
             }
         }
 
         function decode() {
             if (mode === 'error') decodeError();
-            else if (mode === 'reject') decodeSingle('reject', rejectEl, 63, 'Reject reason', 255);
-            else decodeSingle('abort', abortEl, 63, 'Abort reason', 255);
+            else if (mode === 'reject') decodeSingle('reject', rejectEl, 63, 'rejectReason', 255);
+            else decodeSingle('abort', abortEl, 63, 'abortReason', 255);
         }
 
         modeBtns.forEach(btn => {
@@ -503,7 +552,7 @@ faqs:
                 inputs.error.hidden = mode !== 'error';
                 inputs.reject.hidden = mode !== 'reject';
                 inputs.abort.hidden = mode !== 'abort';
-                hintEl.innerHTML = HINTS[mode];
+                hintEl.innerHTML = CFI18n.page('hints.' + mode);
                 decode();
             });
         });
@@ -523,7 +572,7 @@ faqs:
                 cell.classList.add('bec-copyable');
                 cell.setAttribute('role', 'button');
                 cell.setAttribute('tabindex', '0');
-                cell.setAttribute('title', 'Copy ' + cell.dataset.code);
+                cell.setAttribute('title', CFI18n.page('copy.cellTitle', { value: cell.dataset.code }));
             });
             table.addEventListener('click', e => {
                 const cell = e.target.closest('td.bec-id');
@@ -562,7 +611,7 @@ faqs:
                 if (badges[k]) badges[k].textContent = q ? '· ' + matches : '';
                 total += matches;
             });
-            totalBadge.textContent = q ? '· ' + total + ' total' : '';
+            totalBadge.textContent = q ? CFI18n.page('filter.total', { count: total }) : '';
         }
         search.addEventListener('input', applyFilter);
 

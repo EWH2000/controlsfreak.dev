@@ -4,10 +4,68 @@ description: Convert power and energy — W, kW, BTU/hr, MBH, tons, hp, joules, 
 canonical: https://controlsfreak.dev/tools/power-energy-converter.html
 nav: tools
 category: hvac
+pageMessages:
+    units:
+        power:
+            w: "W"
+            kw: "kW"
+            mw: "MW"
+            btuh: "BTU/hr"
+            mbh: "MBH"
+            mmbtuh: "MMBtu/hr"
+            ton: "ton"
+            hp: "hp"
+            bhp: "boiler hp"
+            kcalh: "kcal/hr"
+        energy:
+            j: "J"
+            kj: "kJ"
+            mj: "MJ"
+            gj: "GJ"
+            wh: "Wh"
+            kwh: "kWh"
+            mwh: "MWh"
+            btu: "BTU"
+            kbtu: "kBtu"
+            mmbtu: "MMBtu"
+            therm: "therm"
+            kcal: "kcal"
+        time:
+            s: "s"
+            min: "min"
+            hr: "hr"
+            day: "day"
+            yr: "yr"
+    convert:
+        prompt: "Enter a value to see every equivalent."
+        error: "Enter a number to convert."
+        powerDimension: "{value} {unit} is power — a rate (energy per unit time)."
+        energyDimension: "{value} {unit} is energy — a quantity."
+    bridge:
+        labels:
+            energy: "Energy"
+            power: "Power"
+            time: "Time"
+        errors:
+            energyInputs: "Enter a power and a time to compute energy."
+            powerInputs: "Enter an energy and a time to compute power."
+            timePositive: "Time must be greater than zero to compute power."
+            timeInputs: "Enter an energy and a power to compute time."
+            powerPositive: "Power must be greater than zero to compute time."
+    boiler:
+        decodeUnread: "Unread — expected min / low ÷ high unit"
+        decode: "min {minimum} {unit} · high-fire {low}–{high} {unit}"
+        inputError: "Enter the boiler input rating (fuel fired)."
+        oversize: "Oversized — the lowest settable high fire ({highFire}) exceeds the boiler input; you cannot commission a matched high fire."
+        incompatible: "Incompatible — burner minimum fire ({minimum}) is at or above the boiler input; the burner cannot fire low enough to match this boiler."
+        healthy: "Healthy turndown ({ratio}) — good part-load control, low cycling."
+        moderate: "Moderate turndown ({ratio}) — workable, but watch low-load cycling."
+        poor: "Poor turndown ({ratio}) — min fire is {percent} % of input; short-cycling likely."
+        formula: "Turndown = {input} input ÷ {minimum} min fire = {ratio}"
 keywords: power energy unit converter watt kilowatt btu mbh mbtu mmbtu therm joule kwh megajoule horsepower boiler hp ton refrigeration turndown burner riello firing rate kcal
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -447,43 +505,43 @@ keywords: power energy unit converter watt kilowatt btu mbh mbtu mmbtu therm jou
 
         // Power — watts per unit.
         const POWER = {
-            w:      { label: 'W',         w: 1 },
-            kw:     { label: 'kW',        w: 1e3 },
-            mw:     { label: 'MW',        w: 1e6 },
-            btuh:   { label: 'BTU/hr',    w: BTUH_W },
-            mbh:    { label: 'MBH',       w: 1e3 * BTUH_W },
-            mmbtuh: { label: 'MMBtu/hr',  w: 1e6 * BTUH_W },
-            ton:    { label: 'ton',       w: 12e3 * BTUH_W },
-            hp:     { label: 'hp',        w: HP_W },
-            bhp:    { label: 'boiler hp', w: 33475 * BTUH_W },
-            kcalh:  { label: 'kcal/hr',   w: KCAL_J / 3600 },
+            w:      { label: CFI18n.page('units.power.w'),      w: 1 },
+            kw:     { label: CFI18n.page('units.power.kw'),     w: 1e3 },
+            mw:     { label: CFI18n.page('units.power.mw'),     w: 1e6 },
+            btuh:   { label: CFI18n.page('units.power.btuh'),   w: BTUH_W },
+            mbh:    { label: CFI18n.page('units.power.mbh'),    w: 1e3 * BTUH_W },
+            mmbtuh: { label: CFI18n.page('units.power.mmbtuh'), w: 1e6 * BTUH_W },
+            ton:    { label: CFI18n.page('units.power.ton'),    w: 12e3 * BTUH_W },
+            hp:     { label: CFI18n.page('units.power.hp'),     w: HP_W },
+            bhp:    { label: CFI18n.page('units.power.bhp'),    w: 33475 * BTUH_W },
+            kcalh:  { label: CFI18n.page('units.power.kcalh'),  w: KCAL_J / 3600 },
         };
         const POWER_ORDER = ['w', 'kw', 'mw', 'btuh', 'mbh', 'mmbtuh', 'ton', 'hp', 'bhp', 'kcalh'];
 
         // Energy — joules per unit.
         const ENERGY = {
-            j:     { label: 'J',     j: 1 },
-            kj:    { label: 'kJ',    j: 1e3 },
-            mj:    { label: 'MJ',    j: 1e6 },
-            gj:    { label: 'GJ',    j: 1e9 },
-            wh:    { label: 'Wh',    j: 3600 },
-            kwh:   { label: 'kWh',   j: 3.6e6 },
-            mwh:   { label: 'MWh',   j: 3.6e9 },
-            btu:   { label: 'BTU',   j: BTU_J },
-            kbtu:  { label: 'kBtu',  j: 1e3 * BTU_J },
-            mmbtu: { label: 'MMBtu', j: 1e6 * BTU_J },
-            therm: { label: 'therm', j: 1e5 * BTU_J },
-            kcal:  { label: 'kcal',  j: KCAL_J },
+            j:     { label: CFI18n.page('units.energy.j'),     j: 1 },
+            kj:    { label: CFI18n.page('units.energy.kj'),    j: 1e3 },
+            mj:    { label: CFI18n.page('units.energy.mj'),    j: 1e6 },
+            gj:    { label: CFI18n.page('units.energy.gj'),    j: 1e9 },
+            wh:    { label: CFI18n.page('units.energy.wh'),    j: 3600 },
+            kwh:   { label: CFI18n.page('units.energy.kwh'),   j: 3.6e6 },
+            mwh:   { label: CFI18n.page('units.energy.mwh'),   j: 3.6e9 },
+            btu:   { label: CFI18n.page('units.energy.btu'),   j: BTU_J },
+            kbtu:  { label: CFI18n.page('units.energy.kbtu'),  j: 1e3 * BTU_J },
+            mmbtu: { label: CFI18n.page('units.energy.mmbtu'), j: 1e6 * BTU_J },
+            therm: { label: CFI18n.page('units.energy.therm'), j: 1e5 * BTU_J },
+            kcal:  { label: CFI18n.page('units.energy.kcal'),  j: KCAL_J },
         };
         const ENERGY_ORDER = ['j', 'kj', 'mj', 'gj', 'wh', 'kwh', 'mwh', 'btu', 'kbtu', 'mmbtu', 'therm', 'kcal'];
 
         // Time — seconds per unit.
         const TIME = {
-            s:   { label: 's',   s: 1 },
-            min: { label: 'min', s: 60 },
-            hr:  { label: 'hr',  s: 3600 },
-            day: { label: 'day', s: 86400 },
-            yr:  { label: 'yr',  s: 31536000 },     // 365 d
+            s:   { label: CFI18n.page('units.time.s'),   s: 1 },
+            min: { label: CFI18n.page('units.time.min'), s: 60 },
+            hr:  { label: CFI18n.page('units.time.hr'),  s: 3600 },
+            day: { label: CFI18n.page('units.time.day'), s: 86400 },
+            yr:  { label: CFI18n.page('units.time.yr'),  s: 31536000 },     // 365 d
         };
 
         const $ = (id) => document.getElementById(id);
@@ -528,8 +586,8 @@ keywords: power energy unit converter watt kilowatt btu mbh mbtu mmbtu therm jou
             const val = parseFloat(convVal.value);
             if (!isFinite(val)) {
                 order.forEach(k => { $('pe-conv-' + k).textContent = '—'; });
-                convDim.textContent = 'Enter a value to see every equivalent.';
-                convCallout.textContent = 'Enter a number to convert.';
+                convDim.textContent = CFI18n.page('convert.prompt');
+                convCallout.textContent = CFI18n.page('convert.error');
                 convCallout.hidden = false;
                 return;
             }
@@ -538,8 +596,9 @@ keywords: power energy unit converter watt kilowatt btu mbh mbtu mmbtu therm jou
             const base = val * set[key][baseProp];
             order.forEach(k => { $('pe-conv-' + k).textContent = fmt(base / set[k][baseProp]); });
             $('pe-conv-' + key).closest('tr').classList.add('pe-eq-self');
-            convDim.textContent = fmt(val) + ' ' + set[key].label + ' is a '
-                + (isPower ? 'power — a rate (energy per unit time).' : 'energy — a quantity.');
+            convDim.textContent = CFI18n.page(isPower ? 'convert.powerDimension' : 'convert.energyDimension', {
+                value: fmt(val), unit: set[key].label
+            });
         }
 
         function copyConvert(btn) {
@@ -603,7 +662,7 @@ keywords: power energy unit converter watt kilowatt btu mbh mbtu mmbtu therm jou
             brCallout.hidden = true;
 
             if (mode === 'energy') {
-                if (!isFinite(pW) || !isFinite(tS)) { muteBridge('Enter a power and a time to compute energy.'); return; }
+                if (!isFinite(pW) || !isFinite(tS)) { muteBridge(CFI18n.page('bridge.errors.energyInputs')); return; }
                 const base = pW * tS;                       // joules
                 const outKey = brEnergyU.value, set = ENERGY;
                 const out = base / set[outKey].j;
@@ -614,8 +673,8 @@ keywords: power energy unit converter watt kilowatt btu mbh mbtu mmbtu therm jou
                     + ' × ' + fmt(parseFloat(brTimeV.value)) + ' ' + TIME[brTimeU.value].label
                     + ' = ' + fmt(out) + ' ' + set[outKey].label;
             } else if (mode === 'power') {
-                if (!isFinite(eJ) || !isFinite(tS)) { muteBridge('Enter an energy and a time to compute power.'); return; }
-                if (tS === 0) { muteBridge('Time must be greater than zero to compute power.'); return; }
+                if (!isFinite(eJ) || !isFinite(tS)) { muteBridge(CFI18n.page('bridge.errors.powerInputs')); return; }
+                if (tS === 0) { muteBridge(CFI18n.page('bridge.errors.timePositive')); return; }
                 const base = eJ / tS;                       // watts
                 const outKey = brPowerU.value, set = POWER;
                 const out = base / set[outKey].w;
@@ -626,8 +685,8 @@ keywords: power energy unit converter watt kilowatt btu mbh mbtu mmbtu therm jou
                     + ' ÷ ' + fmt(parseFloat(brTimeV.value)) + ' ' + TIME[brTimeU.value].label
                     + ' = ' + fmt(out) + ' ' + set[outKey].label;
             } else {                                        // time
-                if (!isFinite(eJ) || !isFinite(pW)) { muteBridge('Enter an energy and a power to compute time.'); return; }
-                if (pW === 0) { muteBridge('Power must be greater than zero to compute time.'); return; }
+                if (!isFinite(eJ) || !isFinite(pW)) { muteBridge(CFI18n.page('bridge.errors.timeInputs')); return; }
+                if (pW === 0) { muteBridge(CFI18n.page('bridge.errors.powerPositive')); return; }
                 const base = eJ / pW;                        // seconds
                 const outKey = brTimeU.value, set = TIME;
                 const out = base / set[outKey].s;
@@ -648,7 +707,7 @@ keywords: power energy unit converter watt kilowatt btu mbh mbtu mmbtu therm jou
             brTimeV.disabled   = mode === 'time';
             brEnergyV.disabled = mode === 'energy';
             [brPowerV, brTimeV, brEnergyV].forEach(el => el.classList.toggle('pe-solved', el.disabled));
-            brOutLbl.textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+            brOutLbl.textContent = CFI18n.page('bridge.labels.' + mode);
             calcBridge();
         }
 
@@ -716,7 +775,7 @@ keywords: power energy unit converter watt kilowatt btu mbh mbtu mmbtu therm jou
             }
             const p = parseRiello(boRiello.value);
             if (!p) {
-                boDecode.textContent = 'Unread — expected  min / low ÷ high  unit';
+                boDecode.textContent = CFI18n.page('boiler.decodeUnread');
                 boDecode.className = 'ps-value muted';
                 delete boRiello.dataset.hihighW;
                 calcBoiler();
@@ -728,8 +787,9 @@ keywords: power energy unit converter watt kilowatt btu mbh mbtu mmbtu therm jou
             boHiV.value  = p.hiLow; boHiU.value  = uk;
             boRiello.dataset.hihighW = String(p.hiHigh * POWER[uk].w);
             boDecode.className = 'ps-value live';
-            boDecode.textContent = 'min ' + fmt(p.min) + ' ' + lbl
-                + ' · high-fire ' + fmt(p.hiLow) + '–' + fmt(p.hiHigh) + ' ' + lbl;
+            boDecode.textContent = CFI18n.page('boiler.decode', {
+                minimum: fmt(p.min), low: fmt(p.hiLow), high: fmt(p.hiHigh), unit: lbl
+            });
             calcBoiler();
         }
 
@@ -766,7 +826,7 @@ keywords: power energy unit converter watt kilowatt btu mbh mbtu mmbtu therm jou
             [boPillGrade, boPillIncompat, boPillOversize].forEach(p => { p.hidden = true; });
 
             if (!isFinite(inputW) || inputW <= 0) {
-                muteBoiler('Enter the boiler input rating (fuel fired).');
+                muteBoiler(CFI18n.page('boiler.inputError'));
                 return;
             }
             boCallout.hidden = true;
@@ -782,9 +842,9 @@ keywords: power energy unit converter watt kilowatt btu mbh mbtu mmbtu therm jou
             if (isFinite(hiLowW) && hiLowW > inputW) {
                 boPillOversize.hidden = false;
                 boPillOversize.className = 'status-pill error';
-                boPillOversize.textContent = 'Oversized — the lowest settable high fire ('
-                    + fmt(hiLowW / POWER[boHiU.value].w) + ' ' + POWER[boHiU.value].label
-                    + ') exceeds the boiler input; you cannot commission a matched high fire.';
+                boPillOversize.textContent = CFI18n.page('boiler.oversize', {
+                    highFire: fmt(hiLowW / POWER[boHiU.value].w) + ' ' + POWER[boHiU.value].label
+                });
             }
 
             // Turndown needs the burner minimum.
@@ -810,27 +870,30 @@ keywords: power energy unit converter watt kilowatt btu mbh mbtu mmbtu therm jou
             if (minW >= inputW) {
                 boPillIncompat.hidden = false;
                 boPillIncompat.className = 'status-pill error';
-                boPillIncompat.textContent = 'Incompatible — burner minimum fire ('
-                    + fmt(minW / POWER[boMinU.value].w) + ' ' + POWER[boMinU.value].label
-                    + ') is at or above the boiler input; the burner cannot fire low enough to match this boiler.';
+                boPillIncompat.textContent = CFI18n.page('boiler.incompatible', {
+                    minimum: fmt(minW / POWER[boMinU.value].w) + ' ' + POWER[boMinU.value].label
+                });
             } else {
                 boPillGrade.hidden = false;
                 if (turndown >= 4) {
                     boPillGrade.className = 'status-pill ok';
-                    boPillGrade.textContent = 'Healthy turndown (' + ratioStr(turndown) + ') — good part-load control, low cycling.';
+                    boPillGrade.textContent = CFI18n.page('boiler.healthy', { ratio: ratioStr(turndown) });
                 } else if (minPct <= 60) {
                     boPillGrade.className = 'status-pill warn';
-                    boPillGrade.textContent = 'Moderate turndown (' + ratioStr(turndown) + ') — workable, but watch low-load cycling.';
+                    boPillGrade.textContent = CFI18n.page('boiler.moderate', { ratio: ratioStr(turndown) });
                 } else {
                     boPillGrade.className = 'status-pill warn';
-                    boPillGrade.textContent = 'Poor turndown (' + ratioStr(turndown) + ') — min fire is '
-                        + minPct.toFixed(0) + ' % of input; short-cycling likely.';
+                    boPillGrade.textContent = CFI18n.page('boiler.poor', {
+                        ratio: ratioStr(turndown), percent: minPct.toFixed(0)
+                    });
                 }
             }
 
-            boFormula.textContent = 'Turndown = ' + fmt(inputW / POWER[boInputU.value].w) + ' ' + POWER[boInputU.value].label
-                + ' input ÷ ' + fmt(minW / POWER[boMinU.value].w) + ' ' + POWER[boMinU.value].label
-                + ' min fire = ' + ratioStr(turndown);
+            boFormula.textContent = CFI18n.page('boiler.formula', {
+                input: fmt(inputW / POWER[boInputU.value].w) + ' ' + POWER[boInputU.value].label,
+                minimum: fmt(minW / POWER[boMinU.value].w) + ' ' + POWER[boMinU.value].label,
+                ratio: ratioStr(turndown)
+            });
         }
 
         // ────────────────────────────── WIRING ──────────────────────────────

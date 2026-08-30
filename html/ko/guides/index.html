@@ -1,0 +1,62 @@
+---
+title: 가이드 — 주제별 현장 참고 자료 — controlsfreak.dev
+description: 주제별 현장 가이드입니다. 각 주제의 모든 도구, 학습 자료, 연습문제를 한곳에 모았습니다. 현재 BACnet, 강제순환 공기, 수배관, 냉동 분야를 제공합니다.
+sourceContentHash: b723196c381240e6af71194a753c23d6fe1007477d8ce0019d8bc360f4c17e99
+canonical: https://controlsfreak.dev/ko/guides/
+nav: guides
+---
+{% extends "html/guides/index.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <h1 class="section-label">가이드</h1>
+        <div class="section-line"></div>
+    </div>
+
+    <p class="landing-intro">
+        현장 가이드는 한 가지 주제의 모든 도구, 학습 자료, 연습문제를 이해하기 쉬운 순서로 한 페이지에 모아 둔 자료입니다. 도구 메뉴에서 계산기를 찾고 학습 메뉴에서 해설을 따로 찾는 대신, 가이드 하나를 열면 무엇부터 읽어야 하는지와 장치나 덕트를 실제로 마주했을 때 어떤 도구를 사용해야 하는지를 한눈에 볼 수 있습니다.
+    </p>
+
+    <p class="landing-intro">
+        현재 네 가지 가이드를 제공하며, 각 가이드에는 입문용 학습 순서와 관련 도구가 함께 있습니다. 주제별 자료가 충분히 쌓이는 대로 더 추가할 예정입니다.
+    </p>
+
+    <div class="card-grid">
+        {{ navCard({
+            section:    'reference',
+            href:       '/ko/bacnet/',
+            titleShort: 'BACnet',
+            titleFull:  'BACnet 참고 자료 허브 →',
+            desc:       'BACnet의 모든 내용을 한곳에 모았습니다. 객체 모델, 서비스, 네트워킹, MS/TP, BACnet과 Modbus 비교를 입문 순서대로 학습하고, 제어기가 보고하는 단위·오류·객체·우선순위를 해석하는 현장 도구를 사용할 수 있습니다.',
+            pills:      ['여기서 시작', '학습 5개', '도구 6개']
+        }) }}
+        {{ navCard({
+            section:    'reference',
+            href:       '/ko/forced-air/',
+            titleShort: '강제순환 공기',
+            titleFull:  '강제순환 공기 참고 자료 허브 →',
+            desc:       '공기조화기에서 VAV 박스와 그 커미셔닝까지 공기측 전체를 순서대로 학습하고, 외기전담공조도 다룹니다. 풍량, 코일, 팬 도구로 시스템이 실제로 이송하는 공기를 측정·산정·점검할 수 있습니다.',
+            pills:      ['여기서 시작', '학습 8개', '도구 13개']
+        }) }}
+        {{ navCard({
+            section:    'reference',
+            href:       '/ko/hydronics/',
+            titleShort: '수배관 시스템',
+            titleFull:  '수배관 시스템 참고 자료 허브 →',
+            desc:       '루프와 부하 배관부터 펌프 제어와 밸런싱까지 수측 전체를 학습합니다. 시스템 유량을 산정하는 밸브·유량·펌프 도구와 실시간 루프 빌더 샌드박스도 함께 제공합니다.',
+            pills:      ['여기서 시작', '학습 5개', '도구 4개 + 시뮬레이터']
+        }) }}
+        {{ navCard({
+            section:    'reference',
+            href:       '/ko/refrigeration/',
+            titleShort: '냉동',
+            titleFull:  '냉동 참고 자료 허브 →',
+            desc:       '증기압축 냉동사이클부터 과열도·과냉도, 이를 유지하는 팽창장치까지 냉매 회로를 순서대로 학습합니다. P-T 및 과열도 계산기와 실시간 회로 시뮬레이터도 함께 제공합니다.',
+            pills:      ['여기서 시작', '학습 3개', '도구 1개 + 시뮬레이터']
+        }) }}
+    </div>
+
+</main>
+{% endblock %}

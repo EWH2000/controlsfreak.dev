@@ -1,0 +1,120 @@
+---
+title: 냉동 — 현장 참조, 도구 및 학습 자료 — controlsfreak.dev
+description: 증기 압축 냉동사이클, 과열도·과냉도와 팽창장치 원리를 배우고 냉매 P-T 계산기와 냉동사이클 시뮬레이터로 현장 측정값을 해석합니다.
+sourceContentHash: 0b51fa2ff1fad8ce9d2605b806deee90af051af171a6d79fd24612515321535b
+canonical: https://controlsfreak.dev/ko/refrigeration/
+nav: guides
+navLabel: 냉동
+keywords: 냉동 증기 압축 사이클 압축기 응축기 증발기 흡입 토출 응축압력 포화 과열도 과냉도 txv eev 팽창장치 냉매 충전량 psig pt 선도 매니폴드 게이지 냉매
+---
+{% extends "html/refrigeration/index.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <h1 class="section-label">냉동</h1>
+        <div class="section-line"></div>
+    </div>
+
+    <p class="landing-intro">
+        냉동은 장비에서 <strong>상변화를 이용해 열을 이동시키는</strong> 부분입니다. 압축기가 밀폐 회로 안에서 냉매를 순환시키면 냉매는 증발기에서 끓으며 열을 흡수하고 실외의 응축기에서 응축하며 열을 방출합니다. 팽창장치는 고압측과 저압측 사이의 균형점을 유지합니다. 매니폴드 게이지나 BMS에 표시되는 모든 값은 이 회로에서 나옵니다. 흡입압력과 <button type="button" data-gloss="head-pressure">응축압력</button>, 이 압력에 대응하는 포화온도, 그리고 사이클이 정상적으로 운전되는지 확인하는 <button type="button" data-gloss="superheat">과열도</button>와 <button type="button" data-gloss="subcooling">과냉도</button>가 대표적입니다. 이 자료는 네 가지 주요 구성요소에서 측정값까지 냉매 회로를 따라가며 각 값을 수치로 확인할 도구도 제공합니다.
+    </p>
+
+    <p class="landing-intro">
+        처음이라면 아래 학습 자료를 표시된 순서대로 살펴보세요. 냉동사이클과 포화 압력-온도 관계에서 시작해 냉매 충전량과 공급 상태를 확인하는 두 측정값을 익히고, <button type="button" data-gloss="superheat">과열도</button>를 목표값으로 유지하는 팽창장치까지 이어집니다. 이미 장비에 게이지를 연결했다면 압력과 배관 온도를 가지고 P-T 계산기로 이동하거나, 냉동사이클 시뮬레이터를 열어 고장과 같은 조건을 직접 바꿔 보세요. 모든 자료는 로그인 없이 이용할 수 있으며 사용자를 추적하지 않습니다.
+    </p>
+
+    <h2 class="hub-group">여기서 시작하세요 — 순서대로 보는 학습 자료</h2>
+    <p class="hub-path">
+        <span class="hub-step">1</span> <a href="/ko/education/refrigerant-cycle-basics.html">냉동사이클 기초</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">2</span> <a href="/ko/education/superheat-subcooling.html">과열도 및 과냉도</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">3</span> <a href="/ko/education/metering-devices-txv-eev.html">TXV와 EEV 비교</a>
+    </p>
+
+    <div class="card-grid">
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/refrigerant-cycle-basics.html',
+            titleShort: '냉동사이클',
+            titleFull:  '냉동사이클 기초',
+            desc:       '증기 압축 시스템이 열을 이동시키는 원리를 알아봅니다. 네 가지 주요 구성요소, 고압측과 저압측, 모든 냉매 센서 측정값의 바탕인 포화 압력-온도 관계를 설명하는 첫 번째 장입니다.',
+            pills:      ['1단계', '4대 구성요소', '고압측과 저압측']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/superheat-subcooling.html',
+            titleShort: '과열도 및 과냉도',
+            titleFull:  '과열도 및 과냉도',
+            desc:       '냉동사이클의 정상 운전을 확인하는 두 측정값을 알아봅니다. 각 값이 뜻하는 것과 계산에 필요한 센서, 비정상값이 가리키는 고장 방향을 설명합니다.',
+            pills:      ['2단계', '과열도', '과냉도']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/metering-devices-txv-eev.html',
+            titleShort: 'TXV와 EEV',
+            titleFull:  'TXV와 EEV 비교',
+            desc:       '과열도를 목표값으로 유지하는 두 팽창장치를 비교합니다. TXV의 기계식 힘 평형과 EEV의 제어기 구동 스테퍼 루프, 부하 변화에 따른 각 장치의 동작을 설명합니다.',
+            pills:      ['3단계', 'TXV', 'EEV']
+        }) }}
+    </div>
+
+    <h2 class="hub-group">직접 구성해 보세요 — 시뮬레이터</h2>
+    <p class="hub-group-intro">
+        냉매 회로를 다루는 대화형 모델입니다. 매니폴드 게이지가 달린 증기 압축 냉동사이클을 실시간으로 조작하여 학습 자료의 포화 압력-온도 관계와 고장 징후가 실제로 변하는 모습을 확인할 수 있습니다.
+    </p>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'simulators',
+            href:       '/ko/simulators/refrigerant-loop.html',
+            titleShort: '냉동사이클',
+            titleFull:  '냉동사이클 시뮬레이터',
+            desc:       '실시간 증기 압축 냉동사이클에서 풍량, 냉매 충전량, 외기온도와 팽창장치 과열도 설정을 바꿔 보세요. 흡입압력, 응축압력, 과열도, 과냉도와 냉매가 부족한 증발기의 반응을 매니폴드 게이지와 P-T 표시부에서 확인합니다.',
+            pills:      ['증기 압축', '매니폴드 게이지', '증발기 냉매 부족']
+        }) }}
+    </div>
+
+    <h2 class="hub-group">도구</h2>
+    <p class="hub-group-intro">
+        냉매측 현장 작업을 위한 도구입니다. 현장에서 측정한 압력과 배관 온도를 입력하여 학습 자료에서 다룬 포화 상태 조회와 <button type="button" data-gloss="superheat">과열도</button> / <button type="button" data-gloss="subcooling">과냉도</button> 계산을 바로 수행할 수 있습니다. 로그인이나 설치가 필요하지 않습니다.
+    </p>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/refrigerant-pt.html',
+            titleShort: '냉매 P-T',
+            titleFull:  '냉매 P-T 및 과열도 계산기',
+            desc:       'R-410A, R-22, R-134a, R-407C, R-404A와 R-454B의 포화 압력 ↔ 온도를 변환합니다. 혼합냉매의 온도 활주를 확인할 수 있도록 기포점과 이슬점을 모두 표시하고, 측정한 배관 온도로 과열도와 과냉도도 계산합니다.',
+            pills:      ['냉매 6종', '기포점 / 이슬점', '과열도 / 과냉도']
+        }) }}
+    </div>
+
+    <h2 class="hub-group">관련 페이지</h2>
+    <p class="hub-group-intro">
+        냉매 회로가 열을 처리하는 두 인접 영역입니다. 증발기가 상태를 바꾸는 습공기측과 공기 경계에서의 코일 용량 계산을 함께 살펴보세요.
+    </p>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/psychrometrics-basics.html',
+            titleShort: '습공기 상태 해석',
+            titleFull:  '습공기 상태 해석 기초',
+            desc:       '습공기선도의 일곱 가지 상태량과 각 값이 제어 엔지니어에게 알려 주는 내용을 알아봅니다. 흔한 해석 오류와 함께 이슬점이 수영장 공조에서 중요한 이유를 대화형 도구로 확인합니다.',
+            pills:      ['기초', '7가지 상태량', '이슬점']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/coil-sizing.html',
+            titleShort: '코일 용량 산정',
+            titleFull:  '코일 용량 계산기',
+            desc:       '냉각 또는 가열 코일의 입·출구 공기 상태로 총열량, 현열량과 잠열량을 계산합니다. 또는 알고 있는 부하에서 출구 공기 상태를 역산할 수 있습니다.',
+            pills:      ['냉각 / 가열', '현열 / 잠열', '정방향 / 역산']
+        }) }}
+    </div>
+
+    <a class="back-link" href="/ko/education/">← 학습 자료로 돌아가기</a>
+
+</main>
+{% endblock %}

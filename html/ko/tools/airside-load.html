@@ -1,0 +1,403 @@
+---
+title: 공기측 부하 계산기 — controlsfreak.dev
+description: 현열 q=1.08×CFM×ΔT, 잠열 0.68×CFM×Δgrains, 전열 4.5×CFM×Δh를 미국식·미터법으로 어느 방향이든 계산합니다.
+sourceContentHash: dbfd63aabfb2c452ac1a987950fc841339f09aba6d0488283890f5ed68079400
+sourceMessageHash: acdae1fd3a2bd6f79e4ce95daf3dae05120ef5c6ca53824316c7fde4705825a4
+canonical: https://controlsfreak.dev/ko/tools/airside-load.html
+nav: tools
+category: airflow
+pageMessages:
+    modes:
+        sensible:
+            deltaName: 'ΔT'
+            deltaLabel: 'ΔT'
+            negative: '음의 ΔT는 보통 두 온도의 차감 순서가 반대라는 뜻입니다. 양의 차이로 입력하세요. 난방과 냉방 모두 열 이동 방향과 관계없이 같은 식을 사용합니다.'
+            zero: '풍량을 계산하려면 ΔT가 0보다 커야 합니다. 입구와 출구 온도가 같은 공기는 현열 부하를 운반하지 않습니다.'
+        latent:
+            deltaName: '수분량 Δ'
+            deltaLabel: '수분량 Δ'
+            negative: '음의 수분량 Δ는 코일이 수분을 제거하는 대신 더한다는 뜻입니다. 가습도 같은 식을 사용하므로 차이를 양수로 입력하세요.'
+            zero: '풍량을 계산하려면 수분량 Δ가 0보다 커야 합니다. 입구와 출구 습도가 같은 공기는 잠열 부하를 운반하지 않습니다.'
+        total:
+            deltaName: 'Δh'
+            deltaLabel: 'Δh'
+            negative: '음의 Δh는 보통 두 엔탈피의 차감 순서가 반대라는 뜻입니다. 양의 차이로 입력하세요. 난방과 냉방 모두 열 이동 방향과 관계없이 같은 식을 사용합니다.'
+            zero: '풍량을 계산하려면 Δh가 0보다 커야 합니다. 엔탈피 변화가 없으면 부하도 없습니다.'
+    outputLabel:
+        load: '부하({unit})'
+        airflow: '풍량({unit})'
+        delta: '{name}({unit})'
+    errors:
+        needFlowDelta: '부하를 계산하려면 풍량과 {deltaName}를 입력하세요.'
+        negativeFlow: '풍량은 음수일 수 없습니다.'
+        needLoadDelta: '풍량을 계산하려면 부하와 {deltaName}를 입력하세요.'
+        negativeLoad: '부하는 음수일 수 없습니다.'
+        needLoadFlow: '{deltaName}를 계산하려면 부하와 풍량을 입력하세요.'
+        zeroFlow: 'Δ를 계산하려면 풍량이 0보다 커야 합니다. 정지한 공기는 부하를 운반하지 않습니다.'
+    unitText:
+        sensibleEquation:
+            us: 'qs = 1.08 × CFM × ΔT'
+            metric: 'qs = 0.34 × m³/h × ΔT'
+        sensibleAirflowLabel:
+            us: '풍량(CFM)'
+            metric: '풍량(m³/h)'
+        sensibleDeltaLabel:
+            us: '코일 전후 ΔT(°F)'
+            metric: '코일 전후 ΔT(°C)'
+        sensibleLoadLabel:
+            us: '부하(MBH)'
+            metric: '부하(kW)'
+        tonDefinition:
+            us: '12 MBH'
+            metric: '3.517 kW'
+        sensibleExampleAirflow:
+            us: '2,000 CFM'
+            metric: '3398 m³/h'
+        sensibleExampleDelta:
+            us: '20 °F'
+            metric: '11.1 °C'
+        sensibleFormula:
+            us: 'qs = 1.08 × CFM × ΔT°F, 단위 Btu/h'
+            metric: 'qs = 0.34 × m³/h × ΔT°C, 단위 W'
+        sensibleSubstitution:
+            us: 'qs = 1.08 × 2000 × 20 = 43,200 Btu/h = 43.2 MBH'
+            metric: 'qs = 0.34 × 3398 × 11.1 = 12,824 W = 12.8 kW'
+        waterDelta:
+            us: '12 °F'
+            metric: '6.7 °C'
+        waterFormula:
+            us: 'Q = 43,200 ÷ (500 × 12) = 7.2 GPM'
+            metric: 'Q = 12.8 ÷ (4.187 × 6.7) = 0.46 L/s'
+        latentAirflowLabel:
+            us: '풍량(CFM)'
+            metric: '풍량(m³/h)'
+        latentDeltaLabel:
+            us: '제거 수분량(gr/lb)'
+            metric: '제거 수분량(g/kg)'
+        latentLoadLabel:
+            us: '부하(MBH)'
+            metric: '부하(kW)'
+        moistureDefinition:
+            us: '건공기 1파운드당 수분 그레인 수이며 7,000그레인은 1파운드입니다'
+            metric: '건공기 1킬로그램당 수분 그램 수'
+        latentExampleDelta:
+            us: '10 gr/lb'
+            metric: '1.4 g/kg'
+        latentExampleAirflow:
+            us: '2,000 CFM'
+            metric: '3398 m³/h'
+        latentFormula:
+            us: 'ql = 0.68 × CFM × Δgr/lb, 단위 Btu/h'
+            metric: 'ql = 0.83 × m³/h × Δg/kg, 단위 W'
+        latentSubstitution:
+            us: 'ql = 0.68 × 2000 × 10 = 13,600 Btu/h = 13.6 MBH'
+            metric: 'ql = 0.83 × 3398 × 1.4 = 3,948 W = 3.9 kW'
+        moistureMassWord:
+            us: '그레인'
+            metric: '그램'
+        totalAirflowLabel:
+            us: '풍량(CFM)'
+            metric: '풍량(m³/h)'
+        totalDeltaLabel:
+            us: '코일 전후 Δh(Btu/lb)'
+            metric: '코일 전후 Δh(kJ/kg)'
+        totalLoadLabel:
+            us: '부하(MBH)'
+            metric: '부하(kW)'
+        totalExampleDelta:
+            us: '6.3 Btu/lb'
+            metric: '14.7 kJ/kg'
+        totalFormula:
+            us: 'qt = 4.5 × CFM × Δh, 단위 Btu/h'
+            metric: 'qt = 0.33 × m³/h × Δh, 단위 W'
+        totalSubstitution:
+            us: 'qt = 4.5 × 2000 × 6.3 = 56,700 Btu/h = 56.7 MBH'
+            metric: 'qt = 0.33 × 3398 × 14.7 = 16,484 W = 16.5 kW'
+        tonsFormula:
+            us: '56.7 ÷ 12 = 4.7 냉동톤'
+            metric: '16.5 ÷ 3.517 = 4.7 냉동톤'
+        crossCheck:
+            us: '다른 탭과 교차 확인하면 현열 43.2 + 잠열 13.6 = 56.8 MBH인데 여기서는 56.7 MBH입니다. 0.1 차이는 반올림한 Δh 때문이며 선도의 실제 값은 6.31에 가깝습니다.'
+            metric: '다른 탭과 교차 확인하면 현열 12.8 + 잠열 3.9 = 16.7 kW인데 여기서는 16.5 kW입니다. 피연산자와 각 상수를 독립적으로 반올림한 데서 생긴 차이입니다.'
+        cfmPerTon:
+            us: '2000 ÷ 4.7 ≈ 425 CFM/냉동톤'
+            metric: '≈ 425 CFM/냉동톤(IP 단위계 고유의 경험칙이며 K-factor와 같은 성격)'
+        constantsHeading:
+            us: '1.08, 0.68, 4.5'
+            metric: '0.34, 0.83, 0.33'
+        standardAir:
+            us: '0.075 lb/ft³, 해수면, 약 70 °F'
+            metric: '1.2 kg/m³, 해수면, 약 20 °C'
+        constantDerivation:
+            us: '1.08 = 0.075 lb/ft³ × 60 min/h × 0.240 Btu/lb·°F(밀도 × 시간 × 비열)입니다. 4.5 = 0.075 × 60으로 CFM을 시간당 건공기 파운드로 바꿉니다. 0.68 = 4.5 × 잠열 1,060 Btu/lb ÷ 파운드당 7,000그레인입니다.'
+            metric: '0.34 = 1.2 kg/m³ × 1.005 kJ/kg·K ÷ 3.6입니다. 밀도 × 비열에 m³/h를 초당 건공기 그램으로 바꾸는 ÷ 3.6을 적용한 값은 0.335이며, 유럽 환기 업계의 표준 상수 0.34로 반올림합니다. 0.33 = 1.2 ÷ 3.6으로 m³/h를 초당 건공기 그램으로 바꿉니다. 0.83 = 1.2 × 잠열 2,500 kJ/kg ÷ 3,600입니다.'
+        airflowUnit:
+            us: 'CFM'
+            metric: 'm³/h'
+keywords: CFM 델타T 현열 잠열 총열량 그레인 엔탈피 BTU/h MBH 냉동톤 1.08 0.68 4.5 재열
+---
+{% extends "html/tools/airside-load.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 공기측 부하</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                공기측 부하 계산기
+                <span class="tool-tag">풍량</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>공기측에서 가장 많이 쓰는 세 공식을 어느 방향으로든 풉니다.</summary>
+            <div class="preamble-rest">
+                <code><span data-us="{{ pageMessages.unitText.sensibleEquation.us }}" data-metric="{{ pageMessages.unitText.sensibleEquation.metric }}">qs = 1.08 × CFM × ΔT</span></code>와 잠열·전열 공식은 팬이 이동시키는 공기와 코일이 전달하는 열을 연결합니다.
+                측정 풍량과 ΔT로 부하를 구하거나, 재열 시퀀스에 필요한 풍량 또는 정상 코일에서 나타나야 할 ΔT를 역산할 수 있습니다.
+                이 도구는 <a href="/ko/tools/waterside-load.html">수측 부하 계산기</a>와 한 쌍입니다. 같은 코일의 반대쪽을 계산합니다.
+            </div>
+        </details>
+        <p class="ps-seed-note">입력란에는 예제가 미리 채워져 있습니다. 확인하려는 값으로 수정하세요.</p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="sensible">현열(ΔT)</button>
+            <button class="tab-btn"        data-tab="latent">잠열(절대습도 Δ)</button>
+            <button class="tab-btn"        data-tab="total">전열(Δh)</button>
+        </div>
+
+        <!-- ── Sensible ── -->
+        <div id="tab-sensible" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="asl-s-solve">계산할 값</label>
+                        <select class="ps-input" id="asl-s-solve">
+                            <option value="load">부하</option>
+                            <option value="flow">풍량</option>
+                            <option value="delta">ΔT</option>
+                        </select>
+                    </div>
+                    <div class="ps-row" id="asl-s-row-flow">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.sensibleAirflowLabel.us }}" data-metric="{{ pageMessages.unitText.sensibleAirflowLabel.metric }}" for="asl-s-flow">풍량(CFM)</label>
+                        <input class="ps-input" type="number" id="asl-s-flow" step="any" min="0" placeholder="2000" value="2000">
+                    </div>
+                    <div class="ps-row" id="asl-s-row-delta">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.sensibleDeltaLabel.us }}" data-metric="{{ pageMessages.unitText.sensibleDeltaLabel.metric }}" for="asl-s-delta">코일 전후 ΔT(°F)</label>
+                        <input class="ps-input" type="number" id="asl-s-delta" step="any" min="0" placeholder="20" value="20">
+                    </div>
+                    <div class="ps-row" id="asl-s-row-load">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.sensibleLoadLabel.us }}" data-metric="{{ pageMessages.unitText.sensibleLoadLabel.metric }}" for="asl-s-load">부하(MBH)</label>
+                        <input class="ps-input" type="number" id="asl-s-load" step="any" min="0" placeholder="43.2" value="43.2">
+                    </div>
+                    <p class="ref-note">
+                        ΔT는 양의 차이로 입력하세요. 난방 코일은 입구−출구가 아니라 출구−입구, 냉방 코일은 입구−출구이며 어느 방향이든 수식은 같습니다.
+                    </p>
+                    <p class="ref-note">
+                        <strong>현열만 계산합니다.</strong> 즉 온도 변화만 다룹니다. 습식 냉각 코일은 <button type="button" data-gloss="latent-heat">잠열</button>도 제거하므로 나머지 두 탭을 사용하세요. 냉동톤은 <span data-us="{{ pageMessages.unitText.tonDefinition.us }}" data-metric="{{ pageMessages.unitText.tonDefinition.metric }}">12 MBH</span>의 <em>전열</em>을 뜻하므로 전열 탭에 표시됩니다.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="ps-row primary">
+                        <span class="ps-label" id="asl-s-out-label">부하(MBH)</span>
+                        <span class="ps-value muted" id="asl-s-out">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="asl-s-copy">값 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="asl-s-formula"></div>
+                    <div class="failure-callout" id="asl-s-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">계산 예</h2>
+                <p class="ref-note worked-intro">
+                    온수 코일에 <span data-us="{{ pageMessages.unitText.sensibleExampleAirflow.us }}" data-metric="{{ pageMessages.unitText.sensibleExampleAirflow.metric }}">2,000 CFM</span>의 급기가 흐르고 출구 온도가 <span data-us="{{ pageMessages.unitText.sensibleExampleDelta.us }}" data-metric="{{ pageMessages.unitText.sensibleExampleDelta.metric }}">20 °F</span> 높아집니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>현열 공식: <code><span data-us="{{ pageMessages.unitText.sensibleFormula.us }}" data-metric="{{ pageMessages.unitText.sensibleFormula.metric }}">qs = 1.08 × CFM × ΔT°F, 단위 Btu/h</span></code>.</li>
+                    <li>대입: <code><span data-us="{{ pageMessages.unitText.sensibleSubstitution.us }}" data-metric="{{ pageMessages.unitText.sensibleSubstitution.metric }}">qs = 1.08 × 2000 × 20 = 43,200 Btu/h = 43.2 MBH</span></code>.</li>
+                    <li>같은 열량이 물에서 빠져나왔습니다. 수온 ΔT가 <span data-us="{{ pageMessages.unitText.waterDelta.us }}" data-metric="{{ pageMessages.unitText.waterDelta.metric }}">12 °F</span>라면 <code><span data-us="{{ pageMessages.unitText.waterFormula.us }}" data-metric="{{ pageMessages.unitText.waterFormula.metric }}">Q = 43,200 ÷ (500 × 12) = 7.2 GPM</span></code>입니다. <a href="/ko/tools/waterside-load.html">수측 부하 계산기</a>로 확인하세요. 한 코일의 공기측과 수측 열량은 일치해야 하며, 다르면 측정값 중 하나가 잘못된 것입니다.</li>
+                </ol>
+            </section>
+        </div>
+
+        <!-- ── Latent ── -->
+        <div id="tab-latent" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="asl-l-solve">계산할 값</label>
+                        <select class="ps-input" id="asl-l-solve">
+                            <option value="load">부하</option>
+                            <option value="flow">풍량</option>
+                            <option value="delta">수분량 Δ</option>
+                        </select>
+                    </div>
+                    <div class="ps-row" id="asl-l-row-flow">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.latentAirflowLabel.us }}" data-metric="{{ pageMessages.unitText.latentAirflowLabel.metric }}" for="asl-l-flow">풍량(CFM)</label>
+                        <input class="ps-input" type="number" id="asl-l-flow" step="any" min="0" placeholder="2000" value="2000">
+                    </div>
+                    <div class="ps-row" id="asl-l-row-delta">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.latentDeltaLabel.us }}" data-metric="{{ pageMessages.unitText.latentDeltaLabel.metric }}" for="asl-l-delta">제거 수분량(gr/lb)</label>
+                        <input class="ps-input" type="number" id="asl-l-delta" step="any" min="0" placeholder="10" value="10">
+                    </div>
+                    <div class="ps-row" id="asl-l-row-load">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.latentLoadLabel.us }}" data-metric="{{ pageMessages.unitText.latentLoadLabel.metric }}" for="asl-l-load">부하(MBH)</label>
+                        <input class="ps-input" type="number" id="asl-l-load" step="any" min="0" placeholder="13.6" value="13.6">
+                    </div>
+                    <p class="ref-note">
+                        Δ는 입구−출구 절대습도(함습비, W)입니다. <span data-us="{{ pageMessages.unitText.moistureDefinition.us }}" data-metric="{{ pageMessages.unitText.moistureDefinition.metric }}">건공기 1파운드당 수분 그레인 수이며 7,000그레인은 1파운드입니다</span>. 두 상태는 <a href="/ko/tools/psychrometric-chart.html">습공기선도</a>나 <a href="/ko/tools/dew-point-calculator.html">이슬점 계산기</a>에서 읽으세요.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="ps-row primary">
+                        <span class="ps-label" id="asl-l-out-label">부하(MBH)</span>
+                        <span class="ps-value muted" id="asl-l-out">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="asl-l-copy">값 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="asl-l-formula"></div>
+                    <div class="failure-callout" id="asl-l-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">계산 예</h2>
+                <p class="ref-note worked-intro">
+                    냉각 코일이 수분 <span data-us="{{ pageMessages.unitText.latentExampleDelta.us }}" data-metric="{{ pageMessages.unitText.latentExampleDelta.metric }}">10 gr/lb</span>를 같은 <span data-us="{{ pageMessages.unitText.latentExampleAirflow.us }}" data-metric="{{ pageMessages.unitText.latentExampleAirflow.metric }}">2,000 CFM</span>의 공기에서 제거합니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>잠열 공식: <code><span data-us="{{ pageMessages.unitText.latentFormula.us }}" data-metric="{{ pageMessages.unitText.latentFormula.metric }}">ql = 0.68 × CFM × Δgr/lb, 단위 Btu/h</span></code>.</li>
+                    <li>대입: <code><span data-us="{{ pageMessages.unitText.latentSubstitution.us }}" data-metric="{{ pageMessages.unitText.latentSubstitution.metric }}">ql = 0.68 × 2000 × 10 = 13,600 Btu/h = 13.6 MBH</span></code>.</li>
+                    <li>코일이 제거한 모든 <span data-us="{{ pageMessages.unitText.moistureMassWord.us }}" data-metric="{{ pageMessages.unitText.moistureMassWord.metric }}">그레인</span>은 핀에 응축된 물이며 이때 <button type="button" data-gloss="latent-heat">잠열</button>을 방출합니다. 공기 온도계에는 보이지 않지만 압축기가 이동해야 하는 열입니다.</li>
+                </ol>
+            </section>
+        </div>
+
+        <!-- ── Total ── -->
+        <div id="tab-total" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="asl-t-solve">계산할 값</label>
+                        <select class="ps-input" id="asl-t-solve">
+                            <option value="load">부하</option>
+                            <option value="flow">풍량</option>
+                            <option value="delta">Δh</option>
+                        </select>
+                    </div>
+                    <div class="ps-row" id="asl-t-row-flow">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.totalAirflowLabel.us }}" data-metric="{{ pageMessages.unitText.totalAirflowLabel.metric }}" for="asl-t-flow">풍량(CFM)</label>
+                        <input class="ps-input" type="number" id="asl-t-flow" step="any" min="0" placeholder="2000" value="2000">
+                    </div>
+                    <div class="ps-row" id="asl-t-row-delta">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.totalDeltaLabel.us }}" data-metric="{{ pageMessages.unitText.totalDeltaLabel.metric }}" for="asl-t-delta">코일 전후 Δh(Btu/lb)</label>
+                        <input class="ps-input" type="number" id="asl-t-delta" step="any" min="0" placeholder="6.3" value="6.3">
+                    </div>
+                    <div class="ps-row" id="asl-t-row-load">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.totalLoadLabel.us }}" data-metric="{{ pageMessages.unitText.totalLoadLabel.metric }}" for="asl-t-load">부하(MBH)</label>
+                        <input class="ps-input" type="number" id="asl-t-load" step="any" min="0" placeholder="56.7" value="56.7">
+                    </div>
+                    <p class="ref-note">
+                        Δh는 입구−출구 <button type="button" data-gloss="enthalpy">엔탈피</button>입니다. 온도와 습도에서 시작한다면 <a href="/ko/tools/coil-sizing.html">코일 용량 계산기</a>가 공기 상태를 계산하고 부하를 현열과 잠열로 나눠 줍니다.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="ps-row primary">
+                        <span class="ps-label" id="asl-t-out-label">부하(MBH)</span>
+                        <span class="ps-value muted" id="asl-t-out">—</span>
+                    </div>
+                    <div class="ps-row" id="asl-t-row-tons">
+                        <span class="ps-label">냉동톤</span>
+                        <span class="ps-value muted" id="asl-t-tons">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="asl-t-copy">값 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="asl-t-formula"></div>
+                    <div class="failure-callout" id="asl-t-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">계산 예</h2>
+                <p class="ref-note worked-intro">
+                    같은 코일의 전체 열량을 계산합니다. 입구와 출구 공기에는 <span data-us="{{ pageMessages.unitText.totalExampleDelta.us }}" data-metric="{{ pageMessages.unitText.totalExampleDelta.metric }}">6.3 Btu/lb</span>의 <button type="button" data-gloss="enthalpy">엔탈피</button> 차이가 있습니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>전열 공식: <code><span data-us="{{ pageMessages.unitText.totalFormula.us }}" data-metric="{{ pageMessages.unitText.totalFormula.metric }}">qt = 4.5 × CFM × Δh, 단위 Btu/h</span></code>.</li>
+                    <li>대입: <code><span data-us="{{ pageMessages.unitText.totalSubstitution.us }}" data-metric="{{ pageMessages.unitText.totalSubstitution.metric }}">qt = 4.5 × 2000 × 6.3 = 56,700 Btu/h = 56.7 MBH</span></code>.</li>
+                    <li>냉동기 용량으로는 <code><span data-us="{{ pageMessages.unitText.tonsFormula.us }}" data-metric="{{ pageMessages.unitText.tonsFormula.metric }}">56.7 ÷ 12 = 4.7 냉동톤</span></code>이 이 코일 하나를 통과합니다.</li>
+                </ol>
+                <p class="ref-note">
+                    <span data-us="{{ pageMessages.unitText.crossCheck.us }}" data-metric="{{ pageMessages.unitText.crossCheck.metric }}">다른 탭과 교차 확인하면 현열 43.2 + 잠열 13.6 = 56.8 MBH인데 여기서는 56.7 MBH입니다. 0.1 차이는 반올림한 Δh 때문이며 선도의 실제 값은 6.31에 가깝습니다.</span> 현열 + 잠열 = 전열이라는 관계는 꼭 확인할 가치가 있습니다. 반올림 이상으로 차이가 나면 세 측정값 중 하나가 잘못된 것입니다.
+                </p>
+                <p class="ref-note">
+                    풍량을 냉동톤으로 나누면 <button type="button" data-gloss="dx">DX</button> 건전성 확인 수치가 됩니다. 여기서는 <span data-us="{{ pageMessages.unitText.cfmPerTon.us }}" data-metric="{{ pageMessages.unitText.cfmPerTon.metric }}">2000 ÷ 4.7 ≈ 425 CFM/냉동톤</span>입니다. 업계의 하한은 약 400 CFM/냉동톤입니다. <a href="/ko/tools/equipment-airflow.html">장비 풍량 점검</a>은 이 수치를 단수별로 판정하고, <a href="/ko/education/vav-systems.html">VAV 시스템 학습 자료</a>는 하한 미만에서 결빙이 악화되는 과정을 설명합니다.
+                </p>
+            </section>
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">표준 공기와 <span data-us="{{ pageMessages.unitText.constantsHeading.us }}" data-metric="{{ pageMessages.unitText.constantsHeading.metric }}">1.08, 0.68, 4.5</span>의 유래</h2>
+            <p class="ref-note">
+                세 상수 모두 <strong>표준 공기</strong>, 즉 <span data-us="{{ pageMessages.unitText.standardAir.us }}" data-metric="{{ pageMessages.unitText.standardAir.metric }}">0.075&nbsp;lb/ft³, 해수면, 약 70&nbsp;°F</span>를 현장 계산식에 접어 넣은 값입니다. <span data-us="{{ pageMessages.unitText.constantDerivation.us }}" data-metric="{{ pageMessages.unitText.constantDerivation.metric }}">1.08 = 0.075 lb/ft³ × 60 min/h × 0.240 Btu/lb·°F(밀도 × 시간 × 비열)입니다. 4.5 = 0.075 × 60으로 CFM을 시간당 건공기 파운드로 바꿉니다. 0.68 = 4.5 × 잠열 1,060 Btu/lb ÷ 파운드당 7,000그레인입니다.</span>
+            </p>
+            <p class="ref-note">
+                미국식과 미터법 상수는 서로 환산한 값이 아니라 각각 독립적으로 반올림한 업계 관례입니다. 1.08의 정확한 미터법 대응값은 0.34가 아니라 0.335이므로 두 단위계는 구조적으로 약 1 % 차이가 납니다. 각 단위계 안에서는 일관되며 공식 줄은 항상 표시된 수치와 일치합니다. 고도에서는 공기 밀도가 낮아져 같은 <span data-us="{{ pageMessages.unitText.airflowUnit.us }}" data-metric="{{ pageMessages.unitText.airflowUnit.metric }}">CFM</span>이 운반하는 열이 줄고, 이 페이지의 모든 상수는 고도 1,000 ft마다 부하를 약 3 % 크게 계산합니다. 덴버에서는 약 20 %입니다. <a href="/ko/tools/psychrometric-chart.html">습공기선도</a>는 고도를 정확히 반영합니다.
+            </p>
+            <p class="ref-note">
+                이 페이지는 이미 온도·습도 차이를 알고 있을 때 쓰는 현장 계산식입니다. 입구의 <button type="button" data-gloss="dry-bulb">건구온도</button>와 습도, 출구의 <button type="button" data-gloss="dry-bulb">건구온도</button>와 습도라는 전체 공기 상태에서 시작한다면 <a href="/ko/tools/coil-sizing.html">코일 용량 계산기</a>가 습공기 상태를 정확히 계산하고 전열·현열·잠열·SHR을 한 번에 제공합니다.
+            </p>
+        </section>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/forced-air/', label: '강제순환 공기 시스템 참조 허브'},
+        tools: [
+            {href: '/ko/tools/airflow.html', label: '풍량 및 속도압'},
+            {href: '/ko/tools/duct-traverse.html', label: '덕트 트래버스 계산기'},
+            {href: '/ko/tools/equipment-airflow.html', label: '장비 풍량 점검'},
+            {href: '/ko/tools/coil-sizing.html', label: '코일 용량 계산기'},
+            {href: '/ko/tools/psychrometric-chart.html', label: '습공기선도'},
+            {href: '/ko/tools/waterside-load.html', label: '수측 부하 계산기'},
+            {href: '/ko/tools/minimum-outdoor-air.html', label: '최소 외기량 계산기'},
+            {href: '/ko/tools/duct-sizer.html', label: '덕트 크기 계산기'}
+        ],
+        lessons: [
+            {href: '/ko/education/air-handlers.html', label: '공기조화기(AHU)'},
+            {href: '/ko/education/vav-systems.html', label: 'VAV 시스템'},
+            {href: '/ko/education/psychrometrics-basics.html', label: '습공기 상태 해석 기초'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/air-handlers.html', label: '공기조화기(AHU) 퀴즈'},
+            {href: '/ko/practice/vav-systems.html', label: 'VAV 시스템 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

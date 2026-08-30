@@ -1,0 +1,240 @@
+---
+title: controlsfreak.dev — BMS 현장 참고 자료
+description: 제어 및 기계설비 분야를 위한 무료 공개 계산기와 실무 해설입니다. 현장에서 쓰는 풍량, 코일, 수배관, BACnet, Modbus 도구를 제공합니다.
+sourceContentHash: b65e77c170cf3d9238a7de8f505172f704aaea0301778bbf6c991fee56a911d8
+canonical: https://controlsfreak.dev/ko/
+nav: home
+---
+{% extends "html/index.html" %}
+
+{% block content %}
+<section class="hero hero-seam" aria-label="실시간 데모 및 빠른 도구">
+    <div class="console-titlebar">
+        <span>controlsfreak.dev <span class="titlebar-dots">///</span> 현장 참고 자료</span>
+        <span class="ok-pill">실시간</span>
+    </div>
+
+    <div class="hero-quicktools">
+        <span class="hero-qt-label">바로가기</span>
+        <a class="hero-qt" href="/ko/tools/signal-scaling.html">신호 스케일링</a>
+        <a class="hero-qt" href="/ko/tools/bacnet-ip-converter.html">BACnet/IP 16진수</a>
+        <a class="hero-qt" href="/ko/tools/thermistor-calculator.html">서미스터</a>
+        <a class="hero-qt" href="/ko/tools/psychrometric-chart.html">습공기선도</a>
+        <a class="hero-qt" href="/ko/tools/electrical-quick-calc.html">전기 계산</a>
+        <a class="hero-qt hero-qt--all" href="/ko/tools/">모든 도구 →</a>
+    </div>
+
+    <div class="hero-copy">
+        <h1>빌딩 자동제어, 고급 HVAC 및 여러 인접 분야 종사자를 위한 현장 도구입니다. 빌딩 자동제어 프로그래머가 만들었습니다.</h1>
+        <p>기계실, 옥상, 제어반 앞에서 다시 계산하고 싶지 않은 수식을 모았습니다. 풍량과 덕트 치수, 코일과 습공기 상태, 밸브·펌프 선정, 신호 스케일링, BACnet/IP, Modbus 계산과 시스템 전체를 처음부터 끝까지 설명하는 학습 자료를 제공합니다. 로그인, 광고, 추적 기능이 없고 소스 보기도 그대로 가능하며, 지금부터 10년 후에도 이 페이지들은 계속 실행되도록 만들었습니다.</p>
+        <div class="hero-cta">
+            <a class="hero-btn primary" href="/ko/tools/">도구 둘러보기 →</a>
+            <a class="hero-btn" href="/ko/education/">해설부터 시작하기 →</a>
+        </div>
+        <p class="hero-onramp">경력이 3주든 30년이든 <a href="/ko/education/">학습 자료</a>는 기초부터 시작합니다.</p>
+        <p class="hero-latest">추천 <span class="titlebar-dots">·</span> <a href="/ko/simulators/ddc-workbench.html">DDC Workbench — 자체 제어 프로그램으로 운전되는 실시간 공기조화기 →</a></p>
+    </div>
+
+    <div class="hseam-frame">
+        <div class="hseam-frame-head">
+            <span class="hseam-frame-title">실시간 <span class="titlebar-dots">·</span> AHU-1 급기온도 제어 루프</span>
+            <span class="ok-pill">운전</span>
+        </div>
+
+        <div class="hero-seam-stage" aria-hidden="true">
+            <div class="hseam-panel hseam-sw">
+                <div class="hseam-cap">감시 시스템 <span class="titlebar-dots">·</span> AHU-1</div>
+                <div class="tree">
+                    <div class="row"><span class="ic folder"></span>스테이션</div>
+                    <div class="row indent"><span class="ic station"></span>AHU-1</div>
+                    <div class="row indent2 sel"><span class="ic point"></span>SA-T<span class="hseam-pv" id="hero-tree-sat">55.1 °F</span></div>
+                    <div class="row indent2"><span class="ic point"></span>SA-SP<span class="hseam-pv" id="hero-tree-sp">55.0 °F</span></div>
+                    <div class="row indent2"><span class="ic point"></span>CLG-V<span class="hseam-pv" id="hero-tree-ao">62 %</span></div>
+                </div>
+                <div class="hseam-trend-wrap">
+                    <svg class="trend hseam-trend" viewBox="0 0 300 54" preserveAspectRatio="none" role="img" aria-label="급기온도와 설정값 추세">
+                        <defs><linearGradient id="trend-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--blue)" stop-opacity="0.3"/><stop offset="1" stop-color="var(--blue)" stop-opacity="0"/></linearGradient></defs>
+                        <line class="grid-l" x1="0" y1="18" x2="300" y2="18"/>
+                        <line class="grid-l" x1="0" y1="36" x2="300" y2="36"/>
+                        <polygon class="area" id="hero-trend-area" points=""/>
+                        <polyline class="line sp" id="hero-trend-sp" points=""/>
+                        <polyline class="line" id="hero-trend-line" points=""/>
+                    </svg>
+                    <div class="hseam-trend-key"><span class="k-pv">SA-T</span><span class="k-sp">설정값</span></div>
+                </div>
+            </div>
+
+            <div class="hseam-link">
+                <span class="hseam-wire"></span>
+                <span class="hseam-flow">피드백</span>
+                <span class="hseam-packet" id="hero-packet"><span id="hero-packet-val">55.1 °F</span></span>
+            </div>
+
+            <div class="device hseam-dev">
+                <div class="device-inner">
+                    <div class="device-tb"><span class="led led--run" aria-hidden="true"></span><span class="title">현장 제어기</span><span class="badge">AHU-1</span></div>
+                    <div class="lcd"><div class="k">급기 · AI1</div><div class="v" id="hero-lcd-sat">55.1<small>°F</small></div></div>
+                    <div class="hseam-2up">
+                        <div class="lcd"><div class="k">설정값</div><div class="v" style="font-size:1.1rem" id="hero-lcd-sp">55.0<small>°F</small></div></div>
+                        <div class="lcd"><div class="k">냉각 · AO1</div><div class="v" style="font-size:1.1rem" id="hero-lcd-ao">62<small>%</small></div></div>
+                    </div>
+                    <div class="gauge eq"><span class="gauge-label">밸브</span><div class="track"><div class="fill" id="hero-ao-fill" style="--pct:62%"></div></div><span class="pct" id="hero-ao-pct">62%</span></div>
+                    <div class="dev-leds">
+                        <span><span class="led led--run" aria-hidden="true"></span>운전</span>
+                        <span><span class="led led--comm" aria-hidden="true"></span>통신</span>
+                        <span><span class="led led--off" aria-hidden="true"></span>고장</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hseam-controls">
+            <label class="hseam-sp-label" for="hero-sp">설정값</label>
+            <input type="range" class="hseam-sp" id="hero-sp" min="52" max="58" step="0.5" value="55">
+            <output class="hseam-sp-out" id="hero-sp-out" for="hero-sp">55.0 °F</output>
+            <span class="hseam-readout" id="hero-readout">급기 55.1 °F · 밸브 62 %</span>
+            <a class="hseam-tuner-link" href="/ko/simulators/pid-tuner.html">전체 PID 튜너 열기 →</a>
+        </div>
+
+        <p class="hseam-legend">감시 시스템은 급기 센서를 읽고, 제어기는 냉각 밸브를 변조해 급기온도를 설정값으로 유지합니다. 설정값을 움직여 제어 루프가 이를 추종하는 모습을 관찰한 뒤, 전체 PID 튜너에서 직접 루프를 조정해 보세요.</p>
+    </div>
+
+    <div class="console-statusline">
+        <span class="ok-pill">실시간</span>
+        <span>AHU-1 <span class="titlebar-dots">·</span> 설정값 유지 중</span>
+        <span>v{{ site.version }} <span class="titlebar-dots">·</span> <time datetime="{{ site.buildDate }}">{{ site.buildDate }}</time></span>
+    </div>
+</section>
+
+<main id="main">
+
+    <div class="section-header">
+        <h2 class="section-label" data-stage="1">가이드</h2>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="card-grid two browse-grid">
+        {{ navCard({
+            section: 'reference', href: '/ko/bacnet/', titleShort: 'BACnet', titleFull: 'BACnet 참고 자료 허브 →',
+            desc: 'BACnet의 모든 내용을 한곳에 모았습니다. 객체 모델, 서비스, 네트워킹, MS/TP, BACnet과 Modbus 비교를 입문 순서대로 학습하고, 제어기가 보고하는 단위·오류·객체·우선순위를 해석하는 현장 도구를 사용할 수 있습니다.',
+            pills: ['여기서 시작', '학습 5개', '도구 6개']
+        }) }}
+        {{ navCard({
+            section: 'reference', href: '/ko/forced-air/', titleShort: '강제순환 공기', titleFull: '강제순환 공기 참고 자료 허브 →',
+            desc: '공기조화기에서 VAV 박스와 그 커미셔닝까지 공기측 전체를 순서대로 학습하고, 외기전담공조도 다룹니다. 풍량, 코일, 팬 도구로 시스템이 실제로 이송하는 공기를 측정·산정·점검할 수 있습니다.',
+            pills: ['여기서 시작', '학습 8개', '도구 13개']
+        }) }}
+        {{ navCard({
+            section: 'reference', href: '/ko/hydronics/', titleShort: '수배관 시스템', titleFull: '수배관 시스템 참고 자료 허브 →',
+            desc: '루프와 부하 배관부터 펌프 제어와 밸런싱까지 수측 전체를 학습합니다. 시스템 유량을 산정하는 밸브·유량·펌프 도구와 실시간 루프 빌더 샌드박스도 함께 제공합니다.',
+            pills: ['여기서 시작', '학습 5개', '도구 4개 + 시뮬레이터']
+        }) }}
+        {{ navCard({
+            section: 'reference', href: '/ko/refrigeration/', titleShort: '냉동', titleFull: '냉동 참고 자료 허브 →',
+            desc: '증기압축 냉동사이클부터 과열도·과냉도, 이를 유지하는 팽창장치까지 냉매 회로를 순서대로 학습합니다. P-T 및 과열도 계산기와 실시간 회로 시뮬레이터도 함께 제공합니다.',
+            pills: ['여기서 시작', '학습 3개', '도구 1개 + 시뮬레이터']
+        }) }}
+    </div>
+
+    <div class="section-header">
+        <h2 class="section-label" data-stage="2">범주별 도구</h2>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="card-grid home-cat-grid">
+        {{ navCard({
+            section: 'tools', href: '/ko/tools/#hvac', titleShort: 'HVAC', titleFull: 'HVAC 도구 →',
+            desc: '습공기선도, 외기냉방 비율, 공기 혼합, 코일 용량 산정, 코일 동결 위험, 노점, 냉매 P-T, 동력·에너지 변환을 하나의 필터된 보기에서 제공합니다. 공기측, 냉매, 단위 변환 계산을 다룹니다.',
+            pills: ['습공기 상태', '코일', '외기냉방', '도구 8개']
+        }) }}
+        {{ navCard({
+            section: 'tools', href: '/ko/tools/#protocols', titleShort: '프로토콜', titleFull: '프로토콜 도구 →',
+            desc: 'Modbus 레지스터 디코딩과 기능 코드, BACnet/IP 16진수 주소, BACnet 객체 참고 자료, 공급업체 ID 조회, 공학 단위·오류 코드 디코더, 우선순위 배열 해석 도구를 제공합니다. 통합 작업 중 마주치는 버스 계층 변환을 처리합니다.',
+            pills: ['Modbus', 'BACnet', '도구 8개']
+        }) }}
+        {{ navCard({
+            section: 'tools', href: '/ko/tools/#signals', titleShort: '신호', titleFull: '신호 도구 →',
+            desc: '아날로그 신호 스케일링(mA / V ↔ 공학 단위), 서미스터 / RTD 곡선, PID 파라미터 변환을 제공합니다. 포인트에서 실제 수치를 읽고 내보내는 데 필요한 계산입니다.',
+            pills: ['아날로그 I/O', '센서', '도구 3개']
+        }) }}
+        {{ navCard({
+            section: 'tools', href: '/ko/tools/#airflow', titleShort: '풍량', titleFull: '풍량 도구 →',
+            desc: '속도압, 덕트 트래버스, 공기측 부하, 장비 풍량 점검, 최소 외기량, 덕트 치수 산정을 제공합니다. 공기조화기가 실제로 이송하는 공기를 측정·점검·산정합니다.',
+            pills: ['속도압', '덕트', '도구 6개']
+        }) }}
+        {{ navCard({
+            section: 'tools', href: '/ko/tools/#electrical', titleShort: '전기', titleFull: '전기 도구 →',
+            desc: '제어 변압기 VA 용량, 배선 전압강하, 옴의 법칙·전력 점검용 현장 간편 계산기를 제공합니다. 패널 작업의 제어 전원과 배선 계산을 다룹니다.',
+            pills: ['변압기', '전압강하', '도구 3개']
+        }) }}
+        {{ navCard({
+            section: 'tools', href: '/ko/tools/#hydronics', titleShort: '수배관', titleFull: '수배관 도구 →',
+            desc: '밸브 Cv 용량 산정, 밸브 영향도, 수측 부하, 펌프·팬 상사 법칙을 제공합니다. 수측 용량을 산정하고 속도 변화에 따른 유량·양정·동력 변화를 예측합니다.',
+            pills: ['밸브', '펌프', '도구 4개']
+        }) }}
+    </div>
+
+    <div class="section-header" style="margin-top:3rem;">
+        <h2 class="section-label" data-stage="3">둘러보기</h2>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="card-grid two browse-grid">
+        {{ navCard({
+            section: 'home', href: '/ko/tools/', titleShort: '도구', titleFull: '계산기 및 조회 도구 →',
+            desc: '반복해서 필요한 업무를 위한 계산기와 조회 도구입니다. 단위 변환, 용량 산정 점검, 프로토콜 디코딩, 필요할 때 찾기 어려운 참고표를 제공합니다. 도구를 열어 답을 확인하고 바로 업무로 돌아갈 수 있습니다.',
+            pills: ['계산기', '조회', '변환기', '도구 32개']
+        }) }}
+        {{ navCard({
+            section: 'home', href: '/ko/simulators/', titleShort: '시뮬레이터', titleFull: '모델 실행하기 →',
+            desc: '브라우저에서 직접 조작하는 동작 모델입니다. 설정값을 바꾸고 고장을 강제 지정하며 제어 루프, 로직, 장비가 실시간으로 응답하는 모습을 관찰하세요. 실제 장비 앞에 서기 전에 제어 동작을 익힐 수 있습니다.',
+            pills: ['실습', '샌드박스', '실시간 모델', '시뮬레이터 9개']
+        }) }}
+        {{ navCard({
+            section: 'home', href: '/ko/education/', titleShort: '학습', titleFull: '기초 학습하기 →',
+            desc: '단순 용어집이 아니라 서로 연결된 해설 모음입니다. 일상 업무의 바탕이 되는 루프, 시스템, 프로토콜을 한 가지 질문씩 도식, 계산 예제, 간단한 대화형 위젯으로 설명합니다.',
+            pills: ['해설', '도식', '위젯', '학습 자료 40개']
+        }) }}
+        {{ navCard({
+            section: 'home', href: '/ko/practice/', titleShort: '연습문제', titleFull: '퀴즈 풀기 →',
+            desc: '학습 자료와 연결된 능동 인출 퀴즈와 더 폭넓은 현장 연습문제입니다. 면접·자격시험 형태의 시나리오, 프로토콜 특이사항, 문제 해결을 다룹니다. 업계에 처음 들어왔다면 첫 몇 달 버티기부터 가볍게 시작해 보세요.',
+            pills: ['퀴즈', '현장 연습', '능동 인출', '전체 41개']
+        }) }}
+    </div>
+
+    <div class="section-header" style="margin-top:3rem;">
+        <h2 class="section-label" data-stage="4">소개</h2>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card about-rebuild">
+        <div class="ps-row">
+            <span class="ps-label">직무</span>
+            <span class="ps-value">제어 프로그래머</span>
+        </div>
+        <div class="ps-row">
+            <span class="ps-label">산업</span>
+            <span class="ps-value">BAS / 빌딩 자동제어</span>
+        </div>
+        <div class="ps-row">
+            <span class="ps-label">지역</span>
+            <span class="ps-value">미국 북동부</span>
+        </div>
+        <div class="ps-row">
+            <span class="ps-label">개정</span>
+            <span class="ps-value">{{ site.lastRev }}</span>
+        </div>
+        <div class="ps-row">
+            <span class="ps-label">상태</span>
+            <span class="ps-value live">활동 중</span>
+        </div>
+        <div class="about-prose">
+            <p>안녕하세요. 저는 미국 북동부에서 일하는 제어 프로그래머입니다. 이 사이트는 바이브 코딩을 탐구하면서 진행하는 개인 프로젝트입니다. 이 분야에는 쉽게 찾아볼 수 있는 참고 웹사이트와 교육 자료가 분명히 부족합니다. 처음에는 자주 쓰는 참고 도구를 한곳에 모으기 위해 시작했지만 이제 훨씬 많은 내용을 담게 되었습니다. 제 지식이 쌓이기 시작한 때부터 같은 분야의 사람들을 가르치는 일은 제 열정이었습니다. 이 프로젝트를 통해 더 많은 사람과 그 지식을 나누고자 합니다. 사이트의 모든 내용은 가능한 한 정확성을 확인하지만, 잘못된 내용이 있다면 연락해 주세요. 정확성 문제를 반드시 수정하겠습니다. 보고 싶은 특정 도구나 주제가 있다면 제안해 주세요.</p>
+            <p>여기까지 오는 길은 조금 돌아갔습니다. 대학에서 전기공학을 공부하기 시작했지만 손으로 직접 다루지 않고 이론만 배우는 방식이 저와 맞지 않는다는 것을 빠르게 깨달았습니다. 읽기만 하는 대신 실제 일을 하고 싶었습니다. 어릴 때부터 전자·전기·기계 장치를 만져 왔고, 제어 분야는 그 모든 관심사가 겹치는 곳이었습니다. 학교를 떠나 제어 직무를 찾았고, 그때부터 이 분야가 제게 잘 맞았습니다.</p>
+            <p>일상 업무는 신축 프로젝트 프로그래밍, 기존 시스템의 레트로 커미셔닝, 그 사이에 늘 쌓이는 문제 해결 요청으로 나뉩니다. 주로 학교와 대학 같은 기관·교육 시설과 경공업 현장에서 일합니다. 이 사이트의 방향을 만든 교육에 대한 마음은 신입 직원들이 현장에 함께 나오기 시작하면서 더 커졌습니다. 누군가의 첫 운전 시퀀스를 차근차근 설명하거나 실제 제어반 문 뒤가 어떻게 생겼는지 보여 주는 일은 이 직업에서 특히 보람 있는 부분이었습니다.</p>
+            <p class="colophon">버그 신고, 도구 요청 또는 의견이 있다면 <a href="/ko/contact.html">문의해 주세요</a>.</p>
+        </div>
+    </div>
+
+</main>
+{% endblock %}

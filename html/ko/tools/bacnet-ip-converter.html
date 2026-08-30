@@ -1,0 +1,363 @@
+---
+title: BACnet/IP 16진수 변환기 — controlsfreak.dev
+description: BACnet/IP 주소를 16진수와 점으로 구분한 10진수 형식 사이에서 변환하고, 객체 유형 10비트와 인스턴스 22비트를 패킹하거나 언패킹하는 객체 ID 탭도 제공합니다.
+sourceContentHash: de457077e300fe1a9a7f33bd4be9f9012228789432a378bf9322fb876e83da9d
+sourceMessageHash: 7158c3e6511a44bbaf7c820658b68476248bddbcba825d6a1c5d60d595900e5a
+canonical: https://controlsfreak.dev/ko/tools/bacnet-ip-converter.html
+nav: tools
+category: protocols
+keywords: 16진수 점표기 십진수 주소 네트워크 번호 MAC APDU UDP 포트 47808 BAC0 EBO 객체 식별자 인스턴스 4194303 장치 ID 0xBAC0 47809 와일드카드 디코더
+pageMessages:
+  hexToIp:
+    invalid: 16진수는 8자(IP만) 또는 12자(IP + 포트)여야 합니다. 16진수 숫자만 입력할 수 있으며 공백, 대시, 콜론은 무시됩니다.
+    formatIpOnly: IP만
+    formatIpAndPort: IP + 포트
+    addressOnlyNoPortInString: '{bytes} → {ip} · 주소만 있음(이 문자열에는 포트가 없음)'
+    decodedWithPort: '{ipBytes} → {ip}  ·  {portBytes} → 포트 {port}'
+    defaultPortSuffix: ' (기본 BACnet/IP 포트)'
+    characterOne: '{count}자'
+    characterOther: '{count}자'
+  ipToHex:
+    invalid: IP는 점으로 구분한 네 개의 0–255 십진수여야 합니다. UDP 포트를 입력한 경우 0–65535의 정수여야 합니다.
+    formAddressOnly: 주소만
+    formAddressAndPort: 주소 + 포트
+    lengthEight: 8자
+    lengthTwelve: 12자
+    addressOnlyNoPort: '{ip} → {hex} · 주소만 있음(포트 없음)'
+    encodedWithPort: '{ip} : {port} → {ipHex} {portHex}  ·  포트 {port} = 0x{portHex}'
+  port:
+    defaultBacnetIp: 기본 BACnet/IP
+  objectId:
+    vendorProprietary: 벤더 전용(128–1023)
+    reservedAshrae: 예약됨(ASHRAE)
+    formula: raw = type × 2²² + instance = {type} × 4194304 + {instance} = {raw}  ·  해석 결과 {name}, {instance}
+    wildcardSuffix: '  ·  인스턴스 4194303은 미할당/와일드카드 값'
+    invalidRaw: 32비트 Object_Identifier를 10진수(0–4294967295) 또는 16진수(0x00000000–0xFFFFFFFF)로 입력하세요.
+    invalidParts: 유형은 0–1023의 정수(10비트), 인스턴스는 0–4194303의 정수(22비트)여야 합니다.
+    typeNames:
+      '0': 아날로그 입력(Analog Input, AI)
+      '1': 아날로그 출력(Analog Output, AO)
+      '2': 아날로그 값(Analog Value, AV)
+      '3': 바이너리 입력(Binary Input, BI)
+      '4': 바이너리 출력(Binary Output, BO)
+      '5': 바이너리 값(Binary Value, BV)
+      '6': 달력(Calendar)
+      '7': 명령(Command)
+      '8': 장치(Device)
+      '9': 이벤트 등록(Event Enrollment)
+      '10': 파일(File)
+      '11': 그룹(Group)
+      '12': 루프(Loop)
+      '13': 다중 상태 입력(Multi-state Input, MSI)
+      '14': 다중 상태 출력(Multi-state Output, MSO)
+      '15': 알림 클래스(Notification Class)
+      '16': 프로그램(Program)
+      '17': 스케줄(Schedule)
+      '18': 평균(Averaging)
+      '19': 다중 상태 값(Multi-state Value, MSV)
+      '20': 트렌드 로그(Trend Log)
+      '21': 생명안전 포인트(Life Safety Point)
+      '22': 생명안전 구역(Life Safety Zone)
+      '23': 누산기(Accumulator)
+      '24': 펄스 변환기(Pulse Converter)
+      '25': 이벤트 로그(Event Log)
+      '26': 전역 그룹(Global Group)
+      '27': 다중 트렌드 로그(Trend Log Multiple)
+      '28': 부하 제어(Load Control)
+      '29': 구조화 뷰(Structured View)
+      '30': 출입문(Access Door)
+      '31': 타이머(Timer)
+      '32': 출입 자격 증명(Access Credential)
+      '33': 출입 지점(Access Point)
+      '34': 출입 권한(Access Rights)
+      '35': 출입 사용자(Access User)
+      '36': 출입 구역(Access Zone)
+      '37': 자격 증명 데이터 입력(Credential Data Input)
+      '38': 네트워크 보안(Network Security)
+      '39': 비트 문자열 값(BitString Value)
+      '40': 문자 문자열 값(CharacterString Value)
+      '41': 날짜 패턴 값(DatePattern Value)
+      '42': 날짜 값(Date Value)
+      '43': 날짜시간 패턴 값(DateTimePattern Value)
+      '44': 날짜시간 값(DateTime Value)
+      '45': 정수 값(Integer Value)
+      '46': 대형 아날로그 값(Large Analog Value)
+      '47': 옥텟 문자열 값(OctetString Value)
+      '48': 양의 정수 값(Positive Integer Value)
+      '49': 시간 패턴 값(TimePattern Value)
+      '50': 시간 값(Time Value)
+      '51': 알림 전달자(Notification Forwarder)
+      '52': 경보 등록(Alert Enrollment)
+      '53': 채널(Channel)
+      '54': 조명 출력(Lighting Output)
+      '55': 바이너리 조명 출력(Binary Lighting Output)
+      '56': 네트워크 포트(Network Port)
+      '57': 승강기 그룹(Elevator Group)
+      '58': 에스컬레이터(Escalator)
+      '59': 엘리베이터(Lift)
+      '60': 단계 제어(Staging)
+      '61': 감사 로그(Audit Log)
+      '62': 감사 보고자(Audit Reporter)
+      '63': 색상(Color)
+      '64': 색온도(Color Temperature)
+
+faqs:
+    - q: BACnet/IP는 어떤 포트를 사용하나요?
+      a: UDP 47808이며, 16진수로는 0xBAC0입니다. IANA에 등록된 BACnet 포트이자 어디서나 사용하는 기본값입니다. 한 호스트에서 논리적인 BACnet/IP 네트워크를 여러 개 운용할 때는 관례적으로 47809(0xBAC1)부터 차례로 사용하지만, 이 추가 포트들은 IANA에 등록되어 있지 않습니다.
+    - q: BACnet 객체 식별자(Object Identifier)는 어떻게 인코딩되나요?
+      a: 하나의 32비트 값으로 인코딩됩니다. 상위 10비트는 객체 유형(0–1023), 하위 22비트는 인스턴스(0–4194303)입니다. raw = type × 4194304 + instance이므로 Device 1234는 0x020004D2로 패킹됩니다.
+    - q: 인스턴스 4194303은 무엇을 의미하나요?
+      a: 22비트가 모두 1인 값으로, 미할당/와일드카드 인스턴스로 예약되어 있어 실제 객체에는 사용할 수 없습니다. 디스커버리 트래픽이나 이 값을 "임의의 인스턴스"라는 뜻으로 사용하는 도구에서 볼 수 있습니다.
+    - q: 워크스테이션에서 BACnet/IP 주소가 16진수로 표시되는 이유는 무엇인가요?
+      a: BACnet/IP는 IPv4 주소 4바이트와 UDP 포트 2바이트, 총 6바이트로 장치를 식별하며 일부 프런트엔드는 이 바이트를 가공하지 않은 16진수로 표시합니다. C0A80164BAC0은 포트 47808의 192.168.1.100을 뜻합니다.
+---
+{% extends "html/tools/bacnet-ip-converter.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · BACnet/IP 16진수 변환기</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                BACnet/IP 16진수 변환기
+                <span class="tool-tag">BACnet</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>EBO와 여러 BACnet 도구가 BACnet/IP 장치에 대해 표시하는 16진수 바이트열 ↔ 점으로 구분한 10진수 IP 주소와 UDP 포트를 양방향으로 변환합니다.</summary>
+            <div class="preamble-rest">
+                <em>16진수 → IP</em>는 8자(IP만) 또는 12자(IP + 포트) 16진수 문자열을 디코딩합니다.
+                <em>IP → 16진수</em>는 점으로 구분한 10진수 IP와 선택 입력인 포트로 문자열을 만듭니다. 기본 포트는
+                47808(0xBAC0)입니다.
+                <em>객체 ID</em>는 BACnet 도구에 표시되는 또 하나의 32비트 바이트열, 즉
+                Object_Identifier의 10비트 유형과 22비트 인스턴스를 언패킹하고 다시 하나의 값으로 패킹합니다.
+            </div>
+        </details>
+        <p class="ps-seed-note">입력란에는 예제가 미리 채워져 있습니다. 확인하려는 값으로 수정하세요.</p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="hex2ip">16진수 → IP</button>
+            <button class="tab-btn"        data-tab="ip2hex">IP → 16진수</button>
+            <button class="tab-btn"        data-tab="objid">객체 ID</button>
+        </div>
+
+        <!-- ── Hex → IP ── -->
+        <div id="tab-hex2ip" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="b2i-hex">16진수 문자열</label>
+                        <input class="ps-input" type="text" id="b2i-hex" placeholder="C0A80164BAC0" value="C0A80164BAC0">
+                    </div>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="ps-row">
+                        <span class="ps-label">IP 주소</span>
+                        <span class="ps-value muted" id="b2i-ip">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">UDP 포트</span>
+                        <span class="ps-value muted" id="b2i-port">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">포트 설명</span>
+                        <span class="ps-value muted" id="b2i-notes">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">길이</span>
+                        <span class="ps-value muted" id="b2i-len">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">형식</span>
+                        <span class="ps-value muted" id="b2i-fmt">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="b2i-copy-ip">IP 복사</button>
+                        <button class="copy-btn" id="b2i-copy-ip-port">IP:포트 복사</button>
+                    </div>
+                </section>
+
+            </div>
+            <div class="result-formula flush" id="b2i-formula"></div>
+            <div class="failure-callout" id="b2i-callout" hidden></div>
+            <section class="tool-body-row">
+                <h2 class="ps-section-label" id="hex-address">BACnet/IP 주소가 16진수로 패킹되는 방식</h2>
+                <p class="ref-note" style="margin-top:0;">
+                    BACnet/IP는 IPv4 주소 4바이트와 UDP 포트 2바이트, 총 6바이트로 장치를 식별하며 일부 <button type="button" data-gloss="front-end">프런트엔드</button>는 이 바이트를 하나의 16진수 문자열로 그대로 표시합니다. <code>C0A8 0164 BAC0</code>은 포트 47808의 192.168.1.100으로 해석되며, 8자 문자열에는 주소만 들어 있습니다.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── IP → Hex ── -->
+        <div id="tab-ip2hex" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="i2h-ip">IP 주소</label>
+                        <input class="ps-input" type="text" id="i2h-ip" placeholder="192.168.1.100" value="192.168.1.100">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="i2h-port">UDP 포트</label>
+                        <input class="ps-input" type="number" id="i2h-port" min="0" max="65535" step="1" placeholder="47808 — 선택 입력" value="47808">
+                    </div>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="ps-row">
+                        <span class="ps-label">16진수 문자열</span>
+                        <span class="ps-value muted" id="i2h-hex">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">길이</span>
+                        <span class="ps-value muted" id="i2h-len">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">포트 설명</span>
+                        <span class="ps-value muted" id="i2h-notes">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">출력 형식</span>
+                        <span class="ps-value muted" id="i2h-form">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="i2h-copy-hex">16진수 복사</button>
+                    </div>
+                </section>
+
+            </div>
+            <div class="result-formula flush" id="i2h-formula"></div>
+            <div class="failure-callout" id="i2h-callout" hidden></div>
+            <section class="tool-body-row">
+                <h2 class="ps-section-label" id="hex-encode">BACnet/IP 장치 주소 → 8자 또는 12자 16진수 문자열</h2>
+                <p class="ref-note" style="margin-top:0;">
+                    점으로 구분한 10진수 주소의 각 옥텟은 16진수 1바이트 쌍으로 바뀌고, UDP 포트는 그 뒤에 2바이트로 추가됩니다. 기본 BACnet/IP 포트는 <code>BAC0</code>으로 인코딩됩니다. 12자 결과는 <button type="button" data-gloss="bbmd">BBMD</button>의 <button type="button" data-gloss="broadcast-distribution-table">Broadcast Distribution Table(브로드캐스트 분배 테이블)</button> 항목에 들어가는 것과 같은 6바이트 주소 필드입니다. 각 항목에서는 이 주소 필드와 4바이트 브로드캐스트 분배 마스크를 함께 사용합니다.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Object ID ── -->
+        <div id="tab-objid" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="boi-raw">원시 Object_Identifier(10진수 또는 0x 16진수)</label>
+                        <input class="ps-input" type="text" id="boi-raw" placeholder="0x020004D2" value="0x020004D2">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="boi-type">객체 유형(0–1023)</label>
+                        <input class="ps-input" type="number" id="boi-type" min="0" max="1023" step="1" placeholder="8">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="boi-instance">인스턴스(0–4194303)</label>
+                        <input class="ps-input" type="number" id="boi-instance" min="0" max="4194303" step="1" placeholder="1234">
+                    </div>
+                    <p class="bit-hint" style="margin-top:0.85rem;">양방향으로 사용할 수 있습니다. 통신선에서 읽은 원시 값을 붙여 넣거나, 유형 번호와 인스턴스를 입력해 하나의 값을 패킹하세요.</p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="ps-row">
+                        <span class="ps-label">객체 유형</span>
+                        <span class="ps-value muted" id="boi-out-type">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">인스턴스</span>
+                        <span class="ps-value muted" id="boi-out-instance">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">해석 결과</span>
+                        <span class="ps-value muted" id="boi-out-ref">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">원시 값(10진수)</span>
+                        <span class="ps-value muted" id="boi-out-dec">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">원시 값(16진수)</span>
+                        <span class="ps-value muted" id="boi-out-hex">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="boi-copy-ref">유형·인스턴스 복사</button>
+                        <button class="copy-btn" id="boi-copy-dec">10진수 복사</button>
+                        <button class="copy-btn" id="boi-copy-hex">16진수 복사</button>
+                    </div>
+                </section>
+
+            </div>
+            <div class="result-formula flush" id="boi-formula"></div>
+            <div class="failure-callout" id="boi-callout" hidden></div>
+            <section class="tool-body-row">
+                <h2 class="ps-section-label" id="object-identifier">BACnet 객체 식별자 디코더 — 유형 10비트, 인스턴스 22비트</h2>
+                <p class="ref-note" style="margin-top:0;">
+                    32비트 <code>Object_Identifier</code>는 상위 10비트에 객체 유형을, 하위 22비트에 인스턴스를 패킹합니다. raw = type × 4194304 + instance이므로 <code>0x020004D2</code>는 Device, 1234로 해석됩니다. 전체 <code>Object_Type</code> 표는 <a href="/ko/tools/bacnet-objects.html">BACnet 객체 참조</a>에서 확인할 수 있으며, 인스턴스 4194303은 미할당/와일드카드 값입니다.
+                </p>
+            </section>
+        </div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h2 class="tool-card-title">BACnet/IP 포트 참조 — UDP 47808(0xBAC0)</h2>
+        </div>
+        <div class="tool-body">
+            <table class="ref-table-dense">
+                <thead>
+                    <tr><th>포트</th><th>16진수</th><th class="use">일반적인 용도</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>47808</td><td>BAC0</td><td class="use">기본 BACnet/IP</td></tr>
+                </tbody>
+            </table>
+            <p class="ref-note" style="margin-top:1rem;">
+                UDP 47808(0xBAC0)은 IANA에 등록된 BACnet 포트입니다. 동일한 호스트에서 논리적인 BACnet/IP 네트워크를 여러 개 운용하지 않는 한 현장에서 접할 포트는 이 하나뿐입니다. ASHRAE 135 Annex J는 추가 네트워크에 연속된 포트(47809/BAC1 이상)를 사용하는 관례를 설명하지만, 이러한 포트는 IANA에 등록되어 있지 않습니다. 현장의 실제 BACnet 설계와 대조해 확인하세요.
+            </p>
+            <p class="ref-note">
+                <a href="/ko/education/bacnet-basics.html">BACnet 기초</a>에서는
+                객체 모델, 서비스, <button type="button" data-gloss="priority-array">우선순위 배열</button>, Who-Is/I-Am
+                디스커버리의 작동 방식을 설명합니다. <a href="/ko/education/bacnet-networking.html">BACnet 네트워킹</a>은
+                위 16진수 바이트열 변환을 이해하는 데 필요한 주의점을 다루는 짝 학습 자료입니다. 주소 지정의 세 계층, <button type="button" data-gloss="bbmd">BBMD</button>와 <button type="button" data-gloss="foreign-device">Foreign Device Registration(외부 장치 등록)</button>, 그리고
+                각 BACnet/IP 메시지를 감싸는 BVLL/NPDU/<button type="button" data-gloss="apdu">APDU</button> 프레임을 설명합니다.
+            </p>
+        </div>
+    </div>
+
+    {{ faqBlock(faqs, "BACnet/IP 주소 지정 자주 묻는 질문") }}
+
+    {{ relatedLinks({
+        hub: {href: '/ko/bacnet/', label: 'BACnet 참조 허브'},
+        tools: [
+            {href: '/ko/tools/bacnet-objects.html', label: 'BACnet 객체 참조'},
+            {href: '/ko/tools/bacnet-vendor-ids.html', label: 'BACnet 벤더 ID'},
+            {href: '/ko/tools/modbus-register-viewer.html', label: 'Modbus 레지스터 뷰어'}
+        ],
+        lessons: [
+            {href: '/ko/education/bacnet-basics.html', label: 'BACnet 기초'},
+            {href: '/ko/education/bacnet-networking.html', label: 'BACnet 네트워킹'},
+            {href: '/ko/education/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/bacnet-basics.html', label: 'BACnet 기초'},
+            {href: '/ko/practice/bacnet-networking.html', label: 'BACnet 네트워킹'},
+            {href: '/ko/practice/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

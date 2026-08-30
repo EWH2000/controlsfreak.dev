@@ -1,0 +1,223 @@
+---
+title: 제어밸브 Cv 계산기 — controlsfreak.dev
+description: 유량계수 식 Cv = Q√(SG/ΔP)를 Cv·유량·압력강하 방향으로 계산하고 Kv 환산과 밸브 영향도까지 점검하는 제어밸브 선정 도구입니다.
+sourceContentHash: 0c43692dd17726c4e0b9c8ca3a714d78c1afd5858e52443a46787a0a8e02305a
+sourceMessageHash: 985fe4aadc906d8b32c818ce294251d236cdfb4dfe1325498e4c35175869a981
+canonical: https://controlsfreak.dev/ko/tools/valve-cv.html
+nav: tools
+category: hydronics
+keywords: gpm psi kv kvs 유량계수 밸브 영향도 델타 p 선정 계산기
+pageMessages:
+    output:
+        requiredCv: "필요 Cv"
+        flow: "유량"
+        pressureDrop: "압력강하 ΔP"
+    errors:
+        specificGravity: "비중은 0보다 커야 합니다(물 = 1)."
+        flowDropInputs: "밸브를 선정하려면 유량과 압력강하를 입력하세요."
+        flowDropRange: "유량은 0 이상이고 압력강하는 0보다 커야 합니다."
+        cvDropInputs: "유량을 계산하려면 Cv와 압력강하를 입력하세요."
+        cvDropRange: "Cv와 압력강하는 음수일 수 없습니다."
+        cvFlowInputs: "압력강하를 계산하려면 Cv와 유량을 입력하세요."
+        cvPositive: "압력강하를 계산하려면 Cv가 0보다 커야 합니다."
+        flowNonnegative: "유량은 음수일 수 없습니다."
+    formula:
+        requiredCv: "Cv = {flow} × √({sg} ÷ {drop}) = {result}"
+        flow: "Q = {cv} × √({drop} ÷ {sg}) = {result} GPM"
+        pressureDrop: "ΔP = {sg} × ({flow} ÷ {cv})² = {result} psi"
+        authority: "β = {valve} ÷ ({valve} + {rest}) = {beta}"
+    copy:
+        value: "{value} 복사"
+    authority:
+        prompt: "두 압력강하를 모두 입력하면 판정 결과가 표시됩니다."
+        negative: "압력강하는 음수일 수 없습니다."
+        zero: "총 압력강하가 0입니다. 영향도를 형성할 회로가 없습니다."
+    verdict:
+        good: "영향도 양호(β = {beta}). 밸브가 전체 스트로크에서 유량을 실질적으로 제어합니다. 일반적인 설계 하한은 0.5입니다."
+        marginal: "영향도 한계(β = {beta}). 제어가 비선형이 되어 대부분의 조절이 스트로크 초반에 일어납니다. 밸브의 압력강하 비율을 높이세요."
+        poor: "영향도 불량(β = {beta}). 밸브가 유량을 거의 제어하지 못해 루프가 헌팅합니다. 밸브가 회로 압력강하에서 더 큰 비율을 차지하도록 다시 선정하거나 과대선정 여부를 확인하세요."
+faqs:
+    - q: 밸브 Cv란 무엇인가요?
+      a: 유량계수 Cv는 완전 개방된 밸브가 압력강하 1 psi에서 통과시키는 60°F 물의 GPM입니다. 같은 압력강하에서 Cv가 클수록 더 많은 유량이 흐르는 밸브 용량 정격입니다.
+    - q: 밸브 Cv는 어떻게 계산하나요?
+      a: Cv = Q × √(SG ÷ ΔP)로 계산합니다. Q는 GPM 유량, SG는 비중(물은 1.0), ΔP는 밸브 전후 압력강하(psi)입니다. 같은 식을 역산해 유량이나 압력강하도 구할 수 있습니다.
+    - q: Kv 또는 Kvs를 Cv로 어떻게 환산하나요?
+      a: Cv ≈ 1.156 × Kv이고 Kv ≈ 0.865 × Cv입니다. Kv와 완전 개방 밸브의 정격 Kv인 Kvs는 압력강하 1 bar에서 물의 m³/h를 나타내는 미터법 계수이고 Cv는 압력강하 1 psi에서 GPM을 나타내는 미국 단위계 계수입니다.
+    - q: 제어밸브는 어떤 Cv로 선정해야 하나요?
+      a: 설계 조건에서 필요한 Cv와 같거나 바로 위인 카탈로그 정격 Cv의 밸브를 선택하세요. 조금 작은 값은 허용될 수 있지만 지나치게 큰 값은 밸브 영향도를 떨어뜨리므로 선정 후 영향도를 확인해야 합니다.
+---
+{% extends "html/tools/valve-cv.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 밸브 Cv</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                제어밸브 Cv 계산기
+                <span class="tool-tag">수배관</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>제어밸브는 압력강하 1 psi에서 통과시키는 물의 GPM인 유량계수 <em>Cv</em>로 정격을 표시합니다.</summary>
+            <div class="preamble-rest">
+                <em>Cv / 유량 / ΔP</em>는 어느 방향으로든 선정식을 계산합니다. 주어진 유량과 압력강하에 필요한 Cv, 알려진 밸브가 통과시키는 유량 또는 밸브가 만드는 압력강하를 구합니다.
+                <em>밸브 영향도</em>에서는 밸브가 회로 압력강하 중 충분한 비율을 차지해 실제로 유량을 제어할 수 있는지 확인합니다.
+            </div>
+        </details>
+        <p class="ps-seed-note">입력란에는 예제가 미리 채워져 있습니다. 확인하려는 값으로 수정하세요.</p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="size">Cv / 유량 / ΔP</button>
+            <button class="tab-btn"        data-tab="auth">밸브 영향도</button>
+        </div>
+
+        <div id="tab-size" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="cv-solve">계산 대상</label>
+                        <select class="ps-input" id="cv-solve">
+                            <option value="cv">필요 Cv</option>
+                            <option value="flow">유량(GPM)</option>
+                            <option value="dp">압력강하(psi)</option>
+                        </select>
+                    </div>
+                    <div class="ps-row" id="cv-row-cv">
+                        <label class="ps-label" for="cv-cv">유량계수 Cv</label>
+                        <input class="ps-input" type="number" id="cv-cv" step="any" min="0" placeholder="11" value="11">
+                    </div>
+                    <div class="ps-row" id="cv-row-flow">
+                        <label class="ps-label" for="cv-flow">유량(GPM)</label>
+                        <input class="ps-input" type="number" id="cv-flow" step="any" min="0" placeholder="20" value="20">
+                    </div>
+                    <div class="ps-row" id="cv-row-dp">
+                        <label class="ps-label" for="cv-dp">압력강하 ΔP(psi)</label>
+                        <input class="ps-input" type="number" id="cv-dp" step="any" min="0" placeholder="3.3" value="3.3">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="cv-sg">비중(물 = 1)</label>
+                        <input class="ps-input" type="number" id="cv-sg" step="any" min="0" placeholder="1.0" value="1">
+                    </div>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="ps-row primary">
+                        <span class="ps-label" id="cv-out-label">필요 Cv</span>
+                        <span class="ps-value muted" id="cv-out">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">Kv 환산값(m³/h·bar<sup>−½</sup>)</span>
+                        <span class="ps-value muted" id="cv-kv">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="cv-copy">값 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="cv-formula"></div>
+                    <div class="failure-callout" id="cv-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">계산 예시</h2>
+                <p class="ref-note worked-intro">
+                    코일에 물 20 GPM(SG 1.0)이 필요하고 일람표에서 설계 유량 시 제어밸브 전후 압력강하를 3.3 psi로 허용합니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>선정식은 <code>Cv = Q × √(SG ÷ ΔP)</code>입니다.</li>
+                    <li>값을 대입하면 <code>Cv = 20 × √(1.0 ÷ 3.3) = 11.0</code>입니다.</li>
+                    <li>카탈로그에서 정격 Cv가 11과 같거나 바로 위인 밸브를 선택하세요. 조금 작은 값은 허용될 수 있지만 지나치게 크면 다음 탭에서 확인할 영향도가 낮아집니다.</li>
+                </ol>
+                <p class="ref-note">
+                    <em>계산 대상</em>을 바꾸면 알려진 Cv와 압력강하로 유량을 구하거나, 목표 유량에서 밸브가 만드는 압력강하를 구할 수 있습니다. 미터법 계수도 함께 표시됩니다. <code>Kv ≈ 0.865 × Cv</code>이며 Kv는 압력강하 1 bar에서의 m³/h입니다.
+                </p>
+                <p class="ref-note">
+                    이 값의 적용 범위에는 두 가지 경계가 있습니다. <code>√</code> 형태는 난류이며 <strong>플래싱이 없는</strong> 액체를 가정합니다. ΔP가 커서 액체가 플래싱하고 캐비테이션이 발생하면 초크 유동(F<sub>L</sub>) 보정이 필요하고 제곱근 관계가 성립하지 않습니다. 또한 여기서 구하는 Cv는 <strong>완전 개방 정격</strong>입니다. 스트로크에 따라 유량이 어떻게 변하는지는 이 값이 아니라 밸브의 <button type="button" data-gloss="installed-characteristic">고유 특성</button>이 결정합니다. Cv를 선정한 뒤 다음 탭에서 밸브가 회로 압력강하를 충분히 차지해 실제로 제어할 수 있는지 확인하세요.
+                </p>
+            </section>
+        </div>
+
+        <div id="tab-auth" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="cv-auth-valve">설계 유량·완전 개방 시 밸브 전후 ΔP</label>
+                        <input class="ps-input" type="number" id="cv-auth-valve" step="any" min="0" placeholder="7" value="7">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="cv-auth-rest">제어 분기의 나머지 부분 전후 ΔP</label>
+                        <input class="ps-input" type="number" id="cv-auth-rest" step="any" min="0" placeholder="3" value="3">
+                    </div>
+                    <p class="ref-note">
+                        일관된 압력 단위라면 무엇이든 사용할 수 있습니다. 영향도는 비율이므로 단위가 소거됩니다. “분기의 나머지 부분”은 밸브가 움직일 때 압력강하가 달라지는 코일, 밸런싱 밸브와 해당 제어 회로의 부속 전체입니다.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="ps-row primary">
+                        <span class="ps-label">밸브 영향도 β</span>
+                        <span class="ps-value muted" id="cv-auth-beta">—</span>
+                    </div>
+                    <div class="result-formula wrap" id="cv-auth-formula"></div>
+                    <div class="cv-verdict" id="cv-auth-verdict">두 압력강하를 모두 입력하면 판정 결과가 표시됩니다.</div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">영향도의 의미</h2>
+                <p class="ref-note">
+                    제어밸브가 유량을 제어하려면 회로 압력강하 중 충분한 비율을 차지해야 합니다. 영향도 <code>β = ΔP<sub>밸브, 개방</sub> ÷ (ΔP<sub>밸브, 개방</sub> + ΔP<sub>나머지</sub>)</code>는 완전 개방된 밸브 전후 압력강하를 밸브에 따라 달라지는 회로 부분의 총 압력강하와 비교합니다. 영향도가 낮으면 스트로크의 아주 작은 초반 구간에서 조절 대부분이 일어나 루프가 <button type="button" data-gloss="hunting">헌팅</button>하고 나머지 스트로크는 거의 역할을 하지 못합니다.
+                </p>
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr><th>β</th><th>제어 품질</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>≥ 0.5</td><td>양호 — <button type="button" data-gloss="installed-characteristic">설치 특성</button>이 선형에 가깝게 유지됩니다.</td></tr>
+                        <tr><td>0.25 – 0.5</td><td>한계 — 스트로크 초반에 집중되어 왜곡됩니다.</td></tr>
+                        <tr><td>&lt; 0.25</td><td>불량 — 실질적인 제어가 적고 헌팅하기 쉽습니다.</td></tr>
+                    </tbody>
+                </table>
+                <p class="ref-note">
+                    <button type="button" data-gloss="equal-percentage">등비율</button> 밸브는 회로 저항이 증가하는 조건과 결합할 때 <button type="button" data-gloss="installed-characteristic">설치 특성</button>이 선형에 가까워지므로 일반적으로 선택합니다. 그러나 처음부터 영향도가 충분할 때만 성립합니다. Cv 과대선정은 조용히 영향도를 무너뜨립니다. 필요보다 훨씬 큰 밸브는 조금만 열려도 유량이 흐르므로 영향도가 낮아집니다. <a href="/ko/tools/valve-authority.html">밸브 영향도 계산기</a>에서 β가 낮아질 때 <button type="button" data-gloss="installed-characteristic">설치 특성</button> 곡선이 어떻게 왜곡되는지 확인할 수 있습니다.
+                </p>
+            </section>
+        </div>
+    </div>
+
+    {{ faqBlock(faqs, "밸브 Cv 자주 묻는 질문") }}
+
+    {{ relatedLinks({
+        hub: {href: '/ko/hydronics/', label: '수배관 시스템 참조 허브'},
+        tools: [
+            {href: '/ko/tools/valve-authority.html', label: '밸브 영향도 계산기'},
+            {href: '/ko/tools/waterside-load.html', label: '수배관 부하 계산기'}
+        ],
+        lessons: [
+            {href: '/ko/education/balancing.html', label: '수배관 밸런싱'},
+            {href: '/ko/education/load-piping.html', label: '부하 배관'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/balancing.html', label: '수배관 밸런싱'},
+            {href: '/ko/practice/load-piping.html', label: '부하 배관'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

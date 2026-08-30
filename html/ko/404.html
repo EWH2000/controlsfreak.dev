@@ -1,0 +1,45 @@
+---
+title: 페이지를 찾을 수 없습니다 — controlsfreak.dev
+description: 입력한 URL에 해당하는 페이지가 없습니다. 위의 탐색 메뉴에서 도구, 시뮬레이터, 학습, 연습문제를 선택하거나 홈으로 돌아가세요.
+sourceContentHash: 87ec5146ab6f5ebb83d397f874a24f3c36bd83d4a7382c07d0b649eb2c301738
+noindex: true
+eleventyExcludeFromCollections: true
+permalink: /ko/404.html
+---
+{% extends "html/404.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">404</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                페이지를 찾을 수 없습니다
+                <span class="tool-tag">404</span>
+            </h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="tool-preamble">
+                입력한 URL에 해당하는 페이지가 없습니다. 링크가 오래되었거나 주소를 잘못 입력했을 수 있습니다. 다음 페이지에서 다시 시작해 보세요.
+            </p>
+
+            <ul>
+                <li><a href="/ko/">홈</a> — 현장 참고 자료 개요입니다.</li>
+                <li><a href="/ko/tools/">도구</a> — 단위 변환, 용량 산정 확인, 프로토콜 디코딩, 참고표를 위한 계산기와 조회 도구입니다.</li>
+                <li><a href="/ko/simulators/">시뮬레이터</a> — 설정값을 바꾸고, 고장을 강제 지정하며, 실시간 응답을 관찰할 수 있는 동작 모델입니다.</li>
+                <li><a href="/ko/education/">학습</a> — 수배관 루프, VFD, BACnet, Modbus 등을 다루는 실무 해설입니다.</li>
+                <li><a href="/ko/practice/">연습문제</a> — 입문자를 위한 '첫 몇 달 버티기' 문제를 포함해 지식을 점검하는 퀴즈와 현장 연습문제입니다.</li>
+                <li><a href="/ko/contact.html">문의하기</a> — 끊어진 링크도 제보해 주세요.</li>
+            </ul>
+
+        </div>
+    </div>
+
+</main>
+{% endblock %}

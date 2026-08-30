@@ -5,6 +5,35 @@ canonical: https://controlsfreak.dev/tools/valve-cv.html
 nav: tools
 category: hydronics
 keywords: gpm psi kv kvs flow coefficient valve authority delta p sizing calculator
+pageMessages:
+    output:
+        requiredCv: "Required Cv"
+        flow: "Flow"
+        pressureDrop: "Pressure drop ΔP"
+    errors:
+        specificGravity: "Specific gravity must be greater than 0 (water = 1)."
+        flowDropInputs: "Enter flow and pressure drop to size the valve."
+        flowDropRange: "Flow must be ≥ 0 and pressure drop greater than 0."
+        cvDropInputs: "Enter Cv and pressure drop to find the flow."
+        cvDropRange: "Cv and pressure drop can’t be negative."
+        cvFlowInputs: "Enter Cv and flow to find the pressure drop."
+        cvPositive: "Cv must be greater than 0 to compute a pressure drop."
+        flowNonnegative: "Flow can’t be negative."
+    formula:
+        requiredCv: "Cv = {flow} × √({sg} ÷ {drop}) = {result}"
+        flow: "Q = {cv} × √({drop} ÷ {sg}) = {result} GPM"
+        pressureDrop: "ΔP = {sg} × ({flow} ÷ {cv})² = {result} psi"
+        authority: "β = {valve} ÷ ({valve} + {rest}) = {beta}"
+    copy:
+        value: "Copy {value}"
+    authority:
+        prompt: "Enter both pressure drops to see the verdict."
+        negative: "Pressure drops can’t be negative."
+        zero: "Total drop is zero — there’s no circuit to take authority over."
+    verdict:
+        good: "Good authority (β = {beta}). The valve keeps real control over flow across its stroke; 0.5 is the common design floor."
+        marginal: "Marginal authority (β = {beta}). Control turns nonlinear — most of the throttling happens early in the stroke. Aim for more drop across the valve."
+        poor: "Poor authority (β = {beta}). The valve barely controls flow and the loop will hunt. Resize for a larger share of the circuit drop, or check for oversizing."
 faqs:
     - q: What is valve Cv?
       a: Cv, the flow coefficient, is the GPM of 60 °F water a valve passes wide open at 1 psi pressure drop. It's the valve's capacity rating — a higher Cv passes more flow at the same drop.
@@ -16,8 +45,8 @@ faqs:
       a: Choose the cataloged valve whose rated Cv sits at or just above the required Cv for the design duty. Slightly under is fine; significantly oversized costs you valve authority, so check authority after sizing.
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
-{% from "faq.njk" import faqBlock %}
+{% from "related-links.njk" import relatedLinks with context %}
+{% from "faq.njk" import faqBlock with context %}
 
 {% block head %}
     <style>
@@ -266,7 +295,8 @@ faqs:
             // the previous solve-for's label next to the em-dash (e.g.
             // "Flow —" while solving for ΔP — audit-2026-06 polish).
             outLabelEl.textContent =
-                solve === 'cv' ? 'Required Cv' : solve === 'flow' ? 'Flow' : 'Pressure drop ΔP';
+                solve === 'cv' ? CFI18n.page('output.requiredCv') :
+                solve === 'flow' ? CFI18n.page('output.flow') : CFI18n.page('output.pressureDrop');
 
             const sg   = parseFloat(sgEl.value);
             const cv   = parseFloat(cvEl.value);
@@ -274,30 +304,30 @@ faqs:
             const dp   = parseFloat(dpEl.value);
 
             if (!isFinite(sg) || sg <= 0) {
-                muteSize('Specific gravity must be greater than 0 (water = 1).');
+                muteSize(CFI18n.page('errors.specificGravity'));
                 return;
             }
 
             let result, label, unit, formula, cvForKv;
             if (solve === 'cv') {
-                if (!isFinite(flow) || !isFinite(dp)) { muteSize('Enter flow and pressure drop to size the valve.'); return; }
-                if (flow < 0 || dp <= 0) { muteSize('Flow must be ≥ 0 and pressure drop greater than 0.'); return; }
+                if (!isFinite(flow) || !isFinite(dp)) { muteSize(CFI18n.page('errors.flowDropInputs')); return; }
+                if (flow < 0 || dp <= 0) { muteSize(CFI18n.page('errors.flowDropRange')); return; }
                 result = flow * Math.sqrt(sg / dp);
-                label = 'Required Cv'; unit = ''; cvForKv = result;
-                formula = `Cv = ${tidy(flow, 4)} × √(${tidy(sg, 4)} ÷ ${tidy(dp, 4)}) = ${tidy(result, 2)}`;
+                label = CFI18n.page('output.requiredCv'); unit = ''; cvForKv = result;
+                formula = CFI18n.page('formula.requiredCv', { flow: tidy(flow, 4), sg: tidy(sg, 4), drop: tidy(dp, 4), result: tidy(result, 2) });
             } else if (solve === 'flow') {
-                if (!isFinite(cv) || !isFinite(dp)) { muteSize('Enter Cv and pressure drop to find the flow.'); return; }
-                if (cv < 0 || dp < 0) { muteSize('Cv and pressure drop can’t be negative.'); return; }
+                if (!isFinite(cv) || !isFinite(dp)) { muteSize(CFI18n.page('errors.cvDropInputs')); return; }
+                if (cv < 0 || dp < 0) { muteSize(CFI18n.page('errors.cvDropRange')); return; }
                 result = cv * Math.sqrt(dp / sg);
-                label = 'Flow'; unit = ' GPM'; cvForKv = cv;
-                formula = `Q = ${tidy(cv, 4)} × √(${tidy(dp, 4)} ÷ ${tidy(sg, 4)}) = ${tidy(result, 2)} GPM`;
+                label = CFI18n.page('output.flow'); unit = ' GPM'; cvForKv = cv;
+                formula = CFI18n.page('formula.flow', { cv: tidy(cv, 4), drop: tidy(dp, 4), sg: tidy(sg, 4), result: tidy(result, 2) });
             } else {
-                if (!isFinite(cv) || !isFinite(flow)) { muteSize('Enter Cv and flow to find the pressure drop.'); return; }
-                if (cv <= 0) { muteSize('Cv must be greater than 0 to compute a pressure drop.'); return; }
-                if (flow < 0) { muteSize('Flow can’t be negative.'); return; }
+                if (!isFinite(cv) || !isFinite(flow)) { muteSize(CFI18n.page('errors.cvFlowInputs')); return; }
+                if (cv <= 0) { muteSize(CFI18n.page('errors.cvPositive')); return; }
+                if (flow < 0) { muteSize(CFI18n.page('errors.flowNonnegative')); return; }
                 result = sg * Math.pow(flow / cv, 2);
-                label = 'Pressure drop ΔP'; unit = ' psi'; cvForKv = cv;
-                formula = `ΔP = ${tidy(sg, 4)} × (${tidy(flow, 4)} ÷ ${tidy(cv, 4)})² = ${tidy(result, 3)} psi`;
+                label = CFI18n.page('output.pressureDrop'); unit = ' psi'; cvForKv = cv;
+                formula = CFI18n.page('formula.pressureDrop', { sg: tidy(sg, 4), flow: tidy(flow, 4), cv: tidy(cv, 4), result: tidy(result, 3) });
             }
 
             calloutEl.hidden = true;
@@ -307,7 +337,7 @@ faqs:
             kvEl.className = 'ps-value live';
             kvEl.textContent = tidy(cvForKv * KV_PER_CV, 2);
             formulaEl.textContent = formula;
-            copyBtn.textContent = 'Copy ' + (unit ? unit.trim() : 'Cv');
+            copyBtn.textContent = CFI18n.page('copy.value', { value: unit ? unit.trim() : 'Cv' });
         }
 
         // ── Valve authority ───────────────────────────────────────────
@@ -330,14 +360,14 @@ faqs:
                 betaEl.className = 'ps-value muted';
                 betaEl.textContent = '—';
                 authFormEl.textContent = '';
-                setVerdict('Enter both pressure drops to see the verdict.', '');
+                setVerdict(CFI18n.page('authority.prompt'), '');
                 return;
             }
             if (valve < 0 || rest < 0) {
                 betaEl.className = 'ps-value muted error';
                 betaEl.textContent = '—';
                 authFormEl.textContent = '';
-                setVerdict('Pressure drops can’t be negative.', 'error');
+                setVerdict(CFI18n.page('authority.negative'), 'error');
                 return;
             }
             const total = valve + rest;
@@ -345,22 +375,23 @@ faqs:
                 betaEl.className = 'ps-value muted error';
                 betaEl.textContent = '—';
                 authFormEl.textContent = '';
-                setVerdict('Total drop is zero — there’s no circuit to take authority over.', 'error');
+                setVerdict(CFI18n.page('authority.zero'), 'error');
                 return;
             }
 
             const beta = valve / total;
             betaEl.className = 'ps-value live';
             betaEl.textContent = beta.toFixed(2);
-            authFormEl.textContent =
-                `β = ${tidy(valve, 4)} ÷ (${tidy(valve, 4)} + ${tidy(rest, 4)}) = ${beta.toFixed(2)}`;
+            authFormEl.textContent = CFI18n.page('formula.authority', {
+                valve: tidy(valve, 4), rest: tidy(rest, 4), beta: beta.toFixed(2)
+            });
 
             if (beta >= 0.5) {
-                setVerdict(`Good authority (β = ${beta.toFixed(2)}). The valve keeps real control over flow across its stroke; 0.5 is the common design floor.`, 'ok');
+                setVerdict(CFI18n.page('verdict.good', { beta: beta.toFixed(2) }), 'ok');
             } else if (beta >= 0.25) {
-                setVerdict(`Marginal authority (β = ${beta.toFixed(2)}). Control turns nonlinear — most of the throttling happens early in the stroke. Aim for more drop across the valve.`, 'warn');
+                setVerdict(CFI18n.page('verdict.marginal', { beta: beta.toFixed(2) }), 'warn');
             } else {
-                setVerdict(`Poor authority (β = ${beta.toFixed(2)}). The valve barely controls flow and the loop will hunt. Resize for a larger share of the circuit drop, or check for oversizing.`, 'error');
+                setVerdict(CFI18n.page('verdict.poor', { beta: beta.toFixed(2) }), 'error');
             }
         }
 

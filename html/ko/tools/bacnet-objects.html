@@ -1,0 +1,181 @@
+---
+title: BACnet 객체 유형 및 속성 ID 참조 — controlsfreak.dev
+description: BACnet 객체 유형 전체 목록과 속성 식별자, 공학 단위를 이름이나 번호로 필터링해 확인합니다. 객체 유형 1과 속성 85도 바로 찾을 수 있습니다.
+sourceContentHash: 87b66a11ee688ace6c20fe8f7986b1cb2d32c1e38efef428aaf218ea81ed9aa4
+sourceMessageHash: 198af54c8ac3593037812b10f3edbac901c1e1d9b0c7d8d0e7c4b6f0c3246213
+canonical: https://controlsfreak.dev/ko/tools/bacnet-objects.html
+nav: tools
+category: protocols
+keywords: AV BV AI AO BI BO MSV 우선순위 배열 객체 유형 인스턴스 속성 식별자 Present_Value 공학 단위 열거형 트렌드 로그 스케줄 알림 클래스 누산기
+pageMessages:
+  table:
+    copyTitle: '{code} 복사'
+termSets:
+    - key: objectTypes
+      fragment: object-types
+      name: BACnet 객체 유형(Object_Type 열거형)
+      description: 모든 BACnet 객체 식별자에 포함되는 객체 유형 숫자 코드입니다. 유형 0은 Analog Input, 유형 8은 Device 객체입니다.
+    - key: propertyIds
+      fragment: property-identifiers
+      name: BACnet 속성 식별자(Property_Identifier 열거형)
+      description: 모든 객체 유형에서 동일하게 사용하는 속성 번호입니다. 85는 Present_Value, 87은 Priority_Array입니다.
+    - key: engineeringUnits
+      fragment: engineering-units
+      name: BACnet 공학 단위(Units 열거형)
+      description: 객체의 Units 속성(117)에 사용하는 값입니다. degrees-Celsius(62)부터 cubic-feet-per-minute(84)까지 확인할 수 있습니다.
+faqs:
+    - q: BACnet 객체 유형이란 무엇인가요?
+      a: 모든 Object Identifier에 포함되어 객체가 어떤 종류의 포인트인지 나타내는 숫자 코드인 Object_Type 열거형입니다. 유형 0은 Analog Input, 1은 Analog Output, 2는 Analog Value이며 3–5는 세 가지 Binary 유형, 8은 Device 객체 자체입니다. 객체 모델은 <a href="/ko/education/bacnet-basics.html">BACnet 기초</a>에서 설명합니다.
+    - q: BACnet의 속성 85는 무엇인가요?
+      a: 포인트의 현재 값을 나타내며 가장 자주 읽고 쓰는 속성인 Present_Value입니다. 속성 번호는 모든 객체 유형에서 같으므로 AI, BO, MSV 어느 객체에서도 85는 Present_Value입니다.
+    - q: 객체 유형 128 이상은 무엇을 의미하나요?
+      a: 유형 128–1023은 벤더 전용 범위로, 제조사가 자체 객체 유형을 이 범위에 공개할 수 있습니다. 128 미만의 미할당 번호는 향후 표준판을 위해 ASHRAE가 예약해 두었습니다.
+    - q: 패킹된 BACnet 객체 식별자는 어떻게 디코딩하나요?
+      a: 32비트 Object_Identifier는 상위 10비트에 객체 유형, 하위 22비트에 인스턴스를 담습니다. 원시 값을 <a href="/ko/tools/bacnet-ip-converter.html">BACnet/IP 16진수 변환기</a>의 객체 ID 탭에 붙여 넣으면 두 값을 모두 언패킹합니다.
+---
+{% extends "html/tools/bacnet-objects.html" %}
+
+{% block content %}
+{% set objectDescriptions = bacnetEnumTranslations.ko.objectTypes %}
+{% set propertyDescriptions = bacnetEnumTranslations.ko.propertyIds %}
+{% set unitGroups = bacnetEnumTranslations.ko.unitGroups %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · BACnet 객체 참조</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                BACnet 객체 참조
+                <span class="tool-tag">BACnet</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>제어기, 패킷 캡처 도구 또는 워크스테이션이 이름 대신 보여 주는 숫자를 확인합니다.</summary>
+            <div class="preamble-rest">
+                <em>객체 유형</em>은 포인트의 종류를 나타내는 <code>Object_Type</code> 열거형입니다(유형 1 = Analog Output).
+                <em>속성 ID</em>는 객체에서 읽는 필드를 나타내는 <code>Property_Identifier</code> 열거형이며(속성 85 = Present_Value), 모든 객체 유형에서 같은 번호를 사용합니다.
+                <em>공학 단위</em>는 현장에서 자주 쓰는 <code>Units</code> 열거형을 분야별로 묶은 목록입니다. 이름, 번호 또는 기호를 입력하면 세 표를 모두 필터링합니다.
+            </div>
+        </details>
+
+        <div class="bo-controls">
+            <label class="bo-search-label" for="bo-search">이름 또는 번호로 필터링</label>
+            <input class="ps-input" type="search" id="bo-search" placeholder="예: 85, present, multi-state, output, °C">
+        </div>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="objects">객체 유형 <span class="bo-count" data-count="objects" aria-hidden="true"></span></button>
+            <button class="tab-btn"        data-tab="props">속성 ID <span class="bo-count" data-count="props" aria-hidden="true"></span></button>
+            <button class="tab-btn"        data-tab="units">공학 단위 <span class="bo-count" data-count="units" aria-hidden="true"></span></button>
+        </div>
+
+        <!-- ── Object Types — Object_Type enumeration ── -->
+        <div id="tab-objects" class="tab-pane active">
+            <section class="tool-body-row">
+                <h2 class="ps-section-label" id="object-types">BACnet 객체 유형(Object_Type 열거형)</h2>
+                <p class="ref-note" style="margin-top:0;">
+                    모든 객체 식별자에 포함되는 <code>Object_Type</code> 값입니다. AI/AO/AV와 BI/BO/BV는 장치에서 일상적으로 접하는 포인트의 약 5분의 4를 차지합니다.
+                </p>
+                <div class="table-scroll">
+                    <table class="ref-table-dense rt-stack" id="bo-table-objects">
+                        <thead>
+                            <tr><th>유형</th><th>객체</th><th>설명</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for t in bacnetEnums.objectTypes %}
+                            <tr><td class="bo-id">{{ t.id }}</td><td class="bo-name">{{ t.name | safe }}</td><td>{{ objectDescriptions[t.id] | safe }}</td></tr>
+                            {% endfor %}
+                            <tr class="ref-empty bo-empty" hidden><td colspan="3">이 필터와 일치하는 객체 유형이 없습니다.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="ref-note">
+                    ASHRAE 135-2020과 그 부록에 정의된 0–64 전체 범위입니다. 128 미만의 미할당 번호는 향후 표준판을 위해 ASHRAE가 예약했으며, 128–1023은 벤더 전용 범위입니다. 어떤 벤더의 확장인지는 장치의 <a href="/ko/tools/bacnet-vendor-ids.html">벤더 ID</a>로 확인할 수 있습니다. 패킹된 Object Identifier는 <a href="/ko/tools/bacnet-ip-converter.html">BACnet/IP 16진수 변환기</a>의 객체 ID 탭에서 디코딩하세요.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Property IDs — Property_Identifier enumeration ── -->
+        <div id="tab-props" class="tab-pane">
+            <section class="tool-body-row">
+                <h2 class="ps-section-label" id="property-identifiers">BACnet 속성 식별자(Property_Identifier 열거형)</h2>
+                <p class="ref-note" style="margin-top:0;">
+                    <code>Property_Identifier</code> 번호는 모든 객체 유형에서 같습니다. 속성 85는 <code>Present_Value</code>이며 객체가 <button type="button" data-gloss="ai">AI</button>이든 <button type="button" data-gloss="bo">BO</button>이든 같습니다.
+                </p>
+                <div class="table-scroll">
+                    <table class="ref-table-dense rt-stack" id="bo-table-props">
+                        <thead>
+                            <tr><th>ID</th><th>속성</th><th>의미</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for p in bacnetEnums.propertyIds %}
+                            <tr><td class="bo-id">{{ p.id }}</td><td class="bo-name">{{ p.name | safe }}</td><td>{{ propertyDescriptions[p.id] | safe }}</td></tr>
+                            {% endfor %}
+                            <tr class="ref-empty bo-empty" hidden><td colspan="3">이 필터와 일치하는 속성이 없습니다.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="ref-note">
+                    현장에서 자주 쓰는 항목을 번호순으로 정리했습니다. 전체 열거형은 500번을 넘으며 최신 표준판마다 항목이 계속 추가됩니다. 위 번호는 포인트를 읽고, 오버라이드하고, 커미셔닝(기능 성능 검증)할 때 접하는 항목이며 85, 87, 104가 일상적으로 가장 많이 쓰이는 세 가지입니다.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Eng. Units — Units enumeration (common HVAC slice) ── -->
+        <div id="tab-units" class="tab-pane">
+            <section class="tool-body-row">
+                <h2 class="ps-section-label" id="engineering-units">BACnet 공학 단위(Units 열거형)</h2>
+                <p class="ref-note" style="margin-top:0;">
+                    객체의 <code>Units</code> 속성(117) 값을 분야별로 묶었습니다. 전체 열거형에는 250개가 넘는 값이 있으며, 여기에는 빌딩 시스템에서 실제로 사용하는 항목을 담았습니다.
+                </p>
+                <div class="table-scroll">
+                    <table class="ref-table-dense rt-stack" id="bo-table-units">
+                        <thead>
+                            <tr><th>열거값</th><th>공학 단위</th><th>분야</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for u in bacnetEnums.engineeringUnits %}
+                            <tr><td class="bo-id">{{ u.id }}</td><td>{{ u.name | safe }}{% if u.symbol %} ({{ u.symbol }}){% endif %}</td><td>{{ unitGroups[u.group] }}</td></tr>
+                            {% endfor %}
+                            <tr class="ref-empty bo-empty" hidden><td colspan="3">이 필터와 일치하는 단위가 없습니다.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="ref-note">
+                    위 코드는 안정적으로 유지되는 현장 공통 항목입니다. 이 범위의 객체 유형, 속성 ID, 단위는 표준판이 바뀌어도 다른 값으로 재할당되지 않습니다. 번호가 높은 범위에서 최신 표준판에 추가된 항목과 벤더 확장만 장치 문서나 ASHRAE 135에서 확인하면 됩니다.
+                </p>
+            </section>
+        </div>
+
+    </div>
+
+    {{ faqBlock(faqs, "BACnet 객체 및 속성 자주 묻는 질문") }}
+
+    {{ relatedLinks({
+        hub: {href: '/ko/bacnet/', label: 'BACnet 참조 허브'},
+        tools: [
+            {href: '/ko/tools/bacnet-ip-converter.html', label: 'BACnet/IP 16진수 변환기'},
+            {href: '/ko/tools/bacnet-vendor-ids.html', label: 'BACnet 벤더 ID'},
+            {href: '/ko/tools/modbus-register-viewer.html', label: 'Modbus 레지스터 뷰어'}
+        ],
+        lessons: [
+            {href: '/ko/education/bacnet-basics.html', label: 'BACnet 기초'},
+            {href: '/ko/education/bacnet-networking.html', label: 'BACnet 네트워킹'},
+            {href: '/ko/education/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/bacnet-basics.html', label: 'BACnet 기초'},
+            {href: '/ko/practice/bacnet-networking.html', label: 'BACnet 네트워킹'},
+            {href: '/ko/practice/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

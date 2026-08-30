@@ -1,0 +1,279 @@
+---
+title: 신호 스케일링 계산기 — controlsfreak.dev
+description: 4–20 mA·0–10 V 등의 아날로그 신호와 공학 단위를 양방향 변환하고, 두 교정점에서 Niagara용 기울기와 오프셋을 계산합니다.
+sourceContentHash: d825ac0d30f880fdac226867e746be64b79fd3b0c6d965a4a624d2cebf379338
+sourceMessageHash: 9bf2345edd5ff6f4a779aa2cc5f8cc1a613d516454ecefbcd5d747d281453565
+canonical: https://controlsfreak.dev/ko/tools/signal-scaling.html
+nav: tools
+category: signals
+keywords: 4-20mA 밀리암페어 전압 0-10V 스팬 기울기 오프셋 y=mx+b proxy ext 선형 스케일 AI AO
+pageMessages:
+    labels:
+        signalValue: "신호값({unit})"
+        minimum: "최소"
+        maximum: "최대"
+    errors:
+        scalingInputs: "계산할 신호값과 공학 단위 범위를 입력하세요."
+        scalingSpan: "범위 상한과 하한이 같아 스케일링할 스팬이 없습니다. 서로 다른 값으로 설정하세요."
+        reverseInputs: "계산할 공학값과 공학 단위 범위를 입력하세요."
+        reverseSpan: "공학 범위 상한과 하한이 같아 스케일링할 스팬이 없습니다. 서로 다른 값으로 설정하세요."
+        pointInputs: "계산할 두 (x, y) 점을 모두 입력하세요."
+        slopeUndefined: "x₁과 x₂가 같아 기울기를 정의할 수 없습니다(0으로 나눔). 서로 다른 값으로 설정하세요."
+    formula:
+        scaling: "공학값 = {euMin} + (({signal} − {signalMin}) ÷ ({signalMax} − {signalMin})) × ({euMax} − {euMin}) = {result}{unit}"
+        reverse: "신호 = {signalMin} + (({eu} − {euMin}) ÷ ({euMax} − {euMin})) × ({signalMax} − {signalMin}) = {result} {unit}"
+        slopeOffset: "m = ({y2} − {y1}) ÷ ({x2} − {x1}) = {slope}    ·    b = {y1} − ({slope} × {x1}) = {offset}    →    y = {displaySlope}x + ({displayOffset})"
+    copy:
+        unit: "{unit} 복사"
+        value: "값 복사"
+    reverseDirection: "역변환: 입력한 공학값에 도달하려면 이 {unit} 출력값으로 구동하세요."
+---
+{% extends "html/tools/signal-scaling.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 신호 스케일링</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                신호 스케일링 계산기
+                <span class="tool-tag">아날로그 I/O</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>센서의 아날로그 신호(mA / V)와 공학 단위를 양방향으로 변환하고, 교정기처럼 두 점에서 기울기와 오프셋을 구해 Niagara 구성에 사용할 수 있습니다.</summary>
+            <div class="preamble-rest">
+                <em>신호 → 공학 단위</em>는 원시 측정값을 게시된 범위로 스케일링합니다.
+                <em>공학 단위 → 신호</em>는 반대로 계산하여 설정값에 도달하려면 출력에서 몇 mA를 구동해야 하는지 구합니다.
+                <em>두 점 → 기울기 / 오프셋</em>은 알려진 두 (원시값, 공학값) 쌍으로 m과 b를 직접 계산합니다.
+            </div>
+        </details>
+        <p class="ps-seed-note">입력란에는 예제가 미리 채워져 있습니다. 확인하려는 값으로 수정하세요.</p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="scaling">신호 → 공학 단위</button>
+            <button class="tab-btn"        data-tab="reverse">공학 단위 → 신호</button>
+            <button class="tab-btn"        data-tab="slopeoffset">두 점 → 기울기 / 오프셋</button>
+        </div>
+
+        <div id="tab-scaling" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="sig-type">신호 유형</label>
+                        <select class="ps-input" id="sig-type">
+                            <option value="4-20">4–20 mA</option>
+                            <option value="0-20">0–20 mA</option>
+                            <option value="0-10">0–10 V</option>
+                            <option value="2-10">2–10 V</option>
+                            <option value="0-5">0–5 V</option>
+                            <option value="1-5">1–5 V</option>
+                            <option value="custom">사용자 지정 범위…</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="sig-input-label" for="sig-val">신호값(mA)</label>
+                        <input class="ps-input" type="number" id="sig-val" step="0.01" placeholder="12.00" value="12">
+                    </div>
+                    <div id="custom-row" class="hidden">
+                        <div class="ps-row">
+                            <label class="ps-label" for="custom-min">범위 최솟값</label>
+                            <input class="ps-input" type="number" id="custom-min" step="any" placeholder="4">
+                        </div>
+                        <div class="ps-row">
+                            <label class="ps-label" for="custom-max">범위 최댓값</label>
+                            <input class="ps-input" type="number" id="custom-max" step="any" placeholder="20">
+                        </div>
+                        <div class="ps-row">
+                            <label class="ps-label" for="custom-unit">범위 단위</label>
+                            <input class="ps-input" type="text" id="custom-unit" placeholder="mA">
+                        </div>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eu-min">공학 단위 최솟값</label>
+                        <input class="ps-input" type="number" id="eu-min" step="any" placeholder="0" value="0">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eu-max">공학 단위 최댓값</label>
+                        <input class="ps-input" type="number" id="eu-max" step="any" placeholder="100" value="100">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eu-label-input">단위 라벨</label>
+                        <input class="ps-input" type="text" id="eu-label-input" placeholder="°F, °C, CFM, m³/h, %, …" value="psi">
+                    </div>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="ps-row primary">
+                        <span class="ps-label">공학값</span>
+                        <span class="ps-value muted" id="scaling-out">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">스팬 대비 %</span>
+                        <span class="ps-value muted" id="scaling-pct">—</span>
+                    </div>
+                    <div class="range-bar-wrap">
+                        <div class="range-bar-labels">
+                            <span id="bar-label-min">최소</span>
+                            <span id="bar-label-max">최대</span>
+                        </div>
+                        <div class="range-bar">
+                            <div class="range-bar-fill" id="range-bar-fill"></div>
+                        </div>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="ss-copy-scaling">값 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="scaling-formula"></div>
+                    <div class="failure-callout" id="ss-scaling-callout" hidden></div>
+                </section>
+
+            </div>
+        </div>
+
+        <div id="tab-reverse" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="rev-sig-type">신호 유형</label>
+                        <select class="ps-input" id="rev-sig-type">
+                            <option value="4-20">4–20 mA</option>
+                            <option value="0-20">0–20 mA</option>
+                            <option value="0-10">0–10 V</option>
+                            <option value="2-10">2–10 V</option>
+                            <option value="0-5">0–5 V</option>
+                            <option value="1-5">1–5 V</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="rev-eu-val">공학값</label>
+                        <input class="ps-input" type="number" id="rev-eu-val" step="any" placeholder="72.5" value="50">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="rev-eu-min">공학 단위 최솟값</label>
+                        <input class="ps-input" type="number" id="rev-eu-min" step="any" placeholder="0" value="0">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="rev-eu-max">공학 단위 최댓값</label>
+                        <input class="ps-input" type="number" id="rev-eu-max" step="any" placeholder="100" value="100">
+                    </div>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="ps-row primary">
+                        <span class="ps-label">신호 출력</span>
+                        <span class="ps-value muted" id="reverse-out">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">스팬 대비 %</span>
+                        <span class="ps-value muted" id="reverse-pct">—</span>
+                    </div>
+                    <p class="ref-note" id="reverse-direction-note">역변환: 입력한 공학값에 도달하려면 이 출력값으로 구동하세요.</p>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="ss-copy-reverse">신호 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="reverse-formula"></div>
+                    <div class="failure-callout" id="ss-reverse-callout" hidden></div>
+                </section>
+
+            </div>
+        </div>
+
+        <div id="tab-slopeoffset" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력 — 두 I/O 쌍</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="so-x1">x₁(원시값)</label>
+                        <input class="ps-input" type="number" id="so-x1" step="any" placeholder="4" value="4">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="so-y1">y₁(공학값)</label>
+                        <input class="ps-input" type="number" id="so-y1" step="any" placeholder="0" value="0">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="so-x2">x₂(원시값)</label>
+                        <input class="ps-input" type="number" id="so-x2" step="any" placeholder="20" value="20">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="so-y2">y₂(공학값)</label>
+                        <input class="ps-input" type="number" id="so-y2" step="any" placeholder="100" value="100">
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="ps-section-label">출력 — y = mx + b</h2>
+                    <div class="ps-row">
+                        <span class="ps-label">기울기(m) — 스케일 계수</span>
+                        <span class="ps-value muted" id="so-slope">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">오프셋(b) — 절편</span>
+                        <span class="ps-value muted" id="so-offset">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="ss-copy-slope">m 복사</button>
+                        <button class="copy-btn" id="ss-copy-offset">b 복사</button>
+                        <button class="copy-btn" id="ss-copy-mb">m, b 복사</button>
+                    </div>
+                </section>
+
+            </div>
+            <div class="result-formula flush" id="so-formula"></div>
+            <div class="failure-callout" id="ss-slopeoffset-callout" hidden></div>
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">일반적인 신호 유형</h2>
+            <table class="ref-table-dense">
+                <thead>
+                    <tr><th>신호</th><th>라이브 제로</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>4–20 mA</td><td>있음</td></tr>
+                    <tr><td>0–20 mA</td><td>없음</td></tr>
+                    <tr><td>0–10 V</td><td>없음</td></tr>
+                    <tr><td>2–10 V</td><td>있음</td></tr>
+                    <tr><td>0–5 V</td><td>없음</td></tr>
+                    <tr><td>1–5 V</td><td>있음</td></tr>
+                </tbody>
+            </table>
+            <p class="ref-note">
+                “라이브 제로”가 있으면 단선 신호가 유효한 0%로 읽히지 않고 범위 미달 고장으로 나타납니다.
+            </p>
+        </section>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/thermistor-calculator.html', label: '서미스터 / RTD 계산기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/controller-wiring.html', label: '컨트롤러 배선 시뮬레이터'}
+        ],
+        lessons: [
+            {href: '/ko/education/analog-sensing.html', label: '아날로그 센싱'},
+            {href: '/ko/education/controller-wiring.html', label: '제어기 배선'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/field-wiring-sensors.html', label: '현장 배선 — 센서'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

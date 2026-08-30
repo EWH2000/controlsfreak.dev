@@ -1,0 +1,278 @@
+---
+title: 덕트 치수 계산기 — controlsfreak.dev
+description: 풍량·직경·덕트 마찰률·풍속 중 두 값을 이용해 나머지를 계산하고, 직사각형 덕트를 등마찰 기준의 등가 원형 직경으로 정확히 환산합니다.
+sourceContentHash: 35e9d249cf2e65492dfde8e52b58fcbb2641a03a9f71b89a2e09712394870ac3
+sourceMessageHash: b1d6eae404f840da31fe093d847c216886347a8394029ba9769291ab822580d7
+canonical: https://controlsfreak.dev/ko/tools/duct-sizer.html
+nav: tools
+category: airflow
+pageMessages:
+    copy:
+        results: '결과 복사'
+        diameter: '직경 복사'
+        airflow: 'CFM 복사'
+        equivalentDiameter: 'De 복사'
+        side: '변 길이 복사'
+    errors:
+        roundInputs: '이 계산에는 풍량과 덕트 직경이 필요합니다.'
+        noMeasuredAirflow: '풍량이 없으면 마찰도 없습니다. 덕트가 실제로 운반하는 CFM을 입력하세요(일반적으로 피토관 트래버스 또는 BAS 추세값을 사용합니다).'
+        diameterRange: '직경이 이 선도 계산식의 적용 범위인 3–120 in.를 벗어났습니다.'
+        turbulentMeasured: 'Re ≈ {re}로 층류·천이 영역이며 실제 덕트 유동으로 보기 어렵습니다. 이 선도 계산식은 난류를 가정하므로 CFM과 직경을 확인하세요.'
+        diameterInputs: '이 계산에는 풍량과 목표 덕트 마찰률이 필요합니다.'
+        noDesignAirflow: '풍량이 없으면 치수를 산정할 수 없습니다. 설계 CFM을 입력하세요.'
+        frictionPositive: '목표 덕트 마찰률은 0보다 커야 합니다. 일반적인 시작값은 100 ft당 0.08 in. w.c.입니다.'
+        diameterNoSolution: '{airflow} CFM에서 100 ft당 {friction} in. 조건을 만족하는 원형 덕트가 3–120 in. 범위에 없습니다. 두 값을 확인하세요.'
+        turbulentAirflowTarget: '계산 결과가 층류·천이 영역(Re 4000 미만)에 해당해 실제 덕트 유동으로 보기 어렵습니다. CFM과 목표값을 확인하세요.'
+        airflowInputs: '이 계산에는 덕트 직경과 목표 덕트 마찰률이 필요합니다.'
+        airflowNoSolution: '직경 {diameter} in. 덕트에서 100 ft당 {friction} in.에 도달하는 속도가 계산 범위에 없습니다. 두 값을 확인하세요.'
+        turbulentDiameterTarget: '계산 결과가 층류·천이 영역(Re 4000 미만)에 해당해 실제 덕트 유동으로 보기 어렵습니다. 직경과 목표값을 확인하세요.'
+        velocityInputs: '이 계산에는 풍량과 목표 풍속이 필요합니다.'
+        velocityPositive: '목표 풍속은 0보다 커야 합니다. 일반적으로 주덕트는 1,000–1,500 FPM, 분기덕트는 600–900 FPM 부근으로 선정합니다.'
+        velocityDiameterRange: '이 조합에는 직경 {diameter} in. 덕트가 필요하며, 이 선도 계산식의 적용 범위인 3–120 in.를 벗어납니다.'
+        turbulentVelocityTarget: 'Re ≈ {re}로 층류·천이 영역이며 실제 덕트 유동으로 보기 어렵습니다. CFM과 목표 풍속을 확인하세요.'
+        rectangularInputs: '직사각형 덕트의 폭과 높이를 입력하세요.'
+        rectangularPositive: '덕트 각 변의 길이는 0보다 커야 합니다.'
+        missingSideInputs: '대응시킬 원형 덕트 직경과 알고 있는 한 변의 길이를 입력하세요.'
+        sizesPositive: '치수는 0보다 커야 합니다.'
+        missingSideNoSolution: '한 변이 {known} in.인 직사각형 덕트로 De = {diameter} in.를 만드는 다른 변이 1–300 in. 범위에 없습니다. 알고 있는 변이 해당 원형 덕트에 비해 지나치게 작거나 이미 너무 큽니다.'
+        velocityComparison: '풍속을 비교하려면 양의 CFM을 입력하세요. 비교하지 않으려면 비워 두어도 됩니다.'
+    formula:
+        friction: 'A = π × ({diameter} ÷ 24)² = {area} ft² · V = {airflow} ÷ {area} = {velocity} FPM · 덕트 마찰률 = 100 ft당 {friction} in. w.c. (f = {factor})'
+        diameter: 'D = {diameter} in.({airflow} CFM에서 100 ft당 {friction} in.가 되도록 이분법으로 계산) · V = {airflow} ÷ {area} = {velocity} FPM'
+        airflow: 'V = {velocity} FPM(직경 {diameter} in. 덕트가 100 ft당 {friction} in.가 되도록 이분법으로 계산) · Q = {velocity} × {area} = {airflow} CFM'
+        velocity: 'A = {airflow} ÷ {velocity} = {area} ft² · D = 24 × √({area} ÷ π) = {diameter} in. · 덕트 마찰률 = 100 ft당 {friction} in. w.c.'
+        equivalentDiameter: 'De = 1.30 × ({width} × {height})^0.625 ÷ ({width} + {height})^0.25 = 1.30 × {powerArea} ÷ {powerPerimeter} = {diameter} in.'
+        missingSide: '다른 변 = {side} in.(Huebscher 공식으로 이분법 계산) · 확인: De({known} × {side}) = {diameter} in.'
+        velocityComparison: ' · A 직사각형 = {rectArea} ft², A 원형 = {roundArea} ft² · V = {airflow} ÷ {rectArea} = {rectVelocity}, {airflow} ÷ {roundArea} = {roundVelocity} FPM'
+keywords: 덕트 계산기 덕트 치수 마찰률 마찰손실 in.w.g. 100ft 원형 덕트 풍속 FPM 등가지름 Huebscher 사각원형 변환 Altshul-Tsal 고정압 과소 덕트
+---
+{% extends "html/tools/duct-sizer.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 덕트 치수</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                덕트 치수 계산기
+                <span class="tool-tag">풍량</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>덕트 계산자의 네 가지 계산 방향으로 기존 덕트 상태를 진단합니다.</summary>
+            <div class="preamble-rest">
+                <em>원형 덕트 마찰</em>은 풍량, 직경, 덕트 마찰률, 풍속 중 계산 가능한 두 값을 이용해 나머지를 구하는 덕트 계산자입니다. 회전식 덕트 계산자로는 번거로운 진단 방향, 즉 <em>기존 덕트와 측정 CFM으로 현재 덕트에 걸리는 부담을 확인하는 계산</em>도 지원합니다. <em>직사각형 ↔ 원형</em>은 실제 치수표에서 사용하는 등가 직경으로 환산합니다. 기준은 등면적이나 등풍속이 아니라 동일한 <em>마찰</em>입니다.
+            </div>
+        </details>
+        <p class="ps-seed-note">예시 값이 입력되어 있습니다. 현장 값으로 바꾸어 계산하세요.</p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="round">원형 덕트 마찰</button>
+            <button class="tab-btn"        data-tab="rect">직사각형 ↔ 원형</button>
+        </div>
+
+        <!-- ── Round duct friction ── -->
+        <div id="tab-round" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="dz-solve">계산 대상</label>
+                        <select class="ps-input" id="dz-solve">
+                            <option value="friction">덕트 마찰률·풍속 — CFM + 직경</option>
+                            <option value="dia">직경 — CFM + 목표 덕트 마찰률</option>
+                            <option value="cfm">풍량 — 직경 + 목표 덕트 마찰률</option>
+                            <option value="dia-vel">직경 — CFM + 목표 풍속</option>
+                        </select>
+                    </div>
+                    <div class="ps-row" id="dz-row-cfm">
+                        <label class="ps-label" for="dz-cfm">풍량(CFM)</label>
+                        <input class="ps-input" type="number" id="dz-cfm" step="any" min="0" placeholder="1200" value="1200">
+                    </div>
+                    <div class="ps-row" id="dz-row-dia">
+                        <label class="ps-label" for="dz-dia">원형 덕트 직경(in.)</label>
+                        <input class="ps-input" type="number" id="dz-dia" step="any" min="0" placeholder="12" value="12">
+                    </div>
+                    <div class="ps-row hidden" id="dz-row-fr">
+                        <label class="ps-label" for="dz-fr">목표 덕트 마찰률(in. w.c. / 100 ft)</label>
+                        <input class="ps-input" type="number" id="dz-fr" step="any" min="0" placeholder="0.08" value="0.08">
+                    </div>
+                    <div class="ps-row hidden" id="dz-row-vel">
+                        <label class="ps-label" for="dz-vel">목표 풍속(FPM)</label>
+                        <input class="ps-input" type="number" id="dz-vel" step="any" min="0" placeholder="900" value="900">
+                    </div>
+                    <p class="ref-note">
+                        기본 계산 방향은 진단용입니다. 덕트가 이미 설치되어 있고 <a href="/ko/tools/duct-traverse.html">피토관 트래버스</a> 또는 BAS 추세값으로 실제 풍량을 알 때, 이 덕트에 어느 정도 부담이 걸리는지 확인합니다. 나머지 세 방향은 목표 덕트 마찰률 또는 풍속으로 치수를 정하거나, 기존 치수에서 실제로 운반 가능한 풍량을 구하는 일반적인 덕트 계산입니다.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="ps-row hidden" id="dz-row-out-dia">
+                        <span class="ps-label">원형 덕트 직경(in.)</span>
+                        <span class="ps-value muted" id="dz-out-dia">—</span>
+                    </div>
+                    <div class="ps-row hidden" id="dz-row-out-cfm">
+                        <span class="ps-label">풍량(CFM)</span>
+                        <span class="ps-value muted" id="dz-out-cfm">—</span>
+                    </div>
+                    <div class="ps-row" id="dz-row-out-vel">
+                        <span class="ps-label">풍속(FPM)</span>
+                        <span class="ps-value muted" id="dz-out-vel">—</span>
+                    </div>
+                    <div class="ps-row" id="dz-row-out-ms">
+                        <span class="ps-label">풍속(m/s 환산)</span>
+                        <span class="ps-value muted" id="dz-out-ms">—</span>
+                    </div>
+                    <div class="ps-row primary" id="dz-row-out-fr">
+                        <span class="ps-label">덕트 마찰률(in. w.c. / 100 ft)</span>
+                        <span class="ps-value muted" id="dz-out-fr">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="dz-copy">결과 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="dz-formula"></div>
+                    <div class="failure-callout" id="dz-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">계산 예시 — 용량을 초과한 12 in. 덕트</h2>
+                <p class="ref-note worked-intro">
+                    리모델링한 층의 VAV 박스에서 계속 풍량이 부족합니다. 이 층으로 연결된 주덕트는 직경 12&nbsp;in.의 원형이며, 피토관 트래버스 측정 풍량은 1,200&nbsp;CFM입니다. 이 덕트 조건이 기본 입력값입니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>먼저 풍속을 구합니다. <code>A = π × (12 ÷ 24)² = 0.785 ft²</code>이므로 <code>V = 1200 ÷ 0.785 = 1529 FPM</code>입니다. 주덕트 권장 범위 상단으로 소음은 크지만 운전 가능한 수준이어서, 풍속만으로는 문제를 찾기 어렵습니다.</li>
+                    <li>덕트 마찰률은 문제를 드러냅니다. <code>100 ft당 0.26 in. w.c.</code>로, 덕트 선정 기준으로 추정되는 0.08의 약 세 배입니다. 길이 80 ft인 이 직관부에서만 첫 엘보나 분기 전부터 <code>0.26 × 0.8 = 0.21 in. w.c.</code>를 소모합니다.</li>
+                    <li>계산 대상을 <em>직경</em>으로 바꾸면 100 ft당 0.08&nbsp;in.에서 1,200&nbsp;CFM을 운반하려면 원형 직경이 <strong>15.3&nbsp;in.</strong>여야 합니다. <em>풍량</em>으로 바꾸면 직경 12&nbsp;in. 덕트가 0.08 조건에서 운반할 수 있는 풍량은 약 <strong>626&nbsp;CFM</strong>뿐입니다. 리모델링 과정에서 덕트 치수는 그대로 둔 채 부하를 거의 두 배로 늘린 셈입니다.</li>
+                    <li>마감된 천장의 덕트를 당장 교체하기는 어렵습니다. 그러나 이제 정압이 높은 이유와 VAV 박스가 풍량을 확보하지 못하는 이유를 수치로 설명할 수 있습니다. 다음 리모델링 때 병렬 덕트를 추가하거나 <a href="/ko/education/duct-static-control.html">정압 설정값</a> 기대치를 조정하고, 이 덕트가 실제로 운반할 수 있는 풍량에 맞게 재밸런싱하는 선택지는 모두 이 수치에서 시작합니다.</li>
+                </ol>
+            </section>
+        </div>
+
+        <!-- ── Rectangular ↔ round ── -->
+        <div id="tab-rect" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="dz-r-solve">계산 대상</label>
+                        <select class="ps-input" id="dz-r-solve">
+                            <option value="de">등가 원형 직경 — 직사각형 치수에서 계산</option>
+                            <option value="side">나머지 직사각형 변 — 원형 직경 + 알고 있는 변에서 계산</option>
+                        </select>
+                    </div>
+                    <div class="ps-row" id="dz-r-row-w">
+                        <label class="ps-label" for="dz-r-w">직사각형 덕트 폭(in.)</label>
+                        <input class="ps-input" type="number" id="dz-r-w" step="any" min="0" placeholder="20" value="20">
+                    </div>
+                    <div class="ps-row" id="dz-r-row-h">
+                        <label class="ps-label" for="dz-r-h">직사각형 덕트 높이(in.)</label>
+                        <input class="ps-input" type="number" id="dz-r-h" step="any" min="0" placeholder="10" value="10">
+                    </div>
+                    <div class="ps-row hidden" id="dz-r-row-de">
+                        <label class="ps-label" for="dz-r-de-in">대응시킬 원형 덕트 직경(in.)</label>
+                        <input class="ps-input" type="number" id="dz-r-de-in" step="any" min="0" placeholder="15.3" value="15.3">
+                    </div>
+                    <div class="ps-row hidden" id="dz-r-row-known">
+                        <label class="ps-label" for="dz-r-known">알고 있는 한 변(in.)</label>
+                        <input class="ps-input" type="number" id="dz-r-known" step="any" min="0" placeholder="10" value="10">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="dz-r-cfm">풍량(CFM) — 선택 입력</label>
+                        <input class="ps-input" type="number" id="dz-r-cfm" step="any" min="0" placeholder="풍속 비교용" value="1200">
+                    </div>
+                    <p class="ref-note">
+                        Huebscher 등가 직경으로 환산합니다. 덕트 마찰 선도에 필요한 기준인 동일 풍량에서 <em>단위 길이당 마찰</em>이 같도록 맞춥니다. 의도적으로 <em>등면적</em>이 아닙니다. 직사각형 덕트의 모서리는 마찰벽을 늘리므로, 대응하는 원형 덕트보다 단면적이 더 커야 합니다. 풍량을 입력하면 이러한 차이가 풍속에 미치는 영향도 출력합니다.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="ps-row primary" id="dz-r-row-out-de">
+                        <span class="ps-label">등가 원형 직경 De(in.)</span>
+                        <span class="ps-value muted" id="dz-r-de">—</span>
+                    </div>
+                    <div class="ps-row primary hidden" id="dz-r-row-out-side">
+                        <span class="ps-label">다른 변(in.)</span>
+                        <span class="ps-value muted" id="dz-r-side">—</span>
+                    </div>
+                    <div class="ps-row" id="dz-r-row-rect-v">
+                        <span class="ps-label">직사각형 덕트 풍속(FPM)</span>
+                        <span class="ps-value muted" id="dz-r-rect-v">—</span>
+                    </div>
+                    <div class="ps-row" id="dz-r-row-round-v">
+                        <span class="ps-label">등가 원형 덕트 풍속(FPM)</span>
+                        <span class="ps-value muted" id="dz-r-round-v">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="dz-r-copy">De 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="dz-r-formula"></div>
+                    <div class="failure-callout" id="dz-r-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">계산 예시 — 동일한 마찰, 천장 여유 높이 10 in.</h2>
+                <p class="ref-note worked-intro">
+                    마찰 탭의 결과에 따르면 풍량이 부족한 이 구간에는 실제로 직경 15.3&nbsp;in.의 원형 덕트가 필요합니다. 그러나 천장 내부의 유효 높이는 10&nbsp;in.뿐이므로 직경 15 in. 덕트를 설치할 수 없습니다. 기본 입력값으로 이 상황을 이어서 계산합니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>계산 대상을 <em>나머지 직사각형 변</em>으로 바꿉니다. 한 변을 10&nbsp;in.로 고정하고 De&nbsp;=&nbsp;15.3&nbsp;in.에 맞추면 Huebscher 공식에서 다른 변은 <strong>20.2&nbsp;in.</strong>가 됩니다. 판금 제작 치수는 20&nbsp;×&nbsp;10입니다. 다시 <em>등가 원형 직경</em>으로 바꾸어 확인하면 <code>De = 1.30 × (20 × 10)^0.625 ÷ (20 + 10)^0.25 = 1.30 × 27.42 ÷ 2.34 = 15.2 in.</code>로, 선도 정밀도에서 충분히 가깝습니다.</li>
+                    <li>이 공식의 핵심은 동일한 <em>마찰</em>이 동일한 <em>면적</em>을 뜻하지 않는다는 점입니다. 20&nbsp;×&nbsp;10의 면적은 <code>200 ÷ 144 = 1.39 ft²</code>이지만 직경 15.2&nbsp;in. 원형 덕트는 <code>1.26 ft²</code>뿐입니다. 직사각형 덕트의 모서리는 풍량에는 거의 기여하지 않으면서 마찰벽을 늘리므로, 같은 마찰을 내려면 단면적이 약 10&nbsp;% 더 필요합니다.</li>
+                    <li>따라서 같은 1,200&nbsp;CFM에서도 풍속이 다릅니다. 직사각형은 <code>1200 ÷ 1.39 = 863 FPM</code>, 원형은 <code>1200 ÷ 1.26 = 952 FPM</code>입니다. 단위 길이당 압력 기울기는 같지만 직사각형 덕트의 공기가 더 느립니다.</li>
+                    <li>현장에서는 원하는 원형 덕트와 <em>면적</em>만 맞춰 직사각형 치수를 선정하면 안 됩니다. 등면적 직사각형 덕트는 마찰 기준으로 부족한 치수가 됩니다. 덕트 형상이 바뀌면 마찰 선도에서는 두 치수를 &ldquo;등가&rdquo;라고 해도 풍속을 이용하는 모든 판단, 즉 피토관 <button type="button" data-gloss="velocity-pressure">속도압(VP)</button>으로 하는 <a href="/ko/tools/duct-traverse.html">트래버스</a>와 분기부 소음 예상값도 달라집니다.</li>
+                </ol>
+            </section>
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">이 수치의 근거와 적용 한계</h2>
+            <p class="ref-note">
+                <strong>마찰 계산:</strong> 덕트 마찰 선도의 기반인 Colebrook 방정식 대신 ASHRAE Fundamentals에서 제시하는 폐쇄형 마찰계수 근사식 Altshul-Tsal을 사용합니다. 아연도금 덕트 조도(ε&nbsp;=&nbsp;0.0003&nbsp;ft)와 표준 공기(0.075&nbsp;lb/ft³, 해수면·약 70&nbsp;°F) 조건에서 <code>f′ = 0.11 × (12ε/D + 68/Re)^0.25</code>이며, 0.018 미만에서는 <code>f = 0.85f′ + 0.0028</code>로 보정합니다. 또한 <code>Re ≈ 8.50 × D × V</code>이고 100&nbsp;ft당 <code>Δp = (12 × f × 100 ÷ D) × 0.075 × (V ÷ 1097)²</code>입니다. 타당성 기준점으로 직경 12&nbsp;in.에서 1,000&nbsp;FPM일 때 100&nbsp;ft당 0.12&nbsp;in. w.c.가 계산되며, 모든 공개 선도가 이 점에서 일치합니다. 이 도구는 모든 덕트 계산자와 마찰 선도에서 사용하는 미국 단위(in. w.c./100&nbsp;ft, FPM, CFM, inch)를 기준으로 하며, m/s 환산값도 함께 표시합니다.
+            </p>
+            <p class="ref-note">
+                <strong>치수 선정 관행은 참고 범위입니다.</strong> 저압 급기 덕트 설계는 대체로 100&nbsp;ft당 0.08–0.10&nbsp;in. w.c., 주덕트는 약 1,000–1,500&nbsp;FPM, 분기덕트는 약 600–900&nbsp;FPM에 모이며 회기 덕트는 이보다 더 느리게 운전합니다. 이는 물리 법칙이나 법규가 아니라 소음과 경제성을 고려한 관행입니다. 기계실의 주덕트는 더 빠르게 운전할 수 있지만 회의실 위 덕트에는 같은 수준을 적용하기 어려우므로, 한계값이 아니라 일반적으로 이견이 적은 범위로 보아야 합니다.
+            </p>
+            <p class="ref-note">
+                <strong>직선 아연도금 덕트에만 적용합니다.</strong> 이 페이지는 직선 구간의 손실만 계산합니다. 실제 시스템에서는 엘보, 티, 변환 이음, 밸런싱 댐퍼 같은 부속류의 정압 손실이 그 사이의 덕트보다 큰 경우가 많으므로, 계산값이 0.3&nbsp;in. w.c.인 구간에서 1&nbsp;in. w.c.가 측정될 수 있습니다. 플렉시블 덕트는 이보다 더 불리합니다. 표기된 마찰은 덕트를 완전히 팽팽하게 편 상태를 가정하며, 실제로 압축된 플렉시블 덕트의 마찰은 몇 배 더 큽니다. 따라서 경질 덕트 계산값은 플렉시블 덕트의 정답이 아니라 최소값으로만 보아야 합니다.
+            </p>
+            <p class="ref-note">
+                <strong>치수 계산 결과는 가설이지 지시가 아닙니다.</strong> 이 페이지는 학습 보조 자료이자 2차 검토 수단으로, 판금을 절단하거나 설정값을 변경하기 전에 덕트에 관한 설명이 타당한지 확인하는 데 사용합니다. 계산 결과를 적용할 때는 양쪽 위험을 모두 고려해야 합니다. 치수가 작은 구간은 정압을 덕트 상한 한계에 가깝게 높이고, 전향곡선형 팬에 연결된 <em>과대</em> 덕트는 팬 휠이 곡선을 따라 모터가 감당하지 못할 풍량과 전류 영역까지 운전하게 할 수 있습니다(<a href="/ko/tools/affinity-laws.html">상사 법칙 페이지</a>에서는 이를 속도 관점에서 설명합니다). 최종 판단 기준은 팬 곡선, 모터 명판, 상한 한계입니다.
+            </p>
+        </section>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/forced-air/', label: '공기조화 시스템 참조 허브'},
+        tools: [
+            {href: '/ko/tools/airflow.html', label: '풍량 및 속도압'},
+            {href: '/ko/tools/duct-traverse.html', label: '피토관 덕트 트래버스 계산기'},
+            {href: '/ko/tools/airside-load.html', label: '공기측 부하 계산기'},
+            {href: '/ko/tools/equipment-airflow.html', label: '장비 풍량 점검기'}
+        ],
+        lessons: [
+            {href: '/ko/education/duct-static-control.html', label: '덕트 정압 제어'},
+            {href: '/ko/education/vav-systems.html', label: 'VAV 시스템'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/duct-static-control.html', label: '덕트 정압 제어 퀴즈'},
+            {href: '/ko/practice/vav-systems.html', label: 'VAV 시스템 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

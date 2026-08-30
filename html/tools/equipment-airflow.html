@@ -4,10 +4,54 @@ description: "Check measured airflow against the machine: CFM per active ton for
 canonical: https://controlsfreak.dev/tools/equipment-airflow.html
 nav: tools
 category: airflow
+pageMessages:
+    labels:
+        totalCapacityTons: 'Total cooling capacity (tons)'
+        totalCapacityMbh: 'Total cooling capacity (MBH)'
+    status:
+        initial: 'Enter values to run the check.'
+        validInputs: 'Enter valid inputs for a verdict.'
+        measuredRisePrompt: 'Enter a measured rise (supply minus return, °F) for a verdict — the band above stands on its own.'
+        measuredRiseInvalid: 'A zero or negative rise means the burner isn’t firing or the probes are swapped — no verdict on that number.'
+    errors:
+        dxInputs: 'Enter capacity, staging, and measured airflow to run the check.'
+        capacityPositive: 'Capacity must be greater than 0.'
+        airflowNegative: 'Airflow can’t be negative.'
+        wholeStages: 'Stages come in whole numbers — for a digital scroll, an unloader, or unequal stages, flip the staging entry to capacity %.'
+        stageRequired: 'The unit needs at least one stage.'
+        stagesActiveNegative: 'Stages active can’t be negative.'
+        stagesExceedTotal: 'More stages active than the unit has — check the two counts.'
+        nothingRunning: 'Nothing is running — with no active compressor there’s no coil to starve. The check applies to a running stage.'
+        capacityRunningNegative: 'Capacity running can’t be negative.'
+        capacityOver100: 'More than 100 % of capacity — check the number.'
+        activeRoundsZero: 'Active capacity rounds to zero — effectively nothing is running, so there’s no coil to starve.'
+        gasInputFields: 'Enter the input rating, efficiency, and rise window to build the band.'
+        inputRatingPositive: 'Input rating must be greater than 0.'
+        efficiencyRange: 'Efficiency is a percent between 0 and 100 — 80 is typical of a mid-efficiency furnace.'
+        heatOutputRoundsZero: 'Heat output rounds to zero — check the input rating and efficiency.'
+        gasOutputFields: 'Enter the output rating and rise window to build the band.'
+        outputRatingPositive: 'Output rating must be greater than 0.'
+        riseWindowRequired: 'Enter both edges of the nameplate rise window.'
+        riseWindowPositive: 'Rise window values must be greater than 0.'
+        riseWindowInverted: 'The rise window is inverted — the min must be below the max (a plate reading “RISE 30–60” means min 30, max 60).'
+    formula:
+        dxTonsIntro: 'tons = {capacity} ÷ 12 = {tons} · '
+        dx: 'active = {tons} {fraction} = {active} tons · {airflow} ÷ {active} = {cfmPerTon} CFM per active ton'
+        gasInput: 'q = {input} × {efficiency} % = {output} MBH · '
+        gasBand: 'CFM = {heat} ÷ (1.08 × ΔT) → ÷ {maxDenominator} = {minimumAirflow} CFM at {maximumRise} °F · ÷ {minDenominator} = {maximumAirflow} CFM at {minimumRise} °F'
+        measuredRise: ' · measured {rise} °F: {heat} ÷ {denominator} = {airflow} CFM'
+    verdict:
+        dxIcing: '{value} CFM per active ton — icing territory. Below ~350 a running stage pulls the coil surface below freezing and condensate freezes on instead of dripping off; ice chokes airflow, which starves the coil further. Verify the airflow measurement, then look at filters, fan speed, and whether staging is interlocked to proven airflow.'
+        dxThin: '{value} CFM per active ton — thin. High-latent designs run 350–400 deliberately for dehumidification, but everything below is icing margin. Confirm it’s the design intent and not a loaded filter or a fan turned down.'
+        dxHealthy: '{value} CFM per active ton — in the 400–500 window (≈450 is the common nominal). Healthy airflow for the stages that are running.'
+        dxHigh: '{value} CFM per active ton — high. The coil runs warm and wrings out little moisture, and past ~500 the face velocity starts carrying condensate off the fins into the supply duct. Common when stages are locked out but the fan is still at full song.'
+        gasHighRise: 'Measured rise {rise} °F is above the {minimumRise}–{maximumRise} °F window — airflow is low (≈{airflow} CFM against the {floor} CFM floor). Limit-trip territory: the exchanger runs hot, the high-limit short-cycles the burner, and repeated overheating cracks heat exchangers. Check filters, blower speed tap, and duct restrictions.'
+        gasLowRise: 'Measured rise {rise} °F is below the {minimumRise}–{maximumRise} °F window — airflow is high (≈{airflow} CFM against the {ceiling} CFM ceiling). Flue-condensation territory: the exchanger runs cold enough for combustion moisture to condense inside it and corrode it over seasons. Drop the blower a tap, or confirm the firing rate.'
+        gasHealthy: 'Measured rise {rise} °F sits inside the {minimumRise}–{maximumRise} °F window — implied airflow ≈{airflow} CFM, inside the {minimumAirflow}–{maximumAirflow} CFM band. The exchanger is neither overheating nor condensing.'
 keywords: cfm per ton 400 450 dx icing carryover coil freeze temperature rise window gas furnace heat exchanger high limit staging active stages blower table
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -95,7 +139,7 @@ keywords: cfm per ton 400 450 dx icing carryover coil freeze temperature rise wi
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="status-pill" id="ea-dx-pill">Enter values to run the check.</div>
+                    <div class="status-pill" id="ea-dx-pill">{{ pageMessages.status.initial }}</div>
                     <div class="ps-row primary">
                         <span class="ps-label">CFM per active ton</span>
                         <span class="ps-value muted" id="ea-dx-cpt">—</span>
@@ -184,7 +228,7 @@ keywords: cfm per ton 400 450 dx icing carryover coil freeze temperature rise wi
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="status-pill" id="ea-gx-pill">Enter values to run the check.</div>
+                    <div class="status-pill" id="ea-gx-pill">{{ pageMessages.status.initial }}</div>
                     <div class="ps-row primary">
                         <span class="ps-label">Allowable airflow band (CFM)</span>
                         <span class="ps-value muted" id="ea-gx-band">—</span>
@@ -357,7 +401,7 @@ keywords: cfm per ton 400 450 dx icing carryover coil freeze temperature rise wi
             el.dx_formula.textContent = '';
             el.dx_callout.textContent = msg;
             el.dx_callout.hidden = false;
-            setPill(el.dx_pill, 'Enter valid inputs for a verdict.', '');
+            setPill(el.dx_pill, CFI18n.page('status.validInputs'), '');
         }
 
         function calcDx() {
@@ -367,16 +411,18 @@ keywords: cfm per ton 400 450 dx icing carryover coil freeze temperature rise wi
             el.dx_row_pct.classList.toggle('hidden', stageMode !== 'pct');
 
             const capUnits = el.dx_cap_units.value;
-            el.dx_cap_lbl.textContent = `Total cooling capacity (${capUnits === 'tons' ? 'tons' : 'MBH'})`;
+            el.dx_cap_lbl.textContent = CFI18n.page(capUnits === 'tons'
+                ? 'labels.totalCapacityTons'
+                : 'labels.totalCapacityMbh');
 
             const capRaw  = parseFloat(el.dx_cap.value);
             const flowRaw = parseFloat(el.dx_flow.value);
-            if (!isFinite(capRaw) || !isFinite(flowRaw)) { muteDx('Enter capacity, staging, and measured airflow to run the check.'); return; }
+            if (!isFinite(capRaw) || !isFinite(flowRaw)) { muteDx(CFI18n.page('errors.dxInputs')); return; }
             // Snap to formula-line display precision before any math.
             const cap  = parseFloat(tidy(capRaw, 2));
             const flow = parseFloat(tidy(flowRaw, 0));
-            if (cap <= 0)  { muteDx('Capacity must be greater than 0.'); return; }
-            if (flow < 0)  { muteDx('Airflow can’t be negative.'); return; }
+            if (cap <= 0)  { muteDx(CFI18n.page('errors.capacityPositive')); return; }
+            if (flow < 0)  { muteDx(CFI18n.page('errors.airflowNegative')); return; }
 
             // Nameplate tons from the DISPLAYED conversion when entered as MBH.
             const tons = capUnits === 'tons' ? cap : parseFloat(tidy(cap / 12, 2));
@@ -385,27 +431,27 @@ keywords: cfm per ton 400 450 dx icing carryover coil freeze temperature rise wi
             if (stageMode === 'stages') {
                 const on    = parseFloat(el.dx_stg_on.value);
                 const total = parseFloat(el.dx_stg_total.value);
-                if (!isFinite(on) || !isFinite(total)) { muteDx('Enter capacity, staging, and measured airflow to run the check.'); return; }
+                if (!isFinite(on) || !isFinite(total)) { muteDx(CFI18n.page('errors.dxInputs')); return; }
                 if (!Number.isInteger(on) || !Number.isInteger(total)) {
-                    muteDx('Stages come in whole numbers — for a digital scroll, an unloader, or unequal stages, flip the staging entry to capacity %.'); return;
+                    muteDx(CFI18n.page('errors.wholeStages')); return;
                 }
-                if (total < 1)  { muteDx('The unit needs at least one stage.'); return; }
-                if (on < 0)     { muteDx('Stages active can’t be negative.'); return; }
-                if (on > total) { muteDx('More stages active than the unit has — check the two counts.'); return; }
-                if (on === 0)   { muteDx('Nothing is running — with no active compressor there’s no coil to starve. The check applies to a running stage.'); return; }
+                if (total < 1)  { muteDx(CFI18n.page('errors.stageRequired')); return; }
+                if (on < 0)     { muteDx(CFI18n.page('errors.stagesActiveNegative')); return; }
+                if (on > total) { muteDx(CFI18n.page('errors.stagesExceedTotal')); return; }
+                if (on === 0)   { muteDx(CFI18n.page('errors.nothingRunning')); return; }
                 active = parseFloat(tidy(tons * on / total, 2));
                 fracPart = `× ${on} ÷ ${total}`;
             } else {
                 const pctRaw = parseFloat(el.dx_pct.value);
-                if (!isFinite(pctRaw)) { muteDx('Enter capacity, staging, and measured airflow to run the check.'); return; }
+                if (!isFinite(pctRaw)) { muteDx(CFI18n.page('errors.dxInputs')); return; }
                 const pct = parseFloat(tidy(pctRaw, 1));
-                if (pct < 0)   { muteDx('Capacity running can’t be negative.'); return; }
-                if (pct > 100) { muteDx('More than 100 % of capacity — check the number.'); return; }
-                if (pct === 0) { muteDx('Nothing is running — with no active compressor there’s no coil to starve. The check applies to a running stage.'); return; }
+                if (pct < 0)   { muteDx(CFI18n.page('errors.capacityRunningNegative')); return; }
+                if (pct > 100) { muteDx(CFI18n.page('errors.capacityOver100')); return; }
+                if (pct === 0) { muteDx(CFI18n.page('errors.nothingRunning')); return; }
                 active = parseFloat(tidy(tons * pct / 100, 2));
                 fracPart = `× ${tidy(pct, 1)} ÷ 100`;
             }
-            if (active <= 0) { muteDx('Active capacity rounds to zero — effectively nothing is running, so there’s no coil to starve.'); return; }
+            if (active <= 0) { muteDx(CFI18n.page('errors.activeRoundsZero')); return; }
 
             el.dx_callout.hidden = true;
 
@@ -420,29 +466,24 @@ keywords: cfm per ton 400 450 dx icing carryover coil freeze temperature rise wi
             if (partLoad) setValue(el.dx_nameplate, `${tidy(flow / tons, 0)} CFM/ton`, true);
 
             // MBH entry shows its tons conversion as its own closing step.
-            const tonsIntro = capUnits === 'tons' ? '' : `tons = ${tidy(cap, 2)} ÷ 12 = ${tidy(tons, 2)} · `;
-            el.dx_formula.textContent = tonsIntro +
-                `active = ${tidy(tons, 2)} ${fracPart} = ${tidy(active, 2)} tons · ` +
-                `${tidy(flow, 0)} ÷ ${tidy(active, 2)} = ${tidy(cpt, 0)} CFM per active ton`;
+            const tonsIntro = capUnits === 'tons' ? '' : CFI18n.page('formula.dxTonsIntro', {
+                capacity: tidy(cap, 2), tons: tidy(tons, 2)
+            });
+            el.dx_formula.textContent = tonsIntro + CFI18n.page('formula.dx', {
+                tons: tidy(tons, 2), fraction: fracPart, active: tidy(active, 2),
+                airflow: tidy(flow, 0), cfmPerTon: tidy(cpt, 0)
+            });
 
             // Verdict bands off the displayed number, so pill and readout
             // can never disagree at an edge (owner-blessed 350/400/500).
             if (cpt < 350) {
-                setPill(el.dx_pill,
-                    `${tidy(cpt, 0)} CFM per active ton — icing territory. Below ~350 a running stage pulls the coil surface below freezing and condensate freezes on instead of dripping off; ice chokes airflow, which starves the coil further. Verify the airflow measurement, then look at filters, fan speed, and whether staging is interlocked to proven airflow.`,
-                    'error');
+                setPill(el.dx_pill, CFI18n.page('verdict.dxIcing', { value: tidy(cpt, 0) }), 'error');
             } else if (cpt < 400) {
-                setPill(el.dx_pill,
-                    `${tidy(cpt, 0)} CFM per active ton — thin. High-latent designs run 350–400 deliberately for dehumidification, but everything below is icing margin. Confirm it’s the design intent and not a loaded filter or a fan turned down.`,
-                    'warn');
+                setPill(el.dx_pill, CFI18n.page('verdict.dxThin', { value: tidy(cpt, 0) }), 'warn');
             } else if (cpt <= 500) {
-                setPill(el.dx_pill,
-                    `${tidy(cpt, 0)} CFM per active ton — in the 400–500 window (≈450 is the common nominal). Healthy airflow for the stages that are running.`,
-                    'ok');
+                setPill(el.dx_pill, CFI18n.page('verdict.dxHealthy', { value: tidy(cpt, 0) }), 'ok');
             } else {
-                setPill(el.dx_pill,
-                    `${tidy(cpt, 0)} CFM per active ton — high. The coil runs warm and wrings out little moisture, and past ~500 the face velocity starts carrying condensate off the fins into the supply duct. Common when stages are locked out but the fan is still at full song.`,
-                    'warn');
+                setPill(el.dx_pill, CFI18n.page('verdict.dxHigh', { value: tidy(cpt, 0) }), 'warn');
             }
         }
 
@@ -452,7 +493,7 @@ keywords: cfm per ton 400 450 dx icing carryover coil freeze temperature rise wi
             el.gx_formula.textContent = '';
             el.gx_callout.textContent = msg;
             el.gx_callout.hidden = false;
-            setPill(el.gx_pill, 'Enter valid inputs for a verdict.', '');
+            setPill(el.gx_pill, CFI18n.page('status.validInputs'), '');
         }
 
         function calcGx() {
@@ -466,32 +507,34 @@ keywords: cfm per ton 400 450 dx icing carryover coil freeze temperature rise wi
             if (mode === 'input') {
                 const inpRaw = parseFloat(el.gx_in.value);
                 const effRaw = parseFloat(el.gx_eff.value);
-                if (!isFinite(inpRaw) || !isFinite(effRaw)) { muteGx('Enter the input rating, efficiency, and rise window to build the band.'); return; }
+                if (!isFinite(inpRaw) || !isFinite(effRaw)) { muteGx(CFI18n.page('errors.gasInputFields')); return; }
                 // Snap to formula-line display precision before any math.
                 const inp = parseFloat(tidy(inpRaw, 1));
                 const eff = parseFloat(tidy(effRaw, 1));
-                if (inp <= 0) { muteGx('Input rating must be greater than 0.'); return; }
-                if (eff <= 0 || eff > 100) { muteGx('Efficiency is a percent between 0 and 100 — 80 is typical of a mid-efficiency furnace.'); return; }
+                if (inp <= 0) { muteGx(CFI18n.page('errors.inputRatingPositive')); return; }
+                if (eff <= 0 || eff > 100) { muteGx(CFI18n.page('errors.efficiencyRange')); return; }
                 qMbh = parseFloat(tidy(inp * eff / 100, 1));
-                if (qMbh <= 0) { muteGx('Heat output rounds to zero — check the input rating and efficiency.'); return; }
-                qPart = `q = ${tidy(inp, 1)} × ${tidy(eff, 1)} % = ${tidy(qMbh, 1)} MBH · `;
+                if (qMbh <= 0) { muteGx(CFI18n.page('errors.heatOutputRoundsZero')); return; }
+                qPart = CFI18n.page('formula.gasInput', {
+                    input: tidy(inp, 1), efficiency: tidy(eff, 1), output: tidy(qMbh, 1)
+                });
             } else {
                 const outRaw = parseFloat(el.gx_out.value);
-                if (!isFinite(outRaw)) { muteGx('Enter the output rating and rise window to build the band.'); return; }
+                if (!isFinite(outRaw)) { muteGx(CFI18n.page('errors.gasOutputFields')); return; }
                 qMbh = parseFloat(tidy(outRaw, 1));
-                if (qMbh <= 0) { muteGx('Output rating must be greater than 0.'); return; }
+                if (qMbh <= 0) { muteGx(CFI18n.page('errors.outputRatingPositive')); return; }
                 qPart = '';
             }
 
             const minRaw = parseFloat(el.gx_rise_min.value);
             const maxRaw = parseFloat(el.gx_rise_max.value);
-            if (!isFinite(minRaw) || !isFinite(maxRaw)) { muteGx('Enter both edges of the nameplate rise window.'); return; }
+            if (!isFinite(minRaw) || !isFinite(maxRaw)) { muteGx(CFI18n.page('errors.riseWindowRequired')); return; }
             // Snapped window edges drive the math, the pill, AND the
             // verdict comparison, so none of the three can disagree.
             const riseMin = parseFloat(tidy(minRaw, 1));
             const riseMax = parseFloat(tidy(maxRaw, 1));
-            if (riseMin <= 0 || riseMax <= 0) { muteGx('Rise window values must be greater than 0.'); return; }
-            if (riseMin >= riseMax) { muteGx('The rise window is inverted — the min must be below the max (a plate reading “RISE 30–60” means min 30, max 60).'); return; }
+            if (riseMin <= 0 || riseMax <= 0) { muteGx(CFI18n.page('errors.riseWindowPositive')); return; }
+            if (riseMin >= riseMax) { muteGx(CFI18n.page('errors.riseWindowInverted')); return; }
 
             el.gx_callout.hidden = true;
 
@@ -506,16 +549,17 @@ keywords: cfm per ton 400 450 dx icing carryover coil freeze temperature rise wi
             if (mode === 'input') setValue(el.gx_q, tidy(qMbh, 1), true);
             setValue(el.gx_band, `${tidy(cfmMin, 0)} – ${tidy(cfmMax, 0)} CFM`, true);
 
-            let formula = qPart +
-                `CFM = ${Math.round(qBtu).toLocaleString('en-US')} ÷ (1.08 × ΔT) → ` +
-                `÷ ${tidy(denMax, 2)} = ${tidy(cfmMin, 0)} CFM at ${tidy(riseMax, 1)} °F · ` +
-                `÷ ${tidy(denMin, 2)} = ${tidy(cfmMax, 0)} CFM at ${tidy(riseMin, 1)} °F`;
+            let formula = qPart + CFI18n.page('formula.gasBand', {
+                heat: Math.round(qBtu).toLocaleString('en-US'),
+                maxDenominator: tidy(denMax, 2), minimumAirflow: tidy(cfmMin, 0), maximumRise: tidy(riseMax, 1),
+                minDenominator: tidy(denMin, 2), maximumAirflow: tidy(cfmMax, 0), minimumRise: tidy(riseMin, 1)
+            });
 
             // Measured rise is optional: blank → band only, neutral pill.
             const riseRaw = el.gx_rise.value.trim();
             if (riseRaw === '') {
                 setValue(el.gx_implied);
-                setPill(el.gx_pill, 'Enter a measured rise (supply minus return, °F) for a verdict — the band above stands on its own.', '');
+                setPill(el.gx_pill, CFI18n.page('status.measuredRisePrompt'), '');
                 el.gx_formula.textContent = formula;
                 return;
             }
@@ -523,7 +567,7 @@ keywords: cfm per ton 400 450 dx icing carryover coil freeze temperature rise wi
             const rise = parseFloat(tidy(parseFloat(riseRaw), 1));
             if (!isFinite(rise) || rise <= 0) {
                 setValue(el.gx_implied);
-                setPill(el.gx_pill, 'A zero or negative rise means the burner isn’t firing or the probes are swapped — no verdict on that number.', '');
+                setPill(el.gx_pill, CFI18n.page('status.measuredRiseInvalid'), '');
                 el.gx_formula.textContent = formula;
                 return;
             }
@@ -531,7 +575,10 @@ keywords: cfm per ton 400 450 dx icing carryover coil freeze temperature rise wi
             const denMeas = parseFloat(tidy(1.08 * rise, 2));
             const implied = parseFloat(tidy(qBtu / denMeas, 0));
             setValue(el.gx_implied, `${tidy(implied, 0)} CFM`, true);
-            formula += ` · measured ${tidy(rise, 1)} °F: ${Math.round(qBtu).toLocaleString('en-US')} ÷ ${tidy(denMeas, 2)} = ${tidy(implied, 0)} CFM`;
+            formula += CFI18n.page('formula.measuredRise', {
+                rise: tidy(rise, 1), heat: Math.round(qBtu).toLocaleString('en-US'),
+                denominator: tidy(denMeas, 2), airflow: tidy(implied, 0)
+            });
             el.gx_formula.textContent = formula;
 
             // Verdict compares the snapped rise to the snapped window — the
@@ -540,17 +587,20 @@ keywords: cfm per ton 400 450 dx icing carryover coil freeze temperature rise wi
             // over/under, because a tiny furnace can round the implied
             // flow onto the band edge itself.
             if (rise > riseMax) {
-                setPill(el.gx_pill,
-                    `Measured rise ${tidy(rise, 1)} °F is above the ${tidy(riseMin, 1)}–${tidy(riseMax, 1)} °F window — airflow is low (≈${tidy(implied, 0)} CFM against the ${tidy(cfmMin, 0)} CFM floor). Limit-trip territory: the exchanger runs hot, the high-limit short-cycles the burner, and repeated overheating cracks heat exchangers. Check filters, blower speed tap, and duct restrictions.`,
-                    'error');
+                setPill(el.gx_pill, CFI18n.page('verdict.gasHighRise', {
+                    rise: tidy(rise, 1), minimumRise: tidy(riseMin, 1), maximumRise: tidy(riseMax, 1),
+                    airflow: tidy(implied, 0), floor: tidy(cfmMin, 0)
+                }), 'error');
             } else if (rise < riseMin) {
-                setPill(el.gx_pill,
-                    `Measured rise ${tidy(rise, 1)} °F is below the ${tidy(riseMin, 1)}–${tidy(riseMax, 1)} °F window — airflow is high (≈${tidy(implied, 0)} CFM against the ${tidy(cfmMax, 0)} CFM ceiling). Flue-condensation territory: the exchanger runs cold enough for combustion moisture to condense inside it and corrode it over seasons. Drop the blower a tap, or confirm the firing rate.`,
-                    'warn');
+                setPill(el.gx_pill, CFI18n.page('verdict.gasLowRise', {
+                    rise: tidy(rise, 1), minimumRise: tidy(riseMin, 1), maximumRise: tidy(riseMax, 1),
+                    airflow: tidy(implied, 0), ceiling: tidy(cfmMax, 0)
+                }), 'warn');
             } else {
-                setPill(el.gx_pill,
-                    `Measured rise ${tidy(rise, 1)} °F sits inside the ${tidy(riseMin, 1)}–${tidy(riseMax, 1)} °F window — implied airflow ≈${tidy(implied, 0)} CFM, inside the ${tidy(cfmMin, 0)}–${tidy(cfmMax, 0)} CFM band. The exchanger is neither overheating nor condensing.`,
-                    'ok');
+                setPill(el.gx_pill, CFI18n.page('verdict.gasHealthy', {
+                    rise: tidy(rise, 1), minimumRise: tidy(riseMin, 1), maximumRise: tidy(riseMax, 1),
+                    airflow: tidy(implied, 0), minimumAirflow: tidy(cfmMin, 0), maximumAirflow: tidy(cfmMax, 0)
+                }), 'ok');
             }
         }
 

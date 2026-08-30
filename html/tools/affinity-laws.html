@@ -5,6 +5,14 @@ canonical: https://controlsfreak.dev/tools/affinity-laws.html
 nav: tools
 category: hydronics
 keywords: cfm gpm rpm hz speed pressure bhp horsepower cube law trim calculator vfd energy
+pageMessages:
+  validation:
+    ratio: Enter a {ratioLabel} greater than 0 for the reference and 0 or more for the new value.
+    magnitude: Flow, head, and power are magnitudes — enter 0 or more.
+  ratioLabels:
+    speed: speed
+    diameter: diameter
+  formula: 'ratio = {newValue} ÷ {reference} = {ratio}   ·   Q ∝ ratio   ·   H ∝ ratio²   ·   P ∝ ratio³'
 faqs:
     - q: What are the pump and fan affinity laws?
       a: They scale a known operating point to a new speed (or impeller / sheave diameter) — flow varies with the ratio, head or pressure with its square, and power with its cube. Q₂ = Q₁·(N₂/N₁), H₂ = H₁·(N₂/N₁)², P₂ = P₁·(N₂/N₁)³.
@@ -14,8 +22,8 @@ faqs:
       a: Only the friction-head portion follows the cube. On a system with real static head (open loops, vertical lift), the operating point rides a flatter system curve, so actual power savings fall short of the ideal cube — model the static head separately.
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
-{% from "faq.njk" import faqBlock %}
+{% from "related-links.njk" import relatedLinks with context %}
+{% from "faq.njk" import faqBlock with context %}
 
 {% block head %}
     <style>
@@ -277,7 +285,7 @@ faqs:
                 if (!isFinite(r1) || !isFinite(r2) || r1 <= 0 || r2 < 0) {
                     [ratioEl, q2, h2, p2].forEach(o => { o.className = 'ps-value muted'; o.textContent = '—'; });
                     formulaEl.textContent = '';
-                    calloutEl.textContent = `Enter a ${ratioLabel} greater than 0 for the reference and 0 or more for the new value.`;
+                    calloutEl.textContent = CFI18n.page('validation.ratio', { ratioLabel });
                     calloutEl.hidden = false;
                     return;
                 }
@@ -300,18 +308,20 @@ faqs:
                 // A negative magnitude was entered (vs simply left blank) — say
                 // why the output muted, mirroring the ratio-field callout above.
                 if ([q, h, p].some(v => isFinite(v) && v < 0)) {
-                    calloutEl.textContent = 'Flow, head, and power are magnitudes — enter 0 or more.';
+                    calloutEl.textContent = CFI18n.page('validation.magnitude');
                     calloutEl.hidden = false;
                 }
 
-                formulaEl.textContent =
-                    `ratio = ${tidy(r2, 4)} ÷ ${tidy(r1, 4)} = ${tidy(ratio, 3)}` +
-                    `   ·   Q ∝ ratio   ·   H ∝ ratio²   ·   P ∝ ratio³`;
+                formulaEl.textContent = CFI18n.page('formula', {
+                    newValue: tidy(r2, 4),
+                    reference: tidy(r1, 4),
+                    ratio: tidy(ratio, 3),
+                });
             };
         }
 
-        const calcSpeed = makeCalc('af-s', 'speed');
-        const calcDia   = makeCalc('af-d', 'diameter');
+        const calcSpeed = makeCalc('af-s', CFI18n.page('ratioLabels.speed'));
+        const calcDia   = makeCalc('af-d', CFI18n.page('ratioLabels.diameter'));
 
         document.querySelectorAll('[data-tab]').forEach(btn => {
             btn.addEventListener('click', e => switchTab(e.currentTarget.dataset.tab, e.currentTarget));

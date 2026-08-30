@@ -5,9 +5,63 @@ canonical: https://controlsfreak.dev/tools/refrigerant-pt.html
 nav: tools
 category: hvac
 keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat subcooling
+pageMessages:
+  labels:
+    bubbleTemperature: Bubble point (sat. liquid)
+    dewTemperature: Dew point (sat. vapor)
+    bubblePressure: Bubble-point pressure
+    dewPressure: Dew-point pressure
+    dewAtPressure: Dew point at this pressure
+    bubbleAtPressure: Bubble point at this pressure
+    superheat: Superheat
+    subcooling: Subcooling
+  hints:
+    suction: 'Suction line: read the pressure and a clamp-on temperature at the evaporator outlet. The tool references the dew point.'
+    liquid: 'Liquid line: read the pressure and a clamp-on temperature at the condenser outlet. The tool references the bubble point.'
+  unitText:
+    gaugePressureUs: Gauge pressure (psig)
+    gaugePressureMetric: Gauge pressure (kPag)
+    temperatureUs: Temperature (°F)
+    temperatureMetric: Temperature (°C)
+    measuredLineTemperatureUs: Measured line temp (°F)
+    measuredLineTemperatureMetric: Measured line temp (°C)
+  copy:
+    temperature: Copy temperature
+    pressure: Copy pressure
+    superheat: Copy superheat
+    subcooling: Copy subcooling
+    temperatures: 'Bubble {bubble} {unit} / Dew {dew} {unit}'
+    pressures: 'Bubble {bubble} {unit} / Dew {dew} {unit}'
+    superheatValue: 'Superheat {value} {unit}'
+    subcoolingValue: 'Subcooling {value} {unit}'
+  status:
+    engineUnavailable: Refrigerant engine unavailable — reload the page.
+    dataUnavailable: Refrigerant data unavailable — reload the page.
+    enterPressure: Enter a pressure to read the saturation temperature.
+    enterTemperature: Enter a temperature to read the saturation pressure.
+    enterPressureAndTemperature: Enter a pressure and a line temperature.
+    pressureOutOfRange: 'Out of range — the {refrigerant} chart covers {low} to {high} {unit}.'
+    temperatureOutOfRange: 'Out of range — the {refrigerant} chart covers {low} to {high} {unit}.'
+    glideLarge: '{refrigerant} is a glide blend — {glide} {unit} between bubble and dew. Superheat references the dew point, subcooling the bubble point.'
+    glideSmall: '{refrigerant} — small glide, {glide} {unit} between bubble and dew. Superheat still references the dew point, subcooling the bubble point.'
+    glideNegligible: '{refrigerant} — negligible glide; bubble and dew are effectively one saturation temperature.'
+    saturationPressure: '{refrigerant} — saturation pressure at {temperature} {unit}.'
+    negativeSuperheat: Negative superheat — liquid refrigerant is reaching the compressor (floodback). Check the metering device and charge before running.
+    lowSuperheat: Very low superheat — little margin against liquid floodback. Confirm against the equipment’s target superheat.
+    highSuperheat: 'High superheat — a starved evaporator: undercharge, a restriction, or a metering device feeding too little. Confirm against the target.'
+    typicalSuperheat: 'Superheat {value} {unit} — in a typical range, but the target is system-specific. A TXV holds a different value than a fixed orifice.'
+    negativeSubcooling: Negative subcooling — no liquid seal at the condenser outlet; flash gas in the liquid line. Check charge and condenser airflow.
+    lowSubcooling: Very low subcooling — points to undercharge or a condenser not rejecting heat. Confirm against the equipment’s target.
+    highSubcooling: High subcooling — possible overcharge or a liquid-line restriction backing liquid up in the condenser. Confirm against the target.
+    typicalSubcooling: 'Subcooling {value} {unit} — in a typical range, but the target is set by the equipment manufacturer.'
+  formula:
+    pressureLookup: '{refrigerant} at {pressure} {pressureUnit} — bubble {bubble} {temperatureUnit}, dew {dew} {temperatureUnit}'
+    temperatureLookup: '{refrigerant} at {temperature} {temperatureUnit} — bubble {bubble} {pressureUnit}, dew {dew} {pressureUnit}'
+    superheat: 'superheat = line {line} {temperatureUnit} − dew {saturation} {temperatureUnit} = {value} {deltaUnit}'
+    subcooling: 'subcooling = bubble {saturation} {temperatureUnit} − line {line} {temperatureUnit} = {value} {deltaUnit}'
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -92,24 +146,24 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
                     </div>
 
                     <div class="ps-row" id="rf-pt-pressure-row">
-                        <label class="ps-label" data-us="Gauge pressure (psig)" data-metric="Gauge pressure (kPag)" for="rf-pt-pressure">Gauge pressure (psig)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.gaugePressureUs }}" data-metric="{{ pageMessages.unitText.gaugePressureMetric }}" for="rf-pt-pressure">{{ pageMessages.unitText.gaugePressureUs }}</label>
                         <input class="ps-input" type="number" id="rf-pt-pressure" step="1" value="118">
                     </div>
                     <div class="ps-row hidden" id="rf-pt-temp-row">
-                        <label class="ps-label" data-us="Temperature (°F)" data-metric="Temperature (°C)" for="rf-pt-temp">Temperature (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.temperatureUs }}" data-metric="{{ pageMessages.unitText.temperatureMetric }}" for="rf-pt-temp">{{ pageMessages.unitText.temperatureUs }}</label>
                         <input class="ps-input" type="number" id="rf-pt-temp" step="0.5" value="40">
                     </div>
                 </section>
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="status-pill" id="rf-pt-status">Enter a pressure to read the saturation temperature.</div>
+                    <div class="status-pill" id="rf-pt-status">{{ pageMessages.status.enterPressure }}</div>
                     <div class="ps-row">
-                        <span class="ps-label" id="rf-pt-bubble-lbl">Bubble point (sat. liquid)</span>
+                        <span class="ps-label" id="rf-pt-bubble-lbl">{{ pageMessages.labels.bubbleTemperature }}</span>
                         <span class="ps-value muted" id="rf-pt-bubble">—</span>
                     </div>
                     <div class="ps-row">
-                        <span class="ps-label" id="rf-pt-dew-lbl">Dew point (sat. vapor)</span>
+                        <span class="ps-label" id="rf-pt-dew-lbl">{{ pageMessages.labels.dewTemperature }}</span>
                         <span class="ps-value muted" id="rf-pt-dew">—</span>
                     </div>
                     <div class="ps-row" id="rf-pt-glide-row">
@@ -118,7 +172,7 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
                     </div>
 
                     <div class="btn-row">
-                        <button class="copy-btn" id="rf-pt-copy">Copy temperature</button>
+                        <button class="copy-btn" id="rf-pt-copy">{{ pageMessages.copy.temperature }}</button>
                     </div>
                     <div class="result-formula wrap" id="rf-pt-formula"></div>
                 </section>
@@ -174,18 +228,14 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
                     </div>
 
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Gauge pressure (psig)" data-metric="Gauge pressure (kPag)" for="rf-sc-pressure">Gauge pressure (psig)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.gaugePressureUs }}" data-metric="{{ pageMessages.unitText.gaugePressureMetric }}" for="rf-sc-pressure">{{ pageMessages.unitText.gaugePressureUs }}</label>
                         <input class="ps-input" type="number" id="rf-sc-pressure" step="1" value="118">
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Measured line temp (°F)" data-metric="Measured line temp (°C)" for="rf-sc-temp">Measured line temp (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.measuredLineTemperatureUs }}" data-metric="{{ pageMessages.unitText.measuredLineTemperatureMetric }}" for="rf-sc-temp">{{ pageMessages.unitText.measuredLineTemperatureUs }}</label>
                         <input class="ps-input" type="number" id="rf-sc-temp" step="0.5" value="50">
                     </div>
-                    <p class="ref-note" id="rf-sc-hint">
-                        Suction line: read the pressure and a clamp-on temperature
-                        at the evaporator outlet. The tool references the dew
-                        point.
-                    </p>
+                    <p class="ref-note" id="rf-sc-hint">{{ pageMessages.hints.suction }}</p>
                     <p class="ref-note">
                         The reference flips with the line: superheat is
                         <code>line − dew</code> (vapor side); subcooling is
@@ -196,18 +246,18 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="status-pill" id="rf-sc-status">Enter a pressure and a line temperature.</div>
+                    <div class="status-pill" id="rf-sc-status">{{ pageMessages.status.enterPressureAndTemperature }}</div>
                     <div class="ps-row">
-                        <span class="ps-label" id="rf-sc-satref-lbl">Dew point at this pressure</span>
+                        <span class="ps-label" id="rf-sc-satref-lbl">{{ pageMessages.labels.dewAtPressure }}</span>
                         <span class="ps-value muted" id="rf-sc-satref">—</span>
                     </div>
                     <div class="ps-row primary">
-                        <span class="ps-label" id="rf-sc-result-lbl">Superheat</span>
+                        <span class="ps-label" id="rf-sc-result-lbl">{{ pageMessages.labels.superheat }}</span>
                         <span class="ps-value muted" id="rf-sc-result">—</span>
                     </div>
 
                     <div class="btn-row">
-                        <button class="copy-btn" id="rf-sc-copy">Copy superheat</button>
+                        <button class="copy-btn" id="rf-sc-copy">{{ pageMessages.copy.superheat }}</button>
                     </div>
                     <div class="result-formula wrap" id="rf-sc-formula"></div>
                 </section>
@@ -401,32 +451,42 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
             // with a clear message if refrigerant-loop-engine.js failed to
             // load, rather than throwing on the undefined RefrigLoop global
             // at the lookup sites below.
-            if (typeof RefrigLoop === 'undefined') { clearPt('Refrigerant engine unavailable — reload the page.', 'error'); return; }
+            if (typeof RefrigLoop === 'undefined') { clearPt(CFI18n.page('status.engineUnavailable'), 'error'); return; }
             const R = refrigerant();
-            if (!R) { clearPt('Refrigerant data unavailable — reload the page.', 'error'); return; }
+            if (!R) { clearPt(CFI18n.page('status.dataUnavailable'), 'error'); return; }
             document.getElementById('rf-pt-glide-row').classList.toggle('hidden', ptBy !== 'pressure');
 
             if (ptBy === 'pressure') {
-                document.getElementById('rf-pt-bubble-lbl').textContent = 'Bubble point (sat. liquid)';
-                document.getElementById('rf-pt-dew-lbl').textContent    = 'Dew point (sat. vapor)';
+                document.getElementById('rf-pt-bubble-lbl').textContent = CFI18n.page('labels.bubbleTemperature');
+                document.getElementById('rf-pt-dew-lbl').textContent    = CFI18n.page('labels.dewTemperature');
                 const pD = getNum('rf-pt-pressure');
-                if (!isFinite(pD)) { clearPt('Enter a pressure to read the saturation temperature.'); return; }
+                if (!isFinite(pD)) { clearPt(CFI18n.page('status.enterPressure')); return; }
                 const p = U.toCanonical.pressure(pD);
                 const bub = RefrigLoop.satTempAtP(refrigId(), 'bubble', p);
                 const dew = RefrigLoop.satTempAtP(refrigId(), 'dew', p);
                 if (!bub.ok || !dew.ok) {
                     const lo = Math.round(U.display.pressure(bub.lo));
                     const hi = Math.round(U.display.pressure(bub.hi));
-                    clearPt(`Out of range — the ${R.name} chart covers ${lo} to ${hi} ${pU()}.`, 'error');
+                    clearPt(CFI18n.page('status.pressureOutOfRange', {
+                        refrigerant: R.name, low: lo, high: hi, unit: pU()
+                    }), 'error');
                     return;
                 }
                 const glide = dew.value - bub.value;
                 setLive('rf-pt-bubble', dispT(bub.value) + ' ' + tU());
                 setLive('rf-pt-dew',    dispT(dew.value) + ' ' + tU());
                 setLive('rf-pt-glide',  dispDT(glide) + ' ' + dtU());
-                ptCopy = 'Bubble ' + dispT(bub.value) + ' ' + tU() + ' / Dew ' + dispT(dew.value) + ' ' + tU();
-                document.getElementById('rf-pt-formula').textContent =
-                    `${R.name} at ${dispP(p)} ${pU()} — bubble ${dispT(bub.value)} ${tU()}, dew ${dispT(dew.value)} ${tU()}`;
+                ptCopy = CFI18n.page('copy.temperatures', {
+                    bubble: dispT(bub.value), dew: dispT(dew.value), unit: tU()
+                });
+                document.getElementById('rf-pt-formula').textContent = CFI18n.page('formula.pressureLookup', {
+                    refrigerant: R.name,
+                    pressure: dispP(p),
+                    pressureUnit: pU(),
+                    bubble: dispT(bub.value),
+                    dew: dispT(dew.value),
+                    temperatureUnit: tU()
+                });
                 // Three tiers by computed glide: a large-glide zeotrope (R-407C,
                 // ~7-12 °F) where the dew/bubble split is unmissable; a small-glide
                 // blend (R-454B, ~2 °F) where it's modest but still real — telling
@@ -436,20 +496,23 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
                 // that genuinely behave pure. The 1.5 °F edge sits cleanly between
                 // R-404A (≤ 1.1 °F computed) and R-454B (≥ 1.8 °F computed).
                 if (glide >= 5) {
-                    setStatus('rf-pt-status',
-                        `${R.name} is a glide blend — ${dispDT(glide)} ${dtU()} between bubble and dew. Superheat references the dew point, subcooling the bubble point.`, 'ok');
+                    setStatus('rf-pt-status', CFI18n.page('status.glideLarge', {
+                        refrigerant: R.name, glide: dispDT(glide), unit: dtU()
+                    }), 'ok');
                 } else if (glide >= 1.5) {
-                    setStatus('rf-pt-status',
-                        `${R.name} — small glide, ${dispDT(glide)} ${dtU()} between bubble and dew. Superheat still references the dew point, subcooling the bubble point.`, 'ok');
+                    setStatus('rf-pt-status', CFI18n.page('status.glideSmall', {
+                        refrigerant: R.name, glide: dispDT(glide), unit: dtU()
+                    }), 'ok');
                 } else {
-                    setStatus('rf-pt-status',
-                        `${R.name} — negligible glide; bubble and dew are effectively one saturation temperature.`, 'ok');
+                    setStatus('rf-pt-status', CFI18n.page('status.glideNegligible', {
+                        refrigerant: R.name
+                    }), 'ok');
                 }
             } else {
-                document.getElementById('rf-pt-bubble-lbl').textContent = 'Bubble-point pressure';
-                document.getElementById('rf-pt-dew-lbl').textContent    = 'Dew-point pressure';
+                document.getElementById('rf-pt-bubble-lbl').textContent = CFI18n.page('labels.bubblePressure');
+                document.getElementById('rf-pt-dew-lbl').textContent    = CFI18n.page('labels.dewPressure');
                 const tD = getNum('rf-pt-temp');
-                if (!isFinite(tD)) { clearPt('Enter a temperature to read the saturation pressure.'); return; }
+                if (!isFinite(tD)) { clearPt(CFI18n.page('status.enterTemperature')); return; }
                 const t = U.toCanonical.temp(tD);
                 const bub = RefrigLoop.pressAtSatTemp(refrigId(), 'bubble', t);
                 const dew = RefrigLoop.pressAtSatTemp(refrigId(), 'dew', t);
@@ -458,15 +521,30 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
                     // display units, not raw canonical °F — a metric user
                     // told "covers -41 to 164 °F" against their °C entry
                     // reads the opposite of the truth (audit-2026-06 #28).
-                    clearPt(`Out of range — the ${R.name} chart covers ${dispT(bub.lo)} to ${dispT(bub.hi)} ${tU()}.`, 'error');
+                    clearPt(CFI18n.page('status.temperatureOutOfRange', {
+                        refrigerant: R.name,
+                        low: dispT(bub.lo),
+                        high: dispT(bub.hi),
+                        unit: tU()
+                    }), 'error');
                     return;
                 }
                 setLive('rf-pt-bubble', dispP(bub.value) + ' ' + pU());
                 setLive('rf-pt-dew',    dispP(dew.value) + ' ' + pU());
-                ptCopy = 'Bubble ' + dispP(bub.value) + ' ' + pU() + ' / Dew ' + dispP(dew.value) + ' ' + pU();
-                document.getElementById('rf-pt-formula').textContent =
-                    `${R.name} at ${dispT(t)} ${tU()} — bubble ${dispP(bub.value)} ${pU()}, dew ${dispP(dew.value)} ${pU()}`;
-                setStatus('rf-pt-status', `${R.name} — saturation pressure at ${dispT(t)} ${tU()}.`, 'ok');
+                ptCopy = CFI18n.page('copy.pressures', {
+                    bubble: dispP(bub.value), dew: dispP(dew.value), unit: pU()
+                });
+                document.getElementById('rf-pt-formula').textContent = CFI18n.page('formula.temperatureLookup', {
+                    refrigerant: R.name,
+                    temperature: dispT(t),
+                    temperatureUnit: tU(),
+                    bubble: dispP(bub.value),
+                    dew: dispP(dew.value),
+                    pressureUnit: pU()
+                });
+                setStatus('rf-pt-status', CFI18n.page('status.saturationPressure', {
+                    refrigerant: R.name, temperature: dispT(t), unit: tU()
+                }), 'ok');
             }
         }
 
@@ -481,20 +559,22 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
 
         function calcSc() {
             // Engine guard (codebase-issues #139): same degradation as calcPt.
-            if (typeof RefrigLoop === 'undefined') { clearSc('Refrigerant engine unavailable — reload the page.', 'error'); return; }
+            if (typeof RefrigLoop === 'undefined') { clearSc(CFI18n.page('status.engineUnavailable'), 'error'); return; }
             const R = refrigerant();
-            if (!R) { clearSc('Refrigerant data unavailable — reload the page.', 'error'); return; }
+            if (!R) { clearSc(CFI18n.page('status.dataUnavailable'), 'error'); return; }
             const suction = scLine === 'suction';
-            document.getElementById('rf-sc-result-lbl').textContent = suction ? 'Superheat' : 'Subcooling';
+            document.getElementById('rf-sc-result-lbl').textContent = CFI18n.page(
+                suction ? 'labels.superheat' : 'labels.subcooling'
+            );
             document.getElementById('rf-sc-satref-lbl').textContent =
-                suction ? 'Dew point at this pressure' : 'Bubble point at this pressure';
+                CFI18n.page(suction ? 'labels.dewAtPressure' : 'labels.bubbleAtPressure');
             document.getElementById('rf-sc-hint').textContent = suction
-                ? 'Suction line: read the pressure and a clamp-on temperature at the evaporator outlet. The tool references the dew point.'
-                : 'Liquid line: read the pressure and a clamp-on temperature at the condenser outlet. The tool references the bubble point.';
+                ? CFI18n.page('hints.suction')
+                : CFI18n.page('hints.liquid');
 
             const pD = getNum('rf-sc-pressure');
             const tD = getNum('rf-sc-temp');
-            if (!isFinite(pD) || !isFinite(tD)) { clearSc('Enter a pressure and a line temperature.'); return; }
+            if (!isFinite(pD) || !isFinite(tD)) { clearSc(CFI18n.page('status.enterPressureAndTemperature')); return; }
 
             const p = U.toCanonical.pressure(pD);
             const lineT = U.toCanonical.temp(tD);
@@ -503,7 +583,9 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
             if (!sat.ok) {
                 const lo = Math.round(U.display.pressure(sat.lo));
                 const hi = Math.round(U.display.pressure(sat.hi));
-                clearSc(`Out of range — the ${R.name} chart covers ${lo} to ${hi} ${pU()}.`, 'error');
+                clearSc(CFI18n.page('status.pressureOutOfRange', {
+                    refrigerant: R.name, low: lo, high: hi, unit: pU()
+                }), 'error');
                 return;
             }
 
@@ -511,42 +593,46 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
             const value = suction ? (lineT - sat.value) : (sat.value - lineT);
             setLive('rf-sc-satref', dispT(sat.value) + ' ' + tU());
             setLive('rf-sc-result', dispDT(value) + ' ' + dtU());
-            scCopy = (suction ? 'Superheat ' : 'Subcooling ') + dispDT(value) + ' ' + dtU();
+            scCopy = CFI18n.page(suction ? 'copy.superheatValue' : 'copy.subcoolingValue', {
+                value: dispDT(value), unit: dtU()
+            });
 
-            const ref = suction ? 'dew' : 'bubble';
-            document.getElementById('rf-sc-formula').textContent = suction
-                ? `superheat = line ${dispT(lineT)} ${tU()} − ${ref} ${dispT(sat.value)} ${tU()} = ${dispDT(value)} ${dtU()}`
-                : `subcooling = ${ref} ${dispT(sat.value)} ${tU()} − line ${dispT(lineT)} ${tU()} = ${dispDT(value)} ${dtU()}`;
+            document.getElementById('rf-sc-formula').textContent = CFI18n.page(
+                suction ? 'formula.superheat' : 'formula.subcooling',
+                {
+                    line: dispT(lineT),
+                    temperatureUnit: tU(),
+                    saturation: dispT(sat.value),
+                    value: dispDT(value),
+                    deltaUnit: dtU()
+                }
+            );
 
             // Verdict — rough field rules of thumb; target depends on the
             // metering device and the equipment manufacturer's data.
             if (suction) {
                 if (value < 0) {
-                    setStatus('rf-sc-status',
-                        'Negative superheat — liquid refrigerant is reaching the compressor (floodback). Check the metering device and charge before running.', 'error');
+                    setStatus('rf-sc-status', CFI18n.page('status.negativeSuperheat'), 'error');
                 } else if (value < 5) {
-                    setStatus('rf-sc-status',
-                        'Very low superheat — little margin against liquid floodback. Confirm against the equipment’s target superheat.', 'warn');
+                    setStatus('rf-sc-status', CFI18n.page('status.lowSuperheat'), 'warn');
                 } else if (value > 25) {
-                    setStatus('rf-sc-status',
-                        'High superheat — a starved evaporator: undercharge, a restriction, or a metering device feeding too little. Confirm against the target.', 'warn');
+                    setStatus('rf-sc-status', CFI18n.page('status.highSuperheat'), 'warn');
                 } else {
-                    setStatus('rf-sc-status',
-                        `Superheat ${dispDT(value)} ${dtU()} — in a typical range, but the target is system-specific. A TXV holds a different value than a fixed orifice.`, 'ok');
+                    setStatus('rf-sc-status', CFI18n.page('status.typicalSuperheat', {
+                        value: dispDT(value), unit: dtU()
+                    }), 'ok');
                 }
             } else {
                 if (value < 0) {
-                    setStatus('rf-sc-status',
-                        'Negative subcooling — no liquid seal at the condenser outlet; flash gas in the liquid line. Check charge and condenser airflow.', 'error');
+                    setStatus('rf-sc-status', CFI18n.page('status.negativeSubcooling'), 'error');
                 } else if (value < 3) {
-                    setStatus('rf-sc-status',
-                        'Very low subcooling — points to undercharge or a condenser not rejecting heat. Confirm against the equipment’s target.', 'warn');
+                    setStatus('rf-sc-status', CFI18n.page('status.lowSubcooling'), 'warn');
                 } else if (value > 20) {
-                    setStatus('rf-sc-status',
-                        'High subcooling — possible overcharge or a liquid-line restriction backing liquid up in the condenser. Confirm against the target.', 'warn');
+                    setStatus('rf-sc-status', CFI18n.page('status.highSubcooling'), 'warn');
                 } else {
-                    setStatus('rf-sc-status',
-                        `Subcooling ${dispDT(value)} ${dtU()} — in a typical range, but the target is set by the equipment manufacturer.`, 'ok');
+                    setStatus('rf-sc-status', CFI18n.page('status.typicalSubcooling', {
+                        value: dispDT(value), unit: dtU()
+                    }), 'ok');
                 }
             }
         }
@@ -565,7 +651,9 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
             document.getElementById('rf-pt-pressure-row').classList.toggle('hidden', mode !== 'pressure');
             document.getElementById('rf-pt-temp-row').classList.toggle('hidden', mode !== 'temp');
             // Dynamic copy label — the result is whichever direction we're solving toward.
-            document.getElementById('rf-pt-copy').textContent = mode === 'pressure' ? 'Copy temperature' : 'Copy pressure';
+            document.getElementById('rf-pt-copy').textContent = CFI18n.page(
+                mode === 'pressure' ? 'copy.temperature' : 'copy.pressure'
+            );
             calcPt();
         }
         function setScLine(line, btn) {
@@ -576,7 +664,9 @@ keywords: pt chart r22 r410a r134a r407c psig kpag saturation glide superheat su
                 b.setAttribute('aria-pressed', on ? 'true' : 'false');
             });
             // Dynamic copy label — suction line gives superheat, liquid line gives subcooling.
-            document.getElementById('rf-sc-copy').textContent = line === 'suction' ? 'Copy superheat' : 'Copy subcooling';
+            document.getElementById('rf-sc-copy').textContent = CFI18n.page(
+                line === 'suction' ? 'copy.superheat' : 'copy.subcooling'
+            );
             calcSc();
         }
 

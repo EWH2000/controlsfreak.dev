@@ -4,10 +4,147 @@ description: Walk an AHU through psychrometric processes — mix OA and RA, then
 canonical: https://controlsfreak.dev/tools/psychrometric-chart.html
 nav: tools
 category: hvac
+pageMessages:
+  toggle:
+    "off": "Off"
+    "on": "On"
+  defineBy:
+    rh: "Relative humidity (%)"
+    wb: "Wet-bulb ({unit})"
+    dp: "Dew point ({unit})"
+    w: "Humidity ratio ({unit})"
+    h: "Enthalpy ({unit} dry air)"
+  stages:
+    oa: "OA — Outdoor air"
+    ra: "RA — Return air"
+    ma: "MA — Mixed air"
+    cc: "CC — After cooling coil"
+    hc: "HC — After heating coil"
+    hum: "HUM — After humidifier"
+    sa: "SA — Supply air"
+    offAria: "{label} (stage off)"
+    bypassed: "{short} — bypassed (pass-through)"
+    copyProperties: "Copy {short} properties"
+  process:
+    cooling: "Cooling coil — process delta"
+    heating: "Heating coil — process delta"
+    humidifier: "Humidifier — process delta"
+    default: "Process delta — across this stage"
+  labels:
+    hcDeltaRise: "ΔT rise ({unit})"
+    hcLeavingDb: "Leaving DB ({unit})"
+  status:
+    engineUnavailable: "Psychrometric engine unavailable — reload the page."
+    seaLevel: "Sea level"
+    altitude: "Altitude {value} {unit}"
+    conditions: "{location} — {pressure} {pressureUnit}{airflow}"
+    airflow: " · {value} {unit}"
+  errors:
+    prefix: "{stage}: {message}"
+    outdoorAirPercent: "% OA must be 0–100"
+    awaitingOaRa: "awaiting OA / RA"
+    coolingLeavingDb: "leaving DB must be ≤ entering"
+    coolingHumidityRatio: "leaving humidity ratio can’t exceed entering"
+    enterNumber: "enter a number"
+    heatingLeavingDb: "leaving DB must be ≥ entering"
+    humidifierRhRange: "leaving RH must be 0–100"
+    humidifierRhEntering: "leaving RH must be ≥ entering"
+    awaitingUpstream: "awaiting upstream"
+    psychro:
+      numeric: "Enter numeric values."
+      rhNegative: "Relative humidity can’t be negative."
+      rhAbove100: "Relative humidity can’t exceed 100%."
+      wetBulbAboveDryBulb: "Wet-bulb can’t exceed dry-bulb."
+      dewPointAboveDryBulb: "Dew point can’t exceed dry-bulb."
+      humidityRatioNegative: "Humidity ratio can’t be negative."
+      enthalpyBelowDryAir: "Enthalpy is below dry air at this dry-bulb — impossible."
+      propertyRequired: "Pick a property to define the point by."
+      rhPastSaturation: "That point is past saturation (RH over 100%) — impossible."
+      wetBulbPastSaturation: "That wet-bulb is past saturation — more moisture than air can hold at this dry-bulb and pressure."
+      dewPointPastSaturation: "That dew point is past saturation — more moisture than air can hold at this dry-bulb and pressure."
+      humidityRatioPastSaturation: "That humidity ratio is past saturation — more moisture than air can hold at this dry-bulb and pressure."
+      enthalpyPastSaturation: "That enthalpy is past saturation — more moisture than air can hold at this dry-bulb and pressure."
+  canvas:
+    dryBulbAxis: "Dry-bulb temperature · {unit}"
+    humidityRatioAxis: "Humidity ratio · {unit}"
+    saturation: "100% RH"
+    chipDryBulb: "DB"
+    chipWetBulb: "WB"
+    chipRelativeHumidity: "RH"
+  unitText:
+    altitude:
+      us: "Altitude (ft)"
+      metric: "Altitude (m)"
+    airflow:
+      us: "AHU airflow (CFM)"
+      metric: "AHU airflow (m³/h)"
+    dryBulb:
+      us: "Dry-bulb (°F)"
+      metric: "Dry-bulb (°C)"
+    leavingDryBulb:
+      us: "Leaving DB (°F)"
+      metric: "Leaving DB (°C)"
+    maDryBulb:
+      us: "MA dry-bulb (°F)"
+      metric: "MA dry-bulb (°C)"
+    maHumidityRatio:
+      us: "MA humidity ratio (gr/lb)"
+      metric: "MA humidity ratio (g/kg)"
+    stageDryBulb:
+      us: "DB °F"
+      metric: "DB °C"
+    stageHumidityRatio:
+      us: "gr/lb"
+      metric: "g/kg"
+    stageEnthalpy:
+      us: "h Btu/lb"
+      metric: "h kJ/kg"
+    stageCapacity:
+      us: "MBH"
+      metric: "kW"
+    wetBulb:
+      us: "Wet-bulb (°F)"
+      metric: "Wet-bulb (°C)"
+    dewPoint:
+      us: "Dew point (°F)"
+      metric: "Dew point (°C)"
+    humidityRatio:
+      us: "Humidity ratio (gr/lb)"
+      metric: "Humidity ratio (g/kg)"
+    enthalpy:
+      us: "Enthalpy (Btu/lb)"
+      metric: "Enthalpy (kJ/kg)"
+    specificVolume:
+      us: "Specific volume (ft³/lb)"
+      metric: "Specific volume (m³/kg)"
+    vaporPressure:
+      us: "Vapor pressure (psia)"
+      metric: "Vapor pressure (kPa)"
+    barometricPressure:
+      us: "Barometric press. (psia)"
+      metric: "Barometric press. (kPa)"
+    deltaDryBulb:
+      us: "ΔDB (°F)"
+      metric: "ΔDB (°C)"
+    deltaHumidityRatio:
+      us: "ΔW (gr/lb)"
+      metric: "ΔW (g/kg)"
+    deltaEnthalpy:
+      us: "Δh (Btu/lb)"
+      metric: "Δh (kJ/kg)"
+    totalCapacity:
+      us: "Q total (MBH)"
+      metric: "Q total (kW)"
+    sensibleCapacity:
+      us: "Q sensible (MBH)"
+      metric: "Q sensible (kW)"
+    latentCapacity:
+      us: "Q latent (MBH)"
+      metric: "Q latent (kW)"
 keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU OA RA psychro
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -81,8 +218,8 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
             cursor: pointer;
             user-select: none;
         }
-        .psy-toggle::after { content: 'Off'; }
-        .psy-toggle:has(input:checked)::after { content: 'On'; }
+        .psy-toggle::after { content: {{ pageMessages.toggle.off | safeScriptJson | safe }}; }
+        .psy-toggle:has(input:checked)::after { content: {{ pageMessages.toggle.on | safeScriptJson | safe }}; }
         .psy-toggle input { accent-color: var(--accent); cursor: pointer; }
 
         /* Compact per-stage results table on the right column. Inherits from the
@@ -255,11 +392,11 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                     </div>
                 </div>
                 <div class="ps-row">
-                    <label class="ps-label" data-us="Altitude (ft)" data-metric="Altitude (m)" for="psy-alt">Altitude (ft)</label>
+                    <label class="ps-label" data-us="{{ pageMessages.unitText.altitude.us }}" data-metric="{{ pageMessages.unitText.altitude.metric }}" for="psy-alt">{{ pageMessages.unitText.altitude.us }}</label>
                     <input class="ps-input" type="number" id="psy-alt" step="100" min="0" max="15000" placeholder="0" value="0">
                 </div>
                 <div class="ps-row">
-                    <label class="ps-label" data-us="AHU airflow (CFM)" data-metric="AHU airflow (m³/h)" for="psy-cfm">AHU airflow (CFM)</label>
+                    <label class="ps-label" data-us="{{ pageMessages.unitText.airflow.us }}" data-metric="{{ pageMessages.unitText.airflow.metric }}" for="psy-cfm">{{ pageMessages.unitText.airflow.us }}</label>
                     <input class="ps-input" type="number" id="psy-cfm" step="100" min="0" placeholder="optional">
                 </div>
 
@@ -285,7 +422,7 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                 <!-- OA editor -->
                 <div class="psy-editor shown" data-step="oa">
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="oa-tdb">Dry-bulb (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="oa-tdb">{{ pageMessages.unitText.dryBulb.us }}</label>
                         <input class="ps-input" type="number" id="oa-tdb" step="0.5" min="-50" max="200" value="92">
                     </div>
                     <div class="ps-row">
@@ -308,7 +445,7 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                 <!-- RA editor -->
                 <div class="psy-editor" data-step="ra">
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="ra-tdb">Dry-bulb (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="ra-tdb">{{ pageMessages.unitText.dryBulb.us }}</label>
                         <input class="ps-input" type="number" id="ra-tdb" step="0.5" min="-50" max="200" value="75">
                     </div>
                     <div class="ps-row">
@@ -335,8 +472,8 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                         <input class="ps-input" type="number" id="ma-pct" step="1" min="0" max="100" value="20">
                     </div>
                     <p class="ref-note">Mass-weighted mix of OA and RA. The mixed point falls on the straight line between OA and RA on the chart, at the OA% fraction of the way from RA to OA.</p>
-                    <div class="ps-row"><span class="ps-label" data-us="MA dry-bulb (°F)" data-metric="MA dry-bulb (°C)">MA dry-bulb (°F)</span><span class="ps-value live" id="ma-tdb-out">—</span></div>
-                    <div class="ps-row"><span class="ps-label" data-us="MA humidity ratio (gr/lb)" data-metric="MA humidity ratio (g/kg)">MA humidity ratio (gr/lb)</span><span class="ps-value live" id="ma-w-out">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.maDryBulb.us }}" data-metric="{{ pageMessages.unitText.maDryBulb.metric }}">{{ pageMessages.unitText.maDryBulb.us }}</span><span class="ps-value live" id="ma-tdb-out">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.maHumidityRatio.us }}" data-metric="{{ pageMessages.unitText.maHumidityRatio.metric }}">{{ pageMessages.unitText.maHumidityRatio.us }}</span><span class="ps-value live" id="ma-w-out">—</span></div>
                     <div class="ps-row"><span class="ps-label">MA rel. humidity (%)</span><span class="ps-value live" id="ma-rh-out">—</span></div>
                 </div>
 
@@ -347,7 +484,7 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                         <label class="psy-toggle"><input type="checkbox" id="cc-on" checked></label>
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Leaving DB (°F)" data-metric="Leaving DB (°C)" for="cc-tdb">Leaving DB (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.leavingDryBulb.us }}" data-metric="{{ pageMessages.unitText.leavingDryBulb.metric }}" for="cc-tdb">{{ pageMessages.unitText.leavingDryBulb.us }}</label>
                         <input class="ps-input" type="number" id="cc-tdb" step="0.5" min="-50" max="200" value="55">
                     </div>
                     <div class="ps-row">
@@ -431,26 +568,26 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                     <thead>
                         <tr>
                             <th scope="col">Stage</th>
-                            <th scope="col" data-us="DB °F" data-metric="DB °C">DB °F</th>
-                            <th scope="col" data-us="gr/lb" data-metric="g/kg">gr/lb</th>
+                            <th scope="col" data-us="{{ pageMessages.unitText.stageDryBulb.us }}" data-metric="{{ pageMessages.unitText.stageDryBulb.metric }}">{{ pageMessages.unitText.stageDryBulb.us }}</th>
+                            <th scope="col" data-us="{{ pageMessages.unitText.stageHumidityRatio.us }}" data-metric="{{ pageMessages.unitText.stageHumidityRatio.metric }}">{{ pageMessages.unitText.stageHumidityRatio.us }}</th>
                             <th scope="col">RH %</th>
-                            <th scope="col" data-us="h Btu/lb" data-metric="h kJ/kg">h Btu/lb</th>
-                            <th scope="col" class="psy-q-col hidden" data-us="MBH" data-metric="kW">MBH</th>
+                            <th scope="col" data-us="{{ pageMessages.unitText.stageEnthalpy.us }}" data-metric="{{ pageMessages.unitText.stageEnthalpy.metric }}">{{ pageMessages.unitText.stageEnthalpy.us }}</th>
+                            <th scope="col" class="psy-q-col hidden" data-us="{{ pageMessages.unitText.stageCapacity.us }}" data-metric="{{ pageMessages.unitText.stageCapacity.metric }}">{{ pageMessages.unitText.stageCapacity.us }}</th>
                         </tr>
                     </thead>
                     <tbody><!-- rows generated by JS --></tbody>
                 </table>
 
                 <h2 class="ps-section-label" id="psy-detail-label" style="margin-top:1rem;">OA — Outdoor air</h2>
-                <div class="ps-row"><span class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span><span class="ps-value live" id="ro-db">—</span></div>
-                <div class="ps-row"><span class="ps-label" data-us="Wet-bulb (°F)" data-metric="Wet-bulb (°C)">Wet-bulb (°F)</span><span class="ps-value live" id="ro-wb">—</span></div>
-                <div class="ps-row"><span class="ps-label" data-us="Dew point (°F)" data-metric="Dew point (°C)">Dew point (°F)</span><span class="ps-value live" id="ro-dp">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}">{{ pageMessages.unitText.dryBulb.us }}</span><span class="ps-value live" id="ro-db">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.wetBulb.us }}" data-metric="{{ pageMessages.unitText.wetBulb.metric }}">{{ pageMessages.unitText.wetBulb.us }}</span><span class="ps-value live" id="ro-wb">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.dewPoint.us }}" data-metric="{{ pageMessages.unitText.dewPoint.metric }}">{{ pageMessages.unitText.dewPoint.us }}</span><span class="ps-value live" id="ro-dp">—</span></div>
                 <div class="ps-row"><span class="ps-label">Rel. humidity (%)</span><span class="ps-value live" id="ro-rh">—</span></div>
-                <div class="ps-row"><span class="ps-label" data-us="Humidity ratio (gr/lb)" data-metric="Humidity ratio (g/kg)">Humidity ratio (gr/lb)</span><span class="ps-value live" id="ro-w">—</span></div>
-                <div class="ps-row"><span class="ps-label" data-us="Enthalpy (Btu/lb)" data-metric="Enthalpy (kJ/kg)">Enthalpy (Btu/lb)</span><span class="ps-value live" id="ro-h">—</span></div>
-                <div class="ps-row"><span class="ps-label" data-us="Specific volume (ft³/lb)" data-metric="Specific volume (m³/kg)">Specific volume (ft³/lb)</span><span class="ps-value live" id="ro-v">—</span></div>
-                <div class="ps-row"><span class="ps-label" data-us="Vapor pressure (psia)" data-metric="Vapor pressure (kPa)">Vapor pressure (psia)</span><span class="ps-value live" id="ro-pw">—</span></div>
-                <div class="ps-row"><span class="ps-label" data-us="Barometric press. (psia)" data-metric="Barometric press. (kPa)">Barometric press. (psia)</span><span class="ps-value live" id="ro-p">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.humidityRatio.us }}" data-metric="{{ pageMessages.unitText.humidityRatio.metric }}">{{ pageMessages.unitText.humidityRatio.us }}</span><span class="ps-value live" id="ro-w">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.enthalpy.us }}" data-metric="{{ pageMessages.unitText.enthalpy.metric }}">{{ pageMessages.unitText.enthalpy.us }}</span><span class="ps-value live" id="ro-h">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.specificVolume.us }}" data-metric="{{ pageMessages.unitText.specificVolume.metric }}">{{ pageMessages.unitText.specificVolume.us }}</span><span class="ps-value live" id="ro-v">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.vaporPressure.us }}" data-metric="{{ pageMessages.unitText.vaporPressure.metric }}">{{ pageMessages.unitText.vaporPressure.us }}</span><span class="ps-value live" id="ro-pw">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.barometricPressure.us }}" data-metric="{{ pageMessages.unitText.barometricPressure.metric }}">{{ pageMessages.unitText.barometricPressure.us }}</span><span class="ps-value live" id="ro-p">—</span></div>
 
                 <div class="btn-row">
                     <button class="copy-btn" id="psy-copy-state">Copy OA properties</button>
@@ -458,13 +595,13 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
 
                 <div class="psy-process hidden" id="psy-process-block">
                     <div class="psy-process-label" id="psy-process-label">Process delta — across this stage</div>
-                    <div class="ps-row"><span class="ps-label" data-us="ΔDB (°F)" data-metric="ΔDB (°C)">ΔDB (°F)</span><span class="ps-value live" id="pd-db">—</span></div>
-                    <div class="ps-row"><span class="ps-label" data-us="ΔW (gr/lb)" data-metric="ΔW (g/kg)">ΔW (gr/lb)</span><span class="ps-value live" id="pd-w">—</span></div>
-                    <div class="ps-row"><span class="ps-label" data-us="Δh (Btu/lb)" data-metric="Δh (kJ/kg)">Δh (Btu/lb)</span><span class="ps-value live" id="pd-h">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.deltaDryBulb.us }}" data-metric="{{ pageMessages.unitText.deltaDryBulb.metric }}">{{ pageMessages.unitText.deltaDryBulb.us }}</span><span class="ps-value live" id="pd-db">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.deltaHumidityRatio.us }}" data-metric="{{ pageMessages.unitText.deltaHumidityRatio.metric }}">{{ pageMessages.unitText.deltaHumidityRatio.us }}</span><span class="ps-value live" id="pd-w">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.deltaEnthalpy.us }}" data-metric="{{ pageMessages.unitText.deltaEnthalpy.metric }}">{{ pageMessages.unitText.deltaEnthalpy.us }}</span><span class="ps-value live" id="pd-h">—</span></div>
                     <div class="ps-row hidden" id="pd-shr-row"><span class="ps-label">Sensible heat ratio</span><span class="ps-value live" id="pd-shr">—</span></div>
-                    <div class="ps-row hidden" id="pd-qt-row"><span class="ps-label" data-us="Q total (MBH)" data-metric="Q total (kW)">Q total (MBH)</span><span class="ps-value live" id="pd-qt">—</span></div>
-                    <div class="ps-row hidden" id="pd-qs-row"><span class="ps-label" data-us="Q sensible (MBH)" data-metric="Q sensible (kW)">Q sensible (MBH)</span><span class="ps-value live" id="pd-qs">—</span></div>
-                    <div class="ps-row hidden" id="pd-ql-row"><span class="ps-label" data-us="Q latent (MBH)" data-metric="Q latent (kW)">Q latent (MBH)</span><span class="ps-value live" id="pd-ql">—</span></div>
+                    <div class="ps-row hidden" id="pd-qt-row"><span class="ps-label" data-us="{{ pageMessages.unitText.totalCapacity.us }}" data-metric="{{ pageMessages.unitText.totalCapacity.metric }}">{{ pageMessages.unitText.totalCapacity.us }}</span><span class="ps-value live" id="pd-qt">—</span></div>
+                    <div class="ps-row hidden" id="pd-qs-row"><span class="ps-label" data-us="{{ pageMessages.unitText.sensibleCapacity.us }}" data-metric="{{ pageMessages.unitText.sensibleCapacity.metric }}">{{ pageMessages.unitText.sensibleCapacity.us }}</span><span class="ps-value live" id="pd-qs">—</span></div>
+                    <div class="ps-row hidden" id="pd-ql-row"><span class="ps-label" data-us="{{ pageMessages.unitText.latentCapacity.us }}" data-metric="{{ pageMessages.unitText.latentCapacity.metric }}">{{ pageMessages.unitText.latentCapacity.us }}</span><span class="ps-value live" id="pd-ql">—</span></div>
                 </div>
             </section>
 
@@ -542,6 +679,30 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
         const dispCfm = cfm      => Math.round(U.display.airflow(cfm)).toLocaleString();
         const dispQ   = btuPerH  => U.display.heatCapacity(btuPerH / 1000).toFixed(1);  // input is BTU/h, MBH = /1000
 
+        // Exact adapter for Psychro.solveState(). Unknown source text fails
+        // closed instead of reaching a localized status region in English.
+        const PSYCHRO_ERROR_KEYS = Object.freeze({
+            'Enter numeric values.': 'numeric',
+            'Relative humidity can’t be negative.': 'rhNegative',
+            'Relative humidity can’t exceed 100%.': 'rhAbove100',
+            'Wet-bulb can’t exceed dry-bulb.': 'wetBulbAboveDryBulb',
+            'Dew point can’t exceed dry-bulb.': 'dewPointAboveDryBulb',
+            'Humidity ratio can’t be negative.': 'humidityRatioNegative',
+            'Enthalpy is below dry air at this dry-bulb — impossible.': 'enthalpyBelowDryAir',
+            'Pick a property to define the point by.': 'propertyRequired',
+            'That point is past saturation (RH over 100%) — impossible.': 'rhPastSaturation',
+            'That wet-bulb is past saturation — more moisture than air can hold at this dry-bulb and pressure.': 'wetBulbPastSaturation',
+            'That dew point is past saturation — more moisture than air can hold at this dry-bulb and pressure.': 'dewPointPastSaturation',
+            'That humidity ratio is past saturation — more moisture than air can hold at this dry-bulb and pressure.': 'humidityRatioPastSaturation',
+            'That enthalpy is past saturation — more moisture than air can hold at this dry-bulb and pressure.': 'enthalpyPastSaturation'
+        });
+
+        function psychroErrorMessage(error) {
+            const key = PSYCHRO_ERROR_KEYS[error];
+            if (!key) throw new Error('Uncataloged psychrometric engine error.');
+            return CFI18n.page('errors.psychro.' + key);
+        }
+
         // What the "second value" input means / shows for each mode. The
         // label + step base comes from PsyWidget; this page enriches each
         // entry with `def` (per-mode default in display units) and `fmt`
@@ -550,13 +711,24 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
         let SECOND_PROP;
         function buildSecondProp() {
             const u = U.current();
-            const base = PsyWidget.buildSecondProp();
+            // Keep first paint renderable if the shared widget dependency did
+            // not load. psyRecompute() reports the localized dependency error;
+            // these fallback objects only supply stable machine step values.
+            const base = typeof PsyWidget !== 'undefined'
+                ? PsyWidget.buildSecondProp()
+                : {
+                    rh: { step: 1 },
+                    wb: { step: u === 'us' ? 0.5 : 0.25 },
+                    dp: { step: u === 'us' ? 0.5 : 0.25 },
+                    w:  { step: u === 'us' ? 1 : 0.1 },
+                    h:  { step: 0.5 }
+                };
             SECOND_PROP = {
-                rh: { ...base.rh, def: 50,                                                             fmt: s => s.rh.toFixed(1) },
-                wb: { ...base.wb, def: u === 'us' ? 60 : +U.display.temp(60).toFixed(1),               fmt: s => dispT(s.twb) },
-                dp: { ...base.dp, def: u === 'us' ? 50 : +U.display.temp(50).toFixed(1),               fmt: s => isFinite(s.tdp) ? dispT(s.tdp) : '' },
-                w:  { ...base.w,  def: u === 'us' ? 65 : +U.display.humidityRatio(65).toFixed(1),      fmt: s => dispW(s.W) },
-                h:  { ...base.h,  def: u === 'us' ? 28 : +U.display.enthalpy(28).toFixed(1),           fmt: s => dispH(s.h) },
+                rh: { ...base.rh, label: CFI18n.page('defineBy.rh'), def: 50, fmt: s => s.rh.toFixed(1) },
+                wb: { ...base.wb, label: CFI18n.page('defineBy.wb', { unit: U.suffix.temp() }), def: u === 'us' ? 60 : +U.display.temp(60).toFixed(1), fmt: s => dispT(s.twb) },
+                dp: { ...base.dp, label: CFI18n.page('defineBy.dp', { unit: U.suffix.temp() }), def: u === 'us' ? 50 : +U.display.temp(50).toFixed(1), fmt: s => isFinite(s.tdp) ? dispT(s.tdp) : '' },
+                w:  { ...base.w,  label: CFI18n.page('defineBy.w', { unit: U.suffix.humidityRatio() }), def: u === 'us' ? 65 : +U.display.humidityRatio(65).toFixed(1), fmt: s => dispW(s.W) },
+                h:  { ...base.h,  label: CFI18n.page('defineBy.h', { unit: U.suffix.enthalpy() }), def: u === 'us' ? 28 : +U.display.enthalpy(28).toFixed(1), fmt: s => dispH(s.h) },
             };
         }
         buildSecondProp();
@@ -589,19 +761,19 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
         // ── Stage labels & ordering ──
         const STEPS = ['oa', 'ra', 'ma', 'cc', 'hc', 'hum', 'sa'];
         const STEP_LABEL = {
-            oa:  'OA — Outdoor air',
-            ra:  'RA — Return air',
-            ma:  'MA — Mixed air',
-            cc:  'CC — After cooling coil',
-            hc:  'HC — After heating coil',
-            hum: 'HUM — After humidifier',
-            sa:  'SA — Supply air',
+            oa:  CFI18n.page('stages.oa'),
+            ra:  CFI18n.page('stages.ra'),
+            ma:  CFI18n.page('stages.ma'),
+            cc:  CFI18n.page('stages.cc'),
+            hc:  CFI18n.page('stages.hc'),
+            hum: CFI18n.page('stages.hum'),
+            sa:  CFI18n.page('stages.sa'),
         };
         const STEP_SHORT = { oa: 'OA', ra: 'RA', ma: 'MA', cc: 'CC', hc: 'HC', hum: 'HUM', sa: 'SA' };
         const PROCESS_LABEL = {
-            cc:  'Cooling coil — process delta',
-            hc:  'Heating coil — process delta',
-            hum: 'Humidifier — process delta',
+            cc:  CFI18n.page('process.cooling'),
+            hc:  CFI18n.page('process.heating'),
+            hum: CFI18n.page('process.humidifier'),
         };
 
         // Detail-block label that swaps in a "bypassed" variant when a selected
@@ -611,7 +783,7 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
         function detailLabelFor(key, results) {
             if ((key === 'cc' || key === 'hc' || key === 'hum')
                 && results && results[key] && results[key].enabled === false) {
-                return STEP_SHORT[key] + ' — bypassed (pass-through)';
+                return CFI18n.page('stages.bypassed', { short: STEP_SHORT[key] });
             }
             return STEP_LABEL[key];
         }
@@ -655,18 +827,19 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
             };
             const eOa = readSt('oa');
             r.oa = Psychro.solveState(eOa.mode, eOa.tdb, eOa.second, P);
-            if (!r.oa.ok) setErr('OA: ' + r.oa.error);
+            if (!r.oa.ok) setErr(CFI18n.page('errors.prefix', { stage: 'OA', message: psychroErrorMessage(r.oa.error) }));
 
             const eRa = readSt('ra');
             r.ra = Psychro.solveState(eRa.mode, eRa.tdb, eRa.second, P);
-            if (!r.ra.ok) setErr('RA: ' + r.ra.error);
+            if (!r.ra.ok) setErr(CFI18n.page('errors.prefix', { stage: 'RA', message: psychroErrorMessage(r.ra.error) }));
 
             // MA — mass-weighted enthalpy + humidity-ratio mix
             if (r.oa.ok && r.ra.ok) {
                 const pct = parseFloat(document.getElementById('ma-pct').value);
                 if (!isFinite(pct) || pct < 0 || pct > 100) {
-                    r.ma = { ok: false, error: '% OA must be 0–100' };
-                    setErr('MA: % OA must be 0–100');
+                    const message = CFI18n.page('errors.outdoorAirPercent');
+                    r.ma = { ok: false, error: message };
+                    setErr(CFI18n.page('errors.prefix', { stage: 'MA', message }));
                 } else {
                     const fOa = pct / 100, fRa = 1 - fOa;
                     const W_ma = fOa * r.oa.W + fRa * r.ra.W;
@@ -676,7 +849,7 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                     r.ma = Psychro.buildState(tdb_ma, W_ma, P);
                 }
             } else {
-                r.ma = { ok: false, error: 'awaiting OA / RA' };
+                r.ma = { ok: false, error: CFI18n.page('errors.awaitingOaRa') };
             }
 
             let current = r.ma.ok ? r.ma : null;
@@ -687,16 +860,19 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                 const e = readSt('cc');
                 const sol = Psychro.solveState(e.mode, e.tdb, e.second, P);
                 if (!sol.ok) {
-                    r.cc = { ...sol, enabled: true };
-                    setErr('CC: ' + sol.error);
+                    const message = psychroErrorMessage(sol.error);
+                    r.cc = { ...sol, error: message, enabled: true };
+                    setErr(CFI18n.page('errors.prefix', { stage: 'CC', message }));
                     current = null;
                 } else if (sol.tdb > current.tdb + 1e-6) {
-                    r.cc = { ok: false, enabled: true, error: 'leaving DB must be ≤ entering' };
-                    setErr('CC: leaving DB must be ≤ entering');
+                    const message = CFI18n.page('errors.coolingLeavingDb');
+                    r.cc = { ok: false, enabled: true, error: message };
+                    setErr(CFI18n.page('errors.prefix', { stage: 'CC', message }));
                     current = null;
                 } else if (sol.W > current.W + 1e-6) {
-                    r.cc = { ok: false, enabled: true, error: 'leaving humidity ratio can’t exceed entering' };
-                    setErr('CC: leaving humidity ratio can’t exceed entering');
+                    const message = CFI18n.page('errors.coolingHumidityRatio');
+                    r.cc = { ok: false, enabled: true, error: message };
+                    setErr(CFI18n.page('errors.prefix', { stage: 'CC', message }));
                     current = null;
                 } else {
                     r.cc = { ...sol, enabled: true, inlet: current };
@@ -715,14 +891,16 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                 // 'ldb' is absolute temperature (C→F), 'dt' is a temperature rise (deltaC→deltaF).
                 const val  = (mode === 'dt') ? U.toCanonical.deltaTemp(valD) : U.toCanonical.temp(valD);
                 if (!isFinite(val)) {
-                    r.hc = { ok: false, enabled: true, error: 'enter a number' };
-                    setErr('HC: enter a number');
+                    const message = CFI18n.page('errors.enterNumber');
+                    r.hc = { ok: false, enabled: true, error: message };
+                    setErr(CFI18n.page('errors.prefix', { stage: 'HC', message }));
                     current = null;
                 } else {
                     const tdb_hc = (mode === 'dt') ? current.tdb + val : val;
                     if (tdb_hc < current.tdb - 1e-6) {
-                        r.hc = { ok: false, enabled: true, error: 'leaving DB must be ≥ entering' };
-                        setErr('HC: leaving DB must be ≥ entering');
+                        const message = CFI18n.page('errors.heatingLeavingDb');
+                        r.hc = { ok: false, enabled: true, error: message };
+                        setErr(CFI18n.page('errors.prefix', { stage: 'HC', message }));
                         current = null;
                     } else {
                         const hc = Psychro.buildState(tdb_hc, current.W, P);
@@ -742,12 +920,14 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
             if (current && humOn) {
                 const targetRh = parseFloat(document.getElementById('hum-rh').value);
                 if (!isFinite(targetRh) || targetRh < 0 || targetRh > 100) {
-                    r.hum = { ok: false, enabled: true, error: 'leaving RH must be 0–100' };
-                    setErr('HUM: leaving RH must be 0–100');
+                    const message = CFI18n.page('errors.humidifierRhRange');
+                    r.hum = { ok: false, enabled: true, error: message };
+                    setErr(CFI18n.page('errors.prefix', { stage: 'HUM', message }));
                     current = null;
                 } else if (targetRh < current.rh - 1e-6) {
-                    r.hum = { ok: false, enabled: true, error: 'leaving RH must be ≥ entering' };
-                    setErr('HUM: leaving RH must be ≥ entering');
+                    const message = CFI18n.page('errors.humidifierRhEntering');
+                    r.hum = { ok: false, enabled: true, error: message };
+                    setErr(CFI18n.page('errors.prefix', { stage: 'HUM', message }));
                     current = null;
                 } else {
                     let lo = current.twb, hi = current.tdb;
@@ -771,7 +951,7 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
             }
 
             // SA — the last successfully computed point
-            r.sa = current ? { ...current } : { ok: false, error: 'awaiting upstream' };
+            r.sa = current ? { ...current } : { ok: false, error: CFI18n.page('errors.awaitingUpstream') };
 
             return { ok: !error, error, results: r, stages, P, alt, cfm };
         }
@@ -788,7 +968,7 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                 p.setAttribute('aria-pressed', active ? 'true' : 'false');
             });
             document.querySelectorAll('.psy-editor').forEach(ed => ed.classList.toggle('shown', ed.dataset.step === key));
-            document.getElementById('psy-copy-state').textContent = `Copy ${STEP_SHORT[key]} properties`;
+            document.getElementById('psy-copy-state').textContent = CFI18n.page('stages.copyProperties', { short: STEP_SHORT[key] });
             psyRecompute();
         }
 
@@ -829,7 +1009,7 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
         function onHcModeChange() {
             const mode = document.getElementById('hc-mode').value;
             const tU   = U.suffix.temp();
-            document.getElementById('hc-val-lbl').textContent = mode === 'dt' ? `ΔT rise (${tU})` : `Leaving DB (${tU})`;
+            document.getElementById('hc-val-lbl').textContent = CFI18n.page(mode === 'dt' ? 'labels.hcDeltaRise' : 'labels.hcLeavingDb', { unit: tU });
             psyRecompute();
         }
 
@@ -842,7 +1022,9 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                 const off = !document.getElementById(key + '-on').checked;
                 const pill = document.querySelector(`.psy-pill[data-step="${key}"]`);
                 pill.classList.toggle('off', off);
-                pill.setAttribute('aria-label', STEP_LABEL[key] + (off ? ' (stage off)' : ''));
+                pill.setAttribute('aria-label', off
+                    ? CFI18n.page('stages.offAria', { label: STEP_LABEL[key] })
+                    : STEP_LABEL[key]);
             }
         }
 
@@ -924,7 +1106,7 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
             const block = document.getElementById('psy-process-block');
             if (!stage) { block.classList.add('hidden'); return; }
             block.classList.remove('hidden');
-            document.getElementById('psy-process-label').textContent = PROCESS_LABEL[stage.key] || 'Process delta — across this stage';
+            document.getElementById('psy-process-label').textContent = PROCESS_LABEL[stage.key] || CFI18n.page('process.default');
             const proc = Psychro.computeProcess(stage, cfm);
             const set = (id, txt) => {
                 const el = document.getElementById(id);
@@ -974,9 +1156,9 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
             // Engine guard (codebase-issues #139): degrade to muted readouts + a
             // clear message if psychro-engine.js failed to load, rather than
             // throwing inside solveChain on the undefined Psychro global.
-            if (typeof Psychro === 'undefined') {
+            if (typeof Psychro === 'undefined' || typeof PsyWidget === 'undefined') {
                 const msgEl = document.getElementById('psy-msg');
-                msgEl.textContent = 'Psychrometric engine unavailable — reload the page.';
+                msgEl.textContent = CFI18n.page('status.engineUnavailable');
                 msgEl.style.color = 'var(--red)';
                 renderMaReadouts(null);
                 renderDetail(null, detailLabelFor(selectedStep, {}));
@@ -1005,9 +1187,18 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                 msgEl.textContent = chain.error;
                 msgEl.style.color = 'var(--red)';
             } else {
-                msgEl.textContent = (chain.alt === 0 ? 'Sea level' : `Altitude ${dispAlt(chain.alt)} ${U.suffix.altitude()}`)
-                                    + ` — ${dispP(chain.P)} ${U.suffix.pressure()}`
-                                    + (chain.cfm !== null ? ` · ${dispCfm(chain.cfm)} ${U.suffix.airflow()}` : '');
+                const location = chain.alt === 0
+                    ? CFI18n.page('status.seaLevel')
+                    : CFI18n.page('status.altitude', { value: dispAlt(chain.alt), unit: U.suffix.altitude() });
+                const airflow = chain.cfm !== null
+                    ? CFI18n.page('status.airflow', { value: dispCfm(chain.cfm), unit: U.suffix.airflow() })
+                    : '';
+                msgEl.textContent = CFI18n.page('status.conditions', {
+                    location,
+                    pressure: dispP(chain.P),
+                    pressureUnit: U.suffix.pressure(),
+                    airflow
+                });
                 msgEl.style.color = '';
             }
 
@@ -1029,6 +1220,7 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
         let psyGeom = null;  // { padL, padT, w, h, X, Y } from last draw
 
         function drawPsychChart(chain) {
+            if (!chain) return;
             const canvas = document.getElementById('psy-canvas');
             if (!canvas) return;
             const cssW = canvas.clientWidth, cssH = canvas.clientHeight;
@@ -1115,12 +1307,12 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
             ctx.strokeRect(padL, padT, w, h);
             ctx.fillStyle = cDim;
             ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-            ctx.fillText(`Dry-bulb temperature · ${U.suffix.temp()}`, padL + w / 2, cssH - 1);
+            ctx.fillText(CFI18n.page('canvas.dryBulbAxis', { unit: U.suffix.temp() }), padL + w / 2, cssH - 1);
             ctx.save();
             ctx.translate(cssW - 2, padT + h / 2);
             ctx.rotate(-Math.PI / 2);
             ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-            ctx.fillText(`Humidity ratio · ${U.suffix.humidityRatio()}`, 0, 0);
+            ctx.fillText(CFI18n.page('canvas.humidityRatioAxis', { unit: U.suffix.humidityRatio() }), 0, 0);
             ctx.restore();
 
             const curve = pts => {
@@ -1188,7 +1380,7 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
             for (let t = TDB_MIN; t <= TDB_MAX; t += 0.5) { if (satHumRatio(t, P) >= 0.85 * W_MAX) { satLblT = t; break; } }
             if (satLblT != null) {
                 ctx.fillStyle = cAccent; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-                ctx.fillText('100% RH', X(satLblT) + 4, Y(satHumRatio(satLblT, P)) + 2);
+                ctx.fillText(CFI18n.page('canvas.saturation'), X(satLblT) + 4, Y(satHumRatio(satLblT, P)) + 2);
             }
 
             // ────────── process segments ──────────
@@ -1321,9 +1513,9 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
             if (!s || !s.ok) { hideChip(); return; }
             const tU = U.suffix.temp();
             chipEl.innerHTML =
-                `<span class="lbl">DB</span><span class="val">${dispT(s.tdb)} ${tU}</span><br>` +
-                `<span class="lbl">WB</span><span class="val">${dispT(s.twb)} ${tU}</span><br>` +
-                `<span class="lbl">RH</span><span class="val">${s.rh.toFixed(1)}%</span>`;
+                `<span class="lbl">${CFI18n.page('canvas.chipDryBulb')}</span><span class="val">${dispT(s.tdb)} ${tU}</span><br>` +
+                `<span class="lbl">${CFI18n.page('canvas.chipWetBulb')}</span><span class="val">${dispT(s.twb)} ${tU}</span><br>` +
+                `<span class="lbl">${CFI18n.page('canvas.chipRelativeHumidity')}</span><span class="val">${s.rh.toFixed(1)}%</span>`;
             chipEl.hidden = false;
             chipKey = key;
             positionChip(s);
@@ -1550,8 +1742,10 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
             // HC: depends on hc-mode (ldb vs dt). Just reuse the existing handler logic.
             const hcMode = document.getElementById('hc-mode').value;
             const tU     = U.suffix.temp();
-            document.getElementById('hc-val-lbl').textContent =
-                hcMode === 'dt' ? `ΔT rise (${tU})` : `Leaving DB (${tU})`;
+            document.getElementById('hc-val-lbl').textContent = CFI18n.page(
+                hcMode === 'dt' ? 'labels.hcDeltaRise' : 'labels.hcLeavingDb',
+                { unit: tU }
+            );
         }
 
         // Tighten input `step` on temp inputs in metric (0.25 °C reads finer than 0.5 °F).
