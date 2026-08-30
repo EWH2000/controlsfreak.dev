@@ -129,6 +129,51 @@ test('language switch uses compact locale codes in both languages', async ({ pag
     }
 });
 
+test('Korean middle dots use the Hangul face with balanced advance', async ({ page }) => {
+    await page.goto('/ko/');
+    const about = page.locator('.about-prose p').nth(1);
+    await expect(about).toContainText('전자·전기·기계');
+    await expect(about).not.toContainText('전자 · 전기 · 기계');
+
+    const metrics = await about.evaluate(async element => {
+        await document.fonts.ready;
+        const phrase = '전자·전기·기계';
+        const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+        let node;
+        let start = -1;
+        while ((node = walker.nextNode())) {
+            start = (node.textContent || '').indexOf(phrase);
+            if (start !== -1) break;
+        }
+
+        const dotWidths = [...phrase].flatMap((character, index) => {
+            if (character !== '·') return [];
+            const range = document.createRange();
+            range.setStart(node, start + index);
+            range.setEnd(node, start + index + 1);
+            return [range.getBoundingClientRect().width];
+        });
+        const style = getComputedStyle(element);
+        const context = document.createElement('canvas').getContext('2d');
+        context.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+        const dot = context.measureText('·');
+
+        return {
+            fontFamily: style.fontFamily,
+            dotWidths,
+            canvasWidth: dot.width,
+            inkCenterOffset: (dot.actualBoundingBoxRight - dot.actualBoundingBoxLeft) / 2
+                - dot.width / 2,
+        };
+    });
+
+    expect(metrics.fontFamily).toContain('Overpass KO');
+    expect(metrics.dotWidths).toHaveLength(2);
+    expect(metrics.dotWidths.every(width => width > 1)).toBe(true);
+    expect(metrics.canvasWidth).toBeGreaterThan(1);
+    expect(Math.abs(metrics.inkCenterOffset)).toBeLessThan(metrics.canvasWidth * 0.25);
+});
+
 test('language switch preserves the compact English desktop navigation', async ({ page }) => {
     for (const [width, maxHeight] of [[1280, 100], [1440, 70]]) {
         await page.setViewportSize({ width, height: 700 });

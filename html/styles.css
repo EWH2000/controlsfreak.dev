@@ -58,6 +58,18 @@
     src: url(/assets/fonts/overpass-latin-var.woff2) format('woff2');
     unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
+/* The bundled Overpass subset classifies U+00B7 as a GDEF mark, so shaping
+   gives it zero advance. Korean prose therefore uses this otherwise identical
+   face with U+00B7 omitted, allowing the Hangul fallback to supply its
+   balanced CJK glyph. */
+@font-face {
+    font-family: 'Overpass KO';
+    font-style: normal;
+    font-weight: 300 700;
+    font-display: swap;
+    src: url(/assets/fonts/overpass-latin-var.woff2) format('woff2');
+    unicode-range: U+0000-00B6, U+00B8-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 @font-face {
     font-family: 'IBM Plex Mono';
     font-style: normal;
@@ -247,7 +259,7 @@
    subsets. `keep-all` avoids breaking ordinary Korean words, while
    `overflow-wrap` still protects narrow surfaces from identifiers and URLs. */
 html:lang(ko) {
-    --sans: 'Overpass', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+    --sans: 'Overpass KO', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
     --mono: 'IBM Plex Mono', 'Apple SD Gothic Neo', 'Noto Sans Mono CJK KR', 'Malgun Gothic', monospace;
     word-break: keep-all;
     line-break: strict;
