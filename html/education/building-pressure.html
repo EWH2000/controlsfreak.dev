@@ -9,8 +9,8 @@ keywords: building pressure static relief exhaust fan power exhaust barometric d
 pageMessages:
   unitText:
     targetPressureRange:
-      us: "+0.02 to +0.05 in. w.c."
-      metric: "+5 to +12 Pa"
+      us: "+0.02 to +0.05 in. w.c."
+      metric: "+5 to +12 Pa"
     buildingPressureExample:
       us: a few hundredths of an inch
       metric: a few pascals
@@ -26,6 +26,7 @@ pageMessages:
       out: out
       in: in
     stages:
+      label: Power-exhaust stages
       interlocked: Power-exhaust stages — interlocked to the supply fan
       following: Power-exhaust stages — following the damper
     status:
@@ -512,7 +513,7 @@ pageMessages:
                 </div>
 
                 <div class="bp-w-stages" id="bp-w-stages">
-                    <span class="widget-readout-label" id="bp-w-stages-lbl">{{ pageMessages.widget.stages.following }}</span>
+                    <span class="widget-readout-label" id="bp-w-stages-lbl">{{ pageMessages.widget.stages.label }}</span>
                     <span class="bp-w-stage" id="bp-w-st1">1</span>
                     <span class="bp-w-stage" id="bp-w-st2">2</span>
                     <span class="bp-w-stage" id="bp-w-st3">3</span>

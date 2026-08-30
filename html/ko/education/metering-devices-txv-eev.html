@@ -6,7 +6,7 @@ canonical: https://controlsfreak.dev/ko/education/metering-devices-txv-eev.html
 nav: education
 category: refrigerant
 pairedQuiz: https://controlsfreak.dev/ko/practice/metering-devices-txv-eev.html
-keywords: TXV EEV 오리피스 피스톤 과열도 감온통 팽창 장치 팽창밸브
+keywords: TXV EEV 오리피스 피스톤 과열도 감온통 팽창장치 팽창밸브
 ---
 {% extends "html/education/metering-devices-txv-eev.html" %}
 
@@ -25,13 +25,13 @@ keywords: TXV EEV 오리피스 피스톤 과열도 감온통 팽창 장치 팽�
         <div class="tool-body">
 
             <p class="page-intro">
-                <a href="/ko/education/refrigerant-cycle-basics.html">냉매 사이클 기초</a>에서는 팽창 장치를 냉매 사이클의 네 구성요소 중 하나로 소개하고 내부 구조는 뒤로 미뤘습니다. <a href="/ko/education/superheat-subcooling.html">과열도와 과냉도</a>에서는 팽창 장치가 유닛 컨트롤러와 함께 <em>유지</em>하는 대상이 목표 <button type="button" data-gloss="superheat">과열도</button>임을 보았습니다. 고정 오리피스가 아니라 피드백 요소입니다. 이 페이지에서 그 내부를 엽니다. 같은 역할을 하는 두 가지 일반적인 설계가 있습니다. <strong>온도식 팽창밸브(TXV)</strong>는 흡입관의 감온통을 이용해 기계적으로 동작하고, <strong>전자식 팽창밸브(EEV)</strong>는 스테퍼 모터와 컨트롤러 알고리즘을 이용해 전자적으로 동작합니다. 서비스 기술자는 현장에서 주로 TXV를 만나고 BMS 엔지니어는 컨트롤러에서 주로 EEV를 만납니다. 어느 것이 무엇인지, 각 밸브가 매 순간 개도를 어떻게 결정하는지 알면 두 장치의 동작을 가장 명확하게 구분할 수 있습니다.
+                <a href="/ko/education/refrigerant-cycle-basics.html">냉매 사이클 기초</a>에서는 팽창장치를 냉매 사이클의 네 구성요소 중 하나로 소개하고 내부 구조는 뒤로 미뤘습니다. <a href="/ko/education/superheat-subcooling.html">과열도와 과냉도</a>에서는 팽창장치가 유닛 컨트롤러와 함께 <em>유지</em>하는 대상이 목표 <button type="button" data-gloss="superheat">과열도</button>임을 보았습니다. 고정 오리피스가 아니라 피드백 요소입니다. 이 페이지에서 그 내부를 엽니다. 같은 역할을 하는 두 가지 일반적인 설계가 있습니다. <strong>온도식 팽창밸브(TXV)</strong>는 흡입관의 감온통을 이용해 기계적으로 동작하고, <strong>전자식 팽창밸브(EEV)</strong>는 스테퍼 모터와 컨트롤러 알고리즘을 이용해 전자적으로 동작합니다. 서비스 기술자는 현장에서 주로 TXV를 만나고 BMS 엔지니어는 컨트롤러에서 주로 EEV를 만납니다. 어느 것이 무엇인지, 각 밸브가 매 순간 개도를 어떻게 결정하는지 알면 두 장치의 동작을 가장 명확하게 구분할 수 있습니다.
             </p>
 
-            <h2 class="subhead" id="what-it-does">팽창 장치의 역할</h2>
+            <h2 class="subhead" id="what-it-does">팽창장치의 역할</h2>
 
             <p>
-                간단히 복습하겠습니다. 응축기를 떠나는 고압 측 액체는 따뜻하고 가압되어 있으며, 저압 측 증발기는 비등하며 열을 흡수할 차가운 저압 냉매가 필요합니다. 팽창 장치는 경계에 놓여 작은 포트를 통해 액체를 교축하고 압력을 급격히 낮춥니다. 포트 상류에는 고압의 따뜻한 액체가, 하류에는 증발기로 향하는 액체와 플래시 증기의 차가운 저압 혼합물이 있습니다. 여기까지는 배관의 제한부일 뿐이며 고정 오리피스나 모세관도 같은 일을 합니다. TXV 또는 EEV가 다른 점은 포트가 고정되어 있지 않다는 것입니다. 두 밸브 모두 하류 상황에 반응해 포트 개도를 <em>조절</em>하며, 조절 목표는 증발기 출구의 <em><button type="button" data-gloss="superheat">과열도</button></em>입니다. 공급이 너무 적으면 코일이 굶주려 SH가 올라가고, 너무 많으면 액체가 코일을 빠져나와 SH가 0에 가까워진 뒤 음수가 됩니다. 밸브는 이 값을 목표에 유지합니다.
+                간단히 복습하겠습니다. 응축기를 떠나는 고압 측 액체는 따뜻하고 가압되어 있으며, 저압 측 증발기는 비등하며 열을 흡수할 차가운 저압 냉매가 필요합니다. 팽창장치는 경계에 놓여 작은 포트를 통해 액체를 교축하고 압력을 급격히 낮춥니다. 포트 상류에는 고압의 따뜻한 액체가, 하류에는 증발기로 향하는 액체와 플래시 증기의 차가운 저압 혼합물이 있습니다. 여기까지는 배관의 제한부일 뿐이며 고정 오리피스나 모세관도 같은 일을 합니다. TXV 또는 EEV가 다른 점은 포트가 고정되어 있지 않다는 것입니다. 두 밸브 모두 하류 상황에 반응해 포트 개도를 <em>조절</em>하며, 조절 목표는 증발기 출구의 <em><button type="button" data-gloss="superheat">과열도</button></em>입니다. 공급이 너무 적으면 코일이 굶주려 SH가 올라가고, 너무 많으면 액체가 코일을 빠져나와 SH가 0에 가까워진 뒤 음수가 됩니다. 밸브는 이 값을 목표에 유지합니다.
             </p>
 
             <h2 class="subhead" id="txv">TXV — 기계식 제어 루프</h2>
@@ -198,17 +198,17 @@ keywords: TXV EEV 오리피스 피스톤 과열도 감온통 팽창 장치 팽�
             <h2 class="subhead" id="surfaces">같은 역할, 서로 다른 두 인터페이스</h2>
 
             <p>
-                주로 BMS에서 일한다면 EEV 인터페이스를 보게 됩니다. 포인트로 표시되는 밸브 위치와 <button type="button" data-gloss="superheat">과열도</button>, 변경할 수 있는 설정값이 있습니다. TXV는 네트워크에 아무 정보도 올리지 않습니다. BMS가 TXV가 있는 패키지 유닛을 볼 때 냉매 측 포인트는 보통 흡입·토출 압력뿐이고 팽창 장치는 측정값에 암묵적으로 포함됩니다. 장비에 공구를 사용하는 시간이 많다면 TXV 인터페이스를 봅니다. 시스템 <button type="button" data-gloss="superheat">과열도</button>가 잘못될 때 손에 잡는 장치이며, 문제가 생기면 흡입관 감온통 위치부터 확인합니다. 느슨한 스트랩, 누락된 단열, 감온통 충전 손실이 모두 흔합니다. 제어 기술자와 기계 기술자가 같은 시스템을 두고 의견을 나누면 같은 밸브를 두 방향에서 설명하며 이름이 항상 일치하지 않을 수 있습니다. 두 인터페이스를 모두 알면 그 대화를 연결할 수 있습니다.
+                주로 BMS에서 일한다면 EEV 인터페이스를 보게 됩니다. 포인트로 표시되는 밸브 위치와 <button type="button" data-gloss="superheat">과열도</button>, 변경할 수 있는 설정값이 있습니다. TXV는 네트워크에 아무 정보도 올리지 않습니다. BMS가 TXV가 있는 패키지 유닛을 볼 때 냉매 측 포인트는 보통 흡입·토출 압력뿐이고 팽창장치는 측정값에 암묵적으로 포함됩니다. 장비에 공구를 사용하는 시간이 많다면 TXV 인터페이스를 봅니다. 시스템 <button type="button" data-gloss="superheat">과열도</button>가 잘못될 때 손에 잡는 장치이며, 문제가 생기면 흡입관 감온통 위치부터 확인합니다. 느슨한 스트랩, 누락된 단열, 감온통 충전 손실이 모두 흔합니다. 제어 기술자와 기계 기술자가 같은 시스템을 두고 의견을 나누면 같은 밸브를 두 방향에서 설명하며 이름이 항상 일치하지 않을 수 있습니다. 두 인터페이스를 모두 알면 그 대화를 연결할 수 있습니다.
             </p>
 
             <h2 class="subhead" id="worked-example">계산 예시 — 부하가 변할 때 과열도 유지</h2>
 
             <p>
-                <a href="/ko/education/superheat-subcooling.html">과열도와 과냉도</a>에서 사용한 같은 R-410A 분리형 시스템을 가져오겠습니다. 일반적인 운전일의 정상상태에서 흡입 측 게이지는 <strong><span data-us="118 psig" data-metric="814 kPag">118 psig</span></strong>, 흡입관 온도계는 <strong><span data-us="50 °F" data-metric="10.0 °C">50 °F</span></strong>를 가리켜 <button type="button" data-gloss="superheat">과열도</button>는 <code><span data-us="50 − 40 = 10 °F" data-metric="10.0 − 4.4 = 5.6 °C">50 − 40 = 10 °F</span></code>입니다. 액체 측 게이지는 <strong><span data-us="340 psig" data-metric="2344 kPag">340 psig</span></strong>, 액관 온도계는 <strong><span data-us="95 °F" data-metric="35.0 °C">95 °F</span></strong>를 가리켜 <button type="button" data-gloss="subcooling">과냉도</button>는 <code><span data-us="105 − 95 = 10 °F" data-metric="40.6 − 35.0 = 5.6 °C">105 − 95 = 10 °F</span></code>입니다. 한 경우에는 TXV, 다른 경우에는 EEV인 팽창 장치가 코일 부하에 필요한 유량으로 증발기에 냉매를 공급해 <span data-us="10 °F" data-metric="5.6 °C">10 °F</span> <button type="button" data-gloss="superheat">과열도</button>를 유지합니다.
+                <a href="/ko/education/superheat-subcooling.html">과열도와 과냉도</a>에서 사용한 같은 R-410A 분리형 시스템을 가져오겠습니다. 일반적인 운전일의 정상상태에서 흡입 측 게이지는 <strong><span data-us="118 psig" data-metric="814 kPag">118 psig</span></strong>, 흡입관 온도계는 <strong><span data-us="50 °F" data-metric="10.0 °C">50 °F</span></strong>를 가리켜 <button type="button" data-gloss="superheat">과열도</button>는 <code><span data-us="50 − 40 = 10 °F" data-metric="10.0 − 4.4 = 5.6 °C">50 − 40 = 10 °F</span></code>입니다. 액체 측 게이지는 <strong><span data-us="340 psig" data-metric="2344 kPag">340 psig</span></strong>, 액관 온도계는 <strong><span data-us="95 °F" data-metric="35.0 °C">95 °F</span></strong>를 가리켜 <button type="button" data-gloss="subcooling">과냉도</button>는 <code><span data-us="105 − 95 = 10 °F" data-metric="40.6 − 35.0 = 5.6 °C">105 − 95 = 10 °F</span></code>입니다. 한 경우에는 TXV, 다른 경우에는 EEV인 팽창장치가 코일 부하에 필요한 유량으로 증발기에 냉매를 공급해 <span data-us="10 °F" data-metric="5.6 °C">10 °F</span> <button type="button" data-gloss="superheat">과열도</button>를 유지합니다.
             </p>
 
             <p>
-                구름이 지나가며 외기온이 몇 도 내려가고 실내 회기온도도 함께 낮아집니다. 부하와 함께 증발기 코일로 들어오는 열이 줄어듭니다. 팽창 장치의 현재 포트 위치에서는 코일이 비등시킬 수 있는 양보다 많은 냉매가 공급되어 액체가 흡입 헤더에 더 가까운 곳까지 남고, 감온통 위치의 흡입관 온도가 떨어지기 시작합니다. 몇 도만 변해도 흡입온도가 <span data-us="50 °F" data-metric="10.0 °C">50 °F</span>에서 예를 들어 <span data-us="47 °F" data-metric="8.3 °C">47 °F</span>로 내려갑니다. 이때 압력이 같은 <span data-us="118 psig" data-metric="814 kPag">118 psig</span>라면 <button type="button" data-gloss="superheat">과열도</button>가 <span data-us="10 °F" data-metric="5.6 °C">10 °F</span>에서 <span data-us="7 °F" data-metric="3.9 °C">7 °F</span> 쪽으로 내려갑니다.
+                구름이 지나가며 외기온이 몇 도 내려가고 실내 회기온도도 함께 낮아집니다. 부하와 함께 증발기 코일로 들어오는 열이 줄어듭니다. 팽창장치의 현재 포트 위치에서는 코일이 비등시킬 수 있는 양보다 많은 냉매가 공급되어 액체가 흡입 헤더에 더 가까운 곳까지 남고, 감온통 위치의 흡입관 온도가 떨어지기 시작합니다. 몇 도만 변해도 흡입온도가 <span data-us="50 °F" data-metric="10.0 °C">50 °F</span>에서 예를 들어 <span data-us="47 °F" data-metric="8.3 °C">47 °F</span>로 내려갑니다. 이때 압력이 같은 <span data-us="118 psig" data-metric="814 kPag">118 psig</span>라면 <button type="button" data-gloss="superheat">과열도</button>가 <span data-us="10 °F" data-metric="5.6 °C">10 °F</span>에서 <span data-us="7 °F" data-metric="3.9 °C">7 °F</span> 쪽으로 내려갑니다.
             </p>
 
             <p>
@@ -226,7 +226,7 @@ keywords: TXV EEV 오리피스 피스톤 과열도 감온통 팽창 장치 팽�
             <h2 class="subhead" id="chapter-next">이 장에서 마련한 기초</h2>
 
             <p>
-                이것으로 냉동·냉매 장을 마무리합니다. <a href="/ko/education/refrigerant-cycle-basics.html">냉매 사이클 기초</a>에서 사이클과 포화 관계를 만들었고, <a href="/ko/education/superheat-subcooling.html">과열도와 과냉도</a>에서 그 관계를 사이클이 올바르게 운전되는지 입증하는 두 측정값인 <button type="button" data-gloss="superheat">과열도</button>와 <button type="button" data-gloss="subcooling">과냉도</button>로 바꾸었으며, 이 페이지에서 <button type="button" data-gloss="superheat">과열도</button>를 유지하는 팽창 장치의 내부를 열었습니다. 이 세 개념을 알면 <a href="/ko/tools/refrigerant-pt.html">냉매 P-T 및 과열도 계산기</a>가 블랙박스가 아니라 모든 입력과 출력을 사이클 안에 배치하고 포화 곡선과 대조해 읽을 수 있는 도구가 됩니다. 흡입압력, 클램프형 온도계로 잰 흡입관 온도, 냉매 이름을 계산기에 입력하면 냉매 문제 해결에서 측정 절반은 이미 끝난 것이며, 판정 표시는 숫자의 의미를 읽어 줄 뿐입니다.
+                이것으로 냉동·냉매 장을 마무리합니다. <a href="/ko/education/refrigerant-cycle-basics.html">냉매 사이클 기초</a>에서 사이클과 포화 관계를 만들었고, <a href="/ko/education/superheat-subcooling.html">과열도와 과냉도</a>에서 그 관계를 사이클이 올바르게 운전되는지 입증하는 두 측정값인 <button type="button" data-gloss="superheat">과열도</button>와 <button type="button" data-gloss="subcooling">과냉도</button>로 바꾸었으며, 이 페이지에서 <button type="button" data-gloss="superheat">과열도</button>를 유지하는 팽창장치의 내부를 열었습니다. 이 세 개념을 알면 <a href="/ko/tools/refrigerant-pt.html">냉매 P-T 및 과열도 계산기</a>가 블랙박스가 아니라 모든 입력과 출력을 사이클 안에 배치하고 포화 곡선과 대조해 읽을 수 있는 도구가 됩니다. 흡입압력, 클램프형 온도계로 잰 흡입관 온도, 냉매 이름을 계산기에 입력하면 냉매 문제 해결에서 측정 절반은 이미 끝난 것이며, 판정 표시는 숫자의 의미를 읽어 줄 뿐입니다.
             </p>
 
         </div>

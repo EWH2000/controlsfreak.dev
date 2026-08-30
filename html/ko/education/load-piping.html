@@ -7,7 +7,7 @@ category: hydronics
 pairedQuiz: https://controlsfreak.dev/ko/practice/load-piping.html
 keywords: 2방 3방 밸브 코일 바이패스 분배 혼합 티
 sourceContentHash: b22c77f036b951a26b0e9a6a255b6143f5090106e4be1f8f96f8af7fe74751c8
-sourceMessageHash: 36f09aaf7d69b1e68e14a4d7e996b5bdde85cebd827b7691c64096f6993ff203
+sourceMessageHash: f19f99399580f8aa2b742afeeb25f2636777f4ce4a421962392b17f7cc536505
 pageMessages:
   widget:
     pump:
@@ -432,7 +432,7 @@ pageMessages:
             </p>
 
             <p>
-                변유량 배관에는 놓치기 쉬운 요소가 하나 있으며, 위 시스템 루프 끝에 <strong>최소유량</strong>으로 표시했습니다. 펌프 반대편의 <em>최소유량 바이패스</em>는 제어된 소량의 공급수를 부하를 거치지 않고 환수 주관으로 바로 단락시킵니다. 대부분의 2방 밸브가 닫히면 시스템 유량이 지나치게 낮아져 펌프가 자체 토출에 맞서 <button type="button" data-gloss="deadhead">체절</button>할 수 있습니다. 최저 속도 아래로는 감속할 수 없는 VFD 시스템 펌프에도 이 유량 하한이 필요합니다. 보장된 최소유량은 변유량 시스템에 필요한 펌프 보호입니다. (비슷한 위치의 <em>차압 바이패스 밸브</em>는 <a href="/ko/education/pump-control.html">펌프 제어 교육</a>에서 다룹니다. DPBV는 Δp 설정값에서 열리는 전형적인 정속 펌프 대책이고, VFD 압력 제어에서는 드라이브가 이미 루프 Δp를 제한하므로 변유량 장치는 최소유량을 유지하도록 선정합니다.) 3방 시스템은 부하별 바이패스가 이미 펌프 유량을 일정하게 유지하므로 둘 다 필요하지 않습니다.
+                변유량 배관에는 놓치기 쉬운 요소가 하나 있으며, 위 시스템 루프 끝에 <strong>최소유량</strong>으로 표시했습니다. 펌프 반대편의 <em>최소유량 바이패스</em>는 제어된 소량의 공급수를 부하를 거치지 않고 환수 주관으로 바로 단락시킵니다. 대부분의 2방 밸브가 닫히면 시스템 유량이 지나치게 낮아져 펌프가 자체 토출에 맞서 <button type="button" data-gloss="deadhead">체절운전</button>할 수 있습니다. 최저 속도 아래로는 감속할 수 없는 VFD 시스템 펌프에도 이 유량 하한이 필요합니다. 보장된 최소유량은 변유량 시스템에 필요한 펌프 보호입니다. (비슷한 위치의 <em>차압 바이패스 밸브</em>는 <a href="/ko/education/pump-control.html">펌프 제어 교육</a>에서 다룹니다. DPBV는 Δp 설정값에서 열리는 전형적인 정속 펌프 대책이고, VFD 압력 제어에서는 드라이브가 이미 루프 Δp를 제한하므로 변유량 장치는 최소유량을 유지하도록 선정합니다.) 3방 시스템은 부하별 바이패스가 이미 펌프 유량을 일정하게 유지하므로 둘 다 필요하지 않습니다.
             </p>
 
             <p>
@@ -637,7 +637,7 @@ pageMessages:
 
                 <div class="widget-anecdote-wrap">
                     <p class="widget-anecdote warn" id="lp-w-anecdote" hidden>
-                        <strong>찾았습니다.</strong> 요구 0%, VFD 펌프, 바이패스 없음 — 루프에서 물이 흐를 곳이 없습니다. 드라이브는 약 25% 아래로 감속할 수 없고 부하 밸브는 완전히 닫혀 있으므로 펌프가 닫힌 루프에 맞서 <button type="button" data-gloss="deadhead">체절</button>하며 볼류트 안의 물이 가열됩니다. 최소유량 바이패스가 이를 막는 하한입니다. 변유량 시스템의 나머지 내용은 펌프 감속을 가능하게 하는 드라이브를 다루는 <a href="/ko/education/vfds.html">VFD</a>와, BMS가 감속 시점을 결정하는 시퀀스를 다루는 <a href="/ko/education/pump-control.html">펌프 제어</a>에서 이어집니다.
+                        <strong>찾았습니다.</strong> 요구 0%, VFD 펌프, 바이패스 없음 — 루프에서 물이 흐를 곳이 없습니다. 드라이브는 약 25% 아래로 감속할 수 없고 부하 밸브는 완전히 닫혀 있으므로 펌프가 닫힌 루프에 맞서 <button type="button" data-gloss="deadhead">체절운전</button>하며 볼류트 안의 물이 가열됩니다. 최소유량 바이패스가 이를 막는 하한입니다. 변유량 시스템의 나머지 내용은 펌프 감속을 가능하게 하는 드라이브를 다루는 <a href="/ko/education/vfds.html">VFD</a>와, BMS가 감속 시점을 결정하는 시퀀스를 다루는 <a href="/ko/education/pump-control.html">펌프 제어</a>에서 이어집니다.
                     </p>
                 </div>
 

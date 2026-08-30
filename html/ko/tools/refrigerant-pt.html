@@ -48,8 +48,8 @@ pageMessages:
     glideSmall: '{refrigerant}의 기포점과 이슬점 차이는 {glide} {unit}로 작지만, 과열도는 여전히 이슬점, 과냉도는 기포점을 기준으로 합니다.'
     glideNegligible: '{refrigerant}는 온도 글라이드가 무시할 만큼 작아 기포점과 이슬점을 사실상 하나의 포화온도로 볼 수 있습니다.'
     saturationPressure: '{refrigerant}의 {temperature} {unit} 포화압력입니다.'
-    negativeSuperheat: 과열도가 음수입니다. 액냉매가 압축기로 유입되는 액냉매 역류(floodback) 상태입니다. 운전하기 전에 팽창장치와 냉매 충전량을 점검하세요.
-    lowSuperheat: 과열도가 매우 낮아 액냉매 역류에 대한 여유가 거의 없습니다. 장비의 목표 과열도와 대조하세요.
+    negativeSuperheat: 과열도가 음수입니다. 액냉매가 압축기로 유입되는 액냉매 유입(floodback, 액백) 상태입니다. 운전하기 전에 팽창장치와 냉매 충전량을 점검하세요.
+    lowSuperheat: 과열도가 매우 낮아 액냉매 유입에 대한 여유가 거의 없습니다. 장비의 목표 과열도와 대조하세요.
     highSuperheat: 과열도가 높아 증발기에 냉매가 부족합니다. 냉매 부족, 막힘 또는 팽창장치의 공급 부족을 점검하고 목표값과 대조하세요.
     typicalSuperheat: '과열도 {value} {unit}는 일반적인 범위이지만 목표값은 시스템마다 다릅니다. TXV와 고정 오리피스의 목표값도 서로 다릅니다.'
     negativeSubcooling: 과냉도가 음수이므로 응축기 출구에 액봉이 없고 액관에 플래시가스가 발생합니다. 냉매 충전량과 응축기 풍량을 점검하세요.
@@ -258,7 +258,7 @@ pageMessages:
                     <li><strong>과냉도</strong>(액관): 액관 압력에서 기포점 온도를
                         구한 다음 <code>과냉도 = 기포점 온도 − 관로 온도</code>로
                         계산합니다. 즉, 액체가 포화온도보다 낮은 정도입니다.</li>
-                    <li>과열도가 낮으면 액냉매가 압축기로 <button type="button" data-gloss="floodback">역류</button>할
+                    <li>과열도가 낮으면 액냉매가 압축기로 <button type="button" data-gloss="floodback">액냉매 유입</button>할
                         위험이 있고, 높으면 증발기에 냉매 공급이 부족할 수 있습니다.
                         과냉도가 낮으면 냉매 부족이나 액관 막힘이 의심됩니다. 목표값은
                         <em>시스템마다 다릅니다</em>. TXV(열팽창밸브)는 고정 오리피스와

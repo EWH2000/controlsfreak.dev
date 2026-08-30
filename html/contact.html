@@ -206,10 +206,13 @@ nav: contact
                     };
                     form.addEventListener("input", clearStale);
                 } else {
+                    const message = data.code && errorKeys[data.code]
+                        ? t(errorKeys[data.code])
+                        : window.CFI18n.locale() === 'en' && data.error
+                            ? data.error
+                            : t("contact.genericError");
                     setStatus(
-                        data.code && errorKeys[data.code]
-                            ? t(errorKeys[data.code])
-                            : t("contact.genericError"),
+                        message,
                         "result-value error"
                     );
                 }

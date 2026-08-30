@@ -259,8 +259,9 @@ module.exports = function(eleventyConfig) {
                 for (const attribute of tag[0].matchAll(/\s(id|class|role|type|name|for|min|max|step|value|scope|colspan|rowspan|data-[\w-]+)\s*=\s*(["'])([\s\S]*?)\2/gi)) {
                     values.push(`${attribute[1].toLowerCase()}=${attribute[3]}`);
                 }
+                const flagSurface = tag[0].replace(/=\s*(["'])[\s\S]*?\1/g, '=""');
                 for (const flag of ["checked", "disabled", "hidden", "multiple", "open", "readonly", "required", "selected"]) {
-                    if (new RegExp(`\\s${flag}(?=\\s|/?>)`, "i").test(tag[0])) values.push(flag);
+                    if (new RegExp(`\\s${flag}(?=\\s|/?>)`, "i").test(flagSurface)) values.push(flag);
                 }
                 stableAttributes.push(`${tag[1].toLowerCase()}[${values.join("|")}]`);
             }
@@ -1346,9 +1347,18 @@ module.exports = function(eleventyConfig) {
         const localizedPage = (pages || []).find((item) =>
             resolveLocale(item.data) === selected
             && translationKey(item.data.canonical) === translationKey(baseHref));
+        const localizedTitle = localizedPage
+            ? cleanTitle(localizedPage.data.title)
+            : next.label;
+        const titleSuffix = translate(selected, "quiz.titleSuffix");
+        const localizedLabel = titleSuffix && localizedTitle.endsWith(titleSuffix)
+            ? localizedTitle.slice(0, -titleSuffix.length)
+            : localizedTitle;
         return {
             href: localePath(baseHref, selected),
-            label: localizedPage ? cleanTitle(localizedPage.data.title) : next.label,
+            label: selected === i18nData.defaultLocale
+                ? next.label
+                : localizedLabel,
         };
     });
 
@@ -1525,7 +1535,6 @@ module.exports = function(eleventyConfig) {
     // flat Home→Page trail — a new nav section needs an entry here
     // (convention→consumers sweep).
     const SECTION_MAP = {
-        guides:     { nameKey: "nav.guides",     path: "/guides/" },
         tools:      { nameKey: "nav.tools",      path: "/tools/" },
         simulators: { nameKey: "nav.simulators", path: "/simulators/" },
         education:  { nameKey: "nav.education",  path: "/education/" },
