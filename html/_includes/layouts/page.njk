@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ locale }}">
 <head>
 {% include "head.njk" %}
     {% block head %}{% endblock %}
@@ -11,7 +11,7 @@
    nav link, so it can't drift from what the site calls an education page.
    Consumed by the LESSON PROSE RHYTHM rule in styles.css. #}
 <body{% if nav == "education" %} class="education-page"{% endif %}>
-<a href="#main" class="skip-link">Skip to content</a>
+<a href="#main" class="skip-link">{{ "skip.content" | t(locale) }}</a>
 
 {% include "schematic-bg.njk" %}
 
@@ -24,21 +24,22 @@
    rel=prev/next), so it auto-applies to every page with a sequence entry and
    can't drift from the rel-tags. Titles come from the navEducation collection.
    Non-curriculum pages (no sequence entry) render nothing. #}
-{% set lessonSeq = educationSequence[page.url] %}
+{% set localizedEducationSequence = educationSequence | localizedSequence(locale) %}
+{% set lessonSeq = localizedEducationSequence[page.url] %}
 {% if lessonSeq and (lessonSeq.prev or lessonSeq.next) %}
-<nav class="lesson-seq" aria-label="Lesson sequence">
+<nav class="lesson-seq" aria-label="{{ "lesson.landmark" | t(locale) }}">
     <div class="lesson-seq-col">
-        {% if lessonSeq.prev %}{% for p in collections.navEducation %}{% if p.url == lessonSeq.prev %}
+        {% if lessonSeq.prev %}{% for p in collections.navEducation | localeItems(locale) %}{% if p.url == lessonSeq.prev %}
         <a class="lesson-seq-link lesson-seq-prev" href="{{ p.url }}">
-            <span class="lesson-seq-dir">← Previous lesson</span>
+            <span class="lesson-seq-dir">{{ "lesson.previous" | t(locale) }}</span>
             <span class="lesson-seq-title">{{ p.data.title | cleanTitle }}</span>
         </a>
         {% endif %}{% endfor %}{% endif %}
     </div>
     <div class="lesson-seq-col lesson-seq-col--next">
-        {% if lessonSeq.next %}{% for p in collections.navEducation %}{% if p.url == lessonSeq.next %}
+        {% if lessonSeq.next %}{% for p in collections.navEducation | localeItems(locale) %}{% if p.url == lessonSeq.next %}
         <a class="lesson-seq-link lesson-seq-next" href="{{ p.url }}">
-            <span class="lesson-seq-dir">Next lesson →</span>
+            <span class="lesson-seq-dir">{{ "lesson.next" | t(locale) }}</span>
             <span class="lesson-seq-title">{{ p.data.title | cleanTitle }}</span>
         </a>
         {% endif %}{% endfor %}{% endif %}
@@ -52,7 +53,7 @@
    it (no build-a-DOM flash). role="dialog" + aria-modal; the input is an
    ARIA combobox driving the listbox of results. Lives at end-of-body so
    it's outside the sticky nav's stacking context. See scripts/search.js. #}
-<div id="palette" class="palette" role="dialog" aria-modal="true" aria-label="Search the site" hidden>
+<div id="palette" class="palette" role="dialog" aria-modal="true" aria-label="{{ "search.dialog" | t(locale) }}" hidden>
     <div class="palette-box">
         <div class="palette-field">
             <svg class="palette-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -67,11 +68,11 @@
                    inputmode="search" enterkeyhint="search"
                    aria-expanded="false" aria-controls="palette-results"
                    aria-autocomplete="list" autocomplete="off" autocapitalize="off"
-                   spellcheck="false" placeholder="Search tools, simulators, lessons…"
-                   aria-label="Search the site">
-            <kbd class="palette-hint">esc</kbd>
+                   spellcheck="false" placeholder="{{ "search.placeholder" | t(locale) }}"
+                   aria-label="{{ "search.dialog" | t(locale) }}">
+            <kbd class="palette-hint">{{ "search.escape" | t(locale) }}</kbd>
         </div>
-        <ul id="palette-results" class="palette-results" role="listbox" aria-label="Search results"></ul>
+        <ul id="palette-results" class="palette-results" role="listbox" aria-label="{{ "search.results" | t(locale) }}"></ul>
         <p id="palette-status" class="palette-status" role="status" aria-live="polite" hidden></p>
     </div>
 </div>
@@ -96,6 +97,10 @@
    aria-pressed never re-synced (audit-2026-06 #2). Pages must NOT
    load units.js themselves anymore — a duplicate <script src> would
    re-run the IIFE and double-wire the toggle listeners. #}
+<script src="/scripts/i18n.js?v={{ site.version }}"></script>
+{% if pageMessages %}
+<script>window.CFPageMessages = Object.freeze({{ pageMessages | safeScriptJson | safe }});</script>
+{% endif %}
 <script src="/scripts/theme.js?v={{ site.version }}"></script>
 <script src="/scripts/units.js?v={{ site.version }}"></script>
 {# search.js is loaded site-wide so the command palette (/ or Ctrl/⌘-K, or

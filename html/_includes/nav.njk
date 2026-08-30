@@ -9,44 +9,52 @@
    sit beside a bare "main" in the same landmark list, which is the kind of
    confusion this label exists to remove. Pinned by
    tests/machine-sweep.spec.js (#261). #}
-<nav class="site-nav" aria-label="Site">
-    <a class="site-nav-brand" href="/">controlsfreak<span>.dev</span></a>
+<nav class="site-nav" aria-label="{{ "nav.landmark" | t(locale) }}">
+    <a class="site-nav-brand" href="{{ "/" | localePath(locale) }}">controlsfreak<span>.dev</span></a>
     <div class="site-nav-links" id="site-nav-links">
-        <a href="/"{% if nav == "home" %} class="active"{% endif %}>Home</a>
-        {{ navDropdown('guides', 'Guides', '/guides/', nav == 'guides', null, collections.navGuides, 'Field guides by topic — every tool, lesson, and drill on one subject in one place.') }}
-        {{ navDropdown('tools', 'Tools', '/tools/', nav == 'tools', collections.navTools | navGroups('tools'), null, 'Calculators and converters for the day-to-day.') }}
-        {{ navDropdown('simulators', 'Simulators', '/simulators/', nav == 'simulators', null, collections.navSimulators, 'Interactive models to poke at before the real thing.') }}
-        {{ navDropdown('education', 'Education', '/education/', nav == 'education', collections.navEducation | navGroups('education'), null, 'Practical lessons, from the ground up.') }}
-        {{ navDropdown('practice', 'Practice', '/practice/', nav == 'practice', collections.navPractice | navGroups('practice'), null, 'Quick quizzes and field drills to test yourself.') }}
-        <a href="/contact.html"{% if nav == "contact" %} class="active"{% endif %}>Contact</a>
-        <button type="button" class="nav-search-btn" id="nav-search-btn" aria-haspopup="dialog" aria-label="Search (press slash)">
+        <a href="{{ "/" | localePath(locale) }}"{% if nav == "home" %} class="active"{% endif %}>{{ "nav.home" | t(locale) }}</a>
+        {{ navDropdown('guides', 'nav.guides' | t(locale), '/guides/' | localePath(locale), nav == 'guides', null, collections.navGuides | localeItems(locale), 'nav.blurbs.guides' | t(locale), locale) }}
+        {{ navDropdown('tools', 'nav.tools' | t(locale), '/tools/' | localePath(locale), nav == 'tools', collections.navTools | localeItems(locale) | navGroups('tools', locale), null, 'nav.blurbs.tools' | t(locale), locale) }}
+        {{ navDropdown('simulators', 'nav.simulators' | t(locale), '/simulators/' | localePath(locale), nav == 'simulators', null, collections.navSimulators | localeItems(locale), 'nav.blurbs.simulators' | t(locale), locale) }}
+        {{ navDropdown('education', 'nav.education' | t(locale), '/education/' | localePath(locale), nav == 'education', collections.navEducation | localeItems(locale) | navGroups('education', locale), null, 'nav.blurbs.education' | t(locale), locale) }}
+        {{ navDropdown('practice', 'nav.practice' | t(locale), '/practice/' | localePath(locale), nav == 'practice', collections.navPractice | localeItems(locale) | navGroups('practice', locale), null, 'nav.blurbs.practice' | t(locale), locale) }}
+        <a href="{{ "/contact.html" | localePath(locale) }}"{% if nav == "contact" %} class="active"{% endif %}>{{ "nav.contact" | t(locale) }}</a>
+        <button type="button" class="nav-search-btn" id="nav-search-btn" aria-haspopup="dialog" aria-label="{{ "nav.searchShortcut" | t(locale) }}">
             <svg class="nav-search-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5">
                 <circle cx="7" cy="7" r="4.5"/><line x1="10.6" y1="10.6" x2="14" y2="14"/>
             </svg>
-            <span class="nav-search-label">Search</span>
+            <span class="nav-search-label">{{ "nav.search" | t(locale) }}</span>
             <kbd class="nav-search-kbd">/</kbd>
         </button>
+        {% if canonical or page.fileSlug == "404" %}
+        <span class="language-switch" aria-label="{{ "language.label" | t(locale) }}">
+            {% for language in i18n.locales %}
+            {% if not loop.first %}<span aria-hidden="true">/</span>{% endif %}
+            <a href="{{ page.url | localePath(language.code) }}" hreflang="{{ language.code }}" lang="{{ language.code }}"{% if locale == language.code %} aria-current="page"{% endif %}>{{ language.shortLabel }}</a>
+            {% endfor %}
+        </span>
+        {% endif %}
         <span class="units-toggle">
-            <span class="units-label">Units:</span>
+            <span class="units-label">{{ "settings.units" | t(locale) }}</span>
             <span class="units-toggle-pill">
-                <button class="units-btn" data-units="us" aria-pressed="true">US</button>
-                <button class="units-btn" data-units="metric" aria-pressed="false">Metric</button>
+                <button class="units-btn" data-units="us" aria-pressed="true">{{ "settings.us" | t(locale) }}</button>
+                <button class="units-btn" data-units="metric" aria-pressed="false">{{ "settings.metric" | t(locale) }}</button>
             </span>
         </span>
         <span class="theme-toggle">
-            <span class="theme-label">Theme:</span>
+            <span class="theme-label">{{ "settings.theme" | t(locale) }}</span>
             <span class="theme-toggle-pill">
-                <button class="theme-btn" data-theme-set="dark" aria-pressed="true">Dark</button>
-                <button class="theme-btn" data-theme-set="light" aria-pressed="false">Light</button>
+                <button class="theme-btn" data-theme-set="dark" aria-pressed="true">{{ "settings.dark" | t(locale) }}</button>
+                <button class="theme-btn" data-theme-set="light" aria-pressed="false">{{ "settings.light" | t(locale) }}</button>
             </span>
         </span>
     </div>
-    <button type="button" class="nav-search-btn nav-search-btn--mobile" aria-haspopup="dialog" aria-label="Search">
+    <button type="button" class="nav-search-btn nav-search-btn--mobile" aria-haspopup="dialog" aria-label="{{ "nav.search" | t(locale) }}">
         <svg class="nav-search-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5">
             <circle cx="7" cy="7" r="4.5"/><line x1="10.6" y1="10.6" x2="14" y2="14"/>
         </svg>
     </button>
-    <button type="button" class="nav-hamburger" id="nav-hamburger" aria-expanded="false" aria-controls="site-nav-links" aria-label="Open menu">
+    <button type="button" class="nav-hamburger" id="nav-hamburger" aria-expanded="false" aria-controls="site-nav-links" aria-label="{{ "nav.openMenu" | t(locale) }}">
         <svg class="nav-burger-icon" viewBox="0 0 18 18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
             <line x1="2" y1="5" x2="16" y2="5"/><line x1="2" y1="9" x2="16" y2="9"/><line x1="2" y1="13" x2="16" y2="13"/>
         </svg>

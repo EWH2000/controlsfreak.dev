@@ -9,6 +9,11 @@
     {% set canonicalUrl = canonical | cleanCanonical %}
     {% if canonical %}
     <link rel="canonical" href="{{ canonicalUrl }}">
+    {% set alternates = collections.sitemapPages | translationAlternates(canonical) %}
+    {% for alternate in alternates %}
+    <link rel="alternate" hreflang="{{ alternate.locale }}" href="{{ alternate.url }}">
+    {% if alternate.locale == i18n.defaultLocale %}<link rel="alternate" hreflang="x-default" href="{{ alternate.url }}">{% endif %}
+    {% endfor %}
     {% endif %}
     <meta property="og:title" content="{{ title }}">
     <meta property="og:description" content="{{ description }}">
@@ -16,35 +21,40 @@
     {% if canonical %}
     <meta property="og:url" content="{{ canonicalUrl }}">
     {% endif %}
-    <meta property="og:image" content="https://controlsfreak.dev/assets/og-image.png">
+    {% set currentLocaleMeta = locale | localeMeta %}
+    <meta property="og:image" content="{{ currentLocaleMeta.ogImage }}">
     <meta property="og:site_name" content="controlsfreak.dev">
+    <meta property="og:locale" content="{{ currentLocaleMeta.og or "en_US" }}">
+    {% if canonical %}{% for alternate in alternates %}{% if alternate.locale != locale %}<meta property="og:locale:alternate" content="{{ alternate.og }}">{% endif %}{% endfor %}{% endif %}
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ title }}">
     <meta name="twitter:description" content="{{ description }}">
-    <meta name="twitter:image" content="https://controlsfreak.dev/assets/og-image.png">
-    {% set breadcrumbJson = canonicalUrl | breadcrumbJsonLd(nav, title) %}
+    <meta name="twitter:image" content="{{ currentLocaleMeta.ogImage }}">
+    {% set breadcrumbJson = canonicalUrl | breadcrumbJsonLd(nav, title, locale) %}
     {% if breadcrumbJson %}
     <script type="application/ld+json">{{ breadcrumbJson | safe }}</script>
     {% endif %}
-    {% if nav == "education" and page.url != "/education/" %}
-    <script type="application/ld+json">{{ canonicalUrl | techArticleJsonLd(title, description, page.inputPath | gitFirstmod, page.inputPath | gitLastmod, pairedQuiz | cleanCanonical) | safe }}</script>
-    {% set eduRels = educationSequence[page.url] %}
+    {% if nav == "education" and (page.url | translationKey) != "/education/" %}
+    <script type="application/ld+json">{{ canonicalUrl | techArticleJsonLd(title, description, page.inputPath | gitFirstmod, page.inputPath | gitLastmod, pairedQuiz | cleanCanonical, locale) | safe }}</script>
+    {% set localizedEducationSequence = educationSequence | localizedSequence(locale) %}
+    {% set eduRels = localizedEducationSequence[page.url] %}
     {% if eduRels.prev %}<link rel="prev" href="{{ eduRels.prev }}">{% endif %}
     {% if eduRels.next %}<link rel="next" href="{{ eduRels.next }}">{% endif %}
     {% endif %}
     {% if nav == "practice" and quizzes[page.fileSlug] %}
-    <script type="application/ld+json">{{ canonicalUrl | faqPageJsonLd(quizzes[page.fileSlug], title, pairedLesson | cleanCanonical) | safe }}</script>
+    {% set localizedQuestions = quizzes[page.fileSlug] | localizedQuiz(locale, page.fileSlug) %}
+    <script type="application/ld+json">{{ canonicalUrl | faqPageJsonLd(localizedQuestions, title, pairedLesson | cleanCanonical, locale) | safe }}</script>
     {% endif %}
     {% if faqs %}
-    <script type="application/ld+json">{{ canonicalUrl | faqJsonLd(faqs, title) | safe }}</script>
+    <script type="application/ld+json">{{ canonicalUrl | faqJsonLd(faqs, title, locale) | safe }}</script>
     {% endif %}
     {% if termSets %}
     {%- for ts in termSets %}
-    <script type="application/ld+json">{{ canonicalUrl | definedTermSetJsonLd(bacnetEnums[ts.key], ts.name, ts.fragment, ts.description) | safe }}</script>
+    <script type="application/ld+json">{{ canonicalUrl | definedTermSetJsonLd(bacnetEnums[ts.key], ts.name, ts.fragment, ts.description, locale, bacnetEnumTranslations[locale][ts.key]) | safe }}</script>
     {%- endfor %}
     {% endif %}
-    {% if (nav == "tools" and page.url != "/tools/") or (nav == "simulators" and page.url != "/simulators/") %}
-    <script type="application/ld+json">{{ canonicalUrl | softwareApplicationJsonLd(title, description) | safe }}</script>
+    {% if (nav == "tools" and (page.url | translationKey) != "/tools/") or (nav == "simulators" and (page.url | translationKey) != "/simulators/") %}
+    <script type="application/ld+json">{{ canonicalUrl | softwareApplicationJsonLd(title, description, locale) | safe }}</script>
     {% endif %}
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">

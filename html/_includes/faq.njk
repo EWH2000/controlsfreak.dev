@@ -23,7 +23,7 @@
 {% macro faqBlock(faqs, heading) %}
     {% if faqs and faqs.length %}
     <section class="faq-block" aria-labelledby="faq-heading">
-        <h2 class="ps-section-label" id="faq-heading">{{ heading or "Common questions" }}</h2>
+        <h2 class="ps-section-label" id="faq-heading">{{ heading or ("faq.common" | t(locale)) }}</h2>
         {% for item in faqs %}
         <h3 class="faq-q">{{ item.q }}</h3>
         <div class="faq-a">{{ item.a | safe }}</div>

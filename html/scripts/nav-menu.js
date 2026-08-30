@@ -198,7 +198,7 @@
         // scrolls is the sheet itself (the CSS lock is mobile-scoped).
         document.body.classList.toggle('nav-sheet-open', open);
         burger.setAttribute('aria-expanded', open ? 'true' : 'false');
-        burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+        burger.setAttribute('aria-label', window.CFI18n.t(open ? 'nav.closeMenu' : 'nav.openMenu'));
         if (!open) closeAll();   // collapsing the bar also closes any sub-menu
 
         // Focus management (audit-2026-06 #6): the sheet renders BEFORE

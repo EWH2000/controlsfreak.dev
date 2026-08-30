@@ -109,6 +109,8 @@
 (function () {
     'use strict';
 
+    const t = (key, values) => window.CFI18n.t(key, values);
+
     const ENGINE_VERSION = 1;
     const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
@@ -349,31 +351,31 @@
         rootEl.classList.add('quiz');
         rootEl.innerHTML = '';
 
-        const settingsRow = el('div', { class: 'quiz-settings', role: 'group', 'aria-label': 'Quiz settings' });
+        const settingsRow = el('div', { class: 'quiz-settings', role: 'group', 'aria-label': t('quiz.settingsAria') });
         const countSel = el('select', { id: idify('count'), class: 'quiz-settings-select' });
         ['5', '10', 'all'].forEach(function (v) {
             const o = el('option', { value: v });
-            o.textContent = v === 'all' ? 'All' : v;
+            o.textContent = v === 'all' ? t('quiz.allQuestions') : v;
             countSel.appendChild(o);
         });
         countSel.value = String(state.count);
         const countLbl = el('label', { for: idify('count'), class: 'quiz-settings-label' }, [
-            'Questions: ', countSel
+            t('quiz.questionCount') + ' ', countSel
         ]);
 
         const orderSel = el('select', { id: idify('order'), class: 'quiz-settings-select' });
-        [['sequential', 'Sequential'], ['random', 'Random']].forEach(function (pair) {
+        [['sequential', t('quiz.sequential')], ['random', t('quiz.random')]].forEach(function (pair) {
             const o = el('option', { value: pair[0] });
             o.textContent = pair[1];
             orderSel.appendChild(o);
         });
         orderSel.value = state.order;
         const orderLbl = el('label', { for: idify('order'), class: 'quiz-settings-label' }, [
-            'Order: ', orderSel
+            t('quiz.order') + ' ', orderSel
         ]);
 
-        const bestReadout = el('span', { class: 'quiz-best-readout', 'aria-live': 'off' }, ['Best: —']);
-        const resetBestBtn = el('button', { type: 'button', class: 'quiz-reset-best', id: idify('reset-best') }, ['Reset best']);
+        const bestReadout = el('span', { class: 'quiz-best-readout', 'aria-live': 'off' }, [t('quiz.bestEmpty')]);
+        const resetBestBtn = el('button', { type: 'button', class: 'quiz-reset-best', id: idify('reset-best') }, [t('quiz.resetBest')]);
 
         settingsRow.appendChild(countLbl);
         settingsRow.appendChild(orderLbl);
@@ -381,8 +383,8 @@
         settingsRow.appendChild(resetBestBtn);
 
         const dirtyNotice = el('div', { class: 'quiz-dirty-notice', hidden: true }, [
-            'Settings apply on restart. ',
-            el('button', { type: 'button', class: 'quiz-restart-now' }, ['Restart now →'])
+            t('quiz.applyOnRestart') + ' ',
+            el('button', { type: 'button', class: 'quiz-restart-now' }, [t('quiz.restartNow')])
         ]);
 
         const progress = el('div', { class: 'quiz-progress' });
@@ -404,7 +406,7 @@
             inputmode: 'decimal',
             class: 'quiz-numeric-input',
             id: idify('numeric'),
-            'aria-label': 'Numeric answer'
+            'aria-label': t('quiz.numericAnswerAria')
         });
         const numericUnit = el('span', { class: 'quiz-numeric-unit' });
         numericEl.appendChild(numericInput);
@@ -423,8 +425,8 @@
         });
 
         const actionsEl = el('div', { class: 'quiz-actions' });
-        const submitBtn = el('button', { type: 'button', class: 'quiz-action quiz-action-primary' }, ['Submit']);
-        const skipBtn   = el('button', { type: 'button', class: 'quiz-action quiz-action-secondary' }, ['Skip']);
+        const submitBtn = el('button', { type: 'button', class: 'quiz-action quiz-action-primary' }, [t('quiz.submit')]);
+        const skipBtn   = el('button', { type: 'button', class: 'quiz-action quiz-action-secondary' }, [t('quiz.skip')]);
         actionsEl.appendChild(skipBtn);
         actionsEl.appendChild(submitBtn);
 
@@ -437,7 +439,7 @@
         const resultsEl = el('div', {
             class: 'quiz-results',
             role: 'region',
-            'aria-label': 'Quiz results',
+            'aria-label': t('quiz.resultsAria'),
             hidden: true
         });
 
@@ -454,11 +456,11 @@
             const bestTotal = parseInt(storeGet(storeKeys.bestTotal) || '', 10);
             const bestTime = parseInt(storeGet(storeKeys.bestTime) || '', 10);
             if (isFinite(best) && isFinite(bestTotal) && bestTotal > 0) {
-                let txt = 'Best: ' + best + ' / ' + bestTotal;
-                if (isFinite(bestTime) && bestTime > 0) txt += ' (' + formatMs(bestTime) + ')';
-                bestReadout.textContent = txt;
+                bestReadout.textContent = isFinite(bestTime) && bestTime > 0
+                    ? t('quiz.bestScoreWithTime', { score: best, total: bestTotal, time: formatMs(bestTime) })
+                    : t('quiz.bestScore', { score: best, total: bestTotal });
             } else {
-                bestReadout.textContent = 'Best: —';
+                bestReadout.textContent = t('quiz.bestEmpty');
             }
         }
 
@@ -532,7 +534,10 @@
             const q = questions[qi];
 
             // Progress
-            progressText.textContent = 'Question ' + (state.cursor + 1) + ' of ' + state.queue.length;
+            progressText.textContent = t('quiz.progress', {
+                current: state.cursor + 1,
+                total: state.queue.length
+            });
             const pct = state.queue.length > 1
                 ? ((state.cursor) / state.queue.length) * 100
                 : 0;
@@ -586,8 +591,8 @@
                 choicesEl.hidden = false;
             } else if (q.type === 'tf') {
                 renderChoices([
-                    { id: 'true',  text: 'True',  correct: q.answer === true },
-                    { id: 'false', text: 'False', correct: q.answer === false }
+                    { id: 'true',  text: t('quiz.true'),  correct: q.answer === true },
+                    { id: 'false', text: t('quiz.false'), correct: q.answer === false }
                 ]);
                 choicesEl.hidden = false;
             } else if (q.type === 'numeric') {
@@ -608,7 +613,7 @@
             actionsEl.innerHTML = '';
             actionsEl.appendChild(skipBtn);
             actionsEl.appendChild(submitBtn);
-            submitBtn.textContent = 'Submit';
+            submitBtn.textContent = t('quiz.submit');
             submitBtn.disabled = true;
             skipBtn.disabled = false;
 
@@ -733,12 +738,12 @@
         const disarmReset = () => {
             resetArmed = false;
             if (resetTimer) { clearTimeout(resetTimer); resetTimer = null; }
-            resetBestBtn.textContent = 'Reset best';
+            resetBestBtn.textContent = t('quiz.resetBest');
         };
         resetBestBtn.addEventListener('click', function () {
             if (!resetArmed) {
                 resetArmed = true;
-                resetBestBtn.textContent = 'Confirm reset?';
+                resetBestBtn.textContent = t('quiz.confirmReset');
                 resetTimer = setTimeout(disarmReset, 4000);
                 return;
             }
@@ -798,7 +803,7 @@
             const frag = document.createDocumentFragment();
             const statusEl = el('p', {
                 class: 'quiz-reveal-status'
-            }, [isSkip ? 'Skipped.' : (correct ? 'Correct.' : 'Not quite.')]);
+            }, [isSkip ? t('quiz.skipped') : (correct ? t('quiz.correct') : t('quiz.incorrect'))]);
             frag.appendChild(statusEl);
 
             if (!correct) {
@@ -807,13 +812,15 @@
                     const right = q.choices.filter(function (c) { return c.correct; })[0];
                     if (right) rightAnswerText = right.text;
                 } else if (q.type === 'tf') {
-                    rightAnswerText = q.answer ? 'True' : 'False';
+                    rightAnswerText = q.answer ? t('quiz.true') : t('quiz.false');
                 } else if (q.type === 'numeric') {
                     rightAnswerText = q.answer + (q.unit ? ' ' + q.unit : '');
                 }
                 if (rightAnswerText) {
                     const right = el('p', { class: 'quiz-reveal-right' });
-                    right.innerHTML = '<strong>Right answer:</strong> ' + rightAnswerText;
+                    right.appendChild(el('strong', null, [t('quiz.rightAnswer')]));
+                    right.appendChild(document.createTextNode(' '));
+                    right.appendChild(el('span', { html: rightAnswerText }));
                     frag.appendChild(right);
                 }
             }
@@ -824,7 +831,8 @@
 
             if (q.learnMore && q.learnMore.href) {
                 const lm = el('p', { class: 'quiz-reveal-learn-more' });
-                lm.innerHTML = 'Learn more → <a href="' + q.learnMore.href + '">' + q.learnMore.label + '</a>';
+                lm.appendChild(document.createTextNode(t('quiz.learnMoreLead') + ' '));
+                lm.appendChild(el('a', { href: q.learnMore.href, html: q.learnMore.label }));
                 frag.appendChild(lm);
             }
 
@@ -835,8 +843,8 @@
             // Action button flips to Next / See results
             submitBtn.disabled = false;
             submitBtn.textContent = (state.cursor === state.queue.length - 1)
-                ? 'See results →'
-                : 'Next question →';
+                ? t('quiz.seeResults')
+                : t('quiz.nextQuestion');
             skipBtn.disabled = true;
             // Focus the action button so screen-readers announce reveal then button.
             setTimeout(function () { submitBtn.focus(); }, 0);
@@ -920,11 +928,11 @@
             resultsEl.innerHTML = '';
 
             const headline = el('h2', { class: 'quiz-results-headline' });
-            headline.textContent = score + ' / ' + total + ' correct';
+            headline.textContent = t('quiz.resultsHeadline', { score: score, total: total });
             const sub = el('p', { class: 'quiz-results-sub' });
-            sub.textContent = (title ? title + ' · ' : '') + 'Time ' + formatMs(elapsed);
+            sub.textContent = (title ? title + ' · ' : '') + t('quiz.resultsTime', { time: formatMs(elapsed) });
             if (isNewBest) {
-                const tag = el('span', { class: 'quiz-results-newbest' }, [' · new best']);
+                const tag = el('span', { class: 'quiz-results-newbest' }, [' · ' + t('quiz.newBest')]);
                 sub.appendChild(tag);
             } else if (score === total && total > 0) {
                 // P-006: a perfect run that can't dethrone a longer stored best
@@ -932,7 +940,7 @@
                 // 'flawless' acknowledgement, so a focused 5/5 re-run after a 10/10
                 // isn't met with silence. Its own class (not new-best) keeps the
                 // two signals distinct: green 'flawless' vs amber 'new best'.
-                const tag = el('span', { class: 'quiz-results-flawless' }, [' · flawless']);
+                const tag = el('span', { class: 'quiz-results-flawless' }, [' · ' + t('quiz.flawless')]);
                 sub.appendChild(tag);
             }
             resultsEl.appendChild(headline);
@@ -944,14 +952,14 @@
             const misses = state.answers.filter(function (a) { return !a.correct; });
 
             if (misses.length) {
-                const heading = el('h3', { class: 'quiz-results-misses-heading' }, ['Review']);
+                const heading = el('h3', { class: 'quiz-results-misses-heading' }, [t('quiz.review')]);
                 resultsEl.appendChild(heading);
 
                 const table = el('table', { class: 'ref-table-dense quiz-results-misses' });
                 const thead = el('thead', null, [
                     el('tr', null, [
-                        el('th', null, ['Question']),
-                        el('th', null, ['Learn more'])
+                        el('th', null, [t('quiz.questionColumn')]),
+                        el('th', null, [t('quiz.learnMore')])
                     ])
                 ]);
                 const tbody = el('tbody');
@@ -965,7 +973,7 @@
                     const linkCell = el('td');
                     if (q.learnMore && q.learnMore.href) {
                         const a = el('a', { href: q.learnMore.href });
-                        a.textContent = q.learnMore.label || 'Learn more';
+                        a.textContent = q.learnMore.label || t('quiz.learnMore');
                         linkCell.appendChild(a);
                     } else {
                         linkCell.textContent = '—';
@@ -977,7 +985,7 @@
                 resultsEl.appendChild(table);
             }
 
-            const restartBtn = el('button', { type: 'button', class: 'quiz-action quiz-action-primary quiz-restart-btn' }, ['Restart →']);
+            const restartBtn = el('button', { type: 'button', class: 'quiz-action quiz-action-primary quiz-restart-btn' }, [t('quiz.restart')]);
             restartBtn.addEventListener('click', function () { startQuiz(); });
             const actions = el('div', { class: 'quiz-actions quiz-results-actions' }, [restartBtn]);
             // Onward path (owner decision, audit-2026-06 #22): the card
@@ -987,7 +995,7 @@
             // they're not a curriculum — and get no link.
             if (opts.next && opts.next.href) {
                 actions.appendChild(el('a', { class: 'quiz-action quiz-next-link', href: opts.next.href },
-                    ['Next quiz: ' + opts.next.label + ' →']));
+                    [t('quiz.nextQuiz', { label: opts.next.label })]));
             }
             resultsEl.appendChild(actions);
 

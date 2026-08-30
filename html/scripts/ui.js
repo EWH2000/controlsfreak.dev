@@ -104,7 +104,7 @@
         const orig = btn.textContent;
         btn.classList.add('copied');
         navigator.clipboard.writeText(text).then(() => {
-            btn.textContent = 'copied!';
+            btn.textContent = window.CFI18n.t('clipboard.copied');
             setTimeout(() => {
                 btn.textContent = orig;
                 btn.classList.remove('copied');

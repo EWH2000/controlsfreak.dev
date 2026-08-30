@@ -30,14 +30,15 @@
 (function () {
     'use strict';
 
-    const INDEX_URL = '/search-index.json';
+    const t = (key, values) => window.CFI18n.t(key, values);
+    const INDEX_URL = window.CFI18n.path('/search-index.json');
     const MAX_RESULTS = 8;
     const SECTION_ORDER = { tools: 0, simulators: 1, education: 2, practice: 3 };
     const SECTION_LABEL = {
-        tools: 'Tool',
-        simulators: 'Simulator',
-        education: 'Lesson',
-        practice: 'Practice'
+        tools: t('search.section.tool'),
+        simulators: t('search.section.simulator'),
+        education: t('search.section.lesson'),
+        practice: t('search.section.practice')
     };
 
     // Zero-state browse list (G-007). An empty palette used to be a blank box
@@ -56,7 +57,7 @@
         '/tools/thermistor-calculator.html',
         '/tools/psychrometric-chart.html',
         '/simulators/pid-tuner.html'
-    ];
+    ].map((url) => window.CFI18n.path(url));
 
     // No-match escape hatch (G-007). A newcomer's plain-language query ("how
     // do I read a temperature sensor") misses the field-term keywords, so a
@@ -64,10 +65,10 @@
     // lessons instead. Synthetic (not an index row) so the copy can address
     // the newcomer directly.
     const EDU_FALLBACK = {
-        url: '/education/',
-        title: 'Browse all lessons',
+        url: window.CFI18n.path('/education/'),
+        title: t('search.fallback.title'),
         section: 'education',
-        description: 'New to controls? Start with the explainers.'
+        description: t('search.fallback.description')
     };
 
     let entries = null;          // cached index (null until first fetch)
@@ -240,7 +241,7 @@
 
             const tag = document.createElement('span');
             tag.className = 'palette-result-tag';
-            tag.textContent = SECTION_LABEL[it.section] || 'Page';
+            tag.textContent = SECTION_LABEL[it.section] || t('search.section.page');
 
             const title = document.createElement('span');
             title.className = 'palette-result-title';
@@ -260,24 +261,27 @@
             // Empty query: a neutral browse list. Nothing is preselected, so
             // it doesn't read as a search that already ran.
             status.hidden = false;
-            status.textContent = 'Popular pages — or type to search';
+            status.textContent = t('search.browsePrompt');
             input.setAttribute('aria-expanded', results.length ? 'true' : 'false');
             setActive(-1);
         } else if (mode === 'results') {
             status.hidden = false;
-            status.textContent = results.length + (results.length === 1 ? ' result' : ' results');
+            status.textContent = t(
+                results.length === 1 ? 'search.resultCountOne' : 'search.resultCountOther',
+                { count: results.length }
+            );
             input.setAttribute('aria-expanded', 'true');
             setActive(0);
         } else if (mode === 'nomatch') {
             // results holds the single EDU_FALLBACK browse row; don't preselect
             // it, so a stray Enter doesn't navigate away from a typo'd query.
             status.hidden = false;
-            status.textContent = 'No matches — or browse:';
+            status.textContent = t('search.noMatchesBrowse');
             input.setAttribute('aria-expanded', 'true');
             setActive(-1);
         } else if (mode === 'fail') {
             status.hidden = false;
-            status.textContent = 'Search index unavailable — reopen to retry';
+            status.textContent = t('search.indexUnavailable');
             input.setAttribute('aria-expanded', 'false');
             setActive(-1);
         } else {   // 'loading' — index not back yet; stay quiet

@@ -92,6 +92,8 @@ const FBEEditor = (function () {
         const autoloop  = cfg.autoloop !== false;
         const keyScope  = cfg.keyScope || document;
         const onChange  = typeof cfg.onChange === 'function' ? cfg.onChange : null;
+        const text = (key, values) => window.CFI18n.t('fbe.' + key, values);
+        const runState = (on) => text(on ? 'status.running' : 'status.paused');
 
         // INNER_W / INNER_H grow when the user enters fullscreen so blocks
         // can be dragged into the new space; they never shrink back below
@@ -442,7 +444,7 @@ const FBEEditor = (function () {
                 valEl.classList.remove('fbe-val-on', 'fbe-val-off');
                 if (probe.kind === 'bool') {
                     const on = probe.v === true;
-                    valEl.textContent = on ? 'TRUE' : 'FALSE';
+                    valEl.textContent = text(on ? 'values.true' : 'values.false');
                     valEl.classList.add(on ? 'fbe-val-on' : 'fbe-val-off');
                 } else {
                     valEl.textContent = fmt(probe.v);
@@ -529,25 +531,24 @@ const FBEEditor = (function () {
             inspector.appendChild(title);
 
             if (!selected) {
-                title.textContent = 'Inspector';
+                title.textContent = text('inspector.title');
                 const p = document.createElement('p');
                 p.className = 'fbe-insp-empty';
-                p.textContent = 'Select a block to edit its parameters, or a wire to '
-                    + 'remove it. Click a block in the palette to add one.';
+                p.textContent = text('inspector.empty');
                 inspector.appendChild(p);
                 const keys = document.createElement('p');
                 keys.className = 'fbe-insp-keys';
-                keys.textContent = 'Press Delete to remove · Escape to cancel a wire.';
+                keys.textContent = text('inspector.keys');
                 inspector.appendChild(keys);
                 return;
             }
             if (selected.kind === 'wire') {
-                title.textContent = 'Wire';
-                addDeleteBtn('Delete wire');
+                title.textContent = text('inspector.wire');
+                addDeleteBtn(text('inspector.deleteWire'));
                 return;
             }
             const b = graph.blocks.find((x) => x.id === selected.id);
-            if (!b) { title.textContent = 'Inspector'; return; }
+            if (!b) { title.textContent = text('inspector.title'); return; }
             const def = engine.BLOCKS[b.type];
             // The instance's own name leads once it has one — that is
             // what the user is looking at on the sheet. The type's label
@@ -565,7 +566,7 @@ const FBEEditor = (function () {
             nameRow.className = 'fbe-insp-row';
             const nameLbl = document.createElement('label');
             nameLbl.setAttribute('for', NAME_INPUT_ID);
-            nameLbl.textContent = 'Name';
+            nameLbl.textContent = text('inspector.name');
             const nameField = document.createElement('input');
             nameField.type = 'text';
             nameField.id = NAME_INPUT_ID;
@@ -619,7 +620,7 @@ const FBEEditor = (function () {
                         p.options.forEach((opt) => {
                             const o = document.createElement('option');
                             o.value = opt;
-                            o.textContent = opt;
+                            o.textContent = text('options.' + opt);
                             field.appendChild(o);
                         });
                         field.value = b.params[p.name];
@@ -646,7 +647,7 @@ const FBEEditor = (function () {
                 }
                 inspector.appendChild(row);
             });
-            addDeleteBtn('Delete block');
+            addDeleteBtn(text('inspector.deleteBlock'));
         }
 
         function addDeleteBtn(label) {
@@ -702,22 +703,26 @@ const FBEEditor = (function () {
                 // name where it has one, its id otherwise. On the
                 // workbench the ids ARE the point ids, so this reads
                 // 'Wiring from OAT.O' rather than 'oat.O'.
-                setStatus('Wiring from ' + (b.name || b.id) + '.' + pinDef.name +
-                          ' — click a matching input pin.');
+                setStatus(text('status.wiringFrom', {
+                    block: b.name || b.id,
+                    pin: pinDef.name,
+                }));
                 return;
             }
             // input pin clicked
             if (!pending) {
-                setStatus('Start a wire at an output pin (right edge) first.');
+                setStatus(text('status.startAtOutput'));
                 return;
             }
             if (pending.kind !== pinDef.kind) {
-                setStatus('Type mismatch — ' + pending.kind + ' output can’t '
-                          + 'feed a ' + pinDef.kind + ' input.');
+                setStatus(text('status.typeMismatch', {
+                    outputKind: text('kinds.' + pending.kind),
+                    inputKind: text('kinds.' + pinDef.kind),
+                }));
                 return;
             }
             if (pending.block === b.id) {
-                setStatus('A block can’t wire to itself directly.');
+                setStatus(text('status.selfWire'));
                 cancelWire();
                 return;
             }
@@ -731,7 +736,7 @@ const FBEEditor = (function () {
             });
             cancelWire();
             renderAll();
-            setStatus(running ? 'Running' : 'Paused');
+            setStatus(runState(running));
             emitChange();
         }
 
@@ -787,8 +792,8 @@ const FBEEditor = (function () {
 
         function setRunning(on) {
             running = on;
-            runBtn.textContent = on ? 'Pause' : 'Run';
-            setStatus(on ? 'Running' : 'Paused');
+            runBtn.textContent = text(on ? 'controls.pause' : 'controls.run');
+            setStatus(runState(on));
             // Live-signal wire animation only plays while the sim runs —
             // a paused sheet is static (the CSS keys off this class).
             canvasEl.classList.toggle('fbe-running', on);
@@ -842,7 +847,7 @@ const FBEEditor = (function () {
             selected = null;
             dropSeq = 0;   // restart the drop grid at the top-left
             renderAll();
-            setStatus(running ? 'Running' : 'Paused');
+            setStatus(runState(running));
             emitChange();
         }
 
@@ -887,7 +892,7 @@ const FBEEditor = (function () {
             if (e.target.closest('.fbe-wire-hit')) return;
             cancelWire();
             clearSelection();
-            setStatus(running ? 'Running' : 'Paused');
+            setStatus(runState(running));
         }
 
         // Delete / Backspace removes the selection (Escape cancels a wire).
@@ -902,7 +907,7 @@ const FBEEditor = (function () {
             } else if (e.key === 'Escape') {
                 const hadPending = !!pending;
                 cancelWire();
-                setStatus(running ? 'Running' : 'Paused');
+                setStatus(runState(running));
                 if (hadPending) e.stopPropagation();
             }
         }

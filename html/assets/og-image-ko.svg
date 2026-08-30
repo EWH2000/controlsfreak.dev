@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+    <title>controlsfreak.dev — HVAC 자동제어를 위한 도구와 참고 자료</title>
+
+    <!-- Keep the locale variants visually identical to the primary social card. -->
+    <rect width="1200" height="630" fill="#eef1ec"/>
+    <rect x="24" y="24" width="1152" height="582" fill="none" stroke="#ccd7c8" stroke-width="1.5"/>
+
+    <g transform="translate(94, 281.5)">
+        <polygon fill="#43881c" points="-7,-26.1 -9.6,-35.7 9.6,-35.7 7,-26.1 13.5,-23.4 18.5,-32 32,-18.5 23.4,-13.5 26.1,-7 35.7,-9.6 35.7,9.6 26.1,7 23.4,13.5 32,18.5 18.5,32 13.5,23.4 7,26.1 9.6,35.7 -9.6,35.7 -7,26.1 -13.5,23.4 -18.5,32 -32,18.5 -23.4,13.5 -26.1,7 -35.7,9.6 -35.7,-9.6 -26.1,-7 -23.4,-13.5 -32,-18.5 -18.5,-32 -13.5,-23.4"/>
+        <circle cx="0" cy="0" r="11" fill="#eef1ec"/>
+    </g>
+
+    <text x="166" y="315" font-family="'IBM Plex Mono', 'Menlo', 'Consolas', 'Courier New', monospace" font-size="96" font-weight="600" fill="#38423a" letter-spacing="1">controlsfreak<tspan fill="#43881c">.dev</tspan></text>
+    <text x="600" y="400" text-anchor="middle" font-family="'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif" font-size="34" font-weight="400" fill="#666e66">HVAC 자동제어를 위한 도구와 참고 자료</text>
+</svg>

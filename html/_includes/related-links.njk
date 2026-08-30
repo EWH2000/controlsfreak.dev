@@ -40,44 +40,44 @@
     {% set hasLessons = opts.lessons and opts.lessons.length %}
     {% set hasQuizzes = opts.quizzes and opts.quizzes.length %}
     {% if hasHub or hasTools or hasSims or hasLessons or hasQuizzes %}
-    <aside class="related-links" aria-label="Related">
+    <aside class="related-links" aria-label="{{ "related.landmark" | t(locale) }}">
         {% if hasHub %}
         <div class="related-group related-group-hub">
-            <h2 class="related-label">Part of</h2>
+            <h2 class="related-label">{{ "related.partOf" | t(locale) }}</h2>
             <ul>
-                {% for h in hubList %}<li><a href="{{ h.href }}" rel="related">{{ h.label }}</a></li>{% endfor %}
+                {% for h in hubList %}<li><a href="{{ h.href | localePath(locale) }}" rel="related">{{ h.label }}</a></li>{% endfor %}
             </ul>
         </div>
         {% endif %}
         {% if hasTools %}
         <div class="related-group">
-            <h2 class="related-label">Related tools</h2>
+            <h2 class="related-label">{{ "related.tools" | t(locale) }}</h2>
             <ul>
-                {% for t in opts.tools %}<li><a href="{{ t.href }}" rel="related">{{ t.label }}</a></li>{% endfor %}
+                {% for t in opts.tools %}<li><a href="{{ t.href | localePath(locale) }}" rel="related">{{ t.label }}</a></li>{% endfor %}
             </ul>
         </div>
         {% endif %}
         {% if hasSims %}
         <div class="related-group">
-            <h2 class="related-label">Related simulators</h2>
+            <h2 class="related-label">{{ "related.simulators" | t(locale) }}</h2>
             <ul>
-                {% for s in opts.simulators %}<li><a href="{{ s.href }}" rel="related">{{ s.label }}</a></li>{% endfor %}
+                {% for s in opts.simulators %}<li><a href="{{ s.href | localePath(locale) }}" rel="related">{{ s.label }}</a></li>{% endfor %}
             </ul>
         </div>
         {% endif %}
         {% if hasLessons %}
         <div class="related-group">
-            <h2 class="related-label">Related lessons</h2>
+            <h2 class="related-label">{{ "related.lessons" | t(locale) }}</h2>
             <ul>
-                {% for l in opts.lessons %}<li><a href="{{ l.href }}" rel="related">{{ l.label }}</a></li>{% endfor %}
+                {% for l in opts.lessons %}<li><a href="{{ l.href | localePath(locale) }}" rel="related">{{ l.label }}</a></li>{% endfor %}
             </ul>
         </div>
         {% endif %}
         {% if hasQuizzes %}
         <div class="related-group">
-            <h2 class="related-label">Test yourself</h2>
+            <h2 class="related-label">{{ "related.quizzes" | t(locale) }}</h2>
             <ul>
-                {% for q in opts.quizzes %}<li><a href="{{ q.href }}" rel="related">{{ q.label }}</a></li>{% endfor %}
+                {% for q in opts.quizzes %}<li><a href="{{ q.href | localePath(locale) }}" rel="related">{{ q.label }}</a></li>{% endfor %}
             </ul>
         </div>
         {% endif %}
