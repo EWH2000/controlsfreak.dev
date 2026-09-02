@@ -1013,7 +1013,9 @@ module.exports = function(eleventyConfig) {
     // trigger fired by the 2026-07 Search Console data). So every crawl
     // signal renders the clean, self-referential form via this filter;
     // frontmatter stays `.html` as the single source of truth, and internal
-    // `.html` anchors are unchanged (they 307 fine within the site). Applied
+    // `.html` anchors are unchanged (they 301 fine within the site — one
+    // cached permanent hop; the binding's raw 307 named above is upgraded to
+    // a 301 in src/worker.js, and worker.spec.js pins it). Applied
     // to canonical, og:url, the sitemap <loc>, and every JSON-LD url/@id so
     // the structured-data graph stays internally consistent (paired
     // hasPart/isPartOf @ids must byte-match their target's url).
@@ -1168,7 +1170,14 @@ module.exports = function(eleventyConfig) {
         simulators: { name: "Simulators", url: "https://controlsfreak.dev/simulators/" },
         education:  { name: "Education",  url: "https://controlsfreak.dev/education/" },
         practice:   { name: "Practice",   url: "https://controlsfreak.dev/practice/" },
-        contact:    { name: "Contact",    url: "https://controlsfreak.dev/contact.html" }
+        // Crawl-facing (clean) form, matching what head.njk feeds this filter
+        // — `canonical | cleanCanonical`. contact is the only section whose
+        // landing is a .html page, so it is the only entry where the house
+        // rule "canonical frontmatter keeps .html" could tempt a reader into
+        // restoring the suffix. Don't: the equality test below compares
+        // against the CLEANED canonical, and a mismatch silently emits a
+        // duplicate-named crumb pointing at the redirecting URL.
+        contact:    { name: "Contact",    url: "https://controlsfreak.dev/contact" }
     };
     eleventyConfig.addFilter("breadcrumbJsonLd", (canonical, nav, title) => {
         if (!canonical || canonical === "https://controlsfreak.dev/") return "";
