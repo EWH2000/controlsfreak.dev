@@ -4,10 +4,66 @@ description: Ohm's law and DC power, single- and three-phase AC power, a motor H
 canonical: https://controlsfreak.dev/tools/electrical-quick-calc.html
 nav: tools
 category: electrical
+pageMessages:
+    labels:
+        voltage: "Voltage (V)"
+        current: "Current (A)"
+        resistance: "Resistance (Ω)"
+        power: "Power (W)"
+        solved: " · solved"
+        lineVoltageLl: "Line voltage Vₗ (L-L)"
+        lineVoltageLn: "Line voltage Vₗ (L-N)"
+        nameplatePowerHp: "Nameplate power (HP)"
+        nameplatePowerKw: "Nameplate power (kW)"
+    status:
+        motorPrompt: "Enter a measured clamp reading to compare against the estimate."
+        motorConsistent: "Measured {measured} A is {percent}% of the {estimate} A estimate — consistent with the nameplate."
+        motorAbove: "Measured {measured} A is {percent}% of the {estimate} A estimate — running above estimate. Check loading, supply voltage, or a mechanical bind."
+        motorBelow: "Measured {measured} A is {percent}% of the {estimate} A estimate — running below estimate. Light load, or re-check the PF / efficiency assumptions."
+        motorFar: "Measured {measured} A is {percent}% of the {estimate} A estimate — far from estimate. Re-check phase, voltage, PF / η, or the clamp (CT range, or it is around more than one conductor)."
+        imbalancePrompt: "Enter the three readings to see the verdict."
+        imbalanceOk: "{percent}% — within NEMA MG-1 (≤ 1%). No derate required."
+        imbalanceWarn: "{percent}% — above 1%. NEMA recommends derating the motor; current unbalance runs ~6–10× this, driving extra winding heat. Find the cause: a loose lug, unbalanced single-phase loads, or the utility."
+        imbalanceError: "{percent}% — NEMA MG-1 advises against operating above 5%. Correct the supply before running the motor."
+    errors:
+        ohmNonNegative: "V, I, R, P are magnitudes — enter non-negative values."
+        ohmTwoRequired: "Enter any two of V, I, R, P — the other two are solved."
+        ohmTooManyOne: "Enter exactly two — clear {count} value so the wheel has a single solution."
+        ohmTooManyMany: "Enter exactly two — clear {count} values so the wheel has a single solution."
+        ohmZeroBoth: "0 V and 0 A together don’t define a resistance or power — enter a non-zero value for at least one."
+        ohmOpenCircuit: "Current of 0 A with a voltage present is an open circuit — resistance is infinite."
+        ohmDeadShort: "Resistance of 0 Ω is a dead short — current would be infinite."
+        ohmZeroVoltage: "Voltage of 0 V with power present is undefined — there must be a voltage to push the current."
+        ohmZeroPower: "Power of 0 W with a voltage present implies no current — resistance is infinite."
+        ohmZeroCurrentPower: "Current of 0 A with power present is undefined — power needs current to flow."
+        ohmNoFinite: "That pair has no finite solution — check the inputs."
+        acInputs: "Enter line voltage and power factor."
+        voltagePositive: "Line voltage must be greater than 0."
+        powerFactorRange: "Power factor must be between 0 and 1."
+        acMagnitudeRequired: "Enter one of line current, real power (kW), or apparent power (kVA)."
+        acOneMagnitude: "Enter just one of line current, kW, or kVA — clear the others."
+        nonNegative: "Enter a non-negative value."
+        indeterminate: "That combination is indeterminate — check the inputs."
+        motorPower: "Enter the nameplate power (HP or kW)."
+        efficiencyRange: "Efficiency must be between 0 and 1 (or a percent, e.g. 90)."
+        imbalanceReadings: "Enter all three line-to-line readings."
+        imbalancePositive: "Voltage readings must be greater than 0."
+    formula:
+        ohmVi: "R = V ÷ I = {voltage} ÷ {current} = {resistance} Ω · P = V × I = {voltage} × {current} = {power} W"
+        ohmVr: "I = V ÷ R = {voltage} ÷ {resistance} = {current} A · P = V² ÷ R = {voltage}² ÷ {resistance} = {power} W"
+        ohmVp: "I = P ÷ V = {power} ÷ {voltage} = {current} A · R = V² ÷ P = {voltage}² ÷ {power} = {resistance} Ω"
+        ohmIr: "V = I × R = {current} × {resistance} = {voltage} V · P = I² × R = {current}² × {resistance} = {power} W"
+        ohmIp: "V = P ÷ I = {power} ÷ {current} = {voltage} V · R = P ÷ I² = {power} ÷ {current}² = {resistance} Ω"
+        ohmPr: "V = √(P × R) = √({power} × {resistance}) = {voltage} V · I = √(P ÷ R) = √({power} ÷ {resistance}) = {current} A"
+        ac: "S = {root}{voltage} × {current} = {apparent} kVA · P = S × {factor} = {real} kW · Q = √(S² − P²) = {reactive} kVAR"
+        motor: "FLA = ({horsepower} HP × 746) ÷ ({root}{voltage} × {factor} × {efficiency}) = {amps} A (estimate)"
+        imbalance: "avg = ({ab} + {bc} + {ca}) ÷ 3 = {average} V · max deviation = {deviation} V · unbalance = {deviation} ÷ {average} × 100 = {percent} %"
+    output:
+        phaseAngle: "{angle}° (PF {factor})"
 keywords: ohms law watts volts amps three phase kva kvar power factor motor fla hp kw voltage imbalance nema nec 430
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -273,7 +329,7 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output — estimate</h2>
-                    <div class="status-pill" id="eq-motor-status">Enter a measured clamp reading to compare against the estimate.</div>
+                    <div class="status-pill" id="eq-motor-status">{{ pageMessages.status.motorPrompt }}</div>
                     <div class="ps-row">
                         <span class="ps-label">HP ↔ kW</span>
                         <span class="ps-value muted" id="eq-motor-twin">—</span>
@@ -352,7 +408,7 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="status-pill" id="eq-imb-status">Enter the three readings to see the verdict.</div>
+                    <div class="status-pill" id="eq-imb-status">{{ pageMessages.status.imbalancePrompt }}</div>
                     <div class="ps-row">
                         <span class="ps-label">Average voltage</span>
                         <span class="ps-value muted" id="eq-imb-avg">—</span>
@@ -458,7 +514,12 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
         // Tab 1 — Ohm's Law & Power
         // ─────────────────────────────────────────────
         const OHM_FIELDS = ['v', 'i', 'r', 'p'];
-        const OHM_LABEL  = { v: 'Voltage (V)', i: 'Current (A)', r: 'Resistance (Ω)', p: 'Power (W)' };
+        const OHM_LABEL  = {
+            v: CFI18n.page('labels.voltage'),
+            i: CFI18n.page('labels.current'),
+            r: CFI18n.page('labels.resistance'),
+            p: CFI18n.page('labels.power')
+        };
         const OHM_UNIT   = { v: ' V', i: ' A', r: ' Ω', p: ' W' };
 
         function muteOhm(msg) {
@@ -476,15 +537,16 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
             const given = OHM_FIELDS.filter((f) => isFinite(raw[f]));
 
             if (given.some((f) => raw[f] < 0)) {
-                muteOhm('V, I, R, P are magnitudes — enter non-negative values.');
+                muteOhm(CFI18n.page('errors.ohmNonNegative'));
                 return;
             }
             if (given.length < 2) {
-                muteOhm('Enter any two of V, I, R, P — the other two are solved.');
+                muteOhm(CFI18n.page('errors.ohmTwoRequired'));
                 return;
             }
             if (given.length > 2) {
-                muteOhm('Enter exactly two — clear ' + (given.length - 2) + ' value' + (given.length - 2 > 1 ? 's' : '') + ' so the wheel has a single solution.');
+                const extra = given.length - 2;
+                muteOhm(CFI18n.page(extra > 1 ? 'errors.ohmTooManyMany' : 'errors.ohmTooManyOne', { count: extra }));
                 return;
             }
 
@@ -495,43 +557,59 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
             switch (key) {
                 case 'iv':   // V, I
                     if (raw.i === 0) {
-                        muteOhm(raw.v === 0
-                            ? '0 V and 0 A together don\'t define a resistance or power — enter a non-zero value for at least one.'
-                            : 'Current of 0 A with a voltage present is an open circuit — resistance is infinite.');
+                        muteOhm(CFI18n.page(raw.v === 0 ? 'errors.ohmZeroBoth' : 'errors.ohmOpenCircuit'));
                         return;
                     }
                     r.r = raw.v / raw.i; r.p = raw.v * raw.i;
-                    formula = 'R = V ÷ I = ' + tidy(raw.v, 4) + ' ÷ ' + tidy(raw.i, 4) + ' = ' + tidy(r.r, 4) + ' Ω   ·   P = V × I = ' + tidy(raw.v, 4) + ' × ' + tidy(raw.i, 4) + ' = ' + tidy(r.p, 4) + ' W';
+                    formula = CFI18n.page('formula.ohmVi', {
+                        voltage: tidy(raw.v, 4), current: tidy(raw.i, 4),
+                        resistance: tidy(r.r, 4), power: tidy(r.p, 4)
+                    });
                     break;
                 case 'rv':   // V, R
-                    if (raw.r === 0) { muteOhm('Resistance of 0 Ω is a dead short — current would be infinite.'); return; }
+                    if (raw.r === 0) { muteOhm(CFI18n.page('errors.ohmDeadShort')); return; }
                     r.i = raw.v / raw.r; r.p = (raw.v * raw.v) / raw.r;
-                    formula = 'I = V ÷ R = ' + tidy(raw.v, 4) + ' ÷ ' + tidy(raw.r, 4) + ' = ' + tidy(r.i, 4) + ' A   ·   P = V² ÷ R = ' + tidy(raw.v, 4) + '² ÷ ' + tidy(raw.r, 4) + ' = ' + tidy(r.p, 4) + ' W';
+                    formula = CFI18n.page('formula.ohmVr', {
+                        voltage: tidy(raw.v, 4), resistance: tidy(raw.r, 4),
+                        current: tidy(r.i, 4), power: tidy(r.p, 4)
+                    });
                     break;
                 case 'pv':   // V, P
-                    if (raw.v === 0) { muteOhm('Voltage of 0 V with power present is undefined — there must be a voltage to push the current.'); return; }
-                    if (raw.p === 0) { muteOhm('Power of 0 W with a voltage present implies no current — resistance is infinite.'); return; }
+                    if (raw.v === 0) { muteOhm(CFI18n.page('errors.ohmZeroVoltage')); return; }
+                    if (raw.p === 0) { muteOhm(CFI18n.page('errors.ohmZeroPower')); return; }
                     r.i = raw.p / raw.v; r.r = (raw.v * raw.v) / raw.p;
-                    formula = 'I = P ÷ V = ' + tidy(raw.p, 4) + ' ÷ ' + tidy(raw.v, 4) + ' = ' + tidy(r.i, 4) + ' A   ·   R = V² ÷ P = ' + tidy(raw.v, 4) + '² ÷ ' + tidy(raw.p, 4) + ' = ' + tidy(r.r, 4) + ' Ω';
+                    formula = CFI18n.page('formula.ohmVp', {
+                        power: tidy(raw.p, 4), voltage: tidy(raw.v, 4),
+                        current: tidy(r.i, 4), resistance: tidy(r.r, 4)
+                    });
                     break;
                 case 'ir':   // I, R
                     r.v = raw.i * raw.r; r.p = raw.i * raw.i * raw.r;
-                    formula = 'V = I × R = ' + tidy(raw.i, 4) + ' × ' + tidy(raw.r, 4) + ' = ' + tidy(r.v, 4) + ' V   ·   P = I² × R = ' + tidy(raw.i, 4) + '² × ' + tidy(raw.r, 4) + ' = ' + tidy(r.p, 4) + ' W';
+                    formula = CFI18n.page('formula.ohmIr', {
+                        current: tidy(raw.i, 4), resistance: tidy(raw.r, 4),
+                        voltage: tidy(r.v, 4), power: tidy(r.p, 4)
+                    });
                     break;
                 case 'ip':   // I, P
-                    if (raw.i === 0) { muteOhm('Current of 0 A with power present is undefined — power needs current to flow.'); return; }
+                    if (raw.i === 0) { muteOhm(CFI18n.page('errors.ohmZeroCurrentPower')); return; }
                     r.v = raw.p / raw.i; r.r = raw.p / (raw.i * raw.i);
-                    formula = 'V = P ÷ I = ' + tidy(raw.p, 4) + ' ÷ ' + tidy(raw.i, 4) + ' = ' + tidy(r.v, 4) + ' V   ·   R = P ÷ I² = ' + tidy(raw.p, 4) + ' ÷ ' + tidy(raw.i, 4) + '² = ' + tidy(r.r, 4) + ' Ω';
+                    formula = CFI18n.page('formula.ohmIp', {
+                        power: tidy(raw.p, 4), current: tidy(raw.i, 4),
+                        voltage: tidy(r.v, 4), resistance: tidy(r.r, 4)
+                    });
                     break;
                 case 'pr':   // P, R
-                    if (raw.r === 0) { muteOhm('Resistance of 0 Ω is a dead short — current would be infinite.'); return; }
+                    if (raw.r === 0) { muteOhm(CFI18n.page('errors.ohmDeadShort')); return; }
                     r.v = Math.sqrt(raw.p * raw.r); r.i = Math.sqrt(raw.p / raw.r);
-                    formula = 'V = √(P × R) = √(' + tidy(raw.p, 4) + ' × ' + tidy(raw.r, 4) + ') = ' + tidy(r.v, 4) + ' V   ·   I = √(P ÷ R) = √(' + tidy(raw.p, 4) + ' ÷ ' + tidy(raw.r, 4) + ') = ' + tidy(r.i, 4) + ' A';
+                    formula = CFI18n.page('formula.ohmPr', {
+                        power: tidy(raw.p, 4), resistance: tidy(raw.r, 4),
+                        voltage: tidy(r.v, 4), current: tidy(r.i, 4)
+                    });
                     break;
             }
 
             if (!OHM_FIELDS.every((f) => isFinite(r[f]))) {
-                muteOhm('That pair has no finite solution — check the inputs.');
+                muteOhm(CFI18n.page('errors.ohmNoFinite'));
                 return;
             }
 
@@ -540,7 +618,7 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
                 const cell = el('eq-ohm-out-' + f);
                 cell.textContent = tidy(r[f], 4) + OHM_UNIT[f];
                 cell.className = solved.has(f) ? 'ps-value live' : 'ps-value';
-                el('eq-ohm-lbl-' + f).textContent = OHM_LABEL[f] + (solved.has(f) ? ' · solved' : '');
+                el('eq-ohm-lbl-' + f).textContent = OHM_LABEL[f] + (solved.has(f) ? CFI18n.page('labels.solved') : '');
             });
             el('eq-ohm-formula').textContent = formula;
             hideCallout('eq-ohm-callout');
@@ -564,11 +642,11 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
             const kvaIn = num('eq-ac-kva-in');
 
             // 3φ voltage is line-to-line; a 1φ branch is line-to-neutral.
-            el('eq-ac-vl-label').textContent = phase === '3' ? 'Line voltage Vₗ (L-L)' : 'Line voltage Vₗ (L-N)';
+            el('eq-ac-vl-label').textContent = CFI18n.page(phase === '3' ? 'labels.lineVoltageLl' : 'labels.lineVoltageLn');
 
-            if (!isFinite(vl) || !isFinite(pf)) { muteAc('Enter line voltage and power factor.'); return; }
-            if (vl <= 0) { muteAc('Line voltage must be greater than 0.'); return; }
-            if (pf <= 0 || pf > 1) { muteAc('Power factor must be between 0 and 1.'); return; }
+            if (!isFinite(vl) || !isFinite(pf)) { muteAc(CFI18n.page('errors.acInputs')); return; }
+            if (vl <= 0) { muteAc(CFI18n.page('errors.voltagePositive')); return; }
+            if (pf <= 0 || pf > 1) { muteAc(CFI18n.page('errors.powerFactorRange')); return; }
 
             // Fill-in-what-you-know: V + PF + exactly one of {amps, kW, kVA}.
             const given = [
@@ -577,11 +655,11 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
                 { k: 'kva', v: kvaIn },
             ].filter((m) => isFinite(m.v));
 
-            if (given.length === 0) { muteAc('Enter one of line current, real power (kW), or apparent power (kVA).'); return; }
-            if (given.length > 1)   { muteAc('Enter just one of line current, kW, or kVA — clear the others.'); return; }
+            if (given.length === 0) { muteAc(CFI18n.page('errors.acMagnitudeRequired')); return; }
+            if (given.length > 1)   { muteAc(CFI18n.page('errors.acOneMagnitude')); return; }
 
             const { k, v } = given[0];
-            if (v < 0) { muteAc('Enter a non-negative value.'); return; }
+            if (v < 0) { muteAc(CFI18n.page('errors.nonNegative')); return; }
 
             const rt = phase === '3' ? RT3 : 1;
             const rtLabel = phase === '3' ? '√3 × ' : '';
@@ -590,7 +668,7 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
             else if (k === 'kw') amps = (v * 1000) / (rt * vl * pf);   // pf > 0 guaranteed above
             else                 amps = (v * 1000) / (rt * vl);        // kVA — PF-independent
 
-            if (!isFinite(amps)) { muteAc('That combination is indeterminate — check the inputs.'); return; }
+            if (!isFinite(amps)) { muteAc(CFI18n.page('errors.indeterminate')); return; }
 
             const s = rt * vl * amps;                        // VA
             const p = s * pf;                                // W
@@ -601,12 +679,13 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
             live('eq-ac-kw', (p / 1000).toFixed(2) + ' kW');
             live('eq-ac-kva', (s / 1000).toFixed(2) + ' kVA');
             live('eq-ac-kvar', (q / 1000).toFixed(2) + ' kVAR');
-            live('eq-ac-angle', ang.toFixed(1) + '° (PF ' + tidy(pf, 2) + ')');
+            live('eq-ac-angle', CFI18n.page('output.phaseAngle', { angle: ang.toFixed(1), factor: tidy(pf, 2) }));
 
-            el('eq-ac-formula').textContent =
-                'S = ' + rtLabel + tidy(vl, 1) + ' × ' + tidy(amps, 1) + ' = ' + (s / 1000).toFixed(2) + ' kVA   ·   ' +
-                'P = S × ' + tidy(pf, 2) + ' = ' + (p / 1000).toFixed(2) + ' kW   ·   ' +
-                'Q = √(S² − P²) = ' + (q / 1000).toFixed(2) + ' kVAR';
+            el('eq-ac-formula').textContent = CFI18n.page('formula.ac', {
+                root: rtLabel, voltage: tidy(vl, 1), current: tidy(amps, 1),
+                apparent: (s / 1000).toFixed(2), factor: tidy(pf, 2),
+                real: (p / 1000).toFixed(2), reactive: (q / 1000).toFixed(2)
+            });
             hideCallout('eq-ac-callout');
         }
 
@@ -617,7 +696,7 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
             dim('eq-motor-fla');
             el('eq-motor-formula').textContent = '';
             callout('eq-motor-callout', msg);
-            setPill('eq-motor-status', 'Enter a measured clamp reading to compare against the estimate.', '');
+            setPill('eq-motor-status', CFI18n.page('status.motorPrompt'), '');
         }
 
         function calcMotor() {
@@ -629,7 +708,7 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
             const effRaw = num('eq-motor-eff');
             const meas  = num('eq-motor-meas');
 
-            el('eq-motor-pval-label').textContent = pmode === 'hp' ? 'Nameplate power (HP)' : 'Nameplate power (kW)';
+            el('eq-motor-pval-label').textContent = CFI18n.page(pmode === 'hp' ? 'labels.nameplatePowerHp' : 'labels.nameplatePowerKw');
 
             // HP ↔ kW twin needs only the power value — show it independently.
             let hp = NaN;
@@ -644,36 +723,38 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
             // efficiency: accept 0–1 or a percent (e.g. 90 → 0.90).
             const eff = isFinite(effRaw) ? (effRaw > 1.5 ? effRaw / 100 : effRaw) : NaN;
 
-            if (!isFinite(pval) || pval <= 0) { muteMotorFla('Enter the nameplate power (HP or kW).'); return; }
-            if (!isFinite(vl) || vl <= 0) { muteMotorFla('Line voltage must be greater than 0.'); return; }
-            if (!isFinite(pf) || pf <= 0 || pf > 1) { muteMotorFla('Power factor must be between 0 and 1.'); return; }
-            if (!isFinite(eff) || eff <= 0 || eff > 1) { muteMotorFla('Efficiency must be between 0 and 1 (or a percent, e.g. 90).'); return; }
+            if (!isFinite(pval) || pval <= 0) { muteMotorFla(CFI18n.page('errors.motorPower')); return; }
+            if (!isFinite(vl) || vl <= 0) { muteMotorFla(CFI18n.page('errors.voltagePositive')); return; }
+            if (!isFinite(pf) || pf <= 0 || pf > 1) { muteMotorFla(CFI18n.page('errors.powerFactorRange')); return; }
+            if (!isFinite(eff) || eff <= 0 || eff > 1) { muteMotorFla(CFI18n.page('errors.efficiencyRange')); return; }
 
             const rt = phase === '3' ? RT3 : 1;
             const rtLabel = phase === '3' ? '√3 × ' : '';
             const fla = (hp * 746) / (rt * vl * pf * eff);
-            if (!isFinite(fla)) { muteMotorFla('That combination is indeterminate — check the inputs.'); return; }
+            if (!isFinite(fla)) { muteMotorFla(CFI18n.page('errors.indeterminate')); return; }
 
             live('eq-motor-fla', '~' + tidy(fla, 1) + ' A');
-            el('eq-motor-formula').textContent =
-                'FLA = (' + tidy(hp, 3) + ' HP × 746) ÷ (' + rtLabel + tidy(vl, 1) + ' × ' + tidy(pf, 2) + ' × ' + tidy(eff, 2) + ') = ' + tidy(fla, 1) + ' A (estimate)';
+            el('eq-motor-formula').textContent = CFI18n.page('formula.motor', {
+                horsepower: tidy(hp, 3), root: rtLabel, voltage: tidy(vl, 1),
+                factor: tidy(pf, 2), efficiency: tidy(eff, 2), amps: tidy(fla, 1)
+            });
             hideCallout('eq-motor-callout');
 
             if (isFinite(meas) && meas >= 0) {
                 const ratio = meas / fla;
                 const pctOf = ratio * 100;
-                const head  = 'Measured ' + tidy(meas, 1) + ' A is ' + tidy(pctOf, 0) + '% of the ' + tidy(fla, 1) + ' A estimate';
+                const values = { measured: tidy(meas, 1), percent: tidy(pctOf, 0), estimate: tidy(fla, 1) };
                 if (ratio >= 0.9 && ratio <= 1.1) {
-                    setPill('eq-motor-status', head + ' — consistent with the nameplate.', 'ok');
+                    setPill('eq-motor-status', CFI18n.page('status.motorConsistent', values), 'ok');
                 } else if (ratio > 1.1 && ratio <= 1.25) {
-                    setPill('eq-motor-status', head + ' — running above estimate. Check loading, supply voltage, or a mechanical bind.', 'warn');
+                    setPill('eq-motor-status', CFI18n.page('status.motorAbove', values), 'warn');
                 } else if (ratio < 0.9 && ratio >= 0.5) {
-                    setPill('eq-motor-status', head + ' — running below estimate. Light load, or re-check the PF / efficiency assumptions.', 'warn');
+                    setPill('eq-motor-status', CFI18n.page('status.motorBelow', values), 'warn');
                 } else {
-                    setPill('eq-motor-status', head + ' — far from estimate. Re-check phase, voltage, PF / η, or the clamp (CT range, or it is around more than one conductor).', 'error');
+                    setPill('eq-motor-status', CFI18n.page('status.motorFar', values), 'error');
                 }
             } else {
-                setPill('eq-motor-status', 'Enter a measured clamp reading to compare against the estimate.', '');
+                setPill('eq-motor-status', CFI18n.page('status.motorPrompt'), '');
             }
         }
 
@@ -684,13 +765,13 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
             ['eq-imb-avg', 'eq-imb-dev', 'eq-imb-pct'].forEach(dim);
             el('eq-imb-formula').textContent = '';
             callout('eq-imb-callout', msg);
-            setPill('eq-imb-status', 'Enter the three readings to see the verdict.', '');
+            setPill('eq-imb-status', CFI18n.page('status.imbalancePrompt'), '');
         }
 
         function calcImbalance() {
             const a = num('eq-imb-vab'), b = num('eq-imb-vbc'), c = num('eq-imb-vca');
-            if (![a, b, c].every(isFinite)) { muteImb('Enter all three line-to-line readings.'); return; }
-            if (a <= 0 || b <= 0 || c <= 0) { muteImb('Voltage readings must be greater than 0.'); return; }
+            if (![a, b, c].every(isFinite)) { muteImb(CFI18n.page('errors.imbalanceReadings')); return; }
+            if (a <= 0 || b <= 0 || c <= 0) { muteImb(CFI18n.page('errors.imbalancePositive')); return; }
 
             const avg = (a + b + c) / 3;
             const maxDev = Math.max(Math.abs(a - avg), Math.abs(b - avg), Math.abs(c - avg));
@@ -699,17 +780,18 @@ keywords: ohms law watts volts amps three phase kva kvar power factor motor fla 
             live('eq-imb-avg', tidy(avg, 1) + ' V');
             live('eq-imb-dev', tidy(maxDev, 1) + ' V');
             live('eq-imb-pct', pct.toFixed(2) + ' %');
-            el('eq-imb-formula').textContent =
-                'avg = (' + tidy(a, 1) + ' + ' + tidy(b, 1) + ' + ' + tidy(c, 1) + ') ÷ 3 = ' + tidy(avg, 1) + ' V   ·   ' +
-                'max deviation = ' + tidy(maxDev, 1) + ' V   ·   unbalance = ' + tidy(maxDev, 1) + ' ÷ ' + tidy(avg, 1) + ' × 100 = ' + pct.toFixed(2) + ' %';
+            el('eq-imb-formula').textContent = CFI18n.page('formula.imbalance', {
+                ab: tidy(a, 1), bc: tidy(b, 1), ca: tidy(c, 1), average: tidy(avg, 1),
+                deviation: tidy(maxDev, 1), percent: pct.toFixed(2)
+            });
             hideCallout('eq-imb-callout');
 
             if (pct <= 1) {
-                setPill('eq-imb-status', pct.toFixed(2) + '% — within NEMA MG-1 (≤ 1%). No derate required.', 'ok');
+                setPill('eq-imb-status', CFI18n.page('status.imbalanceOk', { percent: pct.toFixed(2) }), 'ok');
             } else if (pct <= 5) {
-                setPill('eq-imb-status', pct.toFixed(2) + '% — above 1%. NEMA recommends derating the motor; current unbalance runs ~6–10× this, driving extra winding heat. Find the cause: a loose lug, unbalanced single-phase loads, or the utility.', 'warn');
+                setPill('eq-imb-status', CFI18n.page('status.imbalanceWarn', { percent: pct.toFixed(2) }), 'warn');
             } else {
-                setPill('eq-imb-status', pct.toFixed(2) + '% — NEMA MG-1 advises against operating above 5%. Correct the supply before running the motor.', 'error');
+                setPill('eq-imb-status', CFI18n.page('status.imbalanceError', { percent: pct.toFixed(2) }), 'error');
             }
         }
 

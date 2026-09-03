@@ -1,0 +1,242 @@
+---
+title: 온도 센서 — controlsfreak.dev
+description: 서미스터 곡선 계열, RTD와 리드선 저항, 실제 배선된 온도 센서 종류를 확인하는 계측기와 표 기반의 점검 절차를 설명합니다.
+sourceContentHash: 304d44afa79d1cbbc2801bbb98efe3f086bff974b4414373237e3423a1cfd084
+sourceMessageHash: f4be8adfbb917163994abda32dffd9a4aaa74948ef37ec43658e382838ffee9f
+pageMessages:
+    display:
+        thermistorSlopeUs: "°F당 약 240 Ω"
+        thermistorSlopeMetric: "°C당 약 440 Ω"
+        pt100SlopeUs: "°F당 약 0.22 Ω"
+        pt100SlopeMetric: "°C당 약 0.39 Ω"
+        thermistorSlopeApproxUs: "°F당 ≈240 Ω"
+        thermistorSlopeApproxMetric: "°C당 ≈440 Ω"
+canonical: https://controlsfreak.dev/ko/education/temperature-sensors.html
+nav: education
+category: signals
+pairedQuiz: https://controlsfreak.dev/ko/practice/temperature-sensors.html
+keywords: 서미스터 RTD 10K Type II Type III PT100 PT1000 Balco 3선식 옴 곡선 리드선 저항 NTC
+---
+{% extends "html/education/temperature-sensors.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">학습 · 온도 센서</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">온도 센서 <span class="tool-tag">신호</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                건물의 온도 측정값 대부분은 업계에서 가장 단순한 하드웨어인 가는 전선 두 가닥 끝의 저항 소자에서 나옵니다. 전원도 극성도 전자 회로도 없습니다. 소자는 온도에 따라 저항만 바꾸고 제어기는 저장된 <strong>곡선</strong>을 통해 옴을 온도로 변환합니다. 이 변환이 이 페이지의 전체 주제입니다. 처음부터 끝까지 한 가지 질문을 다룹니다. <em>제어기는 왜 전선에 연결된 온도 센서의 정확한 종류를 알아야 하며, 계측기로 어떻게 확인할까요?</em> 센서를 입력에 물리적으로 연결하는 방법은 <a href="/ko/education/controller-wiring.html">제어기 배선</a>에서, 원시 신호가 그래픽 값이 되는 일반적인 과정은 이 장의 첫 페이지인 <a href="/ko/education/analog-sensing.html">아날로그 센싱</a>에서 설명합니다. 이 페이지에서는 센서 자체, 곡선 계열, RTD라는 대안, 그래픽의 값이 맞는지 십 분 안에 판정하는 계측기 점검을 다룹니다.
+            </p>
+
+            <h2 class="subhead" id="curve-families">하나의 이름, 여러 곡선</h2>
+
+            <p>
+                BAS에서 가장 널리 쓰이는 온도 센서는 <strong>NTC 서미스터</strong>, 즉 <em>부온도계수</em> 소자입니다. 온도가 올라가면 저항이 가파르고 비선형적으로 <em>감소</em>합니다. 일반적인 10K 소자는 실온 부근에서 <span data-us="{{ pageMessages.display.thermistorSlopeUs }}" data-metric="{{ pageMessages.display.thermistorSlopeMetric }}">&deg;F당 약 240&nbsp;&Omega;</span> 변하므로 신호 변화가 크고 읽기 쉽습니다. 이름의 <strong>&ldquo;10K&rdquo;</strong>는 단 하나의 기준점을 뜻합니다. <strong><span data-us="77.0&nbsp;&deg;F" data-metric="25.0&nbsp;&deg;C">77.0&nbsp;&deg;F</span>에서 10,000&nbsp;&Omega;</strong>입니다. 바로 이 이름에 함정이 있습니다. 한 점은 곡선이 아닙니다. 두 센서가 모두 <span data-us="77&nbsp;&deg;F" data-metric="25.0&nbsp;&deg;C">77&nbsp;&deg;F</span>에서 10&nbsp;k&Omega;을 나타내면서 다른 모든 온도에서는 서로 다른 값을 낼 수 있습니다.
+            </p>
+
+            <p>
+                현장이 정확히 그렇습니다. 업계의 두 주요 곡선 계열인 <strong>10K Type&nbsp;II</strong>와 <strong>10K Type&nbsp;III</strong>는 기준점만 같고 나머지는 모두 다릅니다. Type&nbsp;II 곡선이 더 가파르고 Type&nbsp;III는 더 완만하므로 저온에서는 더 낮고 고온에서는 더 높은 저항을 나타냅니다. <span data-us="40.0&nbsp;&deg;F" data-metric="4.4&nbsp;&deg;C">40.0&nbsp;&deg;F</span>에서 Type&nbsp;II는 약 <strong>26.3&nbsp;k&Omega;</strong>, Type&nbsp;III는 약 <strong>24.5&nbsp;k&Omega;</strong>입니다. 계측기에서는 비슷해 보일 만큼 가깝지만 그래픽에서는 차이가 날 만큼 멉니다. 둘은 서로 바꿔 쓸 수 없고 어느 하나도 유일한 "10K 곡선"이 아닙니다. 제어기는 전선만 보고 구분할 수 없으므로 사용자가 곡선을 선택해야 합니다.
+            </p>
+
+            <p>
+                여기에 한 가지가 더해져 상황이 복잡해집니다. 여러 제조사가 사용 온도 범위에서 곡선을 완만하게 만들기 위해 10K 소자와 고정 저항을 병렬로 연결한 <strong>분로형</strong> 10K 방식을 사용합니다. JCI 방식은 10K 소자와 8.7&nbsp;k&Omega; 분로 저항을 연결하므로 약 <strong>4.7&nbsp;k&Omega;</strong>만 읽힙니다. 이는 <span data-us="77&nbsp;&deg;F" data-metric="25.0&nbsp;&deg;C">77&nbsp;&deg;F</span> 기준점에서의 값입니다. TAC Type&nbsp;5 방식은 Type&nbsp;III 소자와 11&nbsp;k&Omega; 분로 저항을 연결해 같은 지점에서 약 <strong>5.2&nbsp;k&Omega;</strong>을 나타냅니다. 대화에서는 둘 다 여전히 "10K 센서"라고 부르므로 실온에서 10&nbsp;k&Omega;을 예상한 기술자에게는 심하게 고장 난 센서처럼 보입니다. 일반화하면 <strong>상자의 레이블은 이름이고 소프트웨어에서 선택한 곡선은 결정 사항입니다.</strong> 제어기에서는 둘이 일치해야 하며 배선 자체는 이를 강제하지 않습니다.
+            </p>
+
+            <p>
+                이제 이 절이 가르치려는 조용한 고장에 도달했습니다. Type&nbsp;III 센서를 Type&nbsp;II로 구성된 입력에 연결하면 <em>모든 것이 동작하는 것처럼 보입니다</em>. 포인트는 살아 있고 그럴듯한 온도를 표시하며, 트렌드는 매끄럽고, 경보도 발생하지 않습니다. 하지만 값은 틀립니다. 교차점인 <span data-us="77&nbsp;&deg;F" data-metric="25.0&nbsp;&deg;C">77&nbsp;&deg;F</span>에서는 오차가 없지만 약 <span data-us="3&nbsp;&deg;F" data-metric="1.7&nbsp;&deg;C">3&nbsp;&deg;F</span>의 오차가 생기는 실제 온도 지점 중 하나가 <span data-us="40.0&nbsp;&deg;F" data-metric="4.4&nbsp;&deg;C">40.0&nbsp;&deg;F</span>이며, 교차점에서 더 멀어질수록 오차가 커집니다. 누구나 볼 수 있게 측정값이 레일에 고정되는 개방·단락 센서의 명확한 고장과 비교해 보세요. <a href="/ko/education/controller-wiring.html#inputs">제어기 배선의 서미스터 단자 연결</a>에서 개방은 풀 스케일 저온, 단락은 풀 스케일 고온으로 읽히는 과정을 설명합니다. 곡선 불일치는 정반대입니다. 값이 계속 <em>그럴듯하게</em> 틀립니다. 몇 도 어긋난 외기 센서가 <button type="button" data-gloss="economizer">외기 냉방 제어</button>의 전환과 잠금을 수년간 조용히 왜곡해도 아무도 3&deg;의 거짓값을 추적하지 않습니다.
+            </p>
+
+            <!-- R/T curve overlay: Type II vs Type III on a log resistance
+                 axis, the divergence band shaded, the 77 °F crossover and a
+                 40 °F worked point annotated. Static — the geometry IS the
+                 lesson. Path coordinates generated from the same β-model
+                 curves as /scripts/thermistor-data.js (Type II β=3900,
+                 Type III β=3600, R25=10 kΩ); y is log10(R) mapped 3.7→5.0
+                 over 300→48. -->
+            <svg class="edu-svg tsn-svg" id="tsn-curves" viewBox="0 0 640 352"
+                 role="img" aria-labelledby="tsn-curves-title tsn-curves-desc">
+                <title id="tsn-curves-title">화씨 77도에서 교차하는 10K Type II와 Type III 저항 곡선 비교</title>
+                <desc id="tsn-curves-desc">센서 온도에 따른 저항을 나타낸 차트입니다. 세로축은 5 kΩ부터 100 kΩ까지의 로그 눈금 저항이고 가로축은 화씨 0도부터 100도까지의 온도입니다. 더 가파른 10K Type II와 더 완만한 10K Type III의 두 하강 곡선이 왼쪽 위에서 오른쪽 아래로 이어집니다. 두 곡선 사이의 얇은 음영 영역이 값의 차이를 나타냅니다. 곡선은 화씨 77도, 10 kΩ의 단 한 지점에서 교차하며 점으로 표시됩니다. 두 곡선 모두에 10K라는 이름을 부여하는 공통 지점입니다. 화씨 40도의 계산 지점에서 두 곡선은 26.3 kΩ과 24.5 kΩ을 나타냅니다. 소프트웨어에서 잘못된 곡선을 선택하면 그래픽 값이 경보 없이 그럴듯하게 화씨 약 3도 어긋납니다.</desc>
+
+                <text class="lbl" x="80" y="24">곡선 두 개, 이름 하나 — 10K TYPE II와 TYPE III</text>
+
+                <!-- axes -->
+                <line x1="80" y1="40" x2="80" y2="310" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="80" y1="310" x2="612" y2="310" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <!-- y ticks (log scale) -->
+                <line x1="76" y1="48" x2="84" y2="48" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="76" y1="149.4" x2="84" y2="149.4" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="76" y1="241.8" x2="84" y2="241.8" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="76" y1="300.2" x2="84" y2="300.2" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text class="lbl-dim" x="72" y="52" text-anchor="end">100 kΩ</text>
+                <text class="lbl-dim" x="72" y="153" text-anchor="end">30 kΩ</text>
+                <text class="lbl-dim" x="72" y="246" text-anchor="end">10 kΩ</text>
+                <text class="lbl-dim" x="72" y="304" text-anchor="end">5 kΩ</text>
+                <text class="lbl-dim" x="26" y="175" text-anchor="middle" transform="rotate(-90 26 175)">저항 (로그 눈금)</text>
+                <!-- x ticks -->
+                <line x1="80" y1="310" x2="80" y2="316" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="184" y1="310" x2="184" y2="316" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="288" y1="310" x2="288" y2="316" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="392" y1="310" x2="392" y2="316" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="496" y1="310" x2="496" y2="316" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="600" y1="310" x2="600" y2="316" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text class="lbl-dim" x="80" y="330" text-anchor="middle">0</text>
+                <text class="lbl-dim" x="184" y="330" text-anchor="middle">20</text>
+                <text class="lbl-dim" x="288" y="330" text-anchor="middle">40</text>
+                <text class="lbl-dim" x="392" y="330" text-anchor="middle">60</text>
+                <text class="lbl-dim" x="496" y="330" text-anchor="middle">80</text>
+                <text class="lbl-dim" x="600" y="330" text-anchor="middle">100</text>
+                <text class="lbl-dim" x="346" y="348" text-anchor="middle">센서 온도 (°F)</text>
+
+                <!-- divergence band (drawn under the curves) -->
+                <path class="band" d="M 80 57.4 L 106 71.2 L 132 84.8 L 158 98 L 184 111 L 210 123.7 L 236 136.1 L 262 148.3 L 288 160.3 L 314 172 L 340 183.5 L 366 194.8 L 392 205.8 L 418 216.7 L 444 227.3 L 470 237.7 L 496 248 L 522 258 L 548 267.9 L 574 277.6 L 600 287.1 L 600 283.6 L 574 274.8 L 548 265.9 L 522 256.8 L 496 247.5 L 470 238 L 444 228.4 L 418 218.6 L 392 208.6 L 366 198.4 L 340 188 L 314 177.4 L 288 166.6 L 262 155.5 L 236 144.3 L 210 132.8 L 184 121 L 158 109.1 L 132 96.8 L 106 84.3 L 80 71.6 Z"/>
+
+                <!-- the two curves -->
+                <path class="rt rt-ii" d="M 80 57.4 L 106 71.2 L 132 84.8 L 158 98 L 184 111 L 210 123.7 L 236 136.1 L 262 148.3 L 288 160.3 L 314 172 L 340 183.5 L 366 194.8 L 392 205.8 L 418 216.7 L 444 227.3 L 470 237.7 L 496 248 L 522 258 L 548 267.9 L 574 277.6 L 600 287.1"/>
+                <path class="rt rt-iii" d="M 80 71.6 L 106 84.3 L 132 96.8 L 158 109.1 L 184 121 L 210 132.8 L 236 144.3 L 262 155.5 L 288 166.6 L 314 177.4 L 340 188 L 366 198.4 L 392 208.6 L 418 218.6 L 444 228.4 L 470 238 L 496 247.5 L 522 256.8 L 548 265.9 L 574 274.8 L 600 283.6"/>
+                <text x="100" y="55" font-size="11" fill="var(--blue)">TYPE II</text>
+                <text x="100" y="124" font-size="11" fill="var(--amber)">TYPE III</text>
+
+                <!-- 40 °F worked point: short marker through both readings,
+                     callout text in the empty upper-right area -->
+                <line x1="288" y1="148" x2="288" y2="180" stroke="var(--text-bright)" stroke-width="1" stroke-dasharray="3 3"/>
+                <circle cx="288" cy="160.3" r="4.5" fill="var(--blue)" stroke="var(--bg)" stroke-width="1.5"/>
+                <circle cx="288" cy="166.6" r="4.5" fill="var(--amber)" stroke="var(--bg)" stroke-width="1.5"/>
+                <line x1="332" y1="118" x2="294" y2="146" stroke="var(--text-dim)" stroke-width="1"/>
+                <text class="lbl-dim" x="340" y="80" fill="var(--text-bright)">40.0 °F: 26.3 kΩ와 24.5 kΩ</text>
+                <text class="lbl-dim" x="340" y="96">잘못된 곡선을 선택하면</text>
+                <text class="lbl-dim" x="340" y="112">그래픽이 그럴듯하게 ≈ 3 °F 어긋남</text>
+
+                <!-- 77 °F crossover -->
+                <line x1="480.4" y1="248" x2="480.4" y2="310" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="3 3"/>
+                <circle cx="480.4" cy="241.8" r="6" fill="var(--accent)" stroke="var(--bg)" stroke-width="1.5"/>
+                <text class="lbl-dim" x="468" y="264" fill="var(--text-bright)" text-anchor="end">77 °F — 두 곡선 모두 10.0 kΩ</text>
+                <text class="lbl-dim" x="468" y="280" text-anchor="end">(공통 이름이 보장하는 단 하나의 지점)</text>
+            </svg>
+            <p class="edu-legend tsn-leg">
+                <span><span class="sw t2"></span>10K Type II — 더 가파름</span>
+                <span><span class="sw t3"></span>10K Type III — 더 완만함</span>
+                <span><span class="sw band"></span>곡선 차이 — 조용히 어긋나는 몇 도</span>
+            </p>
+
+            <h2 class="subhead" id="rtds-vs-thermistors">RTD — 또 다른 센서 계열</h2>
+
+            <p>
+                현장에서 접할 다른 계열은 <strong>RTD</strong>, 즉 <em>저항 온도 감지기</em>입니다. 보통 백금으로 만든 가는 금속 소자로 온도가 올라가면 저항도 거의 선형으로 <em>증가</em>합니다. 서미스터 곡선이 제조사별 관례인 반면 일반적인 RTD는 표준화되어 있습니다. <strong>Pt100</strong>은 국제 IEC&nbsp;60751 곡선에 따라 <span data-us="32.0&nbsp;&deg;F" data-metric="0.0&nbsp;&deg;C">32.0&nbsp;&deg;F</span>에서 100.0&nbsp;&Omega;이고, <strong>Pt1000</strong>은 같은 곡선의 저항을 열 배로 확대한 형태입니다. 특이한 친척인 <strong>Balco</strong>는 니켈-철 소자로 <span data-us="70&nbsp;&deg;F" data-metric="21.1&nbsp;&deg;C">70&nbsp;&deg;F</span>에서 약 1,000&nbsp;&Omega;이며 거의 선형이고 오래된 장비에서 흔합니다. 계측기로 확인할 때는 변화 방향이 좋은 단서가 됩니다. 손으로 소자를 데우면 서미스터 저항은 내려가고 RTD 저항은 올라갑니다.
+            </p>
+
+            <p>
+                RTD의 문제는 신호 크기입니다. Pt100은 <span data-us="{{ pageMessages.display.pt100SlopeUs }}" data-metric="{{ pageMessages.display.pt100SlopeMetric }}">&deg;F당 약 0.22&nbsp;&Omega;</span> 변합니다. 실온 부근에서 10K 서미스터가 변하는 <span data-us="{{ pageMessages.display.thermistorSlopeApproxUs }}" data-metric="{{ pageMessages.display.thermistorSlopeApproxMetric }}">&deg;F당 &asymp;240&nbsp;&Omega;</span>보다 천 배 작습니다. 이 크기에서는 현장 구리 배선도 무시할 수 없습니다. <strong>리드선에도 저항이 있고 입력은 리드선 저항과 소자 저항을 구분하지 못합니다.</strong> 18&nbsp;AWG 전선 한 쌍을 <span data-us="100&nbsp;ft" data-metric="30&nbsp;m">100&nbsp;ft</span> 포설하면 약 1.3&nbsp;&Omega;의 구리 저항이 직렬로 더해집니다. 2선식 Pt100에서는 아무 고장 없이도 계속 약 <span data-us="6&nbsp;&deg;F" data-metric="3.3&nbsp;&deg;C">6&nbsp;&deg;F</span> <em>높게</em> 읽힙니다. 같은 1.3&nbsp;&Omega;을 10K 서미스터에 직렬로 더하면 오차는 수천분의 일 도에 불과합니다. 그래서 서미스터는 단순한 2선식 연결로 충분하지만 RTD에는 보상이 필요합니다.
+            </p>
+
+            <p>
+                전통적인 해결 방법은 <strong>3선식 연결</strong>입니다. 나머지 두 전선과 같은 굵기, 같은 길이, 같은 케이블의 세 번째 도체를 소자의 같은 쪽 끝까지 연결합니다. 그러면 입력은 소자와 리드선 두 개를 포함한 센서 루프와, 센서 헤드의 점퍼를 통과하는 리드선 두 개만의 <em>리드선 전용</em> 루프를 측정할 수 있습니다. 첫 번째 값에서 두 번째 값을 빼면 리드선 저항이 상쇄되어 소자 저항만 남습니다. 전체 방식은 한 케이블 안에서 리드선이 서로 일치한다는 전제에 의존합니다. 실험실 수준의 정확도가 필요하면 <strong>4선식</strong> 연결로 소자를 직접 측정해 리드선 저항을 완전히 상쇄합니다. 더 단순한 현대적 해결 방법은 <strong>Pt1000</strong>입니다. 기본 저항이 열 배이므로 같은 리드선 저항의 영향도 열 배 작아집니다. 앞의 1.3&nbsp;&Omega; 배선 오차는 약 <span data-us="0.6&nbsp;&deg;F" data-metric="0.3&nbsp;&deg;C">0.6&nbsp;&deg;F</span>가 됩니다. 이것이 최신 HVAC 제어기가 이를 선호하는 중요한 이유입니다.
+            </p>
+
+            <!-- 3-wire RTD lead compensation, cwl-style: controller input
+                 column, three matched field conductors each carrying a lead-
+                 resistance box, and the sensor head with the element tied to
+                 one lead on top and two leads on the bottom. Static. -->
+            <svg class="edu-svg tsn-svg" id="tsn-rtd" viewBox="0 0 680 296"
+                 role="img" aria-labelledby="tsn-rtd-title tsn-rtd-desc">
+                <title id="tsn-rtd-title">3선식 RTD 연결과 입력의 리드선 저항 상쇄 원리</title>
+                <desc id="tsn-rtd-desc">왼쪽에는 T1, T2, T3 단자가 있는 제어기 입력 블록이 있고 L1, L2, L3 현장 도체 세 개를 통해 오른쪽의 Pt100 소자가 든 센서 헤드에 연결됩니다. 각 도체에는 작은 저항 기호가 있으며 모든 리드선이 몇 Ω의 구리 저항을 더합니다. 센서 헤드 안에서 L1은 소자 위쪽에 연결되고 L2와 L3는 함께 점퍼로 연결되어 소자 아래쪽에 이어집니다. 보상 원리를 설명하는 문구가 있습니다. T1에서 T2까지 측정하면 소자와 L1·L2 리드선이 함께 측정되고, T2에서 T3까지 측정하면 L2·L3 리드선만 측정됩니다. 두 값을 빼면 일치하는 리드선 저항이 상쇄되어 소자 저항만 남습니다.</desc>
+
+                <!-- controller input block -->
+                <text class="lbl-dim" x="87" y="72" text-anchor="middle">제어기</text>
+                <rect class="dev" x="24" y="80" width="126" height="170" rx="3"/>
+                <circle class="term" cx="150" cy="110" r="5"/> <text class="lbl-term" x="124" y="114" text-anchor="end">T1</text>
+                <circle class="term" cx="150" cy="160" r="5"/> <text class="lbl-term" x="124" y="164" text-anchor="end">T2</text>
+                <circle class="term" cx="150" cy="210" r="5"/> <text class="lbl-term" x="124" y="214" text-anchor="end">T3</text>
+                <text class="lbl-dim" x="87" y="238" text-anchor="middle">3선식 RTD 입력</text>
+
+                <!-- sensor head -->
+                <text class="lbl-dim" x="578" y="72" text-anchor="middle">센서 헤드</text>
+                <rect class="dev" x="500" y="80" width="156" height="170" rx="3"/>
+                <circle class="term" cx="500" cy="110" r="5"/>
+                <circle class="term" cx="500" cy="160" r="5"/>
+                <circle class="term" cx="500" cy="210" r="5"/>
+
+                <!-- element (vertical) with its two-lead bottom end -->
+                <rect class="dev" x="600" y="115" width="32" height="80" rx="2"/>
+                <text x="592" y="138" font-size="11" fill="var(--text-bright)" text-anchor="end">Pt100</text>
+                <text class="lbl-dim" x="592" y="152" text-anchor="end">소자</text>
+                <path class="wire" d="M 500 110 H 616 V 115"/>
+                <path class="wire" d="M 616 195 V 210"/>
+                <path class="wire" d="M 500 210 H 616"/>
+                <path class="wire" d="M 500 160 H 548 V 210"/>
+                <circle cx="548" cy="210" r="3" fill="var(--text-dim)"/>
+                <circle cx="616" cy="210" r="3" fill="var(--text-dim)"/>
+
+                <!-- three matched field conductors, each with lead resistance -->
+                <path class="wire" d="M 150 110 H 500"/>
+                <path class="wire" d="M 150 160 H 500"/>
+                <path class="wire" d="M 150 210 H 500"/>
+                <text class="lbl-dim" x="166" y="102">L1</text>
+                <text class="lbl-dim" x="166" y="152">L2</text>
+                <text class="lbl-dim" x="166" y="202">L3</text>
+                <rect class="dev" x="308" y="104" width="36" height="12"/>
+                <rect class="dev" x="308" y="154" width="36" height="12"/>
+                <rect class="dev" x="308" y="204" width="36" height="12"/>
+                <text class="lbl-dim" x="326" y="92" text-anchor="middle">각 리드선이 몇 Ω의 구리 저항을 추가</text>
+
+                <!-- the compensation, in one caption -->
+                <text class="lbl-dim" x="340" y="268" text-anchor="middle">T1→T2 = 소자 + L1 + L2 · T2→T3 = L2 + L3 — 리드선만 측정</text>
+                <text class="lbl-dim" x="340" y="284" text-anchor="middle">두 값을 빼면 일치하는 리드선이 상쇄되고 소자만 남음</text>
+            </svg>
+
+            <p>
+                두 계열을 이해하면 현장에서의 역할 분담도 자연스럽습니다. <strong>서미스터는 BAS의 실내, 덕트, 회기 온도 센서에 주로 사용됩니다.</strong> 값이 저렴하고 신호 변화가 크며 리드선 저항의 영향이 거의 없고 같은 곡선의 센서라면 그대로 교체할 수 있습니다. <strong>RTD는 정확도와 안정성이 비용을 정당화하는 곳에 사용됩니다.</strong> 플랜트와 공정 센서, 서미스터가 견디기 어려운 고온 응용 분야, 특히 <em>일치시킨 센서 쌍</em>에 적합합니다. 에너지(BTU) 측정의 정확도는 공급·환수 &Delta;T에 달려 있고, 특성이 일치하는 백금 소자 한 쌍은 그 차이를 수년간 정확하게 유지합니다. RTD는 장기간 드리프트도 적으므로 요금 계산에 사용하는 센서는 서미스터인 경우가 드뭅니다.
+            </p>
+
+            <h2 class="subhead" id="verification">계측기로 확인하기</h2>
+
+            <p>
+                이제 이 모든 내용을 판정으로 바꾸는 절차를 살펴보겠습니다. 실내는 <span data-us="80&nbsp;&deg;F" data-metric="26.7&nbsp;&deg;C">80&nbsp;&deg;F</span>로 표시되는데 재실자는 춥다고 말하고, <button type="button" data-gloss="oat">외기 온도(OAT)</button> 포인트는 실제 날씨와 다르며, 한 피트 간격의 덕트 센서 두 개가 서로 다른 값을 나타낼 수 있습니다. 용의자는 정확히 세 가지입니다. <strong>센서</strong>, <strong>입력</strong>, <strong>구성</strong>입니다. 그래픽은 자기 자신을 검증할 수 없습니다. 추측으로 하드웨어를 교체하기 전에 계측기가 세 가지를 구분합니다.
+            </p>
+
+            <p>
+                절차는 네 단계입니다. <strong>첫째, 센서를 분리합니다.</strong> 계측기가 입력 자체 회로와 병렬로 연결된 센서가 아니라 센서만 읽도록 입력 단자에서 분리하세요. <strong>둘째, 저항을 측정합니다.</strong> 센서 리드선 사이의 저항을 측정하세요. <strong>셋째, 저항을 온도로 변환합니다.</strong> 센서가 사용해야 하는 종류의 R/T 표를 사용합니다. <a href="/ko/tools/thermistor-calculator.html">서미스터 / RTD 계산기</a>의 R/T 표는 이 페이지의 모든 일반 곡선에 대해 양방향 조회를 제공합니다. 센서 종류 자체가 의심스러우면 식별 탭에서 측정 지점과 각 곡선의 일치도를 순위로 보여 줍니다. <strong>넷째, 비교합니다.</strong> 변환한 온도를 센서와 같은 위치에 놓은 기준 온도계와 비교하세요. <span data-us="70&nbsp;&deg;F" data-metric="21.1&nbsp;&deg;C">70&nbsp;&deg;F</span> 실내에서 정상 10K 센서는 Type&nbsp;II 곡선 기준 약 11.9&nbsp;k&Omega;으로 측정됩니다. 이 부근의 값은 적어도 센서가 사실을 말하는지 확인하는 일상적인 건전성 점검 기준입니다.
+            </p>
+
+            <p>
+                판정은 <em>무엇이 일치하지 않는지</em>에 따라 달라집니다. 올바른 표로 변환한 측정 저항이 기준 온도와 일치하지만 그래픽은 여전히 틀리다면 센서는 정상입니다. 입력, 더 흔하게는 <strong>구성</strong>을 의심하세요. 먼저 포인트에 선택된 곡선을 확인합니다. 계측기에 개방 또는 거의 제로에 가까운 값이 나오면 센서나 배선 경로가 고장 난 것입니다. 센서 헤드에서 다시 측정해 위치를 좁히세요. 헤드에서는 정상 저항인데 패널에서는 개방이면 배선과 단자에 문제가 있고, 헤드에서도 개방이면 센서 자체가 고장입니다. 저항을 변환한 온도가 기준보다 일정하게 몇 도 어긋난다면 이 페이지 첫 절의 문제로 돌아갑니다. <strong>하드웨어를 불량으로 판정하기 전에 곡선 불일치를 의심하세요.</strong> 소프트웨어의 곡선 선택 확인에는 비용이 들지 않으며 정상 센서를 똑같은 정상 센서로 바꿔도 아무것도 해결되지 않습니다.
+            </p>
+
+            <p>
+                계측기로 확인할 수 있는 범위에는 의도적인 두 가지 한계가 있습니다. 센서가 위의 모든 점검을 통과해도 <em>잘못된 공기</em>를 측정해 시스템을 잘못 제어할 수 있습니다. 설치 위치, 성층화, 대형 덕트에 필요한 평균화 소자는 별도 페이지의 주제입니다. 정상 센서가 기준과 작고 일관된 차이를 보일 때 교정 오프셋으로 조정하는 작업도 고유한 함정이 있는 별도 분야입니다. 이 페이지가 제공하는 핵심은 전선이 오직 저항만 전달한다는 사실입니다. 저항을 온도로 바꾸는 것은 곡선뿐이고 제어기에는 사용할 곡선을 지정할 수 있을 뿐입니다. 계측기, 표, 기준 온도계를 사용해 레이블, 배선, 구성이 모두 같은 사실을 말하는지 검증할 수 있습니다.
+            </p>
+
+            {{ relatedLinks({
+                tools: [
+                    {href: '/ko/tools/thermistor-calculator.html', label: '서미스터 / RTD 계산기'},
+                    {href: '/ko/tools/signal-scaling.html', label: '신호 스케일링'}
+                ],
+                simulators: [
+                    {href: '/ko/simulators/controller-wiring.html', label: '컨트롤러 배선 시뮬레이터'}
+                ],
+                lessons: [
+                    {href: '/ko/education/controller-wiring.html', label: '제어기 배선'},
+                    {href: '/ko/education/analog-sensing.html', label: '아날로그 센싱'}
+                ],
+                quizzes: [
+                    {href: '/ko/practice/temperature-sensors.html', label: '온도 센서 퀴즈'}
+                ]
+            }) }}
+
+            <a class="back-link" href="/ko/education/">← 학습 자료로 돌아가기</a>
+
+        </div>
+    </div>
+
+</main>
+{% endblock %}

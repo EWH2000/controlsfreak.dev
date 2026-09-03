@@ -1,0 +1,1130 @@
+---
+title: DDC 워크벤치 — 팬코일유닛 — controlsfreak.dev
+description: 기능 블록 와이어시트로 구동되는 DX 팬코일유닛을 실시간 DDC 그래픽으로 보여 줍니다. 샘플 제어 프로그램을 불러오거나 직접 배선한 뒤 장치가 운전되는 모습을 확인하세요.
+sourceContentHash: e1939986e8e8b8c2b47e21168820bc0c86d60e6bbcd3d3e34d90cd1da6fcaa93
+sourceMessageHash: e3e58cb7d4e4164487f64938e0ead84d6335b1f1ec8752c4a9fad859b352b1a8
+canonical: https://controlsfreak.dev/ko/simulators/ddc-workbench-fcu.html
+nav: simulators
+keywords: FCU 팬코일 DX 냉방 DDC 그래픽 와이어시트 BACnet 우선순위 센서 강제 운전 확인 신호
+pageMessages:
+  shell:
+    binaryOn: 켜짐
+    binaryOff: 꺼짐
+    customProgram: 사용자 편집본
+    listSeparator: " · "
+    idSeparator: ", "
+    idLastSeparator: " 또는 "
+    releasedOne: "{points} — 슬롯 16이 NULL입니다(와이어시트에 {blockIds} 블록 없음). Relinquish_Default를 유지합니다."
+    releasedMany: "{points} — 슬롯 16이 NULL입니다(와이어시트에 {blockIds} 블록 없음). 모두 Relinquish_Default를 유지합니다."
+    slot8One: "{points} — 슬롯 8(Manual Operator)에서 지령 중입니다. 해제하려면 NULL을 쓰세요."
+    slot8Many: "{points} — 모두 슬롯 8(Manual Operator)에서 지령 중입니다. 해제하려면 NULL을 쓰세요."
+    otherSlotOne: "{points} — 슬롯 {slot}에서 지령 중입니다."
+    otherSlotMany: "{points} — 모두 슬롯 {slot}에서 지령 중입니다."
+    resumedResetHint: 초기화하려면 {label} 버튼을 사용하세요.
+  points:
+    spaceTemp: 존 온도
+    rat: RAT
+    dat: DAT
+    fanStatus: 팬 상태
+    fanSpeed: 팬 속도
+    fanEnable: 팬 운전 허가
+    y1: 냉방 1단
+    y2: 냉방 2단
+    coolingSetpoint: 냉방 설정값
+    deadband: 불감대
+  programs:
+    cool2Stage: 2단 냉방
+    cool1Stage: 1단 냉방
+    cool2StageFanOn: 2단 냉방·연속 팬
+    cool2StageSafeties: 2단 냉방 + 안전 로직
+  blocks:
+    stg2Sep: 2단 분리폭
+    stg1Make: 1단 투입점
+    stg2Make: 2단 투입점
+    stg1Set: 1단 Set
+    stg1Reset: 1단 Reset
+    stg2Set: 2단 Set
+    stg2Reset: 2단 Reset
+    stg1Latch: 1단 래치
+    stg2Latch: 2단 래치
+    coolCall: 냉방 요구
+    stg2Call: 2단 요구
+    continuousFan: 연속 팬
+    speedReference: 속도 지령
+    datClear: DAT 해제
+    datTrip: DAT 트립
+    datOk: DAT 정상
+    datLow: DAT 저온
+    datRunOk: DAT 운전 허용
+    coilSafe: 코일 안전
+    minimumOff: 최소 정지시간
+    cycleOk: 사이클 허용
+    runPermit: 운전 허가
+    stageOff: 단계 정지
+    stg1Gate: 1단 게이트
+    stg2Gate: 2단 게이트
+    sixtyPercent: 60%
+    hundredPercent: 100%
+  unit:
+    enterValue: 값을 입력하세요.
+    fanOn: "{percent}% · 켜짐"
+    compressorOn: "{stage}단 · 켜짐"
+    compressorOnShort: "{stage}단 · 켜짐"
+    verdict:
+      commandedNoAirDeadCoil: 팬 운전 지령이 있지만 공기가 흐르지 않습니다 — 압축기가 무풍 코일에서 운전 중입니다
+      fanOffActiveCoil: 압축기가 운전 중인데 팬이 꺼져 있습니다 — 가동 중인 코일에 공기가 흐르지 않습니다
+      commandedNoAirProofDown: 팬 운전 지령이 있지만 공기가 흐르지 않습니다 — 풍량 운전 확인 신호가 없습니다
+      idle: 냉방 요구가 없습니다 — 팬 정지(대기)
+      lowLimitLatched: DAT 저온 제한 경보가 래치되었습니다 — 냉방 단계는 정지했고 팬은 공기를 순환합니다
+      fanOnly: 압축기 정지 — 팬만 운전하며 코일 전후 ΔT가 없습니다
+      lowChargeCandidate: 코일 전후 ΔT가 없습니다 — 공기는 흐르며 냉매 부족은 가능한 원인 중 하나이므로 게이지로 판별해야 합니다
+      condenserSide: 코일 전후 ΔT가 없습니다 — 공기는 흐르며 이 그래픽 밖의 응축기 측을 점검해야 합니다
+      compressorNotCooling: 코일 전후 ΔT가 없습니다 — 압축기가 냉각하지 못합니다
+      freezeWatch: 냉방 중이지만 ΔT가 크거나 풍량이 부족합니다(코일 결빙 주의)
+      clearCooling: 냉방 중 — 코일 전후 ΔT가 뚜렷합니다
+    zoneReadout: "존 {value} {unit}"
+    overrideState: "프로그램 입력값은 {sensed} {unit}이지만 실제 존 온도는 {actual} {unit}입니다. 컨트롤러는 강제된 값으로 단계를 제어합니다."
+    forceSensor: 센서 강제
+    releaseSensor: 강제 해제
+    missingBlock: "실행 중인 와이어시트에 {blockId} 블록이 없어 값을 쓸 수 없습니다. 표시값은 마지막으로 읽은 값입니다."
+    invalidParameter: "{point}에는 {range} 범위의 값을 입력해야 합니다. 현재 운전값으로 되돌렸습니다."
+    clampedParameter: "{point}의 허용 범위는 {range}입니다. 한계값으로 고정했습니다."
+---
+{% extends "html/simulators/ddc-workbench-fcu.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">시뮬레이터 · DDC 워크벤치</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <button type="button" class="tool-card-fullscreen-btn"
+                data-fullscreen-target=".tool-card"
+                aria-pressed="false" aria-label="전체 화면으로 전환"
+                title="전체 화면 전환 — Esc로 종료">
+            <svg class="fs-icon-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="15 3 21 3 21 9"/>
+                <polyline points="9 21 3 21 3 15"/>
+                <line x1="21" y1="3" x2="14" y2="10"/>
+                <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+            <svg class="fs-icon-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="4 14 10 14 10 20"/>
+                <polyline points="20 10 14 10 14 4"/>
+                <line x1="14" y1="10" x2="21" y2="3"/>
+                <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+            <span class="fs-label-enter">전체 화면</span>
+            <span class="fs-label-exit">종료</span>
+        </button>
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                DDC 워크벤치
+                <span class="tool-tag">공기측</span>
+            </h1>
+        </div>
+        <div class="tool-body">
+
+            <details class="tool-preamble">
+                <summary>기능 블록 프로그램으로 구동되는 DX 팬코일유닛을 실시간 DDC 그래픽으로 살펴봅니다.</summary>
+                <div class="preamble-rest">
+                    <strong>장치</strong> 탭은 기술자가 읽고 조정하는 감시 화면입니다. 매개변수 레일의 설정값과 불감대는 실행 중인 프로그램에 반영되며,
+                    <strong>와이어시트</strong> 탭에는 장치를 구동하는 제어 프로그램이 있습니다. 워크벤치는 실제 BACnet 우선순위 배열의 세 수준을 통해 각 출력을 지령합니다.
+                    <strong>슬롯 8 (Manual Operator)</strong>은 수동 운전자 지령에,
+                    <strong>슬롯 16</strong>은 시퀀스에 사용되며, 두 슬롯이 모두 NULL이면
+                    <strong>Relinquish_Default</strong>로 폴백합니다. 존은 실시간 열 모델로 동작합니다. 코일은 존 온도를 낮추고 외피 및 내부 열취득은 높이므로, 프로그램이 스스로 폐루프 제어를 수행합니다.
+                </div>
+            </details>
+
+            <!-- ── Tabs: Unit graphic | Wiresheet (FBE) ── the shell is
+                 unit-agnostic; the persistent statusbar below sits OUTSIDE the
+                 panes so both tabs show live IO + the running program + the
+                 off-program window. -->
+            <div class="tabs tabs-flush">
+                <button class="tab-btn active" data-tab="unit">장치</button>
+                <button class="tab-btn" data-tab="wiresheet">와이어시트</button>
+            </div>
+
+
+            <!-- ── Session notice (shell chrome — /scripts/ddcw-shell.js) ──
+                 Ships HIDDEN and is unhidden only when the workbench boots
+                 from a sessionStorage snapshot (codebase-issues #275). It
+                 has to SAY what came back, because one of the things that
+                 can come back is a forced sensor, and this page's own
+                 stale-override lesson depends on the reader knowing when a
+                 lesson is running rather than discovering a lie they did
+                 not tell.
+
+                 #ddcw-resumed-sr is a SEPARATE, always-present, always-empty
+                 polite region — not a live attribute on the box above. A
+                 live region that enters the accessibility tree already
+                 populated announces nothing (the off-program window's own
+                 comment carries the long version), and unhiding a [hidden]
+                 container is exactly that case; the shell unhides the box
+                 first and writes this node on a follow-up task. -->
+            <div class="ddcw-resumed" id="ddcw-resumed" hidden>
+                <p class="ddcw-resumed-msg" id="ddcw-resumed-msg">이전에 작업하던 워크벤치를 복원했습니다. 수동 지령, 강제 센서, 불러온 와이어시트와 운전 조건이 모두 함께 복원되었습니다.</p>
+                <button type="button" class="ddcw-resumed-fresh" id="ddcw-resumed-fresh">새로 시작</button>
+            </div>
+            <p class="sr-only" id="ddcw-resumed-sr" aria-live="polite"></p>
+
+            <!-- Persistent statusbar (shell, unit-agnostic). IO chips are
+                 rendered from unit.points; the program picker drives the
+                 whole workbench. The <select> ships EMPTY — the shell
+                 (scripts/ddcw-shell.js) builds its options from
+                 unit.programs / unit.programLabels, plus its own disabled
+                 'Custom (edited)' option, so the markup can't drift from
+                 the program set the page actually loads. -->
+            <div class="ddcw-statusbar" id="ddcw-statusbar">
+                <div class="ddcw-io-strip" id="ddcw-io" aria-label="실시간 포인트 값"></div>
+                <div class="ddcw-status-right">
+                    <!-- Unit selector — plain anchors, one each way, NOT tabs
+                         and not a JS switch: the two units are two pages, so
+                         the pair is navigation and works with scripting off.
+                         The current page's own link stays a real anchor and
+                         carries aria-current="page" (the standard pattern);
+                         the visible caption is the nav landmark's accessible
+                         name via aria-labelledby, so the name is not a second
+                         copy of the word. Order is FCU then AHU on BOTH
+                         pages — a selector that reorders itself per page
+                         makes the reader re-find the target every hop. -->
+                    <nav class="ddcw-unit-sel" aria-labelledby="ddcw-unit-sel-lbl">
+                        <span class="ddcw-unit-sel-lbl" id="ddcw-unit-sel-lbl">장치</span>
+                        <span class="ddcw-unit-pill">
+                            <a class="ddcw-unit-link" href="/ko/simulators/ddc-workbench-fcu.html" aria-current="page">FCU</a>
+                            <a class="ddcw-unit-link" href="/ko/simulators/ddc-workbench.html">AHU</a>
+                        </span>
+                    </nav>
+                    <div class="ddcw-prog">
+                        <label class="ddcw-prog-lbl" for="ddcw-program">프로그램</label>
+                        <select class="ps-input" id="ddcw-program"></select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Off-program window (shell, unit-agnostic). Rendered from
+                 unit.points: every actuator point whose resolved command is
+                 NOT the sequence at slot 16 — a hand value held in slot 8, or
+                 a released point resting on Relinquish_Default. Outside both
+                 panes so it stays in view on either tab. Empty = the
+                 .is-empty collapse, NEVER the hidden attribute: the live
+                 region must stay in the accessibility tree while empty or
+                 the first entry announces nothing (see the CSS rule). -->
+            <div class="ddcw-offprog is-empty" id="ddcw-offprog" role="status" aria-live="polite">
+                <span class="ddcw-offprog-lbl">프로그램을 따르지 않는 포인트:</span>
+                <ul class="ddcw-offprog-list" id="ddcw-offprog-list"></ul>
+            </div>
+
+            <!-- Screen-reader mirror of the unit verdict pill. The pill itself
+                 (#fcu-verdict, in the Unit pane) CANNOT carry aria-live:
+                 .tab-pane is display:none, and a live region inside a
+                 display:none subtree is not in the accessibility tree — so the
+                 annunciation would be silent while the Wiresheet is up, which
+                 is exactly where a reader sits studying the program that raised
+                 it (codebase-issues #227a). The pill cannot move out here
+                 either: .tool-card.is-fullscreen #tab-unit.active places it by
+                 `grid-area: verdict`, which only resolves while it is a grid
+                 child of that pane. So the pill stays put and silent and this
+                 node — outside both panes, in the tree on either tab — carries
+                 the announcement. Written by setVerdict() in
+                 scripts/ddcw-fcu-unit.js, signature-guarded so the 10 Hz host
+                 tick cannot spam it. Element shape from pid-tuner.html's
+                 #pid-sr-status.
+                 Empty in MARKUP only, not on arrival: the shell's boot paint
+                 (DDCWShell's hostTick, called once before the 10 Hz interval
+                 starts) fills it, so a reader landing on the page hears the
+                 current verdict once. That is the intended arrival behaviour —
+                 it is NOT the off-program window's empty-and-in-tree contract
+                 above, which stays empty until a point actually goes
+                 off-program.
+                 Known and accepted: with the Unit tab up the verdict string is
+                 in the accessibility tree twice — here and as the pill. Same
+                 shape pid-tuner ships (audit-2026-06 #7). -->
+            <p class="sr-only" id="fcu-verdict-sr" aria-live="polite"></p>
+
+            <!-- Screen-reader mirror of the sensor-override state line
+                 (#fcu-ovr-state, down in the Unit pane's override block). The
+                 visible line repaints at 10 Hz because it interpolates the live
+                 zone temperature; a live region cannot do that without
+                 re-announcing a full sentence ten times a second, which is
+                 codebase-issues #229. So the two jobs are split: the visible
+                 line keeps its 10 Hz repaint and carries no aria-live at all,
+                 and this node is announced on a CHANGE OF VALUE — the drift has
+                 to move OVR_COV_INCREMENT °F since the last announcement, plus
+                 an immediate announcement whenever the OPERATOR moves something
+                 (force taken, value typed, units flipped, force released).
+                 BACnet's own COV_Increment rule, applied to the page whose
+                 subject it is. Written by setOvrState() in
+                 scripts/ddcw-fcu-unit.js — see its header for the derivation.
+
+                 OUTSIDE BOTH PANES, deliberately, and for a different reason
+                 than #fcu-verdict-sr above: not (only) because #tab-unit goes
+                 display:none on the Wiresheet, but because a live region that
+                 re-enters the accessibility tree ALREADY POPULATED announces
+                 nothing — the .ddcw-offprog empty-collapse contract
+                 (html/styles.css, and #227a). The drift half is not
+                 operator-driven, so on a tab return this node would be carrying
+                 a sentence it never got to say.
+
+                 Empty in MARKUP *and* on the boot paint — the contract
+                 distinction from #fcu-verdict-sr, whose whole point is that the
+                 shell's boot hostTick fills it so an arriving reader hears the
+                 current verdict once. Nothing is forced on arrival, so there is
+                 nothing to announce until a reader takes a force; the first
+                 sentence a reader ever hears here is the answer to their own
+                 button press. No aria-atomic, matching #fcu-verdict-sr: the node
+                 is rewritten whole, so there is no partial update to atomise. -->
+            <p class="sr-only" id="fcu-ovr-state-sr" aria-live="polite"></p>
+
+            <!-- ══ TAB: UNIT ══ the DDC supervisory graphic + readouts +
+                 hand controls. -->
+            <div id="tab-unit" class="tab-pane active">
+
+            <!-- ── The supervisory graphic ─────────────────────────────────
+                 Recirculating DX fan coil serving one zone. Return air leaves
+                 the zone (right), runs the top return duct, and DROPS INTO
+                 THE CABINET TOP just left of the coil — the owner's "fix 1"
+                 (parked 2026-07-22, drawn 2026-08-03): the old run wrapped
+                 the whole left side and crowded the badge row and the
+                 cabinet shoulder. The air then CROSSES the open cabinet
+                 interior — through the DX coil then the supply fan — before
+                 rising up the supply riser and back to the zone. Airflow is
+                 a page-local rAF chevron
+                 stream marching one invisible centerline (no flow-engine):
+                 speed scales with the fan fraction, and each chevron recolors
+                 at the coil's leaving edge so the ΔT shows in the air itself.
+                 The DX coil + supply fan glyphs are real SVG <a> drill-downs.
+                 SOFTWARE register throughout. a11y: role="img" +
+                 aria-labelledby → title/desc, and NOTHING inside the drawing
+                 is focusable — role="img" prunes the subtree, which is what
+                 keeps ~19 <text> nodes already duplicated in the .fcu-points
+                 mirror from being read out twice. The activation affordance
+                 for the sensor glyphs is therefore the three mirror BUTTONS
+                 below the drawing, not the glyphs themselves (owner ruling on
+                 codebase-issues #227b). The glyphs keep a click handler and
+                 their hover CSS; they carry no tabindex and no role. -->
+            <div class="fcu-graphic">
+                <svg class="fcu-svg" id="fcu-graphic" viewBox="0 0 720 380"
+                     role="img" aria-labelledby="fcu-title fcu-desc"
+                     font-family="var(--mono)">
+                    <title id="fcu-title">단일 존에 공기를 공급하는 DX 팬코일유닛의 DDC 감시 그래픽</title>
+                    <desc id="fcu-desc">단일 존에 공기를 공급하는 재순환 직팽식 팬코일유닛을 DDC 감시 그래픽으로 나타냅니다. 회기는 오른쪽 존을 나와 상부 회기 덕트를 따라 왼쪽으로 흐른 다음 짧은 수직 덕트를 통해 팬코일유닛 캐비닛 왼쪽 상부로 내려갑니다. 캐비닛은 각 덕트가 만나는 상부 벽을 열어 두어 수직 덕트 입구와 급기 라이저 입구가 모두 분명하게 보입니다. 캐비닛 내부에서 공기는 DX 냉각 코일과 급기 팬을 차례로 지나며, 팬이 두 번째 개구부 위로 공기를 밀어 올려 급기 덕트를 통해 존으로 되돌려 보냅니다. 방향 표시 화살표가 덕트, 수직 구간, 코일과 팬을 따라 이동하여 공기 흐름을 나타냅니다. 세 개의 포인트 배지는 공기 흐름 순서로 왼쪽부터 표시됩니다. 수직 덕트 옆 회기온도, 코일 하류의 부호 있는 코일 전후 온도차(출구온도에서 입구온도를 뺀 값으로 냉각 중에는 음수), 팬 위의 토출공기온도 순입니다. 존 상자에는 존 온도와 냉방 설정값이 표시되고, 별도 라벨에는 급기 팬 상태와 속도 및 압축기 단계가 표시됩니다. DX 코일과 급기 팬은 상세 시뮬레이터로 이동할 수 있는 두 하위 장치로 그려집니다. 캐비닛 태그는 FCU-1입니다. 감지 장치는 실제 설치 위치에 배치됩니다. 존 안쪽 먼 벽의 실내온도 벽면 센서, 엘보 바로 아래 회기 수직 덕트 외벽을 관통하여 헤드가 왼쪽 빈 공간에 놓인 회기온도 삽입형 센서, 팬 하류 급기 덕트 상부 벽을 관통한 토출공기온도 삽입형 센서가 있으며, 각 장치를 활성화하면 상태 표시줄의 해당 실시간 값 칩을 강조합니다.</desc>
+
+                    <!-- ── Ductwork — exterior runs only ──────────────────
+                         Return duct body: from the zone face, along the top,
+                         then a short drop at x120 that lands ON the cabinet
+                         TOP over the coil's entering side. Supply duct body:
+                         from the cabinet's TOP wall at (500,250), up to y218
+                         and over to the zone face. Between the two mouths is
+                         the open cabinet interior — no body / walls there,
+                         only chevrons bridge it. Walls are the ±23 offsets
+                         of each fattened body (stroke 46); each wall runs to
+                         y250 and lands on its opening's edge in the cabinet
+                         top, so duct metal meets casing metal. -->
+                    <path class="fcu-duct-body" d="M548 150 L120 150 L120 250"/>
+                    <path class="fcu-duct-wall" d="M548 127 L97 127 L97 250"/>
+                    <path class="fcu-duct-wall" d="M548 173 L143 173 L143 250"/>
+
+                    <path class="fcu-duct-body" d="M500 250 L500 218 L548 218"/>
+                    <path class="fcu-duct-wall" d="M477 250 L477 195 L548 195"/>
+                    <path class="fcu-duct-wall" d="M523 250 L523 241 L548 241"/>
+
+                    <!-- Duct labels — above each run, clear of the fatter body. -->
+                    <text class="fcu-pt-cap" x="300" y="120">회기</text>
+                    <text class="fcu-pt-cap" x="524" y="187">급기</text>
+
+                    <!-- Invisible centerline — the marker source for the
+                         chevrons only. Full recirculation loop: down the
+                         drop at x120, through the open cabinet mouth, and
+                         across the interior at y298. -->
+                    <path class="fcu-centerline" id="fcu-centerline"
+                          d="M548 150 L120 150 L120 298 L500 298 L500 218 L548 218"/>
+
+                    <!-- Static flow arrows — carry direction under reduced
+                         motion / print (drawn under the moving chevrons).
+                         One per leg: top run leftward, the drop downward
+                         (inside the drop at x120), the riser upward, the
+                         supply run rightward. -->
+                    <g id="fcu-flow-arrows">
+                        <polygon points="328,144 320,150 328,156" fill="var(--blue-cool)"/>
+                        <polygon points="114,205 126,205 120,213" fill="var(--blue-cool)"/>
+                        <polygon points="494,272 506,272 500,264" fill="var(--blue)"/>
+                        <polygon points="520,212 528,218 520,224" fill="var(--blue)"/>
+                    </g>
+
+                    <!-- ── The zone ── return-air source + the space-temp
+                         point's well and the cooling setpoint. Both
+                         captions match the AHU zone box's, and ZONE TEMP
+                         is now the ROSTER's own name for the point (owner
+                         ruling 2026-08-03, the name pass) — the chip, the
+                         off-program window, the wiresheet head and this
+                         well all print the one string.
+                         ⚠ THE TENSION THAT RENAME CREATED, on the record:
+                         this well paints the SENSED point — the wall
+                         stat's number, lie and all — while the INTEGRATED
+                         truth is what #fcu-zone-val prints beside the
+                         override control ("zone NN.N °F"). Before the
+                         rename the two were told apart by their words.
+                         They no longer are, so the state line under the
+                         override is the only thing that names the gap;
+                         don't caption a third surface "zone" without
+                         settling which claim owns the word. -->
+                    <g id="fcu-zone">
+                        <rect x="548" y="90" width="150" height="170" fill="var(--surface)"
+                              stroke="var(--text-dim)" stroke-width="2"/>
+                        <text class="fcu-zone-label" x="623" y="118" font-size="13"
+                              font-weight="600" fill="var(--text-bright)">존</text>
+                        <text class="fcu-pt-cap" x="623" y="150">존 온도</text>
+                        <text class="fcu-pt-val" id="fcu-zone-t" x="623" y="170">76.0 °F</text>
+                        <text class="fcu-pt-cap" x="623" y="205">냉방 설정값</text>
+                        <text class="fcu-pt-val fcu-sp-val" id="fcu-zone-sp" x="623" y="225">72.0 °F</text>
+                    </g>
+
+                    <!-- ── FCU cabinet ── drawn as a path, not a rect (the
+                         AHU casing convention: "drawn as a path … so the
+                         penetrations stay open"), with the two duct mouths
+                         in the top wall OPEN — the return drop lands at
+                         x97-143, the supply riser leaves at x477-523 — so
+                         recirculated air passes through an opening rather
+                         than through a drawn wall line. The right edge sits
+                         at x530 (was 520): the riser's outer wall used to
+                         straddle the old corner by 3 units, and the wider
+                         casing gives it the same short shoulder stub the
+                         drop's side has. -->
+                    <path d="M97 250 L90 250 L90 345 L530 345 L530 250 L523 250 M477 250 L143 250"
+                          fill="none" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text class="fcu-cabinet-label" x="490" y="339" font-size="11"
+                          fill="var(--text-dim)">FCU-1</text>
+
+                    <!-- ── DX coil (drill-down → heat-pump sim) ── -->
+                    <a class="fcu-link" href="/ko/simulators/refrigerant-loop.html"
+                       aria-label="히트펌프 시뮬레이터 열기 — 이 DX 코일의 증기 압축 냉매 회로">
+                        <title>히트펌프 시뮬레이터 열기</title>
+                        <rect class="fcu-link-box" x="150" y="262" width="52" height="72"/>
+                        <path d="M156 270 H196 V282 H156 V294 H196 V306 H156 V318 H196 V330 H156"
+                              fill="none" stroke="var(--blue)" stroke-width="1.5"/>
+                        <text class="fcu-glyph-label" x="176" y="356" font-size="11"
+                              font-weight="600" fill="var(--text-bright)">DX 코일</text>
+                    </a>
+
+                    <!-- ── Supply fan (drill-down → VFD sim) ── -->
+                    <a class="fcu-link" href="/ko/simulators/vfd-mock.html"
+                       aria-label="VFD 시뮬레이터 열기 — 이 급기 팬을 구동하는 드라이브">
+                        <title>VFD 시뮬레이터 열기</title>
+                        <circle class="fcu-link-box" cx="410" cy="298" r="30"/>
+                        <g class="fcu-fan-blade" id="fcu-fan-blade">
+                            <ellipse cx="410" cy="281" rx="5.5" ry="13" transform="rotate(0 410 298) rotate(20 410 281)"/>
+                            <ellipse cx="410" cy="281" rx="5.5" ry="13" transform="rotate(72 410 298) rotate(20 410 281)"/>
+                            <ellipse cx="410" cy="281" rx="5.5" ry="13" transform="rotate(144 410 298) rotate(20 410 281)"/>
+                            <ellipse cx="410" cy="281" rx="5.5" ry="13" transform="rotate(216 410 298) rotate(20 410 281)"/>
+                            <ellipse cx="410" cy="281" rx="5.5" ry="13" transform="rotate(288 410 298) rotate(20 410 281)"/>
+                        </g>
+                        <circle cx="410" cy="298" r="4" fill="var(--text-bright)"/>
+                        <text class="fcu-glyph-label" x="410" y="356" font-size="11"
+                              font-weight="600" fill="var(--text-bright)">급기 팬</text>
+                        <text class="fcu-pt-cap" id="fcu-fan-v" x="410" y="248">60% · 켜짐</text>
+                    </a>
+
+                    <!-- ── Floating point badges — RAT / ΔT / DAT ──
+                         In airflow order, left to right: RAT beside the
+                         return drop it measures (the freed upper-left — the
+                         point of fix 1), ΔT just past the coil, DAT over the
+                         supply fan — the last two on the y188 band above the
+                         cabinet, and RAT on the same band so the row reads
+                         as one line. Kept clear of the fattened return duct
+                         (bottom y173), the drop (outer wall x97), the
+                         cabinet (top y250) and the supply run. The ΔT badge
+                         is the headline: it collapses toward zero on a fault.
+                         ΔT is SIGNED — leaving minus entering (DAT − RAT), so
+                         cooling reads negative (owner ruling 2026-07-27); the
+                         static seed reconciles from the static RAT / DAT.
+                         The entering measurement is captioned RAT, the AHU's
+                         return-air vocabulary and the roster point's own name
+                         (2026-08-03): on a recirculating unit the return air
+                         IS the entering air, and the ΔT note below the mirror
+                         carries that teaching in prose. The RAT badge is 80
+                         wide (its caption needs 65.3 — see the 8px note in
+                         the head block), fitting the x0-97 column with clear
+                         space on both sides. -->
+                    <g id="fcu-badges">
+                        <rect class="fcu-badge" x="8" y="188" width="80" height="40"/>
+                        <text class="fcu-pt-cap" x="48" y="204">RAT · 회기</text>
+                        <text class="fcu-pt-val" id="fcu-rat" x="48" y="222">76.0 °F</text>
+
+                        <rect class="fcu-badge fcu-badge-dt" x="196" y="188" width="96" height="40"/>
+                        <text class="fcu-pt-cap" x="244" y="204">코일 전후 ΔT</text>
+                        <text class="fcu-pt-val fcu-dt-val" id="fcu-dt" x="244" y="222">-17.6 °F</text>
+
+                        <rect class="fcu-badge" x="370" y="188" width="90" height="40"/>
+                        <text class="fcu-pt-cap" x="415" y="204">DAT · 토출</text>
+                        <text class="fcu-pt-val" id="fcu-dat" x="415" y="222">58.4 °F</text>
+                    </g>
+
+                    <!-- Air chevrons — populated by the page script; last of
+                         the schematic layer so they paint above the ducts and
+                         over the coil + fan (air visibly crossing the unit). -->
+                    <g id="fcu-flow" class="fcu-flow-layer"></g>
+
+                    <!-- Compressor status — a supervisory point in the base of
+                         the cabinet, deliberately BELOW the airstream line (a
+                         compressor isn't in the air path), drawn last so its
+                         LED and label stay legible over any chevron. -->
+                    <g id="fcu-comp">
+                        <text class="fcu-pt-cap" x="256" y="313">압축기</text>
+                        <circle id="fcu-comp-dot" cx="212" cy="326" r="5"
+                                fill="var(--accent)" stroke="var(--border)" stroke-width="1"/>
+                        <text class="fcu-pt-cap" id="fcu-comp-v" x="226" y="330"
+                              text-anchor="start">1단 · 켜짐</text>
+                    </g>
+
+                    <!-- ── Sensor devices — WHERE each sensed point lives ──
+                         One glyph per TEMPERATURE point in FCU_POINTS with a
+                         physical home on this drawing (space-temp, rat, dat),
+                         keyed by data-point to the point id; click / Enter /
+                         Space pulses the matching statusbar chip (the shell's
+                         highlightChip hook — the shell binds .ddcw-sensor
+                         generically). Drawn last so the devices stay
+                         legible over the chevron stream.
+                         NOT every sensed point: `fan-status` is a duct-
+                         pressure proof switch and reaches no glyph, because
+                         its home is the duct static and the interlock it
+                         feeds is taught on the wiresheet, not here. That is
+                         a scope call, not an oversight — a DP tap on the
+                         supply run is the natural draw if it ever earns one.
+                         GLYPH VOCABULARY (schematic, software register):
+                         wall plate = space/zone sensor on the room
+                         boundary; insertion probe = duct temp. Reserved
+                         names for later units, deliberately NOT drawn
+                         here: shielded OSA head (this FCU has no OAT
+                         point — outdoor air is a sim knob, not a BACnet
+                         point), averaging element (AHU mixed-air),
+                         flow station.
+                         FUTURE SEAM: a glyph later becomes a drill-down
+                         link into a meter-and-sensor sim (the .fcu-link
+                         idiom) — keep the one-group-per-device shape. -->
+                    <g id="fcu-sensors">
+                        <!-- RAT insertion probe — penetrates the OUTER (left)
+                             wall of the return DROP (x 97) at y 163, just
+                             below the elbow: at the unit's return inlet,
+                             upstream of the coil, reading the real air the
+                             zone sends back — the visible entering-air
+                             measurement behind the RAT badge and the coil
+                             ΔT. It moved onto the drop with fix 1
+                             (2026-08-03): the old top-run underside spot sat
+                             a probe head 5 units over the badge band, and
+                             the drop is where a return sensor on a
+                             top-entry cabinet physically lives. Head hangs
+                             in the freed left column, above the RAT badge
+                             (top y 188); the stem reaches the airstream
+                             near the drop centerline (x 120), clear of the
+                             static down arrow (y 205-213).
+                             Each sensor group carries a .fcu-forced-mark rect
+                             matching its hit area — the dashed accent ring
+                             renderUnit lights while that point's override is
+                             active (space-temp is the only one a control
+                             reaches today; see the marker's CSS block). -->
+                        <g class="ddcw-sensor" id="fcu-sensor-rat" data-point="rat">
+                            <title>회기온도 센서 — 회기 덕트 삽입형 센서</title>
+                            <rect class="ddcw-sensor-hit" x="76" y="141" width="34" height="44"/>
+                            <rect class="fcu-forced-mark" x="76" y="141" width="34" height="44"/>
+                            <line class="ddcw-sensor-stem" x1="97" y1="163" x2="116" y2="163"/>
+                            <rect class="ddcw-sensor-body" x="85" y="158" width="12" height="10"/>
+                        </g>
+                        <!-- DAT insertion probe — penetrates the TOP wall of
+                             the horizontal discharge run (y 195) at x 492:
+                             downstream of the coil AND the fan (the
+                             draw-through pickup the fan-heat note owns),
+                             past the riser elbow. Head sits in the free band
+                             between the return duct (bottom wall y 173) and
+                             the supply wall, clear of the SUPPLY label
+                             (x >= 508) and the DAT badge (x <= 460); the
+                             stem tip reaches the airstream near the duct
+                             centerline (y 218). -->
+                        <g class="ddcw-sensor" id="fcu-sensor-dat" data-point="dat">
+                            <title>토출공기온도 센서 — 급기 덕트 삽입형 센서</title>
+                            <rect class="ddcw-sensor-hit" x="478" y="174" width="28" height="44"/>
+                            <rect class="fcu-forced-mark" x="478" y="174" width="28" height="44"/>
+                            <line class="ddcw-sensor-stem" x1="492" y1="195" x2="492" y2="214"/>
+                            <rect class="ddcw-sensor-body" x="486" y="185" width="12" height="10"/>
+                        </g>
+                        <!-- Space-temp wall plate — mounted INSIDE the zone,
+                             flush on its right wall (x 698) at thermostat
+                             height (mid-wall), on the side away from the
+                             unit's duct connections: a wall stat lives on
+                             the room boundary, never on the equipment.
+                             Clear of the readout column (values end
+                             x ~657). Slots = the vent grille. -->
+                        <g class="ddcw-sensor" id="fcu-sensor-space-temp" data-point="space-temp">
+                            <title>실내온도 센서 — 존 내부 벽면 센서</title>
+                            <rect class="ddcw-sensor-hit" x="666" y="156" width="34" height="44"/>
+                            <rect class="fcu-forced-mark" x="666" y="156" width="34" height="44"/>
+                            <rect class="ddcw-sensor-body" x="683" y="166" width="14" height="24"/>
+                            <line class="ddcw-sensor-slot" x1="686.5" y1="173" x2="693.5" y2="173"/>
+                            <line class="ddcw-sensor-slot" x1="686.5" y1="178" x2="693.5" y2="178"/>
+                            <line class="ddcw-sensor-slot" x1="686.5" y1="183" x2="693.5" y2="183"/>
+                        </g>
+                    </g>
+                </svg>
+            </div>
+
+            <!-- Point readouts (the legible mirror), the register key and the
+                 verdict. Above 900px the PLAIN cells go visually hidden —
+                 still in the DOM, still painted by renderUnit, still
+                 announced — while the buttons stay at every width. The
+                 selector is :not(.fcu-point-btn), so a cell promoted to a
+                 button later keeps its place on the desktop row without a
+                 second edit. See THE MIRROR DIET in the head block. -->
+            <p class="ref-note">
+                도면에서 감지 장치가 표시된 세 포인트는 버튼입니다. 버튼을 누르면 상태 표시줄에서 해당 실시간 값 칩을 강조합니다. 좁은 화면에서는 목록에 도면의 나머지 값도 표시되므로 도면 글자가 너무 작을 때 이 목록에서 값을 읽을 수 있습니다.
+            </p>
+            <!-- ⚠ THE PROVENANCE CHANNELS (codebase-issues #269, then #298).
+                 Every caption tags its point's KIND in an .sr-only span and
+                 every value carries the matching register ink — the AHU's
+                 pair of channels, which this page now spends in full.
+                 It did not always. #269 shipped the glosses ALONE, and on a
+                 page that had no commanded register they were not a redundant
+                 channel but the only one: the sole colour here was --blue on
+                 ΔT, so `Supply fan` and `Compressor` — genuinely commanded
+                 outputs — rendered in exactly the ink `RAT · return` does, and
+                 a sighted reader could not tell a command from a measurement.
+                 #298 closed that half: green .is-cmd on the commanded values,
+                 --blue-ink on the calculated one, plain on the measured, and
+                 the .fcu-key legend below so the code is learnable here rather
+                 than only after a reader has met the AHU.
+                 Kinds derive from ddcw-fcu-unit.js: rat / dat / space-temp are
+                 `ai` sensors, fan-speed / fan-enable / y1 / y2 are actuators
+                 (and fcuRenderUnit's own comment pins the fan cell as the
+                 COMMAND, the peer of the compressor beside it — proof is the
+                 separate `fan-status` claim, which this list does not carry),
+                 cooling-setpoint is a `param`, which the AHU glosses
+                 commanded. ΔT is arithmetic over the two displayed operands,
+                 so it is calculated and owns no roster row at all.
+                 The word rides in the CAPTION, ahead of the live value, so a
+                 button's accessible name stays stable across repaints.
+                 ⚠ ZONE AND SETPOINT ARE TWO ROWS, not one cell with two
+                 glosses. #269 had to double-gloss "Zone / setpoint" because
+                 one cell printed a sensed temperature beside the param it
+                 answers to — two points of two different kinds, where a single
+                 word would have been false about half the cell. Ink cannot be
+                 split that way at all: one span takes one colour. So the pair
+                 separated the way the AHU's always was, and each row now
+                 carries one gloss and one register. The zone row keeps the
+                 button (it is the space-temp glyph's keyboard path); the
+                 setpoint row is a plain div because a param has no sensing
+                 device on the drawing to flag. -->
+            <div class="fcu-points">
+                <button type="button" class="fcu-point fcu-point-btn" data-point="rat" aria-pressed="false">
+                    <span class="fcu-point-cap">RAT · 회기<span class="sr-only"> (측정값)</span></span>
+                    <span class="fcu-point-val" id="fcu-rat-r">76.0 °F</span>
+                </button>
+                <button type="button" class="fcu-point fcu-point-btn" data-point="dat" aria-pressed="false">
+                    <span class="fcu-point-cap">DAT · 토출<span class="sr-only"> (측정값)</span></span>
+                    <span class="fcu-point-val" id="fcu-dat-r">58.4 °F</span>
+                </button>
+                <div class="fcu-point">
+                    <span class="fcu-point-cap">코일 전후 ΔT<span class="sr-only"> (계산값)</span></span>
+                    <span class="fcu-point-val accent" id="fcu-dt-r">-17.6 °F</span>
+                </div>
+                <button type="button" class="fcu-point fcu-point-btn" data-point="space-temp" aria-pressed="false">
+                    <span class="fcu-point-cap">존<span class="sr-only"> (측정값)</span></span>
+                    <span class="fcu-point-val" id="fcu-zone-r">76.0 °F</span>
+                </button>
+                <div class="fcu-point">
+                    <span class="fcu-point-cap">냉방 설정값<span class="sr-only"> (지령값)</span></span>
+                    <span class="fcu-point-val is-cmd" id="fcu-csp-r">72.0 °F</span>
+                </div>
+                <div class="fcu-point">
+                    <span class="fcu-point-cap">급기 팬<span class="sr-only"> (지령값)</span></span>
+                    <span class="fcu-point-val is-cmd" id="fcu-fan-r">60% · 켜짐</span>
+                </div>
+                <div class="fcu-point">
+                    <span class="fcu-point-cap">압축기<span class="sr-only"> (지령값)</span></span>
+                    <span class="fcu-point-val is-cmd" id="fcu-comp-r">1단 · 켜짐</span>
+                </div>
+            </div>
+
+            <!-- ── The register key (codebase-issues #298) ───────────────────
+                 The legend for the ink the mirror above and the drawing both
+                 spend. role="group" + aria-label rather than a heading, the
+                 AHU's call: a one-row key does not earn a heading and a bare
+                 div with aria-label would be ignored.
+                 REGISTER ROW ONLY — the AHU's first row keys its component
+                 identity colours, which this drawing does not spend, and a
+                 legend for a code the page never uses is the same defect #298
+                 was about, pointing the other way.
+                 The three sample values are this page's own static seed (RAT,
+                 fan command, ΔT), so the legend shows the ink on values the
+                 reader is looking at rather than on invented ones.
+                 ⚠ THESE THREE WELLS ARE THE ONLY STATICS ON THIS PAGE A
+                 READER ACTUALLY SEES (codebase-issues #219). Every other
+                 authored value here — the SVG text, the mirror cells, the
+                 fan slider — is overwritten by the shell's boot hostTick
+                 before the first frame, so a stale one is invisible except
+                 to a no-JS render. These wells carry no id and renderUnit
+                 never touches them, so they sit on screen unrepainted
+                 BESIDE the live mirror they are keyed to: when #205 restaged
+                 the fan reference, the legend went on printing `100%` and
+                 `-19.4 °F` next to a mirror reading `60% · ON` and
+                 `-17.6 °F`. Re-derive all three whenever the arrival state
+                 moves — the values below are the frame the boot tick paints
+                 (zone 76.0, stage 1, fan 60 %), which is what makes them the
+                 same numbers the mirror shows a reader on arrival. -->
+            <div class="fcu-key" role="group" aria-label="색상 범례">
+                <div class="fcu-key-row">
+                    <span class="fcu-key-item"><span class="fcu-key-well" data-us="76.0 °F" data-metric="24.4 °C">76.0 °F</span> 측정값</span>
+                    <span class="fcu-key-item"><span class="fcu-key-well is-cmd">60%</span> 지령값</span>
+                    <span class="fcu-key-item"><span class="fcu-key-well is-calc" data-us="-17.6 °F" data-metric="-9.8 °C">-17.6 °F</span> 계산값</span>
+                </div>
+            </div>
+
+            <!-- No aria-live here, and no role="status" either: this pill is
+                 inside #tab-unit, which is display:none whenever the Wiresheet
+                 is up, so a live region on it announces nothing on that tab
+                 (codebase-issues #227a). The announcement rides on the
+                 #fcu-verdict-sr mirror above, outside both panes. -->
+            <div class="status-pill ok fcu-verdict" id="fcu-verdict">
+                냉방 중 — 코일 전후 ΔT가 뚜렷합니다
+            </div>
+
+            <!-- ══ THE PARAMETER RAIL (mini) ═══════════════════════════════
+                 The FCU's two program constants, adjustable from the
+                 operator graphic (owner ruling 2026-08-03) — the AHU
+                 page's rail pattern, sized to this unit's roster. A rail
+                 edit commits through host.writeParam to the const block on
+                 the RUNNING sheet, so the program keeps sequencing on the
+                 new number. It is NOT a hand control: nothing here touches
+                 a priority array, carries a NULL box, or shows up in the
+                 off-program window — which is why it sits ABOVE the
+                 hand-control region rather than in it. Each input takes
+                 <label for>; the °F/°C suffix rides in an aria-hidden u*
+                 span so the value stays a bare editable number; commits
+                 clamp to the roster's per-param min/max and the clamp is
+                 ANNOUNCED on #fcu-params-hint (role=status). The SVG
+                 SETPOINT well in the zone stays the read-only display
+                 twin — nothing inside the graphic becomes focusable
+                 (#227b). -->
+            <section class="fcu-params" aria-labelledby="fcu-params-h">
+                <h2 class="subhead" id="fcu-params-h">프로그램 매개변수</h2>
+                <div class="fcu-param-rows">
+                    <div class="fcu-param-row">
+                        <label class="fcu-param-lbl" for="fcu-p-cool-sp">냉방 설정값</label>
+                        <span class="fcu-param-editwell">
+                            <input class="fcu-param-input" type="number" id="fcu-p-cool-sp" value="72.0" min="65" max="85" step="0.5">
+                            <span class="fcu-param-unit" id="fcu-p-cool-sp-u" aria-hidden="true">°F</span>
+                        </span>
+                    </div>
+                    <div class="fcu-param-row">
+                        <label class="fcu-param-lbl" for="fcu-p-deadband">불감대</label>
+                        <span class="fcu-param-editwell">
+                            <input class="fcu-param-input" type="number" id="fcu-p-deadband" value="3.0" min="1" max="5" step="0.5">
+                            <span class="fcu-param-unit" id="fcu-p-deadband-u" aria-hidden="true">°F</span>
+                        </span>
+                    </div>
+                </div>
+                <p class="fcu-param-hint" id="fcu-params-hint" role="status" aria-live="polite"></p>
+                <p class="fcu-param-note">
+                    두 입력란은 각 매개변수의 허용 범위로 제한되며 제한 사실을 알립니다. 실제 프런트엔드는 대개 매개변수 레일을 조용히 유지하지만, 이 화면은 교육용이므로 결과를 안내합니다. 입력한 설정값의 적용 시점은 프런트엔드마다 다르며, 이 화면은 Enter를 누르거나 입력란에서 포커스가 벗어날 때 적용합니다.
+                </p>
+            </section>
+
+            <!-- ── Controls ── -->
+            <div class="fcu-controls">
+                <h2 class="subhead">제어</h2>
+
+                <!-- Scenario buttons carry NO `aria-pressed` — deliberately
+                     (#245). A scenario is a one-shot COMMAND, not a mode:
+                     clicking "Broken belt" seeds the plant, releases the
+                     overrides and writes slot 8, and the unit is free to leave
+                     that state on the very next knob move. Nothing here is a
+                     toggle, so nothing here holds a pressed state. The STAGE
+                     group below is the counter-example on the same panel — a
+                     genuine exclusive state whose `aria-pressed` IS maintained
+                     (in `fcuSyncControls`). Same call as the controller-wiring
+                     presets (#142). -->
+                <div class="fcu-presets field" role="group" aria-labelledby="fcu-try-lbl">
+                    <span class="field-label" id="fcu-try-lbl">시나리오(슬롯 8에 기록):</span>
+                    <div class="btn-row">
+                        <button type="button" class="copy-btn" data-preset="healthy">정상 냉방</button>
+                        <button type="button" class="copy-btn" data-preset="compoff">압축기 정지</button>
+                        <button type="button" class="copy-btn" data-preset="lowcharge">냉매 부족</button>
+                        <button type="button" class="copy-btn" data-preset="condenser">응축기 막힘</button>
+                        <button type="button" class="copy-btn" data-preset="belt">벨트 파손</button>
+                    </div>
+                </div>
+
+                <div class="field" role="group" aria-labelledby="fcu-stage-lbl">
+                    <span class="field-label" id="fcu-stage-lbl">압축기 단계 — Y1 / Y2(슬롯 8 — Manual Operator)</span>
+                    <div class="btn-row">
+                        <button type="button" class="copy-btn ddcw-tracked" id="fcu-stage-0" data-stage="0" aria-pressed="false">정지</button>
+                        <button type="button" class="copy-btn ddcw-tracked" id="fcu-stage-1" data-stage="1" aria-pressed="false">1단</button>
+                        <button type="button" class="copy-btn ddcw-tracked" id="fcu-stage-2" data-stage="2" aria-pressed="false">2단</button>
+                    </div>
+                    <!-- ONE control, TWO points: the stage group commands y1
+                         AND y2, so its NULL box releases both slots together.
+                         All three NULL boxes share the visible caption; each
+                         aria-label keeps that caption as a prefix and appends
+                         WHICH point the box releases, so a screen reader's
+                         forms-mode listing doesn't read three identical
+                         checkboxes. -->
+                    <label class="ddcw-null" for="fcu-null-stage">
+                        <input type="checkbox" id="fcu-null-stage" checked
+                            aria-label="NULL — 해제 — 압축기 단계 Y1/Y2(슬롯 8)">
+                        NULL — 해제
+                    </label>
+                </div>
+
+                <div class="fcu-knob-grid">
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label id="fcu-fan-lbl" for="fcu-fan-slider">급기 팬 속도(슬롯 8 — Manual Operator)</label>
+                            <span class="slider-val" id="fcu-fan-sval">60%</span>
+                        </div>
+                        <!-- `value` is the pre-first-tick placeholder only:
+                             the slider ships RELEASED, and syncControls
+                             drives a released slider from the resolved
+                             command every paint. 60 is what cool-2stage
+                             commands on arrival (stage 1 → the 60 % speed
+                             reference), so the authored value matches the
+                             first frame instead of contradicting it
+                             (codebase-issues #219). -->
+                        <input type="range" id="fcu-fan-slider" class="ddcw-tracked" min="0" max="100" step="5" value="60">
+                        <label class="ddcw-null" for="fcu-null-fan">
+                            <input type="checkbox" id="fcu-null-fan" checked
+                                aria-label="NULL — 해제 — 급기 팬 속도(슬롯 8)">
+                            NULL — 해제
+                        </label>
+                    </div>
+
+                    <!-- THIS SLIDER OWNS THE SIM-CLOCK RANGE (codebase-issues
+                         #234). 1× is real building time — long enough to watch
+                         an ON-delay tick; 60× fast-forwards a whole recovery.
+                         The unit module deliberately declares no SPEED_MIN /
+                         SPEED_MAX twin (read the note beside SPEED_DEF in
+                         ddcw-fcu-unit.js): nothing would consume it, because
+                         host.setSpeed() clamps nothing. Retune here. The AHU
+                         sheet carries the same range and a spec holds the two
+                         together — a reader hopping between the workbench
+                         pages must not meet two different clocks. `value` is
+                         the boot default only; the shell overwrites it from
+                         the module's SPEED_DEF, and from the session snapshot
+                         on a resume. -->
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label for="fcu-speed-slider">시뮬레이션 속도(실시간 대비 배율)</label>
+                            <span class="slider-val" id="fcu-speed-val">20×</span>
+                        </div>
+                        <input type="range" id="fcu-speed-slider" min="1" max="60" step="1" value="20">
+                    </div>
+
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label for="fcu-oa-slider">외기온도</label>
+                            <span class="slider-val" id="fcu-oa-val">80 °F</span>
+                        </div>
+                        <input type="range" id="fcu-oa-slider" min="55" max="110" step="1" value="80">
+                    </div>
+
+                    <div class="slider-field">
+                        <div class="slider-head">
+                            <label for="fcu-load-slider">내부 부하</label>
+                            <span class="slider-val" id="fcu-load-val">3000 Btu/h</span>
+                        </div>
+                        <input type="range" id="fcu-load-slider" min="0" max="10000" step="250" value="3000">
+                    </div>
+                </div>
+
+                <div class="field fcu-fanen">
+                    <label>
+                        <input type="checkbox" id="fcu-fanen-toggle" class="ddcw-tracked" checked>
+                        팬 운전 허가 — G 지령(슬롯 8 — Manual Operator)
+                    </label>
+                    <label class="ddcw-null" for="fcu-null-fanen">
+                        <input type="checkbox" id="fcu-null-fanen" checked
+                            aria-label="NULL — 해제 — 팬 운전 허가(슬롯 8)">
+                        NULL — 해제
+                    </label>
+                </div>
+
+                <!-- Sensor override — the real-vs-sensed teaching moment. The
+                     box shows what the PROGRAM reads — and so does the DRAWING:
+                     a forced sensor lies to the graphic's wells exactly as it
+                     lies to the program (the AHU render convention, harmonised
+                     2026-08-03). The `zone` readout here is the ONE place the
+                     actual integrated zone appears. Forcing them apart is the
+                     lesson. -->
+                <div class="fcu-override" id="fcu-override">
+                    <div class="slider-head">
+                        <label class="field-label" for="fcu-ovr-input">실내온도 센서(프로그램이 읽는 값)</label>
+                        <span class="slider-val" id="fcu-zone-val">존 76.0&nbsp;°F</span>
+                    </div>
+                    <div class="fcu-ovr-row">
+                        <button type="button" class="copy-btn" id="fcu-ovr-toggle" aria-pressed="false">센서 강제</button>
+                        <input type="number" id="fcu-ovr-input" class="ps-input fcu-ovr-input" step="0.5" value="76.0" disabled>
+                        <span class="fcu-ovr-unit" id="fcu-ovr-unit" aria-hidden="true">°F</span>
+                    </div>
+                    <!-- No aria-live here, and no role="status" either (the role
+                         IMPLIES the live region — dropping one and keeping the
+                         other changes nothing). This line repaints on every 10 Hz
+                         host tick BY DESIGN: it interpolates the live integrated
+                         zone temperature, and watching that number walk away from
+                         the forced one is the whole hazard the line exists to
+                         surface. A live region cannot be paced and repaint at
+                         10 Hz at the same time, so the two jobs were split —
+                         announcements ride the #fcu-ovr-state-sr mirror above,
+                         outside both panes, on a change-of-value increment
+                         (codebase-issues #229). Contrast the verdict pill below,
+                         which is silent for the OPPOSITE reason: it is silent
+                         because it is inside a pane that goes display:none. -->
+                    <p class="fcu-ovr-state" id="fcu-ovr-state"></p>
+                </div>
+
+                <!-- Folded (glossary arc, fold-widening pass 2026-08-11): the AHU
+                     page folds its twin of this pair under the same id. The
+                     input-force / slot-8 distinction is the concept behind the two
+                     controls above; the controls themselves stay in reach. -->
+                <details class="prose-fold" id="ddcw-fold-overrides">
+                    <summary>오버라이드 — 센서 강제와 출력 지령의 차이</summary>
+                    <div class="prose-fold-body">
+                        <p class="ref-note">
+                            센서 강제는 현장에서 입력값이 고착되거나 스케일이 잘못된 상황을 재현합니다. 프로그램은 전달받은 값에 따라 계속 단계를 제어하지만 실제 실내온도는 반대 방향으로 변합니다. 벽면 온도계보다 그래픽의 잘못된 값을 신뢰하면 장비에 존재하지 않는 고장을 쫓게 됩니다. 오버라이드를 해제하면 프로그램이 다시 실제 실내온도를 읽습니다.
+                        </p>
+
+                        <p class="ref-note">
+                            위 NULL 확인란은 이 학습의 다른 절반입니다. 확인을 해제하면 수동 지령이 시퀀스가 쓰는 슬롯 16보다 우선순위가 높은 슬롯 8(Manual Operator)에 기록됩니다. 다시 NULL을 쓸 때까지 해당 포인트는 프로그램을 따르지 않습니다. 슬롯을 해제하지 않고 현장을 떠나는 것이 우선순위 배열 문제의 흔한 시작입니다. 몇 달 뒤에도 오래된 수동값 아래에서 시퀀스는 올바르게 쓰고 있지만 포인트는 "고장"처럼 보입니다. 두 메커니즘은 서로 다릅니다. 센서 오버라이드는 <em>입력</em>을 강제하므로 프로그램이 잘못된 값으로 단계를 제어하고, 슬롯 8 기록은 <em>출력</em>을 지령하므로 프로그램은 계속 계산하지만 우선순위 판정에서 밀립니다. 전체 열여섯 슬롯은
+                            <a href="/ko/tools/bacnet-priority.html">BACnet 우선순위 배열 도구</a>에서 직접 다룰 수 있으며,
+                            <a href="/ko/education/bacnet-basics.html#priority-array">BACnet 기초의 우선순위 배열</a>에서 기본 개념을 확인할 수 있습니다.
+                        </p>
+                    </div>
+                </details>
+            </div>
+
+            <!-- Folded (glossary arc, fold-widening pass 2026-08-11): which
+                 side of the setpoint the band sits on —
+                 /education/comparators-and-deadband.html is the canonical
+                 disambiguation, and the rail above shows the live pair. -->
+            <details class="prose-fold" id="ddcw-fold-setpoint-convention">
+                <summary>이 와이어시트의 설정값 규칙</summary>
+                <div class="prose-fold-body">
+                    <p class="ref-note">
+                        프로그램이 어떤 규칙을 사용하는지 이해하고 설정값 라벨을 읽어야 합니다. 여기서 라벨은 차단값입니다. 1단은 설정값에 불감대를 더한 온도에서 투입되고 설정값에서 해제됩니다. 와이어시트에서는 y1on이 gt1으로 들어가 단계를 투입하고 설정값 자체가 lt1으로 들어가 단계를 해제하므로, 존 온도는 그래픽에 표시된 값보다 불감대만큼
+                        <em>위</em>에서 움직입니다. 다른 시퀀스는 설정값을 중심으로 밴드를 배치하며 어느 방식도 틀리지 않습니다. 커미셔닝에서는 해당 용도에 불감대의 어느 쪽이 필요한지 확인해야 합니다. 현장에서 알아둘 점도 있습니다. 일부 블록 라이브러리는 불감대가 비교기의 어느 쪽에 놓이는지를 고정하므로, 시퀀스에 필요한 위치로 밴드를 옮기기 위해 less-than을 NOT으로 감싸 greater-than을 표현하기도 합니다.
+                    </p>
+                </div>
+            </details>
+
+            <p class="ref-note">
+                이 모델은 방향성을 설명하기 위한 것입니다. 코일 효과는 정격 600 CFM인 약 1.5 ton DX 팬코일유닛의 대략적인 현열 분배이며, 고장 프리셋은 징후를 명확히 보이도록 코일 출력을 완전히 영으로 만듭니다. 실제 냉방 불량에는 여러 원인이 있을 수 있으므로, 그래픽은 무엇을 수리할지가 아니라 어느 쪽을 점검할지를 보여 줍니다.
+            </p>
+
+            <!-- Folded (glossary arc, fold-widening pass 2026-08-11): the
+                 scenario button is above and the lesson is here, so a reader
+                 can open this beside the running fault rather than ahead of it.
+                 ⚠ THIS PARAGRAPH CARRIES THE COIL DRILL-DOWN'S HTML TWIN
+                 (refrigerant-loop) — tests/ddc-workbench-fcu.spec.js pins one
+                 twin per SVG href by EXISTENCE, so a closed fold satisfies it,
+                 but deleting the anchor still reddens that row. -->
+            <details class="prose-fold" id="ddcw-fold-blocked-condenser">
+                <summary>응축기 막힘 학습 — 그래픽만으로 판별할 수 없는 경우</summary>
+                <div class="prose-fold-body">
+                    <p class="ref-note">
+                        응축기 막힘 시나리오는 충분히 살펴볼 가치가 있습니다. 공기측 값은 모두 정상으로 보입니다. 팬 지령이 있고 운전 확인 스위치가 동작하며 흐름 화살표도 계속 움직입니다. 다만 급기측 색상이 냉각을 뜻하는 파란색에서 일반 회색으로 바뀌고 ΔT 배지는 작은 팬 발열분에 머뭅니다. 도면이 알려 주는 또 하나의 정보는 빨간색으로 바뀐 압축기 LED입니다. 전원은 들어왔지만 냉각 능력을 내지 못한다는 뜻입니다. 정상 공기측과 빨간 압축기의 조합은 고장이 냉매 회로에 있음을 가리킵니다. 이 캐비닛 그래픽은 DX 코일에서 끝나고 열 방출은 화면 밖에서 일어나므로 화면의 다른 정보로는 더 좁힐 수 없습니다. 공기측이 정상이고 코일이 아무 일도 하지 않으면 화면 점검을 멈추고 냉매 회로를 확인하는 습관이 필요합니다. 이 값만으로는 응축기 막힘, 압축기 고장, 이 패널의 냉매 부족 고장을 구분할 수 없으며 점검할 계통만 알려 줍니다. 따라서 냉매 부족 판정은 냉매 부족을 단정하지 않고 가능한 원인으로 제시합니다. 시나리오 버튼은 설정된 고장을 알고 있지만 그래픽은 알지 못하며, 프런트엔드가 이 포인트만으로
+                        <em>냉매 부족</em>을 경보로 단정하면 사용자를 대신해 추측하는 셈입니다. 그래픽의 코일 기호를 열면
+                        <a href="/ko/simulators/refrigerant-loop.html">냉매 회로 시뮬레이터</a>에서 응축압력, 과냉도와 과열도를 통해 원인을 구분할 수 있습니다.
+                    </p>
+                </div>
+            </details>
+
+            <!-- Folded (glossary arc, fold-widening pass 2026-08-11): where the
+                 numbers come from — fan heat and the sign convention — rather
+                 than what the machine is doing now. The VFD drill-down comment
+                 travels INSIDE the fold with the paragraph it is about. -->
+            <details class="prose-fold" id="ddcw-fold-fan-heat-dt">
+                <summary>계기값 읽기 — 팬 발열과 부호 있는 ΔT</summary>
+                <div class="prose-fold-body">
+                    <!-- ⚠ THE VFD LINK IN THIS NOTE IS THE FAN DRILL-DOWN'S
+                         EQUIVALENT TARGET, not decoration. The SVG fan glyph
+                         scales with the drawing — ~30×48 CSS px at a 375px
+                         viewport, under the 44px touch floor, and SVG geometry
+                         cannot take a min-width. The touch-target pass (WCAG
+                         2.5.5/2.5.8) rides the equivalent-control clause through
+                         this anchor (the coil glyph's twin already lives in the
+                         blocked-condenser note above);
+                         tests/ddc-workbench-fcu.spec.js pins one HTML twin per
+                         drill-down href, so removing it reddens that row. -->
+                    <p class="fcu-note">
+                        한 가지 실제적인 변수가 있습니다. 토출 센서는 드로스루 방식의 팬 하류에 있으므로 DAT에는 코일 출구온도에 약
+                        <span data-us="0.6&nbsp;°F" data-metric="0.3&nbsp;°C">0.6&nbsp;°F</span>의 팬 발열이 더해집니다. 이는 모터의 실제 일이 공기에 열로 전달된 결과입니다. 현장 기술자는 바로 이 지점에서 작은 교정 오프셋을 조정하여 포인트가 코일 출구온도를 표시하도록 합니다. 도면의 팬 기호는
+                        <a href="/ko/simulators/vfd-mock.html">모의 VFD 인터페이스</a>로 이동하는 링크입니다. 기호가 너무 작게 표시되는 화면에서도 같은 상세 화면으로 이동할 수 있도록 본문 링크를 함께 제공합니다.
+                    </p>
+
+                    <p class="fcu-note">
+                        ΔT 배지는 출구온도에서 입구온도를 뺀 부호 있는 값입니다. 따라서 공기를 냉각하는 코일은 음수, 가열하는 코일은 같은 규칙에서 양수로 표시됩니다. 이 캐비닛은 공기를 재순환하므로 회기가 입구 공기이며, 도면은 이 측정값을 RAT로 표시하고 배지는 DAT − RAT를 계산합니다. 혼합공기를 받는 코일에서는 혼합공기온도가 입구온도이고 계산 규칙은 같습니다. 부호는 불필요한 표시가 아니라 코일이 공기온도를 어느 방향으로 움직이는지를 먼저 알려 주는 정보입니다.
+                    </p>
+                </div>
+            </details>
+
+            </div><!-- #tab-unit -->
+
+            <!-- ══ TAB: WIRESHEET ══ the shared Function-Block Editor
+                 (window.FBEEditor), lazy-mounted on first open. The skeleton
+                 below carries ddcw-* ids; the .fbe-* classes + the fullscreen
+                 rules come from styles.css. Desktop-only by design (the shared
+                 @media gate hides .fbe-live below 1000px / on touch and shows
+                 the tips panel instead). -->
+            <div id="tab-wiresheet" class="tab-pane">
+
+                <!-- The one-line phone truth (owner ruling 2026-08-03).
+                     Rendered only where the live workspace is gated out —
+                     see the p.ddcw-sheet-mobile-note rule in styles.css. -->
+                <p class="ddcw-sheet-mobile-note">
+                    이 화면에서는 와이어시트를 따라 읽어 보는 방식으로 안내합니다. 데스크톱 너비에서는 포인터로 실제 와이어시트를 배선할 수 있으며, 장치 탭은 계속 모든 기능을 사용할 수 있습니다.
+                </p>
+
+                <p class="ddcw-sheet-note">
+                    장치를 구동하는 프로그램입니다. 왼쪽에는 소스(존 온도와 설정값), 가운데에는 로직, 오른쪽에는 출력(두 냉방 단계와 팬)이 있습니다. 위에서 예제를 선택하거나 직접 배선하면 매 틱마다 장치에서 실행됩니다.
+                </p>
+
+                <!-- Folded (glossary arc, collapse pilot 2026-08-10): the
+                     command-versus-state concept is what this paragraph is
+                     for, and /education/commanding-actuators.html owns it.
+                     The observation it hangs on stays one click away rather
+                     than sitting between the reader and the sheet. -->
+                <details class="prose-fold" id="ddcw-fold-ao-command">
+                    <summary>고정된 속도 지령이 고장이 아닌 이유</summary>
+                    <div class="prose-fold-body">
+                        <p class="ddcw-sheet-note">
+                            단일 단계 예제를 살펴볼 필요가 있습니다. 장치가 정지해도 속도 지령은 전속에 고정되어 있어 그래픽을 읽을 때 흔히 의심하는 모습이 나타납니다. 그러나 고장이 아닙니다.
+                            <a href="/ko/education/commanding-actuators.html">AO는 상태가 아니라 지령을 표시합니다</a>. 팬 운전 허가 BO가 실제로 모터를 정지시킵니다. 다단 예제는 단계 요구에 따라 속도 지령을 움직이지만 이 예제는 의도적으로 전속 지령을 유지합니다.
+                        </p>
+                    </div>
+                </details>
+
+                <!-- Folded (glossary arc, fold-widening pass 2026-08-11): an
+                     inventory of what the sample contains — the sheet below draws
+                     the same thing, and the blocks are named. -->
+                <details class="prose-fold" id="ddcw-fold-safeties-contents">
+                    <summary>안전 로직 예제의 구성</summary>
+                    <div class="prose-fold-body">
+                        <p class="ddcw-sheet-note">
+                            2단 + 안전 로직 예제에서는 온도조절기 외의 조건도 냉방 단계를 제어합니다. 풍량 운전 확인이 가장 먼저 적용됩니다. 팬 상태 BI가 운전 허가 앞의 AND로 들어가므로 운전 확인 스위치가 공기 흐름 없음을 보고하는 즉시 압축기는 기동할 수 없고 운전 중인 압축기도 정지합니다. 그 뒤에는
+                            <a href="/ko/education/boolean-logic-latches.html">래치형 DAT 저온 제한</a>이 있어 토출공기온도가 트립 상수 아래로 내려가면 두 단계를 모두 차단하며,
+                            <a href="/ko/education/timers-and-delays.html">최소 정지시간</a>은 정지한 장치가 즉시 다시 단계 운전하지 못하게 합니다. 하나의 AND가 이 허가 조건들을 단계 지령에 결합합니다.
+                        </p>
+                    </div>
+                </details>
+
+                <!-- Folded (glossary arc, fold-widening pass 2026-08-11): FOLDED BY
+                     THE OWNER'S RULING even though it reads as a live walkthrough —
+                     the widening direction is that a fold is where a reader goes TO
+                     read a section beside the working unit, not where prose goes to
+                     be skipped. tests/ddc-workbench-fcu-safeties.spec.js drives this
+                     path in code, not through the note, so the fold changes nothing
+                     it asserts; its prose-fold.spec.js row moved to the fold list. -->
+                <details class="prose-fold" id="ddcw-fold-proof-first">
+                    <summary>운전 확인 우선 — DAT가 무의미해지는 함정</summary>
+                    <div class="prose-fold-body">
+                        <p class="ddcw-sheet-note">
+                            운전 확인을 먼저 적용해야 하는 이유가 있습니다. 정지한 공기 속의 토출 센서는 코일이 아니라 실내온도를 읽습니다. 공기 흐름을 멈추면 저온 제한은 단순히 트립하지 않는 것이 아니라 코일 상태를 보지 못합니다. 코일 상태와 관계없이 정상처럼 보이는 온도를 보고합니다. 시나리오에서 벨트를 파손해 확인해 보세요. 팬 지령은 유지되지만 날개가 멈추고 DAT 칩은 존 온도까지 올라갑니다. 다만 단계는 계속 유지됩니다. 시나리오는 운전자 기록이며 이 시나리오는 두 단계 모두를 시퀀스보다 우선하는 슬롯 8에 남겨 두기 때문입니다. 압축기 단계 아래의
+                            <em>NULL — 해제</em> 확인란으로 단계 지령을 반환하면 다음 틱에 정지합니다. 신뢰할 수 없는 토출공기 값이 아니라 운전 확인 인터록에 의해 정지합니다. 지령, 상태와 운전 확인 신호는 서로 다른 세 정보입니다.
+                            <a href="/ko/education/status-and-proof.html">상태 및 운전 확인 신호</a>에서 그 차이를 자세히 설명합니다.
+                        </p>
+                    </div>
+                </details>
+
+                <!-- Folded (glossary arc, fold-widening pass 2026-08-11): why the
+                     stages return late — the mechanism behind an observation the
+                     reader makes on the running unit. -->
+                <details class="prose-fold" id="ddcw-fold-recovery-order">
+                    <summary>복구 순서 — 해제되어야 하는 두 타이머</summary>
+                    <div class="prose-fold-body">
+                        <p class="ddcw-sheet-note">
+                            두 보호 로직이 겹쳐 있고 순서대로 해제되므로 복구 순서를 살펴봐야 합니다. 저온 제한 트립은 단계 지령을 완전히 정지시키므로 단계를 차단하는 순간 최소 정지 타이머도 시작합니다. 토출공기온도는 해제 상수를 넘어야 하고
+                            <em>동시에</em> 정지 타이머도 만료되어야 단계가 다시 투입됩니다. 따라서 단계는 해제점에서 즉시 복귀하지 않고 그보다 훨씬 뒤에 복귀합니다. 프로그램을 다운로드할 때도 타이머는 영에서 시작하므로, 이 예제를 선택하면 운전 중인 장치가 멈추고 한동안 정지 상태를 유지합니다. 실제 컨트롤러도 전원 투입 시 최소 정지시간을 적용합니다.
+                        </p>
+                    </div>
+                </details>
+
+                <!-- Folded (glossary arc, fold-widening pass 2026-08-11): the habit
+                     this page is for — know what your override does to the logic
+                     underneath. Folded as a section a reader opens on purpose. -->
+                <details class="prose-fold" id="ddcw-fold-off-timer">
+                    <summary>정지 타이머가 감시하는 값과 오버라이드의 영향</summary>
+                    <div class="prose-fold-body">
+                        <p class="ddcw-sheet-note">
+                            정지 타이머가 감시하는 값은 시퀀스 자체의 정지이며 다른 정지는 감시하지 않습니다. 슬롯 8에서 단계를 강제로 정지하면 압축기는 멈추지만 프로그램은 계속 냉방을 요구합니다. 허가 체인은 정지를 감지하지 못하므로 타이머는 영에 머물고, 강제를 해제하는 순간 장치가 재기동합니다. 고장이 아니라 시퀀스가 자신이 아는 정지만 보호하는 것입니다. 포인트를 강제할 때 오버라이드가 하위 로직에 어떤 영향을 주는지 이해하는 습관을 이 화면에서 익혀야 합니다. 프로그램은 장치를 바라보는 자체 관점에서 계속 실행 중인데 사용자가 알리지 않은 채 실제 장치만 바꾼 상태입니다. 팬은 의도적으로 허가 경로 밖에 있습니다. 팬은 냉방 요구를 계속 따르므로 운전 금지 조건이 해제되는 동안에도 코일을 가로질러 공기가 흐릅니다. 팬이 스스로 만든 풍량 운전 확인 신호로 팬을 게이트하면 어떤 장치도 기동할 수 없기 때문입니다. 큰 냉방 요구에서 팬을 저속으로 강제하여 안전 로직의 동작을 확인해 보세요. 기본 예제에서 같은 조작은 안전 로직이 해결하도록 설계된 코일 온도의 결빙 방향 급락을 만듭니다.
+                        </p>
+                    </div>
+                </details>
+
+                <div class="desktop-only-sim">
+                    <h2 class="dos-label">데스크톱 도구</h2>
+                    <p>
+                        와이어시트 블록 배선은 포인터와 넓은 캔버스가 필요한 드래그 작업입니다. 노트북이나 데스크톱에서 이 페이지를 열어 제어 프로그램을 편집하세요. 장치 탭은 휴대전화에서도 읽기 쉬우며 이 와이어시트가 화면에 보이는지와 관계없이 프로그램은 장치를 계속 구동합니다.
+                    </p>
+                </div>
+
+                <div class="fbe-live">
+                    <div class="fbe-simbar">
+                        <button type="button" class="copy-btn" id="ddcw-fbe-run" data-fbe-action="run">일시정지</button>
+                        <button type="button" class="copy-btn" id="ddcw-fbe-reset" data-fbe-action="reset">초기화</button>
+                        <button type="button" class="copy-btn" id="ddcw-fbe-clear" data-fbe-action="clear">모두 지우기</button>
+                        <span class="fbe-status" id="ddcw-fbe-status" role="status" aria-live="polite">실행 중</span>
+                    </div>
+
+                    <div class="fbe-workspace">
+                        <div class="fbe-palette" id="ddcw-fbe-palette" aria-label="블록 팔레트"></div>
+                        <div class="fbe-canvas" id="ddcw-fbe-canvas" tabindex="0" role="region" aria-label="와이어시트 캔버스">
+                            <div class="fbe-canvas-inner" id="ddcw-fbe-inner"></div>
+                        </div>
+                    </div>
+
+                    <div class="fbe-inspector" id="ddcw-fbe-inspector"></div>
+
+                    <div class="fbe-legend">
+                        <span><span class="fbe-swatch fbe-sw-num"></span> 아날로그(숫자)</span>
+                        <span><span class="fbe-swatch fbe-sw-on"></span> 디지털 TRUE</span>
+                        <span><span class="fbe-swatch fbe-sw-off"></span> 디지털 FALSE</span>
+                    </div>
+                </div><!-- .fbe-live -->
+
+            </div><!-- #tab-wiresheet -->
+
+        </div>
+    </div>
+
+    {# This unit is 100 % air side — no valve, no outdoor-air damper, no
+       economizer, no hydronics — so nothing water- or mixing-related belongs
+       in this column even though the AHU page carries it. #}
+    {{ relatedLinks({
+        hub: {href: '/ko/forced-air/', label: '강제순환식 공조 참고 자료 허브'},
+        tools: [
+            {href: '/ko/tools/bacnet-priority.html', label: 'BACnet 우선순위 배열'},
+            {href: '/ko/tools/equipment-airflow.html', label: '장비 풍량 확인'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/ddc-workbench.html', label: 'DDC 워크벤치 — 공기조화기'},
+            {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'},
+            {href: '/ko/simulators/controller-wiring.html', label: '컨트롤러 배선 시뮬레이터'}
+        ],
+        lessons: [
+            {href: '/ko/education/reading-a-wiresheet.html', label: '와이어시트 읽기'},
+            {href: '/ko/education/function-blocks.html', label: '기능 블록 기초'},
+            {href: '/ko/education/comparators-and-deadband.html', label: '비교기 및 불감대'},
+            {href: '/ko/education/timers-and-delays.html', label: '타이머와 지연'},
+            {href: '/ko/education/status-and-proof.html', label: '상태 및 운전 확인 신호'},
+            {href: '/ko/education/bacnet-basics.html', label: 'BACnet 기초'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/wiresheet-traces.html', label: '와이어시트 추적 연습'},
+            {href: '/ko/practice/sequencing-scenarios.html', label: '시퀀싱 시나리오'},
+            {href: '/ko/practice/troubleshooting.html', label: '문제 해결'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/simulators/">← 모든 시뮬레이터</a>
+
+</main>
+{% endblock %}

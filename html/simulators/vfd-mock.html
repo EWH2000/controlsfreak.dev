@@ -4,9 +4,93 @@ description: Mock drive keypad — navigate a generic parameter tree and watch h
 canonical: https://controlsfreak.dev/simulators/vfd-mock.html
 nav: simulators
 keywords: fla amps hz drive keypad fault overload accel speed reference
+pageMessages:
+  groups:
+    motorData: MOTOR DATA
+    ramps: RAMPS
+    sources: SOURCES
+    io: I/O
+  parameters:
+    m01:
+      lcd: RATED FLA
+      name: Rated full-load amps
+    m02:
+      lcd: RATED VOLT
+      name: Rated voltage
+    m03:
+      lcd: RATED FREQ
+      name: Rated frequency
+    m04:
+      lcd: RATED RPM
+      name: Rated speed
+    r01:
+      lcd: ACCEL TIME
+      name: Accel time
+    r02:
+      lcd: DECEL TIME
+      name: Decel time
+    s01:
+      lcd: RUN SRC
+      name: Run command source
+    s02:
+      lcd: SPEED SRC
+      name: Speed reference source
+    s03:
+      lcd: MIN FREQ
+      name: Minimum frequency
+    s04:
+      lcd: MAX FREQ
+      name: Maximum frequency
+    i01:
+      lcd: KP SPEED
+      name: Keypad speed setpoint
+    i02:
+      lcd: PRESET SP1
+      name: Preset speed 1
+    i03:
+      lcd: DI1 FUNC
+      name: DI1 function
+  options:
+    keypad: KEYPAD
+    terminals: TERMINALS
+    network: NETWORK
+    run: RUN
+    jog: JOG
+    reset: RESET
+  lcd:
+    local: LOCAL
+    remote: REMOTE
+    running: RUNNING
+    stopped: STOPPED
+    actual: ACTUAL
+    reference: REF
+    menu: MENU
+    edit: EDIT
+    saveCancel: ENT save  ESC cancel
+  state:
+    atSpeed: AT SPEED
+    rampingUp: RAMPING UP
+    rampingDown: RAMPING DOWN
+    coastingDown: COASTING DOWN
+    stopped: STOPPED
+  mode:
+    local: LOCAL — keypad overrides source parameters
+    remote: REMOTE — drive follows configured sources
+  flash:
+    runLocal: RUN (LOCAL)
+    runOk: RUN OK
+    ignoredTerminal: "IGN: SRC=TERM, L/R"
+    ignoredNetwork: "IGN: SRC=NET, L/R"
+    stop: STOP
+    stopIgnoredDi: "STOP IGN: DI HW"
+    local: "> LOCAL"
+    remote: "> REMOTE"
+    networkRunSent: NET RUN sent
+    networkStopSent: NET STOP sent
+    preset: "> PRESET"
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -551,6 +635,7 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
     (function () {
         'use strict';
 
+        const msg = (key, values) => window.CFI18n.page(key, values);
 
         // ── Parameter tree ─────────────────────────────────────────────
         // `lcd` is the ALL-CAPS short name used on the 20-char display;
@@ -558,25 +643,25 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
         // carry { value, unit, step, min, max }; enums carry
         // { value: index, options: [labels] }. `value` mutates in place
         // when the user commits an edit.
-        const GROUPS = ['MOTOR DATA', 'RAMPS', 'SOURCES', 'I/O'];
+        const GROUPS = [msg('groups.motorData'), msg('groups.ramps'), msg('groups.sources'), msg('groups.io')];
         const PARAMS = [
             // Motor data
-            { id: 'M01', group: 0, lcd: 'RATED FLA',  name: 'Rated full-load amps',  value: 12.5,  unit: 'A',   step: 0.1,  min: 0.1, max: 200 },
-            { id: 'M02', group: 0, lcd: 'RATED VOLT', name: 'Rated voltage',          value: 480,   unit: 'V',   step: 10,   min: 100, max: 600 },
-            { id: 'M03', group: 0, lcd: 'RATED FREQ', name: 'Rated frequency',        value: 60,    unit: 'Hz',  step: 1,    min: 50,  max: 60  },
-            { id: 'M04', group: 0, lcd: 'RATED RPM',  name: 'Rated speed',            value: 1750,  unit: 'RPM', step: 50,   min: 600, max: 3600 },
+            { id: 'M01', group: 0, lcd: msg('parameters.m01.lcd'), name: msg('parameters.m01.name'), value: 12.5, unit: 'A', step: 0.1, min: 0.1, max: 200 },
+            { id: 'M02', group: 0, lcd: msg('parameters.m02.lcd'), name: msg('parameters.m02.name'), value: 480, unit: 'V', step: 10, min: 100, max: 600 },
+            { id: 'M03', group: 0, lcd: msg('parameters.m03.lcd'), name: msg('parameters.m03.name'), value: 60, unit: 'Hz', step: 1, min: 50, max: 60 },
+            { id: 'M04', group: 0, lcd: msg('parameters.m04.lcd'), name: msg('parameters.m04.name'), value: 1750, unit: 'RPM', step: 50, min: 600, max: 3600 },
             // Ramps
-            { id: 'R01', group: 1, lcd: 'ACCEL TIME', name: 'Accel time',             value: 10.0,  unit: 's',   step: 0.5,  min: 0.5, max: 300 },
-            { id: 'R02', group: 1, lcd: 'DECEL TIME', name: 'Decel time',             value: 10.0,  unit: 's',   step: 0.5,  min: 0.5, max: 300 },
+            { id: 'R01', group: 1, lcd: msg('parameters.r01.lcd'), name: msg('parameters.r01.name'), value: 10.0, unit: 's', step: 0.5, min: 0.5, max: 300 },
+            { id: 'R02', group: 1, lcd: msg('parameters.r02.lcd'), name: msg('parameters.r02.name'), value: 10.0, unit: 's', step: 0.5, min: 0.5, max: 300 },
             // Sources
-            { id: 'S01', group: 2, lcd: 'RUN SRC',    name: 'Run command source',    value: 1,     options: ['KEYPAD', 'TERMINALS', 'NETWORK'] },
-            { id: 'S02', group: 2, lcd: 'SPEED SRC',  name: 'Speed reference source', value: 2,     options: ['KEYPAD', 'TERMINALS', 'NETWORK'] },
-            { id: 'S03', group: 2, lcd: 'MIN FREQ',   name: 'Minimum frequency',     value: 0,     unit: 'Hz',  step: 1,    min: 0,   max: 60  },
-            { id: 'S04', group: 2, lcd: 'MAX FREQ',   name: 'Maximum frequency',     value: 60,    unit: 'Hz',  step: 1,    min: 20,  max: 60  },
+            { id: 'S01', group: 2, lcd: msg('parameters.s01.lcd'), name: msg('parameters.s01.name'), value: 1, options: [msg('options.keypad'), msg('options.terminals'), msg('options.network')] },
+            { id: 'S02', group: 2, lcd: msg('parameters.s02.lcd'), name: msg('parameters.s02.name'), value: 2, options: [msg('options.keypad'), msg('options.terminals'), msg('options.network')] },
+            { id: 'S03', group: 2, lcd: msg('parameters.s03.lcd'), name: msg('parameters.s03.name'), value: 0, unit: 'Hz', step: 1, min: 0, max: 60 },
+            { id: 'S04', group: 2, lcd: msg('parameters.s04.lcd'), name: msg('parameters.s04.name'), value: 60, unit: 'Hz', step: 1, min: 20, max: 60 },
             // I/O
-            { id: 'I01', group: 3, lcd: 'KP SPEED',   name: 'Keypad speed setpoint', value: 30.0,  unit: 'Hz',  step: 0.5,  min: 0,   max: 60  },
-            { id: 'I02', group: 3, lcd: 'PRESET SP1', name: 'Preset speed 1',        value: 25.0,  unit: 'Hz',  step: 0.5,  min: 0,   max: 60  },
-            { id: 'I03', group: 3, lcd: 'DI1 FUNC',   name: 'DI1 function',          value: 0,     options: ['RUN', 'JOG', 'RESET'] },
+            { id: 'I01', group: 3, lcd: msg('parameters.i01.lcd'), name: msg('parameters.i01.name'), value: 30.0, unit: 'Hz', step: 0.5, min: 0, max: 60 },
+            { id: 'I02', group: 3, lcd: msg('parameters.i02.lcd'), name: msg('parameters.i02.name'), value: 25.0, unit: 'Hz', step: 0.5, min: 0, max: 60 },
+            { id: 'I03', group: 3, lcd: msg('parameters.i03.lcd'), name: msg('parameters.i03.name'), value: 0, options: [msg('options.run'), msg('options.jog'), msg('options.reset')] },
         ];
 
         function byId(id) { return PARAMS.find(p => p.id === id); }
@@ -708,18 +793,18 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
         // flash text in those headers reads as confusing pseudo-status.
         // (RUN/STOP/L-R presses all return-to-home anyway, so the flash
         // landing on HOME's line 4 is the common path.)
-        function lrLabel() { return state.localMode ? 'LOCAL' : 'REMOTE'; }
+        function lrLabel() { return state.localMode ? msg('lcd.local') : msg('lcd.remote'); }
         function renderLcd() {
             const lines = ['', '', '', ''];
             if (state.mode === 'home') {
                 const running = isRunning();
-                const status  = running ? 'RUNNING' : 'STOPPED';
+                const status  = running ? msg('lcd.running') : msg('lcd.stopped');
                 lines[0] = pad20(status, lrLabel());
-                lines[1] = pad20('ACTUAL', state.actualHz.toFixed(1) + ' Hz');
-                lines[2] = pad20('REF',    activeSpeedRef().toFixed(1) + ' Hz');
+                lines[1] = pad20(msg('lcd.actual'), state.actualHz.toFixed(1) + ' Hz');
+                lines[2] = pad20(msg('lcd.reference'), activeSpeedRef().toFixed(1) + ' Hz');
                 lines[3] = state.flashUntil > Date.now() ? state.flashText : '';
             } else if (state.mode === 'menu') {
-                lines[0] = pad20('MENU', lrLabel());
+                lines[0] = pad20(msg('lcd.menu'), lrLabel());
                 const win = scrollWindow(GROUPS.length, state.groupIdx, 3);
                 for (let i = 0; i < win.count; i++) {
                     const idx = win.start + i;
@@ -738,7 +823,7 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
                 }
             } else if (state.mode === 'edit') {
                 const p = paramsInGroup(state.groupIdx)[state.paramIdx];
-                lines[0] = 'EDIT ' + p.id + ' ' + p.lcd;
+                lines[0] = msg('lcd.edit') + ' ' + p.id + ' ' + p.lcd;
                 lines[1] = '';
                 if (p.options) {
                     lines[2] = '> ' + p.options[state.editValue];
@@ -747,7 +832,7 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
                     // right-align inside 20 chars
                     lines[2] = pad20('', val);
                 }
-                lines[3] = 'ENT save  ESC cancel';
+                lines[3] = msg('lcd.saveCancel');
             }
             // BAS flare: one-shot character-flicker when LCD content
             // changes (not on every 50ms tick). Track the joined string
@@ -795,11 +880,11 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
 
             // State text reflects what the motor is doing right now.
             let stateLabel;
-            if (running && Math.abs(state.actualHz - cmd) < 0.1) stateLabel = 'AT SPEED';
-            else if (running && state.actualHz < cmd)            stateLabel = 'RAMPING UP';
-            else if (running && state.actualHz > cmd)            stateLabel = 'RAMPING DOWN';
-            else if (!running && state.actualHz > 0.1)           stateLabel = 'COASTING DOWN';
-            else                                                  stateLabel = 'STOPPED';
+            if (running && Math.abs(state.actualHz - cmd) < 0.1) stateLabel = msg('state.atSpeed');
+            else if (running && state.actualHz < cmd)            stateLabel = msg('state.rampingUp');
+            else if (running && state.actualHz > cmd)            stateLabel = msg('state.rampingDown');
+            else if (!running && state.actualHz > 0.1)           stateLabel = msg('state.coastingDown');
+            else                                                  stateLabel = msg('state.stopped');
             stateTxt.textContent = stateLabel;
 
             // Device-face LEDs: RUN lit while running, LOC amber in LOCAL.
@@ -810,9 +895,7 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
 
             // Local/Remote mode note below the bezel
             localInd.classList.toggle('local', state.localMode);
-            localTxt.textContent = state.localMode
-                ? 'LOCAL — keypad overrides source parameters'
-                : 'REMOTE — drive follows configured sources';
+            localTxt.textContent = state.localMode ? msg('mode.local') : msg('mode.remote');
 
             // External-input row activity: gray out the rows that the
             // current source parameters aren't listening to. They remain
@@ -914,16 +997,16 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
         function onRun() {
             backToHome();
             // LOCAL: keypad always runs the drive.
-            if (state.localMode) { state.keypadRun = true; flash('RUN (LOCAL)'); return; }
+            if (state.localMode) { state.keypadRun = true; flash(msg('flash.runLocal')); return; }
             const src = byId('S01').value;
-            if (src === 0) { state.keypadRun = true; flash('RUN OK'); }
+            if (src === 0) { state.keypadRun = true; flash(msg('flash.runOk')); }
             // Keypad RUN is correctly ignored when the run source isn't the
             // keypad — that realism is the lesson, but a bare "IGN: SRC=TERMS"
             // reads as a dead button. Name the source AND the fix (press L/R
             // to take local keypad control), and hold it a beat longer so the
             // press doesn't look swallowed (ux-audit #5). 20-char LCD line.
-            else if (src === 1) flash('IGN: SRC=TERM, L/R', 3500);
-            else if (src === 2) flash('IGN: SRC=NET, L/R', 3500);
+            else if (src === 1) flash(msg('flash.ignoredTerminal'), 3500);
+            else if (src === 2) flash(msg('flash.ignoredNetwork'), 3500);
         }
         function onStop() {
             backToHome();
@@ -934,9 +1017,9 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
             const wasRunning = isRunning();
             state.keypadRun = false;
             state.networkRun = false;
-            if (!isRunning() && wasRunning) flash('STOP');
-            else if (isRunning() && byId('S01').value === 1 && state.diClosed) flash('STOP IGN: DI HW');
-            else flash('STOP');
+            if (!isRunning() && wasRunning) flash(msg('flash.stop'));
+            else if (isRunning() && byId('S01').value === 1 && state.diClosed) flash(msg('flash.stopIgnoredDi'));
+            else flash(msg('flash.stop'));
         }
         function onLocalRemote() {
             backToHome();
@@ -947,7 +1030,7 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
             // after the override changes.
             state.keypadRun = false;
             state.networkRun = false;
-            flash(state.localMode ? '> LOCAL' : '> REMOTE');
+            flash(state.localMode ? msg('flash.local') : msg('flash.remote'));
         }
 
         // ── Wiring ─────────────────────────────────────────────────────
@@ -974,12 +1057,12 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
 
         document.getElementById('vfdm-net-run') .addEventListener('click', () => {
             state.networkRun = true;
-            flash('NET RUN sent');
+            flash(msg('flash.networkRunSent'));
             render();
         });
         document.getElementById('vfdm-net-stop').addEventListener('click', () => {
             state.networkRun = false;
-            flash('NET STOP sent');
+            flash(msg('flash.networkStopSent'));
             render();
         });
 
@@ -1000,7 +1083,7 @@ keywords: fla amps hz drive keypad fault overload accel speed reference
             diClosed.classList.toggle('on', state.diClosed);
             state.mode = 'home';
             state.editValue = null;
-            flash('> PRESET');
+            flash(msg('flash.preset'));
             render();
         }
         // The chips that drive applyPreset are bound from this page's head

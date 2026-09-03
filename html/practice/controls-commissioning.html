@@ -7,7 +7,7 @@ category: field
 keywords: point-to-point checkout functional testing startup commissioning override trend verification interlock freezestat turnover punch list
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -74,16 +74,16 @@ keywords: point-to-point checkout functional testing startup commissioning overr
 
         // Question bank lives in html/_data/quizzes/controls-commissioning.js
         // so the FAQPage JSON-LD emitted from head.njk can read the same source.
-        const questions = {{ quizzes['controls-commissioning'] | safeScriptJson | safe }};
+        const questions = {{ quizzes['controls-commissioning'] | localizedQuiz(locale, 'controls-commissioning') | safeScriptJson | safe }};
 
         // defaultCount is the site-wide 10 even though this bank holds 11 —
         // the engine draws a random 10 of them and presents that subset in
         // bank order, so nothing is stranded and a repeat run is a different
         // drill. See buildQueue() in quiz-engine.js.
         Quiz.mount('#quiz', questions, {
-            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            next: {{ page.fileSlug | nextQuiz(locale, collections.navPractice) | safeScriptJson | safe }},
             slug: 'controls-commissioning',
-            title: 'Controls Commissioning',
+            title: {{ title | cleanTitle | safeScriptJson | safe }},
             defaultCount: 10,
             defaultOrder: 'sequential'
         });

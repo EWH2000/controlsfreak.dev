@@ -7,7 +7,7 @@ category: forced-air
 pairedLesson: https://controlsfreak.dev/education/vav-systems.html
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -64,12 +64,12 @@ pairedLesson: https://controlsfreak.dev/education/vav-systems.html
 
         // Question bank lives in html/_data/quizzes/vav-systems.js
         // so the FAQPage JSON-LD emitted from head.njk can read the same source.
-        const questions = {{ quizzes['vav-systems'] | safeScriptJson | safe }};
+        const questions = {{ quizzes['vav-systems'] | localizedQuiz(locale, 'vav-systems') | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
-            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            next: {{ page.fileSlug | nextQuiz(locale, collections.navPractice) | safeScriptJson | safe }},
             slug: 'vav-systems',
-            title: 'VAV Systems',
+            title: {{ title | cleanTitle | safeScriptJson | safe }},
             defaultCount: 10,
             defaultOrder: 'sequential'
         });

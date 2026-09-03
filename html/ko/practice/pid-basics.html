@@ -1,0 +1,55 @@
+---
+title: PID 기초 퀴즈 — controlsfreak.dev
+description: PID의 비례·적분·미분항 역할, P 제어의 드룹, 빠른 리셋의 증상과 HVAC에서 PI 제어를 주로 쓰는 이유를 점검하는 10문항 퀴즈입니다.
+sourceContentHash: b5da3bf72394a2181ee457946164830d96fcbade1f7aeeb4dc468dd6935ae1f0
+canonical: https://controlsfreak.dev/ko/practice/pid-basics.html
+nav: practice
+category: controls
+pairedLesson: https://controlsfreak.dev/ko/education/pid-basics.html
+---
+{% extends "html/practice/pid-basics.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · PID 기초</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">PID 기초 퀴즈 <span class="tool-tag">제어</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/pid-basics.html">PID 기초</a> 학습 자료를 읽은 뒤 자가 점검해 보세요. 세 항의 역할과 절충 관계를 다루는 10문항입니다. 비례·적분·미분항이 각각 담당하는 일, P가 남기는 드룹과 적분항이 이를 없애는 원리, 지나치게 빠른 리셋의 증상, 노이즈가 있는 HVAC 루프에서 미분항을 보통 끄는 이유를 확인합니다. 각 문항의 해설에는 해당 내용이 나온 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/pid-parameter-translator.html', label: 'PID 파라미터 변환기'}
+        ],
+        lessons: [
+            {href: '/ko/education/pid-basics.html', label: 'PID 기초'},
+            {href: '/ko/education/function-blocks.html', label: '기능 블록 기초'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/pid-tuner.html', label: 'PID 튜닝 도우미'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/vfds.html', label: 'VFD 퀴즈'},
+            {href: '/ko/practice/function-blocks.html', label: '기능 블록 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

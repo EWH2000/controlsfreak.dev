@@ -6,9 +6,26 @@ nav: education
 category: fundamentals
 pairedQuiz: https://controlsfreak.dev/practice/vfds.html
 keywords: fla amps hz drive inverter speed torque carrier motor run
+pageMessages:
+  sources:
+    keypad: keypad
+    terminals: terminals (DI)
+    network: network
+  state:
+    running: 'RUNNING <span class="hz">at {speed} Hz</span>'
+    stopped: STOPPED
+  messages:
+    runFrom: 'Run command from {source}.'
+    speedFrom: 'Speed reference from {source}.'
+    ignored: 'Drive ignored RUN from {source} — run source is set to {configured}.'
+    startKeypad: 'To start it: press keypad RUN.'
+    startTerminals: 'To start it: close the DI run input.'
+    startNetwork: 'To start it: send a network RUN command.'
+  anecdote: >-
+    I lost half an afternoon to exactly this once. New chiller plant, drives on BACnet, I could see the speed reference writing through to 30 Hz on the device readout — and the drive sat there stopped. Spent an hour re-checking the sequence, the AV mapping, the network priority array. Finally pulled the manual and found the run-source parameter still set to terminals from the factory. The DI for run command was sitting open on terminal 7. Two parameters, not one.
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -786,7 +803,11 @@ keywords: fla amps hz drive inverter speed torque carrier motor run
         'use strict';
 
         const SOURCES = ['keypad', 'terminals', 'network'];
-        const SOURCE_LABELS = { keypad: 'keypad', terminals: 'terminals (DI)', network: 'network' };
+        const SOURCE_LABELS = {
+            keypad: CFI18n.page('sources.keypad'),
+            terminals: CFI18n.page('sources.terminals'),
+            network: CFI18n.page('sources.network')
+        };
 
         // — DOM
         const runSrcEl   = document.getElementById('vfd-run-src');
@@ -875,9 +896,9 @@ keywords: fla amps hz drive inverter speed torque carrier motor run
             const running = isRunning();
             stateEl.classList.toggle('running', running);
             if (running) {
-                stateEl.innerHTML = 'RUNNING <span class="hz">at ' + state.speedHz + ' Hz</span>';
+                stateEl.innerHTML = CFI18n.page('state.running', { speed: state.speedHz });
             } else {
-                stateEl.textContent = 'STOPPED';
+                stateEl.textContent = CFI18n.page('state.stopped');
             }
 
             // BAS flare: LED tracks the running state; the row gets a
@@ -896,25 +917,25 @@ keywords: fla amps hz drive inverter speed torque carrier motor run
             // Messages explaining the current state
             const msgs = [];
             if (running) {
-                msgs.push('Run command from ' + SOURCE_LABELS[state.runSource] + '.');
-                msgs.push('Speed reference from ' + SOURCE_LABELS[state.speedSource] + '.');
+                msgs.push(CFI18n.page('messages.runFrom', { source: SOURCE_LABELS[state.runSource] }));
+                msgs.push(CFI18n.page('messages.speedFrom', { source: SOURCE_LABELS[state.speedSource] }));
             } else {
                 // If the user just attempted a run from a source that isn't the
                 // configured run source, narrate the ignore
                 const a = state.lastAttempt;
                 if (a && a.verb === 'run' && a.source !== state.runSource) {
-                    msgs.push(
-                        'Drive ignored RUN from ' + SOURCE_LABELS[a.source] +
-                        ' — run source is set to ' + state.runSource.toUpperCase() + '.'
-                    );
+                    msgs.push(CFI18n.page('messages.ignored', {
+                        source: SOURCE_LABELS[a.source],
+                        configured: state.runSource.toUpperCase()
+                    }));
                 }
                 // Always remind what would actually start the drive
                 if (state.runSource === 'keypad') {
-                    msgs.push('To start it: press keypad RUN.');
+                    msgs.push(CFI18n.page('messages.startKeypad'));
                 } else if (state.runSource === 'terminals') {
-                    msgs.push('To start it: close the DI run input.');
+                    msgs.push(CFI18n.page('messages.startTerminals'));
                 } else if (state.runSource === 'network') {
-                    msgs.push('To start it: send a network RUN command.');
+                    msgs.push(CFI18n.page('messages.startNetwork'));
                 }
             }
             msgsEl.innerHTML = msgs.map(function (m) { return '<div>' + m + '</div>'; }).join('');
@@ -931,14 +952,8 @@ keywords: fla amps hz drive inverter speed torque carrier motor run
                 !state.diClosed;
             if (classicMistake) state.anecdoteShown = true;
             if (state.anecdoteShown) {
-                anecdoteEl.innerHTML =
-                    '<div class="widget-anecdote">' +
-                    'I lost half an afternoon to exactly this once. New chiller plant, drives on BACnet, ' +
-                    'I could see the speed reference writing through to 30 Hz on the device readout — and the drive ' +
-                    'sat there stopped. Spent an hour re-checking the sequence, the AV mapping, the network priority ' +
-                    'array. Finally pulled the manual and found the run-source parameter still set to terminals from ' +
-                    'the factory. The DI for run command was sitting open on terminal 7. Two parameters, not one.' +
-                    '</div>';
+                anecdoteEl.innerHTML = '<div class="widget-anecdote">' +
+                    CFI18n.page('anecdote') + '</div>';
             } else {
                 anecdoteEl.innerHTML = '';
             }

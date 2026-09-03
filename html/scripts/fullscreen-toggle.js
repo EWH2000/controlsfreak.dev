@@ -56,7 +56,7 @@
 
     function syncButton(btn, isFs) {
         btn.setAttribute('aria-pressed', isFs ? 'true' : 'false');
-        btn.setAttribute('aria-label', isFs ? 'Exit fullscreen' : 'Enter fullscreen');
+        btn.setAttribute('aria-label', window.CFI18n.t(isFs ? 'fullscreen.exit' : 'fullscreen.enter'));
     }
 
     // Background containment (codebase-issues #163): the overlay covers

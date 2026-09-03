@@ -1,0 +1,256 @@
+---
+title: TXV와 EEV 비교 — controlsfreak.dev
+description: 기계식 TXV의 힘 평형과 전자식 EEV의 제어 루프를 비교하고, 부하가 변할 때 각 팽창밸브가 목표 과열도를 유지하는 원리를 설명합니다.
+sourceContentHash: 2b4b8136b353b7f371452b72c37e78a1b6f07f127f860a5ecf899388a4c5478d
+canonical: https://controlsfreak.dev/ko/education/metering-devices-txv-eev.html
+nav: education
+category: refrigerant
+pairedQuiz: https://controlsfreak.dev/ko/practice/metering-devices-txv-eev.html
+keywords: TXV EEV 오리피스 피스톤 과열도 감온통 팽창장치 팽창밸브
+---
+{% extends "html/education/metering-devices-txv-eev.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">학습 · TXV와 EEV 비교</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">TXV와 EEV 비교 <span class="tool-tag">HVAC</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                <a href="/ko/education/refrigerant-cycle-basics.html">냉매 사이클 기초</a>에서는 팽창장치를 냉매 사이클의 네 구성요소 중 하나로 소개하고 내부 구조는 뒤로 미뤘습니다. <a href="/ko/education/superheat-subcooling.html">과열도와 과냉도</a>에서는 팽창장치가 유닛 컨트롤러와 함께 <em>유지</em>하는 대상이 목표 <button type="button" data-gloss="superheat">과열도</button>임을 보았습니다. 고정 오리피스가 아니라 피드백 요소입니다. 이 페이지에서 그 내부를 엽니다. 같은 역할을 하는 두 가지 일반적인 설계가 있습니다. <strong>온도식 팽창밸브(TXV)</strong>는 흡입관의 감온통을 이용해 기계적으로 동작하고, <strong>전자식 팽창밸브(EEV)</strong>는 스테퍼 모터와 컨트롤러 알고리즘을 이용해 전자적으로 동작합니다. 서비스 기술자는 현장에서 주로 TXV를 만나고 BMS 엔지니어는 컨트롤러에서 주로 EEV를 만납니다. 어느 것이 무엇인지, 각 밸브가 매 순간 개도를 어떻게 결정하는지 알면 두 장치의 동작을 가장 명확하게 구분할 수 있습니다.
+            </p>
+
+            <h2 class="subhead" id="what-it-does">팽창장치의 역할</h2>
+
+            <p>
+                간단히 복습하겠습니다. 응축기를 떠나는 고압 측 액체는 따뜻하고 가압되어 있으며, 저압 측 증발기는 비등하며 열을 흡수할 차가운 저압 냉매가 필요합니다. 팽창장치는 경계에 놓여 작은 포트를 통해 액체를 교축하고 압력을 급격히 낮춥니다. 포트 상류에는 고압의 따뜻한 액체가, 하류에는 증발기로 향하는 액체와 플래시 가스의 차가운 저압 혼합물이 있습니다. 여기까지는 배관의 제한부일 뿐이며 고정 오리피스나 모세관도 같은 일을 합니다. TXV 또는 EEV가 다른 점은 포트가 고정되어 있지 않다는 것입니다. 두 밸브 모두 하류 상황에 반응해 포트 개도를 <em>조절</em>하며, 조절 목표는 증발기 출구의 <em><button type="button" data-gloss="superheat">과열도</button></em>입니다. 공급이 너무 적으면 코일이 굶주려 SH가 올라가고, 너무 많으면 액체가 코일을 빠져나와 SH가 0에 가까워진 뒤 음수가 됩니다. 밸브는 이 값을 목표에 유지합니다.
+            </p>
+
+            <h2 class="subhead" id="txv">TXV — 기계식 제어 루프</h2>
+
+            <p>
+                TXV는 금속으로 만든 제어 루프입니다. 밸브 본체 내부의 다이어프램에 세 압력이 작용하고, 다이어프램 위치가 포트 개도를 결정합니다. 증발기 바로 하류의 흡입관에 단단히 고정한 감온통에는 흔히 시스템과 같은 종류의 냉매가 충전되어 있습니다. 가는 모세관이 감온통을 다이어프램 상부에 연결합니다. 흡입관 온도가 얼마이든 감온통은 몇 초 안에 같은 온도가 되며, 그 온도에서 충전 냉매의 포화압력이 다이어프램을 <em>아래로</em> 누릅니다. 다이어프램 아래에서는 두 힘이 <em>위로</em> 작용합니다. 대부분 밸브에서 조절 가능하며 설치 시 목표 <button type="button" data-gloss="superheat">과열도</button>에 맞추는 단단한 스프링과, 감온통 근처 흡입관에 연결한 작은 외부 균압관을 통해 하부 챔버로 전달되는 증발기 압력입니다.
+            </p>
+
+            <p>
+                이것이 힘의 평형입니다. 위쪽 감온통 압력은 밸브를 열고, 아래쪽 스프링과 증발기 압력은 밸브를 닫습니다. 두 측의 힘이 같아지는 위치에 다이어프램이 자리 잡고, 다이어프램에 연결된 니들도 그에 맞는 포트 위치에 멈춥니다. 이제 <button type="button" data-gloss="superheat">과열도</button>가 변할 때를 따라가 보겠습니다. 증발기 부하가 줄었다고 가정합니다. 온화한 날씨에 코일을 지나는 공기가 차가워졌거나 공조 공간의 댐퍼가 닫혔을 수 있습니다. 냉매로 들어오는 열이 줄면 공급된 액체 1파운드당 비등량도 줄고 액체가 코일 더 깊은 곳까지 남으며, 감온통 위치의 흡입관이 <em>더 차가워집니다</em>. 감온통 충전 냉매도 차가워져 포화압력과 다이어프램을 누르는 힘이 줄어듭니다. 스프링과 증발기 압력이 다이어프램을 위로 밀어 포트를 조금 닫습니다. 냉매 공급량이 줄면 코일이 부하를 따라잡아 남아 있던 액체가 모두 비등하고 흡입온도가 다시 올라가며, 더 작은 질량유량에서 같은 목표 <button type="button" data-gloss="superheat">과열도</button>로 안정됩니다. 부하가 반대로 변하면 과정도 반대로 움직입니다. 감온통이 따뜻해지고 아래 방향 힘이 커져 포트가 열리고 공급량이 늘며 증발기가 더 큰 부하를 처리합니다. 전원, 컨트롤러, 입력할 설정값 없이 밸브가 이 과정을 계속 조용히 수행합니다.
+            </p>
+
+            <svg class="edu-svg" id="txv-cutaway" viewBox="0 0 720 460"
+                 role="img" aria-labelledby="txv-cutaway-title txv-cutaway-desc"
+                 font-family="var(--mono)">
+                <title id="txv-cutaway-title">온도식 팽창밸브 — 기계식 힘 평형</title>
+                <desc id="txv-cutaway-desc">온도식 팽창밸브의 단면도입니다. 그림 위쪽에는 차분한 파란색의 수평 흡입관이 있으며 오른쪽 화살표는 증기가 압축기로 향함을 나타냅니다. 오른쪽 흡입관 아래에는 작은 타원형 감온통이 고정되어 있습니다. 가는 모세관이 감온통에서 완만한 곡선으로 내려가 그림 중앙 밸브 본체 상단에 연결됩니다. 밸브 본체는 수평 다이어프램 선으로 상부와 하부 챔버가 나뉜 세로 직사각형입니다. 상부 챔버에는 감온통 압력·열림이라는 주황색 아래 방향 화살표가 있습니다. 하부 챔버에는 스프링 기호와 스프링 + 증발기 압력·닫힘이라는 차분한 파란색 위 방향 화살표가 있습니다. 하부 챔버 아래에는 다이어프램에 연결된 니들이 본체 하단 포트를 향합니다. 주황색 수평 배관이 왼쪽에서 밸브 본체로 들어오며 고압 액체 입구라고 표시합니다. 차분한 파란색 세로 배관이 본체 아래로 나가며 증발기로 향하는 저압 혼합물 출구라고 표시합니다. 외부 균압관인 가는 점선이 흡입관에서 내려와 하부 챔버 측면으로 연결되어 다이어프램 아래에 증발기 압력을 전달합니다.</desc>
+
+                <line x1="60" y1="80" x2="660" y2="80"
+                      stroke="var(--blue-cool)" stroke-width="6"/>
+                <polygon points="660,73 674,80 660,87" fill="var(--blue-cool)"/>
+                <text x="60" y="65" font-size="10" fill="var(--blue-cool)">흡입관 · 증기 → 압축기</text>
+
+                <g id="txv-bulb">
+                    <ellipse cx="480" cy="103" rx="34" ry="11"
+                             fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <line x1="456" y1="80" x2="456" y2="98" stroke="var(--text-dim)" stroke-width="1.2"/>
+                    <line x1="504" y1="80" x2="504" y2="98" stroke="var(--text-dim)" stroke-width="1.2"/>
+                    <text x="525" y="64" font-size="10" fill="var(--text)">감온통(흡입온도 감지)</text>
+                </g>
+
+                <path d="M 466 113 Q 410 145 380 195" fill="none"
+                      stroke="var(--text-dim)" stroke-width="1.6"/>
+                <text x="420" y="160" font-size="10" fill="var(--text-dim)">모세관</text>
+
+                <rect x="270" y="195" width="200" height="190" rx="3"
+                      fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+
+                <text x="370" y="220" text-anchor="middle" font-size="10" fill="var(--heat)">감온통 압력 · 열림</text>
+                <line x1="370" y1="230" x2="370" y2="252" stroke="var(--heat)" stroke-width="2"/>
+                <polygon points="365,250 375,250 370,262" fill="var(--heat)"/>
+
+                <line x1="282" y1="272" x2="458" y2="272"
+                      stroke="var(--text-bright)" stroke-width="2.5"/>
+                <text x="478" y="276" font-size="10" fill="var(--text-bright)">다이어프램</text>
+
+                <text x="370" y="295" text-anchor="middle" font-size="10" fill="var(--blue-cool)">스프링 + 증발기 압력 · 닫힘</text>
+                <line x1="370" y1="320" x2="370" y2="311" stroke="var(--blue-cool)" stroke-width="2"/>
+                <polygon points="365,313 375,313 370,301" fill="var(--blue-cool)"/>
+
+                <path d="M 350 332 q 5 -5 10 0 q 5 5 10 0 q 5 -5 10 0 q 5 5 10 0"
+                      fill="none" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                <line x1="370" y1="272" x2="370" y2="284" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="370" y1="299" x2="370" y2="358" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <polygon points="362,348 378,348 370,365" fill="var(--text-dim)"
+                         stroke="var(--text)" stroke-width="1.2"/>
+                <text x="395" y="354" font-size="10" fill="var(--text-dim)">니들</text>
+
+                <line x1="334" y1="385" x2="358" y2="385" stroke="var(--text)" stroke-width="2.8"/>
+                <line x1="382" y1="385" x2="406" y2="385" stroke="var(--text)" stroke-width="2.8"/>
+                <text x="362" y="401" text-anchor="end" font-size="10" fill="var(--text)">포트 / 시트</text>
+
+                <line x1="60" y1="385" x2="268" y2="385"
+                      stroke="var(--heat)" stroke-width="6"/>
+                <polygon points="260,378 274,385 260,392" fill="var(--heat)"/>
+                <text x="60" y="372" font-size="10" fill="var(--heat)">고압 액체 입구(액관에서)</text>
+
+                <line x1="370" y1="385" x2="370" y2="440"
+                      stroke="var(--blue-cool)" stroke-width="6"/>
+                <polygon points="363,432 377,432 370,448" fill="var(--blue-cool)"/>
+                <text x="390" y="430" font-size="10" fill="var(--blue-cool)">저압 혼합물 출구 → 증발기</text>
+
+                <path d="M 570 80 V 305 H 470" fill="none"
+                      stroke="var(--text-dim)" stroke-width="1.4" stroke-dasharray="4 3"/>
+                <text x="582" y="175" font-size="9" font-style="italic" fill="var(--text-dim)">외부</text>
+                <text x="582" y="189" font-size="9" font-style="italic" fill="var(--text-dim)">균압관</text>
+                <text x="582" y="203" font-size="9" font-style="italic" fill="var(--text-dim)">(증발기 압력을</text>
+                <text x="582" y="217" font-size="9" font-style="italic" fill="var(--text-dim)">하부 챔버로 전달)</text>
+            </svg>
+            <div class="edu-legend txv-leg">
+                <span><span class="sw hot"></span>포트를 여는 힘(감온통 압력)</span>
+                <span><span class="sw cold"></span>포트를 닫는 힘(스프링&nbsp;+&nbsp;증발기&nbsp;압력)</span>
+                <span><span class="sw force"></span>다이어프램 / 기계 부품</span>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                그림과 함께 알아둘 실무 사항이 있습니다. 스프링은 <em>목표</em> <button type="button" data-gloss="superheat">과열도</button>를 정합니다. 스프링 힘이 클수록 SH 목표가 높습니다. 평형을 맞추려면 감온통이 더 따뜻해져 아래 방향 힘을 더 만들어야 하기 때문입니다. 서비스 기술자는 밸브 하단의 조정 나사를 조금씩 돌려 스프링 장력을 바꾸며, 회전당 SH 변화량은 제조사 데이터시트에 나옵니다. 외부 균압관은 보기보다 중요합니다. 균압관이 없으면 다이어프램 아래 압력은 밸브 출구 바로 뒤의 압력입니다. 증발기 압력강하가 큰 시스템에서는 이 압력이 실제 감온통 위치의 압력과 의미 있게 다릅니다. 균압관은 감온통 위치의 흡입관 압력을 하부 챔버로 되돌려, 힘의 평형이 밸브 직후가 아니라 코일 출구에서 일어나는 일을 반영하게 합니다. 오래되었거나 매우 작은 시스템에서는 생략할 수 있고 내부 균압형 TXV도 있지만, 밸브와 코일 사이에 다회로 분배기가 있는 시스템에는 외부 균압관이 필요합니다.
+            </p>
+
+            <div class="callout">
+                <h3>현장 메모 <span>· TXV와 가장 헷갈리기 쉬운 장치</span></h3>
+                <p>흡입관에 고정되어 가는 관으로 벽의 상자에 연결된 감온통은 덕트에 고정되어 가는 전선으로 컨트롤러에 연결된 회기온도 센서와 매우 비슷합니다. 형태와 설치 방식이 같습니다. 구분할 단서는 감온통이 닿은 배관입니다. 덕트 단열재가 아니라 노출 동관이며, 아래쪽 본체의 다른 연결부도 저전압 전선이 아니라 냉매 배관입니다. BMS 분야에서 오래 일했지만 기계실 경험이 없는 사람은 둘을 혼동하기도 합니다. 한 번 구분하고 나면 실루엣을 놓치기 어렵습니다. TXV 감온통은 냉매 사이클의 상징적인 형태 중 하나이며, 직접 정비하지 않을 유닛에서도 가리킬 수 있을 만큼 알아둘 가치가 있습니다.</p>
+            </div>
+
+            <h2 class="subhead" id="eev">EEV — 전자식 제어 루프</h2>
+
+            <p>
+                EEV도 <button type="button" data-gloss="superheat">과열도</button>를 유지하도록 포트를 조절하는 같은 일을 하지만, 기계식 힘 평형을 디지털 제어 루프로 대체합니다. 감지 장치는 흡입관에 설치한 압력 트랜스듀서와 온도 센서이며, 두 장치 모두 패키지 장비에서는 유닛 컨트롤러에, 현장 조립 시스템과 냉동기에서는 때때로 BMS 자체에 배선됩니다. 컨트롤러가 두 입력을 읽고 측정 압력의 포화온도를 조회한 뒤 빼서 <button type="button" data-gloss="superheat">과열도</button>를 계산하고 파라미터에 저장된 목표값과 비교합니다. 오차 방향에 따라 밸브 상단 스테퍼 모터에 명령해 니들을 몇 스텝 더 열거나 닫습니다. 스테퍼는 전원이 꺼져도 위치를 유지합니다. 전원이 없으면 움직이지 않고 마지막 명령 위치에 그대로 있습니다. 일반적인 EEV 포트는 완전 닫힘에서 완전 열림까지 수백~수천 개의 개별 스텝을 가지며, 이것이 BMS가 사용하는 분해능입니다.
+            </p>
+
+            <p>
+                제어 루프는 PID 또는 더 단순한 비례 + 불감대 방식입니다. 컨트롤러 제조사가 알고리즘을 선택하고 몇 가지 튜닝 파라미터(목표 SH, 이득, 때로는 적분 시간)를 제공합니다. BMS에서는 익숙한 형태의 포인트 목록을 봅니다. <em><button type="button" data-gloss="superheat">실제 과열도</button></em>, <em><button type="button" data-gloss="superheat">과열도 설정값</button></em>, <em>밸브 위치</em>, 때로는 <em>밸브 위치 오버라이드</em>가 있으며 트렌드 선은 다른 피드백 루프와 같습니다. EEV가 TXV보다 유리한 점은 전자장치의 일반적인 장점입니다. 공구 없이 목표를 바꾸고, 부하 변화에 더 빨리 반응하고, 운전 조건별로 다른 SH를 유지할 수 있으며(저부하에서 증발기를 최대한 사용하도록 SH를 낮추는 등), 그래픽에서 위치 값을 볼 수 있습니다. 불리한 점도 전자장치의 일반적인 단점입니다. 센서 드리프트는 하류에서 문제가 생길 때까지 보이지 않고, 고착된 스테퍼는 트렌드의 평평한 선처럼 보이며, <button type="button" data-gloss="hunting">헌팅</button>하는 제어 알고리즘은 기계적 감쇠의 도움 없이 계속 <button type="button" data-gloss="hunting">헌팅</button>합니다.
+            </p>
+
+            <svg class="edu-svg" id="txv-eev-stepper" viewBox="0 0 720 345"
+                 role="img" aria-labelledby="txv-eev-stepper-title txv-eev-stepper-desc"
+                 font-family="var(--mono)">
+                <title id="txv-eev-stepper-title">전자식 팽창밸브 — 컨트롤러 구동 루프</title>
+                <desc id="txv-eev-stepper-desc">전자식 팽창밸브의 제어 루프를 그린 블록도입니다. 그림 위쪽에는 차분한 파란색 흡입관이 있고 오른쪽 화살표는 증기가 압축기로 향함을 나타냅니다. 배관 오른쪽 아래에는 P라고 표시한 작은 원형 압력 트랜스듀서와 T라고 표시한 작은 직사각형 온도 센서가 있습니다. 두 센서의 가는 신호선이 그림 중앙의 유닛 컨트롤러 또는 BMS 직사각형 상자로 내려갑니다. 컨트롤러 안에는 과열도 계산, 설정값 비교, 포트 위치 명령이라는 짧은 설명이 있습니다. 신호선이 컨트롤러 아래에서 나와 단순화한 직사각형 밸브 본체 위의 스테퍼 모터 상자로 연결됩니다. 주황색 수평 배관이 왼쪽에서 밸브 본체로 들어오며 고압 액체 입구라고 표시하고, 차분한 파란색 세로 배관이 본체 아래로 나가며 증발기로 향하는 저압 혼합물 출구라고 표시합니다.</desc>
+
+                <line x1="60" y1="50" x2="660" y2="50"
+                      stroke="var(--blue-cool)" stroke-width="6"/>
+                <polygon points="660,43 674,50 660,57" fill="var(--blue-cool)"/>
+                <text x="60" y="35" font-size="10" fill="var(--blue-cool)">흡입관 · 증기 → 압축기</text>
+
+                <circle cx="420" cy="72" r="13"
+                        fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.8"/>
+                <text x="420" y="76" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text)">P</text>
+                <line x1="420" y1="59" x2="420" y2="50" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                <rect x="475" y="60" width="26" height="22" rx="2"
+                      fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.8"/>
+                <text x="488" y="76" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text)">T</text>
+                <line x1="488" y1="60" x2="488" y2="50" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                <path d="M 420 85 V 130 H 360 V 165" fill="none"
+                      stroke="var(--text-dim)" stroke-width="1.4"/>
+                <path d="M 488 82 V 145 H 400 V 165" fill="none"
+                      stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                <rect x="232" y="165" width="296" height="70" rx="3"
+                      fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                <text x="380" y="188" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">유닛 컨트롤러 / BMS</text>
+                <text x="380" y="208" text-anchor="middle" font-size="10" fill="var(--text-dim)">SH = T − T_sat(P) 계산, 설정값 비교,</text>
+                <text x="380" y="222" text-anchor="middle" font-size="10" fill="var(--text-dim)">포트 위치 스텝 명령</text>
+
+                <path d="M 380 235 V 260" fill="none"
+                      stroke="var(--text-dim)" stroke-width="1.4"/>
+                <polygon points="375,256 385,256 380,268" fill="var(--text-dim)"/>
+
+                <rect x="340" y="270" width="80" height="22" rx="3"
+                      fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                <text x="380" y="285" text-anchor="middle" font-size="10" font-weight="600" fill="var(--text-bright)">스테퍼</text>
+
+                <rect x="320" y="292" width="120" height="14" rx="2"
+                      fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+
+                <line x1="60" y1="299" x2="318" y2="299"
+                      stroke="var(--heat)" stroke-width="6"/>
+                <polygon points="310,292 324,299 310,306" fill="var(--heat)"/>
+                <text x="60" y="286" font-size="10" fill="var(--heat)">고압 액체 입구(액관에서)</text>
+
+                <line x1="380" y1="306" x2="380" y2="335"
+                      stroke="var(--blue-cool)" stroke-width="6"/>
+                <polygon points="373,327 387,327 380,343" fill="var(--blue-cool)"/>
+                <text x="400" y="325" font-size="10" fill="var(--blue-cool)">저압 혼합물 출구 → 증발기</text>
+            </svg>
+
+            <p style="margin-top:1.25rem;">
+                TXV 포트를 닫았던 같은 부하 변화는 다른 경로를 통해 EEV 포트도 닫습니다. 코일 통과 공기 냉각 → 비등량 감소 → 흡입관 냉각 → 흡입압력은 조금만 변하고 흡입온도 하강 → 컨트롤러가 계산한 <button type="button" data-gloss="superheat">과열도</button>가 설정값 아래로 하강 → 알고리즘이 포트 위치 명령 감소 → 스테퍼가 명령한 스텝만큼 니들을 닫음 → 코일 유입 질량유량 감소 → 증발기에 남은 액체가 모두 비등 → SH가 설정값으로 복귀합니다. 컨트롤러, 감온통, 다이어프램은 모두 같은 종류의 일을 하며 수단만 다릅니다. 유닛 컨트롤러 트렌드 그래픽에서 루프 동작을 볼 수 있습니다. 밸브 위치가 스텝 단위로 바뀌고 <button type="button" data-gloss="superheat">과열도</button>는 몇 도의 리플과 함께 목표를 따르며 둘 사이 관계가 질서 있게 보여야 합니다. 밸브 위치가 0% 또는 100%에 <button type="button" data-gloss="railed">상·하한 고정</button>되었는데 <button type="button" data-gloss="superheat">과열도</button>가 여전히 목표에서 벗어나면 루프의 제어 여유가 소진된 것입니다. 이제 공급량이 제한 요소가 아니라 냉매 충전량, 잘못된 코일 부하 또는 거짓말하는 센서가 문제입니다.
+            </p>
+
+            <h2 class="subhead" id="surfaces">같은 역할, 서로 다른 두 인터페이스</h2>
+
+            <p>
+                주로 BMS에서 일한다면 EEV 인터페이스를 보게 됩니다. 포인트로 표시되는 밸브 위치와 <button type="button" data-gloss="superheat">과열도</button>, 변경할 수 있는 설정값이 있습니다. TXV는 네트워크에 아무 정보도 올리지 않습니다. BMS가 TXV가 있는 패키지 유닛을 볼 때 냉매 측 포인트는 보통 흡입·토출 압력뿐이고 팽창장치는 측정값에 암묵적으로 포함됩니다. 장비에 공구를 사용하는 시간이 많다면 TXV 인터페이스를 봅니다. 시스템 <button type="button" data-gloss="superheat">과열도</button>가 비정상일 때 직접 점검하는 장치이며, 문제가 생기면 흡입관 감온통 위치부터 확인합니다. 느슨한 스트랩, 누락된 단열, 감온통 충전 손실이 모두 흔합니다. 제어 기술자와 기계 기술자가 같은 시스템을 두고 의견을 나누면 같은 밸브를 두 방향에서 설명하며 이름이 항상 일치하지 않을 수 있습니다. 두 인터페이스를 모두 알면 그 대화를 연결할 수 있습니다.
+            </p>
+
+            <h2 class="subhead" id="worked-example">계산 예시 — 부하가 변할 때 과열도 유지</h2>
+
+            <p>
+                <a href="/ko/education/superheat-subcooling.html">과열도와 과냉도</a>에서 사용한 같은 R-410A 분리형 시스템을 가져오겠습니다. 일반적인 운전일의 정상상태에서 흡입 측 게이지는 <strong><span data-us="118 psig" data-metric="814 kPag">118 psig</span></strong>, 흡입관 온도계는 <strong><span data-us="50 °F" data-metric="10.0 °C">50 °F</span></strong>를 가리켜 <button type="button" data-gloss="superheat">과열도</button>는 <code><span data-us="50 − 40 = 10 °F" data-metric="10.0 − 4.4 = 5.6 °C">50 − 40 = 10 °F</span></code>입니다. 액체 측 게이지는 <strong><span data-us="340 psig" data-metric="2344 kPag">340 psig</span></strong>, 액관 온도계는 <strong><span data-us="95 °F" data-metric="35.0 °C">95 °F</span></strong>를 가리켜 <button type="button" data-gloss="subcooling">과냉도</button>는 <code><span data-us="105 − 95 = 10 °F" data-metric="40.6 − 35.0 = 5.6 °C">105 − 95 = 10 °F</span></code>입니다. 한 경우에는 TXV, 다른 경우에는 EEV인 팽창장치가 코일 부하에 필요한 유량으로 증발기에 냉매를 공급해 <span data-us="10 °F" data-metric="5.6 °C">10 °F</span> <button type="button" data-gloss="superheat">과열도</button>를 유지합니다.
+            </p>
+
+            <p>
+                구름이 지나가며 외기온이 몇 도 내려가고 실내 회기온도도 함께 낮아집니다. 부하와 함께 증발기 코일로 들어오는 열이 줄어듭니다. 팽창장치의 현재 포트 위치에서는 코일이 비등시킬 수 있는 양보다 많은 냉매가 공급되어 액체가 흡입 헤더에 더 가까운 곳까지 남고, 감온통 위치의 흡입관 온도가 떨어지기 시작합니다. 몇 도만 변해도 흡입온도가 <span data-us="50 °F" data-metric="10.0 °C">50 °F</span>에서 예를 들어 <span data-us="47 °F" data-metric="8.3 °C">47 °F</span>로 내려갑니다. 이때 압력이 같은 <span data-us="118 psig" data-metric="814 kPag">118 psig</span>라면 <button type="button" data-gloss="superheat">과열도</button>가 <span data-us="10 °F" data-metric="5.6 °C">10 °F</span>에서 <span data-us="7 °F" data-metric="3.9 °C">7 °F</span> 쪽으로 내려갑니다.
+            </p>
+
+            <p>
+                <strong>TXV 시스템</strong>에서는 감온통이 흡입관과 함께 차가워집니다. 감온통 충전 냉매가 수축해 포화압력과 다이어프램을 누르는 힘이 줄어듭니다. 스프링과 증발기 압력이 새 평형에서 더 커져 다이어프램이 조금 올라갑니다. 니들도 함께 올라가며 전체 이동거리의 아주 작은 일부만큼 포트가 좁아집니다. 니들은 다이어프램과 함께 수직으로 움직일 뿐 회전하지 않으며, "돌리는" 것은 조정 나사입니다. 코일 유입 질량유량이 새로운 비등량에 맞게 줄고 남아 있던 액체가 상변화를 끝내며 흡입온도가 올라갑니다. 감온통은 스프링 힘과 목표 평형을 만드는 온도에서 안정됩니다. 컨트롤러나 설정값 변경 없이 더 작은 질량유량으로 시스템이 <span data-us="10 °F" data-metric="5.6 °C">10 °F</span> <button type="button" data-gloss="superheat">과열도</button>로 돌아옵니다.
+            </p>
+
+            <p>
+                <strong>EEV 시스템</strong>에서는 흡입관 온도 센서가 더 낮은 값을 보고하고 압력 트랜스듀서는 거의 같은 <span data-us="118 psig" data-metric="814 kPag">118 psig</span>를 보고합니다. 부하가 낮아져 압력도 약간 떨어집니다. 컨트롤러가 현재 압력의 이슬점 온도를 조회하고 빼서 <button type="button" data-gloss="superheat">과열도</button>를 약 <span data-us="7 °F" data-metric="3.9 °C">7 °F</span>로 계산하고, <span data-us="10 °F" data-metric="5.6 °C">10 °F</span> 설정값과 비교합니다. 제어 알고리즘이 포트 위치 명령을 몇 스텝 줄입니다. 스테퍼가 니들을 밀어 넣어 포트가 좁아지고 질량유량이 줄며 코일의 액체가 모두 비등하고 흡입온도가 올라갑니다. 계산된 <button type="button" data-gloss="superheat">과열도</button>가 <span data-us="10 °F" data-metric="5.6 °C">10 °F</span>로 돌아옵니다. TXV와 결과는 같으며 트렌드 그래픽에는 밸브 위치의 작은 스텝 변화와 <button type="button" data-gloss="superheat">과열도</button>의 짧은 하강·회복으로 나타납니다.
+            </p>
+
+            <p>
+                반대 방향도 같은 과정이 역으로 진행됩니다. 오후에 부하가 다시 커지면 코일이 현재 공급량보다 빠르게 비등시키고, 흡입관은 <span data-us="50 °F" data-metric="10.0 °C">50 °F</span>를 넘어 따뜻해지며 <button type="button" data-gloss="superheat">과열도</button>는 <span data-us="10 °F" data-metric="5.6 °C">10 °F</span>를 넘습니다. TXV 감온통이 따뜻해져 충전 냉매가 팽창하고 다이어프램이 아래로 움직여 포트가 열리며 공급량이 늘고 SH가 목표로 돌아옵니다. EEV 컨트롤러는 더 높은 계산 <button type="button" data-gloss="superheat">과열도</button>를 보고 포트 명령을 증가시키며, 스테퍼가 니들을 열어 같은 회복을 만듭니다. 두 밸브 모두 같은 공정값에 대해 고전적인 폐루프 제어를 수행합니다. 차이는 컨트롤러로 사용하는 요소(스프링 + 밀폐 충전 기체 또는 CPU + 트렌드 센서)와 그 컨트롤러가 작업자에게 제공하는 인터페이스입니다.
+            </p>
+
+            <h2 class="subhead" id="chapter-next">이 장에서 마련한 기초</h2>
+
+            <p>
+                이것으로 냉동·냉매 장을 마무리합니다. <a href="/ko/education/refrigerant-cycle-basics.html">냉매 사이클 기초</a>에서 사이클과 포화 관계를 만들었고, <a href="/ko/education/superheat-subcooling.html">과열도와 과냉도</a>에서 그 관계를 사이클이 올바르게 운전되는지 입증하는 두 측정값인 <button type="button" data-gloss="superheat">과열도</button>와 <button type="button" data-gloss="subcooling">과냉도</button>로 바꾸었으며, 이 페이지에서 <button type="button" data-gloss="superheat">과열도</button>를 유지하는 팽창장치의 내부를 열었습니다. 이 세 개념을 알면 <a href="/ko/tools/refrigerant-pt.html">냉매 P-T 및 과열도 계산기</a>가 블랙박스가 아니라 모든 입력과 출력을 사이클 안에 배치하고 포화 곡선과 대조해 읽을 수 있는 도구가 됩니다. 흡입압력, 클램프형 온도계로 잰 흡입관 온도, 냉매 이름을 계산기에 입력하면 냉매 계통 고장 진단에 필요한 측정의 절반은 이미 끝난 것이며, 판정 표시는 숫자의 의미를 읽어 줄 뿐입니다.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/refrigeration/', label: '냉동·냉매 참고 자료 허브'},
+        tools: [
+            {href: '/ko/tools/refrigerant-pt.html', label: '냉매 P-T 및 과열도 계산기'},
+            {href: '/ko/tools/coil-sizing.html', label: '코일 용량 계산기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/refrigerant-loop.html', label: '냉매 회로 시뮬레이터'}
+        ],
+        lessons: [
+            {href: '/ko/education/refrigerant-cycle-basics.html', label: '냉매 사이클 기초'},
+            {href: '/ko/education/superheat-subcooling.html', label: '과열도와 과냉도'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/metering-devices-txv-eev.html', label: 'TXV와 EEV 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 학습 자료로 돌아가기</a>
+
+</main>
+{% endblock %}

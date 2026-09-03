@@ -1,0 +1,247 @@
+---
+title: 펌프 및 팬 상사법칙 계산기 — controlsfreak.dev
+description: 펌프·팬의 알려진 운전점에서 새 속도 또는 임펠러 트림 조건으로 유량은 비율, 양정·압력은 비율의 제곱, 동력은 비율의 세제곱에 따라 환산합니다.
+sourceContentHash: d788553cbc9a3507033249ba2432b73639f03ace84f873707c08749e48251516
+sourceMessageHash: 33fd2c241e56b787dd35f83fa8bd92443f703fc60f51f5c39c952664afcd3e8a
+canonical: https://controlsfreak.dev/ko/tools/affinity-laws.html
+nav: tools
+category: hydronics
+keywords: cfm gpm rpm hz 속도 압력 bhp 마력 세제곱 법칙 임펠러 트림 계산기 vfd 에너지
+pageMessages:
+  validation:
+    ratio: 기준 {ratioLabel}는 0보다 크고 새 값은 0 이상이어야 합니다.
+    magnitude: 유량, 양정과 동력은 크기값이므로 0 이상을 입력하세요.
+  ratioLabels:
+    speed: 속도
+    diameter: 직경
+  formula: '비율 = {newValue} ÷ {reference} = {ratio}   ·   Q ∝ 비율   ·   H ∝ 비율²   ·   P ∝ 비율³'
+faqs:
+    - q: 펌프와 팬의 상사법칙이란 무엇인가요?
+      a: 알려진 운전점을 새 속도 또는 임펠러·풀리 직경으로 환산하는 법칙입니다. 유량은 비율에 비례하고 양정 또는 압력은 비율의 제곱, 동력은 세제곱에 비례합니다. Q₂ = Q₁·(N₂/N₁), H₂ = H₁·(N₂/N₁)², P₂ = P₁·(N₂/N₁)³입니다.
+    - q: VFD는 왜 에너지를 크게 절감하나요?
+      a: 동력이 속도의 세제곱에 비례하기 때문입니다. 펌프나 팬을 80% 속도로 낮추면 유량은 80%가 되지만 동력은 0.8³ ≈ 51%로 줄어듭니다. 유량 80%를 유지하면서 에너지는 거의 절반만 쓰는 셈이며, 이 세제곱 관계가 가변속 드라이브의 핵심 절감 원리입니다.
+    - q: 정양정이 있는 시스템에도 상사법칙이 그대로 적용되나요?
+      a: 마찰양정 부분만 세제곱 관계를 따릅니다. 개방 회로나 수직 양정처럼 실제 정양정이 있는 시스템에서는 운전점이 더 완만한 시스템 곡선을 따라가므로 실제 동력 절감량이 이상적인 세제곱값보다 작습니다. 정양정을 별도로 모델링해야 합니다.
+---
+{% extends "html/tools/affinity-laws.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 상사법칙</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                펌프 및 팬 상사법칙 계산기
+                <span class="tool-tag">펌프 및 팬</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>하나의 운전점과 속도 또는 임펠러 변화를 상사법칙으로 환산합니다.</summary>
+            <div class="preamble-rest">
+                유량은 비율, 양정은 그 비율의 제곱, 동력은 <em>세제곱</em>에 비례합니다. VFD로 펌프 속도를 낮췄을 때 유량 감소보다 에너지 절감이 훨씬 큰 이유입니다.
+                <em>속도 기준</em>은 VFD에, <em>임펠러 직경 기준</em>은 트림에 사용합니다. 속도 변화에는 정확히 적용되지만 같은 케이싱의 작은 임펠러 트림에는 근사적으로 적용됩니다.
+            </div>
+        </details>
+        <p class="ps-seed-note">입력란에는 예제가 미리 채워져 있습니다. 확인하려는 값으로 수정하세요.</p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="speed">속도 기준</button>
+            <button class="tab-btn"        data-tab="dia">임펠러 직경 기준</button>
+        </div>
+
+        <!-- ── By speed ── -->
+        <div id="tab-speed" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="af-s-n1">기준 속도 N₁</label>
+                        <input class="ps-input" type="number" id="af-s-n1" step="any" min="0" placeholder="60" value="60">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="af-s-n2">새 속도 N₂</label>
+                        <input class="ps-input" type="number" id="af-s-n2" step="any" min="0" placeholder="50" value="50">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="af-s-q1">유량 Q₁</label>
+                        <input class="ps-input" type="number" id="af-s-q1" step="any" min="0" placeholder="100" value="100">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="af-s-h1">양정 / 압력 H₁</label>
+                        <input class="ps-input" type="number" id="af-s-h1" step="any" min="0" placeholder="50" value="50">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="af-s-p1">동력 P₁</label>
+                        <input class="ps-input" type="number" id="af-s-p1" step="any" min="0" placeholder="10" value="10">
+                    </div>
+                    <p class="ref-note">
+                        속도에는 일관된 단위(RPM, Hz, %)를 사용할 수 있습니다. 유량, 양정과 동력의 단위는 그대로 유지되므로 출력은 입력한 단위를 따릅니다. 펌프 양정은 ft, 팬 정압은 in. w.c., 동력은 bhp 또는 kW 등을 사용할 수 있습니다.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력 — N₂에서</h2>
+                    <div class="ps-row af-ratio">
+                        <span class="ps-label">속도비 N₂/N₁</span>
+                        <span class="ps-value muted" id="af-s-ratio">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">유량 Q₂ &nbsp;(∝ 비율)</span>
+                        <span class="ps-value muted" id="af-s-q2">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">양정 / 압력 H₂ &nbsp;(∝ 비율²)</span>
+                        <span class="ps-value muted" id="af-s-h2">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">동력 P₂ &nbsp;(∝ 비율³)</span>
+                        <span class="ps-value muted" id="af-s-p2">—</span>
+                    </div>
+                    <p class="ref-note">
+                        Q₂ / H₂ / P₂는 위에서 입력한 단위를 그대로 사용합니다. 이 도구는 값의 크기만 환산합니다.
+                    </p>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="af-s-copy">결과 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="af-s-formula"></div>
+                    <div class="failure-callout" id="af-s-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">계산 예제</h2>
+                <p class="ref-note worked-intro">
+                    VFD가 운전점 100 GPM, 양정 50 ft, 10 bhp인 펌프의 속도를 60 Hz에서 50 Hz, 즉 83%로 낮춥니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>비율: <code>50 ÷ 60 = 0.833</code>.</li>
+                    <li>유량: <code>100 × 0.833 = 83.3 GPM</code>(선형).</li>
+                    <li>양정: <code>50 × 0.833² = 34.7 ft</code>(제곱).</li>
+                    <li>동력: <code>10 × 0.833³ = 5.8 bhp</code>(세제곱).</li>
+                </ol>
+                <p class="ref-note">
+                    속도를 17% 낮추면 유량은 약 17% 감소하지만 동력은 거의 <em>절반</em>으로 줄어듭니다. 세제곱 법칙은 가변속 펌핑이 에너지를 절감하는 근거이며, 운전점이 더 이상 상사곡선을 따라 내려가지 않기 시작하면 절감 효과가 빠르게 줄어듭니다(펌프 제어 참조).
+                </p>
+                <p class="ref-note">
+                    상사법칙은 펌프나 팬의 <em>자체</em> 곡선에 있는 운전점을 환산합니다. 장비가 실제로 상사 포물선을 따라 내려가는지는 시스템에 달려 있습니다. 세제곱 절감 효과는 주로 마찰로 이루어진 시스템 곡선, 즉 정양정이 거의 없고 효율이 대체로 일정한 조건을 전제로 합니다. 개방형 냉각탑, 관개, 집수조에서 물을 끌어올리는 장치처럼 실제 정양정이 있으면(개방 회로에 해당하며 폐회로는 자체 고도차를 회수하므로 정양정이 없음) 운전점이 포물선에서 벗어나 절감량이 세제곱 예측값보다 작아집니다. 속도 변화는 <em>장비 곡선에는</em> 정확히 적용되지만 실제 절감량은 시스템이 결정합니다.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── By impeller diameter ── -->
+        <div id="tab-dia" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="af-d-n1">기준 직경 D₁</label>
+                        <input class="ps-input" type="number" id="af-d-n1" step="any" min="0" placeholder="10" value="10">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="af-d-n2">트림한 직경 D₂</label>
+                        <input class="ps-input" type="number" id="af-d-n2" step="any" min="0" placeholder="9" value="9">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="af-d-q1">유량 Q₁</label>
+                        <input class="ps-input" type="number" id="af-d-q1" step="any" min="0" placeholder="100" value="100">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="af-d-h1">양정 / 압력 H₁</label>
+                        <input class="ps-input" type="number" id="af-d-h1" step="any" min="0" placeholder="50" value="50">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="af-d-p1">동력 P₁</label>
+                        <input class="ps-input" type="number" id="af-d-p1" step="any" min="0" placeholder="10" value="10">
+                    </div>
+                    <p class="ref-note">
+                        직경에는 일관된 단위(in, mm)를 사용할 수 있습니다. 직경 상사법칙은 <em>동일한</em> 케이싱에서 작은 폭으로 트림할 때만 성립합니다. 약 10–15%를 넘어서면 효율이 떨어져 단순 비율 계산과 실제 결과의 차이가 커집니다.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력 — D₂에서</h2>
+                    <div class="ps-row af-ratio">
+                        <span class="ps-label">직경비 D₂/D₁</span>
+                        <span class="ps-value muted" id="af-d-ratio">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">유량 Q₂ &nbsp;(∝ 비율)</span>
+                        <span class="ps-value muted" id="af-d-q2">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">양정 / 압력 H₂ &nbsp;(∝ 비율²)</span>
+                        <span class="ps-value muted" id="af-d-h2">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">동력 P₂ &nbsp;(∝ 비율³)</span>
+                        <span class="ps-value muted" id="af-d-p2">—</span>
+                    </div>
+                    <p class="ref-note">
+                        Q₂ / H₂ / P₂는 위에서 입력한 단위를 그대로 사용합니다. 이 도구는 값의 크기만 환산합니다.
+                    </p>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="af-d-copy">결과 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="af-d-formula"></div>
+                    <div class="failure-callout" id="af-d-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">상사법칙</h2>
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr><th>물리량</th><th>속도 기준(N)</th><th>직경 기준(D)</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>유량 Q</td><td>∝ N₂/N₁</td><td>∝ D₂/D₁</td></tr>
+                        <tr><td>양정 / 압력 H</td><td>∝ (N₂/N₁)²</td><td>∝ (D₂/D₁)²</td></tr>
+                        <tr><td>동력 P</td><td>∝ (N₂/N₁)³</td><td>∝ (D₂/D₁)³</td></tr>
+                    </tbody>
+                </table>
+                <p class="ref-note">
+                    속도 변화는 정확하고 되돌릴 수 있습니다. 펌프 속도를 낮췄다가 다시 올리면 같은 운전점으로 돌아옵니다. 임펠러 트림은 금속을 영구적으로 깎으며 근사적으로만 적용됩니다. 과대 선정된 펌프를 설계 운전점에 한 번 맞추는 데는 적합하지만 제어 수단은 아닙니다.
+                </p>
+            </section>
+        </div>
+
+        <section class="tool-body-row">
+            <p class="ref-note">
+                <strong>P₂를 적용하기 전에 모터를 확인하세요.</strong> 세제곱 법칙은 속도를 올릴 때도 적용됩니다. 속도를 10% 높이면 모터에는 33% 더 큰 동력이 필요합니다. 이 페이지는 교차 검증과 학습을 위해 부하를 환산하지만, 모터가 새 속도를 견딜 수 있는지는 명판 HP, <button type="button" data-gloss="service-factor">서비스 팩터</button>와 과부하 설정값이 결정합니다. 최대 주파수를 높이기 전에 이를 확인하세요. 계산기는 부하를 예측할 뿐 모터를 보호하지 않습니다.
+            </p>
+        </section>
+    </div>
+
+    {{ faqBlock(faqs, "상사법칙 FAQ") }}
+
+    {{ relatedLinks({
+        hub: [
+            {href: '/ko/hydronics/', label: '수배관 시스템 참고 자료 허브'},
+            {href: '/ko/forced-air/', label: '강제순환식 공조 참고 자료 허브'}
+        ],
+        lessons: [
+            {href: '/ko/education/pump-control.html', label: '펌프 제어'},
+            {href: '/ko/education/duct-static-control.html', label: '덕트 정압 제어'},
+            {href: '/ko/education/vfds.html', label: 'VFD'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/pump-control.html', label: '펌프 제어'},
+            {href: '/ko/practice/duct-static-control.html', label: '덕트 정압 제어'},
+            {href: '/ko/practice/vfds.html', label: 'VFD'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

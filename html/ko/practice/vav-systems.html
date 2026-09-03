@@ -1,0 +1,57 @@
+---
+title: VAV 시스템 퀴즈 — controlsfreak.dev
+description: 온도가 아닌 풍량 제어, K 계수와 속도압, 압력 독립형 제어, 최소 풍량 재열 및 풍량 부족으로 인한 DX 코일 결빙을 점검하는 10문항 퀴즈입니다.
+sourceContentHash: e2a84b56085a4434280239f20a1adee3d543822404efbe6bf19e7e6f610ade8d
+canonical: https://controlsfreak.dev/ko/practice/vav-systems.html
+nav: practice
+category: forced-air
+pairedLesson: https://controlsfreak.dev/ko/education/vav-systems.html
+---
+{% extends "html/practice/vav-systems.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · VAV 시스템</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">VAV 시스템 퀴즈 <span class="tool-tag">공기 시스템</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/vav-systems.html">VAV 시스템</a> 학습 자료를 읽은 뒤 박스의 동작을
+                기억해 따라가 보세요. 학습 순서를 따르는 10문항입니다. 박스가 실제로 변화시키는 값, 풍량 링과
+                CFM = K × √VP, 댐퍼 위치가 누구의 설정값도 아닌 이유, 환기 하한과 그 위에서 동작하는 재열,
+                풍량 부족 코일의 추세, 모든 박스가 한꺼번에 닫힐 때 압력이 향하는 곳을 확인합니다. 각 문항의
+                해설에는 해당 내용이 나온 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/airflow.html', label: '풍량 및 속도압'},
+            {href: '/ko/tools/duct-traverse.html', label: '덕트 트래버스 계산기'},
+            {href: '/ko/tools/equipment-airflow.html', label: '장비 풍량 점검'},
+            {href: '/ko/tools/coil-sizing.html', label: '코일 용량 산정 계산기'},
+            {href: '/ko/tools/duct-sizer.html', label: '덕트 치수 산정 도구'}
+        ],
+        lessons: [
+            {href: '/ko/education/vav-systems.html', label: 'VAV 시스템'},
+            {href: '/ko/education/air-handlers.html', label: '공기조화기'},
+            {href: '/ko/education/air-unit-identification.html', label: '공조 장비 식별'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

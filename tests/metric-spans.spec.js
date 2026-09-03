@@ -1,4 +1,6 @@
-// Metric conversion gate — every °F → °C figure in the SOURCE, both notations.
+// Metric conversion gate — every °F → °C figure, both notations. Dual-unit
+// spans are checked in the rendered site so localized message values are
+// resolved; quiz parentheticals are checked in their authored source.
 //
 // BLOCKING, and it runs in `npm test` like any other spec. Pure Node: it
 // reads `html/**` off disk and never opens a browser, the same shape as the
@@ -80,7 +82,9 @@
 // `html/tools/coil-freeze-risk.html`.
 'use strict';
 
+const path = require('node:path');
 const { test, expect } = require('@playwright/test');
+const i18n = require('../html/_data/i18n.js');
 const {
     TOL_BASE,
     PROSE_FILES,
@@ -92,7 +96,52 @@ const {
     extractParentheticals,
 } = require('./metric-spans.js');
 
-// The fifteen figures the two tests genuinely cannot classify — all of them
+const SITE = path.join(__dirname, '..', '_site');
+const localeDirs = new Set(i18n.locales
+    .map(({ code }) => code)
+    .filter(code => code !== i18n.defaultLocale));
+
+function authoredSpanPair(pair) {
+    const file = pair.file.replace(/^_site\//, 'html/');
+    const segments = file.split('/');
+    const sourceFile = localeDirs.has(segments[1])
+        ? ['html'].concat(segments.slice(2)).join('/')
+        : file;
+    return { ...pair, file, sourceFile };
+}
+
+function renderedSpanPairs(files) {
+    const pairs = extractPairs(files).map(authoredSpanPair);
+    const defaultPairs = new Map();
+    for (const pair of pairs) {
+        if (pair.file === pair.sourceFile) {
+            if (!defaultPairs.has(pair.file)) defaultPairs.set(pair.file, []);
+            defaultPairs.get(pair.file).push(pair);
+        }
+    }
+
+    const localeOrdinals = new Map();
+    return pairs.map((pair) => {
+        if (pair.file === pair.sourceFile) return { ...pair, sourceUs: pair.us };
+        const ordinal = localeOrdinals.get(pair.file) || 0;
+        localeOrdinals.set(pair.file, ordinal + 1);
+        const sourcePair = defaultPairs.get(pair.sourceFile)?.[ordinal];
+        return { ...pair, sourceUs: sourcePair?.us };
+    });
+}
+
+function allowlistKey(text) {
+    let value = String(text || '');
+    while (value.includes('&amp;')) value = value.replace(/&amp;/g, '&');
+    return value
+        .replace(/&nbsp;|&#160;|&#xa0;| /gi, ' ')
+        .replace(/&#39;|&apos;/gi, "'")
+        .replace(/&quot;/gi, '"')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+// The eighteen figures the two tests genuinely cannot classify — all of them
 // spans; the parenthetical population needs no exemptions today. Every one
 // was read by hand during the 2026-08 accuracy audit, and none is a defect.
 const ALLOWLIST = [
@@ -155,6 +204,26 @@ const ALLOWLIST = [
             + 'and 4/50 is 8 % exactly as 8/100 is. 0–50 °C is a real metric sensor '
             + 'span; the exact conversion (4.4 °C on 0–55.6 °C) gives the same 8 % '
             + 'with numbers no instrument has.',
+    },
+    {
+        file: 'html/education/temperature-sensors.html',
+        us: '240 Ω for every °F',
+        why: 'A SENSOR SENSITIVITY, not a temperature. Ohms per degree scale by '
+            + '9/5 when the denominator changes from °F to °C; the two deliberately '
+            + 'rounded curve figures (about 240 Ω/°F and 440 Ω/°C) agree.',
+    },
+    {
+        file: 'html/education/temperature-sensors.html',
+        us: '0.22 Ω per °F',
+        why: 'The Pt100 sensitivity twin of the entry above. 0.22 Ω/°F × 9/5 is '
+            + '0.396 Ω/°C, stated as about 0.39 Ω/°C; neither side is an absolute '
+            + 'temperature or a temperature delta.',
+    },
+    {
+        file: 'html/education/temperature-sensors.html',
+        us: '≈240 Ω per °F',
+        why: 'The same thermistor sensitivity appears again in the RTD comparison. '
+            + 'It repeats the valid reciprocal-unit relationship documented above.',
     },
     {
         file: 'html/tools/air-mixing.html',
@@ -220,15 +289,19 @@ const ALLOWLIST = [
     },
 ];
 
-const allowed = (pair) => ALLOWLIST.some((a) => a.file === pair.file && a.us === pair.us);
+const allowed = (pair) => ALLOWLIST.some((a) => {
+    if (a.file !== pair.file && a.file !== pair.sourceFile) return false;
+    const expected = allowlistKey(a.us);
+    return [pair.us, pair.sourceUs].some((us) => allowlistKey(us) === expected);
+});
 const describe = (pair, status) => (pair.notation === 'span'
     ? `${pair.file}:${pair.line} [${status}]\n      data-us="${pair.us}"\n      data-metric="${pair.metric}"`
     : `${pair.file}:${pair.line} [${status}] ${pair.raw}`);
 
 function survey() {
-    const templates = scanFiles();
+    const templates = scanFiles(SITE);
     const proseFiles = scanFiles(undefined, PROSE_FILES);
-    const spans = extractPairs(templates);
+    const spans = renderedSpanPairs(templates);
     const parens = extractParentheticals(proseFiles);
     const pairs = [...spans, ...parens];
     const rows = pairs.map((p) => ({ pair: p, result: classifyPair(p) }));
@@ -285,7 +358,10 @@ test('every ALLOWLIST entry still matches an unclassifiable figure', () => {
         .map((r) => r.pair);
 
     const dead = ALLOWLIST
-        .filter((a) => !live.some((p) => p.file === a.file && p.us === a.us))
+        .filter((a) => !live.some((p) =>
+            (p.file === a.file || p.sourceFile === a.file)
+            && [p.us, p.sourceUs]
+                .some((us) => allowlistKey(us) === allowlistKey(a.us))))
         .map((a) => `${a.file} — data-us="${a.us}"`);
 
     expect(

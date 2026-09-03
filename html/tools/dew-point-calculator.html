@@ -4,10 +4,63 @@ description: Dry-bulb plus RH or wet-bulb to dew point, with wet-bulb, grains, a
 canonical: https://controlsfreak.dev/tools/dew-point-calculator.html
 nav: tools
 category: hvac
+pageMessages:
+    labels:
+        secondRh: 'RH (%)'
+        secondWetBulb: 'Wet-bulb ({unit})'
+        enteringDryBulb: 'Entering-air dry-bulb ({unit})'
+        altitude: 'Altitude ({unit})'
+        coilSurface: 'Coil leaving / surface ({unit})'
+        wetBulb: 'Wet-bulb ({unit})'
+        humidityRatio: 'Humidity ratio ({unit})'
+        enthalpy: 'Enthalpy ({unit})'
+    verdict:
+        below: '✓ Leaving {margin} below dew point — the coil is pulling the air below the entering dew point, so it’s wringing out moisture. (Any surface this cold would sweat.)'
+        above: '⚠ Leaving {margin} above dew point — the air never reaches saturation, so you’re getting little to no latent removal. Space humidity will ride up.'
+        edge: '≈ Leaving right at the dew point — the onset of condensation; barely any latent removal either way.'
+    errors:
+        rhZero: '0 % RH — dry air has no dew point.'
+        engineUnavailable: 'Psychrometric engine unavailable — reload the page.'
+        noMoisture: 'No moisture in this air — there is no dew point to find.'
+        psychro:
+            numeric: 'Enter numeric values.'
+            rhNegative: 'Relative humidity can’t be negative.'
+            rhAbove100: 'Relative humidity can’t exceed 100%.'
+            wetBulbAboveDryBulb: 'Wet-bulb can’t exceed dry-bulb.'
+            rhPastSaturation: 'That point is past saturation (RH over 100%) — impossible.'
+            wetBulbPastSaturation: 'That wet-bulb is past saturation — more moisture than air can hold at this dry-bulb and pressure.'
+    unitText:
+        enteringDryBulb:
+            us: 'Entering-air dry-bulb (°F)'
+            metric: 'Entering-air dry-bulb (°C)'
+        altitude:
+            us: 'Altitude (ft)'
+            metric: 'Altitude (m)'
+        coilSurface:
+            us: 'Coil leaving / surface (°F)'
+            metric: 'Coil leaving / surface (°C)'
+        wetBulb:
+            us: 'Wet-bulb (°F)'
+            metric: 'Wet-bulb (°C)'
+        humidityRatio:
+            us: 'Humidity ratio (gr/lb)'
+            metric: 'Humidity ratio (g/kg)'
+        enthalpy:
+            us: 'Enthalpy (Btu/lb)'
+            metric: 'Enthalpy (kJ/kg)'
+        exampleEntering:
+            us: '75 °F'
+            metric: '23.9 °C'
+        exampleDewPoint:
+            us: '57.8 °F'
+            metric: '14.3 °C'
+        exampleCoilLeaving:
+            us: '55 °F'
+            metric: '12.8 °C'
 keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sweat sweating
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -114,7 +167,7 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
             <section>
                 <h2 class="ps-section-label">Input</h2>
                 <div class="ps-row">
-                    <label class="ps-label" data-us="Entering-air dry-bulb (°F)" data-metric="Entering-air dry-bulb (°C)" for="dew-db">Entering-air dry-bulb (°F)</label>
+                    <label class="ps-label" data-us="{{ pageMessages.unitText.enteringDryBulb.us }}" data-metric="{{ pageMessages.unitText.enteringDryBulb.metric }}" for="dew-db">Entering-air dry-bulb (°F)</label>
                     <input class="ps-input" type="number" id="dew-db" step="0.5" min="-50" max="200" value="75">
                 </div>
                 <div class="ps-row">
@@ -129,13 +182,13 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
                     <input class="ps-input" type="number" id="dew-second" step="1" value="55">
                 </div>
                 <div class="ps-row">
-                    <label class="ps-label" data-us="Altitude (ft)" data-metric="Altitude (m)" for="dew-alt">Altitude (ft)</label>
+                    <label class="ps-label" data-us="{{ pageMessages.unitText.altitude.us }}" data-metric="{{ pageMessages.unitText.altitude.metric }}" for="dew-alt">Altitude (ft)</label>
                     <input class="ps-input" type="number" id="dew-alt" step="100" min="0" value="0">
                 </div>
 
                 <h3 class="subhead">Coil check — optional</h3>
                 <div class="ps-row">
-                    <label class="ps-label" data-us="Coil leaving / surface (°F)" data-metric="Coil leaving / surface (°C)" for="dew-surface">Coil leaving / surface (°F)</label>
+                    <label class="ps-label" data-us="{{ pageMessages.unitText.coilSurface.us }}" data-metric="{{ pageMessages.unitText.coilSurface.metric }}" for="dew-surface">Coil leaving / surface (°F)</label>
                     <input class="ps-input" type="number" id="dew-surface" step="0.5" placeholder="e.g. supply 55">
                 </div>
                 <p class="ref-note">
@@ -152,11 +205,11 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
                     <span class="dew-hero muted" id="dew-out-dp">—</span>
                 </div>
                 <div class="ps-row">
-                    <span class="ps-label" data-us="Wet-bulb (°F)" data-metric="Wet-bulb (°C)">Wet-bulb (°F)</span>
+                    <span class="ps-label" data-us="{{ pageMessages.unitText.wetBulb.us }}" data-metric="{{ pageMessages.unitText.wetBulb.metric }}">Wet-bulb (°F)</span>
                     <span class="ps-value muted" id="dew-out-wb">—</span>
                 </div>
                 <div class="ps-row">
-                    <span class="ps-label" data-us="Humidity ratio (gr/lb)" data-metric="Humidity ratio (g/kg)">Humidity ratio (gr/lb)</span>
+                    <span class="ps-label" data-us="{{ pageMessages.unitText.humidityRatio.us }}" data-metric="{{ pageMessages.unitText.humidityRatio.metric }}">Humidity ratio (gr/lb)</span>
                     <span class="ps-value muted" id="dew-out-gr">—</span>
                 </div>
                 <div class="ps-row hidden" id="dew-out-rh-row">
@@ -164,7 +217,7 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
                     <span class="ps-value muted" id="dew-out-rh">—</span>
                 </div>
                 <div class="ps-row">
-                    <span class="ps-label" data-us="Enthalpy (Btu/lb)" data-metric="Enthalpy (kJ/kg)">Enthalpy (Btu/lb)</span>
+                    <span class="ps-label" data-us="{{ pageMessages.unitText.enthalpy.us }}" data-metric="{{ pageMessages.unitText.enthalpy.metric }}">Enthalpy (Btu/lb)</span>
                     <span class="ps-value muted" id="dew-out-h">—</span>
                 </div>
 
@@ -180,10 +233,10 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
             <h2 class="ps-section-label">Field notes — the over-humidity call</h2>
             <p class="ref-note">
                 Read the return-air <button type="button" data-gloss="dry-bulb">dry-bulb</button> and RH off the space sensor
-                (<span data-us="75 °F" data-metric="23.9 °C">75 °F</span> / 55 %, say) and the
-                tool gives the return dew point (about <span data-us="57.8 °F" data-metric="14.3 °C">57.8 °F</span>).
+                (<span data-us="{{ pageMessages.unitText.exampleEntering.us }}" data-metric="{{ pageMessages.unitText.exampleEntering.metric }}">75 °F</span> / 55 %, say) and the
+                tool gives the return dew point (about <span data-us="{{ pageMessages.unitText.exampleDewPoint.us }}" data-metric="{{ pageMessages.unitText.exampleDewPoint.metric }}">57.8 °F</span>).
                 Now compare your supply / leaving <button type="button" data-gloss="dry-bulb">dry-bulb</button> to it. Leaving below that dew point
-                (<span data-us="55 °F" data-metric="12.8 °C">55 °F</span>) means the coil is wringing
+                (<span data-us="{{ pageMessages.unitText.exampleCoilLeaving.us }}" data-metric="{{ pageMessages.unitText.exampleCoilLeaving.metric }}">55 °F</span>) means the coil is wringing
                 out moisture; leaving above it means you're cooling sensibly only and space
                 humidity climbs — the failure mode behind most over-humidity complaints.
             </p>
@@ -245,6 +298,24 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
         // 'wb' = dry-bulb + wet-bulb (sling psychrometer).
         let mode = 'rh';
 
+        // Keep the psychrometric engine's machine errors out of localized UI.
+        // An unmapped value is deliberately fatal so a future engine message
+        // cannot silently leak English into a translated page.
+        const PSYCHRO_ERROR_KEYS = Object.freeze({
+            'Enter numeric values.': 'numeric',
+            'Relative humidity can’t be negative.': 'rhNegative',
+            'Relative humidity can’t exceed 100%.': 'rhAbove100',
+            'Wet-bulb can’t exceed dry-bulb.': 'wetBulbAboveDryBulb',
+            'That point is past saturation (RH over 100%) — impossible.': 'rhPastSaturation',
+            'That wet-bulb is past saturation — more moisture than air can hold at this dry-bulb and pressure.': 'wetBulbPastSaturation'
+        });
+
+        function psychroErrorMessage(error) {
+            const key = PSYCHRO_ERROR_KEYS[error];
+            if (!key) throw new Error('Uncataloged psychrometric engine error.');
+            return CFI18n.page('errors.psychro.' + key);
+        }
+
         const SECONDARY = ['dew-out-wb', 'dew-out-gr', 'dew-out-rh', 'dew-out-h'];
 
         function setLive(id, text) {
@@ -258,12 +329,12 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
         function refreshSecondLabel() {
             const sec = $('dew-second');
             if (mode === 'rh') {
-                $('dew-second-label').textContent = 'RH (%)';
+                $('dew-second-label').textContent = CFI18n.page('labels.secondRh');
                 sec.step = '1';
                 sec.min = '0';
                 sec.max = '100';
             } else {
-                $('dew-second-label').textContent = 'Wet-bulb (' + U.suffix.temp() + ')';
+                $('dew-second-label').textContent = CFI18n.page('labels.secondWetBulb', { unit: U.suffix.temp() });
                 sec.step = '0.5';
                 sec.removeAttribute('min');
                 sec.removeAttribute('max');
@@ -298,13 +369,13 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
             v.hidden = false;
             if (marginF > 0.5) {
                 v.className = 'status-pill dew-verdict ok';
-                v.textContent = '✓ Leaving ' + margin + ' below dew point — the coil is pulling the air below the entering dew point, so it’s wringing out moisture. (Any surface this cold would sweat.)';
+                v.textContent = CFI18n.page('verdict.below', { margin });
             } else if (marginF < -0.5) {
                 v.className = 'status-pill dew-verdict warn';
-                v.textContent = '⚠ Leaving ' + margin + ' above dew point — the air never reaches saturation, so you’re getting little to no latent removal. Space humidity will ride up.';
+                v.textContent = CFI18n.page('verdict.above', { margin });
             } else {
                 v.className = 'status-pill dew-verdict edge';
-                v.textContent = '≈ Leaving right at the dew point — the onset of condensation; barely any latent removal either way.';
+                v.textContent = CFI18n.page('verdict.edge');
             }
         }
 
@@ -327,7 +398,7 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
             // a finiteness guard on the solved state for any other path
             // that drives W to zero (audit-2026-06 #27).
             if (mode === 'rh' && secD <= 0) {
-                muteOutputs('0 % RH — dry air has no dew point.');
+                muteOutputs(CFI18n.page('errors.rhZero'));
                 return;
             }
 
@@ -335,13 +406,13 @@ keywords: dewpoint wet bulb wbt RH humidity grains enthalpy condensation coil sw
             // to load, degrade to the muted state with a clear message rather
             // than throwing on the undefined Psychro global.
             if (typeof Psychro === 'undefined') {
-                muteOutputs('Psychrometric engine unavailable — reload the page.');
+                muteOutputs(CFI18n.page('errors.engineUnavailable'));
                 return;
             }
             const state = Psychro.solveState(mode, dbF, secCanon, P);
-            if (!state.ok) { muteOutputs(state.error); return; }
+            if (!state.ok) { muteOutputs(psychroErrorMessage(state.error)); return; }
             if (!isFinite(state.tdp)) {
-                muteOutputs('No moisture in this air — there is no dew point to find.');
+                muteOutputs(CFI18n.page('errors.noMoisture'));
                 return;
             }
             $('dew-callout').hidden = true;

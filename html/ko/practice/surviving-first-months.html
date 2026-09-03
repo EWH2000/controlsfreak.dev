@@ -1,0 +1,56 @@
+---
+title: 현장 첫 몇 달 버티기 — controlsfreak.dev
+description: 건물제어 현장에 입문한 기술자를 위해 안전, 패널 구성, 센서, 4–20 mA, VFD, 현장 작업 습관을 폭넓게 점검하는 실습입니다.
+sourceContentHash: 50524beb6da046a3e95a81e8b90091ad91045c1635292483aa67f1c3935125f3
+canonical: https://controlsfreak.dev/ko/practice/surviving-first-months.html
+nav: practice
+category: field
+---
+{% extends "html/practice/surviving-first-months.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 현장 실습</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">현장 첫 몇 달 버티기 <span class="tool-tag">현장 실습</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                현장에 입문한 지 몇 달 되지 않은 기술자를 위한 폭넓은 실습입니다. 학교나 벤더 교육에서는
+                빠지기 쉬운 습관과 의외의 상황을 중심으로 안전 기초, 제어 패널 구성, 센서 고장 양상,
+                4–20 mA의 "라이브 제로", VFD의 특성, 경력이 쌓일수록 큰 차이를 만드는 작업 습관을
+                다룹니다. 이 모든 내용을 한 번에 다루는 단일 학습 자료는 아직 없으므로 정답 확인 패널에서
+                각 문항의 해설을 바로 제공합니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/thermistor-calculator.html', label: '서미스터 / RTD 계산기'},
+            {href: '/ko/tools/signal-scaling.html', label: '신호 스케일링 계산기'}
+        ],
+        lessons: [
+            {href: '/ko/education/vfds.html', label: '가변주파수 드라이브(VFD)'},
+            {href: '/ko/education/pid-basics.html', label: 'PID 기초'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/field-wiring-sensors.html', label: '현장 배선 및 센서'},
+            {href: '/ko/practice/troubleshooting.html', label: '문제 해결'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

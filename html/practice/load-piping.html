@@ -7,7 +7,7 @@ category: hydronics
 pairedLesson: https://controlsfreak.dev/education/load-piping.html
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -56,12 +56,12 @@ pairedLesson: https://controlsfreak.dev/education/load-piping.html
 
         // Question bank lives in html/_data/quizzes/load-piping.js so the
         // FAQPage JSON-LD emitted from head.njk can read the same source.
-        const questions = {{ quizzes['load-piping'] | safeScriptJson | safe }};
+        const questions = {{ quizzes['load-piping'] | localizedQuiz(locale, 'load-piping') | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
-            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            next: {{ page.fileSlug | nextQuiz(locale, collections.navPractice) | safeScriptJson | safe }},
             slug: 'load-piping',
-            title: 'Load Piping',
+            title: {{ title | cleanTitle | safeScriptJson | safe }},
             defaultCount: 10,
             defaultOrder: 'sequential'
         });

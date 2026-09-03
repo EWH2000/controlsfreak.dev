@@ -1,0 +1,208 @@
+---
+title: 제어 변압기 용량 계산기 — controlsfreak.dev
+description: 24 VAC 제어 변압기의 장치 부하를 합산해 사용 VA, 부하율, 표준 용량별 여유 용량과 2차측 퓨즈 참고값을 계산합니다.
+sourceContentHash: 69f60065debcbba851448c36f6253893cb98db8190696702bcb59ee011a61a45
+sourceMessageHash: faab94d5e6436eef5d7f309181227ccb0a7e5d8eeea2f0a392bfd22d4ecb0d85
+canonical: https://controlsfreak.dev/ko/tools/transformer-sizing.html
+nav: tools
+category: electrical
+keywords: 24vac va 변압기 용량 class 2 퓨즈 2차측 제어 전원 부하 예산 계산기 액추에이터 돌입전류
+pageMessages:
+    devices:
+        controller: "컨트롤러"
+        damperActuator: "댐퍼 액추에이터"
+        valveActuator: "밸브 액추에이터"
+        relay: "릴레이"
+    validation:
+        deviceLoad: "장치 부하를 하나 이상 입력하세요."
+        transformerRating: "변압기 정격 용량을 입력하세요."
+    fuse:
+        overLimit: "> 10 A — 적용 기준을 확인하세요"
+    formula: "Σ = {sum} = {total} VA · {total} ÷ {size} = {percent} % · 퓨즈: {size} ÷ 24 = {fla} A × 1.25 = {target} → {fuse}"
+    status:
+        overloaded: "100 % 초과 — 문제가 있는 상태입니다. {size} VA 변압기에 {total} VA({percent} %)가 연결되어 과열되고 돌입전류 시 전압이 저하됩니다. 부하를 다른 변압기로 옮기거나 용량을 늘리세요."
+        warning: "80 % 기준선 초과 — 문제가 될 수 있습니다. 현재 부하율은 {percent} %이지만 스프링 리턴 액추에이터와 릴레이 투입 돌입전류가 여유를 소모하며, 장치를 추가할 공간도 없습니다. 용량 증대를 계획하세요."
+        ok: "정상 — 부하율 {percent} %, {size} VA 정격에서 여유 용량은 {headroom} VA입니다."
+faqs:
+    - q: 24 VAC 제어 변압기의 용량은 어떻게 선정하나요?
+      a: 2차측에 연결된 모든 장치의 유지(홀딩) VA를 합산한 뒤, 약 80% 이하의 부하율과 여유를 확보할 수 있는 40, 75, 100 VA 이상의 표준 변압기를 선택하세요. Class 2 변압기는 본질적으로 전류가 제한됩니다.
+    - q: 하나의 24 V 변압기로 액추에이터를 몇 개 구동할 수 있나요?
+      a: 변압기 VA를 액추에이터 한 대의 유지 VA로 나누고 약 20%의 여유를 남기세요. 예를 들어 40 VA 변압기에 유지 부하 3 VA 액추에이터를 연결하면 약 40 × 0.8 ÷ 3 ≈ 10대를 구동할 수 있습니다. 스프링 리턴 액추에이터는 유지 중보다 구동 중 VA가 훨씬 크므로 돌입전류도 확인해야 합니다.
+    - q: 돌입 VA와 유지 VA의 차이는 무엇인가요?
+      a: 돌입 VA는 액추에이터, 릴레이 또는 접촉기가 처음 여자될 때 순간적으로 흐르는 높은 부하이고, 유지(밀폐) VA는 위치가 정해진 뒤의 정상 부하입니다. 연속 부하는 유지 VA로 선정하되 변압기와 2차측 퓨즈가 동시 돌입 부하를 견딜 수 있는지 확인하세요.
+---
+{% extends "html/tools/transformer-sizing.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 변압기 용량 선정</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                제어 변압기 용량 계산기
+                <span class="tool-tag">전기</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>&ldquo;이 변압기에 액추에이터를 하나 더 연결할 여유가 있을까요?&rdquo;</summary>
+            <div class="preamble-rest">
+                개보수 현장에서 자주 묻지만 계산은 간단한 질문입니다.
+                24&nbsp;VAC 2차측에 연결된 장치를 입력하고 변압기를 선택하면 부하율, 여유 용량과 2차측 퓨즈 참고값을 확인할 수 있습니다.
+            </div>
+        </details>
+        <p class="ps-seed-note">입력란에는 예제가 미리 채워져 있습니다. 확인하려는 값으로 수정하세요.</p>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">2차측 연결 장치</h2>
+                <div class="ps-row">
+                    <input class="ps-input" type="text" id="xf-name-1" aria-label="장치 1 이름" placeholder="장치" value="{{ pageMessages.devices.controller }}">
+                    <input class="ps-input" type="number" id="xf-va-1" aria-label="장치 1 VA" step="any" min="0" placeholder="VA" value="14">
+                </div>
+                <div class="ps-row">
+                    <input class="ps-input" type="text" id="xf-name-2" aria-label="장치 2 이름" placeholder="장치" value="{{ pageMessages.devices.damperActuator }}">
+                    <input class="ps-input" type="number" id="xf-va-2" aria-label="장치 2 VA" step="any" min="0" placeholder="VA" value="7">
+                </div>
+                <div class="ps-row">
+                    <input class="ps-input" type="text" id="xf-name-3" aria-label="장치 3 이름" placeholder="장치" value="{{ pageMessages.devices.damperActuator }}">
+                    <input class="ps-input" type="number" id="xf-va-3" aria-label="장치 3 VA" step="any" min="0" placeholder="VA" value="7">
+                </div>
+                <div class="ps-row">
+                    <input class="ps-input" type="text" id="xf-name-4" aria-label="장치 4 이름" placeholder="장치" value="{{ pageMessages.devices.valveActuator }}">
+                    <input class="ps-input" type="number" id="xf-va-4" aria-label="장치 4 VA" step="any" min="0" placeholder="VA" value="10">
+                </div>
+                <div class="ps-row">
+                    <input class="ps-input" type="text" id="xf-name-5" aria-label="장치 5 이름" placeholder="장치" value="{{ pageMessages.devices.relay }}">
+                    <input class="ps-input" type="number" id="xf-va-5" aria-label="장치 5 VA" step="any" min="0" placeholder="VA" value="2">
+                </div>
+                <div class="ps-row">
+                    <input class="ps-input" type="text" id="xf-name-6" aria-label="장치 6 이름" placeholder="장치">
+                    <input class="ps-input" type="number" id="xf-va-6" aria-label="장치 6 VA" step="any" min="0" placeholder="VA">
+                </div>
+                <div class="ps-row">
+                    <input class="ps-input" type="text" id="xf-name-7" aria-label="장치 7 이름" placeholder="장치">
+                    <input class="ps-input" type="number" id="xf-va-7" aria-label="장치 7 VA" step="any" min="0" placeholder="VA">
+                </div>
+                <div class="ps-row">
+                    <input class="ps-input" type="text" id="xf-name-8" aria-label="장치 8 이름" placeholder="장치">
+                    <input class="ps-input" type="number" id="xf-va-8" aria-label="장치 8 VA" step="any" min="0" placeholder="VA">
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" for="xf-size">변압기</label>
+                    <select class="ps-input" id="xf-size">
+                        <option value="40">40 VA</option>
+                        <option value="75" selected>75 VA</option>
+                        <option value="96">96 VA</option>
+                        <option value="100">100 VA</option>
+                        <option value="custom">사용자 지정…</option>
+                    </select>
+                </div>
+                <div class="ps-row hidden" id="xf-row-custom">
+                    <label class="ps-label" for="xf-size-custom">사용자 지정 정격(VA)</label>
+                    <input class="ps-input" type="number" id="xf-size-custom" step="any" min="0" placeholder="50">
+                </div>
+                <p class="ref-note">
+                    VA가 없는 행은 건너뛰므로 여분 행은 비워 두세요. VA는 기억에 의존하지 말고 장치 명판이나 데이터시트에서 확인하세요. 아래 참고표는 입력값을 대신하는 자료가 아니라 타당성을 점검하는 용도입니다.
+                </p>
+            </section>
+
+            <section role="status" aria-atomic="false">
+                <h2 class="ps-section-label">출력</h2>
+                <div class="status-pill" id="xf-status">장치 부하를 입력하면 판정 결과가 표시됩니다.</div>
+                <div class="ps-row">
+                    <span class="ps-label">총 연결 부하</span>
+                    <span class="ps-value muted" id="xf-total">—</span>
+                </div>
+                <div class="ps-row primary">
+                    <span class="ps-label">부하율</span>
+                    <span class="ps-value muted" id="xf-pct">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label">여유 용량</span>
+                    <span class="ps-value muted" id="xf-headroom">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label">2차측 퓨즈 참고값</span>
+                    <span class="ps-value muted" id="xf-fuse">—</span>
+                </div>
+                <div class="btn-row">
+                    <button class="copy-btn" id="xf-copy">총부하 복사</button>
+                </div>
+                <div class="result-formula wrap" id="xf-formula"></div>
+            </section>
+
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">계산 예</h2>
+            <p class="ref-note worked-intro">
+                미리 입력된 패널은 75&nbsp;VA 변압기에 컨트롤러(14&nbsp;VA), 댐퍼 액추에이터 2대(각 7&nbsp;VA), 밸브 액추에이터(10&nbsp;VA)와 <button type="button" data-gloss="interposing-relay">인터포징 릴레이</button>(2&nbsp;VA)를 연결한 구성입니다.
+            </p>
+            <ol class="ref-note worked-list">
+                <li>합계: <code>14 + 7 + 7 + 10 + 2 = 40 VA</code>.</li>
+                <li>부하율: <code>40 ÷ 75 = 53 %</code> — 여유 용량 35&nbsp;VA로 계획 기준선 80&nbsp;%보다 충분히 낮습니다.</li>
+                <li>퓨즈: 2차측 정격전류는 <code>75 ÷ 24 = 3.1 A</code>이고, <code>3.1 × 1.25 = 3.9 → 4 A</code>의 표준 용량을 적용합니다.</li>
+            </ol>
+            <p class="ref-note">
+                퓨즈는 연결 부하가 아니라 <strong>변압기 정격</strong>을 기준으로 선정합니다. 변압기와 배선을 보호하므로 나중에 장치를 추가하더라도 퓨즈를 바꿀 필요가 없어야 합니다.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">일반적인 24 VAC 부하 — 타당성 점검표</h2>
+            <table class="ref-table-dense">
+                <thead>
+                    <tr><th>장치</th><th>일반적인 VA</th><th>참고</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><button type="button" data-gloss="ddc">직접 디지털 제어기(DDC)</button></td><td>4 – 14</td><td>내장 I/O 수가 늘어날수록 커집니다.</td></tr>
+                    <tr><td>비 스프링 리턴 댐퍼 액추에이터</td><td>2 – 5</td><td>유지 시 기준이며 구동 중에는 더 큽니다.</td></tr>
+                    <tr><td>스프링 리턴 댐퍼 액추에이터</td><td>5 – 10</td><td>스프링에 맞서 계속 위치를 유지합니다.</td></tr>
+                    <tr><td>밸브 액추에이터</td><td>3 – 10</td><td>종류보다 용량 등급의 영향이 큽니다.</td></tr>
+                    <tr><td><button type="button" data-gloss="interposing-relay">인터포징 릴레이</button> 코일</td><td>1 – 2</td><td>수십 ms 동안 돌입전류가 약 5–10배입니다.</td></tr>
+                    <tr><td>디스플레이 장착 온도조절기/센서</td><td>1 – 3</td><td>루프 전원형 트랜스미터는 이 예산이 아닌 DC 전원에서 소비합니다.</td></tr>
+                </tbody>
+            </table>
+            <p class="ref-note">
+                부하 예산은 두 단계로 판단하세요. <strong>부하율 80&nbsp;% 초과는 문제가 될 수 있습니다.</strong> 시험대에서는 동작해도 스프링에 맞서 위치를 유지하는 스프링 리턴 액추에이터와 릴레이 투입 시에는 명판의 정상 부하보다 더 큰 전력이 필요하며, 추가 장치를 위한 여유도 없습니다. <strong>100&nbsp;% 초과는 문제가 있는 상태입니다.</strong> 변압기가 과열되고 돌입전류 시 전압이 저하되어 가장 추운 아침에 패널이 재부팅될 수 있습니다.
+            </p>
+            <p class="ref-note">
+                이 합계는 정상 유지 상태의 <strong>정상상태</strong> VA입니다. 또 다른 고장은 과도상태에서 발생합니다. 전원 투입 시 여러 스프링 리턴 액추에이터가 동시에 움직이고 릴레이 투입 돌입전류가 더해지면(수십 ms 동안 약 5–10배) 정상상태 합계가 통과해도 순간적으로 변압기 VA 정격을 초과할 수 있습니다. 80&nbsp;% 기준선만으로 이 동시 서지를 보장할 수 없습니다. 모든 장치가 동시에 원위치로 움직이는 추운 아침에만 재부팅되는 패널은 이 숫자가 아니라 과도상태에서 실패하는 것입니다.
+            </p>
+            <p class="ref-note">
+                <strong>퓨즈 행은 출발점일 뿐 사양이 아닙니다.</strong> 명판 VA에 일반적인 125&nbsp;% 기준을 적용한 교차 점검값입니다. 실제 설치에는 변압기 제조사의 퓨즈 표, 패널 도면과 인증 조건이 우선합니다. 보호 장치의 용량을 간이식만으로 결정하면 보호하려던 장비가 손상될 수 있습니다.
+            </p>
+        </section>
+    </div>
+
+    {{ faqBlock(faqs, "변압기 용량 선정 FAQ") }}
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/voltage-drop.html', label: '배선 구간 및 전압 강하'},
+            {href: '/ko/tools/electrical-quick-calc.html', label: '현장 전기 간이 계산기'},
+            {href: '/ko/tools/signal-scaling.html', label: '신호 스케일링'},
+            {href: '/ko/tools/power-energy-converter.html', label: '동력 및 에너지 변환기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/controller-wiring.html', label: '컨트롤러 배선 시뮬레이터'}
+        ],
+        lessons: [
+            {href: '/ko/education/controller-wiring.html', label: '컨트롤러 배선'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/field-wiring-sensors.html', label: '현장 배선 및 센서'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

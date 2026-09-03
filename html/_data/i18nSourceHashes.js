@@ -1,0 +1,55 @@
+"use strict";
+
+// Source revisions reviewed for each complete locale's data overlays. The
+// build recalculates these values; update a pin only after comparing the
+// corresponding translations with the changed English source.
+
+module.exports = {
+    ko: {
+        quizzes: {
+            "air-handlers": "8e29d949c61d9d827bcd20e9c7f13b73de26a9c57df02c17a62e3cec4970e3ab",
+            "air-unit-identification": "152f5871669a59ee356594f4687ec199b75c6d3e2c7988703a19c9e2b4772593",
+            "analog-sensing": "a9a11c8488be7a7addf0900d6806cc021b374c3558aaf2bc1d794be5954ab033",
+            "bacnet-basics": "dc6dc2a7136f225bad0c4011500d04460264b22e56ef5fe97d76023919b4b349",
+            "bacnet-mstp": "148d989c8d93f807245bba6293bd07dc6f8562e756af27bd7e00f5d74486dcef",
+            "bacnet-networking": "b88aa33a74830641725e2ea14d2d3158924927cf57cee704cf9f66fdb1455368",
+            "balancing": "f7bfa2929e9a63d6c2a2eb1aa122d8091c8777d067e9e84b13e42348497a097e",
+            "boolean-logic-latches": "e4b16702e228b3344fd0750fe4a5d4bd071ff2cd19151d098a3c3461d0660dc6",
+            "building-pressure": "801f7c0c0e91a10539330899d12d0e90b0a71b54eae79126d011bebbede58103",
+            "commanding-actuators": "b8896585dfaca771a798c7918e5fdb008c0e21155807493d00560b3ca510e5b2",
+            "comparators-and-deadband": "1f0a9c8381d2d0eed558cf861ef96b0c7ddf494b534655a7b1622680f268091d",
+            "controller-swap": "f81475e03487694a94dc22b1857d535a4749a5411083c0974720e79f0f795ac4",
+            "controller-wiring": "4fe355a80b7551bbbd1c378b3d0e27c34011acb92acc17657e61e823a1796e02",
+            "controls-commissioning": "fe232cb16a39b1fb4f1d239ee28257d7d277d35255cb337e227a9132145d4836",
+            "duct-static-control": "55cbe9517b61f864d22871579f4a502e6a47c4ad1e66feec6258b95fd2cc3bae",
+            "economizers": "9366d7591aa7d41fb8372bb64efe41519c4f9c404c8bdcdb2b3f02a36eabf391",
+            "equipment-staging": "788093df651a626400e79be3a84a16c06a1dfeca22b31bb00287286ad55526da",
+            "field-wiring-sensors": "50068fbc276f964879a34db07b249be7a5374d2d8f975497c53011380ea5edb2",
+            "function-blocks": "2aa57edbe78bb1691365520d90db70b901edf7ea509d6c85512aff0935f69bb7",
+            "hydronic-loops": "e255620d1b0d17079fa278b3af9f4e40e773924a309b5f3c4d39c15ebbb04b8e",
+            "load-piping": "0483658e60aa48a60bc752dc971677a49d54ddb4f3df2368b8d1a2faae69c713",
+            "metering-devices-txv-eev": "bf2ac87b1aa79217c680216b3dd0e029b16bc21a8aa868ecbcc3d007c54587a4",
+            "modbus-basics": "22fcb7be8ed7371e2a50bb63f7f897219d894ac5700c37b7f6c924e113dd6823",
+            "modbus-decoding": "146c60cfca8aaed36ba80e484c6d602e065d17dc9551a160fae49818990cbb11",
+            "pid-basics": "a4b11a4cd731ad15eca5f07fd7176f6ee655bde8998cccbc0960d06e547b6aa2",
+            "psychrometrics-basics": "f33a33f4ccd781a508753311cfea1dfaba41728bb50f151729e7585557e145a2",
+            "pump-control": "107a7eb5eecfd455dc60e0b83e9a15986927b6b285c26336b73f92eb61c76dbe",
+            "reading-a-wiresheet": "6487bf78475ce2739678267587c18a06425c2d6f162803571a74704bd1776c46",
+            "refrigerant-cycle-basics": "bb222d0d338b835f64b347b9b5d3be53c0316f237459ec7fb4a159893ec6cfd8",
+            "sequencing-scenarios": "e3ea6f54051fc409690fe8672a8fff86c29e9b64f99bb8c0cc0c07aeb9a67465",
+            "setpoint-math-reset": "c371e1cf2400ccb9d7f79ff00b1243ebdf6b4fc00c1426d22282dc64fa593b6c",
+            "start-stop-commands": "139b0b7460a1ea485df75f1ff10026274866fe6efcd2e929e1c86b1d65437e03",
+            "status-and-proof": "3d328d53773d7d95b5232d4d67cf42c4121de0544f729d78d2cde8535af79612",
+            "superheat-subcooling": "ceb2025199acbc2273f43b08c9c954191b49af291d048f9772d03b87045fdf83",
+            "surviving-first-months": "43101205dad1fe7e724ec41aa232e1164434cf6c49381dc60ab1e895200e6c05",
+            "temperature-sensors": "4a67b978cb0892bbef75b7499cfee6523fce33726091473b42f8b9a886cf2111",
+            "timers-and-delays": "7a4a471813483da520c935ef2b2985173b0a50accbca102bce3e589145ed1be9",
+            "troubleshooting": "e0f125e25202cc8f62b615007eca7cd7634e144ed7576721dcd0fe47535b66e6",
+            "vav-systems": "348be663e813d0c39ee7bf741aa38b1ca7d12d9e50054cc5f50cb3c0ec3b6448",
+            "vfds": "4481902daa216108030d93c29d206cbe3e2de91314a07f8e7960240a6a5827ec",
+            "wiresheet-traces": "e19c785cf789fb33b5cdded24a55a4b90f3590f68f695ac505d76879976fabfb",
+        },
+        glossary: "4bcab3f6911671457e844a665bba0a7749ad37265734e88b928858efc4310036",
+        bacnetEnums: "3667ed9a6d3e5ffa2d98ad11350daf16bc8a33105c2bffd5fe5be7d871910bd3",
+    },
+};

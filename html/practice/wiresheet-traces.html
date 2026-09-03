@@ -7,7 +7,7 @@ category: field
 keywords: wiresheet trace function block troubleshooting permissive red herring override force clamp
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -295,12 +295,12 @@ keywords: wiresheet trace function block troubleshooting permissive red herring 
 
         // Question bank lives in html/_data/quizzes/wiresheet-traces.js so the
         // FAQPage JSON-LD emitted from head.njk can read the same source.
-        const questions = {{ quizzes['wiresheet-traces'] | safeScriptJson | safe }};
+        const questions = {{ quizzes['wiresheet-traces'] | localizedQuiz(locale, 'wiresheet-traces') | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
-            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            next: {{ page.fileSlug | nextQuiz(locale, collections.navPractice) | safeScriptJson | safe }},
             slug: 'wiresheet-traces',
-            title: 'Wiresheet Traces',
+            title: {{ title | cleanTitle | safeScriptJson | safe }},
             defaultCount: 10,
             defaultOrder: 'sequential'
         });

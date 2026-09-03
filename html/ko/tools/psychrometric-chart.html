@@ -1,0 +1,472 @@
+---
+title: "습공기선도 — controlsfreak.dev"
+description: "공기조화기(AHU)의 습공기 공정을 따라 외기와 회기를 혼합한 뒤 냉각·가열·가습합니다. 선도에서 외기(OA)와 회기(RA) 상태점을 끌어 옮기면 나머지 공정이 함께 갱신됩니다."
+sourceContentHash: 4772ce5ae2b954ef5d86f3dc60121683a78de9b9e304d65a02a4e67a7f245c2f
+sourceMessageHash: "91a770866c8c40bb642f784af141f26b1b987ead6788bd2799014a1ae4f11955"
+canonical: "https://controlsfreak.dev/ko/tools/psychrometric-chart.html"
+nav: "tools"
+category: "hvac"
+pageMessages:
+  toggle:
+    off: "꺼짐"
+    on: "켜짐"
+  defineBy:
+    rh: "상대습도(%)"
+    wb: "습구온도({unit})"
+    dp: "노점({unit})"
+    w: "절대습도(함습비, W)({unit})"
+    h: "엔탈피({unit} 건공기)"
+  stages:
+    oa: "외기(OA)"
+    ra: "회기(RA)"
+    ma: "혼합공기(MA)"
+    cc: "냉각 코일 출구(CC)"
+    hc: "가열 코일 출구(HC)"
+    hum: "가습기 출구(HUM)"
+    sa: "급기(SA)"
+    offAria: "{label}(단계 꺼짐)"
+    bypassed: "{short} — 바이패스(통과 상태)"
+    copyProperties: "{short} 물성 복사"
+  process:
+    cooling: "냉각 코일 — 공정 변화량"
+    heating: "가열 코일 — 공정 변화량"
+    humidifier: "가습기 — 공정 변화량"
+    default: "공정 변화량 — 선택한 단계 전·후"
+  labels:
+    hcDeltaRise: "온도상승 ΔT({unit})"
+    hcLeavingDb: "출구 건구온도({unit})"
+  status:
+    engineUnavailable: "습공기 상태 해석 엔진을 사용할 수 없습니다. 페이지를 새로고침하세요."
+    seaLevel: "해수면"
+    altitude: "고도 {value} {unit}"
+    conditions: "{location} — {pressure} {pressureUnit}{airflow}"
+    airflow: " · {value} {unit}"
+  errors:
+    prefix: "{stage}: {message}"
+    outdoorAirPercent: "외기 비율은 0~100 % 범위여야 합니다."
+    awaitingOaRa: "외기(OA) / 회기(RA) 상태를 기다리는 중입니다."
+    coolingLeavingDb: "출구 건구온도는 입구 건구온도 이하여야 합니다."
+    coolingHumidityRatio: "출구 절대습도(함습비, W)는 입구 값을 초과할 수 없습니다."
+    enterNumber: "숫자 값을 입력하세요."
+    heatingLeavingDb: "출구 건구온도는 입구 건구온도 이상이어야 합니다."
+    humidifierRhRange: "출구 상대습도는 0~100 % 범위여야 합니다."
+    humidifierRhEntering: "출구 상대습도는 입구 상대습도 이상이어야 합니다."
+    awaitingUpstream: "상류 단계의 상태를 기다리는 중입니다."
+    psychro:
+      numeric: "숫자 값을 입력하세요."
+      rhNegative: "상대습도는 음수일 수 없습니다."
+      rhAbove100: "상대습도는 100 %를 초과할 수 없습니다."
+      wetBulbAboveDryBulb: "습구온도는 건구온도보다 높을 수 없습니다."
+      dewPointAboveDryBulb: "노점은 건구온도보다 높을 수 없습니다."
+      humidityRatioNegative: "절대습도(함습비, W)는 음수일 수 없습니다."
+      enthalpyBelowDryAir: "엔탈피가 이 건구온도의 건공기 엔탈피보다 낮습니다. 물리적으로 불가능합니다."
+      propertyRequired: "상태점을 정의할 물성을 선택하세요."
+      rhPastSaturation: "이 상태점은 포화선을 벗어납니다(상대습도 100 % 초과). 물리적으로 불가능합니다."
+      wetBulbPastSaturation: "입력한 습구온도는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다."
+      dewPointPastSaturation: "입력한 노점은 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다."
+      humidityRatioPastSaturation: "입력한 절대습도(함습비, W)는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다."
+      enthalpyPastSaturation: "입력한 엔탈피는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다."
+  canvas:
+    dryBulbAxis: "건구온도 · {unit}"
+    humidityRatioAxis: "절대습도(함습비, W) · {unit}"
+    saturation: "상대습도 100 %"
+    chipDryBulb: "건구"
+    chipWetBulb: "습구"
+    chipRelativeHumidity: "상대습도"
+  unitText:
+    altitude:
+      us: "고도(ft)"
+      metric: "고도(m)"
+    airflow:
+      us: "AHU 풍량(CFM)"
+      metric: "AHU 풍량(m³/h)"
+    dryBulb:
+      us: "건구온도(°F)"
+      metric: "건구온도(°C)"
+    leavingDryBulb:
+      us: "출구 건구온도(°F)"
+      metric: "출구 건구온도(°C)"
+    maDryBulb:
+      us: "혼합공기(MA) 건구온도(°F)"
+      metric: "혼합공기(MA) 건구온도(°C)"
+    maHumidityRatio:
+      us: "혼합공기(MA) 절대습도(함습비, W)(gr/lb)"
+      metric: "혼합공기(MA) 절대습도(함습비, W)(g/kg)"
+    stageDryBulb:
+      us: "건구 °F"
+      metric: "건구 °C"
+    stageHumidityRatio:
+      us: "gr/lb"
+      metric: "g/kg"
+    stageEnthalpy:
+      us: "h Btu/lb"
+      metric: "h kJ/kg"
+    stageCapacity:
+      us: "MBH"
+      metric: "kW"
+    wetBulb:
+      us: "습구온도(°F)"
+      metric: "습구온도(°C)"
+    dewPoint:
+      us: "노점(°F)"
+      metric: "노점(°C)"
+    humidityRatio:
+      us: "절대습도(함습비, W)(gr/lb)"
+      metric: "절대습도(함습비, W)(g/kg)"
+    enthalpy:
+      us: "엔탈피(Btu/lb)"
+      metric: "엔탈피(kJ/kg)"
+    specificVolume:
+      us: "비체적(ft³/lb)"
+      metric: "비체적(m³/kg)"
+    vaporPressure:
+      us: "수증기 분압(psia)"
+      metric: "수증기 분압(kPa)"
+    barometricPressure:
+      us: "대기압(psia)"
+      metric: "대기압(kPa)"
+    deltaDryBulb:
+      us: "Δ 건구온도(°F)"
+      metric: "Δ 건구온도(°C)"
+    deltaHumidityRatio:
+      us: "Δ 절대습도(함습비, W)(gr/lb)"
+      metric: "Δ 절대습도(함습비, W)(g/kg)"
+    deltaEnthalpy:
+      us: "Δ 엔탈피(Btu/lb)"
+      metric: "Δ 엔탈피(kJ/kg)"
+    totalCapacity:
+      us: "Q 전열(MBH)"
+      metric: "Q 전열(kW)"
+    sensibleCapacity:
+      us: "Q 현열(MBH)"
+      metric: "Q 현열(kW)"
+    latentCapacity:
+      us: "Q 잠열(MBH)"
+      metric: "Q 잠열(kW)"
+keywords: "습공기선도 습공기 상태 해석 절대습도 함습비 엔탈피 습구온도 노점온도 노점 외기 회기 혼합공기 코일 AHU OA RA"
+---
+{% extends "html/tools/psychrometric-chart.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 습공기선도</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <!-- .fs-desktop-only: at phone widths the absolute-positioned
+             button paints over the title's HVAC tag, and the page
+             already steers narrow-viewport users to the Input column
+             rather than the compressed chart. -->
+        <button type="button" class="tool-card-fullscreen-btn fs-desktop-only"
+                data-fullscreen-target=".tool-card"
+                aria-pressed="false" aria-label="전체 화면으로 전환"
+                title="전체 화면 전환 — Esc 키로 종료">
+            <svg class="fs-icon-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="15 3 21 3 21 9"/>
+                <polyline points="9 21 3 21 3 15"/>
+                <line x1="21" y1="3" x2="14" y2="10"/>
+                <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+            <svg class="fs-icon-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="4 14 10 14 10 20"/>
+                <polyline points="20 10 14 10 14 4"/>
+                <line x1="14" y1="10" x2="21" y2="3"/>
+                <line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+            <span class="fs-label-enter">전체 화면</span>
+            <span class="fs-label-exit">종료</span>
+        </button>
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                습공기선도
+                <span class="tool-tag">HVAC</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>공기조화기의 습공기 공정을 단계별로 해석합니다.</summary>
+            <div class="preamble-rest">
+                외기(OA)와 회기(RA)를 혼합한 다음 냉각, 가열,
+                가습합니다. 단계 버튼으로 공정을 선택해 패널에서 매개변수를 수정하거나 선도에서 <strong>OA</strong>와
+                <strong>RA</strong> 상태점을 끌어 옮기세요. 급기(SA) 상태와 모든 중간 상태점이 함께 갱신됩니다.
+                <strong>습공기선도가 처음인가요?</strong> <a href="/ko/education/psychrometrics-basics.html">습공기선도 기초 학습 자료</a>에서 선도의 일곱 가지 물성과 특히 주의할 <button type="button" data-gloss="dew-point">노점</button>을 먼저 설명합니다.
+            </div>
+        </details>
+        <p class="ps-seed-note">입력란에는 예제가 미리 채워져 있습니다. 확인하려는 값으로 수정하세요.</p>
+
+        <div class="narrow-width-note">
+            이 선도는 넓은 화면에 맞춰져 있습니다. 휴대전화에서는 3열 작업 공간이
+            한 열로 바뀌고 캔버스가 압축됩니다. 휴대전화에서는 위 입력 열에 각
+            상태를 직접 입력하는 것이 가장 빠릅니다. 선도에서 OA / RA를 끌어 옮길 수도 있지만,
+            노트북이나 태블릿을 사용하면 더 편하게 읽을 수 있습니다.
+        </div>
+
+        <!-- Same three-column property-sheet layout as the other tools (BACnet
+             converter, Signal Scaling, Modbus viewer), with a custom column
+             split — inputs left, chart canvas in the wide centre column, per-
+             stage results on the right. Column proportions live in the inline
+             <style> above; the .ps-* classes themselves are shared. -->
+        <div class="tool-body-3col">
+
+            <!-- ────────── INPUTS COLUMN ────────── -->
+            <section>
+                <h2 class="ps-section-label">공기조화기</h2>
+                <div class="ps-row" role="group" aria-labelledby="psy-range-label">
+                    <span class="ps-label" id="psy-range-label">선도 범위</span>
+                    <div class="btn-row">
+                        <button class="copy-btn active" id="psy-range-standard" data-range="standard" aria-pressed="true">표준</button>
+                        <button class="copy-btn"        id="psy-range-cold"     data-range="cold" aria-pressed="false">저온</button>
+                    </div>
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" data-us="{{ pageMessages.unitText.altitude.us }}" data-metric="{{ pageMessages.unitText.altitude.metric }}" for="psy-alt">{{ pageMessages.unitText.altitude.us }}</label>
+                    <input class="ps-input" type="number" id="psy-alt" step="100" min="0" max="15000" placeholder="0" value="0">
+                </div>
+                <div class="ps-row">
+                    <label class="ps-label" data-us="{{ pageMessages.unitText.airflow.us }}" data-metric="{{ pageMessages.unitText.airflow.metric }}" for="psy-cfm">{{ pageMessages.unitText.airflow.us }}</label>
+                    <input class="ps-input" type="number" id="psy-cfm" step="100" min="0" placeholder="선택 사항">
+                </div>
+
+                <!-- Stage selector. NOT a tablist: there are no per-stage
+                     panels — every pill re-renders the one shared detail
+                     region — and an off stage's pill stays operable (it
+                     selects the stage to inspect its pass-through state).
+                     aria-pressed carries selection; the accessible names
+                     carry the full stage name + off state, kept in sync
+                     by selectStep() / updatePillsOff() (audit-2026-06
+                     #10: the half-applied tablist announced "tab list"
+                     then seven stateless buttons). -->
+                <div class="psy-pills" role="group" aria-label="편집할 상태점">
+                    <button class="psy-pill active" data-step="oa"  aria-pressed="true"  aria-label="외기(OA)">OA</button>
+                    <button class="psy-pill"        data-step="ra"  aria-pressed="false" aria-label="회기(RA)">RA</button>
+                    <button class="psy-pill"        data-step="ma"  aria-pressed="false" aria-label="혼합공기(MA)">MA</button>
+                    <button class="psy-pill"        data-step="cc"  aria-pressed="false" aria-label="냉각 코일 출구(CC)">CC</button>
+                    <button class="psy-pill off"    data-step="hc"  aria-pressed="false" aria-label="가열 코일 출구(HC)(단계 꺼짐)">HC</button>
+                    <button class="psy-pill off"    data-step="hum" aria-pressed="false" aria-label="가습기 출구(HUM)(단계 꺼짐)">HUM</button>
+                    <button class="psy-pill"        data-step="sa"  aria-pressed="false" aria-label="급기(SA)">SA</button>
+                </div>
+
+                <!-- OA editor -->
+                <div class="psy-editor shown" data-step="oa">
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="oa-tdb">{{ pageMessages.unitText.dryBulb.us }}</label>
+                        <input class="ps-input" type="number" id="oa-tdb" step="0.5" min="-50" max="200" value="92">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="oa-mode">정의 기준</label>
+                        <select class="ps-input" id="oa-mode">
+                            <option value="rh">상대습도</option>
+                            <option value="wb" selected>습구온도</option>
+                            <option value="dp">노점</option>
+                            <option value="w">절대습도(함습비, W)</option>
+                            <option value="h">엔탈피</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="oa-second-lbl" for="oa-second">습구온도(°F)</label>
+                        <input class="ps-input" type="number" id="oa-second" step="0.5" min="-50" max="200" value="76">
+                    </div>
+                    <p class="ref-note">공기조화기로 유입되는 외기입니다. 선도에서 이 점을 끌어 옮기거나 여기서 값을 수정하세요.</p>
+                </div>
+
+                <!-- RA editor -->
+                <div class="psy-editor" data-step="ra">
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="ra-tdb">{{ pageMessages.unitText.dryBulb.us }}</label>
+                        <input class="ps-input" type="number" id="ra-tdb" step="0.5" min="-50" max="200" value="75">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="ra-mode">정의 기준</label>
+                        <select class="ps-input" id="ra-mode">
+                            <option value="rh">상대습도</option>
+                            <option value="wb" selected>습구온도</option>
+                            <option value="dp">노점</option>
+                            <option value="w">절대습도(함습비, W)</option>
+                            <option value="h">엔탈피</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="ra-second-lbl" for="ra-second">습구온도(°F)</label>
+                        <input class="ps-input" type="number" id="ra-second" step="0.5" min="-50" max="200" value="63">
+                    </div>
+                    <p class="ref-note">공조 공간에서 돌아오는 회기(RA)입니다. 선도에서 이 점을 끌어 옮기거나 여기서 값을 수정하세요.</p>
+                </div>
+
+                <!-- MA editor -->
+                <div class="psy-editor" data-step="ma">
+                    <div class="ps-row">
+                        <label class="ps-label" for="ma-pct">외기 비율(%)</label>
+                        <input class="ps-input" type="number" id="ma-pct" step="1" min="0" max="100" value="20">
+                    </div>
+                    <p class="ref-note">OA와 RA를 질량 가중 혼합합니다. 혼합 상태점은 선도의 OA–RA 직선 위에서 RA로부터 OA 방향으로 외기 비율(OA%)만큼 이동한 위치에 놓입니다.</p>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.maDryBulb.us }}" data-metric="{{ pageMessages.unitText.maDryBulb.metric }}">{{ pageMessages.unitText.maDryBulb.us }}</span><span class="ps-value live" id="ma-tdb-out">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.maHumidityRatio.us }}" data-metric="{{ pageMessages.unitText.maHumidityRatio.metric }}">{{ pageMessages.unitText.maHumidityRatio.us }}</span><span class="ps-value live" id="ma-w-out">—</span></div>
+                    <div class="ps-row"><span class="ps-label">혼합공기(MA) 상대습도(%)</span><span class="ps-value live" id="ma-rh-out">—</span></div>
+                </div>
+
+                <!-- CC editor -->
+                <div class="psy-editor" data-step="cc">
+                    <div class="ps-row" role="group" aria-labelledby="cc-toggle-label">
+                        <span class="ps-label" id="cc-toggle-label">냉각 코일</span>
+                        <label class="psy-toggle"><input type="checkbox" id="cc-on" checked></label>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.leavingDryBulb.us }}" data-metric="{{ pageMessages.unitText.leavingDryBulb.metric }}" for="cc-tdb">{{ pageMessages.unitText.leavingDryBulb.us }}</label>
+                        <input class="ps-input" type="number" id="cc-tdb" step="0.5" min="-50" max="200" value="55">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="cc-mode">정의 기준</label>
+                        <select class="ps-input" id="cc-mode">
+                            <option value="rh">상대습도</option>
+                            <option value="wb" selected>습구온도</option>
+                            <option value="dp">노점</option>
+                            <option value="w">절대습도(함습비, W)</option>
+                            <option value="h">엔탈피</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="cc-second-lbl" for="cc-second">습구온도(°F)</label>
+                        <input class="ps-input" type="number" id="cc-second" step="0.5" min="-50" max="200" value="54">
+                    </div>
+                    <p class="ref-note">코일 출구 상태입니다. 출구 건구온도는 입구 값 이하여야 하며, 냉각 코일을 통과하면서 절대습도(함습비, W)가 증가할 수는 없습니다.</p>
+                </div>
+
+                <!-- HC editor -->
+                <div class="psy-editor" data-step="hc">
+                    <div class="ps-row" role="group" aria-labelledby="hc-toggle-label">
+                        <span class="ps-label" id="hc-toggle-label">가열 코일</span>
+                        <label class="psy-toggle"><input type="checkbox" id="hc-on"></label>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="hc-mode">지정 기준</label>
+                        <select class="ps-input" id="hc-mode">
+                            <option value="ldb" selected>출구 건구온도</option>
+                            <option value="dt">온도상승 ΔT</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="hc-val-lbl" for="hc-val">출구 건구온도(°F)</label>
+                        <input class="ps-input" type="number" id="hc-val" step="0.5" min="-50" max="200" value="75">
+                    </div>
+                    <p class="ref-note"><button type="button" data-gloss="sensible-heat">현열</button>만 가열하며, 코일 전·후의 절대습도(함습비, W)는 변하지 않습니다. 출구 건구온도는 입구 값 이상이어야 합니다.</p>
+                </div>
+
+                <!-- HUM editor -->
+                <div class="psy-editor" data-step="hum">
+                    <div class="ps-row" role="group" aria-labelledby="hum-toggle-label">
+                        <span class="ps-label" id="hum-toggle-label">가습기</span>
+                        <label class="psy-toggle"><input type="checkbox" id="hum-on"></label>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="hum-rh">출구 상대습도(%)</label>
+                        <input class="ps-input" type="number" id="hum-rh" step="1" min="0" max="100" value="50">
+                    </div>
+                    <p class="ref-note">증발식 패드나 습윤 매체를 사용한 단열(일정한 <button type="button" data-gloss="wet-bulb">습구온도</button>) 가습입니다. 수분을 더하면 <button type="button" data-gloss="dry-bulb">건구온도</button>가 약간 내려갑니다. 출구 상대습도는 입구 값 이상이어야 합니다.</p>
+                </div>
+
+                <!-- SA editor (read-only) -->
+                <div class="psy-editor" data-step="sa">
+                    <p class="ref-note" style="margin-top:0.6rem;">급기(SA)는 공정 연속선에서 활성화된 마지막 단계의 출구 상태입니다. 전체 물성표는 오른쪽에 있습니다.</p>
+                </div>
+
+                <p class="bit-hint" id="psy-msg" style="margin:0.6rem 0 0;padding:0 1rem;line-height:1.55;"></p>
+            </section>
+
+            <!-- ────────── CHART COLUMN ────────── -->
+            <section>
+                <h2 class="ps-section-label">습공기선도</h2>
+                <div class="sim-canvas-wrap">
+                    <canvas id="psy-canvas" style="aspect-ratio:8/5;height:auto;touch-action:none;" role="img" aria-label="외기에서 급기까지 공기조화기의 상태 경로를 나타낸 습공기선도"></canvas>
+                    <div id="psy-chip" class="psy-chip" hidden aria-hidden="true"></div>
+                </div>
+                <p class="bit-hint" style="margin-bottom:0;line-height:1.65;">
+                    굵은 녹색 = 포화곡선, 오른쪽으로 상승하는 가는 곡선 = 일정 상대습도, 가는 점선 = 일정 <button type="button" data-gloss="wet-bulb">습구온도</button>입니다.
+                    공정 구간은 색상으로 구분합니다. <span style="color:var(--text-dim)">회색</span> = 혼합,
+                    <span style="color:var(--blue)">파란색</span> = 냉각 / 제습,
+                    <span style="color:var(--heat)">주황색</span> = 가열,
+                    <span style="color:var(--accent)">녹색 점선</span> = 단열 가습입니다.
+                </p>
+            </section>
+
+            <!-- ────────── OUTPUT COLUMN ────────── -->
+            <section>
+                <h2 class="ps-section-label">단계별 상태</h2>
+                <table class="ref-table-dense psy-stage-tbl" id="psy-stage-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">단계</th>
+                            <th scope="col" data-us="{{ pageMessages.unitText.stageDryBulb.us }}" data-metric="{{ pageMessages.unitText.stageDryBulb.metric }}">{{ pageMessages.unitText.stageDryBulb.us }}</th>
+                            <th scope="col" data-us="{{ pageMessages.unitText.stageHumidityRatio.us }}" data-metric="{{ pageMessages.unitText.stageHumidityRatio.metric }}">{{ pageMessages.unitText.stageHumidityRatio.us }}</th>
+                            <th scope="col">상대습도 %</th>
+                            <th scope="col" data-us="{{ pageMessages.unitText.stageEnthalpy.us }}" data-metric="{{ pageMessages.unitText.stageEnthalpy.metric }}">{{ pageMessages.unitText.stageEnthalpy.us }}</th>
+                            <th scope="col" class="psy-q-col hidden" data-us="{{ pageMessages.unitText.stageCapacity.us }}" data-metric="{{ pageMessages.unitText.stageCapacity.metric }}">{{ pageMessages.unitText.stageCapacity.us }}</th>
+                        </tr>
+                    </thead>
+                    <tbody><!-- rows generated by JS --></tbody>
+                </table>
+
+                <h2 class="ps-section-label" id="psy-detail-label" style="margin-top:1rem;">{{ pageMessages.stages.oa }}</h2>
+                <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}">{{ pageMessages.unitText.dryBulb.us }}</span><span class="ps-value live" id="ro-db">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.wetBulb.us }}" data-metric="{{ pageMessages.unitText.wetBulb.metric }}">{{ pageMessages.unitText.wetBulb.us }}</span><span class="ps-value live" id="ro-wb">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.dewPoint.us }}" data-metric="{{ pageMessages.unitText.dewPoint.metric }}">{{ pageMessages.unitText.dewPoint.us }}</span><span class="ps-value live" id="ro-dp">—</span></div>
+                <div class="ps-row"><span class="ps-label">상대습도(%)</span><span class="ps-value live" id="ro-rh">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.humidityRatio.us }}" data-metric="{{ pageMessages.unitText.humidityRatio.metric }}">{{ pageMessages.unitText.humidityRatio.us }}</span><span class="ps-value live" id="ro-w">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.enthalpy.us }}" data-metric="{{ pageMessages.unitText.enthalpy.metric }}">{{ pageMessages.unitText.enthalpy.us }}</span><span class="ps-value live" id="ro-h">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.specificVolume.us }}" data-metric="{{ pageMessages.unitText.specificVolume.metric }}">{{ pageMessages.unitText.specificVolume.us }}</span><span class="ps-value live" id="ro-v">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.vaporPressure.us }}" data-metric="{{ pageMessages.unitText.vaporPressure.metric }}">{{ pageMessages.unitText.vaporPressure.us }}</span><span class="ps-value live" id="ro-pw">—</span></div>
+                <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.barometricPressure.us }}" data-metric="{{ pageMessages.unitText.barometricPressure.metric }}">{{ pageMessages.unitText.barometricPressure.us }}</span><span class="ps-value live" id="ro-p">—</span></div>
+
+                <div class="btn-row">
+                    <button class="copy-btn" id="psy-copy-state">외기(OA) 물성 복사</button>
+                </div>
+
+                <div class="psy-process hidden" id="psy-process-block">
+                    <div class="psy-process-label" id="psy-process-label">공정 변화량 — 선택한 단계 전·후</div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.deltaDryBulb.us }}" data-metric="{{ pageMessages.unitText.deltaDryBulb.metric }}">{{ pageMessages.unitText.deltaDryBulb.us }}</span><span class="ps-value live" id="pd-db">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.deltaHumidityRatio.us }}" data-metric="{{ pageMessages.unitText.deltaHumidityRatio.metric }}">{{ pageMessages.unitText.deltaHumidityRatio.us }}</span><span class="ps-value live" id="pd-w">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.deltaEnthalpy.us }}" data-metric="{{ pageMessages.unitText.deltaEnthalpy.metric }}">{{ pageMessages.unitText.deltaEnthalpy.us }}</span><span class="ps-value live" id="pd-h">—</span></div>
+                    <div class="ps-row hidden" id="pd-shr-row"><span class="ps-label">현열비(SHR)</span><span class="ps-value live" id="pd-shr">—</span></div>
+                    <div class="ps-row hidden" id="pd-qt-row"><span class="ps-label" data-us="{{ pageMessages.unitText.totalCapacity.us }}" data-metric="{{ pageMessages.unitText.totalCapacity.metric }}">{{ pageMessages.unitText.totalCapacity.us }}</span><span class="ps-value live" id="pd-qt">—</span></div>
+                    <div class="ps-row hidden" id="pd-qs-row"><span class="ps-label" data-us="{{ pageMessages.unitText.sensibleCapacity.us }}" data-metric="{{ pageMessages.unitText.sensibleCapacity.metric }}">{{ pageMessages.unitText.sensibleCapacity.us }}</span><span class="ps-value live" id="pd-qs">—</span></div>
+                    <div class="ps-row hidden" id="pd-ql-row"><span class="ps-label" data-us="{{ pageMessages.unitText.latentCapacity.us }}" data-metric="{{ pageMessages.unitText.latentCapacity.metric }}">{{ pageMessages.unitText.latentCapacity.us }}</span><span class="ps-value live" id="pd-ql">—</span></div>
+                </div>
+            </section>
+
+        </div>
+
+        <div style="padding:1.25rem 1.5rem;border-top:1px solid var(--border);">
+            <p class="pid-note" style="margin-top:0;">
+                물성은 건공기 1 lb당 값이며 ASHRAE Fundamentals(Chapter 1)의 IP 방정식으로 내부 계산한 뒤
+                선택한 표시 단위로 변환합니다. 여기에 표시한 공식 형태(0.240, 0.444, CFM·60/v)는 해당 IP식을 따르며,
+                미터법 표시값은 같은 계산 결과를 정확히 환산한 값입니다. 상대습도는 통상적인 근사 방식인 분압비로 계산합니다.
+                혼합은 질량 가중 <button type="button" data-gloss="enthalpy">엔탈피</button> / 절대습도(함습비, W) 조합으로 계산하며, 단열 가습에서는 <button type="button" data-gloss="wet-bulb">습구온도</button>가 일정합니다.
+                코일 용량은 AHU 풍량과 입구 비체적으로 계산합니다.
+                Q = ṁ·Δh, ṁ = CFM·60/v<sub>in</sub>; Q<sub>sens</sub> = ṁ·(0.240 + 0.444·W<sub>in</sub>)·ΔT. 건물의 습공기 상태를 직관적으로 파악하고
+                설계일 상태점을 신속히 점검하기 위한 용도이며, 보정된 부하 해석 도구를 대체하지 않습니다.
+            </p>
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/dew-point-calculator.html', label: '노점온도 계산기'},
+            {href: '/ko/tools/air-mixing.html', label: '공기 혼합 계산기'},
+            {href: '/ko/tools/coil-sizing.html', label: '코일 용량 계산기'},
+            {href: '/ko/tools/economizer-ratio.html', label: '외기냉방 비율 도우미'}
+        ],
+        lessons: [
+            {href: '/ko/education/psychrometrics-basics.html', label: '습공기선도 기초'},
+            {href: '/ko/education/air-handlers.html', label: '공기조화기'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/psychrometrics-basics.html', label: '습공기선도 기초 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

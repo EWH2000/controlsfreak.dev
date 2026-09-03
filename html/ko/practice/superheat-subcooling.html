@@ -1,0 +1,58 @@
+---
+title: 과열도 및 과냉도 퀴즈 — controlsfreak.dev
+description: 과열도와 과냉도의 측정 위치, 배관 온도와 포화온도를 이용한 계산식, 비정상 고·저 판독값의 의미를 점검하는 10문항 퀴즈입니다.
+sourceContentHash: 18a0e26abb839b1fca361ce7c5709d0c684114ceeccdd8d9ef6dc8a87c87624a
+canonical: https://controlsfreak.dev/ko/practice/superheat-subcooling.html
+nav: practice
+category: refrigeration
+pairedLesson: https://controlsfreak.dev/ko/education/superheat-subcooling.html
+---
+{% extends "html/practice/superheat-subcooling.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 과열도 및 과냉도</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">과열도 및 과냉도 퀴즈 <span class="tool-tag">냉동</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저
+                <a href="/ko/education/superheat-subcooling.html">과열도 및 과냉도</a> 학습 자료를 읽은 뒤
+                스스로 확인해 보세요. 냉매 사이클이 올바르게 운전되는지 입증하는 두 측정값을 다루는
+                10문항입니다. 과열도와 과냉도가 각각 무엇을 어느 배관에서 측정하는지, 배관 온도와
+                포화온도를 이용한 계산식(이슬점과 기포점), 두 값이 높거나 낮을 때 어떤 원인을 의심해야
+                하는지 점검합니다. 각 문항의 해설에는 해당 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/ko/education/superheat-subcooling.html', label: '과열도 및 과냉도'},
+            {href: '/ko/education/refrigerant-cycle-basics.html', label: '냉매 사이클 기초'},
+            {href: '/ko/education/metering-devices-txv-eev.html', label: 'TXV와 EEV 비교'}
+        ],
+        tools: [
+            {href: '/ko/tools/refrigerant-pt.html', label: '냉매 P-T 및 과열도 계산기'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/refrigerant-cycle-basics.html', label: '냉매 사이클 기초 퀴즈'},
+            {href: '/ko/practice/metering-devices-txv-eev.html', label: 'TXV와 EEV 비교 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

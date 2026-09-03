@@ -1,0 +1,85 @@
+---
+title: 문의하기 — controlsfreak.dev
+description: controlsfreak.dev에 의견을 보내세요. 도구 피드백, 새 계산기 제안, 버그 신고, 참고 데이터의 오류 정정을 접수합니다.
+sourceContentHash: f469da7c7fb19f22cbdf4fe0ad3323c4574f0cf28318826f89ae232d0b8f3e41
+canonical: https://controlsfreak.dev/ko/contact.html
+nav: contact
+---
+{% extends "html/contact.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">문의하기</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                연락하기
+                <span class="tool-tag">문의</span>
+            </h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="contact-intro">
+                도구의 계산값이 잘못되었거나, 페이지에서 오타를 발견했거나, 아직 없는 도구를 제안하고 싶거나, 그저 인사를 전하고 싶다면 메시지를 보내 주세요. 제 받은편지함으로 바로 전달되며, 모든 메시지를 읽고 보통 하루나 이틀 안에 답변드리려고 노력합니다.
+            </p>
+
+            <form id="contact-form">
+                <div class="form-row">
+                    <div class="field">
+                        <label for="contact-name">이름(선택)</label>
+                        <input type="text" id="contact-name" name="name" maxlength="200" autocomplete="name">
+                    </div>
+                    <div class="field">
+                        <label for="contact-email">이메일(필수)</label>
+                        <input type="email" id="contact-email" name="email" required maxlength="200" autocomplete="email"
+                               pattern="[^\s@.](?:[^\s@]*[^\s@.])?@[^\s@.](?:[^\s@]*[^\s@.])?\.[^\s@.](?:[^\s@]*[^\s@.])?"
+                               title="일반적인 형식의 이메일 주소를 입력하세요. @ 바로 앞이나 뒤 또는 주소의 맨 앞이나 끝에는 마침표를 사용할 수 없습니다.">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="field">
+                        <label for="contact-message">메시지(필수)</label>
+                        <textarea id="contact-message" name="message" required maxlength="5000" rows="8"></textarea>
+                    </div>
+                </div>
+
+                <div class="hp-field" aria-hidden="true">
+                    <label for="contact-website">웹사이트</label>
+                    <input type="text" id="contact-website" name="website" tabindex="-1" autocomplete="off">
+                </div>
+
+                <div class="cf-turnstile"
+                     data-sitekey="0x4AAAAAADMxtgbuzZieosAM"
+                     data-theme="light"
+                     data-language="{{ locale }}"
+                     data-callback="onTsOk"
+                     data-expired-callback="onTsExpired"
+                     data-error-callback="onTsError"></div>
+
+                <div class="btn-row">
+                    <button type="submit" class="copy-btn">메시지 보내기</button>
+                </div>
+            </form>
+
+            <div id="contact-result" class="result-panel hidden">
+                <div class="result-label">상태</div>
+                <div class="result-value" id="contact-result-value">—</div>
+            </div>
+            <div class="sr-only" role="status" aria-live="polite" aria-atomic="true" id="contact-result-sr"></div>
+
+            <p class="contact-fallback">
+                보안이 엄격한 네트워크에서 차단되었거나 JavaScript가 꺼져 있어 양식이 작동하지 않나요?
+                <a href="mailto:contact@controlsfreak.dev">contact@controlsfreak.dev</a>로 직접 이메일을 보내 주세요.
+                이메일 주소는 답변에만 사용합니다. 자세한 내용은 <a href="/ko/privacy.html">개인정보 처리방침</a>에서 확인하세요.
+            </p>
+
+        </div>
+    </div>
+
+</main>
+{% endblock %}

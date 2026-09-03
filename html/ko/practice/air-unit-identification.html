@@ -1,0 +1,54 @@
+---
+title: 공조 장비 식별 퀴즈 — controlsfreak.dev
+description: 설치 위치·캐비닛 구성·공기 연결로 장비 유형을 좁히고, 냉매 배관과 VAV 특징, 모델 번호의 냉동톤, 실제 장비와 문서가 다를 때의 판단을 점검하는 10문항 퀴즈입니다.
+sourceContentHash: a46c4ea3a074b51636c3c4cf90e22da93f32fb799f48485b2fb28ac373f0ee9d
+canonical: https://controlsfreak.dev/ko/practice/air-unit-identification.html
+nav: practice
+category: forced-air
+pairedLesson: https://controlsfreak.dev/ko/education/air-unit-identification.html
+---
+{% extends "html/practice/air-unit-identification.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 공조 장비 식별</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">공조 장비 식별 퀴즈 <span class="tool-tag">공기 시스템</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/air-unit-identification.html">공조 장비 식별</a> 학습 자료를 읽은 뒤 장비의
+                이름을 기억해 구분해 보세요. 학습 순서를 따르는 10문항입니다. 현장의 세 가지 질문, 패키지형·조립형·보충공기
+                장비를 가르는 특징, 분리형 시스템의 냉매 배관 세트, VAV를 식별하는 조건 조합, 모델 번호에서
+                구하는 냉동톤, 전화에서 말한 여러 \"일람표\" 중 실제 문서, 비운전 계절의 오버라이드로 라벨 없는
+                시스템이 스스로 위치를 드러내게 하는 방법을 확인합니다. 각 문항의 해설에는 해당 내용이 나온 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/refrigerant-pt.html', label: '냉매 P-T 및 과열도 계산기'},
+            {href: '/ko/tools/air-mixing.html', label: '혼합공기 온도 계산기'}
+        ],
+        lessons: [
+            {href: '/ko/education/air-unit-identification.html', label: '공조 장비 식별'},
+            {href: '/ko/education/air-handlers.html', label: '공기조화기'},
+            {href: '/ko/education/building-pressure.html', label: '건물 압력'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

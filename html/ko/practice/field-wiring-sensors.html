@@ -1,0 +1,58 @@
+---
+title: 현장 배선 및 센서 실습 — controlsfreak.dev
+description: 서미스터·RTD 곡선, 4–20 mA 라이브 제로, AI/AO, 루프 전원, 차폐 접지, 소싱·싱킹 입력을 다루는 현장 배선 실습입니다.
+sourceContentHash: 9756ddbdb77dd8da937a64c0fdc3cb1c5ae2fb3868145d4dc54a6269cec6391e
+canonical: https://controlsfreak.dev/ko/practice/field-wiring-sensors.html
+nav: practice
+category: field
+---
+{% extends "html/practice/field-wiring-sensors.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 현장 배선 및 센서</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">현장 배선 및 센서 실습 <span class="tool-tag">현장 실습</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                신호가 실제 전선과 만나는 계층, 즉 제어 로직이 실행되기도 전에 문제를 일으키는 현장을
+                다루는 10문항입니다. 서미스터와 RTD의 곡선 및 서미스터가 비선형인 이유, 2선식·3선식·4선식
+                RTD의 리드선 저항 보상, <strong>AI</strong>가 읽는 신호와 <strong>AO</strong>가 출력하는 신호,
+                루프 전원, 단선을 정상 저압 신호와 구별하게 해 주는 4–20 mA <strong>라이브 제로</strong>,
+                차폐 접지, 소싱 입력과 싱킹 입력을 다룹니다. 정답 확인 패널에서 바로 해설을 제공하며,
+                계산이 필요한 내용은 서미스터 및 신호 스케일링 도구로 연결됩니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/thermistor-calculator.html', label: '서미스터 / RTD 계산기'},
+            {href: '/ko/tools/signal-scaling.html', label: '신호 스케일링 계산기'}
+        ],
+        lessons: [
+            {href: '/ko/education/controller-wiring.html', label: '제어기 배선'},
+            {href: '/ko/education/bacnet-basics.html', label: 'BACnet 기초'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/controller-swap.html', label: '컨트롤러 교체'},
+            {href: '/ko/practice/surviving-first-months.html', label: '입문 첫 몇 달 버티기'},
+            {href: '/ko/practice/controls-commissioning.html', label: '제어 커미셔닝'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

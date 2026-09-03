@@ -6,8 +6,26 @@
 // under html/scripts/. No bundler, no transpile.
 
 const { execFileSync } = require("child_process");
+const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
+const i18nData = require("./html/_data/i18n.js");
+const i18nStatus = require("./html/_data/i18nStatus.js");
+const bacnetEnumsData = require("./html/_data/bacnetEnums.js");
+const bacnetEnumTranslationsData = require("./html/_data/bacnetEnumTranslations.js");
+const i18nSourceHashes = require("./html/_data/i18nSourceHashes.js");
+const quizTranslations = require("./html/_data/quizTranslations.js");
+const { localizeQuiz } = require("./lib/localize-quiz.js");
+const {
+    cleanCanonical,
+    localeFromCanonical,
+    localePath,
+    localizedCanonical,
+    localizedSequence,
+    resolveLocale,
+    translate,
+    translationKey,
+} = require("./lib/i18n.js");
 
 // 11ty's input + includes directories, hoisted out of the `dir` object
 // returned at the bottom of this file so flowStaticGuard's on-disk scan
@@ -17,6 +35,22 @@ const path = require("path");
 // EXEMPT_TEMPLATES path. Two literals would drift; one can't.
 const INPUT_DIR = "html";
 const INCLUDES_DIR = "_includes";
+
+const glossaryTranslations = Object.fromEntries(
+    i18nData.locales
+        .map(({ code }) => code)
+        .filter((code) => code !== i18nData.defaultLocale)
+        .map((code) => {
+            const translationPath = path.join(
+                __dirname,
+                "html",
+                "_data",
+                "glossary-translations",
+                `${code}.js`
+            );
+            return [code, fs.existsSync(translationPath) ? require(translationPath) : {}];
+        })
+);
 
 module.exports = function(eleventyConfig) {
     // .html files run through Nunjucks so signal-scaling.html →
@@ -35,6 +69,55 @@ module.exports = function(eleventyConfig) {
         trimBlocks: true,
         lstripBlocks: true
     });
+
+    // Shared interface copy and locale-aware URL helpers. Long-form prose
+    // remains in thin locale page templates, while chrome and runtime UI use
+    // stable message keys. Missing keys throw instead of silently falling
+    // back to English — a localization omission must fail the build.
+    eleventyConfig.addFilter("t", (key, locale, values) =>
+        translate(resolveLocale(locale), key, values));
+    eleventyConfig.addFilter("localePath", (url, locale) =>
+        localePath(url, resolveLocale(locale)));
+    eleventyConfig.addFilter("localizedCanonical", (url, locale) =>
+        localizedCanonical(url, resolveLocale(locale)));
+    eleventyConfig.addFilter("translationKey", translationKey);
+    eleventyConfig.addFilter("localeItems", (items, locale) => {
+        const selected = resolveLocale(locale);
+        return (items || []).filter((item) => resolveLocale(item.data) === selected);
+    });
+    eleventyConfig.addFilter("localizedSequence", (sequence, locale) =>
+        localizedSequence(sequence, resolveLocale(locale)));
+    eleventyConfig.addFilter("translationAlternates", (pages, canonical) => {
+        const key = translationKey(canonical);
+        const localeOrder = new Map(
+            i18nData.locales.map(({ code }, index) => [code, index])
+        );
+        return (pages || [])
+            .filter((item) => translationKey(item.data.canonical) === key)
+            .map((item) => {
+                const locale = resolveLocale(item.data);
+                const meta = i18nData.locales.find((entry) => entry.code === locale) || {};
+                return {
+                    locale,
+                    url: cleanCanonical(item.data.canonical),
+                    path: item.url,
+                    og: meta.og,
+                    shortLabel: meta.shortLabel,
+                };
+            })
+            .sort((a, b) => localeOrder.get(a.locale) - localeOrder.get(b.locale));
+    });
+    eleventyConfig.addFilter("localeMeta", (locale) =>
+        i18nData.locales.find((entry) => entry.code === resolveLocale(locale))
+        || i18nData.locales[0]);
+    eleventyConfig.addFilter("runtimeLocales", (locales) =>
+        (locales || []).map(({ code, label, shortLabel }) => ({
+            code,
+            label,
+            shortLabel,
+        })));
+    eleventyConfig.addFilter("localizedQuiz", (questions, locale, slug) =>
+        localizeQuiz(questions, locale, slug, quizTranslations));
 
     // Static assets — copied verbatim to _site/ at the same relative
     // paths the existing pages reference. The mapping object form
@@ -65,9 +148,9 @@ module.exports = function(eleventyConfig) {
     // `category` values; the two are independent sources today and must
     // be kept in sync by hand (codebase-issues — two-source category).
     const NAV_CATEGORIES = {
-        tools: [["hvac", "HVAC"], ["protocols", "Protocols"], ["signals", "Signals"], ["airflow", "Airflow"], ["electrical", "Electrical"], ["hydronics", "Hydronics"]],
-        education: [["fundamentals", "Fundamentals"], ["signals", "Signals & Sensing"], ["hydronics", "Hydronics"], ["refrigerant", "Refrigerant"], ["forced-air", "Forced Air Systems"], ["programming", "Programming"], ["protocols", "Protocols"]],
-        practice: [["modbus", "Modbus"], ["bacnet", "BACnet"], ["hydronics", "Hydronics"], ["refrigeration", "Refrigeration"], ["signals", "Signals & Sensing"], ["controls", "Controls"], ["programming", "Programming"], ["psychrometrics", "Psychrometrics"], ["forced-air", "Forced Air Systems"], ["field", "Field Drills"]],
+        tools: [["hvac", "nav.categories.hvac"], ["protocols", "nav.categories.protocols"], ["signals", "nav.categories.signalsShort"], ["airflow", "nav.categories.airflow"], ["electrical", "nav.categories.electrical"], ["hydronics", "nav.categories.hydronics"]],
+        education: [["fundamentals", "nav.categories.fundamentals"], ["signals", "nav.categories.signals"], ["hydronics", "nav.categories.hydronics"], ["refrigerant", "nav.categories.refrigerant"], ["forced-air", "nav.categories.forcedAir"], ["programming", "nav.categories.programming"], ["protocols", "nav.categories.protocols"]],
+        practice: [["modbus", "nav.categories.modbus"], ["bacnet", "nav.categories.bacnet"], ["hydronics", "nav.categories.hydronics"], ["refrigeration", "nav.categories.refrigeration"], ["signals", "nav.categories.signals"], ["controls", "nav.categories.controls"], ["programming", "nav.categories.programming"], ["psychrometrics", "nav.categories.psychrometrics"], ["forced-air", "nav.categories.forcedAir"], ["field", "nav.categories.field"]],
     };
 
     // Build-time guard for the 140–160 char `description` frontmatter
@@ -78,15 +161,27 @@ module.exports = function(eleventyConfig) {
     // hook with access to the resolved data cascade; it returns nothing
     // and exists only for the side-effecting length check.
     eleventyConfig.addCollection("descriptionLengthGuard", (collectionApi) => {
-        const MIN = 140;
-        const MAX = 160;
+        const boundsFor = (locale) => {
+            const meta = i18nData.locales.find(({ code }) => code === locale);
+            const bounds = meta && meta.descriptionLength;
+            if (!bounds || !Number.isInteger(bounds.min) || !Number.isInteger(bounds.max)) {
+                throw new Error(`Missing integer descriptionLength bounds for locale ${locale}`);
+            }
+            return bounds;
+        };
         const offenders = collectionApi.getAll()
             .filter((item) => typeof item.data.description === "string")
             .filter((item) => {
+                const selected = resolveLocale(item.data);
+                const { min, max } = boundsFor(selected);
                 const len = item.data.description.length;
-                return len < MIN || len > MAX;
+                return len < min || len > max;
             })
-            .map((item) => `  ${item.inputPath} — ${item.data.description.length} chars`);
+            .map((item) => {
+                const selected = resolveLocale(item.data);
+                const { min, max } = boundsFor(selected);
+                return `  ${item.inputPath} — ${item.data.description.length} chars; ${selected} target is ${min}–${max}`;
+            });
         // A *missing* description used to pass silently (the typeof
         // filter skipped it) — any page real enough to carry a canonical
         // must also carry a description (audit-2026-06 polish; the
@@ -97,10 +192,613 @@ module.exports = function(eleventyConfig) {
             .map((item) => `  ${item.inputPath} — canonical but no description`);
         const all = offenders.concat(missing);
         if (all.length) {
+            const targets = i18nData.locales
+                .map(({ code }) => {
+                    const { min, max } = boundsFor(code);
+                    return `${code} ${min}–${max}`;
+                })
+                .join(", ");
             throw new Error(
-                `description frontmatter must be ${MIN}–${MAX} chars ` +
+                `description frontmatter length by locale — ${targets} ` +
                 `(CLAUDE.md "Templating"):\n${all.join("\n")}`
             );
+        }
+        return [];
+    });
+
+    // A locale must implement the same leaf-message contract as English.
+    // Exact key and interpolation-token parity prevents a UI state from
+    // silently falling back or exposing an unresolved `{placeholder}` only
+    // after a visitor triggers it in the browser.
+    eleventyConfig.addCollection("i18nCatalogGuard", () => {
+        const flatten = (value, prefix = "", output = new Map(), label = "catalog") => {
+            Object.entries(value || {}).forEach(([key, child]) => {
+                const pathKey = prefix ? `${prefix}.${key}` : key;
+                if (typeof child === "string") {
+                    if (!child.trim()) {
+                        throw new Error(`i18n catalog leaf must be non-empty: ${label}.${pathKey}`);
+                    }
+                    output.set(pathKey, child);
+                }
+                else if (child && typeof child === "object" && !Array.isArray(child)) {
+                    flatten(child, pathKey, output, label);
+                } else {
+                    throw new Error(`i18n catalog leaf must be a string: ${label}.${pathKey}`);
+                }
+            });
+            return output;
+        };
+        const placeholders = (message) => [...String(message).matchAll(/\{([A-Za-z][\w-]*)\}/g)]
+            .map((match) => match[1])
+            .sort();
+        const base = flatten(
+            i18nData.messages[i18nData.defaultLocale],
+            "",
+            new Map(),
+            i18nData.defaultLocale
+        );
+        const offenders = [];
+        const localeCodes = i18nData.locales.map(({ code }) => code);
+        if (new Set(localeCodes).size !== localeCodes.length) {
+            offenders.push("  locale codes must be unique");
+        }
+        if (!localeCodes.includes(i18nData.defaultLocale)) {
+            offenders.push(`  default locale ${i18nData.defaultLocale} is not configured`);
+        }
+        if (new Set(i18nStatus.completeLocales).size !== i18nStatus.completeLocales.length) {
+            offenders.push("  completeLocales entries must be unique");
+        }
+        i18nStatus.completeLocales.forEach((code) => {
+            if (code === i18nData.defaultLocale) {
+                offenders.push(`  completeLocales must omit the default locale ${code}`);
+            } else if (!localeCodes.includes(code)) {
+                offenders.push(`  complete locale ${code} is not configured`);
+            }
+        });
+        i18nData.locales.forEach((locale) => {
+            const { code } = locale;
+            ["code", "label", "shortLabel", "og", "ogImage"].forEach((field) => {
+                if (typeof locale[field] !== "string" || !locale[field].trim()) {
+                    offenders.push(`  ${code || "(missing code)"} — ${field} must be a non-empty string`);
+                }
+            });
+            if (typeof code === "string"
+                && !/^[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-(?:[A-Z]{2}|\d{3}))?$/.test(code)) {
+                offenders.push(`  ${code} — locale code must be a supported BCP 47 language tag (for example en, ko, or pt-BR)`);
+            }
+            if (typeof locale.shortLabel === "string"
+                && [...locale.shortLabel.trim()].length > 5) {
+                offenders.push(`  ${code} — shortLabel must be at most 5 characters`);
+            }
+            if (typeof locale.og === "string"
+                && !/^[a-z]{2,3}_[A-Z]{2}$/.test(locale.og)) {
+                offenders.push(`  ${code} — og must use language_TERRITORY format (for example en_US)`);
+            } else if (typeof code === "string" && typeof locale.og === "string"
+                && locale.og.split("_")[0] !== code.split("-")[0]) {
+                offenders.push(`  ${code} — og language must match the locale code`);
+            }
+            if (typeof locale.ogImage === "string" && locale.ogImage.trim()) {
+                try {
+                    const imageUrl = new URL(locale.ogImage);
+                    if (imageUrl.protocol !== "https:") {
+                        offenders.push(`  ${code} — ogImage must use an absolute https URL`);
+                    }
+                } catch {
+                    offenders.push(`  ${code} — ogImage must be an absolute URL`);
+                }
+            }
+            const catalog = flatten(i18nData.messages[code], "", new Map(), code);
+            [...base.keys()].filter((key) => !catalog.has(key))
+                .forEach((key) => offenders.push(`  ${code} — missing ${key}`));
+            [...catalog.keys()].filter((key) => !base.has(key))
+                .forEach((key) => offenders.push(`  ${code} — extra ${key}`));
+            [...base.keys()].filter((key) => catalog.has(key)).forEach((key) => {
+                const expected = placeholders(base.get(key));
+                const actual = placeholders(catalog.get(key));
+                if (expected.join("\0") !== actual.join("\0")) {
+                    offenders.push(`  ${code}.${key} — placeholders [${actual.join(", ")}] must be [${expected.join(", ")}]`);
+                }
+            });
+        });
+        if (offenders.length) {
+            throw new Error(`i18n message catalog contract:\n${offenders.join("\n")}`);
+        }
+        return [];
+    });
+
+    // Locale overlays are keyed to stable IDs, but an English wording edit can
+    // keep every ID unchanged. Pin each complete locale to the exact quiz,
+    // glossary, and BACnet source revision its translator reviewed so those
+    // prose-only edits cannot pass as an apparently complete translation.
+    eleventyConfig.addCollection("i18nSourceDataGuard", () => {
+        const hash = (value) => crypto.createHash("sha256")
+            .update(JSON.stringify(value))
+            .digest("hex");
+        const quizDir = path.join(__dirname, "html", "_data", "quizzes");
+        const quizSources = Object.fromEntries(
+            fs.readdirSync(quizDir)
+                .filter((file) => file.endsWith(".js"))
+                .sort()
+                .map((file) => [
+                    path.basename(file, ".js"),
+                    require(path.join(quizDir, file)),
+                ])
+        );
+        const glossary = require("./html/_data/glossary.js");
+        const glossarySurface = Object.fromEntries(
+            Object.entries(glossary).map(([id, entry]) => [id, {
+                term: entry.term,
+                def: entry.def,
+            }])
+        );
+        const bacnetSurface = {
+            objectTypes: bacnetEnumsData.objectTypes.map(({ id, desc }) => ({ id, desc })),
+            propertyIds: bacnetEnumsData.propertyIds
+                .filter(({ desc }) => typeof desc === "string" && desc.trim())
+                .map(({ id, desc }) => ({ id, desc })),
+            unitGroups: [...new Set(
+                bacnetEnumsData.engineeringUnits.map(({ group }) => group)
+            )],
+        };
+        const expected = {
+            quizzes: Object.fromEntries(
+                Object.entries(quizSources).map(([slug, questions]) => [slug, hash(questions)])
+            ),
+            glossary: hash(glossarySurface),
+            bacnetEnums: hash(bacnetSurface),
+        };
+        const offenders = [];
+        const exactKeys = (actual, wanted, label) => {
+            if (!actual || Array.isArray(actual) || typeof actual !== "object") {
+                offenders.push(`  ${label} — must be an object`);
+                return false;
+            }
+            const actualKeys = Object.keys(actual).sort();
+            const wantedKeys = [...wanted].sort();
+            if (actualKeys.join("\0") !== wantedKeys.join("\0")) {
+                offenders.push(`  ${label} — keys must be [${wantedKeys.join(", ")}], found [${actualKeys.join(", ")}]`);
+                return false;
+            }
+            return true;
+        };
+
+        exactKeys(i18nSourceHashes, i18nStatus.completeLocales, "source-hash locales");
+        i18nStatus.completeLocales.forEach((locale) => {
+            const pins = i18nSourceHashes[locale];
+            if (!exactKeys(pins, ["quizzes", "glossary", "bacnetEnums"], `${locale} source hashes`)) {
+                return;
+            }
+            if (exactKeys(pins.quizzes, Object.keys(expected.quizzes), `${locale}.quizzes`)) {
+                Object.entries(expected.quizzes).forEach(([slug, expectedHash]) => {
+                    if (pins.quizzes[slug] !== expectedHash) {
+                        offenders.push(`  ${locale}.quizzes.${slug} — source hash must be ${expectedHash}; review the current English quiz before updating it`);
+                    }
+                });
+            }
+            [["glossary", expected.glossary], ["bacnetEnums", expected.bacnetEnums]]
+                .forEach(([name, expectedHash]) => {
+                    if (pins[name] !== expectedHash) {
+                        offenders.push(`  ${locale}.${name} — source hash must be ${expectedHash}; review the current English source before updating it`);
+                    }
+                });
+        });
+
+        if (offenders.length) {
+            throw new Error(`i18n source-data revision contract:\n${offenders.join("\n")}`);
+        }
+        return [];
+    });
+
+    // BACnet enum identifiers remain language-neutral, while explanatory
+    // descriptions and editorial unit-group labels are locale overlays.
+    // Pin overlays to the source IDs/groups so a source-row addition, array
+    // hole, or new locale cannot render an empty cell or fall back to English.
+    eleventyConfig.addCollection("bacnetEnumTranslationGuard", () => {
+        const offenders = [];
+        const localeCodes = i18nData.locales.map(({ code }) => code);
+        const overlayLocales = Object.keys(bacnetEnumTranslationsData).sort();
+        const expectedLocales = [...localeCodes].sort();
+        if (JSON.stringify(overlayLocales) !== JSON.stringify(expectedLocales)) {
+            offenders.push(`  locale overlays must be [${expectedLocales.join(", ")}], found [${overlayLocales.join(", ")}]`);
+        }
+
+        const defaultOverlay = bacnetEnumTranslationsData[i18nData.defaultLocale];
+        if (!defaultOverlay || Array.isArray(defaultOverlay) || typeof defaultOverlay !== "object") {
+            offenders.push(`  ${i18nData.defaultLocale} — default overlay must be an object`);
+        } else if (Object.keys(defaultOverlay).length) {
+            offenders.push(`  ${i18nData.defaultLocale} — default overlay must stay empty so source descriptions remain canonical`);
+        }
+
+        const compareKeys = (actual, expected, label, requireStringValues = true) => {
+            if (!actual || typeof actual !== "object") {
+                offenders.push(`  ${label} — overlay must be an object`);
+                return;
+            }
+            const actualKeys = Object.keys(actual).sort();
+            const expectedKeys = [...expected].sort();
+            if (JSON.stringify(actualKeys) !== JSON.stringify(expectedKeys)) {
+                offenders.push(`  ${label} — keys must be [${expectedKeys.join(", ")}], found [${actualKeys.join(", ")}]`);
+            }
+            if (requireStringValues) {
+                expectedKeys.forEach((key) => {
+                    if (typeof actual[key] !== "string" || !actual[key].trim()) {
+                        offenders.push(`  ${label}.${key} — translation must be a non-empty string`);
+                    }
+                });
+            }
+        };
+
+        const objectTypeIds = bacnetEnumsData.objectTypes.map(({ id }) => String(id));
+        const propertyIds = bacnetEnumsData.propertyIds
+            .filter(({ desc }) => typeof desc === "string" && desc.trim())
+            .map(({ id }) => String(id));
+        const unitGroups = [...new Set(bacnetEnumsData.engineeringUnits.map(({ group }) => group))];
+
+        i18nStatus.completeLocales.forEach((code) => {
+            const overlay = bacnetEnumTranslationsData[code];
+            if (!overlay || Array.isArray(overlay) || typeof overlay !== "object") {
+                offenders.push(`  ${code} — missing BACnet enum overlay`);
+                return;
+            }
+            compareKeys(overlay, ["objectTypes", "propertyIds", "unitGroups"], code, false);
+            if (!Array.isArray(overlay.objectTypes)) {
+                offenders.push(`  ${code}.objectTypes — overlay must be an array indexed by object type ID`);
+            } else if (overlay.objectTypes.length !== bacnetEnumsData.objectTypes.length) {
+                offenders.push(`  ${code}.objectTypes — length must be ${bacnetEnumsData.objectTypes.length}, found ${overlay.objectTypes.length}`);
+            }
+            compareKeys(overlay.objectTypes, objectTypeIds, `${code}.objectTypes`);
+            if (Array.isArray(overlay.propertyIds)) {
+                offenders.push(`  ${code}.propertyIds — overlay must be an ID-keyed object, not an array`);
+            }
+            compareKeys(overlay.propertyIds, propertyIds, `${code}.propertyIds`);
+            if (Array.isArray(overlay.unitGroups)) {
+                offenders.push(`  ${code}.unitGroups — overlay must be a group-keyed object, not an array`);
+            }
+            compareKeys(overlay.unitGroups, unitGroups, `${code}.unitGroups`);
+        });
+
+        if (offenders.length) {
+            throw new Error(`BACnet enum translation contract:\n${offenders.join("\n")}`);
+        }
+        return [];
+    });
+
+    // Every translated page is a thin child of its English source: translated
+    // frontmatter + one content block, while head/styles/scripts remain a
+    // single source in the parent. The sourceContentHash pins the exact parent
+    // content and translatable frontmatter revision reviewed by the translator;
+    // changing English prose or metadata invalidates the child until it is
+    // reviewed and re-hashed.
+    eleventyConfig.addCollection("i18nPageGuard", (collectionApi) => {
+        const all = collectionApi.getAll();
+        const sourcePages = all.filter((item) =>
+            resolveLocale(item.data) === i18nData.defaultLocale
+            && typeof item.data.canonical === "string");
+        const translatedPages = all.filter((item) =>
+            resolveLocale(item.data) !== i18nData.defaultLocale
+            && typeof item.data.canonical === "string");
+        const offenders = [];
+        const sourceByKey = new Map(sourcePages.map((item) => [translationKey(item.data.canonical), item]));
+
+        if (sourcePages.length < 134) {
+            offenders.push(`  English canonical page floor is 134; found ${sourcePages.length}`);
+        }
+
+        const extractContent = (source, label) => {
+            const matches = [...source.matchAll(/\{%\s*block\s+content\s*%\}([\s\S]*?)\{%\s*endblock\s*%\}/g)];
+            if (matches.length !== 1) {
+                offenders.push(`  ${label} — expected exactly one content block, found ${matches.length}`);
+                return "";
+            }
+            return matches[0][1].replace(/\r\n/g, "\n").trim();
+        };
+        const translationFrontmatter = (data = {}) => ({
+            title: typeof data.title === "string" ? data.title : null,
+            description: typeof data.description === "string" ? data.description : null,
+            keywords: typeof data.keywords === "string" ? data.keywords : null,
+            navLabel: typeof data.navLabel === "string" ? data.navLabel : null,
+            pageMessages: data.pageMessages && typeof data.pageMessages === "object"
+                ? data.pageMessages
+                : null,
+            faqs: Array.isArray(data.faqs) ? data.faqs.map((faq) => ({
+                q: typeof faq.q === "string" ? faq.q : null,
+                a: typeof faq.a === "string" ? faq.a : null,
+            })) : [],
+            termSets: Array.isArray(data.termSets) ? data.termSets.map((termSet) => ({
+                key: typeof termSet.key === "string" ? termSet.key : null,
+                fragment: typeof termSet.fragment === "string" ? termSet.fragment : null,
+                name: typeof termSet.name === "string" ? termSet.name : null,
+                description: typeof termSet.description === "string" ? termSet.description : null,
+            })) : [],
+        });
+        const contentHash = (source, label, data) => crypto
+            .createHash("sha256")
+            .update(JSON.stringify({
+                content: extractContent(source, label),
+                frontmatter: translationFrontmatter(data),
+            }))
+            .digest("hex");
+        const frontmatterStrings = (source, fields) => {
+            const frontmatter = (source.match(/^---\r?\n([\s\S]*?)\r?\n---/) || [])[1] || "";
+            return Object.fromEntries(fields.map((field) => {
+                const value = (frontmatter.match(new RegExp(`^${field}:\\s*(.*?)\\s*$`, "m")) || [])[1];
+                return [field, typeof value === "string" ? value.trim() : null];
+            }));
+        };
+        const flattenPageMessages = (value, prefix = "", output = new Map(), label = "pageMessages") => {
+            Object.entries(value || {}).forEach(([name, child]) => {
+                const key = prefix ? `${prefix}.${name}` : name;
+                if (typeof child === "string") output.set(key, child);
+                else if (child && typeof child === "object" && !Array.isArray(child)) {
+                    flattenPageMessages(child, key, output, label);
+                } else {
+                    offenders.push(`  ${label}.${key} — page-message leaves must be strings`);
+                }
+            });
+            return output;
+        };
+        const messageTokens = (message) => [...String(message).matchAll(/\{([A-Za-z][\w-]*)\}/g)]
+            .map((match) => match[1])
+            .sort();
+        const assertLocalizedLinks = (source, label, locale) => {
+            const visibleMarkup = source.replace(/<!--[\s\S]*?-->/g, "");
+            const hrefs = [
+                ...[...visibleMarkup.matchAll(/\bhref\s*=\s*(["'])(.*?)\1/gi)].map((match) => match[2]),
+                ...[...visibleMarkup.matchAll(/\bhref\s*:\s*(["'])(.*?)\1/gi)].map((match) => match[2]),
+            ];
+            const prefix = `/${locale}/`;
+            hrefs.filter((href) => href.startsWith("/") && !href.startsWith("//"))
+                .filter((href) => href !== `/${locale}` && !href.startsWith(prefix))
+                .forEach((href) => offenders.push(`  ${label} — root-relative link ${href} must start with ${prefix}`));
+        };
+        const structureSignature = (source) => {
+            const visibleMarkup = source.replace(/<!--[\s\S]*?-->/g, "");
+            const tags = [...visibleMarkup.matchAll(/<(\/)?([a-z][\w:-]*)\b[^>]*>/gi)]
+                .map((match) => `${match[1] ? "/" : ""}${match[2].toLowerCase()}`);
+            const macros = [...visibleMarkup.matchAll(/\{\{\s*([A-Za-z_][\w.]*)\s*\(/g)]
+                .map((match) => match[1]);
+            const stableAttributes = [];
+            for (const tag of visibleMarkup.matchAll(/<([a-z][\w:-]*)\b[^>]*>/gi)) {
+                const values = [];
+                for (const attribute of tag[0].matchAll(/\s(id|class|role|type|name|for|min|max|step|value|scope|colspan|rowspan|data-[\w-]+)\s*=\s*(["'])([\s\S]*?)\2/gi)) {
+                    values.push(`${attribute[1].toLowerCase()}=${attribute[3]}`);
+                }
+                const flagSurface = tag[0].replace(/=\s*(["'])[\s\S]*?\1/g, '=""');
+                for (const flag of ["checked", "disabled", "hidden", "multiple", "open", "readonly", "required", "selected"]) {
+                    if (new RegExp(`\\s${flag}(?=\\s|/?>)`, "i").test(flagSurface)) values.push(flag);
+                }
+                stableAttributes.push(`${tag[1].toLowerCase()}[${values.join("|")}]`);
+            }
+            const links = [
+                ...[...visibleMarkup.matchAll(/\bhref\s*=\s*(["'])(.*?)\1/gi)].map((match) => match[2]),
+                ...[...visibleMarkup.matchAll(/\bhref\s*:\s*(["'])(.*?)\1/gi)].map((match) => match[2]),
+            ].map((href) => localePath(href, i18nData.defaultLocale));
+            const machineFields = [...visibleMarkup.matchAll(/\b(section|category|desktopOnly)\s*:\s*(["']?)([\w-]+)\2/g)]
+                .map((match) => `${match[1]}=${match[3]}`);
+            return { tags, macros, stableAttributes, links, machineFields };
+        };
+        const compareSignature = (source, translated, label) => {
+            const sourceSignature = structureSignature(source);
+            const translatedSignature = structureSignature(translated);
+            Object.keys(sourceSignature).forEach((field) => {
+                const expected = sourceSignature[field];
+                const actual = translatedSignature[field];
+                if (expected.length !== actual.length || expected.some((value, index) => value !== actual[index])) {
+                    const mismatch = Math.max(expected.length, actual.length) === 0
+                        ? 0
+                        : [...Array(Math.max(expected.length, actual.length)).keys()]
+                            .find((index) => expected[index] !== actual[index]);
+                    offenders.push(`  ${label} — ${field} structure differs at item ${mismatch}; ` +
+                        `source ${expected.length}, translation ${actual.length}`);
+                }
+            });
+        };
+
+        translatedPages.forEach((item) => {
+            const selected = resolveLocale(item.data);
+            const key = translationKey(item.data.canonical);
+            const parent = sourceByKey.get(key);
+            if (!parent) {
+                offenders.push(`  ${item.inputPath} — no English canonical page owns translation key ${key}`);
+                return;
+            }
+            if (typeof item.data.title !== "string" || !item.data.title.trim()) {
+                offenders.push(`  ${item.inputPath} — title must be translated and non-empty`);
+            }
+            const expectedCanonical = localizedCanonical(parent.data.canonical, selected);
+            if (item.data.canonical !== expectedCanonical) {
+                offenders.push(`  ${item.inputPath} — canonical must be ${expectedCanonical}`);
+            }
+            const expectedParent = parent.inputPath.replace(/^\.\//, "");
+            const extendsMatches = [...item.rawInput.matchAll(/\{%\s*extends\s+["']([^"']+)["']\s*%\}/g)];
+            if (extendsMatches.length !== 1 || extendsMatches[0][1] !== expectedParent) {
+                offenders.push(`  ${item.inputPath} — must extend exactly ${expectedParent}`);
+            }
+            const blocks = [...item.rawInput.matchAll(/\{%\s*block\s+([\w-]+)/g)].map((match) => match[1]);
+            if (blocks.length !== 1 || blocks[0] !== "content") {
+                offenders.push(`  ${item.inputPath} — translated child may override only one content block; found [${blocks.join(", ")}]`);
+            }
+            const translatedContent = extractContent(item.rawInput, item.inputPath);
+            assertLocalizedLinks(item.rawInput, item.inputPath, selected);
+            const executableMarkup = translatedContent.replace(/<!--[\s\S]*?-->/g, "");
+            if (/<(?:script|style)\b/i.test(executableMarkup)) {
+                offenders.push(`  ${item.inputPath} — translated content may not duplicate script/style; move executable or styling code to the English parent block`);
+            }
+            const parentSource = fs.readFileSync(parent.inputPath, "utf8");
+            const expectedHash = contentHash(parentSource, parent.inputPath, parent.data);
+            if (item.data.sourceContentHash !== expectedHash) {
+                offenders.push(`  ${item.inputPath} — sourceContentHash must be ${expectedHash}; review the current English content before updating it`);
+            }
+            compareSignature(extractContent(parentSource, parent.inputPath), translatedContent, item.inputPath);
+            ["nav", "category"].forEach((field) => {
+                if ((item.data[field] || null) !== (parent.data[field] || null)) {
+                    offenders.push(`  ${item.inputPath} — ${field} must match ${parent.inputPath}`);
+                }
+            });
+            ["keywords", "navLabel"].forEach((field) => {
+                const sourceHas = typeof parent.data[field] === "string";
+                const translatedHas = typeof item.data[field] === "string";
+                if (sourceHas !== translatedHas || (sourceHas && !item.data[field].trim())) {
+                    offenders.push(`  ${item.inputPath} — ${field} presence must match ${parent.inputPath}`);
+                }
+            });
+            const sourceFaqs = Array.isArray(parent.data.faqs) ? parent.data.faqs : [];
+            const translatedFaqs = Array.isArray(item.data.faqs) ? item.data.faqs : [];
+            if (sourceFaqs.length !== translatedFaqs.length) {
+                offenders.push(`  ${item.inputPath} — FAQ count must be ${sourceFaqs.length}, found ${translatedFaqs.length}`);
+            } else {
+                sourceFaqs.forEach((faq, index) => {
+                    const translatedFaq = translatedFaqs[index] || {};
+                    ["q", "a"].forEach((field) => {
+                        if (typeof translatedFaq[field] !== "string" || !translatedFaq[field].trim()) {
+                            offenders.push(`  ${item.inputPath} — faqs[${index}].${field} must be translated`);
+                        } else {
+                            compareSignature(String(faq[field] || ""), translatedFaq[field], `${item.inputPath} faqs[${index}].${field}`);
+                        }
+                    });
+                });
+            }
+            const sourceTermSets = Array.isArray(parent.data.termSets) ? parent.data.termSets : [];
+            const translatedTermSets = Array.isArray(item.data.termSets) ? item.data.termSets : [];
+            if (sourceTermSets.length !== translatedTermSets.length) {
+                offenders.push(`  ${item.inputPath} — termSets count must be ${sourceTermSets.length}, found ${translatedTermSets.length}`);
+            } else {
+                sourceTermSets.forEach((termSet, index) => {
+                    const translatedTermSet = translatedTermSets[index] || {};
+                    ["key", "fragment"].forEach((field) => {
+                        if ((translatedTermSet[field] || null) !== (termSet[field] || null)) {
+                            offenders.push(`  ${item.inputPath} — termSets[${index}].${field} must remain ${termSet[field]}`);
+                        }
+                    });
+                    ["name", "description"].forEach((field) => {
+                        if (typeof translatedTermSet[field] !== "string" || !translatedTermSet[field].trim()) {
+                            offenders.push(`  ${item.inputPath} — termSets[${index}].${field} must be translated`);
+                        }
+                    });
+                });
+            }
+            [["pairedQuiz", parent.data.pairedQuiz], ["pairedLesson", parent.data.pairedLesson]].forEach(([field, value]) => {
+                const expected = value ? localizedCanonical(value, selected) : null;
+                if ((item.data[field] || null) !== expected) {
+                    offenders.push(`  ${item.inputPath} — ${field} must be ${expected || "absent"}`);
+                }
+            });
+            const sourceMessages = flattenPageMessages(
+                parent.data.pageMessages,
+                "",
+                new Map(),
+                `${parent.inputPath}.pageMessages`
+            );
+            const localizedMessages = flattenPageMessages(
+                item.data.pageMessages,
+                "",
+                new Map(),
+                `${item.inputPath}.pageMessages`
+            );
+            if (sourceMessages.size) {
+                const expectedMessageHash = crypto.createHash("sha256")
+                    .update(JSON.stringify(parent.data.pageMessages))
+                    .digest("hex");
+                if (item.data.sourceMessageHash !== expectedMessageHash) {
+                    offenders.push(`  ${item.inputPath} — sourceMessageHash must be ${expectedMessageHash}; ` +
+                        `review the current English pageMessages before updating it`);
+                }
+            } else if (item.data.sourceMessageHash) {
+                offenders.push(`  ${item.inputPath} — sourceMessageHash is present but ${parent.inputPath} has no pageMessages`);
+            }
+            [...sourceMessages.keys()].filter((messageKey) => !localizedMessages.has(messageKey))
+                .forEach((messageKey) => offenders.push(`  ${item.inputPath} — missing pageMessages.${messageKey}`));
+            [...localizedMessages.keys()].filter((messageKey) => !sourceMessages.has(messageKey))
+                .forEach((messageKey) => offenders.push(`  ${item.inputPath} — extra pageMessages.${messageKey}`));
+            [...sourceMessages.keys()].filter((messageKey) => localizedMessages.has(messageKey))
+                .forEach((messageKey) => {
+                    const sourceMessage = sourceMessages.get(messageKey);
+                    const localizedMessage = localizedMessages.get(messageKey);
+                    if (sourceMessage.trim() && !localizedMessage.trim()) {
+                        offenders.push(`  ${item.inputPath} — pageMessages.${messageKey} translation must be non-empty`);
+                    }
+                    if (!sourceMessage.trim() && localizedMessage !== sourceMessage) {
+                        offenders.push(`  ${item.inputPath} — intentionally empty pageMessages.${messageKey} must remain exactly empty`);
+                    }
+                    const expected = messageTokens(sourceMessage);
+                    const actual = messageTokens(localizedMessage);
+                    if (expected.join("\0") !== actual.join("\0")) {
+                        offenders.push(`  ${item.inputPath} — pageMessages.${messageKey} placeholders ` +
+                            `[${actual.join(", ")}] must be [${expected.join(", ")}]`);
+                    }
+                });
+        });
+
+        // The localized 404 is intentionally outside the sitemap because it
+        // has no canonical URL, but it still carries user-facing copy and must
+        // not drift outside the thin-child contract.
+        const source404Input = "html/404.html";
+        const source404Path = path.join(__dirname, source404Input);
+        const source404 = fs.existsSync(source404Path)
+            ? fs.readFileSync(source404Path, "utf8")
+            : null;
+        i18nStatus.completeLocales.forEach((locale) => {
+            const localized404Input = `html/${locale}/404.html`;
+            const localized404Path = path.join(__dirname, localized404Input);
+            const localized404 = fs.existsSync(localized404Path)
+                ? fs.readFileSync(localized404Path, "utf8")
+                : null;
+            if (!source404 || !localized404) {
+                offenders.push(`  ${locale} localized 404 — English or translated template is missing`);
+                return;
+            }
+            const extendsMatches = [...localized404.matchAll(
+                /\{%\s*extends\s+["']([^"']+)["']\s*%\}/g
+            )];
+            if (extendsMatches.length !== 1 || extendsMatches[0][1] !== source404Input) {
+                offenders.push(`  ${localized404Input} — must extend exactly ${source404Input}`);
+            }
+            const blocks = [...localized404.matchAll(/\{%\s*block\s+([\w-]+)/g)]
+                .map((match) => match[1]);
+            if (blocks.length !== 1 || blocks[0] !== "content") {
+                offenders.push(`  ${localized404Input} — translated 404 may override only one content block; found [${blocks.join(", ")}]`);
+            }
+            const translatedContent = extractContent(localized404, localized404Input);
+            assertLocalizedLinks(localized404, localized404Input, locale);
+            if (/<(?:script|style)\b/i.test(translatedContent.replace(/<!--[\s\S]*?-->/g, ""))) {
+                offenders.push(`  ${localized404Input} — translated 404 may not duplicate script/style`);
+            }
+            const source404Data = frontmatterStrings(source404, ["title", "description"]);
+            const localized404Data = frontmatterStrings(localized404, ["title", "description"]);
+            ["title", "description"].forEach((field) => {
+                if (typeof localized404Data[field] !== "string" || !localized404Data[field].trim()) {
+                    offenders.push(`  ${localized404Input} — ${field} must be translated`);
+                }
+            });
+            const expectedHash = contentHash(source404, source404Input, source404Data);
+            const recordedHash = (localized404.match(
+                /^sourceContentHash:\s*([a-f0-9]+)\s*$/m
+            ) || [])[1];
+            if (recordedHash !== expectedHash) {
+                offenders.push(`  ${localized404Input} — sourceContentHash must be ${expectedHash}; review the current English 404 before updating it`);
+            }
+            compareSignature(
+                extractContent(source404, source404Input),
+                translatedContent,
+                localized404Input
+            );
+        });
+
+        i18nStatus.completeLocales.forEach((locale) => {
+            const localizedKeys = new Set(translatedPages
+                .filter((item) => resolveLocale(item.data) === locale)
+                .map((item) => translationKey(item.data.canonical)));
+            const missing = [...sourceByKey.keys()].filter((key) => !localizedKeys.has(key));
+            const extra = [...localizedKeys].filter((key) => !sourceByKey.has(key));
+            if (missing.length || extra.length) {
+                offenders.push(`  ${locale} canonical bijection — missing ${missing.length}, extra ${extra.length}`);
+                missing.forEach((key) => offenders.push(`    missing ${key}`));
+                extra.forEach((key) => offenders.push(`    extra ${key}`));
+            }
+        });
+
+        if (offenders.length) {
+            throw new Error(`i18n thin-child contract:\n${offenders.join("\n")}`);
         }
         return [];
     });
@@ -119,7 +817,7 @@ module.exports = function(eleventyConfig) {
             collectionApi.getAll()
                 .filter((item) => item.data.nav === section
                     && typeof item.data.canonical === "string"
-                    && item.data.canonical !== landing)
+                    && translationKey(item.data.canonical) !== translationKey(landing))
                 .forEach((item) => {
                     const c = item.data.category;
                     if (!c) offenders.push(`  ${item.inputPath} — nav:${section} but no \`category\``);
@@ -144,24 +842,24 @@ module.exports = function(eleventyConfig) {
     // (the grid order isn't machine-readable here). Mirrors navCategoryGuard.
     eleventyConfig.addCollection("educationSequenceGuard", (collectionApi) => {
         const sequence = require("./html/_data/educationSequence.js");
-        const sequenced = new Set(Object.keys(sequence));
+        const sequenced = new Set(Object.keys(sequence).map(translationKey));
         const landing = "https://controlsfreak.dev/education/";
         const pagePaths = new Set();
         const offenders = [];
         collectionApi.getAll()
             .filter((item) => item.data.nav === "education"
                 && typeof item.data.canonical === "string"
-                && item.data.canonical !== landing)
+                && translationKey(item.data.canonical) !== translationKey(landing))
             .forEach((item) => {
-                const path = item.data.canonical.replace("https://controlsfreak.dev", "");
+                const path = translationKey(item.data.canonical);
                 pagePaths.add(path);
                 if (!sequenced.has(path)) {
                     offenders.push(`  ${item.inputPath} — nav:education page absent from educationSequence order`);
                 }
             });
-        sequenced.forEach((url) => {
-            if (!pagePaths.has(url)) {
-                offenders.push(`  educationSequence lists ${url} but no nav:education page claims that canonical`);
+        sequenced.forEach((key) => {
+            if (!pagePaths.has(key)) {
+                offenders.push(`  educationSequence lists ${key} but no nav:education page claims that translation key`);
             }
         });
         if (offenders.length) {
@@ -589,25 +1287,25 @@ module.exports = function(eleventyConfig) {
     // falsify this comment.
     eleventyConfig.addCollection("quizOrderGuard", (collectionApi) => {
         const order = require("./html/_data/quizOrder.js");
-        const ordered = new Set(order.map((entry) => `/practice/${entry.slug}.html`));
+        const ordered = new Set(order.map((entry) => translationKey(`/practice/${entry.slug}.html`)));
         const landing = "https://controlsfreak.dev/practice/";
         const pagePaths = new Set();
         const offenders = [];
         collectionApi.getAll()
             .filter((item) => item.data.nav === "practice"
                 && typeof item.data.canonical === "string"
-                && item.data.canonical !== landing
+                && translationKey(item.data.canonical) !== translationKey(landing)
                 && item.data.category !== "field")
             .forEach((item) => {
-                const path = item.data.canonical.replace("https://controlsfreak.dev", "");
+                const path = translationKey(item.data.canonical);
                 pagePaths.add(path);
                 if (!ordered.has(path)) {
                     offenders.push(`  ${item.inputPath} — content quiz absent from quizOrder`);
                 }
             });
-        ordered.forEach((url) => {
-            if (!pagePaths.has(url)) {
-                offenders.push(`  quizOrder lists ${url} but no non-field nav:practice page claims that canonical`);
+        ordered.forEach((key) => {
+            if (!pagePaths.has(key)) {
+                offenders.push(`  quizOrder lists ${key} but no non-field nav:practice page claims that translation key`);
             }
         });
         if (offenders.length) {
@@ -662,7 +1360,7 @@ module.exports = function(eleventyConfig) {
         const pagePaths = new Set(
             collectionApi.getAll()
                 .filter((item) => typeof item.data.canonical === "string")
-                .map((item) => item.data.canonical.replace("https://controlsfreak.dev", ""))
+                .map((item) => translationKey(item.data.canonical))
         );
         const keys = Object.keys(glossary);
         // The walk must never pass because it found nothing to look at —
@@ -679,8 +1377,28 @@ module.exports = function(eleventyConfig) {
                 return;
             }
             entry.owners.forEach((owner) => {
-                if (!pagePaths.has(owner)) {
+                if (!pagePaths.has(translationKey(owner))) {
                     offenders.push(`  ${key} — owners path ${owner} names no page that carries that canonical; re-point it or drop it`);
+                }
+            });
+        });
+        i18nStatus.completeLocales.forEach((locale) => {
+            const translatedGlossary = glossaryTranslations[locale] || {};
+            const translatedKeys = Object.keys(translatedGlossary);
+            if (JSON.stringify(translatedKeys.sort()) !== JSON.stringify([...keys].sort())) {
+                offenders.push(`  ${locale} glossary keys must exactly match English: expected ${keys.length}, found ${translatedKeys.length}`);
+            }
+            keys.forEach((key) => {
+                const translation = translatedGlossary[key] || {};
+                const fields = Object.keys(translation).sort();
+                if (fields.join("\0") !== "def\0term") {
+                    offenders.push(`  ${locale}/${key} — glossary overlay must contain exactly \`term\` and \`def\``);
+                }
+                if (typeof translation.term !== "string" || !translation.term.trim()) {
+                    offenders.push(`  ${locale}/${key} — glossary overlay has no non-empty \`term\``);
+                }
+                if (typeof translation.def !== "string" || !translation.def.trim()) {
+                    offenders.push(`  ${locale}/${key} — glossary overlay has no non-empty \`def\``);
                 }
             });
         });
@@ -792,6 +1510,8 @@ module.exports = function(eleventyConfig) {
         const glossary = require("./html/_data/glossary.js");
         const version = require("./package.json").version;
         const pageUrl = (this.page && this.page.url) || "";
+        const pageLocale = localeFromCanonical(pageUrl);
+        const translatedGlossary = glossaryTranslations[pageLocale] || {};
         const inputPath = (this.page && this.page.inputPath) || out;
         const offenders = [];
         const used = [];
@@ -896,7 +1616,11 @@ module.exports = function(eleventyConfig) {
                 offenders.push(`  data-gloss="${id}" — no such glossary entry. Known ids: ${Object.keys(glossary).join(", ")}`);
                 ok = false;
             }
-            if (ok && entry.owners.indexOf(pageUrl) !== -1) {
+            if (ok && pageLocale !== i18nData.defaultLocale && !translatedGlossary[id]) {
+                offenders.push(`  data-gloss="${id}" — missing ${pageLocale} glossary translation`);
+                ok = false;
+            }
+            if (ok && entry.owners.some((owner) => translationKey(owner) === translationKey(pageUrl))) {
                 offenders.push(`  data-gloss="${id}" — this page TEACHES that term (glossary owners), and a gloss there shadows the page's own teaching beat (docs/tooltip-glossary-scoping.md §7.4). Remove the mark; never soften the guard`);
                 ok = false;
             }
@@ -948,7 +1672,9 @@ module.exports = function(eleventyConfig) {
             .replace(/&/g, "&amp;").replace(/</g, "&lt;")
             .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
         const panels = used.map((id) => {
-            const entry = glossary[id];
+            const entry = pageLocale !== i18nData.defaultLocale
+                ? { ...glossary[id], ...translatedGlossary[id] }
+                : glossary[id];
             return `<div class="gloss-tip" role="tooltip" id="gloss-tip-${id}" hidden>\n`
                  + `    <p class="gloss-tip-term"><dfn>${esc(entry.term)}</dfn></p>\n`
                  + `    <p class="gloss-tip-def">${entry.def}</p>\n`
@@ -982,12 +1708,29 @@ module.exports = function(eleventyConfig) {
     // audit #22). Returns null for slugs outside the canonical order
     // (the field drills aren't a curriculum). Titles come from the
     // quiz pages' own frontmatter at build time via the collection.
-    eleventyConfig.addFilter("nextQuiz", function (slug) {
+    eleventyConfig.addFilter("nextQuiz", function (slug, locale, pages) {
+        const selected = resolveLocale(locale);
         const order = require("./html/_data/quizOrder.js");
         const i = order.findIndex((e) => e.slug === slug);
         if (i === -1) return null;
         const next = order[(i + 1) % order.length];
-        return { href: "/practice/" + next.slug + ".html", label: next.label };
+        const baseHref = "/practice/" + next.slug + ".html";
+        const localizedPage = (pages || []).find((item) =>
+            resolveLocale(item.data) === selected
+            && translationKey(item.data.canonical) === translationKey(baseHref));
+        const localizedTitle = localizedPage
+            ? cleanTitle(localizedPage.data.title)
+            : next.label;
+        const titleSuffix = translate(selected, "quiz.titleSuffix");
+        const localizedLabel = titleSuffix && localizedTitle.endsWith(titleSuffix)
+            ? localizedTitle.slice(0, -titleSuffix.length)
+            : localizedTitle;
+        return {
+            href: localePath(baseHref, selected),
+            label: selected === i18nData.defaultLocale
+                ? next.label
+                : localizedLabel,
+        };
     });
 
     // Page title with the shared " — controlsfreak.dev" suffix stripped.
@@ -1019,8 +1762,7 @@ module.exports = function(eleventyConfig) {
     // to canonical, og:url, the sitemap <loc>, and every JSON-LD url/@id so
     // the structured-data graph stays internally consistent (paired
     // hasPart/isPartOf @ids must byte-match their target's url).
-    eleventyConfig.addFilter("cleanCanonical", (url) =>
-        (url || "").replace(/\.html$/, ""));
+    eleventyConfig.addFilter("cleanCanonical", cleanCanonical);
 
     // Pages for the site search index (html/search-index.njk → the static
     // /search-index.json the command palette fetches). Same membership as
@@ -1046,7 +1788,7 @@ module.exports = function(eleventyConfig) {
         collectionApi.getAll()
             .filter((item) => item.data.nav === section
                 && typeof item.data.canonical === "string"
-                && item.data.canonical !== landing)
+                && translationKey(item.data.canonical) !== translationKey(landing))
             .sort((a, b) => cleanTitle(a.data.title).localeCompare(cleanTitle(b.data.title)));
     eleventyConfig.addCollection("navTools", (api) =>
         navSection(api, "tools", "https://controlsfreak.dev/tools/"));
@@ -1068,11 +1810,11 @@ module.exports = function(eleventyConfig) {
     // `pages` list inheriting the collection's title sort; empty
     // categories are dropped. Simulators has no NAV_CATEGORIES entry, so
     // it never calls this — it renders flat.
-    eleventyConfig.addFilter("navGroups", (pages, section) =>
+    eleventyConfig.addFilter("navGroups", (pages, section, locale) =>
         (NAV_CATEGORIES[section] || [])
-            .map(([key, label]) => ({
+            .map(([key, labelKey]) => ({
                 key,
-                label,
+                label: translate(resolveLocale(locale), labelKey),
                 pages: (pages || []).filter((p) => p.data.category === key),
             }))
             .filter((g) => g.pages.length));
@@ -1166,23 +1908,26 @@ module.exports = function(eleventyConfig) {
     // flat Home→Page trail — a new nav section needs an entry here
     // (convention→consumers sweep).
     const SECTION_MAP = {
-        tools:      { name: "Tools",      url: "https://controlsfreak.dev/tools/" },
-        simulators: { name: "Simulators", url: "https://controlsfreak.dev/simulators/" },
-        education:  { name: "Education",  url: "https://controlsfreak.dev/education/" },
-        practice:   { name: "Practice",   url: "https://controlsfreak.dev/practice/" },
-        // Crawl-facing (clean) form, matching what head.njk feeds this filter
-        // — `canonical | cleanCanonical`. contact is the only section whose
-        // landing is a .html page, so it is the only entry where the house
-        // rule "canonical frontmatter keeps .html" could tempt a reader into
-        // restoring the suffix. Don't: the equality test below compares
-        // against the CLEANED canonical, and a mismatch silently emits a
-        // duplicate-named crumb pointing at the redirecting URL.
-        contact:    { name: "Contact",    url: "https://controlsfreak.dev/contact" }
+        tools:      { nameKey: "nav.tools",      path: "/tools/" },
+        simulators: { nameKey: "nav.simulators", path: "/simulators/" },
+        education:  { nameKey: "nav.education",  path: "/education/" },
+        practice:   { nameKey: "nav.practice",   path: "/practice/" },
+        // Keep the source-style path here so localization can insert `/ko`;
+        // the computed URL is cleaned below before comparison and emission.
+        // That produces `/contact` and `/ko/contact`, never the redirecting
+        // `.html` form that caused the duplicate Contact breadcrumb.
+        contact:    { nameKey: "nav.contact",    path: "/contact.html" }
     };
-    eleventyConfig.addFilter("breadcrumbJsonLd", (canonical, nav, title) => {
-        if (!canonical || canonical === "https://controlsfreak.dev/") return "";
-        const items = [{ name: "Home", url: "https://controlsfreak.dev/" }];
-        const section = SECTION_MAP[nav];
+    eleventyConfig.addFilter("breadcrumbJsonLd", (canonical, nav, title, locale) => {
+        const selected = resolveLocale(locale);
+        const home = cleanCanonical(localizedCanonical("https://controlsfreak.dev/", selected));
+        if (!canonical || canonical === home) return "";
+        const items = [{ name: translate(selected, "seo.home"), url: home }];
+        const sectionConfig = SECTION_MAP[nav];
+        const section = sectionConfig ? {
+            name: translate(selected, sectionConfig.nameKey),
+            url: cleanCanonical(localizedCanonical(sectionConfig.path, selected)),
+        } : null;
         if (section) {
             if (canonical === section.url) {
                 items.push({ name: section.name, url: canonical });
@@ -1199,6 +1944,7 @@ module.exports = function(eleventyConfig) {
         return scriptSafeStringify({
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
+            "inLanguage": selected,
             "itemListElement": items.map((item, i) => ({
                 "@type": "ListItem",
                 "position": i + 1,
@@ -1239,10 +1985,12 @@ module.exports = function(eleventyConfig) {
         String(s || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
     const buildQuestionName = (q) =>
         stripHtml(q.prompt) + (q.snippet ? " " + stripHtml(q.snippet) : "");
-    const buildAnswerText = (q) => {
+    const buildAnswerText = (q, locale) => {
         let answer = "";
         if (q.type === "tf") {
-            answer = q.answer ? "True" : "False";
+            answer = q.answer
+                ? translate(locale, "seo.true")
+                : translate(locale, "seo.false");
         } else if (q.type === "numeric") {
             answer = String(q.answer) + (q.unit ? " " + q.unit : "");
         } else {
@@ -1258,19 +2006,21 @@ module.exports = function(eleventyConfig) {
         const separator = /[.!?]$/.test(answer) ? " " : ". ";
         return answer + (answer && explanation ? separator : "") + explanation;
     };
-    eleventyConfig.addFilter("faqPageJsonLd", (canonical, questions, title, pairedLesson) => {
+    eleventyConfig.addFilter("faqPageJsonLd", (canonical, questions, title, pairedLesson, locale) => {
         if (!canonical || !Array.isArray(questions) || !questions.length) return "";
+        const selected = resolveLocale(locale);
         const node = {
             "@context": "https://schema.org",
             "@type": "FAQPage",
             "name": cleanTitle(title),
             "url": canonical,
+            "inLanguage": selected,
             "mainEntity": questions.map((q) => ({
                 "@type": "Question",
                 "name": buildQuestionName(q),
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": buildAnswerText(q),
+                    "text": buildAnswerText(q, selected),
                 },
             })),
         };
@@ -1289,13 +2039,14 @@ module.exports = function(eleventyConfig) {
     // copy. Answers may carry inline HTML for display; it's stripped for the
     // schema text. Emitted from head.njk whenever `faqs` is set; keep it off
     // practice pages so a page never emits two FAQPage nodes.
-    eleventyConfig.addFilter("faqJsonLd", (canonical, faqs, title) => {
+    eleventyConfig.addFilter("faqJsonLd", (canonical, faqs, title, locale) => {
         if (!canonical || !Array.isArray(faqs) || !faqs.length) return "";
         return scriptSafeStringify({
             "@context": "https://schema.org",
             "@type": "FAQPage",
             "name": cleanTitle(title),
             "url": canonical,
+            "inLanguage": resolveLocale(locale),
             "mainEntity": faqs.map((item) => ({
                 "@type": "Question",
                 "name": stripHtml(item.q),
@@ -1320,7 +2071,7 @@ module.exports = function(eleventyConfig) {
     // bacnetEnums lookup today (precedent: quizzes[page.fileSlug]); a
     // second enum domain wanting this is the trigger to promote the
     // lookup to a generic _data/termSets.js wrapper.
-    eleventyConfig.addFilter("definedTermSetJsonLd", (canonical, terms, name, fragment, description) => {
+    eleventyConfig.addFilter("definedTermSetJsonLd", (canonical, terms, name, fragment, description, locale, descriptions) => {
         if (!canonical || !Array.isArray(terms) || !terms.length) return "";
         const setId = canonical + "#" + fragment;
         const node = {
@@ -1329,6 +2080,7 @@ module.exports = function(eleventyConfig) {
             "@id": setId,
             "name": name,
             "url": setId,
+            "inLanguage": resolveLocale(locale),
         };
         if (description) node.description = description;
         node.hasDefinedTerm = terms.map((t) => {
@@ -1337,7 +2089,10 @@ module.exports = function(eleventyConfig) {
                 "termCode": String(t.id),
                 "name": t.name,
             };
-            if (t.desc) term.description = stripHtml(t.desc);
+            const localizedDescription = descriptions && descriptions[t.id];
+            if (localizedDescription || t.desc) {
+                term.description = stripHtml(localizedDescription || t.desc);
+            }
             return term;
         });
         return scriptSafeStringify(node);
@@ -1353,7 +2108,7 @@ module.exports = function(eleventyConfig) {
     // satisfies Google's "free app" validation (alternative would be
     // aggregateRating, which we don't have). Emitted from head.njk only
     // when nav: tools AND not on the tools landing itself.
-    eleventyConfig.addFilter("softwareApplicationJsonLd", (canonical, title, description) => {
+    eleventyConfig.addFilter("softwareApplicationJsonLd", (canonical, title, description, locale) => {
         if (!canonical) return "";
         return scriptSafeStringify({
             "@context": "https://schema.org",
@@ -1361,6 +2116,7 @@ module.exports = function(eleventyConfig) {
             "name": cleanTitle(title),
             "description": description,
             "url": canonical,
+            "inLanguage": resolveLocale(locale),
             "applicationCategory": "UtilityApplication",
             "operatingSystem": "Web",
             "offers": {
@@ -1379,8 +2135,10 @@ module.exports = function(eleventyConfig) {
     // FAQPage node — schema.org pairing that mirrors the
     // `relatedLinks({quizzes: …})` cross-link rendered in the body.
     // Emitted from head.njk only when `nav: education`.
-    eleventyConfig.addFilter("techArticleJsonLd", (canonical, title, description, datePublished, dateModified, pairedQuiz) => {
+    eleventyConfig.addFilter("techArticleJsonLd", (canonical, title, description, datePublished, dateModified, pairedQuiz, locale) => {
         if (!canonical) return "";
+        const selected = resolveLocale(locale);
+        const localizedRoot = cleanCanonical(localizedCanonical("/", selected));
         const node = {
             "@context": "https://schema.org",
             "@type": "TechArticle",
@@ -1388,10 +2146,11 @@ module.exports = function(eleventyConfig) {
             "description": description,
             "url": canonical,
             "mainEntityOfPage": canonical,
+            "inLanguage": selected,
             "datePublished": datePublished,
             "dateModified": dateModified,
-            "author": { "@id": "https://controlsfreak.dev/#author" },
-            "publisher": { "@id": "https://controlsfreak.dev/#website" }
+            "author": { "@id": `${localizedRoot}#author` },
+            "publisher": { "@id": `${localizedRoot}#website` }
         };
         if (pairedQuiz) {
             node.hasPart = { "@type": "FAQPage", "@id": pairedQuiz };

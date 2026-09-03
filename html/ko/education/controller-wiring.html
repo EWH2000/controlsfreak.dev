@@ -1,0 +1,388 @@
+---
+title: 제어기 배선 — controlsfreak.dev
+description: 현장 포인트를 DDC 제어기에 결선하는 방법을 알아봅니다. 24 VAC 전원과 공통선, 입출력 유형, 현장에서 자주 발생하는 배선 실수를 다룹니다.
+sourceContentHash: b8b7fee1bf28cc578128513f117fcb0bc55df3da7251c1530cc7457284f25240
+canonical: https://controlsfreak.dev/ko/education/controller-wiring.html
+nav: education
+category: signals
+pairedQuiz: https://controlsfreak.dev/ko/practice/controller-wiring.html
+keywords: 24vac com 변압기 단락 4-20ma 루프 배선 퓨즈 극성
+---
+{% extends "html/education/controller-wiring.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">학습 · 제어기 배선</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">제어기 배선 <span class="tool-tag">배선</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                <button type="button" data-gloss="ddc">DDC</button> 제어기가 시퀀스 한 줄이라도 실행하려면 먼저 모든 포인트를 <em>결선</em>해야 합니다. 단자에는 전원을, 각 입력에는 센서를, 각 출력에는 액추에이터나 접촉기를 연결합니다. 프로그램이 완벽해도 전선 하나를 반대로 연결하면 온도가 &minus;40 °F로 표시되거나 댐퍼가 전혀 움직이지 않을 수 있습니다. 이 페이지에서는 범용 제어기에 연결되는 네 가지 요소인 전원, 입력, 출력, 그리고 이들을 하나로 묶는 공통선을 살펴보고, 누구나 현장에서 한 번쯤 겪는 대표적인 배선 실수를 짚습니다. 직접 결선해 보고 싶다면 <a href="/ko/simulators/controller-wiring.html">컨트롤러 배선 시뮬레이터</a>에서 같은 제어기를 실시간 피드백과 의도적으로 발생시킬 수 있는 고장과 함께 다뤄 볼 수 있습니다.
+            </p>
+
+            <h2 class="subhead" id="power">전원과 공유 공통선</h2>
+
+            <p>
+                일반적인 현장 제어기는 소형 제어 변압기에서 공급되는 <strong>24 VAC</strong>로 동작합니다. 일차측에는 선간 전압(120 또는 277 V)이, 이차측에는 24 V가 걸립니다. 이차측의 두 전선은 제어기 전원 단자에 연결하며, 핫 선은 <strong>24V~</strong>, 다른 선은 <strong>24COM</strong>에 연결합니다. 24 VAC는 교류이므로 어느 쪽도 "양극"은 아니지만, 한쪽은 다른 모든 측정의 기준이 되는 제어기의 <strong>기준 전위</strong>, 즉 0 V이며 그 선이 COM입니다.
+            </p>
+
+            <p>
+                이것이 패널 전체에서 가장 중요한 개념입니다. <strong>COM은 모든 신호가 공유하는 기준입니다.</strong> 모든 센서의 귀환선, 모든 아날로그 출력의 공통선, 모든 입력의 하단은 제어기 자체 전원과 같은 공통점으로 돌아옵니다. 입력은 <em>해당 단자와 COM 사이</em>의 전압(또는 저항이나 전류)을 측정합니다. 센서 귀환선이 COM에 닿지 않으면 제어기에는 측정 기준이 없어 판독값에 의미가 없습니다. 대부분의 제어기가 입력 근처에 COM 단자를 여러 개 제공하는 이유도 이 모든 귀환선을 연결할 자리를 마련하기 위해서입니다. 이 단자들은 내부에서 24COM과 접속되어 있어 나사는 다르지만 같은 노드입니다.
+            </p>
+
+            <p>
+                이 개념이 현장 함정으로 바뀌는 지점은 <strong>변압기 공유</strong>입니다. 공간과 VA 용량을 절약하려고 여러 제어기, 또는 제어기와 전원형 액추에이터가 하나의 변압기를 함께 쓰는 경우가 많습니다. <em>모든 장치가 같은 이차측 선을 공통선 기준으로 삼는다면</em> 문제없습니다. 많은 제어기가 내부에서 24 VAC를 반파 정류하므로 극성에 민감합니다. 한 장치의 COM은 한쪽 선에, 다음 장치의 COM은 반대쪽 선에 연결하면 두 공통점 사이에 24 V 전체가 걸립니다. 이때 공유 센서, 실드, 점퍼처럼 양쪽에서 모두 "공통"이어야 하는 전선은 하나의 이차측 양단을 이어 버립니다. 그 결과 변압기 단락, 퓨즈 단선 또는 입력 손상이 발생합니다. (잘 알려진 "거의 48볼트" 형태의 사고는 위상이 반대로 연결된 <em>서로 다른 두 변압기</em>가 필요합니다. 이 경우 두 "공통점" 사이에는 실제로 이차 전압의 거의 두 배가 걸릴 수 있으며, 시뮬레이터의 변압기 충돌 프리셋이 바로 이 상황을 모델링합니다.) 원칙은 단순하고 예외가 없습니다. <strong>변압기를 공유할 때는 모든 COM을 같은 선에 연결하세요.</strong> 여러 변압기를 함께 사용한다면 위상을 맞추세요. 그렇지 않으면 퓨즈를 설치한 뒤 서로 분리하고, 절대로 교차 연결하지 마세요.
+            </p>
+
+            <p>
+                이차측 단락(사이에 부하 없이 핫 선을 COM에 직접 연결)은 변압기 퓨즈를 즉시 끊어 회로가 잘못되었음을 분명히 알립니다. 이는 의도된 보호 동작입니다. 퓨즈가 제어기보다 훨씬 저렴하기 때문입니다.
+            </p>
+
+            <!-- Power diagram: one transformer, two devices, both COMs on the
+                 same secondary leg (the phasing rule made visual). Static —
+                 the shared-leg story is the whole point, no motion needed. -->
+            <svg class="edu-svg cwl-svg" id="cwl-power" viewBox="0 0 680 250"
+                 role="img" aria-labelledby="cwl-power-title cwl-power-desc">
+                <title id="cwl-power-title">하나의 변압기가 공유 공통선으로 두 제어기에 전원 공급</title>
+                <desc id="cwl-power-desc">왼쪽의 24 VAC 제어 변압기에는 빨간색으로 표시된 핫 선과 파란색으로 표시된 공통선, 이차측 전선 두 가닥이 있습니다. 핫 선은 오른쪽에 위아래로 배치된 두 제어기의 24V~ 단자로 연결되고, 공통선은 두 제어기의 24COM 단자로 연결됩니다. 두 제어기가 같은 이차측 선을 공통선으로 사용하므로 위상이 올바른 구성입니다. 두 제어기 사이에서 선을 엇갈리게 연결하면 공유 공통선을 통해 변압기 이차측이 단락된다는 설명이 표시됩니다.</desc>
+
+                <!-- transformer -->
+                <rect class="dev" x="24" y="84" width="96" height="82" rx="3"/>
+                <text class="lbl" x="72" y="118" text-anchor="middle">XFMR</text>
+                <text class="lbl-dim" x="72" y="134" text-anchor="middle">24 VAC</text>
+                <text class="lbl-dim" x="72" y="150" text-anchor="middle">40 VA</text>
+                <circle class="term" cx="120" cy="104" r="5"/>
+                <circle class="term" cx="120" cy="146" r="5"/>
+                <text class="lbl-dim" x="128" y="100">24~</text>
+                <text class="lbl-dim" x="128" y="159">com</text>
+
+                <!-- controller A. Terminal labels are omitted on purpose: the
+                     hot wire (red) lands on the upper terminal, common (blue) on
+                     the lower, and labelling them here would collide with the
+                     incoming wires. The transformer leads carry the labels. -->
+                <rect class="dev" x="470" y="40" width="160" height="64" rx="3"/>
+                <text class="lbl" x="550" y="66" text-anchor="middle">제어기 A</text>
+                <text class="lbl-dim" x="550" y="84" text-anchor="middle">반파 정류 24 VAC</text>
+                <circle class="term" cx="470" cy="58" r="5"/>
+                <circle class="term" cx="470" cy="92" r="5"/>
+
+                <!-- controller B -->
+                <rect class="dev" x="470" y="150" width="160" height="64" rx="3"/>
+                <text class="lbl" x="550" y="176" text-anchor="middle">제어기 B</text>
+                <text class="lbl-dim" x="550" y="194" text-anchor="middle">반파 정류 24 VAC</text>
+                <circle class="term" cx="470" cy="168" r="5"/>
+                <circle class="term" cx="470" cy="202" r="5"/>
+
+                <!-- hot leg (red): xfmr 24~ up the bus to both upper terminals -->
+                <path class="wire w-hot" d="M 120 104 H 300 V 58 H 470"/>
+                <path class="wire w-hot" d="M 300 104 V 168 H 470"/>
+                <!-- common leg (blue): xfmr com to both lower terminals -->
+                <path class="wire w-com" d="M 120 146 H 340 V 92 H 470"/>
+                <path class="wire w-com" d="M 340 146 V 202 H 470"/>
+
+                <text class="lbl-dim" x="300" y="234" text-anchor="middle">두 COM을 같은 선에 연결 = 동일한 0 V 기준</text>
+            </svg>
+            <p class="edu-legend cwl-leg">
+                <span><span class="sw hot"></span>24 VAC 핫 선</span>
+                <span><span class="sw com"></span>공통선 / 귀환선</span>
+            </p>
+
+            <h2 class="subhead" id="inputs">입력 — 제어기가 읽는 신호</h2>
+
+            <p>
+                대부분의 현장 제어기에는 포인트별로 여러 전기량을 읽도록 설정할 수 있는 <strong>범용 입력</strong>(UI)과 온/오프 접점용 전용 <strong>바이너리 입력</strong>(BI)이 있습니다. 배선의 핵심은 알맞은 두세 가닥을 올바른 단자에 연결하고, 매번 귀환선을 COM으로 되돌리는 것입니다. 입력이 무엇을 <em>읽는지</em>는 설정 방식과 반대편에 연결된 장치의 종류에 따라 달라집니다.
+            </p>
+
+            <p>
+                <strong>10K 서미스터</strong>가 가장 단순합니다. 두 가닥이며 극성과 별도 전원이 없습니다. 한 가닥은 UI에, 다른 가닥은 COM에 연결합니다. 저항 입력으로 설정된 제어기는 크기를 알고 있는 미세 전류를 서미스터에 흘려 전압 강하를 측정합니다. 이것이 저항값이며, 센서 유형별 곡선이 저항을 온도로 변환합니다. 한 가닥이 끊어지거나 귀환선을 COM이 아닌 곳에 연결하면 제어기는 무한대 저항을 감지하고 곡선에서는 이를 측정 범위 최저 온도로 해석합니다. 따라서 완전 단선은 공란이 아니라 비정상적으로 낮은 온도로 나타납니다. 입력이 주어진 개방 회로를 설정대로 정확히 처리하는 것입니다. (센서 유형이 잘못되어 Type III 센서에 Type II 곡선을 적용하면 값은 읽히지만 몇 도씩 어긋납니다. 설정은 배선만큼 중요합니다.)
+            </p>
+
+            <p>
+                <strong>0&ndash;10 V 트랜스미터</strong>는 세 가닥 장치입니다. 전원(대개 같은 제어 변압기의 24 V)이 필요하고, 세 번째 전선으로 0&ndash;10 V 신호를 출력하며, 장치의 공통선은 COM으로 돌아갑니다. 전압 입력으로 설정된 제어기는 COM을 기준으로 신호를 읽습니다. 전원이 없으면 신호도 없어 포인트는 0을 계속 표시하며, 마치 센서가 측정 범위 하한에 고정된 것처럼 보입니다.
+            </p>
+
+            <p>
+                <strong>4&ndash;20 mA 트랜스미터</strong>에서는 루프 전원 개념이 자주 혼동을 일으킵니다. 두 가닥 트랜스미터에는 별도의 신호선이 없습니다. 측정값에 비례하도록 4&ndash;20 mA 범위에서 <em>자신이 포함된 루프를 흐르는 전류를 조절</em>합니다. 따라서 루프에 전원을 공급해야 하며, 트랜스미터의 전자 회로도 루프 전류로 구동되므로 <strong>DC</strong> 전원을 사용해야 합니다. 일반적으로 제어기 자체의 <strong>루프 전원 단자</strong>(여기서는 <strong>LOOP+</strong>로 표시)에서 나오는 12&ndash;30 VDC나 별도의 24 VDC 전원을 사용하며, 24 VAC 핫 선은 <em>사용하지 않습니다</em>. 이 DC 전류는 트랜스미터의 <strong>+</strong> 단자로 나가 장치를 통과한 뒤, 전류 입력으로 설정된 제어기 입력의 <strong>&minus;</strong> 측으로 돌아옵니다. 여기서 하단이 COM에 연결된 작은 내부 저항이 전류를 제어기가 읽을 수 있는 전압으로 바꿉니다. <strong>+</strong>를 AC 핫 선에 잘못 연결하면 조절할 DC 전류가 없어 포인트는 0 mA로 죽어 있고, 전원을 전혀 공급하지 않아도 결과는 같습니다. 이 방식의 장점은 범위 하한의 4 mA도 살아 있는 제로가 아닌 신호라는 점입니다. 따라서 단선(0 mA)을 실제 하한 측정값과 구분할 수 있으며, 표준이 0이 아니라 4에서 시작하는 이유가 바로 이것입니다.
+            </p>
+
+            <p>
+                <strong>바이너리 입력</strong>은 릴레이, 스위치, 유량 확인용 패들 스위치 같은 무전압 접점을 감시합니다. 제어기는 BI 단자에서 자체 저전압 "습윤" 전류를 내보냅니다. 현장 접점은 회로를 COM으로 되돌려 완성하거나(닫힘), 완성하지 않습니다(열림). 한쪽을 BI, 다른 쪽을 COM에 연결하면 되지만 귀환선이 실제로 COM에 도달해야 합니다. 한쪽만 BI에 연결하고 다른 쪽이 부유한 접점은 회로를 완성할 수 없으므로 장비 상태와 관계없이 입력은 항상 OPEN으로 표시됩니다. 반면 일부 접점은 다른 패널의 전압이 이미 인가된 <em>외부 전원형</em>("유전압")입니다. 이런 접점에는 제어기의 습윤 전압을 가하면 안 되며, 제어기 설명서의 지시에 따라 결선하지 않으면 한 패널이 다른 패널로 역급전될 수 있습니다. 결선 전에 어떤 종류인지 확인하세요.
+            </p>
+
+            <p>
+                이 페이지에서 의도적으로 다루지 않는 내용이 하나 있습니다. 아날로그 케이블의 <strong>실드와 접지</strong>입니다. 핵심만 말하면 케이블의 드레인/실드는 <em>패널 쪽 한쪽 끝에만</em> 연결해야 합니다. 양쪽 끝을 모두 연결하면 접지 루프가 생겨 깨끗하게 읽으려는 신호에 잡음이 더해집니다. 그 이유는 <a href="/ko/practice/field-wiring-sensors.html">현장 배선 &mdash; 센서 연습</a>에서 자세히 다룹니다.
+            </p>
+
+            <!-- Inputs diagram: power + UI/BI column on the left, four landings on
+                 the right. A red hot bus distributes 24V~ to the powered
+                 transmitters; a blue common bus collects every return back to COM.
+                 Signal wires run straight across. Nothing crosses the body. Static. -->
+            <svg class="edu-svg cwl-svg" id="cwl-inputs" viewBox="0 0 700 400"
+                 role="img" aria-labelledby="cwl-inputs-title cwl-inputs-desc">
+                <title id="cwl-inputs-title">제어기의 네 가지 입력 결선</title>
+                <desc id="cwl-inputs-desc">왼쪽 제어기 단자 열에는 24V~, UI1, UI2, UI3, COM 단자와 BI1이 나열되어 있습니다. 빨간색 핫 버스는 24V~에서 아래로 이어지고, 청록색 DC 루프 전원선은 LOOP+ 단자에서 나오며, 파란색 공통 버스는 COM에서 이어집니다. 오른쪽에는 네 장치가 연결됩니다. 10K 서미스터는 UI1에 연결되고 귀환선은 공통 버스로 돌아가며 신호선은 흐린색입니다. 세 가닥 0&ndash;10 V 트랜스미터는 핫 버스에서 24 V 전원을 받고, 출력을 UI2에, 공통선을 공통 버스에 연결합니다. 두 가닥 4&ndash;20 mA 트랜스미터의 루프는 LOOP+ DC 루프 전원 단자에서 전원을 받아 UI3으로 돌아옵니다. BI1의 무전압 접점도 공통 버스로 귀환합니다. 모든 귀환선은 공유 공통선에 연결됩니다.</desc>
+
+                <!-- controller terminal column -->
+                <rect class="dev" x="24" y="34" width="126" height="350" rx="3"/>
+                <text class="lbl-dim" x="87" y="26" text-anchor="middle">제어기</text>
+                <circle class="term" cx="150" cy="64" r="5"/>  <text class="lbl-term" x="124" y="68" text-anchor="end">24V~</text>
+                <circle class="term" cx="150" cy="88" r="5"/>  <text class="lbl-term" x="124" y="92" text-anchor="end">LOOP+</text>
+                <circle class="term" cx="150" cy="112" r="5"/> <text class="lbl-term" x="124" y="116" text-anchor="end">UI1</text>
+                <circle class="term" cx="150" cy="180" r="5"/> <text class="lbl-term" x="124" y="184" text-anchor="end">UI2</text>
+                <circle class="term" cx="150" cy="258" r="5"/> <text class="lbl-term" x="124" y="262" text-anchor="end">UI3</text>
+                <circle class="term" cx="150" cy="318" r="5"/> <text class="lbl-term" x="124" y="322" text-anchor="end">COM</text>
+                <circle class="term" cx="150" cy="360" r="5"/> <text class="lbl-term" x="124" y="364" text-anchor="end">BI1</text>
+
+                <!-- distribution buses: hot (red) from 24V~ feeds the 0-10V xmtr;
+                     DC loop power (teal) from LOOP+ feeds the 4-20mA loop;
+                     common (blue) from COM collects every return. -->
+                <path class="wire w-hot" d="M 150 64 H 192 V 164"/>
+                <path class="wire w-loop" d="M 150 88 H 208 V 246 H 490"/>
+                <path class="wire w-com" d="M 150 318 H 224 V 112"/>
+                <path class="wire w-com" d="M 224 374 V 318"/>
+
+                <!-- 10K thermistor on UI1 -->
+                <rect class="dev" x="490" y="92" width="160" height="40" rx="3"/>
+                <text class="lbl" x="570" y="110" text-anchor="middle">10K 서미스터</text>
+                <text class="lbl-dim" x="570" y="125" text-anchor="middle">저항 · 2선식</text>
+                <path class="wire w-sig" d="M 150 112 H 490"/>
+                <path class="wire w-com" d="M 490 126 H 224"/>
+
+                <!-- 0-10V transmitter on UI2 (3-wire: pwr / out / com) -->
+                <rect class="dev" x="490" y="152" width="160" height="56" rx="3"/>
+                <text class="lbl" x="570" y="174" text-anchor="middle">0&ndash;10 V 트랜스미터</text>
+                <text class="lbl-dim" x="570" y="189" text-anchor="middle">3선식 · 전원/출력/COM</text>
+                <path class="wire w-hot" d="M 192 164 H 490"/>
+                <path class="wire w-sig" d="M 150 180 H 490"/>
+                <path class="wire w-com" d="M 490 196 H 224"/>
+
+                <!-- 4-20mA transmitter on UI3 (2-wire loop) -->
+                <rect class="dev" x="490" y="236" width="160" height="48" rx="3"/>
+                <text class="lbl" x="570" y="258" text-anchor="middle">4&ndash;20 mA 트랜스미터</text>
+                <text class="lbl-dim" x="570" y="273" text-anchor="middle">2선식 · 루프 전원형</text>
+                <path class="wire w-sig" d="M 490 272 H 320 V 258 H 150"/>
+
+                <!-- dry contact on BI1 -->
+                <rect class="dev" x="490" y="340" width="160" height="40" rx="3"/>
+                <text class="lbl" x="570" y="358" text-anchor="middle">무전압 접점</text>
+                <text class="lbl-dim" x="570" y="373" text-anchor="middle">COM으로 귀환</text>
+                <path class="wire w-sig" d="M 150 360 H 490"/>
+                <path class="wire w-com" d="M 490 374 H 224"/>
+
+                <text class="lbl-dim" x="370" y="396" text-anchor="middle">핫 선은 0–10 V 트랜스미터에, LOOP+ (DC)는 4–20 mA 루프에 전원 공급 · COM으로 귀환</text>
+            </svg>
+            <p class="edu-legend cwl-leg">
+                <span><span class="sw hot"></span>24 VAC 핫 선</span>
+                <span><span class="sw loop"></span>DC 루프 전원</span>
+                <span><span class="sw com"></span>공통선 / 귀환선</span>
+                <span><span class="sw sig"></span>신호</span>
+            </p>
+
+            <h2 class="subhead" id="outputs">출력 — 제어기가 구동하는 신호</h2>
+
+            <p>
+                출력도 입력과 마찬가지로 두 종류입니다. 댐퍼나 밸브 액추에이터에 0&ndash;10 V 또는 4&ndash;20 mA 신호를 보내 비례 제어하는 <strong>아날로그 출력</strong>(AO)과 장치를 켜거나 끄는 <strong>바이너리 출력</strong>(BO)이 있습니다. 출력 측에서 반복되는 실수는 <em>제어기의 신호가 부하의 동력 전원이 아니라는 사실</em>을 잊는 것입니다.
+            </p>
+
+            <p>
+                <strong>0&ndash;10 V 액추에이터</strong>에는 세 가지가 필요하지만, 서두르는 기술자는 그중 두 가지만 연결하기 쉽습니다. 댐퍼를 움직이는 모터를 구동할 자체 <strong>전원</strong>, 즉 24 VAC가 필요합니다. AO 단자의 <strong>제어 신호</strong>도 필요합니다. 또한 액추에이터와 제어기가 같은 기준으로 0&ndash;10 V를 측정할 수 있도록 신호 공통선을 제어기 COM에 연결해야 합니다. 신호만 연결하고 전원을 빼먹으면 제어기가 60%를 정상적으로 지령해도 액추에이터는 꼼짝하지 않습니다. AO는 전원 공급원이 아니라 출력이며, 수 mA 수준의 10 V로는 댐퍼를 움직일 수 없습니다. 전원과 신호를 연결했어도 공통선이 부유하면 명령에 공유 기준이 없어 값이 흔들립니다. 언제나 세 가지를 모두 연결하세요.
+            </p>
+
+            <p>
+                <strong>바이너리 출력</strong>은 보통 제어기 내부의 <strong>무전압 릴레이 접점</strong>입니다. 제어기가 명령에 따라 서로 연결하는 두 단자일 뿐, 자체적으로 전원을 스위칭하지는 않습니다. 이 릴레이가 실제로 무언가를 <em>동작</em>시키려면 회로가 접점을 통과하도록 해야 합니다. 24 VAC 핫 선을 릴레이 공통 단자(흔히 BO-C 또는 출력별 전원 단자로 표시)에 넣고, 스위칭된 쪽을 팬 접촉기 코일, 소형 릴레이, 솔레노이드 같은 부하로 보낸 뒤 부하의 귀환선을 24COM에 연결합니다. 릴레이가 닫히면 부하에 24 VAC가 공급되고, 열리면 부하가 떨어집니다. 모든 배선을 마치고 제어기가 BO를 켜며 릴레이도 딸깍거리는데 아무 일도 일어나지 않는 전형적인 상황은 BO-C에 핫 선을 공급하지 않았기 때문입니다. 전원이 없는 선을 릴레이가 스위칭하고 있는 셈입니다.
+            </p>
+
+            <p>
+                일부 바이너리 출력은 릴레이 대신 <strong>트라이액</strong>을 사용합니다. 움직이는 접점이 없어 마모되지 않지만 24 VAC만 다루는 반도체 스위치입니다. 무전압 접점처럼 유연하지 않고, "꺼짐" 상태에서도 미세 누설 전류가 흘러 민감한 부하가 부분적으로 여자될 수 있습니다. 트라이액 출력 두 개(열림과 닫힘)로 액추에이터를 양방향으로 조금씩 움직이는 <button type="button" data-gloss="floating-actuator">플로팅/트라이스테이트 액추에이터</button> 구동에 흔히 사용됩니다. 24 VAC 한 선을 부하에 스위칭한다는 배선 목적은 같지만 트라이액은 무전압 접점이 아닙니다. AC 전용이라 도통 후 래치되어 DC 부하를 차단할 수 없고, 부유·절연 접점도 아닙니다. 여기에 꺼짐 상태 누설까지 있으므로 DC 회로를 스위칭하거나 회로가 실제로 무전압인지 증명하는 용도에는 적합하지 않습니다.
+            </p>
+
+            <!-- Outputs diagram: AO 0-10V actuator (power + signal + common) and a
+                 BO relay driving a fan contactor (BO-C fed from the hot leg). All
+                 wiring stays in the gap right of the column. Static. -->
+            <svg class="edu-svg cwl-svg" id="cwl-outputs" viewBox="0 0 700 340"
+                 role="img" aria-labelledby="cwl-outputs-title cwl-outputs-desc">
+                <title id="cwl-outputs-title">아날로그 출력과 바이너리 출력 결선</title>
+                <desc id="cwl-outputs-desc">0&ndash;10 V 액추에이터는 제어기에서 세 선을 연결합니다. 모터 구동용 24 V 전원(빨간색), 24COM으로 돌아가는 신호 공통선(파란색), AO1 단자의 제어 신호(흐린색)입니다. 아래에서는 바이너리 출력이 팬 접촉기를 구동합니다. 점퍼가 핫 선을 BO-C 전원 단자(빨간색)에 공급하고, BO1 접점이 접촉기 코일로 전원을 스위칭하며, 코일은 24COM(파란색)으로 돌아갑니다. BO-C에 핫 선을 공급하지 않으면 릴레이가 딸깍거려도 아무 장치도 작동하지 않는다는 설명이 표시됩니다.</desc>
+
+                <!-- controller -->
+                <rect class="dev" x="24" y="40" width="126" height="270" rx="3"/>
+                <text class="lbl-dim" x="87" y="32" text-anchor="middle">제어기</text>
+                <circle class="term" cx="150" cy="64" r="5"/>  <text class="lbl-term" x="124" y="68" text-anchor="end">24V~</text>
+                <circle class="term" cx="150" cy="104" r="5"/> <text class="lbl-term" x="124" y="108" text-anchor="end">24COM</text>
+                <circle class="term" cx="150" cy="152" r="5"/> <text class="lbl-term" x="124" y="156" text-anchor="end">AO1</text>
+                <circle class="term" cx="150" cy="262" r="5"/> <text class="lbl-term" x="124" y="266" text-anchor="end">BO-C</text>
+                <circle class="term" cx="150" cy="300" r="5"/> <text class="lbl-term" x="124" y="304" text-anchor="end">BO1</text>
+
+                <!-- 0-10V actuator (pwr + signal + shared common) -->
+                <rect class="dev" x="490" y="108" width="170" height="92" rx="3"/>
+                <text class="lbl" x="575" y="138" text-anchor="middle">0&ndash;10 V 액추에이터</text>
+                <text class="lbl-dim" x="575" y="156" text-anchor="middle">전원 + 신호</text>
+                <text class="lbl-dim" x="575" y="171" text-anchor="middle">+ 공유 공통선</text>
+                <path class="wire w-hot" d="M 150 64 H 224 V 130 H 490"/>
+                <path class="wire w-sig" d="M 150 152 H 490"/>
+                <path class="wire w-com" d="M 490 176 H 264 V 104 H 150"/>
+
+                <!-- BO relay -> fan contactor; BO-C jumpered from the hot leg -->
+                <rect class="dev" x="490" y="250" width="170" height="68" rx="3"/>
+                <text class="lbl" x="575" y="280" text-anchor="middle">팬 접촉기</text>
+                <text class="lbl-dim" x="575" y="298" text-anchor="middle">24 VAC 코일</text>
+                <path class="wire w-hot" d="M 150 64 H 188 V 262 H 150"/>
+                <path class="wire w-hot" d="M 150 300 H 490"/>
+                <path class="wire w-com" d="M 490 314 H 340 V 104 H 150"/>
+
+                <text class="lbl-dim" x="330" y="332" text-anchor="middle">BO-C에 핫 선을 공급하지 않으면 릴레이만 딸깍거리고 아무 장치도 작동하지 않음</text>
+            </svg>
+            <p class="edu-legend cwl-leg">
+                <span><span class="sw hot"></span>24 VAC 핫 선</span>
+                <span><span class="sw com"></span>공통선 / 귀환선</span>
+                <span><span class="sw sig"></span>신호</span>
+            </p>
+
+            <h2 class="subhead" id="putting-together">제어기 전체 결선</h2>
+
+            <p>
+                모두 조합하면 하나의 범용 제어기가 동시에 전체 결선을 수용합니다. 변압기의 입력 전원, 입력에 연결된 서미스터와 트랜스미터 두 개, BI의 무전압 접점, AO의 액추에이터, BO의 팬 접촉기가 한데 모입니다. 아래 도면은 시뮬레이터와 같은 제어기인 <strong>DDC-8</strong>에 각 유형을 하나씩 연결한 경로를 보여 줍니다. 주황색 경로는 실제 전류가 흐르며 액추에이터와 BO 전원 단자에 전원을 공급하는 AC 핫 버스입니다. 청록색 <strong>4&ndash;20 mA 루프</strong>는 제어기의 <strong>LOOP+</strong> 단자에서 DC 루프 전원을 받아 트랜스미터를 지나 입력으로 순환합니다. 파란색은 모든 귀환선이 공유하는 공통선, 흐린색은 신호 배선, 빨간색은 대기 중인 핫 선입니다.
+            </p>
+
+            <!-- Capstone: full DDC-8 with one landing of each type, energized.
+                 data-flow="current": amber on the 24V hot bus (AC), teal on the
+                 4-20mA loop (DC) — the two paths where current literally flows. Arrows
+                 carry the meaning under prefers-reduced-motion (the engine bails
+                 and injects no particles). Selectors elsewhere stay attribute-
+                 only per the CLAUDE.md SVG gotcha; these paths are uniquely id'd. -->
+            <svg class="edu-svg cwl-svg" id="cwl-cap" viewBox="0 0 760 540"
+                 role="img" aria-labelledby="cwl-cap-title cwl-cap-desc">
+                <title id="cwl-cap-title">모든 결선을 마친 DDC-8 제어기</title>
+                <desc id="cwl-cap-desc">왼쪽에는 범용 DDC-8 제어기 단자대가 있고 오른쪽 위 24 VAC 변압기에서 전원을 받습니다. 핫 선(주황색, 여자 상태)은 24V~ 단자에 전원을 공급하고 수직 핫 버스를 따라 내려가 액추에이터와 BO-C 전원 단자에 전원을 공급합니다. 별도의 LOOP+ 단자는 4&ndash;20 mA 트랜스미터에 DC 루프 전원을 공급합니다. 공통선(파란색)은 24COM에 연결되어 수직 공통 버스를 따라 내려가며 모든 장치의 귀환선이 여기에 연결됩니다. 오른쪽에는 각 유형의 장치가 하나씩 있습니다. UI1에는 10K 서미스터, UI2에는 LOOP+ DC 루프 전원 단자에서 트랜스미터를 지나 입력으로 돌아오는 루프(청록색)의 4&ndash;20 mA 트랜스미터, BI1에는 무전압 접점, AO1에는 전원·신호·공통선을 연결한 0&ndash;10 V 액추에이터, BO1에는 스위칭되는 팬 접촉기가 있습니다. 방향 화살표는 여자된 핫 버스(주황색)와 DC 루프(청록색)의 전류 흐름을 표시합니다.</desc>
+
+                <!-- controller strip -->
+                <rect class="dev" x="24" y="40" width="126" height="470" rx="3"/>
+                <text class="lbl-dim" x="87" y="32" text-anchor="middle">범용 DDC-8</text>
+                <circle class="term" cx="150" cy="70" r="5"/>  <text class="lbl-term" x="124" y="74" text-anchor="end">24V~</text>
+                <circle class="term" cx="150" cy="110" r="5"/> <text class="lbl-term" x="124" y="114" text-anchor="end">24COM</text>
+                <circle class="term" cx="150" cy="135" r="5"/> <text class="lbl-term" x="124" y="139" text-anchor="end">LOOP+</text>
+                <circle class="term" cx="150" cy="160" r="5"/> <text class="lbl-term" x="124" y="164" text-anchor="end">COM</text>
+                <circle class="term" cx="150" cy="210" r="5"/> <text class="lbl-term" x="124" y="214" text-anchor="end">UI1</text>
+                <circle class="term" cx="150" cy="270" r="5"/> <text class="lbl-term" x="124" y="274" text-anchor="end">UI2</text>
+                <circle class="term" cx="150" cy="330" r="5"/> <text class="lbl-term" x="124" y="334" text-anchor="end">BI1</text>
+                <circle class="term" cx="150" cy="390" r="5"/> <text class="lbl-term" x="124" y="394" text-anchor="end">AO1</text>
+                <circle class="term" cx="150" cy="450" r="5"/> <text class="lbl-term" x="124" y="454" text-anchor="end">BO-C</text>
+                <circle class="term" cx="150" cy="482" r="5"/> <text class="lbl-term" x="124" y="486" text-anchor="end">BO1</text>
+
+                <!-- transformer (top right) -->
+                <rect class="dev" x="470" y="26" width="120" height="58" rx="3"/>
+                <text class="lbl" x="530" y="50" text-anchor="middle">XFMR</text>
+                <text class="lbl-dim" x="530" y="66" text-anchor="middle">24 VAC</text>
+                <circle class="term" cx="470" cy="44" r="4.5"/>
+                <circle class="term" cx="470" cy="68" r="4.5"/>
+
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes wire geometry — this page ships no JavaScript
+                     at all. A future geometry write must refresh in the same breath, or
+                     the page must opt out via the `flowGeometryLive` frontmatter
+                     (flowStaticGuard, .eleventy.js). -->
+                <!-- POWER feeds + the two distribution buses -->
+                <!-- hot feed (animated): xfmr 24~ -> 24V~ -->
+                <path id="cwl-cap-feed" data-flow="current" data-flow-static="true" class="wire w-cur" d="M 470 44 H 178 V 70 H 150" fill="none"/>
+                <polygon class="arrow-cur" points="300,39 300,49 290,44"/>
+                <!-- hot bus (animated): 24V~ down the spine -->
+                <path id="cwl-cap-hot" data-flow="current" data-flow-static="true" class="wire w-cur" d="M 150 70 H 200 V 460 H 150" fill="none"/>
+                <polygon class="arrow-cur" points="195,300 205,300 200,310"/>
+                <!-- common feed + common bus (blue) -->
+                <path class="wire w-com" d="M 470 68 H 200 V 110 H 150"/>
+                <path class="wire w-com" d="M 150 110 H 232 V 490"/>
+                <path class="wire w-com" d="M 232 160 H 150"/>
+
+                <!-- thermistor on UI1 -->
+                <rect class="dev" x="480" y="190" width="160" height="40" rx="3"/>
+                <text class="lbl" x="560" y="208" text-anchor="middle">10K 서미스터</text>
+                <text class="lbl-dim" x="560" y="223" text-anchor="middle">UI1 + COM</text>
+                <path class="wire w-sig" d="M 150 210 H 480"/>
+                <path class="wire w-com" d="M 480 224 H 232"/>
+
+                <!-- 4-20mA loop on UI2: LOOP+ (DC) -> xmtr+ ; xmtr- -> UI2 (animated) -->
+                <rect class="dev" x="480" y="250" width="160" height="44" rx="3"/>
+                <text class="lbl" x="560" y="270" text-anchor="middle">4&ndash;20 mA 트랜스미터</text>
+                <text class="lbl-dim" x="560" y="285" text-anchor="middle">DC 루프 전원형</text>
+                <path class="wire w-loop" d="M 150 135 H 214 V 264 H 480"/>
+                <path id="cwl-cap-loop" data-flow="current" data-flow-static="true" class="wire w-loop" d="M 480 286 H 360 V 270 H 150" fill="none"/>
+                <polygon class="arrow-loop" points="250,265 240,270 250,275"/>
+
+                <!-- dry contact on BI1 -->
+                <rect class="dev" x="480" y="310" width="160" height="40" rx="3"/>
+                <text class="lbl" x="560" y="328" text-anchor="middle">무전압 접점</text>
+                <text class="lbl-dim" x="560" y="343" text-anchor="middle">BI1 + COM</text>
+                <path class="wire w-sig" d="M 150 330 H 480"/>
+                <path class="wire w-com" d="M 480 344 H 232"/>
+
+                <!-- 0-10V actuator on AO1: hot tap + signal + common -->
+                <rect class="dev" x="480" y="368" width="160" height="54" rx="3"/>
+                <text class="lbl" x="560" y="390" text-anchor="middle">0&ndash;10 V 액추에이터</text>
+                <text class="lbl-dim" x="560" y="407" text-anchor="middle">전원 + 신호 + COM</text>
+                <path class="wire w-cur" d="M 200 404 H 480"/>
+                <path class="wire w-sig" d="M 150 390 H 480"/>
+                <path class="wire w-com" d="M 480 418 H 232"/>
+
+                <!-- fan contactor on BO1: BO-C fed from hot bus; BO1 switches it -->
+                <rect class="dev" x="480" y="450" width="160" height="50" rx="3"/>
+                <text class="lbl" x="560" y="472" text-anchor="middle">팬 접촉기</text>
+                <text class="lbl-dim" x="560" y="489" text-anchor="middle">BO1으로 스위칭</text>
+                <path class="wire w-cur" d="M 200 450 H 150"/>
+                <path class="wire w-hot" d="M 150 482 H 480"/>
+                <path class="wire w-com" d="M 480 494 H 232"/>
+            </svg>
+            <p class="edu-legend cwl-leg">
+                <span><span class="sw cur"></span>여자된 AC(전류 흐름)</span>
+                <span><span class="sw loop"></span>DC 루프 전원</span>
+                <span><span class="sw hot"></span>24 VAC 핫 선</span>
+                <span><span class="sw com"></span>공통선 / 귀환선</span>
+                <span><span class="sw sig"></span>신호</span>
+            </p>
+
+            <p>
+                이것이 전체 작업입니다. 전원은 공유 공통선을 기준으로 삼고, 각 입력에는 판독에 필요한 전선을 연결하며, 각 출력에는 신호와 실제 동작에 필요한 전원을 모두 제공합니다. <a href="/ko/simulators/controller-wiring.html">컨트롤러 배선 시뮬레이터</a>에서는 이 모든 결선을 직접 해 보고, 서미스터 단선, 무전원 루프, 핫 선이 빠진 BO-C처럼 하나를 잘못 연결했을 때 어떤 일이 일어나는지 확인할 수 있습니다.
+            </p>
+
+            <p>
+                이 페이지의 범위를 조금 벗어나는 요소가 하나 있습니다. 바로 <strong>네트워크</strong>입니다. 현장 제어기에는 BMS와 통신하기 위한 RS-485 / BACnet MS/TP 트렁크나 BACnet/IP 포트가 거의 항상 있습니다. 여기에는 데이지 체인 토폴로지, &plus;/&minus; 극성, 종단 저항, 스테이션 주소 지정이라는 별도의 세계가 있습니다. 이는 한 장치의 단자 결선이 아니라 제어기 트렁크 전체의 동작을 다루는 버스 수준의 이야기이므로 별도 페이지에 담았습니다. <a href="/ko/education/bacnet-mstp.html">BACnet MS/TP</a> 설명에서 그 내용을 다루며, 제어기의 네트워크 단자가 두 주제의 경계입니다. 트렁크를 통해 전달되는 프로토콜 측면은 <a href="/ko/education/bacnet-networking.html">BACnet 네트워킹</a> 설명에서 이어집니다.
+            </p>
+
+            {{ relatedLinks({
+                tools: [
+                    {href: '/ko/tools/signal-scaling.html', label: '신호 스케일링'},
+                    {href: '/ko/tools/thermistor-calculator.html', label: '서미스터 / RTD 계산기'},
+                    {href: '/ko/tools/transformer-sizing.html', label: '변압기 VA 용량 계산'},
+                    {href: '/ko/tools/voltage-drop.html', label: '배선 길이와 전압 강하'}
+                ],
+                simulators: [
+                    {href: '/ko/simulators/controller-wiring.html', label: '컨트롤러 배선 시뮬레이터'}
+                ],
+                lessons: [
+                    {href: '/ko/education/bacnet-mstp.html', label: 'BACnet MS/TP'},
+                    {href: '/ko/education/bacnet-networking.html', label: 'BACnet 네트워킹'}
+                ],
+                quizzes: [
+                    {href: '/ko/practice/controller-wiring.html', label: '제어기 배선'},
+                    {href: '/ko/practice/field-wiring-sensors.html', label: '현장 배선 — 센서'},
+                    {href: '/ko/practice/controller-swap.html', label: '제어기 교체'}
+                ]
+            }) }}
+
+            <a class="back-link" href="/ko/education/">← 학습 자료로 돌아가기</a>
+
+        </div>
+    </div>
+
+</main>
+{% endblock %}

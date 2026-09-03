@@ -1,0 +1,533 @@
+---
+title: 펌프 제어 — controlsfreak.dev
+description: 펌프·시스템 곡선의 운전점, 인버터 상사 법칙, 원격 차압 센서와 최다 개방 밸브 기반 차압 설정값 리셋의 실제 BMS 운전 시퀀스를 설명합니다.
+canonical: https://controlsfreak.dev/ko/education/pump-control.html
+nav: education
+category: hydronics
+pairedQuiz: https://controlsfreak.dev/ko/practice/pump-control.html
+keywords: 펌프 제어 차압 DP 센서 인버터 VFD 상사 법칙 펌프 곡선 시스템 곡선 운전점 차압 설정값 리셋 최다 개방 밸브
+sourceContentHash: 1d8206bc0239551d32d60a7f50908e11a9724f05402a48a1ab116da7e8d576f0
+sourceMessageHash: 5c97f19bafc796ae385445fd8a85374f2148d865db595c65f33741d55d6e200b
+pageMessages:
+  aria:
+    valveOpen: 밸브 개도, 백분율
+  axis:
+    flow:
+      us: 유량 (GPM)
+      metric: 유량 (L/s)
+    head:
+      us: 양정 (ft)
+      metric: 양정 (m)
+  deadheadAnecdote: >-
+    수요가 0이면 루프의 물이 갈 곳이 없습니다. 적절한 차압 제어나 루프 말단의 차압 바이패스 밸브(DPBV)가 있으면 펌프가 속도를 낮추거나 바이패스가 열려 상황을 제어합니다. 둘 다 없으면 펌프는 닫힌 루프를 상대로 속도를 유지하는 <em>체절운전(deadhead)</em>을 하며, 열을 운반할 유량이 없어 볼류트 안의 물이 가열됩니다. 저도 모든 부하에 2방 밸브가 있고 바이패스가 없는 루프에서 한 번 겪었습니다. 다행히 기계실 바로 옆에 있었고 소리를 놓칠 수 없었습니다. 이 제어 전반이 방지하려는 고장 상태가 바로 이것입니다.
+---
+{% extends "html/education/pump-control.html" %}
+{% from "related-links.njk" import relatedLinks with context %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">교육 · 펌프 제어</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">펌프 제어 <span class="tool-tag">수배관 시스템</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                <a href="/ko/education/load-piping.html">부하 배관</a> 강의에서는 각 코일의 유량을 2방 밸브가 조절하고 건물 수요에 따라 시스템 유량이 오르내리는 변유량 수배관 시스템을 부하측에서 구성했습니다. <a href="/ko/education/vfds.html">인버터(VFD)</a> 강의에서는 펌프를 요구한 속도로 운전하게 하는 장치를 살펴봤습니다. 이 페이지는 두 내용을 연결합니다. <em>BMS는 어떤 속도를 요구할지 어떻게 결정할까요?</em> 짧게 답하면 ‘루프의 압력 센서를 관찰하면서 건물이 거의 알아차리지 못할 때까지 펌프 속도를 낮춥니다.’ 자세한 답은 아래의 모든 내용입니다.
+            </p>
+
+            <!-- ───────────────── 1 · Constant-Speed Pumps ───────────────── -->
+            <h2 class="subhead" id="constant-speed">정속 펌프 — 가장 단순한 경우</h2>
+
+            <p>
+                변유량을 설명하기 전에 그것이 대체한 방식을 알아보겠습니다. <em>정속</em> 펌프는 이름 그대로 전원에 직입으로 연결되어 전원이 공급될 때마다 60 Hz로 운전하는 모터입니다. BMS가 제어할 수 있는 것은 기동 또는 정지의 이진 포인트 하나뿐입니다. 속도 지령도 설정값도 선택할 운전 곡선도 없습니다. 펌프는 하나의 고정된 운전점에서 시스템이 요구하는 유량을 내보내며 하루 종일 그대로 운전합니다.
+            </p>
+
+            <p>
+                시스템이 정유량을 <em>필요로</em>한다면 이 방식도 잘 작동합니다. 모든 부하에 3방 밸브가 있는 오래된 중력순환 개조형 보일러 루프는 설계상 시스템 유량이 일정하며 이것이 3방 밸브의 목적입니다. 하루 종일 한 운전점에 머무르므로 정속 펌프가 합리적인 조합입니다. 문제는 정속 펌프가 현대의 변유량 건물에 적용될 때 나타납니다. 모든 부하에 2방 밸브가 있고 부분 부하에서 각 밸브가 닫혀 가는데도 펌프는 원하지 않는 시스템에 같은 양정으로 같은 유량을 계속 밀어 넣습니다. 과도한 압력은 거의 닫힌 밸브에서 소모되고 에너지는 소음과 마모로 바뀝니다. 모든 밸브가 동시에 충분히 닫히고 바이패스가 없다면 유로가 닫힌 루프를 상대로 펌프가 도는 <em>체절운전(deadhead)</em>이라는 실제 고장 상태가 생깁니다. 뒤에서 다시 다룹니다.
+            </p>
+
+            <p>
+                정속 펌프의 체절운전을 방지하는 장치는 루프 말단의 <em>차압 바이패스 밸브(DPBV)</em>입니다. 모든 부하가 닫히면서 시스템 압력이 임계값을 넘으면 DPBV가 Δp 설정값에서 열려 펌프 유량이 흐를 경로를 만듭니다. 이는 변속 펌핑이 다른 방식으로 해결하는 제어 문제를 기계적으로 보완한 것입니다. 변속 펌핑은 애초에 시스템이 요구하지 않는 압력을 만들지 않습니다. 이 페이지의 나머지 내용이 그 방법입니다. 변유량 시스템에도 같은 체절운전 위험이 있지만 대신 <a href="/ko/education/load-piping.html#tie-back">최소 유량 바이패스</a>를 사용합니다. 인버터가 이미 루프 Δp를 제한하므로 압력 설정값에서 열리는 것이 아니라 최소 유량을 유지할 수 있게 크기를 선정합니다.
+            </p>
+
+            <!-- ───────────────── 2 · Pump Curve and System Curve ───────────────── -->
+            <h2 class="subhead" id="operating-point">펌프 곡선과 시스템 곡선 — 운전점</h2>
+
+            <p>
+                수배관 시스템에서 마주치는 원심 펌프에 관해 기억해 둘 사실 두 가지가 있습니다.
+            </p>
+
+            <ul style="margin:0.5rem 0 1rem 1.5rem;">
+                <li><strong>펌프에는 유량 정격이 아니라 <em>곡선</em>이 있습니다.</strong> 앞의 모든 경로가 닫혀 유량이 0일 때 펌프는 최대 압력인 <em>차단 양정(shutoff head)</em>을 만듭니다. 유로를 열어 유량이 늘면 하향 곡선을 따라 양정이 낮아집니다. 시스템 저항이 없는 완전 개방 상태인 곡선의 오른쪽 끝에서는 유량이 최대가 되고 양정은 0에 가까워집니다. 펌프는 이 선 위의 어느 지점에서도 운전할 수 있으며 실제 동작은 앞에 연결된 시스템이 결정합니다.</li>
+                <li><strong>배관 시스템에도 <em>곡선</em>이 있습니다.</strong> 배관, 피팅, 밸브, 코일의 마찰 손실은 유량의 제곱에 비례해 증가합니다. 모든 밸브가 완전히 열린 루프는 낮고 완만한 시스템 곡선을 갖습니다. 밸브를 조이면 곡선이 가팔라져 같은 유량을 보내는 데 더 큰 양정이 필요합니다.</li>
+            </ul>
+
+            <p>
+                두 곡선이 교차하는 곳이 펌프가 실제로 운전하는 <em>운전점</em>입니다. 엔지니어가 숫자로 고르는 지점이 아니라 물리적으로 평형을 이루는 곳입니다. 밸브를 열면 시스템 곡선이 완만해지고 교점은 오른쪽 아래로 이동해 유량이 늘고 양정은 낮아집니다. 밸브를 닫으면 곡선이 가팔라지고 교점은 왼쪽 위로 이동해 유량이 줄고 양정은 높아집니다. 펌프는 건물 수요에 따라 자기 곡선 위를 오르내립니다.
+            </p>
+
+            <p>
+                아래 두 슬라이더를 움직여 직접 확인하세요. 굵은 파란색 선은 선택한 속도의 펌프 곡선이고 흐린 선은 비교를 위한 같은 펌프의 전속도 곡선입니다. 녹색 포물선은 선택한 밸브 위치의 시스템 곡선입니다. 점은 두 곡선이 만나는 운전점입니다.
+            </p>
+
+            <!-- Widget 1 — operating-point chart. Inline JS at the bottom of the page redraws the
+                 pump curve, the reference (60 Hz) pump curve, and the system curve as the sliders
+                 move, and places the operating-point dot at the intersection. Math summary:
+                 pump curve H_p(Q, r) = 70*r² − 0.002*Q²   (r = Hz/60, parabola opening downward,
+                                                            shutoff head 70 ft at full speed)
+                 system curve H_s(Q, v) = (0.005 / (v/100)²) * Q²   (v = valves-open %, parabola
+                                                            through origin, steeper as valves close)
+                 intersection: Q = r * sqrt(70 / (R + 0.002)), where R is the system-curve slope.
+                 At r=1, v=100: Q = 100 GPM, H = 50 ft — the design operating point. -->
+            <div class="widget" id="pc-w1">
+                <div class="pc-w1-grid">
+                    <div>
+                        <div class="pc-w1-chart-wrap">
+                            <svg class="pc-w1-chart" id="pc-w1-chart" viewBox="0 0 480 280" role="img" aria-labelledby="pc-w1-title pc-w1-desc">
+                                <title id="pc-w1-title">펌프 곡선과 시스템 곡선</title>
+                                <desc id="pc-w1-desc">가로축은 유량이고 세로축은 양정인 차트입니다. 펌프 곡선은 왼쪽 위의 차단 양정·유량 0 지점에서 오른쪽 아래의 최대 유량·낮은 양정 지점으로 내려갑니다. 시스템 곡선은 원점에서 포물선으로 올라갑니다. 교점인 운전점에 마커가 있습니다. 속도 슬라이더를 움직이면 펌프 곡선의 크기가 바뀌고 밸브 위치 슬라이더를 움직이면 시스템 곡선의 기울기가 바뀝니다.</desc>
+
+                                <!-- axes -->
+                                <line x1="50" y1="240" x2="460" y2="240" stroke="var(--text-dim)" stroke-width="1"/>
+                                <line x1="50" y1="240" x2="50" y2="20" stroke="var(--text-dim)" stroke-width="1"/>
+
+                                <!-- axis labels -->
+                                <text x="255" y="270" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)" data-us="{{ pageMessages.axis.flow.us }}" data-metric="{{ pageMessages.axis.flow.metric }}">{{ pageMessages.axis.flow.us }}</text>
+                                <text x="16" y="130" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--text-dim)" transform="rotate(-90 16 130)" data-us="{{ pageMessages.axis.head.us }}" data-metric="{{ pageMessages.axis.head.metric }}">{{ pageMessages.axis.head.us }}</text>
+
+                                <!-- x-axis ticks: 0, 30, 60, 90, 120 -->
+                                <g font-family="var(--mono)" font-size="9" fill="var(--text-dim)" text-anchor="middle">
+                                    <text x="50"  y="254" data-us="0" data-metric="0">0</text>
+                                    <text x="152" y="254" data-us="30" data-metric="1.9">30</text>
+                                    <text x="255" y="254" data-us="60" data-metric="3.8">60</text>
+                                    <text x="358" y="254" data-us="90" data-metric="5.7">90</text>
+                                    <text x="460" y="254" data-us="120" data-metric="7.6">120</text>
+                                </g>
+
+                                <!-- y-axis ticks: 0, 20, 40, 60, 80 -->
+                                <g font-family="var(--mono)" font-size="9" fill="var(--text-dim)" text-anchor="end">
+                                    <text x="44" y="244" data-us="0" data-metric="0">0</text>
+                                    <text x="44" y="189" data-us="20" data-metric="6.1">20</text>
+                                    <text x="44" y="134" data-us="40" data-metric="12.2">40</text>
+                                    <text x="44" y="79" data-us="60" data-metric="18.3">60</text>
+                                    <text x="44" y="24" data-us="80" data-metric="24.4">80</text>
+                                </g>
+
+                                <!-- faint reference grid -->
+                                <g stroke="var(--border-faint)" stroke-width="1">
+                                    <line x1="50"  y1="189" x2="460" y2="189"/>
+                                    <line x1="50"  y1="134" x2="460" y2="134"/>
+                                    <line x1="50"  y1="79"  x2="460" y2="79"/>
+                                    <line x1="50"  y1="24"  x2="460" y2="24"/>
+                                    <line x1="152" y1="240" x2="152" y2="20"/>
+                                    <line x1="255" y1="240" x2="255" y2="20"/>
+                                    <line x1="358" y1="240" x2="358" y2="20"/>
+                                </g>
+
+                                <!-- pump curve at 60 Hz reference, faded -->
+                                <polyline id="pc-w1-pump-ref" fill="none" stroke="var(--blue-cool)" stroke-width="1.5" stroke-dasharray="4 3" points=""/>
+                                <!-- pump curve at current Hz -->
+                                <polyline id="pc-w1-pump" fill="none" stroke="var(--blue)" stroke-width="2.5" points=""/>
+                                <!-- system curve at current valve position -->
+                                <polyline id="pc-w1-sys" fill="none" stroke="var(--accent)" stroke-width="2.5" points=""/>
+                                <!-- operating-point dot -->
+                                <circle id="pc-w1-op" cx="0" cy="0" r="6" fill="var(--text-bright)" stroke="var(--surface)" stroke-width="2"/>
+
+                                <!-- small inline legend, top-right of the plot area.
+                                     Swatches end before the x=358 gridline and text
+                                     starts after it, so the gridline threads the gap
+                                     instead of striking the labels. -->
+                                <g font-family="var(--mono)" font-size="10" fill="var(--text-dim)">
+                                    <line x1="330" y1="34" x2="355" y2="34" stroke="var(--blue)" stroke-width="2.5"/>
+                                    <text x="362" y="38">펌프(현재)</text>
+                                    <line x1="330" y1="50" x2="355" y2="50" stroke="var(--blue-cool)" stroke-width="1.5" stroke-dasharray="4 3"/>
+                                    <text x="362" y="54">펌프(60 Hz)</text>
+                                    <line x1="330" y1="66" x2="355" y2="66" stroke="var(--accent)" stroke-width="2.5"/>
+                                    <text x="362" y="70">시스템</text>
+                                </g>
+                            </svg>
+                        </div>
+
+                        <div style="margin-top:1rem;">
+                            <div class="widget-section-label">펌프 속도</div>
+                            <div class="widget-slider-head">
+                                <span>0 Hz</span>
+                                <span class="v"><span id="pc-w1-hz">60</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">Hz</span></span>
+                                <span>60 Hz</span>
+                            </div>
+                            <input class="widget-slider" id="pc-w1-hz-slider" type="range" min="0" max="60" step="1" value="60" aria-label="펌프 속도, Hz"/>
+
+                            <div class="widget-section-label" style="margin-top:0.4rem;">밸브 개도</div>
+                            <div class="widget-slider-head">
+                                <span>10%</span>
+                                <span class="v"><span id="pc-w1-valve">100</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">%</span></span>
+                                <span>100%</span>
+                            </div>
+                            <input class="widget-slider" id="pc-w1-valve-slider" type="range" min="10" max="100" step="1" value="100" aria-label="{{ pageMessages.aria.valveOpen }}"/>
+                        </div>
+                    </div>
+
+                    <div class="pc-w1-readouts">
+                        <div class="pc-w-fan-wrap">
+                            <svg class="widget-fan" id="pc-w1-fan" viewBox="0 0 100 100" width="44" height="44" aria-hidden="true">
+                                <circle cx="50" cy="50" r="46" fill="none" stroke="var(--border)" stroke-width="2"/>
+                                <g class="widget-fan-blades" id="pc-w1-fan-blades">
+                                    <ellipse cx="50" cy="22" rx="7" ry="22"/>
+                                    <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(72 50 50)"/>
+                                    <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(144 50 50)"/>
+                                    <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(216 50 50)"/>
+                                    <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(288 50 50)"/>
+                                </g>
+                                <circle cx="50" cy="50" r="5" fill="var(--text-dim)"/>
+                            </svg>
+                            <div class="pc-w-fan-label">
+                                펌프 모터<span class="hz" id="pc-w1-fan-label">60 Hz</span>
+                            </div>
+                        </div>
+                        <div class="pc-w1-readout">
+                            <div class="widget-readout-label">유량</div>
+                            <div class="widget-readout-value"><span id="pc-w1-flow">100</span><span class="unit" data-us="GPM" data-metric="L/s">GPM</span></div>
+                        </div>
+                        <div class="pc-w1-readout">
+                            <div class="widget-readout-label">양정</div>
+                            <div class="widget-readout-value"><span id="pc-w1-head">50</span><span class="unit" data-us="ft" data-metric="m">ft</span></div>
+                        </div>
+                        <div class="pc-w1-readout">
+                            <div class="widget-readout-label">60 Hz 대비 동력</div>
+                            <div class="widget-readout-value"><span id="pc-w1-power">100</span><span class="unit">%</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                슬라이더를 움직일 때 두 가지를 살펴보세요. 먼저 펌프가 60 Hz인 상태에서 밸브를 닫으면 운전점이 왼쪽 위로 이동합니다. 유량은 줄지만 양정은 크게 올라갑니다. 이것이 정속 펌프의 문제입니다. 건물의 요구가 줄어도 펌프는 신경 쓰지 않고 새로 커진 저항을 상대로 계속 밀어냅니다. 둘째, 밸브 위치를 고정하고 펌프 속도를 낮추면 운전점이 시스템 곡선을 따라 이동합니다. 유량은 속도에 거의 비례해 줄고 양정은 속도의 제곱에 비례해 줄며, 세제곱 법칙을 따르는 동력 표시값은 둘보다 더 빠르게 낮아집니다. 건물의 요구가 줄었으므로 펌프가 하는 일도 줄고 수학적으로도 유리합니다.
+            </p>
+
+            <!-- ───────────────── 3 · How a VFD Moves the Operating Point ───────────────── -->
+            <h2 class="subhead" id="affinity-laws">인버터가 운전점을 이동하는 방법 — 상사 법칙</h2>
+
+            <p>
+                ‘속도가 바뀌면 펌프 곡선의 크기가 바뀐다’는 관계의 수학적 근거는 <em>상사 법칙</em>입니다. 현장에서 마주치는 모든 원심 펌프와 팬에 적용되는 세 가지 간단한 관계이며 인버터가 널리 쓰이는 이유입니다.
+            </p>
+
+            <div class="callout" style="margin-top:1rem;">
+                <h3>상사 법칙 — 펌프 속도에 따른 변화</h3>
+                <ul style="margin:0.4rem 0 0 1.25rem;font-size:0.86rem;line-height:1.8;color:var(--text);">
+                    <li><strong>유량은 속도에 비례합니다.</strong>&nbsp; Q&#8322; / Q&#8321; = N&#8322; / N&#8321;</li>
+                    <li><strong>양정은 속도의 제곱에 비례합니다.</strong>&nbsp; H&#8322; / H&#8321; = (N&#8322; / N&#8321;)&#178;</li>
+                    <li><strong>동력은 속도의 세제곱에 비례합니다.</strong>&nbsp; P&#8322; / P&#8321; = (N&#8322; / N&#8321;)&#179;</li>
+                </ul>
+                <p style="margin-top:0.7rem;">마지막 관계는 인버터 페이지의 <a href="/ko/education/vfds.html">세제곱 법칙</a>을 펌프측에서 본 것입니다. 속도를 70%로 낮추면 같은 장비가 시스템 곡선을 따라 이동하며 필요한 동력은 약 34%까지 줄어듭니다.</p>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                두 번째 법칙에는 유용한 주의점이 숨어 있습니다. 양정은 루프의 <em>고도차</em>와 <em>마찰</em>을 이겨 내는 값입니다. 폐루프에서는 물이 올라가며 얻은 위치에너지를 내려오면서 돌려주므로 고도차의 기여가 0입니다. 남는 마찰은 그 자체가 Q²에 비례합니다. 같은 제곱 관계입니다. 따라서 시스템 곡선이 H = R·Q² 형태인 동안 낮은 속도의 운전점은 곡선을 따라 깔끔하게 이동합니다. 속도가 낮아지면 유량이 줄고 양정은 훨씬 더 줄며 동력은 더욱 크게 감소합니다. ‘인버터가 시스템 펌프의 에너지 비용을 크게 절감한다’는 설명은 보정 계수 없이 이 간단한 관계로 성립합니다.
+            </p>
+
+            <p>
+                두 가지 예외를 기억하세요. 냉각탑, 관개, 집수조에서 높은 곳으로 물을 보내는 모든 설비 같은 <em>개방 루프</em>에는 상사 법칙으로 줄어들지 않는 고정 정수두가 있습니다. 펌프는 속도가 아무리 느려도 고도차를 극복해야 하므로 절감 특성이 달라집니다. 또한 실제 인버터에서는 저속에서 인버터와 모터 손실 때문에 이론적인 세제곱 법칙보다 몇 퍼센트포인트 덜 절감됩니다. 전체 형태는 맞지만 절대값은 약간 보수적으로 봐야 합니다.
+            </p>
+
+            <!-- ───────────────── 4 · DP-Based Control ───────────────── -->
+            <h2 class="subhead" id="dp-control">차압 기반 제어 — 루프 말단의 센서</h2>
+
+            <p>
+                이제 BMS에는 속도 지령 입력이 있는 인버터가 있습니다. 무엇을 기준으로 변조해야 할까요? 오늘날 가장 일반적인 답은 루프에 연결된 <em>차압(DP)</em> 센서입니다. BMS는 측정 차압이 차압 설정값과 같도록 PID 루프를 운전합니다. 건물이 더 많은 유량을 요구하면 밸브가 열리고 차압이 낮아져 펌프 속도가 올라갑니다. 요구가 줄면 밸브가 닫히고 차압이 높아져 펌프 속도가 내려갑니다. 직접적인 물리 피드백이므로 펌프는 시간이 아니라 건물의 요구에 응답합니다.
+            </p>
+
+            <p>
+                센서의 설치 위치가 중요합니다. 일반적인 선택은 두 가지입니다.
+            </p>
+
+            <ul style="margin:0.5rem 0 1rem 1.5rem;">
+                <li><strong>펌프 위치(로컬 DP).</strong> 비용이 낮고 펌프 패널 너머의 현장 배선이 필요하지 않습니다. 펌프 토출 압력에서 흡입 압력을 뺀 값, 즉 펌프가 만드는 양정을 읽습니다. 건물 어느 곳에서 수요가 발생하든 펌프 출력을 설정값 근처로 유지합니다. 단점은 <em>루프 말단</em>의 상태를 전혀 알 수 없다는 것입니다. 오염된 스트레이너나 조여진 밸브로 루프 마찰이 증가해도 로컬 DP는 정상처럼 보이는 동안 최악조건 부하에는 유량이 부족할 수 있습니다.</li>
+                <li><strong>수배관상 가장 불리한 지점(원격 DP).</strong> 루프 말단, 보통 마지막 대형 부하를 지난 곳의 공급·환수 주관 양단에 현장 센서를 연결합니다. 최악조건 부하가 실제로 사용할 수 있는 압력을 측정합니다. 펌프의 역할은 ‘최악조건 부하에 최소한 이 정도 차압을 제공하는 것’이 되며, 이것이 건물에 실제로 중요한 변수입니다. 소형 시스템보다 큰 설비에서는 거의 항상 더 나은 선택입니다.</li>
+            </ul>
+
+            <p>
+                아래는 배치도입니다. 왼쪽에는 인버터가 연결된 펌프가 있고 공급 주관은 2방 밸브가 있는 세 부하에 물을 보내며 환수 주관이 되돌아옵니다. 말단의 공급·환수 양단에는 원격 차압 센서가 연결됩니다. 그 센서를 사용하는 PID 루프의 출력이 펌프 속도 지령입니다.
+            </p>
+
+            <!-- Pipe-flow diagram for DP control. Third Education page with pipe-flow diagrams =
+                 trigger to consolidate .hd-svg / .lp-svg into .edu-svg in styles.css (done — see
+                 the friction-file entry). Conventions inherited: supply solid + --blue, return
+                 dashed + --blue-cool, named <g> groups, semantic id prefix (pc-dp-), data-flow
+                 annotations so the particle engine animates without retrofit. Two converging-flow
+                 segments are avoided here — every tee is a simple drop into a horizontal that
+                 only carries one flow direction. -->
+            <svg class="edu-svg" viewBox="0 0 720 360" role="img" aria-labelledby="pc-dp-title pc-dp-desc"
+                 font-family="var(--mono)">
+                <title id="pc-dp-title">원격 차압 센서가 있는 변유량 루프</title>
+                <desc id="pc-dp-desc">왼쪽의 인버터 구동 펌프가 왼쪽 라이저를 통해 물을 밀어 올려 루프 상단을 가로지르는 공급 주관으로 보냅니다. 도식 중앙에서 각각 2방 비례제어 밸브와 코일이 있는 세 부하가 공급 주관에서 분기하고 물을 하단의 환수 주관으로 되돌립니다. 환수 주관은 왼쪽 펌프 흡입측으로 이어집니다. 루프 맨 오른쪽에는 공급·환수 주관에 센싱 배관을 연결한 차압 센서가 있습니다. 센서값은 펌프 속도 제어의 피드백 변수로 BMS에 전달됩니다.</desc>
+
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes pipe geometry — the widget's setAttribute
+                     ('points') / cx / cy writes all target the pump-curve chart SVG, and
+                     the blade transform targets the fan SVG; neither holds a data-flow
+                     element. A future geometry write must refresh in the same breath, or
+                     the page must opt out via the `flowGeometryLive` frontmatter
+                     (flowStaticGuard, .eleventy.js). -->
+                <!-- piping: supply (solid, --blue). One path covers pump-discharge riser
+                     plus supply main horizontal, drawn in flow direction (up, then right). -->
+                <path id="pc-dp-supply-riser-main" data-flow="supply" data-flow-static="true"
+                      d="M50 228 V 100 H 670"
+                      fill="none" stroke="var(--blue)" stroke-width="3"/>
+
+                <!-- supply drops to each load -->
+                <line id="pc-dp-a-sup-top" data-flow="supply" data-flow-static="true" x1="200" y1="100" x2="200" y2="135" stroke="var(--blue)" stroke-width="3"/>
+                <line id="pc-dp-a-sup-bot" data-flow="supply" data-flow-static="true" x1="200" y1="165" x2="200" y2="180" stroke="var(--blue)" stroke-width="3"/>
+                <line id="pc-dp-b-sup-top" data-flow="supply" data-flow-static="true" x1="380" y1="100" x2="380" y2="135" stroke="var(--blue)" stroke-width="3"/>
+                <line id="pc-dp-b-sup-bot" data-flow="supply" data-flow-static="true" x1="380" y1="165" x2="380" y2="180" stroke="var(--blue)" stroke-width="3"/>
+                <line id="pc-dp-c-sup-top" data-flow="supply" data-flow-static="true" x1="560" y1="100" x2="560" y2="135" stroke="var(--blue)" stroke-width="3"/>
+                <line id="pc-dp-c-sup-bot" data-flow="supply" data-flow-static="true" x1="560" y1="165" x2="560" y2="180" stroke="var(--blue)" stroke-width="3"/>
+
+                <!-- piping: return (dashed, --blue-cool). Coil drops to return main, then
+                     return main back along the bottom and up into the pump intake. -->
+                <line id="pc-dp-a-ret" data-flow="return" data-flow-static="true" x1="200" y1="240" x2="200" y2="300" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="pc-dp-b-ret" data-flow="return" data-flow-static="true" x1="380" y1="240" x2="380" y2="300" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="pc-dp-c-ret" data-flow="return" data-flow-static="true" x1="560" y1="240" x2="560" y2="300" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="pc-dp-return-main-riser" data-flow="return" data-flow-static="true"
+                      d="M670 300 H 50 V 272"
+                      fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- equipment: pump (circle, P label) + small VFD box to its left -->
+                <g id="pc-dp-pump">
+                    <circle cx="50" cy="250" r="22" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="50" y="256" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text-bright)">P</text>
+                </g>
+                <g id="pc-dp-vfd">
+                    <rect x="8" y="232" width="24" height="36" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="18" y="254" text-anchor="middle" font-size="9" font-weight="600" fill="var(--text-bright)">VFD</text>
+                    <!-- thin wire from VFD to pump motor -->
+                    <line x1="32" y1="250" x2="28" y2="250" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="2 2"/>
+                </g>
+
+                <!-- valves (bowtie symbols, ~15px square footprint each) -->
+                <g id="pc-dp-a-valve">
+                    <polygon points="188,135 212,135 200,148" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="188,165 212,165 200,152" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                </g>
+                <g id="pc-dp-b-valve">
+                    <polygon points="368,135 392,135 380,148" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="368,165 392,165 380,152" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                </g>
+                <g id="pc-dp-c-valve">
+                    <polygon points="548,135 572,135 560,148" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="548,165 572,165 560,152" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                </g>
+
+                <!-- coils -->
+                <g id="pc-dp-a-coil">
+                    <rect x="170" y="180" width="60" height="60" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="200" y="215" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright)">코일 A</text>
+                </g>
+                <g id="pc-dp-b-coil">
+                    <rect x="350" y="180" width="60" height="60" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="380" y="215" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright)">코일 B</text>
+                </g>
+                <g id="pc-dp-c-coil">
+                    <rect x="530" y="180" width="60" height="60" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="560" y="215" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright)">코일 C</text>
+                </g>
+
+                <!-- DP sensor at the far right end of the loop. Sensing lines drawn thin and
+                     non-flow so the engine ignores them. -->
+                <g id="pc-dp-sensor">
+                    <!-- supply-side sensing tap -->
+                    <circle cx="670" cy="100" r="3.5" fill="var(--text-dim)"/>
+                    <line x1="670" y1="103" x2="670" y2="195" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="3 3"/>
+                    <!-- return-side sensing tap -->
+                    <circle cx="670" cy="300" r="3.5" fill="var(--text-dim)"/>
+                    <line x1="670" y1="297" x2="670" y2="225" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="3 3"/>
+                    <!-- sensor body -->
+                    <rect x="645" y="195" width="50" height="30" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="670" y="215" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text-bright)">ΔP</text>
+                    <!-- "to BMS" wire breaking off to the right. Label sits
+                         below-left of the sensor box: at its old spot
+                         (x=708/y=222, anchor end) it rendered INSIDE the ΔP
+                         box (audit-2026-06 diagram polish). -->
+                    <line x1="695" y1="210" x2="710" y2="210" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="3 3"/>
+                    <text x="666" y="240" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim)">BMS로</text>
+                </g>
+
+                <!-- flow arrows (static state encoding, kept so direction reads under reduced
+                     motion or before the engine kicks in) -->
+                <g id="pc-dp-flow-arrows">
+                    <!-- supply main -->
+                    <polygon points="110,95 119,100 110,105" fill="var(--blue)"/>
+                    <polygon points="280,95 289,100 280,105" fill="var(--blue)"/>
+                    <polygon points="460,95 469,100 460,105" fill="var(--blue)"/>
+                    <polygon points="620,95 629,100 620,105" fill="var(--blue)"/>
+                    <!-- supply riser (going up) -->
+                    <polygon points="45,170 50,159 55,170" fill="var(--blue)"/>
+                    <!-- supply drops at each load -->
+                    <polygon points="195,123 200,134 205,123" fill="var(--blue)"/>
+                    <polygon points="375,123 380,134 385,123" fill="var(--blue)"/>
+                    <polygon points="555,123 560,134 565,123" fill="var(--blue)"/>
+                    <!-- return drops at each load -->
+                    <polygon points="195,275 200,286 205,275" fill="var(--blue-cool)"/>
+                    <polygon points="375,275 380,286 385,275" fill="var(--blue-cool)"/>
+                    <polygon points="555,275 560,286 565,275" fill="var(--blue-cool)"/>
+                    <!-- return main (going right-to-left) -->
+                    <polygon points="120,305 111,300 120,295" fill="var(--blue-cool)"/>
+                    <polygon points="280,305 271,300 280,295" fill="var(--blue-cool)"/>
+                    <polygon points="460,305 451,300 460,295" fill="var(--blue-cool)"/>
+                    <polygon points="620,305 611,300 620,295" fill="var(--blue-cool)"/>
+                </g>
+
+                <!-- labels -->
+                <text x="80" y="90"  class="edu-caption">공급 주관 →</text>
+                <text x="80" y="324" class="edu-caption">← 환수 주관</text>
+                <text x="50" y="312" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">변속</text>
+                <text x="670" y="93" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim)">원격 DP 센서 — 수배관상 가장 불리한 지점</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw supply"></span>공급수</span>
+                <span><span class="sw return"></span>환수</span>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                실제 현장의 센서는 보통 공급·환수에 습식 탭으로 연결한 차압 트랜스듀서이며, 스테인리스 모세관 두 가닥이 BMS 네트워크의 트랜스미터로 이어집니다. BACnet이나 Modbus를 사용하거나 펌프 PID를 실행하는 같은 제어기에 4–20 mA로 직접 배선할 수 있습니다. 커미셔닝 중 휴대용 압력계와 비교해 교정하고 2년 차 조정 때 다시 확인하세요. 트랜스듀서는 드리프트하며, 드리프트된 차압 센서는 한 계절 동안 아무도 알아차리지 못한 채 성능을 조금씩 떨어뜨리는 문제입니다.
+            </p>
+
+            <!-- ───────────────── 5 · DP Setpoint Reset ───────────────── -->
+            <h2 class="subhead" id="dp-reset">차압 설정값 리셋 — 마지막 절감까지</h2>
+
+            <p>
+                고정 차압 제어만으로도 정속 펌핑보다 크게 개선됩니다. 그러나 절감 여지가 남습니다. 차압 설정값은 <em>최악조건</em> 부하, 즉 피크 수요에서 모든 밸브가 설계 유량을 통과시키기 위해 그 압력을 필요로 할 만큼 열린 상태를 기준으로 선정합니다. 대부분의 운전시간은 이 조건과 전혀 다릅니다. 대개 밸브 대부분이 조여져 있고 펌프는 어떤 부하에도 필요하지 않은 과도한 압력을 만듭니다. 남는 압력은 조절 밸브에서 단순히 소모됩니다.
+            </p>
+
+            <p>
+                <em>차압 설정값 리셋</em>은 <em>밸브 위치 리셋</em> 또는 <em>최다 개방 밸브 리셋</em>이라고도 하며 이 차이를 줄이는 시퀀스입니다. BMS가 시스템의 모든 비례제어 밸브 위치를 읽고 건물에서 가장 많이 열린 밸브가 약 95% 개방될 때까지 차압 설정값을 <em>낮춥니다</em>. 그 밸브는 사실상 조절을 하지 않고 펌프는 현재 최악조건 부하에 필요한 만큼의 압력만 만듭니다. 다른 모든 밸브도 고정 설정값일 때보다 더 열리고 펌프는 느리게 운전합니다. 펌프가 느려지면 양정이 줄고 양정의 <em>제곱</em> 관계와 세제곱 법칙에 따라 동력은 훨씬 더 크게 줄어듭니다.
+            </p>
+
+            <p>
+                아래 위젯에는 단순화를 위해 동일한 수요로 고정된 2방 밸브 부하 다섯 개가 있습니다. 수요 슬라이더를 움직여 건물이 요구하는 난방 또는 냉방량을 바꾸세요. <em>고정 DP</em>와 <em>리셋 DP</em> 사이를 전환해 부분 부하의 차이를 확인하세요. 리셋 모드에서 밸브가 더 열리고 펌프 Hz가 낮아지며 동력 표시값이 급격히 감소합니다.
+            </p>
+
+            <!-- Widget 2 — DP setpoint reset. Approximate physics:
+                 Q (flow) = demand_pct (scale: design = 100 GPM at d=100)
+                 H_pump = DP_setpoint + R_pipe * Q²
+                 with R_pipe = 0.0025 (pipe friction; at d=100 yields 25 ft pipe loss → 50 ft total at 25 ft DP setpoint, matches widget 1 design point)
+                 r² = (H_pump + 0.002*Q²) / 70   (invert pump curve to find speed ratio)
+                 Hz = r * 60, clamped at min 10 Hz
+                 power_pct = r³ * 100
+                 In fixed-DP mode: DP_setpoint = 25 ft (constant)
+                 In reset-DP mode: DP_setpoint = max(5, 25*(d/100)) — walks down linearly toward a 5 ft floor
+                 Valve openness in reset mode: clamped to ~95% (the reset target)
+                 Valve openness in fixed mode: walks with demand (lower demand ⇒ more throttling) -->
+            <div class="widget" id="pc-w2">
+                <!-- Real <button>s, not bare <a>s: these set the widget's mode
+                     and demand, they don't navigate, and an anchor with no href
+                     is invisible to the keyboard (#299). Same .widget-try look
+                     either way — the shared stylesheet carries the button
+                     twin. -->
+                <div class="widget-try">
+                    <span class="lbl">예시:</span>
+                    <button type="button" id="pc-w2-try-design">설계일(모든 밸브 완전 개방)</button>
+                    <button type="button" id="pc-w2-try-mid">한낮(수요 60%)</button>
+                    <button type="button" id="pc-w2-try-night">야간 셋백(수요 15%)</button>
+                </div>
+
+                <div class="pc-w2-mode" role="group" aria-label="차압 제어 모드">
+                    <button id="pc-w2-mode-fixed" type="button" class="on">고정 DP</button>
+                    <button id="pc-w2-mode-reset" type="button">리셋 DP</button>
+                </div>
+
+                <div class="widget-section-label">건물 수요</div>
+                <div class="widget-slider-head">
+                    <span>0%</span>
+                    <span class="v"><span id="pc-w2-demand">100</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">%</span></span>
+                    <span>100%</span>
+                </div>
+                <input class="widget-slider" id="pc-w2-demand-slider" type="range" min="0" max="100" step="1" value="100" aria-label="건물 수요, 백분율"/>
+
+                <div class="widget-section-label" style="margin-top:0.4rem;">밸브 위치(부하 5개)</div>
+                <div class="pc-w2-valves" id="pc-w2-valves" aria-label="밸브 위치"></div>
+
+                <div class="pc-w2-readouts">
+                    <div class="pc-w1-readout">
+                        <div class="widget-readout-label">DP 설정값</div>
+                        <div class="widget-readout-value"><span id="pc-w2-dp-set">25</span><span class="unit" data-us="ft" data-metric="m">ft</span></div>
+                    </div>
+                    <div class="pc-w1-readout">
+                        <div class="widget-readout-label">펌프 속도</div>
+                        <div class="widget-readout-value"><span id="pc-w2-hz">60</span><span class="unit">Hz</span></div>
+                    </div>
+                    <div class="pc-w1-readout">
+                        <div class="widget-readout-label">유량</div>
+                        <div class="widget-readout-value"><span id="pc-w2-flow">100</span><span class="unit" data-us="GPM" data-metric="L/s">GPM</span></div>
+                    </div>
+                    <div class="pc-w1-readout">
+                        <div class="widget-readout-label">전속도 대비 동력</div>
+                        <div class="widget-readout-value"><span id="pc-w2-power">100</span><span class="unit">%</span></div>
+                    </div>
+                </div>
+
+                <div class="widget-anecdote-wrap" id="pc-w2-anecdote-wrap"></div>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                실제 리셋은 이 위젯보다 더 지능적으로 작동할 수 있습니다. 실제 설비의 수요는 균일하지 않아 한 존은 큰 출력을 요구하고 나머지는 거의 부하가 없을 수 있습니다. 최다 개방 밸브 로직은 바로 이런 조건에서 효과를 냅니다. 전체 루프를 최악조건 존의 설정값까지 가압하지 않고 실제로 큰 일을 하는 존 하나를 만족시키며 나머지는 거의 유휴 상태로 둡니다. 상한은 배관 마찰을 이겨 설계 유량을 보내는 데 필요한 값보다 설정값을 낮출 수 없다는 점입니다. 어느 지점부터는 동관을 통해 물을 보내기 위해 실제 압력이 필요합니다. 하한은 루프가 사수 상태가 되지 않도록 BMS가 작은 최소 설정값을 유지하는 것입니다. 그 사이의 구간에 에너지 절감의 대부분이 있습니다.
+            </p>
+
+            <!-- ───────────────── 6 · Lead/Lag — brief ───────────────── -->
+            <h2 class="subhead" id="lead-lag">리드·래그와 병렬 펌프 — 참고 사항</h2>
+
+            <p>
+                실제 시스템 대부분에는 펌프가 <em>한 대보다 많이</em> 있습니다. 최소한 N+1 예비성을 위한 주 펌프와 대기 펌프가 있고, 흔히 변속 펌프 두세 대를 병렬로 구성해 수요가 증가할 때 증단하고 감소할 때 감단합니다. 어느 펌프를 언제 운전할지, 단계 전환을 어떻게 범프 없이 수행할지, 고른 마모를 위해 운전시간을 어떻게 순환할지, 펌프가 시스템에 과도한 유량을 보내기 전에 곡선 끝 보호를 어떻게 트립할지는 별도의 주제입니다. 이는 펌프 제어 자체보다 <em>시퀀싱</em>에 해당합니다. 그런 계층이 있다는 점은 알아야 하지만 이 페이지의 질문은 아닙니다.
+            </p>
+
+            <p>
+                간단히 말하면 병렬 변속 펌프는 하나의 차압 루프와 두 모터로 <em>같은</em> 속도 지령에서 운전합니다. <button type="button" data-gloss="lead-lag">리드</button> 펌프가 장시간 전속도에 가깝게 운전하면 대수 제어 시퀀스가 <button type="button" data-gloss="lead-lag">래그</button> 펌프를 투입합니다. 그 이후의 세부 사항은 플랜트, 방지할 고장 상태, BMS 프로그래머의 선호에 따라 달라집니다. <a href="/ko/education/equipment-staging.html">장비 대수 제어</a> 강의는 바로 그 지점에서 이어집니다. 시퀀스가 펌프 운전 대수를 결정하고 <button type="button" data-gloss="lead-lag">리드</button>를 순환해 고르게 마모시키는 방법을 설명합니다.
+            </p>
+
+            <!-- ───────────────── 7 · Closing ───────────────── -->
+            <h2 class="subhead">전체 제어 연결하기</h2>
+
+            <p>
+                세 페이지가 하나의 그림을 이룹니다. <a href="/ko/education/load-piping.html">부하 배관</a>에서는 모든 부하의 유량을 2방 밸브로 조절해 건물 수요에 따라 시스템 유량이 변하는 시스템을 코일 관점에서 구성했습니다. <a href="/ko/education/vfds.html">인버터(VFD)</a>에서는 펌프 모터를 전원 직입으로 켜고 끄는 대신 속도 지령을 따르게 하는 장치를 살펴봤습니다. 이 페이지에서는 <em>BMS가 그 속도 지령으로 하는 일</em>을 채웠습니다. 최악조건 부하 양단의 차압 설정값을 유지하되 가능하면 건물 수요와 함께 낮추고, 하루 동안 시스템 곡선을 따라 펌프 곡선 위의 운전점을 이동합니다. 변속 펌핑은 세 개념을 동시에 이해해야 하며 서로 분리하면 어느 것도 완전하게 설명되지 않습니다. 그 아래에서는 시스템 압력이 변할 때도 각 부하의 연결 밸브가 설계 유량을 유지해야 합니다. 이는 <a href="/ko/education/balancing.html">수배관 밸런싱</a>에서 다루며, 적극적인 차압 리셋에 <button type="button" data-gloss="picv">압력 독립형 제어 밸브</button>(PICV)가 자연스럽게 조합되는 이유입니다.
+            </p>
+
+            <p>
+                다음은 이 모든 제어 위의 <em>시퀀스</em> 계층입니다. 일부는 이미 설명했습니다. <a href="/ko/education/equipment-staging.html">장비 대수 제어</a> 강의에서는 동일한 펌프, 보일러 또는 냉동기를 몇 대 운전할지 결정하고 고른 마모를 위해 순환하는 방법을 다룹니다. 나머지는 앞으로의 내용입니다. 외기 온도에 따라 어떤 설정값을 리셋하는지, 제어 루프가 모드 사이를 어떻게 전환하는지, 플랜트의 모든 장비를 요동시키지 않고 건물을 비재실 야간 셋백에서 아침 예열로 어떻게 전환하는지 살펴보게 됩니다.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/hydronics/', label: '수배관 참고 자료 허브'},
+        tools: [
+            {href: '/ko/tools/affinity-laws.html', label: '펌프·팬 상사 법칙'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/hydronic-loop-builder.html', label: '수배관 루프 빌더'},
+            {href: '/ko/simulators/vfd-mock.html', label: '모의 인버터 인터페이스'}
+        ],
+        lessons: [
+            {href: '/ko/education/vfds.html', label: '인버터(VFD)'},
+            {href: '/ko/education/hydronic-loops.html', label: '수배관 루프'},
+            {href: '/ko/education/load-piping.html', label: '부하 배관'},
+            {href: '/ko/education/duct-static-control.html', label: '덕트 정압 제어'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/pump-control.html', label: '펌프 제어'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 교육으로 돌아가기</a>
+
+</main>
+{% endblock %}

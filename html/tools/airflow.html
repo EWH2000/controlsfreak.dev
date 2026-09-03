@@ -5,9 +5,28 @@ canonical: https://controlsfreak.dev/tools/airflow.html
 nav: tools
 category: airflow
 keywords: cfm k factor velocity pressure vp 4005 fpm duct traverse pitot flow hood vav
+pageMessages:
+  output:
+    flow: Flow
+    kFactor: K factor
+  copy:
+    value: Copy {value}
+  errors:
+    velocityPressure: Enter the velocity pressure.
+    pickupReversed: Negative velocity pressure usually means the sensing lines are swapped — high and low ports reversed at the pickup or the transducer.
+    kFactor: Enter the K factor to find the flow.
+    kNegative: K can’t be negative.
+    measuredFlow: Enter the measured flow to back-solve K.
+    flowNegative: Flow can’t be negative.
+    zeroVelocityPressure: VP of zero can’t back-solve K — no velocity pressure, no flow signal to calibrate against.
+    pitotReversed: Negative velocity pressure usually means the pitot ports are swapped — total and static reversed at the gauge.
+    diameter: Enter the duct diameter.
+    diameterPositive: Diameter must be greater than 0.
+    dimensions: Enter the duct width and height.
+    dimensionsPositive: Duct dimensions must be greater than 0.
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -250,26 +269,26 @@ keywords: cfm k factor velocity pressure vp 4005 fpm duct traverse pitot flow ho
             const solve = kSolveEl.value;
             document.getElementById('vp-k-row-k').classList.toggle('hidden', solve === 'k');
             document.getElementById('vp-k-row-cfm').classList.toggle('hidden', solve === 'flow');
-            kOutLabelEl.textContent = solve === 'flow' ? 'Flow' : 'K factor';
+            kOutLabelEl.textContent = CFI18n.page(solve === 'flow' ? 'output.flow' : 'output.kFactor');
 
             const k   = parseFloat(kKEl.value);
             const vp  = parseFloat(kVpEl.value);
             const cfm = parseFloat(kCfmEl.value);
 
-            if (!isFinite(vp)) { muteK('Enter the velocity pressure.'); return; }
-            if (vp < 0) { muteK('Negative velocity pressure usually means the sensing lines are swapped — high and low ports reversed at the pickup or the transducer.'); return; }
+            if (!isFinite(vp)) { muteK(CFI18n.page('errors.velocityPressure')); return; }
+            if (vp < 0) { muteK(CFI18n.page('errors.pickupReversed')); return; }
 
             let result, formula, unit;
             if (solve === 'flow') {
-                if (!isFinite(k)) { muteK('Enter the K factor to find the flow.'); return; }
-                if (k < 0) { muteK('K can’t be negative.'); return; }
+                if (!isFinite(k)) { muteK(CFI18n.page('errors.kFactor')); return; }
+                if (k < 0) { muteK(CFI18n.page('errors.kNegative')); return; }
                 result = k * Math.sqrt(vp);
                 formula = `CFM = ${tidy(k, 4)} × √${tidy(vp, 4)} = ${tidy(k, 4)} × ${tidy(Math.sqrt(vp), 4)} = ${tidy(result, 0)} CFM`;
                 unit = ' CFM';
             } else {
-                if (!isFinite(cfm)) { muteK('Enter the measured flow to back-solve K.'); return; }
-                if (cfm < 0) { muteK('Flow can’t be negative.'); return; }
-                if (vp === 0) { muteK('VP of zero can’t back-solve K — no velocity pressure, no flow signal to calibrate against.'); return; }
+                if (!isFinite(cfm)) { muteK(CFI18n.page('errors.measuredFlow')); return; }
+                if (cfm < 0) { muteK(CFI18n.page('errors.flowNegative')); return; }
+                if (vp === 0) { muteK(CFI18n.page('errors.zeroVelocityPressure')); return; }
                 result = cfm / Math.sqrt(vp);
                 formula = `K = ${tidy(cfm, 4)} ÷ √${tidy(vp, 4)} = ${tidy(cfm, 4)} ÷ ${tidy(Math.sqrt(vp), 4)} = ${tidy(result, 0)}`;
                 unit = '';
@@ -279,7 +298,7 @@ keywords: cfm k factor velocity pressure vp 4005 fpm duct traverse pitot flow ho
             kOutEl.className = 'ps-value live';
             kOutEl.textContent = tidy(result, 0) + unit;
             kFormulaEl.textContent = formula;
-            kCopyBtn.textContent = 'Copy ' + (solve === 'flow' ? 'CFM' : 'K');
+            kCopyBtn.textContent = CFI18n.page('copy.value', { value: solve === 'flow' ? 'CFM' : 'K' });
         }
 
         // ── Duct velocity ─────────────────────────────────────────────
@@ -312,21 +331,21 @@ keywords: cfm k factor velocity pressure vp 4005 fpm duct traverse pitot flow ho
             document.querySelectorAll('.vp-round-only').forEach(el => el.classList.toggle('hidden', !round));
 
             const vp = parseFloat(dVpEl.value);
-            if (!isFinite(vp)) { muteD('Enter the velocity pressure.'); return; }
-            if (vp < 0) { muteD('Negative velocity pressure usually means the pitot ports are swapped — total and static reversed at the gauge.'); return; }
+            if (!isFinite(vp)) { muteD(CFI18n.page('errors.velocityPressure')); return; }
+            if (vp < 0) { muteD(CFI18n.page('errors.pitotReversed')); return; }
 
             let area, areaFormula;
             if (round) {
                 const dia = parseFloat(dDiaEl.value);
-                if (!isFinite(dia)) { muteD('Enter the duct diameter.'); return; }
-                if (dia <= 0) { muteD('Diameter must be greater than 0.'); return; }
+                if (!isFinite(dia)) { muteD(CFI18n.page('errors.diameter')); return; }
+                if (dia <= 0) { muteD(CFI18n.page('errors.diameterPositive')); return; }
                 area = Math.PI * Math.pow(dia / 24, 2);   // (dia/12)/2 squared × π, in ft²
                 areaFormula = `A = π × (${tidy(dia, 4)} ÷ 24)² = ${tidy(area, 2)} ft²`;
             } else {
                 const w = parseFloat(dWEl.value);
                 const h = parseFloat(dHEl.value);
-                if (!isFinite(w) || !isFinite(h)) { muteD('Enter the duct width and height.'); return; }
-                if (w <= 0 || h <= 0) { muteD('Duct dimensions must be greater than 0.'); return; }
+                if (!isFinite(w) || !isFinite(h)) { muteD(CFI18n.page('errors.dimensions')); return; }
+                if (w <= 0 || h <= 0) { muteD(CFI18n.page('errors.dimensionsPositive')); return; }
                 area = (w / 12) * (h / 12);
                 areaFormula = `A = (${tidy(w, 4)} ÷ 12) × (${tidy(h, 4)} ÷ 12) = ${tidy(area, 2)} ft²`;
             }

@@ -4,9 +4,54 @@ description: A live plant-staging sim — demand rides a day-load curve while a 
 canonical: https://controlsfreak.dev/simulators/staging-sequencer.html
 nav: simulators
 keywords: lead lag rotation runtime stage up down chiller boiler pump
+pageMessages:
+  units:
+    pump:
+      name: Pump
+      singular: pump
+      plural: pumps
+    boiler:
+      name: Boiler
+      singular: boiler
+      plural: boilers
+    chiller:
+      name: Chiller
+      singular: chiller
+      plural: chillers
+    lead: Lead
+    runtime: Runtime
+    hourShort: h
+    hoursLabel: Hrs
+  states:
+    fault: Fault
+    running: Running
+    standby: Standby
+  clock:
+    short: "D{day} {time}"
+    long: "Day {day} · {time}"
+  log:
+    stageUp: "Stage up → {count} units ({tag} on)"
+    stageDown: "Stage down → {count} units ({tag} off)"
+    scheduledRotation: "Rotate lead → {tag} (scheduled)"
+    faultPromoted: "{faulted} FAULT → {promoted} promoted"
+    faultShortfall: "{faulted} FAULT → no standby free — capacity shortfall"
+    faultsCleared: Faults cleared — all units available
+    plantReset: "Plant reset — {count} {units}, {strategy}. Press Play."
+  strategies:
+    fixed: fixed lead
+    equalized: runtime-equalized
+    scheduled: scheduled rotation
+  status:
+    capacityShortfall: Capacity shortfall — demand wants another unit but none is healthy and free.
+    minimumTimeHeld: "Stage change held — minimum stage time ({seconds} s)"
+    adding: "Adding a unit — stage delay {seconds} s"
+    dropping: "Dropping a unit — stage delay {seconds} s"
+    steady: "{count} {units} running — {condition}"
+    nearCapacity: demand near capacity
+    loadSteady: load steady
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -477,7 +522,7 @@ keywords: lead lag rotation runtime stage up down chiller boiler pump
             minSec: 300,     // sim-seconds locked after a change
             speed: 2,        // sim-hours advanced per real second
         };
-        const TYPE_NOUN = { pump: 'Pump', boiler: 'Boiler', chiller: 'Chiller' };
+        const TYPE_TAG = { pump: 'P', boiler: 'B', chiller: 'C' };
         const MAX_DT_SIM_H = 0.5;     // clamp per-frame sim advance (tab refocus)
         const SAMPLE_DT_H  = 0.05;    // chart sample cadence in sim-hours
         const MAX_SAMPLES  = 1000;    // ~50 sim-hours of scrolling window
@@ -579,7 +624,10 @@ keywords: lead lag rotation runtime stage up down chiller boiler pump
             const hod = h % 24;
             const hh = Math.floor(hod);
             const mm = Math.floor((hod - hh) * 60);
-            return 'D' + day + ' ' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+            return CFI18n.page('clock.short', {
+                day: day,
+                time: String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0'),
+            });
         }
         function clockLong(simSec) {
             const h = simSec / 3600;
@@ -587,7 +635,10 @@ keywords: lead lag rotation runtime stage up down chiller boiler pump
             const hod = h % 24;
             const hh = Math.floor(hod);
             const mm = Math.floor((hod - hh) * 60);
-            return 'Day ' + day + ' · ' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+            return CFI18n.page('clock.long', {
+                day: day,
+                time: String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0'),
+            });
         }
         function log(kind, msg) {
             const ul = $('stg-log');
@@ -600,8 +651,11 @@ keywords: lead lag rotation runtime stage up down chiller boiler pump
             ul.insertBefore(li, ul.firstChild);
             while (ul.children.length > MAX_LOG) ul.removeChild(ul.lastChild);
         }
-        const noun = () => TYPE_NOUN[cfg.type];
-        const tag = i => noun().charAt(0) + (i + 1);   // P1, B2, C3 …
+        const noun = () => CFI18n.page('units.' + cfg.type + '.name');
+        const units = count => CFI18n.page(
+            'units.' + cfg.type + '.' + (count === 1 ? 'singular' : 'plural')
+        );
+        const tag = i => TYPE_TAG[cfg.type].charAt(0) + (i + 1);   // P1, B2, C3 …
 
         // ── Staging direction wanted right now ──
         function wantedDirection() {
@@ -616,13 +670,13 @@ keywords: lead lag rotation runtime stage up down chiller boiler pump
             const add = pickAdd();
             if (add === -1) return;
             plant.on.add(add);
-            log('up', 'Stage up → ' + runningCount() + ' units (' + tag(add) + ' on)');
+            log('up', CFI18n.page('log.stageUp', { count: runningCount(), tag: tag(add) }));
         }
         function stageDown() {
             const drop = pickDrop();
             if (drop === -1) return;
             plant.on.delete(drop);
-            log('down', 'Stage down → ' + runningCount() + ' units (' + tag(drop) + ' off)');
+            log('down', CFI18n.page('log.stageDown', { count: runningCount(), tag: tag(drop) }));
         }
 
         // Scheduled rotation — advance the lead pointer, then re-seat the
@@ -643,7 +697,7 @@ keywords: lead lag rotation runtime stage up down chiller boiler pump
             // log only if the set actually moved
             let moved = want.length !== before.size;
             if (!moved) { for (const i of want) if (!before.has(i)) { moved = true; break; } }
-            if (moved) log('rotate', 'Rotate lead → ' + tag(newLead) + ' (scheduled)');
+            if (moved) log('rotate', CFI18n.page('log.scheduledRotation', { tag: tag(newLead) }));
         }
 
         // ── Fault injection ──
@@ -662,9 +716,12 @@ keywords: lead lag rotation runtime stage up down chiller boiler pump
                 if (promoted === -1) promoted = add;
             }
             if (promoted !== -1) {
-                log('fault', tag(lead) + ' FAULT → ' + tag(promoted) + ' promoted');
+                log('fault', CFI18n.page('log.faultPromoted', {
+                    faulted: tag(lead),
+                    promoted: tag(promoted),
+                }));
             } else {
-                log('fault', tag(lead) + ' FAULT → no standby free — capacity shortfall');
+                log('fault', CFI18n.page('log.faultShortfall', { faulted: tag(lead) }));
             }
             // clear any pending change; faulting resets the deadband timing
             plant.pending = null;
@@ -675,7 +732,7 @@ keywords: lead lag rotation runtime stage up down chiller boiler pump
             for (let i = 0; i < cfg.N; i++) {
                 if (!plant.healthy[i]) { plant.healthy[i] = true; any = true; }
             }
-            if (any) log('info', 'Faults cleared — all units available');
+            if (any) log('info', CFI18n.page('log.faultsCleared'));
             render();
         }
 
@@ -753,8 +810,13 @@ keywords: lead lag rotation runtime stage up down chiller boiler pump
                 c.cell.setAttribute('data-lead', i === lead ? 'true' : 'false');
                 c.ledEl.className = 'led ' +
                     (state === 'fault' ? 'led--alarm' : state === 'run' ? 'led--run' : 'led--off');
-                c.stateEl.textContent = state === 'fault' ? 'Fault' : (state === 'run' ? 'Running' : 'Standby');
-                c.hrsEl.innerHTML = Math.round(plant.runtime[i]) + '<small>h</small>';
+                c.stateEl.textContent = state === 'fault'
+                    ? CFI18n.page('states.fault')
+                    : state === 'run'
+                        ? CFI18n.page('states.running')
+                        : CFI18n.page('states.standby');
+                c.hrsEl.innerHTML = Math.round(plant.runtime[i]) +
+                    '<small>' + CFI18n.page('units.hourShort') + '</small>';
                 c.barEl.style.setProperty('--pct', (max > 0 ? (plant.runtime[i] / max) * 100 : 0) + '%');
             }
 
@@ -768,23 +830,32 @@ keywords: lead lag rotation runtime stage up down chiller boiler pump
             const want = wantedDirection();
             const locked = plant.simSec < plant.lockSec;
             let kind, msg;
-            const units = noun().toLowerCase() + (k === 1 ? '' : 's');
+            const unitLabel = units(k);
 
             if (plant.shortfall) {
                 kind = 'shortfall';
-                msg = 'Capacity shortfall — demand wants another unit but none is healthy and free.';
+                msg = CFI18n.page('status.capacityShortfall');
             } else if (want !== 0 && locked) {
                 kind = 'held';
-                msg = 'Stage change held — minimum stage time (' +
-                    Math.max(0, Math.ceil(plant.lockSec - plant.simSec)) + ' s)';
+                msg = CFI18n.page('status.minimumTimeHeld', {
+                    seconds: Math.max(0, Math.ceil(plant.lockSec - plant.simSec)),
+                });
             } else if (plant.pending) {
                 kind = 'pending';
-                msg = (plant.pending.dir > 0 ? 'Adding a unit' : 'Dropping a unit') +
-                    ' — stage delay ' + Math.max(0, Math.ceil(plant.pending.readyAt - plant.simSec)) + ' s';
+                msg = CFI18n.page(plant.pending.dir > 0 ? 'status.adding' : 'status.dropping', {
+                    seconds: Math.max(0, Math.ceil(plant.pending.readyAt - plant.simSec)),
+                });
             } else {
                 kind = 'steady';
-                msg = k + ' ' + units + ' running — ' +
-                    (plant.demand > Math.round(k / cfg.N * 100) ? 'demand near capacity' : 'load steady');
+                msg = CFI18n.page('status.steady', {
+                    count: k,
+                    units: unitLabel,
+                    condition: CFI18n.page(
+                        plant.demand > Math.round(k / cfg.N * 100)
+                            ? 'status.nearCapacity'
+                            : 'status.loadSteady'
+                    ),
+                });
             }
             el.setAttribute('data-kind', kind);
             el.textContent = msg;
@@ -915,10 +986,11 @@ keywords: lead lag rotation runtime stage up down chiller boiler pump
                     '<div class="device-inner">' +
                     '<div class="head"><span class="led led--off" aria-hidden="true"></span>' +
                     '<span class="num">' + noun() + ' ' + (i + 1) + '</span>' +
-                    '<span class="lead-tag">Lead</span></div>' +
-                    '<div class="state">Standby</div>' +
-                    '<div class="lcd"><span class="k">Runtime</span><span class="v">0<small>h</small></span></div>' +
-                    '<div class="gauge eq"><span class="gauge-label">Hrs</span>' +
+                    '<span class="lead-tag">' + CFI18n.page('units.lead') + '</span></div>' +
+                    '<div class="state">' + CFI18n.page('states.standby') + '</div>' +
+                    '<div class="lcd"><span class="k">' + CFI18n.page('units.runtime') +
+                    '</span><span class="v">0<small>' + CFI18n.page('units.hourShort') + '</small></span></div>' +
+                    '<div class="gauge eq"><span class="gauge-label">' + CFI18n.page('units.hoursLabel') + '</span>' +
                     '<div class="track"><div class="fill" style="--pct:0%"></div></div></div>' +
                     '</div>';
                 wrap.appendChild(cell);
@@ -949,14 +1021,16 @@ keywords: lead lag rotation runtime stage up down chiller boiler pump
             buildCells();
             if (!quiet) {
                 const ul = $('stg-log');
-                ul.innerHTML = '<li class="empty"><span class="m">Plant reset — ' + cfg.N + ' ' +
-                    noun().toLowerCase() + 's, ' + strategyLabel() + '. Press Play.</span></li>';
+                ul.innerHTML = '<li class="empty"><span class="m">' + CFI18n.page('log.plantReset', {
+                    count: cfg.N,
+                    units: units(cfg.N),
+                    strategy: strategyLabel(),
+                }) + '</span></li>';
             }
             render();
         }
         function strategyLabel() {
-            return cfg.strategy === 'equalized' ? 'runtime-equalized' :
-                cfg.strategy === 'scheduled' ? 'scheduled rotation' : 'fixed lead';
+            return CFI18n.page('strategies.' + cfg.strategy);
         }
 
         // Seed a static day for reduced-motion users (no animation): step

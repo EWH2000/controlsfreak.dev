@@ -4,10 +4,49 @@ description: Average a pitot traverse the right way — root each velocity press
 canonical: https://controlsfreak.dev/tools/duct-traverse.html
 nav: tools
 category: airflow
+pageMessages:
+    labels:
+        readingsVp: 'Readings — VP (in. w.c.), one per point'
+        readingsVelocity: 'Readings — velocity (FPM), one per point'
+        flow: 'Flow'
+        akFactor: 'Ak factor'
+    count:
+        one: '1 reading'
+        many: '{count} readings'
+    errors:
+        readingInvalid: 'Reading {index} isn’t a number (got “{token}”) — fix or delete it and the average recomputes.'
+        readingsRequired: 'Paste the traverse readings — one number per point, separated by spaces, commas, or line breaks.'
+        negativeVp: 'Reading {index} is negative — a below-zero VP at a traverse point usually means the flow is reversing or tumbling off an upstream fitting. Don’t average it in; relocate the plane (aim for ~7.5 straight duct diameters).'
+        negativeVelocity: 'Reading {index} is negative — a velocity can’t be. If the instrument really showed reversed flow at that point, relocate the plane (~7.5 straight duct diameters) rather than averaging it in.'
+        diameterRequired: 'Enter the duct diameter.'
+        diameterPositive: 'Diameter must be greater than 0.'
+        dimensionsRequired: 'Enter the duct width and height.'
+        dimensionsPositive: 'Duct dimensions must be greater than 0.'
+        faceVelocityRequired: 'Enter the face velocity.'
+        faceVelocityNegative: 'Velocity can’t be negative — turn the anemometer around, or check which way the air is actually moving.'
+        akRequired: 'Enter the Ak factor to find the flow.'
+        akPositive: 'Ak must be greater than 0 — it’s an effective flow area.'
+        hoodFlowRequired: 'Enter the hood flow to back-solve Ak.'
+        hoodFlowNegative: 'Flow can’t be negative.'
+        zeroVelocity: 'Face velocity of zero can’t back-solve Ak — no air moving, nothing to calibrate against.'
+    formula:
+        roundArea: 'A = π × ({diameter} ÷ 24)² = {area} ft²'
+        rectangularArea: 'A = ({width} ÷ 12) × ({height} ÷ 12) = {area} ft²'
+        velocityPressure: 'mean(√VP), {count} pts = {meanRoot} · V̄ = 4005 × {meanRoot} = {velocity} FPM'
+        velocityReadings: 'V̄, mean of {count} readings = {velocity} FPM'
+        traverse: '{velocityPart} · {areaPart} · Q = {velocity} × {area} = {airflow} CFM'
+        akFlow: 'Q = {ak} × {velocity} = {flow} CFM'
+        akBacksolve: 'Ak = {flow} ÷ {velocity} = {ak} ft²'
+    orderCheck:
+        high: 'Order check: averaging the pressures first — mean VP = {meanVp}, one root = {root} — would give {naive} FPM, reading {percent} % high. The wrong order can only read high, and the gap grows with profile spread.'
+        uniform: 'Order check: this profile is uniform enough that the two orders agree to display precision — the wrong-order penalty (always high, growing with profile spread) is smaller than the rounding in these digits.'
+    copy:
+        flow: 'Copy CFM'
+        ak: 'Copy Ak'
 keywords: pitot traverse tab air balancing equal area grid log tchebycheff ak factor diffuser hood velocity pressure points 4005
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -295,7 +334,7 @@ keywords: pitot traverse tab air balancing equal area grid log tchebycheff ak fa
             for (let i = 0; i < tokens.length; i++) {
                 const v = Number(tokens[i]);
                 if (!isFinite(v)) {
-                    return { error: `Reading ${i + 1} isn’t a number (got “${tokens[i]}”) — fix or delete it and the average recomputes.`, count: tokens.length };
+                    return { error: CFI18n.page('errors.readingInvalid', { index: i + 1, token: tokens[i] }), count: tokens.length };
                 }
                 values.push(v);
             }
@@ -316,41 +355,43 @@ keywords: pitot traverse tab air balancing equal area grid log tchebycheff ak fa
         function calcT() {
             const isVp = tTypeEl.value === 'vp';
             tReadingsLabelEl.textContent = isVp
-                ? 'Readings — VP (in. w.c.), one per point'
-                : 'Readings — velocity (FPM), one per point';
+                ? CFI18n.page('labels.readingsVp')
+                : CFI18n.page('labels.readingsVelocity');
 
             const round = tShapeEl.value === 'round';
             document.querySelectorAll('.tr-rect-only').forEach(el => el.classList.toggle('hidden', round));
             document.querySelectorAll('.tr-round-only').forEach(el => el.classList.toggle('hidden', !round));
 
             const parsed = parseReadings(tReadingsEl.value);
-            tCountEl.textContent = parsed.count === 1 ? '1 reading' : `${parsed.count} readings`;
-            if (parsed.count === 0) { muteT('Paste the traverse readings — one number per point, separated by spaces, commas, or line breaks.'); return; }
+            tCountEl.textContent = parsed.count === 1
+                ? CFI18n.page('count.one')
+                : CFI18n.page('count.many', { count: parsed.count });
+            if (parsed.count === 0) { muteT(CFI18n.page('errors.readingsRequired')); return; }
             if (parsed.error) { muteT(parsed.error); return; }
 
             const values = parsed.values;
             const negIdx = values.findIndex(v => v < 0);
             if (negIdx !== -1) {
                 muteT(isVp
-                    ? `Reading ${negIdx + 1} is negative — a below-zero VP at a traverse point usually means the flow is reversing or tumbling off an upstream fitting. Don’t average it in; relocate the plane (aim for ~7.5 straight duct diameters).`
-                    : `Reading ${negIdx + 1} is negative — a velocity can’t be. If the instrument really showed reversed flow at that point, relocate the plane (~7.5 straight duct diameters) rather than averaging it in.`);
+                    ? CFI18n.page('errors.negativeVp', { index: negIdx + 1 })
+                    : CFI18n.page('errors.negativeVelocity', { index: negIdx + 1 }));
                 return;
             }
 
             let area, areaFormula;
             if (round) {
                 const dia = parseFloat(tDiaEl.value);
-                if (!isFinite(dia)) { muteT('Enter the duct diameter.'); return; }
-                if (dia <= 0) { muteT('Diameter must be greater than 0.'); return; }
+                if (!isFinite(dia)) { muteT(CFI18n.page('errors.diameterRequired')); return; }
+                if (dia <= 0) { muteT(CFI18n.page('errors.diameterPositive')); return; }
                 area = Math.PI * Math.pow(dia / 24, 2);   // (dia/12)/2 squared × π, in ft²
-                areaFormula = `A = π × (${tidy(dia, 4)} ÷ 24)² = ${tidy(area, 2)} ft²`;
+                areaFormula = CFI18n.page('formula.roundArea', { diameter: tidy(dia, 4), area: tidy(area, 2) });
             } else {
                 const w = parseFloat(tWEl.value);
                 const h = parseFloat(tHEl.value);
-                if (!isFinite(w) || !isFinite(h)) { muteT('Enter the duct width and height.'); return; }
-                if (w <= 0 || h <= 0) { muteT('Duct dimensions must be greater than 0.'); return; }
+                if (!isFinite(w) || !isFinite(h)) { muteT(CFI18n.page('errors.dimensionsRequired')); return; }
+                if (w <= 0 || h <= 0) { muteT(CFI18n.page('errors.dimensionsPositive')); return; }
                 area = (w / 12) * (h / 12);
-                areaFormula = `A = (${tidy(w, 4)} ÷ 12) × (${tidy(h, 4)} ÷ 12) = ${tidy(area, 2)} ft²`;
+                areaFormula = CFI18n.page('formula.rectangularArea', { width: tidy(w, 4), height: tidy(h, 4), area: tidy(area, 2) });
             }
 
             const n = values.length;
@@ -362,11 +403,13 @@ keywords: pitot traverse tab air balancing equal area grid log tchebycheff ak fa
                 const meanRoot = values.reduce((s, v) => s + Math.sqrt(v), 0) / n;
                 const meanRootShown = parseFloat(tidy(meanRoot, 4));
                 velShown = parseFloat(tidy(4005 * meanRootShown, 0));
-                velFormula = `mean(√VP), ${n} pts = ${tidy(meanRootShown, 4)} · V̄ = 4005 × ${tidy(meanRootShown, 4)} = ${tidy(velShown, 0)} FPM`;
+                velFormula = CFI18n.page('formula.velocityPressure', {
+                    count: n, meanRoot: tidy(meanRootShown, 4), velocity: tidy(velShown, 0)
+                });
             } else {
                 const meanVel = values.reduce((s, v) => s + v, 0) / n;
                 velShown = parseFloat(tidy(meanVel, 0));
-                velFormula = `V̄, mean of ${n} readings = ${tidy(velShown, 0)} FPM`;
+                velFormula = CFI18n.page('formula.velocityReadings', { count: n, velocity: tidy(velShown, 0) });
             }
             const areaShown = parseFloat(tidy(area, 2));
             const cfm = velShown * areaShown;
@@ -380,8 +423,10 @@ keywords: pitot traverse tab air balancing equal area grid log tchebycheff ak fa
             tAreaEl.textContent = tidy(areaShown, 2) + ' ft²';
             tCfmEl.className = 'ps-value live';
             tCfmEl.textContent = tidy(cfm, 0) + ' CFM';
-            tFormulaEl.textContent =
-                `${velFormula} · ${areaFormula} · Q = ${tidy(velShown, 0)} × ${tidy(areaShown, 2)} = ${tidy(cfm, 0)} CFM`;
+            tFormulaEl.textContent = CFI18n.page('formula.traverse', {
+                velocityPart: velFormula, areaPart: areaFormula, velocity: tidy(velShown, 0),
+                area: tidy(areaShown, 2), airflow: tidy(cfm, 0)
+            });
 
             // The order-check line — the page's teaching hook, computed
             // live against this traverse. Only meaningful for VP input
@@ -397,8 +442,11 @@ keywords: pitot traverse tab air balancing equal area grid log tchebycheff ak fa
                 // print a negative or zero "% high" under a sentence that
                 // says that can't happen.
                 tJensenEl.textContent = naive > velShown && tidy(pct, 1) !== '0'
-                    ? `Order check: averaging the pressures first — mean VP = ${tidy(meanVpShown, 4)}, one root = ${tidy(rootShown, 4)} — would give ${tidy(naive, 0)} FPM, reading ${tidy(pct, 1)} % high. The wrong order can only read high, and the gap grows with profile spread.`
-                    : 'Order check: this profile is uniform enough that the two orders agree to display precision — the wrong-order penalty (always high, growing with profile spread) is smaller than the rounding in these digits.';
+                    ? CFI18n.page('orderCheck.high', {
+                        meanVp: tidy(meanVpShown, 4), root: tidy(rootShown, 4),
+                        naive: tidy(naive, 0), percent: tidy(pct, 1)
+                    })
+                    : CFI18n.page('orderCheck.uniform');
                 tJensenEl.hidden = false;
             } else {
                 tJensenEl.hidden = true;
@@ -428,35 +476,35 @@ keywords: pitot traverse tab air balancing equal area grid log tchebycheff ak fa
             const solve = aSolveEl.value;
             document.getElementById('tr-a-row-ak').classList.toggle('hidden', solve === 'ak');
             document.getElementById('tr-a-row-cfm').classList.toggle('hidden', solve === 'flow');
-            aOutLabelEl.textContent = solve === 'flow' ? 'Flow' : 'Ak factor';
+            aOutLabelEl.textContent = CFI18n.page(solve === 'flow' ? 'labels.flow' : 'labels.akFactor');
 
             const ak  = parseFloat(aAkEl.value);
             const vel = parseFloat(aVelEl.value);
             const cfm = parseFloat(aCfmEl.value);
 
-            if (!isFinite(vel)) { muteA('Enter the face velocity.'); return; }
-            if (vel < 0) { muteA('Velocity can’t be negative — turn the anemometer around, or check which way the air is actually moving.'); return; }
+            if (!isFinite(vel)) { muteA(CFI18n.page('errors.faceVelocityRequired')); return; }
+            if (vel < 0) { muteA(CFI18n.page('errors.faceVelocityNegative')); return; }
 
             let result, formula;
             if (solve === 'flow') {
-                if (!isFinite(ak)) { muteA('Enter the Ak factor to find the flow.'); return; }
-                if (ak <= 0) { muteA('Ak must be greater than 0 — it’s an effective flow area.'); return; }
+                if (!isFinite(ak)) { muteA(CFI18n.page('errors.akRequired')); return; }
+                if (ak <= 0) { muteA(CFI18n.page('errors.akPositive')); return; }
                 result = ak * vel;
-                formula = `Q = ${tidy(ak, 4)} × ${tidy(vel, 4)} = ${tidy(result, 0)} CFM`;
+                formula = CFI18n.page('formula.akFlow', { ak: tidy(ak, 4), velocity: tidy(vel, 4), flow: tidy(result, 0) });
                 aOutEl.textContent = tidy(result, 0) + ' CFM';
             } else {
-                if (!isFinite(cfm)) { muteA('Enter the hood flow to back-solve Ak.'); return; }
-                if (cfm < 0) { muteA('Flow can’t be negative.'); return; }
-                if (vel === 0) { muteA('Face velocity of zero can’t back-solve Ak — no air moving, nothing to calibrate against.'); return; }
+                if (!isFinite(cfm)) { muteA(CFI18n.page('errors.hoodFlowRequired')); return; }
+                if (cfm < 0) { muteA(CFI18n.page('errors.hoodFlowNegative')); return; }
+                if (vel === 0) { muteA(CFI18n.page('errors.zeroVelocity')); return; }
                 result = cfm / vel;
-                formula = `Ak = ${tidy(cfm, 4)} ÷ ${tidy(vel, 4)} = ${tidy(result, 2)} ft²`;
+                formula = CFI18n.page('formula.akBacksolve', { flow: tidy(cfm, 4), velocity: tidy(vel, 4), ak: tidy(result, 2) });
                 aOutEl.textContent = tidy(result, 2) + ' ft²';
             }
 
             aCalloutEl.hidden = true;
             aOutEl.className = 'ps-value live';
             aFormulaEl.textContent = formula;
-            aCopyBtn.textContent = 'Copy ' + (solve === 'flow' ? 'CFM' : 'Ak');
+            aCopyBtn.textContent = CFI18n.page(solve === 'flow' ? 'copy.flow' : 'copy.ak');
         }
 
         // ── Wiring ────────────────────────────────────────────────────

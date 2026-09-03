@@ -1,0 +1,152 @@
+---
+title: BACnet — 현장 참고 자료, 도구 및 학습 — controlsfreak.dev
+description: BACnet 현장 참고 자료입니다. 객체 모델, 서비스, 네트워킹, MS/TP 학습 자료와 장치가 보고하는 단위, 오류, 객체를 해석하는 도구를 제공합니다.
+sourceContentHash: d4d4cded3c7d6806f2729190f3bd5c3d9aba370e26352e9b1fe23de3a48ae74e
+canonical: https://controlsfreak.dev/ko/bacnet/
+nav: guides
+navLabel: BACnet
+keywords: bacnet 참고 자료 허브 도구 학습 객체 모델 서비스 bibbs mstp 네트워킹 priority array units error codes vendor id ashrae 135 iso 16484-5 who-is i-am
+---
+{% extends "html/bacnet/index.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <h1 class="section-label">BACnet</h1>
+        <div class="section-line"></div>
+    </div>
+
+    <p class="landing-intro">
+        BACnet(Building Automation and Control Networks)은 빌딩 자동제어 분야에서 널리 사용하는 개방형 프로토콜입니다. ASHRAE 135(국제 표준 ISO 16484-5)로 표준화되었으며, 모든 센서·설정값·명령을 <strong>자기 기술형 객체</strong>로 모델링합니다. 각 포인트가 자신의 이름, 단위, 값을 포함하므로 워크스테이션은 처음 보는 제어기도 탐색하여 각 포인트의 의미를 읽을 수 있습니다. 이 페이지에서는 이러한 객체 모델, 객체에 동작하는 서비스, 그리고 데이터를 전달하는 네트워크를 다룹니다.
+    </p>
+
+    <p class="landing-intro">
+        처음 접한다면 아래 학습 순서를 따라가세요. 객체 모델에서 시작해 실제 배선과 전체 네트워크까지 단계적으로 이어집니다. 점검대 위에 장치가 이미 있다면 도구로 바로 이동해 제어기가 보고한 숫자를 입력하고 의미를 확인할 수 있습니다. 모든 자료는 공개되어 있으며 로그인이나 추적 기능이 없습니다.
+    </p>
+
+    <h2 class="hub-group">여기서 시작 — 순서대로 보는 학습 자료</h2>
+    <p class="hub-path">
+        <span class="hub-step">1</span> <a href="/ko/education/bacnet-basics.html">기초</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">2</span> <a href="/ko/education/bacnet-services.html">서비스</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">3</span> <a href="/ko/education/bacnet-networking.html">네트워킹</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">4</span> <a href="/ko/education/bacnet-mstp.html">MS/TP</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">5</span> <a href="/ko/education/bacnet-vs-modbus.html">Modbus와 비교</a>
+    </p>
+
+    <div class="card-grid">
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/bacnet-basics.html',
+            titleShort: 'BACnet 기초',
+            titleFull:  'BACnet 기초',
+            desc:       'BACnet의 자기 기술형 객체 모델, 속성을 읽고 쓰는 서비스, 우선순위 배열, Who-Is / I-Am 탐색이 실제 네트워크에서 어떻게 동작하는지 알아봅니다.',
+            pills:      ['1단계', '객체 모델', '우선순위 배열', 'Who-Is / I-Am']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/bacnet-services.html',
+            titleShort: 'BACnet 서비스',
+            titleFull:  'BACnet 서비스',
+            desc:       'BACnet의 동작을 정의하는 확인형(confirmed)·비확인형(unconfirmed) 서비스와 서비스 계열을 알아보고, 장치가 실제로 지원하는 서비스를 나타내는 BIBB와 장치 프로파일을 살펴봅니다.',
+            pills:      ['2단계', '서비스', 'BIBB', '장치 프로파일']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/bacnet-networking.html',
+            titleShort: 'BACnet 네트워킹',
+            titleFull:  'BACnet 네트워킹',
+            desc:       '주소 지정의 세 계층, BVLL/NPDU/APDU 프레임, BBMD와 외부 장치 등록(FDR), EBO의 16진수 바이트열 장치 주소를 읽는 방법을 알아봅니다.',
+            pills:      ['3단계', '주소 3계층', 'BVLL / NPDU / APDU', 'BBMD / FDR']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/bacnet-mstp.html',
+            titleShort: 'BACnet MS/TP',
+            titleFull:  'BACnet MS/TP',
+            desc:       'MS/TP 트렁크에서 장치가 이탈하는 원인을 알아봅니다. 토큰 링과 Max_Master, MAC 주소와 장치 인스턴스의 차이, 종단·바이어스·극성, 증상별 계층 진단표를 다룹니다.',
+            pills:      ['4단계', '토큰 링', 'Max_Master', '종단 저항']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/bacnet-vs-modbus.html',
+            titleShort: 'BACnet과 Modbus',
+            titleFull:  'BACnet과 Modbus 비교',
+            desc:       '자기 기술형 객체와 원시 레지스터, 탐색, COV와 폴링, 우선순위 방식과 마지막 쓰기 우선 방식을 나란히 비교하고 게이트웨이가 두 프로토콜을 연결하는 지점을 알아봅니다.',
+            pills:      ['5단계', '객체와 레지스터', '탐색', '게이트웨이']
+        }) }}
+    </div>
+
+    <h2 class="hub-group">도구</h2>
+    <p class="hub-group-intro">
+        장치가 보고한 숫자를 읽을 수 있는 정보로 바꾸는 여섯 가지 현장 도구입니다. 표와 해석 도구로 구성되어 있으며 로그인이나 설치가 필요 없습니다.
+    </p>
+
+    <h3 class="hub-sub">디코더 — 장치가 보고한 숫자는 무엇을 뜻할까요?</h3>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/bacnet-units.html',
+            titleShort: 'BACnet 단위',
+            titleFull:  'BACnet 공학 단위 디코더',
+            desc:       'BACnet Units 열거형 전체(property 117)를 필터링 가능한 표로 제공합니다. 포인트가 단위로 보고한 숫자를 붙여 넣어 이름을 확인하거나, 255개 표준 값을 번호·이름·기호로 필터링할 수 있습니다.',
+            pills:      ['Property 117', '단위 열거형', '디코딩']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/bacnet-error-codes.html',
+            titleShort: 'BACnet 오류',
+            titleFull:  'BACnet 오류 코드 디코더',
+            desc:       '장치가 요청을 거부할 때 반환하는 오류 클래스와 코드, Reject·Abort 사유를 해석합니다. unknown-property, write-access-denied, APDU-too-long Abort 등의 의미를 검색할 수 있습니다.',
+            pills:      ['Error / Reject / Abort', '클래스 + 코드', '디코딩']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/bacnet-vendor-ids.html',
+            titleShort: 'BACnet 벤더 ID',
+            titleFull:  'BACnet 벤더 ID 조회',
+            desc:       'ASHRAE가 배정한 벤더 ID 등록부 전체를 검색 가능한 표로 제공합니다. 장치가 I-Am에서 보고한 Vendor_Identifier를 해석하거나 1,600개가 넘는 제조사를 이름으로 필터링할 수 있습니다.',
+            pills:      ['Vendor_Identifier', 'Property 120', '등록부']
+        }) }}
+    </div>
+
+    <h3 class="hub-sub">주소와 명령</h3>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/bacnet-ip-converter.html',
+            titleShort: 'BACnet/IP 16진수',
+            titleFull:  'BACnet/IP 16진수 변환기',
+            desc:       'EBO가 BACnet/IP 장치에 표시하는 16진수 주소 문자열과 점으로 구분한 십진수 IP·UDP 포트를 양방향으로 변환합니다. 10비트 객체 유형과 22비트 인스턴스를 패킹·언패킹하는 Object ID 탭도 제공합니다.',
+            pills:      ['BACnet/IP', 'UDP 47808', '16진수 ↔ 십진수']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/bacnet-priority.html',
+            titleShort: 'BACnet 우선순위',
+            titleFull:  'BACnet 우선순위 배열',
+            desc:       '16개 명령 슬롯에 값 또는 NULL을 설정하고 Present_Value가 NULL이 아닌 슬롯 중 번호가 가장 낮은 슬롯으로 결정되는 과정을 확인합니다. 우선순위 스택, Relinquish_Default, NULL 쓰기로 오버라이드를 해제하는 이유를 다룹니다.',
+            pills:      ['Priority_Array', 'Present_Value', '오버라이드']
+        }) }}
+    </div>
+
+    <h3 class="hub-sub">참고 자료 — 객체 모델</h3>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/bacnet-objects.html',
+            titleShort: 'BACnet 객체',
+            titleFull:  'BACnet 객체 참고 자료',
+            desc:       '객체 유형, 속성 식별자, 공학 단위 열거형을 이름이나 번호로 필터링합니다. 표준 문서를 열지 않고도 객체 유형 1과 속성 85를 해석할 수 있습니다.',
+            pills:      ['객체 유형', '속성 ID', '공학 단위']
+        }) }}
+    </div>
+
+    <a class="back-link" href="/ko/education/">← 학습으로 돌아가기</a>
+
+</main>
+{% endblock %}

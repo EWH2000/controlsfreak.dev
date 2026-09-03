@@ -10,7 +10,7 @@
              a: The share of a circuit's pressure drop the valve takes when
                 wide open. Below ~0.25 the valve barely controls flow.
        ---
-       {% from "faq.njk" import faqBlock %}
+       {% from "faq.njk" import faqBlock with context %}
        ...
        {{ faqBlock(faqs) }}            (default "Common questions" heading)
        {{ faqBlock(faqs, "Cv FAQ") }}  (a custom heading)
@@ -23,7 +23,7 @@
 {% macro faqBlock(faqs, heading) %}
     {% if faqs and faqs.length %}
     <section class="faq-block" aria-labelledby="faq-heading">
-        <h2 class="ps-section-label" id="faq-heading">{{ heading or "Common questions" }}</h2>
+        <h2 class="ps-section-label" id="faq-heading">{{ heading or ("faq.common" | t(locale)) }}</h2>
         {% for item in faqs %}
         <h3 class="faq-q">{{ item.q }}</h3>
         <div class="faq-a">{{ item.a | safe }}</div>

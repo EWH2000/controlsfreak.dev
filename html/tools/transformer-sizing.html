@@ -5,6 +5,22 @@ canonical: https://controlsfreak.dev/tools/transformer-sizing.html
 nav: tools
 category: electrical
 keywords: 24vac va transformer sizing class 2 fuse secondary control power budget calculator actuator inrush
+pageMessages:
+    devices:
+        controller: "Controller"
+        damperActuator: "Damper actuator"
+        valveActuator: "Valve actuator"
+        relay: "Relay"
+    validation:
+        deviceLoad: "Enter at least one device load."
+        transformerRating: "Enter the transformer rating."
+    fuse:
+        overLimit: "> 10 A — check the rule"
+    formula: "Σ = {sum} = {total} VA · {total} ÷ {size} = {percent} % · fuse: {size} ÷ 24 = {fla} A × 1.25 = {target} → {fuse}"
+    status:
+        overloaded: "Above 100 % — this IS a problem. {total} VA on a {size} VA transformer ({percent} %): it runs hot and sags under inrush. Move loads to another transformer or upsize."
+        warning: "Above the 80 % line — could be a problem. {percent} % loaded works today, but inrush from spring-return actuators and relay pull-in eats the gap, and the next add-on has nowhere to go. Plan the upsize now."
+        ok: "OK — {percent} % loaded, {headroom} VA of headroom under the {size} VA rating."
 faqs:
     - q: How do you size a 24 VAC control transformer?
       a: Add up the sealed (holding) VA of every device on the secondary, then pick a standard transformer — 40, 75, 100 VA and up — whose rating leaves headroom, aiming to load it to no more than about 80%. Class 2 transformers are inherently current-limited.
@@ -14,8 +30,8 @@ faqs:
       a: Inrush is the momentary high draw when an actuator, relay, or contactor first energizes; holding (sealed) VA is the steady draw once it's positioned. Size the continuous load on holding VA, but confirm the transformer and secondary fuse tolerate the combined inrush.
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
-{% from "faq.njk" import faqBlock %}
+{% from "related-links.njk" import relatedLinks with context %}
+{% from "faq.njk" import faqBlock with context %}
 
 {% block content %}
 <main id="main">
@@ -47,23 +63,23 @@ faqs:
             <section>
                 <h2 class="ps-section-label">Devices on the secondary</h2>
                 <div class="ps-row">
-                    <input class="ps-input" type="text" id="xf-name-1" aria-label="Device 1 name" placeholder="Device" value="Controller">
+                    <input class="ps-input" type="text" id="xf-name-1" aria-label="Device 1 name" placeholder="Device" value="{{ pageMessages.devices.controller }}">
                     <input class="ps-input" type="number" id="xf-va-1" aria-label="Device 1 VA" step="any" min="0" placeholder="VA" value="14">
                 </div>
                 <div class="ps-row">
-                    <input class="ps-input" type="text" id="xf-name-2" aria-label="Device 2 name" placeholder="Device" value="Damper actuator">
+                    <input class="ps-input" type="text" id="xf-name-2" aria-label="Device 2 name" placeholder="Device" value="{{ pageMessages.devices.damperActuator }}">
                     <input class="ps-input" type="number" id="xf-va-2" aria-label="Device 2 VA" step="any" min="0" placeholder="VA" value="7">
                 </div>
                 <div class="ps-row">
-                    <input class="ps-input" type="text" id="xf-name-3" aria-label="Device 3 name" placeholder="Device" value="Damper actuator">
+                    <input class="ps-input" type="text" id="xf-name-3" aria-label="Device 3 name" placeholder="Device" value="{{ pageMessages.devices.damperActuator }}">
                     <input class="ps-input" type="number" id="xf-va-3" aria-label="Device 3 VA" step="any" min="0" placeholder="VA" value="7">
                 </div>
                 <div class="ps-row">
-                    <input class="ps-input" type="text" id="xf-name-4" aria-label="Device 4 name" placeholder="Device" value="Valve actuator">
+                    <input class="ps-input" type="text" id="xf-name-4" aria-label="Device 4 name" placeholder="Device" value="{{ pageMessages.devices.valveActuator }}">
                     <input class="ps-input" type="number" id="xf-va-4" aria-label="Device 4 VA" step="any" min="0" placeholder="VA" value="10">
                 </div>
                 <div class="ps-row">
-                    <input class="ps-input" type="text" id="xf-name-5" aria-label="Device 5 name" placeholder="Device" value="Relay">
+                    <input class="ps-input" type="text" id="xf-name-5" aria-label="Device 5 name" placeholder="Device" value="{{ pageMessages.devices.relay }}">
                     <input class="ps-input" type="number" id="xf-va-5" aria-label="Device 5 VA" step="any" min="0" placeholder="VA" value="2">
                 </div>
                 <div class="ps-row">
@@ -246,10 +262,10 @@ faqs:
                 const v = parseFloat(el.value);
                 if (isFinite(v) && v > 0) loads.push(v);
             }
-            if (!loads.length) { muteAll('Enter at least one device load.'); return; }
+            if (!loads.length) { muteAll(CFI18n.page('validation.deviceLoad')); return; }
 
             const size = sizeEl.value === 'custom' ? parseFloat(customEl.value) : parseFloat(sizeEl.value);
-            if (!isFinite(size) || size <= 0) { muteAll('Enter the transformer rating.'); return; }
+            if (!isFinite(size) || size <= 0) { muteAll(CFI18n.page('validation.transformerRating')); return; }
 
             const total = loads.reduce((a, b) => a + b, 0);
             const pct = (total / size) * 100;
@@ -266,18 +282,27 @@ faqs:
             headroomEl.className = 'ps-value live';
             headroomEl.textContent = tidy(headroom, 1) + ' VA';
             fuseEl.className = 'ps-value live';
-            fuseEl.textContent = fuse ? fuse + ' A' : '> 10 A — check the rule';
-            formulaEl.textContent =
-                `Σ = ${loads.map(v => tidy(v, 1)).join(' + ')} = ${tidy(total, 1)} VA · ` +
-                `${tidy(total, 1)} ÷ ${tidy(size, 0)} = ${tidy(pct, 0)} % · ` +
-                `fuse: ${tidy(size, 0)} ÷ 24 = ${tidy(fla, 1)} A × 1.25 = ${tidy(fuseTarget, 1)} → ${fuse ? fuse + ' A' : '—'}`;
+            fuseEl.textContent = fuse ? fuse + ' A' : CFI18n.page('fuse.overLimit');
+            formulaEl.textContent = CFI18n.page('formula', {
+                sum: loads.map(v => tidy(v, 1)).join(' + '),
+                total: tidy(total, 1),
+                size: tidy(size, 0),
+                percent: tidy(pct, 0),
+                fla: tidy(fla, 1),
+                target: tidy(fuseTarget, 1),
+                fuse: fuse ? fuse + ' A' : '—',
+            });
 
             if (pct > 100) {
-                setStatus(`Above 100 % — this IS a problem. ${tidy(total, 1)} VA on a ${tidy(size, 0)} VA transformer (${tidy(pct, 0)} %): it runs hot and sags under inrush. Move loads to another transformer or upsize.`, 'error');
+                setStatus(CFI18n.page('status.overloaded', {
+                    total: tidy(total, 1), size: tidy(size, 0), percent: tidy(pct, 0),
+                }), 'error');
             } else if (pct > 80) {
-                setStatus(`Above the 80 % line — could be a problem. ${tidy(pct, 0)} % loaded works today, but inrush from spring-return actuators and relay pull-in eats the gap, and the next add-on has nowhere to go. Plan the upsize now.`, 'warn');
+                setStatus(CFI18n.page('status.warning', { percent: tidy(pct, 0) }), 'warn');
             } else {
-                setStatus(`OK — ${tidy(pct, 0)} % loaded, ${tidy(headroom, 1)} VA of headroom under the ${tidy(size, 0)} VA rating.`, 'ok');
+                setStatus(CFI18n.page('status.ok', {
+                    percent: tidy(pct, 0), headroom: tidy(headroom, 1), size: tidy(size, 0),
+                }), 'ok');
             }
         }
 

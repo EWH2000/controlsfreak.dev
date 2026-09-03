@@ -94,6 +94,7 @@ nav: contact
                 <div class="cf-turnstile"
                      data-sitekey="0x4AAAAAADMxtgbuzZieosAM"
                      data-theme="light"
+                     data-language="{{ locale }}"
                      data-callback="onTsOk"
                      data-expired-callback="onTsExpired"
                      data-error-callback="onTsError"></div>
@@ -139,6 +140,19 @@ nav: contact
     (function () {
         'use strict';
 
+        const t = (key) => window.CFI18n.t(key);
+        const errorKeys = {
+            BAD_ORIGIN: 'contact.errors.badOrigin',
+            MISSING_LENGTH: 'contact.errors.missingLength',
+            BODY_TOO_LARGE: 'contact.errors.bodyTooLarge',
+            FORM_UNREADABLE: 'contact.errors.formUnreadable',
+            INVALID_EMAIL: 'contact.errors.invalidEmail',
+            INVALID_MESSAGE: 'contact.errors.invalidMessage',
+            NAME_TOO_LONG: 'contact.errors.nameTooLong',
+            VERIFICATION_FAILED: 'contact.errors.verificationFailed',
+            SEND_FAILED: 'contact.errors.sendFailed',
+            METHOD_NOT_ALLOWED: 'contact.errors.methodNotAllowed'
+        };
         const form = document.getElementById("contact-form");
         const submitBtn = form.querySelector("button[type=submit]");
 
@@ -163,7 +177,7 @@ nav: contact
 
             // Show pending state
             result.classList.remove("hidden");
-            setStatus("Sending…", "result-value muted");
+            setStatus(t("contact.sending"), "result-value muted");
             submitBtn.disabled = true;
 
             try {
@@ -174,7 +188,7 @@ nav: contact
                 });
                 const data = await res.json();
                 if (data.ok) {
-                    setStatus("Message sent. Thanks!", "result-value");
+                    setStatus(t("contact.sent"), "result-value");
                     form.reset();
                     // Reset Turnstile so a second submission gets a fresh token
                     if (window.turnstile) window.turnstile.reset();
@@ -192,10 +206,18 @@ nav: contact
                     };
                     form.addEventListener("input", clearStale);
                 } else {
-                    setStatus(data.error || "Something went wrong.", "result-value error");
+                    const message = data.code && errorKeys[data.code]
+                        ? t(errorKeys[data.code])
+                        : window.CFI18n.locale() === 'en' && data.error
+                            ? data.error
+                            : t("contact.genericError");
+                    setStatus(
+                        message,
+                        "result-value error"
+                    );
                 }
             } catch (err) {
-                setStatus("Network error. Please try again.", "result-value error");
+                setStatus(t("contact.networkError"), "result-value error");
             } finally {
                 submitBtn.disabled = false;
             }

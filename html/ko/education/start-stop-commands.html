@@ -1,0 +1,298 @@
+---
+title: 기동/정지 명령 — controlsfreak.dev
+description: BO의 ON 명령에서 모터 기동까지 이어지는 인터포징 릴레이·HOA·안전 회로의 경로와 Hand는 되지만 Auto는 안 되는 이유를 설명합니다.
+sourceContentHash: b8305061ae0c98f5d744bedbc08d52be4fc1a56e69eb1891485fd7d6df4ce03c
+canonical: https://controlsfreak.dev/ko/education/start-stop-commands.html
+nav: education
+category: signals
+pairedQuiz: https://controlsfreak.dev/ko/practice/start-stop-commands.html
+keywords: BO 바이너리 출력 기동 정지 HOA Hand Off Auto 인터포징 릴레이 접촉기 안전 회로 명령 경로 동결방지 온도조절기 화재감지 온도조절기 과부하
+---
+{% extends "html/education/start-stop-commands.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">학습 · 기동/정지 명령</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">기동/정지 명령 <span class="tool-tag">신호</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                BMS가 "기동"하는 모든 팬과 펌프는 실제로 BMS가 한쪽 끝만 건드리는 하드웨어 체인에 의해 기동합니다. 제어기가 하는 일은 바이너리 출력으로 작은 릴레이 접점을 닫는 것뿐입니다. 그 딸깍 소리 이후는 모두 구리 배선이며, 이 페이지에서 다루는 서비스 요청의 대부분이 그 배선에서 발생합니다. 처음부터 끝까지 한 가지 질문을 다룹니다. <em>BO가 장비에 ON을 명령할 때 제어기 릴레이와 모터 기동 사이에는 무엇이 있으며, Hand에서는 되는데 Auto에서는 왜 되지 않을까요?</em> 릴레이와 트라이액의 차이, 전원선에서 BO-C로 전원을 공급하는 법 같은 BO 자체는 <a href="/ko/education/controller-wiring.html#outputs">제어기 배선 학습 자료</a>의 영역이며 여기서는 이미 올바르다고 가정합니다. 이 페이지는 BO의 딸깍 소리와 접촉기의 철컥 소리 사이에 있는 모든 것을 <em>하류 방향으로</em> 따라갑니다.
+            </p>
+
+            <h2 class="subhead" id="command-path">명령 경로</h2>
+
+            <p>
+                전류가 바라보는 순서대로 체인을 왼쪽에서 오른쪽으로 펼쳐 보겠습니다. <strong>BO</strong>는 판단을 내립니다. 프로그램이나 운전자 재정의가 운전을 요구하면 제어기 내부의 <button type="button" data-gloss="dry-contact">무전압 접점</button>이 닫힙니다. BO는 모터를 스위칭하지 않으며 모터 기동기조차 직접 스위칭하지 않습니다. 작은 파일럿 듀티 접점이 <strong>인터포징 릴레이</strong>의 코일을 구동하고, <em>그</em> 릴레이의 더 큰 접점이 기동기 제어 회로에 들어갑니다. 중간 장치가 필요한 이유는 두 가지이며 모두 명판에서 확인할 수 있습니다. <strong>접점 정격</strong> 측면에서 BO는 작은 24 VAC 부하용이지만 접촉기 코일은 실제 <button type="button" data-gloss="inrush">돌입전류</button>가 있는 더 큰 유도성 부하입니다. <strong>전압 등급</strong> 측면에서 기동기 제어 회로에는 120 VAC가 흔히 사용되며 라인 전압 등급 배선을 <button type="button" data-gloss="ddc">DDC</button> 단자대에 연결해서는 안 됩니다. BO는 자신이 감당할 수 있는 작은 릴레이를 스위칭하고, 릴레이는 BO가 직접 처리할 수 없는 회로를 스위칭합니다.
+            </p>
+
+            <p>
+                인터포징 릴레이 접점에서 나온 기동기 제어 회로는 <strong>HOA 스위치</strong>, 즉 Hand-Off-Auto 수동 재정의를 통과합니다. 다음 절 전체에서 이를 다루며 BO 경로는 <em>Auto</em> 단자로 들어갑니다. 그다음은 <strong>안전 회로</strong>입니다. 정상 운전 중에는 닫혀 있다가 트립 시 열리는 접점들을 직렬로 연결한 하드와이어드 금지 조건입니다. 코일을 통과하는 공기가 동결점에 가까워지면 열리는 <strong>동결방지 온도조절기</strong>, <strong>화재감지 온도조절기</strong> 또는 덕트 감지기 정지 접점, 과부하 트립 시 열리는 <strong>모터 과부하 보조 접점</strong>이 있습니다. 어느 하나라도 열리면 누가 명령하든 회로가 끊깁니다. Hand에서도 안전장치를 우회하지 못하도록 안전 회로는 의도적으로 HOA의 하류에 있습니다. 마지막에는 힘을 쓰는 <strong>접촉기 코일</strong>이 있습니다. 전원을 공급하면 접촉기의 전원 측 접점이 붙어 모터에 삼상 전원을 공급합니다. 이 코일을 지나 기동기 내부에 있는 접촉기 선정, 과부하 소자와 트립 등급, 전원 측 전력은 전기 기술자의 영역이며 제어 측 회로는 코일에서 끝납니다.
+            </p>
+
+            <p>
+                이 그림을 기억하면 BMS 관점에서 각 요소의 고장 징후를 한 호흡으로 설명할 수 있습니다. 명령하지 않는 BO, 죽은 인터포징 릴레이 코일, 제어기 측 단선은 <em>Auto에서는 작동하지 않지만 Hand에서는 운전</em>합니다. HOA가 Off에 놓여 있으면 <em>둘 다 작동하지 않으며 계측기가 아니라 눈으로 보고 해결</em>합니다. 열린 안전장치는 <em>Hand와 Auto 모두 작동하지 않습니다.</em> 안전 회로가 모든 명령보다 우선합니다. 죽은 접촉기 코일이나 제어 전원 상실은 <em>어디에서도 작동하지 않으며 먼저 코일 단자에서 계측</em>합니다. 아래 다이어그램에는 전체 체인과 각 연결부 아래의 고장 징후를 나타냈습니다.
+            </p>
+
+            <!-- Command-path diagram: the starter control circuit left to right
+                 (hot → interposing-relay contact → HOA Auto leg → safety string
+                 → contactor coil → neutral), the Hand leg bypassing the relay
+                 up top, and the controller-side 24 VAC BO circuit driving the
+                 relay coil at lower left. Break-point callouts beneath each
+                 element. Static — the topology is the whole point. -->
+            <svg class="edu-svg ssc-svg" id="ssc-path" viewBox="0 0 760 400"
+                 role="img" aria-labelledby="ssc-path-title ssc-path-desc">
+                <title id="ssc-path-title">BO 접점에서 접촉기 코일까지의 기동/정지 명령 경로</title>
+                <desc id="ssc-path-desc">왼쪽에서 오른쪽으로 그린 기동기 제어 회로입니다. 일반적으로 기동기 자체의 제어 변압기에서 공급되는 120 VAC 제어 전원선이 왼쪽으로 들어와 인터포징 릴레이 접점, HOA 스위치의 Auto 단자, 동결·화재·과부하 보조 접점 세 개를 직렬로 연결한 안전 회로, 접촉기 코일을 지나 제어 중성선으로 돌아갑니다. Hand 단자는 인터포징 릴레이 앞의 전원선에서 분기해 HOA의 Hand 단자로 다시 들어가며 제어기가 소유한 모든 요소를 하드와이어로 우회합니다. 왼쪽 아래에서는 DDC 제어기의 바이너리 출력이 별도의 24 VAC 회로를 스위칭해 인터포징 릴레이 코일을 여자합니다. 이것이 전체 체인에서 제어기가 관여하는 유일한 지점입니다. 각 요소 아래 설명은 그 지점의 단선을 BMS에서 어떻게 보는지 나타냅니다. 죽은 BO나 릴레이는 Auto만 죽고 Hand는 운전합니다. Off에 둔 HOA와 열린 안전장치는 Hand와 Auto가 모두 죽습니다. 죽은 코일이나 제어 전원 상실은 어디에서도 작동하지 않습니다.</desc>
+
+                <!-- ── starter control circuit (the main rail, y=150) ── -->
+                <!-- control hot terminal + label -->
+                <circle class="term" cx="36" cy="150" r="5"/>
+                <text class="lbl-term" x="24" y="172">제어 전원선</text>
+                <text class="lbl-dim" x="24" y="188" font-size="10">일반적으로 120 VAC —</text>
+                <text class="lbl-dim" x="24" y="202" font-size="10">기동기 제어 변압기에서 공급</text>
+
+                <!-- hot rail into the IR contact; junction feeds the Hand leg -->
+                <path class="wire w-ctl" d="M 36 150 H 204"/>
+                <circle class="j" cx="84" cy="150" r="3.5"/>
+                <text class="lbl-dim" x="150" y="140" font-size="10" text-anchor="middle">AUTO 단자</text>
+
+                <!-- Hand bypass over the top, into the HOA's H terminal -->
+                <path class="wire w-ctl" d="M 84 150 V 84 H 386 V 110"/>
+                <text class="lbl-dim" x="235" y="74" font-size="10" text-anchor="middle">HAND 단자 — BO와 릴레이 우회</text>
+
+                <!-- ── interposing relay (coil + contact, one device) ── -->
+                <rect class="dev" x="204" y="110" width="96" height="140"/>
+                <circle class="term" cx="204" cy="150" r="5"/>
+                <circle class="term" cx="300" cy="150" r="5"/>
+                <!-- NO contact: fixed point + open blade -->
+                <line class="blade" x1="222" y1="150" x2="276" y2="134"/>
+                <circle class="j" cx="222" cy="150" r="2.5"/>
+                <path class="wire w-ctl" d="M 280 150 H 300" stroke-width="2"/>
+                <text class="lbl" x="252" y="178" text-anchor="middle" font-size="11">인터포징</text>
+                <text class="lbl" x="252" y="192" text-anchor="middle" font-size="11">릴레이</text>
+                <!-- coil, fed by the BO circuit -->
+                <circle class="dev" cx="252" cy="222" r="13"/>
+                <text class="lbl" x="252" y="226" text-anchor="middle" font-size="10">IR</text>
+                <circle class="term" cx="204" cy="222" r="5"/>
+                <circle class="term" cx="300" cy="222" r="5"/>
+                <path class="wire w-bo" d="M 204 222 H 239" stroke-width="2"/>
+                <path class="wire w-com" d="M 265 222 H 300" stroke-width="2"/>
+                <text class="lbl-dim" x="252" y="268" font-size="10" text-anchor="middle">비여자 상태로 표시</text>
+
+                <!-- ── controller (bottom left) driving the IR coil ── -->
+                <rect class="dev" x="24" y="252" width="120" height="86"/>
+                <text class="lbl-dim" x="84" y="244" text-anchor="middle">제어기</text>
+                <circle class="term" cx="144" cy="274" r="5"/>
+                <text class="lbl-term" x="136" y="266" text-anchor="end">BO1</text>
+                <text class="lbl-dim" x="84" y="304" text-anchor="middle" font-size="10">BO 무전압 접점</text>
+                <circle class="term" cx="144" cy="322" r="5"/>
+                <text class="lbl-term" x="136" y="314" text-anchor="end">24COM</text>
+                <path class="wire w-bo" d="M 144 274 H 176 V 222 H 204"/>
+                <path class="wire w-com" d="M 300 222 H 322 V 322 H 144"/>
+                <text class="lbl-dim" x="152" y="296" font-size="10">BO가 스위칭하는 24 VAC</text>
+
+                <!-- ── HOA switch ── -->
+                <rect class="dev" x="336" y="110" width="100" height="88"/>
+                <circle class="term" cx="336" cy="150" r="5"/>
+                <circle class="term" cx="386" cy="110" r="5"/>
+                <circle class="term" cx="436" cy="150" r="5"/>
+                <path class="wire w-ctl" d="M 300 150 H 336"/>
+                <!-- A path closed (selector in AUTO); H path open -->
+                <path class="wire w-ctl" d="M 336 150 H 402 L 436 150" stroke-width="2"/>
+                <line class="blade" x1="386" y1="118" x2="398" y2="132" stroke-dasharray="3 3" stroke-width="1.6"/>
+                <text class="lbl" x="348" y="144" font-size="11">A</text>
+                <text class="lbl" x="372" y="126" font-size="11">H</text>
+                <text class="lbl-dim" x="386" y="184" font-size="10" text-anchor="middle">OFF에서 양쪽 모두 열림</text>
+                <text class="lbl-dim" x="386" y="214" font-size="10" text-anchor="middle">HOA — AUTO 상태로 표시</text>
+
+                <!-- ── safety string: three series vetoes ── -->
+                <text class="lbl-dim" x="548" y="104" font-size="10" text-anchor="middle">안전 회로</text>
+                <line x1="470" y1="112" x2="626" y2="112" stroke="var(--text-dim)" stroke-width="1"/>
+                <path class="wire w-ctl" d="M 436 150 H 470"/>
+                <circle class="term" cx="470" cy="150" r="4.5"/>
+                <line class="blade" x1="470" y1="150" x2="508" y2="140"/>
+                <circle class="term" cx="510" cy="150" r="4.5"/>
+                <text class="lbl-dim" x="490" y="132" font-size="10" text-anchor="middle">FREEZE</text>
+                <path class="wire w-ctl" d="M 510 150 H 528"/>
+                <circle class="term" cx="528" cy="150" r="4.5"/>
+                <line class="blade" x1="528" y1="150" x2="566" y2="140"/>
+                <circle class="term" cx="568" cy="150" r="4.5"/>
+                <text class="lbl-dim" x="548" y="132" font-size="10" text-anchor="middle">FIRE</text>
+                <path class="wire w-ctl" d="M 568 150 H 586"/>
+                <circle class="term" cx="586" cy="150" r="4.5"/>
+                <line class="blade" x1="586" y1="150" x2="624" y2="140"/>
+                <circle class="term" cx="626" cy="150" r="4.5"/>
+                <text class="lbl-dim" x="606" y="132" font-size="10" text-anchor="middle">OL AUX</text>
+
+                <!-- ── contactor coil + neutral ── -->
+                <path class="wire w-ctl" d="M 626 150 H 652"/>
+                <circle class="dev" cx="668" cy="150" r="16"/>
+                <text class="lbl" x="668" y="155" text-anchor="middle">C</text>
+                <text class="lbl-dim" x="668" y="106" font-size="10" text-anchor="middle">접촉기</text>
+                <text class="lbl-dim" x="668" y="119" font-size="10" text-anchor="middle">코일</text>
+                <path class="wire w-com" d="M 684 150 H 724"/>
+                <circle class="term" cx="724" cy="150" r="5"/>
+                <text class="lbl-term" x="738" y="154">N</text>
+                <text class="lbl-dim" x="700" y="180" font-size="10" text-anchor="end">제어 중성선</text>
+                <text class="lbl-dim" x="668" y="208" font-size="10" text-anchor="middle">코일 여자 → 접점 닫힘</text>
+                <text class="lbl-dim" x="668" y="221" font-size="10" text-anchor="middle">→ 모터 운전(전원 측)</text>
+
+                <!-- ── break-point callouts ── -->
+                <text class="lbl" x="380" y="348" text-anchor="middle" font-size="11">BMS에서 바라본 각 지점의 단선</text>
+                <text class="lbl-callout" x="84" y="366" text-anchor="middle">포인트가 명령하지 않음:</text>
+                <text class="lbl-callout" x="84" y="380" text-anchor="middle">Auto 정지, Hand 운전</text>
+                <text class="lbl-callout" x="84" y="394" text-anchor="middle">— 먼저 BO 확인</text>
+                <text class="lbl-callout" x="240" y="366" text-anchor="middle">코일 또는 접점 고장:</text>
+                <text class="lbl-callout" x="240" y="380" text-anchor="middle">Auto 정지, Hand 운전</text>
+                <text class="lbl-callout" x="240" y="394" text-anchor="middle">— 동작음 확인</text>
+                <text class="lbl-callout" x="392" y="366" text-anchor="middle">OFF에 둠:</text>
+                <text class="lbl-callout" x="392" y="380" text-anchor="middle">Hand와 Auto 모두 정지</text>
+                <text class="lbl-callout" x="392" y="394" text-anchor="middle">— 먼저 보고 계측</text>
+                <text class="lbl-callout" x="545" y="366" text-anchor="middle">안전장치가 하나라도 열림:</text>
+                <text class="lbl-callout" x="545" y="380" text-anchor="middle">Hand와 Auto 모두 정지</text>
+                <text class="lbl-callout" x="545" y="394" text-anchor="middle">— 회로를 따라 확인</text>
+                <text class="lbl-callout" x="680" y="366" text-anchor="middle">코일 / 제어 전원:</text>
+                <text class="lbl-callout" x="680" y="380" text-anchor="middle">어디에서도 작동하지 않음</text>
+                <text class="lbl-callout" x="680" y="394" text-anchor="middle">— 코일에서 계측</text>
+            </svg>
+            <p class="edu-legend ssc-leg">
+                <span><span class="sw ctl"></span>기동기 제어 전원선(일반적으로 120 VAC)</span>
+                <span><span class="sw bo"></span>BO가 스위칭하는 24 VAC(제어기 측)</span>
+                <span><span class="sw com"></span>공통선 / 중성선</span>
+            </p>
+
+            <h2 class="subhead" id="hoa">HOA의 의미 — 누가 결정하는가</h2>
+
+            <p>
+                선택 스위치의 세 위치는 권한에 대한 완전한 선언이며 각 위치를 정확히 설명할 필요가 있습니다. <strong>Hand</strong>는 BO와 인터포징 릴레이를 완전히 우회해 코일 회로를 연결합니다. 장치는 운전하며 BMS는 재정의된다기보다 <em>우회</em>됩니다. 어떤 소프트웨어 포인트, 우선순위, 어느 위치에서 내린 명령도 모터 동작을 바꾸지 못합니다. 안전장치는 여전히 유효합니다. Hand는 안전 회로를 우회하지 않고 그 상류에서 체인으로 들어갑니다. <strong>Off</strong>는 두 단자 앞에서 회로를 끊습니다. BO와 Hand 모두보다 우선합니다. 장치 앞에 선 사람이 이를 정지할 수 있어야 하므로 Off가 반드시 우선해야 합니다. 다만 HOA의 Off는 <em>잠금/표찰(LOTO)</em>이 아닙니다. 기동기의 전원 측은 여전히 충전되어 있으며 선택 스위치는 내부에서 작업하는 사람을 보호하지 않습니다. <strong>Auto</strong>는 도면에서 가정하는 위치입니다. 회로가 인터포징 릴레이 접점을 통과하고 결정권은 BO, 즉 프로그램에 있습니다.
+            </p>
+
+            <p>
+                이제 각 위치가 BMS 그래픽에 표시되는 한 쌍의 포인트에 어떤 영향을 주는지 보겠습니다. <em>명령</em> 포인트는 요청을 기록하고 <em>상태</em> 포인트는 사실을 보고합니다. 정상 장치의 Auto에서는 두 값이 일치합니다. 명령 ON이면 상태 ON, 명령 OFF이면 상태 OFF입니다. Hand에서는 설계상 값이 갈립니다. 장치는 운전하지만 BMS는 OFF를 명령하고 있을 수 있습니다. <strong>명령 OFF, 상태 ON</strong>이며 사실을 말하는 쪽은 상태입니다. 이 불일치는 BMS가 ON을 명령했는데 운전 확인 포인트는 아무것도 움직이지 않는다고 보고하는 벨트 파손 서비스 요청과 정확히 반대입니다. 전류 스위치, <button type="button" data-gloss="differential-pressure">차압 스위치</button> 등 상태 포인트가 신뢰를 얻는 방법과 운전을 입증하는 전체 기술은 입력 측에서 설명하는 <a href="/ko/education/status-and-proof.html">상태 및 운전 확인 신호</a>의 주제입니다. 여기서는 그래픽에 불일치가 표시될 <em>수</em> 있고 명령/상태 불일치가 오류가 아니라 메시지라는 점만으로 충분합니다. 아래 패널에는 그래픽에서 바라본 세 위치를 나타냈습니다.
+            </p>
+
+            <!-- HOA truth panel: three positions × what runs × what the
+                 command and status points show. Static table-style SVG. -->
+            <svg class="edu-svg ssc-svg" id="ssc-hoa" viewBox="0 0 700 350"
+                 role="img" aria-labelledby="ssc-hoa-title ssc-hoa-desc">
+                <title id="ssc-hoa-title">HOA 상태 패널: 각 위치가 명령과 상태에 미치는 영향</title>
+                <desc id="ssc-hoa-desc">HOA 위치별로 한 행씩 있는 세 행 패널입니다. Hand에서는 BO를 우회해 배선되므로 장치가 운전하며 BMS는 결정에 관여하지 않고 우회됩니다. 그래픽에는 명령 OFF와 상태 ON의 불일치가 표시되며 벨트 파손 사례와 반대입니다. Off에서는 장치가 무조건 정지하며 Off가 BO와 Hand 모두보다 우선합니다. 그래픽에는 명령 ON과 상태 OFF가 표시되고 어떤 BMS 쓰기도 이를 바꾸지 못합니다. Auto에서는 BO가 결정하고 프로그램에 제어권이 있습니다. 명령과 상태가 일치하며 두 값이 갈리면 원인을 찾아야 합니다. 설명에는 상태는 사실을 보고하고 명령은 요청을 기록하며 Hand와 Off에서는 설계상 두 값이 갈린다고 적혀 있습니다.</desc>
+
+                <!-- header -->
+                <text class="lbl-dim" x="40" y="36">위치</text>
+                <text class="lbl-dim" x="190" y="36">장치 동작</text>
+                <text class="lbl-dim" x="446" y="36">명령과 상태</text>
+                <line x1="30" y1="48" x2="670" y2="48" stroke="var(--text-dim)" stroke-width="1"/>
+
+                <!-- row: HAND -->
+                <circle class="dev" cx="64" cy="88" r="17"/>
+                <line x1="64" y1="88" x2="53" y2="76" stroke="var(--text-bright)" stroke-width="3" stroke-linecap="round"/>
+                <text class="lbl-dim" x="44" y="66" font-size="9">H</text>
+                <text class="lbl-dim" x="64" y="60" font-size="9" text-anchor="middle">O</text>
+                <text class="lbl-dim" x="84" y="66" font-size="9">A</text>
+                <text class="lbl" x="100" y="92" font-size="13" font-weight="600">HAND</text>
+                <text class="lbl" x="190" y="84" font-size="11">운전 — BO를 우회해 배선</text>
+                <text class="lbl-dim" x="190" y="102" font-size="10">BMS가 우회되어 결정에 관여하지 않음</text>
+                <rect class="chip" x="446" y="66" width="88" height="20"/>
+                <text class="lbl-dim" x="490" y="80" font-size="10" text-anchor="middle">CMD: OFF</text>
+                <rect class="chip" x="446" y="92" width="88" height="20"/>
+                <text class="lbl" x="490" y="106" font-size="10" text-anchor="middle">STATUS: ON</text>
+                <text class="verdict-split" x="550" y="80">불일치 — 벨트 파손의</text>
+                <text class="verdict-split" x="550" y="94">반대 상황</text>
+                <line x1="30" y1="134" x2="670" y2="134" stroke="var(--border)" stroke-width="1"/>
+
+                <!-- row: OFF -->
+                <circle class="dev" cx="64" cy="180" r="17"/>
+                <line x1="64" y1="180" x2="64" y2="164" stroke="var(--text-bright)" stroke-width="3" stroke-linecap="round"/>
+                <text class="lbl-dim" x="44" y="158" font-size="9">H</text>
+                <text class="lbl-dim" x="64" y="152" font-size="9" text-anchor="middle">O</text>
+                <text class="lbl-dim" x="84" y="158" font-size="9">A</text>
+                <text class="lbl" x="100" y="184" font-size="13" font-weight="600">OFF</text>
+                <text class="lbl" x="190" y="176" font-size="11">무조건 정지</text>
+                <text class="lbl-dim" x="190" y="194" font-size="10">BO와 Hand 모두보다 우선</text>
+                <rect class="chip" x="446" y="158" width="88" height="20"/>
+                <text class="lbl-dim" x="490" y="172" font-size="10" text-anchor="middle">CMD: ON</text>
+                <rect class="chip" x="446" y="184" width="88" height="20"/>
+                <text class="lbl" x="490" y="198" font-size="10" text-anchor="middle">STATUS: OFF</text>
+                <text class="verdict-split" x="550" y="172">불일치 — 어떤 BMS 쓰기도</text>
+                <text class="verdict-split" x="550" y="186">바꿀 수 없음</text>
+                <line x1="30" y1="226" x2="670" y2="226" stroke="var(--border)" stroke-width="1"/>
+
+                <!-- row: AUTO -->
+                <circle class="dev" cx="64" cy="272" r="17"/>
+                <line x1="64" y1="272" x2="75" y2="260" stroke="var(--text-bright)" stroke-width="3" stroke-linecap="round"/>
+                <text class="lbl-dim" x="44" y="250" font-size="9">H</text>
+                <text class="lbl-dim" x="64" y="244" font-size="9" text-anchor="middle">O</text>
+                <text class="lbl-dim" x="84" y="250" font-size="9">A</text>
+                <text class="lbl" x="100" y="276" font-size="13" font-weight="600">AUTO</text>
+                <text class="lbl" x="190" y="268" font-size="11">BO가 결정</text>
+                <text class="lbl-dim" x="190" y="286" font-size="10">프로그램에 제어권이 있음</text>
+                <rect class="chip" x="446" y="250" width="88" height="20"/>
+                <text class="lbl-dim" x="490" y="264" font-size="10" text-anchor="middle">CMD: ON</text>
+                <rect class="chip" x="446" y="276" width="88" height="20"/>
+                <text class="lbl" x="490" y="290" font-size="10" text-anchor="middle">STATUS: ON</text>
+                <text class="verdict-agree" x="550" y="264">일치 — 값이 갈리면</text>
+                <text class="verdict-agree" x="550" y="278">원인 추적 시작</text>
+
+                <text class="lbl-dim" x="350" y="336" font-size="11" text-anchor="middle">상태는 사실을 보고하고 명령은 요청을 기록합니다. Hand와 Off에서는 설계상 두 값이 갈립니다.</text>
+            </svg>
+
+            <p>
+                문제 해결 절에서 활용하기 전에 Hand가 <em>하는 역할</em>을 한 가지 더 살펴보겠습니다. Hand는 어떤 소프트웨어 포인트도 답할 수 없는 질문에 답합니다. 스위치를 전환하면 장치가 운전하거나 운전하지 않습니다. 프로그램, 네트워크, 제어기, BO가 모두 시험에서 제외됩니다. 이는 재정의라기보다 진단 도구이며 아래의 대표적인 서비스 요청에서 가장 먼저 취하는 조치입니다.
+            </p>
+
+            <h2 class="subhead" id="finding-the-break">단선 지점 찾기</h2>
+
+            <p>
+                "팬이 운전하지 않는다"는 요청이 들어왔을 때 첫 조치는 계측기가 아니라 HOA입니다. 스위치를 한 번 전환하면 전체 체인을 두 부분으로 나누어 어느 쪽에서 찾아야 할지 알려 주기 때문입니다. <strong>Hand에서는 운전하지만 Auto에서는 작동하지 않음:</strong> Hand는 HOA 하류의 모든 요소, 즉 안전 회로, 접촉기 코일, 제어 전원, 기동기, 모터 자체가 정상임을 한 번에 입증했습니다. 고장은 상류의 Auto 단자에 있습니다. BO에서 실제로 포인트가 명령 중인지 배선을 만지기 전에 확인하고, 인터포징 릴레이 코일에 24 V가 인가되는지, 동작음이 나는지, 접점이 실제로 닫히는지 확인한 다음 그 사이의 배선을 살펴봅니다. <strong>Hand와 Auto 모두 작동하지 않음:</strong> 이제 상류 부분은 반대로 제외됩니다. 제어기가 무엇을 하거나 하지 않는지는 Hand에서도 운전하지 않는 장치를 설명하지 못합니다. 하류를 찾으세요. 열린 접점을 찾을 때까지 안전 회로의 각 접점을 따라 확인하고, 그다음 접촉기 코일, 마지막으로 제어 전원 자체를 확인합니다. 동결방지 온도조절기는 흔히 수동 재설정 방식이므로 밤사이 <span data-us="38&nbsp;°F" data-metric="3.3&nbsp;°C">38&nbsp;°F</span>에서 트립되면 누군가 버튼을 누를 때까지 트립 상태로 남습니다.
+            </p>
+
+            <!-- // anecdote slot: a works-in-Hand-dead-in-Auto service call (or the
+                 morning-after manual-reset freeze stat) — owner to supply -->
+
+            <p>
+                안전 회로에는 한 가지 타당한 질문이 숨어 있어 조금 더 살펴볼 필요가 있습니다. 제어기는 이미 토출 온도를 알고 있는데 프로그램이 동결 조건을 감지해 소프트웨어로 팬을 정지하면 되지 않을까요? 일부 시퀀스에서는 첫 방어선으로 정확히 그렇게 합니다. 그러나 하드와이어드 안전 회로는 제어기 전원 차단, 프로그램 다운로드 중, 네트워크 단절, 다른 층에서 문제를 해결하던 사람이 포인트를 재정의한 순간처럼 소프트웨어를 신뢰할 수 없는 모든 때를 위해 존재합니다. 놓치면 사람을 위험하게 하거나 장비를 파괴하는 트립, 즉 화재감지 온도조절기나 물이 든 코일을 보호하는 동결방지 온도조절기는 이 <em>모든 것</em>보다 우선해야 합니다. 코일과 직렬로 연결한 구리 배선만이 그런 권한을 갖습니다. 경계는 다음과 같습니다. <strong>인명 안전 및 장비 파괴를 막는 트립은 구리 배선에 두고, 소프트웨어 <button type="button" data-gloss="interlock">인터록</button>은 원활한 운전 협조를 담당합니다.</strong> 단계 제어, 최적화, 플랜트를 안전하게 만들기보다 매끄럽게 만드는 <button type="button" data-gloss="interlock">인터록</button>이 이에 해당합니다. BMS는 이상적으로 상태 또는 경보 포인트를 통해 하드와이어드 트립을 <em>통보받지만</em> 결정권은 없습니다.
+            </p>
+
+            <p>
+                <em>이상적으로</em>라는 말이 중요한 이유는 안전 회로의 접점이 반드시 포인트일 필요가 없기 때문입니다. 전체 회로 양단에 입력 하나를 연결하면 <button type="button" data-gloss="front-end">프런트엔드</button>가 알 수 있는 것은 안전장치 하나가 열렸다는 단 하나의 비트뿐입니다. 각 트립에 도체와 입력을 하나씩 사용해야 마침내 <em>어느</em> 장치인지 알 수 있습니다. 어느 것도 설치하지 않은 흔한 경우에는 그래픽에 ON 명령과 OFF 상태만 표시됩니다. 벨트 파손이나 죽은 접촉기 코일과 구별되지 않는 같은 불일치입니다. 더욱이 안전 회로 밖에 별도로 배선된 트립, 즉 자체 정지 릴레이에 연결된 덕트 감지기나 제어 변압기에 전원을 공급하는 차단기가 꺼진 경우는 화면에 전혀 나타나지 않을 수도 있습니다. 그래픽에는 운전하지 않아야 할 이유가 없는데 장치로 가 보면 동결방지 온도조절기가 래치되어 있거나, 차단기가 트립 또는 정지되어 있거나, BMS에 전혀 연결하지 않은 덕트 감지기가 있는 장치가 많습니다. 그래픽이 거짓말한 것이 아니라 그 반대 상황을 알려 줄 계측을 구매하지 않은 것입니다. 그래서 장치까지 걸어가는 일은 최후의 수단이 아니라 진단의 일부로 남습니다. 운전하지 않는 장치에서 조용한 화면은 무엇이 고장 났는지가 아니라 무엇이 배선되어 있는지를 말합니다.
+            </p>
+
+            <p>
+                장비가 더 커져 드라이브가 추가되어도 형태는 유지됩니다. <a href="/ko/education/vfds.html#run-vs-speed">VFD</a>에서는 접촉기가 사라지고 드라이브 자체가 모터를 스위칭하지만, 운전 명령은 드라이브 단자에 연결된 같은 이야기입니다. BO, 정격상 필요한 경우의 인터포징 릴레이, 드라이브가 운전 전에 확인하는 활성화 또는 안전 회로가 있습니다. 드라이브는 접촉기를 대체하지만 명령 경로의 형태는 유지합니다.
+            </p>
+
+            <p>
+                이제 이 페이지의 첫 질문에 답할 수 있습니다. BO의 딸깍 소리와 모터 사이에는 판단을 증폭하는 인터포징 릴레이, 누가 결정할지 정하는 선택 스위치, 하드와이어드 금지 조건의 연쇄, 실제 작업을 수행하는 코일이 있습니다. Hand에서 되지만 Auto에서 안 되는 이유는 Hand가 제어기가 소유한 모든 요소의 하류에서 체인으로 들어가기 때문입니다. 바로 이 때문에 숙련된 기술자가 먼저 HOA에 손을 뻗습니다. 한 번 전환하면 의심 대상의 절반을 제외할 수 있습니다.
+            </p>
+
+            {{ relatedLinks({
+                simulators: [
+                    {href: '/ko/simulators/controller-wiring.html', label: '컨트롤러 배선 시뮬레이터'}
+                ],
+                lessons: [
+                    {href: '/ko/education/controller-wiring.html', label: '제어기 배선'},
+                    {href: '/ko/education/status-and-proof.html', label: '상태 및 운전 확인 신호'},
+                    {href: '/ko/education/vfds.html', label: 'VFD'}
+                ],
+                quizzes: [
+                    {href: '/ko/practice/start-stop-commands.html', label: '기동/정지 명령 퀴즈'}
+                ]
+            }) }}
+
+            <a class="back-link" href="/ko/education/">← 학습 자료로 돌아가기</a>
+
+        </div>
+    </div>
+
+</main>
+{% endblock %}

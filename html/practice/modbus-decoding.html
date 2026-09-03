@@ -7,7 +7,7 @@ category: modbus
 pairedLesson: https://controlsfreak.dev/education/modbus-decoding.html
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -59,12 +59,12 @@ pairedLesson: https://controlsfreak.dev/education/modbus-decoding.html
 
         // Question bank lives in html/_data/quizzes/modbus-decoding.js so the
         // FAQPage JSON-LD emitted from head.njk can read the same source.
-        const questions = {{ quizzes['modbus-decoding'] | safeScriptJson | safe }};
+        const questions = {{ quizzes['modbus-decoding'] | localizedQuiz(locale, 'modbus-decoding') | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
-            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            next: {{ page.fileSlug | nextQuiz(locale, collections.navPractice) | safeScriptJson | safe }},
             slug: 'modbus-decoding',
-            title: 'Modbus Decoding',
+            title: {{ title | cleanTitle | safeScriptJson | safe }},
             defaultCount: 10,
             defaultOrder: 'sequential'
         });

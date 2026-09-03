@@ -4,10 +4,26 @@ description: ASHRAE 62.1 breathing-zone ventilation math — Rp, Ra, zone effect
 canonical: https://controlsfreak.dev/tools/minimum-outdoor-air.html
 nav: tools
 category: airflow
+pageMessages:
+    status:
+        initial: 'Enter values to run the math.'
+        validInputs: 'Enter valid inputs to run the math.'
+        supplyPrompt: 'Add the zone supply airflow (Vpz) to read the minimum as a % OA damper floor.'
+        supplyInvalid: 'The % OA check needs a positive supply airflow — enter the zone’s design or measured CFM.'
+        exceedsSupply: 'The zone needs {percent} % of its supply as outdoor air — more than 100 % OA can deliver. Ventilation is short even with the damper wide open; the fix is more supply air, not damper position.'
+        fitsSupply: 'Voz fits the supply — {percent} % OA is this zone’s ventilation floor.'
+    errors:
+        zoneInputs: 'The breathing-zone math needs all four numbers — Rp and Ra from the preset or the stamped schedule, Pz and Az from the zone.'
+        nonNegative: 'Rates, people, and area can’t be negative — the ventilation floor only ever adds.'
+        customEz: 'Custom Ez needs a number — 1.0 is the ceiling-supply cooling default.'
+        effectivenessPositive: 'An effectiveness of zero or less would mean no supply air ever reaches the breathing zone — real systems live between roughly 0.5 and 1.2.'
+    formula:
+        ventilation: 'Vbz = {person} + {area} = {vbz} cfm · Voz = {vbz} ÷ {effectiveness} = {voz} cfm'
+        percentOutdoorAir: ' · % OA = {voz} ÷ {supply} × 100 = {percent} %'
 keywords: ashrae 62.1 minimum outdoor air ventilation rate procedure breathing zone vbz voz rp ra cfm per person zone air distribution effectiveness ez dcv demand controlled ventilation minimum damper position imc 403
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -105,7 +121,7 @@ keywords: ashrae 62.1 minimum outdoor air ventilation rate procedure breathing z
 
             <section role="status" aria-atomic="false">
                 <h2 class="ps-section-label">Output</h2>
-                <div class="status-pill" id="vo-pill">Enter values to run the math.</div>
+                <div class="status-pill" id="vo-pill">{{ pageMessages.status.initial }}</div>
                 <div class="ps-row">
                     <span class="ps-label">Per-person share — Rp × Pz</span>
                     <span class="ps-value muted" id="vo-person">—</span>
@@ -382,7 +398,7 @@ keywords: ashrae 62.1 minimum outdoor air ventilation rate procedure breathing z
             el.formula.textContent = '';
             el.callout.textContent = msg;
             el.callout.hidden = false;
-            setPill('Enter valid inputs to run the math.', '');
+            setPill(CFI18n.page('status.validInputs'), '');
         }
 
         function calc() {
@@ -395,13 +411,11 @@ keywords: ashrae 62.1 minimum outdoor air ventilation rate procedure breathing z
             const az = snap(parseFloat(el.az.value), 0);
 
             if (!isFinite(rp) || !isFinite(pz) || !isFinite(ra) || !isFinite(az)) {
-                mute('The breathing-zone math needs all four numbers — Rp and Ra ' +
-                     'from the preset or the stamped schedule, Pz and Az from the zone.');
+                mute(CFI18n.page('errors.zoneInputs'));
                 return;
             }
             if (rp < 0 || pz < 0 || ra < 0 || az < 0) {
-                mute('Rates, people, and area can’t be negative — the ventilation ' +
-                     'floor only ever adds.');
+                mute(CFI18n.page('errors.nonNegative'));
                 return;
             }
 
@@ -409,17 +423,14 @@ keywords: ashrae 62.1 minimum outdoor air ventilation rate procedure breathing z
             if (el.ez.value === 'custom') {
                 ez = snap(parseFloat(el.ez_custom.value), 2);
                 if (!isFinite(ez)) {
-                    mute('Custom Ez needs a number — 1.0 is the ceiling-supply ' +
-                         'cooling default.');
+                    mute(CFI18n.page('errors.customEz'));
                     return;
                 }
             } else {
                 ez = parseFloat(el.ez.value);
             }
             if (ez <= 0) {
-                mute('An effectiveness of zero or less would mean no supply air ever ' +
-                     'reaches the breathing zone — real systems live between roughly ' +
-                     '0.5 and 1.2.');
+                mute(CFI18n.page('errors.effectivenessPositive'));
                 return;
             }
 
@@ -438,32 +449,33 @@ keywords: ashrae 62.1 minimum outdoor air ventilation rate procedure breathing z
             // rate × count products — a 2-dp rate can produce a .05-tie
             // product that rounds away from its printed factors, and the
             // sum of two printed 1-dp shares always closes by hand.
-            let formula = 'Vbz = ' + tidy(person, 1) + ' + ' + tidy(area, 1) + ' = ' +
-                          tidy(vbz, 1) + ' cfm' +
-                          ' · Voz = ' + tidy(vbz, 1) + ' ÷ ' + tidy(ez, 2) + ' = ' +
-                          tidy(voz, 1) + ' cfm';
+            let formula = CFI18n.page('formula.ventilation', {
+                person: tidy(person, 1), area: tidy(area, 1), vbz: tidy(vbz, 1),
+                effectiveness: tidy(ez, 2), voz: tidy(voz, 1)
+            });
 
             // ── Optional % OA against the zone supply ──
             const vpzRaw = el.vpz.value.trim();
             if (vpzRaw === '') {
                 el.row_pct.classList.add('hidden');
                 setValue(el.pct);
-                setPill('Add the zone supply airflow (Vpz) to read the minimum as a % OA damper floor.', '');
+                setPill(CFI18n.page('status.supplyPrompt'), '');
             } else {
                 el.row_pct.classList.remove('hidden');
                 const vpz = snap(parseFloat(vpzRaw), 0);
                 if (!isFinite(vpz) || vpz <= 0) {
                     setValue(el.pct);
-                    setPill('The % OA check needs a positive supply airflow — enter the zone’s design or measured CFM.', '');
+                    setPill(CFI18n.page('status.supplyInvalid'), '');
                 } else {
                     const pct = snap(voz / vpz * 100, 1);
                     setValue(el.pct, disp(pct, 1) + ' %', true);
-                    formula += ' · % OA = ' + tidy(voz, 1) + ' ÷ ' + tidy(vpz, 0) +
-                               ' × 100 = ' + tidy(pct, 1) + ' %';
+                    formula += CFI18n.page('formula.percentOutdoorAir', {
+                        voz: tidy(voz, 1), supply: tidy(vpz, 0), percent: tidy(pct, 1)
+                    });
                     if (pct > 100) {
-                        setPill('The zone needs ' + disp(pct, 1) + ' % of its supply as outdoor air — more than 100 % OA can deliver. Ventilation is short even with the damper wide open; the fix is more supply air, not damper position.', 'error');
+                        setPill(CFI18n.page('status.exceedsSupply', { percent: disp(pct, 1) }), 'error');
                     } else {
-                        setPill('Voz fits the supply — ' + disp(pct, 1) + ' % OA is this zone’s ventilation floor.', 'ok');
+                        setPill(CFI18n.page('status.fitsSupply', { percent: disp(pct, 1) }), 'ok');
                     }
                 }
             }

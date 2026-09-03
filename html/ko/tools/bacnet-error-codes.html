@@ -1,0 +1,362 @@
+---
+title: BACnet 오류 코드 디코더 — controlsfreak.dev
+description: 장치가 반환한 BACnet Error, Reject 또는 Abort를 디코딩합니다. 오류 클래스와 코드, 거부 및 중단 사유를 번호 또는 이름으로 검색할 수 있습니다.
+sourceContentHash: c93c7fccd78fb6b463b5b775f93d0f2d5b02b048e22f1966e71407d5aa49d2e3
+sourceMessageHash: a534c146d688c6c9fd06d4babeb97a1f0ab47964d93b9176ddb55c366cf73aff
+pageMessages:
+    hints:
+        error: "<strong>Error</strong>는 클래스 + 코드 쌍이며, 서비스가 실행된 뒤 장치가 요청을 거부했다는 뜻입니다."
+        reject: "<strong>Reject</strong>는 요청 PDU의 형식이 잘못되었거나 지원되지 않아 서비스 실행 전에 폐기되었다는 뜻입니다."
+        abort: "<strong>Abort</strong>는 진행 중인 트랜잭션을 종료하며, 대개 세그멘테이션·타임아웃·리소스 문제가 원인입니다."
+    labels:
+        errorCode: "오류 코드"
+        rejectReason: "거부 사유"
+        abortReason: "중단 사유"
+    validation:
+        errorPair: "오류 클래스와 코드는 0–65535 범위의 정수여야 합니다(이 열거형이 사용하는 Unsigned 범위)."
+        rejectReason: "거부 사유는 0–{max} 범위의 정수여야 합니다."
+        abortReason: "중단 사유는 0–{max} 범위의 정수여야 합니다."
+    prompts:
+        errorPair: "오류 클래스와 코드를 입력하세요."
+        rejectReason: "거부 사유를 입력하세요."
+        abortReason: "중단 사유를 입력하세요."
+    markers:
+        proprietary: "— (벤더 전용)"
+        unnamed: "— (이름 없음)"
+    states:
+        proprietary: "벤더 전용"
+        unnamed: "이름 없음"
+        vendorProprietary: "벤더 전용"
+    status:
+        decoded: "디코딩됨"
+        partlyDecoded: "일부만 디코딩됨 — 참고 사항을 확인하세요"
+        proprietaryRange: "벤더 전용 범위"
+        unnamedSnapshot: "이 스냅샷에 이름 없음"
+    descriptions:
+        codeProprietary: "코드 {code}은(는) 벤더 전용 범위입니다. 제조사 문서를 확인하세요."
+        codeUnnamed: "코드 {code}은(는) 표준 범위에 있지만 이 스냅샷에는 이름이 없습니다. 최신 표준판에 추가된 코드일 수 있습니다."
+        singleProprietary: "{value}은(는) 벤더 전용 범위입니다. 제조사 문서를 확인하세요."
+        singleUnnamed: "{value}은(는) 표준 범위에 있지만 이 스냅샷에는 이름이 없습니다."
+    formula:
+        errorPair: "클래스 {classValue} / 코드 {codeValue}  →  {className} / {codeName}"
+        decodedSingle: "{value}  →  {name}"
+        proprietarySingle: "{value}  →  벤더 전용"
+        unnamedSingle: "{value}  →  이름 없음"
+    copy:
+        errorPair: "클래스 {classValue}({className}) / 코드 {codeValue}({codeName})"
+        decodedSingle: "{value}({name})"
+        proprietarySingle: "{value}(벤더 전용)"
+        unnamedSingle: "{value}(이름 없음)"
+        cellTitle: "{value} 복사"
+    filter:
+        total: "· 전체 {count}개"
+canonical: https://controlsfreak.dev/ko/tools/bacnet-error-codes.html
+nav: tools
+category: protocols
+keywords: BACnet 오류 클래스 코드 Reject Abort PDU 디코딩 unknown-object unknown-property write-access-denied 시간초과 세그먼테이션 TSM APDU ASHRAE 135 Wireshark
+faqs:
+    - q: BACnet Error, Reject, Abort의 차이는 무엇인가요?
+      a: 세 가지 모두 요청 실패를 뜻하지만 실패한 단계가 다릅니다. <strong>Error</strong>는 서비스가 실행된 뒤 장치가 요청을 거부했다는 뜻이며 오류 클래스와 오류 코드(unknown-property, write-access-denied)를 반환합니다. <strong>Reject</strong>는 요청이 잘못 구성·인코딩되었거나 장치가 구현하지 않은 서비스를 요구해 프로토콜 계층에서 처리할 수 없었다는 뜻입니다. 서비스가 실행되기 전에 폐기되고 거부 사유를 반환합니다. <strong>Abort</strong>는 이미 진행 중인 트랜잭션을 종료하며 대개 세그멘테이션, 타임아웃 또는 리소스 문제가 원인입니다. 중단 사유를 반환합니다.
+    - q: BACnet 오류 클래스 2, 코드 32는 무엇을 의미하나요?
+      a: 오류 클래스 2는 property이고 코드 32는 unknown-property입니다. 객체에 없는 속성을 요청했다는 뜻입니다. 속성 식별자를 확인하세요. 해당 장치나 객체가 구현하지 않은 선택 속성을 읽으려 할 때 흔히 발생합니다.
+    - q: 사유가 APDU-too-long인 BACnet Abort란 무엇인가요?
+      a: 응답이 APDU 하나에 들어가지 않는데 장치가 세그멘테이션을 지원하지 않거나 세그멘테이션 협상이 되지 않은 경우입니다. 큰 ReadPropertyMultiple 또는 Object_List 읽기에서 나타납니다. 요청을 더 작은 읽기로 나누거나 양쪽에서 세그멘테이션을 사용하도록 설정하세요.
+    - q: BACnet 포인트에 쓸 때 write-access-denied가 발생하는 이유는 무엇인가요?
+      a: 오류 코드 40인 write-access-denied는 속성이 읽기 전용이거나 현재 사용자에게 쓰기가 금지되었음을 뜻합니다. 예를 들어 입력 객체의 Present_Value 또는 장치가 쓰기를 허용하지 않는 속성에서 발생합니다. 명령 가능한 객체는 프로그램이나 우선순위 배열이 값을 소유하므로 Present_Value 직접 쓰기를 거부할 수 있습니다. 대신 우선순위를 지정해 쓰거나 실제로 값을 구동하는 객체에 쓰세요.
+    - q: 원시 BACnet 오류 클래스와 코드는 어디에서 확인하나요?
+      a: 워크스테이션은 보통 디코딩된 텍스트를 보여 주지만, 디스커버리 로그, 통합 오류 대화상자 또는 Wireshark의 BACnet-Error/Reject/Abort APDU 디코드 결과에는 원시 번호가 표시됩니다. 그 번호를 이 페이지에 붙여 넣으세요.
+---
+{% extends "html/tools/bacnet-error-codes.html" %}
+
+{% block content %}
+{% set errorNotesKo = {
+    classes: {
+        'device': '장치 수준의 거부입니다. 장치가 사용 중이거나 구성 작업 중이거나 운전 문제로 요청을 처리할 수 없습니다. 대개 일시적이므로 다시 시도하세요.',
+        'object': '대상 객체에 문제가 있습니다. unknown-object(잘못된 인스턴스 번호), 잘못된 유형 또는 장치에서 금지한 생성·삭제가 원인입니다. 객체 ID를 확인하세요.',
+        'property': '지정한 속성에 문제가 있습니다. unknown-property, write-access-denied(읽기 전용), value-out-of-range 또는 잘못된 데이터형·배열 인덱스가 원인입니다.',
+        'resources': '장치의 메모리나 저장 공간이 부족합니다. 객체 생성, 목록 요소 추가 또는 값 저장 공간이 없으며 포인트·객체 표가 가득 찬 경우가 많습니다.',
+        'security': '보안 검사에 실패했습니다. 잘못된 암호, 인증 실패, 호환되지 않는 보안 수준, 키 또는 암호화 오류로 요청이 차단되었습니다.',
+        'services': '서비스 요청의 형식이 잘못되었습니다. 필수 매개변수 누락·불일치, 잘못된 태그 인코딩 또는 범위를 벗어난 매개변수가 원인이며 대개 클라이언트나 스택의 버그입니다.',
+        'vt': '가상 터미널 세션 오류입니다. 알 수 없는 VT 클래스·세션, 사용 가능한 세션 없음 또는 이미 종료된 세션을 뜻합니다. 현장에서는 거의 볼 수 없는 레거시 텍스트 터미널 기능입니다.',
+        'communication': '메시지 전송 문제입니다. DCC에 의해 통신이 비활성화되었거나 메시지가 중복·불완전하거나 네트워크·경로를 알 수 없습니다. DCC 상태와 라우팅을 확인하세요.'
+    },
+    codes: {
+        'other': '구체적인 코드가 맞지 않을 때 장치가 반환하는 포괄 코드입니다. 실제 원인은 벤더가 정의하므로 장치 자체 로그나 설명서를 확인하세요.',
+        'configuration-in-progress': '장치가 다운로드 또는 커미셔닝(기능 성능 검증) 중이어서 요청을 처리할 수 없습니다. 구성이나 프로그램 로드가 끝난 뒤 다시 시도하세요.',
+        'device-busy': '장치가 일시적으로 과부하 상태입니다. 백업, 복원 또는 프로그램 로드 중일 때 흔합니다. 몇 초 기다렸다가 다시 시도하세요.',
+        'file-access-denied': 'File 객체의 읽기 또는 쓰기가 거부되었습니다. 대개 권한 문제이거나 백업·복원 작업이 파일을 열어 잠근 상태입니다.',
+        'inconsistent-parameters': '배열 크기가 맞지 않거나 옵션 조합이 잘못된 것처럼 서비스 인수가 서로 충돌합니다. 도구에서 만든 요청을 수정하세요.',
+        'invalid-data-type': '쓴 값의 데이터형이 속성과 맞지 않습니다. 예를 들어 enum 또는 integer가 필요한 곳에 real을 썼습니다. 쓰기 값의 데이터형을 바로잡으세요.',
+        'missing-required-parameter': '요청 PDU에 필수 필드가 빠졌습니다. 클라이언트 요청의 형식이 잘못된 것이므로 도구나 드라이버의 인코딩을 확인하세요.',
+        'no-space-for-object': '장치의 객체 데이터베이스가 가득 차서 CreateObject가 실패했습니다. 사용하지 않는 객체를 삭제하거나 장치의 객체 한계에 도달했는지 확인하세요.',
+        'no-space-to-write-property': '속성 저장 공간이 부족합니다. 스케줄이나 그룹 같은 목록에 항목을 추가할 때 흔합니다. 공간을 확보하거나 기존 항목을 줄이세요.',
+        'property-is-not-a-list': '목록이 아닌 속성에 AddListElement 또는 RemoveListElement를 사용했습니다. 해당 속성에 잘못된 서비스를 사용한 것입니다.',
+        'object-deletion-not-permitted': 'Device 객체나 고정 I/O 포인트처럼 내장 객체라 삭제할 수 없습니다. 동적으로 만든 객체만 삭제할 수 있습니다.',
+        'object-identifier-already-exists': 'CreateObject에서 이미 사용 중인 인스턴스 번호를 요청했습니다. 해당 객체 유형에서 사용하지 않는 인스턴스를 선택하세요.',
+        'operational-problem': '장치 내부 고장으로 작업이 차단되었습니다. 장치 상태와 경보를 확인하고 필요하면 재부팅하세요.',
+        'read-access-denied': '속성이 존재하지만 읽기가 차단되었습니다. 해당 속성을 읽는 데 필요한 권한이나 보안 수준이 없습니다.',
+        'service-request-denied': '대상 장치가 자체 정책, 상태 또는 보안상의 이유로 서비스를 거부했습니다. 요청 형식은 올바르므로 네트워크가 아니라 대상 장치를 확인하세요.',
+        'timeout': 'APDU 타임아웃 안에 응답이 없습니다. 잘못된 MAC·네트워크 번호, 오프라인 장치 또는 MS/TP 토큰 손실 같은 통신 문제가 원인입니다.',
+        'unknown-object': '참조한 객체가 장치에 없습니다. 객체 유형이나 인스턴스가 잘못되었거나 객체가 삭제되었습니다. 참조는 이름이 아니라 ID를 사용하므로 이름 변경과는 무관합니다.',
+        'unknown-property': '객체가 해당 속성 ID를 지원하지 않습니다. 속성이 잘못되었거나 이 장치가 구현하지 않은 전용 속성입니다.',
+        'unsupported-object-type': 'CreateObject에서 장치가 구현하지 않은 객체 유형을 요청했습니다. 지원 유형은 PICS를 확인하세요.',
+        'value-out-of-range': '쓴 값이 속성의 허용 범위를 벗어났습니다. 잘못된 우선순위, COV 증가량 또는 설정값 등이 해당합니다. 허용 범위 안으로 제한하세요.',
+        'write-access-denied': '속성이 읽기 전용이거나 지금 쓸 수 없습니다. 입력 객체의 Present_Value 또는 명령 우선순위 충돌에서 발생할 수 있습니다.',
+        'invalid-array-index': '배열 인덱스가 속성 크기를 벗어났거나 인덱스 0을 잘못 사용했습니다. 인덱싱하기 전에 배열 길이를 읽으세요.',
+        'cov-subscription-failed': '장치가 COV 구독을 설정하지 못했습니다. 대개 구독 표가 가득 찬 경우입니다. 슬롯을 비우거나 폴링으로 전환하세요.',
+        'not-cov-property': 'Change-of-Value를 지원하지 않는 속성에 구독했습니다. Present_Value나 Status_Flags 같은 지원 속성만 사용할 수 있습니다.',
+        'optional-functionality-not-supported': '장치가 해당 선택 서비스나 기능을 구현하지 않았습니다. 사용하기 전에 BIBB 또는 PICS를 확인하세요.',
+        'datatype-not-supported': '사용한 데이터형을 장치가 해당 속성이나 작업에서 허용하지 않습니다. 지원되는 유형으로 다시 인코딩하세요.',
+        'duplicate-name': '이 장치에서 Object_Name이 이미 사용 중입니다. 장치 안에서 이름은 고유해야 하므로 다른 이름을 선택하세요.',
+        'duplicate-object-id': '객체 식별자가 기존 객체와 충돌합니다. 해당 인스턴스가 장치에 이미 할당되어 있습니다.',
+        'property-is-not-an-array': '스칼라 속성에 배열 인덱스를 사용했습니다. 인덱스를 빼고 값을 전체로 읽거나 쓰세요.',
+        'unknown-device': '응답한 게이트웨이 또는 프록시가 참조된 장치 인스턴스를 알지 못합니다. 실제로 경로가 끊기면 이 코드가 아니라 네트워크 Reject 또는 타임아웃이 발생합니다.',
+        'value-not-initialized': '속성에 아직 값이 없습니다. 빈 우선순위 배열 슬롯이나 한 번도 쓰지 않은 포인트에서 흔합니다.',
+        'unknown-subscription': '더 이상 존재하지 않는 COV 구독을 참조했습니다. 만료되었거나 생성되지 않은 구독이므로 다시 구독하세요.',
+        'busy': '장치가 지금 요청을 처리할 수 없습니다. 잠시 기다렸다가 다시 시도하세요.',
+        'communication-disabled': 'DeviceCommunicationControl이 장치 통신을 중지했습니다. DCC enable을 보내거나 타이머가 끝날 때까지 기다려 통신을 복원하세요.',
+        'success': '오류가 없습니다. 작업이 완료되었음을 확인하는 성공 결과 코드입니다.',
+        'access-denied': '권한 문제로 요청이 거부되었습니다. 필요한 권한이 없으며 BACnet/SC 또는 키 기반 보안에서 흔합니다.'
+    },
+    reject: {
+        'other': '정의된 코드에 해당하지 않는 파싱 단계의 거부를 나타내는 포괄 코드입니다. 스니퍼로 원시 APDU를 캡처해 원인을 확인하세요.',
+        'buffer-overflow': '요청이 수신기의 디코드 버퍼를 넘어 완전히 디코딩할 수 없어 거부되었습니다. Max-APDU가 작은 장치에 너무 큰 APDU를 보낼 때 흔합니다.',
+        'inconsistent-parameters': '각 인수는 디코딩되었지만 서로 모순되어 요청을 처리할 수 없습니다. 서비스가 함께 허용하지 않는 조합입니다.',
+        'invalid-parameter-data-type': '인수의 인코딩 유형이 서비스에서 예상한 유형과 다릅니다. 예를 들어 Unsigned가 필요한 곳에 Real이 들어갔으며 대개 송신측 인코더의 버그입니다.',
+        'invalid-tag': '컨텍스트 또는 애플리케이션 태그가 잘못되거나 위치가 틀려 디코더가 바이트열을 해석하지 못했습니다. 직접 작성했거나 결함 있는 인코더에서 흔합니다.',
+        'missing-required-parameter': '서비스의 필수 인수가 없습니다. 송신측이 디코더에 필요한 필드를 누락했습니다.',
+        'parameter-out-of-range': '인수는 디코딩되었지만 인덱스나 선택값이 서비스 한계를 넘는 등 해당 필드가 허용하는 범위를 벗어났습니다.',
+        'too-many-arguments': '요청에 서비스 정의보다 많은 인수가 들어 있습니다. 디코더가 예상하지 않은 추가 매개변수가 뒤에 붙었습니다.',
+        'undefined-enumeration': '열거형 인수에 해당 enum에 정의되지 않은 값이 들어 있습니다. 수신기가 매핑할 수 없는 최신 코드나 전용 코드인 경우가 많습니다.',
+        'unrecognized-service': 'PDU는 파싱되었지만 장치가 해당 서비스 선택지를 구현하지 않았습니다. 요청한 서비스를 이 장치에서 지원하지 않습니다.',
+        'invalid-data-encoding': '바이트를 디코딩할 수 있지만 데이터형의 적법한 인코딩이 아닙니다. 단순히 태그만 잘못된 것이 아니라 데이터형 수준에서 형식이 잘못되었습니다. 구형 스택은 보내지 않는 최신 표준판의 사유입니다.'
+    },
+    abort: {
+        'other': '목록의 어떤 사유에도 해당하지 않을 때 사용하는 포괄 코드입니다. 장치가 이유를 밝히지 않고 트랜잭션을 종료했으므로 패킷 캡처만이 단서입니다.',
+        'buffer-overflow': '트랜잭션 도중 수신기의 버퍼 공간이 부족해졌습니다. 작은 장치가 너무 큰 세그먼트 메시지를 재조립할 때 흔합니다. APDU 크기나 세그먼트 수를 줄이세요.',
+        'invalid-apdu-in-this-state': '상태 머신이 예상하지 않은 세그먼트 또는 ACK입니다. 이전 재전송의 중복 패킷이 늦게 도착했거나 클라이언트가 앞선 트랜잭션을 닫기 전에 invoke ID를 재사용한 경우가 많습니다.',
+        'preempted-by-higher-priority-task': '장치가 재초기화 같은 더 긴급한 내부 작업을 위해 우선순위가 낮은 이 트랜잭션을 의도적으로 중단했습니다. 흔하지 않으며 부하나 슬롯 부족 문제는 아닙니다.',
+        'segmentation-not-supported': '응답이 APDU 하나에 들어가지 않지만 장치가 세그멘테이션을 지원하지 않습니다. ReadPropertyMultiple 또는 ReadRange 청크를 더 작게 요청하세요.',
+        'security-error': 'BACnet 네트워크 보안 검사에 실패했습니다. 잘못된 서명, 키 불일치 또는 재생 메시지가 원인입니다. 보안 장치 사이의 키와 시간 동기화를 확인하세요.',
+        'insufficient-security': '메시지의 보안 수준이 이 작업에 필요한 수준보다 낮습니다. 장치가 계속 처리하려면 피어가 정책의 최소 수준에 맞게 서명하거나 암호화해야 합니다.',
+        'window-size-out-of-range': '제안한 세그멘테이션 윈도 크기가 적법한 1–127 범위를 벗어났거나 장치가 허용하는 범위를 넘었습니다. 세그먼트 ACK 협상이 잘못되었습니다.',
+        'application-exceeded-reply-time': '애플리케이션 계층에서 응답을 만드는 데 너무 오래 걸려 트랜잭션이 종료되었습니다. 느린 백엔드, 막힌 포인트 또는 과부하된 제어기가 원인일 수 있습니다.',
+        'out-of-resources': '장치에 트랜잭션을 계속할 상태 머신 슬롯, 메모리 또는 핸들이 남아 있지 않습니다. 폴링 부하가 큰 소형 제어기에서 흔하므로 폴링을 줄이거나 시간을 분산하세요.',
+        'tsm-timeout': '트랜잭션 상태 머신이 다음 세그먼트나 ACK를 기다리다 타임아웃되었습니다. 패킷 손실, 오프라인 피어 또는 MS/TP 토큰 손실이 흔한 원인입니다.',
+        'apdu-too-long': 'APDU가 수신기의 Max APDU Length Accepted를 넘고 세그멘테이션할 수도 없습니다. 요청이나 응답을 줄이거나 세그멘테이션을 사용하세요.'
+    }
+} %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · BACnet 오류 코드 디코더</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                BACnet 오류 코드 디코더
+                <span class="tool-tag">BACnet</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>장치가 요청을 거부하며 돌려준 번호를 실제 오류 원인, 즉 오류 클래스와 코드, Reject 사유 또는 Abort 사유로 해석합니다.</summary>
+            <div class="preamble-rest">
+                BACnet 요청이 실패하면 장치는 세 가지 중 하나로 응답합니다. <strong>BACnet-Error</strong>(오류 <em>클래스</em>와 오류 <em>코드</em>), 메시지 형식이 잘못되었음을 알리는 거부 사유를 담은 <strong>BACnet-Reject</strong>, 또는 트랜잭션이 종료되었음을 알리는 중단 사유를 담은 <strong>BACnet-Abort</strong>입니다.
+                받은 응답 종류를 선택하고 번호를 입력해 의미를 확인하거나, 아래의 전체 참조 표를 필터링하세요.
+            </div>
+        </details>
+        <p class="ps-seed-note">입력란에는 예제가 미리 채워져 있습니다. 확인하려는 번호로 수정하세요.</p>
+
+        <div class="bec-modes" role="group" aria-labelledby="bec-mode-label">
+            <span id="bec-mode-label" class="sr-only">장치가 어떤 종류의 실패를 반환했나요?</span>
+            <button type="button" class="bec-mode active" data-mode="error" aria-pressed="true">Error(클래스 + 코드)</button>
+            <button type="button" class="bec-mode" data-mode="reject" aria-pressed="false">Reject(거부)</button>
+            <button type="button" class="bec-mode" data-mode="abort" aria-pressed="false">Abort(중단)</button>
+        </div>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">입력</h2>
+
+                <div class="bec-inputs" id="bec-in-error">
+                    <div class="ps-row">
+                        <label class="ps-label" for="bec-class">오류 클래스 <span style="white-space:nowrap;">(0–7)</span></label>
+                        <input class="ps-input" type="number" id="bec-class" min="0" max="65535" step="1" placeholder="2" value="2">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="bec-code">오류 코드 <span style="white-space:nowrap;">(0–255)</span></label>
+                        <input class="ps-input" type="number" id="bec-code" min="0" max="65535" step="1" placeholder="32" value="32">
+                    </div>
+                </div>
+
+                <div class="bec-inputs" id="bec-in-reject" hidden>
+                    <div class="ps-row">
+                        <label class="ps-label" for="bec-reject">Reject 사유 <span style="white-space:nowrap;">(0–255)</span></label>
+                        <input class="ps-input" type="number" id="bec-reject" min="0" max="255" step="1" placeholder="9" value="9">
+                    </div>
+                </div>
+
+                <div class="bec-inputs" id="bec-in-abort" hidden>
+                    <div class="ps-row">
+                        <label class="ps-label" for="bec-abort">Abort 사유 <span style="white-space:nowrap;">(0–255)</span></label>
+                        <input class="ps-input" type="number" id="bec-abort" min="0" max="255" step="1" placeholder="11" value="11">
+                    </div>
+                </div>
+
+                <p class="bit-hint" id="bec-hint" style="margin-top:0.85rem;"><strong>Error</strong>는 클래스 + 코드 쌍입니다. 서비스가 실행된 뒤 장치가 요청을 거부했습니다.</p>
+            </section>
+
+            <section role="status" aria-atomic="false">
+                <h2 class="ps-section-label">출력</h2>
+                <div class="ps-row">
+                    <span class="ps-label" id="bec-primary-label">오류 코드</span>
+                    <span class="ps-value muted" id="bec-out-primary">—</span>
+                </div>
+                <div class="ps-row" id="bec-context-row">
+                    <span class="ps-label">오류 클래스</span>
+                    <span class="ps-value muted" id="bec-out-context">—</span>
+                </div>
+                <p class="ps-value" id="bec-out-desc" style="margin:0.6rem 0 0; min-height:1.2em;"></p>
+                <div class="status-pill" id="bec-status">디코딩할 값을 입력하세요.</div>
+                <div class="btn-row">
+                    <button class="copy-btn" id="bec-copy">디코드 결과 복사</button>
+                </div>
+            </section>
+
+        </div>
+        <div class="result-formula flush" id="bec-formula"></div>
+        <div class="failure-callout" id="bec-callout" hidden></div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="reference">전체 참조표</h2>
+            <p class="ref-note" style="margin-top:0;">
+                모든 오류 클래스, 오류 코드, Reject 사유, Abort 사유를 네 표에서 한꺼번에 필터링할 수 있습니다. 값을 클릭하면 복사됩니다.
+            </p>
+            <!-- Error enums are generated from bacnet-stack (html/_data/bacnetErrors.js) and were cross-checked 2026-07-13 against BACpypes3 + BACnet4J and ASHRAE addenda 135-2020cc / 135-2020cp for the SC / TLS / OAuth-scope tail; field-common rows carry human-reviewed descriptions (bacnetErrorNotes.js), the long tail stays name-only. Two known caveats: the deprecated 135-1995 security codes (1, 6, 12, 15, 28) are bacnet-stack-sourced — the independent transcriptions no longer carry them to reconfirm; and code 204 keeps bacnet-stack's disambiguated "unknown-security-key" (135-2020cc frees the bare "unknown-key" name, but id 107 historically held it). -->
+            <div style="margin-bottom:0.9rem;">
+                <label class="bec-search-label" for="bec-search">번호, 이름 또는 의미로 필터링 <span class="bec-count" id="bec-count-total" aria-hidden="true"></span></label>
+                <input class="ps-input" type="search" id="bec-search" placeholder="예: 32, unknown-property, segmentation, timeout">
+            </div>
+
+            <div class="tabs tabs-flush" role="tablist">
+                <button class="tab-btn active" data-tab="codes">오류 코드 <span class="bec-count" data-count="codes" aria-hidden="true"></span></button>
+                <button class="tab-btn" data-tab="classes">클래스 <span class="bec-count" data-count="classes" aria-hidden="true"></span></button>
+                <button class="tab-btn" data-tab="reject">Reject <span class="bec-count" data-count="reject" aria-hidden="true"></span></button>
+                <button class="tab-btn" data-tab="abort">Abort <span class="bec-count" data-count="abort" aria-hidden="true"></span></button>
+            </div>
+
+            <div id="tab-codes" class="tab-pane active">
+                <div class="table-scroll">
+                    <table class="ref-table-dense rt-stack" id="bec-table-codes">
+                        <thead><tr><th>코드</th><th>이름</th><th>의미</th></tr></thead>
+                        <tbody>
+                            {% for c in bacnetErrors.errorCode %}
+                            {% set d = errorNotesKo.codes[c.name] %}
+                            <tr{% if not d %} class="bec-noteless"{% endif %}><td class="bec-id">{{ c.id }}</td><td data-name="{{ c.name }}">{{ c.name | safe }}</td><td>{% if d %}{{ d | safe }}{% else %}—{% endif %}</td></tr>
+                            {% endfor %}
+                            <tr class="ref-empty bec-empty" hidden><td colspan="3">이 필터와 일치하는 오류 코드가 없습니다.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-classes" class="tab-pane">
+                <div class="table-scroll">
+                    <table class="ref-table-dense rt-stack" id="bec-table-classes">
+                        <thead><tr><th>클래스</th><th>이름</th><th>의미</th></tr></thead>
+                        <tbody>
+                            {% for c in bacnetErrors.errorClass %}
+                            {% set d = errorNotesKo.classes[c.name] %}
+                            <tr{% if not d %} class="bec-noteless"{% endif %}><td class="bec-id">{{ c.id }}</td><td data-name="{{ c.name }}">{{ c.name | safe }}</td><td>{% if d %}{{ d | safe }}{% else %}—{% endif %}</td></tr>
+                            {% endfor %}
+                            <tr class="ref-empty bec-empty" hidden><td colspan="3">이 필터와 일치하는 클래스가 없습니다.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-reject" class="tab-pane">
+                <div class="table-scroll">
+                    <table class="ref-table-dense rt-stack" id="bec-table-reject">
+                        <thead><tr><th>사유</th><th>이름</th><th>의미</th></tr></thead>
+                        <tbody>
+                            {% for c in bacnetErrors.rejectReason %}
+                            {% set d = errorNotesKo.reject[c.name] %}
+                            <tr{% if not d %} class="bec-noteless"{% endif %}><td class="bec-id">{{ c.id }}</td><td data-name="{{ c.name }}">{{ c.name | safe }}</td><td>{% if d %}{{ d | safe }}{% else %}—{% endif %}</td></tr>
+                            {% endfor %}
+                            <tr class="ref-empty bec-empty" hidden><td colspan="3">이 필터와 일치하는 Reject 사유가 없습니다.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-abort" class="tab-pane">
+                <div class="table-scroll">
+                    <table class="ref-table-dense rt-stack" id="bec-table-abort">
+                        <thead><tr><th>사유</th><th>이름</th><th>의미</th></tr></thead>
+                        <tbody>
+                            {% for c in bacnetErrors.abortReason %}
+                            {% set d = errorNotesKo.abort[c.name] %}
+                            <tr{% if not d %} class="bec-noteless"{% endif %}><td class="bec-id">{{ c.id }}</td><td data-name="{{ c.name }}">{{ c.name | safe }}</td><td>{% if d %}{{ d | safe }}{% else %}—{% endif %}</td></tr>
+                            {% endfor %}
+                            <tr class="ref-empty bec-empty" hidden><td colspan="3">이 필터와 일치하는 Abort 사유가 없습니다.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <p class="ref-note">
+                유료로 제공되는 ASHRAE 135 오류 표를 사실상 기계 판독 가능한 형태로 옮긴 <a href="https://github.com/bacnet-stack/bacnet-stack">bacnet-stack</a> 오류 열거형에서 가져왔습니다. 가져온 날짜 {{ bacnetErrors.retrieved }}, 클래스 {{ bacnetErrors.counts.classes }}개, 오류 코드 {{ bacnetErrors.counts.codes }}개, Reject 사유 {{ bacnetErrors.counts.reject }}개, Abort 사유 {{ bacnetErrors.counts.abort }}개입니다. 현장에서 자주 쓰는 값에는 설명을 제공하고, 최신 표준판에 추가된 사용 빈도가 낮은 항목(BACnet/SC 전송, HTTP/TLS/DNS, OAuth 범위 코드)은 이름만 표시합니다. 정확한 규범 문구는 표준에서 확인하세요.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="error-reject-abort">Error, Reject, Abort 비교</h2>
+            <p class="ref-note" style="margin-top:0;">
+                세 응답 모두 "아니오"를 뜻하지만 실패 지점이 다르며, 그 차이로 확인할 위치를 알 수 있습니다. <strong>BACnet-Error</strong>는 요청 형식이 올바르고 서비스도 실행되었지만 장치가 요청 내용을 정확히 이해한 뒤 거부했다는 뜻입니다. 오류 <em>클래스</em>(범주)와 오류 <em>코드</em>(구체적인 사유)를 반환합니다. 현장에서 가장 흔하며 unknown-property, write-access-denied, value-out-of-range 등이 해당합니다.
+            </p>
+            <p class="ref-note">
+                <strong>BACnet-Reject</strong>는 요청이 그 단계까지 도달하지 못했다는 뜻입니다. <button type="button" data-gloss="apdu">APDU</button>의 형식·인코딩이 잘못되었거나 장치가 구현하지 않은 서비스를 사용해, 서비스가 실행되기 전에 프로토콜 계층에서 폐기되었습니다. <strong>BACnet-Abort</strong>는 이미 시작된 트랜잭션이 도중에 종료되었다는 뜻이며 거의 항상 세그멘테이션, <button type="button" data-gloss="tsm">TSM</button> 타임아웃 또는 장치의 버퍼·리소스 부족이 원인입니다. Reject는 메시지를, Abort는 전송이나 장치 용량을 확인하라는 신호입니다.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="reading-class-and-code">오류 클래스와 코드 읽기</h2>
+            <p class="ref-note" style="margin-top:0;">
+                BACnet-Error에는 항상 두 값이 함께 들어 있습니다. <em>클래스</em>는 문제를 device, object, property, resources, security, services, vt 또는 communication 범주로 나누고, <em>코드</em>는 해당 범주 안의 구체적인 메시지입니다. 실제 조치는 대개 코드를 기준으로 하며 클래스는 어느 하위 시스템에서 오류를 발생시켰는지 알려 줍니다. 같은 코드 번호가 둘 이상의 클래스에 사용될 수 있으므로 두 값을 모두 디코딩하세요.
+            </p>
+            <p class="ref-note">
+                클래스 0–63과 표준 코드 범위는 ASHRAE가 관리합니다. 클래스 64 이상은 벤더 전용 오류이며 의미는 제조사 문서에 있습니다. 어느 제조사인지 <a href="/ko/tools/bacnet-vendor-ids.html">벤더 ID 조회</a>에서 확인할 수 있습니다. <a href="/ko/tools/bacnet-objects.html">객체 참고 자료</a>에서는 이 오류들이 가리키는 객체 유형과 속성을 설명합니다.
+            </p>
+        </section>
+
+    </div>
+
+    {{ faqBlock(faqs, "BACnet 오류 디코딩 자주 묻는 질문") }}
+
+    {{ relatedLinks({
+        hub: {href: '/ko/bacnet/', label: 'BACnet 참고 자료 허브'},
+        tools: [
+            {href: '/ko/tools/bacnet-objects.html', label: 'BACnet 객체 참고 자료'},
+            {href: '/ko/tools/bacnet-units.html', label: 'BACnet 단위 디코더'},
+            {href: '/ko/tools/bacnet-ip-converter.html', label: 'BACnet/IP 16진수 변환기'}
+        ],
+        lessons: [
+            {href: '/ko/education/bacnet-basics.html', label: 'BACnet 기초'},
+            {href: '/ko/education/bacnet-networking.html', label: 'BACnet 네트워킹'},
+            {href: '/ko/education/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/bacnet-basics.html', label: 'BACnet 기초'},
+            {href: '/ko/practice/bacnet-networking.html', label: 'BACnet 네트워킹'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

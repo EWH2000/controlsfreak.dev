@@ -6,9 +6,18 @@ nav: education
 category: hydronics
 pairedQuiz: https://controlsfreak.dev/practice/load-piping.html
 keywords: 2-way 3-way valve coil bypass diverting mixing tee
+pageMessages:
+  widget:
+    pump:
+      speed: Pump speed
+      head: Pump head
+    state:
+      deadhead: DEADHEAD
+      warn: LOW FLOW
+      ok: OK
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -1034,11 +1043,13 @@ keywords: 2-way 3-way valve coil bypass diverting mixing tee
             bypassFlowEl.textContent = formatFlow(r.bypassFlow);
             pumpValEl.textContent    = Math.round(r.pumpVal);
 
-            const pumpLabel = state.pump === 'vfd' ? 'Pump speed' : 'Pump head';
+            const pumpLabel = CFI18n.page(state.pump === 'vfd'
+                ? 'widget.pump.speed'
+                : 'widget.pump.head');
             pumpLabelEl.textContent = pumpLabel;
             barLabelEl.textContent  = pumpLabel;
 
-            stateTextEl.textContent = r.stateName.toUpperCase();
+            stateTextEl.textContent = CFI18n.page('widget.state.' + r.stateName);
             root.setAttribute('data-state', r.stateName);
 
             const barWidth = Math.min(100, (r.pumpVal / BAR_MAX_PCT) * 100);

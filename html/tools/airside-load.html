@@ -4,10 +4,138 @@ description: Airside heat-rate math solved any direction — sensible q = 1.08 �
 canonical: https://controlsfreak.dev/tools/airside-load.html
 nav: tools
 category: airflow
+pageMessages:
+    modes:
+        sensible:
+            deltaName: 'ΔT'
+            deltaLabel: 'ΔT'
+            negative: 'A negative ΔT usually means the two temperatures got subtracted in the wrong order — enter it as a positive difference; heating or cooling, the equation doesn’t care which way the heat moves.'
+            zero: 'ΔT must be greater than 0 to solve for airflow — air that leaves at the same temperature is carrying no sensible load.'
+        latent:
+            deltaName: 'moisture Δ'
+            deltaLabel: 'Moisture Δ'
+            negative: 'A negative moisture Δ just means the coil is adding moisture instead of removing it — humidification is the same math; enter the difference as positive.'
+            zero: 'Moisture Δ must be greater than 0 to solve for airflow — air that leaves at the same humidity is carrying no latent load.'
+        total:
+            deltaName: 'Δh'
+            deltaLabel: 'Δh'
+            negative: 'A negative Δh usually means the two enthalpies got subtracted in the wrong order — enter it as a positive difference; heating or cooling, the equation doesn’t care which way the heat moves.'
+            zero: 'Δh must be greater than 0 to solve for airflow — no enthalpy change, no load.'
+    outputLabel:
+        load: 'Load ({unit})'
+        airflow: 'Airflow ({unit})'
+        delta: '{name} ({unit})'
+    errors:
+        needFlowDelta: 'Enter airflow and {deltaName} to find the load.'
+        negativeFlow: 'Airflow can’t be negative.'
+        needLoadDelta: 'Enter load and {deltaName} to find the airflow.'
+        negativeLoad: 'Load can’t be negative.'
+        needLoadFlow: 'Enter load and airflow to find the {deltaName}.'
+        zeroFlow: 'Airflow must be greater than 0 to solve for the Δ — still air moves no load.'
+    unitText:
+        sensibleEquation:
+            us: 'qs = 1.08 × CFM × ΔT'
+            metric: 'qs = 0.34 × m³/h × ΔT'
+        sensibleAirflowLabel:
+            us: 'Airflow (CFM)'
+            metric: 'Airflow (m³/h)'
+        sensibleDeltaLabel:
+            us: 'ΔT across coil (°F)'
+            metric: 'ΔT across coil (°C)'
+        sensibleLoadLabel:
+            us: 'Load (MBH)'
+            metric: 'Load (kW)'
+        tonDefinition:
+            us: '12 MBH'
+            metric: '3.517 kW'
+        sensibleExampleAirflow:
+            us: '2,000 CFM'
+            metric: '3398 m³/h'
+        sensibleExampleDelta:
+            us: '20 °F'
+            metric: '11.1 °C'
+        sensibleFormula:
+            us: 'qs = 1.08 × CFM × ΔT°F, in Btu/h'
+            metric: 'qs = 0.34 × m³/h × ΔT°C, in W'
+        sensibleSubstitution:
+            us: 'qs = 1.08 × 2000 × 20 = 43,200 Btu/h = 43.2 MBH'
+            metric: 'qs = 0.34 × 3398 × 11.1 = 12,824 W = 12.8 kW'
+        waterDelta:
+            us: '12 °F'
+            metric: '6.7 °C'
+        waterFormula:
+            us: 'Q = 43,200 ÷ (500 × 12) = 7.2 GPM'
+            metric: 'Q = 12.8 ÷ (4.187 × 6.7) = 0.46 L/s'
+        latentAirflowLabel:
+            us: 'Airflow (CFM)'
+            metric: 'Airflow (m³/h)'
+        latentDeltaLabel:
+            us: 'Moisture removed (gr/lb)'
+            metric: 'Moisture removed (g/kg)'
+        latentLoadLabel:
+            us: 'Load (MBH)'
+            metric: 'Load (kW)'
+        moistureDefinition:
+            us: 'grains of moisture per pound of dry air; 7,000 grains make a pound'
+            metric: 'grams of moisture per kilogram of dry air'
+        latentExampleDelta:
+            us: '10 gr/lb'
+            metric: '1.4 g/kg'
+        latentExampleAirflow:
+            us: '2,000 CFM'
+            metric: '3398 m³/h'
+        latentFormula:
+            us: 'ql = 0.68 × CFM × Δgr/lb, in Btu/h'
+            metric: 'ql = 0.83 × m³/h × Δg/kg, in W'
+        latentSubstitution:
+            us: 'ql = 0.68 × 2000 × 10 = 13,600 Btu/h = 13.6 MBH'
+            metric: 'ql = 0.83 × 3398 × 1.4 = 3,948 W = 3.9 kW'
+        moistureMassWord:
+            us: 'grain'
+            metric: 'gram'
+        totalAirflowLabel:
+            us: 'Airflow (CFM)'
+            metric: 'Airflow (m³/h)'
+        totalDeltaLabel:
+            us: 'Δh across coil (Btu/lb)'
+            metric: 'Δh across coil (kJ/kg)'
+        totalLoadLabel:
+            us: 'Load (MBH)'
+            metric: 'Load (kW)'
+        totalExampleDelta:
+            us: '6.3 Btu/lb'
+            metric: '14.7 kJ/kg'
+        totalFormula:
+            us: 'qt = 4.5 × CFM × Δh, in Btu/h'
+            metric: 'qt = 0.33 × m³/h × Δh, in W'
+        totalSubstitution:
+            us: 'qt = 4.5 × 2000 × 6.3 = 56,700 Btu/h = 56.7 MBH'
+            metric: 'qt = 0.33 × 3398 × 14.7 = 16,484 W = 16.5 kW'
+        tonsFormula:
+            us: '56.7 ÷ 12 = 4.7 tons'
+            metric: '16.5 ÷ 3.517 = 4.7 tons'
+        crossCheck:
+            us: 'Cross-check against the other tabs: sensible 43.2 + latent 13.6 = 56.8 MBH against 56.7 here — the missing 0.1 is the rounded Δh (the chart really read closer to 6.31).'
+            metric: 'Cross-check against the other tabs: sensible 12.8 + latent 3.9 = 16.7 kW against 16.5 here — rounded operands plus independently rounded constants.'
+        cfmPerTon:
+            us: '2000 ÷ 4.7 ≈ 425 CFM per ton here'
+            metric: '≈ 425 CFM per ton here (an IP-native rule, like the K-factor)'
+        constantsHeading:
+            us: '1.08, 0.68, and 4.5'
+            metric: '0.34, 0.83, and 0.33'
+        standardAir:
+            us: '0.075 lb/ft³, sea level, ~70 °F'
+            metric: '1.2 kg/m³, sea level, ~20 °C'
+        constantDerivation:
+            us: '1.08 = 0.075 lb/ft³ × 60 min/h × 0.240 Btu/lb·°F (density × time × specific heat). 4.5 = 0.075 × 60 — it just turns CFM into pounds of dry air per hour. 0.68 = 4.5 × 1,060 Btu/lb of latent heat ÷ 7,000 grains per pound.'
+            metric: '0.34 = 1.2 kg/m³ × 1.005 kJ/kg·K ÷ 3.6 — density × specific heat, with the ÷ 3.6 turning m³/h into grams of dry air per second — which computes to 0.335 and rounds up to the trade''s 0.34, the standard European ventilation constant. 0.33 = 1.2 ÷ 3.6 — it just turns m³/h into grams of dry air per second. 0.83 = 1.2 × 2,500 kJ/kg of latent heat ÷ 3,600.'
+        airflowUnit:
+            us: 'CFM'
+            metric: 'm³/h'
 keywords: cfm delta t sensible latent total heat grains enthalpy btuh mbh tons 1.08 0.68 4.5 reheat
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -28,7 +156,7 @@ keywords: cfm delta t sensible latent total heat grains enthalpy btuh mbh tons 1
         <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
             <summary>The airside workhorse trio, solved in any direction.</summary>
             <div class="preamble-rest">
-                <code><span data-us="qs = 1.08 × CFM × ΔT" data-metric="qs = 0.34 × m³/h × ΔT">qs = 1.08 × CFM × ΔT</span></code> and its latent and total siblings tie the air a fan moves to the heat a coil transfers.
+                <code><span data-us="{{ pageMessages.unitText.sensibleEquation.us }}" data-metric="{{ pageMessages.unitText.sensibleEquation.metric }}">qs = 1.08 × CFM × ΔT</span></code> and its latent and total siblings tie the air a fan moves to the heat a coil transfers.
                 Solve in any direction — the load a measured airflow and ΔT imply, the airflow a reheat schedule needs, or the ΔT a healthy coil should be showing.
                 This is the airside twin of the <a href="/tools/waterside-load.html">waterside-load tool</a>: same coil, other side.
             </div>
@@ -56,22 +184,22 @@ keywords: cfm delta t sensible latent total heat grains enthalpy btuh mbh tons 1
                         </select>
                     </div>
                     <div class="ps-row" id="asl-s-row-flow">
-                        <label class="ps-label" data-us="Airflow (CFM)" data-metric="Airflow (m³/h)" for="asl-s-flow">Airflow (CFM)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.sensibleAirflowLabel.us }}" data-metric="{{ pageMessages.unitText.sensibleAirflowLabel.metric }}" for="asl-s-flow">Airflow (CFM)</label>
                         <input class="ps-input" type="number" id="asl-s-flow" step="any" min="0" placeholder="2000" value="2000">
                     </div>
                     <div class="ps-row" id="asl-s-row-delta">
-                        <label class="ps-label" data-us="ΔT across coil (°F)" data-metric="ΔT across coil (°C)" for="asl-s-delta">ΔT across coil (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.sensibleDeltaLabel.us }}" data-metric="{{ pageMessages.unitText.sensibleDeltaLabel.metric }}" for="asl-s-delta">ΔT across coil (°F)</label>
                         <input class="ps-input" type="number" id="asl-s-delta" step="any" min="0" placeholder="20" value="20">
                     </div>
                     <div class="ps-row" id="asl-s-row-load">
-                        <label class="ps-label" data-us="Load (MBH)" data-metric="Load (kW)" for="asl-s-load">Load (MBH)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.sensibleLoadLabel.us }}" data-metric="{{ pageMessages.unitText.sensibleLoadLabel.metric }}" for="asl-s-load">Load (MBH)</label>
                         <input class="ps-input" type="number" id="asl-s-load" step="any" min="0" placeholder="43.2" value="43.2">
                     </div>
                     <p class="ref-note">
                         Enter ΔT as a positive difference — entering-to-leaving on a heating coil, leaving-to-entering on cooling; the math is the same either direction.
                     </p>
                     <p class="ref-note">
-                        <strong>Sensible only</strong> — temperature change alone. A wet cooling coil is also moving <button type="button" data-gloss="latent-heat">latent heat</button>; that&rsquo;s the other two tabs. Tons live on the Total tab, because a ton is <span data-us="12 MBH" data-metric="3.517 kW">12 MBH</span> of <em>total</em> heat.
+                        <strong>Sensible only</strong> — temperature change alone. A wet cooling coil is also moving <button type="button" data-gloss="latent-heat">latent heat</button>; that&rsquo;s the other two tabs. Tons live on the Total tab, because a ton is <span data-us="{{ pageMessages.unitText.tonDefinition.us }}" data-metric="{{ pageMessages.unitText.tonDefinition.metric }}">12 MBH</span> of <em>total</em> heat.
                     </p>
                 </section>
 
@@ -93,12 +221,12 @@ keywords: cfm delta t sensible latent total heat grains enthalpy btuh mbh tons 1
             <section class="tool-body-row">
                 <h2 class="ps-section-label">Worked example</h2>
                 <p class="ref-note worked-intro">
-                    A hot-water coil takes <span data-us="2,000 CFM" data-metric="3398 m³/h">2,000 CFM</span> of supply air and leaves it <span data-us="20 °F" data-metric="11.1 °C">20 °F</span> warmer.
+                    A hot-water coil takes <span data-us="{{ pageMessages.unitText.sensibleExampleAirflow.us }}" data-metric="{{ pageMessages.unitText.sensibleExampleAirflow.metric }}">2,000 CFM</span> of supply air and leaves it <span data-us="{{ pageMessages.unitText.sensibleExampleDelta.us }}" data-metric="{{ pageMessages.unitText.sensibleExampleDelta.metric }}">20 °F</span> warmer.
                 </p>
                 <ol class="ref-note worked-list">
-                    <li>The sensible equation: <code><span data-us="qs = 1.08 × CFM × ΔT°F, in Btu/h" data-metric="qs = 0.34 × m³/h × ΔT°C, in W">qs = 1.08 × CFM × ΔT°F, in Btu/h</span></code>.</li>
-                    <li>Plug in: <code><span data-us="qs = 1.08 × 2000 × 20 = 43,200 Btu/h = 43.2 MBH" data-metric="qs = 0.34 × 3398 × 11.1 = 12,824 W = 12.8 kW">qs = 1.08 × 2000 × 20 = 43,200 Btu/h = 43.2 MBH</span></code>.</li>
-                    <li>The same heat left the water. At a <span data-us="12 °F" data-metric="6.7 °C">12 °F</span> water ΔT that&rsquo;s <code><span data-us="Q = 43,200 ÷ (500 × 12) = 7.2 GPM" data-metric="Q = 12.8 ÷ (4.187 × 6.7) = 0.46 L/s">Q = 43,200 ÷ (500 × 12) = 7.2 GPM</span></code> — run it on the <a href="/tools/waterside-load.html">Waterside Load Calculator</a>. The two sides of one coil have to agree; when they don&rsquo;t, one of the readings is lying.</li>
+                    <li>The sensible equation: <code><span data-us="{{ pageMessages.unitText.sensibleFormula.us }}" data-metric="{{ pageMessages.unitText.sensibleFormula.metric }}">qs = 1.08 × CFM × ΔT°F, in Btu/h</span></code>.</li>
+                    <li>Plug in: <code><span data-us="{{ pageMessages.unitText.sensibleSubstitution.us }}" data-metric="{{ pageMessages.unitText.sensibleSubstitution.metric }}">qs = 1.08 × 2000 × 20 = 43,200 Btu/h = 43.2 MBH</span></code>.</li>
+                    <li>The same heat left the water. At a <span data-us="{{ pageMessages.unitText.waterDelta.us }}" data-metric="{{ pageMessages.unitText.waterDelta.metric }}">12 °F</span> water ΔT that&rsquo;s <code><span data-us="{{ pageMessages.unitText.waterFormula.us }}" data-metric="{{ pageMessages.unitText.waterFormula.metric }}">Q = 43,200 ÷ (500 × 12) = 7.2 GPM</span></code> — run it on the <a href="/tools/waterside-load.html">Waterside Load Calculator</a>. The two sides of one coil have to agree; when they don&rsquo;t, one of the readings is lying.</li>
                 </ol>
             </section>
         </div>
@@ -118,19 +246,19 @@ keywords: cfm delta t sensible latent total heat grains enthalpy btuh mbh tons 1
                         </select>
                     </div>
                     <div class="ps-row" id="asl-l-row-flow">
-                        <label class="ps-label" data-us="Airflow (CFM)" data-metric="Airflow (m³/h)" for="asl-l-flow">Airflow (CFM)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.latentAirflowLabel.us }}" data-metric="{{ pageMessages.unitText.latentAirflowLabel.metric }}" for="asl-l-flow">Airflow (CFM)</label>
                         <input class="ps-input" type="number" id="asl-l-flow" step="any" min="0" placeholder="2000" value="2000">
                     </div>
                     <div class="ps-row" id="asl-l-row-delta">
-                        <label class="ps-label" data-us="Moisture removed (gr/lb)" data-metric="Moisture removed (g/kg)" for="asl-l-delta">Moisture removed (gr/lb)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.latentDeltaLabel.us }}" data-metric="{{ pageMessages.unitText.latentDeltaLabel.metric }}" for="asl-l-delta">Moisture removed (gr/lb)</label>
                         <input class="ps-input" type="number" id="asl-l-delta" step="any" min="0" placeholder="10" value="10">
                     </div>
                     <div class="ps-row" id="asl-l-row-load">
-                        <label class="ps-label" data-us="Load (MBH)" data-metric="Load (kW)" for="asl-l-load">Load (MBH)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.latentLoadLabel.us }}" data-metric="{{ pageMessages.unitText.latentLoadLabel.metric }}" for="asl-l-load">Load (MBH)</label>
                         <input class="ps-input" type="number" id="asl-l-load" step="any" min="0" placeholder="13.6" value="13.6">
                     </div>
                     <p class="ref-note">
-                        Δ is entering minus leaving humidity ratio — <span data-us="grains of moisture per pound of dry air; 7,000 grains make a pound" data-metric="grams of moisture per kilogram of dry air">grains of moisture per pound of dry air; 7,000 grains make a pound</span>. Read both states off the <a href="/tools/psychrometric-chart.html">psych chart</a> or the <a href="/tools/dew-point-calculator.html">dew-point calculator</a>.
+                        Δ is entering minus leaving humidity ratio — <span data-us="{{ pageMessages.unitText.moistureDefinition.us }}" data-metric="{{ pageMessages.unitText.moistureDefinition.metric }}">grains of moisture per pound of dry air; 7,000 grains make a pound</span>. Read both states off the <a href="/tools/psychrometric-chart.html">psych chart</a> or the <a href="/tools/dew-point-calculator.html">dew-point calculator</a>.
                     </p>
                 </section>
 
@@ -152,12 +280,12 @@ keywords: cfm delta t sensible latent total heat grains enthalpy btuh mbh tons 1
             <section class="tool-body-row">
                 <h2 class="ps-section-label">Worked example</h2>
                 <p class="ref-note worked-intro">
-                    A cooling coil wrings <span data-us="10 gr/lb" data-metric="1.4 g/kg">10 gr/lb</span> of moisture out of the same <span data-us="2,000 CFM" data-metric="3398 m³/h">2,000 CFM</span>.
+                    A cooling coil wrings <span data-us="{{ pageMessages.unitText.latentExampleDelta.us }}" data-metric="{{ pageMessages.unitText.latentExampleDelta.metric }}">10 gr/lb</span> of moisture out of the same <span data-us="{{ pageMessages.unitText.latentExampleAirflow.us }}" data-metric="{{ pageMessages.unitText.latentExampleAirflow.metric }}">2,000 CFM</span>.
                 </p>
                 <ol class="ref-note worked-list">
-                    <li>The latent equation: <code><span data-us="ql = 0.68 × CFM × Δgr/lb, in Btu/h" data-metric="ql = 0.83 × m³/h × Δg/kg, in W">ql = 0.68 × CFM × Δgr/lb, in Btu/h</span></code>.</li>
-                    <li>Plug in: <code><span data-us="ql = 0.68 × 2000 × 10 = 13,600 Btu/h = 13.6 MBH" data-metric="ql = 0.83 × 3398 × 1.4 = 3,948 W = 3.9 kW">ql = 0.68 × 2000 × 10 = 13,600 Btu/h = 13.6 MBH</span></code>.</li>
-                    <li>Every <span data-us="grain" data-metric="gram">grain</span> the coil removes is water condensing on the fins and giving up its <button type="button" data-gloss="latent-heat">latent heat</button> — heat the compressor has to move even though no thermometer in the airstream sees it.</li>
+                    <li>The latent equation: <code><span data-us="{{ pageMessages.unitText.latentFormula.us }}" data-metric="{{ pageMessages.unitText.latentFormula.metric }}">ql = 0.68 × CFM × Δgr/lb, in Btu/h</span></code>.</li>
+                    <li>Plug in: <code><span data-us="{{ pageMessages.unitText.latentSubstitution.us }}" data-metric="{{ pageMessages.unitText.latentSubstitution.metric }}">ql = 0.68 × 2000 × 10 = 13,600 Btu/h = 13.6 MBH</span></code>.</li>
+                    <li>Every <span data-us="{{ pageMessages.unitText.moistureMassWord.us }}" data-metric="{{ pageMessages.unitText.moistureMassWord.metric }}">grain</span> the coil removes is water condensing on the fins and giving up its <button type="button" data-gloss="latent-heat">latent heat</button> — heat the compressor has to move even though no thermometer in the airstream sees it.</li>
                 </ol>
             </section>
         </div>
@@ -177,15 +305,15 @@ keywords: cfm delta t sensible latent total heat grains enthalpy btuh mbh tons 1
                         </select>
                     </div>
                     <div class="ps-row" id="asl-t-row-flow">
-                        <label class="ps-label" data-us="Airflow (CFM)" data-metric="Airflow (m³/h)" for="asl-t-flow">Airflow (CFM)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.totalAirflowLabel.us }}" data-metric="{{ pageMessages.unitText.totalAirflowLabel.metric }}" for="asl-t-flow">Airflow (CFM)</label>
                         <input class="ps-input" type="number" id="asl-t-flow" step="any" min="0" placeholder="2000" value="2000">
                     </div>
                     <div class="ps-row" id="asl-t-row-delta">
-                        <label class="ps-label" data-us="Δh across coil (Btu/lb)" data-metric="Δh across coil (kJ/kg)" for="asl-t-delta">Δh across coil (Btu/lb)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.totalDeltaLabel.us }}" data-metric="{{ pageMessages.unitText.totalDeltaLabel.metric }}" for="asl-t-delta">Δh across coil (Btu/lb)</label>
                         <input class="ps-input" type="number" id="asl-t-delta" step="any" min="0" placeholder="6.3" value="6.3">
                     </div>
                     <div class="ps-row" id="asl-t-row-load">
-                        <label class="ps-label" data-us="Load (MBH)" data-metric="Load (kW)" for="asl-t-load">Load (MBH)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.totalLoadLabel.us }}" data-metric="{{ pageMessages.unitText.totalLoadLabel.metric }}" for="asl-t-load">Load (MBH)</label>
                         <input class="ps-input" type="number" id="asl-t-load" step="any" min="0" placeholder="56.7" value="56.7">
                     </div>
                     <p class="ref-note">
@@ -215,29 +343,29 @@ keywords: cfm delta t sensible latent total heat grains enthalpy btuh mbh tons 1
             <section class="tool-body-row">
                 <h2 class="ps-section-label">Worked example</h2>
                 <p class="ref-note worked-intro">
-                    Same coil, all in: the entering and leaving air read <span data-us="6.3 Btu/lb" data-metric="14.7 kJ/kg">6.3 Btu/lb</span> apart in <button type="button" data-gloss="enthalpy">enthalpy</button>.
+                    Same coil, all in: the entering and leaving air read <span data-us="{{ pageMessages.unitText.totalExampleDelta.us }}" data-metric="{{ pageMessages.unitText.totalExampleDelta.metric }}">6.3 Btu/lb</span> apart in <button type="button" data-gloss="enthalpy">enthalpy</button>.
                 </p>
                 <ol class="ref-note worked-list">
-                    <li>The total equation: <code><span data-us="qt = 4.5 × CFM × Δh, in Btu/h" data-metric="qt = 0.33 × m³/h × Δh, in W">qt = 4.5 × CFM × Δh, in Btu/h</span></code>.</li>
-                    <li>Plug in: <code><span data-us="qt = 4.5 × 2000 × 6.3 = 56,700 Btu/h = 56.7 MBH" data-metric="qt = 0.33 × 3398 × 14.7 = 16,484 W = 16.5 kW">qt = 4.5 × 2000 × 6.3 = 56,700 Btu/h = 56.7 MBH</span></code>.</li>
-                    <li>In chiller language: <code><span data-us="56.7 ÷ 12 = 4.7 tons" data-metric="16.5 ÷ 3.517 = 4.7 tons">56.7 ÷ 12 = 4.7 tons</span></code> moving through that one coil.</li>
+                    <li>The total equation: <code><span data-us="{{ pageMessages.unitText.totalFormula.us }}" data-metric="{{ pageMessages.unitText.totalFormula.metric }}">qt = 4.5 × CFM × Δh, in Btu/h</span></code>.</li>
+                    <li>Plug in: <code><span data-us="{{ pageMessages.unitText.totalSubstitution.us }}" data-metric="{{ pageMessages.unitText.totalSubstitution.metric }}">qt = 4.5 × 2000 × 6.3 = 56,700 Btu/h = 56.7 MBH</span></code>.</li>
+                    <li>In chiller language: <code><span data-us="{{ pageMessages.unitText.tonsFormula.us }}" data-metric="{{ pageMessages.unitText.tonsFormula.metric }}">56.7 ÷ 12 = 4.7 tons</span></code> moving through that one coil.</li>
                 </ol>
                 <p class="ref-note">
-                    <span data-us="Cross-check against the other tabs: sensible 43.2 + latent 13.6 = 56.8 MBH against 56.7 here — the missing 0.1 is the rounded Δh (the chart really read closer to 6.31)." data-metric="Cross-check against the other tabs: sensible 12.8 + latent 3.9 = 16.7 kW against 16.5 here — rounded operands plus independently rounded constants.">Cross-check against the other tabs: sensible 43.2 + latent 13.6 = 56.8 MBH against 56.7 here — the missing 0.1 is the rounded Δh (the chart really read closer to 6.31).</span> Sensible + latent = total is the cross-check worth keeping — when the split misses by more than rounding, one of the three readings is lying.
+                    <span data-us="{{ pageMessages.unitText.crossCheck.us }}" data-metric="{{ pageMessages.unitText.crossCheck.metric }}">Cross-check against the other tabs: sensible 43.2 + latent 13.6 = 56.8 MBH against 56.7 here — the missing 0.1 is the rounded Δh (the chart really read closer to 6.31).</span> Sensible + latent = total is the cross-check worth keeping — when the split misses by more than rounding, one of the three readings is lying.
                 </p>
                 <p class="ref-note">
-                    Divide the airflow by the tons and you&rsquo;ve got the <button type="button" data-gloss="dx">DX</button> sanity number — <span data-us="2000 ÷ 4.7 ≈ 425 CFM per ton here" data-metric="≈ 425 CFM per ton here (an IP-native rule, like the K-factor)">2000 ÷ 4.7 ≈ 425 CFM per ton here</span>. The trade&rsquo;s floor sits near 400; the <a href="/tools/equipment-airflow.html">Equipment Airflow Check</a> turns this number into a staging-aware verdict, and the <a href="/education/vav-systems.html">VAV Systems lesson</a> walks the icing runaway below the floor.
+                    Divide the airflow by the tons and you&rsquo;ve got the <button type="button" data-gloss="dx">DX</button> sanity number — <span data-us="{{ pageMessages.unitText.cfmPerTon.us }}" data-metric="{{ pageMessages.unitText.cfmPerTon.metric }}">2000 ÷ 4.7 ≈ 425 CFM per ton here</span>. The trade&rsquo;s floor sits near 400; the <a href="/tools/equipment-airflow.html">Equipment Airflow Check</a> turns this number into a staging-aware verdict, and the <a href="/education/vav-systems.html">VAV Systems lesson</a> walks the icing runaway below the floor.
                 </p>
             </section>
         </div>
 
         <section class="tool-body-row">
-            <h2 class="ps-section-label">Standard air, and where <span data-us="1.08, 0.68, and 4.5" data-metric="0.34, 0.83, and 0.33">1.08, 0.68, and 4.5</span> come from</h2>
+            <h2 class="ps-section-label">Standard air, and where <span data-us="{{ pageMessages.unitText.constantsHeading.us }}" data-metric="{{ pageMessages.unitText.constantsHeading.metric }}">1.08, 0.68, and 4.5</span> come from</h2>
             <p class="ref-note">
-                All three constants are <strong>standard air</strong> — <span data-us="0.075 lb/ft³, sea level, ~70 °F" data-metric="1.2 kg/m³, sea level, ~20 °C">0.075&nbsp;lb/ft³, sea level, ~70&nbsp;°F</span> — folded into pocket-card form. <span data-us="1.08 = 0.075 lb/ft³ × 60 min/h × 0.240 Btu/lb·°F (density × time × specific heat). 4.5 = 0.075 × 60 — it just turns CFM into pounds of dry air per hour. 0.68 = 4.5 × 1,060 Btu/lb of latent heat ÷ 7,000 grains per pound." data-metric="0.34 = 1.2 kg/m³ × 1.005 kJ/kg·K ÷ 3.6 — density × specific heat, with the ÷ 3.6 turning m³/h into grams of dry air per second — which computes to 0.335 and rounds up to the trade's 0.34, the standard European ventilation constant. 0.33 = 1.2 ÷ 3.6 — it just turns m³/h into grams of dry air per second. 0.83 = 1.2 × 2,500 kJ/kg of latent heat ÷ 3,600.">1.08 = 0.075 lb/ft³ × 60 min/h × 0.240 Btu/lb·°F (density × time × specific heat). 4.5 = 0.075 × 60 — it just turns CFM into pounds of dry air per hour. 0.68 = 4.5 × 1,060 Btu/lb of latent heat ÷ 7,000 grains per pound.</span>
+                All three constants are <strong>standard air</strong> — <span data-us="{{ pageMessages.unitText.standardAir.us }}" data-metric="{{ pageMessages.unitText.standardAir.metric }}">0.075&nbsp;lb/ft³, sea level, ~70&nbsp;°F</span> — folded into pocket-card form. <span data-us="{{ pageMessages.unitText.constantDerivation.us }}" data-metric="{{ pageMessages.unitText.constantDerivation.metric }}">1.08 = 0.075 lb/ft³ × 60 min/h × 0.240 Btu/lb·°F (density × time × specific heat). 4.5 = 0.075 × 60 — it just turns CFM into pounds of dry air per hour. 0.68 = 4.5 × 1,060 Btu/lb of latent heat ÷ 7,000 grains per pound.</span>
             </p>
             <p class="ref-note">
-                The US and metric constants are independently rounded trade conventions, not conversions of each other — the exact metric twin of 1.08 is 0.335, not 0.34 — so the two systems disagree by roughly a percent by construction. Each system is internally consistent, and the formula line always closes on the numbers shown. At altitude the air is thinner, each <span data-us="CFM" data-metric="m³/h">CFM</span> carries less heat, and every constant on this page over-reads the load by roughly 3&nbsp;% per thousand feet of elevation — call it about 20&nbsp;% in Denver; the <a href="/tools/psychrometric-chart.html">psych chart</a> carries a proper altitude input.
+                The US and metric constants are independently rounded trade conventions, not conversions of each other — the exact metric twin of 1.08 is 0.335, not 0.34 — so the two systems disagree by roughly a percent by construction. Each system is internally consistent, and the formula line always closes on the numbers shown. At altitude the air is thinner, each <span data-us="{{ pageMessages.unitText.airflowUnit.us }}" data-metric="{{ pageMessages.unitText.airflowUnit.metric }}">CFM</span> carries less heat, and every constant on this page over-reads the load by roughly 3&nbsp;% per thousand feet of elevation — call it about 20&nbsp;% in Denver; the <a href="/tools/psychrometric-chart.html">psych chart</a> carries a proper altitude input.
             </p>
             <p class="ref-note">
                 This page is the pocket-card arithmetic for when you already hold the deltas. Starting from full air states — <button type="button" data-gloss="dry-bulb">dry-bulb</button> and humidity in, <button type="button" data-gloss="dry-bulb">dry-bulb</button> and humidity out — the <a href="/tools/coil-sizing.html">coil-sizing calculator</a> does the psychrometrics properly and hands back total, sensible, latent, and SHR in one pass.
@@ -309,31 +437,34 @@ keywords: cfm delta t sensible latent total heat grains enthalpy btuh mbh tons 1
                 id: 's', sym: 'qs',
                 K: { us: 1.08, metric: 0.34 },
                 deltaQ: 'deltaTemp', deltaSym: 'ΔT',
-                deltaName: 'ΔT',
+                deltaName: CFI18n.page('modes.sensible.deltaName'),
+                deltaLabel: CFI18n.page('modes.sensible.deltaLabel'),
                 msgs: {
-                    negDelta: 'A negative ΔT usually means the two temperatures got subtracted in the wrong order — enter it as a positive difference; heating or cooling, the equation doesn’t care which way the heat moves.',
-                    zeroDelta: 'ΔT must be greater than 0 to solve for airflow — air that leaves at the same temperature is carrying no sensible load.'
+                    negDelta: CFI18n.page('modes.sensible.negative'),
+                    zeroDelta: CFI18n.page('modes.sensible.zero')
                 }
             },
             {
                 id: 'l', sym: 'ql',
                 K: { us: 0.68, metric: 0.83 },
                 deltaQ: 'humidityRatio', deltaSym: 'Δw',
-                deltaName: 'moisture Δ',
+                deltaName: CFI18n.page('modes.latent.deltaName'),
+                deltaLabel: CFI18n.page('modes.latent.deltaLabel'),
                 msgs: {
-                    negDelta: 'A negative moisture Δ just means the coil is adding moisture instead of removing it — humidification is the same math; enter the difference as positive.',
-                    zeroDelta: 'Moisture Δ must be greater than 0 to solve for airflow — air that leaves at the same humidity is carrying no latent load.'
+                    negDelta: CFI18n.page('modes.latent.negative'),
+                    zeroDelta: CFI18n.page('modes.latent.zero')
                 }
             },
             {
                 id: 't', sym: 'qt',
                 K: { us: 4.5, metric: 0.33 },
                 deltaQ: 'deltaEnthalpy', deltaSym: 'Δh',
-                deltaName: 'Δh',
+                deltaName: CFI18n.page('modes.total.deltaName'),
+                deltaLabel: CFI18n.page('modes.total.deltaLabel'),
                 tons: true,
                 msgs: {
-                    negDelta: 'A negative Δh usually means the two enthalpies got subtracted in the wrong order — enter it as a positive difference; heating or cooling, the equation doesn’t care which way the heat moves.',
-                    zeroDelta: 'Δh must be greater than 0 to solve for airflow — no enthalpy change, no load.'
+                    negDelta: CFI18n.page('modes.total.negative'),
+                    zeroDelta: CFI18n.page('modes.total.zero')
                 }
             }
         ];
@@ -374,9 +505,9 @@ keywords: cfm delta t sensible latent total heat grains enthalpy btuh mbh tons 1
 
             // Label up front so the mute path can't strand a stale one.
             m.el['out-label'].textContent =
-                solve === 'load' ? `Load (${U.suffix.heatCapacity()})` :
-                solve === 'flow' ? `Airflow (${U.suffix.airflow()})` :
-                `${m.deltaName.charAt(0).toUpperCase() + m.deltaName.slice(1)} (${deltaSuffix(m)})`;
+                solve === 'load' ? CFI18n.page('outputLabel.load', { unit: U.suffix.heatCapacity() }) :
+                solve === 'flow' ? CFI18n.page('outputLabel.airflow', { unit: U.suffix.airflow() }) :
+                CFI18n.page('outputLabel.delta', { name: m.deltaLabel, unit: deltaSuffix(m) });
 
             const flow  = parseFloat(m.el.flow.value);
             const delta = parseFloat(m.el.delta.value);
@@ -384,8 +515,8 @@ keywords: cfm delta t sensible latent total heat grains enthalpy btuh mbh tons 1
 
             let result, formula, unit, dec;
             if (solve === 'load') {
-                if (!isFinite(flow) || !isFinite(delta)) { mute(m, `Enter airflow and ${m.deltaName} to find the load.`); return; }
-                if (flow < 0) { mute(m, 'Airflow can’t be negative.'); return; }
+                if (!isFinite(flow) || !isFinite(delta)) { mute(m, CFI18n.page('errors.needFlowDelta', { deltaName: m.deltaName })); return; }
+                if (flow < 0) { mute(m, CFI18n.page('errors.negativeFlow')); return; }
                 if (delta < 0) { mute(m, m.msgs.negDelta); return; }
                 const q = K * flow * delta;   // Btu/h or W
                 result = q / 1000;            // MBH or kW
@@ -402,16 +533,16 @@ keywords: cfm delta t sensible latent total heat grains enthalpy btuh mbh tons 1
                     m.el.tons.textContent = tidy(tons, 1);
                 }
             } else if (solve === 'flow') {
-                if (!isFinite(load) || !isFinite(delta)) { mute(m, `Enter load and ${m.deltaName} to find the airflow.`); return; }
-                if (load < 0) { mute(m, 'Load can’t be negative.'); return; }
+                if (!isFinite(load) || !isFinite(delta)) { mute(m, CFI18n.page('errors.needLoadDelta', { deltaName: m.deltaName })); return; }
+                if (load < 0) { mute(m, CFI18n.page('errors.negativeLoad')); return; }
                 if (delta <= 0) { mute(m, m.msgs.zeroDelta); return; }
                 result = (load * 1000) / (K * delta);   // CFM or m³/h
                 formula = `Q = (${tidy(load, 4)} × 1000) ÷ (${K} × ${tidy(delta, 4)}) = ${tidy(result, 0)} ${U.suffix.airflow()}`;
                 unit = ' ' + U.suffix.airflow(); dec = 0;
             } else {
-                if (!isFinite(load) || !isFinite(flow)) { mute(m, `Enter load and airflow to find the ${m.deltaName}.`); return; }
-                if (load < 0) { mute(m, 'Load can’t be negative.'); return; }
-                if (flow <= 0) { mute(m, 'Airflow must be greater than 0 to solve for the Δ — still air moves no load.'); return; }
+                if (!isFinite(load) || !isFinite(flow)) { mute(m, CFI18n.page('errors.needLoadFlow', { deltaName: m.deltaName })); return; }
+                if (load < 0) { mute(m, CFI18n.page('errors.negativeLoad')); return; }
+                if (flow <= 0) { mute(m, CFI18n.page('errors.zeroFlow')); return; }
                 result = (load * 1000) / (K * flow);
                 formula = `${m.deltaSym} = (${tidy(load, 4)} × 1000) ÷ (${K} × ${tidy(flow, 4)}) = ${tidy(result, 1)} ${deltaSuffix(m)}`;
                 unit = ' ' + deltaSuffix(m); dec = 1;

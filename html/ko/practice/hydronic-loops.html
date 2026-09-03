@@ -1,0 +1,49 @@
+---
+title: 수배관 루프 퀴즈 — controlsfreak.dev
+description: 직접환수와 역환수의 유량 평형 원리, 1차·2차 트윈 티의 근접 배치 티와 보일러 일정 유량 및 주입 제어를 점검하는 10문항 퀴즈입니다.
+sourceContentHash: 847f37479c4164fde6e91c6f40e824badcc19f78116a12238efad3710c95ded3
+canonical: https://controlsfreak.dev/ko/practice/hydronic-loops.html
+nav: practice
+category: hydronics
+pairedLesson: https://controlsfreak.dev/ko/education/hydronic-loops.html
+---
+{% extends "html/practice/hydronic-loops.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 수배관 루프</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">수배관 루프 퀴즈 <span class="tool-tag">수배관 시스템</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/hydronic-loops.html">수배관 루프</a> 학습 자료를 읽은 뒤 스스로
+                확인해 보세요. 수배관 토폴로지를 다루는 10문항입니다. 직접환수 방식이 스스로 불균형해지고 역환수
+                방식이 자체 평형에 가까워지는 이유, 근접 배치 티를 사용하는 1차·2차 트윈 티, 보일러 일정 유량,
+                주입 펌프의 제어점을 점검합니다. 각 문항의 해설에는 해당 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/ko/education/hydronic-loops.html', label: '수배관 루프'},
+            {href: '/ko/education/load-piping.html', label: '부하 배관'},
+            {href: '/ko/education/pump-control.html', label: '펌프 제어'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

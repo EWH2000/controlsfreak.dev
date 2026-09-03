@@ -4,6 +4,76 @@ description: Mixed air temperature calculator — blend up to three air streams 
 canonical: https://controlsfreak.dev/tools/air-mixing.html
 nav: tools
 category: hvac
+pageMessages:
+    defineBy:
+        rh: 'Relative humidity (%)'
+        wb: 'Wet-bulb ({unit})'
+        dp: 'Dew point ({unit})'
+        w: 'Humidity ratio ({unit})'
+        h: 'Enthalpy ({unit} dry air)'
+    status:
+        prompt: 'Enter values to see the mix.'
+        fixStreams: 'Fix the stream input(s) above to see the mix.'
+        weightRequired: 'Enter a weight for each stream.'
+        weightNegative: 'Weights can’t be negative.'
+        fractionSum: 'Fractions sum to {sum} %; must sum to 100 % (±0.1).'
+        zeroMassFlow: 'Total mass flow is zero — no mix to compute.'
+        mixedOutOfRange: 'Mixed state out of range — check inputs.'
+        computed: 'Mixed state computed at {pressure} {unit}.'
+    errors:
+        engineUnavailable: 'Psychrometric engine unavailable — reload the page.'
+        streamValuesRequired: 'Enter dry-bulb and second value.'
+        psychro:
+            numeric: 'Enter numeric values.'
+            rhNegative: 'Relative humidity can’t be negative.'
+            rhAbove100: 'Relative humidity can’t exceed 100%.'
+            wetBulbAboveDryBulb: 'Wet-bulb can’t exceed dry-bulb.'
+            dewPointAboveDryBulb: 'Dew point can’t exceed dry-bulb.'
+            humidityRatioNegative: 'Humidity ratio can’t be negative.'
+            enthalpyBelowDryAir: 'Enthalpy is below dry air at this dry-bulb — impossible.'
+            propertyRequired: 'Pick a property to define the point by.'
+            rhPastSaturation: 'That point is past saturation (RH over 100%) — impossible.'
+            wetBulbPastSaturation: 'That wet-bulb is past saturation — more moisture than air can hold at this dry-bulb and pressure.'
+            dewPointPastSaturation: 'That dew point is past saturation — more moisture than air can hold at this dry-bulb and pressure.'
+            humidityRatioPastSaturation: 'That humidity ratio is past saturation — more moisture than air can hold at this dry-bulb and pressure.'
+            enthalpyPastSaturation: 'That enthalpy is past saturation — more moisture than air can hold at this dry-bulb and pressure.'
+    unitText:
+        altitude:
+            us: 'Altitude (ft)'
+            metric: 'Altitude (m)'
+        airflow:
+            us: 'Airflow (CFM)'
+            metric: 'Airflow (m³/h)'
+        dryBulb:
+            us: 'Dry-bulb (°F)'
+            metric: 'Dry-bulb (°C)'
+        wetBulb:
+            us: 'Wet-bulb (°F)'
+            metric: 'Wet-bulb (°C)'
+        dewPoint:
+            us: 'Dew point (°F)'
+            metric: 'Dew point (°C)'
+        humidityRatio:
+            us: 'Humidity ratio (gr/lb)'
+            metric: 'Humidity ratio (g/kg)'
+        enthalpy:
+            us: 'Enthalpy (Btu/lb)'
+            metric: 'Enthalpy (kJ/kg)'
+        specificVolume:
+            us: 'Specific volume (ft³/lb)'
+            metric: 'Specific volume (m³/kg)'
+        exampleOutdoor:
+            us: '1000 CFM / 95 °F / 75 °F WB'
+            metric: '1700 m³/h / 35 °C / 23.9 °C WB'
+        exampleReturn:
+            us: '3000 CFM / 75 °F / 50 % RH'
+            metric: '5100 m³/h / 23.9 °C / 50 % RH'
+        exampleErv:
+            us: '500 CFM / 60 °F / 55 °F WB'
+            metric: '850 m³/h / 15.6 °C / 12.8 °C WB'
+        exampleFractions:
+            us: '22 % / 67 % / 11 %'
+            metric: '22 % / 67 % / 11 %'
 keywords: cfm mixed air temperature oa oat ra return outdoor plenum blend calculator formula
 faqs:
     - q: What is the mixed air temperature formula?
@@ -14,8 +84,8 @@ faqs:
       a: Air density changes with temperature and altitude, so two equal CFM streams don't carry equal mass. Weighting by mass flow (or density-corrected CFM) is exact; the plain CFM average is a good approximation only near equal densities.
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
-{% from "faq.njk" import faqBlock %}
+{% from "related-links.njk" import relatedLinks with context %}
+{% from "faq.njk" import faqBlock with context %}
 
 {% block head %}
     <style>
@@ -74,7 +144,7 @@ faqs:
 
         <section class="am-alt-strip">
             <div class="ps-row">
-                <label class="ps-label" data-us="Altitude (ft)" data-metric="Altitude (m)" for="am-alt">Altitude (ft)</label>
+                <label class="ps-label" data-us="{{ pageMessages.unitText.altitude.us }}" data-metric="{{ pageMessages.unitText.altitude.metric }}" for="am-alt">Altitude (ft)</label>
                 <input class="ps-input" type="number" id="am-alt" step="100" min="0" max="15000" placeholder="0" value="0">
             </div>
         </section>
@@ -93,11 +163,11 @@ faqs:
 
                     <h3 class="subhead">Stream 1</h3>
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Airflow (CFM)" data-metric="Airflow (m³/h)" for="am-flow-s1-w">Airflow (CFM)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.airflow.us }}" data-metric="{{ pageMessages.unitText.airflow.metric }}" for="am-flow-s1-w">Airflow (CFM)</label>
                         <input class="ps-input" type="number" id="am-flow-s1-w" step="50" min="0" value="1000">
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="am-flow-s1-tdb">Dry-bulb (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="am-flow-s1-tdb">Dry-bulb (°F)</label>
                         <input class="ps-input" type="number" id="am-flow-s1-tdb" step="0.5" min="-50" max="200" value="95">
                     </div>
                     <div class="ps-row">
@@ -118,11 +188,11 @@ faqs:
 
                     <h3 class="subhead">Stream 2</h3>
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Airflow (CFM)" data-metric="Airflow (m³/h)" for="am-flow-s2-w">Airflow (CFM)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.airflow.us }}" data-metric="{{ pageMessages.unitText.airflow.metric }}" for="am-flow-s2-w">Airflow (CFM)</label>
                         <input class="ps-input" type="number" id="am-flow-s2-w" step="50" min="0" value="3000">
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="am-flow-s2-tdb">Dry-bulb (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="am-flow-s2-tdb">Dry-bulb (°F)</label>
                         <input class="ps-input" type="number" id="am-flow-s2-tdb" step="0.5" min="-50" max="200" value="75">
                     </div>
                     <div class="ps-row">
@@ -143,11 +213,11 @@ faqs:
 
                     <h3 class="subhead">Stream 3</h3>
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Airflow (CFM)" data-metric="Airflow (m³/h)" for="am-flow-s3-w">Airflow (CFM)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.airflow.us }}" data-metric="{{ pageMessages.unitText.airflow.metric }}" for="am-flow-s3-w">Airflow (CFM)</label>
                         <input class="ps-input" type="number" id="am-flow-s3-w" step="50" min="0" value="500">
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="am-flow-s3-tdb">Dry-bulb (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="am-flow-s3-tdb">Dry-bulb (°F)</label>
                         <input class="ps-input" type="number" id="am-flow-s3-tdb" step="0.5" min="-50" max="200" value="60">
                     </div>
                     <div class="ps-row">
@@ -174,16 +244,16 @@ faqs:
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="status-pill" id="am-flow-status">Enter values to see the mix.</div>
+                    <div class="status-pill" id="am-flow-status">{{ pageMessages.status.prompt }}</div>
 
                     <h3 class="subhead">Mixed-air state</h3>
-                    <div class="ps-row primary"><span class="ps-label" data-us="Dry-bulb (°F)"          data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span>          <span class="ps-value muted" id="am-flow-ma-tdb">—</span></div>
-                    <div class="ps-row"><span class="ps-label" data-us="Wet-bulb (°F)"          data-metric="Wet-bulb (°C)">Wet-bulb (°F)</span>          <span class="ps-value muted" id="am-flow-ma-wb">—</span></div>
-                    <div class="ps-row"><span class="ps-label" data-us="Dew point (°F)"         data-metric="Dew point (°C)">Dew point (°F)</span>         <span class="ps-value muted" id="am-flow-ma-dp">—</span></div>
-                    <div class="ps-row"><span class="ps-label" data-us="Humidity ratio (gr/lb)" data-metric="Humidity ratio (g/kg)">Humidity ratio (gr/lb)</span> <span class="ps-value muted" id="am-flow-ma-w">—</span></div>
+                    <div class="ps-row primary"><span class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}">Dry-bulb (°F)</span>          <span class="ps-value muted" id="am-flow-ma-tdb">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.wetBulb.us }}" data-metric="{{ pageMessages.unitText.wetBulb.metric }}">Wet-bulb (°F)</span>          <span class="ps-value muted" id="am-flow-ma-wb">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.dewPoint.us }}" data-metric="{{ pageMessages.unitText.dewPoint.metric }}">Dew point (°F)</span>         <span class="ps-value muted" id="am-flow-ma-dp">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.humidityRatio.us }}" data-metric="{{ pageMessages.unitText.humidityRatio.metric }}">Humidity ratio (gr/lb)</span> <span class="ps-value muted" id="am-flow-ma-w">—</span></div>
                     <div class="ps-row"><span class="ps-label">Rel. humidity (%)</span>          <span class="ps-value muted" id="am-flow-ma-rh">—</span></div>
-                    <div class="ps-row"><span class="ps-label" data-us="Enthalpy (Btu/lb)"      data-metric="Enthalpy (kJ/kg)">Enthalpy (Btu/lb)</span>      <span class="ps-value muted" id="am-flow-ma-h">—</span></div>
-                    <div class="ps-row"><span class="ps-label" data-us="Specific volume (ft³/lb)" data-metric="Specific volume (m³/kg)">Specific volume (ft³/lb)</span> <span class="ps-value muted" id="am-flow-ma-v">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.enthalpy.us }}" data-metric="{{ pageMessages.unitText.enthalpy.metric }}">Enthalpy (Btu/lb)</span>      <span class="ps-value muted" id="am-flow-ma-h">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.specificVolume.us }}" data-metric="{{ pageMessages.unitText.specificVolume.metric }}">Specific volume (ft³/lb)</span> <span class="ps-value muted" id="am-flow-ma-v">—</span></div>
 
                     <div class="btn-row">
                         <button class="copy-btn" id="am-flow-copy">Copy mixed state</button>
@@ -196,9 +266,9 @@ faqs:
                 <h2 class="ps-section-label">Worked example</h2>
                 <p class="ref-note worked-intro">
                     Summer AHU with energy recovery — three streams meeting in the mixing plenum.
-                    Outdoor at <span data-us="1000 CFM / 95 °F / 75 °F WB" data-metric="1700 m³/h / 35 °C / 23.9 °C WB">1000 CFM / 95 °F / 75 °F WB</span>,
-                    return at <span data-us="3000 CFM / 75 °F / 50 % RH" data-metric="5100 m³/h / 23.9 °C / 50 % RH">3000 CFM / 75 °F / 50 % RH</span>,
-                    ERV exhaust bleed at <span data-us="500 CFM / 60 °F / 55 °F WB" data-metric="850 m³/h / 15.6 °C / 12.8 °C WB">500 CFM / 60 °F / 55 °F WB</span>.
+                    Outdoor at <span data-us="{{ pageMessages.unitText.exampleOutdoor.us }}" data-metric="{{ pageMessages.unitText.exampleOutdoor.metric }}">1000 CFM / 95 °F / 75 °F WB</span>,
+                    return at <span data-us="{{ pageMessages.unitText.exampleReturn.us }}" data-metric="{{ pageMessages.unitText.exampleReturn.metric }}">3000 CFM / 75 °F / 50 % RH</span>,
+                    ERV exhaust bleed at <span data-us="{{ pageMessages.unitText.exampleErv.us }}" data-metric="{{ pageMessages.unitText.exampleErv.metric }}">500 CFM / 60 °F / 55 °F WB</span>.
                 </p>
                 <ol class="ref-note worked-list">
                     <li>For each stream, solve the state (the engine returns specific volume
@@ -237,7 +307,7 @@ faqs:
                         <input class="ps-input" type="number" id="am-frac-s1-w" step="1" min="0" max="100" value="22">
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="am-frac-s1-tdb">Dry-bulb (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="am-frac-s1-tdb">Dry-bulb (°F)</label>
                         <input class="ps-input" type="number" id="am-frac-s1-tdb" step="0.5" min="-50" max="200" value="95">
                     </div>
                     <div class="ps-row">
@@ -262,7 +332,7 @@ faqs:
                         <input class="ps-input" type="number" id="am-frac-s2-w" step="1" min="0" max="100" value="67">
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="am-frac-s2-tdb">Dry-bulb (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="am-frac-s2-tdb">Dry-bulb (°F)</label>
                         <input class="ps-input" type="number" id="am-frac-s2-tdb" step="0.5" min="-50" max="200" value="75">
                     </div>
                     <div class="ps-row">
@@ -287,7 +357,7 @@ faqs:
                         <input class="ps-input" type="number" id="am-frac-s3-w" step="1" min="0" max="100" value="11">
                     </div>
                     <div class="ps-row">
-                        <label class="ps-label" data-us="Dry-bulb (°F)" data-metric="Dry-bulb (°C)" for="am-frac-s3-tdb">Dry-bulb (°F)</label>
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="am-frac-s3-tdb">Dry-bulb (°F)</label>
                         <input class="ps-input" type="number" id="am-frac-s3-tdb" step="0.5" min="-50" max="200" value="60">
                     </div>
                     <div class="ps-row">
@@ -315,16 +385,16 @@ faqs:
 
                 <section role="status" aria-atomic="false">
                     <h2 class="ps-section-label">Output</h2>
-                    <div class="status-pill" id="am-frac-status">Enter values to see the mix.</div>
+                    <div class="status-pill" id="am-frac-status">{{ pageMessages.status.prompt }}</div>
 
                     <h3 class="subhead">Mixed-air state</h3>
-                    <div class="ps-row primary"><span class="ps-label" data-us="Dry-bulb (°F)"          data-metric="Dry-bulb (°C)">Dry-bulb (°F)</span>          <span class="ps-value muted" id="am-frac-ma-tdb">—</span></div>
-                    <div class="ps-row"><span class="ps-label" data-us="Wet-bulb (°F)"          data-metric="Wet-bulb (°C)">Wet-bulb (°F)</span>          <span class="ps-value muted" id="am-frac-ma-wb">—</span></div>
-                    <div class="ps-row"><span class="ps-label" data-us="Dew point (°F)"         data-metric="Dew point (°C)">Dew point (°F)</span>         <span class="ps-value muted" id="am-frac-ma-dp">—</span></div>
-                    <div class="ps-row"><span class="ps-label" data-us="Humidity ratio (gr/lb)" data-metric="Humidity ratio (g/kg)">Humidity ratio (gr/lb)</span> <span class="ps-value muted" id="am-frac-ma-w">—</span></div>
+                    <div class="ps-row primary"><span class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}">Dry-bulb (°F)</span>          <span class="ps-value muted" id="am-frac-ma-tdb">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.wetBulb.us }}" data-metric="{{ pageMessages.unitText.wetBulb.metric }}">Wet-bulb (°F)</span>          <span class="ps-value muted" id="am-frac-ma-wb">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.dewPoint.us }}" data-metric="{{ pageMessages.unitText.dewPoint.metric }}">Dew point (°F)</span>         <span class="ps-value muted" id="am-frac-ma-dp">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.humidityRatio.us }}" data-metric="{{ pageMessages.unitText.humidityRatio.metric }}">Humidity ratio (gr/lb)</span> <span class="ps-value muted" id="am-frac-ma-w">—</span></div>
                     <div class="ps-row"><span class="ps-label">Rel. humidity (%)</span>          <span class="ps-value muted" id="am-frac-ma-rh">—</span></div>
-                    <div class="ps-row"><span class="ps-label" data-us="Enthalpy (Btu/lb)"      data-metric="Enthalpy (kJ/kg)">Enthalpy (Btu/lb)</span>      <span class="ps-value muted" id="am-frac-ma-h">—</span></div>
-                    <div class="ps-row"><span class="ps-label" data-us="Specific volume (ft³/lb)" data-metric="Specific volume (m³/kg)">Specific volume (ft³/lb)</span> <span class="ps-value muted" id="am-frac-ma-v">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.enthalpy.us }}" data-metric="{{ pageMessages.unitText.enthalpy.metric }}">Enthalpy (Btu/lb)</span>      <span class="ps-value muted" id="am-frac-ma-h">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.specificVolume.us }}" data-metric="{{ pageMessages.unitText.specificVolume.metric }}">Specific volume (ft³/lb)</span> <span class="ps-value muted" id="am-frac-ma-v">—</span></div>
 
                     <div class="btn-row">
                         <button class="copy-btn" id="am-frac-copy">Copy mixed state</button>
@@ -337,7 +407,7 @@ faqs:
                 <h2 class="ps-section-label">Worked example</h2>
                 <p class="ref-note worked-intro">
                     Same three streams expressed as mass fractions —
-                    <span data-us="22 % / 67 % / 11 %" data-metric="22 % / 67 % / 11 %">22 % / 67 % / 11 %</span>.
+                    <span data-us="{{ pageMessages.unitText.exampleFractions.us }}" data-metric="{{ pageMessages.unitText.exampleFractions.metric }}">22 % / 67 % / 11 %</span>.
                 </p>
                 <ol class="ref-note worked-list">
                     <li>Skip the volumetric-to-mass step — fractions are already in mass units.</li>
@@ -415,8 +485,44 @@ faqs:
         const vU    = ()      => U.suffix.specificVolume();
 
         // Define-by catalog — rebuilt on unitschange so labels and input
-        // steps follow the active unit system. See /scripts/psy-widget.js.
-        let SECOND_PROP = PsyWidget.buildSecondProp();
+        // steps follow the active unit system. Keep the widget's machine
+        // fields and replace only its user-visible labels.
+        function buildSecondProp() {
+            const base = PsyWidget.buildSecondProp();
+            return {
+                rh: { ...base.rh, label: CFI18n.page('defineBy.rh') },
+                wb: { ...base.wb, label: CFI18n.page('defineBy.wb', { unit: U.suffix.temp() }) },
+                dp: { ...base.dp, label: CFI18n.page('defineBy.dp', { unit: U.suffix.temp() }) },
+                w:  { ...base.w,  label: CFI18n.page('defineBy.w', { unit: U.suffix.humidityRatio() }) },
+                h:  { ...base.h,  label: CFI18n.page('defineBy.h', { unit: U.suffix.enthalpy() }) }
+            };
+        }
+
+        let SECOND_PROP = buildSecondProp();
+
+        // Exact machine-error adapter. Unknown engine text fails closed so a
+        // future English message cannot silently surface in another locale.
+        const PSYCHRO_ERROR_KEYS = Object.freeze({
+            'Enter numeric values.': 'numeric',
+            'Relative humidity can’t be negative.': 'rhNegative',
+            'Relative humidity can’t exceed 100%.': 'rhAbove100',
+            'Wet-bulb can’t exceed dry-bulb.': 'wetBulbAboveDryBulb',
+            'Dew point can’t exceed dry-bulb.': 'dewPointAboveDryBulb',
+            'Humidity ratio can’t be negative.': 'humidityRatioNegative',
+            'Enthalpy is below dry air at this dry-bulb — impossible.': 'enthalpyBelowDryAir',
+            'Pick a property to define the point by.': 'propertyRequired',
+            'That point is past saturation (RH over 100%) — impossible.': 'rhPastSaturation',
+            'That wet-bulb is past saturation — more moisture than air can hold at this dry-bulb and pressure.': 'wetBulbPastSaturation',
+            'That dew point is past saturation — more moisture than air can hold at this dry-bulb and pressure.': 'dewPointPastSaturation',
+            'That humidity ratio is past saturation — more moisture than air can hold at this dry-bulb and pressure.': 'humidityRatioPastSaturation',
+            'That enthalpy is past saturation — more moisture than air can hold at this dry-bulb and pressure.': 'enthalpyPastSaturation'
+        });
+
+        function psychroErrorMessage(error) {
+            const key = PSYCHRO_ERROR_KEYS[error];
+            if (!key) throw new Error('Uncataloged psychrometric engine error.');
+            return CFI18n.page('errors.psychro.' + key);
+        }
 
         function quantityForMode(mode) {
             switch (mode) {
@@ -472,7 +578,7 @@ faqs:
             const mode = document.getElementById(prefix + '-mode').value;
             const secD = parseFloat(document.getElementById(prefix + '-second').value);
             if (!isFinite(tdbD) || !isFinite(secD)) {
-                return { ok: false, error: 'Enter dry-bulb and second value.' };
+                return { ok: false, pageError: 'errors.streamValuesRequired' };
             }
             return Psychro.solveState(mode, U.toCanonical.temp(tdbD), PsyWidget.secondToCanonical(mode, secD), P);
         }
@@ -484,7 +590,7 @@ faqs:
             // than throwing on the undefined Psychro global inside readStream.
             if (typeof Psychro === 'undefined') {
                 clearOutputs(tab);
-                setStatus(tab, 'Psychrometric engine unavailable — reload the page.', 'error');
+                setStatus(tab, CFI18n.page('errors.engineUnavailable'), 'error');
                 return;
             }
             const P = pressure();
@@ -495,14 +601,16 @@ faqs:
             STREAMS.forEach((sn, i) => {
                 const prefix = 'am-' + tab + '-' + sn;
                 if (!states[i].ok) {
-                    setStreamErr(prefix, states[i].error);
+                    setStreamErr(prefix, states[i].pageError
+                        ? CFI18n.page(states[i].pageError)
+                        : psychroErrorMessage(states[i].error));
                     anyErr = true;
                 } else {
                     setStreamErr(prefix, '');
                 }
             });
             if (anyErr) {
-                setStatus(tab, 'Fix the stream input(s) above to see the mix.', 'warn');
+                setStatus(tab, CFI18n.page('status.fixStreams'), 'warn');
                 clearOutputs(tab);
                 return;
             }
@@ -510,12 +618,12 @@ faqs:
             // Per-stream weight → mass.
             const wRaw = STREAMS.map(sn => parseFloat(document.getElementById('am-' + tab + '-' + sn + '-w').value));
             if (!wRaw.every(isFinite)) {
-                setStatus(tab, 'Enter a weight for each stream.', 'warn');
+                setStatus(tab, CFI18n.page('status.weightRequired'), 'warn');
                 clearOutputs(tab);
                 return;
             }
             if (wRaw.some(w => w < 0)) {
-                setStatus(tab, 'Weights can’t be negative.', 'warn');
+                setStatus(tab, CFI18n.page('status.weightNegative'), 'warn');
                 clearOutputs(tab);
                 return;
             }
@@ -529,7 +637,7 @@ faqs:
                 // Fractions must sum to 100 within ±0.1.
                 const sum = wRaw.reduce((a, b) => a + b, 0);
                 if (Math.abs(sum - 100) > 0.1) {
-                    setStatus(tab, `Fractions sum to ${sum.toFixed(1)} %; must sum to 100 % (±0.1).`, 'warn');
+                    setStatus(tab, CFI18n.page('status.fractionSum', { sum: sum.toFixed(1) }), 'warn');
                     clearOutputs(tab);
                     return;
                 }
@@ -538,7 +646,7 @@ faqs:
 
             const M = m.reduce((a, b) => a + b, 0);
             if (!(M > 0)) {
-                setStatus(tab, 'Total mass flow is zero — no mix to compute.', 'warn');
+                setStatus(tab, CFI18n.page('status.zeroMassFlow'), 'warn');
                 clearOutputs(tab);
                 return;
             }
@@ -550,14 +658,15 @@ faqs:
 
             const maState = Psychro.buildState(T_mix, W_mix, P);
             if (!maState || !isFinite(maState.h)) {
-                setStatus(tab, 'Mixed state out of range — check inputs.', 'error');
+                setStatus(tab, CFI18n.page('status.mixedOutOfRange'), 'error');
                 clearOutputs(tab);
                 return;
             }
 
-            setStatus(tab, 'Mixed state computed at '
-                + U.display.pressure(P).toFixed(U.current() === 'us' ? 2 : 1)
-                + ' ' + U.suffix.pressure() + '.', 'ok');
+            setStatus(tab, CFI18n.page('status.computed', {
+                pressure: U.display.pressure(P).toFixed(U.current() === 'us' ? 2 : 1),
+                unit: U.suffix.pressure()
+            }), 'ok');
             setLive('am-' + tab + '-ma-tdb', dispT(maState.tdb) + ' ' + tU());
             setLive('am-' + tab + '-ma-wb',  isFinite(maState.twb) ? dispT(maState.twb) + ' ' + tU() : '—');
             setLive('am-' + tab + '-ma-dp',  isFinite(maState.tdp) ? dispT(maState.tdp) + ' ' + tU() : '—');
@@ -624,7 +733,7 @@ faqs:
                     if (q) rewriteInput(prefix + '-second', q, oldUnits, newUnits);
                 }
             }
-            SECOND_PROP = PsyWidget.buildSecondProp();
+            SECOND_PROP = buildSecondProp();
             calcAll();
         });
 

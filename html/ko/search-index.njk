@@ -1,0 +1,15 @@
+---
+permalink: /ko/search-index.json
+eleventyExcludeFromCollections: true
+---
+[
+{% for page in collections.searchPages | localeItems(locale) %}
+    {
+        "title": {{ page.data.title | cleanTitle | dump | safe }},
+        "description": {{ (page.data.description or "") | dump | safe }},
+        "url": {{ page.data.canonical | canonicalPath | dump | safe }},
+        "section": {{ (page.data.nav or "") | dump | safe }},
+        "keywords": {{ (page.data.keywords or "") | dump | safe }}
+    }{% if not loop.last %},{% endif %}
+{% endfor %}
+]

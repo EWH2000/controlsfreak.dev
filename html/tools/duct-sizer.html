@@ -4,10 +4,48 @@ description: Ductulator math for the field — friction rate and velocity from C
 canonical: https://controlsfreak.dev/tools/duct-sizer.html
 nav: tools
 category: airflow
+pageMessages:
+    copy:
+        results: 'Copy results'
+        diameter: 'Copy diameter'
+        airflow: 'Copy CFM'
+        equivalentDiameter: 'Copy De'
+        side: 'Copy side'
+    errors:
+        roundInputs: 'This direction needs the airflow and the diameter.'
+        noMeasuredAirflow: 'No airflow, no friction — enter the CFM the duct is actually moving (a traverse or a BAS trend is the usual source).'
+        diameterRange: 'Diameter is outside the 3–120 in. range this chart math is built for.'
+        turbulentMeasured: 'Re ≈ {re} — laminar/transitional territory, not real duct flow. The chart math assumes turbulent flow; check the CFM and the diameter.'
+        diameterInputs: 'This direction needs the airflow and a target friction rate.'
+        noDesignAirflow: 'No airflow, nothing to size — enter the design CFM.'
+        frictionPositive: 'Target friction has to be positive — 0.08 in. w.c. per 100 ft is the classic starting point.'
+        diameterNoSolution: 'No round duct in the 3–120 in. range lands on {friction} in/100 ft at {airflow} CFM — check both numbers.'
+        turbulentAirflowTarget: 'The solve lands in laminar/transitional territory (Re below 4000) — not real duct flow. Check the CFM and the target.'
+        airflowInputs: 'This direction needs the diameter and a target friction rate.'
+        airflowNoSolution: 'No velocity in range gets a {diameter} in. duct to {friction} in/100 ft — check both numbers.'
+        turbulentDiameterTarget: 'The solve lands in laminar/transitional territory (Re below 4000) — not real duct flow. Check the diameter and the target.'
+        velocityInputs: 'This direction needs the airflow and a target velocity.'
+        velocityPositive: 'Target velocity has to be positive — mains are conventionally sized near 1,000–1,500 FPM, branches near 600–900.'
+        velocityDiameterRange: 'That pairing wants a {diameter} in. duct — outside the 3–120 in. range this chart math is built for.'
+        turbulentVelocityTarget: 'Re ≈ {re} — laminar/transitional territory, not real duct flow. Check the CFM and the target velocity.'
+        rectangularInputs: 'Enter the rectangular width and height.'
+        rectangularPositive: 'Duct sides must be greater than 0.'
+        missingSideInputs: 'Enter the round diameter to match and the side you know.'
+        sizesPositive: 'Sizes must be greater than 0.'
+        missingSideNoSolution: 'No second side between 1 and 300 in. pairs with a {known} in. side to make De = {diameter} in. — the known side is either far too small for that round, or already past it.'
+        velocityComparison: 'The velocity comparison needs a positive CFM — or leave it blank to skip it.'
+    formula:
+        friction: 'A = π × ({diameter} ÷ 24)² = {area} ft² · V = {airflow} ÷ {area} = {velocity} FPM · friction = {friction} in. w.c. per 100 ft (f = {factor})'
+        diameter: 'D = {diameter} in. (bisected so {airflow} CFM lands on {friction} in/100 ft) · V = {airflow} ÷ {area} = {velocity} FPM'
+        airflow: 'V = {velocity} FPM (bisected so a {diameter} in. duct lands on {friction} in/100 ft) · Q = {velocity} × {area} = {airflow} CFM'
+        velocity: 'A = {airflow} ÷ {velocity} = {area} ft² · D = 24 × √({area} ÷ π) = {diameter} in. · friction = {friction} in. w.c. per 100 ft'
+        equivalentDiameter: 'De = 1.30 × ({width} × {height})^0.625 ÷ ({width} + {height})^0.25 = 1.30 × {powerArea} ÷ {powerPerimeter} = {diameter} in.'
+        missingSide: 'other side = {side} in. (bisected on the Huebscher formula) · check: De({known} × {side}) = {diameter} in.'
+        velocityComparison: ' · A rect = {rectArea} ft² vs A round = {roundArea} ft² · V = {airflow} ÷ {rectArea} = {rectVelocity} vs {airflow} ÷ {roundArea} = {roundVelocity} FPM'
 keywords: ductulator duct sizer friction rate friction loss in wg per 100 ft round duct velocity fpm equivalent diameter huebscher rectangular to round altshul tsal high static undersized duct
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -325,65 +363,77 @@ keywords: ductulator duct sizer friction rate friction loss in wg per 100 ft rou
             const vel = snap(parseFloat(el.vel.value), 0);
 
             if (mode === 'friction') {
-                el.copy.textContent = 'Copy results';
+                el.copy.textContent = CFI18n.page('copy.results');
                 copyIds = ['dz-out-vel', 'dz-out-fr'];
-                if (!isFinite(cfm) || !isFinite(dia)) { muteRound('This direction needs the airflow and the diameter.'); return; }
-                if (cfm <= 0) { muteRound('No airflow, no friction — enter the CFM the duct is actually moving (a traverse or a BAS trend is the usual source).'); return; }
-                if (dia < DUCT_DIA_MIN || dia > DUCT_DIA_MAX) { muteRound('Diameter is outside the 3–120 in. range this chart math is built for.'); return; }
+                if (!isFinite(cfm) || !isFinite(dia)) { muteRound(CFI18n.page('errors.roundInputs')); return; }
+                if (cfm <= 0) { muteRound(CFI18n.page('errors.noMeasuredAirflow')); return; }
+                if (dia < DUCT_DIA_MIN || dia > DUCT_DIA_MAX) { muteRound(CFI18n.page('errors.diameterRange')); return; }
                 const area = snap(ductArea(dia), 3);
                 const v = snap(cfm / area, 0);
                 const r = ductFriction(dia, v);
-                if (r.re < 4000) { muteRound('Re ≈ ' + tidy(r.re, 0) + ' — laminar/transitional territory, not real duct flow. The chart math assumes turbulent flow; check the CFM and the diameter.'); return; }
+                if (r.re < 4000) { muteRound(CFI18n.page('errors.turbulentMeasured', { re: tidy(r.re, 0) })); return; }
                 setValue(el.out_vel, tidy(v, 0) + ' FPM', true);
                 setValue(el.out_ms, tidy(v * FPM_TO_MS, 2) + ' m/s', true);
                 setValue(el.out_fr, frText(r.dp100) + ' in/100 ft', true);
-                el.formula.textContent = 'A = π × (' + tidy(dia, 1) + ' ÷ 24)² = ' + tidy(area, 3) + ' ft² · V = ' + tidy(cfm, 0) + ' ÷ ' + tidy(area, 3) + ' = ' + tidy(v, 0) + ' FPM · friction = ' + frText(r.dp100) + ' in. w.c. per 100 ft (f = ' + tidy(r.f, 3) + ')';
+                el.formula.textContent = CFI18n.page('formula.friction', {
+                    diameter: tidy(dia, 1), area: tidy(area, 3), airflow: tidy(cfm, 0),
+                    velocity: tidy(v, 0), friction: frText(r.dp100), factor: tidy(r.f, 3)
+                });
             } else if (mode === 'dia') {
-                el.copy.textContent = 'Copy diameter';
+                el.copy.textContent = CFI18n.page('copy.diameter');
                 copyIds = ['dz-out-dia'];
-                if (!isFinite(cfm) || !isFinite(fr)) { muteRound('This direction needs the airflow and a target friction rate.'); return; }
-                if (cfm <= 0) { muteRound('No airflow, nothing to size — enter the design CFM.'); return; }
-                if (fr <= 0) { muteRound('Target friction has to be positive — 0.08 in. w.c. per 100 ft is the classic starting point.'); return; }
+                if (!isFinite(cfm) || !isFinite(fr)) { muteRound(CFI18n.page('errors.diameterInputs')); return; }
+                if (cfm <= 0) { muteRound(CFI18n.page('errors.noDesignAirflow')); return; }
+                if (fr <= 0) { muteRound(CFI18n.page('errors.frictionPositive')); return; }
                 const dRaw = ductDiaForFriction(cfm, fr);
-                if (!isFinite(dRaw)) { muteRound('No round duct in the 3–120 in. range lands on ' + tidy(fr, 2) + ' in/100 ft at ' + tidy(cfm, 0) + ' CFM — check both numbers.'); return; }
+                if (!isFinite(dRaw)) { muteRound(CFI18n.page('errors.diameterNoSolution', { friction: tidy(fr, 2), airflow: tidy(cfm, 0) })); return; }
                 const d = snap(dRaw, 1);
                 const area = snap(ductArea(d), 3);
                 const v = snap(cfm / area, 0);
-                if (ductFriction(d, v).re < 4000) { muteRound('The solve lands in laminar/transitional territory (Re below 4000) — not real duct flow. Check the CFM and the target.'); return; }
+                if (ductFriction(d, v).re < 4000) { muteRound(CFI18n.page('errors.turbulentAirflowTarget')); return; }
                 setValue(el.out_dia, tidy(d, 1) + ' in.', true);
                 setValue(el.out_vel, tidy(v, 0) + ' FPM', true);
                 setValue(el.out_ms, tidy(v * FPM_TO_MS, 2) + ' m/s', true);
-                el.formula.textContent = 'D = ' + tidy(d, 1) + ' in. (bisected so ' + tidy(cfm, 0) + ' CFM lands on ' + tidy(fr, 2) + ' in/100 ft) · V = ' + tidy(cfm, 0) + ' ÷ ' + tidy(area, 3) + ' = ' + tidy(v, 0) + ' FPM';
+                el.formula.textContent = CFI18n.page('formula.diameter', {
+                    diameter: tidy(d, 1), airflow: tidy(cfm, 0), friction: tidy(fr, 2),
+                    area: tidy(area, 3), velocity: tidy(v, 0)
+                });
             } else if (mode === 'cfm') {
-                el.copy.textContent = 'Copy CFM';
+                el.copy.textContent = CFI18n.page('copy.airflow');
                 copyIds = ['dz-out-cfm'];
-                if (!isFinite(dia) || !isFinite(fr)) { muteRound('This direction needs the diameter and a target friction rate.'); return; }
-                if (dia < DUCT_DIA_MIN || dia > DUCT_DIA_MAX) { muteRound('Diameter is outside the 3–120 in. range this chart math is built for.'); return; }
-                if (fr <= 0) { muteRound('Target friction has to be positive — 0.08 in. w.c. per 100 ft is the classic starting point.'); return; }
+                if (!isFinite(dia) || !isFinite(fr)) { muteRound(CFI18n.page('errors.airflowInputs')); return; }
+                if (dia < DUCT_DIA_MIN || dia > DUCT_DIA_MAX) { muteRound(CFI18n.page('errors.diameterRange')); return; }
+                if (fr <= 0) { muteRound(CFI18n.page('errors.frictionPositive')); return; }
                 const vRaw = ductVelForFriction(dia, fr);
-                if (!isFinite(vRaw)) { muteRound('No velocity in range gets a ' + tidy(dia, 1) + ' in. duct to ' + tidy(fr, 2) + ' in/100 ft — check both numbers.'); return; }
+                if (!isFinite(vRaw)) { muteRound(CFI18n.page('errors.airflowNoSolution', { diameter: tidy(dia, 1), friction: tidy(fr, 2) })); return; }
                 const v = snap(vRaw, 0);
-                if (ductFriction(dia, v).re < 4000) { muteRound('The solve lands in laminar/transitional territory (Re below 4000) — not real duct flow. Check the diameter and the target.'); return; }
+                if (ductFriction(dia, v).re < 4000) { muteRound(CFI18n.page('errors.turbulentDiameterTarget')); return; }
                 const area = snap(ductArea(dia), 3);
                 const q = snap(v * area, 0);
                 setValue(el.out_cfm, tidy(q, 0) + ' CFM', true);
                 setValue(el.out_vel, tidy(v, 0) + ' FPM', true);
                 setValue(el.out_ms, tidy(v * FPM_TO_MS, 2) + ' m/s', true);
-                el.formula.textContent = 'V = ' + tidy(v, 0) + ' FPM (bisected so a ' + tidy(dia, 1) + ' in. duct lands on ' + tidy(fr, 2) + ' in/100 ft) · Q = ' + tidy(v, 0) + ' × ' + tidy(area, 3) + ' = ' + tidy(q, 0) + ' CFM';
+                el.formula.textContent = CFI18n.page('formula.airflow', {
+                    velocity: tidy(v, 0), diameter: tidy(dia, 1), friction: tidy(fr, 2),
+                    area: tidy(area, 3), airflow: tidy(q, 0)
+                });
             } else {
-                el.copy.textContent = 'Copy diameter';
+                el.copy.textContent = CFI18n.page('copy.diameter');
                 copyIds = ['dz-out-dia'];
-                if (!isFinite(cfm) || !isFinite(vel)) { muteRound('This direction needs the airflow and a target velocity.'); return; }
-                if (cfm <= 0) { muteRound('No airflow, nothing to size — enter the design CFM.'); return; }
-                if (vel <= 0) { muteRound('Target velocity has to be positive — mains are conventionally sized near 1,000–1,500 FPM, branches near 600–900.'); return; }
+                if (!isFinite(cfm) || !isFinite(vel)) { muteRound(CFI18n.page('errors.velocityInputs')); return; }
+                if (cfm <= 0) { muteRound(CFI18n.page('errors.noDesignAirflow')); return; }
+                if (vel <= 0) { muteRound(CFI18n.page('errors.velocityPositive')); return; }
                 const area = snap(cfm / vel, 3);
                 const d = snap(24 * Math.sqrt(area / Math.PI), 1);
-                if (d < DUCT_DIA_MIN || d > DUCT_DIA_MAX) { muteRound('That pairing wants a ' + tidy(d, 1) + ' in. duct — outside the 3–120 in. range this chart math is built for.'); return; }
+                if (d < DUCT_DIA_MIN || d > DUCT_DIA_MAX) { muteRound(CFI18n.page('errors.velocityDiameterRange', { diameter: tidy(d, 1) })); return; }
                 const r = ductFriction(d, vel);
-                if (r.re < 4000) { muteRound('Re ≈ ' + tidy(r.re, 0) + ' — laminar/transitional territory, not real duct flow. Check the CFM and the target velocity.'); return; }
+                if (r.re < 4000) { muteRound(CFI18n.page('errors.turbulentVelocityTarget', { re: tidy(r.re, 0) })); return; }
                 setValue(el.out_dia, tidy(d, 1) + ' in.', true);
                 setValue(el.out_fr, frText(r.dp100) + ' in/100 ft', true);
-                el.formula.textContent = 'A = ' + tidy(cfm, 0) + ' ÷ ' + tidy(vel, 0) + ' = ' + tidy(area, 3) + ' ft² · D = 24 × √(' + tidy(area, 3) + ' ÷ π) = ' + tidy(d, 1) + ' in. · friction = ' + frText(r.dp100) + ' in. w.c. per 100 ft';
+                el.formula.textContent = CFI18n.page('formula.velocity', {
+                    airflow: tidy(cfm, 0), velocity: tidy(vel, 0), area: tidy(area, 3),
+                    diameter: tidy(d, 1), friction: frText(r.dp100)
+                });
             }
             el.callout.hidden = true;
         }
@@ -408,7 +458,7 @@ keywords: ductulator duct sizer friction rate friction loss in wg per 100 ft rou
             el.r_row_known.classList.toggle('hidden', mode === 'de');
             el.r_row_out_de.classList.toggle('hidden', mode === 'side');
             el.r_row_out_side.classList.toggle('hidden', mode === 'de');
-            el.r_copy.textContent = mode === 'de' ? 'Copy De' : 'Copy side';
+            el.r_copy.textContent = CFI18n.page(mode === 'de' ? 'copy.equivalentDiameter' : 'copy.side');
             rCopyId = mode === 'de' ? 'dz-r-de' : 'dz-r-side';
 
             const w = snap(parseFloat(el.r_w.value), 1);
@@ -420,8 +470,8 @@ keywords: ductulator duct sizer friction rate friction loss in wg per 100 ft rou
 
             let de, rectA, rectB, formula;
             if (mode === 'de') {
-                if (!isFinite(w) || !isFinite(h)) { muteRect('Enter the rectangular width and height.'); return; }
-                if (w <= 0 || h <= 0) { muteRect('Duct sides must be greater than 0.'); return; }
+                if (!isFinite(w) || !isFinite(h)) { muteRect(CFI18n.page('errors.rectangularInputs')); return; }
+                if (w <= 0 || h <= 0) { muteRect(CFI18n.page('errors.rectangularPositive')); return; }
                 // Chain De off displayed intermediates so the formula
                 // row reproduces by hand.
                 const p1 = snap(Math.pow(w * h, 0.625), 2);
@@ -429,19 +479,24 @@ keywords: ductulator duct sizer friction rate friction loss in wg per 100 ft rou
                 de = snap(1.30 * p1 / p2, 1);
                 rectA = w; rectB = h;
                 setValue(el.r_de, tidy(de, 1) + ' in.', true);
-                formula = 'De = 1.30 × (' + tidy(w, 1) + ' × ' + tidy(h, 1) + ')^0.625 ÷ (' + tidy(w, 1) + ' + ' + tidy(h, 1) + ')^0.25 = 1.30 × ' + tidy(p1, 2) + ' ÷ ' + tidy(p2, 2) + ' = ' + tidy(de, 1) + ' in.';
+                formula = CFI18n.page('formula.equivalentDiameter', {
+                    width: tidy(w, 1), height: tidy(h, 1), powerArea: tidy(p1, 2),
+                    powerPerimeter: tidy(p2, 2), diameter: tidy(de, 1)
+                });
             } else {
-                if (!isFinite(deIn) || !isFinite(known)) { muteRect('Enter the round diameter to match and the side you know.'); return; }
-                if (deIn <= 0 || known <= 0) { muteRect('Sizes must be greater than 0.'); return; }
+                if (!isFinite(deIn) || !isFinite(known)) { muteRect(CFI18n.page('errors.missingSideInputs')); return; }
+                if (deIn <= 0 || known <= 0) { muteRect(CFI18n.page('errors.sizesPositive')); return; }
                 const bRaw = huebscherSide(deIn, known);
-                if (!isFinite(bRaw)) { muteRect('No second side between 1 and 300 in. pairs with a ' + tidy(known, 1) + ' in. side to make De = ' + tidy(deIn, 1) + ' in. — the known side is either far too small for that round, or already past it.'); return; }
+                if (!isFinite(bRaw)) { muteRect(CFI18n.page('errors.missingSideNoSolution', { known: tidy(known, 1), diameter: tidy(deIn, 1) })); return; }
                 const b = snap(bRaw, 1);
                 const p1 = snap(Math.pow(known * b, 0.625), 2);
                 const p2 = snap(Math.pow(known + b, 0.25), 2);
                 de = snap(1.30 * p1 / p2, 1);
                 rectA = known; rectB = b;
                 setValue(el.r_side, tidy(b, 1) + ' in.', true);
-                formula = 'other side = ' + tidy(b, 1) + ' in. (bisected on the Huebscher formula) · check: De(' + tidy(known, 1) + ' × ' + tidy(b, 1) + ') = ' + tidy(de, 1) + ' in.';
+                formula = CFI18n.page('formula.missingSide', {
+                    side: tidy(b, 1), known: tidy(known, 1), diameter: tidy(de, 1)
+                });
             }
 
             let showCompare = false;
@@ -456,7 +511,10 @@ keywords: ductulator duct sizer friction rate friction loss in wg per 100 ft rou
                 if (isFinite(rv) && isFinite(cv)) {
                     setValue(el.r_rect_v, tidy(rv, 0) + ' FPM', true);
                     setValue(el.r_round_v, tidy(cv, 0) + ' FPM', true);
-                    formula += ' · A rect = ' + tidy(ra, 2) + ' ft² vs A round = ' + tidy(ca, 2) + ' ft² · V = ' + tidy(cfm, 0) + ' ÷ ' + tidy(ra, 2) + ' = ' + tidy(rv, 0) + ' vs ' + tidy(cfm, 0) + ' ÷ ' + tidy(ca, 2) + ' = ' + tidy(cv, 0) + ' FPM';
+                    formula += CFI18n.page('formula.velocityComparison', {
+                        rectArea: tidy(ra, 2), roundArea: tidy(ca, 2), airflow: tidy(cfm, 0),
+                        rectVelocity: tidy(rv, 0), roundVelocity: tidy(cv, 0)
+                    });
                     showCompare = true;
                 }
             }
@@ -469,7 +527,7 @@ keywords: ductulator duct sizer friction rate friction loss in wg per 100 ft rou
             el.r_formula.textContent = formula;
 
             if (cfm !== null && !(isFinite(cfm) && cfm > 0)) {
-                el.r_callout.textContent = 'The velocity comparison needs a positive CFM — or leave it blank to skip it.';
+                el.r_callout.textContent = CFI18n.page('errors.velocityComparison');
                 el.r_callout.hidden = false;
             } else {
                 el.r_callout.hidden = true;

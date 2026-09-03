@@ -1,0 +1,292 @@
+---
+title: 강제순환식 공조 — 현장 참고 자료, 도구 및 학습 — controlsfreak.dev
+description: 강제순환식 공조 현장 참고 자료입니다. 공기조화기에서 VAV 박스까지의 학습 자료와 시스템 풍량을 산정하고 점검하는 풍량·코일·팬 도구를 제공합니다.
+sourceContentHash: 962dd9af3a0dc33b23fa3ebd9baba7fcb565f31229bc52309adfb6877c51d761
+canonical: https://controlsfreak.dev/ko/forced-air/
+nav: guides
+navLabel: 강제순환식 공조
+keywords: 강제순환식 공조 공기조화기 ahu rtu 외기냉방 vav 덕트 정압 건물 압력 풍량 속도압 덕트 산정 트래버스 최소 외기량 ashrae 62.1 코일 산정 혼합공기 습공기 팬 상사 법칙
+---
+{% extends "html/forced-air/index.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <h1 class="section-label">강제순환식 공조</h1>
+        <div class="section-line"></div>
+    </div>
+
+    <p class="landing-intro">
+        강제순환식 공조 시스템은 건물에서 <strong>조화된 공기를 이송하는</strong> 부분입니다. 공기조화기(AHU)는 회기를 흡입해 외기와 혼합하고 필터와 코일을 통과시키며, 팬은 덕트를 통해 각 존으로 공기를 보냅니다. 이 경로의 모든 지점은 제어 시스템이 측정하거나 용량을 산정하고 설정값으로 유지해야 하는 대상입니다. 혼합공기 온도, <button type="button" data-gloss="duct-static">덕트 정압</button>, 외기 비율, 코일 용량, 팬 속도가 이에 해당합니다. 이 페이지에서는 공기조화기부터 VAV 박스까지 공기측 전체를 살펴보고 각 지점을 수치로 확인하는 도구를 제공합니다.
+    </p>
+
+    <p class="landing-intro">
+        처음 접한다면 아래 학습 자료를 순서대로 보세요. 공기조화기에서 말단 박스까지 공기 흐름을 따라가고, 설계 풍량에 맞춰 커미셔닝하는 방법과 환기용 외기를 별도로 처리하는 외기전담공조기를 알아봅니다. 장비가 이미 앞에 있다면 도구로 바로 이동해 덕트 치수를 산정하고, 트래버스 측정값을 평균내고, 최소 외기량을 계산하거나, 코일을 점검할 수 있습니다. 모든 자료는 공개되어 있으며 로그인이나 추적 기능이 없습니다.
+    </p>
+
+    <h2 class="hub-group">여기서 시작 — 순서대로 보는 학습 자료</h2>
+    <p class="hub-path">
+        <span class="hub-step">1</span> <a href="/ko/education/air-handlers.html">공기조화기</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">2</span> <a href="/ko/education/economizers.html">외기냉방</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">3</span> <a href="/ko/education/building-pressure.html">건물 압력</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">4</span> <a href="/ko/education/air-unit-identification.html">공조 장비 식별</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">5</span> <a href="/ko/education/vav-systems.html">VAV 시스템</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">6</span> <a href="/ko/education/duct-static-control.html">덕트 정압</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">7</span> <a href="/ko/education/air-balancing.html">공기 밸런싱</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">8</span> <a href="/ko/education/dedicated-outdoor-air.html">외기전담공조</a>
+    </p>
+
+    <div class="card-grid">
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/air-handlers.html',
+            titleShort: '공기조화기',
+            titleFull:  '공기조화기',
+            desc:       '공기조화기 내부의 공기 경로를 지점별로 따라갑니다. 회기, 혼합상자, 필터, 가열·냉각 코일, 급기팬과 각 구성요소의 역할을 알아봅니다. 이 장의 출발점입니다.',
+            pills:      ['1단계', '공기 경로', '혼합 → 코일 → 팬']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/economizers.html',
+            titleShort: '외기냉방',
+            titleFull:  '외기냉방',
+            desc:       '공기조화기가 압축기 대신 외기를 이용해 냉방해야 하는 조건을 알아봅니다. 절환 로직, 댐퍼 시퀀스, 외기냉방이 유지하는 혼합공기 목표값을 다룹니다.',
+            pills:      ['2단계', '외기냉방', '댐퍼 시퀀스']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/building-pressure.html',
+            titleShort: '건물 압력',
+            titleFull:  '건물 압력',
+            desc:       '건물이 양압 또는 음압이 되는 이유를 알아봅니다. 급기·회기·배기의 균형과 릴리프 경로, 출입문에 힘이 걸리지 않도록 건물 압력을 중립에 가깝게 유지하는 제어를 다룹니다.',
+            pills:      ['3단계', '급기 / 회기 / 릴리프', '중립 압력']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/air-unit-identification.html',
+            titleShort: '공조 장비 식별',
+            titleFull:  '공조 장비 식별',
+            desc:       '눈앞의 장비가 무엇인지 식별합니다. RTU, AHU, 팬코일유닛, 보충공기 장비와 단일 존·VAV 시스템을 구분하고 명판과 덕트 배치가 알려 주는 정보를 살펴봅니다.',
+            pills:      ['4단계', 'RTU / AHU / MAU', '명판']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/vav-systems.html',
+            titleShort: 'VAV 시스템',
+            titleFull:  'VAV 시스템',
+            desc:       '하나의 공기조화기가 요구 조건이 서로 다른 여러 존을 제어하는 방법을 알아봅니다. VAV 박스, 압력 독립형 제어 루프, 재열, 여러 댐퍼가 움직이는 동안 공기조화기가 덕트 정압을 유지하는 원리를 다룹니다.',
+            pills:      ['5단계', 'VAV 박스', '압력 독립형']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/duct-static-control.html',
+            titleShort: '덕트 정압',
+            titleFull:  '덕트 정압 제어',
+            desc:       '박스가 열리고 닫힐 때 급기 덕트 정압을 유지하는 방법을 알아봅니다. 센서 설치 위치, 설정값을 추종하는 팬 속도(VFD) 루프, 팬 에너지를 절감하는 정압 리셋을 다룹니다.',
+            pills:      ['6단계', '정압 설정값', '팬 리셋']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/air-balancing.html',
+            titleShort: '공기 밸런싱',
+            titleFull:  '공기 밸런싱',
+            desc:       '공기측을 설계 풍량에 맞춰 커미셔닝합니다. 트래버스와 박스 CFM 비교, 박스 최소·최대 풍량과 재열 설정, 기준 존을 이용한 비례 밸런싱, 건물의 약양압 유지를 다룹니다.',
+            pills:      ['7단계', '유량 링 · K√VP', '비례 밸런싱']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/dedicated-outdoor-air.html',
+            titleShort: 'DOAS',
+            titleFull:  '외기전담공조',
+            desc:       '신선한 공기를 공급하는 또 다른 방법을 알아봅니다. 100% 외기를 처리하는 전용 장비가 환기·잠열 부하를 현열 부하와 분리하고, 깊은 코일로 노점 설정값까지 제습한 뒤 중성 온도로 재열하며, 실내 현열은 말단장치가 처리합니다.',
+            pills:      ['8단계', '잠열 / 현열', '깊은 코일 · 재열']
+        }) }}
+    </div>
+
+    <h2 class="hub-group">직접 구성하기 — 시뮬레이터</h2>
+    <p class="hub-group-intro">
+        공기측을 위한 대화형 모델입니다. 장비를 운전하는 기능 블록 프로그램을 한 탭 옆에서 볼 수 있는 실시간 <button type="button" data-gloss="ddc">직접 디지털 제어기(DDC)</button> 그래픽으로, 학습 자료에서 본 시퀀스·센서 고장·해제되지 않고 남은 오버라이드를 화면에서 직접 움직여 볼 수 있습니다. 먼저 더 작은 팬코일유닛부터 시작해 보세요.
+    </p>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'simulators',
+            href:       '/ko/simulators/ddc-workbench.html',
+            titleShort: 'AHU 워크벤치',
+            titleFull:  'DDC 워크벤치 — 공기조화기',
+            desc:       '단일 존 공기조화기를 실시간 DDC 그래픽으로 다룹니다. 외기냉방 댐퍼, 온수 코일, 2단 DX가 있고 한 탭 옆에서 이를 운전하는 기능 블록 프로그램을 볼 수 있습니다. 센서 값을 강제로 지정하고 실제 우선순위 배열을 통해 포인트를 오버라이드하면서 화면에 드러나는 장비 상태를 관찰하세요.',
+            pills:      ['실시간 DDC 그래픽', '외기냉방', '우선순위 배열', '와이어시트']
+        }) }}
+        {{ navCard({
+            section:    'simulators',
+            href:       '/ko/simulators/ddc-workbench-fcu.html',
+            titleShort: 'FCU 워크벤치',
+            titleFull:  'DDC 워크벤치 — 팬코일유닛',
+            desc:       '같은 워크벤치에서 DX 팬코일유닛을 다룹니다. 장비가 작아 전체 제어 흐름을 쉽게 읽을 수 있습니다. 샘플 시퀀스를 불러오거나 빈 시트에서 직접 배선한 뒤 냉방을 증단하고 팬 운전 확인 신호를 끊어 그래픽에서 로직까지 고장을 추적하세요.',
+            pills:      ['실시간 DDC 그래픽', 'DX 대수제어', '직접 배선', '고장 프리셋']
+        }) }}
+    </div>
+
+    <h2 class="hub-group">도구</h2>
+    <p class="hub-group-intro">
+        공기측을 위한 열세 가지 현장 도구입니다. 덕트의 실제 풍량을 측정하고, 덕트와 코일의 용량을 산정하며, 환기량을 계산하고, 팬 속도 변화에 따른 성능 변화를 예측할 수 있습니다. 로그인이나 설치가 필요 없습니다.
+    </p>
+
+    <h3 class="hub-sub">공기 측정 — 실제로 얼마나 흐를까요?</h3>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/airflow.html',
+            titleShort: '풍량',
+            titleFull:  '풍량 및 속도압',
+            desc:       '덕트의 속도압, 공기 속도, CFM을 양방향으로 변환합니다. 피토관 또는 속도압 측정값을 실제 공기 속도로 바꾸고 속도에서 풍량을 계산할 수 있습니다.',
+            pills:      ['속도압 ↔ 속도', 'CFM', '피토관']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/duct-traverse.html',
+            titleShort: '덕트 트래버스',
+            titleFull:  '덕트 트래버스 계산기',
+            desc:       '피토관 격자 측정값을 정확한 덕트 CFM으로 평균냅니다. Log-Tchebycheff 트래버스 측정점, 각 지점의 속도, 이로부터 합산한 풍량을 제공합니다.',
+            pills:      ['트래버스', 'Log-Tchebycheff', '평균 CFM']
+        }) }}
+    </div>
+
+    <h3 class="hub-sub">덕트 및 부하 용량 산정</h3>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/duct-sizer.html',
+            titleShort: '덕트 치수 산정',
+            titleFull:  '덕트 치수 산정 도구',
+            desc:       '마찰손실률 또는 속도를 기준으로 원형이나 사각 덕트 치수를 산정합니다. 등가직경 양방향 변환과 팬이 극복해야 하는 마찰손실도 확인할 수 있습니다.',
+            pills:      ['마찰손실률', '원형 ↔ 사각', '등가직경']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/airside-load.html',
+            titleShort: '공기측 부하',
+            titleFull:  '공기측 부하 계산기',
+            desc:       '공기 흐름이 운반하는 현열·잠열 부하를 계산합니다. CFM, 온도차, 습도 변화로 BTU/h를 구하여 코일이 공기측에서 처리해야 하는 부하를 확인합니다.',
+            pills:      ['현열 + 잠열', 'CFM · ΔT', 'BTU/h']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/equipment-airflow.html',
+            titleShort: '장비 풍량',
+            titleFull:  '장비 풍량 점검',
+            desc:       '장비가 필요한 만큼 공기를 이송하는지 확인합니다. 명판 용량과 담당 공간을 기준으로 냉동톤당 CFM, 인당 CFM을 점검합니다.',
+            pills:      ['CFM / 냉동톤', 'CFM / 인', '적정성 점검']
+        }) }}
+    </div>
+
+    <h3 class="hub-sub">환기 및 혼합</h3>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/minimum-outdoor-air.html',
+            titleShort: '최소 외기량',
+            titleFull:  '최소 외기량 계산기',
+            desc:       'ASHRAE 62.1에 따라 공간에 필요한 외기량을 계산합니다. 인원·면적 기준 환기량, 존 공기분배 유효도, 필요한 외기를 공급하는 취입 비율을 다룹니다.',
+            pills:      ['62.1 Rp / Ra', 'Ez', '외기 비율']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/economizer-ratio.html',
+            titleShort: '외기냉방 비율',
+            titleFull:  '외기냉방 비율 도우미',
+            desc:       '혼합공기 목표값을 만족하는 외기 댐퍼 위치를 계산합니다. 외기냉방 절환에 필요한 외기와 회기의 비율과 그 결과인 혼합공기 온도를 구합니다.',
+            pills:      ['외기 / 회기 비율', '혼합공기 목표', '외기냉방']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/air-mixing.html',
+            titleShort: '공기 혼합',
+            titleFull:  '혼합공기 온도 계산기',
+            desc:       '회기와 외기를 혼합한 공기 상태를 계산합니다. 댐퍼 비율에 따른 혼합상자의 가중 평균과 코일 입구 온도를 구할 수 있습니다.',
+            pills:      ['회기 + 외기', '혼합공기 온도', '댐퍼 비율']
+        }) }}
+    </div>
+
+    <h3 class="hub-sub">코일 및 습공기</h3>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/coil-sizing.html',
+            titleShort: '코일 용량 산정',
+            titleFull:  '코일 용량 산정 계산기',
+            desc:       '코일에 필요한 용량을 계산합니다. 풍량과 입구·출구 공기 상태로 전열·현열·잠열 BTU/h 및 이를 운반하는 수측 유량을 구합니다.',
+            pills:      ['코일 용량', '전열 / 현열 / 잠열', 'GPM']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/coil-freeze-risk.html',
+            titleShort: '코일 동결',
+            titleFull:  '코일 동결 위험 점검',
+            desc:       '코일의 동결 위험을 확인합니다. 외기 비율과 이에 따른 혼합공기 온도, 수측을 보호하는 글리콜 농도를 계산합니다.',
+            pills:      ['동결 위험', '혼합공기 온도', '글리콜 %']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/dew-point-calculator.html',
+            titleShort: '노점',
+            titleFull:  '노점 계산기 및 코일 점검',
+            desc:       '온도와 습도에서 노점을 계산합니다. 차가운 표면이나 냉각 코일에 결로가 생기는지, 공기가 어느 지점에서 포화에 도달하는지 확인합니다.',
+            pills:      ['노점', '결로', '코일 점검']
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/psychrometric-chart.html',
+            titleShort: '습공기선도',
+            titleFull:  '습공기선도',
+            desc:       '공기 상태를 선도에 표시하고 건구온도, 습구온도, 상대습도, 노점, 엔탈피를 읽습니다. 코일 또는 혼합 과정을 따라 상태 변화를 확인할 수 있습니다.',
+            pills:      ['공기 상태', '습구온도 / 상대습도', '과정선']
+        }) }}
+    </div>
+
+    <h3 class="hub-sub">팬</h3>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/affinity-laws.html',
+            titleShort: '상사 법칙',
+            titleFull:  '상사 법칙',
+            desc:       '팬 속도에 따라 풍량, 정압, 동력이 어떻게 변하는지 계산합니다. 축동력이 속도의 세제곱에 비례하므로 VFD는 강제순환식 공조 시스템의 에너지를 줄이는 가장 큰 수단입니다. 펌프에도 같은 법칙이 적용됩니다.',
+            pills:      ['팬 법칙', '속도 → 풍량 / 정압', '세제곱 법칙 동력']
+        }) }}
+    </div>
+
+    <h2 class="hub-group">관련 학습 자료</h2>
+    <p class="hub-group-intro">
+        공기측의 기반이 되는 두 가지 주제입니다. 모든 코일 계산의 바탕인 공기 상태 용어와 팬 속도를 낮추는 VFD를 다룹니다.
+    </p>
+    <div class="card-grid">
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/psychrometrics-basics.html',
+            titleShort: '습공기 상태',
+            titleFull:  '습공기 상태 해석 기초',
+            desc:       '건공기와 수증기의 혼합물인 습공기를 알아봅니다. 건구온도, 습구온도, 노점, 상대습도, 엔탈피는 습공기선도와 모든 코일 계산의 기본 용어입니다.',
+            pills:      ['기초', '공기 상태', '엔탈피']
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/vfds.html',
+            titleShort: 'VFD',
+            titleFull:  'VFD',
+            desc:       '가변주파수 드라이브(VFD)가 팬이나 펌프 모터의 속도를 낮추는 방법을 알아봅니다. 덕트 정압 제어와 펌프 속도 제어의 기반이 되는 V/Hz 원리를 다룹니다.',
+            pills:      ['기초', 'V / Hz', '팬 / 펌프 속도']
+        }) }}
+    </div>
+
+    <a class="back-link" href="/ko/education/">← 학습으로 돌아가기</a>
+
+</main>
+{% endblock %}

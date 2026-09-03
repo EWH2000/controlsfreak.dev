@@ -1,0 +1,373 @@
+---
+title: 서미스터 / RTD 계산기 — controlsfreak.dev
+description: 서미스터와 RTD의 온도·저항을 양방향 변환하거나, 10K·20K·3K·Balco·Pt100·Pt1000 중 종류를 알 수 없는 센서를 식별합니다.
+sourceContentHash: 75326315b42b46b17c956e49c7730c9fd96173f21df25952f53b1a8a5b23e0d8
+sourceMessageHash: c439f715462b398f9b2e933a64f3c51ae9ba0bd8d20016ab2916d2523e81791b
+canonical: https://controlsfreak.dev/ko/tools/thermistor-calculator.html
+nav: tools
+category: signals
+pageMessages:
+    tags:
+        thermistor: "서미스터"
+        rtd: "RTD"
+        identify: "식별"
+    groups:
+        ntc: "NTC 서미스터"
+        rtd: "RTD — 온도가 오르면 저항이 증가합니다"
+    labels:
+        temperature: "온도(°{unit})"
+        temperatureShort: "온도(°{unit})"
+        resistance: "저항(Ω)"
+        rtTable: "R / T 표 — {name}"
+        perPointFit: "측정 지점별 적합도"
+        perPointFitType: "측정 지점별 적합도 — {name}"
+    copy:
+        resistance: "저항 복사"
+        temperature: "온도 복사"
+    lookup:
+        nominalCaution: "이 곡선값은 공칭값입니다. 교정에 사용하기 전에 센서 데이터시트와 대조하세요."
+        dataUnavailable: "센서 곡선 데이터를 사용할 수 없습니다. 페이지를 새로고침하세요."
+        resistanceFromTemperature: "온도에서 저항 계산"
+        temperatureFromResistance: "저항에서 온도 계산"
+        curveConfirm: "{name} — 실제 센서 종류를 확인하세요."
+        temperatureRequired: "온도를 입력하세요."
+        temperatureOutOfRange: "범위 초과 — 표의 범위는 {fahrenheitLow}~{fahrenheitHigh} °F({celsiusLow}~{celsiusHigh} °C)입니다."
+        resistanceRequired: "저항값(Ω)을 입력하세요."
+        resistanceOutOfRange: "범위 초과 — 이 센서 종류의 표는 {low}~{high} Ω 범위입니다."
+        tableValue: "표의 정확한 값"
+        interpolated: "보간값"
+        inRange: "범위 내"
+        exactTemperature: "{temperature} → {resistance} Ω(표의 정확한 행)"
+        interpolatedTemperature: "{lowTemperature}({lowResistance} Ω)와 {highTemperature}({highResistance} Ω) 사이를 보간했습니다."
+        exactResistance: "{resistance} Ω → {temperature}(표의 정확한 행)"
+        interpolatedResistance: "{lowResistance} Ω({lowTemperature})와 {highResistance} Ω({highTemperature}) 사이를 보간했습니다."
+    identify:
+        pointsOne: "측정 지점 {count}개"
+        pointsMany: "측정 지점 {count}개"
+        ignoredUs: " · {count}개 제외(−40~250 °F 범위 밖)"
+        ignoredMetric: " · {count}개 제외(−40~121 °C 범위 밖)"
+        minimumPoints: "온도와 저항 측정 지점을 2개 이상 입력하세요."
+        outOfRange: "범위 초과"
+        noCoverage: "모든 측정값을 포괄하는 센서 종류가 없습니다. 입력값을 다시 확인하세요."
+        verdictNoFit: "적합도가 양호한 표준 센서 종류가 없습니다"
+        verdictAmbiguous: "판별 불가 — 상위 센서 종류의 적합도가 거의 같습니다"
+        verdictStrong: "매우 높은 일치도"
+        verdictLikely: "일치 가능성 높음"
+        verdictWeak: "낮은 일치도 — 가능한 후보 중 가장 가까움"
+        averageError: "{verdict} · 평균 오차 {error}"
+        pointTemperatureAria: "{number}번 측정 지점 온도"
+        pointResistanceAria: "{number}번 측정 지점 저항"
+        removePointAria: "{number}번 측정 지점 삭제"
+    unitText:
+        nominalFitUs: "BAS 운전 범위인 32~150 °F에서 약 1 °F 이내"
+        nominalFitMetric: "BAS 운전 범위인 0~65 °C에서 약 0.5 °C 이내"
+        extremeErrorUs: "−40 °F 극한에서 등가 온도 오차 2~5 °F"
+        extremeErrorMetric: "−40 °C 극한에서 등가 온도 오차 1~3 °C"
+    types:
+        10k-2:
+            name: "10K 타입 II"
+            ref: "77 °F(25 °C)에서 10,000 Ω"
+            notes: "가장 널리 쓰이는 BAS 서미스터 곡선입니다. Honeywell, Johnson Controls, Continental Industries와 여러 OEM에서는 이를 “Type 2”라고 부릅니다. Type 3보다 곡선이 가파르며 서로 바꿔 쓸 수 없습니다. 32 °F에서 Type 2는 약 32.7 kΩ, Type 3은 약 29.5 kΩ이고, 185 °F에서는 각각 약 1.07 kΩ와 1.26 kΩ입니다. 이는 공개된 기준값이며 위의 생성 표는 최대 약 1 °F 차이가 납니다. “이 표에 관하여”를 참조하세요."
+        10k-3:
+            name: "10K 타입 III"
+            ref: "77 °F(25 °C)에서 10,000 Ω"
+            notes: "널리 쓰이는 또 하나의 10K 곡선입니다. BAPI “10K-3”, Mamac, Functional Devices, US Sensor “Curve G”, Dale “Type 9”, ACI “Series AH”가 이에 해당합니다. Type 2보다 완만하여(유효 β₂₅/₈₅ ≈ 3693 K) 저온에서는 저항이 더 낮고 고온에서는 더 높습니다. 77 °F에서 두 곡선이 10,000 Ω로 교차하기 때문에 모두 “10K”라고 부르지만, 그 밖의 온도에서는 서로 달라지며 호환되지 않습니다."
+        10k-jci:
+            name: "10K + 8.7K(JCI)"
+            ref: "77 °F에서 약 4.65 kΩ"
+            notes: "Johnson Controls 방식입니다. 10K NTC 소자와 8.7 kΩ 저항을 병렬로 연결하여 재실 운전 범위에서 곡선을 완만하게 만듭니다. 실온에서 약 4.6 kΩ로, 분로 저항이 없는 10K보다 훨씬 낮게 측정됩니다. 공칭값으로만 사용하고 파일 머리말의 주의사항을 확인하세요."
+        10k-5-tac:
+            name: "10K 타입 5(TAC)"
+            ref: "77 °F에서 약 5.24 kΩ"
+            notes: "구형 Schneider Electric / TAC Vista / Andover Continuum 방식입니다. 10K Type 3 소자에 11 kΩ 병렬 저항을 연결해 HVAC 범위에서 “선형화”합니다. “Type V” 또는 “10K-3(선형화)”라고도 표기합니다. 실온에서 분로 저항이 없는 10K의 약 절반으로 측정됩니다."
+        20k:
+            name: "20K NTC"
+            ref: "77 °F(25 °C)에서 20,000 Ω"
+            notes: "비교적 드문 20K 곡선으로, Honeywell T7460/T7470 실내 센서와 여러 OEM 덕트·침수형 프로브에 사용됩니다. 기준 표의 β₂₅/₈₅가 약 4260으로 10K 곡선보다 가파릅니다. 제조사가 다른 20K 소자는 β가 다를 수 있으므로 원래 장치 문서와 대조하세요."
+        3k:
+            name: "3K NTC"
+            ref: "77 °F(25 °C)에서 3,000 Ω"
+            notes: "일부 구형 컨트롤러와 개보수 설비에서 사용되는 오래된 3K 곡선입니다. Sontay 명명법에서는 “3K3A1”이라고도 합니다. Vector의 기준 표에는 β₂₅/₈₅ = 3974로 기재되어 있습니다. 제조사가 다른 구형 3K 소자는 β가 다를 수 있으므로 원래 장치 문서와 대조하세요."
+        balco-1k:
+            name: "1K Balco(RTD)"
+            ref: "70 °F(21 °C)에서 약 1,000 Ω"
+            notes: "니켈·철 합금인 “Balco” / “Resistalloy” RTD입니다. 현장 점검 방식이 비슷해 이 도구에 함께 실었지만 NTC 서미스터가 아니라 RTD이므로, 온도가 오르면 저항이 증가하고 곡선은 약간 위로 휘는 거의 선형 형태입니다. 실온에서 TCR은 약 2.2 Ω/°F(3.96 Ω/°C)입니다. 구형 Honeywell 및 Johnson 장비에서 흔히 사용됩니다."
+        pt100:
+            name: "Pt100 RTD"
+            ref: "0 °C에서 100.00 Ω"
+            notes: "IEC 60751 / DIN 43760 곡선을 따르는 백금 RTD로 유럽 및 산업 표준입니다. 온도가 오르면 저항이 증가하며 반복성이 매우 높습니다. 표준 확인점은 0 °C에서 100.00 Ω, 100 °C에서 약 138.51 Ω입니다. Class A 허용오차는 0 °C에서 ±0.15 °C입니다."
+        pt1000:
+            name: "Pt1000 RTD"
+            ref: "0 °C에서 1000.00 Ω"
+            notes: "Pt100과 같은 IEC 60751 곡선을 10배 확대한 백금 RTD입니다. 기준 저항이 높아 리드선 저항의 영향이 줄기 때문에 최신 HVAC에서 점점 널리 사용됩니다. α = 0.00385 Ω/Ω/°C이며, 표준 확인점은 0 °C에서 1000.00 Ω, 100 °C에서 약 1385.1 Ω입니다."
+keywords: NTC RTD 저항 옴 10K 20K 3K Balco Pt100 Pt1000 센서 온도 곡선
+---
+{% extends "html/tools/thermistor-calculator.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 서미스터 / RTD</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                서미스터 / RTD 계산기
+                <span class="tool-tag" id="th-tag">{{ pageMessages.tags.thermistor }}</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>일반적인 HVAC 센서의 온도와 저항을 양방향으로 변환합니다.</summary>
+            <div class="preamble-rest">
+                일반적인 HVAC 센서—10K Type II / III, Johnson 8.7K,
+                Schneider Type 5, 20K, 3K, Balco, Pt100, Pt1000—의 온도와 저항을 양방향으로 변환하고,
+                센서 종류를 모를 때는 식별 모드를 사용할 수 있습니다.
+                <em>조회</em>는 선택한 센서 종류의 온도 또는 저항을 입력받아 나머지 값과
+                전체 R/T 표를 제공합니다.
+                <em>식별</em>은 종류를 모르는 센서에서 측정한 (온도, 저항) 쌍을 받아
+                특성 곡선 적합도에 따라 모든 센서 종류의 순위를 정합니다.
+            </div>
+        </details>
+        <p class="ps-seed-note">입력란에 예시값이 채워져 있습니다. 실제 값으로 수정하세요.</p>
+
+        <!-- Two modes, à la Signal Scaling. LOOKUP: pick a known type, enter a
+             temperature OR a resistance, get the other plus the full R/T table.
+             IDENTIFY: enter measured (temperature, resistance) pairs from an
+             UNKNOWN sensor and the tool ranks every standard type by how well
+             its published curve fits. Both modes read the same THERMISTOR_TYPES
+             from /scripts/thermistor-data.js — see that file's header for
+             per-type verification status. -->
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" id="th-tab-lookup"   data-tab="lookup">조회</button>
+            <button class="tab-btn"        id="th-tab-identify" data-tab="identify">식별</button>
+        </div>
+
+        <!-- ── LOOKUP ───────────────────────────────────────────────────────
+             Three-column property-sheet layout, like the BACnet converter:
+             Input left, the computed answer in the middle, the full R/T table
+             for the selected type on the right. -->
+        <div id="tab-lookup" class="tab-pane active">
+            <div class="tool-body-3col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+
+                    <div class="ps-row">
+                        <label class="ps-label" for="th-type">센서</label>
+                        <!-- option values must match the keys in THERMISTOR_TYPES (scripts/thermistor-data.js);
+                             option text mirrors each type's `name` there — the full maker / context lives in
+                             that type's `notes`, shown under the R/T table -->
+                        <select class="ps-input" id="th-type">
+                            <optgroup label="{{ pageMessages.groups.ntc }}">
+                                <!-- Type II is the default on purpose: the page's
+                                     own note calls it the most widespread BAS
+                                     curve, and defaulting to III invited a silent
+                                     wrong-curve answer on the most common field
+                                     task (audit-2026-06 #29, owner decision). -->
+                                <option value="10k-2" selected>{{ pageMessages.types["10k-2"].name }}</option>
+                                <option value="10k-3">{{ pageMessages.types["10k-3"].name }}</option>
+                                <option value="10k-jci">{{ pageMessages.types["10k-jci"].name }}</option>
+                                <option value="10k-5-tac">{{ pageMessages.types["10k-5-tac"].name }}</option>
+                                <option value="20k">{{ pageMessages.types["20k"].name }}</option>
+                                <option value="3k">{{ pageMessages.types["3k"].name }}</option>
+                            </optgroup>
+                            <optgroup label="{{ pageMessages.groups.rtd }}">
+                                <option value="balco-1k">{{ pageMessages.types["balco-1k"].name }}</option>
+                                <option value="pt100">{{ pageMessages.types.pt100.name }}</option>
+                                <option value="pt1000">{{ pageMessages.types.pt1000.name }}</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="ps-row" role="group" aria-labelledby="th-by-label">
+                        <span class="ps-label" id="th-by-label">조회 기준</span>
+                        <div class="btn-row">
+                            <button class="copy-btn active" id="th-by-temp" aria-pressed="true">온도</button>
+                            <button class="copy-btn" id="th-by-res" aria-pressed="false">저항</button>
+                        </div>
+                    </div>
+
+                    <div class="ps-row">
+                        <label class="ps-label" id="th-temp-lbl" for="th-temp">온도(°F)</label>
+                        <input class="ps-input" type="number" id="th-temp" step="1" min="-50" max="200" placeholder="77" value="77">
+                    </div>
+
+                    <div class="ps-row">
+                        <label class="ps-label" for="th-res">저항(Ω)</label>
+                        <input class="ps-input" type="number" id="th-res" step="1" min="0" placeholder="10000" disabled>
+                    </div>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+
+                    <div class="ps-row">
+                        <span class="ps-label">기준점</span>
+                        <span class="ps-value muted" id="th-ref-point">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">특성 곡선</span>
+                        <span class="ps-value muted" id="th-curve">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">계산 방향</span>
+                        <span class="ps-value muted" id="th-dir">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">결과</span>
+                        <span class="ps-value live" id="th-result">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">계산 방식</span>
+                        <span class="ps-value muted" id="th-kind">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">범위 판정</span>
+                        <span class="ps-value muted" id="th-status">—</span>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="copy-btn" id="th-copy-btn">저항 복사</button>
+                        <button class="copy-btn" id="th-copy-pair">온도 + 저항 복사</button>
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="ps-section-label" id="th-rt-title">R / T 표</h2>
+                    <!-- Keyboard-reachable scroll region: the table holds
+                         ~85% of the page's reference payload behind a
+                         248px scroller with zero focusable descendants
+                         (audit-2026-06 #58). The FOCUS INDICATORS block
+                         supplies :focus-visible for free. -->
+                    <div id="th-rt-scroll" tabindex="0" role="region" aria-labelledby="th-rt-title">
+                        <table class="ref-table-dense">
+                            <thead>
+                                <tr id="th-rt-head"><th>온도</th><th>저항(Ω)</th></tr>
+                            </thead>
+                            <tbody id="th-rt-body"></tbody>
+                        </table>
+                    </div>
+                    <p class="ref-note" id="th-note">—</p>
+                </section>
+
+            </div>
+
+            <div class="result-formula flush" id="th-worked"></div>
+        </div>
+
+        <!-- ── IDENTIFY ──────────────────────────────────────────────────────
+             Measured points on the left, the ranked best-match on the right,
+             the per-point fit breakdown for the winner in the row below. -->
+        <div id="tab-identify" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">측정 지점</h2>
+                    <p class="ref-note compact">종류를 모르는 센서에서 측정한 온도 + 저항 쌍을 입력하세요. 넓은 범위에 걸친 측정값을 3개 이상 입력하면 가장 명확하게 판별할 수 있습니다.</p>
+                    <table class="ref-table-dense th-id-input">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col" id="th-id-t-head">온도(°F)</th>
+                                <th scope="col">저항(Ω)</th>
+                                <th scope="col"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="th-id-rows"></tbody>
+                    </table>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="th-id-add">+ 측정 지점 추가</button>
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="ps-section-label">최적 일치</h2>
+
+                    <div class="ps-row">
+                        <span class="ps-label">추정 센서 종류</span>
+                        <span class="ps-value live" id="th-id-best">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">신뢰도</span>
+                        <span class="ps-value muted" id="th-id-conf">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">사용한 측정 지점</span>
+                        <span class="ps-value muted" id="th-id-npts">—</span>
+                    </div>
+
+                    <p class="ref-note compact">공개된 특성 곡선과 측정값 사이의 차이에 따라 모든 표준 센서 종류의 순위를 정합니다. 행을 선택하면 해당 종류를 조회 모드에서 열 수 있습니다.</p>
+                    <table class="ref-table-dense">
+                        <thead>
+                            <tr>
+                                <th scope="col">센서 종류</th>
+                                <th scope="col">등가 온도 오차</th>
+                                <th scope="col">저항 오차</th>
+                            </tr>
+                        </thead>
+                        <tbody id="th-id-rank-body"></tbody>
+                    </table>
+                </section>
+
+            </div>
+
+            <div class="tool-body-row">
+                <h2 class="ps-section-label" id="th-id-resid-title">측정 지점별 적합도</h2>
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">측정 온도</th>
+                            <th scope="col">측정 저항(Ω)</th>
+                            <th scope="col">곡선 예측값</th>
+                            <th scope="col">오차</th>
+                        </tr>
+                    </thead>
+                    <tbody id="th-id-resid-body"></tbody>
+                </table>
+                <p class="ref-note">식별 모드는 측정값을 조회 모드에서 사용하는 동일한 생성 공칭 곡선과 비교하며, 교정 데이터와 비교하는 것은 아닙니다. 센서 허용오차(일반적으로 ±0.1~±1 °C), 계측기 정확도, 자가 발열은 모두 측정값에 영향을 줍니다. 측정 지점 2개만으로는 비슷한 곡선을 구분하기 어려울 때가 많습니다. 10K Type II와 10K Type III는 모두 77 °F에서 10 kΩ을 지나며, 이 점을 벗어나야 차이가 나타납니다. 작업 조건이 허용하는 범위에서 가능한 넓은 온도 범위의 측정값을 3개 이상 사용하고, 판별이 매우 비슷한 경우에는 확정적으로 식별하지 말고 “두 종류 중 하나”로 판단하세요.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="tool-card about-tables">
+        <div class="tool-card-header">
+            <h2 class="tool-card-title">
+                이 표에 관하여
+            </h2>
+        </div>
+        <div class="tool-body" style="font-size: 0.92rem; line-height: 1.6;">
+            <p><strong>값의 출처.</strong> 각 R/T 표는 소수의 특성 곡선 매개변수—NTC 서미스터의 β와 R25, 선형화된 10K 곡선의 병렬 분로 저항, RTD의 R0와 온도 계수—로부터 <em>생성</em>됩니다. Pt100과 Pt1000 표는 국제 표준인 IEC 60751 Callendar–Van Dusen 다항식을 따릅니다. 500개가 넘는 셀을 한 행씩 검토하는 대신 매개변수를 검증하면 표 전체의 신뢰성을 한 번에 확인할 수 있습니다.</p>
+
+            <p><strong>검증에 사용한 자료(2026-05 검토).</strong> <em>10K Type II, 10K Type III, 10K Type 5(TAC)</em>는 BAPI 10K-2 / 10K-3 / 10K-3(11K) 출력 표를 기준으로 하고 US Sensor “Curve G”, Sontay 호환성 차트, Vector Controls 다중 곡선 참조 자료와 교차 확인했습니다. <em>20K와 3K</em>는 Vector Controls와 Sontay 자료, <em>1K Balco</em>는 Schneider EcoStruxure Building Operation 저항 차트와 ACI BALCO 데이터시트, <em>Pt100과 Pt1000</em>은 IEC 60751:2008을 직접 기준으로 하여 Vector, Sontay, Fluke 표 생성기, pt100.de와 교차 확인했습니다. 여러 출처의 값이 일치하지 않은 경우에는 다른 기술자와 검토한 뒤 곡선을 결정했습니다.</p>
+
+            <p><strong>여전히 공칭값인 항목.</strong> Johnson Controls 10K + 8.7K 분로 곡선은 공개 R/T 표가 없는 유일한 종류입니다. 정식 TE-6300 Product Bulletin URL은 문서 포털 랜딩 페이지로 리디렉션됩니다. 이 곡선은 10K Type 2 소자와 8.7 kΩ 저항을 병렬로 연결한 모델입니다. 현장의 관행적 지식으로는 확인되었지만 데이터시트로는 검증되지 않았습니다. 교정 데이터가 있는 정상 JCI 센서를 확보한 경우에는 그 데이터를 우선 참조하세요.</p>
+
+            <p><strong>참조용으로 사용하고 교정에는 사용하지 마세요.</strong> 단일 β 모델은 Steinhart-Hart 곡선을 근사합니다. 분로 저항이 없는 10K 곡선에서는 적합 오차가 <span data-us="{{ pageMessages.unitText.nominalFitUs }}" data-metric="{{ pageMessages.unitText.nominalFitMetric }}">{{ pageMessages.unitText.nominalFitUs }}</span>이며, 극한 조건에서는 <span data-us="{{ pageMessages.unitText.extremeErrorUs }}" data-metric="{{ pageMessages.unitText.extremeErrorMetric }}">{{ pageMessages.unitText.extremeErrorUs }}</span>까지 커집니다. Pt100과 Pt1000은 국제 표준을 따르며 해당 표준과 정확히 일치합니다. 교정 등급의 작업에서는 실제 작업 온도에서 검증된 기준기와 센서를 직접 비교하여 측정하세요. 본 사이트나 다른 출처의 공개 표를 무조건 신뢰해서는 안 됩니다.</p>
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/signal-scaling.html', label: '신호 스케일링 계산기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/controller-wiring.html', label: '컨트롤러 배선 시뮬레이터'}
+        ],
+        lessons: [
+            {href: '/ko/education/temperature-sensors.html', label: '온도 센서'},
+            {href: '/ko/education/controller-wiring.html', label: '컨트롤러 배선'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/field-wiring-sensors.html', label: '현장 배선 — 센서'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

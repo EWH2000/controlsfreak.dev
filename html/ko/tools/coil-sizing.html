@@ -1,0 +1,418 @@
+---
+title: 코일 용량 계산기 — controlsfreak.dev
+description: 냉방 또는 난방 코일의 입·출구 공기 상태로 전열·현열·잠열 용량을 계산하거나, 알고 있는 부하에서 출구 공기 상태를 역산합니다.
+sourceContentHash: 9843066798a8e3fe72fdc63a8bb2dbc3c00aefaa75ae90f49b8b08b6feed303f
+sourceMessageHash: 333580426bcde01bd0b7248dc9b0f3c93b7adbbfc6c7d8eab8670dec037c51a3
+canonical: https://controlsfreak.dev/ko/tools/coil-sizing.html
+nav: tools
+category: hvac
+pageMessages:
+    defineBy:
+        rh: '상대습도(%)'
+        wb: '습구온도({unit})'
+        dp: '노점({unit})'
+        w: '절대습도(함습비, W)({unit})'
+        h: '엔탈피({unit} 건공기)'
+    status:
+        capacityPrompt: '코일 용량을 계산할 값을 입력하세요.'
+        leavingPrompt: '출구 상태를 계산할 값을 입력하세요.'
+        coolingCapacity: '냉각 코일 — 전열 {capacity} {unit}, SHR {shr}.'
+        heatingCapacity: '가열 코일 — 현열 {capacity} {unit}.'
+        leavingSaturated: '출구 상태점이 포화곡선, 즉 코일의 장치 노점온도(ADP)에 놓입니다. 이 현열 분할에서는 그만큼의 잠열 부하를 제거할 수 없습니다. 잠열 부하를 낮추거나 완전히 포화된 출구 공기를 허용해야 합니다.'
+        coolingLeavingSolved: '냉각 코일 — 출구 상태 계산 완료.'
+        heatingLeavingSolved: '가열 코일 — 출구 상태 계산 완료.'
+    warnings:
+        coolingLooksHeating: '출구 공기가 입구보다 따뜻합니다. 이는 가열 공정입니다. 코일 종류를 가열로 바꾸세요.'
+        heatingLooksCooling: '출구 공기가 입구보다 차갑습니다. 이는 냉각 공정입니다. 코일 종류를 냉각으로 바꾸세요.'
+        coolingAddsMoisture: '출구 공기의 수분량이 입구보다 많습니다. 냉각 코일은 수분을 제거하며 더할 수 없습니다.'
+    errors:
+        engineUnavailable: '습공기 상태 해석 엔진을 사용할 수 없습니다. 페이지를 새로고침하세요.'
+        enteringPrefix: '입구 공기 — {message}'
+        leavingPrefix: '출구 공기 — {message}'
+        positiveAirflow: '풍량은 0보다 큰 숫자여야 합니다.'
+        psychro:
+            numeric: '숫자 값을 입력하세요.'
+            rhNegative: '상대습도는 음수일 수 없습니다.'
+            rhAbove100: '상대습도는 100 %를 초과할 수 없습니다.'
+            wetBulbAboveDryBulb: '습구온도는 건구온도보다 높을 수 없습니다.'
+            dewPointAboveDryBulb: '노점은 건구온도보다 높을 수 없습니다.'
+            humidityRatioNegative: '절대습도(함습비, W)는 음수일 수 없습니다.'
+            enthalpyBelowDryAir: '엔탈피가 이 건구온도의 건공기 엔탈피보다 낮습니다. 물리적으로 불가능합니다.'
+            propertyRequired: '상태점을 정의할 물성을 선택하세요.'
+            rhPastSaturation: '이 상태점은 포화선을 벗어납니다(상대습도 100 % 초과). 물리적으로 불가능합니다.'
+            wetBulbPastSaturation: '입력한 습구온도는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다.'
+            dewPointPastSaturation: '입력한 노점은 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다.'
+            humidityRatioPastSaturation: '입력한 절대습도(함습비, W)는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다.'
+            enthalpyPastSaturation: '입력한 엔탈피는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다.'
+            enteringInvalid: '입구 공기 상태가 유효하지 않습니다.'
+            positiveAirflowEngine: '0보다 큰 풍량을 입력하세요.'
+            sensibleNegative: '현열 부하는 음수일 수 없습니다.'
+            latentNegative: '잠열 부하는 음수일 수 없습니다.'
+            boneDry: '이 부하는 공기를 절대건조 상태보다 더 낮게 만듭니다. 입력값을 확인하세요.'
+    formula:
+        capacity: 'ṁ = {airTerm} = {massFlow} {massUnit} (v = {specificVolume} {volumeUnit}, 입구 {enteringDb}/{enteringWb} {tempUnit}) · 전열 = ṁ × Δh = {capacity} {capacityUnit}'
+        leaving: 'ΔDB = {deltaDb} {tempUnit} · 출구 {leavingDb} {tempUnit} / 상대습도 {rh} %'
+    unitText:
+        dryBulb:
+            us: '건구온도(°F)'
+            metric: '건구온도(°C)'
+        seededLeavingDb:
+            us: '55 °F'
+            metric: '12.8 °C'
+        seededLeavingWb:
+            us: '54 °F'
+            metric: '12.2 °C'
+        airflow:
+            us: '풍량(CFM)'
+            metric: '풍량(m³/h)'
+        totalCapacity:
+            us: '전열 용량(MBH)'
+            metric: '전열 용량(kW)'
+        sensibleCapacity:
+            us: '현열 용량(MBH)'
+            metric: '현열 용량(kW)'
+        latentCapacity:
+            us: '잠열 용량(MBH)'
+            metric: '잠열 용량(kW)'
+        deltaDryBulb:
+            us: 'Δ 건구온도(°F)'
+            metric: 'Δ 건구온도(°C)'
+        deltaHumidityRatio:
+            us: 'Δ 절대습도(함습비, W)(gr/lb)'
+            metric: 'Δ 절대습도(함습비, W)(g/kg)'
+        deltaEnthalpy:
+            us: 'Δ 엔탈피(Btu/lb)'
+            metric: 'Δ 엔탈피(kJ/kg)'
+        exampleAirflow:
+            us: '2000 CFM'
+            metric: '3400 m³/h'
+        exampleEntering:
+            us: '80 °F DB/67 °F WB'
+            metric: '26.7 °C DB/19.4 °C WB'
+        exampleLeaving:
+            us: '55 °F DB/54 °F WB'
+            metric: '12.8 °C DB/12.2 °C WB'
+        sensibleLoad:
+            us: '현열 부하(MBH)'
+            metric: '현열 부하(kW)'
+        latentLoad:
+            us: '잠열 부하(MBH)'
+            metric: '잠열 부하(kW)'
+        coilCapacity:
+            us: '코일 용량(MBH)'
+            metric: '코일 용량(kW)'
+        wetBulb:
+            us: '습구온도(°F)'
+            metric: '습구온도(°C)'
+        humidityRatio:
+            us: '절대습도(함습비, W)(gr/lb)'
+            metric: '절대습도(함습비, W)(g/kg)'
+        dewPoint:
+            us: '노점(°F)'
+            metric: '노점(°C)'
+        enthalpy:
+            us: '엔탈피(Btu/lb)'
+            metric: '엔탈피(kJ/kg)'
+keywords: CFM GPM 델타T MBH BTU 냉동톤 현열 잠열 SHR 코일 용량
+---
+{% extends "html/tools/coil-sizing.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 코일 용량 산정</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                코일 용량 계산기
+                <span class="tool-tag">HVAC</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>코일 하나의 성능을 독립적으로 계산합니다.</summary>
+            <div class="preamble-rest">
+                용량 탭에서는 입구와 출구 공기 상태를 입력해 전열·현열·잠열 용량과 <button type="button" data-gloss="sensible-heat">현열</button>비를 계산합니다. 출구 상태 탭에서는
+                반대로 입구 공기와 코일이 처리해야 할 부하를 입력해 출구 공기 상태를 구합니다. 습공기선도의 코일 공정과 같은 수식만 따로 제공하므로 전체 공기조화기(AHU) 공정 없이도 용량을 빠르게 확인할 수 있습니다.
+            </div>
+        </details>
+        <p class="ps-seed-note">입력란에는 예제가 미리 채워져 있습니다. 확인하려는 값으로 수정하세요.</p>
+
+        <section class="cs-type-strip">
+            <div class="ps-row">
+                <label class="ps-label" for="cs-coil-type">코일 종류</label>
+                <select class="ps-input" id="cs-coil-type">
+                    <option value="cool" selected>냉각 코일</option>
+                    <option value="heat">가열 코일</option>
+                </select>
+            </div>
+        </section>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="cap">용량</button>
+            <button class="tab-btn"        data-tab="leaving">출구 상태</button>
+        </div>
+
+        <!-- ── Capacity tab ── -->
+        <div id="tab-cap" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+
+                    <h3 class="subhead">입구 공기</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="cs-cap-ent-tdb">건구온도(°F)</label>
+                        <input class="ps-input" type="number" id="cs-cap-ent-tdb" step="0.5" min="-50" max="200" value="80">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="cs-cap-ent-mode">상태 정의 기준</label>
+                        <select class="ps-input" id="cs-cap-ent-mode">
+                            <option value="rh">상대습도</option>
+                            <option value="wb" selected>습구온도</option>
+                            <option value="dp">노점</option>
+                            <option value="w">절대습도(함습비, W)</option>
+                            <option value="h">엔탈피</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="cs-cap-ent-second-lbl" for="cs-cap-ent-second">습구온도(°F)</label>
+                        <input class="ps-input" type="number" id="cs-cap-ent-second" step="0.5" value="67">
+                    </div>
+
+                    <h3 class="subhead">출구 공기</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="cs-cap-lvg-tdb">건구온도(°F)</label>
+                        <input class="ps-input" type="number" id="cs-cap-lvg-tdb" step="0.5" min="-50" max="200" value="55">
+                    </div>
+                    <div class="ps-row cs-cool-only">
+                        <label class="ps-label" for="cs-cap-lvg-mode">상태 정의 기준</label>
+                        <select class="ps-input" id="cs-cap-lvg-mode">
+                            <option value="rh">상대습도</option>
+                            <option value="wb" selected>습구온도</option>
+                            <option value="dp">노점</option>
+                            <option value="w">절대습도(함습비, W)</option>
+                            <option value="h">엔탈피</option>
+                        </select>
+                    </div>
+                    <div class="ps-row cs-cool-only">
+                        <label class="ps-label" id="cs-cap-lvg-second-lbl" for="cs-cap-lvg-second">습구온도(°F)</label>
+                        <input class="ps-input" type="number" id="cs-cap-lvg-second" step="0.5" value="54">
+                    </div>
+                    <p class="ref-note cs-cool-only">
+                        예제로 입력된 출구 상태(<span data-us="{{ pageMessages.unitText.seededLeavingDb.us }}" data-metric="{{ pageMessages.unitText.seededLeavingDb.metric }}">55 °F</span> DB/
+                        <span data-us="{{ pageMessages.unitText.seededLeavingWb.us }}" data-metric="{{ pageMessages.unitText.seededLeavingWb.metric }}">54 °F</span> WB)는 의도적으로 제습이 강한 거의 포화된 코일 출구 상태(약 95&nbsp;% RH)라서 <button type="button" data-gloss="sensible-heat">현열</button>비가 낮게 계산됩니다. 실제 출구 공기는 보통 조금 더 건조하므로 설계 조건에 맞게 수정하세요.
+                    </p>
+                    <p class="ref-note cs-heat-only">
+                        가열 코일에서는 절대습도(함습비, W)가 변하지 않습니다.
+                        출구 공기가 입구 공기의 수분량을 그대로 가지므로 출구 <button type="button" data-gloss="dry-bulb">건구온도</button>만 입력하면 됩니다.
+                    </p>
+
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.airflow.us }}" data-metric="{{ pageMessages.unitText.airflow.metric }}" for="cs-cap-cfm">풍량(CFM)</label>
+                        <input class="ps-input" type="number" id="cs-cap-cfm" step="50" min="0" value="2000">
+                    </div>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="status-pill" id="cs-cap-status">{{ pageMessages.status.capacityPrompt }}</div>
+                    <div class="ps-row primary">
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.totalCapacity.us }}" data-metric="{{ pageMessages.unitText.totalCapacity.metric }}">전열 용량(MBH)</span>
+                        <span class="ps-value muted" id="cs-cap-q-total">—</span>
+                    </div>
+                    <div class="ps-row cs-cool-only">
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.sensibleCapacity.us }}" data-metric="{{ pageMessages.unitText.sensibleCapacity.metric }}">현열 용량(MBH)</span>
+                        <span class="ps-value muted" id="cs-cap-q-sens">—</span>
+                    </div>
+                    <div class="ps-row cs-cool-only">
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.latentCapacity.us }}" data-metric="{{ pageMessages.unitText.latentCapacity.metric }}">잠열 용량(MBH)</span>
+                        <span class="ps-value muted" id="cs-cap-q-lat">—</span>
+                    </div>
+                    <div class="ps-row cs-cool-only">
+                        <span class="ps-label">현열비(SHR)</span>
+                        <span class="ps-value muted" id="cs-cap-shr">—</span>
+                    </div>
+
+                    <h3 class="subhead">공정 변화(부호: − = 냉각)</h3>
+                    <div class="ps-row">
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.deltaDryBulb.us }}" data-metric="{{ pageMessages.unitText.deltaDryBulb.metric }}">Δ 건구온도(°F)</span>
+                        <span class="ps-value muted" id="cs-cap-ddb">—</span>
+                    </div>
+                    <div class="ps-row cs-cool-only">
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.deltaHumidityRatio.us }}" data-metric="{{ pageMessages.unitText.deltaHumidityRatio.metric }}">Δ 절대습도(함습비, W)(gr/lb)</span>
+                        <span class="ps-value muted" id="cs-cap-dw">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.deltaEnthalpy.us }}" data-metric="{{ pageMessages.unitText.deltaEnthalpy.metric }}">Δ 엔탈피(Btu/lb)</span>
+                        <span class="ps-value muted" id="cs-cap-dh">—</span>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="copy-btn" id="cs-cap-copy">용량 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="cs-cap-formula"></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">계산 예</h2>
+                <p class="ref-note worked-intro">
+                    냉각 코일에 <span data-us="{{ pageMessages.unitText.exampleAirflow.us }}" data-metric="{{ pageMessages.unitText.exampleAirflow.metric }}">2000 CFM</span>의 공기가
+                    <span data-us="{{ pageMessages.unitText.exampleEntering.us }}" data-metric="{{ pageMessages.unitText.exampleEntering.metric }}">80 °F DB/67 °F WB</span>로 들어가
+                    <span data-us="{{ pageMessages.unitText.exampleLeaving.us }}" data-metric="{{ pageMessages.unitText.exampleLeaving.metric }}">55 °F DB/54 °F WB</span>로 나옵니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>각 공기 상태의 <button type="button" data-gloss="enthalpy">엔탈피</button> <code>h</code>와 절대습도(함습비, W) <code>W</code>를 ASHRAE 선도 수식으로 구합니다.</li>
+                    <li>체적유량을 건공기 질량유량으로 환산합니다.<br>
+                        <code>ṁ = CFM × 60 ÷ v<sub>entering</sub></code>(lb 건공기/h).</li>
+                    <li>전열 용량은 <button type="button" data-gloss="enthalpy">엔탈피</button> 변화량으로 계산합니다.
+                        <code>q<sub>total</sub> = ṁ × Δh</code>. 현열은
+                        <button type="button" data-gloss="dry-bulb">건구온도</button> 변화량으로 계산합니다.
+                        <code>q<sub>sens</sub> = ṁ × (0.240 + 0.444·W) × ΔDB</code>.
+                        잠열은 나머지인 <code>q<sub>total</sub> − q<sub>sens</sub></code>입니다.</li>
+                    <li><button type="button" data-gloss="sensible-heat">현열</button>비
+                        <code>SHR = q<sub>sens</sub> ÷ q<sub>total</sub></code>는 코일 용량 중 온도를 낮추는 비율과 수분을 제거하는 비율을 보여 줍니다. SHR이 낮으면 코일이 습도가 높은 공간을 처리하고 있다는 뜻입니다.</li>
+                </ol>
+                <p class="ref-note">
+                    위 공식은 엔진의 기본 IP 단위계(CFM, lb, Btu, 즉 ASHRAE IP 수식)로 작성되어 있습니다. 미터법에서는 표시 단계에서 환산하므로 보이는 입력값과 결과는 같은 IP 계산의 정확한 대응값입니다. 대기압은 해수면으로 고정됩니다. 고도를 반영하려면
+                    <a href="/ko/tools/psychrometric-chart.html">습공기선도</a>의 고도 입력을 사용하세요.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Leaving-state tab ── -->
+        <div id="tab-leaving" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+
+                    <h3 class="subhead">입구 공기</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="cs-lvg-ent-tdb">건구온도(°F)</label>
+                        <input class="ps-input" type="number" id="cs-lvg-ent-tdb" step="0.5" min="-50" max="200" value="80">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="cs-lvg-ent-mode">상태 정의 기준</label>
+                        <select class="ps-input" id="cs-lvg-ent-mode">
+                            <option value="rh">상대습도</option>
+                            <option value="wb" selected>습구온도</option>
+                            <option value="dp">노점</option>
+                            <option value="w">절대습도(함습비, W)</option>
+                            <option value="h">엔탈피</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="cs-lvg-ent-second-lbl" for="cs-lvg-ent-second">습구온도(°F)</label>
+                        <input class="ps-input" type="number" id="cs-lvg-ent-second" step="0.5" value="67">
+                    </div>
+
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.airflow.us }}" data-metric="{{ pageMessages.unitText.airflow.metric }}" for="cs-lvg-cfm">풍량(CFM)</label>
+                        <input class="ps-input" type="number" id="cs-lvg-cfm" step="50" min="0" value="2000">
+                    </div>
+
+                    <h3 class="subhead">코일 부하</h3>
+                    <div class="ps-row cs-cool-only">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.sensibleLoad.us }}" data-metric="{{ pageMessages.unitText.sensibleLoad.metric }}" for="cs-lvg-q-sens">현열 부하(MBH)</label>
+                        <input class="ps-input" type="number" id="cs-lvg-q-sens" step="1" min="0" value="40">
+                    </div>
+                    <div class="ps-row cs-cool-only">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.latentLoad.us }}" data-metric="{{ pageMessages.unitText.latentLoad.metric }}" for="cs-lvg-q-lat">잠열 부하(MBH)</label>
+                        <input class="ps-input" type="number" id="cs-lvg-q-lat" step="1" min="0" value="15">
+                    </div>
+                    <div class="ps-row cs-heat-only">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.coilCapacity.us }}" data-metric="{{ pageMessages.unitText.coilCapacity.metric }}" for="cs-lvg-q-heat">코일 용량(MBH)</label>
+                        <input class="ps-input" type="number" id="cs-lvg-q-heat" step="1" min="0" value="50">
+                    </div>
+                    <p class="ref-note">
+                        대기압은 해수면으로 고정됩니다. 가열 코일의 부하는 모두 현열이며 절대습도(함습비, W)는 변하지 않습니다.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="status-pill" id="cs-lvg-status">{{ pageMessages.status.leavingPrompt }}</div>
+                    <h3 class="subhead">출구 공기</h3>
+                    <div class="ps-row primary">
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}">건구온도(°F)</span>
+                        <span class="ps-value muted" id="cs-lvg-out-db">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.wetBulb.us }}" data-metric="{{ pageMessages.unitText.wetBulb.metric }}">습구온도(°F)</span>
+                        <span class="ps-value muted" id="cs-lvg-out-wb">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.humidityRatio.us }}" data-metric="{{ pageMessages.unitText.humidityRatio.metric }}">절대습도(함습비, W)(gr/lb)</span>
+                        <span class="ps-value muted" id="cs-lvg-out-w">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">상대습도(%)</span>
+                        <span class="ps-value muted" id="cs-lvg-out-rh">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.dewPoint.us }}" data-metric="{{ pageMessages.unitText.dewPoint.metric }}">노점(°F)</span>
+                        <span class="ps-value muted" id="cs-lvg-out-dp">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" data-us="{{ pageMessages.unitText.enthalpy.us }}" data-metric="{{ pageMessages.unitText.enthalpy.metric }}">엔탈피(Btu/lb)</span>
+                        <span class="ps-value muted" id="cs-lvg-out-h">—</span>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="copy-btn" id="cs-lvg-copy">출구 건구온도 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="cs-lvg-formula"></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">계산 예</h2>
+                <p class="ref-note worked-intro">
+                    반대로 계산합니다. 입구 공기와 코일이 처리할 부하에서 출구 공기 상태를 구합니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>질량유량 <code>ṁ</code>은 용량 탭과 마찬가지로 풍량과 입구 비체적에서 구합니다.</li>
+                    <li>냉각 코일에서는 <button type="button" data-gloss="sensible-heat">현열</button> 부하가 <button type="button" data-gloss="dry-bulb">건구온도</button>
+                        하강량을 정합니다. <code>ΔDB = −q<sub>sens</sub> ÷ (ṁ × (0.240 + 0.444·W))</code>.
+                        전열 부하(현열 + 잠열)는 <button type="button" data-gloss="enthalpy">엔탈피</button>
+                        하강량을 정합니다. <code>Δh = −q<sub>total</sub> ÷ ṁ</code>. <button type="button" data-gloss="dry-bulb">건구온도</button>와 <button type="button" data-gloss="enthalpy">엔탈피</button>로 출구 상태점이 결정됩니다.</li>
+                    <li><button type="button" data-gloss="latent-heat">잠열</button> 부하가 해당
+                        <button type="button" data-gloss="sensible-heat">현열</button> 분할에서 공기가 제거할 수 있는 수분량보다 크면 출구 상태점이 포화곡선, 즉 코일의 장치 노점온도(ADP)에 놓입니다. 상태 줄에 이를 표시합니다.</li>
+                    <li>가열 코일은 순수 현열 공정입니다. 용량이
+                        <code>ΔDB</code>를 정하고 절대습도(함습비, W)는 그대로이므로 출구 상태는 수분량이 같은 더 따뜻한 공기입니다.</li>
+                </ol>
+                <p class="ref-note">
+                    용량 탭의 역계산입니다. 여기서 구한 출구 상태를 용량 탭에 입력하면 같은 용량이 다시 나옵니다. 용량 탭과 마찬가지로 공식은 IP 단위계 기준이며 미터법 값은 표시 단계에서 환산합니다.
+                </p>
+            </section>
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/psychrometric-chart.html', label: '습공기선도'},
+            {href: '/ko/tools/airside-load.html', label: '공기측 부하 계산기'},
+            {href: '/ko/tools/refrigerant-pt.html', label: '냉매 P-T 및 과열도'},
+            {href: '/ko/tools/power-energy-converter.html', label: '동력 및 에너지 변환기'}
+        ],
+        lessons: [
+            {href: '/ko/education/psychrometrics-basics.html', label: '습공기 상태 해석 기초'},
+            {href: '/ko/education/air-handlers.html', label: '공기조화기(AHU)'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/psychrometrics-basics.html', label: '습공기 상태 해석 기초 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

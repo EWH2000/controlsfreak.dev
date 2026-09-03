@@ -5,9 +5,43 @@ canonical: https://controlsfreak.dev/tools/waterside-load.html
 nav: tools
 category: hydronics
 keywords: gpm delta t mbh tons btuh water flow 500 chilled hot water coil
+pageMessages:
+    display:
+        preambleEquationUs: "q = 500 × GPM × ΔT"
+        preambleEquationMetric: "q = 4.187 × L/s × ΔT"
+        flowLabelUs: "Flow (GPM)"
+        flowLabelMetric: "Flow (L/s)"
+        deltaTLabelUs: "ΔT across coil (°F)"
+        deltaTLabelMetric: "ΔT across coil (°C)"
+        loadLabelUs: "Load (MBH)"
+        loadLabelMetric: "Load (kW)"
+        exampleFlowUs: "20 GPM"
+        exampleFlowMetric: "1.26 L/s"
+        exampleDeltaUs: "12 °F"
+        exampleDeltaMetric: "6.7 °C"
+        workedEquationUs: "q = 500 × GPM × ΔT°F, in Btu/h"
+        workedEquationMetric: "q = 4.187 × L/s × ΔT°C, in kW"
+        workedPlugUs: "q = 500 × 20 × 12 = 120,000 Btu/h = 120 MBH"
+        workedPlugMetric: "q = 4.187 × 1.26 × 6.7 = 35.3 kW"
+        workedTonsUs: "120 ÷ 12 = 10 tons"
+        workedTonsMetric: "35.3 ÷ 3.517 ≈ 10 tons"
+        constantDetailUs: "8.33 lb/gal × 60 min/h × 1.0 Btu/lb·°F — water’s density and specific heat folded into one constant."
+        constantDetailMetric: "water’s specific heat, 4.187 kJ/kg·K, at roughly 1 kg per liter — density and specific heat folded into one constant."
+    labels:
+        load: "Load ({unit})"
+        flow: "Flow ({unit})"
+        deltaT: "ΔT ({unit})"
+    validation:
+        loadInputs: "Enter flow and ΔT to find the load."
+        flowDeltaNonnegative: "Flow and ΔT can’t be negative — enter ΔT as a positive difference."
+        flowInputs: "Enter load and ΔT to find the flow."
+        loadNonnegative: "Load can’t be negative."
+        deltaTPositiveForFlow: "ΔT must be greater than 0 to solve for flow — at ΔT = 0 no flow moves any load."
+        deltaTInputs: "Enter load and flow to find the ΔT."
+        flowPositiveForDeltaT: "Flow must be greater than 0 to solve for ΔT — still water has no ΔT to give."
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -28,7 +62,7 @@ keywords: gpm delta t mbh tons btuh water flow 500 chilled hot water coil
         <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
             <summary>The waterside workhorse, solved in any direction.</summary>
             <div class="preamble-rest">
-                The waterside workhorse: <code><span data-us="q = 500 × GPM × ΔT" data-metric="q = 4.187 × L/s × ΔT">q = 500 × GPM × ΔT</span></code> ties a coil&rsquo;s water flow, the temperature difference across it, and the load it&rsquo;s moving.
+                The waterside workhorse: <code><span data-us="{{ pageMessages.display.preambleEquationUs }}" data-metric="{{ pageMessages.display.preambleEquationMetric }}">q = 500 × GPM × ΔT</span></code> ties a coil&rsquo;s water flow, the temperature difference across it, and the load it&rsquo;s moving.
                 Solve in any direction — the load a measured flow and ΔT imply, the flow a scheduled load needs, or the ΔT a healthy loop should be showing.
             </div>
         </details>
@@ -47,15 +81,15 @@ keywords: gpm delta t mbh tons btuh water flow 500 chilled hot water coil
                     </select>
                 </div>
                 <div class="ps-row" id="wl-row-flow">
-                    <label class="ps-label" data-us="Flow (GPM)" data-metric="Flow (L/s)" for="wl-flow">Flow (GPM)</label>
+                    <label class="ps-label" data-us="{{ pageMessages.display.flowLabelUs }}" data-metric="{{ pageMessages.display.flowLabelMetric }}" for="wl-flow">Flow (GPM)</label>
                     <input class="ps-input" type="number" id="wl-flow" step="any" min="0" placeholder="20" value="20">
                 </div>
                 <div class="ps-row" id="wl-row-dt">
-                    <label class="ps-label" data-us="ΔT across coil (°F)" data-metric="ΔT across coil (°C)" for="wl-dt">ΔT across coil (°F)</label>
+                    <label class="ps-label" data-us="{{ pageMessages.display.deltaTLabelUs }}" data-metric="{{ pageMessages.display.deltaTLabelMetric }}" for="wl-dt">ΔT across coil (°F)</label>
                     <input class="ps-input" type="number" id="wl-dt" step="any" min="0" placeholder="12" value="12">
                 </div>
                 <div class="ps-row" id="wl-row-load">
-                    <label class="ps-label" data-us="Load (MBH)" data-metric="Load (kW)" for="wl-load">Load (MBH)</label>
+                    <label class="ps-label" data-us="{{ pageMessages.display.loadLabelUs }}" data-metric="{{ pageMessages.display.loadLabelMetric }}" for="wl-load">Load (MBH)</label>
                     <input class="ps-input" type="number" id="wl-load" step="any" min="0" placeholder="120" value="120">
                 </div>
                 <p class="ref-note">
@@ -88,18 +122,18 @@ keywords: gpm delta t mbh tons btuh water flow 500 chilled hot water coil
         <section class="tool-body-row">
             <h2 class="ps-section-label">Worked example</h2>
             <p class="ref-note worked-intro">
-                A chilled-water coil takes <span data-us="20 GPM" data-metric="1.26 L/s">20 GPM</span>, and the return pipe runs <span data-us="12 °F" data-metric="6.7 °C">12 °F</span> warmer than the supply.
+                A chilled-water coil takes <span data-us="{{ pageMessages.display.exampleFlowUs }}" data-metric="{{ pageMessages.display.exampleFlowMetric }}">20 GPM</span>, and the return pipe runs <span data-us="{{ pageMessages.display.exampleDeltaUs }}" data-metric="{{ pageMessages.display.exampleDeltaMetric }}">12 °F</span> warmer than the supply.
             </p>
             <ol class="ref-note worked-list">
-                <li>The waterside equation: <code><span data-us="q = 500 × GPM × ΔT°F, in Btu/h" data-metric="q = 4.187 × L/s × ΔT°C, in kW">q = 500 × GPM × ΔT°F, in Btu/h</span></code>.</li>
-                <li>Plug in: <code><span data-us="q = 500 × 20 × 12 = 120,000 Btu/h = 120 MBH" data-metric="q = 4.187 × 1.26 × 6.7 = 35.3 kW">q = 500 × 20 × 12 = 120,000 Btu/h = 120 MBH</span></code>.</li>
-                <li>In chiller language: <code><span data-us="120 ÷ 12 = 10 tons" data-metric="35.3 ÷ 3.517 ≈ 10 tons">120 ÷ 12 = 10 tons</span></code> moving through that one coil.</li>
+                <li>The waterside equation: <code><span data-us="{{ pageMessages.display.workedEquationUs }}" data-metric="{{ pageMessages.display.workedEquationMetric }}">q = 500 × GPM × ΔT°F, in Btu/h</span></code>.</li>
+                <li>Plug in: <code><span data-us="{{ pageMessages.display.workedPlugUs }}" data-metric="{{ pageMessages.display.workedPlugMetric }}">q = 500 × 20 × 12 = 120,000 Btu/h = 120 MBH</span></code>.</li>
+                <li>In chiller language: <code><span data-us="{{ pageMessages.display.workedTonsUs }}" data-metric="{{ pageMessages.display.workedTonsMetric }}">120 ÷ 12 = 10 tons</span></code> moving through that one coil.</li>
             </ol>
             <p class="ref-note">
                 Flip <em>Solve for</em> to run it the other way: the flow a scheduled load needs at design ΔT, or the ΔT a known flow should produce — the on-the-spot check behind every low-ΔT diagnosis. A coil passing design flow at half the design ΔT is moving half the load it should; the <a href="/education/balancing.html">balancing lesson</a> walks where that goes next.
             </p>
             <p class="ref-note">
-                Where the <span data-us="500" data-metric="4.187">500</span> comes from: <span data-us="8.33 lb/gal × 60 min/h × 1.0 Btu/lb·°F — water&rsquo;s density and specific heat folded into one constant." data-metric="water&rsquo;s specific heat, 4.187 kJ/kg·K, at roughly 1 kg per liter — density and specific heat folded into one constant.">8.33 lb/gal × 60 min/h × 1.0 Btu/lb·°F — water&rsquo;s density and specific heat folded into one constant.</span>
+                Where the <span data-us="500" data-metric="4.187">500</span> comes from: <span data-us="{{ pageMessages.display.constantDetailUs }}" data-metric="{{ pageMessages.display.constantDetailMetric }}">8.33 lb/gal × 60 min/h × 1.0 Btu/lb·°F — water&rsquo;s density and specific heat folded into one constant.</span>
             </p>
         </section>
     </div>
@@ -192,9 +226,9 @@ keywords: gpm delta t mbh tons btuh water flow 500 chilled hot water coil
 
             // Label up front so the mute path can't strand a stale one.
             outLabelEl.textContent =
-                solve === 'load' ? `Load (${U.suffix.heatCapacity()})` :
-                solve === 'flow' ? `Flow (${U.suffix.waterFlow()})` :
-                `ΔT (${U.suffix.deltaTemp()})`;
+                solve === 'load' ? CFI18n.page('labels.load', { unit: U.suffix.heatCapacity() }) :
+                solve === 'flow' ? CFI18n.page('labels.flow', { unit: U.suffix.waterFlow() }) :
+                CFI18n.page('labels.deltaT', { unit: U.suffix.deltaTemp() });
 
             const flow = parseFloat(flowEl.value);
             const dt   = parseFloat(dtEl.value);
@@ -202,8 +236,8 @@ keywords: gpm delta t mbh tons btuh water flow 500 chilled hot water coil
 
             let result, formula, unit, dec;
             if (solve === 'load') {
-                if (!isFinite(flow) || !isFinite(dt)) { mute('Enter flow and ΔT to find the load.'); return; }
-                if (flow < 0 || dt < 0) { mute('Flow and ΔT can’t be negative — enter ΔT as a positive difference.'); return; }
+                if (!isFinite(flow) || !isFinite(dt)) { mute(CFI18n.page('validation.loadInputs')); return; }
+                if (flow < 0 || dt < 0) { mute(CFI18n.page('validation.flowDeltaNonnegative')); return; }
                 if (us) {
                     const btuh = K * flow * dt;
                     result = btuh / 1000;   // MBH
@@ -221,9 +255,9 @@ keywords: gpm delta t mbh tons btuh water flow 500 chilled hot water coil
                 tonsEl.className = 'ps-value live';
                 tonsEl.textContent = tidy(tons, 1);
             } else if (solve === 'flow') {
-                if (!isFinite(load) || !isFinite(dt)) { mute('Enter load and ΔT to find the flow.'); return; }
-                if (load < 0) { mute('Load can’t be negative.'); return; }
-                if (dt <= 0) { mute('ΔT must be greater than 0 to solve for flow — at ΔT = 0 no flow moves any load.'); return; }
+                if (!isFinite(load) || !isFinite(dt)) { mute(CFI18n.page('validation.flowInputs')); return; }
+                if (load < 0) { mute(CFI18n.page('validation.loadNonnegative')); return; }
+                if (dt <= 0) { mute(CFI18n.page('validation.deltaTPositiveForFlow')); return; }
                 if (us) {
                     result = (load * 1000) / (K * dt);
                     formula = `Q = (${tidy(load, 4)} × 1000) ÷ (500 × ${tidy(dt, 4)}) = ${tidy(result, 1)} GPM`;
@@ -233,9 +267,9 @@ keywords: gpm delta t mbh tons btuh water flow 500 chilled hot water coil
                 }
                 unit = ' ' + U.suffix.waterFlow(); dec = us ? 1 : 2;
             } else {
-                if (!isFinite(load) || !isFinite(flow)) { mute('Enter load and flow to find the ΔT.'); return; }
-                if (load < 0) { mute('Load can’t be negative.'); return; }
-                if (flow <= 0) { mute('Flow must be greater than 0 to solve for ΔT — still water has no ΔT to give.'); return; }
+                if (!isFinite(load) || !isFinite(flow)) { mute(CFI18n.page('validation.deltaTInputs')); return; }
+                if (load < 0) { mute(CFI18n.page('validation.loadNonnegative')); return; }
+                if (flow <= 0) { mute(CFI18n.page('validation.flowPositiveForDeltaT')); return; }
                 if (us) {
                     result = (load * 1000) / (K * flow);
                     formula = `ΔT = (${tidy(load, 4)} × 1000) ÷ (500 × ${tidy(flow, 4)}) = ${tidy(result, 1)} °F`;

@@ -1,0 +1,471 @@
+---
+title: 설정값 연산 및 리셋 스케줄 — controlsfreak.dev
+description: 오프셋용 덧셈·뺄셈, MIN·MAX 선택, 네 개의 연산 블록으로 외기 리셋 스케줄을 구성하여 와이어시트가 설정값을 계산하는 방법을 설명합니다.
+canonical: https://controlsfreak.dev/ko/education/setpoint-math-reset.html
+nav: education
+category: programming
+pairedQuiz: https://controlsfreak.dev/ko/practice/setpoint-math-reset.html
+keywords: 설정값 리셋 스케줄 OAT 기울기 절편 클램프 제한 MIN MAX SELECT 재실 오프셋 y=mx+b
+pageMessages:
+    unitText:
+        offsetEquation:
+            us: "72 + 2 = 74 및 72 − 2 = 70"
+            metric: "22.2 + 1.1 = 23.3 및 22.2 − 1.1 = 21.1"
+        interceptNote:
+            us: "이 스케줄의 저온측 끝점은 우연히 0 °F에 놓이므로 절편이 곧 설계 끝점입니다. 리셋 스케줄을 영도 설계일 기준으로 자주 제시하는 이유도 바로 이것입니다. b를 별도로 계산할 필요가 없습니다."
+            metric: "(°F에서는 이 스케줄의 저온측 끝점이 0°에 놓입니다. 같은 직선을 °C로 나타내면 70.4에서 절편이 정해집니다.)"
+        outdoorAxis:
+            us: "외기 온도 (°F)"
+            metric: "외기 온도 (°C)"
+        waterAxis:
+            us: "온수 설정값 (°F)"
+            metric: "온수 설정값 (°C)"
+        run:
+            us: "가로 변화량: 60 °F"
+            metric: "가로 변화량: 33.4 °C"
+        rise:
+            us: "세로 변화량: −40 °F"
+            metric: "세로 변화량: −22.2 °C"
+        coldDesign:
+            us: "설계점: 0 °F에서 180 °F (= b)"
+            metric: "설계점: −17.8 °C에서 82.2 °C"
+        warmDesign:
+            us: "설계점: 60 °F에서 140 °F"
+            metric: "설계점: 15.6 °C에서 60.0 °C"
+        highClamp:
+            us: "LIMIT가 180으로 제한"
+            metric: "LIMIT가 82.2로 제한"
+        lowClamp:
+            us: "LIMIT가 140으로 제한"
+            metric: "LIMIT가 60.0으로 제한"
+        unclamped:
+            us: "제한 전에는 −10 °F에서 186.7 °F를 요구"
+            metric: "제한 전에는 −23.3 °C에서 85.9 °C를 요구"
+        limitBand:
+            us: "140–180 °F"
+            metric: "60.0–82.2 °C"
+sourceContentHash: ffff96b70f32249016d8994d2b7072ca3322135e7c41cf0038ffd85bdcf6a833
+sourceMessageHash: 1aebd3bf6361006eb820a203414b596a4860ee8911b0c0fa77caa474deeb2c88
+---
+{% extends "html/education/setpoint-math-reset.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">교육 · 설정값 연산</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">설정값 연산 및 리셋 스케줄 <span class="tool-tag">로직</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                실행 중인 <button type="button" data-gloss="wiresheet">와이어시트</button>를 열고
+                설정값을 찾아보세요. 비교기나 <a href="/ko/education/pid-basics.html">PID 블록</a>이
+                프로세스를 유지하려는 값입니다. SP 핀에 들어가는 와이어를 따라가 보면 대부분 직접
+                입력한 상수에서 오지 않고 작은 연산 블록 체인에서 나옵니다. 이 페이지에서는 그
+                체인을 다룹니다. 처음부터 끝까지 한 가지 질문에 답합니다. <em>와이어시트는 어떻게
+                설정값을 계산하며, 네 개의 연산 블록으로 어떻게 외기 리셋 스케줄을 만들까요?</em>
+                핀, 와이어, 스캔 같은 블록 용어는 <a href="/ko/education/function-blocks.html">함수
+                블록 기초</a>에서 설명합니다. 여기서는 연산 및 선택 계열을 실제로 사용합니다.
+            </p>
+
+            <h2 class="subhead" id="offsets">설정값은 입력하는 것이 아니라 계산합니다</h2>
+
+            <p>
+                와이어시트가 설정값을 직접 입력하는 대신 계산하는 이유는 유지보수 관점의 산술입니다.
+                하나의 숫자가 여러 판단을 구동해야 합니다. 존 와이어시트는 “
+                <span data-us="74&nbsp;°F" data-metric="23.3&nbsp;°C">74&nbsp;°F</span>에서 냉방,
+                <span data-us="70&nbsp;°F" data-metric="21.1&nbsp;°C">70&nbsp;°F</span>에서 정지”를
+                서로 무관한 두 상수로 저장하지 않습니다. 설정값 <em>하나</em>를 저장하고 경계값을
+                계산합니다. <span data-us="72&nbsp;°F" data-metric="22.2&nbsp;°C">72&nbsp;°F</span>
+                설정값 상수와 <button type="button" data-gloss="deadband">불감대</button> 상수
+                <span data-us="2&nbsp;°F" data-metric="1.1&nbsp;°C">2&nbsp;°F</span>를 사용하면
+                <code>ADD</code>가 상한을, <code>SUB</code>가 하한을 만듭니다(
+                <span data-us="{{ pageMessages.unitText.offsetEquation.us }}" data-metric="{{ pageMessages.unitText.offsetEquation.metric }}">72 + 2 = 74 및 72 − 2 = 70</span>).
+                기능 블록 편집기의 두 온도조절기 예제도 정확히 이렇게 배선되어 있습니다. SP 상수
+                하나와 불감대 상수 하나로 경계를 계산합니다. 설정값을 바꾸면 두 경계가 함께
+                바뀌므로 수정할 숫자가 두 개였다는 사실을 기억할 필요가 없습니다. <em>경계에서</em>의
+                동작, 즉 히스테리시스와 채터링, 불감대가 필요한 이유는 이 장의 별도 수업인
+                <a href="/ko/education/comparators-and-deadband.html#deadband">비교기 및 불감대의
+                불감대 절</a>에서 설명합니다.
+            </p>
+
+            <p>
+                같은 두 블록으로 재실/비재실 설정값도 처리합니다. 비재실 난방 설정값은 별개의
+                기준이 아니라 재실 값에서 셋백을 뺀 값입니다. 재실
+                <span data-us="70&nbsp;°F" data-metric="21.1&nbsp;°C">70&nbsp;°F</span>에서
+                <span data-us="5&nbsp;°F" data-metric="2.8&nbsp;°C">5&nbsp;°F</span> 셋백을 빼면
+                운영 시간 외에는 <span data-us="70 − 5 = 65&nbsp;°F" data-metric="21.1 − 2.8 = 18.3&nbsp;°C">70 − 5 = 65&nbsp;°F</span>가 됩니다. 이를 <code>SUB</code>로 배선하면 건물 관리자의
+                “한 도 더 따뜻하게 해 주세요”라는 요청도 상수 하나만 수정하여 모든 모드에 동시에
+                반영할 수 있습니다.
+            </p>
+
+            <p>
+                <code>MIN</code>과 <code>MAX</code>는 이미 존재하는 값 중 하나를 <em>선택</em>하는
+                다른 방식으로 설정값을 계산합니다. <code>MAX</code>는 <strong>최댓값 선택</strong>입니다.
+                여러 존의 난방 요구가 35%, 62%, 18%라면 가장 요구가 큰 존의 62%를 통과시킵니다.
+                플랜트가 최악 조건을 충족하면 다른 존도 자연스럽게 충족됩니다. <code>MIN</code>은
+                <strong>최솟값 선택</strong>이며 대표 용도는 상한 제한입니다. 계산된 설정값을 한 입력에,
+                고정 상한 상수를 다른 입력에 연결하면 설비로 가는 계산값은 절대 상한을 넘지 못합니다.
+                무엇이 이기는지 물어 두 블록을 구분하세요. <code>MAX</code>에서는 가장 큰 요구가,
+                <code>MIN</code>에서는 제한값이 이깁니다.
+            </p>
+
+            <h2 class="subhead" id="reset">선형 리셋 — 직선과 클램프</h2>
+
+            <p>
+                이제 이 수업의 핵심이자 대표적인 응용인 <em>외기 리셋 스케줄</em>을 살펴봅니다.
+                시스템 관점의 원리는 다음과 같습니다. 설계 외기온이 낮은 날에는 난방 루프에 가장
+                뜨거운 물이 필요하지만 온화한 날에는 같은 수온이 과도합니다. 따라서 외기가
+                따뜻해질수록 BMS가 온수 설정값을 낮춥니다. 이것이 <em>왜</em> 에너지를 절약하는지,
+                끝점 값을 어떻게 정하는지는 시스템 페이지의 범위입니다. 같은 원리를 적용한
+                <a href="/ko/education/pump-control.html#dp-reset">펌프 제어의 차압 설정값 리셋</a>과
+                <a href="/ko/education/duct-static-control.html#reset">덕트 정압의 트림 앤 리스폰드</a>가
+                이 연산의 시스템 측면을 설명합니다. 이 페이지는 나머지 절반인 <em>와이어시트에서
+                리셋 스케줄이 무엇인지</em>를 다룹니다. 와이어시트에서 리셋 스케줄은
+                <strong>y&nbsp;=&nbsp;mx&nbsp;+&nbsp;b에 클램프를 더한 것</strong>입니다.
+            </p>
+
+            <p>
+                설계 엔지니어가 시작하는 두 끝점부터 보겠습니다. 이 스케줄에서 루프는
+                <span data-us="180&nbsp;°F" data-metric="82.2&nbsp;°C">180&nbsp;°F</span> 온수를
+                외기가 <span data-us="0&nbsp;°F" data-metric="−17.8&nbsp;°C">0&nbsp;°F</span>일 때,
+                <span data-us="140&nbsp;°F" data-metric="60.0&nbsp;°C">140&nbsp;°F</span> 온수를
+                외기가 <span data-us="60&nbsp;°F" data-metric="15.6&nbsp;°C">60&nbsp;°F</span>일 때
+                요구합니다. 두 끝점 사이는 직선입니다. 두 점으로 직선을 만들려면 배운 그대로
+                세로 변화량을 가로 변화량으로 나누어 기울기를 계산합니다.
+                <span data-us="m = (140 − 180) ÷ (60 − 0) = −40 ÷ 60 ≈ −0.667" data-metric="m = (60.0 − 82.2) ÷ (15.6 − (−17.8)) = −22.2 ÷ 33.4 ≈ −0.665">m = (140 − 180) ÷ (60 − 0) = −40 ÷ 60 ≈ −0.667</span>.
+                부호로 계산이 타당한지 확인할 수 있습니다. 외기 온도가 <em>상승</em>할수록 설정값은
+                <em>하강</em>해야 하므로 리셋 기울기는 음수입니다. 다음으로 어느 끝점이든 사용하여
+                절편을 구해 직선을 고정합니다.
+                <span data-us="b = 180 − (−0.667 × 0) = 180" data-metric="b = 82.2 − (−0.665 × (−17.8)) = 82.2 − 11.8 = 70.4">b = 180 − (−0.667 × 0) = 180</span>.
+                <span data-us="{{ pageMessages.unitText.interceptNote.us }}" data-metric="{{ pageMessages.unitText.interceptNote.metric }}">이 스케줄의 저온측 끝점은 우연히 0&nbsp;°F에 놓이므로 절편이 곧 설계 끝점입니다. 리셋 스케줄을 영도 설계일 기준으로 자주 제시하는 이유도 바로 이것입니다. b를 별도로 계산할 필요가 없습니다.</span>
+                전체 스케줄은 하나의 식입니다.
+                <code><span data-us="SP = −0.667 × OAT + 180" data-metric="SP = −0.665 × OAT + 70.4">SP = −0.667 × OAT + 180</span></code>.
+                중간값으로 확인해 보겠습니다. 외기가
+                <span data-us="30&nbsp;°F" data-metric="−1.1&nbsp;°C">30&nbsp;°F</span>인 날에는
+                <span data-us="SP = −0.667 × 30 + 180 = −20.0 + 180 = 160.0&nbsp;°F" data-metric="SP = −0.665 × (−1.1) + 70.4 = 0.7 + 70.4 = 71.1&nbsp;°C">SP = −0.667 × 30 + 180 = −20.0 + 180 = 160.0&nbsp;°F</span>
+                가 됩니다. 외기 범위의 중간에서 수온 범위도 절반만큼 내려갑니다. 아래 그림은 이
+                스케줄과 계산 예시 지점을 함께 나타냅니다.
+            </p>
+
+            <svg class="edu-svg smr-svg" viewBox="0 0 680 400" font-family="var(--mono)"
+                 role="img" aria-labelledby="smr-line-title smr-line-desc">
+                <title id="smr-line-title">외기 리셋 스케줄: 외기 온도에 따른 온수 설정값, 두 설계 끝점 사이의 경사선과 양 끝의 클램프된 수평선</title>
+                <desc id="smr-line-desc">가로축은 외기 온도이고 세로축은 온수 설정값인 차트입니다.
+                    실선은 외기 온도가 영 이하일 때 180도에서 수평으로 시작합니다. 외기 0도에서
+                    설정값 180도인 설계 끝점부터 외기 60도에서 설정값 140도인 두 번째 설계 끝점까지
+                    내려간 뒤, 더 따뜻한 날에는 다시 140도에서 수평으로 이어집니다. 수평인 양쪽 끝에는
+                    LIMIT 블록이 직선을 설계 밴드 안에 유지한다고 표시되어 있습니다. 끝점 사이의 점선
+                    세로 변화량/가로 변화량 괄호에는 마이너스 40/60, 약 마이너스 0.667인 기울기와 외기가 영일 때 180인
+                    절편이 표시됩니다. 저온측 수평선 위의 점선 연장은 클램프가 없으면 외기 마이너스 10도에서
+                    186.7도를 요구하지만 클램프는 180으로 제한하는 모습을 보여 줍니다. 점으로 된
+                    수직선은 외기 30도에서 설정값이 직선의 중간값인 160도가 되는 계산 예시 지점을
+                    나타냅니다.</desc>
+
+                <!-- axes -->
+                <line x1="70" y1="330" x2="630" y2="330" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <polygon points="630,325 642,330 630,335" fill="var(--text-dim)"/>
+                <line x1="70" y1="330" x2="70" y2="60" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <polygon points="65,60 70,48 75,60" fill="var(--text-dim)"/>
+
+                <!-- x ticks: OAT −20 / 0 / 20 / 40 / 60 / 80 °F -->
+                <g stroke="var(--text-dim)" stroke-width="1">
+                    <line x1="70"  y1="330" x2="70"  y2="336"/>
+                    <line x1="182" y1="330" x2="182" y2="336"/>
+                    <line x1="294" y1="330" x2="294" y2="336"/>
+                    <line x1="406" y1="330" x2="406" y2="336"/>
+                    <line x1="518" y1="330" x2="518" y2="336"/>
+                    <line x1="630" y1="330" x2="630" y2="336"/>
+                </g>
+                <g font-size="11" fill="var(--text-dim)" text-anchor="middle">
+                    <text x="70"  y="352" data-us="−20" data-metric="−28.9">−20</text>
+                    <text x="182" y="352" data-us="0"   data-metric="−17.8">0</text>
+                    <text x="294" y="352" data-us="20"  data-metric="−6.7">20</text>
+                    <text x="406" y="352" data-us="40"  data-metric="4.4">40</text>
+                    <text x="518" y="352" data-us="60"  data-metric="15.6">60</text>
+                    <text x="630" y="352" data-us="80"  data-metric="26.7">80</text>
+                </g>
+
+                <!-- y ticks: SP 140 / 150 / 160 / 170 / 180 °F -->
+                <g stroke="var(--text-dim)" stroke-width="1">
+                    <line x1="64" y1="285" x2="70" y2="285"/>
+                    <line x1="64" y1="240" x2="70" y2="240"/>
+                    <line x1="64" y1="195" x2="70" y2="195"/>
+                    <line x1="64" y1="150" x2="70" y2="150"/>
+                    <line x1="64" y1="105" x2="70" y2="105"/>
+                </g>
+                <g font-size="11" fill="var(--text-dim)" text-anchor="end">
+                    <text x="58" y="289" data-us="140" data-metric="60.0">140</text>
+                    <text x="58" y="244" data-us="150" data-metric="65.6">150</text>
+                    <text x="58" y="199" data-us="160" data-metric="71.1">160</text>
+                    <text x="58" y="154" data-us="170" data-metric="76.7">170</text>
+                    <text x="58" y="109" data-us="180" data-metric="82.2">180</text>
+                </g>
+
+                <!-- axis captions -->
+                <text x="350" y="380" font-size="11" fill="var(--text)" text-anchor="middle"
+                      data-us="{{ pageMessages.unitText.outdoorAxis.us }}" data-metric="{{ pageMessages.unitText.outdoorAxis.metric }}">외기 온도 (°F)</text>
+                <text x="24" y="195" font-size="11" fill="var(--text)" text-anchor="middle" transform="rotate(-90 24 195)"
+                      data-us="{{ pageMessages.unitText.waterAxis.us }}" data-metric="{{ pageMessages.unitText.waterAxis.metric }}">온수 설정값 (°F)</text>
+
+                <!-- the unclamped line, dashed, past both ends (drawn first, behind) -->
+                <line x1="182" y1="105" x2="126" y2="75" stroke="var(--amber)" stroke-width="2" stroke-dasharray="6 5"/>
+                <line x1="518" y1="285" x2="602" y2="330" stroke="var(--amber)" stroke-width="2" stroke-dasharray="6 5"/>
+                <circle cx="126" cy="75" r="4.5" fill="none" stroke="var(--amber)" stroke-width="2"/>
+
+                <!-- the schedule as the sheet outputs it: clamped tails + sloped middle -->
+                <line x1="70"  y1="105" x2="182" y2="105" stroke="var(--blue)" stroke-width="2.5"/>
+                <line x1="182" y1="105" x2="518" y2="285" stroke="var(--blue)" stroke-width="2.5"/>
+                <line x1="518" y1="285" x2="630" y2="285" stroke="var(--blue)" stroke-width="2.5"/>
+
+                <!-- rise / run bracket + slope annotation -->
+                <line x1="182" y1="105" x2="518" y2="105" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="4 3"/>
+                <line x1="518" y1="105" x2="518" y2="285" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="4 3"/>
+                <text x="445" y="94" font-size="10" fill="var(--text-dim)" text-anchor="middle"
+                      data-us="{{ pageMessages.unitText.run.us }}" data-metric="{{ pageMessages.unitText.run.metric }}">가로 변화량: 60 °F</text>
+                <text x="528" y="199" font-size="10" fill="var(--text-dim)" text-anchor="start"
+                      data-us="{{ pageMessages.unitText.rise.us }}" data-metric="{{ pageMessages.unitText.rise.metric }}">세로 변화량: −40 °F</text>
+                <text x="330" y="130" font-size="11" fill="var(--text-bright)" text-anchor="middle"
+                      data-us="m = −40 ÷ 60 ≈ −0.667" data-metric="m = −22.2 ÷ 33.4 ≈ −0.665">m = −40 ÷ 60 ≈ −0.667</text>
+
+                <!-- design endpoints -->
+                <circle cx="182" cy="105" r="5" fill="var(--accent)" stroke="var(--bg)" stroke-width="1.5"/>
+                <circle cx="518" cy="285" r="5" fill="var(--accent)" stroke="var(--bg)" stroke-width="1.5"/>
+                <text x="196" y="86" font-size="11" fill="var(--text)" text-anchor="start"
+                      data-us="{{ pageMessages.unitText.coldDesign.us }}" data-metric="{{ pageMessages.unitText.coldDesign.metric }}">설계점: 0 °F에서 180 °F (= b)</text>
+                <text x="512" y="312" font-size="11" fill="var(--text)" text-anchor="end"
+                      data-us="{{ pageMessages.unitText.warmDesign.us }}" data-metric="{{ pageMessages.unitText.warmDesign.metric }}">설계점: 60 °F에서 140 °F</text>
+
+                <!-- clamp callouts -->
+                <text x="76" y="126" font-size="10" fill="var(--text-dim)" text-anchor="start"
+                      data-us="{{ pageMessages.unitText.highClamp.us }}" data-metric="{{ pageMessages.unitText.highClamp.metric }}">LIMIT가 180으로 제한</text>
+                <text x="626" y="272" font-size="10" fill="var(--text-dim)" text-anchor="end"
+                      data-us="{{ pageMessages.unitText.lowClamp.us }}" data-metric="{{ pageMessages.unitText.lowClamp.metric }}">LIMIT가 140으로 제한</text>
+
+                <!-- unclamped-ask callout (cold end) -->
+                <text x="138" y="58" font-size="10" fill="var(--amber)" text-anchor="start"
+                      data-us="{{ pageMessages.unitText.unclamped.us }}" data-metric="{{ pageMessages.unitText.unclamped.metric }}">제한 전에는 −10 °F에서 186.7 °F를 요구</text>
+
+                <!-- worked point -->
+                <line x1="350" y1="195" x2="350" y2="330" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="3 4"/>
+                <line x1="70" y1="195" x2="350" y2="195" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="3 4"/>
+                <circle cx="350" cy="195" r="5" fill="var(--accent)" stroke="var(--bg)" stroke-width="1.5"/>
+                <text x="362" y="188" font-size="11" fill="var(--text-bright)" text-anchor="start"
+                      data-us="30 °F → 160 °F" data-metric="−1.1 °C → 71.1 °C">30 °F → 160 °F</text>
+            </svg>
+
+            <p>
+                이제 블록으로 구성해 보겠습니다. 이 부분이 이 페이지의 질문에 나온 “네 개의 연산
+                블록”입니다. 아날로그 입력이 외기 센서를 읽고, <code>MUL</code>이 기울기 상수를
+                곱합니다. <code>ADD</code>가 절편 상수를 더하고, <code>LIMIT</code>가 결과를 설계
+                밴드 안으로 제한합니다. 제한된 값은 루프의 설정값인 아날로그 출력으로 전달됩니다.
+                전체 스케줄은 <code>AI → MUL → ADD → LIMIT → AO</code>이며 m과 b가 상수로
+                함께 연결됩니다. 기능 블록 편집기에는 이 와이어시트가 <em>온수 리셋</em> 예제로
+                제공됩니다. 기울기 상수는 −40/60을 반올림한 −0.667이고 절편은 180입니다.
+                편집기의 기본 외기값인
+                <span data-us="30&nbsp;°F" data-metric="−1.1&nbsp;°C (30&nbsp;°F)">30&nbsp;°F</span>에서는
+                와이어에 <code>MUL</code> 입력 30, 출력 −20.0, <code>ADD</code> 출력 160,
+                <code>LIMIT</code>를 거쳐 출력되는 160이 표시됩니다. 정확히 말하면 반올림한
+                −0.667을 사용한 원시 합계는 159.99이며 편집기의 값 표시줄이 이를 160으로
+                반올림합니다. 정확한 −40/60 분수를 사용하면 중간점은 정확히 160입니다. 실제
+                와이어시트에서도 반올림한 기울기 상수가 정확한 분수에서 약간 벗어나는 것은
+                일반적입니다.
+            </p>
+
+            <svg class="edu-svg smr-svg wide" viewBox="0 0 850 310" font-family="var(--mono)"
+                 role="img" aria-labelledby="smr-chain-title smr-chain-desc">
+                <title id="smr-chain-title">네 개의 연산 블록으로 만든 리셋 스케줄: 아날로그 입력, 곱셈, 덧셈, 제한, 아날로그 출력</title>
+                <desc id="smr-chain-desc">일곱 개 블록으로 구성된 기능 블록 와이어시트입니다. 30을 읽는
+                    외기 온도 아날로그 입력이 MULTIPLY 블록에 연결되고, 마이너스 0.667인 기울기 상수가 곱셈
+                    블록의 두 번째 입력에 들어갑니다. 곱셈 출력 마이너스 20.0은 ADD 블록에 연결되고, 180인
+                    절편 상수가 덧셈 블록의 두 번째 입력에 들어갑니다. 덧셈 출력 160은 140과 180 사이로
+                    제한하는 LIMIT 블록에 연결되며, 제한 블록의 출력 160은 온수 설정값 아날로그 출력에
+                    전달됩니다. 외기 30도인 계산 예시 지점의 와이어 값이 표시되어 있습니다. 설명에는
+                    와이어시트가 화씨로 계산한다고 적혀 있습니다.</desc>
+
+                <!-- wires (behind the blocks) -->
+                <line x1="125" y1="86" x2="190" y2="74"  stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="185" y1="223" x2="190" y2="98" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="300" y1="86" x2="365" y2="74"  stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="360" y1="223" x2="365" y2="98" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="475" y1="86" x2="540" y2="86"  stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="650" y1="86" x2="715" y2="86"  stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
+
+                <!-- wire value labels at the worked point -->
+                <text x="158" y="62" font-size="11" fill="var(--text-bright)" text-anchor="middle">30</text>
+                <text x="333" y="62" font-size="11" fill="var(--text-bright)" text-anchor="middle">−20.0</text>
+                <text x="508" y="74" font-size="11" fill="var(--text-bright)" text-anchor="middle">160</text>
+                <text x="683" y="74" font-size="11" fill="var(--text-bright)" text-anchor="middle">160</text>
+
+                <!-- OAT analog input -->
+                <g id="smr-chain-oat">
+                    <rect x="15" y="58" width="110" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="26" y="77" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">ANALOG IN</text>
+                    <text x="26" y="98" font-size="13" font-weight="600" fill="var(--text-bright)">OAT  30</text>
+                    <circle cx="125" cy="86" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- slope constant -->
+                <g id="smr-chain-slope">
+                    <rect x="65" y="195" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="76" y="214" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">CONSTANT</text>
+                    <text x="76" y="235" font-size="13" font-weight="600" fill="var(--text-bright)">m  −0.667</text>
+                    <circle cx="185" cy="223" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- MUL -->
+                <g id="smr-chain-mul">
+                    <rect x="190" y="58" width="110" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="245" y="84" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text-bright)">MUL</text>
+                    <text x="245" y="102" text-anchor="middle" font-size="9" fill="var(--text-dim)">기울기 × OAT</text>
+                    <circle cx="190" cy="74" r="3.8" fill="var(--blue)"/>
+                    <circle cx="190" cy="98" r="3.8" fill="var(--blue)"/>
+                    <circle cx="300" cy="86" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- intercept constant -->
+                <g id="smr-chain-icpt">
+                    <rect x="240" y="195" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="251" y="214" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">CONSTANT</text>
+                    <text x="251" y="235" font-size="13" font-weight="600" fill="var(--text-bright)">b  180</text>
+                    <circle cx="360" cy="223" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- ADD -->
+                <g id="smr-chain-add">
+                    <rect x="365" y="58" width="110" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="420" y="84" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text-bright)">ADD</text>
+                    <text x="420" y="102" text-anchor="middle" font-size="9" fill="var(--text-dim)">+ 절편</text>
+                    <circle cx="365" cy="74" r="3.8" fill="var(--blue)"/>
+                    <circle cx="365" cy="98" r="3.8" fill="var(--blue)"/>
+                    <circle cx="475" cy="86" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- LIMIT -->
+                <g id="smr-chain-limit">
+                    <rect x="540" y="58" width="110" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="595" y="84" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text-bright)">LIMIT</text>
+                    <text x="595" y="102" text-anchor="middle" font-size="9" fill="var(--text-dim)">140–180으로 제한</text>
+                    <circle cx="540" cy="86" r="3.8" fill="var(--blue)"/>
+                    <circle cx="650" cy="86" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- HW SP analog output -->
+                <g id="smr-chain-hwsp">
+                    <rect x="715" y="58" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="726" y="77" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">ANALOG OUT</text>
+                    <text x="726" y="98" font-size="13" font-weight="600" fill="var(--text-bright)">HW SP  160</text>
+                    <circle cx="715" cy="86" r="3.8" fill="var(--blue)"/>
+                </g>
+
+                <text x="425" y="292" font-size="10.5" fill="var(--text-dim)" text-anchor="middle">계산 예시 지점의 와이어 값 — 편집기 기본값인 외기 30 °F(−1.1 °C), 와이어시트는 °F로 계산</text>
+            </svg>
+
+            <p>
+                <code>LIMIT</code>는 왜 필요할까요? 직선은 설계 범위가 어디서 끝나는지 모르고
+                계속 이어지기 때문입니다. 외기 온도가
+                <span data-us="−10&nbsp;°F" data-metric="−23.3&nbsp;°C">−10&nbsp;°F</span>까지
+                떨어지면 클램프되지 않은 직선은
+                <span data-us="−0.667 × (−10) + 180 = 6.7 + 180 = 186.7&nbsp;°F" data-metric="−0.665 × (−23.3) + 70.4 = 15.5 + 70.4 = 85.9&nbsp;°C">−0.667 × (−10) + 180 = 6.7 + 180 = 186.7&nbsp;°F</span>
+                온수를 요구합니다. 설계자가 루프를 산정한 온도보다 높으며 한파가 심할수록 요구값은
+                설계 범위를 더 멀리 벗어납니다. 보일러 선정, 배관 등급, 루프 자체의 상한은 시스템이
+                <em>사용하도록 설계된</em> 수온을 기준으로 정해집니다. 단지 날씨가 설계 범위를
+                벗어났다는 이유로 설정값 체인이 이 모든 한계를 넘어서는 수온을 지시해서는 안 됩니다.
+                <code>LIMIT</code>는 연산을 공학적 범위 안에 두는 안전 난간입니다.
+                <span data-us="{{ pageMessages.unitText.limitBand.us }}" data-metric="{{ pageMessages.unitText.limitBand.metric }}">140–180&nbsp;°F</span>
+                사이 값은 그대로 통과하고 밴드 밖에서는 더 가까운 끝점으로 제한합니다. 같은 클램프가
+                반대쪽 끝도 처리합니다. 외기가
+                <span data-us="70&nbsp;°F" data-metric="21.1&nbsp;°C">70&nbsp;°F</span>인 오후에는
+                직선이 설계 최저값보다 낮은 수온을 요구하지만 하한이
+                <span data-us="140&nbsp;°F" data-metric="60.0&nbsp;°C">140&nbsp;°F</span>로 유지하여
+                루프가 제 역할을 할 만큼 충분히 뜨겁게 유지됩니다.
+            </p>
+
+            <p>
+                “리셋 스케줄”을 새로운 내용으로 정리하기 전에 한 가지를 더 짚어 보겠습니다.
+                이 사이트에서 이미 같은 연산을 사용했습니다. 두 점, 기울기, 절편, 그 사이의 직선은
+                두 설계일 대신 트랜스미터 범위의 두 끝점을 사용하는 <em>정확히</em>
+                <a href="/ko/education/analog-sensing.html">신호 스케일링</a>과 같은 산술입니다.
+                <a href="/ko/tools/signal-scaling.html">신호 스케일링 도구의
+                2점 → 기울기/오프셋 탭</a>은 리셋 스케줄도 그대로 계산할 수 있습니다.
+                (x₁&nbsp;=&nbsp;0, y₁&nbsp;=&nbsp;180)과 (x₂&nbsp;=&nbsp;60,
+                y₂&nbsp;=&nbsp;140)을 입력하면 와이어시트 상수가 담는 것과 같은 m과 b가 나옵니다.
+                하나의 연산이 두 가지 작업에 쓰이며, 둘 다 이 분야 곳곳에 존재합니다.
+            </p>
+
+            <p class="ref-note">
+                미터법 독자를 위한 단위 참고 사항입니다. 편집기의 기본 와이어시트는 IP 단위계
+                상수(−0.667, 180, 140–180 클램프)를 사용하여 °F로 계산합니다. 이 페이지의 °C
+                값은 같은 스케줄을 미터법으로 다시 나타낸 것(기울기 −0.665, 절편 70.4,
+                클램프 60.0–82.2)이며 시뮬레이터 와이어에 표시되는 값은 아닙니다.
+            </p>
+
+            <h2 class="subhead" id="select">설정값 전환 — SELECT 블록</h2>
+
+            <p>
+                와이어시트가 설정값을 계산하는 세 번째 방법은 참/거짓 신호에 따라 두 값 중 하나를
+                <em>선택</em>하는 것입니다. <code>SELECT</code> 블록은 아날로그 입력 두 개,
+                불리언 선택 입력 하나, 출력 하나로 구성됩니다. 재실 냉방 설정값
+                (<span data-us="72&nbsp;°F" data-metric="22.2&nbsp;°C">72&nbsp;°F</span>)을 한
+                입력에, 비재실 셋백 값
+                (<span data-us="65&nbsp;°F" data-metric="18.3&nbsp;°C">65&nbsp;°F</span>)을 다른
+                입력에 연결하고 재실 스케줄 비트를 선택 입력에 연결합니다. 건물이 재실 상태이면
+                블록은 <span data-us="72" data-metric="22.2">72</span>를 통과시키고, 스케줄이
+                해제되는 순간 출력은 <span data-us="65" data-metric="18.3">65</span>로 바뀝니다.
+                하류에서 존을 제어하는 비교기나 PID는 전환 사실을 알 필요가 없습니다. 한 스캔에서
+                설정값 와이어의 값이 바뀐 것만 봅니다. <code>SELECT</code>의 입력은 일반 아날로그
+                와이어이므로 반드시 상수일 필요도 없습니다. 예를 들어 한 입력에는 리셋 스케줄 같은
+                계산값을, 다른 입력에는 고정 셋백 값을 연결할 수 있습니다.
+            </p>
+
+            <p>
+                두 가지보다 많은 모드가 필요하면 SELECT를 직렬로 연결합니다. 첫 번째 블록은 비재실과
+                아침 예열 값을 고르고, 두 번째 블록은 그 결과와 재실 설정값 중 하나를 고릅니다.
+                두 불리언 와이어로 출력이 세 모드를 오갑니다. 이 페이지가 답하는 범위와 그렇지 않은
+                범위를 구분해야 합니다. 연산 블록이 설정값을 만들고 <code>SELECT</code>가 그중 하나를
+                고르지만, 스케줄, 재실 우선제어, 예열 로직, 건물 모드를 결정하는 상태 머신 등 불리언
+                와이어를 <em>구동하는</em> 방법은 완전히 다른 주제입니다. 여기서 다루는 산술보다 달력
+                시간과 시퀀스 설계에 가깝습니다. 모드 와이어는 이미 주어졌다고 보세요. 무엇이 그
+                와이어를 계산하든 이 페이지의 선택 연산은 같은 방식으로 동작합니다.
+            </p>
+
+            <h2 class="subhead" id="capstone">불러온 뒤 클램프의 제한 동작을 확인하세요</h2>
+
+            <p>
+                이 모든 구성은 <a href="/ko/simulators/function-block-editor.html">기능 블록 편집기</a>에
+                이미 배선되어 있습니다. 편집기를 열고 <em>온수 리셋</em> 예제를 선택하세요.
+                <button type="button" data-gloss="oat">OAT</button> 입력을 선택하고 검사기에서 값을
+                바꿔 보세요. 30에서는 위에서 계산한 지점과 같은 160이 실시간으로 출력됩니다.
+                값을 0 아래로 내리면 <code>ADD</code> 와이어 값은 계속 올라가지만 출력은 180에
+                고정됩니다. <code>LIMIT</code>가 저온측 끝을 제한하는 모습입니다. 60 위로 올리면
+                출력은 하한인 140에 고정됩니다. 이 한 가지 동작에 수업 전체가 담겨 있습니다.
+                직선이 계산하고 클램프가 계산값을 설계 범위 안에 유지합니다.
+            </p>
+
+            <a class="cta-button" href="/ko/simulators/function-block-editor.html">기능 블록 편집기 열기 →</a>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/signal-scaling.html', label: '신호 스케일링'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'}
+        ],
+        lessons: [
+            {href: '/ko/education/function-blocks.html', label: '기능 블록 기초'},
+            {href: '/ko/education/comparators-and-deadband.html', label: '비교기 및 불감대'},
+            {href: '/ko/education/pump-control.html', label: '펌프 제어'},
+            {href: '/ko/education/duct-static-control.html', label: '덕트 정압 제어'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/setpoint-math-reset.html', label: '설정값 연산 및 리셋 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 교육 목록으로 돌아가기</a>
+
+</main>
+{% endblock %}

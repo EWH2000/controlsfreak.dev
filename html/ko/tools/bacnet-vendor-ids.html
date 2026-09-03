@@ -1,0 +1,172 @@
+---
+title: BACnet 벤더 ID 조회 — controlsfreak.dev
+description: ASHRAE가 할당한 전체 BACnet 벤더 ID 등록부를 번호 또는 이름으로 검색해 장치가 I-Am에서 보고한 Vendor_Identifier(속성 120)를 디코딩합니다.
+sourceContentHash: c71e55d94ecab8ae985f8e72f6e3db4609b295d19fe395a5923add90943e074b
+sourceMessageHash: e2e727ad2a6af124307728272150ac51b631dc4e9a411b808987bbb697021c56
+pageMessages:
+    prompt: "조회할 벤더 ID를 입력하세요."
+    validation: "벤더 ID는 0–65535 범위의 정수여야 합니다. Vendor_Identifier 속성의 Unsigned16 범위입니다."
+    status:
+        registered: "등록된 벤더 ID"
+        reserved: "ASHRAE 예약 번호 — 할당되지 않음"
+        unassigned: "미할당 — 철회되었거나 발급되지 않음"
+        snapshot: "이 스냅샷에서 미할당 — 등록부 기준일 {retrieved}, 마지막 ID {maxId}"
+    formula:
+        registered: "{id} → {organization}"
+        reserved: "{id} → ASHRAE 예약 번호, 벤더에 할당되지 않음"
+        unassigned: "{id} → 등록 없음(ID는 재할당되지 않으므로 번호가 빈 상태로 유지됨)"
+        snapshot: "{id} → 이 스냅샷의 범위(0–{maxId}) 밖 — 더 최신 장치이거나 실시간 등록부 확인 필요"
+    copy:
+        cellTitle: "{value} 복사"
+canonical: https://controlsfreak.dev/ko/tools/bacnet-vendor-ids.html
+nav: tools
+category: protocols
+keywords: 벤더 식별자 속성 120 Who-Is I-Am 제조사 ASHRAE 레지스트리 전용 장치 객체 Wireshark 검색
+faqs:
+    - q: BACnet 장치의 벤더 ID는 어떻게 찾나요?
+      a: Device 객체의 속성 120(Vendor_Identifier)을 읽으세요. 모든 워크스테이션의 장치 속성 시트에서 확인할 수 있습니다. 장치는 Who-Is 디스커버리 중에 보내는 I-Am에도 이 값을 알리므로, 장치에 직접 접근하지 않아도 디스커버리 로그나 패킷 캡처에서 확인할 수 있습니다. 디스커버리 작동 방식은 <a href="/ko/education/bacnet-basics.html">BACnet 기초</a>에서 설명합니다.
+    - q: BACnet 벤더 ID는 누가 할당하나요?
+      a: ASHRAE가 BACnet 위원회를 통해 할당합니다. 등록은 무료이고 일반적으로 조직마다 번호 하나를 받으며 ID는 절대 재할당되지 않습니다. 회사 이름이 바뀌거나 인수된 뒤에도 번호는 최초 등록에 계속 연결됩니다. 따라서 표에는 "formerly"가 포함된 회사명도 일부 있습니다. 공식 등록부는 bacnet.org에서 제공합니다.
+    - q: BACnet의 벤더 ID 0은 무엇인가요?
+      a: 표준 제정 기관인 ASHRAE 자체입니다. 자체 등록부의 첫 번째 항목을 사용했습니다. 벤더 ID 1은 초기 BACnet 상호운용성 시험을 조직하고 개최한 NIST입니다.
+    - q: 두 장치가 같은 BACnet 벤더 ID를 사용할 수 있나요?
+      a: 네. 같은 제조사의 모든 장치는 같은 벤더 ID를 보고합니다. 이 값은 개별 장치가 아니라 제조사를 식별합니다. 인터네트워크 전체에서 고유해야 하는 값은 장치 인스턴스 번호입니다.
+    - q: 어떤 BACnet 벤더 ID가 예약되어 있나요?
+      a: 555, 666, 777, 888, 911, 999, 1111은 ASHRAE가 따로 예약해 두어 할당하지 않습니다. 캡처나 장치 설정에 이 번호 중 하나가 보이면 실제 제조사가 아니라 자리표시자 또는 잘못 구성된 스택입니다.
+---
+{% extends "html/tools/bacnet-vendor-ids.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · BACnet 벤더 ID 조회</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                BACnet 벤더 ID 조회
+                <span class="tool-tag">BACnet</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>ASHRAE가 할당한 모든 벤더 ID를 하나의 필터 가능한 표로 제공합니다. 장치가 보고한 번호를 붙여 넣으면 제조사를 확인할 수 있습니다.</summary>
+            <div class="preamble-rest">
+                <em>벤더 ID</em>는 모든 BACnet 장치가 Device 객체에 보유하고 I-Am에서 알리는 <code>Vendor_Identifier</code>(속성 120)입니다. ASHRAE가 제조사마다 한 번 할당하고 영구히 유지하는 16비트 번호입니다.
+                디코더 입력란에 번호를 입력하거나 전체 등록부 표를 ID 또는 회사명으로 필터링하세요.
+                여기에는 ID와 조직명만 다시 게시하며, 표 아래에 데이터 스냅샷 날짜를 표시합니다.
+            </div>
+        </details>
+        <p class="ps-seed-note">입력란에는 예제가 미리 채워져 있습니다. 확인하려는 번호로 수정하세요.</p>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">입력</h2>
+                <div class="ps-row">
+                    <label class="ps-label" for="bvid-id">벤더 ID <span style="white-space:nowrap;">(0–65535)</span></label>
+                    <input class="ps-input" type="number" id="bvid-id" min="0" max="65535" step="1" placeholder="260" value="260">
+                </div>
+                <p class="bit-hint" style="margin-top:0.85rem;">디스커버리 로그, 속성 시트 또는 Wireshark의 I-Am 디코드 결과에서 Vendor_Identifier로 표시되는 번호입니다.</p>
+            </section>
+
+            <section role="status" aria-atomic="false">
+                <h2 class="ps-section-label">출력</h2>
+                <div class="ps-row">
+                    <span class="ps-label">조직</span>
+                    <span class="ps-value muted" id="bvid-out-org">—</span>
+                </div>
+                <div class="status-pill" id="bvid-status">조회할 벤더 ID를 입력하세요.</div>
+                <div class="btn-row">
+                    <button class="copy-btn" id="bvid-copy-org">조직명 복사</button>
+                </div>
+            </section>
+
+        </div>
+        <div class="result-formula flush" id="bvid-formula"></div>
+        <div class="failure-callout" id="bvid-callout" hidden></div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="vendor-id-list">전체 BACnet 벤더 ID 목록(ASHRAE 등록부)</h2>
+            <p class="ref-note" style="margin-top:0;">
+                워크스테이션이 번호를 조회하는 등록부와 같은 데이터이며 ID {{ bacnetVendorIds.maxId }}까지의 모든 할당을 담았습니다. ID를 클릭하면 복사됩니다.
+            </p>
+            <div class="bvid-controls">
+                <label class="bvid-search-label" for="bvid-search">ID 또는 제조사로 필터링 <span class="bvid-count" id="bvid-count" aria-hidden="true"></span></label>
+                <input class="ps-input" type="search" id="bvid-search" placeholder="예: 260, 47, Trane, Siemens, Reliable">
+            </div>
+            <table class="ref-table-dense" id="bvid-table" data-max-id="{{ bacnetVendorIds.maxId }}" data-retrieved="{{ bacnetVendorIds.retrieved }}">
+                <thead>
+                    <tr><th>ID</th><th>조직</th></tr>
+                </thead>
+                <tbody>
+                    {% for v in bacnetVendorIds.vendors %}
+                    <tr{% if v.reserved %} class="bvid-res"{% endif %}><td>{{ v.id }}</td><td>{% if v.reserved %}ASHRAE 예약{% else %}{{ v.org }}{% endif %}</td></tr>
+                    {% endfor %}
+                    <tr class="ref-empty bvid-empty" hidden><td colspan="2">이 필터와 일치하는 벤더 ID가 없습니다.</td></tr>
+                </tbody>
+            </table>
+            <p class="ref-note">
+                ASHRAE 공식 등록부인 <a href="https://bacnet.org/assigned-vendor-ids/">bacnet.org 할당 벤더 ID</a>에서 가져왔습니다. 가져온 날짜 {{ bacnetVendorIds.retrieved }}, ID {{ bacnetVendorIds.maxId }}까지 {{ bacnetVendorIds.vendors | length }}건의 할당이 있습니다. ID는 한 번 할당하면 다시 배정하지 않으므로 번호는 항상 같은 등록자를 식별합니다. 다만 등록부가 회사명 변경과 인수에 맞춰 조직명을 수정하므로 현재 이름이 이 스냅샷보다 최신일 수 있습니다. 순서 중 비어 있는 번호는 철회되었거나 발급되지 않은 것이며, {{ bacnetVendorIds.maxId }}보다 큰 ID를 보고하는 장치는 이 스냅샷보다 최신일 수 있습니다. 여기에는 ID와 조직명만 다시 게시하고 등록부의 연락처 열은 의도적으로 제외했습니다.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="what-a-vendor-id-is">BACnet 벤더 ID란</h2>
+            <p class="ref-note" style="margin-top:0;">
+                ASHRAE가 제조사에 한 번 할당한 뒤 절대 재할당하지 않는 16비트 번호이며, Device 객체의 <code>Vendor_Identifier</code>(속성 120)로 공개됩니다. 회사에서 출하한 모든 장치는 같은 번호를 보고합니다. 개별 장치가 아니라 제조사를 식별하는 값입니다. 등록이 무료이므로 목록이 길고 현장에서 거의 접하지 않는 회사명도 많이 포함되어 있습니다.
+            </p>
+            <p class="ref-note">
+                등록부의 첫 두 행에는 그 기원이 담겨 있습니다. ID 0은 ASHRAE 자체이고 ID 1은 초기 BACnet 상호운용성 시험을 조직하고 개최한 NIST입니다. 그 뒤의 항목은 업계가 BACnet을 채택한 대략적인 순서로 이어집니다.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="vendor-ids-in-the-field">현장에서 벤더 ID를 접하는 곳</h2>
+            <p class="ref-note" style="margin-top:0;">
+                보통 세 곳에서 접합니다. Who-Is 디스커버리 중 장치가 응답하는 I-Am, 즉 워크스테이션의 디스커버리 로그에서 장치 인스턴스 옆에 표시되는 값, Device 객체의 속성 시트에서 확인하는 속성 120, 그리고 Wireshark 캡처에서 디코딩한 I-Am <button type="button" data-gloss="apdu">APDU</button>입니다. 세 경우 모두 가공되지 않은 같은 번호가 표시되며 바로 그럴 때 이 표가 필요합니다.
+            </p>
+            <p class="ref-note">
+                벤더 ID는 프로토콜의 전용 부분에 네임스페이스도 제공합니다. 객체 유형 128–1023과 번호가 높은 속성은 벤더별로 다릅니다. 범위는 <a href="/ko/tools/bacnet-objects.html">BACnet 객체 참고 자료</a>에서 확인할 수 있습니다. 따라서 캡처에서 표준에 정의되지 않은 객체 유형을 발견하면 가장 먼저 "어느 벤더의 장치인가"를 확인해야 하며, 벤더 ID가 그 답을 줍니다.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="reserved-vendor-ids">예약되어 할당되지 않는 벤더 ID</h2>
+            <p class="ref-note" style="margin-top:0;">
+                555, 666, 777, 888, 911, 999, 1111의 일곱 번호는 ASHRAE가 보류하며 벤더에 할당하지 않습니다. 장치나 캡처에서 이 번호 중 하나가 보고되면 실제 제조사의 제품이 아니라 자리표시자, 시험용 스택 또는 잘못된 구성입니다.
+            </p>
+            <p class="ref-note">
+                그 밖에 순서에서 비어 있는 번호는 등록이 철회되었거나 발급되지 않은 번호입니다. ID는 재할당되지 않으므로 계속 비어 있습니다. 또한 ASHRAE는 새 ID를 계속 발급하므로 이 스냅샷의 상한보다 큰 번호는 대개 잘못된 값이 아니라 표보다 최신인 장치를 뜻합니다.
+            </p>
+        </section>
+
+    </div>
+
+    {{ faqBlock(faqs, "BACnet 벤더 ID 자주 묻는 질문") }}
+
+    {{ relatedLinks({
+        hub: {href: '/ko/bacnet/', label: 'BACnet 참고 자료 허브'},
+        tools: [
+            {href: '/ko/tools/bacnet-objects.html', label: 'BACnet 객체 참고 자료'},
+            {href: '/ko/tools/bacnet-ip-converter.html', label: 'BACnet/IP 16진수 변환기'}
+        ],
+        lessons: [
+            {href: '/ko/education/bacnet-basics.html', label: 'BACnet 기초'},
+            {href: '/ko/education/bacnet-networking.html', label: 'BACnet 네트워킹'},
+            {href: '/ko/education/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/bacnet-basics.html', label: 'BACnet 기초'},
+            {href: '/ko/practice/bacnet-networking.html', label: 'BACnet 네트워킹'},
+            {href: '/ko/practice/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

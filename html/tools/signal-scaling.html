@@ -5,9 +5,29 @@ canonical: https://controlsfreak.dev/tools/signal-scaling.html
 nav: tools
 category: signals
 keywords: 4-20mA milliamp voltage 0-10V span slope offset y=mx+b proxy ext linear scale ai ao
+pageMessages:
+    labels:
+        signalValue: "Signal Value ({unit})"
+        minimum: "Min"
+        maximum: "Max"
+    errors:
+        scalingInputs: "Enter a signal value and engineering-unit range to compute."
+        scalingSpan: "Range high equals range low — there’s no span to scale across. Set them to different values."
+        reverseInputs: "Enter an engineering value and engineering-unit range to compute."
+        reverseSpan: "Engineering range high equals range low — there’s no span to scale across. Set them to different values."
+        pointInputs: "Enter both (x, y) pairs to solve."
+        slopeUndefined: "x₁ equals x₂ — the slope is undefined (division by zero). Set x₁ and x₂ to different values."
+    formula:
+        scaling: "Eng. value = {euMin} + (({signal} − {signalMin}) ÷ ({signalMax} − {signalMin})) × ({euMax} − {euMin}) = {result}{unit}"
+        reverse: "Signal = {signalMin} + (({eu} − {euMin}) ÷ ({euMax} − {euMin})) × ({signalMax} − {signalMin}) = {result} {unit}"
+        slopeOffset: "m = ({y2} − {y1}) ÷ ({x2} − {x1}) = {slope}    ·    b = {y1} − ({slope} × {x1}) = {offset}    →    y = {displaySlope}x + ({displayOffset})"
+    copy:
+        unit: "Copy {unit}"
+        value: "Copy value"
+    reverseDirection: "Reverse: drive this {unit} output to land on the entered eng. value."
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -303,7 +323,7 @@ keywords: 4-20mA milliamp voltage 0-10V span slope offset y=mx+b proxy ext linea
                 ({ min: sMin, max: sMax, unit: sUnit } = SIG[key]);
             }
 
-            document.getElementById('sig-input-label').textContent = `Signal Value (${sUnit})`;
+            document.getElementById('sig-input-label').textContent = CFI18n.page('labels.signalValue', { unit: sUnit });
 
             const sig    = parseFloat(document.getElementById('sig-val').value);
             const euMin  = parseFloat(document.getElementById('eu-min').value);
@@ -315,8 +335,8 @@ keywords: 4-20mA milliamp voltage 0-10V span slope offset y=mx+b proxy ext linea
             const fillEl    = document.getElementById('range-bar-fill');
             const calloutEl = document.getElementById('ss-scaling-callout');
 
-            document.getElementById('bar-label-min').textContent = !isFinite(euMin) ? 'Min' : `${euMin}${euUnit ? ' ' + euUnit : ''}`;
-            document.getElementById('bar-label-max').textContent = !isFinite(euMax) ? 'Max' : `${euMax}${euUnit ? ' ' + euUnit : ''}`;
+            document.getElementById('bar-label-min').textContent = !isFinite(euMin) ? CFI18n.page('labels.minimum') : `${euMin}${euUnit ? ' ' + euUnit : ''}`;
+            document.getElementById('bar-label-max').textContent = !isFinite(euMax) ? CFI18n.page('labels.maximum') : `${euMax}${euUnit ? ' ' + euUnit : ''}`;
 
             const muteOutputs = (msg) => {
                 outEl.className = 'ps-value muted';
@@ -329,11 +349,11 @@ keywords: 4-20mA milliamp voltage 0-10V span slope offset y=mx+b proxy ext linea
                 calloutEl.hidden = false;
             };
             if (!isFinite(sig) || !isFinite(euMin) || !isFinite(euMax) || !isFinite(sMin) || !isFinite(sMax)) {
-                muteOutputs('Enter a signal value and engineering-unit range to compute.');
+                muteOutputs(CFI18n.page('errors.scalingInputs'));
                 return;
             }
             if (sMax === sMin || euMax === euMin) {
-                muteOutputs('Range high equals range low — there’s no span to scale across. Set them to different values.');
+                muteOutputs(CFI18n.page('errors.scalingSpan'));
                 return;
             }
             calloutEl.hidden = true;
@@ -352,11 +372,14 @@ keywords: 4-20mA milliamp voltage 0-10V span slope offset y=mx+b proxy ext linea
             pctEl.className = 'ps-value live' + (outOfRange ? ' error' : '');
             pctEl.textContent = pctNum.toFixed(1) + '%' + (outOfRange ? ' ⚠' : '');
 
-            document.getElementById('scaling-formula').textContent =
-                `Eng. value = ${euMin} + ((${sig} − ${sMin}) ÷ (${sMax} − ${sMin})) × (${euMax} − ${euMin}) = ${eu.toFixed(2)}${euUnit ? ' ' + euUnit : ''}`;
+            document.getElementById('scaling-formula').textContent = CFI18n.page('formula.scaling', {
+                euMin, signal: sig, signalMin: sMin, signalMax: sMax, euMax,
+                result: eu.toFixed(2), unit: euUnit ? ' ' + euUnit : ''
+            });
 
             // Dynamic copy-button label — names the unit the user is copying.
-            document.getElementById('ss-copy-scaling').textContent = euUnit ? `Copy ${euUnit}` : 'Copy value';
+            document.getElementById('ss-copy-scaling').textContent = euUnit
+                ? CFI18n.page('copy.unit', { unit: euUnit }) : CFI18n.page('copy.value');
         }
 
         // ─────────────────────────────────────────────
@@ -382,11 +405,11 @@ keywords: 4-20mA milliamp voltage 0-10V span slope offset y=mx+b proxy ext linea
                 calloutEl.hidden = false;
             };
             if (!isFinite(eu) || !isFinite(euMin) || !isFinite(euMax)) {
-                muteOutputs('Enter an engineering value and engineering-unit range to compute.');
+                muteOutputs(CFI18n.page('errors.reverseInputs'));
                 return;
             }
             if (euMax === euMin) {
-                muteOutputs('Engineering range high equals range low — there’s no span to scale across. Set them to different values.');
+                muteOutputs(CFI18n.page('errors.reverseSpan'));
                 return;
             }
             calloutEl.hidden = true;
@@ -401,16 +424,17 @@ keywords: 4-20mA milliamp voltage 0-10V span slope offset y=mx+b proxy ext linea
             pctEl.className = 'ps-value live' + (outOfRange ? ' error' : '');
             pctEl.textContent = (ratio * 100).toFixed(1) + '%' + (outOfRange ? ' ⚠' : '');
 
-            document.getElementById('reverse-formula').textContent =
-                `Signal = ${sMin} + ((${eu} − ${euMin}) ÷ (${euMax} − ${euMin})) × (${sMax} − ${sMin}) = ${sig.toFixed(3)} ${sUnit}`;
+            document.getElementById('reverse-formula').textContent = CFI18n.page('formula.reverse', {
+                signalMin: sMin, eu, euMin, euMax, signalMax: sMax, result: sig.toFixed(3), unit: sUnit
+            });
 
             // Dynamic copy-button label — names the signal's natural unit (mA / V).
-            document.getElementById('ss-copy-reverse').textContent = `Copy ${sUnit}`;
+            document.getElementById('ss-copy-reverse').textContent = CFI18n.page('copy.unit', { unit: sUnit });
 
             // Echo the direction so a skimmer can't read the readout backwards —
             // names the signal's actual unit (mA / V).
             document.getElementById('reverse-direction-note').textContent =
-                `Reverse: drive this ${sUnit} output to land on the entered eng. value.`;
+                CFI18n.page('reverseDirection', { unit: sUnit });
         }
 
         // ─────────────────────────────────────────────
@@ -446,11 +470,11 @@ keywords: 4-20mA milliamp voltage 0-10V span slope offset y=mx+b proxy ext linea
                 calloutEl.hidden = false;
             };
             if (!isFinite(x1) || !isFinite(y1) || !isFinite(x2) || !isFinite(y2)) {
-                muteOutputs('Enter both (x, y) pairs to solve.');
+                muteOutputs(CFI18n.page('errors.pointInputs'));
                 return;
             }
             if (x1 === x2) {
-                muteOutputs('x₁ equals x₂ — the slope is undefined (division by zero). Set x₁ and x₂ to different values.');
+                muteOutputs(CFI18n.page('errors.slopeUndefined'));
                 return;
             }
             calloutEl.hidden = true;
@@ -465,10 +489,10 @@ keywords: 4-20mA milliamp voltage 0-10V span slope offset y=mx+b proxy ext linea
             slopeEl.textContent  = parseFloat(m.toFixed(6)).toString();
             offsetEl.textContent = parseFloat(b.toFixed(6)).toString();
 
-            formulaEl.textContent =
-                `m = (${y2} − ${y1}) ÷ (${x2} − ${x1}) = ${m.toFixed(6)}` +
-                `    ·    b = ${y1} − (${m.toFixed(6)} × ${x1}) = ${b.toFixed(6)}` +
-                `    →    y = ${parseFloat(m.toFixed(6))}x + (${parseFloat(b.toFixed(6))})`;
+            formulaEl.textContent = CFI18n.page('formula.slopeOffset', {
+                y2, y1, x2, x1, slope: m.toFixed(6), offset: b.toFixed(6),
+                displaySlope: parseFloat(m.toFixed(6)), displayOffset: parseFloat(b.toFixed(6))
+            });
         }
 
         // ── Wiring ──

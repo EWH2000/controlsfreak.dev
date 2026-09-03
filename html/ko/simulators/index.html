@@ -1,0 +1,127 @@
+---
+title: 시뮬레이터 — controlsfreak.dev
+description: 빌딩 자동제어 실무를 위한 동작 모델입니다. PID 루프 조정, VFD 키패드 조작, DDC 제어기 배선, 병렬 플랜트 대수제어, 수배관 루프 구성을 연습하세요.
+sourceContentHash: 9a43f179b27e03e43682c68c46a54a4da08e1829a0939d534c2910a2d243adfe
+canonical: https://controlsfreak.dev/ko/simulators/
+nav: simulators
+---
+{% extends "html/simulators/index.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <h1 class="section-label">시뮬레이터</h1>
+        <div class="section-line"></div>
+    </div>
+
+    <p class="landing-intro">
+        브라우저에서 직접 조작할 수 있는 대화형 모델입니다. 실제 장비 앞에 서기 전에 제어 동작을 연습할 수 있습니다. 로그인이나 설치가 필요 없으며 추적 기능도 없습니다.
+    </p>
+
+    <p class="chip-row-preamble">활동별 필터:</p>
+
+    <div class="filter-chips" role="group" aria-label="활동별 시뮬레이터 필터">
+        <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
+            전체 <span class="filter-chip-count">9</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="panel-wiring" aria-pressed="false">
+            패널 및 배선 <span class="filter-chip-count">2</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="programming-logic" aria-pressed="false">
+            프로그래밍 및 로직 <span class="filter-chip-count">3</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="equipment-systems" aria-pressed="false">
+            장비 및 시스템 <span class="filter-chip-count">4</span>
+        </button>
+    </div>
+
+    <div class="card-grid">
+        {{ navCard({
+            section:    'simulators',
+            href:       '/ko/simulators/ddc-workbench.html',
+            titleShort: 'AHU 워크벤치',
+            titleFull:  'DDC 워크벤치 — 공기조화기',
+            desc:       '단일 존 공기조화기를 실시간 DDC 그래픽으로 다룹니다. 외기냉방 댐퍼, 온수 코일, 2단 DX가 있고 한 탭 옆에서 이를 운전하는 기능 블록 프로그램을 볼 수 있습니다. 센서를 강제 지정하고 실제 우선순위 배열로 포인트를 재정의하면서 화면에 드러나는 장비 상태를 관찰하세요.',
+            pills:      ['실시간 DDC 그래픽', '외기냉방', '우선순위 배열', '와이어시트'],
+            category:   'equipment-systems'
+        }) }}
+        {{ navCard({
+            section:    'simulators',
+            href:       '/ko/simulators/ddc-workbench-fcu.html',
+            titleShort: 'FCU 워크벤치',
+            titleFull:  'DDC 워크벤치 — 팬코일유닛',
+            desc:       '같은 워크벤치에서 DX 팬코일유닛을 다룹니다. 장비가 작아 전체 제어 흐름을 쉽게 읽을 수 있습니다. 샘플 시퀀스를 불러오거나 빈 시트에서 직접 배선한 뒤 냉방을 증단하고 팬 운전 확인 신호를 끊어 그래픽에서 로직까지 고장을 추적하세요.',
+            pills:      ['실시간 DDC 그래픽', 'DX 대수제어', '직접 배선', '고장 프리셋'],
+            category:   'equipment-systems'
+        }) }}
+        {{ navCard({
+            section:    'simulators',
+            href:       '/ko/simulators/pid-tuner.html',
+            titleShort: 'PID 튜너',
+            titleFull:  'PID 튜닝 도우미',
+            desc:       '계단응답 시뮬레이터입니다. 이득·리셋·레이트(또는 Ti·Td / 비례대), 사전 설정 튜닝값, 측정값(PV)과 설정값 그래프, 증상별 튜닝 조정 요약표를 제공합니다.',
+            pills:      ['PID 루프', '계단응답', 'FOPDT', '튜닝 요약'],
+            category:   'programming-logic'
+        }) }}
+        {{ navCard({
+            section:    'simulators',
+            href:       '/ko/simulators/vfd-mock.html',
+            titleShort: '모의 VFD',
+            titleFull:  '모의 VFD 인터페이스',
+            desc:       '클릭 가능한 키패드에서 일반적인 드라이브의 파라미터 트리를 탐색합니다. 실제 드라이브를 다루기 전에 운전 지령 소스와 속도 지령 소스의 연동 조건을 익힐 수 있습니다. VFD 해설과 함께 보세요.',
+            pills:      ['VFD', '키패드 시뮬레이션', '파라미터 트리', '운전 / 속도 소스'],
+            category:   'panel-wiring'
+        }) }}
+        {{ navCard({
+            section:    'simulators',
+            href:       '/ko/simulators/function-block-editor.html',
+            titleShort: '기능 블록 편집기',
+            titleFull:  '기능 블록 편집기',
+            desc:       '그래픽 기반 와이어시트 샌드박스입니다. 로직, 수학, 타이머, PID 블록을 배치하고 배선하여 제어 시퀀스가 실시간으로 실행되는 모습을 확인할 수 있습니다. 예제도 내장되어 있습니다. 기능 블록 기초 해설과 함께 보세요.',
+            pills:      ['로직 샌드박스', '로직 / 수학 / 타이머 / PID', '예제'],
+            category:   'programming-logic',
+            desktopOnly: true
+        }) }}
+        {{ navCard({
+            section:    'simulators',
+            href:       '/ko/simulators/staging-sequencer.html',
+            titleShort: '대수제어 시퀀서',
+            titleFull:  '장비 대수제어 시퀀서',
+            desc:       '실시간 병렬 플랜트 모델입니다. 하루 부하 곡선에 따라 수요가 변하는 동안 설정 가능한 시퀀스가 장비를 증단·감단하고, 세 가지 방식으로 선행 장비를 교대하며, 고장을 주입하고 모든 동작을 기록합니다. 장비 대수제어 해설과 함께 보세요.',
+            pills:      ['증단 / 감단', '선행 교대', '운전시간 균등화', '이벤트 로그'],
+            category:   'programming-logic'
+        }) }}
+        {{ navCard({
+            section:    'simulators',
+            href:       '/ko/simulators/controller-wiring.html',
+            titleShort: '제어기 배선',
+            titleFull:  '제어기 배선 시뮬레이터',
+            desc:       '일반적인 DDC 제어기를 처음부터 끝까지 배선합니다. 변압기 전원을 연결하고 센서, 액추에이터, 팬을 배치한 뒤 단자와 단자를 클릭해 연결하세요. 올바르게 연결하면 포인트가 실시간으로 값을 읽고, 잘못 연결하면 스파크·단선·퓨즈 용단이 발생합니다.',
+            pills:      ['24 VAC 전원', 'UI / BI / AO / BO', '실시간 고장', '고장 찾기'],
+            category:   'panel-wiring',
+            desktopOnly: true
+        }) }}
+        {{ navCard({
+            section:    'simulators',
+            href:       '/ko/simulators/hydronic-loop-builder.html',
+            titleShort: '루프 빌더',
+            titleFull:  '수배관 루프 빌더',
+            desc:       '입면도 위에 온수 또는 냉수 루프를 구성합니다. 플랜트, 펌프, 코일, 밸브를 배치하고 포트끼리 배관을 연결하면 실제 유량, 양정, 수온이 실시간으로 계산되어 전파됩니다. 세 가지 예제 루프가 내장되어 있습니다.',
+            pills:      ['실시간 해석', '펌프 / 코일 / 밸브', '운전점', '예제 3개'],
+            category:   'equipment-systems',
+            desktopOnly: true
+        }) }}
+        {{ navCard({
+            section:    'simulators',
+            href:       '/ko/simulators/refrigerant-loop.html',
+            titleShort: '냉매 회로',
+            titleFull:  '냉매 회로 시뮬레이터',
+            desc:       '실시간 증기압축 냉동사이클입니다. 풍량, 냉매 충전량, 외기 조건, 팽창장치 과열도 설정을 바꾸고 흡입압력, 응축압력, 과열도, 과냉도, 코일 풍량 부족 상태가 매니폴드 게이지와 실시간 P-T 표시에서 어떻게 변하는지 관찰하세요. 냉매 학습 자료와 함께 보세요.',
+            pills:      ['증기압축', '흡입 / 응축압력', '과열도 / 과냉도', '코일 풍량 부족'],
+            category:   'equipment-systems'
+        }) }}
+    </div>
+
+</main>
+{% endblock %}

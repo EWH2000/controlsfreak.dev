@@ -1,0 +1,49 @@
+---
+title: 부하 배관 퀴즈 — controlsfreak.dev
+description: 2방·3방 밸브가 만드는 가변·정유량, 적합한 펌프 조합, 혼합·분배 구성과 최소유량 바이패스를 점검하는 10문항 퀴즈입니다.
+sourceContentHash: 98d299be87736963f66d0c77c399c78762030d22faa4ec434f0bdf320a422a20
+canonical: https://controlsfreak.dev/ko/practice/load-piping.html
+nav: practice
+category: hydronics
+pairedLesson: https://controlsfreak.dev/ko/education/load-piping.html
+---
+{% extends "html/practice/load-piping.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 부하 배관</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">부하 배관 퀴즈 <span class="tool-tag">수배관 시스템</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/load-piping.html">부하 배관</a> 학습 자료를 읽은 뒤 스스로 확인해
+                보세요. 각 코일의 밸브가 전체 루프를 어떻게 결정하는지 다루는 10문항입니다. 2방 밸브와 가변
+                시스템 유량, 3방 밸브와 정유량, 혼합형과 분배형의 차이, 각 방식에 적합한 펌프, 최소유량 바이패스를
+                점검합니다. 각 문항의 해설에는 해당 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/ko/education/load-piping.html', label: '부하 배관'},
+            {href: '/ko/education/hydronic-loops.html', label: '수배관 루프'},
+            {href: '/ko/education/balancing.html', label: '수배관 밸런싱'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

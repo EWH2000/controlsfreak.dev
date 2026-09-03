@@ -1,0 +1,254 @@
+---
+title: 와이어시트 트레이스 실전 연습 — controlsfreak.dev
+description: 실제 기능 블록 와이어시트에서 미끼 분기, 잘못된 퍼미시브 체인, 그럴듯하지만 틀린 설정을 출력부터 역추적해 찾는 13문항 실전 연습입니다.
+sourceContentHash: 2d77d3c640f2b67d0d681a6339ecb5dc3edef5e454b4a8eef735b7dde3e19074
+canonical: https://controlsfreak.dev/ko/practice/wiresheet-traces.html
+nav: practice
+category: field
+keywords: 와이어시트 트레이스 기능 블록 문제 해결 퍼미시브 미끼 분기 오버라이드 강제값 클램프
+---
+{% extends "html/practice/wiresheet-traces.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 와이어시트 트레이스</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">와이어시트 트레이스 실전 연습 <span class="tool-tag">현장 연습</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                <a href="/ko/education/reading-a-wiresheet.html">와이어시트 읽기</a> 학습 자료는 잘못된 출력에서
+                시작해 상류로 한 단계씩 이동하고, 출력이 시퀀스의 요구와 처음으로 어긋나는 블록을 찾는
+                방법을 설명합니다. 이 실전 연습에서는 쉽게 답을 내주지 않는 와이어시트에 그 방법을
+                적용합니다. 모든 와이어시트는 <em>실시간</em>이며, 표시된 값은 화면에서 실제로 보게 될 값이고
+                각 블록은 자신의 라벨에 적힌 연산을 정확히 수행합니다. 어려움은 다른 곳에 있습니다. 고장처럼
+                보이지만 정상인 분기, 지금은 올바르게 허가하지만 정작 필요할 때 아무것도 보호하지 못하는
+                체인, 어느 필드에 있어도 그럴듯한 숫자가 잘못된 필드에 입력된 경우입니다. 블록까지만 보지
+                말고 핀까지 읽으세요.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {# ── Figure bank ──────────────────────────────────────────────
+       Static, hidden, cloned by id into the question's .quiz-figure
+       slot by the quiz engine (see the `figure` field in
+       html/scripts/quiz-engine.js). Reserved for the three questions
+       where TOPOLOGY is the puzzle — which pin a wire lands on, which
+       leg a block sits on — since prose cannot pose that question
+       without answering it. The rest of the bank uses a text snippet,
+       which reads better on a phone.
+
+       Each figure names itself with a NATIVE <title>/<desc> pair —
+       aria-labelledby fails mount, which is the opposite of the
+       education-page SVG idiom. The <desc> gives a screen-reader user
+       the same puzzle a sighted user gets: every block, every wire,
+       every live value, in the same neutral register the drawing uses.
+       It names no fault and reaches no verdict — the verdict is in the
+       question's `explain`, which every reader gets after answering.
+       Colour convention matches the lesson: blue wires carry analog
+       values, green a TRUE digital signal, grey a FALSE one. ── #}
+    <div class="wst-figure-bank" aria-hidden="true">
+
+        <svg id="wst-fig-orphan-sp" class="edu-svg wst-fig hidden" viewBox="0 0 650 250" role="img" font-family="var(--mono)">
+            <title>두 설정값 상수가 있는 냉방 요구 와이어시트</title>
+            <desc>블록 다섯 개로 구성된 실시간 기능 블록 와이어시트입니다. 왼쪽 위의 SPACE TEMP 아날로그 입력은 74를 나타내며, 배선은 오른쪽 아래로 이어져 비교기의 A 핀에 연결됩니다. 그 아래 SP ADJUST 상수 블록은 72를 나타냅니다. 출력 핀은 그려져 있지만 배선이 연결되지 않아 어디에도 도달하지 않습니다. 그 아래 SP FIXED 상수 블록은 78을 나타내며, 배선은 오른쪽 위로 이어져 같은 비교기의 B 핀에 연결됩니다. 비교기에는 A &gt; B가 표시되고 74 &gt; 78의 결과로 FALSE가 나타납니다. FALSE를 나타내는 회색 출력 배선은 COOL 바이너리 출력으로 이어지며 출력은 OFF입니다.</desc>
+
+            <path d="M165 44 H210 V80 H250" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M165 200 H210 V100 H250" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="390" y1="90" x2="475" y2="90" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round"/>
+
+            <text x="172" y="36" font-size="11" fill="var(--blue)">74</text>
+            <text x="172" y="192" font-size="11" fill="var(--blue)">78</text>
+            <text x="400" y="82" font-size="11" fill="var(--text-dim)">FALSE</text>
+
+            <g>
+                <rect x="15" y="18" width="150" height="52" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="27" y="37" font-size="10" letter-spacing="0.5" fill="var(--text-dim)">아날로그 입력 · 실내</text>
+                <text x="27" y="58" font-size="14" font-weight="600" fill="var(--text-bright)">TEMP  74</text>
+                <circle cx="165" cy="44" r="4" fill="var(--blue)"/>
+            </g>
+            <g>
+                <rect x="15" y="96" width="150" height="52" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="27" y="115" font-size="10" letter-spacing="0.5" fill="var(--text-dim)">상수 · 그래픽</text>
+                <text x="27" y="136" font-size="14" font-weight="600" fill="var(--text-bright)">SP ADJUST  72</text>
+                <circle cx="165" cy="122" r="4" fill="var(--blue)"/>
+            </g>
+            <g>
+                <rect x="15" y="174" width="150" height="52" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="27" y="193" font-size="10" letter-spacing="0.5" fill="var(--text-dim)">상수</text>
+                <text x="27" y="214" font-size="14" font-weight="600" fill="var(--text-bright)">SP FIXED  78</text>
+                <circle cx="165" cy="200" r="4" fill="var(--blue)"/>
+            </g>
+            <g>
+                <rect x="250" y="60" width="140" height="60" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="258" y="84" font-size="10" fill="var(--text-dim)">A</text>
+                <text x="258" y="104" font-size="10" fill="var(--text-dim)">B</text>
+                <text x="325" y="86" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text-bright)">A &gt; B</text>
+                <text x="325" y="104" text-anchor="middle" font-size="10" fill="var(--text-dim)">74 &gt; 78 → FALSE</text>
+                <circle cx="250" cy="80" r="4" fill="var(--blue)"/>
+                <circle cx="250" cy="100" r="4" fill="var(--blue)"/>
+                <circle cx="390" cy="90" r="4" fill="var(--text-dim)"/>
+            </g>
+            <g>
+                <rect x="475" y="64" width="150" height="52" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="487" y="83" font-size="10" letter-spacing="0.5" fill="var(--text-dim)">바이너리 출력</text>
+                <text x="487" y="104" font-size="14" font-weight="600" fill="var(--text-dim)">COOL  OFF</text>
+                <circle cx="475" cy="90" r="4" fill="var(--text-dim)"/>
+            </g>
+        </svg>
+
+        <svg id="wst-fig-hi-select" class="edu-svg wst-fig hidden" viewBox="0 0 660 230" role="img" font-family="var(--mono)">
+            <title>상한 선택 블록으로 이어지는 온수 리셋 체인</title>
+            <desc>두 줄에 블록 일곱 개가 배치된 실시간 기능 블록 와이어시트입니다. 위쪽 줄의 OAT 아날로그 입력은 55를 나타내며 &minus;1.0을 곱하도록 설정된 MULTIPLY 블록으로 이어지고, 출력은 &minus;55입니다. 이 값은 190을 더하는 ADD 블록으로 이어져 135를 출력합니다. 이어지는 LIMIT 블록은 값을 130에서 180 사이로 제한하며 출력은 135입니다. LIMIT 출력 배선은 오른쪽으로 가서 위쪽 줄 아래로 내려온 뒤 왼쪽으로 되돌아가 둘째 줄 MAX 블록의 A 핀에 연결됩니다. 둘째 줄 왼쪽의 MIN HW 상수 블록은 170을 나타내며 같은 MAX 블록의 B 핀으로 이어집니다. MAX 출력은 170이며 170을 나타내는 HW SETPOINT 아날로그 출력으로 이어집니다. 모든 배선은 아날로그 값을 전달하는 파란색입니다.</desc>
+
+            <path d="M140 41 H176" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
+            <path d="M296 41 H332" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
+            <path d="M442 41 H478" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
+            <path d="M618 41 H638 V110 H210 V152 H250" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M162 176 H250" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
+            <path d="M370 164 H430" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round"/>
+
+            <text x="146" y="33" font-size="11" fill="var(--blue)">55</text>
+            <text x="302" y="33" font-size="11" fill="var(--blue)">−55</text>
+            <text x="448" y="33" font-size="11" fill="var(--blue)">135</text>
+            <text x="622" y="33" font-size="11" fill="var(--blue)">135</text>
+            <text x="168" y="168" font-size="11" fill="var(--blue)">170</text>
+            <text x="376" y="156" font-size="11" fill="var(--blue)">170</text>
+
+            <g>
+                <rect x="12" y="16" width="128" height="50" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="24" y="35" font-size="10" letter-spacing="0.5" fill="var(--text-dim)">아날로그 입력</text>
+                <text x="24" y="56" font-size="14" font-weight="600" fill="var(--text-bright)">OAT  55</text>
+                <circle cx="140" cy="41" r="4" fill="var(--blue)"/>
+            </g>
+            <g>
+                <rect x="176" y="16" width="120" height="50" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="236" y="38" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text-bright)">MULTIPLY</text>
+                <text x="236" y="56" text-anchor="middle" font-size="10" fill="var(--text-dim)">× −1.0</text>
+                <circle cx="176" cy="41" r="4" fill="var(--blue)"/>
+                <circle cx="296" cy="41" r="4" fill="var(--blue)"/>
+            </g>
+            <g>
+                <rect x="332" y="16" width="110" height="50" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="387" y="38" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text-bright)">ADD</text>
+                <text x="387" y="56" text-anchor="middle" font-size="10" fill="var(--text-dim)">+ 190</text>
+                <circle cx="332" cy="41" r="4" fill="var(--blue)"/>
+                <circle cx="442" cy="41" r="4" fill="var(--blue)"/>
+            </g>
+            <g>
+                <rect x="478" y="16" width="140" height="50" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="548" y="38" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text-bright)">LIMIT</text>
+                <text x="548" y="56" text-anchor="middle" font-size="10" fill="var(--text-dim)">130 … 180</text>
+                <circle cx="478" cy="41" r="4" fill="var(--blue)"/>
+                <circle cx="618" cy="41" r="4" fill="var(--blue)"/>
+            </g>
+            <g>
+                <rect x="12" y="149" width="150" height="54" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="24" y="169" font-size="10" letter-spacing="0.5" fill="var(--text-dim)">상수</text>
+                <text x="24" y="190" font-size="14" font-weight="600" fill="var(--text-bright)">MIN HW  170</text>
+                <circle cx="162" cy="176" r="4" fill="var(--blue)"/>
+            </g>
+            <g>
+                <rect x="250" y="134" width="120" height="60" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="258" y="156" font-size="10" fill="var(--text-dim)">A</text>
+                <text x="258" y="180" font-size="10" fill="var(--text-dim)">B</text>
+                <text x="315" y="160" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text-bright)">MAX</text>
+                <text x="315" y="180" text-anchor="middle" font-size="10" fill="var(--text-dim)">상한 선택</text>
+                <circle cx="250" cy="152" r="4" fill="var(--blue)"/>
+                <circle cx="250" cy="176" r="4" fill="var(--blue)"/>
+                <circle cx="370" cy="164" r="4" fill="var(--blue)"/>
+            </g>
+            <g>
+                <rect x="430" y="138" width="150" height="52" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="442" y="157" font-size="10" letter-spacing="0.5" fill="var(--text-dim)">아날로그 출력</text>
+                <text x="442" y="178" font-size="14" font-weight="600" fill="var(--text-bright)">HW SP  170</text>
+                <circle cx="430" cy="164" r="4" fill="var(--blue)"/>
+            </g>
+        </svg>
+
+        <svg id="wst-fig-not-leg" class="edu-svg wst-fig hidden" viewBox="0 0 690 200" role="img" font-family="var(--mono)">
+            <title>감지 방향이 반대인 두 안전장치로 만든 공기조화기 운전 허가</title>
+            <desc>블록 다섯 개로 구성된 실시간 기능 블록 와이어시트입니다. 왼쪽 위의 FRZ STAT 바이너리 입력은 정상 닫힘으로 표시되고 ON을 나타내며, TRUE를 뜻하는 녹색 배선이 NOT 블록으로 이어집니다. NOT의 출력 배선은 FALSE를 뜻하는 회색이며 오른쪽 아래로 이어져 AND 블록의 A 핀에 연결됩니다. 왼쪽 아래의 SMOKE 바이너리 입력은 트립 감지 방식으로 표시되고 OFF를 나타내며 배선은 FALSE를 뜻하는 회색입니다. 이 배선은 중간 블록 없이 오른쪽 위로 이어져 같은 AND 블록의 B 핀에 연결됩니다. AND 출력은 FALSE이며 OFF를 나타내는 FAN ENABLE 바이너리 출력으로 이어집니다.</desc>
+
+            <line x1="162" y1="42" x2="205" y2="42" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+            <path d="M300 42 H338 V70 H360" fill="none" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M162 152 H312 V94 H360" fill="none" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="465" y1="82" x2="530" y2="82" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round"/>
+
+            <text x="168" y="34" font-size="11" fill="var(--accent)">TRUE</text>
+            <text x="306" y="34" font-size="11" fill="var(--text-dim)">FALSE</text>
+            <text x="168" y="144" font-size="11" fill="var(--text-dim)">FALSE</text>
+            <text x="471" y="74" font-size="11" fill="var(--text-dim)">FALSE</text>
+
+            <g>
+                <rect x="12" y="16" width="150" height="52" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="24" y="35" font-size="10" letter-spacing="0.5" fill="var(--text-dim)">바이너리 입력 · NC</text>
+                <text x="24" y="56" font-size="14" font-weight="600" fill="var(--accent)">FRZ STAT  ON</text>
+                <circle cx="162" cy="42" r="4" fill="var(--accent)"/>
+            </g>
+            <g>
+                <rect x="205" y="16" width="95" height="52" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="252" y="48" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text-bright)">NOT</text>
+                <circle cx="205" cy="42" r="4" fill="var(--accent)"/>
+                <circle cx="300" cy="42" r="4" fill="var(--text-dim)"/>
+            </g>
+            <g>
+                <rect x="12" y="126" width="150" height="52" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="24" y="145" font-size="10" letter-spacing="0.5" fill="var(--text-dim)">바이너리 입력 · 트립</text>
+                <text x="24" y="166" font-size="14" font-weight="600" fill="var(--text-dim)">SMOKE  OFF</text>
+                <circle cx="162" cy="152" r="4" fill="var(--text-dim)"/>
+            </g>
+            <g>
+                <rect x="360" y="52" width="105" height="60" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="368" y="74" font-size="10" fill="var(--text-dim)">A</text>
+                <text x="368" y="98" font-size="10" fill="var(--text-dim)">B</text>
+                <text x="418" y="78" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text-bright)">AND</text>
+                <text x="418" y="98" text-anchor="middle" font-size="10" fill="var(--text-dim)">운전 허가</text>
+                <circle cx="360" cy="70" r="4" fill="var(--text-dim)"/>
+                <circle cx="360" cy="94" r="4" fill="var(--text-dim)"/>
+                <circle cx="465" cy="82" r="4" fill="var(--text-dim)"/>
+            </g>
+            <g>
+                <rect x="530" y="56" width="145" height="52" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="542" y="75" font-size="10" letter-spacing="0.5" fill="var(--text-dim)">바이너리 출력</text>
+                <text x="542" y="96" font-size="14" font-weight="600" fill="var(--text-dim)">FAN ENA  OFF</text>
+                <circle cx="530" cy="82" r="4" fill="var(--text-dim)"/>
+            </g>
+        </svg>
+
+    </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/ko/simulators/ddc-workbench.html', label: 'DDC 워크벤치 — 공기조화기'},
+            {href: '/ko/simulators/ddc-workbench-fcu.html', label: 'DDC 워크벤치 — 팬코일유닛'},
+            {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'}
+        ],
+        lessons: [
+            {href: '/ko/education/reading-a-wiresheet.html', label: '와이어시트 읽기'},
+            {href: '/ko/education/boolean-logic-latches.html', label: '불 대수 로직 및 래치'},
+            {href: '/ko/education/comparators-and-deadband.html', label: '비교기 및 불감대'},
+            {href: '/ko/education/setpoint-math-reset.html', label: '설정값 수학 및 리셋'},
+            {href: '/ko/education/controls-commissioning.html', label: '제어 커미셔닝'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/reading-a-wiresheet.html', label: '와이어시트 읽기'},
+            {href: '/ko/practice/boolean-logic-latches.html', label: '불 대수 로직 및 래치'},
+            {href: '/ko/practice/troubleshooting.html', label: '문제 해결'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

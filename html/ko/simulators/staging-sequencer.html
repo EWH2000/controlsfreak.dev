@@ -1,0 +1,291 @@
+---
+title: 장비 대수제어 시퀀서 — controlsfreak.dev
+description: 일일 부하곡선에 따라 수요가 변하는 동안 설정 가능한 플랜트가 장비를 증단·감단하고, 선행 장비를 교대하며, 고장을 발생시키고 각 동작을 기록하는 실시간 대수제어 시뮬레이터입니다.
+sourceContentHash: cf3ba90afc05e1ad2cf84b9d8206f73ef4c2a6e06755237e38211b04d88888e9
+sourceMessageHash: 33fa38a5334ab0a28f19ed904f18dd83c2d6fcf52a1ac30cda1f1eca920be326
+canonical: https://controlsfreak.dev/ko/simulators/staging-sequencer.html
+nav: simulators
+keywords: 선행 후행 순환 교대 운전시간 증단 감단 냉동기 보일러 펌프 장비 대수제어
+pageMessages:
+  units:
+    pump:
+      name: 펌프
+      singular: 펌프
+      plural: 펌프
+    boiler:
+      name: 보일러
+      singular: 보일러
+      plural: 보일러
+    chiller:
+      name: 냉동기
+      singular: 냉동기
+      plural: 냉동기
+    lead: 선행
+    runtime: 누적 운전시간
+    hourShort: h
+    hoursLabel: 시간
+  states:
+    fault: 고장
+    running: 운전 중
+    standby: 대기
+  clock:
+    short: "{day}일차 {time}"
+    long: "{day}일차 · {time}"
+  log:
+    stageUp: "증단 → {count}대 운전({tag} 기동)"
+    stageDown: "감단 → {count}대 운전({tag} 정지)"
+    scheduledRotation: "선행 장비 교대 → {tag}(정기 교대)"
+    faultPromoted: "{faulted} 고장 → {promoted} 대체 투입"
+    faultShortfall: "{faulted} 고장 → 가용 대기 장비 없음 — 용량 부족"
+    faultsCleared: 고장 해제 — 모든 장비 사용 가능
+    plantReset: "플랜트 초기화 — {units} {count}대, {strategy}. 재생을 누르세요."
+  strategies:
+    fixed: 선행 장비 고정
+    equalized: 운전시간 균등화
+    scheduled: 정기 순환 교대
+  status:
+    capacityShortfall: 용량 부족 — 부하상 장비 한 대를 더 운전해야 하지만 정상 상태로 대기 중인 장비가 없습니다.
+    minimumTimeHeld: "대수 전환 보류 — 최소 단계 유지시간({seconds}초)"
+    adding: "장비 증단 예정 — 대수제어 지연 {seconds}초"
+    dropping: "장비 감단 예정 — 대수제어 지연 {seconds}초"
+    steady: "{units} {count}대 운전 중 — {condition}"
+    nearCapacity: 부하가 현재 용량에 근접함
+    loadSteady: 부하 안정
+---
+{% extends "html/simulators/staging-sequencer.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">시뮬레이터 · 장비 대수제어 시퀀서</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                장비 대수제어 시퀀서
+                <span class="tool-tag">시퀀스 제어</span>
+            </h1>
+        </div>
+        <!-- Custom stacked layout on purpose (like the PID tuner / VFD mock):
+             a running plant — config, clock controls, a live demand-vs-capacity
+             chart, per-unit cells, and an event log — doesn't fit the
+             Input / Output / Reference column pattern. Only the "what each knob
+             does" table at the bottom is reference content. -->
+        <div class="tool-body">
+
+            <p class="tool-preamble" style="margin-bottom:1.5rem;">
+                실제 플랜트가 아닌 단순화한 모형입니다. 공통 헤더에 연결된 동일 용량 장비를 간소화한 시퀀스로 대수제어하여 각 설정값의 영향을 익힐 수 있습니다.
+                <strong>대수제어가 처음이신가요?</strong> <a href="/ko/education/equipment-staging.html">학습 자료부터 읽기 →</a>
+            </p>
+
+            <!-- ── Plant configuration ─────────────────────────────────── -->
+            <h2 class="subhead">플랜트 구성</h2>
+
+            <div class="form-row">
+                <div class="field" role="group" aria-labelledby="stg-count-lbl">
+                    <span id="stg-count-lbl" class="field-label">플랜트 장비 대수</span>
+                    <div class="btn-row">
+                        <button type="button" class="copy-btn"        id="stg-count-2" data-count="2" aria-pressed="false">2</button>
+                        <button type="button" class="copy-btn active" id="stg-count-3" data-count="3" aria-pressed="true">3</button>
+                        <button type="button" class="copy-btn"        id="stg-count-4" data-count="4" aria-pressed="false">4</button>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="stg-type">장비 종류</label>
+                    <select id="stg-type">
+                        <option value="pump" selected>펌프</option>
+                        <option value="boiler">보일러</option>
+                        <option value="chiller">냉동기</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="field">
+                    <label for="stg-strategy">선행/후행 전략</label>
+                    <select id="stg-strategy">
+                        <option value="fixed" selected>선행 장비 고정</option>
+                        <option value="equalized">운전시간 균등화</option>
+                        <option value="scheduled">정기 순환 교대</option>
+                    </select>
+                </div>
+                <div class="field stg-sched-field" id="stg-sched-field" hidden>
+                    <label for="stg-sched-days">선행 장비 교대 주기(일)</label>
+                    <input type="number" id="stg-sched-days" min="1" max="30" step="1" value="7">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="field">
+                    <label for="stg-up">증단 기준(장비당 부하 % 초과)</label>
+                    <input type="number" id="stg-up" min="50" max="100" step="1" value="90">
+                </div>
+                <div class="field">
+                    <!-- "post-drop": the sequence drops a unit when the load
+                         the REMAINING units would carry stays below this line
+                         — not when the current per-unit readout crosses it.
+                         The math is the documented hunting-proof design; the
+                         label carries the semantics (audit-2026-06 #48). -->
+                    <label for="stg-down">감단 기준(감단 후 장비당 부하 % 미만)</label>
+                    <input type="number" id="stg-down" min="5" max="95" step="1" value="45">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="field">
+                    <label for="stg-delay">대수제어 지연(초)</label>
+                    <input type="number" id="stg-delay" min="0" max="900" step="5" value="120">
+                </div>
+                <div class="field">
+                    <label for="stg-min">최소 단계 유지시간(초)</label>
+                    <input type="number" id="stg-min" min="0" max="3600" step="5" value="300">
+                </div>
+            </div>
+
+            <!-- ── Run controls ────────────────────────────────────────── -->
+            <h2 class="subhead" style="margin-top:1.75rem;">운전</h2>
+
+            <div class="stg-runbar">
+                <div class="btn-row" style="margin-top:0;">
+                    <button type="button" class="copy-btn active" id="stg-play">▶ 재생</button>
+                    <button type="button" class="copy-btn" id="stg-pause">⏸ 일시 정지</button>
+                    <button type="button" class="copy-btn" id="stg-reset">↺ 초기화</button>
+                </div>
+                <div class="stg-clock"><span class="lbl">시뮬레이션 시각</span><span id="stg-clock">1일차 · 00:00</span></div>
+            </div>
+
+            <div class="slider-field" style="margin-bottom:1rem;">
+                <div class="widget-slider-head">
+                    <label for="stg-speed">시계 배속</label>
+                    <span class="v"><span id="stg-speed-val">2</span> <span style="font-size:0.7em;color:var(--text-dim);font-weight:500;">시뮬레이션 h / 실제 s</span></span>
+                </div>
+                <input class="widget-slider" id="stg-speed" type="range" min="0.5" max="12" step="0.5" value="2" aria-label="시계 배속, 실제 초당 시뮬레이션 시간">
+            </div>
+
+            <div class="form-row">
+                <div class="field" role="group" aria-labelledby="stg-mode-lbl">
+                    <span id="stg-mode-lbl" class="field-label">부하 입력</span>
+                    <div class="stg-seg" id="stg-mode">
+                        <button type="button" class="on" id="stg-mode-follow" data-mode="follow">일일 부하곡선 추종</button>
+                        <button type="button" id="stg-mode-manual" data-mode="manual">수동</button>
+                    </div>
+                </div>
+                <div class="field" role="group" aria-labelledby="stg-fault-lbl">
+                    <span id="stg-fault-lbl" class="field-label">고장</span>
+                    <div class="btn-row">
+                        <button type="button" class="copy-btn" id="stg-trip">선행 장비 고장 발생</button>
+                        <button type="button" class="copy-btn" id="stg-clear">고장 해제</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slider-field" style="margin-bottom:1rem;">
+                <div class="widget-slider-head">
+                    <label for="stg-demand">건물 부하</label>
+                    <span class="v"><span id="stg-demand-val">12</span> <span style="font-size:0.7em;color:var(--text-dim);font-weight:500;">%</span></span>
+                </div>
+                <input class="widget-slider" id="stg-demand" type="range" min="0" max="100" step="1" value="12" aria-label="건물 부하, 백분율" disabled>
+            </div>
+
+            <div class="stg-status" id="stg-status" data-kind="steady" aria-live="polite"></div>
+
+            <!-- ── Live trend chart ────────────────────────────────────── -->
+            <div class="narrow-width-note">
+                부하와 가동 용량을 비교하는 차트는 넓은 화면에서 가장 읽기 쉽습니다. 휴대전화 너비에서는
+                시간축이 압축됩니다. 플랜트는 그대로 운전하고 이벤트 로그도 모든 동작을 기록하지만,
+                노트북에서는 차트를 더 여유롭게 볼 수 있습니다.
+            </div>
+
+            <div class="sim-canvas-wrap">
+                <canvas id="stg-canvas" role="img" aria-label="플랜트 추세: 시뮬레이션 시간에 따른 건물 부하와 가동 중인 대수제어 용량 비교"></canvas>
+            </div>
+            <div class="sim-legend">
+                <span><span class="swatch stg-demand"></span>건물 부하</span>
+                <span><span class="swatch stg-cap"></span>가동 용량</span>
+            </div>
+
+            <!-- ── Per-unit cells (built in JS) ────────────────────────── -->
+            <!-- role="group" so the aria-label is actually exposed —
+                 aria-label on a role-less div is ignored by AT
+                 (audit-2026-06 #55). -->
+            <div class="stg-units" id="stg-units" role="group" aria-label="장비별 상태 및 누적 운전시간"></div>
+
+            <!-- ── Live readouts ───────────────────────────────────────── -->
+            <div class="bit-readouts">
+                <div class="readout">
+                    <div class="readout-label">운전 장비</div>
+                    <div class="readout-value"><span id="stg-running">1</span> <span style="color:var(--text-dim);font-weight:400;">/ 총 <span id="stg-total">3</span></span></div>
+                </div>
+                <div class="readout">
+                    <div class="readout-label">가동 용량</div>
+                    <div class="readout-value"><span id="stg-capacity">33</span>%</div>
+                </div>
+                <div class="readout">
+                    <div class="readout-label">장비당 부하</div>
+                    <div class="readout-value"><span id="stg-load">36</span>%</div>
+                </div>
+                <div class="readout">
+                    <div class="readout-label">운전시간 편차</div>
+                    <div class="readout-value"><span id="stg-spread">0</span> h</div>
+                </div>
+            </div>
+
+            <!-- ── Event log ──
+                 role="log" lives on the wrapper, NOT the <ul>: overriding
+                 the list role orphans every <li> (no required parent), so
+                 screen readers lose list semantics and item count
+                 (audit-2026-06 #57). -->
+            <div class="stg-log-wrap" role="log" aria-live="polite" aria-label="시퀀스 이벤트 로그">
+                <h2 class="subhead" style="margin-top:1.75rem;">이벤트 로그</h2>
+                <ul class="stg-log" id="stg-log">
+                    <li class="empty"><span class="m">재생을 누르세요. 증단·감단, 순환 교대, 고장 이벤트가 여기에 기록됩니다.</span></li>
+                </ul>
+            </div>
+
+            <!-- ── Reference (light — the lesson owns the deep treatment) ─ -->
+            <h2 class="ps-section-label" style="margin-top:2.25rem;">각 설정의 역할</h2>
+
+            <p style="margin-bottom:1.1rem;font-size:0.9rem;line-height:1.75;color:var(--text);">
+                시퀀스는 <em>몇 대를</em> 운전할지와 <em>어느 장비를</em> 운전할지 계속 판단합니다. 임계값과 타이머가 첫 번째 질문에 답하고 선행/후행 전략이 두 번째 질문에 답합니다. <a href="/ko/education/equipment-staging.html">장비 대수제어</a> 학습 자료에서는 그 이유를 자세히 설명하며, 아래 표는 위 제어 항목을 위한 빠른 참조입니다.
+            </p>
+
+            <table class="ref-table-dense">
+                <thead>
+                    <tr><th class="use">설정</th><th>역할</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td class="use">증단/감단 %</td><td>증단은 운전 중인 장비에 부하를 나눈 장비당 부하가 임계값을 넘으면 장비를 한 대 추가합니다. 감단은 <em>감단 후</em> 상태를 판단합니다. 남은 장비가 각각 부담할 부하가 임계값보다 낮을 때만 한 대를 정지합니다. N대 운전 중 표시되는 장비당 부하를 기준으로 하면 약 감단&nbsp;×&nbsp;(N−1)/N입니다. 감단 후 값을 확인해야 플랜트가 곧바로 다시 증단하는 것을 막을 수 있습니다. 두 임계값 사이가 <em>불감대</em>이며, 실제 간격이 없으면 플랜트가 임계점에서 장비를 반복 기동·정지하는 헌팅이 발생합니다.</td></tr>
+                    <tr><td class="use">대수제어 지연</td><td>부하가 임계값을 넘은 상태로 이 시간 동안 유지되어야 시퀀스가 동작하므로 짧은 부하 변동으로 장비가 불필요하게 전환되지 않습니다.</td></tr>
+                    <tr><td class="use">최소 단계 유지시간</td><td>대수가 한 번 바뀐 뒤 일정 시간 다음 전환을 잠급니다. 단주기 운전은 모터와 기동기, 장비에 부담을 줍니다.</td></tr>
+                    <tr><td class="use">선행 장비 고정</td><td>항상 1번 장비가 선행합니다. 한 장비에 운전시간이 집중되고 나머지는 대기하므로 운전시간 편차가 계속 벌어집니다.</td></tr>
+                    <tr><td class="use">운전시간 균등화</td><td>누적 운전시간이 가장 짧은 대기 장비가 다음에 기동하고, 가장 긴 운전 장비가 먼저 정지합니다. 막대가 수렴하며 장비군이 고르게 마모됩니다.</td></tr>
+                    <tr><td class="use">정기 순환 교대</td><td>누적 운전시간과 관계없이 설정한 주기마다 선행 역할을 다음 장비로 넘깁니다. 가장 단순한 순환 교대이며 많은 플랜트에 기본 적용됩니다.</td></tr>
+                    <tr><td class="use">선행 장비 고장 발생</td><td>현재 선행 장비를 고장 상태로 만들면 시퀀스가 대기 장비를 즉시 대체 투입합니다. 대신 운전할 정상 장비가 없으면 용량 부족이 발생하며, 이것이 플랜트를 N+1로 구성하는 이유입니다.</td></tr>
+                </tbody>
+            </table>
+
+            <p class="pid-note">
+                시연을 위해 시계를 가속했습니다. 설정한 대수제어 지연과 최소 단계 유지시간은 <em>시뮬레이션</em> 초이므로 시계 배속이 높을수록 빠르게 지나갑니다. 실제 플랜트에서는 보통 각각 수분 단위로 설정합니다. 일일 부하곡선은 야간에 낮고 정오와 오후에 높은 하나의 완만한 봉우리입니다. <em>일일 부하곡선 추종</em>을 선택하면 플랜트가 자동으로 증단·감단하고 순환 교대하며, <em>수동</em>으로 전환하면 부하 슬라이더를 직접 조작할 수 있습니다.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/ko/education/equipment-staging.html', label: '장비 대수제어'},
+            {href: '/ko/education/pump-control.html', label: '펌프 제어'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/pid-tuner.html', label: 'PID 튜닝 도우미'},
+            {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/simulators/">← 모든 시뮬레이터</a>
+
+</main>
+{% endblock %}

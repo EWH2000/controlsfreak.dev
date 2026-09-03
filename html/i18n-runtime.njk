@@ -1,0 +1,74 @@
+---
+permalink: /scripts/i18n.js
+eleventyExcludeFromCollections: true
+---
+(function (global) {
+    'use strict';
+
+    const DEFAULT_LOCALE = {{ i18n.defaultLocale | safeScriptJson | safe }};
+    const LOCALES = {{ i18n.locales | runtimeLocales | safeScriptJson | safe }};
+    const MESSAGES = {{ i18n.messages | safeScriptJson | safe }};
+    const SUPPORTED = new Set(LOCALES.map(item => item.code));
+
+    function locale() {
+        const selected = document.documentElement.lang;
+        return SUPPORTED.has(selected) ? selected : DEFAULT_LOCALE;
+    }
+
+    function message(key, selectedLocale) {
+        const chosen = SUPPORTED.has(selectedLocale) ? selectedLocale : locale();
+        const value = String(key || '').split('.').reduce(
+            (current, part) => current && current[part],
+            MESSAGES[chosen]
+        );
+        if (typeof value !== 'string') {
+            throw new Error(`Missing i18n message: ${chosen}.${key}`);
+        }
+        return value;
+    }
+
+    function t(key, values, selectedLocale) {
+        const copy = message(key, selectedLocale);
+        if (!values || typeof values !== 'object') return copy;
+        return copy.replace(/\{([A-Za-z][\w-]*)\}/g, (match, name) =>
+            Object.prototype.hasOwnProperty.call(values, name)
+                ? String(values[name])
+                : match
+        );
+    }
+
+    function page(key, values) {
+        const catalog = global.CFPageMessages;
+        const copy = String(key || '').split('.').reduce(
+            (current, part) => current && current[part],
+            catalog
+        );
+        if (typeof copy !== 'string') {
+            throw new Error(`Missing page message: ${locale()}.${key}`);
+        }
+        if (!values || typeof values !== 'object') return copy;
+        return copy.replace(/\{([A-Za-z][\w-]*)\}/g, (match, name) =>
+            Object.prototype.hasOwnProperty.call(values, name)
+                ? String(values[name])
+                : match
+        );
+    }
+
+    function path(value, selectedLocale) {
+        if (!value) return value;
+        const chosen = SUPPORTED.has(selectedLocale) ? selectedLocale : locale();
+        const raw = String(value);
+        if (!raw.startsWith('/') || raw.startsWith('//')) return raw;
+        const match = raw.match(/^([^?#]*)([?#][\s\S]*)?$/);
+        const pathname = match ? match[1] : raw;
+        const suffix = match && match[2] ? match[2] : '';
+        const firstSegment = pathname.match(/^\/([^/]+)(?=\/|$)/);
+        const withoutLocale = firstSegment && SUPPORTED.has(firstSegment[1])
+            ? pathname.slice(firstSegment[0].length) || '/'
+            : pathname || '/';
+        if (chosen === DEFAULT_LOCALE) return withoutLocale + suffix;
+        return (withoutLocale === '/' ? `/${chosen}/` : `/${chosen}${withoutLocale}`) + suffix;
+    }
+
+    global.CFI18n = Object.freeze({ locale, locales: LOCALES, page, path, t });
+})(window);

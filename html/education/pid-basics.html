@@ -6,9 +6,19 @@ nav: education
 category: fundamentals
 pairedQuiz: https://controlsfreak.dev/practice/pid-basics.html
 keywords: gain reset rate proportional integral derivative offset loop error
+pageMessages:
+    slider:
+        proportional: "prop. band ≈ {band} % · no integral, no rate"
+        gainZero: "gain is zero — the output never moves"
+        reset: "reset time ≈ {time} · no rate"
+        integralOff: "integral off — this is just Sim 1 again"
+        derivative: "derivative time ≈ {seconds} s"
+        derivativeOff: "derivative off — the aggressive P + I, left to oscillate"
+    metrics:
+        none: "none"
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -326,13 +336,19 @@ keywords: gain reset rate proportional integral derivative offset loop error
             const set = (id, t) => { document.getElementById(id).textContent = t; };
             if (n === 1) {
                 set('m1-val', cfg.gain.toFixed(1));
-                set('m1-sub', cfg.gain > 0 ? `prop. band ≈ ${Math.round(100 / cfg.gain)} %  ·  no integral, no rate` : 'gain is zero — the output never moves');
+                set('m1-sub', cfg.gain > 0
+                    ? CFI18n.page('slider.proportional', { band: Math.round(100 / cfg.gain) })
+                    : CFI18n.page('slider.gainZero'));
             } else if (n === 2) {
                 set('m2-val', cfg.rep.toFixed(2));
-                set('m2-sub', cfg.rep > 0 ? `reset time ≈ ${fmtTi(cfg.rep)}  ·  no rate` : 'integral off — this is just Sim 1 again');
+                set('m2-sub', cfg.rep > 0
+                    ? CFI18n.page('slider.reset', { time: fmtTi(cfg.rep) })
+                    : CFI18n.page('slider.integralOff'));
             } else {
                 set('m3-val', cfg.rate.toFixed(2));
-                set('m3-sub', cfg.rate > 0 ? `derivative time ≈ ${Math.round(cfg.rate * 60)} s` : 'derivative off — the aggressive P + I, left to oscillate');
+                set('m3-sub', cfg.rate > 0
+                    ? CFI18n.page('slider.derivative', { seconds: Math.round(cfg.rate * 60) })
+                    : CFI18n.page('slider.derivativeOff'));
             }
         }
 
@@ -344,7 +360,7 @@ keywords: gain reset rate proportional integral derivative offset loop error
         // shows SP − PV directly with +sim.ssErr.
         function showMiniMetrics(n, sim, procKey) {
             const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
-            const fmtPct = v => v < 0.05 ? 'none' : v.toFixed(1) + ' %';
+            const fmtPct = v => v < 0.05 ? CFI18n.page('metrics.none') : v.toFixed(1) + ' %';
             const fmtOffset = formatPidDelta(-sim.ssErr, sim, procKey);
             if (n === 1) {
                 set('m1-offset', fmtOffset);

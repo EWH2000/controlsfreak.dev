@@ -6,9 +6,15 @@ nav: education
 category: signals
 pairedQuiz: https://controlsfreak.dev/practice/analog-sensing.html
 keywords: 4-20mA 0-10V span scaling live zero railed transducer range transmitter under-range over-range slope offset
+pageMessages:
+    mapping:
+        value: "{mA} mA → {eu} psi"
+        belowLiveZero: "{percent}% of span — below the live zero: no real measurement lives here. A dead loop, a broken wire, or an open terminal."
+        pastRangeMax: "{percent}% of span — past range max: a real transmitter saturates just above 20 mA. Treat it as railed or faulted, not as data."
+        inRange: "{percent}% of span — in range: a measurement you can believe."
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -304,16 +310,21 @@ keywords: 4-20mA 0-10V span scaling live zero railed transducer range transmitte
             link.setAttribute('x1', x);
             link.setAttribute('x2', x);
 
-            valEl.textContent = ma.toFixed(1) + ' mA → ' + eu.toFixed(1) + ' psi';
+            valEl.textContent = CFI18n.page('mapping.value', {
+                mA: ma.toFixed(1), eu: eu.toFixed(1),
+            });
             if (ma < SIG_MIN) {
-                subEl.textContent = (pct * 100).toFixed(1) +
-                    '% of span — below the live zero: no real measurement lives here. A dead loop, a broken wire, or an open terminal.';
+                subEl.textContent = CFI18n.page('mapping.belowLiveZero', {
+                    percent: (pct * 100).toFixed(1),
+                });
             } else if (ma > SIG_MAX) {
-                subEl.textContent = (pct * 100).toFixed(1) +
-                    '% of span — past range max: a real transmitter saturates just above 20 mA. Treat it as railed or faulted, not as data.';
+                subEl.textContent = CFI18n.page('mapping.pastRangeMax', {
+                    percent: (pct * 100).toFixed(1),
+                });
             } else {
-                subEl.textContent = (pct * 100).toFixed(1) +
-                    '% of span — in range: a measurement you can believe.';
+                subEl.textContent = CFI18n.page('mapping.inRange', {
+                    percent: (pct * 100).toFixed(1),
+                });
             }
         }
 

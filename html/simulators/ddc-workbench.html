@@ -4,9 +4,135 @@ description: A single-zone air handler as a live DDC graphic driven by a functio
 canonical: https://controlsfreak.dev/simulators/ddc-workbench.html
 nav: simulators
 keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
+pageMessages:
+  shell:
+    binaryOn: "ON"
+    binaryOff: "OFF"
+    customProgram: Custom (edited)
+    listSeparator: " · "
+    idSeparator: ", "
+    idLastSeparator: " or "
+    releasedOne: "{points} — slot 16 is NULL (no {blockIds} block on the wiresheet) — holding Relinquish_Default."
+    releasedMany: "{points} — slot 16 is NULL (no {blockIds} blocks on the wiresheet) — all holding Relinquish_Default."
+    slot8One: "{points} — commanded by slot 8 (Manual Operator) — write NULL to release."
+    slot8Many: "{points} — all commanded by slot 8 (Manual Operator) — write NULL to release."
+    otherSlotOne: "{points} — commanded by slot {slot}."
+    otherSlotMany: "{points} — all commanded by slot {slot}."
+    resumedResetHint: "Use the {label} button to reset it."
+  points:
+    rat: RAT
+    oat: OAT
+    mat: MAT
+    dat: DAT
+    spaceTemp: Zone Temp
+    fanStatus: Fan Sts
+    oaDamper: OA Dmpr
+    hwValve: HW Vlv
+    fanSpeed: Fan Spd
+    fanEnable: Fan En
+    y1: Clg Stg 1
+    y2: Clg Stg 2
+    coolingSetpoint: Cool SP
+    heatingSetpoint: Heat SP
+    deadband: Deadband
+    minimumOutdoorAir: Min OA
+    economizerLockout: Econ Lock
+  programs:
+    economizerTwoStage: Economizer + 2-stage DX + HW
+    economizerTwoStageLowLimits: Economizer + 2-stage DX + HW + low limits
+  blocks:
+    zeroPercent: 0%
+    hundredPercent: 100%
+    hundredPercentPosition: 100% Pos
+    hundredPercentSpeed: 100% Spd
+    datLow: DAT Low
+    differentialOk: Diff OK
+    economizerCall: Econ Call
+    economizerDamper: Econ Dmpr
+    economizerPermit: Econ Permit
+    fanPermit: Fan Permit
+    fanSpeedReference: Fan Spd Ref
+    fanStatusCheck: Fan Sts Chk
+    hotWaterValveSelect: HW Vlv Sel
+    heatClamp: Heat Clamp
+    heatError: Heat Error
+    heatGain: Heat Kp
+    heatRaw: Heat Raw
+    lowLimitLatch: LLS Latch
+    lowLimitOk: LLS OK
+    lowLimitReset: LLS Reset
+    lowLimitTrip: LLS Trip
+    limitDamper: Limit Dmpr
+    lockoutOk: Lock OK
+    mixedAirLowLimit: MAT Low Lim
+    minimumMixedAir: Min MAT
+    occupied: Occupied
+    stageOneGate: Stg 1 Gate
+    stageOneLatch: Stg 1 Latch
+    stageOneMake: Stg 1 Make
+    stageOneReset: Stg 1 Reset
+    stageOneSet: Stg 1 Set
+    stageTwoGate: Stg 2 Gate
+    stageTwoLatch: Stg 2 Latch
+    stageTwoMake: Stg 2 Make
+    stageTwoReset: Stg 2 Reset
+    stageTwoSeparation: Stg 2 Sep
+    stageTwoSet: Stg 2 Set
+    tripDamper: Trip Dmpr
+    tripHotWaterValve: Trip HW Vlv
+  unit:
+    enterValue: Enter a value.
+    proofMade: MADE
+    proofNone: NONE
+    callCooling: Cooling
+    callHeating: Heating
+    callSatisfied: Satisfied
+    economizerOpen: Open
+    economizerLockedOut: Locked out
+    economizerAtMinimum: At minimum
+    mechanicalOff: Off
+    mechanicalStage: "Stage {stage}"
+    lowLimitTripped: TRIPPED
+    lowLimitNormal: NORMAL
+    jumperInstalled: JUMPERED
+    jumperAbsent: NO JUMPER
+    verdict:
+      commandedNoAirLoadedCoil: Fan commanded on but no air moving — a coil is loaded on dead air
+      fanOffLoadedCoil: Coil loaded with the fan off — no air across an active coil
+      commandedNoAirProofDown: Fan commanded on but no air moving — airflow proof is down
+      idle: Unit off — no air moving (idle)
+      simultaneousHeatCool: Heating valve open under a running compressor — the unit is fighting itself
+      lowCharge: No ΔT across the machine — low charge, not cooling
+      nearFreezingEnteringAir: Compressor running on air already near freezing — almost nothing left to take out
+      compressorNotCooling: Compressor running with no ΔT — the coil is not cooling
+      freezeWatch: Cooling — but the coil is running cold (freeze watch)
+      clearMechanicalCooling: Mechanical cooling — clear ΔT across the machine
+      heatingNoDelta: Heating valve open with no ΔT — no heat reaching the air
+      heatingAtLimit: Heating — the coil is at its leaving-air limit, so opening further adds nothing
+      clearHeating: Heating — clear ΔT across the machine
+      economizing: Economizing — free cooling only, no mechanical stage
+      dischargeSettling: Neither coil loaded — the discharge is still settling
+      fanOnly: Fan running, neither coil loaded — no ΔT across the machine
+    zoneReadout: "zone {value} {unit}"
+    forcedState: "Forced: {points}. The program is sequencing on those numbers, not on the machine."
+    percentOpen: "{percent} percent open"
+    forceSensor: Force sensor
+    releaseSensor: Release
+    missingBlock: "The running sheet has no {blockId} block, so there is nothing to write — the value shown is the last one read."
+    reset:
+      cleared: Reset — the element is warm and the contacts are made.
+      stillCold: "Nothing happens. The element is still below its setting: clear the cause first, then push the button."
+      notTripped: Nothing to reset — this stat has not tripped.
+    jumper:
+      installedAfterTrip: Jumper across the terminals. The stat was tripped — the fan is running again, and nothing has been fixed.
+      installedNormal: Jumper across the terminals. Whatever this stat does now, the fan will not hear about it.
+      removedAfterTrip: Jumper removed. The element had tripped while it was wired around — the fan just dropped.
+      removedNormal: Jumper removed. The stat is back in the circuit.
+    invalidParameter: "{point} takes {range} — reverted to the live value."
+    clampedParameter: "{point} accepts {range} — held at the limit."
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -4186,11 +4312,54 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
             },
         };
 
+        const msg = function (key, values) { return window.CFI18n.page(key, values); };
         DDCWShell.createWorkbench(DDCWAhuUnit.create({
+            message: msg,
             programs: AHU_PROGRAMS,
             programLabels: {
-                'econ-2stage':           'Economizer + 2-stage DX + HW',
-                'econ-2stage-lowlimits': 'Economizer + 2-stage DX + HW + low limits',
+                'econ-2stage':           msg('programs.economizerTwoStage'),
+                'econ-2stage-lowlimits': msg('programs.economizerTwoStageLowLimits'),
+            },
+            blockLabels: {
+                '0%': msg('blocks.zeroPercent'),
+                '100%': msg('blocks.hundredPercent'),
+                '100% Pos': msg('blocks.hundredPercentPosition'),
+                '100% Spd': msg('blocks.hundredPercentSpeed'),
+                'DAT Low': msg('blocks.datLow'),
+                'Diff OK': msg('blocks.differentialOk'),
+                'Econ Call': msg('blocks.economizerCall'),
+                'Econ Dmpr': msg('blocks.economizerDamper'),
+                'Econ Permit': msg('blocks.economizerPermit'),
+                'Fan Permit': msg('blocks.fanPermit'),
+                'Fan Spd Ref': msg('blocks.fanSpeedReference'),
+                'Fan Sts Chk': msg('blocks.fanStatusCheck'),
+                'HW Vlv Sel': msg('blocks.hotWaterValveSelect'),
+                'Heat Clamp': msg('blocks.heatClamp'),
+                'Heat Error': msg('blocks.heatError'),
+                'Heat Kp': msg('blocks.heatGain'),
+                'Heat Raw': msg('blocks.heatRaw'),
+                'LLS Latch': msg('blocks.lowLimitLatch'),
+                'LLS OK': msg('blocks.lowLimitOk'),
+                'LLS Reset': msg('blocks.lowLimitReset'),
+                'LLS Trip': msg('blocks.lowLimitTrip'),
+                'Limit Dmpr': msg('blocks.limitDamper'),
+                'Lock OK': msg('blocks.lockoutOk'),
+                'MAT Low Lim': msg('blocks.mixedAirLowLimit'),
+                'Min MAT': msg('blocks.minimumMixedAir'),
+                'Occupied': msg('blocks.occupied'),
+                'Stg 1 Gate': msg('blocks.stageOneGate'),
+                'Stg 1 Latch': msg('blocks.stageOneLatch'),
+                'Stg 1 Make': msg('blocks.stageOneMake'),
+                'Stg 1 Reset': msg('blocks.stageOneReset'),
+                'Stg 1 Set': msg('blocks.stageOneSet'),
+                'Stg 2 Gate': msg('blocks.stageTwoGate'),
+                'Stg 2 Latch': msg('blocks.stageTwoLatch'),
+                'Stg 2 Make': msg('blocks.stageTwoMake'),
+                'Stg 2 Reset': msg('blocks.stageTwoReset'),
+                'Stg 2 Sep': msg('blocks.stageTwoSeparation'),
+                'Stg 2 Set': msg('blocks.stageTwoSet'),
+                'Trip Dmpr': msg('blocks.tripDamper'),
+                'Trip HW Vlv': msg('blocks.tripHotWaterValve'),
             },
             defaultProgram: 'econ-2stage',
             // Canvas bounds for the sheets above. WIDTH is the low-limits

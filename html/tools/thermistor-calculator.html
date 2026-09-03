@@ -4,10 +4,104 @@ description: "Thermistor and RTD calculator: convert temperature to resistance b
 canonical: https://controlsfreak.dev/tools/thermistor-calculator.html
 nav: tools
 category: signals
+pageMessages:
+    tags:
+        thermistor: "THERMISTOR"
+        rtd: "RTD"
+        identify: "IDENTIFY"
+    groups:
+        ntc: "NTC Thermistors"
+        rtd: "RTDs — resistance rises with temperature"
+    labels:
+        temperature: "Temperature (°{unit})"
+        temperatureShort: "Temp (°{unit})"
+        resistance: "Resistance (Ω)"
+        rtTable: "R / T Table — {name}"
+        perPointFit: "Per-point fit"
+        perPointFitType: "Per-point fit — {name}"
+    copy:
+        resistance: "Copy resistance"
+        temperature: "Copy temperature"
+    lookup:
+        nominalCaution: "Curve values here are nominal — confirm against the sensor’s datasheet before using them for calibration."
+        dataUnavailable: "sensor curve data unavailable — reload the page"
+        resistanceFromTemperature: "resistance from temperature"
+        temperatureFromResistance: "temperature from resistance"
+        curveConfirm: "{name} — confirm your sensor"
+        temperatureRequired: "enter a temperature"
+        temperatureOutOfRange: "out of range — table covers {fahrenheitLow} to {fahrenheitHigh} °F ({celsiusLow} to {celsiusHigh} °C)"
+        resistanceRequired: "enter a resistance in ohms"
+        resistanceOutOfRange: "out of range — for this type the table covers {low} to {high} Ω"
+        tableValue: "table value"
+        interpolated: "interpolated"
+        inRange: "in range"
+        exactTemperature: "{temperature}  →  {resistance} Ω   (exact table row)"
+        interpolatedTemperature: "interpolated between {lowTemperature} ({lowResistance} Ω) and {highTemperature} ({highResistance} Ω)"
+        exactResistance: "{resistance} Ω  →  {temperature}   (exact table row)"
+        interpolatedResistance: "interpolated between {lowResistance} Ω ({lowTemperature}) and {highResistance} Ω ({highTemperature})"
+    identify:
+        pointsOne: "{count} point"
+        pointsMany: "{count} points"
+        ignoredUs: " · {count} ignored (outside −40 to 250 °F)"
+        ignoredMetric: " · {count} ignored (outside −40 to 121 °C)"
+        minimumPoints: "enter at least 2 (temp, resistance) points"
+        outOfRange: "out of range"
+        noCoverage: "no type covers every reading — re-check the entries"
+        verdictNoFit: "no standard type fits well"
+        verdictAmbiguous: "ambiguous — top types fit about equally"
+        verdictStrong: "strong match"
+        verdictLikely: "likely match"
+        verdictWeak: "weak — loose fit, best available"
+        averageError: "{verdict} · {error} avg error"
+        pointTemperatureAria: "Point {number} temperature"
+        pointResistanceAria: "Point {number} resistance"
+        removePointAria: "Remove point {number}"
+    unitText:
+        nominalFitUs: "roughly 1 °F across 32–150 °F (the BAS operating range)"
+        nominalFitMetric: "roughly 0.5 °C across 0–65 °C (the BAS operating range)"
+        extremeErrorUs: "2–5 °F of equivalent temperature error at the −40 °F extreme"
+        extremeErrorMetric: "1–3 °C of equivalent temperature error at the −40 °C extreme"
+    types:
+        10k-2:
+            name: "10K Type II"
+            ref: "10,000 Ω at 77 °F (25 °C)"
+            notes: "The most widespread BAS thermistor curve — Honeywell, Johnson Controls, Continental Industries and many OEMs call it \"Type 2\". Steeper curve than Type 3, not interchangeable: at 32 °F a Type 2 reads ≈ 32.7 kΩ, a Type 3 ≈ 29.5 kΩ; at 185 °F a Type 2 reads ≈ 1.07 kΩ, a Type 3 ≈ 1.26 kΩ. Those are canonical published values; the generated table above differs by up to ~1 °F — see \"About these tables\"."
+        10k-3:
+            name: "10K Type III"
+            ref: "10,000 Ω at 77 °F (25 °C)"
+            notes: "The other common 10K curve — BAPI \"10K-3\", Mamac, Functional Devices, US Sensor \"Curve G\", Dale \"Type 9\", ACI \"Series AH\". Shallower than Type 2 (effective β₂₅/₈₅ ≈ 3693 K), so it reads lower at the cold end and higher at the hot end. The 10,000 Ω @ 77 °F crossover is what makes both \"Type 2\" and \"Type 3\" share the \"10K\" label; everywhere else they diverge, and they are not interchangeable."
+        10k-jci:
+            name: "10K + 8.7K (JCI)"
+            ref: "≈ 4.65 kΩ at 77 °F"
+            notes: "Johnson Controls convention — a 10K NTC element with an 8.7 kΩ resistor in parallel, which flattens the curve over the occupied range. Reads much lower than a bare 10K (≈ 4.6 kΩ at room temperature). Treat as nominal — see header."
+        10k-5-tac:
+            name: "10K Type 5 (TAC)"
+            ref: "≈ 5.24 kΩ at 77 °F"
+            notes: "Older Schneider Electric / TAC Vista / Andover Continuum convention — a 10K Type 3 element with an 11 kΩ parallel resistor, \"linearized\" for the HVAC range. Sometimes labeled \"Type V\" or \"10K-3 (linearized)\". Reads roughly half a bare 10K at room temperature."
+        20k:
+            name: "20K NTC"
+            ref: "20,000 Ω at 77 °F (25 °C)"
+            notes: "A less common 20K curve, found on Honeywell T7460/T7470 wall sensors and various OEM duct/immersion probes. Steeper than the 10K curves — β₂₅/₈₅ ≈ 4260 from the canonical table. 20K elements from other vendors may use a different β; confirm against the original device documentation."
+        3k:
+            name: "3K NTC"
+            ref: "3,000 Ω at 77 °F (25 °C)"
+            notes: "An older 3K curve found in some legacy controllers and retrofits — also called \"3K3A1\" in Sontay nomenclature. Vector lists β₂₅/₈₅ = 3974 for the canonical table. Legacy 3K elements from other vendors may use a different β, so confirm against the original device documentation."
+        balco-1k:
+            name: "1K Balco (RTD)"
+            ref: "≈ 1,000 Ω at 70 °F (21 °C)"
+            notes: "A nickel-iron alloy (\"Balco\" / \"Resistalloy\") RTD — listed here because it shows up the same way on the troubleshooting bench, but it is an RTD, not an NTC thermistor: resistance RISES with temperature and the curve is roughly linear with slight upward curvature. TCR ≈ 2.2 Ω/°F (3.96 Ω/°C) at room temperature. Common on older Honeywell and Johnson gear."
+        pt100:
+            name: "Pt100 RTD"
+            ref: "100.00 Ω at 0 °C"
+            notes: "Platinum RTD on the IEC 60751 / DIN 43760 curve, α = 0.00385 Ω/Ω/°C — the European / industrial standard. Resistance rises with temperature, very repeatable. Standard checkpoints: 100.00 Ω at 0 °C, ≈ 138.51 Ω at 100 °C. Class A is ±0.15 °C at 0 °C."
+        pt1000:
+            name: "Pt1000 RTD"
+            ref: "1000.00 Ω at 0 °C"
+            notes: "Platinum RTD on the same IEC 60751 curve as Pt100, scaled ×10 — increasingly common in newer HVAC because the higher base resistance makes lead-wire resistance less significant. α = 0.00385 Ω/Ω/°C. Standard checkpoints: 1000.00 Ω at 0 °C, ≈ 1385.1 Ω at 100 °C."
 keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperature curve
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -86,7 +180,7 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
         <div class="tool-card-header">
             <h1 class="tool-card-title">
                 Thermistor / RTD Calculator
-                <span class="tool-tag" id="th-tag">THERMISTOR</span>
+                <span class="tool-tag" id="th-tag">{{ pageMessages.tags.thermistor }}</span>
             </h1>
         </div>
 
@@ -132,23 +226,23 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
                              option text mirrors each type's `name` there — the full maker / context lives in
                              that type's `notes`, shown under the R/T table -->
                         <select class="ps-input" id="th-type">
-                            <optgroup label="NTC Thermistors">
+                            <optgroup label="{{ pageMessages.groups.ntc }}">
                                 <!-- Type II is the default on purpose: the page's
                                      own note calls it the most widespread BAS
                                      curve, and defaulting to III invited a silent
                                      wrong-curve answer on the most common field
                                      task (audit-2026-06 #29, owner decision). -->
-                                <option value="10k-2" selected>10K Type II</option>
-                                <option value="10k-3">10K Type III</option>
-                                <option value="10k-jci">10K + 8.7K (JCI)</option>
-                                <option value="10k-5-tac">10K Type 5 (TAC)</option>
-                                <option value="20k">20K NTC</option>
-                                <option value="3k">3K NTC</option>
+                                <option value="10k-2" selected>{{ pageMessages.types["10k-2"].name }}</option>
+                                <option value="10k-3">{{ pageMessages.types["10k-3"].name }}</option>
+                                <option value="10k-jci">{{ pageMessages.types["10k-jci"].name }}</option>
+                                <option value="10k-5-tac">{{ pageMessages.types["10k-5-tac"].name }}</option>
+                                <option value="20k">{{ pageMessages.types["20k"].name }}</option>
+                                <option value="3k">{{ pageMessages.types["3k"].name }}</option>
                             </optgroup>
-                            <optgroup label="RTDs — resistance rises with temperature">
-                                <option value="balco-1k">1K Balco (RTD)</option>
-                                <option value="pt100">Pt100 RTD</option>
-                                <option value="pt1000">Pt1000 RTD</option>
+                            <optgroup label="{{ pageMessages.groups.rtd }}">
+                                <option value="balco-1k">{{ pageMessages.types["balco-1k"].name }}</option>
+                                <option value="pt100">{{ pageMessages.types.pt100.name }}</option>
+                                <option value="pt1000">{{ pageMessages.types.pt1000.name }}</option>
                             </optgroup>
                         </select>
                     </div>
@@ -317,7 +411,7 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
 
             <p><strong>What's still nominal.</strong> The Johnson Controls 10K + 8.7K-shunt curve is the one type without a public R/T table — the canonical TE-6300 Product Bulletin URL redirects to a docs-portal landing page. It's modeled as a 10K Type 2 element in parallel with 8.7 kΩ, which is folklore-confirmed but datasheet-unverified. If you have a known-good JCI sensor with calibration data, that's the better reference.</p>
 
-            <p><strong>Use as a reference, not for calibration.</strong> A single-β model approximates a Steinhart-Hart curve; the fit is within <span data-us="roughly 1 °F across 32–150 °F (the BAS operating range)" data-metric="roughly 0.5 °C across 0–65 °C (the BAS operating range)">roughly 1 °F across 32–150 °F (the BAS operating range)</span> and degrades to <span data-us="2–5 °F of equivalent temperature error at the −40 °F extreme" data-metric="1–3 °C of equivalent temperature error at the −40 °C extreme">2–5 °F of equivalent temperature error at the −40 °F extreme</span> for the bare 10K curves. Pt100 and Pt1000 are governed by the international standard and match it exactly. For calibration-grade work, measure your sensor directly against a known-good reference at the working temperature — don't trust any published table, ours or anyone else's, blindly.</p>
+            <p><strong>Use as a reference, not for calibration.</strong> A single-β model approximates a Steinhart-Hart curve; the fit is within <span data-us="{{ pageMessages.unitText.nominalFitUs }}" data-metric="{{ pageMessages.unitText.nominalFitMetric }}">{{ pageMessages.unitText.nominalFitUs }}</span> and degrades to <span data-us="{{ pageMessages.unitText.extremeErrorUs }}" data-metric="{{ pageMessages.unitText.extremeErrorMetric }}">{{ pageMessages.unitText.extremeErrorUs }}</span> for the bare 10K curves. Pt100 and Pt1000 are governed by the international standard and match it exactly. For calibration-grade work, measure your sensor directly against a known-good reference at the working temperature — don't trust any published table, ours or anyone else's, blindly.</p>
         </div>
     </div>
 
@@ -374,7 +468,15 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
         const C2F = c => c * 9 / 5 + 32;
         const thUnit = () => window.Units.current() === 'metric' ? 'C' : 'F';
 
-        function thType() { return THERMISTOR_TYPES[document.getElementById('th-type').value]; }
+        const thTypeId = () => document.getElementById('th-type').value;
+        function thType() { return THERMISTOR_TYPES[thTypeId()]; }
+        function thTypeText(id) {
+            return {
+                name: CFI18n.page('types.' + id + '.name'),
+                ref: CFI18n.page('types.' + id + '.ref'),
+                notes: CFI18n.page('types.' + id + '.notes')
+            };
+        }
 
         // Resistance rounding — kept in step with thermistor-data.js's roundR so the
         // result of an interpolation matches the table's own precision.
@@ -400,7 +502,7 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
             document.getElementById('th-temp').disabled = (mode !== 'temp');
             document.getElementById('th-res').disabled  = (mode !== 'res');
             // Dynamic copy label — the single-value button copies whichever side is the result.
-            document.getElementById('th-copy-btn').textContent = mode === 'temp' ? 'Copy resistance' : 'Copy temperature';
+            document.getElementById('th-copy-btn').textContent = CFI18n.page(mode === 'temp' ? 'copy.resistance' : 'copy.temperature');
             thRecompute();
         }
 
@@ -408,8 +510,9 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
         // One temperature column in the active unit, plus the resistance column.
         function thRenderTable(T) {
             const u = thUnit();
+            const text = thTypeText(thTypeId());
             document.getElementById('th-rt-head').innerHTML =
-                '<th>°' + u + '</th><th>Resistance (Ω)</th>';
+                '<th>°' + u + '</th><th>' + CFI18n.page('labels.resistance') + '</th>';
             const kind = T.curve ? T.curve.kind : null;
             let html = '';
             for (const [tF, tC, R] of T.table) {
@@ -418,11 +521,11 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
                 html += `<tr><td>${t}</td><td>${r}</td></tr>`;
             }
             document.getElementById('th-rt-body').innerHTML = html;
-            document.getElementById('th-rt-title').textContent = 'R / T Table — ' + T.name;
-            document.getElementById('th-tag').textContent = (T.family === 'rtd') ? 'RTD' : 'THERMISTOR';
-            document.getElementById('th-ref-point').textContent = T.ref;
+            document.getElementById('th-rt-title').textContent = CFI18n.page('labels.rtTable', { name: text.name });
+            document.getElementById('th-tag').textContent = CFI18n.page(T.family === 'rtd' ? 'tags.rtd' : 'tags.thermistor');
+            document.getElementById('th-ref-point').textContent = text.ref;
             document.getElementById('th-note').innerHTML =
-                T.notes + ' <em>Curve values here are nominal — confirm against the sensor’s datasheet before using them for calibration.</em>';
+                text.notes + ' <em>' + CFI18n.page('lookup.nominalCaution') + '</em>';
         }
 
         // ── Highlight the table row nearest the given °F temperature; scroll it back
@@ -489,7 +592,7 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
                 resultEl.className = 'ps-value muted'; resultEl.textContent = '—';
                 document.getElementById('th-kind').className = 'ps-value muted';
                 document.getElementById('th-kind').textContent = '—';
-                statusEl.className = 'ps-value error'; statusEl.textContent = 'sensor curve data unavailable — reload the page';
+                statusEl.className = 'ps-value error'; statusEl.textContent = CFI18n.page('lookup.dataUnavailable');
                 document.getElementById('th-worked').textContent = '';
                 return;
             }
@@ -516,11 +619,11 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
             const resEl    = document.getElementById('th-res');
             const curveEl  = document.getElementById('th-curve');
 
-            dirEl.textContent = thLookupBy === 'temp' ? 'resistance from temperature' : 'temperature from resistance';
+            dirEl.textContent = CFI18n.page(thLookupBy === 'temp' ? 'lookup.resistanceFromTemperature' : 'lookup.temperatureFromResistance');
             // Persistent reminder of the assumed sensor curve (T-026): Type II and
             // Type III both read 10 kΩ at 77 °F and only diverge away from it, so the
             // selected curve stays in view next to the answer, not only in the dropdown.
-            curveEl.textContent = document.getElementById('th-type').selectedOptions[0].textContent + ' — confirm your sensor';
+            curveEl.textContent = CFI18n.page('lookup.curveConfirm', { name: thTypeText(tid).name });
 
             const mute = (status, statusClass) => {
                 resultEl.className = 'ps-value muted'; resultEl.textContent = '—';
@@ -534,27 +637,37 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
 
             if (thLookupBy === 'temp') {
                 const raw = parseFloat(tempEl.value);
-                if (!isFinite(raw)) { mute('enter a temperature'); return; }
+                if (!isFinite(raw)) { mute(CFI18n.page('lookup.temperatureRequired')); return; }
                 const tF = thUnit() === 'C' ? C2F(raw) : raw;
                 if (tF < Flo - 1e-6 || tF > Fhi + 1e-6) {
-                    mute(`out of range — table covers ${Flo} to ${Fhi} °F (${Math.round(F2C(Flo))} to ${Math.round(F2C(Fhi))} °C)`, 'error');
+                    mute(CFI18n.page('lookup.temperatureOutOfRange', {
+                        fahrenheitLow: Flo, fahrenheitHigh: Fhi,
+                        celsiusLow: Math.round(F2C(Flo)), celsiusHigh: Math.round(F2C(Fhi))
+                    }), 'error');
                     return;
                 }
                 const r = thLerpByTemp(tbl, tF);
                 resultEl.className = 'ps-value live'; resultEl.textContent = thFmtR(r.value, kind) + ' Ω';
                 thLastRaw = String(thRoundR(r.value, kind));
                 resEl.value = thRoundR(r.value, kind);
-                kindEl.className = 'ps-value muted'; kindEl.textContent = r.exact ? 'table value' : 'interpolated';
-                statusEl.className = 'ps-value live'; statusEl.textContent = 'in range';
+                kindEl.className = 'ps-value muted'; kindEl.textContent = CFI18n.page(r.exact ? 'lookup.tableValue' : 'lookup.interpolated');
+                statusEl.className = 'ps-value live'; statusEl.textContent = CFI18n.page('lookup.inRange');
                 workedEl.textContent = r.exact
-                    ? `${thFmtT(r.lo[0])}  →  ${thFmtR(r.lo[2], kind)} Ω   (exact table row)`
-                    : `interpolated between ${thFmtT(r.lo[0])} (${thFmtR(r.lo[2], kind)} Ω) and ${thFmtT(r.hi[0])} (${thFmtR(r.hi[2], kind)} Ω)`;
+                    ? CFI18n.page('lookup.exactTemperature', {
+                        temperature: thFmtT(r.lo[0]), resistance: thFmtR(r.lo[2], kind)
+                    })
+                    : CFI18n.page('lookup.interpolatedTemperature', {
+                        lowTemperature: thFmtT(r.lo[0]), lowResistance: thFmtR(r.lo[2], kind),
+                        highTemperature: thFmtT(r.hi[0]), highResistance: thFmtR(r.hi[2], kind)
+                    });
                 thHighlightRow(tF);
             } else {
                 const r = parseFloat(resEl.value);
-                if (!isFinite(r) || r <= 0) { mute('enter a resistance in ohms'); return; }
+                if (!isFinite(r) || r <= 0) { mute(CFI18n.page('lookup.resistanceRequired')); return; }
                 if (r < Rlo - 1e-6 || r > Rhi + 1e-6) {
-                    mute(`out of range — for this type the table covers ${thFmtR(Rlo, kind)} to ${thFmtR(Rhi, kind)} Ω`, 'error');
+                    mute(CFI18n.page('lookup.resistanceOutOfRange', {
+                        low: thFmtR(Rlo, kind), high: thFmtR(Rhi, kind)
+                    }), 'error');
                     return;
                 }
                 const t = thLerpByRes(tbl, r);
@@ -563,11 +676,16 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
                 resultEl.className = 'ps-value live'; resultEl.textContent = tDisp.toFixed(1) + ' °' + u;
                 thLastRaw = tDisp.toFixed(1);
                 tempEl.value = tDisp.toFixed(1);
-                kindEl.className = 'ps-value muted'; kindEl.textContent = t.exact ? 'table value' : 'interpolated';
-                statusEl.className = 'ps-value live'; statusEl.textContent = 'in range';
+                kindEl.className = 'ps-value muted'; kindEl.textContent = CFI18n.page(t.exact ? 'lookup.tableValue' : 'lookup.interpolated');
+                statusEl.className = 'ps-value live'; statusEl.textContent = CFI18n.page('lookup.inRange');
                 workedEl.textContent = t.exact
-                    ? `${thFmtR(t.lo[2], kind)} Ω  →  ${thFmtT(t.lo[0])}   (exact table row)`
-                    : `interpolated between ${thFmtR(t.lo[2], kind)} Ω (${thFmtT(t.lo[0])}) and ${thFmtR(t.hi[2], kind)} Ω (${thFmtT(t.hi[0])})`;
+                    ? CFI18n.page('lookup.exactResistance', {
+                        resistance: thFmtR(t.lo[2], kind), temperature: thFmtT(t.lo[0])
+                    })
+                    : CFI18n.page('lookup.interpolatedResistance', {
+                        lowResistance: thFmtR(t.lo[2], kind), lowTemperature: thFmtT(t.lo[0]),
+                        highResistance: thFmtR(t.hi[2], kind), highTemperature: thFmtT(t.hi[0])
+                    });
                 thHighlightRow(t.tF);
             }
         }
@@ -602,7 +720,7 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
         // thRecompute via the thRendered.unit change check).
         function thApplyUnit() {
             const u = thUnit();
-            document.getElementById('th-temp-lbl').textContent = 'Temperature (°' + u + ')';
+            document.getElementById('th-temp-lbl').textContent = CFI18n.page('labels.temperature', { unit: u });
         }
 
         // ─────────────────────────────────────────────────────────────────
@@ -704,7 +822,7 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
         const idFmtErr = errF => (thUnit() === 'C' ? errF * 5 / 9 : errF).toFixed(1) + ' °' + thUnit();
 
         function idApplyUnit() {
-            document.getElementById('th-id-t-head').textContent = 'Temp (°' + thUnit() + ')';
+            document.getElementById('th-id-t-head').textContent = CFI18n.page('labels.temperatureShort', { unit: thUnit() });
         }
 
         // ── Main recompute for Identify mode ──
@@ -720,23 +838,23 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
             const read = idReadPoints();
             const pts  = read.pts;
 
-            nptsEl.textContent = pts.length + (pts.length === 1 ? ' point' : ' points')
-                + (read.ignored ? ' · ' + read.ignored + ' ignored (outside −40 to 250 °F)' : '');
+            nptsEl.textContent = CFI18n.page(pts.length === 1 ? 'identify.pointsOne' : 'identify.pointsMany', { count: pts.length })
+                + (read.ignored ? CFI18n.page(thUnit() === 'C' ? 'identify.ignoredMetric' : 'identify.ignoredUs', { count: read.ignored }) : '');
 
             const idMute = msg => {
                 bestEl.className = 'ps-value muted'; bestEl.textContent = '—';
                 confEl.className = 'ps-value muted'; confEl.textContent = msg;
                 rankBody.innerHTML = '';
                 residEl.innerHTML  = '';
-                residTtl.textContent = 'Per-point fit';
+                residTtl.textContent = CFI18n.page('labels.perPointFit');
             };
 
-            if (pts.length < 2) { idMute('enter at least 2 (temp, resistance) points'); return; }
+            if (pts.length < 2) { idMute(CFI18n.page('identify.minimumPoints')); return; }
 
             // Engine guard (codebase-issues #139): degrade to the muted state
             // with a clear message if thermistor-data.js failed to load, rather
             // than throwing on the undefined THERMISTOR_TYPES global below.
-            if (typeof THERMISTOR_TYPES === 'undefined') { idMute('sensor curve data unavailable — reload the page'); return; }
+            if (typeof THERMISTOR_TYPES === 'undefined') { idMute(CFI18n.page('lookup.dataUnavailable')); return; }
 
             // score every type, then rank: scorable types by rmsT ascending,
             // out-of-range types sorted to the bottom (still listed, flagged).
@@ -757,9 +875,9 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
             let rows = '';
             scores.forEach(s => {
                 const cls  = s === best ? ' class="th-id-top"' : (s.oor ? ' class="th-id-oor"' : '');
-                const pick = '<button type="button" class="copy-btn th-id-pick" data-type="' + s.id + '">' + s.type.name + '</button>';
+                const pick = '<button type="button" class="copy-btn th-id-pick" data-type="' + s.id + '">' + thTypeText(s.id).name + '</button>';
                 rows += s.oor
-                    ? '<tr' + cls + '><td>' + pick + '</td><td>out of range</td><td>—</td></tr>'
+                    ? '<tr' + cls + '><td>' + pick + '</td><td>' + CFI18n.page('identify.outOfRange') + '</td><td>—</td></tr>'
                     : '<tr' + cls + '><td>' + pick + '</td><td>' + idFmtErr(s.rmsT) + '</td><td>' + s.rmsP.toFixed(1) + ' %</td></tr>';
             });
             rankBody.innerHTML = rows;
@@ -767,9 +885,9 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
             if (!best) {
                 bestEl.className = 'ps-value muted'; bestEl.textContent = '—';
                 confEl.className = 'ps-value muted';
-                confEl.textContent = 'no type covers every reading — re-check the entries';
+                confEl.textContent = CFI18n.page('identify.noCoverage');
                 residEl.innerHTML = '';
-                residTtl.textContent = 'Per-point fit';
+                residTtl.textContent = CFI18n.page('labels.perPointFit');
                 return;
             }
 
@@ -779,19 +897,19 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
             // points genuinely cannot tell them apart.
             const gap = runner ? runner.rmsT - best.rmsT : Infinity;
             let verdict, strong = false;
-            if      (best.rmsT > 6)    verdict = 'no standard type fits well';
-            else if (gap < 1)          verdict = 'ambiguous — top types fit about equally';
-            else if (best.rmsT <= 1) { verdict = 'strong match'; strong = true; }
-            else if (best.rmsT <= 3) { verdict = 'likely match'; strong = true; }
-            else                       verdict = 'weak — loose fit, best available';
+            if      (best.rmsT > 6)    verdict = CFI18n.page('identify.verdictNoFit');
+            else if (gap < 1)          verdict = CFI18n.page('identify.verdictAmbiguous');
+            else if (best.rmsT <= 1) { verdict = CFI18n.page('identify.verdictStrong'); strong = true; }
+            else if (best.rmsT <= 3) { verdict = CFI18n.page('identify.verdictLikely'); strong = true; }
+            else                       verdict = CFI18n.page('identify.verdictWeak');
 
             bestEl.className = 'ps-value live';
-            bestEl.textContent = best.type.name;
+            bestEl.textContent = thTypeText(best.id).name;
             confEl.className = 'ps-value ' + (strong ? 'live' : 'muted');
-            confEl.textContent = verdict + ' · ' + idFmtErr(best.rmsT) + ' avg error';
+            confEl.textContent = CFI18n.page('identify.averageError', { verdict: verdict, error: idFmtErr(best.rmsT) });
 
             // per-point fit for the winner
-            residTtl.textContent = 'Per-point fit — ' + best.type.name;
+            residTtl.textContent = CFI18n.page('labels.perPointFitType', { name: thTypeText(best.id).name });
             let rhtml = '';
             best.per.forEach((pp, i) => {
                 const p  = pts[i];
@@ -811,9 +929,9 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
             const rows = document.querySelectorAll('#th-id-rows tr');
             rows.forEach((tr, i) => {
                 tr.querySelector('.th-id-num').textContent = i + 1;
-                tr.querySelector('.th-id-t').setAttribute('aria-label', 'Point ' + (i + 1) + ' temperature');
-                tr.querySelector('.th-id-r').setAttribute('aria-label', 'Point ' + (i + 1) + ' resistance');
-                tr.querySelector('.th-id-del').setAttribute('aria-label', 'Remove point ' + (i + 1));
+                tr.querySelector('.th-id-t').setAttribute('aria-label', CFI18n.page('identify.pointTemperatureAria', { number: i + 1 }));
+                tr.querySelector('.th-id-r').setAttribute('aria-label', CFI18n.page('identify.pointResistanceAria', { number: i + 1 }));
+                tr.querySelector('.th-id-del').setAttribute('aria-label', CFI18n.page('identify.removePointAria', { number: i + 1 }));
             });
             // keep at least two rows — disable every remove button at the floor
             const atFloor = rows.length <= 2;
@@ -900,11 +1018,11 @@ keywords: NTC RTD resistance ohms 10k 20k 3k balco pt100 pt1000 sensor temperatu
         document.getElementById('th-tab-lookup').addEventListener('click', e => {
             switchTab('lookup', e.currentTarget);
             const T = thType();
-            document.getElementById('th-tag').textContent = (T.family === 'rtd') ? 'RTD' : 'THERMISTOR';
+            document.getElementById('th-tag').textContent = CFI18n.page(T.family === 'rtd' ? 'tags.rtd' : 'tags.thermistor');
         });
         document.getElementById('th-tab-identify').addEventListener('click', e => {
             switchTab('identify', e.currentTarget);
-            document.getElementById('th-tag').textContent = 'IDENTIFY';
+            document.getElementById('th-tag').textContent = CFI18n.page('tags.identify');
             idRecompute();
         });
 

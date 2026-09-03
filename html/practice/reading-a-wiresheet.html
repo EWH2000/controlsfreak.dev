@@ -7,7 +7,7 @@ category: programming
 pairedLesson: https://controlsfreak.dev/education/reading-a-wiresheet.html
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -73,12 +73,12 @@ pairedLesson: https://controlsfreak.dev/education/reading-a-wiresheet.html
         // source. The bank is concept + method level by design — the hard
         // multi-block trace programs belong to the upcoming Wiresheet
         // Traces drill (see the bank header).
-        const questions = {{ quizzes['reading-a-wiresheet'] | safeScriptJson | safe }};
+        const questions = {{ quizzes['reading-a-wiresheet'] | localizedQuiz(locale, 'reading-a-wiresheet') | safeScriptJson | safe }};
 
         Quiz.mount('#quiz', questions, {
-            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            next: {{ page.fileSlug | nextQuiz(locale, collections.navPractice) | safeScriptJson | safe }},
             slug: 'reading-a-wiresheet',
-            title: 'Reading a Wiresheet',
+            title: {{ title | cleanTitle | safeScriptJson | safe }},
             defaultCount: 10,
             defaultOrder: 'sequential'
         });

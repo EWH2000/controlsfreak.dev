@@ -1,0 +1,52 @@
+---
+title: 타이머 및 지연 퀴즈 — controlsfreak.dev
+description: TON·TOF 선택, 경과시간 초기화, 운전 확인 대기시간, 디바운스와 압축기 최소 운전·정지시간을 점검하는 10문항 퀴즈입니다.
+sourceContentHash: 7e9a8e22e84fd9933b7c49f4082248053e887dceab353681c42df4f1caf2bc9c
+canonical: https://controlsfreak.dev/ko/practice/timers-and-delays.html
+nav: practice
+category: programming
+pairedLesson: https://controlsfreak.dev/ko/education/timers-and-delays.html
+---
+{% extends "html/practice/timers-and-delays.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 타이머 및 지연</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">타이머 및 지연 퀴즈 <span class="tool-tag">로직</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/timers-and-delays.html">타이머 및 지연</a> 학습 자료를 읽은 뒤 자가 점검해 보세요. 판단에 시간을 적용하는 10문항입니다. 문장에 맞는 타이머 선택, 경과시간을 실제로 초기화하는 조건, 불필요한 트립과 감지 사각지대 사이에서 운전 확인 대기시간 정하기, 채터링 상태 디바운스하기, 압축기를 보호하는 최소 운전·정지시간을 확인합니다. 각 문항의 해설에는 해당 내용이 나온 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        lessons: [
+            {href: '/ko/education/timers-and-delays.html', label: '타이머 및 지연'},
+            {href: '/ko/education/function-blocks.html', label: '기능 블록 기초'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'},
+            {href: '/ko/simulators/ddc-workbench-fcu.html', label: 'DDC 워크벤치 — 팬코일유닛'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/function-blocks.html', label: '기능 블록 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

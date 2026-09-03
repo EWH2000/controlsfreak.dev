@@ -1,0 +1,470 @@
+---
+title: 공조 장비 식별 — controlsfreak.dev
+description: 낯선 공조 장비를 RTU·AHU·MAU·DOAS·분리형 시스템·팬코일로 구분하는 현장 질문과 명판·기계설비 일람표·도면 확인 방법을 설명합니다.
+canonical: https://controlsfreak.dev/ko/education/air-unit-identification.html
+nav: education
+category: forced-air
+pairedQuiz: https://controlsfreak.dev/ko/practice/air-unit-identification.html
+keywords: RTU AHU MAU DOAS 보충공기 장치 히트펌프 분리형 시스템 팬코일 명판 기계설비 일람표 태그 용량 모델번호 장비 식별
+sourceContentHash: b557f1acaf740f97d10b35ceacd92f1219c5c958a96d3e8fb3383f8cee87fdbb
+sourceMessageHash: ba6e403c67302936a8cdcea4c994e3d0dbbc97e160815b4089856c0fd9ca762a
+pageMessages:
+  families:
+    rtu:
+      name: 패키지형 RTU
+      call: RTU — 패키지형 옥상 공조기
+      note: '냉열원이 모두 장비 안에 있습니다. 히트펌프인지 냉방 전용인지는 명판을 확인해야 합니다.'
+    ahu:
+      name: 조립형 AHU
+      call: AHU — 조립형 공기조화기
+      note: 코일과 배관 쌍만 있으므로 다른 곳에 있는 플랜트에서 냉온수를 공급받습니다.
+    mau:
+      name: MAU / DOAS
+      call: MAU — 보충공기 장치
+      note: 회기 덕트가 없는 외기 100% 장비로, 다른 장치가 배출한 공기를 보충합니다.
+    split:
+      name: 분리형 시스템
+      call: 분리형 — 실외 CU, 실내 공기 순환장치
+      note: 냉매 배관을 따라가면 한쪽을 식별하는 동시에 다른 쪽도 식별할 수 있습니다.
+    fcu:
+      name: 팬코일유닛
+      call: FCU — 팬코일유닛
+      note: 공기조화기가 아닌 말단 장치입니다. 이 페이지에서는 구분할 수 있으면 충분합니다.
+  mysteries:
+    curb: 옥상 + 장비 내부의 모든 냉열원 + 두 덕트 = 패키지형 RTU입니다. 응축기 팬이 첫 번째 단서였습니다.
+    basement: 배관 쌍이 있고 압축기가 없으므로 다른 플랜트에서 냉온수를 공급받습니다. 플랜트는 복도 너머에 있습니다.
+    noReturn: 회기 덕트가 없다는 사실이 식별의 전부입니다. 주방 후드가 배출하는 공기를 보충합니다.
+    liar: 화면은 AHU, 일람표도 AHU라고 했지만 둘 다 틀렸습니다. 장비 본체는 처음부터 사실을 보여 주고 있었습니다.
+  hints:
+    sit: '어디에 설치되어 있습니까?'
+    cabinet: '캐비닛 안에 무엇이 있습니까?'
+    air: '공기는 어디에서 들어옵니까?'
+  nudges:
+    connections: ' 연결 상태를 보면 대개 가장 빨리 판별할 수 있습니다.'
+    cabinet: ' 캐비닛 내부가 결정적인 단서입니다.'
+    siting: ' 설치 위치를 확인하세요.'
+  status:
+    initial: 다섯 장비군이 남아 있습니다. 순서와 관계없이 질문에 답하세요.
+    nothing: 이 조합과 일치하는 장비가 없습니다. 현장에서는 다시 살펴봐야 한다는 뜻입니다. 명칭보다 연결 상태와 캐비닛 내부를 우선하세요. 여기서는 답 하나가 잘못되었습니다.
+    roofAhu: ' 옥상에 있어도 마찬가지입니다. 설치 위치보다 배관이 더 중요한 단서입니다.'
+    confirmed: '확인 완료 — {family}. {confirmation}'
+    rightFamily: '장비군은 맞지만 현장 장면과 답이 다릅니다. 다시 읽으세요: {hint}'
+    cluesConflict: '위젯은 입력한 답에 동의하지만 단서와 맞지 않습니다. 장면을 다시 읽으세요: {hint}'
+    answerOff: 답 하나가 잘못되었습니다.
+    oneStanding: '하나만 남았습니다: {family}. {note}'
+    readScene: 현장 장면을 읽고 단서에 따라 세 질문에 답하세요.
+    remaining: '{count}개 장비군이 남아 있습니다.{nudge}'
+  unitText:
+    width:
+      us: 2피트
+      metric: 0.6 m
+  anecdote:
+    liar: >-
+      <div class="widget-anecdote warn">이 문제는 실제 건물에서 겪은 일입니다. 같은 층을 팬코일유닛, 공기조화기, 옥상 공조기가 함께 담당했지만 현장 누구도 무엇이 무엇인지 구분하지 못했고 저도 마찬가지였습니다. 소프트웨어에는 장비가 완전히 다른 장비군으로 분류되어 있었고 남아 있는 도면도 태그와 맞지 않았습니다. 그래서 장비가 직접 자신을 밝히게 했습니다. 여름에는 <em>난방</em> 밸브에 명령을 주고 제어기 출력 표시등을 확인했습니다. 겨울에는 계절상 이미 비활성화된 장비에 냉방 명령으로 같은 방법을 썼습니다. 명령은 건물이 아니라 신호만 움직였습니다. 표시등을 볼 수 없으면 출력 단자에 계측기를 댔습니다. 포인트 하나, 장비 하나, 이름 하나씩 확인해 문서가 잃어버린 지도를 다시 만들었습니다. 이런 방법으로 장비를 식별한 일이 한 번이 아닙니다. 문서는 틀릴 수 있지만 장비 본체는 거짓말하지 않습니다.</div>
+---
+{% extends "html/education/air-unit-identification.html" %}
+{% from "related-links.njk" import relatedLinks with context %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">교육 · 공조 장비 식별</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">공조 장비 식별 <span class="tool-tag">공기 계통</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                앞의 세 페이지에서는 공기조화기가 무엇을 하는지 설명했습니다. 이 페이지는 그보다 앞선 순간, 처음 보는 장비 앞에 옥상에 서 있는데 무전기로 무엇을 보고 있느냐는 질문을 받는 상황에서 시작합니다. 상업용 건물의 모든 공기측 장비는 서로 다른 캐비닛 안에 같은 공기 경로를 담고 있습니다. 그러나 출동 담당자와 도면, 빌딩관리시스템(BMS)은 모두 그 캐비닛의 이름으로 장비를 부르므로, 정확한 명칭을 알아내는 일이 이후 모든 작업의 첫 단계입니다. 처음부터 끝까지 다룰 질문은 하나입니다. <em>한 번도 본 적 없는 공기측 장비 앞에 섰을 때, 그것이 무엇이고 어떤 일을 하며 무전기로 무엇이라 불러야 하는지 어떻게 알아낼까요?</em>
+            </p>
+
+            <div class="callout">
+                <p style="line-height:1.7;">
+                    이 장의 첫 글에서는 AHU, RTU, 보충공기 장치, 팬코일 같은 장비군을 구분하는 일은 별도의 질문이며 따로 설명하겠다고 약속했습니다. 바로 이 페이지가 그 설명이며, <a href="/ko/education/air-handlers.html">공기조화기</a>의 내용을 바탕으로 합니다. 아래의 각 장비군은 그 페이지에서 다룬 공기 경로를 서로 다른 상자에 담은 것입니다. ‘각 구간을 따라간다’는 말이 낯설다면 먼저 첫 글을 읽으세요. 모든 캐비닛에 무엇이 있어야 하는지 알고 나면 장비군의 차이가 훨씬 명확해집니다.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · Three questions ───────────────── -->
+            <h2 class="subhead" id="three-questions">명판보다 먼저 확인할 세 가지 질문</h2>
+
+            <p>
+                처음부터 명판을 찾고 싶은 마음을 잠시 접어두세요. 명판은 장비에서 가장 권위 있는 표식이지만 점검 패널 뒤에 있거나, 페인트에 덮이거나, 햇빛에 바래거나, 3&nbsp;m 높이에 달려 있어 가장 접근하기 어려울 수도 있습니다. 그리고 이 페이지의 나머지 내용에서 보듯이 각종 문서도 틀릴 수 있습니다. 대신 3&nbsp;m 밖에서 손을 주머니에 넣은 채로도 답할 수 있는 세 가지 질문부터 시작하세요. <em>어디에 설치되어 있습니까?</em> <em>캐비닛 안에는 무엇이 있습니까?</em> <em>공기는 어디에서 들어와 어디로 나갑니까?</em> 이 세 질문이면 상업용 건물의 옥상이나 기계실에서 마주치는 장비 대부분을 좁혀 갈 수 있습니다.
+            </p>
+
+            <p>
+                각 질문은 서로 다른 층위의 정보를 읽습니다. 설치 위치는 가장 손쉬운 첫 구분입니다. 옥상 기초대(roof curb) 위인지, 기계실 바닥을 차지하는지, 재실 공간 안이나 천장 위의 작은 상자인지, 또는 무언가로 연결된 두 개의 분리된 장치인지 살펴봅니다. 캐비닛 내부는 더 결정적인 단서입니다. 압축기와 가스 버너가 있으면 장비가 자체 냉열원을 갖춘 것이고, 코일만 있으며 보일러실이나 냉동기 쪽으로 사라지는 배관 쌍이 있으면 다른 플랜트에서 냉온수를 빌려 씁니다. 작은 코일과 팬 하나뿐이라면 공기조화기가 아니라 말단 장치입니다. 연결 상태는 지문과 같습니다. 회기 덕트와 외기 후드가 함께 있으면 공기를 재순환하고 혼합하며, 회기 덕트 없이 흡입 후드만 있으면 외기 100&nbsp;% 장비입니다. 실내를 향한 그릴 한 쌍만 있다면 그 공간 자체가 <em>덕트</em> 역할을 합니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 326" role="img" aria-labelledby="aid-d1-title aid-d1-desc" font-family="var(--mono)">
+                <title id="aid-d1-title">일반 공조 장비에 적용하는 세 가지 현장 질문</title>
+                <desc id="aid-d1-desc">옥상 기초대 위에 놓인 물음표 표시의 일반 공조 장비입니다. 번호가 붙은 세 질문이 읽어야 할 세 층위를 가리킵니다. 설치 위치는 옥상 기초대를, 캐비닛 내부는 장비 상자를, 공기가 드나드는 곳은 회기·외기·급기 덕트 연결부를 가리킵니다.</desc>
+
+                <!-- ground + curb + cabinet -->
+                <line x1="30" y1="252" x2="510" y2="252" stroke="var(--border)" stroke-width="2"/>
+                <rect x="215" y="232" width="120" height="20" fill="none" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <rect x="200" y="118" width="150" height="114" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+                <text x="275" y="192" text-anchor="middle" font-size="40" font-weight="bold" fill="var(--text-dim)">?</text>
+
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes duct geometry — the identification widget only
+                     toggles HTML cards and scenes. A future geometry write must refresh
+                     in the same breath, or the page must opt out via the
+                     `flowGeometryLive` frontmatter (flowStaticGuard, .eleventy.js). -->
+                <!-- duct connections -->
+                <path id="aid-d1-oa" data-flow="air" data-flow-static="true" d="M258 66 V118" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <polygon points="253,106 263,106 258,116" fill="var(--teal)"/>
+                <text x="258" y="54" text-anchor="middle" font-size="13" fill="var(--text)">외기</text>
+
+                <path id="aid-d1-ra" data-flow="air" data-flow-static="true" d="M64 200 H200" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <polygon points="188,195 188,205 198,200" fill="var(--blue-cool)"/>
+                <text x="64" y="186" font-size="13" fill="var(--text)">회기</text>
+
+                <path id="aid-d1-sa" data-flow="air" data-flow-static="true" d="M350 200 H486" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <polygon points="476,195 476,205 486,200" fill="var(--blue)"/>
+                <text x="486" y="186" text-anchor="end" font-size="13" fill="var(--text)">급기</text>
+
+                <!-- the three questions -->
+                <text x="30" y="292" font-size="14" fill="var(--text-bright)">1 · 어디에 설치되어 있습니까?</text>
+                <line x1="220" y1="283" x2="217" y2="254" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="3 3"/>
+
+                <text x="30" y="94" font-size="14" fill="var(--text-bright)">2 · 캐비닛 안에는 무엇이 있습니까?</text>
+                <line x1="150" y1="102" x2="200" y2="134" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="3 3"/>
+
+                <text x="510" y="286" text-anchor="end" font-size="14" fill="var(--text-bright)">3 · 공기는 어디에서 들어와</text>
+                <text x="510" y="304" text-anchor="end" font-size="14" fill="var(--text-bright)">어디로 나갑니까?</text>
+                <line x1="460" y1="270" x2="460" y2="210" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="3 3"/>
+            </svg>
+
+            <div class="edu-legend">
+                <span><span class="sw oa"></span>외기</span>
+                <span><span class="sw ra"></span>회기</span>
+                <span><span class="sw sa"></span>급기</span>
+            </div>
+
+            <!-- ───────────────── 2 · The lineup ───────────────── -->
+            <h2 class="subhead" id="the-lineup">장비군 비교: 다섯 장비군의 다섯 가지 지문</h2>
+
+            <p>
+                이 세 질문을 기준으로 장비군을 살펴보겠습니다. <em>패키지형 옥상 공조기(RTU)</em>는 세 질문 모두에 뚜렷한 답을 줍니다. 옥상 기초대 위에 설치되고, 캐비닛 안에는 흡입 후드 뒤의 필터 랙, 자체 압축기와 응축기 팬을 갖춘 <button type="button" data-gloss="dx">직팽식(DX)</button> 냉각 코일, 그리고 보통 연도가 달린 가스 열교환기까지 모두 들어 있습니다. 회기 덕트는 건물에서 옥상 기초대를 통해 올라오고 급기 덕트는 다시 아래로 내려갑니다. <a href="/ko/education/air-handlers.html">이 장의 첫 글</a>에서 그린 모든 구간을 공장에서 하나의 내후성 상자 안에 접어 넣은 셈입니다. 한쪽 끝에서 돌아가는 응축기 팬 부분은 냉매 플랜트가 장비 안에 있다는 확실한 단서입니다.
+            </p>
+
+            <p>
+                눈에 잘 띄지 않는 변형으로 <em>히트펌프형 RTU</em>가 있습니다. 옥상 기초대, 후드, 캐비닛은 같지만 냉매 회로를 역방향으로 운전해 냉방에 사용하던 같은 코일로 건물을 난방할 수 있습니다. 전환은 사방밸브가 담당하며, <a href="/ko/education/refrigerant-cycle-basics.html#components">냉매 사이클</a>을 양방향으로 운전하는 방식입니다. 7월의 옥상에서 외형만 보고는 냉방 전용 장비와 구분할 수 없습니다. 분명히 말하면 <strong>히트펌프를 식별하는 단서는 판금 외형이 아니라 문서</strong>입니다. 냉방 전용 형제 모델과 한 글자 다른 모델 코드나, 난방 항목에 버너 대신 압축기가 적힌 명판을 확인해야 합니다. 어떤 질문은 명판만이 답할 수 있다는 사실을 처음 보여 주는 사례입니다.
+            </p>
+
+            <p>
+                <em>조립형 공기조화기(AHU)</em>는 캐비닛 질문에 정반대로 답합니다. 상자 안에는 공기측 구성품만 있습니다. 펜트하우스를 포함한 기계실에 놓이며, 옆이나 내부를 걸어 다닐 만큼 큰 여러 섹션을 현장에서 조립하는 경우가 많습니다. 코일은 플랜트의 냉온수를 공급받습니다. 냉동기나 보일러 쪽으로 이어지는 보온 배관 쌍과 코일 연결부의 밸브·액추에이터는 있지만 압축기는 어디에도 없습니다. 배관 쌍이 보이면 이 장비는 외부의 플랜트를 빌려 쓰는 것입니다. 설치 위치가 전형적이지 않아도 이 구분은 유효합니다. 옥상에 놓인 조립형 장비도 공기조화기입니다. <strong>설치 위치보다 배관이 더 중요한 단서</strong>이기 때문입니다.
+            </p>
+
+            <p>
+                <em>보충공기 장치(MAU)</em>는 없는 것으로 식별합니다. 장비 둘레를 살펴보면 흡입 후드, 건물 안으로 내려가는 급기 덕트, 흔히 버너 섹션까지 있지만 회기 덕트는 전혀 없습니다. 건물 공기를 재순환하는 장비가 아니라 주방 후드, 대형 공정 배기, 한 층의 실험실 팬처럼 다른 설비가 내보낸 공기를 보충하므로 외기 100&nbsp;%를 처리합니다. 이전 페이지의 ‘<a href="/ko/education/building-pressure.html#dampers-pressure">들어오는 공기를 늘리는</a>’ 장치를 별도 상자로 만든 것입니다. 더 정교한 친척인 <em>전용외기 시스템(DOAS)</em>도 환기를 위해 외기 100&nbsp;%를 처리하며 보통 열회수 장치를 갖춥니다. 여기서는 식별할 수 있으면 충분하며, 공기를 습공기 상태에서 어떻게 처리하는지는 <a href="/ko/education/dedicated-outdoor-air.html">이 장의 별도 페이지</a>에서 다룹니다.
+            </p>
+
+            <p>
+                <em>분리형 시스템</em>은 설치 위치 질문에 ‘두 개의 장치’라고 답합니다. 실외의 패드나 평지붕에는 압축기, 응축기 코일, 팬을 갖춘 응축 유닛이 있고 실내에는 공기 순환장치가 있습니다. 두 장치는 덕트가 아니라 <em>냉매 배관 세트</em>, 즉 굵은 쪽에 보온재를 씌운 두 가닥의 동관으로 연결됩니다. 냉매 배관을 따라가면 양쪽 장치를 한 번에 식별할 수 있습니다. 실내 장치는 설비실 안의 공기조화기부터 벽걸이 카세트까지 다양하며, 중요한 명판은 실외 장치에 있습니다.
+            </p>
+
+            <p>
+                마지막은 다른 장비와 구분할 수 있도록 포함한 작은 <em>팬코일유닛(FCU)</em>입니다. 담당 공간 안이나 천장 위에 놓인 폭 수십 센티미터의 상자로, 이름 그대로 팬과 배관에 연결된 코일만 들어 있습니다. 덕트는 거의 없고 자체 외기 연결부도 보통 없습니다. 공기조화기가 아니라 팬이 달린 수배관 부하인 말단 장치입니다. 이 장에서는 식별할 수 있으면 충분합니다. 지금 중요한 것은 그래픽에서 공기조화기라고 표시되었더라도 팬코일유닛을 잘못 판단하지 않는 것입니다. 이 점을 기억해 두세요.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 592" role="img" aria-labelledby="aid-d2-title aid-d2-desc" font-family="var(--mono)">
+                <title id="aid-d2-title">다섯 장비군의 서로 다른 연결 지문</title>
+                <desc id="aid-d2-desc">각 장비군을 한 행씩 나타냅니다. 패키지형 RTU는 회기와 외기를 받아 급기하며 내부에 직팽식 코일과 버너가 있습니다. 조립형 AHU는 같은 세 덕트를 갖지만 내부에는 코일만 있고 플랜트 배관 쌍이 연결됩니다. 보충공기 장치는 외기만 받으며 없는 회기 덕트를 점선으로 표시했습니다. 분리형 시스템은 냉매 배관으로 연결된 두 상자입니다. 팬코일유닛은 천장 위에 매달려 있고 작은 배관 쌍과 아래쪽 그릴이 있습니다.</desc>
+
+                <!-- row 1 · packaged RTU -->
+                <text x="10" y="36" font-size="15" fill="var(--text-bright)">패키지형 RTU</text>
+                <text x="10" y="56" font-size="12" fill="var(--text-dim)">모든 냉열원이 내부에 —</text>
+                <text x="10" y="72" font-size="12" fill="var(--text-dim)">압축기, 버너</text>
+                <rect x="300" y="92" width="140" height="12" fill="none" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="190" y1="104" x2="530" y2="104" stroke="var(--border)" stroke-width="2"/>
+                <rect x="290" y="36" width="160" height="56" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+                <text x="352" y="68" text-anchor="middle" font-size="12" fill="var(--text-dim)">DX + 버너</text>
+                <circle cx="426" cy="64" r="12" fill="none" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <line x1="426" y1="54" x2="426" y2="74" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="416" y1="64" x2="436" y2="64" stroke="var(--text-dim)" stroke-width="1"/>
+                <path id="aid-d2-rtu-oa" data-flow="air" data-flow-static="true" d="M200 50 H290" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <polygon points="280,45 280,55 290,50 " fill="var(--teal)"/>
+                <path id="aid-d2-rtu-ra" data-flow="air" data-flow-static="true" d="M200 78 H290" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <polygon points="280,73 280,83 290,78" fill="var(--blue-cool)"/>
+                <path id="aid-d2-rtu-sa" data-flow="air" data-flow-static="true" d="M450 64 H530" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <polygon points="520,59 520,69 530,64" fill="var(--blue)"/>
+
+                <!-- row 2 · built-up AHU -->
+                <text x="10" y="150" font-size="15" fill="var(--text-bright)">조립형 AHU</text>
+                <text x="10" y="170" font-size="12" fill="var(--text-dim)">코일만 있음 — 플랜트의</text>
+                <text x="10" y="186" font-size="12" fill="var(--text-dim)">배관 쌍에 연결</text>
+                <rect x="290" y="150" width="160" height="56" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+                <text x="370" y="182" text-anchor="middle" font-size="12" fill="var(--text-dim)">코일만 있음</text>
+                <path id="aid-d2-ahu-oa" data-flow="air" data-flow-static="true" d="M200 164 H290" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <polygon points="280,159 280,169 290,164" fill="var(--teal)"/>
+                <path id="aid-d2-ahu-ra" data-flow="air" data-flow-static="true" d="M200 192 H290" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <polygon points="280,187 280,197 290,192" fill="var(--blue-cool)"/>
+                <path id="aid-d2-ahu-sa" data-flow="air" data-flow-static="true" d="M450 178 H530" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <polygon points="520,173 520,183 530,178" fill="var(--blue)"/>
+                <path id="aid-d2-ahu-hws" data-flow="supply" data-flow-static="true" d="M330 232 V206" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+                <path id="aid-d2-ahu-hwr" data-flow="return" data-flow-static="true" d="M348 206 V232" fill="none" stroke="var(--blue-cool)" stroke-width="2.5" stroke-dasharray="7 4"/>
+                <text x="364" y="228" font-size="12" fill="var(--text-dim)">플랜트에서</text>
+
+                <!-- row 3 · MAU / DOAS -->
+                <text x="10" y="270" font-size="15" fill="var(--text-bright)">MAU / DOAS</text>
+                <text x="10" y="290" font-size="12" fill="var(--text-dim)">되돌아오는 공기 없음 —</text>
+                <text x="10" y="306" font-size="12" fill="var(--text-dim)">외기 100%</text>
+                <rect x="290" y="268" width="160" height="56" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+                <text x="370" y="300" text-anchor="middle" font-size="12" fill="var(--text-dim)">100% OA</text>
+                <path id="aid-d2-mau-oa" data-flow="air" data-flow-static="true" d="M200 282 H290" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <polygon points="280,277 280,287 290,282" fill="var(--teal)"/>
+                <path d="M200 312 H290" fill="none" stroke="var(--text-dim)" stroke-width="2" stroke-dasharray="4 7" opacity="0.55"/>
+                <text x="200" y="342" font-size="12" fill="var(--text-dim)">회기 덕트 없음 — 결정적 단서</text>
+                <path id="aid-d2-mau-sa" data-flow="air" data-flow-static="true" d="M450 296 H530" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <polygon points="520,291 520,301 530,296" fill="var(--blue)"/>
+
+                <!-- row 4 · split system -->
+                <text x="10" y="390" font-size="15" fill="var(--text-bright)">분리형 시스템</text>
+                <text x="10" y="410" font-size="12" fill="var(--text-dim)">두 개의 장치 —</text>
+                <text x="10" y="426" font-size="12" fill="var(--text-dim)">사이에 냉매 배관</text>
+                <rect x="200" y="386" width="104" height="56" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+                <text x="252" y="418" text-anchor="middle" font-size="12" fill="var(--text-dim)">압축기</text>
+                <rect x="384" y="386" width="104" height="56" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+                <text x="436" y="418" text-anchor="middle" font-size="12" fill="var(--text-dim)">팬 + 코일</text>
+                <line x1="304" y1="404" x2="384" y2="404" stroke="var(--text-dim)" stroke-width="2.5"/>
+                <line x1="304" y1="424" x2="384" y2="424" stroke="var(--text-dim)" stroke-width="1.5" stroke-dasharray="2 3"/>
+                <text x="344" y="396" text-anchor="middle" font-size="12" fill="var(--text-dim)">냉매 배관</text>
+                <text x="252" y="460" text-anchor="middle" font-size="12" fill="var(--text-dim)">실외</text>
+                <text x="436" y="460" text-anchor="middle" font-size="12" fill="var(--text-dim)">실내</text>
+
+                <!-- row 5 · fan coil -->
+                <text x="10" y="504" font-size="15" fill="var(--text-bright)">팬코일유닛</text>
+                <text x="10" y="524" font-size="12" fill="var(--text-dim)">공간 안의 팬과</text>
+                <text x="10" y="540" font-size="12" fill="var(--text-dim)">배관 연결 코일</text>
+                <line x1="190" y1="496" x2="530" y2="496" stroke="var(--border)" stroke-width="2" stroke-dasharray="8 5"/>
+                <text x="530" y="488" text-anchor="end" font-size="12" fill="var(--text-dim)">천장</text>
+                <rect x="320" y="506" width="100" height="44" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+                <text x="370" y="532" text-anchor="middle" font-size="12" fill="var(--text-dim)">팬 + 코일</text>
+                <path id="aid-d2-fcu-hws" data-flow="supply" data-flow-static="true" d="M244 516 H320" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+                <path id="aid-d2-fcu-hwr" data-flow="return" data-flow-static="true" d="M320 534 H244" fill="none" stroke="var(--blue-cool)" stroke-width="2.5" stroke-dasharray="7 4"/>
+                <text x="240" y="566" font-size="12" fill="var(--text-dim)">플랜트에서</text>
+                <path id="aid-d2-fcu-ra" data-flow="air" data-flow-static="true" d="M356 578 V550" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <polygon points="351,560 361,560 356,550" fill="var(--blue-cool)"/>
+                <path id="aid-d2-fcu-sa" data-flow="air" data-flow-static="true" d="M394 550 V578" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <polygon points="389,568 399,568 394,578" fill="var(--blue)"/>
+                <text x="430" y="572" font-size="12" fill="var(--text-dim)">아래쪽 그릴</text>
+            </svg>
+
+            <div class="edu-legend">
+                <span><span class="sw oa"></span>외기</span>
+                <span><span class="sw ra"></span>회기</span>
+                <span><span class="sw sa"></span>급기</span>
+                <span><span class="sw supply"></span>물 · 공급</span>
+                <span><span class="sw return"></span>물 · 환수</span>
+            </div>
+
+            <div class="callout" style="margin-top:1.5rem;">
+                <h3>CV입니까, VAV입니까? <span>· 장비군이 아니라 운전 특성입니다</span></h3>
+                <p>덕트가 연결된 장비라면 어느 쪽도 가능합니다. 정풍량(CV)은 운전할 때 고정된 풍량을 보내고, 변풍량(VAV)은 부하에 따라 풍량을 바꿉니다. VAV의 특징은 구성품 하나가 아니라 여러 조건의 조합입니다. 급기 팬의 인버터<em>와</em> 급기 덕트를 따라 배치된 액추에이터 장착 말단 박스<em>와</em> 팬이 유지하는 <button type="button" data-gloss="duct-static">덕트 정압 설정값</button>이 모두 있어야 합니다. 인버터 하나만으로는 아무것도 확정할 수 없습니다. 최신 정풍량 장비에도 밸런싱과 소프트 스타트를 위한 <a href="/ko/education/vfds.html#cube-law">인버터(VFD)</a>가 있기 때문입니다. 따라서 급기 덕트를 따라가세요. 댐퍼 액추에이터가 달린 박스가 있으면 VAV이고, 주 덕트에서 디퓨저로 바로 이어지면 대개 정풍량입니다. 다만 최신 방식에는 한 가지 예외가 있습니다. 단일 존 패키지 장비는 말단 박스나 정압 설정값 없이도 해당 존의 부하에 맞춰 팬 속도를 바꿉니다. 이를 단일 존 VAV라 하며 2010년대 초부터 대형 장비에 에너지 코드가 요구해 온 방식입니다. 말단 박스가 없는 주 덕트에서는 인버터가 한 속도를 유지하는지, 부하를 따라가는지 확인하세요. <a href="/ko/education/vav-systems.html">말단 박스가 실제로 하는 일</a>은 이 장의 다음 페이지에서 다룹니다. VAV처럼 보이지만 VAV는 아닌 VVT, 즉 정풍량 장비에 존 댐퍼를 적용한 방식은 별도 페이지에서 설명합니다.</p>
+            </div>
+
+            <!-- ───────────────── 3 · The paper trail ───────────────── -->
+            <h2 class="subhead" id="paper-trail">문서의 흔적: 태그, 장비 일람표, 명판</h2>
+
+            <p>
+                이제 문서를 살펴보겠습니다. 기계설비 도면의 모든 장비에는 AHU-1, RTU-3, MAU-1, EF-2처럼 짧은 장비군 코드, 하이픈, 번호로 이루어진 <em>일람표 태그</em>가 있습니다. 이 태그가 모든 자료를 잇는 실입니다. 캐비닛에 스텐실이나 스티커로 표시되고 차단기에도 적혀 있을 수 있으며, <em>기계설비 장비 일람표</em>의 해당 행과 평면도에 표시된 장비 기호에도 같은 태그를 사용합니다. 일람표는 M 계열 도면에 있는 표로, 장비마다 설계 풍량, 외부 정압, 코일 용량, 전기 데이터를 한 행에 기록합니다. 그중 가장 먼저 볼 두 열은 <em>설치 위치(location)</em>와 <em>담당 구역(serves)</em>입니다. 혼동으로 사고가 생기기 전에 구분해 두겠습니다. 기계설비 장비 일람표는 도면 위의 표입니다. <a href="/ko/education/bacnet-basics.html">BACnet Schedule 객체</a>도 아니고 시간대별 재실 스케줄도 아닙니다. 서로 관계없는 세 가지가 영어로 schedule이라는 단어를 공유하므로, 누군가 ‘schedule을 확인하라’고 말했을 때 어느 것을 뜻하는지에 따라 전혀 다른 작업이 됩니다.
+            </p>
+
+            <p>
+                <em>명판</em>은 설계자가 아니라 제작사가 기록한 장비 자체의 증언입니다. 제조사, 모델, 일련번호와 함께 전압·상, 최소 회로 전류, 최대 과전류 보호 정격처럼 전선과 차단기 선정의 기준이 된 전기 정격이 적혀 있습니다. 패키지형 <button type="button" data-gloss="dx">직팽식(DX)</button> 장비에는 냉매 종류와 공장 충전량도 표시됩니다. 모델 문자열은 자세히 볼 가치가 있습니다. 아래의 예를 참고하세요. 명판과 일람표가 일치하지 않아 일람표에 없는 모델 번호가 보인다면, 문서가 알려 줄 수 있는 가장 중요한 사실을 발견한 것입니다. 누군가 장비를 교체했지만 도면에는 아직 반영되지 않은 것입니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 350" role="img" aria-labelledby="aid-d3-title aid-d3-desc" font-family="var(--mono)">
+                <title id="aid-d3-title">하나의 태그가 표시되는 세 곳: 캐비닛, 일람표, 평면도</title>
+                <desc id="aid-d3-desc">문서의 흔적을 나타내는 세 지점을 점선으로 연결했습니다. 장비 캐비닛에는 RTU-3 태그가 스텐실로 표시되어 있습니다. 장비별 행으로 구성된 기계설비 장비 일람표에서는 RTU-3 행을 강조하고 값 셀을 빈칸으로 그렸습니다. 옥상 평면도에는 장비 위치의 원 안에 같은 태그가 있습니다. 태그가 세 자료를 하나로 잇습니다.</desc>
+
+                <!-- the cabinet -->
+                <rect x="40" y="40" width="130" height="54" fill="var(--surface)" stroke="var(--border)" stroke-width="1.5"/>
+                <text x="105" y="72" text-anchor="middle" font-size="16" font-weight="bold" fill="var(--text-bright)">RTU-3</text>
+                <text x="105" y="30" text-anchor="middle" font-size="12" fill="var(--text-dim)">캐비닛</text>
+
+                <!-- the schedule -->
+                <text x="420" y="22" text-anchor="middle" font-size="12" fill="var(--text-dim)">기계설비 장비 일람표</text>
+                <rect x="330" y="30" width="180" height="120" fill="none" stroke="var(--border)" stroke-width="1.5"/>
+                <line x1="330" y1="54" x2="510" y2="54" stroke="var(--border)" stroke-width="1"/>
+                <line x1="392" y1="30" x2="392" y2="150" stroke="var(--border)" stroke-width="1"/>
+                <line x1="452" y1="30" x2="452" y2="150" stroke="var(--border)" stroke-width="1"/>
+                <text x="361" y="47" text-anchor="middle" font-size="12" fill="var(--text-dim)">TAG</text>
+                <text x="422" y="47" text-anchor="middle" font-size="12" fill="var(--text-dim)">CFM</text>
+                <text x="481" y="47" text-anchor="middle" font-size="12" fill="var(--text-dim)">담당 구역</text>
+                <rect x="331" y="102" width="178" height="24" fill="var(--accent)" fill-opacity="0.15" stroke="var(--accent)" stroke-width="1"/>
+                <text x="361" y="71" text-anchor="middle" font-size="12" fill="var(--text)">RTU-1</text>
+                <text x="361" y="95" text-anchor="middle" font-size="12" fill="var(--text)">RTU-2</text>
+                <text x="361" y="119" text-anchor="middle" font-size="12" fill="var(--text-bright)">RTU-3</text>
+                <text x="361" y="143" text-anchor="middle" font-size="12" fill="var(--text)">RTU-4</text>
+                <line x1="404" y1="67" x2="440" y2="67" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="404" y1="91" x2="440" y2="91" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="404" y1="115" x2="440" y2="115" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="404" y1="139" x2="440" y2="139" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="462" y1="67" x2="500" y2="67" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="462" y1="91" x2="500" y2="91" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="462" y1="115" x2="500" y2="115" stroke="var(--text-dim)" stroke-width="1"/>
+                <line x1="462" y1="139" x2="500" y2="139" stroke="var(--text-dim)" stroke-width="1"/>
+
+                <!-- the plan -->
+                <rect x="120" y="230" width="180" height="90" fill="none" stroke="var(--border)" stroke-width="1.5"/>
+                <line x1="120" y1="275" x2="220" y2="275" stroke="var(--border)" stroke-width="1"/>
+                <line x1="220" y1="230" x2="220" y2="320" stroke="var(--border)" stroke-width="1"/>
+                <ellipse cx="260" cy="256" rx="27" ry="14" fill="none" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <text x="260" y="260" text-anchor="middle" font-size="12" fill="var(--text)">RTU-3</text>
+                <text x="210" y="340" text-anchor="middle" font-size="12" fill="var(--text-dim)">옥상 평면도</text>
+
+                <!-- the thread -->
+                <line x1="172" y1="66" x2="328" y2="90" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="4 4"/>
+                <line x1="390" y1="152" x2="292" y2="240" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="4 4"/>
+                <line x1="118" y1="238" x2="82" y2="98" stroke="var(--text-dim)" stroke-width="1" stroke-dasharray="4 4"/>
+                <text x="196" y="180" font-size="13" fill="var(--text)">하나의 태그, 세 곳</text>
+            </svg>
+
+            <div class="callout" style="margin-top:1.5rem;">
+                <h3>계산 예시 <span>· 모델 번호에서 냉방 톤수 읽기</span></h3>
+                <p>대부분의 패키지 장비 모델 번호에는 공칭 냉방 용량을 천 BTU/h 단위로 나타내는 숫자가 들어 있습니다. 명판은 미국 단위계를 사용하며 괄호 안의 SI 값은 규모를 비교하기 위한 것입니다. 문자열에 <strong>036</strong>이 있는 장비는 36,000&nbsp;BTU/h입니다. 1냉동톤당 12,000&nbsp;BTU/h로 나누면 3냉동톤, 약 10.6&nbsp;kW 장비입니다. <strong>048</strong>은 4냉동톤(14.1&nbsp;kW), <strong>060</strong>은 5냉동톤(17.6&nbsp;kW)입니다. 이는 법칙이 아니라 관례입니다. 제조사마다 숫자의 위치가 다르고 일부 문자열은 풍량을 나타내므로, 숫자는 가설로 삼고 기계설비 장비 일람표로 확인하세요. 같은 문자열에서 히트펌프가 드러나기도 합니다. 동일 캐비닛의 냉방 전용 모델과 장비군 문자가 다를 수 있습니다.</p>
+            </div>
+
+            <!-- ───────────────── 4 · When the paper lies ───────────────── -->
+            <h2 class="subhead" id="paper-lies">문서가 틀렸을 때</h2>
+
+            <p>
+                앞 절은 문서가 사실이라는 가정에서 출발했습니다. 그러나 모든 문서가 틀린 경우도 있습니다. 건물은 문서보다 오래 남습니다. 장비를 교체해도 일람표는 갱신되지 않고, 옥상에 가 보지 않은 사람이 그래픽을 만들어 장비가 소프트웨어에서 완전히 다른 장비군으로 분류되기도 합니다. 태그는 떨어지거나 페인트에 덮이고, 처음부터 부착되지 않았을 수도 있습니다. 살아 있는 문서 역할을 해야 할 현장 담당자도 같은 잘못된 그래픽에서 명칭을 배웠기 때문에 혼란을 그대로 물려받습니다. BAS의 이름, 도면, 현장 안내자의 말이 모두 다르다면 더는 장비 하나를 식별하는 문제가 아닙니다. 신뢰할 수 없는 증인 세 명을 감사하는 상황입니다.
+            </p>
+
+            <p>
+                제어 관점에서 깔끔하게 해결하는 방법이 있습니다. 시스템이 스스로 위치를 알리게 하되, <strong>운전하지 않는 계절의 출력을 명령</strong>하세요. 소프트웨어에서 식별되지 않은 장비를 선택하고 현재는 영향을 줄 수 없는 특정 출력, 예를 들어 7월에는 난방 밸브를, 1월에는 냉수 밸브를 명령합니다. 그 출력 뒤의 플랜트가 실제로 정지해 보일러가 차갑고 냉동기가 꺼져 있다면 명령은 건물이 아니라 신호만 움직입니다. 그런 다음 의심되는 캐비닛 앞에서 응답을 확인합니다. 제어기 대부분은 포인트별 출력 LED를 갖추고 있으며 LED가 없다면 출력 단자에 계측기를 대고 전압 또는 전류가 변하는지 확인하세요. 포인트를 명령하고 캐비닛이 응답하면 지도의 한 줄을 되찾은 것입니다. 다음 장비를 건드리기 전에 기록하세요.
+            </p>
+
+            <p>
+                오버라이드는 여전히 오버라이드이므로 안전 원칙을 지켜야 합니다. 먼저 해당 계절의 설비가 정말 정지했는지 확인하세요. 많은 건물은 재열과 제습을 위해 여름 내내 온수를 운전하므로, 난방 명령이 무해하다고 판단하기 전에 플랜트가 꺼져 있고 루프가 차가운지 확인해야 합니다. 요구 신호가 아니라 특정 출력을 명령하세요. 패키지 장비의 1단 ‘냉방 요구’는 출력 하나가 아니라 시퀀스이며, 통합된 <button type="button" data-gloss="economizer">외기냉방(economizer)</button> 장치는 외기 댐퍼를 열어 이에 응답합니다. 작업은 짧고 단순하게 유지하세요. 밸브를 몇 초간 움직이는 것이지 점심시간 내내 실험을 방치하는 것이 아닙니다. 작은 조작도 허용할 수 없는 설비는 피하세요. 인명안전 시스템, 실험실과 압력 유지가 중요한 공간, 동결 위험이 있는 모든 경로가 해당합니다. 1월의 외기 댐퍼는 진단 도구가 아니며, 밸브 대신 ‘냉방’을 명령하면 기꺼이 열릴 수 있습니다. 작업 전에 운전 담당자에게 무엇을 할지 알리세요. 건드린 모든 오버라이드를 해제한 뒤 실제로 자동 모드로 돌아가는 것도 확인해야 합니다. <strong>남겨 둔 오버라이드는 기존 혼란에 더해진 또 하나의 거짓 정보</strong>이며 다음 기술자가 이를 다시 감사하게 됩니다.
+            </p>
+
+            <!-- ───────────────── 5 · Lineup-walker widget ───────────────── -->
+            <h2 class="subhead" id="name-the-box">직접 장비 이름 알아내기</h2>
+
+            <p>
+                앞의 장비군 비교를 직접 적용해 보세요. 세 질문에 어떤 순서로 답해도 됩니다. 답할 때마다 후보 장비군이 제외되어 하나만 남고, 위젯은 무전기로 무엇이라 불러야 할지 알려 줍니다. 게임처럼 연습할 수도 있습니다. 각 ‘사례 선택’ 버튼은 문서의 주장까지 포함한 현장 문장으로 단서를 제시합니다. 단서를 읽고 직접 질문에 답한 뒤 위젯의 판단과 일치하는지 확인하세요. 마지막 사례는 이 페이지의 작성자가 실제로 정리해야 했던 건물을 재현합니다.
+            </p>
+
+            <div class="widget" id="aid-widget">
+                <div class="widget-try">
+                    <span class="lbl">사례 선택:</span>
+                    <button type="button" data-aid-mystery="fresh">자유 탐색 — 단서 없음</button>
+                    <button type="button" data-aid-mystery="curb">옥상 기초대 위의 상자</button>
+                    <button type="button" data-aid-mystery="basement">지하실의 거대한 장비</button>
+                    <button type="button" data-aid-mystery="no-return">회기 덕트가 없는 장비</button>
+                    <button type="button" data-aid-mystery="liar">아무것도 일치하지 않는 건물</button>
+                </div>
+
+                <div class="aid-w-scenes">
+                    <div class="aid-w-scene" id="aid-w-scene-curb" hidden>
+                        <strong>옥상 기초대 위의 상자.</strong> 옥상 기초대 위에 캐비닛 하나가 있습니다. 한쪽 끝의 그릴 뒤에서는 응축기 팬이 돌고, 점검 패널에서는 작은 연도가 나와 있으며, 흡입 후드 뒤에는 필터 랙이 있습니다. 덕트 연결부 두 개가 옥상 기초대를 지나 건물 안으로 내려갑니다. 하나는 실내에서 올라오는 회기이고 다른 하나는 다시 아래로 내려가는 급기입니다. 차단기에는 <em>RTU-4</em>가 스텐실로 표시되어 있으며 이번에는 다른 모든 단서와 일치합니다.
+                    </div>
+                    <div class="aid-w-scene" id="aid-w-scene-basement" hidden>
+                        <strong>지하실의 거대한 장비.</strong> 작은 방 크기의 판금 상자가 여러 섹션으로 조립되어 지하 기계설비 통로에서 웅웅거립니다. 루버가 달린 혼합 섹션에서 회기 덕트와 외기 덕트가 만나고, 보온된 배관 두 쌍이 코일 근처의 케이싱으로 들어가며 연결부에는 밸브와 액추에이터가 있습니다. 문을 열면 필터 뱅크 옆을 걸어 지나갈 수 있습니다. 압축기도 연도도 어디에도 없습니다.
+                    </div>
+                    <div class="aid-w-scene" id="aid-w-scene-no-return" hidden>
+                        <strong>회기 덕트가 없는 장비.</strong> 다시 옥상이며 주방 위입니다. 흡입 후드, 버너 섹션, 건물 안으로 내려가는 급기 덕트가 전부입니다. 회기 연결부를 찾아 두 바퀴 돌아보지만 존재하지 않습니다. 15&nbsp;m 떨어진 곳에서는 그리스 후드에 연결된 배기 팬이 강한 바람을 내보내고 있습니다.
+                    </div>
+                    <div class="aid-w-scene" id="aid-w-scene-liar" hidden>
+                        <strong>아무것도 일치하지 않는 건물.</strong> 그래픽에는 AHU-2라고 표시되어 있습니다. 기계설비 장비 일람표에는 AHU-2가 펜트하우스의 <span data-us="30,000&nbsp;CFM" data-metric="51,000&nbsp;m³/h">30,000&nbsp;CFM</span> 조립형 장비라고 되어 있습니다. 하지만 지금 있는 곳은 펜트하우스가 아닙니다. 천장 안쪽의 사다리 위에서 폭이 <span data-us="{{ pageMessages.unitText.width.us }}" data-metric="{{ pageMessages.unitText.width.metric }}">{{ pageMessages.unitText.width.us }}</span>인 상자와 마주하고 있습니다. 작은 팬, 가는 배관 쌍에 연결된 코일, 응축수 팬, 아래 천장 타일의 그릴이 보입니다. 장비 자체를 믿으세요.
+                    </div>
+                </div>
+
+                <div class="aid-w-top">
+                    <div>
+                        <div class="widget-readout-label" id="aid-w-sit-lbl">1 · 어디에 설치되어 있습니까?</div>
+                        <div class="aid-w-modes" role="group" aria-labelledby="aid-w-sit-lbl">
+                            <button type="button" class="aid-w-mode-btn" data-aid-sit="roof" aria-pressed="false">옥상 기초대</button>
+                            <button type="button" class="aid-w-mode-btn" data-aid-sit="mech" aria-pressed="false">기계실</button>
+                            <button type="button" class="aid-w-mode-btn" data-aid-sit="space" aria-pressed="false">담당 공간 안</button>
+                            <button type="button" class="aid-w-mode-btn" data-aid-sit="two" aria-pressed="false">두 개의 장치</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="widget-readout-label" id="aid-w-cab-lbl">2 · 캐비닛 안에는 무엇이 있습니까?</div>
+                        <div class="aid-w-modes" role="group" aria-labelledby="aid-w-cab-lbl">
+                            <button type="button" class="aid-w-mode-btn" data-aid-cab="all" aria-pressed="false">압축기 + 버너</button>
+                            <button type="button" class="aid-w-mode-btn" data-aid-cab="piped" aria-pressed="false">플랜트 배관 연결 코일</button>
+                            <button type="button" class="aid-w-mode-btn" data-aid-cab="fan" aria-pressed="false">팬 + 작은 코일</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="widget-readout-label" id="aid-w-air-lbl">3 · 공기는 어디에서 들어옵니까?</div>
+                        <div class="aid-w-modes" role="group" aria-labelledby="aid-w-air-lbl">
+                            <button type="button" class="aid-w-mode-btn" data-aid-air="mix" aria-pressed="false">회기 덕트 + 외기 후드</button>
+                            <button type="button" class="aid-w-mode-btn" data-aid-air="oa" aria-pressed="false">외기만 — 회기 없음</button>
+                            <button type="button" class="aid-w-mode-btn" data-aid-air="room" aria-pressed="false">실내 자체</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="aid-w-lineup" id="aid-w-lineup">
+                    <span class="widget-readout-label" id="aid-w-lineup-lbl">후보 장비군</span>
+                    <span class="aid-w-card" id="aid-w-card-rtu">패키지형 RTU</span>
+                    <span class="aid-w-card" id="aid-w-card-ahu">조립형 AHU</span>
+                    <span class="aid-w-card" id="aid-w-card-mau">MAU / DOAS</span>
+                    <span class="aid-w-card" id="aid-w-card-split">분리형 시스템</span>
+                    <span class="aid-w-card" id="aid-w-card-fcu">팬코일유닛</span>
+                </div>
+
+                <div>
+                    <div class="widget-readout-label">무전기로 부를 이름</div>
+                    <div class="widget-readout-value" id="aid-w-call">—</div>
+                </div>
+
+                <div class="aid-w-status" id="aid-w-status" aria-live="polite">{{ pageMessages.status.initial }}</div>
+                <div class="aid-w-alert" id="aid-w-alert"></div>
+            </div>
+
+            <p class="ref-note">
+                위젯은 일반적인 사례만 단순화해 보여 줍니다. 실제 건물에서는 경계가 흐려집니다. 플랜트 코일을 사용하는 옥상 공기조화기(위젯에서도 찾을 수 있습니다), 실내에 설치된 패키지 장비, 덕트형 분리 시스템, 천장 위에 숨은 수열원 히트펌프가 있을 수 있습니다. 그래도 세 질문은 모든 장비에 유효합니다. 명칭이 아니라 연결 상태와 캐비닛 내부를 읽기 때문입니다. 답의 조합과 일치하는 장비가 없다면 위젯의 실패가 아니라 현장이 다시 살펴보라고 알려 주는 것입니다.
+            </p>
+
+            <!-- ───────────────── 6 · Same stations ───────────────── -->
+            <h2 class="subhead" id="same-stations">이름이 무엇이든 같은 구간을 따라가세요</h2>
+
+            <p>
+                이제 이 장의 첫 글에서 약속한 결론에 도달했습니다. 상자의 이름을 알아낸 뒤에는 이미 배운 내용을 그대로 적용할 수 있습니다. 기계실에 길게 펼쳐져 있든 옥상 기초대의 캐비닛 하나에 접혀 있든, <strong>명판에 무엇이라 적혀 있어도 회기 또는 흡입, 혼합, 필터, 코일, 팬이라는 같은 구간이 같은 순서로 이어지기</strong> 때문입니다. <a href="/ko/education/air-handlers.html#air-path">공기 경로를 따라가면</a> 이름조차 없는 상자도 무슨 일을 하는지 드러냅니다. 현장의 순서에 따른 식별은 이렇게 완성됩니다. 손을 주머니에 넣고도 답할 수 있는 세 질문, 대조할 다섯 가지 지문, 문서가 정확할 때 따라갈 흔적, 그리고 문서가 틀렸을 때 시스템이 스스로 위치를 알리게 하는 방법입니다. 이 장의 다음 내용은 <a href="/ko/education/vav-systems.html">급기 덕트 끝의 상자인 VAV 시스템</a>이며, 그다음에는 <a href="/ko/education/duct-static-control.html">팬이 필요한 속도를 알아내는 방법</a>을 다룹니다.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/forced-air/', label: '강제순환식 공조 참고 자료 허브'},
+        tools: [
+            {href: '/ko/tools/refrigerant-pt.html', label: '냉매 P-T 및 과열도 계산기'},
+            {href: '/ko/tools/air-mixing.html', label: '공기 혼합 계산기'}
+        ],
+        lessons: [
+            {href: '/ko/education/air-handlers.html', label: '공기조화기'},
+            {href: '/ko/education/building-pressure.html', label: '건물 압력'},
+            {href: '/ko/education/economizers.html', label: '외기냉방'},
+            {href: '/ko/education/vav-systems.html', label: 'VAV 시스템'},
+            {href: '/ko/education/duct-static-control.html', label: '덕트 정압 제어'},
+            {href: '/ko/education/dedicated-outdoor-air.html', label: '전용외기 시스템'},
+            {href: '/ko/education/vfds.html', label: '인버터(VFD)'},
+            {href: '/ko/education/refrigerant-cycle-basics.html', label: '냉매 사이클 기초'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/air-unit-identification.html', label: '공조 장비 식별'},
+            {href: '/ko/practice/air-handlers.html', label: '공기조화기'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 교육으로 돌아가기</a>
+
+</main>
+{% endblock %}

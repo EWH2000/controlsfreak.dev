@@ -3,7 +3,7 @@ permalink: /search-index.json
 eleventyExcludeFromCollections: true
 ---
 [
-{% for page in collections.searchPages %}
+{% for page in collections.searchPages | localeItems(locale) %}
     {
         "title": {{ page.data.title | cleanTitle | dump | safe }},
         "description": {{ (page.data.description or "") | dump | safe }},

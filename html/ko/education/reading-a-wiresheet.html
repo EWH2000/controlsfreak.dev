@@ -1,0 +1,528 @@
+---
+title: 와이어시트 읽기 — controlsfreak.dev
+description: 직접 작성하지 않은 실시간 와이어시트를 진단하는 방법을 설명합니다. 잘못된 출력에서 역추적하고, 스캔 값과 반복되는 블록 패턴으로 잘못된 블록을 찾습니다.
+sourceContentHash: 2a5fb31c8b3ea4075e1e40c7a93dc007ff0462908e917f2226085fff9c61cc01
+canonical: https://controlsfreak.dev/ko/education/reading-a-wiresheet.html
+nav: education
+category: programming
+pairedQuiz: https://controlsfreak.dev/ko/practice/reading-a-wiresheet.html
+keywords: 와이어시트 역방향 추적 문제 해결 실시간 값 스캔 패턴 강제 지정 오버라이드 블록
+---
+{% extends "html/education/reading-a-wiresheet.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">학습 · 와이어시트 읽기</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">와이어시트 읽기 <span class="tool-tag">로직</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                이 장의 각 학습 자료에서는 블록 계열 하나씩을 설명했습니다. 이 페이지에서는
+                그 블록들이 모여 수행하는 일을 설명합니다. 장치는 오작동하고, 프로그램은 다른
+                사람이 작성했으며, 눈앞의 시트는 모든 배선에 현재 값이 표시되는 <em>실시간</em>
+                상태입니다. 이런 시트를 재미로 읽는 사람은 없습니다. 무언가 잘못되었기 때문에
+                읽습니다. 처음부터 끝까지 필요한 기술은 한 가지 질문으로 요약됩니다.
+                <em>직접 작성하지 않은 프로그램에 문제가 생겼을 때, 실시간 <button type="button"
+                data-gloss="wiresheet">와이어시트</button>를 어떻게 읽어 잘못된 답을 내는 블록을
+                찾을까요?</em>
+            </p>
+
+            <div class="callout">
+                <p style="line-height:1.7;">
+                    이 페이지는 앞선 학습 자료를 이해했다고 가정합니다.
+                    <a href="/ko/education/function-blocks.html">기능 블록 기초</a>에서 핀, 배선,
+                    스캔을 설명했고, 각 블록 계열인 래치, 비교기, 타이머, 설정값 연산은 저마다의
+                    일상적인 역할을 수행합니다. 두 작업의 경계도 분명히 해야 합니다.
+                    <strong>커미셔닝(기능 성능 검증)은 <em>올바른</em> 프로그램이 설치되었음을
+                    입증합니다.</strong> 포인트 투 포인트 점검과 오버라이드 규율은
+                    <a href="/ko/education/controls-commissioning.html">제어 커미셔닝</a>에서
+                    다룹니다. 이 페이지에서는 다른 작업, 즉 실시간 프로그램에서 고장을 찾는
+                    방법을 다룹니다.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · Work backward ───────────────── -->
+            <h2 class="subhead" id="raw-backward">잘못된 출력에서 역방향으로 추적하기</h2>
+
+            <p>
+                초보자는 작성된 순서대로 시트를 읽으려 합니다. 왼쪽 입력에서 시작해 신호를
+                순방향으로 따라가며 블록을 하나씩 확인합니다. 꼼꼼한 방법처럼 느껴지지만,
+                고장까지 가는 가장 느린 경로이기도 합니다. 고장 난 시트도 <em>대부분은 정상</em>이기
+                때문입니다. 블록 하나만 잘못된 답을 내고 나머지 서른 개는 제 역할을 완벽히
+                수행합니다. 순방향으로 읽으면 중요한 블록에 닿기 전에 정상인 구십 퍼센트를
+                전부 검사하게 됩니다. 순방향은 시트를 <em>학습하는</em> 방법이지 고치는 방법이
+                아닙니다.
+            </p>
+
+            <p>
+                따라서 반대쪽 끝에서 시작하세요. 신고 내용에는 이미 잘못된 출력이 드러나 있습니다.
+                운전하지 않는 난방, 닫히지 않는 댐퍼, 해제되지 않는 경보가 그 예입니다. 해당 출력에
+                손가락을 대고 배선을 하나씩 <strong>상류</strong>로 거슬러 올라가며 매 단계에서 같은
+                질문을 하세요. <em>이 입력들을 고려할 때 이 출력이 맞습니까?</em> 여기서 "맞다"는
+                단순히 블록의 레이블대로 계산된다는 뜻이 아니라 <strong>시퀀스가 필요로 하는
+                답</strong>이라는 뜻입니다. 답이 맞는 동안에는 블록이 정직하며 문제는 더 상류에
+                있습니다. <strong>처음으로 “아니요”가 나오는 곳이 찾던 블록입니다.</strong>
+            </p>
+
+            <p>
+                시퀀스에 필요한 답과 레이블이 계산하는 답을 구분하는 것이 핵심입니다. 블록은 두
+                가지 방식으로 잘못된 답을 낼 수 있기 때문입니다. 연산 자체가 고장 나는 경우는
+                드뭅니다. 블록은 지시받은 계산을 항상 정확히 수행합니다. 흔한 원인은
+                <strong>잘못된 문장이 블록에 구성된 경우</strong>입니다. 방향이 반대로 설정된 비교기,
+                빠진 반전, 누군가 잘못 입력한 상수, 서로 바뀐 배선 한 쌍이 그 예입니다. 이런 블록은
+                자신의 질문에 언제나 충실히 답하지만, 질문 자체가 잘못되어 있습니다. 그래도 같은
+                추적으로 찾아낼 수 있습니다. 해당 단계에서 출력이 시퀀스가 분명히 필요로 하는 답과
+                어긋나고, 그보다 상류는 모두 타당합니다. 잘못된 답을 내는 블록이나 그 설정이 바로
+                손가락 아래에 있습니다.
+            </p>
+
+            <p>
+                이 규율을 따르면 두 가지 이점도 저절로 얻습니다. 잘못된 출력에 도달하지 않는 모든
+                분기는 이 추적에서 <em>존재하지 않는 것</em>과 같습니다. 아무리 의심스러워 보여도
+                살펴볼 필요가 없습니다. 또한 "맞다, 정직하다"고 판단한 각 단계에서는 정상 입력
+                위쪽의 <em>전체 하위 트리</em>를 조사 대상에서 제외할 수 있습니다. TRUE인 운전 허가
+                경로 하나만 보면 이를 만든 <button type="button" data-gloss="permissive">퍼미시브</button>
+                체인 전체가 정상임을 알 수 있습니다. 역방향 추적은 단순히 반대쪽 끝에서 시작하는
+                방법이 아니라 가지치기 전략입니다. 한 단계씩 이동할 때마다 시트가 작아집니다.
+            </p>
+
+            <!-- ───────────────── 2 · The scan, observed ───────────────── -->
+            <h2 class="subhead" id="raw-scan">눈앞의 값에서 스캔이 의미하는 것</h2>
+
+            <p>
+                <a href="/ko/education/function-blocks.html">기능 블록 기초</a>에서는 시트의 실행
+                방식을 설명했습니다. 제어기는 소스부터 의존성 순서로 모든 블록을 초당 여러 번
+                평가하며, 이 주기를 <em>스캔</em>이라고 합니다. 피드백 배선에는 <em>이전</em> 스캔의
+                값이 전달되므로 루프가 스스로를 끝없이 쫓지 않고 해결됩니다. 이것이 작동 메커니즘입니다.
+                실시간 시트 앞에서는 이 메커니즘이 실제로 관찰할 수 있는 세 가지 현상으로 나타납니다.
+            </p>
+
+            <p>
+                <strong>값은 순서대로가 아니라 함께 움직입니다.</strong> 한 번의 스캔 안에서 비교기,
+                게이트, 출력으로 이어지는 전체 조합 체인이 모두 결정되고, 화면은 제어기의 스캔보다
+                훨씬 느리게 다시 그려집니다. 값이 블록에서 블록으로 기어가듯 이동하는 모습을 볼 수
+                없으며, 그런 모습을 기다려서도 안 됩니다. 여기서 중요한 진단 원칙이 나옵니다.
+                한 체인에서 다른 입력도 TRUE인 AND에 TRUE가 들어가는데 출력은 FALSE인 것처럼
+                값들이 <em>서로 맞지 않는다면</em>, 화면에서 전파 지연을 본 것이 아닙니다. 관찰할 수
+                있는 전파 지연은 없습니다. 해당 블록에 실제 문제가 있으며 “아니요”를 찾아낸 것입니다.
+            </p>
+
+            <p>
+                <strong>피드백은 값의 시점을 정직하게 보여 줍니다.</strong> 래치에
+                <code>Q&nbsp;TRUE</code>가 표시되는데 <code>S</code> 입력이 FALSE이면 초보자에게는 고장처럼 보입니다.
+                켜는 입력이 없는데 출력이 켜져 있기 때문입니다. 하지만 이는 시트에서 가장 정상적인
+                모습입니다. <code>Q</code>는 <em>상태</em>이며, <code>S</code>는 수천 번의 스캔 전이라도
+                한 번만 TRUE였으면 됩니다. 자체 출력으로 되돌아가는 모든 배선도 같은 방식으로
+                읽습니다. 설계상 정확히 한 스캔 전인 이전 스캔 값을 전달합니다. 추적이 상태를 갖는
+                블록에 도달하면 질문의 시제가 바뀝니다. "이 입력들을 고려할 때 이 출력이 맞습니까?"가
+                아니라 "이 입력들과 <em>정당한 과거 상태</em>를 고려할 때 맞습니까?"를 물어야 합니다.
+                래치에서는 현재 <code>S</code> 값만 보지 말고 무엇이 <code>S</code>를 동작시켰을 수
+                있는지 확인하세요.
+            </p>
+
+            <p>
+                <strong>입력을 강제 지정하는 것은 가장 빠르게 실행할 수 있는 실험입니다.</strong>
+                전체 시트가 매 스캔마다 결정되므로 강제 지정한 값은 다음 화면 갱신 전에 모든 하류
+                블록으로 전파됩니다. 온도를 다섯 도 높이면 비교기, 래치, 게이트, 출력이 한꺼번에
+                상태를 드러냅니다. 플랫폼에서 이를 강제 지정(force), 오버라이드(override),
+                서비스 제외(out of service) 중 무엇이라고
+                부르든 수동적인 판독을 능동적인 시험으로 바꿉니다. <em>이 입력이 X라면 시트가
+                올바르게 동작합니까?</em> 그렇다면 고장은 강제 지점의 상류로 이동하고, 아니라면
+                하류에 남습니다. 빠르게 수렴하는 이진 탐색입니다. 모든 강제 지정을 기록하고 모두
+                해제하는 안전 규율은 커미셔닝에서 사용하는 오버라이드 규율과 같습니다.
+                <a href="/ko/education/controls-commissioning.html#ccx-overrides">해당 학습 자료의
+                오버라이드 절</a>이 기준이며, 재실 건물에서는 더 엄격하게 적용해야 합니다.
+            </p>
+
+            <!-- ───────────────── 3 · Idiom recognition ───────────────── -->
+            <h2 class="subhead" id="raw-idioms">로직 패턴 식별: 블록 다섯 개를 이름 하나로</h2>
+
+            <p>
+                글을 읽을 때 글자 하나씩 읽지 않고 단어로 읽습니다. 시트도 마찬가지입니다. 이 장의
+                각 학습 자료에서는 실제 시트에 하나의 단위로 반복해서 나타나는 블록 묶음을
+                설명했습니다. 묶음의 이름을 알면 블록 다섯 개가 단어 하나로 줄어듭니다. 블록 마흔
+                개짜리 시트는 배선으로 연결된 여섯 개나 일곱 개의 패턴이 되고, 추적은
+                <em>블록 사이가 아니라 패턴 사이</em>를 이동합니다. 익숙한 패턴 안에서는 각 핀이
+                어떻게 동작해야 하는지 이미 알고 있으므로 중요한 단계는 패턴이 맞닿는 경계입니다.
+            </p>
+
+            <div class="callout-grid">
+                <div class="callout">
+                    <h3>퍼미시브 체인 <span>· 운전 허가</span></h3>
+                    <code class="raw-sig">운전 확인 → AND → AND → … → 운전 허가</code>
+                    <p>모든 안전 조건과 운전 확인 신호를 차례로 AND로 묶습니다. FALSE 경로 하나면 운전 허가가 사라지므로 추적은 "FALSE 경로 찾기"입니다.</p>
+                </div>
+                <div class="callout">
+                    <h3>래치 + 수동 리셋 <span>· 기억</span></h3>
+                    <code class="raw-sig">고장 → S · 버튼 → R · Q가 트립 유지</code>
+                    <p>고장이 한 번 발생하면 사람이 확인할 때까지 래치가 유지됩니다. 따라서 S가 FALSE인데 Q가 TRUE이면 블록 고장이 아니라 패턴이 정상 동작하는 것입니다.</p>
+                </div>
+                <div class="callout">
+                    <h3>밴드 경계 클러스터 <span>· 불감대</span></h3>
+                    <code class="raw-sig">SP ± DB → GT / LT → SR 래치</code>
+                    <p>더하기와 빼기로 경계를 만들고, 비교기 두 개가 감시하며, 래치는 그 사이를 유지합니다. 채터링하는 대신 경계를 지날 때 한 번만 전환하는 온도조절기입니다.</p>
+                </div>
+                <div class="callout">
+                    <h3>운전 확인 대기시간 <span>· 기동 실패</span></h3>
+                    <code class="raw-sig">CMD AND NOT(상태) → TON → 래치</code>
+                    <p>지령은 있지만 운전 확인 신호가 없으면 타이머가 시작됩니다. 정상 기동은 설정시간 전에 완료되고, 대기시간보다 오래 지속되는 실패만 경보로 래치됩니다.</p>
+                </div>
+                <div class="callout">
+                    <h3>리셋 연산 체인 <span>· 스케줄</span></h3>
+                    <code class="raw-sig">입력 → MUL → ADD → LIMIT</code>
+                    <p>조건값으로 계산한 설정값, 즉 범위 제한을 적용한 y&nbsp;=&nbsp;mx&nbsp;+&nbsp;b입니다. 직접 입력한 것처럼 보이는 설정값이 계속 움직인다면 이 패턴일 가능성이 큽니다.</p>
+                </div>
+                <div class="callout">
+                    <h3>모드 전환 <span>· 설정값 두 개, 배선 하나</span></h3>
+                    <code class="raw-sig">모드 비트 → SELECT: 재실 / 비재실</code>
+                    <p>불리언 값으로 두 값 중 흘려보낼 하나를 선택합니다. SELECT를 연쇄 연결하면 세 개 이상의 모드를 만들 수 있습니다. 두 값보다 먼저 선택 비트를 추적하세요.</p>
+                </div>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                각 패턴은 이 장의 별도 학습 자료에서 자세히 다룹니다.
+                <a href="/ko/education/boolean-logic-latches.html">불리언 로직 및 래치</a>에서는
+                <button type="button" data-gloss="permissive">퍼미시브</button> 체인과 래치를,
+                <a href="/ko/education/comparators-and-deadband.html">비교기 및 불감대</a>에서는
+                밴드 경계를,
+                <a href="/ko/education/timers-and-delays.html">타이머 및 지연</a>에서는 운전 확인
+                대기시간을,
+                <a href="/ko/education/setpoint-math-reset.html">설정값 연산 및 리셋 스케줄</a>에서는
+                리셋 연산 체인과 SELECT를 설명합니다. 여기서는 이름만 알면 됩니다. 그 이름이 있어야
+                다음 절의 추적이 가능하기 때문입니다.
+            </p>
+
+            <!-- ───────────────── 4 · The worked trace ───────────────── -->
+            <h2 class="subhead" id="raw-worked">추적 예제 — 추운 아침, 난방 불능</h2>
+
+            <p>
+                한 장의 시트에서 전체 방법을 적용해 보겠습니다. 공기조화기의 난방 요구 로직입니다.
+                프로그램은 이번 가을에 설치되었고 오늘은 처음으로 실제 추운 아침이며, 신고 내용은
+                간단합니다. 실내 온도는
+                <span data-us="65&nbsp;°F" data-metric="18.3&nbsp;°C">65&nbsp;°F</span>이고 계속
+                떨어지는데 난방이 켜지지 않습니다. 직접 작성한 프로그램이 아닙니다. 블록보다 패턴을
+                먼저 읽으세요. 위쪽에는 <strong>밴드 경계 클러스터</strong>가 있고, 이는
+                <span data-us="68&nbsp;°F" data-metric="20.0&nbsp;°C">68&nbsp;°F</span> 설정값을
+                중심으로 난방 온도조절기를 만듭니다.
+                왼쪽 아래에는 두 운전 확인 신호로 구성된 <strong><button type="button"
+                data-gloss="permissive">퍼미시브</button> 체인</strong>이 있습니다. 게이트 AND가
+                두 패턴을 난방 지령으로 결합하고, <button type="button" data-gloss="freezestat">동결
+                방지 온도조절기</button>에서 갈라진 작은 분기는 트립 램프를 구동합니다. 블록 열다섯
+                개이지만 패턴 네 개와 짧은 분기 하나입니다.
+            </p>
+
+            <svg class="edu-svg raw-svg" viewBox="0 0 980 710" role="img"
+                 aria-labelledby="raw-d1-title raw-d1-desc" font-family="var(--mono)">
+                <title id="raw-d1-title">번호로 역방향 추적 단계를 표시한, 고장 난 난방 요구 와이어시트</title>
+                <desc id="raw-d1-desc">모든 배선에 현재 값이 표시된 블록 열다섯 개의 실시간 기능 블록 시트입니다. 위쪽에는 밴드 경계 클러스터가 있습니다. 값이 65인 실내 온도 아날로그 입력, 값이 68인 설정값 상수, 값이 1인 불감대 상수가 SUBTRACT 블록과 ADD 블록에 입력되어 각각 하한 경계 67과 상한 경계 69를 만듭니다. 비교기 두 개가 온도와 경계를 비교하며 모두 A가 B보다 큰지를 묻습니다. Set 경로 비교기는 65가 67보다 큰지 묻고 FALSE를 출력하며, Reset 경로 비교기는 65가 69보다 큰지 묻고 FALSE를 출력합니다. 두 출력은 Q가 FALSE인 SR 래치에 입력됩니다. 왼쪽 아래에는 퍼미시브 체인이 있습니다. ON인 팬 상태 바이너리 입력과 OK인 정상 닫힘 동결 방지 온도조절기는 모두 TRUE이며, 두 신호가 AND에 입력되어 운전 허가 출력이 TRUE가 됩니다. 동결 방지 온도조절기에서 갈라진 분기는 NOT을 거쳐 현재 꺼진 동결 트립 램프 바이너리 출력을 구동하며, 모든 배선은 회색입니다. 죽은 것처럼 보이지만 정상인 분기입니다. 래치 출력과 운전 허가는 게이트 AND에서 만나고 그 FALSE 출력이 OFF인 HEAT 바이너리 출력을 구동합니다. 번호가 있는 추적 표시 네 개가 증상에서 역방향으로 이어집니다. 하나는 HEAT 출력, 둘은 게이트 AND, 셋은 래치, 강조된 넷은 잘못된 답을 내는 블록인 Set 경로 비교기에 있습니다. 이 블록은 65가 67보다 큰지 충실히 계산하지만, 난방 온도조절기의 Set 경로에는 65가 67보다 작은지 묻는 비교가 필요합니다. 미만 비교가 필요한 곳에 초과 비교를 넣었기 때문에 난방 요구가 발생하지 않습니다.</desc>
+
+                <!-- wires (drawn first, behind the blocks) -->
+                <!-- analog: temp fans to both comparators -->
+                <path d="M145 48 H355 V38 H390" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M355 48 V166 H390" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="355" cy="48" r="2.6" fill="var(--blue)"/>
+                <!-- analog: SP fans to both edge builders -->
+                <path d="M145 176 H165 V102 H205" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M165 176 V230 H205" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="165" cy="176" r="2.6" fill="var(--blue)"/>
+                <!-- analog: DB fans to both edge builders -->
+                <path d="M145 304 H185 V122 H205" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M185 304 V250 H205" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="185" cy="304" r="2.6" fill="var(--blue)"/>
+                <!-- analog: edges into comparators -->
+                <path d="M325 112 H357 V58 H390" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M325 240 H357 V186 H390" fill="none" stroke="var(--blue)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- digital FALSE (grey): comparators into latch, call into gate, gate into heat, herring lamp -->
+                <path d="M510 48 H540 V102 H575" fill="none" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M510 176 H548 V122 H575" fill="none" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M685 112 H702 V302 H720" fill="none" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <line x1="840" y1="312" x2="850" y2="312" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round"/>
+                <line x1="500" y1="576" x2="575" y2="576" stroke="var(--text-dim)" stroke-width="2.4" stroke-linecap="round"/>
+                <!-- digital TRUE (green): the permissive chain -->
+                <path d="M145 448 H170 V502 H205" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M145 576 H180 V522 H205" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M180 576 H390" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+                <circle cx="180" cy="576" r="2.6" fill="var(--accent)"/>
+                <path d="M325 512 H660 V322 H720" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+
+                <!-- wire value labels (one per net, at the source pin) -->
+                <text x="152" y="40" font-size="10" fill="var(--blue)">65</text>
+                <text x="152" y="168" font-size="10" fill="var(--blue)">68</text>
+                <text x="152" y="296" font-size="10" fill="var(--blue)">1</text>
+                <text x="332" y="104" font-size="10" fill="var(--blue)">67</text>
+                <text x="332" y="232" font-size="10" fill="var(--blue)">69</text>
+                <text x="518" y="40" font-size="10" fill="var(--text-dim)">FALSE</text>
+                <text x="518" y="168" font-size="10" fill="var(--text-dim)">FALSE</text>
+                <text x="693" y="104" font-size="10" fill="var(--text-dim)">FALSE</text>
+                <text x="845" y="276" text-anchor="middle" font-size="10" fill="var(--text-dim)">FALSE</text>
+                <text x="508" y="568" font-size="10" fill="var(--text-dim)">FALSE</text>
+                <text x="152" y="440" font-size="10" fill="var(--accent)">TRUE</text>
+                <text x="152" y="568" font-size="10" fill="var(--accent)">TRUE</text>
+                <text x="332" y="504" font-size="10" fill="var(--accent)">TRUE</text>
+
+                <!-- TEMP -->
+                <g id="raw-d1-temp">
+                    <rect x="15" y="20" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="39" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">아날로그 입력 · 실내</text>
+                    <text x="27" y="60" font-size="13" font-weight="600" fill="var(--text-bright)">TEMP  65</text>
+                    <circle cx="145" cy="48" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- SP -->
+                <g id="raw-d1-sp">
+                    <rect x="15" y="148" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="167" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">상수</text>
+                    <text x="27" y="188" font-size="13" font-weight="600" fill="var(--text-bright)">SP  68</text>
+                    <circle cx="145" cy="176" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- DB -->
+                <g id="raw-d1-db">
+                    <rect x="15" y="276" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="295" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">상수</text>
+                    <text x="27" y="316" font-size="13" font-weight="600" fill="var(--text-bright)">DB  1</text>
+                    <circle cx="145" cy="304" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- LO edge (SUB) -->
+                <g id="raw-d1-lo">
+                    <rect x="205" y="84" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="213" y="106" font-size="9" fill="var(--text-dim)">A</text>
+                    <text x="213" y="126" font-size="9" fill="var(--text-dim)">B</text>
+                    <text x="272" y="108" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">SUBTRACT</text>
+                    <text x="272" y="126" text-anchor="middle" font-size="9" fill="var(--text-dim)">68 − 1 = 67</text>
+                    <circle cx="205" cy="102" r="3.8" fill="var(--blue)"/>
+                    <circle cx="205" cy="122" r="3.8" fill="var(--blue)"/>
+                    <circle cx="325" cy="112" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- HI edge (ADD) -->
+                <g id="raw-d1-hi">
+                    <rect x="205" y="212" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="213" y="234" font-size="9" fill="var(--text-dim)">A</text>
+                    <text x="213" y="254" font-size="9" fill="var(--text-dim)">B</text>
+                    <text x="272" y="236" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">ADD</text>
+                    <text x="272" y="254" text-anchor="middle" font-size="9" fill="var(--text-dim)">68 + 1 = 69</text>
+                    <circle cx="205" cy="230" r="3.8" fill="var(--blue)"/>
+                    <circle cx="205" cy="250" r="3.8" fill="var(--blue)"/>
+                    <circle cx="325" cy="240" r="3.8" fill="var(--blue)"/>
+                </g>
+                <!-- UNDER (set leg — the lie) -->
+                <g id="raw-d1-under">
+                    <rect x="390" y="20" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--amber)" stroke-width="1.5"/>
+                    <text x="398" y="42" font-size="9" fill="var(--text-dim)">A</text>
+                    <text x="398" y="62" font-size="9" fill="var(--text-dim)">B</text>
+                    <text x="457" y="44" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">A &gt; B</text>
+                    <text x="457" y="62" text-anchor="middle" font-size="9" fill="var(--text-dim)">65 &gt; 67 → FALSE</text>
+                    <circle cx="390" cy="38" r="3.8" fill="var(--blue)"/>
+                    <circle cx="390" cy="58" r="3.8" fill="var(--blue)"/>
+                    <circle cx="510" cy="48" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- OVER (reset leg — honest) -->
+                <g id="raw-d1-over">
+                    <rect x="390" y="148" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="398" y="170" font-size="9" fill="var(--text-dim)">A</text>
+                    <text x="398" y="190" font-size="9" fill="var(--text-dim)">B</text>
+                    <text x="457" y="172" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">A &gt; B</text>
+                    <text x="457" y="190" text-anchor="middle" font-size="9" fill="var(--text-dim)">65 &gt; 69 → FALSE</text>
+                    <circle cx="390" cy="166" r="3.8" fill="var(--blue)"/>
+                    <circle cx="390" cy="186" r="3.8" fill="var(--blue)"/>
+                    <circle cx="510" cy="176" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- CALL latch -->
+                <g id="raw-d1-call">
+                    <rect x="575" y="84" width="110" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="583" y="106" font-size="9" fill="var(--text-dim)">S</text>
+                    <text x="583" y="126" font-size="9" fill="var(--text-dim)">R</text>
+                    <text x="637" y="108" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">SR LATCH</text>
+                    <text x="637" y="126" text-anchor="middle" font-size="9" fill="var(--text-dim)">Q FALSE</text>
+                    <circle cx="575" cy="102" r="3.8" fill="var(--text-dim)"/>
+                    <circle cx="575" cy="122" r="3.8" fill="var(--text-dim)"/>
+                    <circle cx="685" cy="112" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- STS -->
+                <g id="raw-d1-sts">
+                    <rect x="15" y="420" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="439" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">바이너리 입력 · 팬</text>
+                    <text x="27" y="460" font-size="13" font-weight="600" fill="var(--accent)">STATUS  ON</text>
+                    <circle cx="145" cy="448" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- FRZ -->
+                <g id="raw-d1-frz">
+                    <rect x="15" y="548" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="27" y="567" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">바이너리 입력 · NC STAT</text>
+                    <text x="27" y="588" font-size="13" font-weight="600" fill="var(--accent)">FRZ OK  ON</text>
+                    <circle cx="145" cy="576" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- PERMIT AND -->
+                <g id="raw-d1-permit">
+                    <rect x="205" y="484" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="265" y="508" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">AND</text>
+                    <text x="265" y="526" text-anchor="middle" font-size="9" fill="var(--accent)">운전 허가</text>
+                    <circle cx="205" cy="502" r="3.8" fill="var(--accent)"/>
+                    <circle cx="205" cy="522" r="3.8" fill="var(--accent)"/>
+                    <circle cx="325" cy="512" r="3.8" fill="var(--accent)"/>
+                </g>
+                <!-- NOT (herring) -->
+                <g id="raw-d1-not">
+                    <rect x="390" y="548" width="110" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="445" y="572" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">NOT</text>
+                    <text x="445" y="590" text-anchor="middle" font-size="9" fill="var(--text-dim)">OK → 트립 아님</text>
+                    <circle cx="390" cy="576" r="3.8" fill="var(--accent)"/>
+                    <circle cx="500" cy="576" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- TRIP lamp (herring) -->
+                <g id="raw-d1-trip">
+                    <rect x="575" y="548" width="130" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="587" y="567" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">바이너리 출력 · 램프</text>
+                    <text x="587" y="588" font-size="12" font-weight="600" fill="var(--text-dim)">FRZ TRIP  OFF</text>
+                    <circle cx="575" cy="576" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- GATE AND -->
+                <g id="raw-d1-gate">
+                    <rect x="720" y="284" width="120" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="780" y="308" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">AND</text>
+                    <text x="780" y="326" text-anchor="middle" font-size="9" fill="var(--text-dim)">요구 · 허가</text>
+                    <circle cx="720" cy="302" r="3.8" fill="var(--text-dim)"/>
+                    <circle cx="720" cy="322" r="3.8" fill="var(--accent)"/>
+                    <circle cx="840" cy="312" r="3.8" fill="var(--text-dim)"/>
+                </g>
+                <!-- HEAT -->
+                <g id="raw-d1-heat">
+                    <rect x="850" y="284" width="115" height="56" rx="3" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="862" y="303" font-size="8.5" letter-spacing="0.5" fill="var(--text-dim)">바이너리 출력</text>
+                    <text x="862" y="324" font-size="12" font-weight="600" fill="var(--text-dim)">HEAT  OFF</text>
+                    <circle cx="850" cy="312" r="3.8" fill="var(--text-dim)"/>
+                </g>
+
+                <!-- trace badges -->
+                <g id="raw-d1-b1">
+                    <circle cx="907" cy="254" r="10" fill="none" stroke="var(--text-dim)" stroke-width="1.3"/>
+                    <text x="907" y="258" text-anchor="middle" font-size="10.5" fill="var(--text-dim)">1</text>
+                </g>
+                <g id="raw-d1-b2">
+                    <circle cx="780" cy="254" r="10" fill="none" stroke="var(--text-dim)" stroke-width="1.3"/>
+                    <text x="780" y="258" text-anchor="middle" font-size="10.5" fill="var(--text-dim)">2</text>
+                </g>
+                <g id="raw-d1-b3">
+                    <circle cx="637" cy="54" r="10" fill="none" stroke="var(--text-dim)" stroke-width="1.3"/>
+                    <text x="637" y="58" text-anchor="middle" font-size="10.5" fill="var(--text-dim)">3</text>
+                </g>
+                <g id="raw-d1-b4">
+                    <circle cx="452" cy="112" r="10" fill="none" stroke="var(--amber)" stroke-width="1.3"/>
+                    <text x="452" y="116" text-anchor="middle" font-size="10.5" fill="var(--amber)">4</text>
+                </g>
+
+                <text x="490" y="644" text-anchor="middle" font-size="10.5" fill="var(--text)">1 — 증상: 실내 온도가 65이고 내려가는데 HEAT는 OFF — 입력이 아니라 여기서 시작</text>
+                <text x="490" y="662" text-anchor="middle" font-size="10.5" fill="var(--text)">2 — 게이트는 정상: 허가 경로 TRUE(체인을 한눈에 제외), 요구 경로 FALSE — FALSE를 추적</text>
+                <text x="490" y="680" text-anchor="middle" font-size="10.5" fill="var(--text)">3 — 래치는 정상: S FALSE, R FALSE, Q는 이전 스캔 반복 — S가 왜 동작하지 않는지가 새 질문</text>
+                <text x="490" y="698" text-anchor="middle" font-size="10.5" fill="var(--amber)">4 — 오류: 65와 67 경계의 비교는 TRUE여야 함 — 블록은 A &gt; B, Set 경로에는 A &lt; B 필요</text>
+            </svg>
+
+            <p class="ref-note compact" style="text-align:center;">
+                파란색 배선은 아날로그 값을, 녹색 배선은 TRUE 디지털 신호를, 회색 배선은 FALSE
+                디지털 신호를 전달합니다. 실시간 편집기와 같은 색상입니다.
+            </p>
+
+            <p>
+                <strong>단계 1 — 증상에서 시작합니다.</strong> <code>HEAT</code>는 OFF입니다.
+                입력은 게이트 출력 하나뿐이고 그 값은 FALSE입니다. FALSE 입력을 그대로 반복하는
+                출력 블록은 정직하므로 상류로 이동합니다.
+                <strong>단계 2 — 게이트입니다.</strong> 두 경로 중 운전 허가는 TRUE이고 요구는
+                FALSE입니다. TRUE와 FALSE를 입력받은 AND가 FALSE를 출력하는 것은 정상입니다.
+                여기서 가지치기의 이점이 나타납니다. TRUE인 운전 허가 경로를 보면 아래쪽의
+                <button type="button" data-gloss="permissive">퍼미시브</button> 체인 전체를 조사
+                대상에서 제외할 수 있습니다. 한눈에 상태 ON, <button type="button"
+                data-gloss="freezestat">동결 방지 온도조절기</button> OK, 운전 허가 성립을 확인하고
+                다시 읽지 않습니다. FALSE 경로를 따라갑니다.
+                <strong>단계 3 — 래치입니다.</strong> S와 R이 FALSE이고 <code>Q</code>도 FALSE입니다.
+                Set도 Reset도 되지 않은 래치는 이전 스캔 상태를 반복합니다. <em>S가 한 번도
+                동작하지 않았다면</em> 정상입니다. 래치는 정직하며, 질문은 S가 왜 동작하지 않는지로
+                상류를 향합니다.
+                <strong>단계 4 — Set 경로입니다.</strong> 입력은 실내 온도 65와 하한 밴드 경계
+                67입니다. 시퀀스가 이 블록에서 필요로 하는 답은 "실내 온도가 밴드 아래로
+                떨어졌으므로 난방을 요구한다"이며 65는 분명히 67보다 낮으므로 답은 TRUE여야
+                합니다. 하지만 블록은 FALSE라고 답합니다. <em>첫 번째 “아니요”입니다.</em> 이제 배선이
+                아니라 블록을 읽으세요. 레이블은 <code>A&nbsp;&gt;&nbsp;B</code>입니다. 블록은
+                "65가 67보다 큰가?"라는 잘못된 질문에 언제나 정확히 답합니다. 난방 온도조절기의
+                Set 경로에는 <code>A&nbsp;&lt;&nbsp;B</code>가 필요합니다. 위쪽 Reset 경로를 보면
+                같은 블록이 올바르게 사용되었습니다. 클러스터를 만든 사람이 Reset 비교기를 먼저
+                만들고 Set 경로에 복사한 뒤 복사본의 방향을 바꾸지 않은 것입니다. 문자 하나가
+                빠진 결함을 네 단계 만에 찾아냈습니다.
+            </p>
+
+            <p>
+                추적하지 않은 부분을 세어 보세요. <button type="button"
+                data-gloss="permissive">퍼미시브</button> 체인은 단계 2에서 한눈에 정상으로 판단했고
+                개별 블록을 따라가지 않았습니다. 아래쪽 동결 트립 램프 분기는 경로에 전혀 없습니다.
+                모든 배선이 회색이라 시트에서 가장 눈에 띄는 함정입니다. "죽은" 배선을 찾는
+                초보자는 이곳에 먼저 도달하지만, 회색은 FALSE라는 뜻일 뿐이며 정상인 트립 램프는
+                바로 FALSE여야 합니다. 이 분기의 어떤 것도 난방 출력에 도달하지 않으므로 추적할
+                필요가 없습니다. 순방향으로 읽으면 소스 다섯 개에서 출발해 정상인 시트 전체를
+                거쳐야 잘못된 블록 하나에 닿습니다. 역방향 추적은 블록 네 개만 확인했습니다.
+            </p>
+
+            <p>
+                마지막으로 기억할 점이 있습니다. 반전된 비교는 날씨에 따라 시퀀스의 동작 방향
+                전체를 뒤집습니다. 추운 아침 난방을 막은 같은 오류가 지난주의 온화한 오후에는
+                과열을 일으켰을 것입니다. 67 경계보다 <em>높은</em> 곳에서는 어디서나 S가 동작하고,
+                R이 마침내 반대하는 69를 지나도 Set 우선형 래치에서는 S가 이깁니다. 조건에 따라
+                반대로 나타나는 증상은 방향이 뒤집힌 비교일 가능성이 큽니다. 수정 자체도 작은
+                검증 과정입니다. 블록을 <code>A&nbsp;&lt;&nbsp;B</code>로 바꾸고 S가 TRUE가 되어
+                래치가 Set되고 난방이 시작되는지 확인하세요. 그다음 해제 동작도 검증하세요.
+                작동을 확인하지 않은 수리는 공구가 들어간 가설일 뿐입니다.
+            </p>
+
+            <!-- ───────────────── 5 · Break one yourself ───────────────── -->
+            <h2 class="subhead" id="raw-try-it">직접 고장을 만들어 보기</h2>
+
+            <p>
+                위 추적은 페이지에 고정되어 있지만, 기술은 실시간으로 익혀야 합니다.
+                <a href="/ko/simulators/function-block-editor.html">기능 블록 편집기</a>를 열고
+                <em>난방 온도조절기</em> 예제를 불러오세요. 앞서 본 시트와 같은 밴드 경계
+                클러스터이며 이번에는 정상입니다. 연습을 세 단계로 진행합니다.
+                <strong>예측:</strong> TEMP 블록을 선택하고 검사기에 새 값을 입력하세요. 이것이
+                강제 지정입니다. 시트를 보기 전에 두 경계, 두 비교기, S, R, Q를 비롯해 모든
+                배선 값을 예측하세요. <em>그런 다음</em> 확인합니다. 온도를 하한 경계 아래로 내리고,
+                밴드 안으로 다시 올린 뒤, 상한 위로 올리면서 각 경계를 지나기 전에 결과를
+                예측하세요. <strong>고장 만들기:</strong> 이번에는 일부러 <button type="button"
+                data-gloss="deadband">불감대</button> 상수를 5로 바꾸어
+                서늘한 실내에서도 난방이 조용해지는 모습을 확인하세요. <strong>추적:</strong> 오작동한
+                출력에서 역방향으로 추적합니다. 게이트는 정상이고 래치도 정상이며 비교기도 정상입니다.
+                잘못된 값은 누군가 입력한 숫자까지 물러났습니다. 고장은 항상 로직에만 있는 것이
+                아닙니다. 때로는 잘못된 답을 내는 블록이 상수입니다.
+            </p>
+
+            <a class="cta-button" href="/ko/simulators/function-block-editor.html">기능 블록 편집기 열기 →</a>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'},
+            {href: '/ko/simulators/ddc-workbench.html', label: 'DDC 워크벤치 — 공기조화기'},
+            {href: '/ko/simulators/ddc-workbench-fcu.html', label: 'DDC 워크벤치 — 팬코일유닛'}
+        ],
+        lessons: [
+            {href: '/ko/education/function-blocks.html', label: '기능 블록 기초'},
+            {href: '/ko/education/boolean-logic-latches.html', label: '불리언 로직 및 래치'},
+            {href: '/ko/education/comparators-and-deadband.html', label: '비교기 및 불감대'},
+            {href: '/ko/education/timers-and-delays.html', label: '타이머 및 지연'},
+            {href: '/ko/education/setpoint-math-reset.html', label: '설정값 연산 및 리셋 스케줄'},
+            {href: '/ko/education/controls-commissioning.html', label: '제어 커미셔닝'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/reading-a-wiresheet.html', label: '와이어시트 읽기 퀴즈'},
+            {href: '/ko/practice/wiresheet-traces.html', label: '와이어시트 추적 연습'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 모든 학습 자료</a>
+
+</main>
+{% endblock %}

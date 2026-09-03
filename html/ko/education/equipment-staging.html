@@ -1,0 +1,323 @@
+---
+title: 장비 대수 제어 — controlsfreak.dev
+description: 병렬 펌프 여러 대를 부하에 따라 증단·감단하고 리드·래그 순환과 누적 운전시간 균등화를 적용하는 BMS 시퀀스를 설명합니다.
+canonical: https://controlsfreak.dev/ko/education/equipment-staging.html
+nav: education
+category: fundamentals
+pairedQuiz: https://controlsfreak.dev/ko/practice/equipment-staging.html
+keywords: 장비 대수 제어 증단 감단 리드 래그 순환 운전시간 균등화 병렬 펌프 히스테리시스 불감대 BMS 시퀀스
+sourceContentHash: 8f4bca880da09ab9c4ca7a650ab09d8ebc2b1b07fc8c2c1ce426982fd8d4b9bf
+sourceMessageHash: 57218eb7b9230bb8d9f8c566fd3c714f3fc74de0612916bbcbfd2eb81b8a4011
+pageMessages:
+  pump:
+    label: '펌프 {number}'
+    running: 운전
+    standby: 대기
+    one: 대
+    many: 대
+  status:
+    held: '단계 변경 보류 — 최소 단계 유지시간({seconds}초)'
+    adding: '펌프 1대 추가 예정 — 단계 지연 {seconds}초'
+    dropping: '펌프 1대 정지 예정 — 단계 지연 {seconds}초'
+    steady: '{count}{noun} 운전 중 — {condition}'
+    nearCapacity: 수요가 운전 용량에 근접
+    loadSteady: 부하 안정
+  rotation:
+    lead: 리드
+    hour: 시간
+    anecdote: >-
+      고정 리드 방식으로 12주 넘게 운전하면 펌프 한 대는 2천 시간 넘게 운전하는 동안 나머지 두 대의 운전시간은 0에 머뭅니다. 리드 펌프의 베어링과 씰처럼 운전할 때 마모되는 부품은 닳고, 대기 펌프는 정지한 채 베어링에 자국이 생기고 씰이 말라 다른 방식으로 노후됩니다. 리드 펌프가 마침내 고장 난 날, 대신 투입되는 펌프는 한 번도 돌지 않았으므로 가장 좋지 않은 순간에 정상 작동 여부를 알게 됩니다. <strong>운전시간 균등화</strong>로 전환해 계속 진행해 보세요. 시퀀스가 매주 운전시간이 가장 짧은 펌프에 리드를 넘기고 막대가 다시 비슷해집니다. 세 대가 하나처럼 고르게 마모되게 하는 것이 순환 운전의 핵심입니다.
+---
+{% extends "html/education/equipment-staging.html" %}
+{% from "related-links.njk" import relatedLinks with context %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">교육 · 장비 대수 제어</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">장비 대수 제어 <span class="tool-tag">시퀀싱</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                <a href="/ko/education/pump-control.html">펌프 제어</a> 강의의 마지막에는 아직 풀지 않은 문제가 있었습니다. 실제 시스템에는 대부분 펌프가 <em>한 대보다 많이</em> 있습니다. 최소한 주 펌프와 예비 펌프가 있고, 흔히 두세 대를 병렬로 배관해 수요가 오르내릴 때 빌딩자동제어 시스템이 운전 대수를 늘리거나 줄입니다. 이 페이지에서는 그 결정을 내리는 <em>대수 제어 시퀀스</em>를 다룹니다. 펌프를 예로 설명하지만 BMS가 보일러, 냉동기, 냉각탑 셀의 대수를 제어할 때도 같은 로직을 사용합니다. 동일한 장비가 여러 대일 때 <em>몇 대를</em> 운전하고 <em>어느 장비를</em> 선택할까요?
+            </p>
+
+            <!-- ───────────────── 1 · Why parallel units ───────────────── -->
+            <h2 class="subhead" id="why-parallel">플랜트가 동일한 장비를 여러 대 운전하는 이유</h2>
+
+            <p>
+                대수 제어를 이해하려면 먼저 플랜트에 펌프가 여러 대인 이유를 알아야 합니다. 건물의 <em>피크</em> 부하에 맞춘 펌프 한 대는 피크가 아닌 거의 모든 시간에 과대 용량입니다. 변속 펌프는 어느 정도까지 속도를 낮춰 건물 부하를 따라갈 수 있으며 이것이 펌프 제어의 핵심입니다. 그러나 한계가 있습니다. 모든 인버터(VFD)에는 최소 속도가 있고 그 속도에서 생기는 유량보다 수요가 낮아지면 변속 펌핑으로 해결하려던 문제가 다시 나타납니다. 조여진 밸브에서 압력이 소모되고 극단적인 경우 펌프 제어 페이지의 마지막에서 다룬 <em><button type="button" data-gloss="deadhead">체절운전(deadhead)</button></em>에 이릅니다. 펌프 한 대의 턴다운에는 한계가 있습니다.
+            </p>
+
+            <p>
+                부하를 여러 대의 작은 펌프로 나누면 <button type="button" data-gloss="turndown">턴다운</button> 문제가 완화됩니다. 부하가 작을 때는 펌프 한 대를 성능곡선의 적절한 지점에서 운전하고, 수요가 커지면 두 번째와 세 번째 펌프를 차례로 투입합니다. 효율과 무관한 두 번째 이유는 <em>예비성</em>입니다. 피크 부하에 필요한 수량보다 펌프 한 대를 더 둔 N+1 플랜트는 펌프가 고장 나거나 정비를 위해 분리되어도 계속 운전할 수 있습니다. 새벽 2시에 베어링이 고장 나더라도 대기 펌프가 부하를 이어받고 기술자는 날이 밝은 뒤 처리할 수 있습니다.
+            </p>
+
+            <p>
+                이제 공통 흡입 주관이 세 대 모두에 물을 공급하고 공통 토출 주관이 각 펌프의 유량을 모으는 동일한 병렬 펌프 세 대를 떠올려 보세요. 이 페이지의 나머지 내용은 이 플랜트를 기준으로 설명합니다.
+            </p>
+
+            <!-- Pipe-flow schematic — three pumps in parallel. Annotated for
+                 /scripts/flow-engine.js: supply (discharge side) solid --blue,
+                 return (suction side) dashed --blue-cool. The engine walks
+                 particles along the data-flow paths and drops the dashes
+                 while running; the static arrows + dashed return carry the
+                 direction under reduced motion. -->
+            <svg class="edu-svg" viewBox="0 0 660 220" role="img" aria-labelledby="es-fig-title es-fig-desc"
+                 font-family="var(--mono)">
+                <title id="es-fig-title">병렬로 배관된 동일한 펌프 세 대</title>
+                <desc id="es-fig-desc">아래쪽의 공통 흡입 헤더와 위쪽의 공통 토출 헤더 사이에 펌프 세 대가 나란히 있습니다. 각 펌프는 흡입 헤더에서 물을 끌어와 체크밸브를 거쳐 토출 헤더로 보냅니다. 토출 헤더는 합쳐진 유량을 건물 시스템으로 보내고 흡입 헤더는 시스템에서 돌아오는 물을 모읍니다.</desc>
+
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes pipe geometry — the staging widgets build HTML
+                     cells and bars. A future geometry write must refresh in the same
+                     breath, or the page must opt out via the `flowGeometryLive`
+                     frontmatter (flowStaticGuard, .eleventy.js). -->
+                <!-- piping: supply / discharge side (solid, --blue) -->
+                <line id="es-fig-disch-header" data-flow="supply" data-flow-static="true" x1="178.5" y1="56" x2="540" y2="56" stroke="var(--blue)" stroke-width="3"/>
+                <path id="es-fig-to-system" data-flow="supply" data-flow-static="true" d="M540 56 H 568 V 30" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <line id="es-fig-p1-disch" data-flow="supply" data-flow-static="true" x1="180" y1="97" x2="180" y2="56" stroke="var(--blue)" stroke-width="3"/>
+                <line id="es-fig-p2-disch" data-flow="supply" data-flow-static="true" x1="330" y1="97" x2="330" y2="56" stroke="var(--blue)" stroke-width="3"/>
+                <line id="es-fig-p3-disch" data-flow="supply" data-flow-static="true" x1="480" y1="97" x2="480" y2="56" stroke="var(--blue)" stroke-width="3"/>
+
+                <!-- piping: return / suction side (dashed, --blue-cool). The
+                     suction header and the from-system drop are drawn left-to-
+                     right but carry flow the other way, so they walk reversed. -->
+                <line id="es-fig-suct-header" data-flow="return" data-flow-static="true" data-flow-reverse="true" x1="178.5" y1="182" x2="540" y2="182" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="es-fig-from-system" data-flow="return" data-flow-static="true" data-flow-reverse="true" d="M540 182 H 568 V 206" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="es-fig-p1-suct" data-flow="return" data-flow-static="true" x1="180" y1="182" x2="180" y2="141" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="es-fig-p2-suct" data-flow="return" data-flow-static="true" x1="330" y1="182" x2="330" y2="141" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="es-fig-p3-suct" data-flow="return" data-flow-static="true" x1="480" y1="182" x2="480" y2="141" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- system-connection arrowheads -->
+                <polygon points="563,36 568,25 573,36" fill="var(--blue)"/>
+                <polygon points="563,206 568,195 573,206" fill="var(--blue-cool)"/>
+
+                <!-- equipment: three pumps, each with a discharge check valve -->
+                <g id="es-fig-p1">
+                    <circle cx="180" cy="119" r="22" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="180" y="124" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text-bright)">P1</text>
+                    <polygon points="172,84 188,84 180,73" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                </g>
+                <g id="es-fig-p2">
+                    <circle cx="330" cy="119" r="22" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="330" y="124" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text-bright)">P2</text>
+                    <polygon points="322,84 338,84 330,73" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                </g>
+                <g id="es-fig-p3">
+                    <circle cx="480" cy="119" r="22" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="480" y="124" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text-bright)">P3</text>
+                    <polygon points="472,84 488,84 480,73" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                </g>
+
+                <!-- static flow arrows — direction cue before the engine
+                     starts and under prefers-reduced-motion -->
+                <g id="es-fig-flow-arrows">
+                    <polygon points="250,51 260,56 250,61" fill="var(--blue)"/>
+                    <polygon points="400,51 410,56 400,61" fill="var(--blue)"/>
+                    <polygon points="175,69 180,63 185,69" fill="var(--blue)"/>
+                    <polygon points="325,69 330,63 335,69" fill="var(--blue)"/>
+                    <polygon points="475,69 480,63 485,69" fill="var(--blue)"/>
+                    <polygon points="260,177 250,182 260,187" fill="var(--blue-cool)"/>
+                    <polygon points="410,177 400,182 410,187" fill="var(--blue-cool)"/>
+                    <polygon points="175,167 180,161 185,167" fill="var(--blue-cool)"/>
+                    <polygon points="325,167 330,161 335,167" fill="var(--blue-cool)"/>
+                    <polygon points="475,167 480,161 485,167" fill="var(--blue-cool)"/>
+                </g>
+
+                <!-- labels -->
+                <text x="120" y="46" font-size="11" fill="var(--text)">공통 토출 헤더</text>
+                <text x="120" y="200" font-size="11" fill="var(--text)">공통 흡입 헤더</text>
+                <text x="210" y="78" font-size="9" font-style="italic" fill="var(--text-dim)">체크밸브</text>
+                <text x="578" y="34" font-size="11" fill="var(--text)">시스템으로</text>
+                <text x="578" y="204" font-size="11" fill="var(--text)">시스템에서</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw supply"></span>공급수</span>
+                <span><span class="sw return"></span>환수</span>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                이제 BMS는 하루 종일 계속 두 가지 질문에 답해야 합니다. 세 펌프 가운데 지금 <em>몇 대를</em> 운전해야 하며 <em>어느 펌프를</em> 선택해야 할까요? 순서대로 살펴보겠습니다.
+            </p>
+
+            <!-- ───────────────── 2 · Staging up and down ───────────────── -->
+            <h2 class="subhead" id="staging">증단과 감단 — 몇 대를 운전할 것인가</h2>
+
+            <p>
+                시퀀스에는 ‘현재 건물이 얼마나 큰 부하로 운전되는가’를 대표하는 신호가 필요합니다. 변속 플랜트에는 이미 적절한 신호가 있습니다. 차압(DP) 루프가 만드는 속도 지령이며 펌프 제어 페이지에서 다룬 주제입니다. 운전 중인 펌프가 한동안 최고 속도에 가까이 머문다면 더 이상 여유가 없다는 뜻입니다. 건물은 현재 펌프가 공급할 수 있는 양보다 더 큰 유량을 원하므로 펌프를 한 대 추가할 때입니다. 반대로 속도 지령이 계속 낮다면 운전 펌프에 여유가 있으므로 한 대를 정지할 수 있습니다.
+            </p>
+
+            <p>
+                이를 두 개의 임계값, 즉 <em>증단</em> 지점과 <em>감단</em> 지점으로 구현합니다. 중요한 점은 두 값이 <em>같지 않다는 것</em>입니다. 감단 지점은 증단 지점보다 충분히 낮고 그 사이에는 의도적인 <em>불감대</em>가 있습니다. 하나의 임계값이 두 역할을 모두 맡으면 그 선 근처의 수요가 펌프를 추가하고, 각 운전 펌프의 부하가 낮아지면서 수요가 다시 선 아래로 내려가 펌프를 정지하고, 그 결과 수요가 다시 올라갑니다. 시퀀스가 <em>헌팅</em>하며 펌프를 끝없이 켰다 껐다 하게 됩니다. 불감대는 펌프를 투입하는 조건과 정지하는 조건을 명확히 구분해 플랜트가 안정되게 합니다.
+            </p>
+
+            <p>
+                두 타이머가 시퀀스를 완성합니다. 임계값을 넘는 <em>즉시</em> 동작하지 않고, <em>단계 지연시간</em> 동안 수요가 임계값 너머에 계속 머문 뒤 시퀀스가 동작합니다. 존 하나가 갑자기 열리거나 압력이 순간적으로 떨어지는 짧은 변동 때문에 플랜트 전체가 요동하지 않게 하는 것입니다. 단계가 실제로 변경되면 <em>최소 단계 유지시간</em> 동안 다음 변경을 막습니다. 방금 기동한 펌프를 60초 뒤에 정지시켜서는 안 됩니다. <button type="button" data-gloss="short-cycling">단주기 운전(short-cycling)</button>은 모터 권선, 기동기, 펌프 자체에 모두 부담을 줍니다.
+            </p>
+
+            <p>
+                아래 위젯에는 도식과 같은 펌프 세 대가 있습니다. 수요 슬라이더를 움직여 시퀀스의 동작을 확인하세요. 각 임계값에서 펌프가 증단·감단되고, 변경 전에는 단계 지연시간이 줄어들며, 변경이 너무 빨리 이어지면 최소 단계 유지시간이 이를 막습니다. 슬라이더를 빠르게 위아래로 움직여 보세요. 시퀀스는 짧은 변동을 쫓아가지 않습니다.
+            </p>
+
+            <!-- Widget 1 — staging simulator. Logic recorded inline in the
+                 script below: stage-up / stage-down thresholds per running
+                 count (with a deadband between them), a stage-delay timer,
+                 and a minimum-stage-time lock after each change. -->
+            <div class="widget" id="es-w1">
+                <!-- Real <button>s, not bare <a>s: these set the demand
+                     slider, they don't navigate, and an anchor with no href is
+                     invisible to the keyboard (#297). Same .widget-try look
+                     either way — the shared stylesheet carries the button
+                     twin. -->
+                <div class="widget-try">
+                    <span class="lbl">예시:</span>
+                    <button type="button" data-demand="12">저부하(12%)</button>
+                    <button type="button" data-demand="50">중간 부하(50%)</button>
+                    <button type="button" data-demand="95">설계일(95%)</button>
+                </div>
+
+                <div class="widget-section-label">건물 수요</div>
+                <div class="widget-slider-head">
+                    <span>0%</span>
+                    <span class="v"><span id="es-w1-demand">20</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">%</span></span>
+                    <span>100%</span>
+                </div>
+                <input class="widget-slider" id="es-w1-demand-slider" type="range" min="0" max="100" step="1" value="20" aria-label="건물 수요, 백분율"/>
+
+                <div class="widget-section-label">펌프</div>
+                <div class="es-cells" id="es-w1-pumps" aria-label="펌프 상태"></div>
+
+                <div class="es-w1-status" id="es-w1-status" data-kind="steady" aria-live="polite"></div>
+
+                <div class="es-readouts">
+                    <div class="es-readout">
+                        <div class="widget-readout-label">운전 펌프 수</div>
+                        <div class="widget-readout-value"><span id="es-w1-running">1</span><span class="unit">/ 3</span></div>
+                    </div>
+                    <div class="es-readout">
+                        <div class="widget-readout-label">운전 중 용량</div>
+                        <div class="widget-readout-value"><span id="es-w1-capacity">33</span><span class="unit">%</span></div>
+                    </div>
+                    <div class="es-readout">
+                        <div class="widget-readout-label">증단 임계값</div>
+                        <div class="widget-readout-value"><span id="es-w1-up">30%</span></div>
+                    </div>
+                    <div class="es-readout">
+                        <div class="widget-readout-label">감단 임계값</div>
+                        <div class="widget-readout-value"><span id="es-w1-down">—</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="ref-note compact" style="text-align:center;">
+                시연을 위해 위젯의 시간을 빠르게 설정했습니다. 2초의 단계 지연시간과
+                4초의 최소 단계 유지시간은 실제 플랜트에서 각각 수 분 정도로 설정되는
+                값을 대신합니다.
+            </p>
+
+            <p>
+                두 가지를 눈여겨보세요. 수요 슬라이더를 두 번째 펌프가 투입되는 지점 너머로 천천히 움직였다가 다시 천천히 내리면, 펌프는 투입된 지점과 같은 곳에서 정지하지 않습니다. 되돌아가야 하는 그 구간이 불감대입니다. 그리고 플랜트 용량 선정의 기준이 된 피크 부하 조건인 <em>설계일</em>로 곧바로 이동해 보세요. 모든 펌프가 동시에 켜지지 않습니다. 각 단계 변경은 지연시간을 기다리고 최소 단계 유지시간이 변경 사이의 간격을 확보합니다. 플랜트는 한꺼번에 요동하지 않고 의도적으로 전 용량까지 올라갑니다.
+            </p>
+
+            <!-- ───────────────── 3 · Lead/lag and rotation ───────────────── -->
+            <h2 class="subhead" id="rotation">리드·래그와 순환 — 어느 펌프를 운전할 것인가</h2>
+
+            <p>
+                <em>몇 대를</em> 운전할지 정한 뒤에도 시퀀스는 실제로 <em>어느</em> 펌프를 선택할지 결정해야 합니다. 가장 먼저 운전하는 펌프가 <em>리드</em>이고 다음에 투입되는 펌프가 <em>래그</em>입니다. 펌프가 세 대라면 1차 래그와 2차 래그가 있습니다. 단순한 순서처럼 보이지만 마모 때문에 생각보다 중요합니다.
+            </p>
+
+            <p>
+                한 대를 항상 리드로 고정하면 플랜트가 운전하는 모든 시간 동안 그 펌프가 가동됩니다. 1년 뒤에는 리드 펌프에 수천 시간이 누적되는 반면 다른 펌프의 운전시간은 거의 없습니다. 베어링과 씰처럼 운전할 때 마모되는 기계 부품이 있는 리드 펌프만 닳고 ‘예비’ 대기 펌프는 역할을 하지 못합니다. 따라서 좋은 시퀀스는 리드를 <em>순환</em>합니다. 가장 단순한 방식은 매주처럼 고정된 주기에 리드를 교대합니다. 더 나은 방식은 <em>운전시간을 균등화</em>합니다. BMS가 펌프별 누적 운전시간을 추적하고 시간이 가장 짧은 펌프에 리드를 넘겨, 한 대씩 차례로 닳는 대신 전체가 함께 고르게 마모되게 합니다.
+            </p>
+
+            <p>
+                순환 운전은 대기 펌프가 실제로 정상인지도 계속 확인합니다. 전혀 운전하지 않는 펌프는 보존되는 것이 아닙니다. 베어링에 자국이 생기고 씰이 말라 다른 방식으로 노후되므로, 처음 투입되는 날에야 작동하지 않는다는 사실을 알 수 있습니다. 그래서 시퀀스는 흔히 <em>대기 펌프 시험 운전</em>을 추가해 일정에 따라 유휴 펌프를 잠시 운전합니다. 순환은 고장 대응과도 함께 작동합니다. 리드 펌프가 트립되거나 인버터를 잃거나 유량 경보를 내면 시퀀스는 즉시 문제없이 대기 펌프를 <em>리드로 승격</em>해야 합니다. 자동으로 교대할 때만 예비성이 실제로 기능합니다.
+            </p>
+
+            <p>
+                이 로직은 펌프에만 적용되지 않습니다. 중앙 플랜트는 같은 방식으로 리드·래그 보일러와 냉동기의 대수를 제어합니다. 펌프 속도 대신 플랜트 난방 또는 냉방 부하를 증단·감단 신호로 사용하고 장비에 맞게 타이머를 조정하지만, ‘몇 대와 어느 장비를 선택하고 고른 마모를 위해 순환한다’는 시퀀스는 같습니다. 아래 위젯은 순환 문제만 따로 볼 수 있도록 플랜트를 한 번에 1주씩 진행합니다. 매주 리드 펌프만 운전하는 저부하 기간을 가정해, 첫 번째 위젯에서 다룬 동시에 <em>몇 대가</em> 운전하는지와 <em>어느</em> 펌프에 시간이 누적되는지를 분리합니다. 피크 부하가 이어지는 주에는 펌프 두세 대가 함께 투입되고 운전시간 균등화는 실제로 운전한 펌프들 사이에 <em>그</em> 시간도 같은 방식으로 분배합니다. 전략을 선택하고 주 단위로 진행하면서 운전시간 막대를 확인하세요.
+            </p>
+
+            <!-- Widget 2 — rotation / runtime equalization. Each step is one
+                 week; the lead pump logs the week's hours. Fixed-lead pins
+                 the lead to P1; runtime-equalized hands it to the lowest-
+                 hour pump each week. -->
+            <div class="widget" id="es-w2">
+                <div class="widget-section-label">순환 전략</div>
+                <div class="es-w2-strategy" role="group" aria-label="순환 전략">
+                    <button id="es-w2-fixed" type="button" class="on">고정 리드</button>
+                    <button id="es-w2-equal" type="button">운전시간 균등화</button>
+                </div>
+
+                <div class="es-w2-controls">
+                    <button id="es-w2-step" type="button" class="copy-btn">1주 운전</button>
+                    <button id="es-w2-reset" type="button" class="copy-btn">초기화</button>
+                </div>
+
+                <div class="widget-section-label">누적 운전시간</div>
+                <div class="es-cells" id="es-w2-pumps" aria-label="펌프별 누적 운전시간"></div>
+
+                <div class="es-readouts">
+                    <div class="es-readout">
+                        <div class="widget-readout-label">경과 주</div>
+                        <div class="widget-readout-value"><span id="es-w2-weeks">0</span></div>
+                    </div>
+                    <div class="es-readout">
+                        <div class="widget-readout-label">운전시간 편차</div>
+                        <div class="widget-readout-value"><span id="es-w2-spread">0</span><span class="unit">시간</span></div>
+                    </div>
+                </div>
+
+                <div class="widget-anecdote-wrap" id="es-w2-anecdote-wrap"></div>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                <em>고정 리드</em>로 12주를 운전하면 편차가 결과를 보여 줍니다. 펌프 한 대가 모든 운전을 담당하고 나머지 두 대는 정지해 있습니다. 그런 다음 <em>운전시간 균등화</em>로 바꾸고 계속 진행하세요. 매주 운전시간이 가장 짧은 펌프로 리드가 이동하면서 막대가 다시 비슷해집니다. 같은 세 펌프가 같은 부하를 담당하지만, 마모를 한 대에 집중하지 않고 분산하는 시퀀스만 다릅니다.
+            </p>
+
+            <!-- ───────────────── 4 · Closing ───────────────── -->
+            <h2 class="subhead">전체 시퀀스 연결하기</h2>
+
+            <p>
+                이제 펌프 제어 페이지에서 시작한 내용이 완성됩니다. <a href="/ko/education/load-piping.html">부하 배관</a>, <a href="/ko/education/vfds.html">인버터(VFD)</a>, <a href="/ko/education/pump-control.html">펌프 제어</a>에서는 조절되는 부하, 속도 지령을 따르는 인버터, 지령을 결정하는 차압 루프를 통해 펌프 한 대가 건물에 대응하는 과정을 구성했습니다. 대수 제어는 그 위의 계층입니다. 펌프 한 대로 부족하거나 한 대만 운전할 필요가 없을 때 시퀀스가 운전 대수를 정하고 운전시간을 담당할 펌프를 순환합니다. 불감대, 단계 지연시간, 최소 단계 유지시간, 운전시간 균등화는 특별한 기술이 아닙니다. 그러나 안정되는 플랜트와 헌팅을 반복해 수명이 짧아지는 플랜트를 가르는 요소입니다.
+            </p>
+
+            <p>
+                대수 제어는 시퀀스의 한 종류입니다. 같은 BMS는 이 페이지에서 다루지 않은 다른 시퀀스도 실행합니다. 외기 온도에 따라 설정값을 리셋하고, 건물을 재실·비재실 모드로 전환하며, 모든 장비를 한꺼번에 기동하지 않고 아침 예열을 부드럽게 수행합니다. 이런 내용은 별도의 시퀀싱 페이지에서 다룹니다. 더 가까운 예로 펌프가 성능곡선 끝을 벗어나 운전하지 않게 하는 곡선 끝 보호는 실제 대수 제어 시퀀스가 갖추는 같은 종류의 안전 기능입니다. 펌프 제어 페이지에서는 최악의 경우인 <button type="button" data-gloss="deadhead">체절운전(deadhead)</button>을 살펴봤습니다. 대수 제어가 적용되면 플랜트는 장비의 모음에서 하나의 시스템으로 바뀝니다.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/equipment-airflow.html', label: '장비 풍량 확인'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/staging-sequencer.html', label: '대수 제어 시퀀서'}
+        ],
+        lessons: [
+            {href: '/ko/education/pid-basics.html', label: 'PID 기초'},
+            {href: '/ko/education/pump-control.html', label: '펌프 제어'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/equipment-staging.html', label: '장비 대수 제어 퀴즈'},
+            {href: '/ko/practice/sequencing-scenarios.html', label: '시퀀싱 시나리오'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 교육으로 돌아가기</a>
+
+</main>
+{% endblock %}

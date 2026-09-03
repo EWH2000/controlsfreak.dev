@@ -1,0 +1,355 @@
+---
+title: 액추에이터 명령 — controlsfreak.dev
+description: 액추에이터 명령 스팬, 정동작·역동작, 고장 시 위치, 피드백과 플로팅 제어를 통해 AO 명령과 실제 행정이 어긋나는 이유를 설명합니다.
+sourceContentHash: 3f48ff1f4807a949860b35b23ccd9d252db1b5415ebc760db7cb2c2b09ccacdd
+canonical: https://controlsfreak.dev/ko/education/commanding-actuators.html
+nav: education
+category: signals
+pairedQuiz: https://controlsfreak.dev/ko/practice/commanding-actuators.html
+keywords: 액추에이터 2-10V 0-10V 4-20mA 스팬 행정 스프링 리턴 고장 위치 정상 열림 정상 닫힘 플로팅 트라이스테이트 피드백 댐퍼 밸브 DIP 스위치
+---
+{% extends "html/education/commanding-actuators.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">학습 · 액추에이터 명령</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">액추에이터 명령 <span class="tool-tag">신호</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                제어기의 아날로그 출력은 위치가 아니라 약속입니다. AO는 배선을 따라 전압이나 전류를
+                내보내고, 반대편의 액추에이터는 그 신호를 댐퍼 회전 각도나 밸브 스템 이동 거리 같은
+                행정으로 바꿉니다. 둘 사이에는 몇 가지 변환 규칙이 있습니다. 신호가 사용하는
+                <em>스팬</em>, 액추에이터가 움직이는 <em>방향</em>, 신호나 전원이 끊겼을 때 이동하는
+                위치이며, 배선이 모두 맞아도 각 항목의 설정은 틀릴 수 있습니다. 이 페이지는 이러한
+                변환을 설명합니다. 처음부터 끝까지 한 가지 질문을 다룹니다. <em>AO가 50%를 명령한
+                뒤 댐퍼가 실제로 50% 위치에 도달하기까지 어떤 일이 일어나며, 두 값은 왜 다를까요?</em>
+                도체 자체의 결선, 즉 전원 + 신호 + 공통선의 세 선 결선과 플로팅 액추에이터를 구동하는
+                트라이액 한 쌍은 <a href="/ko/education/controller-wiring.html">제어기 배선</a>에서
+                설명합니다. 여기서는 배선이 올바른데도 문제가 남아 있는 상황을 전제로 합니다.
+            </p>
+
+            <!-- ───────────────── 1 · Command spans ───────────────── -->
+            <h2 class="subhead" id="command-spans">명령 스팬 — 0–10 V, 2–10 V, 4–20 mA</h2>
+
+            <p>
+                비례제어 액추에이터는 흔히 세 가지 명령 신호 중 하나를 사용합니다. <strong>0–10 V</strong>,
+                <strong>2–10 V</strong>, <strong>4–20 mA</strong>입니다. 모두 행정의 0–100%를 뜻하는
+                선형 스팬이며 끝점만 다릅니다. 오프셋이 있는 두 스팬에는 <button type="button" data-gloss="live-zero"><em>라이브 제로</em></button>가
+                있습니다. 범위 하한이 실제 영이 아닌 신호이므로 죽은 배선(0&nbsp;V, 0&nbsp;mA)과
+                정상적인 "완전 닫힘" 명령을 구분할 수 있습니다. 입력 측의 같은 고장 표시 로직은
+                <a href="/ko/education/analog-sensing.html#live-zero">아날로그 센싱</a>에서 다루며,
+                여기서는 방향이 반대입니다. 두 신호는 밀접한 관계도 있습니다. 4–20 mA 루프를
+                500&nbsp;Ω 저항에 통과시키면 저항 양단의 전압은 정확히 2–10 V가 됩니다. 그래서
+                액추에이터 사양서에는 2–10 V 입력이 "500&nbsp;Ω 저항을 사용하면 4–20 mA를 수용"한다고
+                흔히 적혀 있습니다. 드라이브도 같은 0–10 / 4–20 명령 신호를 사용하며, VFD의 속도
+                기준 신호는 보통 둘 중 하나입니다. 운전 명령과 속도 기준 신호는
+                <a href="/ko/education/vfds.html">VFD 학습 자료</a>에서 설명합니다.
+            </p>
+
+            <p>
+                이 페이지 전체의 문제를 숫자 하나로 살펴보겠습니다. 제어기 AO가
+                0–100% → 0–10 V로 스케일링되어 있으므로 50% 명령은 배선에 <strong>5.0 V</strong>를
+                출력합니다. 하지만 액추에이터는 <strong>2–10 V</strong> 입력으로 설정되어 있습니다.
+                0%는 2 V, 100%는 10 V입니다. 액추에이터는 자신이 아는 계산만 수행합니다.
+                행정 = (5.0 − 2) ÷ (10 − 2) = <strong>37.5%</strong>입니다. 그래픽은 50을 표시하고
+                댐퍼는 37.5에 있지만 두 장치는 모두 완벽하게 작동하고 있습니다.
+                <a href="/ko/tools/signal-scaling.html">신호 스케일링 도구</a>에서 이를 재현할 수 있습니다.
+                신호 유형 2–10 V, 신호값 5, 공학 단위 범위 0–100을 입력하면 37.50이 나오고,
+                스팬 백분율 표시도 같은 37.5%를 나타냅니다.
+            </p>
+
+            <svg class="edu-svg cak-svg" id="cak-d1" viewBox="0 0 680 292"
+                 role="img" aria-labelledby="cak-d1-title cak-d1-desc">
+                <title id="cak-d1-title">5볼트 명령을 0–10 V 및 2–10 V 스팬에서 읽은 결과</title>
+                <desc id="cak-d1-desc">수평 수직선 두 개입니다. 위쪽 눈금선은 0–10볼트인 제어기 AO 명령 스팬이며, 점은 제어기가 50퍼센트라고 판단하는 5.0볼트를 표시합니다. 아래쪽 눈금선은 0–100퍼센트 행정으로 표시한 액추에이터의 2–10볼트 입력 스팬이며, 0–2볼트 구간은 액추에이터가 움직일 수 없는 데드 존으로 빗금 처리되어 있습니다. 5볼트 점에서 액추에이터 눈금선으로 수직 점선이 내려가며, 같은 전압이 액추에이터가 계산에 포함하지 않는 2볼트 오프셋 때문에 37.5퍼센트 행정에 놓입니다.</desc>
+
+                <defs>
+                    <pattern id="cak-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                        <line x1="0" y1="0" x2="0" y2="6" stroke="var(--text-dim)" stroke-width="1" opacity="0.55"/>
+                    </pattern>
+                </defs>
+
+                <!-- top rail: AO command, 0–10 V (x = 80 + 52·V) -->
+                <text class="lbl" x="80" y="28">AO 명령 — 0–10 V</text>
+                <text class="lbl-cmd" x="340" y="50" text-anchor="middle">5.0 V — 제어기는 50%로 판단</text>
+                <line class="rail" x1="80" y1="76" x2="600" y2="76"/>
+                <line class="tick" x1="80" y1="70" x2="80" y2="82"/>
+                <line class="tick" x1="184" y1="70" x2="184" y2="82"/>
+                <line class="tick" x1="288" y1="70" x2="288" y2="82"/>
+                <line class="tick" x1="392" y1="70" x2="392" y2="82"/>
+                <line class="tick" x1="496" y1="70" x2="496" y2="82"/>
+                <line class="tick" x1="600" y1="70" x2="600" y2="82"/>
+                <text class="lbl-dim" x="80" y="100" text-anchor="middle">0 V</text>
+                <text class="lbl-dim" x="184" y="100" text-anchor="middle">2</text>
+                <text class="lbl-dim" x="288" y="100" text-anchor="middle">4</text>
+                <text class="lbl-dim" x="392" y="100" text-anchor="middle">6</text>
+                <text class="lbl-dim" x="496" y="100" text-anchor="middle">8</text>
+                <text class="lbl-dim" x="600" y="100" text-anchor="middle">10</text>
+                <circle cx="340" cy="76" r="6" fill="var(--accent)" stroke="var(--bg)" stroke-width="1.5"/>
+
+                <!-- the same voltage, dropped onto the actuator's span -->
+                <line class="cmd-mark" x1="340" y1="84" x2="340" y2="184"/>
+                <polygon points="335,184 345,184 340,192" fill="var(--accent)"/>
+
+                <!-- bottom rail: actuator stroke, 2–10 V input (0% at x=184, 100% at x=600) -->
+                <text class="lbl" x="600" y="140" text-anchor="end">액추에이터 행정 — 2–10 V 입력</text>
+                <text class="lbl-dim" x="132" y="160" text-anchor="middle">데드 존</text>
+                <text class="lbl-dim" x="132" y="174" text-anchor="middle">2 V 미만에서는 움직이지 않음</text>
+                <rect x="80" y="188" width="104" height="16" fill="url(#cak-hatch)" stroke="var(--text-dim)" stroke-width="1"/>
+                <line class="rail" x1="184" y1="196" x2="600" y2="196"/>
+                <line class="tick" x1="184" y1="190" x2="184" y2="202"/>
+                <line class="tick" x1="288" y1="190" x2="288" y2="202"/>
+                <line class="tick" x1="392" y1="190" x2="392" y2="202"/>
+                <line class="tick" x1="496" y1="190" x2="496" y2="202"/>
+                <line class="tick" x1="600" y1="190" x2="600" y2="202"/>
+                <text class="lbl-dim" x="184" y="220" text-anchor="middle">0%</text>
+                <text class="lbl-dim" x="288" y="220" text-anchor="middle">25%</text>
+                <text class="lbl-dim" x="392" y="220" text-anchor="middle">50%</text>
+                <text class="lbl-dim" x="496" y="220" text-anchor="middle">75%</text>
+                <text class="lbl-dim" x="600" y="220" text-anchor="middle">100%</text>
+                <circle cx="340" cy="196" r="6" fill="var(--blue)" stroke="var(--bg)" stroke-width="1.5"/>
+                <text class="lbl-ans" x="340" y="248" text-anchor="middle">37.5% 행정 — 액추에이터의 결과</text>
+                <text class="lbl-dim" x="340" y="278" text-anchor="middle">같은 5볼트, 서로 다른 두 결과 — 2 V 오프셋은 상쇄되지 않음</text>
+            </svg>
+
+            <p style="margin-top:1.25rem;">
+                스팬 불일치의 현장 징후는 <em>일관성</em>입니다. 명령이 올라가면 댐퍼가 더 열리는
+                등 모든 것이 추종하지만, 같은 설정을 공유하는 모든 장치의 모든 위치가 온종일
+                어긋납니다. 댐퍼 하나만 낮은 위치에 고정되어 있다면 액추에이터 고장이지만 한 층의
+                모든 댐퍼가 낮게 있다면 설정 문제입니다. 범위 하단 부근에서는 오프셋이
+                <strong>데드 존</strong>이 됩니다. 이 AO가 출력하는 20% 미만 명령(0–2 V)은
+                2–10 V 액추에이터에 모두 아무것도 하지 말라는 같은 뜻입니다. 작은 개도를 유지하려는
+                루프는 응답을 받지 못하고 그동안 적분값을 누적하다가 신호가 마침내 2 V를 넘으면
+                오버슈트합니다. 스팬 불일치에서 흔히 나타나는 행정 끝 부근의 <button type="button" data-gloss="hunting">헌팅</button>입니다.
+                불일치를 반대로 구성해 2–10 V로 스케일링된 AO를 0–10 V 액추에이터에 연결하면
+                모든 위치가 반대로 <em>높게</em> 됩니다. AO의 "완전 닫힘"은 2 V이고 액추에이터는
+                2 V를 20%로 읽으므로 그래픽 표시와 관계없이 댐퍼가 완전히 닫히지 않습니다.
+            </p>
+
+            <p>
+                일반적인 원인은 액추에이터 고장이 아니라 스위치입니다. 대부분의 비례제어
+                액추에이터 본체에는 입력 스팬(0–10 / 2–10 / 저항을 사용한 4–20 mA)을 선택하는
+                <strong>DIP 스위치 또는 점퍼</strong>가 있고, 방향도 함께 선택하는 경우가 많습니다.
+                공장 기본값은 제어기 스케일링을 알지 못합니다. 해결책은 교체가 아니라 일치입니다.
+                배선을 건드리기 전에 액추에이터의 스팬 스위치와 AO 스케일링을 비교하고, 모터를
+                고장으로 판정하기 전에 배선을 확인하세요.
+            </p>
+
+            <!-- ───────────────── 2 · Direction and fail posture ───────────────── -->
+            <h2 class="subhead" id="direction-and-fail">방향과 고장 시 위치</h2>
+
+            <p>
+                스팬은 얼마나 움직일지를, <strong>방향</strong> 설정은 어느 쪽으로 움직일지를 정합니다.
+                <em>정동작</em> 액추에이터는 신호가 높아질수록 행정이 증가합니다. 2 V는 0%,
+                10 V는 100%입니다. <em>역동작</em> 액추에이터는 같은 스팬을 반대로 사용해 최대
+                신호에서 행정이 영이 됩니다. 보통 같은 DIP 블록이나 댐퍼 액추에이터의 회전 스위치
+                (CW/CCW)에서 설정합니다. 용어가 겹치므로 한 가지를 구분해야 합니다. 여기서는
+                신호를 행정에 매핑하는 액추에이터 <em>자체의</em> 방향을 말합니다. 측정값이 높아질 때
+                제어기 출력이 움직이는 방향을 뜻하는 제어 루프의 정동작/역동작 <em>동작 방식</em>은
+                다른 문제를 해결하는 별도 설정이며 <a href="/ko/education/comparators-and-deadband.html#deadband">비교기 및 불감대</a>에서
+                설명합니다. 어느 하나를 뒤집으면 움직임이 반전되고, 둘 다 뒤집으면 두 반전이
+                상쇄되어 시스템이 작동하는 것처럼 보이기도 합니다. 누군가 위치를 확인하기 전까지는
+                그렇습니다. 실제로 잘못된 계층에서 매핑을 수정하세요. 아래 차트에는 이 절의 내용을
+                한 그래프에 담았습니다. 이상적인 1:1 선, 앞 예제의 2–10 V 선, 역동작 선을 통해
+                같은 5 V 명령에 세 구성이 어떻게 반응하는지 한눈에 볼 수 있습니다.
+            </p>
+
+            <svg class="edu-svg cak-svg" id="cak-d2" viewBox="0 0 620 402"
+                 role="img" aria-labelledby="cak-d2-title cak-d2-desc">
+                <title id="cak-d2-title">세 가지 액추에이터 구성의 명령 대비 행정</title>
+                <desc id="cak-d2-desc">가로축에는 0–10볼트 AO 명령 전압, 세로축에는 0–100퍼센트 액추에이터 행정이 있는 차트입니다. 세 선이 있습니다. 0–10볼트 정동작 액추에이터의 1대1 기준 점선은 원점에서 시작해 10볼트에서 최대 행정까지 상승합니다. 2–10볼트 정동작 액추에이터의 실선은 2볼트까지 영에서 평평하게 유지되다가 10볼트의 최대 행정까지 더 가파르게 상승하며 모든 지점에서 기준선 아래에 있습니다. 0–10볼트 역동작 액추에이터의 하강선은 0볼트의 최대 행정에서 10볼트의 영까지 내려갑니다. 5볼트의 수직 점선은 두 0–10볼트 선과 50퍼센트에서 만나고 2–10볼트 선과 37.5퍼센트에서 만납니다.</desc>
+
+                <text class="lbl-dim" x="330" y="26" text-anchor="middle">5 V에서 0–10 V 액추에이터는 50%, 2–10 V 액추에이터는 37.5%</text>
+
+                <!-- axes -->
+                <line x1="90" y1="320" x2="580" y2="320" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <polygon points="580,315 592,320 580,325" fill="var(--text-dim)"/>
+                <line x1="90" y1="320" x2="90" y2="60" stroke="var(--text-dim)" stroke-width="1.5"/>
+                <polygon points="85,60 90,48 95,60" fill="var(--text-dim)"/>
+                <text class="lbl-dim" x="335" y="382" text-anchor="middle">AO 명령 (V) →</text>
+                <text class="lbl-dim" x="34" y="190" text-anchor="middle" transform="rotate(-90 34 190)">액추에이터 행정 →</text>
+
+                <!-- x ticks (x = 90 + 48·V) -->
+                <line class="tick" x1="90" y1="320" x2="90" y2="326"/>
+                <line class="tick" x1="186" y1="320" x2="186" y2="326"/>
+                <line class="tick" x1="282" y1="320" x2="282" y2="326"/>
+                <line class="tick" x1="378" y1="320" x2="378" y2="326"/>
+                <line class="tick" x1="474" y1="320" x2="474" y2="326"/>
+                <line class="tick" x1="570" y1="320" x2="570" y2="326"/>
+                <text class="lbl-dim" x="90" y="344" text-anchor="middle">0</text>
+                <text class="lbl-dim" x="186" y="344" text-anchor="middle">2</text>
+                <text class="lbl-dim" x="282" y="344" text-anchor="middle">4</text>
+                <text class="lbl-dim" x="378" y="344" text-anchor="middle">6</text>
+                <text class="lbl-dim" x="474" y="344" text-anchor="middle">8</text>
+                <text class="lbl-dim" x="570" y="344" text-anchor="middle">10</text>
+
+                <!-- y ticks (y = 320 − 2.6·pct) -->
+                <line class="tick" x1="84" y1="320" x2="90" y2="320"/>
+                <line class="tick" x1="84" y1="255" x2="90" y2="255"/>
+                <line class="tick" x1="84" y1="190" x2="90" y2="190"/>
+                <line class="tick" x1="84" y1="125" x2="90" y2="125"/>
+                <line class="tick" x1="84" y1="60" x2="90" y2="60"/>
+                <text class="lbl-dim" x="76" y="324" text-anchor="end">0%</text>
+                <text class="lbl-dim" x="76" y="259" text-anchor="end">25%</text>
+                <text class="lbl-dim" x="76" y="194" text-anchor="end">50%</text>
+                <text class="lbl-dim" x="76" y="129" text-anchor="end">75%</text>
+                <text class="lbl-dim" x="76" y="64" text-anchor="end">100%</text>
+
+                <!-- the three configurations -->
+                <line class="ln-ideal" x1="90" y1="320" x2="570" y2="60"/>
+                <path class="ln-span" d="M 90 320 H 186 L 570 60"/>
+                <line class="ln-rev" x1="90" y1="60" x2="570" y2="320"/>
+
+                <!-- the 5 V command marker and where each line answers it -->
+                <line class="cmd-mark" x1="330" y1="320" x2="330" y2="54"/>
+                <text class="lbl-cmd" x="330" y="344" text-anchor="middle">5 V</text>
+                <circle cx="330" cy="190" r="5.5" fill="var(--text-bright)" stroke="var(--bg)" stroke-width="1.5"/>
+                <line x1="333" y1="158" x2="331" y2="182" stroke="var(--text-dim)" stroke-width="1"/>
+                <text class="lbl" x="338" y="152">50%</text>
+                <circle cx="330" cy="222" r="5.5" fill="var(--blue)" stroke="var(--bg)" stroke-width="1.5"/>
+                <text class="lbl-ans" x="344" y="240">37.5%</text>
+            </svg>
+            <p class="edu-legend cak-leg">
+                <span><span class="sw ideal"></span>0–10 V 정동작 — 1:1 기준</span>
+                <span><span class="sw span"></span>2–10 V 정동작 — 0–10 V 명령에서 낮게 위치</span>
+                <span><span class="sw rev"></span>0–10 V 역동작</span>
+            </p>
+
+            <p>
+                방향은 "어느 쪽으로 움직이는가"에 답합니다. 다음 질문은 <strong>모든 것이 꺼지면
+                어디로 가는가</strong>입니다. <em>스프링 리턴</em> 액추에이터는 행정 중에 스프링을
+                감습니다. 전원을 차단하면 제어기 개입 없이 스프링이 자체 속도로 액추에이터를 정해진
+                행정 끝으로 이동시킵니다. <em>비스프링</em>(현 위치 유지) 액추에이터는 있던 자리에서
+                그대로 멈춥니다. 세 번째 계열은 커패시터에 에너지를 저장했다가 정전 시 설정 위치로
+                스스로 이동하는 전자식 페일세이프지만 설계 질문은 같습니다. 스프링이 맡을 끝 위치는
+                나중에 정하는 사항이 아닙니다. 하드웨어를 선택할 때 결정되며, 소프트웨어가 사라진
+                바로 그때 동작하므로 어떤 소프트웨어도 재정의할 수 없는 유일한 동작입니다.
+            </p>
+
+            <p>
+                밸브 분야에서는 정지 위치를 <strong>정상 열림 / 정상 닫힘</strong>이라고 부릅니다.
+                <em>정상</em>이라는 말이 함정입니다. 밸브가 보통 운전되는 위치가 아니라
+                <strong>전원과 신호가 없을 때</strong>의 스프링 위치를 뜻합니다. 정상 열림 온수
+                밸브는 수명의 거의 전부를 거의 닫힌 상태로 보낼 수도 있지만, 제어가 사라지는 순간
+                스프링이 열림 위치로 보내므로 여전히 NO입니다. 댐퍼는 같은 의미를
+                <em>고장 시 열림 / 고장 시 닫힘</em>, 스프링 열림 / 스프링 닫힘이라는 다른 말로 표현합니다.
+            </p>
+
+            <p>
+                대표적인 예는 <strong>동결 방지</strong>입니다. 관행이 의외일 수 있어 자세히
+                설명할 가치가 있습니다. <strong>온수 코일 밸브는 정상 열림으로 지정합니다.</strong>
+                미국 북동부의 한겨울 공기조화기를 떠올려 보세요. 전원이 끊기고 <button type="button" data-gloss="freezestat">동결방지 온도조절기</button>가
+                트립되며 제어기가 꺼집니다. 외기 댐퍼는 스프링으로 <em>닫혀</em> 케이싱이
+                <span data-us="32&nbsp;°F" data-metric="0&nbsp;°C">32&nbsp;°F</span> 미만의 공기를
+                더 이상 들이마시지 않습니다. 난방 밸브는 스프링으로 <em>열려</em> 코일에 온수를
+                가득 흘려 차가운 공기가 코일을 얼리지 못하게 합니다. 해당 층이 과열될 수 있지만,
+                다른 선택지는 코일 파열과 기계실 침수입니다. 고장 시 위치는 평범한 때가 아니라
+                건물에서 가장 나쁜 오 분을 대비해 내리는 설계 결정입니다. "반대로" 지정된 것처럼
+                보이는 밸브를 발견했다면 대개 이것이 이유입니다.
+            </p>
+
+            <!-- // anecdote slot: a fail-posture save or bite — a frozen/burst coil,
+                 or an NO valve overheating a space on a power loss — owner to supply -->
+
+            <!-- ───────────────── 3 · Feedback and floating ───────────────── -->
+            <h2 class="subhead" id="feedback-and-floating">위치 피드백과 피드백 없는 명령</h2>
+
+            <p>
+                지금까지는 액추에이터가 명령을 수신했다고 가정했습니다. 이를 <em>확인</em>하는
+                유일한 방법은 <strong>위치 피드백</strong>입니다. 많은 비례제어 액추에이터에는 같은
+                행정에 대해 흔히 2–10 V인 피드백 출력이 있고, 이를 <button type="button" data-gloss="ai">AI</button>에 연결합니다.
+                이제 그래픽에는 요청한 값과 액추에이터가 수행했다고 보고한 값 두 개가 표시됩니다.
+                명령은 기대이며 피드백은 측정값입니다.
+            </p>
+
+            <p>
+                AO가 50%를 명령했는데 피드백 <button type="button" data-gloss="ai">AI</button>는 34%를 읽는다면 어떻게 해야 할까요?
+                비용이 적게 드는 순서로 분기점을 확인하세요. <strong>먼저 시간:</strong> 액추에이터는
+                의도적으로 느립니다. 전행정에 90–150초가 걸리는 것이 일반적이므로 방금 쓴 명령과
+                피드백은 설계상 한동안 다릅니다. 피드백이 여전히 상승하고 있다면 불일치가 아니라
+                이동 중인 것입니다. <strong>다음은 구성:</strong> 피드백 신호에는 스팬이 있고 이를
+                읽는 <button type="button" data-gloss="ai">AI</button>에는 스케일링이 있습니다. 명령 측의 모든 함정이 돌아오는 경로에서도 다시
+                적용됩니다. 2–10 V 피드백을 0–10 V로 스케일링된 <button type="button" data-gloss="ai">AI</button>에 연결하면 정상 액추에이터의
+                값을 잘못 표시합니다. <strong>마지막은 기계적 문제:</strong> 명령이 계속 상승하는데
+                피드백이 목표에 못 미친 채 <em>멈춰 유지된다면</em> 액추에이터가 물리적으로 도달할 수
+                없다고 알리는 것입니다. 댐퍼 날개 고착, 밸브 스템 고착, 토크 한계에서 멈춘 모터일
+                수 있습니다. 반대 징후도 주의하세요. 명령과 피드백은 완벽하게 일치하지만 온도는 전혀
+                변하지 않는 경우입니다. 액추에이터는 돌고 있지만 링크가 미끄러지거나 허브가 느슨해
+                축은 움직이지 않을 수 있습니다.
+            </p>
+
+            <p>
+                <strong>플로팅(트라이스테이트) 액추에이터</strong>는 아날로그 신호를 전혀 사용하지
+                않습니다. 제어기는 바이너리 출력 두 개를 구동합니다. 하나는 액추에이터를 조금씩
+                열고, 다른 하나는 조금씩 닫으며, 어느 쪽도 켜지지 않으면 현재 위치를 유지합니다.
+                액추에이터에는 위치 입력이 없고 일반적으로 피드백도 없습니다. 트라이액 두 개의
+                결선 자체는 배선 페이지에서 다룹니다. 대신 제어기는 위치를 <em>추정</em>합니다.
+                액추에이터의 행정 시간을 알고 자체 펄스를 적분합니다. "120초 행정 중 열림 방향으로
+                12초 구동했으므로 이전보다 10% 더 열렸다"고 계산합니다. 위치가 없는 명령이며,
+                그래픽의 숫자는 측정값이 아니라 산술 결과입니다.
+            </p>
+
+            <p>
+                이 추정값은 드리프트합니다. 펄스는 반올림되고 순간 정전은 행정 도중 카운트를
+                재시작하며, 누군가 수동 재정의 크랭크를 돌려도 보고되지 않습니다. 그대로 두면
+                추정 위치와 실제 위치가 멀어지고 루프에서 조용한 이상이 생깁니다. 그래픽에서는
+                설정값을 유지하지만 실내에서는 불만이 나옵니다. 설계된 해결책은 <strong>행정 끝에서
+                재동기화</strong>하는 것입니다. 제어기는 보통 스케줄 시작이나 전원 인가 후 주기적으로
+                전행정 시간보다 더 오래 한쪽 끝을 향해 액추에이터를 구동합니다. 실제 위치가 어디였든
+                제어기가 0%(또는 100%)로 신뢰할 수 있는 기계적 끝에 도달하고 카운트가 새로 시작됩니다.
+                이는 흔한 서비스 요청 하나에 답합니다. <em>댐퍼가 매일 아침 완전히 닫힌 뒤 다시
+                열리는데 고장인가요?</em> 아닙니다. 제어기가 플로팅 액추에이터에 유일하게 있는 위치
+                기준을 다시 영점 조정하는 것입니다. 드리프트가 문제이고 아침의 전행정 구동은
+                해결책이며 둘 다 액추에이터 고장이 아닙니다.
+            </p>
+
+            <p>
+                명령과 실제 위치 사이의 전체 과정은 이렇습니다. AO는 스팬으로 말하고 액추에이터는
+                행정으로 답하며, 방향은 움직이는 쪽을 정하고 스프링은 모든 것이 고장 났을 때 정지할
+                위치를 정합니다. 피드백 또는 기계적 끝 위치만이 실제값입니다. 두 값이 다를 때 확인할
+                고장 목록은 짧고 순서가 있습니다. 이동 시간, 스팬 설정, 방향, 기계적 문제, 그리고
+                이미 확인한 배선입니다. 이 페이지에서 의도적으로 다루지 않는 내용이 하나 있습니다.
+                주어진 밸브 행정이 실제로 어느 정도의 <em>유량</em>을 만드는가입니다. 오십 퍼센트 행정은
+                오십 퍼센트 유량인 경우가 드뭅니다. 이는 밸브 선정과 영향도의 문제이며, 이 페이지 대신 두
+                도구에서 계산합니다. <a href="/ko/tools/valve-cv.html">밸브 Cv 선정</a>은 필요한
+                유량과 확보한 압력 강하에 맞는 밸브를 고르고, <a href="/ko/tools/valve-authority.html">밸브
+                영향도 계산기</a>는 밸브 행정이 코일에서 의미를 가지려면 분기 압력 강하 중 밸브가
+                어느 정도를 차지해야 하는지 알려 줍니다.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/signal-scaling.html', label: '신호 스케일링'},
+            {href: '/ko/tools/valve-cv.html', label: '밸브 Cv 선정'},
+            {href: '/ko/tools/valve-authority.html', label: '밸브 영향도 계산기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/controller-wiring.html', label: '컨트롤러 배선 시뮬레이터'}
+        ],
+        lessons: [
+            {href: '/ko/education/controller-wiring.html', label: '제어기 배선'},
+            {href: '/ko/education/analog-sensing.html', label: '아날로그 센싱'},
+            {href: '/ko/education/vfds.html', label: 'VFD'},
+            {href: '/ko/education/pid-basics.html', label: 'PID 기초'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/commanding-actuators.html', label: '액추에이터 명령'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 학습 자료로 돌아가기</a>
+
+</main>
+{% endblock %}

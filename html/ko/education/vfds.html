@@ -1,0 +1,477 @@
+---
+title: VFD(인버터) — controlsfreak.dev
+description: HVAC 가변주파수드라이브(VFD)의 동작 원리, 세제곱 법칙, 운전 명령과 속도 지령, 주요 파라미터 및 고장을 설명합니다.
+canonical: https://controlsfreak.dev/ko/education/vfds.html
+nav: education
+category: fundamentals
+pairedQuiz: https://controlsfreak.dev/ko/practice/vfds.html
+keywords: VFD 인버터 전부하전류 암페어 헤르츠 드라이브 속도 토크 캐리어 모터 운전
+sourceContentHash: 93eb4d692e69a20dd1d0995e9015cc8812b5214f697e0df12823668ad5e49f83
+sourceMessageHash: a3e07d180261eff067f228aea29fe15d76a83a52211c3b8a4a52b04435b03114
+pageMessages:
+  sources:
+    keypad: 키패드
+    terminals: 단자대(DI)
+    network: 네트워크
+  state:
+    running: '운전 중 <span class="hz">{speed} Hz</span>'
+    stopped: 정지
+  messages:
+    runFrom: '{source}에서 운전 명령을 받았습니다.'
+    speedFrom: '{source}에서 속도 지령을 받았습니다.'
+    ignored: '드라이브가 {source}의 RUN 명령을 무시했습니다. 운전 명령 소스가 {configured}(으)로 설정되어 있습니다.'
+    startKeypad: '시작하려면 키패드의 RUN을 누르세요.'
+    startTerminals: '시작하려면 DI 운전 입력을 닫으세요.'
+    startNetwork: '시작하려면 네트워크로 RUN 명령을 보내세요.'
+  anecdote: >-
+    저도 정확히 이 문제로 오후 반나절을 허비한 적이 있습니다. 새 냉동기 플랜트의 드라이브가 BACnet에 연결되어 있었고 장치 표시창에서 속도 지령이 30 Hz로 기록되는 것까지 보였지만, 드라이브는 정지한 채였습니다. 시퀀스와 AV 매핑, 네트워크 우선순위 배열을 한 시간 동안 다시 확인했습니다. 결국 설명서를 펼쳐 보니 운전 명령 소스 파라미터가 출고 시 설정인 단자대로 남아 있었습니다. 7번 단자의 운전 명령용 DI는 열려 있었습니다. 하나가 아니라 두 개의 파라미터를 설정해야 합니다.
+---
+{% extends "html/education/vfds.html" %}
+{% from "related-links.njk" import relatedLinks with context %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">교육 · VFD</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">VFD(인버터) <span class="tool-tag">드라이브</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                <a href="/ko/education/load-piping.html">부하 배관</a> 교육에서는 변유량 시스템에 속도를 바꿀 수 있는 펌프가 필요하다고 설명하며, 그 펌프가 무엇인지 알아볼 곳으로 “VFD 교육”을 안내했습니다. 바로 이 페이지입니다. <em>가변주파수드라이브(variable frequency drive, VFD)</em>는 상용 전원과 모터 사이에 설치되어 원하는 속도로 모터를 운전하는 장치입니다. 모든 제어 기술자가 결국 BMS에서 지령을 쓰게 되는 장치이기도 하며, “왜 이 장비가 운전되지 않지?”라는 서비스 요청의 절반은 파라미터 하나가 잘못 설정된 데서 시작됩니다. 이 페이지에서는 VFD가 무엇인지와 네트워크에 연결된 뒤 제어 기술자가 다루는 인터페이스를 모두 설명합니다.
+            </p>
+
+            <h2 class="subhead" id="what">VFD란 무엇인가</h2>
+
+            <p>
+                드라이브는 주파수가 고정된 교류 전원(미국은 60 Hz, 그 밖의 대부분 지역은 50 Hz)을 제어기가 요구하는 주파수의 교류로 변환합니다. 주파수가 낮으면 모터가 느려지고, 높으면 빨라집니다. 변환은 다음 세 단계를 순서대로 거칩니다.
+            </p>
+
+            <svg class="vfd-svg" viewBox="0 0 720 220" role="img" aria-labelledby="vfd-bd-title vfd-bd-desc"
+                 font-family="var(--mono)">
+                <title id="vfd-bd-title">VFD 블록도</title>
+                <desc id="vfd-bd-desc">화살표로 연결된 네 개의 상자가 왼쪽에서 오른쪽으로 배치되어 있습니다. 고정 60 Hz 교류 입력, 교류를 직류로 변환하는 정류기, 직류를 평활하고 저장하는 DC 버스, 직류를 제어기가 선택한 주파수의 교류로 다시 스위칭하는 인버터 순서입니다. 인버터 오른쪽에서 나온 화살표는 “교류 출력(가변)” 표시에 도달합니다.</desc>
+
+                <g id="vfd-bd-acin">
+                    <rect x="20" y="60" width="120" height="70" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="80" y="92" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">교류 입력</text>
+                    <text x="80" y="111" text-anchor="middle" font-size="10" fill="var(--text)">60 Hz · 고정</text>
+                </g>
+
+                <line x1="140" y1="95" x2="170" y2="95" stroke="var(--text-dim)" stroke-width="2"/>
+                <polygon points="170,90 178,95 170,100" fill="var(--text-dim)"/>
+
+                <g id="vfd-bd-rect">
+                    <rect x="180" y="60" width="140" height="70" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="250" y="92" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">정류기</text>
+                    <text x="250" y="111" text-anchor="middle" font-size="10" fill="var(--text)">AC → DC</text>
+                </g>
+
+                <line x1="320" y1="95" x2="350" y2="95" stroke="var(--text-dim)" stroke-width="2"/>
+                <polygon points="350,90 358,95 350,100" fill="var(--text-dim)"/>
+
+                <g id="vfd-bd-dcbus">
+                    <rect x="360" y="60" width="110" height="70" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="415" y="92" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">DC 버스</text>
+                    <text x="415" y="111" text-anchor="middle" font-size="10" fill="var(--text)">평활</text>
+                </g>
+
+                <line x1="470" y1="95" x2="500" y2="95" stroke="var(--text-dim)" stroke-width="2"/>
+                <polygon points="500,90 508,95 500,100" fill="var(--text-dim)"/>
+
+                <g id="vfd-bd-inv">
+                    <rect x="510" y="60" width="140" height="70" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="580" y="92" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">인버터</text>
+                    <text x="580" y="111" text-anchor="middle" font-size="10" fill="var(--text)">DC → AC(가변)</text>
+                </g>
+
+                <line x1="650" y1="95" x2="685" y2="95" stroke="var(--blue)" stroke-width="2"/>
+                <polygon points="685,90 693,95 685,100" fill="var(--blue)"/>
+                <text x="610" y="155" text-anchor="middle" font-size="11" font-style="italic" fill="var(--text-dim)">→ 교류 출력(가변 주파수)</text>
+
+                <text x="360" y="190" text-anchor="middle" font-size="10" font-style="italic" fill="var(--text-dim)">전력은 왼쪽에서 오른쪽으로 흐름 · 제어하는 값은 인버터의 스위칭 주파수</text>
+            </svg>
+
+            <p style="margin-top:0.5rem;">
+                드라이브 내부에서는 수많은 절연 게이트 양극성 트랜지스터(IGBT)가 DC 버스를 초당 수천 번 스위칭하여 사인파 형태의 출력을 합성합니다. 제어 관점에서는 그 세부 원리가 중요하지 않습니다. 중요한 것은 인버터가 출력할 주파수, 운전 허용 시점, 명령을 받을 위치를 정하는 파라미터입니다. 모든 “드라이브 설정” 작업은 이 인터페이스에서 이루어지며, 나머지 내용도 여기에 초점을 맞춥니다.
+            </p>
+
+            <h2 class="subhead" id="cube-law">드라이브가 어디에나 쓰이는 이유 — 세제곱 법칙</h2>
+
+            <p>
+                현대식 기계실을 둘러보면 펌프와 팬, 때로는 압축기에도 드라이브가 설치되어 있습니다. 40년 전에는 같은 장비가 한 가지 속도로만 운전되고, 필요하지 않은 유량은 <button type="button" data-gloss="bypass-damper">바이패스 댐퍼</button>, 3방 밸브 또는 베인을 통해 흘려보냈습니다. 이런 방식이 바뀐 주된 이유는 쾌적성이나 제어성이 아니라(물론 둘 다 좋은 부수 효과입니다) <em>에너지</em>이며, 이를 설명하는 계산은 간단합니다.
+            </p>
+
+            <p>
+                팬, 펌프, 대부분의 압축기와 같은 원심 장비에서 필요한 동력은 대략 속도의 <em>세제곱</em>에 비례합니다. 속도를 80%로 낮추면 동력은 설계값의 80%가 아니라 0.8³ ≈ <strong>51%</strong>가 됩니다. 50%로 낮추면 0.5³ ≈ <strong>13%</strong>까지 줄어듭니다. 하루 중 부분 부하로 운전하는 시간이 조금만 있어도 전기요금 절감으로 드라이브 투자비를 회수할 수 있습니다.
+            </p>
+
+            <div class="callout" style="margin-top:1rem;">
+                <h3>세제곱 법칙 — 원심 부하의 속도와 동력</h3>
+                <div class="vfd-cube-numbers">
+                    <div><span class="pct">속도 100%</span><span class="val">동력 100%</span></div>
+                    <div><span class="pct">속도 80%</span><span class="val">동력 약 51%</span></div>
+                    <div><span class="pct">속도 70%</span><span class="val">동력 약 34%</span></div>
+                    <div><span class="pct">속도 50%</span><span class="val">동력 약 13%</span></div>
+                    <div><span class="pct">속도 30%</span><span class="val">동력 약 3%</span></div>
+                </div>
+                <p style="margin-top:0.7rem;">실제 드라이브는 특히 매우 낮은 속도에서 인버터와 모터 효율 손실이 몇 퍼센트포인트 발생하므로 계측기에서 위 수치가 정확히 나타나지는 않습니다. 그러나 드라이브의 경제성을 만드는 것은 이 곡선의 형태입니다.</p>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                그래서 모든 부하가 <a href="/ko/education/load-piping.html">2방 밸브로 배관된</a> 변유량 펌핑 시스템에는 거의 항상 시스템 펌프용 VFD가 함께 설치됩니다. 부분 부하에서는 같은 유량을 온종일 순환시키는 대신 건물 부하가 줄어드는 만큼 펌프 속도도 낮춰야 합니다. 공기 측도 같습니다. 급기 팬에 VFD를 적용한 <a href="/ko/education/vav-systems.html">VAV(변풍량) 시스템</a>은 박스 풍량이 줄면 팬 속도도 낮추며, 팬은 유닛에서 가장 큰 에너지 소비원입니다. 세제곱 법칙이 ‘왜’를 설명한다면, 나머지 내용은 ‘어떻게’를 설명합니다.
+            </p>
+
+            <h2 class="subhead" id="run-vs-speed">운전 명령과 속도 지령</h2>
+
+            <p>
+                드라이브에서 기술자가 가장 자주 놓치는 부분입니다. VFD로 모터를 운전하려면 실제로 하나가 아니라 <em>두 가지</em> 명령을 주어야 하며, 각 명령의 소스 파라미터도 드라이브에서 서로 독립적으로 설정됩니다.
+            </p>
+
+            <ul style="margin:0.5rem 0 1rem 1.5rem;">
+                <li><strong>운전 명령</strong> — 지금 드라이브를 운전할 것인가? 켜기/끄기, 시작/정지 명령입니다. 드라이브 <em>키패드</em>, 단자대에 배선된 <em>디지털 입력</em>, 또는 <em>네트워크</em>(BACnet, Modbus 등) 쓰기 중 하나에서 받습니다.</li>
+                <li><strong>속도 지령</strong> — <em>운전한다면</em> 얼마나 빠르게 돌 것인가? Hz, RPM, %로 표현되는 아날로그 값입니다. 운전 명령과 별개로 키패드, 단자대의 <em>아날로그 입력</em>(일반적으로 4–20 mA), 또는 네트워크 쓰기 중 하나에서 받습니다.</li>
+            </ul>
+
+            <p>
+                흔히 하는 실수는 이 둘을 하나로 취급하는 것입니다. 속도 지령 소스를 BACnet으로 설정하고 BMS가 속도 지령 AV(<a href="/ko/education/bacnet-basics.html">BACnet Analog Value 객체</a>)에 30 Hz를 정상적으로 쓰고 있는데도 드라이브가 운전되지 않습니다. 왜일까요? <em>운전 명령 소스</em> 파라미터가 여전히 출고 시 설정인 “단자대”로 남아 있고, 디지털 입력 운전 신호가 배선되지 않았기 때문입니다. 두 파라미터 중 하나만 바꾼 것입니다.
+            </p>
+
+            <p>
+                직접 확인해 보세요. 아래 위젯은 설정한 운전 명령 소스와 속도 지령 소스를 그대로 따르는 작은 모의 드라이브입니다. 구성을 선택한 다음 세 가지 명령 인터페이스에서 각각 시작해 보세요. 상태 패널이 어떤 명령을 수락하고 무시했는지 알려 줍니다.
+            </p>
+
+            <div class="widget" id="vfd-widget">
+                <div class="widget-try">
+                    <span class="lbl">시험하기:</span>
+                    <button type="button" id="vfd-try-keypad">모두 키패드(커미셔닝)</button>
+                    <button type="button" id="vfd-try-network">모두 네트워크(BMS 자동)</button>
+                    <button type="button" id="vfd-try-classic">전형적인 설정 실수</button>
+                </div>
+
+                <div class="vfd-w-sources">
+                    <label for="vfd-run-src">운전 명령 소스</label>
+                    <select id="vfd-run-src" aria-label="운전 명령 소스">
+                        <option value="keypad">키패드(전면 패널 버튼)</option>
+                        <option value="terminals" selected>단자대(디지털 입력)</option>
+                        <option value="network">네트워크(BACnet / Modbus)</option>
+                    </select>
+
+                    <label for="vfd-spd-src">속도 지령 소스</label>
+                    <select id="vfd-spd-src" aria-label="속도 지령 소스">
+                        <option value="keypad">키패드(전면 패널 버튼)</option>
+                        <option value="terminals">단자대(4–20 mA AI)</option>
+                        <option value="network" selected>네트워크(BACnet / Modbus)</option>
+                    </select>
+                </div>
+
+                <div class="vfd-w-section">
+                    <div class="widget-section-label">속도 지령(소스: <span id="vfd-spd-src-name">네트워크</span>)</div>
+                    <div class="widget-slider-head">
+                        <span>0 Hz</span>
+                        <span class="v"><span id="vfd-spd-val">25</span> <span style="font-size:0.65em;color:var(--text-dim);font-weight:500;">Hz</span></span>
+                        <span>60 Hz</span>
+                    </div>
+                    <input class="widget-slider" id="vfd-spd-slider" type="range" min="0" max="60" step="1" value="25" aria-label="속도 지령"/>
+                </div>
+
+                <div class="vfd-w-section">
+                    <div class="widget-section-label">운전 명령 시험</div>
+
+                    <div class="vfd-w-cmd-row">
+                        <span class="src">키패드</span>
+                        <span class="ctrls">
+                            <button class="vfd-w-btn" id="vfd-kp-run" type="button">▶ 운전</button>
+                            <button class="vfd-w-btn" id="vfd-kp-stop" type="button">■ 정지</button>
+                        </span>
+                    </div>
+
+                    <div class="vfd-w-cmd-row">
+                        <span class="src">단자대</span>
+                        <span class="ctrls">
+                            <span style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);">DI 운전:</span>
+                            <span class="vfd-w-di" role="group" aria-label="디지털 입력 상태">
+                                <button id="vfd-di-open" type="button" class="on">열림</button>
+                                <button id="vfd-di-closed" type="button">닫힘</button>
+                            </span>
+                        </span>
+                    </div>
+
+                    <div class="vfd-w-cmd-row">
+                        <span class="src">네트워크</span>
+                        <span class="ctrls">
+                            <button class="vfd-w-btn" id="vfd-net-run" type="button">BACnet RUN 전송</button>
+                            <button class="vfd-w-btn" id="vfd-net-stop" type="button">BACnet STOP 전송</button>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="vfd-w-status">
+                    <div class="vfd-w-status-row">
+                        <svg class="widget-fan" id="vfd-w-fan" viewBox="0 0 100 100" width="56" height="56" aria-hidden="true">
+                            <circle cx="50" cy="50" r="46" fill="none" stroke="var(--border)" stroke-width="2"/>
+                            <g class="widget-fan-blades" id="vfd-w-fan-blades">
+                                <ellipse cx="50" cy="22" rx="7" ry="22"/>
+                                <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(72 50 50)"/>
+                                <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(144 50 50)"/>
+                                <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(216 50 50)"/>
+                                <ellipse cx="50" cy="22" rx="7" ry="22" transform="rotate(288 50 50)"/>
+                            </g>
+                            <circle cx="50" cy="50" r="5" fill="var(--text-dim)"/>
+                        </svg>
+                        <div class="vfd-w-status-text">
+                            <div class="vfd-w-state-row">
+                                <span class="bas-led" id="vfd-state-led" aria-hidden="true"></span>
+                                <div class="vfd-w-state" id="vfd-state">정지</div>
+                            </div>
+                            <div class="vfd-w-msgs" id="vfd-msgs"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="widget-anecdote-wrap" id="vfd-anecdote-wrap"></div>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                현장의 모든 드라이브형 장치에 공통되는 핵심은 <em>속도 지령 설정은 필요조건이지만 충분조건은 아니라는 점</em>입니다. 운전 명령이 예상한 곳에서 오지 않으면 BACnet 쓰기가 아무리 정확해도 드라이브는 명령을 무시하고 정지해 있습니다. “BMS에서 운전되지 않는” 드라이브를 점검할 때 가장 먼저 확인할 것은 하나가 아니라 <em>두</em> 소스 파라미터입니다.
+            </p>
+
+            <h2 class="subhead" id="parameter-groups">모든 드라이브에 있는 파라미터 그룹</h2>
+
+            <p>
+                제조사마다 파라미터 구성 방식은 다릅니다. ABB는 파라미터 번호, Yaskawa는 Pn 코드, Danfoss는 3단계 메뉴를 사용하지만 파라미터가 속하는 <em>범주</em>는 업계 전반에서 거의 같습니다. 범주를 알면 설명서 전체를 처음부터 끝까지 읽지 않고도 어떤 드라이브에서든 필요한 설정을 찾을 수 있습니다. 실제로 다루는 항목은 다음 여섯 그룹에 들어갑니다.
+            </p>
+
+            <div class="callout-grid" style="margin-top:1.25rem;">
+                <div class="callout">
+                    <h3>모터 데이터 <span>· 명판</span></h3>
+                    <p>모터 명판에 적힌 값을 드라이브에 입력합니다. <em>전부하전류(FLA), 정격 전압, 정격 주파수, 정격 속도(RPM)</em>와 경우에 따라 모터 형식 및 역률이 포함됩니다. 드라이브는 이 값으로 전류 제한을 정하고, 모터 내부 모델을 만드는 자동 튜닝을 수행합니다. 잘못 입력하면 보통 부하에서도 과전류 트립이 발생하거나 모터가 눈에 띄지 않게 과열됩니다. 새 드라이브를 커미셔닝할 때 가장 먼저 입력하며 이후에는 거의 변경하지 않습니다.</p>
+                </div>
+                <div class="callout">
+                    <h3>램프 <span>· 가속 / 감속</span></h3>
+                    <p>시작 시 0 Hz에서 정격 주파수까지 올라가는 시간(<em>가속 시간</em>)과 정지 시 다시 내려오는 시간(<em>감속 시간</em>)을 초 단위로 설정합니다. 기계적 충격을 줄이기 위한 램프 <em>형상</em>(선형 또는 S 곡선) 파라미터가 있는 경우도 있습니다. 너무 빠르면 가속 중 과전류 또는 감속 중 과전압 트립이 발생합니다(모터가 DC 버스로 전력을 회생하기 때문입니다). 너무 느리면 건물 반응이 둔하거나 시퀀스가 시간 초과됩니다. 시운전 때 조정한 뒤 문제가 있을 때만 다시 다룹니다.</p>
+                </div>
+                <div class="callout">
+                    <h3>지령과 소스 <span>· 어떤 속도를 어디에서 받을지</span></h3>
+                    <p><em>속도 지령 소스</em> 파라미터(키패드 / 단자대 / 네트워크 / 여러 프리셋 중 하나)와 지령 허용 범위를 설정합니다. <em>최소 주파수, 최대 주파수</em>, 프리셋 속도, 4–20 mA <button type="button" data-gloss="ai">AI</button>를 Hz 범위에 대응시키는 스케일링도 포함됩니다. 드라이브가 예상한 속도로 램핑하지 않을 때 절반가량의 원인은 이 그룹에서 찾을 수 있습니다.</p>
+                </div>
+                <div class="callout">
+                    <h3>운전/정지 소스 <span>· 시작 명령</span></h3>
+                    <p>위 속도 지령 소스와 독립적인 <em>운전 명령 소스</em> 파라미터입니다. 키패드 / 단자대 / 네트워크 중 고르는 것은 같지만 별도 파라미터입니다. 2선식과 3선식(유지형 DI 운전과 순간형 시작/정지), 조그 허용, 정회전/역회전 선택이 포함되기도 합니다. 커미셔닝 때 “키패드로 시험 완료” 상태에서 “BMS로 운전” 상태로 전환할 때 설정합니다.</p>
+                </div>
+                <div class="callout">
+                    <h3>입출력 구성 <span>· 각 단자의 기능</span></h3>
+                    <p>드라이브의 물리 입출력은 <em>소프트웨어로 할당</em>할 수 있습니다. 디지털 입력은 운전 명령, 고장 리셋, 조그 허용 또는 프리셋 속도 선택이 될 수 있고, 아날로그 입력은 속도 지령이나 피드백 채널이 될 수 있습니다. 디지털 출력은 “드라이브 운전”, “고장 활성” 또는 “속도 도달”을 알릴 수 있습니다. 이 그룹은 물리 단자와 논리 기능의 대응표입니다. 배선 전에 읽고 배선 후에 확인하세요.</p>
+                </div>
+                <div class="callout">
+                    <h3>고장과 보호 <span>· 트립 시 동작</span></h3>
+                    <p><em>고장 이력</em>(최근 N회 트립, 시각 및 트립 당시 운전 상태)과 보호 동작을 다룹니다. <em>자동 리셋 허용</em>, 자동 리셋 횟수와 시간 제한, 고장 출력 릴레이 할당, 저전압 순시정전 통과, 전류 제한 설정이 포함됩니다. 유지보수팀은 드라이브 리셋에 지쳐 자동 리셋을 켜고, 제어 기술자는 같은 근본 원인이 아무도 모르게 반복 트립하는 일을 겪은 뒤 다시 끄게 되는 파라미터입니다.</p>
+                </div>
+            </div>
+
+            <h2 class="subhead" id="network">네트워크 통합 — 제어 담당자와 드라이브가 만나는 지점</h2>
+
+            <p>
+                드라이브 전면의 키패드는 커미셔닝과 패널 전면 진단에 사용합니다. 실제 운전에서는 드라이브가 네트워크에 연결되어 다음 세 프로토콜 중 하나로 BMS와 통신합니다. 건물의 다른 장치에서 접하는 것과 같은 프로토콜이며 물리 계층의 장단점도 같습니다.
+            </p>
+
+            <div class="table-scroll" style="margin-top:1.25rem;">
+                <table class="ref-table rt-stack">
+                    <thead>
+                        <tr><th>프로토콜</th><th>물리 계층</th><th>속도</th><th>일반적인 용도</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Modbus RTU</td>
+                            <td>RS-485, 연선, 데이지체인</td>
+                            <td>9600 – 115200 baud</td>
+                            <td>구형 드라이브, 개보수, BACnet 옵션이 없는 플랜트 장비. 단순하고 널리 지원됩니다.</td>
+                        </tr>
+                        <tr>
+                            <td>BACnet MS/TP</td>
+                            <td>RS-485, 연선, 데이지체인</td>
+                            <td>9600 – 76800 baud</td>
+                            <td>BMS 현장 제어기 아래 전용 MS/TP 트렁크에 연결된 드라이브. <button type="button" data-gloss="modbus-rtu">Modbus RTU</button>와 같은 배선을 사용하지만 프로토콜은 다릅니다.</td>
+                        </tr>
+                        <tr>
+                            <td>BACnet/IP</td>
+                            <td>Ethernet, 연선 또는 광섬유</td>
+                            <td>10 / 100 / 1000 Mbps</td>
+                            <td>내장 또는 추가형 Ethernet 카드가 있는 드라이브로, 다른 BMS 장치와 함께 라우팅됩니다. 새 장비의 현대적인 기본 방식입니다.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                주소 체계는 프로토콜마다 달라도 BMS가 실제로 읽고 쓰는 값은 일관됩니다. 모든 드라이브에서 알아야 할 네 가지 포인트는 다음과 같습니다.
+            </p>
+
+            <ul style="margin:0.5rem 0 1rem 1.5rem;">
+                <li><em>운전 명령</em> — BMS가 쓰는 이진값입니다. 피드백이 아니라 설정값입니다. 드라이브의 운전 명령 소스가 “네트워크”일 때만 유효합니다(위 위젯 참조).</li>
+                <li><em>속도 지령</em> — BMS가 쓰는 아날로그 값으로, 일반적으로 Hz 또는 정격 주파수의 백분율입니다. 마찬가지로 속도 지령 소스가 네트워크를 가리킬 때만 유효합니다.</li>
+                <li><em>운전 상태</em> — BMS가 읽는 이진값입니다. <em>드라이브가 실제로 시작되었음을 알려 주는 값</em>이므로, BMS가 “방금 운전 명령을 보냈다”고 알고 있는 상태만 믿어서는 안 됩니다.</li>
+                <li><em>실제 주파수 / 전류 / 고장 코드</em> — 아날로그 및 이진 피드백입니다. 최소한 BMS는 실제 Hz, 모터 전류(기계 문제를 조기에 알려 주는 지표), 활성 고장 코드를 기록해야 합니다.</li>
+            </ul>
+
+            <p>
+                EBO BACnet/IP 검색에서 나온 16진수 주소를 해석하려면 <a href="/ko/tools/bacnet-ip-converter.html">BACnet/IP 변환기</a>를 사용해 점 표기 십진수 IP로 바꿀 수 있습니다. Modbus 레지스터의 비트를 확인해야 한다면 <a href="/ko/tools/modbus-register-viewer.html">Modbus 레지스터 뷰어</a>가 16비트 워드를 펼쳐 보여 줍니다.
+            </p>
+
+            <h2 class="subhead" id="fault-codes">고장 코드 — 개념적 범주</h2>
+
+            <p>
+                제조사마다 고장 코드 목록이 다르고 너무 길어 모두 외울 수는 없습니다. 대신 코드를 다섯거나 여섯 가지 범주로 나누어 <em>기억할 수 있습니다</em>. 코드 번호가 달라도 범주별 근본 원인은 제조사 간에 같기 때문입니다. 드라이브의 고장 이력은 대개 “과전류가 발생했다”고 알려 주며, 브랜드별 차이는 이를 어느 번호로 부르는지뿐입니다.
+            </p>
+
+            <div class="table-scroll" style="margin-top:1.25rem;">
+                <table class="ref-table">
+                    <thead>
+                        <tr><th>범주</th><th>발생 상황</th><th>일반적인 원인</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>과전류</td>
+                            <td>드라이브 출력 전류가 제한값을 빠르게 초과함</td>
+                            <td>단락, 지락, 구속 회전자, 너무 가파른 가속 램프, 잘못된 모터 데이터</td>
+                        </tr>
+                        <tr>
+                            <td>과전압(DC 버스)</td>
+                            <td>DC 버스 전압이 트립 임계값보다 높아짐</td>
+                            <td>너무 가파른 감속 램프(모터가 버스로 회생), 과도한 입력 선간전압, 회생 부하에 제동 저항 누락</td>
+                        </tr>
+                        <tr>
+                            <td>저전압(DC 버스)</td>
+                            <td>DC 버스 전압이 트립 임계값보다 낮아짐</td>
+                            <td>낮거나 끊긴 입력 선간전압, 순간 저전압, 느슨한 전원 연결, 대형 모터 기동 시 건물 전압 강하</td>
+                        </tr>
+                        <tr>
+                            <td>지락</td>
+                            <td>드라이브가 접지로 누설되는 전류를 감지함</td>
+                            <td>손상된 모터 케이블, 모터 절연 파괴, 전선관 내 수분, 긴 배선 구간에 잘못된 케이블 사용</td>
+                        </tr>
+                        <tr>
+                            <td>모터 과부하</td>
+                            <td>드라이브 내부 열 모델이 현재 전류가 계속되면 모터가 과열된다고 판단함</td>
+                            <td>기계적 고착, 실제 부하에 비해 용량이 작은 모터</td>
+                        </tr>
+                        <tr>
+                            <td>드라이브 과열</td>
+                            <td>방열판 또는 내부 온도가 임계값을 초과함</td>
+                            <td>냉각 팬 고장, 필터 막힘, 외함 공기 흐름 방해, 과도한 주변 온도</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                5분마다 고장을 자동 리셋하는 드라이브는 <em>문제가 여전히 남아 있다고 알려 주는 것</em>입니다. 경보를 지우는 데 그치지 않고 고장 범주를 읽어야 모터를 태우지 않고 문제를 해결할 수 있습니다.
+            </p>
+
+            <h2 class="subhead">바이패스 구성</h2>
+
+            <p>
+                인명 안전 팬, 1차 냉수 펌프처럼 드라이브 고장으로 장비를 정지시켜서는 안 되는 중요 부하에는 패널에 <em>바이패스</em>가 포함되는 경우가 많습니다. 셀렉터 스위치는 전원을 드라이브를 통하거나 두 번째 접촉기의 접점을 거쳐 모터에 직접 공급하도록 전환합니다. 위치는 <em>OFF</em>, <em>DRIVE</em>(정상 — 가변속), <em>BYPASS</em>(직입 기동 — 전속, 드라이브 미사용) 세 가지입니다. 드라이브가 고장 나면 BYPASS로 전환하여 교체품을 준비하는 동안 장비를 60 Hz로 계속 운전합니다.
+            </p>
+
+            <svg class="vfd-svg" viewBox="0 0 660 280" role="img" aria-labelledby="vfd-bp-title vfd-bp-desc"
+                 font-family="var(--mono)">
+                <title id="vfd-bp-title">수동 바이패스 구성</title>
+                <desc id="vfd-bp-desc">왼쪽의 전원이 OFF, DRIVE, BYPASS 세 위치를 가진 셀렉터 스위치에 공급됩니다. DRIVE 위치에서는 위쪽 드라이브 상자를 거쳐 모터로 연결되고, BYPASS 위치에서는 아래쪽 경로로 드라이브를 건너뛰어 모터에 직접 연결됩니다. 두 경우 모두 오른쪽의 같은 모터를 사용하며, 드라이브의 가변주파수 출력과 고정 60 Hz 전원 중 무엇을 받는지가 달라집니다.</desc>
+
+                <g id="vfd-bp-line">
+                    <rect x="20" y="115" width="100" height="55" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="70" y="142" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">전원 입력</text>
+                    <text x="70" y="158" text-anchor="middle" font-size="10" fill="var(--text)">60 Hz</text>
+                </g>
+
+                <line x1="120" y1="142" x2="180" y2="142" stroke="var(--text-dim)" stroke-width="2"/>
+
+                <g id="vfd-bp-selector">
+                    <circle cx="200" cy="142" r="20" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <line x1="200" y1="142" x2="216" y2="128" stroke="var(--blue)" stroke-width="3"/>
+                    <circle cx="216" cy="128" r="3" fill="var(--blue)"/>
+                    <text x="200" y="105" text-anchor="middle" font-size="10" font-weight="600" fill="var(--text-bright)">셀렉터</text>
+                    <text x="200" y="195" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">DRIVE 위치 표시</text>
+                </g>
+
+                <line x1="220" y1="128" x2="270" y2="128" stroke="var(--text-dim)" stroke-width="2"/>
+                <line x1="270" y1="128" x2="270" y2="80" stroke="var(--text-dim)" stroke-width="2"/>
+                <line x1="270" y1="80" x2="350" y2="80" stroke="var(--text-dim)" stroke-width="2"/>
+                <g id="vfd-bp-drive">
+                    <rect x="350" y="50" width="120" height="60" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="410" y="78" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">드라이브</text>
+                    <text x="410" y="94" text-anchor="middle" font-size="10" fill="var(--text)">가변 주파수</text>
+                </g>
+                <line x1="470" y1="80" x2="520" y2="80" stroke="var(--text-dim)" stroke-width="2"/>
+                <line x1="520" y1="80" x2="520" y2="142" stroke="var(--text-dim)" stroke-width="2"/>
+
+                <line x1="220" y1="156" x2="270" y2="156" stroke="var(--text-dim)" stroke-width="2" stroke-dasharray="6 4"/>
+                <line x1="270" y1="156" x2="270" y2="220" stroke="var(--text-dim)" stroke-width="2" stroke-dasharray="6 4"/>
+                <line x1="270" y1="220" x2="520" y2="220" stroke="var(--text-dim)" stroke-width="2" stroke-dasharray="6 4"/>
+                <line x1="520" y1="220" x2="520" y2="172" stroke="var(--text-dim)" stroke-width="2" stroke-dasharray="6 4"/>
+                <text x="395" y="215" text-anchor="middle" font-size="11" font-style="italic" fill="var(--text-dim)">바이패스 · 직입 기동(60 Hz)</text>
+
+                <line x1="520" y1="142" x2="560" y2="142" stroke="var(--text-dim)" stroke-width="2"/>
+                <polygon points="560,137 568,142 560,147" fill="var(--text-dim)"/>
+
+                <g id="vfd-bp-motor">
+                    <circle cx="605" cy="142" r="30" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="605" y="138" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright)">M</text>
+                    <text x="605" y="155" text-anchor="middle" font-size="9" fill="var(--text)">모터</text>
+                </g>
+
+                <text x="330" y="25" text-anchor="middle" font-size="11" font-style="italic" fill="var(--text-dim)">병렬인 두 경로 중 셀렉터가 통전할 경로를 선택</text>
+            </svg>
+
+            <p style="margin-top:0.5rem;">
+                바이패스는 제어보다 전기와 운전 측면의 주제입니다. BMS는 보통 “바이패스 중” 이진 상태 피드백만 받아, 시퀀스가 현재 사용되지 않는 드라이브에 속도 지령을 계속 조절할지 판단합니다. 존재를 알아 두면 충분하며 제어 중심 페이지에서 그 이상 다룰 필요는 없습니다.
+            </p>
+
+            <h2 class="subhead">부하 배관과 다시 연결하기</h2>
+
+            <p>
+                <a href="/ko/education/load-piping.html">부하 배관</a> 교육에서는 부하 측에서 변유량 시스템을 살펴봤습니다. 각 코일 유량을 2방 밸브로 조절하므로 부하 밸브가 닫힐수록 시스템 펌프도 느려져야 합니다. VFD가 그 그림의 펌프 측 해답입니다. 시스템 펌프가 BMS에 제공하는 인터페이스는 방금 살펴본 두 파라미터, 즉 운전 명령과 속도 지령입니다. BMS는 시퀀스가 중요하게 보는 변수를 유지하도록 속도 지령을 조절합니다. 일반적으로 루프의 <button type="button" data-gloss="differential-pressure">차압</button>을 유지하며, 때로는 환수 온도 설정값이나 가장 많이 열린 밸브의 밸브 개도율 리셋을 사용합니다.
+            </p>
+
+            <p>
+                BMS가 보낼 속도 지령을 <em>어떻게</em> 결정하는지는 별도 주제이며, 이제 유체별 교육이 마련되어 있습니다. 수배관 측의 <a href="/ko/education/pump-control.html">펌프 제어 교육</a>에서는 펌프 곡선과 운전점, 원격 센서를 이용한 차압 제어, 세제곱 법칙의 절감 효과를 최대화하는 차압 설정값 리셋을 설명합니다. 공기 측의 <a href="/ko/education/duct-static-control.html">덕트 정압 제어</a>도 같은 원리입니다. VAV 박스가 조절될 때 급기 팬은 <button type="button" data-gloss="duct-static">정압 설정값</button>을 유지하며 속도를 낮춥니다.
+            </p>
+
+            <p>
+                실제 드라이브의 파라미터 트리를 체험하려면 <a href="/ko/simulators/vfd-mock.html">모의 VFD 인터페이스</a>로 이어 가세요. 위/아래/Enter/Escape 키를 누르고, 세 단계 아래 메뉴에 숨은 운전 명령 소스 파라미터를 찾으며, RUN을 눌렀을 때 지령 Hz와 실제 Hz를 비교할 수 있습니다. 위 위젯과 같은 소스 파라미터 개념을 키패드와 파라미터 트리로 직접 탐색하는 시뮬레이터입니다.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/affinity-laws.html', label: '펌프·팬 상사 법칙'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/vfd-mock.html', label: '모의 VFD 인터페이스'}
+        ],
+        lessons: [
+            {href: '/ko/education/pump-control.html', label: '펌프 제어'},
+            {href: '/ko/education/duct-static-control.html', label: '덕트 정압 제어'},
+            {href: '/ko/education/hydronic-loops.html', label: '수배관 루프'},
+            {href: '/ko/education/air-handlers.html', label: '공기조화기'},
+            {href: '/ko/education/vav-systems.html', label: 'VAV 시스템'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/vfds.html', label: 'VFD 퀴즈'},
+            {href: '/ko/practice/troubleshooting.html', label: '문제 해결'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 교육으로 돌아가기</a>
+
+</main>
+{% endblock %}

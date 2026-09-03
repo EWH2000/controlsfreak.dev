@@ -1,0 +1,417 @@
+---
+title: 혼합공기 온도 계산기 — controlsfreak.dev
+description: 최대 세 개의 공기 흐름을 질량유량 또는 질량분율로 혼합해 혼합공기의 건구온도, 습도, 엔탈피와 노점온도를 계산하는 도구입니다.
+sourceContentHash: ec5e085a069d3df00987da84895ff031663174f2fca4994a143f4814bddfd3a1
+sourceMessageHash: 6d4109a050365807938ed975aacb75876a721bbe576496dbe8061bfde271a359
+canonical: https://controlsfreak.dev/ko/tools/air-mixing.html
+nav: tools
+category: hvac
+pageMessages:
+    defineBy:
+        rh: '상대습도(%)'
+        wb: '습구온도({unit})'
+        dp: '노점({unit})'
+        w: '절대습도(함습비, W)({unit})'
+        h: '엔탈피({unit} 건공기)'
+    status:
+        prompt: '혼합 상태를 계산할 값을 입력하세요.'
+        fixStreams: '혼합 결과를 보려면 위 공기 흐름의 입력 오류를 수정하세요.'
+        weightRequired: '각 공기 흐름의 가중치를 입력하세요.'
+        weightNegative: '가중치는 음수일 수 없습니다.'
+        fractionSum: '질량분율 합계는 {sum} %입니다. 합계가 100 %(±0.1)여야 합니다.'
+        zeroMassFlow: '총 질량유량이 0이므로 혼합 상태를 계산할 수 없습니다.'
+        mixedOutOfRange: '혼합 상태가 계산 범위를 벗어났습니다. 입력값을 확인하세요.'
+        computed: '혼합 상태 계산 완료(압력 {pressure} {unit}).'
+    errors:
+        engineUnavailable: '습공기 상태 해석 엔진을 사용할 수 없습니다. 페이지를 새로고침하세요.'
+        streamValuesRequired: '건구온도와 두 번째 상태값을 입력하세요.'
+        psychro:
+            numeric: '숫자 값을 입력하세요.'
+            rhNegative: '상대습도는 음수일 수 없습니다.'
+            rhAbove100: '상대습도는 100 %를 초과할 수 없습니다.'
+            wetBulbAboveDryBulb: '습구온도는 건구온도보다 높을 수 없습니다.'
+            dewPointAboveDryBulb: '노점은 건구온도보다 높을 수 없습니다.'
+            humidityRatioNegative: '절대습도(함습비, W)는 음수일 수 없습니다.'
+            enthalpyBelowDryAir: '엔탈피가 이 건구온도의 건공기 엔탈피보다 낮습니다. 물리적으로 불가능합니다.'
+            propertyRequired: '상태점을 정의할 물성을 선택하세요.'
+            rhPastSaturation: '이 상태점은 포화선을 벗어납니다(상대습도 100 % 초과). 물리적으로 불가능합니다.'
+            wetBulbPastSaturation: '입력한 습구온도는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다.'
+            dewPointPastSaturation: '입력한 노점은 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다.'
+            humidityRatioPastSaturation: '입력한 절대습도(함습비, W)는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다.'
+            enthalpyPastSaturation: '입력한 엔탈피는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다.'
+    unitText:
+        altitude:
+            us: '고도(ft)'
+            metric: '고도(m)'
+        airflow:
+            us: '풍량(CFM)'
+            metric: '풍량(m³/h)'
+        dryBulb:
+            us: '건구온도(°F)'
+            metric: '건구온도(°C)'
+        wetBulb:
+            us: '습구온도(°F)'
+            metric: '습구온도(°C)'
+        dewPoint:
+            us: '노점(°F)'
+            metric: '노점(°C)'
+        humidityRatio:
+            us: '절대습도(함습비, W)(gr/lb)'
+            metric: '절대습도(함습비, W)(g/kg)'
+        enthalpy:
+            us: '엔탈피(Btu/lb)'
+            metric: '엔탈피(kJ/kg)'
+        specificVolume:
+            us: '비체적(ft³/lb)'
+            metric: '비체적(m³/kg)'
+        exampleOutdoor:
+            us: '1000 CFM / 95 °F / 75 °F WB'
+            metric: '1700 m³/h / 35 °C / 23.9 °C WB'
+        exampleReturn:
+            us: '3000 CFM / 75 °F / 50 % RH'
+            metric: '5100 m³/h / 23.9 °C / 50 % RH'
+        exampleErv:
+            us: '500 CFM / 60 °F / 55 °F WB'
+            metric: '850 m³/h / 15.6 °C / 12.8 °C WB'
+        exampleFractions:
+            us: '22 % / 67 % / 11 %'
+            metric: '22 % / 67 % / 11 %'
+keywords: CFM 혼합공기 온도 외기 OA OAT 회기 RA 플레넘 혼합 계산기 공식
+faqs:
+    - q: 혼합공기 온도 공식은 무엇인가요?
+      a: 각 공기 흐름의 온도에 질량유량을 가중합니다. MAT = Σ(ṁ·T) ÷ Σṁ. 해수면 부근에서 밀도가 비슷하면 풍량 가중평균인 MAT ≈ (CFM_oa·T_oa + CFM_ra·T_ra) ÷ (CFM_oa + CFM_ra)로 근사할 수 있습니다.
+    - q: 외기 비율로 혼합공기 온도를 어떻게 계산하나요?
+      a: MAT = %OA × T_oa + (1 − %OA) × T_ra입니다. 외기 30 %가 40 °F이고 회기(RA) 70 %가 72 °F라면 MAT = 0.30 × 40 + 0.70 × 72 = 62.4 °F입니다.
+    - q: CFM 대신 질량유량으로 가중하는 이유는 무엇인가요?
+      a: 공기 밀도는 온도와 고도에 따라 달라지므로 CFM이 같은 두 공기 흐름도 질량은 같지 않습니다. 질량유량 또는 밀도 보정 CFM으로 가중하면 정확하며, 단순 CFM 평균은 밀도가 비슷할 때만 좋은 근사값입니다.
+---
+{% extends "html/tools/air-mixing.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 혼합공기 온도</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                혼합공기 온도 계산기
+                <span class="tool-tag">HVAC</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>세 공기 흐름을 혼합하고 보유한 데이터에 맞는 가중 방식을 선택합니다.</summary>
+            <div class="preamble-rest">
+                패널에서 CFM을 확인할 수 있으면 질량유량 기준을 사용합니다(외기 + 회기(RA) + ERV 배기 블리드, <button type="button" data-gloss="economizer">외기냉방(economizer)</button> + 회기(RA) + 보충공기).
+                계통도에 백분율이 있으면 질량분율 기준을 사용합니다. 어느 쪽이든 같은 질량 가중 혼합식이며, 탭은 가중치를 도구에 입력하는 방식만 정합니다.
+            </div>
+        </details>
+        <p class="ps-seed-note">입력란에는 예제가 미리 채워져 있습니다. 확인하려는 값으로 수정하세요.</p>
+
+        <section class="am-alt-strip">
+            <div class="ps-row">
+                <label class="ps-label" data-us="{{ pageMessages.unitText.altitude.us }}" data-metric="{{ pageMessages.unitText.altitude.metric }}" for="am-alt">고도(ft)</label>
+                <input class="ps-input" type="number" id="am-alt" step="100" min="0" max="15000" placeholder="0" value="0">
+            </div>
+        </section>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="flow">질량유량 기준</button>
+            <button class="tab-btn"        data-tab="frac">질량분율 기준</button>
+        </div>
+
+        <!-- ── By mass flow ── -->
+        <div id="tab-flow" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+
+                    <h3 class="subhead">공기 흐름 1</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.airflow.us }}" data-metric="{{ pageMessages.unitText.airflow.metric }}" for="am-flow-s1-w">풍량(CFM)</label>
+                        <input class="ps-input" type="number" id="am-flow-s1-w" step="50" min="0" value="1000">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="am-flow-s1-tdb">건구온도(°F)</label>
+                        <input class="ps-input" type="number" id="am-flow-s1-tdb" step="0.5" min="-50" max="200" value="95">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="am-flow-s1-mode">상태 정의 기준</label>
+                        <select class="ps-input" id="am-flow-s1-mode">
+                            <option value="rh">상대습도</option>
+                            <option value="wb" selected>습구온도</option>
+                            <option value="dp">노점</option>
+                            <option value="w">절대습도(함습비, W)</option>
+                            <option value="h">엔탈피</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="am-flow-s1-second-lbl" for="am-flow-s1-second">습구온도(°F)</label>
+                        <input class="ps-input" type="number" id="am-flow-s1-second" step="0.5" value="75">
+                    </div>
+                    <div class="am-stream-err" id="am-flow-s1-err"></div>
+
+                    <h3 class="subhead">공기 흐름 2</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.airflow.us }}" data-metric="{{ pageMessages.unitText.airflow.metric }}" for="am-flow-s2-w">풍량(CFM)</label>
+                        <input class="ps-input" type="number" id="am-flow-s2-w" step="50" min="0" value="3000">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="am-flow-s2-tdb">건구온도(°F)</label>
+                        <input class="ps-input" type="number" id="am-flow-s2-tdb" step="0.5" min="-50" max="200" value="75">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="am-flow-s2-mode">상태 정의 기준</label>
+                        <select class="ps-input" id="am-flow-s2-mode">
+                            <option value="rh" selected>상대습도</option>
+                            <option value="wb">습구온도</option>
+                            <option value="dp">노점</option>
+                            <option value="w">절대습도(함습비, W)</option>
+                            <option value="h">엔탈피</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="am-flow-s2-second-lbl" for="am-flow-s2-second">상대습도(%)</label>
+                        <input class="ps-input" type="number" id="am-flow-s2-second" step="1" value="50">
+                    </div>
+                    <div class="am-stream-err" id="am-flow-s2-err"></div>
+
+                    <h3 class="subhead">공기 흐름 3</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.airflow.us }}" data-metric="{{ pageMessages.unitText.airflow.metric }}" for="am-flow-s3-w">풍량(CFM)</label>
+                        <input class="ps-input" type="number" id="am-flow-s3-w" step="50" min="0" value="500">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="am-flow-s3-tdb">건구온도(°F)</label>
+                        <input class="ps-input" type="number" id="am-flow-s3-tdb" step="0.5" min="-50" max="200" value="60">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="am-flow-s3-mode">상태 정의 기준</label>
+                        <select class="ps-input" id="am-flow-s3-mode">
+                            <option value="rh">상대습도</option>
+                            <option value="wb" selected>습구온도</option>
+                            <option value="dp">노점</option>
+                            <option value="w">절대습도(함습비, W)</option>
+                            <option value="h">엔탈피</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="am-flow-s3-second-lbl" for="am-flow-s3-second">습구온도(°F)</label>
+                        <input class="ps-input" type="number" id="am-flow-s3-second" step="0.5" value="55">
+                    </div>
+                    <div class="am-stream-err" id="am-flow-s3-err"></div>
+
+                    <p class="ref-note">
+                        각 공기 상태에서 비체적을 구하고 공기 흐름별 질량유량을 <code>CFM ÷ v</code>로 계산합니다. 혼합에서 제외하려는 흐름의 CFM은 0으로 설정하세요.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="status-pill" id="am-flow-status">{{ pageMessages.status.prompt }}</div>
+
+                    <h3 class="subhead">혼합공기 상태</h3>
+                    <div class="ps-row primary"><span class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}">건구온도(°F)</span>          <span class="ps-value muted" id="am-flow-ma-tdb">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.wetBulb.us }}" data-metric="{{ pageMessages.unitText.wetBulb.metric }}">습구온도(°F)</span>          <span class="ps-value muted" id="am-flow-ma-wb">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.dewPoint.us }}" data-metric="{{ pageMessages.unitText.dewPoint.metric }}">노점(°F)</span>         <span class="ps-value muted" id="am-flow-ma-dp">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.humidityRatio.us }}" data-metric="{{ pageMessages.unitText.humidityRatio.metric }}">절대습도(함습비, W)(gr/lb)</span> <span class="ps-value muted" id="am-flow-ma-w">—</span></div>
+                    <div class="ps-row"><span class="ps-label">상대습도(%)</span>          <span class="ps-value muted" id="am-flow-ma-rh">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.enthalpy.us }}" data-metric="{{ pageMessages.unitText.enthalpy.metric }}">엔탈피(Btu/lb)</span>      <span class="ps-value muted" id="am-flow-ma-h">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.specificVolume.us }}" data-metric="{{ pageMessages.unitText.specificVolume.metric }}">비체적(ft³/lb)</span> <span class="ps-value muted" id="am-flow-ma-v">—</span></div>
+
+                    <div class="btn-row">
+                        <button class="copy-btn" id="am-flow-copy">혼합공기 상태 복사</button>
+                    </div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">계산 예</h2>
+                <p class="ref-note worked-intro">
+                    에너지 회수장치가 있는 여름철 공기조화기(AHU)에서 세 공기 흐름이 혼합 플레넘에서 만납니다.
+                    외기는 <span data-us="{{ pageMessages.unitText.exampleOutdoor.us }}" data-metric="{{ pageMessages.unitText.exampleOutdoor.metric }}">1000 CFM/95 °F DB/75 °F WB</span>,
+                    회기(RA)는 <span data-us="{{ pageMessages.unitText.exampleReturn.us }}" data-metric="{{ pageMessages.unitText.exampleReturn.metric }}">3000 CFM/75 °F DB/50 % RH</span>,
+                    ERV 배기 블리드 흐름은 <span data-us="{{ pageMessages.unitText.exampleErv.us }}" data-metric="{{ pageMessages.unitText.exampleErv.metric }}">500 CFM/60 °F DB/55 °F WB</span>입니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>각 공기 흐름의 상태를 풉니다. 엔진은 <code>W</code>, <code>h</code>와 함께 비체적 <code>v</code>를 반환합니다.</li>
+                    <li>체적유량을 질량유량으로 환산합니다. <code>m<sub>i</sub> = CFM<sub>i</sub> ÷ v<sub>i</sub></code>.
+                        차가운 공기는 밀도가 높고 따뜻한 공기는 낮습니다.</li>
+                    <li>질량에 따라 선형으로 혼합되는 두 변수, 즉 절대습도(함습비, W)와 <button type="button" data-gloss="enthalpy">엔탈피</button>를 질량 가중합니다.<br>
+                        <code>W<sub>mix</sub> = Σ(m<sub>i</sub> · W<sub>i</sub>) ÷ Σm<sub>i</sub></code>,
+                        <code>h<sub>mix</sub> = Σ(m<sub>i</sub> · h<sub>i</sub>) ÷ Σm<sub>i</sub></code>.</li>
+                    <li><button type="button" data-gloss="dry-bulb">건구온도</button>는 <button type="button" data-gloss="enthalpy">엔탈피</button> 식
+                        <code>h = (0.240 + 0.444·W)·T + 1061·W</code>을 역산해 구합니다.<br>
+                        <code>T<sub>mix</sub> = (h<sub>mix</sub> − 1061·W<sub>mix</sub>) ÷ (0.240 + 0.444·W<sub>mix</sub>)</code>.</li>
+                    <li>현장 압력에서 전체 상태를 구성해 RH, WB, DP, v를 표시합니다.</li>
+                </ol>
+                <p class="ref-note">
+                    출력 열은 공기조화기(AHU)가 실제로 받는 상태를 보여 줍니다. 이 혼합 상태의 RH와 WB에 따라 냉각 코일이 건식 또는 습식으로 운전됩니다.
+                    공식은 엔진의 기본 IP 단위계(CFM, lb, Btu, 즉 ASHRAE IP 수식)로 작성되며 미터법 입력과 결과는 표시 단계에서 같은 계산을 환산합니다.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── By mass fraction ── -->
+        <div id="tab-frac" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+
+                    <h3 class="subhead">공기 흐름 1</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" for="am-frac-s1-w">질량분율(%)</label>
+                        <input class="ps-input" type="number" id="am-frac-s1-w" step="1" min="0" max="100" value="22">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="am-frac-s1-tdb">건구온도(°F)</label>
+                        <input class="ps-input" type="number" id="am-frac-s1-tdb" step="0.5" min="-50" max="200" value="95">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="am-frac-s1-mode">상태 정의 기준</label>
+                        <select class="ps-input" id="am-frac-s1-mode">
+                            <option value="rh">상대습도</option>
+                            <option value="wb" selected>습구온도</option>
+                            <option value="dp">노점</option>
+                            <option value="w">절대습도(함습비, W)</option>
+                            <option value="h">엔탈피</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="am-frac-s1-second-lbl" for="am-frac-s1-second">습구온도(°F)</label>
+                        <input class="ps-input" type="number" id="am-frac-s1-second" step="0.5" value="75">
+                    </div>
+                    <div class="am-stream-err" id="am-frac-s1-err"></div>
+
+                    <h3 class="subhead">공기 흐름 2</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" for="am-frac-s2-w">질량분율(%)</label>
+                        <input class="ps-input" type="number" id="am-frac-s2-w" step="1" min="0" max="100" value="67">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="am-frac-s2-tdb">건구온도(°F)</label>
+                        <input class="ps-input" type="number" id="am-frac-s2-tdb" step="0.5" min="-50" max="200" value="75">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="am-frac-s2-mode">상태 정의 기준</label>
+                        <select class="ps-input" id="am-frac-s2-mode">
+                            <option value="rh" selected>상대습도</option>
+                            <option value="wb">습구온도</option>
+                            <option value="dp">노점</option>
+                            <option value="w">절대습도(함습비, W)</option>
+                            <option value="h">엔탈피</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="am-frac-s2-second-lbl" for="am-frac-s2-second">상대습도(%)</label>
+                        <input class="ps-input" type="number" id="am-frac-s2-second" step="1" value="50">
+                    </div>
+                    <div class="am-stream-err" id="am-frac-s2-err"></div>
+
+                    <h3 class="subhead">공기 흐름 3</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" for="am-frac-s3-w">질량분율(%)</label>
+                        <input class="ps-input" type="number" id="am-frac-s3-w" step="1" min="0" max="100" value="11">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="am-frac-s3-tdb">건구온도(°F)</label>
+                        <input class="ps-input" type="number" id="am-frac-s3-tdb" step="0.5" min="-50" max="200" value="60">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="am-frac-s3-mode">상태 정의 기준</label>
+                        <select class="ps-input" id="am-frac-s3-mode">
+                            <option value="rh">상대습도</option>
+                            <option value="wb" selected>습구온도</option>
+                            <option value="dp">노점</option>
+                            <option value="w">절대습도(함습비, W)</option>
+                            <option value="h">엔탈피</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="am-frac-s3-second-lbl" for="am-frac-s3-second">습구온도(°F)</label>
+                        <input class="ps-input" type="number" id="am-frac-s3-second" step="0.5" value="55">
+                    </div>
+                    <div class="am-stream-err" id="am-frac-s3-err"></div>
+
+                    <p class="ref-note">
+                        질량분율 합계는 100 %(허용오차 ±0.1 %)여야 합니다.
+                        데이터가 이미 백분율이면 이 탭을 사용하고, 그렇지 않으면 질량유량 탭을 사용하세요.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="status-pill" id="am-frac-status">{{ pageMessages.status.prompt }}</div>
+
+                    <h3 class="subhead">혼합공기 상태</h3>
+                    <div class="ps-row primary"><span class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}">건구온도(°F)</span>          <span class="ps-value muted" id="am-frac-ma-tdb">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.wetBulb.us }}" data-metric="{{ pageMessages.unitText.wetBulb.metric }}">습구온도(°F)</span>          <span class="ps-value muted" id="am-frac-ma-wb">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.dewPoint.us }}" data-metric="{{ pageMessages.unitText.dewPoint.metric }}">노점(°F)</span>         <span class="ps-value muted" id="am-frac-ma-dp">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.humidityRatio.us }}" data-metric="{{ pageMessages.unitText.humidityRatio.metric }}">절대습도(함습비, W)(gr/lb)</span> <span class="ps-value muted" id="am-frac-ma-w">—</span></div>
+                    <div class="ps-row"><span class="ps-label">상대습도(%)</span>          <span class="ps-value muted" id="am-frac-ma-rh">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.enthalpy.us }}" data-metric="{{ pageMessages.unitText.enthalpy.metric }}">엔탈피(Btu/lb)</span>      <span class="ps-value muted" id="am-frac-ma-h">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.specificVolume.us }}" data-metric="{{ pageMessages.unitText.specificVolume.metric }}">비체적(ft³/lb)</span> <span class="ps-value muted" id="am-frac-ma-v">—</span></div>
+
+                    <div class="btn-row">
+                        <button class="copy-btn" id="am-frac-copy">혼합공기 상태 복사</button>
+                    </div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">계산 예</h2>
+                <p class="ref-note worked-intro">
+                    같은 세 공기 흐름을 질량분율로 나타내면
+                    <span data-us="{{ pageMessages.unitText.exampleFractions.us }}" data-metric="{{ pageMessages.unitText.exampleFractions.metric }}">22 %/67 %/11 %</span>입니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>이미 질량 단위이므로 체적유량을 질량유량으로 바꾸는 단계를 건너뜁니다.</li>
+                    <li>절대습도(함습비, W)와 <button type="button" data-gloss="enthalpy">엔탈피</button>를 직접 질량 가중합니다.
+                        <code>W<sub>mix</sub> = 0.22·W<sub>1</sub> + 0.67·W<sub>2</sub> + 0.11·W<sub>3</sub></code>,
+                        <code>h<sub>mix</sub></code>도 같은 방식입니다.</li>
+                    <li><button type="button" data-gloss="dry-bulb">건구온도</button>를 같은 방식으로 역산하고 전체 상태를 구성합니다.</li>
+                </ol>
+                <p class="ref-note">
+                    계통표에 "외기 분율"과 DB·WB가 함께 있으면 이 탭을 사용하세요.
+                    패널에 CFM과 댐퍼 위치가 표시되면 질량유량 탭을 사용하세요.
+                </p>
+            </section>
+        </div>
+
+        <section class="tool-body-row">
+            <p class="ref-note">
+                <strong>이 수치가 어디에 쓰이는지 유의하세요.</strong> 혼합 계산은 정확하지만 입력값은 그렇지 않은 경우가 많습니다. 댐퍼가 고착되고 풍량은 변하며 단일 지점 센서는 층상화된 플레넘의 한 층만 읽습니다. 혼합공기 결과를 결빙 판단에 사용할 때는 이론 확인과 보조 판단으로만 삼고 저온 방지 하드웨어가 실제 보호를 담당하게 하세요. 한계를 넘은 뒤의 상황은
+                <a href="/ko/tools/coil-freeze-risk.html">코일 동결 위험 점검기</a>에서 설명합니다.
+            </p>
+        </section>
+    </div>
+
+    {{ faqBlock(faqs, "혼합공기 온도 자주 묻는 질문") }}
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/psychrometric-chart.html', label: '습공기선도'},
+            {href: '/ko/tools/economizer-ratio.html', label: '외기냉방 비율 도우미'},
+            {href: '/ko/tools/coil-freeze-risk.html', label: '코일 동결 위험 점검기'}
+        ],
+        lessons: [
+            {href: '/ko/education/psychrometrics-basics.html', label: '습공기 상태 해석 기초'},
+            {href: '/ko/education/air-handlers.html', label: '공기조화기(AHU)'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/psychrometrics-basics.html', label: '습공기 상태 해석 기초 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

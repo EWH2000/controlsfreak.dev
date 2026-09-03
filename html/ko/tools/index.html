@@ -1,0 +1,338 @@
+---
+title: 도구 — controlsfreak.dev
+description: HVAC 제어 실무를 위한 무료 계산기와 변환기입니다. BACnet/IP·Modbus 도구, 신호 스케일링, 습공기 상태, 서미스터 곡선, 냉매 P-T를 제공합니다.
+sourceContentHash: 15440b13096bd45ee60b4d2940f01c82b4b474ded9144b3c1cdbb2ddcca0e2c8
+canonical: https://controlsfreak.dev/ko/tools/
+nav: tools
+---
+{% extends "html/tools/index.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <h1 class="section-label">도구</h1>
+        <div class="section-line"></div>
+    </div>
+
+    <p class="landing-intro">
+        일상적인 업무에 쓰는 계산기, 변환기, 뷰어입니다. 필요한 도구를 선택하세요. 로그인이나 설치가 필요 없으며 추적 기능도 없습니다. 업계에 처음 들어와 제목이 낯선 약어로만 보인다면 <a href="/ko/education/">학습 자료</a>에서 각 도구의 배경 개념을 확인할 수 있습니다.
+    </p>
+
+    <div class="filter-chips" role="group" aria-label="범주별 도구 필터">
+        <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
+            전체 <span class="filter-chip-count">32</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="hvac" aria-pressed="false">
+            HVAC <span class="filter-chip-count">8</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
+            프로토콜 <span class="filter-chip-count">8</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="signals" aria-pressed="false">
+            신호 <span class="filter-chip-count">3</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="airflow" aria-pressed="false">
+            풍량 <span class="filter-chip-count">6</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="electrical" aria-pressed="false">
+            전기 <span class="filter-chip-count">3</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
+            수배관 <span class="filter-chip-count">4</span>
+        </button>
+    </div>
+
+    <div class="card-grid">
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/signal-scaling.html',
+            titleShort: '신호 스케일링',
+            titleFull:  '신호 스케일링 계산기',
+            desc:       'mA / V 신호와 공학 단위를 양방향으로 변환하고, 스팬 대비 백분율을 표시합니다. 두 점에서 기울기와 오프셋을 구해 Niagara ProxyExt에 바로 붙여 넣을 수 있는 탭도 제공합니다.',
+            pills:      ['아날로그 I/O', '4-20 mA', '0-10 V', '기울기 / 오프셋'],
+            category:   'signals'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/thermistor-calculator.html',
+            titleShort: '서미스터',
+            titleFull:  '서미스터 / RTD 계산기',
+            desc:       '일반적인 HVAC 센서의 온도와 저항을 양방향으로 조회합니다. 10K Type II / III, Johnson 8.7K, Schneider Type 5, 20K, 3K, 1K Balco, Pt100, Pt1000을 지원하며 측정값으로 알 수 없는 센서도 식별할 수 있습니다.',
+            pills:      ['센서', 'NTC / RTD', '온도 ↔ 저항', '미확인 센서 식별'],
+            category:   'signals'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/pid-parameter-translator.html',
+            titleShort: 'PID 변환기',
+            titleFull:  'PID 파라미터 변환기',
+            desc:       '하나의 튜닝값을 여러 표기 방식으로 변환합니다. 이득 ↔ 비례대, repeats/min ↔ 적분시간(min / s), 레이트 ↔ 미분 이득, 표준형 ↔ 직렬형 ↔ 병렬형 알고리즘을 지원합니다.',
+            pills:      ['제어 루프', '이득 ↔ 비례대', '리셋 ↔ Ti', 'PID 형식'],
+            category:   'signals'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/modbus-register-viewer.html',
+            titleShort: 'Modbus 레지스터',
+            titleFull:  'Modbus 레지스터 뷰어',
+            desc:       '16비트 레지스터를 클릭 가능한 비트 격자로 표시하고 십진수·16진수 입력과 양방향으로 연동합니다. 십진수, 16진수, 2진수 값을 함께 확인할 수 있습니다.',
+            pills:      ['Modbus', '16비트', '십진 / 16진 / 2진'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/modbus-functions.html',
+            titleShort: 'Modbus FC',
+            titleFull:  'Modbus 기능 코드 및 CRC',
+            desc:       '기능 코드와 예외 코드를 이름이나 번호로 조회합니다. RTU CRC-16 계산기로 프레임 체크섬을 생성하거나 검증할 수도 있습니다.',
+            pills:      ['Modbus', '기능 코드', '예외 응답', 'CRC-16'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/bacnet-ip-converter.html',
+            titleShort: 'BACnet/IP 16진수',
+            titleFull:  'BACnet/IP 16진수 변환기',
+            desc:       'EBO가 BACnet/IP 장치에 표시하는 16진수 주소 문자열과 점으로 구분한 십진수 IP·UDP 포트를 양방향으로 변환합니다.',
+            pills:      ['BACnet/IP', 'UDP 47808', '16진수 ↔ 십진수'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/bacnet-objects.html',
+            titleShort: 'BACnet 객체',
+            titleFull:  'BACnet 객체 참고 자료',
+            desc:       '객체 유형, 속성 식별자, 공학 단위 열거형을 이름이나 번호로 필터링합니다. 표준 문서를 열지 않고도 객체 유형 1과 속성 85를 해석할 수 있습니다.',
+            pills:      ['BACnet', '객체 유형', '속성 ID', '공학 단위'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/bacnet-vendor-ids.html',
+            titleShort: 'BACnet 벤더 ID',
+            titleFull:  'BACnet 벤더 ID 조회',
+            desc:       'ASHRAE가 배정한 벤더 ID 등록부 전체를 검색 가능한 표로 제공합니다. 장치가 I-Am에서 보고한 Vendor_Identifier를 해석하거나 1,600개가 넘는 제조사를 이름으로 필터링할 수 있습니다.',
+            pills:      ['BACnet', 'Vendor_Identifier', 'Property 120', '등록부'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/bacnet-units.html',
+            titleShort: 'BACnet 단위',
+            titleFull:  'BACnet 공학 단위 디코더',
+            desc:       'BACnet Units 열거형 전체(property 117)를 필터링 가능한 표로 제공합니다. 포인트가 단위로 보고한 숫자를 붙여 넣어 이름을 확인하거나, 255개 표준 값을 번호·이름·기호로 필터링할 수 있습니다.',
+            pills:      ['BACnet', 'Property 117', '단위 열거형', '디코딩'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/bacnet-error-codes.html',
+            titleShort: 'BACnet 오류',
+            titleFull:  'BACnet 오류 코드 디코더',
+            desc:       '장치가 요청을 거부할 때 반환하는 오류 클래스와 코드, Reject·Abort 사유를 해석합니다. unknown-property, write-access-denied, APDU-too-long Abort 등의 의미를 검색할 수 있습니다.',
+            pills:      ['BACnet', 'Error / Reject / Abort', '클래스 + 코드', '디코딩'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/bacnet-priority.html',
+            titleShort: 'BACnet 우선순위',
+            titleFull:  'BACnet 우선순위 배열',
+            desc:       '16개 명령 슬롯에 값 또는 NULL을 설정하고 Present_Value가 NULL이 아닌 슬롯 중 번호가 가장 낮은 슬롯으로 결정되는 과정을 확인합니다. 우선순위 스택, Relinquish_Default, NULL 쓰기로 오버라이드를 해제하는 이유를 다룹니다.',
+            pills:      ['BACnet', 'Priority_Array', 'Present_Value', '오버라이드'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/psychrometric-chart.html',
+            titleShort: '습공기선도',
+            titleFull:  '습공기선도',
+            desc:       '대화형 ASHRAE 습공기선도에서 공기조화기의 혼합·냉각·가열·가습 과정을 따라갑니다. 상단의 미국 단위 / 미터법 전환을 따르며 외기와 회기 점을 끌거나 출구 조건을 입력할 수 있습니다. 풍량을 설정하면 코일 용량도 표시됩니다.',
+            pills:      ['HVAC', '습공기 상태', 'ASHRAE', '미국 단위 / 미터법'],
+            category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/economizer-ratio.html',
+            titleShort: '외기냉방 비율',
+            titleFull:  '외기냉방 비율 도우미',
+            desc:       '외기와 회기를 혼합하여 목표 혼합공기 건구온도까지 낮추는 데 필요한 외기 비율을 계산합니다. 가능 여부를 판정하고 고급 외기냉방 로직을 위해 외기와 회기의 엔탈피 절환도 점검합니다.',
+            pills:      ['HVAC', '외기 비율', '혼합 설정값', '엔탈피 점검'],
+            category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/air-mixing.html',
+            titleShort: '혼합공기',
+            titleFull:  '혼합공기 온도 계산기',
+            desc:       '세 공기 흐름을 질량유량(현장 패널의 CFM) 또는 질량분율(계통도의 백분율)로 혼합하고 건구온도, 습도, 엔탈피, 노점을 포함한 전체 혼합공기 상태를 확인합니다.',
+            pills:      ['HVAC', '3개 흐름 혼합', 'CFM 또는 %', '혼합공기 상태'],
+            category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/coil-sizing.html',
+            titleShort: '코일 용량 산정',
+            titleFull:  '코일 용량 산정 계산기',
+            desc:       '냉각 또는 가열 코일의 입구·출구 공기 상태로 전열·현열·잠열 용량을 계산합니다. 알고 있는 부하에서 출구 공기 상태를 역산할 수도 있습니다.',
+            pills:      ['HVAC', '냉각 / 가열', '현열 / 잠열', '정방향 및 역산'],
+            category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/coil-freeze-risk.html',
+            titleShort: '코일 동결 위험',
+            titleFull:  '코일 동결 위험 점검',
+            desc:       '동결방지기 작동 계절의 점검 도구입니다. 혼합공기 조건을 계산하고 튜브 내부 유체(물, 글리콜 또는 증기 응축수)와 비교하여 여유도와 보호 판정을 제공합니다.',
+            pills:      ['HVAC', '혼합공기 온도 여유', '글리콜 / 증기', '판정'],
+            category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/dew-point-calculator.html',
+            titleShort: '노점',
+            titleFull:  '노점 계산기',
+            desc:       '건구온도와 상대습도 또는 습구온도로 노점을 계산하고 습구온도, grains, 엔탈피를 함께 표시합니다. 급기가 회기 노점 아래로 내려가는지 확인하는 코일 점검도 제공합니다.',
+            pills:      ['HVAC', '노점', '코일 점검', '미국 단위 / 미터법'],
+            category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/refrigerant-pt.html',
+            titleShort: '냉매 P-T',
+            titleFull:  '냉매 P-T 및 과열도 계산기',
+            desc:       'R-410A, R-22, R-134a, R-407C, R-404A, R-454B의 포화압력과 온도를 양방향으로 변환합니다. 기포점과 이슬점을 모두 표시해 혼합냉매의 온도 글라이드를 확인하고, 측정한 배관 온도로 과열도·과냉도를 점검합니다.',
+            pills:      ['HVAC', '냉매 6종', '기포점 / 이슬점', '과열도 / 과냉도'],
+            category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/power-energy-converter.html',
+            titleShort: '전력 및 에너지',
+            titleFull:  '전력 및 에너지 변환기',
+            desc:       'W, kW, BTU/hr, MBH, 냉동톤, hp, 보일러 hp, J, kWh, therm, MMBtu 등 모든 전력·에너지 단위를 상호 변환합니다. 시간을 이용해 전력과 에너지를 연결하고 보일러 입력이 버너 턴다운비에 맞는지도 점검합니다.',
+            pills:      ['HVAC', 'BTU / kW / hp', '전력 × 시간', '보일러 턴다운비'],
+            category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/airflow.html',
+            titleShort: '풍량',
+            titleFull:  '풍량 및 속도압',
+            desc:       '현장에서 자주 쓰는 풍량 제곱근 공식을 양방향으로 계산합니다. VAV 박스의 CFM = K × √VP를 정방향으로 풀거나 후드 측정값으로 K를 역산하고, 피토관 속도 V = 4005 × √VP와 덕트 면적으로 CFM을 구합니다.',
+            pills:      ['풍량', 'K 계수', 'V = 4005·√VP', '덕트 CFM'],
+            category:   'airflow'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/airside-load.html',
+            titleShort: '공기측 부하',
+            titleFull:  '공기측 부하 계산기',
+            desc:       '공기측 핵심 공식 세 가지를 모든 방향으로 계산합니다. 현열 q = 1.08 × CFM × ΔT, 잠열 0.68 × CFM × Δgrains, 전열 4.5 × CFM × Δh와 냉동톤을 미국 단위 / 미터법 전환에 맞춰 제공합니다.',
+            pills:      ['풍량', '1.08 / 0.68 / 4.5', '현열 / 잠열 / 전열', '미국 단위 / 미터법'],
+            category:   'airflow'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/duct-traverse.html',
+            titleShort: '덕트 트래버스',
+            titleFull:  '덕트 트래버스 계산기',
+            desc:       '피토관 트래버스 측정값마다 제곱근을 구한 뒤 평균내는 V̄ = 4005 × mean(√VP) 방식으로 정확히 계산합니다. 덕트 면적에서 CFM을 구하고, 디퓨저 Ak 계수 풍량도 정방향 또는 후드 값에서 역산합니다.',
+            pills:      ['풍량', 'mean(√VP)', '피토관 / TAB', 'Ak 계수'],
+            category:   'airflow'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/equipment-airflow.html',
+            titleShort: '풍량 점검',
+            titleFull:  '장비 풍량 점검',
+            desc:       '측정 풍량을 장비 허용범위와 비교합니다. 현재 운전 중인 DX 냉방 용량 기준 CFM/냉동톤으로 결빙·응축수 비산 위험을 판정하고, 가스 퍼니스 온도상승 범위로 허용 CFM 대역을 계산합니다.',
+            pills:      ['풍량', 'CFM / 운전 냉동톤', '온도상승 범위', '판정'],
+            category:   'airflow'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/minimum-outdoor-air.html',
+            titleShort: '최소 외기량',
+            titleFull:  '최소 외기량 계산기',
+            desc:       'ASHRAE 62.1 호흡영역 환기량을 계산합니다. Rp × Pz + Ra × Az에 존 공기분배 유효도를 적용해 외기 댐퍼 최소 비율을 구하고, DCV로 리셋 가능한 몫과 항상 필요한 면적 기준 최소량을 구분합니다.',
+            pills:      ['풍량', 'Rp·Pz + Ra·Az', 'Ez', 'DCV 구분'],
+            category:   'airflow'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/duct-sizer.html',
+            titleShort: '덕트 치수 산정',
+            titleFull:  '덕트 치수 산정 도구',
+            desc:       '덕트 계산을 네 가지 방향으로 수행합니다. CFM과 직경에서 마찰손실률·속도를 구하거나 목표 마찰손실률 또는 속도에 맞춰 치수를 산정합니다. Huebscher 사각 ↔ 원형 변환도 제공하며, 등마찰 조건이 등속도 조건과 다름을 반영합니다.',
+            pills:      ['풍량', 'in. w.c. / 100 ft', 'Altshul-Tsal', '사각 ↔ 원형'],
+            category:   'airflow'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/valve-cv.html',
+            titleShort: '밸브 Cv',
+            titleFull:  '제어 밸브 Cv 계산기',
+            desc:       '유량계수로 제어 밸브를 선정합니다. Cv = Q√(SG/ΔP)를 모든 방향으로 풀고, 밸브 영향도 점검과 미터법 작업을 위한 Kv 등가값을 제공합니다.',
+            pills:      ['수배관', 'Cv / Kv', '영향도', '유량 / ΔP'],
+            category:   'hydronics'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/valve-authority.html',
+            titleShort: '밸브 영향도',
+            titleFull:  '밸브 영향도 계산기',
+            desc:       '완전 개방 밸브와 나머지 분기의 압력강하로 영향도 β를 구합니다. 양호·한계·불량 판정과 β가 낮아질 때 설치 유량 특성이 왜곡되는 모습을 실시간 그래프로 표시합니다.',
+            pills:      ['수배관', '영향도 β', '설치 특성곡선', '판정'],
+            category:   'hydronics'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/affinity-laws.html',
+            titleShort: '상사 법칙',
+            titleFull:  '펌프 및 팬 상사 법칙 계산기',
+            desc:       '알려진 운전점에서 새 속도 또는 절삭 임펠러 조건을 계산합니다. 유량은 비율에, 양정은 비율의 제곱에, 동력은 비율의 세제곱에 따라 변합니다. VFD 에너지 절감의 근거입니다.',
+            pills:      ['펌프 및 팬', '상사 법칙', 'VFD 속도', '임펠러 절삭'],
+            category:   'hydronics'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/transformer-sizing.html',
+            titleShort: '변압기 VA',
+            titleFull:  '제어 변압기 용량 계산기',
+            desc:       '24 VAC 2차측에 연결되는 부하를 나열하고 변압기를 선택해 부하율과 여유 용량을 확인합니다. 변압기 정격에 따른 2차측 권장 퓨즈도 제공합니다.',
+            pills:      ['전기', '24 VAC', 'VA 부하 계산', '퓨즈 용량 산정'],
+            category:   'electrical'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/voltage-drop.html',
+            titleShort: '전압강하',
+            titleFull:  '배선 길이 및 전압강하',
+            desc:       '배선 구간의 구리 저항을 계산하고 신호 특성에 맞춰 판정합니다. 4-20 mA 루프의 공급전압 여유, 0-10 V에서 실제로 발생하는 오차와 오해하기 쉬운 오차, 온도 센서의 리드선 오차를 온도로 표시합니다.',
+            pills:      ['전기', 'AWG', '4-20 mA 루프', '리드선 오차'],
+            category:   'electrical'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/electrical-quick-calc.html',
+            titleShort: '전기 계산',
+            titleFull:  '현장 전기 간편 계산기',
+            desc:       '네 가지 현장 계산을 한곳에서 제공합니다. 옴의 법칙(V/I/R/P 중 두 값), 단상·3상 AC 전력(kW, kVA, kVAR, PF), 모터 HP↔kW 및 전부하전류 추정, NEMA 전압 불평형 점검을 수행합니다.',
+            pills:      ['전기', '옴의 법칙', '3상 전력', '모터 FLA'],
+            category:   'electrical'
+        }) }}
+        {{ navCard({
+            section:    'tools',
+            href:       '/ko/tools/waterside-load.html',
+            titleShort: '수측 부하',
+            titleFull:  '수측 부하 계산기',
+            desc:       '수배관 핵심 공식 q = 500 × GPM × ΔT를 모든 방향으로 계산합니다. 측정 유량과 ΔT가 의미하는 부하, 부하에 필요한 유량, 정상적인 루프의 예상 ΔT를 구하며 냉동톤도 함께 표시합니다.',
+            pills:      ['수배관', 'q = 500·GPM·ΔT', 'MBH / 냉동톤', '미국 단위 / 미터법'],
+            category:   'hydronics'
+        }) }}
+    </div>
+
+</main>
+{% endblock %}

@@ -9,7 +9,7 @@
 
     Usage (in a page template):
 
-        {%- from "nav-card.njk" import navCard -%}
+        {%- from "nav-card.njk" import navCard with context -%}
         {{ navCard({
             section:    'tools',
             href:       '/tools/signal-scaling.html',
@@ -46,21 +46,23 @@
 #}
 
 {% macro navCard(opts) -%}
-    {%- set sectionWord = {
-        tools:      'TOOL',
-        education:  'LESSON',
-        simulators: 'SIM',
-        practice:   'QUIZ',
-        home:       'SECTION'
-    }[opts.section] or 'REF' -%}
-    {%- set statusWord = {
-        tools:      'LIVE',
-        education:  'READ',
-        simulators: 'RUN',
-        practice:   'GO',
-        home:       'OK'
-    }[opts.section] or 'OK' -%}
-<a class="nav-card nav-card--{{ opts.section }}{% if opts.wide %} nav-card--wide{% endif %}"{% if opts.category %} data-category="{{ opts.category }}"{% endif %} href="{{ opts.href }}">
+    {%- set sectionKey = {
+        tools:      'card.section.tools',
+        education:  'card.section.education',
+        simulators: 'card.section.simulators',
+        practice:   'card.section.practice',
+        home:       'card.section.home'
+    }[opts.section] or 'card.section.fallback' -%}
+    {%- set statusKey = {
+        tools:      'card.status.tools',
+        education:  'card.status.education',
+        simulators: 'card.status.simulators',
+        practice:   'card.status.practice',
+        home:       'card.status.home'
+    }[opts.section] or 'card.status.fallback' -%}
+    {%- set sectionWord = sectionKey | t(locale) -%}
+    {%- set statusWord = statusKey | t(locale) -%}
+<a class="nav-card nav-card--{{ opts.section }}{% if opts.wide %} nav-card--wide{% endif %}"{% if opts.category %} data-category="{{ opts.category }}"{% endif %} href="{{ opts.href | localePath(locale) }}">
     <div class="nav-card-titlebar">
         <span>{{ sectionWord }} <span class="titlebar-dots">::</span> {{ opts.titleShort | upper }}</span>
         <span class="ok-pill">{{ statusWord }}</span>
@@ -71,7 +73,7 @@
     </div>
     {%- if (opts.pills and opts.pills.length) or opts.desktopOnly %}
     <div class="nav-card-statusline">
-        {%- if opts.desktopOnly %}<span class="nav-card-pill nav-card-pill--desktop">Desktop only</span>{% endif %}
+        {%- if opts.desktopOnly %}<span class="nav-card-pill nav-card-pill--desktop">{{ "card.desktopOnly" | t(locale) }}</span>{% endif %}
         {%- for p in (opts.pills or []) %}<span class="nav-card-pill">{{ p }}</span>{% endfor %}
     </div>
     {%- endif %}

@@ -1,0 +1,175 @@
+---
+title: BACnet 공학 단위 디코더 — controlsfreak.dev
+description: BACnet Units 열거값을 디코딩합니다. 속성 117의 표준값 0–254 전체를 번호, 이름 또는 기호로 검색할 수 있으며 62는 degrees-Celsius, 84는 CFM입니다.
+sourceContentHash: 4237d995fc5c0ea9fb6f657849388b8bc97bbefea849e9061a7720c23f0ad880
+sourceMessageHash: 1c93647a68b0aad97fc2c765f8e3db96767259f339666b787769925f6e49cbd2
+canonical: https://controlsfreak.dev/ko/tools/bacnet-units.html
+nav: tools
+category: protocols
+keywords: 단위 열거형 속성 117 Present_Value 섭씨 화씨 CFM 공학 단위 디코딩 역검색 ASHRAE 135 no-units 퍼센트 킬로파스칼
+pageMessages:
+  decode:
+    prompt: Units 값을 입력하면 조회됩니다.
+    invalid: Units 값은 이 열거형이 사용하는 Unsigned 범위인 0–65535의 정수여야 합니다.
+    standard: 표준 공학 단위
+    snapshotMissing: 표준 범위이지만 이 데이터 스냅샷에 이름이 없음
+    snapshotFormula: '{id} → 0–{max} 범위에 있지만 여기에는 이름이 없습니다. 최신 표준판의 값일 수 있으므로 ASHRAE 135를 확인하세요.'
+    reserved: 예약된 상한값 — 배정된 단위가 아님
+    reservedFormula: '{id} → 표준 범위(0–{max})의 예약 경계값이며 단위가 아닙니다.'
+    proprietary: 전용/벤더 범위 — 표준 이름 없음
+    proprietaryFormula: '{id} → {min} 이상은 벤더 전용입니다. 의미는 제조사 문서에서 확인하세요.'
+  table:
+    copyTitle: '{code} 복사'
+faqs:
+    - q: BACnet Units 속성이란 무엇인가요?
+      a: 속성 117(<code>Units</code>)은 객체의 <code>Present_Value</code>가 사용하는 공학 단위, 예를 들어 degrees-Celsius, cubic-feet-per-minute, percent 등을 담습니다. 통신선에서는 정수가 전달되고 워크스테이션이 그 번호를 단위 이름으로 매핑하는 열거형입니다. 이 페이지가 바로 그 매핑을 제공합니다. 이 속성이 속한 전체 속성 목록은 <a href="/ko/tools/bacnet-objects.html">BACnet 객체 참고 자료</a>에서 확인하세요.
+    - q: BACnet 열거값 62는 어떤 단위인가요?
+      a: 62는 degrees-Celsius, 64는 degrees-Fahrenheit, 63은 kelvin입니다. 온도 단위가 열거형의 60번대 초반에 모여 있어 이 세 번호를 가장 먼저 외우게 됩니다. 어떤 값이든 위 디코더에 붙여 넣어 확인할 수 있습니다.
+    - q: BACnet 단위 번호의 범위는 어떻게 되나요?
+      a: 0–255는 ASHRAE 표준 범위이며 bacnet-stack은 0–254의 모든 값에 이름을 배정합니다(255는 예약된 상한값). 256–65535는 전용 범위로 벤더가 자체 단위를 정의할 수 있습니다. 이 범위의 번호에는 표준 이름이 없으므로 장치 문서를 확인해야 합니다.
+    - q: 장치에서 단위 이름 대신 번호가 표시되는 이유는 무엇인가요?
+      a: BACnet 통신선에는 항상 열거형 정수만 전달되며, 이를 "degrees-Celsius" 같은 이름으로 바꾸는 일은 클라이언트가 담당합니다. 오래되었거나 다른 체계의 객체 데이터베이스를 쓰는 워크스테이션, 또는 최신 열거형을 불러오지 않은 캡처 도구는 번호만 표시합니다. 바로 그럴 때 이 페이지에 번호를 붙여 넣으면 됩니다.
+    - q: BACnet 단위 95는 무엇인가요?
+      a: 95는 no-units입니다. 비율, 개수 또는 공학 단위가 없는 원시 설정값처럼 무차원인 포인트의 Units 속성에 사용합니다. 98은 percent이며 댐퍼와 밸브 명령에서 매우 자주 접하는 또 하나의 값입니다.
+---
+{% extends "html/tools/bacnet-units.html" %}
+
+{% block content %}
+{% set unitGroups = bacnetEnumTranslations[locale].unitGroups %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · BACnet 공학 단위 디코더</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                BACnet 공학 단위 디코더
+                <span class="tool-tag">BACnet</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>전체 BACnet Units 열거형을 하나의 필터 가능한 표로 제공합니다. 포인트가 단위로 보고한 번호를 붙여 넣으면 이름을 확인할 수 있습니다.</summary>
+            <div class="preamble-rest">
+                객체의 <em>Units</em>는 열거형인 <code>Units</code> 속성(117)입니다. 통신선에는 번호가 전달되고 워크스테이션은 이를 <code>degrees-Celsius</code>나 <code>cubic-feet-per-minute</code> 같은 단위로 매핑합니다.
+                오래된 데이터베이스, 다른 벤더의 장치, 원시 패킷 캡처처럼 도구가 번호만 보여 줄 때 이 페이지에서 디코딩할 수 있습니다.
+                디코더 입력란에 값을 입력하거나, 표준 열거형 0–{{ bacnetUnits.maxStd }} 전체를 번호, 이름 또는 기호로 필터링하세요.
+            </div>
+        </details>
+        <p class="ps-seed-note">입력란에는 예제가 미리 채워져 있습니다. 확인하려는 번호로 수정하세요.</p>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">입력</h2>
+                <div class="ps-row">
+                    <label class="ps-label" for="bunit-id">Units 값 <span style="white-space:nowrap;">(0–65535)</span></label>
+                    <input class="ps-input" type="number" id="bunit-id" min="0" max="65535" step="1" placeholder="62" value="62">
+                </div>
+                <p class="bit-hint" style="margin-top:0.85rem;">속성 시트, 트렌드 내보내기 파일 또는 Wireshark 디코드 결과에서 포인트의 <code>Units</code> 속성으로 표시되는 번호입니다.</p>
+            </section>
+
+            <section role="status" aria-atomic="false">
+                <h2 class="ps-section-label">출력</h2>
+                <div class="ps-row">
+                    <span class="ps-label">공학 단위</span>
+                    <span class="ps-value muted" id="bunit-out-name">—</span>
+                </div>
+                <div class="ps-row">
+                    <span class="ps-label">분야</span>
+                    <span class="ps-value muted" id="bunit-out-group">—</span>
+                </div>
+                <div class="status-pill" id="bunit-status">Units 값을 입력하면 조회됩니다.</div>
+                <div class="btn-row">
+                    <button class="copy-btn" id="bunit-copy-name">단위 이름 복사</button>
+                </div>
+            </section>
+
+        </div>
+        <div class="result-formula flush" id="bunit-formula"></div>
+        <div class="failure-callout" id="bunit-callout" hidden></div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="units-list">전체 BACnet Units 열거형(0–{{ bacnetUnits.maxStd }})</h2>
+            <p class="ref-note" style="margin-top:0;">
+                <code>Units</code> 속성의 모든 표준값을 번호순으로 정리했습니다. 값을 클릭하면 복사됩니다. 괄호 안 기호로도 검색할 수 있습니다.
+            </p>
+            <div class="bunit-controls">
+                <label class="bunit-search-label" for="bunit-search">번호, 이름 또는 기호로 필터링 <span class="bunit-count" id="bunit-count" aria-hidden="true"></span></label>
+                <input class="ps-input" type="search" id="bunit-search" placeholder="예: 62, celsius, kPa, 유량, %">
+            </div>
+            <div class="table-scroll">
+                <table class="ref-table-dense rt-stack" id="bunit-table" data-max-std="{{ bacnetUnits.maxStd }}" data-proprietary-min="{{ bacnetUnits.proprietaryMin }}">
+                    <thead>
+                        <tr><th>값</th><th>공학 단위</th><th>분야</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for u in bacnetUnits.units %}
+                        <tr><td>{{ u.id }}</td><td data-name="{{ u.name }}">{{ u.name | safe }}{% if u.symbol %} <span class="bunit-sym">({{ u.symbol }})</span>{% endif %}</td><td>{{ unitGroups[u.group] or '' }}</td></tr>
+                        {% endfor %}
+                        <tr class="ref-empty bunit-empty" hidden><td colspan="3">이 필터와 일치하는 단위가 없습니다.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="ref-note">
+                <a href="https://github.com/bacnet-stack/bacnet-stack">bacnet-stack</a>의 <code>BACnetEngineeringUnits</code> enum에서 가져왔습니다. 이는 유료로 제공되는 ASHRAE 135 <code>Units</code> 열거형을 사실상 기계 판독 가능한 형태로 옮긴 자료입니다. 가져온 날짜 {{ bacnetUnits.retrieved }}, 표준값 {{ bacnetUnits.count }}개, 범위 0–{{ bacnetUnits.maxStd }}입니다. 현장에서 자주 쓰는 행에는 <a href="/ko/tools/bacnet-objects.html">객체 참고 자료</a>와 공유하는 검토된 이름과 기호를 사용했고, 사용 빈도가 낮은 행에는 bacnet-stack의 표기를 사용했습니다. 정확한 문구가 필요한 경우 표준과 대조하세요. {{ bacnetUnits.proprietaryMin }} 이상은 전용/벤더 범위이므로 여기에는 배정된 이름이 없습니다.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="what-the-units-property-is">Units 속성이란</h2>
+            <p class="ref-note" style="margin-top:0;">
+                모든 아날로그 객체에는 <code>Present_Value</code>가 무엇을 뜻하는지 나타내는 <code>Units</code> 속성(117)이 있습니다. 단위 없는 숫자는 그저 숫자일 뿐입니다. BACnet은 이를 <em>열거형</em>으로 저장합니다. 통신선에 "degrees-Celsius"라는 문자열을 보내는 대신 장치가 정수 62를 보내고, 값을 읽는 클라이언트가 그 이름을 조회합니다. 메시지를 작고 언어 중립적으로 유지하는 대신 한 번의 간접 조회가 필요하며, 이 페이지가 바로 그 과정을 대신합니다.
+            </p>
+            <p class="ref-note">
+                열거형은 대략 분야별로 묶여 있습니다. 온도는 60번대 초반, 압력은 50번대, 유량은 80번대, 전기 단위는 앞부분에 있습니다. 다만 각 표준판에서 역사적인 순서에 따라 번호가 배정되었으므로 계산 규칙은 없습니다. 번호를 알고 있거나 찾아보아야 합니다.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="standard-and-proprietary-ranges">표준 범위와 전용 범위</h2>
+            <p class="ref-note" style="margin-top:0;">
+                0–255는 ASHRAE가 배정하는 범위이며 현재 표준은 {{ bacnetUnits.maxStd }}까지 이름을 정의합니다(255는 예약된 상한값). 장치가 이 범위의 Units 값을 보고하지만 이름이 표시되지 않는다면, 대개 번호가 잘못된 것이 아니라 클라이언트 데이터베이스가 해당 값보다 오래된 것입니다.
+            </p>
+            <p class="ref-note">
+                {{ bacnetUnits.proprietaryMin }}–65535는 전용/벤더 범위입니다. <a href="/ko/tools/bacnet-objects.html">객체 참고 자료</a>의 벤더 전용 객체 유형과 같은 개념으로, 제조사가 자체 장비에서 이해하는 단위를 정의할 수 있습니다. 이 범위의 번호에는 표준 의미가 없으므로 답은 벤더 문서에 있습니다. 어떤 문서를 열어야 하는지는 <a href="/ko/tools/bacnet-vendor-ids.html">벤더 ID 조회</a>에서 확인하세요.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="where-you-see-units-values">원시 Units 값을 접하는 곳</h2>
+            <p class="ref-note" style="margin-top:0;">
+                보통 세 곳에서 접합니다. <code>Units</code>를 이름으로 해석하지 않고 번호로 표시하는 속성 시트, 레이블 대신 열거값을 열에 기록한 트렌드 또는 포인트 내보내기 파일, 그리고 Wireshark가 <code>Units</code> 태그를 가공하지 않은 부호 없는 정수(Unsigned)로 표시한 디코드 패킷입니다. 세 경우 모두 같은 번호이므로 위 입력란에 붙여 넣으세요.
+            </p>
+        </section>
+
+    </div>
+
+    {{ faqBlock(faqs, "BACnet 공학 단위 자주 묻는 질문") }}
+
+    {{ relatedLinks({
+        hub: {href: '/ko/bacnet/', label: 'BACnet 참고 자료 허브'},
+        tools: [
+            {href: '/ko/tools/bacnet-objects.html', label: 'BACnet 객체 참고 자료'},
+            {href: '/ko/tools/bacnet-ip-converter.html', label: 'BACnet/IP 16진수 변환기'},
+            {href: '/ko/tools/bacnet-vendor-ids.html', label: 'BACnet 벤더 ID'}
+        ],
+        lessons: [
+            {href: '/ko/education/bacnet-basics.html', label: 'BACnet 기초'},
+            {href: '/ko/education/bacnet-networking.html', label: 'BACnet 네트워킹'},
+            {href: '/ko/education/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/bacnet-basics.html', label: 'BACnet 기초'},
+            {href: '/ko/practice/bacnet-networking.html', label: 'BACnet 네트워킹'},
+            {href: '/ko/practice/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

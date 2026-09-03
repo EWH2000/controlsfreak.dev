@@ -1,0 +1,565 @@
+---
+title: 공기조화기(AHU) — controlsfreak.dev
+description: 공기조화기 내부에서 회기·배기와 최소 외기가 혼합되고, 필터·가열 및 냉각 코일·급기 팬을 거치며 조화되는 전 과정을 설명합니다.
+canonical: https://controlsfreak.dev/ko/education/air-handlers.html
+nav: education
+category: forced-air
+pairedQuiz: https://controlsfreak.dev/ko/practice/air-handlers.html
+keywords: 공기조화기 AHU 혼합부 혼합공기 회기 배기 외기 급기 팬 필터 코일 토출공기 MA-T DA-T RTU 댐퍼
+sourceContentHash: 393ebd4a0cceb08e9d278b58ba001a6639c81aa4983afde8e00d1f45d80b6adf
+sourceMessageHash: dcc1674c396a23954d3cab228682c7273b85bbf9877a63b4bfc0322033acd429
+pageMessages:
+  widget:
+    fraction:
+      failedOpen: 외기 댐퍼 개방 고장
+      fixedMinimum: 고정 최소 개도
+    status:
+      freezeRisk: 혼합공기가 결빙 온도에 근접 — 동결 방지 장치 작동 영역
+      damperFailed: 외기 댐퍼 개방 고장 — 혼합공기 온도가 외기 온도를 따라갑니다
+      coolingActive: 냉방 — 코일이 출구 공기 목표값을 유지합니다
+      coolingIdle: 냉각 코일 정지 — 혼합공기 온도가 이미 목표값보다 낮습니다
+      heatingActive: 난방 — 코일이 출구 공기 목표값을 유지합니다
+      heatingIdle: 가열 코일 정지 — 혼합공기 온도가 이미 목표값보다 높습니다
+      fanOnly: 팬만 운전 — 급기 온도는 혼합공기 온도에 팬 발열을 더한 값입니다
+    anecdote: >-
+      여기서는 MA-T가 단서를 제공하지만 이 값도 잘못된 정보를 줄 수 있습니다. 맑은 봄날 아침 내내 외기냉방 댐퍼가 오르내리고 압축기가 단주기 운전하면서 서로를 계속 ‘보정’하던 RTU를 추적한 적이 있습니다. 압축기 단수와 동시에 MA-T가 톱니 모양으로 변하는 트렌드가 원인을 보여 주었습니다. 혼합공기 센서가 DX 코일에 너무 가까워 단수가 투입될 때마다 혼합공기 대신 코일의 영향을 읽고 있었습니다. 혼합 플레넘 전체에 평균값 감지 소자를 설치하자 문제가 사라졌습니다. 혼합은 실제 위치에서 일어나며, 센서는 설치된 위치의 상태만 보고합니다.
+---
+{% extends "html/education/air-handlers.html" %}
+
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">교육 · 공기조화기</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">공기조화기(AHU) <span class="tool-tag">공기 시스템</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                상업용 건물의 모든 강제순환식 공조 시스템은 명판에 무엇이라고 쓰여 있든 같은 과정을 중심으로 구성됩니다. 실내에서
+                공기를 끌어내 일부를 외기로 교체하고, 여과하고, 가열하거나 냉각한 뒤 다시 밀어 보냅니다. 이 모든 일을 하는 상자가
+                <em>공기조화기(AHU)</em>입니다. 이 페이지에서는 공기 한 덩어리가 각 구간을 차례로 지나가는 경로를 따라갑니다. 이
+                경로를 이해하면 모든 AHU 그래픽과 혼합공기 경보, “급기 온도가 왜 이상하지?”라는 모든 문의를 더 쉽게 해결할 수
+                있습니다. 처음부터 끝까지 한 가지 질문에 답합니다. <em>공기는 공기조화기를 통과하면서 어떻게 변할까요?</em>
+            </p>
+
+            <div class="callout">
+                <p style="line-height:1.7;">
+                    장비 앞에 서서 AHU, RTU, 보충공기 유닛, 팬코일 중 무엇이라고 불러야 할지 모르겠나요? 이 장비 계열을 구분하는
+                    방법은 별도의 주제이며 <a href="/ko/education/air-unit-identification.html">이 장의 다른 페이지</a>에서 설명합니다.
+                    아래 내용은 모든 장비가 공유하는 구조를 일반 조립형 공기조화기로 나타낸 것입니다. 여기서 경로를 익히면 모든 장비
+                    내부에서 같은 구성을 알아볼 수 있습니다.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · The air path, end to end ───────────────── -->
+            <h2 class="subhead" id="air-path">처음부터 끝까지 이어지는 공기 경로</h2>
+
+            <p>
+                아래 그림 하나에 전체 과정이 담겨 있습니다. 공기는 회기 그릴을 통해 실내를 떠나 <em>회기 덕트</em>를 타고 유닛으로
+                돌아옵니다. 유닛 직전에서 일부는 <em>배기·릴리프</em> 개구부를 통해 건물 밖으로 버려지고, 나머지는
+                <em>혼합부</em>로 내려가 신선한 <em>외기</em>와 합류합니다. 이렇게 섞인 <em>혼합공기</em>는 <em>필터</em>를
+                통과한 다음 <em>가열 코일</em>과 <em>냉각 코일</em>을 지나며 온도가 바뀝니다. 냉각 코일 표면이 젖어 있으면 수분도
+                달라집니다. 마지막으로 <em>급기 팬</em>이 완성된 <em>급기</em>를 실내로 다시 밀어 보냅니다. 이 과정은 매일 온종일
+                반복됩니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 420" role="img" aria-labelledby="ah-d1-title ah-d1-desc"
+                 font-family="var(--mono)">
+                <title id="ah-d1-title">공기조화기를 통과하는 공기 경로</title>
+                <desc id="ah-d1-desc">공기가 실내를 떠나 공기조화기 위쪽의 회기 덕트를 따라 이동합니다. 혼합부 앞에서 배기·릴리프 분기 덕트가 회기의 일부를 건물 밖으로 내보냅니다. 나머지는 혼합부로 내려가 흡입구를 통해 들어온 외기와 합류합니다. 혼합공기는 필터, 가열 코일, 냉각 코일을 차례로 통과하며, 급기 팬이 급기 덕트를 통해 실내로 다시 밀어 보냅니다.</desc>
+
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes duct geometry — the D4 damper blade turns via a
+                     CSS transform on a <rect>. A future geometry write must refresh in
+                     the same breath, or the page must opt out via the `flowGeometryLive`
+                     frontmatter (flowStaticGuard, .eleventy.js). -->
+                <!-- ducts. data-flow="air" hooks flow-engine.js; particle color
+                     follows each duct's stroke. Density 0.5 on the OA and EA
+                     branches is the minimum-outside-air encoding — those ducts
+                     carry a fraction of the return-side flow. -->
+                <path id="ah-d1-ra" data-flow="air" data-flow-static="true" d="M470 170 V140 H100 V260" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="ah-d1-ea" data-flow="air" data-flow-static="true" data-flow-density="0.5" d="M170 140 V55 H60" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="ah-d1-oa" data-flow="air" data-flow-static="true" data-flow-density="0.5" d="M5 230 V310 H40" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <path id="ah-d1-ma" data-flow="air" data-flow-static="true" d="M130 310 H265" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="ah-d1-sa" data-flow="air" data-flow-static="true" d="M305 310 H470 V250" fill="none" stroke="var(--blue)" stroke-width="3"/>
+
+                <!-- flow arrows (static — carry direction for reduced-motion / print) -->
+                <g id="ah-d1-flow-arrows">
+                    <polygon points="395,135 386,140 395,145" fill="var(--blue-cool)"/>
+                    <polygon points="250,135 241,140 250,145" fill="var(--blue-cool)"/>
+                    <polygon points="95,195 105,195 100,206" fill="var(--blue-cool)"/>
+                    <polygon points="165,100 175,100 170,89" fill="var(--text-dim)"/>
+                    <polygon points="115,50 106,55 115,60" fill="var(--text-dim)"/>
+                    <polygon points="0,265 10,265 5,276" fill="var(--teal)"/>
+                    <polygon points="20,305 29,310 20,315" fill="var(--teal)"/>
+                    <polygon points="176,305 185,310 176,315" fill="var(--blue-cool)"/>
+                    <polygon points="324,305 333,310 324,315" fill="var(--blue)"/>
+                    <polygon points="465,285 475,285 470,274" fill="var(--blue)"/>
+                </g>
+
+                <!-- casing + section dividers -->
+                <rect x="40" y="260" width="360" height="100" fill="none" stroke="var(--text-dim)" stroke-width="2"/>
+                <line x1="130" y1="260" x2="130" y2="360" stroke="var(--border)" stroke-width="1"/>
+                <line x1="180" y1="260" x2="180" y2="360" stroke="var(--border)" stroke-width="1"/>
+                <line x1="250" y1="260" x2="250" y2="360" stroke="var(--border)" stroke-width="1"/>
+                <line x1="320" y1="260" x2="320" y2="360" stroke="var(--border)" stroke-width="1"/>
+
+                <!-- equipment glyphs -->
+                <g id="ah-d1-filter">
+                    <rect x="140" y="275" width="30" height="70" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <line x1="143" y1="342" x2="167" y2="278" stroke="var(--border)" stroke-width="1"/>
+                    <line x1="143" y1="322" x2="167" y2="298" stroke="var(--border)" stroke-width="1"/>
+                </g>
+                <g id="ah-d1-htg">
+                    <rect x="195" y="275" width="40" height="70" fill="var(--surface)" stroke="var(--heat)" stroke-width="2"/>
+                    <path d="M201 284 H229 V297 H201 V310 H229 V323 H201 V336 H229" fill="none" stroke="var(--heat)" stroke-width="1.5"/>
+                </g>
+                <g id="ah-d1-clg">
+                    <rect x="265" y="275" width="40" height="70" fill="var(--surface)" stroke="var(--blue)" stroke-width="2"/>
+                    <path d="M271 284 H299 V297 H271 V310 H299 V323 H271 V336 H299" fill="none" stroke="var(--blue)" stroke-width="1.5"/>
+                </g>
+                <g id="ah-d1-fan">
+                    <circle cx="360" cy="310" r="17" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="354,303 369,310 354,317" fill="var(--text-dim)"/>
+                </g>
+
+                <!-- mixing-box convergence arrows -->
+                <g id="ah-d1-mix-arrows">
+                    <polygon points="95,282 105,282 100,293" fill="var(--blue-cool)"/>
+                    <polygon points="52,305 61,310 52,315" fill="var(--teal)"/>
+                </g>
+
+                <!-- the space -->
+                <g id="ah-d1-space">
+                    <rect x="430" y="170" width="80" height="80" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="470" y="207" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">실내</text>
+                    <text x="470" y="222" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">공간</text>
+                </g>
+
+                <!-- labels -->
+                <text x="300" y="128" text-anchor="middle" font-size="15" fill="var(--text)">← 회기</text>
+                <text x="115" y="44" text-anchor="middle" font-size="13" fill="var(--text)">배기 / 릴리프</text>
+                <text x="6" y="218" text-anchor="start" font-size="13" fill="var(--text)">외기</text>
+                <text x="455" y="333" text-anchor="middle" font-size="14" fill="var(--text)">급기</text>
+                <text x="85" y="378" text-anchor="middle" font-size="13" fill="var(--text)">혼합부</text>
+                <text x="155" y="378" text-anchor="middle" font-size="13" fill="var(--text)">필터</text>
+                <text x="215" y="378" text-anchor="middle" font-size="13" fill="var(--text)">가열 코일</text>
+                <text x="285" y="378" text-anchor="middle" font-size="13" fill="var(--text)">냉각 코일</text>
+                <text x="360" y="378" text-anchor="middle" font-size="13" fill="var(--text)">급기 팬</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw oa"></span>외기</span>
+                <span><span class="sw ra"></span>회기 / 혼합공기</span>
+                <span><span class="sw sa"></span>급기</span>
+                <span><span class="sw ea"></span>배기 / 릴리프</span>
+            </div>
+
+            <div class="callout" style="margin-top:1.5rem;">
+                <h3>옥상형 유닛을 본 적이 있나요? <span>· 같은 구성입니다</span></h3>
+                <p>패키지형 RTU는 이 그림의 구성을 지붕 위 내후성 케이스에 접어 넣은 장비입니다. 흡입 후드 뒤의 혼합 댐퍼, 필터 랙, 코일, 급기 팬 등 모든 구간이 더 작게 만들어져 공장에서 미리 조립되어 있습니다. 실질적인 차이는 하나입니다. RTU는 플랜트에서 공급받는 온수·냉수 코일 대신 보통 가스 열교환기와 <button type="button" data-gloss="dx">직팽식(DX)</button> 냉각 코일을 갖춥니다. 이 코일은 같은 캐비닛 안에 압축기와 응축기를 둔 자체 <a href="/ko/education/refrigerant-cycle-basics.html">냉매 사이클</a>의 증발기입니다. 같은 날 RTU와 조립형 AHU를 차례로 살펴보면 각 구성요소가 같은 순서로 배치되어 있음을 확인할 수 있습니다.</p>
+            </div>
+
+            <!-- ───────────────── 2 · The mixing box ───────────────── -->
+            <h2 class="subhead" id="mixing-box">세 덕트가 만나는 혼합부</h2>
+
+            <p>
+                첫 번째 구간은 공기를 처리하는 대신 <em>교환하는</em> 유일한 곳이라 혼동하기 쉽습니다. 이곳에는 세 개의 댐퍼가
+                있습니다. 건물 공기를 얼마나 재사용할지 정하는 <em>회기 댐퍼</em>, 환기용 외기를 얼마나 들일지 정하는
+                <em>외기 댐퍼</em>, 유입 공기가 들어올 자리를 만들기 위해 건물 밖으로 얼마나 내보낼지 정하는
+                <em>배기·릴리프 댐퍼</em>입니다. 외기를 들이는 이유는 무엇일까요? 온도가 아니라 <em>사람</em>을 위해서입니다.
+                사람이 있는 건물은 환기를 위해 일정량의 외기를 계속 공급해야 하며, 법규가 최소량을 정합니다. 들어온 공기만큼은
+                다시 나가야 합니다. 유닛이 외기를 들이면서 아무 공기도 내보내지 않으면 건물이 천천히 풍선처럼 부풀어 로비 문이
+                저절로 열려 있고 출입할 때마다 공기가 거세게 빠져나갑니다. 릴리프 공기가 어디로 가고 공기량 수지가 맞지 않으면
+                어떤 일이 일어나는지는 <a href="/ko/education/building-pressure.html">이 장의 다른 페이지</a>에서 설명합니다. 여기서는
+                공기 교환이 이 구간에서 이루어진다는 점을 기억하세요.
+            </p>
+            <p>
+                기본 유닛이 최소 환기량으로 운전할 때 구성은 단순합니다. 외기(OA) 댐퍼는
+                <em>최소 개도</em>, 즉 <a href="/ko/tools/minimum-outdoor-air.html">법정 환기량</a>을 충족할 만큼만 열려 있고,
+                회기(RA) 댐퍼는 대부분 열리며, 릴리프 댐퍼도 이에 맞춰 조금 열립니다. 세 댐퍼는 서로 연동되어 함께 움직입니다.
+                최소 개도보다 더 열어 외기로 건물을 무상 냉방하는 운전은 <em><button type="button" data-gloss="economizer">외기냉방</button></em>
+                시퀀스입니다. 이는 자체 로직과 고장 형태를 가진 완전히 별개의 판단이며
+                <a href="/ko/education/economizers.html">이 장의 다음 페이지</a>에서 설명합니다. 이 페이지에서는 모든 댐퍼를 최소
+                개도로 유지합니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 520 400" role="img" aria-labelledby="ah-d2-title ah-d2-desc"
+                 font-family="var(--mono)">
+                <title id="ah-d2-title">최소 외기량으로 운전하는 혼합부 상세도</title>
+                <desc id="ah-d2-desc">세 개의 댐퍼 조립체가 있는 혼합부입니다. 회기는 대부분 열린 댐퍼를 통해 오른쪽에서 들어옵니다. 외기는 최소 개도로 유지되는 댐퍼를 통해 왼쪽에서 들어옵니다. 위쪽의 배기·릴리프 댐퍼는 같은 양의 공기가 나가도록 조금 열려 있습니다. 세 기류는 챔버에서 섞이고 혼합공기는 아래쪽으로 나가 필터로 향합니다.</desc>
+
+                <!-- ducts -->
+                <path id="ah-d2-ra" data-flow="air" data-flow-static="true" d="M490 150 H370" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="ah-d2-oa" data-flow="air" data-flow-static="true" data-flow-density="0.5" d="M10 225 H150" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <path id="ah-d2-ea" data-flow="air" data-flow-static="true" data-flow-density="0.5" d="M260 100 V15" fill="none" stroke="var(--text-dim)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="ah-d2-ma" data-flow="air" data-flow-static="true" d="M260 300 V385" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+
+                <!-- flow arrows -->
+                <g id="ah-d2-flow-arrows">
+                    <polygon points="475,145 466,150 475,155" fill="var(--blue-cool)"/>
+                    <polygon points="35,220 44,225 35,230" fill="var(--teal)"/>
+                    <polygon points="255,90 265,90 260,79" fill="var(--text-dim)"/>
+                    <polygon points="255,335 265,335 260,346" fill="var(--blue-cool)"/>
+                    <!-- convergence inside the chamber -->
+                    <polygon points="335,145 326,150 335,155" fill="var(--blue-cool)"/>
+                    <polygon points="171,220 180,225 171,230" fill="var(--teal)"/>
+                    <polygon points="255,270 265,270 260,281" fill="var(--blue-cool)"/>
+                </g>
+
+                <!-- chamber -->
+                <rect x="150" y="100" width="220" height="200" fill="none" stroke="var(--text-dim)" stroke-width="2"/>
+
+                <!-- dampers: frame + parallel blades. Blade angle carries the
+                     position — near-parallel to flow = open, near-perpendicular
+                     = throttled to minimum. -->
+                <g id="ah-d2-ra-damper">
+                    <rect x="410" y="132" width="30" height="36" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="413" y1="139" x2="437" y2="143" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="413" y1="148" x2="437" y2="152" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="413" y1="157" x2="437" y2="161" stroke="var(--text-bright)" stroke-width="1.5"/>
+                </g>
+                <g id="ah-d2-oa-damper">
+                    <rect x="70" y="207" width="30" height="36" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="79" y1="212" x2="73" y2="238" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="89" y1="212" x2="83" y2="238" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="99" y1="212" x2="93" y2="238" stroke="var(--text-bright)" stroke-width="1.5"/>
+                </g>
+                <g id="ah-d2-ea-damper">
+                    <rect x="242" y="40" width="36" height="30" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="246" y1="48" x2="274" y2="45" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="246" y1="57" x2="274" y2="54" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="246" y1="66" x2="274" y2="63" stroke="var(--text-bright)" stroke-width="1.5"/>
+                </g>
+
+                <!-- labels -->
+                <text x="430" y="122" text-anchor="middle" font-size="15" fill="var(--text)">← 회기</text>
+                <text x="425" y="186" text-anchor="middle" font-size="12" fill="var(--text-dim)">대부분 열림</text>
+                <text x="80" y="196" text-anchor="middle" font-size="15" fill="var(--text)">외기 →</text>
+                <text x="85" y="260" text-anchor="middle" font-size="12" fill="var(--text-dim)">최소 개도</text>
+                <text x="300" y="30" text-anchor="start" font-size="13" fill="var(--text)">배기 / 릴리프 ↑</text>
+                <text x="300" y="62" text-anchor="start" font-size="12" fill="var(--text-dim)">조금 열림</text>
+                <text x="260" y="190" text-anchor="middle" font-size="16" font-weight="600" fill="var(--text-bright)">혼합부</text>
+                <text x="260" y="246" text-anchor="middle" font-size="11" fill="var(--text-dim)">세 댐퍼가 연동되어</text>
+                <text x="260" y="262" text-anchor="middle" font-size="11" fill="var(--text-dim)">최소 개도로 유지됩니다</text>
+                <text x="330" y="345" text-anchor="start" font-size="14" fill="var(--text)">혼합공기 ↓</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw oa"></span>외기</span>
+                <span><span class="sw ra"></span>회기 / 혼합공기</span>
+                <span><span class="sw ea"></span>배기 / 릴리프</span>
+            </div>
+
+            <div class="callout" style="margin-top:1.5rem;">
+                <h3>계산 예제 <span>· 혼합공기 온도</span></h3>
+                <p>혼합 온도는 단순한 가중평균을 따릅니다. 회기가 <span data-us="75&nbsp;°F" data-metric="23.9&nbsp;°C">75&nbsp;°F</span>로 돌아오고, 외기는 <span data-us="35&nbsp;°F" data-metric="1.7&nbsp;°C">35&nbsp;°F</span>인 아침이며, 댐퍼가 최소 20&nbsp;%로 열려 있다고 가정합니다. 그러면 혼합공기의 80&nbsp;%는 회기이고 20&nbsp;%는 외기입니다. 계산을 읽기 쉽게 하기 위해 명령 개도를 풍량 비율로 간주한 것입니다. 실제 댐퍼 풍량은 스트로크에 선형적으로 비례하지 않습니다. °F 단위에서는 0.8&nbsp;×&nbsp;75&nbsp;+&nbsp;0.2&nbsp;×&nbsp;35 = 60&nbsp;+&nbsp;7 = 혼합공기 67&nbsp;°F입니다. °C 단위로는 0.8&nbsp;×&nbsp;23.9&nbsp;+&nbsp;0.2&nbsp;×&nbsp;1.7&nbsp;≈&nbsp;19.5입니다. <em>MA-T 센서</em>는 이 값을 읽어야 합니다. 값이 일치하지 않는다면 BMS 명령과 관계없이 실제 댐퍼 위치가 어디인지 그 차이가 알려 줍니다. 혼합 과정 중 온도는 이처럼 단순하지만 수분은 더 복잡합니다. <a href="/ko/education/psychrometrics-basics.html#processes">습공기 상태 해석 기초</a>에서 이를 설명하며, <a href="/ko/tools/air-mixing.html">공기 혼합 계산기</a>에서 실제 기류를 혼합해 볼 수도 있습니다.</p>
+            </div>
+
+            <!-- ───────────────── 3 · Filter, then coils ───────────────── -->
+            <h2 class="subhead" id="filter-coils">필터를 지나 코일로</h2>
+
+            <p>
+                혼합부를 나온 공기는 가장 먼저 <em>필터</em>에 닿습니다. 하류의 모든 장비가 비싸기 때문에 필터는 언제나 앞에
+                위치합니다. 코일은 얇은 핀이 촘촘하게 쌓인 구조입니다. 먼지가 쌓이면 열전달 성능은 급격히 떨어지고 압력손실은
+                커집니다. 대신 필터가 먼지를 받아 내며 자신의 상태도 알려 줍니다. 여재에 먼지가 쌓일수록
+                <em>필터 전후 차압이 증가합니다</em>. 그래서 필터 랙 양쪽에는 ΔP 스위치나 센서가 설치됩니다. 모든 “필터 경보”를
+                발생시키는 BMS 포인트이며, 달력보다 신뢰할 만한 상태 값입니다.
+            </p>
+            <p>
+                다음은 공기를 실제로 변화시키는 코일 구간입니다. <em>가열 코일</em>은 온도만 높이고 공기 속 수분은 그대로
+                통과시킵니다. <em>냉각 코일</em>은 두 가지 일을 합니다. 온도를 낮추고, 핀 표면 온도가 공기의
+                <button type="button" data-gloss="dew-point">노점</button>보다 낮아지면 기류의 수분이 핀에 응축됩니다. 그래서 코일
+                아래에 <em>드레인 팬과 응축수 배관</em>이 있으며, 이 배관이 막히면 두 층 아래 천장에 물자국이 나타나기도 합니다.
+                냉각 코일 출구의 일반적인 설계 목표는 약 <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span>입니다.
+                이 지점에서 수배관 측과 연결됩니다. 조립형 유닛에서 이 코일들은 <em>수배관 부하</em>입니다. 기계실에 설치된 장비가
+                아니라 공기를 둘러쌀 뿐, <a href="/ko/education/load-piping.html">부하 배관</a>에서 살펴본 것과 같은 2방 밸브와
+                공급·환수 배관을 사용합니다. <a href="/ko/tools/coil-sizing.html">코일 용량 선정 계산기</a>에서 실제 부하에 맞춰
+                코일 용량을 선정해 보세요.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 520 400" role="img" aria-labelledby="ah-d3-title ah-d3-desc"
+                 font-family="var(--mono)">
+                <title id="ah-d3-title">필터 및 코일 구간</title>
+                <desc id="ah-d3-desc">공기조화기 케이싱의 일부를 나타낸 그림입니다. 혼합공기가 왼쪽에서 들어와 전후에 차압 센서가 연결된 필터 랙을 지나고, 가열 코일과 아래쪽에 드레인 팬·응축수 배관이 있는 냉각 코일을 차례로 통과합니다. 각 코일에는 케이싱 아래쪽으로 물 공급 및 환수 배관 접속부가 나와 있습니다. 공기는 오른쪽에서 급기로 이 구간을 빠져나갑니다.</desc>
+
+                <!-- air path: mixed air up to the cooling coil, supply air after it -->
+                <path id="ah-d3-ma" data-flow="air" data-flow-static="true" d="M10 210 H295" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <path id="ah-d3-sa" data-flow="air" data-flow-static="true" d="M375 210 H510" fill="none" stroke="var(--blue)" stroke-width="3"/>
+
+                <!-- coil water stubs — the water register inside an air diagram:
+                     the coil is a hydronic load (load-piping.html). -->
+                <path id="ah-d3-hws" data-flow="supply" data-flow-static="true" d="M202 355 V280" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+                <path id="ah-d3-hwr" data-flow="return" data-flow-static="true" d="M222 280 V355" fill="none" stroke="var(--blue-cool)" stroke-width="2.5" stroke-dasharray="7 4"/>
+                <path id="ah-d3-chws" data-flow="supply" data-flow-static="true" d="M307 355 V280" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+                <path id="ah-d3-chwr" data-flow="return" data-flow-static="true" d="M327 280 V355" fill="none" stroke="var(--blue-cool)" stroke-width="2.5" stroke-dasharray="7 4"/>
+
+                <!-- flow arrows -->
+                <g id="ah-d3-flow-arrows">
+                    <polygon points="55,205 64,210 55,215" fill="var(--blue-cool)"/>
+                    <polygon points="160,205 169,210 160,215" fill="var(--blue-cool)"/>
+                    <polygon points="255,205 264,210 255,215" fill="var(--blue-cool)"/>
+                    <polygon points="440,205 449,210 440,215" fill="var(--blue)"/>
+                    <polygon points="197,310 207,310 202,299" fill="var(--blue)"/>
+                    <polygon points="217,330 227,330 222,341" fill="var(--blue-cool)"/>
+                    <polygon points="302,310 312,310 307,299" fill="var(--blue)"/>
+                    <polygon points="322,330 332,330 327,341" fill="var(--blue-cool)"/>
+                </g>
+
+                <!-- casing slice -->
+                <rect x="40" y="120" width="440" height="180" fill="none" stroke="var(--text-dim)" stroke-width="2"/>
+
+                <!-- filter + ΔP taps -->
+                <g id="ah-d3-filter">
+                    <rect x="100" y="140" width="34" height="140" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <line x1="104" y1="272" x2="130" y2="148" stroke="var(--border)" stroke-width="1"/>
+                    <line x1="104" y1="230" x2="130" y2="190" stroke="var(--border)" stroke-width="1"/>
+                </g>
+                <g id="ah-d3-dp">
+                    <line x1="85" y1="160" x2="85" y2="95" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="150" y1="160" x2="150" y2="95" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="85" y1="95" x2="104" y2="86" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="150" y1="95" x2="130" y2="86" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <circle cx="117" cy="82" r="13" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="117" y="86" text-anchor="middle" font-size="12" fill="var(--text-bright)">ΔP</text>
+                    <text x="117" y="55" text-anchor="middle" font-size="12" fill="var(--text-dim)">필터 오염 ΔP</text>
+                </g>
+
+                <!-- heating coil -->
+                <g id="ah-d3-htg">
+                    <rect x="190" y="140" width="44" height="140" fill="var(--surface)" stroke="var(--heat)" stroke-width="2"/>
+                    <path d="M196 147 H228 V161 H196 V175 H228 V189 H196 V203 H228 V217 H196 V231 H228 V245 H196 V259 H228 V273 H196" fill="none" stroke="var(--heat)" stroke-width="1.5"/>
+                </g>
+
+                <!-- cooling coil + drain pan + condensate -->
+                <g id="ah-d3-clg">
+                    <rect x="295" y="140" width="44" height="140" fill="var(--surface)" stroke="var(--blue)" stroke-width="2"/>
+                    <path d="M301 147 H333 V161 H301 V175 H333 V189 H301 V203 H333 V217 H301 V231 H333 V245 H301 V259 H333 V273 H301" fill="none" stroke="var(--blue)" stroke-width="1.5"/>
+                </g>
+                <g id="ah-d3-pan">
+                    <path d="M290 282 V290 H348 V282" fill="none" stroke="var(--text-dim)" stroke-width="2"/>
+                    <path d="M344 290 V325 H370" fill="none" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="378" y="329" text-anchor="start" font-size="12" fill="var(--text-dim)">응축수 배수</text>
+                </g>
+
+                <!-- labels -->
+                <text x="50" y="176" text-anchor="start" font-size="14" fill="var(--text)">혼합</text>
+                <text x="50" y="194" text-anchor="start" font-size="14" fill="var(--text)">공기 →</text>
+                <text x="372" y="192" text-anchor="start" font-size="14" fill="var(--text)">급기 →</text>
+                <text x="317" y="108" text-anchor="middle" font-size="12" fill="var(--text-dim)">이곳에서 공기 온도가 노점을 통과합니다</text>
+                <text x="117" y="134" text-anchor="middle" font-size="13" fill="var(--text)">필터</text>
+                <text x="212" y="134" text-anchor="middle" font-size="13" fill="var(--text)">가열 코일</text>
+                <text x="212" y="372" text-anchor="middle" font-size="12" fill="var(--text-dim)">HWS / HWR</text>
+                <text x="317" y="134" text-anchor="middle" font-size="13" fill="var(--text)">냉각 코일</text>
+                <text x="317" y="372" text-anchor="middle" font-size="12" fill="var(--text-dim)">CHWS / CHWR</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw ra"></span>혼합공기</span>
+                <span><span class="sw sa"></span>급기</span>
+            </div>
+
+            <!-- ───────────────── 4 · The supply fan ───────────────── -->
+            <h2 class="subhead" id="supply-fan">공기를 실제로 움직이는 급기 팬</h2>
+
+            <p>
+                상류의 모든 구성요소는 공기를 <em>조화</em>하지만 공기를 <em>움직이지는</em> 않습니다. 급기 팬은 상자 안에서 공기를
+                움직이는 유일한 장치입니다. 여기서 그린 가장 일반적인 <em>흡입형(draw-through)</em> 배치에서는 팬이 코일 하류에
+                있어 코일을 가로질러 공기를 끌어당긴 뒤 급기 덕트로 밀어 넣습니다. 두 가지를 기억해 두세요. 첫째, 팬 자체도 약간의
+                열을 더합니다. 모터의 일이 기류의 열로 바뀌므로 토출공기는 코일 출구 공기보다 약
+                <span data-us="1&nbsp;°F" data-metric="0.6&nbsp;°C">1&nbsp;°F</span> 높습니다. 그래서 토출공기 온도 센서인
+                <em>DA-T</em>는 코일 계산값과 정확히 일치하지 않습니다. 둘째, 현대식 유닛의 팬에는
+                <a href="/ko/education/vfds.html">가변주파수 드라이브(VFD)</a>가 적용되어 건물 요구에 따라 속도를 바꿀 수 있습니다.
+                유닛이 <em>얼마나 빠르게</em> 운전할지를 정하는 <button type="button" data-gloss="duct-static">덕트 정압</button> 루프는
+                별도의 제어 주제이며 <a href="/ko/education/duct-static-control.html">이 장의 다른 페이지</a>에서 설명합니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 500 340" role="img" aria-labelledby="ah-d4-title ah-d4-desc"
+                 font-family="var(--mono)">
+                <title id="ah-d4-title">급기 팬과 토출부</title>
+                <desc id="ah-d4-desc">급기 팬이 들어 있는 공기조화기 케이싱 구간입니다. 조화된 공기가 왼쪽 코일에서 도달하면 팬이 이를 끌어당겨 오른쪽 급기 덕트로 밀어냅니다. 케이싱 위쪽의 VFD가 제어 배선을 통해 팬 모터를 구동합니다.</desc>
+
+                <!-- air path in / out of the fan -->
+                <path id="ah-d4-in" data-flow="air" data-flow-static="true" d="M10 190 H132" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="ah-d4-out" data-flow="air" data-flow-static="true" d="M208 190 H460" fill="none" stroke="var(--blue)" stroke-width="3"/>
+
+                <!-- VFD control wire — electrical register; discrete signal pulse -->
+                <path id="ah-d4-sig" data-pulse="signal" data-pulse-interval="6000" d="M88 74 V132 H170 V152" fill="none" stroke="var(--amber)" stroke-width="2"/>
+
+                <!-- flow arrows -->
+                <g id="ah-d4-flow-arrows">
+                    <polygon points="55,185 64,190 55,195" fill="var(--blue)"/>
+                    <polygon points="250,185 259,190 250,195" fill="var(--blue)"/>
+                    <polygon points="415,185 424,190 415,195" fill="var(--blue)"/>
+                </g>
+
+                <!-- casing slice -->
+                <rect x="40" y="110" width="280" height="160" fill="none" stroke="var(--text-dim)" stroke-width="2"/>
+
+                <!-- fan -->
+                <g id="ah-d4-fan">
+                    <circle cx="170" cy="190" r="36" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <rect class="ah-fan-blade" id="ah-d4-blade" x="140" y="188" width="60" height="4" rx="2" fill="var(--text-dim)"/>
+                    <circle cx="170" cy="190" r="3" fill="var(--text-bright)"/>
+                </g>
+
+                <!-- VFD -->
+                <g id="ah-d4-vfd">
+                    <rect x="60" y="40" width="56" height="34" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="88" y="62" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">VFD</text>
+                </g>
+
+                <!-- labels -->
+                <text x="250" y="92" text-anchor="middle" font-size="12" fill="var(--text-dim)">흡입형 — 팬이 코일을 통과해 공기를 끌어당김</text>
+                <text x="50" y="166" text-anchor="start" font-size="12" fill="var(--text-dim)">← 코일</text>
+                <text x="50" y="181" text-anchor="start" font-size="12" fill="var(--text-dim)">출구에서</text>
+                <text x="360" y="214" text-anchor="start" font-size="13" fill="var(--text)">덕트로 →</text>
+                <text x="170" y="296" text-anchor="middle" font-size="15" fill="var(--text)">급기 팬</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw sa"></span>급기</span>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                전체 경로를 정리하면 다음과 같습니다. 회기가 들어오고, 혼합부에서 일부를 외기로 교체하고, 필터로 여과한 뒤,
+                코일에서 가열하거나 냉각하며 필요하면 제습하고, 팬이 다시 밀어냅니다. 이 장의 나머지 내용 대부분은 이 구간 중 하나와
+                연결됩니다. 댐퍼를 최소 개도보다 더 열어야 하는 시점은 <a href="/ko/education/economizers.html">외기냉방</a>, 릴리프
+                공기의 행선지는 <a href="/ko/education/building-pressure.html">건물 압력</a>, 급기 덕트 끝의 박스가 하는 일은
+                <a href="/ko/education/vav-systems.html">VAV 시스템</a>, 팬이 운전 속도를 결정하는 방식은
+                <a href="/ko/education/duct-static-control.html">덕트 정압</a>, 환기를 전용 유닛에 맡길 때의 변화는
+                <a href="/ko/education/dedicated-outdoor-air.html">외기전담공조</a>에서 설명합니다. 이 페이지가 지도라면 나머지는
+                각 지역에 해당합니다.
+            </p>
+
+            <!-- ───────────────── 5 · Sensor-strip widget ───────────────── -->
+            <h2 class="subhead" id="sensor-strip">센서로 유닛 경로 따라가기</h2>
+
+            <p>
+                각 구간은 단순한 구조가 아니라 BMS 그래픽에 실제로 표시되는 포인트입니다. 공기 경로 순서대로
+                <em>RA-T</em>, <em>OA-T</em>, <em>MA-T</em>, <em>DA-T</em>입니다. 왼쪽에서 오른쪽으로 읽는 것이 곧 유닛을 따라
+                걷는 일입니다. 아래에서 외기 온도를 설정하고 코일 운전 상태를 선택한 뒤 각 구간에서 공기가 어떻게 변하는지 살펴보세요.
+                위 혼합부 설명과 마찬가지로 댐퍼는 최소 20&nbsp;%에 고정됩니다. 아무리 추운 아침이라도 이 방식으로는 혼합공기가 위험할
+                정도로 차가워질 수 없다는 점을 확인한 다음, 마지막 프리셋을 실행해 보세요.
+            </p>
+
+            <div class="widget" id="ah-widget">
+                <div class="widget-try">
+                    <span class="lbl">실행 예:</span>
+                    <button type="button" data-ah-preset="design">설계 냉방일 (<span data-us="95&nbsp;°F" data-metric="35&nbsp;°C">95&nbsp;°F</span>)</button>
+                    <button type="button" data-ah-preset="mild">온화한 봄날 아침 (<span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span>)</button>
+                    <button type="button" data-ah-preset="winter">겨울 아침 (<span data-us="10&nbsp;°F" data-metric="-12.2&nbsp;°C">10&nbsp;°F</span>)</button>
+                    <button type="button" data-ah-preset="fail">댐퍼 링크 고장</button>
+                </div>
+
+                <div class="ah-w-top">
+                    <div>
+                        <div class="widget-readout-label">외기 비율</div>
+                        <div class="widget-readout-value" id="ah-w-frac">20<span class="unit"> %</span> <span class="unit">— {{ pageMessages.widget.fraction.fixedMinimum }}</span></div>
+                    </div>
+                    <div>
+                        <div class="widget-readout-label" id="ah-w-mode-lbl">코일 모드</div>
+                        <div class="ah-w-modes" role="group" aria-labelledby="ah-w-mode-lbl">
+                            <button type="button" class="ah-w-mode-btn" data-ah-mode="cool" aria-pressed="true">냉방</button>
+                            <button type="button" class="ah-w-mode-btn" data-ah-mode="heat" aria-pressed="false">난방</button>
+                            <button type="button" class="ah-w-mode-btn" data-ah-mode="off" aria-pressed="false">코일 정지</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="widget-slider-head">
+                    <label for="ah-w-oat-slider">외기 온도</label>
+                    <span class="v" id="ah-w-oat-value">95.0 °F</span>
+                </div>
+                <input class="widget-slider" id="ah-w-oat-slider" type="range" min="-10" max="110" step="1" value="95"/>
+
+                <div class="ah-w-strip">
+                    <div class="ah-w-station">
+                        <div class="ah-w-station-name">RA-T · 회기</div>
+                        <div class="ah-w-station-row">
+                            <span class="ah-w-swatch" id="ah-w-ra-swatch"></span>
+                            <span class="ah-w-station-value" id="ah-w-ra-value">75.0 °F</span>
+                        </div>
+                    </div>
+                    <div class="ah-w-station">
+                        <div class="ah-w-station-name">OA-T · 외기</div>
+                        <div class="ah-w-station-row">
+                            <span class="ah-w-swatch" id="ah-w-oa-swatch"></span>
+                            <span class="ah-w-station-value" id="ah-w-oa-value">95.0 °F</span>
+                        </div>
+                    </div>
+                    <div class="ah-w-station">
+                        <div class="ah-w-station-name">MA-T · 혼합공기</div>
+                        <div class="ah-w-station-row">
+                            <span class="ah-w-swatch" id="ah-w-ma-swatch"></span>
+                            <span class="ah-w-station-value" id="ah-w-ma-value">79.0 °F</span>
+                        </div>
+                    </div>
+                    <div class="ah-w-station">
+                        <div class="ah-w-station-name">DA-T · 토출공기</div>
+                        <div class="ah-w-station-row">
+                            <span class="ah-w-swatch" id="ah-w-da-swatch"></span>
+                            <span class="ah-w-station-value" id="ah-w-da-value">56.0 °F</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ah-w-status" id="ah-w-status" aria-live="polite">{{ pageMessages.widget.status.coolingActive }}</div>
+                <div class="ah-w-alert" id="ah-w-alert"></div>
+            </div>
+
+            <p class="ref-note">
+                외기 비율을 20&nbsp;%로 고정한 이유는 무엇일까요? 댐퍼를 최소 개도<em>보다 더</em> 열어 외기로 건물을 무상 냉방할
+                시점을 판단하는 일은 <button type="button" data-gloss="economizer">외기냉방</button>의 역할이며,
+                <button type="button" data-gloss="economizer">외기냉방</button>은 <a href="/ko/education/economizers.html">별도 페이지</a>에서
+                설명하기 때문입니다. 여기서 중요한 것은 최소 개도가 제공하는 이점입니다. 혼합공기의 80&nbsp;%가
+                <span data-us="75&nbsp;°F" data-metric="23.9&nbsp;°C">75&nbsp;°F</span> 회기이므로 슬라이더에서 가장 추운 아침을
+                선택해도 혼합공기는 충분히 따뜻하게 유지됩니다. 최소 개도는 <em>계산상</em> 겨울철에도 안전합니다. 고장 프리셋은 이
+                계산이 성립하지 않을 때의 모습을 보여 줍니다. (여기서는 온도만 다룹니다. 혼합 과정의 수분 측면은
+                <a href="/ko/education/psychrometrics-basics.html#processes">습공기 상태 해석 기초</a>에서 설명합니다.)
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/forced-air/', label: '강제순환식 공조 참고 자료 허브'},
+        tools: [
+            {href: '/ko/tools/psychrometric-chart.html', label: '습공기선도'},
+            {href: '/ko/tools/air-mixing.html', label: '공기 혼합 계산기'},
+            {href: '/ko/tools/coil-sizing.html', label: '코일 용량 선정 계산기'},
+            {href: '/ko/tools/airside-load.html', label: '공기측 부하 계산기'},
+            {href: '/ko/tools/coil-freeze-risk.html', label: '코일 동결 위험 점검기'},
+            {href: '/ko/tools/minimum-outdoor-air.html', label: '최소 외기량 계산기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/ddc-workbench.html', label: 'DDC 워크벤치 — 공기조화기'}
+        ],
+        lessons: [
+            {href: '/ko/education/economizers.html', label: '외기냉방'},
+            {href: '/ko/education/building-pressure.html', label: '건물 압력'},
+            {href: '/ko/education/air-unit-identification.html', label: '공조 유닛 식별'},
+            {href: '/ko/education/vav-systems.html', label: 'VAV 시스템'},
+            {href: '/ko/education/duct-static-control.html', label: '덕트 정압 제어'},
+            {href: '/ko/education/air-balancing.html', label: '공기 밸런싱'},
+            {href: '/ko/education/dedicated-outdoor-air.html', label: '외기전담공조'},
+            {href: '/ko/education/psychrometrics-basics.html', label: '습공기 상태 해석 기초'},
+            {href: '/ko/education/load-piping.html', label: '부하 배관'},
+            {href: '/ko/education/vfds.html', label: '가변주파수 드라이브(VFD)'},
+            {href: '/ko/education/refrigerant-cycle-basics.html', label: '냉매 사이클 기초'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/air-handlers.html', label: '공기조화기'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 교육 목록으로 돌아가기</a>
+
+</main>
+{% endblock %}

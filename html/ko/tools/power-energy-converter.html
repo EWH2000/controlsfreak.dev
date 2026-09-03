@@ -1,0 +1,428 @@
+---
+title: 전력 및 에너지 변환기 — controlsfreak.dev
+description: W, kW, BTU/hr, MBH, 냉동톤, hp, J, kWh, therm, MMBtu 사이에서 전력과 에너지를 변환하고, 시간을 통해 두 값을 환산하며 보일러 입력과 버너 턴다운을 점검합니다.
+sourceContentHash: 618d1b36330f28b33c6256bb89400a0074bbd8cee1fdfb4c5711b413368116dc
+sourceMessageHash: d00e14614c7d0462e023482ff20309a4baaa5200a423169b5a09769e5a9d9966
+canonical: https://controlsfreak.dev/ko/tools/power-energy-converter.html
+nav: tools
+category: hvac
+pageMessages:
+    units:
+        power:
+            w: "W"
+            kw: "kW"
+            mw: "MW"
+            btuh: "BTU/hr"
+            mbh: "MBH"
+            mmbtuh: "MMBtu/hr"
+            ton: "ton"
+            hp: "hp"
+            bhp: "boiler hp"
+            kcalh: "kcal/hr"
+        energy:
+            j: "J"
+            kj: "kJ"
+            mj: "MJ"
+            gj: "GJ"
+            wh: "Wh"
+            kwh: "kWh"
+            mwh: "MWh"
+            btu: "BTU"
+            kbtu: "kBtu"
+            mmbtu: "MMBtu"
+            therm: "therm"
+            kcal: "kcal"
+        time:
+            s: "s"
+            min: "min"
+            hr: "hr"
+            day: "day"
+            yr: "yr"
+    convert:
+        prompt: "값을 입력하면 모든 등가값을 확인할 수 있습니다."
+        error: "변환할 숫자를 입력하세요."
+        powerDimension: "{value} {unit} — 전력, 즉 단위 시간당 에너지의 비율입니다."
+        energyDimension: "{value} {unit} — 에너지량입니다."
+    bridge:
+        labels:
+            energy: "에너지"
+            power: "전력"
+            time: "시간"
+        errors:
+            energyInputs: "에너지를 계산하려면 전력과 시간을 입력하세요."
+            powerInputs: "전력을 계산하려면 에너지와 시간을 입력하세요."
+            timePositive: "전력을 계산하려면 시간이 0보다 커야 합니다."
+            timeInputs: "시간을 계산하려면 에너지와 전력을 입력하세요."
+            powerPositive: "시간을 계산하려면 전력이 0보다 커야 합니다."
+    boiler:
+        decodeUnread: "해석할 수 없습니다. 최소 / 고연소 하한 ÷ 고연소 상한 단위 형식으로 입력하세요."
+        decode: "최소 연소량 {minimum} {unit} · 고연소 범위 {low}–{high} {unit}"
+        inputError: "보일러 연료 입력 정격을 입력하세요."
+        oversize: "용량 과대 — 설정 가능한 최저 고연소량({highFire})이 보일러 입력을 초과하여 일치하는 고연소량으로 커미셔닝할 수 없습니다."
+        incompatible: "호환 불가 — 버너 최소 연소량({minimum})이 보일러 입력 이상이어서 이 보일러에 맞을 만큼 낮게 연소할 수 없습니다."
+        healthy: "양호한 턴다운비({ratio}) — 부분 부하 제어가 양호하고 사이클링이 적습니다."
+        moderate: "보통 수준의 턴다운비({ratio}) — 운전할 수 있으나 저부하 사이클링에 주의하세요."
+        poor: "낮은 턴다운비({ratio}) — 최소 연소량이 입력의 {percent}%이므로 단주기 운전이 발생할 가능성이 큽니다."
+        formula: "턴다운비 = 입력 {input} ÷ 최소 연소량 {minimum} = {ratio}"
+keywords: 동력 에너지 단위 변환기 와트 킬로와트 BTU MBH MBtu MMBtu therm 줄 kWh 메가줄 마력 보일러 hp 냉동톤 턴다운 버너 Riello 연소율 kcal
+---
+{% extends "html/tools/power-energy-converter.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 전력 및 에너지</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                전력 및 에너지 변환기
+                <span class="tool-tag">전력 · 에너지</span>
+            </h1>
+        </div>
+        <p class="tool-preamble">
+            전력, 에너지, 그리고 두 물리량을 연결하는 시간을 계산합니다. 단위를 서로 변환하고,
+            주어진 시간으로 전력과 에너지를 환산하며, 보일러와 버너의 용량 적합성을 확인합니다.
+        </p>
+        <p class="ps-seed-note">예시 값이 입력되어 있습니다. 현장 값으로 바꾸어 계산하세요.</p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="convert">단위 변환</button>
+            <button class="tab-btn"        data-tab="bridge">전력 × 시간 = 에너지</button>
+            <button class="tab-btn"        data-tab="boiler">보일러 / 버너</button>
+        </div>
+
+        <!-- ───────────────────────── TAB 1 — CONVERT ───────────────────────── -->
+        <div id="tab-convert" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-conv-val">값</label>
+                        <input class="ps-input" type="number" id="pe-conv-val" step="any" placeholder="100" value="100">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-conv-unit">단위</label>
+                        <select class="ps-input" id="pe-conv-unit">
+                            <optgroup label="전력(비율)">
+                                <option value="w">W — 와트</option>
+                                <option value="kw" selected>kW — 킬로와트</option>
+                                <option value="mw">MW — 메가와트</option>
+                                <option value="btuh">BTU/hr — 시간당 BTU</option>
+                                <option value="mbh">MBH — 천 BTU/hr</option>
+                                <option value="mmbtuh">MMBtu/hr — 백만 BTU/hr</option>
+                                <option value="ton">ton — 냉동톤</option>
+                                <option value="hp">hp — 마력</option>
+                                <option value="bhp">boiler hp — 33,475 BTU/hr</option>
+                                <option value="kcalh">kcal/hr — 시간당 킬로칼로리</option>
+                            </optgroup>
+                            <optgroup label="에너지(양)">
+                                <option value="j">J — 줄</option>
+                                <option value="kj">kJ — 킬로줄</option>
+                                <option value="mj">MJ — 메가줄</option>
+                                <option value="gj">GJ — 기가줄</option>
+                                <option value="wh">Wh — 와트시</option>
+                                <option value="kwh">kWh — 킬로와트시</option>
+                                <option value="mwh">MWh — 메가와트시</option>
+                                <option value="btu">BTU — 영국 열량 단위</option>
+                                <option value="kbtu">kBtu — 천 BTU</option>
+                                <option value="mmbtu">MMBtu — 백만 BTU</option>
+                                <option value="therm">therm — 100,000 BTU</option>
+                                <option value="kcal">kcal — 킬로칼로리</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <p class="bit-hint">
+                        전력 또는 에너지 단위를 선택하면 같은 차원의 모든 등가값이 실시간으로 갱신됩니다.
+                        전력을 에너지로 환산하거나 그 반대로 계산하려면 <strong>전력 × 시간 = 에너지</strong> 탭을 사용하세요.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">등가값</h2>
+                    <p class="bit-hint" id="pe-conv-dim">—</p>
+                    <table class="ref-table-dense pe-eq">
+                        <thead>
+                            <tr><th>단위</th><th class="pe-eq-valh">값</th></tr>
+                        </thead>
+                        <tbody id="pe-conv-body">
+                            <tr data-dim="power"><td><span class="pe-eq-sym">W</span> <span class="pe-eq-name">와트</span></td><td class="pe-eq-val" id="pe-conv-w">—</td></tr>
+                            <tr data-dim="power"><td><span class="pe-eq-sym">kW</span> <span class="pe-eq-name">킬로와트</span></td><td class="pe-eq-val" id="pe-conv-kw">—</td></tr>
+                            <tr data-dim="power"><td><span class="pe-eq-sym">MW</span> <span class="pe-eq-name">메가와트</span></td><td class="pe-eq-val" id="pe-conv-mw">—</td></tr>
+                            <tr data-dim="power"><td><span class="pe-eq-sym">BTU/hr</span> <span class="pe-eq-name">시간당 BTU</span></td><td class="pe-eq-val" id="pe-conv-btuh">—</td></tr>
+                            <tr data-dim="power"><td><span class="pe-eq-sym">MBH</span> <span class="pe-eq-name">천 BTU/hr</span></td><td class="pe-eq-val" id="pe-conv-mbh">—</td></tr>
+                            <tr data-dim="power"><td><span class="pe-eq-sym">MMBtu/hr</span> <span class="pe-eq-name">백만 BTU/hr</span></td><td class="pe-eq-val" id="pe-conv-mmbtuh">—</td></tr>
+                            <tr data-dim="power"><td><span class="pe-eq-sym">ton</span> <span class="pe-eq-name">냉동톤</span></td><td class="pe-eq-val" id="pe-conv-ton">—</td></tr>
+                            <tr data-dim="power"><td><span class="pe-eq-sym">hp</span> <span class="pe-eq-name">마력</span></td><td class="pe-eq-val" id="pe-conv-hp">—</td></tr>
+                            <tr data-dim="power"><td><span class="pe-eq-sym">boiler hp</span> <span class="pe-eq-name">보일러 마력</span></td><td class="pe-eq-val" id="pe-conv-bhp">—</td></tr>
+                            <tr data-dim="power"><td><span class="pe-eq-sym">kcal/hr</span> <span class="pe-eq-name">시간당 킬로칼로리</span></td><td class="pe-eq-val" id="pe-conv-kcalh">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">J</span> <span class="pe-eq-name">줄</span></td><td class="pe-eq-val" id="pe-conv-j">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">kJ</span> <span class="pe-eq-name">킬로줄</span></td><td class="pe-eq-val" id="pe-conv-kj">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">MJ</span> <span class="pe-eq-name">메가줄</span></td><td class="pe-eq-val" id="pe-conv-mj">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">GJ</span> <span class="pe-eq-name">기가줄</span></td><td class="pe-eq-val" id="pe-conv-gj">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">Wh</span> <span class="pe-eq-name">와트시</span></td><td class="pe-eq-val" id="pe-conv-wh">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">kWh</span> <span class="pe-eq-name">킬로와트시</span></td><td class="pe-eq-val" id="pe-conv-kwh">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">MWh</span> <span class="pe-eq-name">메가와트시</span></td><td class="pe-eq-val" id="pe-conv-mwh">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">BTU</span> <span class="pe-eq-name">영국 열량 단위</span></td><td class="pe-eq-val" id="pe-conv-btu">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">kBtu</span> <span class="pe-eq-name">천 BTU</span></td><td class="pe-eq-val" id="pe-conv-kbtu">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">MMBtu</span> <span class="pe-eq-name">백만 BTU</span></td><td class="pe-eq-val" id="pe-conv-mmbtu">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">therm</span> <span class="pe-eq-name">100,000 BTU</span></td><td class="pe-eq-val" id="pe-conv-therm">—</td></tr>
+                            <tr data-dim="energy"><td><span class="pe-eq-sym">kcal</span> <span class="pe-eq-name">킬로칼로리</span></td><td class="pe-eq-val" id="pe-conv-kcal">—</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="pe-conv-copy">모두 복사</button>
+                    </div>
+                    <div class="failure-callout" id="pe-conv-callout" hidden></div>
+                </section>
+
+            </div>
+        </div>
+
+        <!-- ──────────────────── TAB 2 — POWER × TIME = ENERGY ──────────────────── -->
+        <div id="tab-bridge" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-br-solve">계산 대상</label>
+                        <select class="ps-input" id="pe-br-solve">
+                            <option value="energy" selected>에너지(= 전력 × 시간)</option>
+                            <option value="power">전력(= 에너지 ÷ 시간)</option>
+                            <option value="time">시간(= 에너지 ÷ 전력)</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-br-power-val">전력</label>
+                        <div class="pe-vu">
+                            <input class="ps-input" type="number" id="pe-br-power-val" step="any" placeholder="100" value="100">
+                            <select class="ps-input" id="pe-br-power-unit" aria-label="전력 단위">
+                                <option value="w">W</option>
+                                <option value="kw" selected>kW</option>
+                                <option value="mw">MW</option>
+                                <option value="btuh">BTU/hr</option>
+                                <option value="mbh">MBH</option>
+                                <option value="mmbtuh">MMBtu/hr</option>
+                                <option value="ton">ton</option>
+                                <option value="hp">hp</option>
+                                <option value="bhp">boiler hp</option>
+                                <option value="kcalh">kcal/hr</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-br-time-val">시간</label>
+                        <div class="pe-vu">
+                            <input class="ps-input" type="number" id="pe-br-time-val" step="any" placeholder="24" value="24">
+                            <select class="ps-input" id="pe-br-time-unit" aria-label="시간 단위">
+                                <option value="s">s(초)</option>
+                                <option value="min">min(분)</option>
+                                <option value="hr" selected>hr(시간)</option>
+                                <option value="day">day(일)</option>
+                                <option value="yr">yr(년)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-br-energy-val">에너지</label>
+                        <div class="pe-vu">
+                            <input class="ps-input" type="number" id="pe-br-energy-val" step="any" placeholder="—">
+                            <select class="ps-input" id="pe-br-energy-unit" aria-label="에너지 단위">
+                                <option value="j">J</option>
+                                <option value="kj">kJ</option>
+                                <option value="mj">MJ</option>
+                                <option value="gj">GJ</option>
+                                <option value="wh">Wh</option>
+                                <option value="kwh" selected>kWh</option>
+                                <option value="mwh">MWh</option>
+                                <option value="btu">BTU</option>
+                                <option value="kbtu">kBtu</option>
+                                <option value="mmbtu">MMBtu</option>
+                                <option value="therm">therm</option>
+                                <option value="kcal">kcal</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">결과</h2>
+                    <div class="ps-row">
+                        <span class="ps-label" id="pe-br-out-label">에너지</span>
+                        <span class="ps-value muted" id="pe-br-out" aria-labelledby="pe-br-out-label">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">기타 등가값</span>
+                        <span class="ps-value muted" id="pe-br-equiv">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="pe-br-copy">결과 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="pe-br-formula"></div>
+                    <div class="failure-callout" id="pe-br-callout" hidden></div>
+                </section>
+
+            </div>
+        </div>
+
+        <!-- ───────────────────────── TAB 3 — BOILER / BURNER ───────────────────────── -->
+        <div id="tab-boiler" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-boil-input-val">보일러 입력(대당)</label>
+                        <div class="pe-vu">
+                            <input class="ps-input" type="number" id="pe-boil-input-val" step="any" placeholder="835" value="835">
+                            <select class="ps-input" id="pe-boil-input-unit" aria-label="보일러 입력 단위">
+                                <option value="w">W</option>
+                                <option value="kw">kW</option>
+                                <option value="mw">MW</option>
+                                <option value="btuh">BTU/hr</option>
+                                <option value="mbh" selected>MBH</option>
+                                <option value="mmbtuh">MMBtu/hr</option>
+                                <option value="bhp">boiler hp</option>
+                                <option value="kcalh">kcal/hr</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-boil-qty">수량(보일러 대수)</label>
+                        <input class="ps-input" type="number" id="pe-boil-qty" step="1" min="1" placeholder="1" value="2">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-boil-min-val">버너 최소 연소량</label>
+                        <div class="pe-vu">
+                            <input class="ps-input" type="number" id="pe-boil-min-val" step="any" placeholder="570" value="570">
+                            <select class="ps-input" id="pe-boil-min-unit" aria-label="버너 최소 연소량 단위">
+                                <option value="w">W</option>
+                                <option value="kw">kW</option>
+                                <option value="mw">MW</option>
+                                <option value="btuh">BTU/hr</option>
+                                <option value="mbh" selected>MBH</option>
+                                <option value="mmbtuh">MMBtu/hr</option>
+                                <option value="bhp">boiler hp</option>
+                                <option value="kcalh">kcal/hr</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-boil-hi-val">고연소 범위 하한(선택 입력)</label>
+                        <div class="pe-vu">
+                            <input class="ps-input" type="number" id="pe-boil-hi-val" step="any" placeholder="—">
+                            <select class="ps-input" id="pe-boil-hi-unit" aria-label="고연소 범위 하한 단위">
+                                <option value="w">W</option>
+                                <option value="kw">kW</option>
+                                <option value="mw">MW</option>
+                                <option value="btuh">BTU/hr</option>
+                                <option value="mbh" selected>MBH</option>
+                                <option value="mmbtuh">MMBtu/hr</option>
+                                <option value="bhp">boiler hp</option>
+                                <option value="kcalh">kcal/hr</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="pe-boil-riello">Riello 연소 범위 문자열(선택 입력)</label>
+                        <input class="ps-input" type="text" id="pe-boil-riello" placeholder="150/350 ÷ 860 kW">
+                    </div>
+                    <p class="bit-hint">
+                        Riello 표기 형식은 <strong>최소 / 고연소 하한 ÷ 고연소 상한</strong>입니다(÷는
+                        범위를 뜻하는 유럽식 표기입니다). 이 문자열을 붙여 넣으면 위 버너 입력란이 채워지고
+                        조정 가능한 고연소 범위를 해석합니다. 연소 성능도와 커미셔닝 시 설정한
+                        고연소량을 최종 기준으로 사용하세요.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">용량 및 턴다운비</h2>
+                    <div class="ps-row">
+                        <span class="ps-label">유효 턴다운비</span>
+                        <span class="ps-value muted" id="pe-boil-turndown">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">최소 연소량 / 입력(%)</span>
+                        <span class="ps-value muted" id="pe-boil-pct">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">플랜트 입력(합계)</span>
+                        <span class="ps-value muted" id="pe-boil-plant">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">버너 턴다운비</span>
+                        <span class="ps-value muted" id="pe-boil-bturndown">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">해석한 연소 범위</span>
+                        <span class="ps-value muted" id="pe-boil-decode">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="pe-boil-copy">요약 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="pe-boil-formula"></div>
+                    <div class="pe-pills">
+                        <div class="status-pill" id="pe-boil-pill-grade" hidden></div>
+                        <div class="status-pill" id="pe-boil-pill-incompat" hidden></div>
+                        <div class="status-pill" id="pe-boil-pill-oversize" hidden></div>
+                    </div>
+                    <div class="failure-callout" id="pe-boil-callout" hidden></div>
+                </section>
+
+            </div>
+        </div>
+
+        <!-- ───────────────── Shared reference (persists across tabs) ───────────────── -->
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">빠른 참조 및 MBH / MMBtu 혼동 주의</h2>
+            <p class="ref-note worked-intro">
+                <strong>M은 메가가 아니라 로마 숫자로 천을 뜻합니다.</strong> HVAC에서
+                <strong>MBH = MBtu/hr = MBtuh</strong>는 모두 시간당 BTU의 <em>천 배</em>를 뜻하고,
+                <strong>MMBtu</strong>는 BTU의 <em>백만 배</em>를 뜻합니다. &ldquo;MBtu&rdquo;를
+                백만으로 읽거나 &ldquo;MMBtu&rdquo;를 천으로 읽으면 1000배의 오류가 생깁니다.
+                이 도구는 두 단위를 명확히 구분하며 MBH와 MBtu/hr를 같은 단위로 해석합니다.
+            </p>
+            <table class="ref-table-dense">
+                <thead>
+                    <tr><th>단위 1</th><th>등가값</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>kW</td><td>3.412 MBH = 0.2843 ton = 1.341 hp</td></tr>
+                    <tr><td>ton(냉동)</td><td>12 MBH = 3.517 kW = 4.72 hp</td></tr>
+                    <tr><td>hp</td><td>0.7457 kW = 2.544 MBH</td></tr>
+                    <tr><td>boiler hp</td><td>33.47 MBH = 9.81 kW = 0.0335 MMBtu/hr</td></tr>
+                    <tr><td>MMBtu/hr</td><td>1,000 MBH = 293.1 kW</td></tr>
+                    <tr><td>therm</td><td>100,000 BTU = 29.31 kWh = 0.1 MMBtu</td></tr>
+                    <tr><td>kWh</td><td>3,412 BTU = 3.6 MJ</td></tr>
+                    <tr><td>MMBtu</td><td>293.1 kWh = 1,055 MJ = 10 therm</td></tr>
+                </tbody>
+            </table>
+            <p class="ref-note">
+                <strong>계산 예시(이 도구를 만들게 된 서비스 사례):</strong>
+                167 kW 보일러는 570 MBH입니다. 입력이 835 MBH인 보일러에 최소 연소량이
+                570 MBH인 버너를 적용하면 턴다운비는 835 ÷ 570 ≈ <strong>1.46:1</strong>로
+                낮으며 <button type="button" data-gloss="short-cycling">단주기 운전</button>이 발생할 가능성이 큽니다. 버너 출력은 보일러의 총출력이 아니라
+                <em>입력</em>(연료 연소량)에 맞추고, 플랜트 합계는 대당 정격에 수량을 곱해 계산하세요.
+            </p>
+        </section>
+
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/waterside-load.html', label: '수배관 부하 계산기'},
+            {href: '/ko/tools/coil-sizing.html', label: '코일 용량 산정 계산기'},
+            {href: '/ko/tools/electrical-quick-calc.html', label: '현장 전기 간편 계산기'},
+            {href: '/ko/tools/transformer-sizing.html', label: '변압기 VA 용량 산정'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

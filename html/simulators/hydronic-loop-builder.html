@@ -4,9 +4,98 @@ description: Build a hot- or chilled-water loop on two elevations — drop a pla
 canonical: https://controlsfreak.dev/simulators/hydronic-loop-builder.html
 nav: simulators
 keywords: hydronic loop pump coil valve cv balancing delta-t static head primary secondary chilled water flow head operating point developed length pipe friction UA elevation depth
+pageMessages:
+  categories:
+    plant: Plant
+    pumps: Pumps
+    terminals: Terminals
+    valves: Valves
+    fittings: Fittings
+  components:
+    plant: Plant
+    pump: Pump
+    coil: Coil
+    valve2: 2-Way Valve
+    valve3: 3-Way Valve
+    balanceValve: Balance Valve
+    tee: Tee
+  params:
+    plant:
+      mode: Mode
+      lwt: Leaving °F
+      qmax: Capacity (MBH)
+      k: Resistance k
+      srcmode: Source mode
+    pump:
+      h0: Shutoff head (ft)
+      a: Curve a
+      speed: Speed (%)
+      on: Enabled
+    coil:
+      coilmode: Heat model
+      k: Resistance k
+      qdesign: Load (MBH)
+      ua: UA (Btu/h·°F)
+      tspace: Space °F
+    valve2:
+      cv: Cv (full)
+      pos: Position (%)
+      eqpct: Equal-percent
+      rangeability: Rangeability R
+    valve3:
+      cv: Cv (full)
+      pos: Position (%)
+    balanceValve:
+      cv: Cv (full)
+      setting: Setting (%)
+  options:
+    heat: heat
+    cool: cool
+    setpoint: setpoint
+    capacity: capacity
+    load: load
+    ua: ua
+  status:
+    pipingFrom: "Piping from {component}.{port} — click another port."
+    differentComponent: Pick a port on a different component.
+    running: Running
+    paused: Paused
+  component:
+    offSuffix: " · off"
+  readouts:
+    pumpTitle: "PUMP {id}"
+    plantTitle: "PLANT {id}"
+    loopTitle: LOOP
+    flow: Flow
+    head: Head
+    speed: Speed
+    leaving: Leaving
+    entering: Entering
+    load: Load
+    pipeRun: Pipe run
+    segments: Segments
+    empty: Add a pump and a plant to see live readouts.
+  inspector:
+    empty: Click a component to edit it · click two ports to lay pipe · drag in the east view to set depth · Delete removes · Esc cancels
+    pipeTitle: "Pipe {id}"
+    developedLength: Developed length
+    frictionHeadLoss: Friction head loss
+    deletePipe: Delete pipe
+    componentTitle: "{component} · {id}"
+    delete: Delete
+  controls:
+    pause: Pause
+    run: Run
+  view:
+    restoreSplitTitle: Restore split view
+    maximizeTitle: Maximize this view
+    restoreAria: "Restore {view} view"
+    maximizeAria: "Maximize {view} view"
+    north: north
+    east: east
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -557,6 +646,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
         const readoutsEl = byId('hlb-readouts');
         const canvasesEl = byId('hlb-canvases');
         const card = document.querySelector('.tool-card');
+        const msg = (key, values) => window.CFI18n.page(key, values);
 
         const HC = window.HYDRO;
         let system   = HC.makeSystem({ components: [], pipes: [] });
@@ -690,6 +780,18 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
         // ── status helper ──
         function setStatus(text) { statusEl.textContent = text; }
 
+        // hydronic-engine.js keeps stable machine-facing component, category,
+        // parameter, and enum identifiers. Translate only their presentation at
+        // this page boundary so the engine remains language-neutral.
+        const CATEGORY_KEYS = {
+            Plant: 'plant', Pumps: 'pumps', Terminals: 'terminals',
+            Valves: 'valves', Fittings: 'fittings',
+        };
+        function categoryLabel(category) { return msg('categories.' + CATEGORY_KEYS[category]); }
+        function componentLabel(type) { return msg('components.' + type); }
+        function paramLabel(type, name) { return msg('params.' + type + '.' + name); }
+        function optionLabel(value) { return msg('options.' + value); }
+
         // ── palette (grouped by category) ──
         function renderPalette() {
             const palette = byId('hlb-palette');
@@ -699,13 +801,13 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                 if (!types.length) return;
                 const lbl = document.createElement('div');
                 lbl.className = 'hlb-palette-label';
-                lbl.textContent = cat;
+                lbl.textContent = categoryLabel(cat);
                 palette.appendChild(lbl);
                 types.forEach((t) => {
                     const btn = document.createElement('button');
                     btn.type = 'button';
                     btn.className = 'hlb-palette-btn';
-                    btn.textContent = HC.COMPONENTS[t].label;
+                    btn.textContent = componentLabel(t);
                     btn.addEventListener('click', () => addComponent(t));
                     palette.appendChild(btn);
                 });
@@ -793,7 +895,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             const head = document.createElement('div');
             head.className = 'hlb-comp-head';
             const name = document.createElement('span');
-            name.textContent = def.label;
+            name.textContent = componentLabel(comp.type);
             const glyph = document.createElement('span');
             glyph.className = 'hlb-comp-glyph';
             glyph.textContent = comp.id;
@@ -878,11 +980,11 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             if (!pending) {
                 pending = { comp: comp.id, port: portDef.name };
                 renderAll();
-                setStatus('Piping from ' + comp.id + '.' + portDef.name + ' — click another port.');
+                setStatus(msg('status.pipingFrom', { component: comp.id, port: portDef.name }));
                 return;
             }
             if (pending.comp === comp.id) {
-                setStatus('Pick a port on a different component.');
+                setStatus(msg('status.differentComponent'));
                 return;
             }
             // one pipe per port — drop any existing pipe touching either endpoint
@@ -893,7 +995,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             addPipe([a.comp, a.port], [b.comp, b.port]);
             cancelPipe();
             renderAll();
-            setStatus(running ? 'Running' : 'Paused');
+            setStatus(msg(running ? 'status.running' : 'status.paused'));
         }
 
         function addPipe(from, to) {
@@ -1040,7 +1142,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                 const o = c.out || {};
                 let txt = '—';
                 switch (c.type) {
-                    case 'pump':   txt = dispFlow(o.Q) + (o.on ? '' : ' · off'); break;
+                    case 'pump':   txt = dispFlow(o.Q) + (o.on ? '' : msg('component.offSuffix')); break;
                     case 'plant':  txt = dispTemp(o.lwt); break;
                     case 'coil':   txt = 'ΔT ' + fmt(o.dT, 1) + '°'; break;
                     case 'valve2': txt = fmt(o.posPct, 0) + '%'; break;
@@ -1071,29 +1173,29 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             let html = '';
             if (pump) {
                 const o = pump.out || {};
-                html += readoutCard('PUMP ' + pump.id, [
-                    ['Flow', dispFlow(o.Q || 0)],
-                    ['Head', dispHead(o.head || 0)],
-                    ['Speed', fmt(o.speed, 0) + ' %'],
+                html += readoutCard(msg('readouts.pumpTitle', { id: pump.id }), [
+                    [msg('readouts.flow'), dispFlow(o.Q || 0)],
+                    [msg('readouts.head'), dispHead(o.head || 0)],
+                    [msg('readouts.speed'), fmt(o.speed, 0) + ' %'],
                 ], (o.on && (o.Q || 0) > 0.1) ? 'led--run' : 'led--off');
             }
             if (plant) {
                 const o = plant.out || {};
-                html += readoutCard('PLANT ' + plant.id, [
-                    ['Leaving', dispTemp(o.lwt || 70)],
-                    ['Entering', dispTemp(o.ewt || 70)],
-                    ['Load', dispLoad(o.Qheat || 0)],
+                html += readoutCard(msg('readouts.plantTitle', { id: plant.id }), [
+                    [msg('readouts.leaving'), dispTemp(o.lwt || 70)],
+                    [msg('readouts.entering'), dispTemp(o.ewt || 70)],
+                    [msg('readouts.load'), dispLoad(o.Qheat || 0)],
                 ], (o.Q || 0) > 0.1 ? (plant.params.mode === 'cool' ? 'led--comm' : 'led--run') : 'led--off');
             }
             if (system.pipes.length) {
                 let totLen = 0;
                 system.pipes.forEach((p) => { totLen += (p.length || 0); });
-                html += readoutCard('LOOP', [
-                    ['Pipe run', dispLen(totLen)],
-                    ['Segments', String(system.pipes.length)],
+                html += readoutCard(msg('readouts.loopTitle'), [
+                    [msg('readouts.pipeRun'), dispLen(totLen)],
+                    [msg('readouts.segments'), String(system.pipes.length)],
                 ], totLen > 0 ? 'led--run' : 'led--off');
             }
-            if (!html) html = '<span class="hlb-insp-empty">Add a pump and a plant to see live readouts.</span>';
+            if (!html) html = '<span class="hlb-insp-empty">' + msg('readouts.empty') + '</span>';
             readoutsEl.innerHTML = html;
         }
 
@@ -1103,21 +1205,21 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             if (!selected) {
                 const keys = document.createElement('span');
                 keys.className = 'hlb-insp-keys';
-                keys.textContent = 'Click a component to edit it · click two ports to lay pipe · drag in the east view to set depth · Delete removes · Esc cancels';
+                keys.textContent = msg('inspector.empty');
                 inspector.appendChild(keys);
                 return;
             }
             if (selected.kind === 'pipe') {
                 const title = document.createElement('span');
                 title.className = 'hlb-insp-title';
-                title.textContent = 'Pipe ' + selected.id;
+                title.textContent = msg('inspector.pipeTitle', { id: selected.id });
                 inspector.appendChild(title);
-                inspector.appendChild(statRow('Developed length', 'hlb-pipe-len'));
-                inspector.appendChild(statRow('Friction head loss', 'hlb-pipe-dh'));
+                inspector.appendChild(statRow(msg('inspector.developedLength'), 'hlb-pipe-len'));
+                inspector.appendChild(statRow(msg('inspector.frictionHeadLoss'), 'hlb-pipe-dh'));
                 const del = document.createElement('button');
                 del.type = 'button';
                 del.className = 'copy-btn hlb-insp-del';
-                del.textContent = 'Delete pipe';
+                del.textContent = msg('inspector.deletePipe');
                 del.addEventListener('click', deleteSelected);
                 inspector.appendChild(del);
                 refreshInspectorValues();
@@ -1128,7 +1230,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             const def = HC.COMPONENTS[comp.type];
             const title = document.createElement('span');
             title.className = 'hlb-insp-title';
-            title.textContent = def.label + ' · ' + comp.id;
+            title.textContent = msg('inspector.componentTitle', { component: componentLabel(comp.type), id: comp.id });
             inspector.appendChild(title);
 
             (def.params || []).forEach((p) => {
@@ -1146,7 +1248,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                     field = document.createElement('select');
                     (p.options || []).forEach((opt) => {
                         const o = document.createElement('option');
-                        o.value = opt; o.textContent = opt;
+                        o.value = opt; o.textContent = optionLabel(opt);
                         if (comp.params[p.name] === opt) o.selected = true;
                         field.appendChild(o);
                     });
@@ -1170,7 +1272,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                 field.id = inputId;
                 const label = document.createElement('label');
                 label.setAttribute('for', inputId);
-                label.textContent = p.label;
+                label.textContent = paramLabel(comp.type, p.name);
                 if (p.kind === 'bool') { row.appendChild(field); row.appendChild(label); }
                 else { row.appendChild(label); row.appendChild(field); }
                 inspector.appendChild(row);
@@ -1179,7 +1281,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             const del = document.createElement('button');
             del.type = 'button';
             del.className = 'copy-btn hlb-insp-del';
-            del.textContent = 'Delete';
+            del.textContent = msg('inspector.delete');
             del.addEventListener('click', deleteSelected);
             inspector.appendChild(del);
         }
@@ -1256,8 +1358,8 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
         }
         function setRunning(on) {
             running = on;
-            runBtn.textContent = on ? 'Pause' : 'Run';
-            setStatus(on ? 'Running' : 'Paused');
+            runBtn.textContent = msg(on ? 'controls.pause' : 'controls.run');
+            setStatus(msg(on ? 'status.running' : 'status.paused'));
             if (on) startLoop(); else stopLoop();
         }
         function resetSim() {
@@ -1316,8 +1418,10 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                 if (btn) {
                     const on = maximized === v.id;
                     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-                    btn.setAttribute('title', on ? 'Restore split view' : 'Maximize this view');
-                    btn.setAttribute('aria-label', (on ? 'Restore' : 'Maximize') + ' ' + (v.id === 'n' ? 'north' : 'east') + ' view');
+                    btn.setAttribute('title', msg(on ? 'view.restoreSplitTitle' : 'view.maximizeTitle'));
+                    btn.setAttribute('aria-label', msg(on ? 'view.restoreAria' : 'view.maximizeAria', {
+                        view: msg(v.id === 'n' ? 'view.north' : 'view.east'),
+                    }));
                 }
             });
             reflowFullscreen();   // a fullscreen pane changes width when maximized
@@ -1363,7 +1467,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
                 if (selected) { e.preventDefault(); deleteSelected(); }
             } else if (e.key === 'Escape') {
                 const had = !!pending;
-                if (had) { cancelPipe(); renderAll(); setStatus(running ? 'Running' : 'Paused'); e.stopPropagation(); }
+                if (had) { cancelPipe(); renderAll(); setStatus(msg(running ? 'status.running' : 'status.paused')); e.stopPropagation(); }
             }
         });
 
@@ -1373,7 +1477,7 @@ keywords: hydronic loop pump coil valve cv balancing delta-t static head primary
             if (e.target.closest('.hlb-pipe-hit')) return;
             cancelPipe();
             clearSelection();
-            setStatus(running ? 'Running' : 'Paused');
+            setStatus(msg(running ? 'status.running' : 'status.paused'));
         });
 
         // recolour readouts on a units toggle

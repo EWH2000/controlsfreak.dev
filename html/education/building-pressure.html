@@ -6,9 +6,48 @@ nav: education
 category: forced-air
 pairedQuiz: https://controlsfreak.dev/practice/building-pressure.html
 keywords: building pressure static relief exhaust fan power exhaust barometric damper positive negative infiltration exfiltration doors makeup air
+pageMessages:
+  unitText:
+    targetPressureRange:
+      us: "+0.02 to +0.05 in. w.c."
+      metric: "+5 to +12 Pa"
+    buildingPressureExample:
+      us: a few hundredths of an inch
+      metric: a few pascals
+    ductStaticMagnitude:
+      us: whole inches of water column
+      metric: hundreds of pascals
+    buildingStaticMagnitude:
+      us: a few hundredths
+      metric: a few pascals
+  widget:
+    minimumSuffix: " · minimum"
+    direction:
+      out: out
+      in: in
+    stages:
+      label: Power-exhaust stages
+      interlocked: Power-exhaust stages — interlocked to the supply fan
+      following: Power-exhaust stages — following the damper
+    status:
+      strongPositive: Strongly positive — doors standing open; the building found its own relief
+      positive: Positive — doors drifting open, conditioned air pushing out
+      slightlyPositive: Slightly positive — where you want it
+      neutral: Near neutral — acceptable, but no margin against wind and stack
+      negative: Negative — outside air pulling in at every crack
+      strongNegative: Strongly negative — doors heavy, whistling at the weatherstripping
+      barometricShutOutward: " · barometric blades shut — they only relieve outward"
+      barometricShutBelow: " · barometric blades shut — below the crack setting"
+      barometricRelieving: " · barometric relieving — passive, riding a pressure error"
+      powerExhaustMistake: " · stages following the supply fan, not the damper — that’s the mistake"
+      powerExhaustStages: " · {count} of 4 stages running"
+      trackingHood: " · tracking a commissioned offset that never included the hood — the ledger moved, the offset didn’t"
+      trackingNormal: " · relief fan tracking supply at its commissioned offset"
+    anecdote: >-
+      This preset is autobiographical. Early on, I treated power exhaust like a return fan, because nobody had told me they were different animals — a fan on the return side is a fan on the return side, right? So my program ran it the way you’d run a return fan: interlocked with the supply fan, on whenever the unit was on. All winter, at minimum outside air, that exhaust fan dutifully threw away air the dampers weren’t bringing in. The building told on me before any trend did — entrance doors that pulled like they were sprung, a whistle at the weatherstripping you could hear across the vestibule. The fix was one line of logic: call the fan with the <em>damper</em>, not with the unit. A return fan lives in the airstream and runs whenever the unit runs; power exhaust is a relief device, and it only has a job when the dampers open past minimum. Same neighborhood, opposite rules.
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -170,7 +209,7 @@ keywords: building pressure static relief exhaust fan power exhaust barometric d
                 A building is a slightly leaky box with fans pushing air across its envelope in both directions, and its pressure is nothing more mysterious than the bookkeeping. Write it as a ledger. <em>Deposits:</em> outside air brought in by the air handlers — on most buildings, the only deliberate entry. <em>Withdrawals:</em> relief air leaving back through the unit, the dedicated exhaust fans (restrooms, kitchen hoods, janitor closets) that run whether or not the AHU cares, and <em>exfiltration</em> — air pushed out through every crack, joint, and door gap the envelope owns. Supply and return air never appear on the ledger at all: they circulate <em>inside</em> the envelope, moving air from one room to another without ever crossing it. The building's pressure is simply the residual — whatever imbalance is left after the fans have done their pushing, expressed as the tiny pressure it takes to force that leftover air through the envelope's leaks.
             </p>
             <p>
-                And the target isn't zero. Designers hold buildings <em>slightly positive</em> — a setpoint around <span data-us="+0.02 to +0.05&nbsp;in. w.c." data-metric="+5 to +12&nbsp;Pa">+0.02 to +0.05&nbsp;in. w.c.</span> relative to outdoors — so the leakage always flows outward: conditioned air seeping out through the cracks, instead of unfiltered, unconditioned, humid air seeping in. Get it wrong in either direction and the building tells you at the doors. Too positive, and exterior doors drift open against their closers and push back when you pull them shut. Too negative, and doors go heavy, slam behind people, and whistle at the gaps — and in humid weather the infiltrating air drags moisture into wall cavities where nobody wants it. Elevator lobbies and stair doors act up for the same reason: a shaft is just a very tall duct connecting floors that disagree about pressure.
+                And the target isn't zero. Designers hold buildings <em>slightly positive</em> — a setpoint around <span data-us="{{ pageMessages.unitText.targetPressureRange.us }}" data-metric="{{ pageMessages.unitText.targetPressureRange.metric }}">+0.02 to +0.05&nbsp;in. w.c.</span> relative to outdoors — so the leakage always flows outward: conditioned air seeping out through the cracks, instead of unfiltered, unconditioned, humid air seeping in. Get it wrong in either direction and the building tells you at the doors. Too positive, and exterior doors drift open against their closers and push back when you pull them shut. Too negative, and doors go heavy, slam behind people, and whistle at the gaps — and in humid weather the infiltrating air drags moisture into wall cavities where nobody wants it. Elevator lobbies and stair doors act up for the same reason: a shaft is just a very tall duct connecting floors that disagree about pressure.
             </p>
             <p>
                 One asymmetry worth naming before the picture, because it bites hardest on large units: <strong>the return duct never brings back everything the supply duct delivered.</strong> An air handler serving whole floors loses a steady bite of its supply air to the dedicated exhausts drawing from the same spaces — gang restroom fans are the classic — air that leaves the loop mid-lap and exits the roof without ever seeing the mixing box again. That stolen share isn't optional ventilation; it's a standing withdrawal the unit must cover. Size the outside-air minimum below it and the ledger opens every morning already negative, with the dampers sitting innocently at their commanded position. The working rule: <em>minimum outside air ≥ everything the exhaust fans take from the unit's territory, plus the surplus that holds the building positive.</em>
@@ -271,7 +310,7 @@ keywords: building pressure static relief exhaust fan power exhaust barometric d
                      (17,000 × 0.20 = 3,400); the widget's nearest-10 rounding
                      shows 16,990 at 100 % OA. Accepted daylight — closure of
                      the taught math outranks matching that one widget state. -->
-                <p>A constant-volume unit supplies <span data-us="10,000&nbsp;CFM" data-metric="17,000&nbsp;m³/h">10,000&nbsp;CFM</span> with its dampers at a minimum admitting 20&nbsp;% outside air, so it deposits <span data-us="2,000&nbsp;CFM" data-metric="3,400&nbsp;m³/h">2,000&nbsp;CFM</span>. (Damper <em>position</em> and flow <em>fraction</em> aren't actually the same thing in a real mixing box — position-to-flow is nonlinear and drifts — but this page treats them as equal to keep the ledger arithmetic readable.) The restroom exhaust fans withdraw <span data-us="800&nbsp;CFM" data-metric="1,360&nbsp;m³/h">800&nbsp;CFM</span>. The remaining <span data-us="1,200&nbsp;CFM" data-metric="2,040&nbsp;m³/h">1,200&nbsp;CFM</span> has nowhere to go but out through the envelope — and the modest pressure it takes to push that surplus through the cracks, <span data-us="a few hundredths of an inch" data-metric="a few pascals">a few hundredths of an inch</span>, <em>is</em> the building pressure. Every scenario on this page is this same subtraction with different numbers. (Dedicated kitchen and lab exhaust, and life-safety smoke control, play this same ledger with stricter rules — both are their own topics.)</p>
+                <p>A constant-volume unit supplies <span data-us="10,000&nbsp;CFM" data-metric="17,000&nbsp;m³/h">10,000&nbsp;CFM</span> with its dampers at a minimum admitting 20&nbsp;% outside air, so it deposits <span data-us="2,000&nbsp;CFM" data-metric="3,400&nbsp;m³/h">2,000&nbsp;CFM</span>. (Damper <em>position</em> and flow <em>fraction</em> aren't actually the same thing in a real mixing box — position-to-flow is nonlinear and drifts — but this page treats them as equal to keep the ledger arithmetic readable.) The restroom exhaust fans withdraw <span data-us="800&nbsp;CFM" data-metric="1,360&nbsp;m³/h">800&nbsp;CFM</span>. The remaining <span data-us="1,200&nbsp;CFM" data-metric="2,040&nbsp;m³/h">1,200&nbsp;CFM</span> has nowhere to go but out through the envelope — and the modest pressure it takes to push that surplus through the cracks, <span data-us="{{ pageMessages.unitText.buildingPressureExample.us }}" data-metric="{{ pageMessages.unitText.buildingPressureExample.metric }}">a few hundredths of an inch</span>, <em>is</em> the building pressure. Every scenario on this page is this same subtraction with different numbers. (Dedicated kitchen and lab exhaust, and life-safety smoke control, play this same ledger with stricter rules — both are their own topics.)</p>
             </div>
 
             <!-- ───────────────── 2 · The relief lineup ───────────────── -->
@@ -450,7 +489,7 @@ keywords: building pressure static relief exhaust fan power exhaust barometric d
 
                 <div class="widget-slider-head">
                     <label for="bp-w-oa-slider">Outside-air fraction</label>
-                    <span class="v" id="bp-w-oa-value">20 % · minimum</span>
+                    <span class="v" id="bp-w-oa-value">20 %{{ pageMessages.widget.minimumSuffix }}</span>
                 </div>
                 <input class="widget-slider" id="bp-w-oa-slider" type="range" min="20" max="100" step="1" value="20"/>
 
@@ -469,12 +508,12 @@ keywords: building pressure static relief exhaust fan power exhaust barometric d
                     </div>
                     <div class="bp-w-line">
                         <div class="bp-w-line-name">The residual · envelope</div>
-                        <div class="bp-w-line-value" id="bp-w-leak">1,200 CFM out</div>
+                        <div class="bp-w-line-value" id="bp-w-leak">1,200 CFM {{ pageMessages.widget.direction.out }}</div>
                     </div>
                 </div>
 
                 <div class="bp-w-stages" id="bp-w-stages">
-                    <span class="widget-readout-label" id="bp-w-stages-lbl">Power-exhaust stages</span>
+                    <span class="widget-readout-label" id="bp-w-stages-lbl">{{ pageMessages.widget.stages.label }}</span>
                     <span class="bp-w-stage" id="bp-w-st1">1</span>
                     <span class="bp-w-stage" id="bp-w-st2">2</span>
                     <span class="bp-w-stage" id="bp-w-st3">3</span>
@@ -496,7 +535,7 @@ keywords: building pressure static relief exhaust fan power exhaust barometric d
                     <text x="500" y="76" text-anchor="end" font-size="12" fill="var(--text-dim)">positive</text>
                 </svg>
 
-                <div class="bp-w-status" id="bp-w-status" aria-live="polite">Slightly positive — where you want it</div>
+                <div class="bp-w-status" id="bp-w-status" aria-live="polite">{{ pageMessages.widget.status.slightlyPositive }}</div>
                 <div class="bp-w-alert" id="bp-w-alert"></div>
             </div>
 
@@ -513,7 +552,7 @@ keywords: building pressure static relief exhaust fan power exhaust barometric d
 
             <div class="callout" style="margin-top:1.5rem;">
                 <h3>Not the same pressure <span>· building static ≠ duct static</span></h3>
-                <p>The classic conflation, worth killing on sight: <em>duct static pressure</em> is the supply fan's control variable, measured inside the ductwork at <span data-us="whole inches of water column" data-metric="hundreds of pascals">whole inches of water column</span>; <em>building static pressure</em> is the envelope's residual, measured space-to-outdoors at <span data-us="a few hundredths" data-metric="a few pascals">a few hundredths</span>. Different magnitude, different sensor, different loop, different failure symptoms — a healthy duct static says nothing about the ledger, and a neutral building says nothing about the fan. How the supply fan holds its duct static is <a href="/education/duct-static-control.html">a page of its own</a>.</p>
+                <p>The classic conflation, worth killing on sight: <em>duct static pressure</em> is the supply fan's control variable, measured inside the ductwork at <span data-us="{{ pageMessages.unitText.ductStaticMagnitude.us }}" data-metric="{{ pageMessages.unitText.ductStaticMagnitude.metric }}">whole inches of water column</span>; <em>building static pressure</em> is the envelope's residual, measured space-to-outdoors at <span data-us="{{ pageMessages.unitText.buildingStaticMagnitude.us }}" data-metric="{{ pageMessages.unitText.buildingStaticMagnitude.metric }}">a few hundredths</span>. Different magnitude, different sensor, different loop, different failure symptoms — a healthy duct static says nothing about the ledger, and a neutral building says nothing about the fan. How the supply fan holds its duct static is <a href="/education/duct-static-control.html">a page of its own</a>.</p>
             </div>
 
             <p style="margin-top:1.25rem;">
@@ -700,11 +739,11 @@ keywords: building pressure static relief exhaust fan power exhaust barometric d
             const leak  = oaIn - ef - rel;   // by construction = leakFlow(dp)
             const U     = window.Units;
 
-            oaValEl.textContent = oaPct + ' %' + (oaPct === 20 ? ' · minimum' : '');
+            oaValEl.textContent = oaPct + ' %' + (oaPct === 20 ? CFI18n.page('widget.minimumSuffix') : '');
             inEl.textContent     = fmtFlow(oaIn);
             efEl.textContent     = fmtFlow(ef);
             reliefEl.textContent = fmtFlow(rel);
-            leakEl.textContent   = fmtFlow(Math.abs(leak)) + (leak >= 0 ? ' out' : ' in');
+            leakEl.textContent   = fmtFlow(Math.abs(leak)) + ' ' + CFI18n.page(leak >= 0 ? 'widget.direction.out' : 'widget.direction.in');
 
             // Pressure readout + gauge needle (pegged at ±GAUGE_MAX).
             const pegged = Math.abs(dp) > GAUGE_MAX;
@@ -722,9 +761,9 @@ keywords: building pressure static relief exhaust fan power exhaust barometric d
                 stageEls.forEach(function (el, i) {
                     el.className = 'bp-w-stage' + (i < on ? ' on' : '');
                 });
-                stagesLbl.textContent = state.interlocked
-                    ? 'Power-exhaust stages — interlocked to the supply fan'
-                    : 'Power-exhaust stages — following the damper';
+                stagesLbl.textContent = CFI18n.page(state.interlocked
+                    ? 'widget.stages.interlocked'
+                    : 'widget.stages.following');
             }
 
             // Status line: the pressure verdict, plus what the relief
@@ -732,35 +771,35 @@ keywords: building pressure static relief exhaust fan power exhaust barometric d
             let statusClass, statusText;
             if (dp > GAUGE_MAX) {
                 statusClass = 'fault';
-                statusText  = 'Strongly positive — doors standing open; the building found its own relief';
+                statusText  = CFI18n.page('widget.status.strongPositive');
             } else if (dp > 0.06) {
                 statusClass = 'warn';
-                statusText  = 'Positive — doors drifting open, conditioned air pushing out';
+                statusText  = CFI18n.page('widget.status.positive');
             } else if (dp >= 0.01) {
                 statusClass = '';
-                statusText  = 'Slightly positive — where you want it';
+                statusText  = CFI18n.page('widget.status.slightlyPositive');
             } else if (dp > -0.005) {
                 statusClass = '';
-                statusText  = 'Near neutral — acceptable, but no margin against wind and stack';
+                statusText  = CFI18n.page('widget.status.neutral');
             } else if (dp >= -0.06) {
                 statusClass = 'warn';
-                statusText  = 'Negative — outside air pulling in at every crack';
+                statusText  = CFI18n.page('widget.status.negative');
             } else {
                 statusClass = 'fault';
-                statusText  = 'Strongly negative — doors heavy, whistling at the weatherstripping';
+                statusText  = CFI18n.page('widget.status.strongNegative');
             }
             if (state.relief === 'baro') {
-                statusText += dp <= BARO_CRACK
-                    ? ' · barometric blades shut' + (dp < -0.005 ? ' — they only relieve outward' : ' — below the crack setting')
-                    : ' · barometric relieving — passive, riding a pressure error';
+                statusText += CFI18n.page(dp <= BARO_CRACK
+                    ? (dp < -0.005 ? 'widget.status.barometricShutOutward' : 'widget.status.barometricShutBelow')
+                    : 'widget.status.barometricRelieving');
             } else if (isPe) {
                 statusText += state.interlocked
-                    ? ' · stages following the supply fan, not the damper — that’s the mistake'
-                    : ' · ' + peStagesOn(oaPct) + ' of 4 stages running';
+                    ? CFI18n.page('widget.status.powerExhaustMistake')
+                    : CFI18n.page('widget.status.powerExhaustStages', { count: peStagesOn(oaPct) });
             } else if (state.relief === 'track') {
-                statusText += state.hood
-                    ? ' · tracking a commissioned offset that never included the hood — the ledger moved, the offset didn’t'
-                    : ' · relief fan tracking supply at its commissioned offset';
+                statusText += CFI18n.page(state.hood
+                    ? 'widget.status.trackingHood'
+                    : 'widget.status.trackingNormal');
             }
             statusEl.className = 'bp-w-status' + (statusClass ? ' ' + statusClass : '');
             statusEl.textContent = statusText;
@@ -770,7 +809,7 @@ keywords: building pressure static relief exhaust fan power exhaust barometric d
             // air-handlers / economizers precedent).
             if (state.interlocked && dp < -0.06) state.anecdoteShown = true;
             if (state.anecdoteShown) {
-                alertEl.innerHTML = '<div class="widget-anecdote warn">This preset is autobiographical. Early on, I treated power exhaust like a return fan, because nobody had told me they were different animals — a fan on the return side is a fan on the return side, right? So my program ran it the way you’d run a return fan: interlocked with the supply fan, on whenever the unit was on. All winter, at minimum outside air, that exhaust fan dutifully threw away air the dampers weren’t bringing in. The building told on me before any trend did — entrance doors that pulled like they were sprung, a whistle at the weatherstripping you could hear across the vestibule. The fix was one line of logic: call the fan with the <em>damper</em>, not with the unit. A return fan lives in the airstream and runs whenever the unit runs; power exhaust is a relief device, and it only has a job when the dampers open past minimum. Same neighborhood, opposite rules.</div>';
+                alertEl.innerHTML = '<div class="widget-anecdote warn">' + CFI18n.page('widget.anecdote') + '</div>';
             } else {
                 alertEl.innerHTML = '';
             }

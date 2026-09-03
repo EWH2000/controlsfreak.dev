@@ -6,9 +6,62 @@ nav: education
 category: forced-air
 pairedQuiz: https://controlsfreak.dev/practice/air-unit-identification.html
 keywords: rtu ahu mau doas makeup air unit heat pump split system fan coil nameplate mechanical schedule tag tonnage model number identify what is this unit
+pageMessages:
+  families:
+    rtu:
+      name: Packaged RTU
+      call: RTU — packaged rooftop
+      note: 'Everything onboard — the plant came with the box. Heat pump or straight cooling? That&#39;s a nameplate question.'
+    ahu:
+      name: Built-up AHU
+      call: AHU — built-up air handler
+      note: Bare coils and pipe pairs — it borrows a plant that lives elsewhere.
+    mau:
+      name: MAU / DOAS
+      call: MAU — makeup-air unit
+      note: No return duct — a 100% outside-air machine. It replaces what something else throws away.
+    split:
+      name: Split system
+      call: Split — CU outside, air mover inside
+      note: Follow the lineset — identifying one half identifies both.
+    fcu:
+      name: Fan coil
+      call: FCU — fan coil
+      note: A terminal device, not an air handler. Recognition is all this page owes it.
+  mysteries:
+    curb: Roof + everything onboard + both ducts = packaged rooftop. The condenser fans were the first giveaway.
+    basement: Pipe pairs and no compressors — a borrower. The plant lives down the hall.
+    noReturn: 'The missing return duct is the whole identification. It feeds the kitchen&#39;s hungry hood.'
+    liar: The graphic said AHU, the schedule agreed with the graphic, and both were wrong. The cabinet was telling the truth the whole time.
+  hints:
+    sit: 'where does it sit?'
+    cabinet: 'what&#39;s in the cabinet?'
+    air: 'where does its air come from?'
+  nudges:
+    connections: ' The connections usually settle it fastest.'
+    cabinet: ' The cabinet is the deep tell.'
+    siting: ' Ask where it sits.'
+  status:
+    initial: Five families standing. Answer any question, in any order.
+    nothing: Nothing matches that combination. In the field, that means look again — the connections and the cabinet outrank the label. Here, one of the answers is off.
+    roofAhu: ' And yes, even on a roof: the pipes outrank the address.'
+    confirmed: 'Confirmed — {family}. {confirmation}'
+    rightFamily: 'Right family — but that&#39;s not what the scene says. Re-read it: {hint}'
+    cluesConflict: 'The widget agrees with your answers — but the clues don&#39;t. Re-read the scene: {hint}'
+    answerOff: one answer is off.
+    oneStanding: 'One left standing: {family}. {note}'
+    readScene: Read the scene, then answer the three questions from the clues.
+    remaining: '{count} families still standing.{nudge}'
+  unitText:
+    width:
+      us: two feet
+      metric: 0.6 m
+  anecdote:
+    liar: >-
+      <div class="widget-anecdote warn">This mystery is a real building. It had fan coils, air handlers, and rooftop units all serving the same floors — and nobody on site could tell me which was which; they were as turned around as I was. The software was worse: units filed under the wrong family entirely. And the prints that existed didn&#39;t match the tags. So I made the equipment introduce itself: in summer, command a <em>heating</em> valve and watch the controller&#39;s output light — in winter, a cooling command did the same job, on equipment the season had already de-energized. The command moved a signal, not the building. No light to watch? Put a meter on the output terminals. One point, one box, one name at a time, I rebuilt the map the paper had lost. I&#39;ve had to identify units this way more than once. The paper can lie; the cabinet can&#39;t.</div>
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -441,7 +494,7 @@ keywords: rtu ahu mau doas makeup air unit heat pump split system fan coil namep
                         <strong>The machine with no return duct.</strong> Roof again, above the kitchen. Intake hood, burner section, supply duct heading down into the building — and that's it. You walk around it twice looking for the return connection; there isn't one. Fifty feet away, a grease-hooded exhaust fan is throwing a gale.
                     </div>
                     <div class="aid-w-scene" id="aid-w-scene-liar" hidden>
-                        <strong>The building where nothing matched.</strong> The graphic calls it AHU-2. The mechanical schedule says AHU-2 is a <span data-us="30,000&nbsp;CFM" data-metric="51,000&nbsp;m³/h">30,000&nbsp;CFM</span> built-up unit in the penthouse. You are not in the penthouse — you're on a ladder in a ceiling bay, nose to nose with a box <span data-us="two feet" data-metric="0.6&nbsp;m">two feet</span> across: a small fan, a piped coil on a pair of skinny lines, a condensate pan, a grille in the tile below it. Believe the box.
+                        <strong>The building where nothing matched.</strong> The graphic calls it AHU-2. The mechanical schedule says AHU-2 is a <span data-us="30,000&nbsp;CFM" data-metric="51,000&nbsp;m³/h">30,000&nbsp;CFM</span> built-up unit in the penthouse. You are not in the penthouse — you're on a ladder in a ceiling bay, nose to nose with a box <span data-us="{{ pageMessages.unitText.width.us }}" data-metric="{{ pageMessages.unitText.width.metric }}">{{ pageMessages.unitText.width.us }}</span> across: a small fan, a piped coil on a pair of skinny lines, a condensate pan, a grille in the tile below it. Believe the box.
                     </div>
                 </div>
 
@@ -487,7 +540,7 @@ keywords: rtu ahu mau doas makeup air unit heat pump split system fan coil namep
                     <div class="widget-readout-value" id="aid-w-call">—</div>
                 </div>
 
-                <div class="aid-w-status" id="aid-w-status" aria-live="polite">Five families standing. Answer any question, in any order.</div>
+                <div class="aid-w-status" id="aid-w-status" aria-live="polite">{{ pageMessages.status.initial }}</div>
                 <div class="aid-w-alert" id="aid-w-alert"></div>
             </div>
 
@@ -564,34 +617,34 @@ keywords: rtu ahu mau doas makeup air unit heat pump split system fan coil namep
 
         const FAMILIES = {
             rtu: {
-                name: 'Packaged RTU',
+                name: CFI18n.page('families.rtu.name'),
                 sit: ['roof'], cab: ['all'], air: ['mix'],
-                call: 'RTU — packaged rooftop',
-                note: 'Everything onboard — the plant came with the box. Heat pump or straight cooling? That&#39;s a nameplate question.'
+                call: CFI18n.page('families.rtu.call'),
+                note: CFI18n.page('families.rtu.note')
             },
             ahu: {
-                name: 'Built-up AHU',
+                name: CFI18n.page('families.ahu.name'),
                 sit: ['mech', 'roof'], cab: ['piped'], air: ['mix'],
-                call: 'AHU — built-up air handler',
-                note: 'Bare coils and pipe pairs — it borrows a plant that lives elsewhere.'
+                call: CFI18n.page('families.ahu.call'),
+                note: CFI18n.page('families.ahu.note')
             },
             mau: {
-                name: 'MAU / DOAS',
+                name: CFI18n.page('families.mau.name'),
                 sit: ['roof', 'mech'], cab: ['all', 'piped'], air: ['oa'],
-                call: 'MAU — makeup-air unit',
-                note: 'No return duct — a 100% outside-air machine. It replaces what something else throws away.'
+                call: CFI18n.page('families.mau.call'),
+                note: CFI18n.page('families.mau.note')
             },
             split: {
-                name: 'Split system',
+                name: CFI18n.page('families.split.name'),
                 sit: ['two'], cab: ['fan'], air: ['room'],
-                call: 'Split — CU outside, air mover inside',
-                note: 'Follow the lineset — identifying one half identifies both.'
+                call: CFI18n.page('families.split.call'),
+                note: CFI18n.page('families.split.note')
             },
             fcu: {
-                name: 'Fan coil',
+                name: CFI18n.page('families.fcu.name'),
                 sit: ['space'], cab: ['fan'], air: ['room'],
-                call: 'FCU — fan coil',
-                note: 'A terminal device, not an air handler. Recognition is all this page owes it.'
+                call: CFI18n.page('families.fcu.call'),
+                note: CFI18n.page('families.fcu.note')
             },
         };
 
@@ -599,30 +652,30 @@ keywords: rtu ahu mau doas makeup air unit heat pump split system fan coil namep
             curb: {
                 answer: 'rtu',
                 truth: { sit: 'roof', cab: 'all', air: 'mix' },
-                confirm: 'Roof + everything onboard + both ducts = packaged rooftop. The condenser fans were the first giveaway.'
+                confirm: CFI18n.page('mysteries.curb')
             },
             basement: {
                 answer: 'ahu',
                 truth: { sit: 'mech', cab: 'piped', air: 'mix' },
-                confirm: 'Pipe pairs and no compressors — a borrower. The plant lives down the hall.'
+                confirm: CFI18n.page('mysteries.basement')
             },
             'no-return': {
                 answer: 'mau',
                 truth: { sit: 'roof', cab: 'all', air: 'oa' },
-                confirm: 'The missing return duct is the whole identification. It feeds the kitchen&#39;s hungry hood.'
+                confirm: CFI18n.page('mysteries.noReturn')
             },
             liar: {
                 answer: 'fcu',
                 truth: { sit: 'space', cab: 'fan', air: 'room' },
-                confirm: 'The graphic said AHU, the schedule agreed with the graphic, and both were wrong. The cabinet was telling the truth the whole time.'
+                confirm: CFI18n.page('mysteries.liar')
             },
         };
 
         const QUESTIONS = ['sit', 'cab', 'air'];
         const HINTS = {
-            sit: 'where does it sit?',
-            cab: 'what&#39;s in the cabinet?',
-            air: 'where does its air come from?',
+            sit: CFI18n.page('hints.sit'),
+            cab: CFI18n.page('hints.cabinet'),
+            air: CFI18n.page('hints.air'),
         };
 
         const callEl   = document.getElementById('aid-w-call');
@@ -668,9 +721,9 @@ keywords: rtu ahu mau doas makeup air unit heat pump split system fan coil namep
         }
 
         function nudge() {
-            if (!state.air) return ' The connections usually settle it fastest.';
-            if (!state.cab) return ' The cabinet is the deep tell.';
-            if (!state.sit) return ' Ask where it sits.';
+            if (!state.air) return CFI18n.page('nudges.connections');
+            if (!state.cab) return CFI18n.page('nudges.cabinet');
+            if (!state.sit) return CFI18n.page('nudges.siting');
             return '';
         }
 
@@ -699,37 +752,48 @@ keywords: rtu ahu mau doas makeup air unit heat pump split system fan coil namep
             let warn = false;
             if (alive.length === 0) {
                 warn = true;
-                text = 'Nothing matches that combination. In the field, that means look again — the connections and the cabinet outrank the label. Here, one of the answers is off.';
+                text = CFI18n.page('status.nothing');
             } else if (identified) {
                 let note = FAMILIES[identified].note;
                 if (identified === 'ahu' && state.sit === 'roof') {
-                    note += ' And yes, even on a roof: the pipes outrank the address.';
+                    note += CFI18n.page('status.roofAhu');
                 }
                 if (state.mystery) {
                     const m = MYSTERIES[state.mystery];
                     const q = firstMismatch(m.truth);
                     if (identified === m.answer && q === null) {
-                        text = 'Confirmed — ' + FAMILIES[identified].name + '. ' + m.confirm;
+                        text = CFI18n.page('status.confirmed', {
+                            family: FAMILIES[identified].name,
+                            confirmation: m.confirm,
+                        });
                         if (state.mystery === 'liar') state.anecdoteShown = true;
                     } else if (identified === m.answer) {
                         // Right family reached through an answer the scene
                         // contradicts (the multi-value accept sets make this
                         // possible) — a lucky guess still gets re-checked.
                         warn = true;
-                        text = 'Right family — but that&#39;s not what the scene says. Re-read it: ' + HINTS[q];
+                        text = CFI18n.page('status.rightFamily', { hint: HINTS[q] });
                     } else {
                         warn = true;
-                        text = 'The widget agrees with your answers — but the clues don&#39;t. Re-read the scene: ' + (q ? HINTS[q] : 'one answer is off.');
+                        text = CFI18n.page('status.cluesConflict', {
+                            hint: q ? HINTS[q] : CFI18n.page('status.answerOff'),
+                        });
                     }
                 } else {
-                    text = 'One left standing: ' + FAMILIES[identified].name + '. ' + note;
+                    text = CFI18n.page('status.oneStanding', {
+                        family: FAMILIES[identified].name,
+                        note: note,
+                    });
                 }
             } else if (answeredCount() === 0) {
                 text = state.mystery
-                    ? 'Read the scene, then answer the three questions from the clues.'
-                    : 'Five families standing. Answer any question, in any order.';
+                    ? CFI18n.page('status.readScene')
+                    : CFI18n.page('status.initial');
             } else {
-                text = alive.length + ' families still standing.' + nudge();
+                text = CFI18n.page('status.remaining', {
+                    count: alive.length,
+                    nudge: nudge(),
+                });
             }
             statusEl.innerHTML = text;
             statusEl.classList.toggle('warn', warn);
@@ -738,7 +802,7 @@ keywords: rtu ahu mau doas makeup air unit heat pump split system fan coil namep
             // reader has out-identified the paperwork. Pinned once
             // seen (the chapter precedent).
             if (state.anecdoteShown) {
-                alertEl.innerHTML = '<div class="widget-anecdote warn">This mystery is a real building. It had fan coils, air handlers, and rooftop units all serving the same floors — and nobody on site could tell me which was which; they were as turned around as I was. The software was worse: units filed under the wrong family entirely. And the prints that existed didn&#39;t match the tags. So I made the equipment introduce itself: in summer, command a <em>heating</em> valve and watch the controller&#39;s output light — in winter, a cooling command did the same job, on equipment the season had already de-energized. The command moved a signal, not the building. No light to watch? Put a meter on the output terminals. One point, one box, one name at a time, I rebuilt the map the paper had lost. I&#39;ve had to identify units this way more than once. The paper can lie; the cabinet can&#39;t.</div>';
+                alertEl.innerHTML = CFI18n.page('anecdote.liar');
             } else {
                 alertEl.innerHTML = '';
             }

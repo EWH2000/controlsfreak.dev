@@ -6,9 +6,24 @@ nav: education
 category: forced-air
 pairedQuiz: https://controlsfreak.dev/practice/duct-static-control.html
 keywords: duct static pressure supply fan vfd speed control static sensor placement two-thirds setpoint reset trim and respond high static cutout sensing tube transducer railed full scale
+pageMessages:
+  widget:
+    demandOf: "{count} of 30"
+    overridden: overridden
+    status:
+      sensorRailed: "Sensor railed at {limit} — full scale. The duct is really near {actual}, and nothing here says stop."
+      fanPegged: Fan pegged at 60 Hz, static below setpoint — boxes wide open, flow collapsing. The ratchet from the last page, seen from the fan.
+      fanPinned: Fan pinned — the boxes pinch it back. Flow holds at what the zones asked; the extra speed just becomes pressure.
+      pinnedAtSetpoint: Pinned at 60 Hz and landing on setpoint — at design flow the override is invisible. Every other hour it will not be.
+      restrictionHigh: "Static on setpoint, flow unchanged — the fan is paying {hz} Hz over a clean unit. The loop is hiding a restriction."
+      restrictionLow: "Static on setpoint and the ice costs only {hz} Hz at this flow — the mask is deepest exactly when the coil is most at risk."
+      reset: "Setpoint walked down to {setpoint} — the fan makes only the pressure someone is using. Cube law, one more time."
+      onSetpoint: Static on setpoint — one number standing in for thirty demands.
+    anecdote: >-
+      This preset is the same pair of air handlers from the last page — the starved-DX building — seen from the fan's side. Before the diagnosis, there was an earlier fix attempt, and it reached for the obvious lever: the coil is starving for air, so make more air — crank the fan. The boxes answered the way pressure-independent boxes always answer: they pinched, held their setpoints, and the flow barely moved. All that extra fan became pressure instead, and the duct-static trend climbed until it flatlined at exactly 2.5 in. w.c. and sat there, hour after hour, suspiciously smooth. That flatline wasn't a measurement — it was the top of one: a 0–2.5 in. w.c. transducer wired 0–10 V, railed at 10 V, reporting only that the truth was somewhere above it. No high-static cutout anywhere on the unit to catch what the sensor couldn't say — the same uninsured posture as the missing low-pressure cutout, one story earlier. The real fix went the other direction entirely: the fan was never the problem, because the fan makes pressure and the boxes make flow, and the coil's cure was more <em>flow</em> — which is how that building ended up with every box pinned to max while it waits for its sheet metal.
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -518,7 +533,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
 
                 <div class="widget-slider-head">
                     <label for="ds-w-demand-slider">Boxes calling for cooling</label>
-                    <span class="v" id="ds-w-demand-value">12 of 30</span>
+                    <span class="v" id="ds-w-demand-value">{{ pageMessages.widget.demandOf | replace("{count}", "12") }}</span>
                 </div>
                 <input class="widget-slider" id="ds-w-demand-slider" type="range" min="0" max="30" step="1" value="12"/>
 
@@ -582,7 +597,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                     </div>
                 </div>
 
-                <div class="ds-w-status" id="ds-w-status" aria-live="polite">Static on setpoint — one number standing in for thirty demands.</div>
+                <div class="ds-w-status" id="ds-w-status" aria-live="polite">{{ pageMessages.widget.status.onSetpoint }}</div>
                 <div class="ds-w-alert" id="ds-w-alert"></div>
             </div>
 
@@ -842,9 +857,9 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
             // prefix idiom ('> 2.50 in. w.c.') — the full verdict lives
             // in the fault status line; the long '— railed' suffix
             // overflows the 150px strip column.
-            demandValEl.textContent = n + ' of 30';
+            demandValEl.textContent = CFI18n.page('widget.demandOf', { count: n });
             staticEl.textContent = (railed ? '> ' : '') + fmtStatic(shown);
-            spEl.textContent = state.fan === 'pinned' ? 'overridden' : fmtStatic(spActive);
+            spEl.textContent = state.fan === 'pinned' ? CFI18n.page('widget.overridden') : fmtStatic(spActive);
             hzEl.textContent = hz.toFixed(1) + ' Hz';
             powerEl.innerHTML = Math.round(r * r * r * 100) + '<span class="unit"> %</span>';
 
@@ -857,40 +872,41 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
             statusEl.classList.remove('warn', 'fault');
             if (railed) {
                 statusEl.classList.add('fault');
-                statusEl.textContent = 'Sensor railed at ' + fmtStatic(SENSOR_MAX) +
-                    ' — full scale. The duct is really near ' + fmtStatic(sensed) +
-                    ', and nothing here says stop.';
+                statusEl.textContent = CFI18n.page('widget.status.sensorRailed', {
+                    limit: fmtStatic(SENSOR_MAX),
+                    actual: fmtStatic(sensed)
+                });
                 // The anecdote is the iced-coil building's story — only
                 // its scenario reveals it (manual clean-coil railing
                 // keeps the fault, not the story).
                 if (state.coil === 'iced') state.anecdoteShown = true;
             } else if (saturated) {
                 statusEl.classList.add('fault');
-                statusEl.textContent = 'Fan pegged at 60 Hz, static below setpoint — boxes wide open, flow collapsing. The ratchet from the last page, seen from the fan.';
+                statusEl.textContent = CFI18n.page('widget.status.fanPegged');
             } else if (state.fan === 'pinned') {
                 if (sensed > spActive + 0.15) {
                     statusEl.classList.add('warn');
-                    statusEl.textContent = 'Fan pinned — the boxes pinch it back. Flow holds at what the zones asked; the extra speed just becomes pressure.';
+                    statusEl.textContent = CFI18n.page('widget.status.fanPinned');
                 } else {
-                    statusEl.textContent = 'Pinned at 60 Hz and landing on setpoint — at design flow the override is invisible. Every other hour it will not be.';
+                    statusEl.textContent = CFI18n.page('widget.status.pinnedAtSetpoint');
                 }
             } else if (state.coil === 'iced') {
                 statusEl.classList.add('warn');
                 if (maskHz >= 5) {
-                    statusEl.textContent = 'Static on setpoint, flow unchanged — the fan is paying ' + maskHz + ' Hz over a clean unit. The loop is hiding a restriction.';
+                    statusEl.textContent = CFI18n.page('widget.status.restrictionHigh', { hz: maskHz });
                 } else {
-                    statusEl.textContent = 'Static on setpoint and the ice costs only ' + maskHz + ' Hz at this flow — the mask is deepest exactly when the coil is most at risk.';
+                    statusEl.textContent = CFI18n.page('widget.status.restrictionLow', { hz: maskHz });
                 }
             } else if (state.sp === 'reset' && spActive < SP_DESIGN) {
-                statusEl.textContent = 'Setpoint walked down to ' + fmtStatic(spActive) + ' — the fan makes only the pressure someone is using. Cube law, one more time.';
+                statusEl.textContent = CFI18n.page('widget.status.reset', { setpoint: fmtStatic(spActive) });
             } else {
-                statusEl.textContent = 'Static on setpoint — one number standing in for thirty demands.';
+                statusEl.textContent = CFI18n.page('widget.status.onSetpoint');
             }
 
             // The anecdote pins once revealed.
             if (state.anecdoteShown) {
                 if (!alertEl.firstChild) {
-                    alertEl.innerHTML = '<div class="widget-anecdote warn">This preset is the same pair of air handlers from the last page — the starved-DX building — seen from the fan&#39;s side. Before the diagnosis, there was an earlier fix attempt, and it reached for the obvious lever: the coil is starving for air, so make more air — crank the fan. The boxes answered the way pressure-independent boxes always answer: they pinched, held their setpoints, and the flow barely moved. All that extra fan became pressure instead, and the duct-static trend climbed until it flatlined at exactly 2.5 in. w.c. and sat there, hour after hour, suspiciously smooth. That flatline wasn&#39;t a measurement — it was the top of one: a 0&ndash;2.5 in. w.c. transducer wired 0&ndash;10 V, railed at 10 V, reporting only that the truth was somewhere above it. No high-static cutout anywhere on the unit to catch what the sensor couldn&#39;t say — the same uninsured posture as the missing low-pressure cutout, one story earlier. The real fix went the other direction entirely: the fan was never the problem, because the fan makes pressure and the boxes make flow, and the coil&#39;s cure was more <em>flow</em> — which is how that building ended up with every box pinned to max while it waits for its sheet metal.</div>';
+                    alertEl.innerHTML = '<div class="widget-anecdote warn">' + CFI18n.page('widget.anecdote') + '</div>';
                 }
             }
         }

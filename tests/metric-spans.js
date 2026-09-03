@@ -90,16 +90,19 @@
 // parenthetical pairs classify cleanly, so covering them costs no exemptions.
 //
 // ── Scan scope ───────────────────────────────────────────────────────────
-// SPANS: `.html` and `.njk` under `html/` — the templates that render to
-// pages. `.js` is excluded there: the only `data-us` occurrences in a script
-// are the DOM-convention example in `html/scripts/units.js`'s header comment
-// and its own `[data-us][data-metric]` query selector, neither of which is
-// shipped markup.
+// SPANS: by default, `.html` and `.njk` under `html/` — the templates that
+// render to pages. The blocking spec supplies `_site/` instead so localized
+// message values have been resolved before classification. `.js` is excluded
+// in either case: the only `data-us` occurrences in a script are the
+// DOM-convention example in `html/scripts/units.js`'s header comment and its
+// own `[data-us][data-metric]` query selector, neither of which is shipped
+// markup.
 // PARENTHETICALS: `.html`, `.njk` AND `.js` under `html/`, because the quiz
 // banks under `html/_data/quizzes/` are `.js` modules and are exactly the
 // surface this notation exists to cover.
-// `_site/` is not scanned at all; the source is the single place a figure is
-// authored.
+// The report-only lint keeps source as the single authored surface. The
+// blocking spec scans rendered spans and authored parentheticals because
+// locale overlays resolve only during the build.
 'use strict';
 
 const fs = require('node:fs');
@@ -228,7 +231,7 @@ function extractPairs(files = scanFiles()) {
     const pairs = [];
     for (const file of files) {
         const src = fs.readFileSync(file, 'utf8');
-        const rel = path.relative(ROOT, file);
+        const rel = path.relative(ROOT, file).split(path.sep).join('/');
         let m;
         const re = new RegExp(OPEN_TAG.source, 'g');
         while ((m = re.exec(src))) {
@@ -262,7 +265,7 @@ function extractParentheticals(files = scanFiles(SCAN_ROOT, PROSE_FILES)) {
     const pairs = [];
     for (const file of files) {
         const src = normalise(fs.readFileSync(file, 'utf8'));
-        const rel = path.relative(ROOT, file);
+        const rel = path.relative(ROOT, file).split(path.sep).join('/');
         let m;
         const re = new RegExp(PARENTHETICAL.source, 'g');
         while ((m = re.exec(src))) {

@@ -18,6 +18,7 @@
 // permalink "/index.html").
 
 module.exports = {
+    locale: "en",
     permalink: function(data) {
         return data.page.filePathStem + ".html";
     }

@@ -1,0 +1,240 @@
+---
+title: PID 기초 — controlsfreak.dev
+description: 실제 HVAC 제어에서 비례·적분·미분 동작이 각각 무엇을 하는지 계산 예시와 세 가지 대화형 미니 시뮬레이터로 함께 설명합니다.
+sourceContentHash: 5ddaa35cd0a11e1681170d5658d99eaa9b22598a17c74d55d62adda4005488b6
+sourceMessageHash: a01f4625db7069974e2b2ebef5c694f5e72a73903faa3bb5da3b22b5a6a103aa
+pageMessages:
+    slider:
+        proportional: "비례대 ≈ {band} % · 적분 없음, 미분 없음"
+        gainZero: "이득이 0이므로 출력이 움직이지 않습니다"
+        reset: "적분 시간 ≈ {time} · 미분 없음"
+        integralOff: "적분이 꺼져 있어 미니 시뮬레이터 1과 같습니다"
+        derivative: "미분 시간 ≈ {seconds}초"
+        derivativeOff: "미분이 꺼져 있어 공격적인 P + I 응답이 계속 진동합니다"
+    metrics:
+        none: "없음"
+canonical: https://controlsfreak.dev/ko/education/pid-basics.html
+nav: education
+category: fundamentals
+pairedQuiz: https://controlsfreak.dev/ko/practice/pid-basics.html
+keywords: PID 이득 리셋 레이트 비례 적분 미분 정상상태 편차 루프 오차
+---
+{% extends "html/education/pid-basics.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">학습 · PID 기초</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                PID 기초
+                <span class="tool-tag">루프</span>
+            </h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                PID는 세 가지 조정값을 함께 사용해 공정값(PV, 측정하는 값)을 설정값(SP, 유지하려는 값)으로 움직입니다. 일반적인 HVAC 루프에서 각 항이 어떤 역할을 하는지 상식적인 관점으로 살펴보고, 조정값을 하나씩 바꿀 수 있는 작은 시뮬레이터 세 개로 직접 확인합니다. 끝까지 읽고 나면 전체 <a href="/ko/simulators/pid-tuner.html">PID 튜닝 도우미</a>를 훨씬 쉽게 이해할 수 있습니다.
+            </p>
+
+            <h2 class="subhead">P, I, D가 실제로 하는 일</h2>
+
+            <div class="callout-grid">
+                <div class="callout">
+                    <h3 id="p-term">P — 비례 <span>· 얼마나 강하게 미는가</span></h3>
+                    <p>출력은 현재 오차에 비례합니다. 목표에서 두 배 멀어지면 두 배 강하게 밉니다. 이득이 높을수록 응답은 더 강하고 빠르지만, 지나치게 강하면 루프가 오버슈트하고 <button type="button" data-gloss="hunting">헌팅</button>합니다. 현장에서는 흔히 <em>비례대(proportional band)</em>로 설정합니다. PB&nbsp;=&nbsp;100&nbsp;÷&nbsp;이득이므로 20% PB에서는 입력 범위의 20%에 걸쳐 출력이 전체 범위를 움직입니다.</p>
+                    <p style="margin-top:0.6rem;"><em>계산 예시.</em> 냉수 밸브에서 SP = <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span>, PV = <span data-us="60&nbsp;°F" data-metric="15.6&nbsp;°C">60&nbsp;°F</span>, 스팬 = <span data-us="20&nbsp;°F" data-metric="11.1&nbsp;°C">20&nbsp;°F</span>입니다. 오차는 <span data-us="5&nbsp;°F" data-metric="2.8&nbsp;°C">5&nbsp;°F</span>로 스팬의 25%입니다. 이득이 4이면 비례 출력은 4&nbsp;×&nbsp;25% = 100%이므로 밸브를 완전히 열도록 명령합니다. 급기가 차가워지고 PV가 내려가면 출력도 비례해 줄어듭니다. 문제는 P만 사용하면 작은 영구 편차인 드룹(droop)이 항상 남는다는 점입니다. 출력을 만들려면 <em>어느 정도의</em> 오차가 <em>반드시</em> 필요하므로 루프는 설정값에 조금 못 미치는 지점에서 안정됩니다.</p>
+                </div>
+                <div class="callout">
+                    <h3 id="i-term">I — 적분 / 리셋 <span>· 얼마나 끈기 있게 미는가</span></h3>
+                    <p><em>어떤</em> 오차라도 남아 있는 동안 같은 방향으로 출력을 계속 조금씩 움직여 P가 남긴 편차를 없앱니다. 일반적으로 분당 반복 횟수 또는 그 역수인 1회 반복당 적분 시간(분)으로 설정합니다. 너무 빠르면 느린 주기의 진동과 오버슈트가 생기고, 너무 느리면 마지막 남은 간격을 없애는 데 아주 오래 걸립니다. 느린 HVAC 루프 대부분에서 실제 일을 하는 항은 적분입니다.</p>
+                    <p style="margin-top:0.6rem;"><em>계산 예시.</em> 실내온도 루프가 P만 사용했을 때 설정값보다 <span data-us="1&nbsp;°F" data-metric="0.6&nbsp;°C">1&nbsp;°F</span> 낮게 머무릅니다. 전형적인 드룹입니다. 0.2&nbsp;반복/분(Ti = 5분)을 추가하면 적분항이 다음 몇 분 동안 <span data-us="1&nbsp;°F" data-metric="0.6&nbsp;°C">1&nbsp;°F</span>의 오차를 누적하고, PV가 SP에 도달해 오차 = 0이 될 때까지 출력을 천천히 높입니다. 이를 2&nbsp;반복/분으로 올리면 적분이 너무 빠르게 반응해 루프가 오버슈트하며, 깔끔하게 접근하지 못하고 설정값 주위에서 느리게 진동합니다. 이것이 상충 관계입니다.</p>
+                </div>
+                <div class="callout">
+                    <h3 id="d-term">D — 미분 / 레이트 <span>· 얼마나 빠르게 변하는가</span></h3>
+                    <p>PV가 변하는 속도에 반응해 일찍 제동을 걸며, 지연이 큰 공정에서 오버슈트를 줄입니다. 분 단위로 설정합니다. 센서 잡음을 증폭하므로 HVAC에서는 거의 항상 작거나 0입니다. 변동이 심한 입력에서는 득보다 해가 큽니다. 사용한다면 오차가 아닌 <em>측정값</em>에 미분을 적용해야 누군가 설정값을 바꿀 때 출력이 갑자기 튀는 현상을 피할 수 있습니다.</p>
+                    <p style="margin-top:0.6rem;"><em>효과가 있는 경우.</em> 지연이 몇 분인 대형 온수 재열 코일을 생각해 보세요. P + I는 열이 아직 코일을 통과하는 중에도 계속 출력을 높여 오버슈트를 만듭니다. 시작점으로 Ti의 약 <sup>1</sup>⁄<sub>4</sub>에서 <sup>1</sup>⁄<sub>8</sub> 정도인 작은 Td를 사용하면 PV가 SP를 향해 빠르게 움직이는 것을 루프가 "보고" 일찍 출력을 줄일 수 있습니다. 덕트 압력이나 VFD 속도처럼 빠르고 깨끗한 루프에는 굳이 사용할 필요가 없습니다. 대부분의 HVAC 루프는 완전한 PID가 아니라 PI입니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-header" style="margin-top:2.5rem;">
+        <h2 class="section-label">각 항의 동작을 직접 확인하기</h2>
+        <div class="section-line"></div>
+    </div>
+
+    <p style="max-width:640px;margin-bottom:1.5rem;">
+        세 개의 작은 시뮬레이터가 앞의 시뮬레이터에 항을 하나씩 추가합니다. 조정값 하나만 바꿀 수 있고, 빠른/중간/느린 루프 버튼은 루프의 반응 속도를 설정합니다. 무엇이든 움직이면 그래프가 즉시 다시 그려집니다. 세 조정값을 한꺼번에 바꾸고 싶다면 전체 <a href="/ko/simulators/pid-tuner.html">PID 튜닝 도우미</a>로 이동하세요.
+    </p>
+
+    <div class="tool-card" id="sim1">
+        <div class="tool-card-header">
+            <h3 class="tool-card-title">
+                P만 사용
+                <span class="tool-tag">시뮬레이터 1</span>
+            </h3>
+        </div>
+        <div class="tool-body">
+            <p style="font-size:0.92rem;line-height:1.75;color:var(--text);margin-bottom:1.1rem;">
+                비례 제어만 사용하면 항상 설정값에 조금 못 미치는 정상상태 편차인 드룹이 남습니다. 적분은 바로 이 편차를 없애기 위해 존재합니다. 이득을 높이면 편차가 줄고, 낮추면 간격이 커집니다. 오차가 완전히 0이 되지는 않습니다. P는 출력을 만들기 위해 어느 정도 오차가 필요하므로 아무리 강하게 밀어도 루프가 약간 못 미치는 지점에서 안정되는 것이 이 시뮬레이터의 핵심입니다. 이 세 루프는 값을 높여도 감쇠가 잘 유지되므로 루프 진동 대신 간격이 좁아지는 모습을 보여 줍니다. P가 지나치게 클 때의 오버슈트와 헌팅을 보려면 실제 불감시간이 있는 루프가 필요하며, 전체 <a href="/ko/simulators/pid-tuner.html">PID 튜닝 도우미</a>에서 확인할 수 있습니다.
+            </p>
+
+            <div class="btn-row" style="margin-bottom:1.1rem;">
+                <button class="copy-btn"        data-mini="1" data-key="fast">빠른 루프</button>
+                <button class="copy-btn active" data-mini="1" data-key="med">중간 루프</button>
+                <button class="copy-btn"        data-mini="1" data-key="slow">느린 루프</button>
+            </div>
+
+            <div class="slider-field" style="margin-bottom:1.1rem;">
+                <div class="slider-head">
+                    <label for="m1-slider">이득(Kc)</label>
+                    <span class="slider-val" id="m1-val">2.0</span>
+                </div>
+                <input type="range" id="m1-slider" min="0" max="20" step="0.1" value="2">
+                <span class="slider-sub" id="m1-sub"></span>
+            </div>
+
+            <div class="sim-canvas-wrap">
+                <canvas id="m1-canvas" style="height:160px;" role="img" aria-label="PID 계단응답: 비례 제어만 사용해 정상상태 편차가 남는 모습"></canvas>
+            </div>
+            <div class="sim-legend" style="margin-bottom:1rem;">
+                <span><span class="swatch pv"></span>공정값</span>
+                <span><span class="swatch sp"></span>설정값</span>
+            </div>
+
+            <div class="ps-row">
+                <span class="ps-label">정상상태 편차</span>
+                <span class="ps-value live" id="m1-offset">—</span>
+            </div>
+            <p class="ref-note compact">P만으로는 이 간격을 없앨 수 없으며, 적분은 바로 이 간격을 없애기 위해 사용합니다.</p>
+        </div>
+    </div>
+
+    <div class="tool-card" id="sim2">
+        <div class="tool-card-header">
+            <h3 class="tool-card-title">
+                P + I
+                <span class="tool-tag">시뮬레이터 2</span>
+            </h3>
+        </div>
+        <div class="tool-body">
+            <p style="font-size:0.92rem;line-height:1.75;color:var(--text);margin-bottom:1.1rem;">
+                같은 루프에 적분을 추가하면 드룹이 사라지고 PV가 설정값까지 올라갑니다. 그러나 리셋을 너무 빠르게 하면 실제 루프에서 모든 기술자가 보았을 법한 현상, 즉 맞추려던 선 주위의 느리고 완만한 진동이 나타납니다. 슬라이더를 움직이며 두 측정값을 모두 확인하세요.
+            </p>
+
+            <div class="btn-row" style="margin-bottom:1.1rem;">
+                <button class="copy-btn"        data-mini="2" data-key="fast">빠른 루프</button>
+                <button class="copy-btn active" data-mini="2" data-key="med">중간 루프</button>
+                <button class="copy-btn"        data-mini="2" data-key="slow">느린 루프</button>
+            </div>
+
+            <div class="slider-field" style="margin-bottom:1.1rem;">
+                <div class="slider-head">
+                    <label for="m2-slider">리셋(반복/분) · 이득 2.0 고정</label>
+                    <span class="slider-val" id="m2-val">1.00</span>
+                </div>
+                <input type="range" id="m2-slider" min="0" max="6" step="0.05" value="1">
+                <span class="slider-sub" id="m2-sub"></span>
+            </div>
+
+            <div class="sim-canvas-wrap">
+                <canvas id="m2-canvas" style="height:160px;" role="img" aria-label="PID 계단응답: 비례와 적분으로 편차를 없앤 뒤 오버슈트가 나타나는 모습"></canvas>
+            </div>
+            <div class="sim-legend" style="margin-bottom:1rem;">
+                <span><span class="swatch pv"></span>공정값</span>
+                <span><span class="swatch sp"></span>설정값</span>
+            </div>
+
+            <div class="ps-row">
+                <span class="ps-label">정상상태 편차</span>
+                <span class="ps-value live" id="m2-offset">—</span>
+            </div>
+            <div class="ps-row">
+                <span class="ps-label">오버슈트</span>
+                <span class="ps-value live" id="m2-over">—</span>
+            </div>
+            <p class="ref-note compact">편차는 0이 되지만 이제 오버슈트를 살펴야 합니다.</p>
+        </div>
+    </div>
+
+    <div class="tool-card" id="sim3">
+        <div class="tool-card-header">
+            <h3 class="tool-card-title">
+                P + I + D
+                <span class="tool-tag">시뮬레이터 3</span>
+            </h3>
+        </div>
+        <div class="tool-body">
+            <p style="font-size:0.92rem;line-height:1.75;color:var(--text);margin-bottom:1.1rem;">
+                이 루프는 지나치게 공격적인 P + I 설정에서 시작해 오버슈트하고 진동합니다. 미분을 조금 추가하면 PV가 설정값을 향해 빠르게 움직일 때 제동이 걸리고 오버슈트가 크게 줄어듭니다. 다만 적정 지점이 있습니다. D를 계속 높이면 루프가 둔해지며, 실제 잡음 많은 센서에서는 출력이 떨리기 시작합니다. 그래서 대부분의 HVAC 루프가 PI를 사용합니다.
+            </p>
+
+            <div class="btn-row" style="margin-bottom:1.1rem;">
+                <button class="copy-btn"        data-mini="3" data-key="fast">빠른 루프</button>
+                <button class="copy-btn active" data-mini="3" data-key="med">중간 루프</button>
+                <button class="copy-btn"        data-mini="3" data-key="slow">느린 루프</button>
+            </div>
+
+            <div class="slider-field" style="margin-bottom:1.1rem;">
+                <div class="slider-head">
+                    <label for="m3-slider">레이트(Td, 분) · 이득 2.0 / 리셋 4.0 고정</label>
+                    <span class="slider-val" id="m3-val">0.00</span>
+                </div>
+                <input type="range" id="m3-slider" min="0" max="0.5" step="0.01" value="0">
+                <span class="slider-sub" id="m3-sub"></span>
+            </div>
+
+            <div class="sim-canvas-wrap">
+                <canvas id="m3-canvas" style="height:160px;" role="img" aria-label="PID 계단응답: 비례·적분·미분 제어에서 미분이 오버슈트를 감쇠하는 모습"></canvas>
+            </div>
+            <div class="sim-legend" style="margin-bottom:1rem;">
+                <span><span class="swatch pv"></span>공정값</span>
+                <span><span class="swatch sp"></span>설정값</span>
+            </div>
+
+            <div class="ps-row">
+                <span class="ps-label">오버슈트</span>
+                <span class="ps-value live" id="m3-over">—</span>
+            </div>
+            <div class="ps-row">
+                <span class="ps-label">정착 시간(±2%)</span>
+                <span class="ps-value live" id="m3-settle">—</span>
+            </div>
+            <p class="ref-note compact">작은 D만으로도 거의 비용 없이 오버슈트를 크게 줄일 수 있지만 지나치면 루프가 둔해집니다. 레이트 슬라이더 범위는 루프와 함께 조정됩니다. 유용한 Td는 τ와 함께 커지므로 느린 공정에서도 미분이 작용할 범위가 있습니다. 느린 HVAC 루프가 주로 PI를 쓰는 이유는 따로 있습니다. D는 측정값의 변화율에 작용하며, 느리고 잡음 많은 센서에서는 주로 잡음을 증폭합니다.</p>
+        </div>
+    </div>
+
+    <p style="max-width:640px;margin-top:2.5rem;">
+        건물 자동화 컨트롤러에서 방금 튜닝한 PID는 <button type="button" data-gloss="wiresheet">와이어시트</button> 위의 단일 블록입니다. 왼쪽에는 설정값과 측정값이 배선되고 오른쪽으로 0&ndash;100&nbsp;% 명령이 나갑니다. 시퀀스의 나머지는 PID를 공급하고 허용하는 보조 블록입니다. <a href="/ko/education/function-blocks.html">기능 블록 기초</a>에서 와이어시트를 읽는 방법과 업계 전반이 이런 방식으로 시퀀스를 만드는 이유를 설명합니다.
+    </p>
+
+    <p style="margin-top:2.5rem;">
+        <a class="cta-button" href="/ko/simulators/pid-tuner.html">직접 시험해 보기 →</a>
+    </p>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/pid-parameter-translator.html', label: 'PID 파라미터 변환기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/pid-tuner.html', label: 'PID 튜닝 도우미'},
+            {href: '/ko/simulators/function-block-editor.html', label: '기능 블록 편집기'}
+        ],
+        lessons: [
+            {href: '/ko/education/function-blocks.html', label: '기능 블록 기초'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/pid-basics.html', label: 'PID 기초 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 학습 자료로 돌아가기</a>
+
+</main>
+{% endblock %}

@@ -65,6 +65,24 @@
 const FBE = (function () {
     'use strict';
 
+    // The engine stays runnable in a DOM-free test VM, where the site-wide
+    // locale runtime does not exist. In a page, message lookup is strict and
+    // therefore exposes a missing translation immediately.
+    const text = (key, fallback) => (
+        typeof window !== 'undefined' && window.CFI18n
+            ? window.CFI18n.t('fbe.' + key)
+            : fallback
+    );
+    const CATEGORY = {
+        io: text('categories.io', 'I/O'),
+        boolean: text('categories.boolean', 'Boolean'),
+        comparator: text('categories.comparator', 'Comparator'),
+        math: text('categories.math', 'Math'),
+        timer: text('categories.timer', 'Timer'),
+        selection: text('categories.selection', 'Selection'),
+        control: text('categories.control', 'Control'),
+    };
+
     // ── helpers ─────────────────────────────────────────────────────
     const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
     const EPS = 1e-9;
@@ -98,25 +116,25 @@ const FBE = (function () {
 
         // — Boolean —
         and: {
-            label: 'AND', tag: 'AND', category: 'Boolean',
+            label: text('blocks.and', 'AND'), tag: 'AND', category: CATEGORY.boolean,
             inputs: [{ name: 'A', kind: 'bool' }, { name: 'B', kind: 'bool' }],
             outputs: [{ name: 'Q', kind: 'bool' }],
             evaluate: (i) => ({ out: { Q: asBool(i.A) && asBool(i.B) } }),
         },
         or: {
-            label: 'OR', tag: 'OR', category: 'Boolean',
+            label: text('blocks.or', 'OR'), tag: 'OR', category: CATEGORY.boolean,
             inputs: [{ name: 'A', kind: 'bool' }, { name: 'B', kind: 'bool' }],
             outputs: [{ name: 'Q', kind: 'bool' }],
             evaluate: (i) => ({ out: { Q: asBool(i.A) || asBool(i.B) } }),
         },
         xor: {
-            label: 'XOR', tag: 'XOR', category: 'Boolean',
+            label: text('blocks.xor', 'XOR'), tag: 'XOR', category: CATEGORY.boolean,
             inputs: [{ name: 'A', kind: 'bool' }, { name: 'B', kind: 'bool' }],
             outputs: [{ name: 'Q', kind: 'bool' }],
             evaluate: (i) => ({ out: { Q: asBool(i.A) !== asBool(i.B) } }),
         },
         not: {
-            label: 'NOT', tag: 'NOT', category: 'Boolean',
+            label: text('blocks.not', 'NOT'), tag: 'NOT', category: CATEGORY.boolean,
             inputs: [{ name: 'IN', kind: 'bool' }],
             outputs: [{ name: 'Q', kind: 'bool' }],
             evaluate: (i) => ({ out: { Q: !asBool(i.IN) } }),
@@ -125,7 +143,7 @@ const FBE = (function () {
             // Set-dominant SR latch: S wins when both S and R are true.
             // The tag drops "LATCH": what KIND of latch this instance is
             // ('Stg 1 Latch', 'Trip Latch') belongs in the name.
-            label: 'SR LATCH', tag: 'SR', category: 'Boolean', stateful: true,
+            label: text('blocks.sr', 'SR LATCH'), tag: 'SR', category: CATEGORY.boolean, stateful: true,
             inputs: [{ name: 'S', kind: 'bool' }, { name: 'R', kind: 'bool' }],
             outputs: [{ name: 'Q', kind: 'bool' }],
             evaluate: (i, p, s) => {
@@ -156,37 +174,37 @@ const FBE = (function () {
         // where a fallback face costs nothing. (Owner ruling
         // 2026-08-01, codebase-issues #255.)
         gt: {
-            label: 'A > B', tag: 'A>B', category: 'Comparator',
+            label: text('blocks.gt', 'A > B'), tag: 'A>B', category: CATEGORY.comparator,
             inputs: [{ name: 'A', kind: 'number' }, { name: 'B', kind: 'number' }],
             outputs: [{ name: 'Q', kind: 'bool' }],
             evaluate: (i) => ({ out: { Q: asNum(i.A) > asNum(i.B) } }),
         },
         lt: {
-            label: 'A < B', tag: 'A<B', category: 'Comparator',
+            label: text('blocks.lt', 'A < B'), tag: 'A<B', category: CATEGORY.comparator,
             inputs: [{ name: 'A', kind: 'number' }, { name: 'B', kind: 'number' }],
             outputs: [{ name: 'Q', kind: 'bool' }],
             evaluate: (i) => ({ out: { Q: asNum(i.A) < asNum(i.B) } }),
         },
         ge: {
-            label: 'A ≥ B', tag: 'A>=B', category: 'Comparator',
+            label: text('blocks.ge', 'A ≥ B'), tag: 'A>=B', category: CATEGORY.comparator,
             inputs: [{ name: 'A', kind: 'number' }, { name: 'B', kind: 'number' }],
             outputs: [{ name: 'Q', kind: 'bool' }],
             evaluate: (i) => ({ out: { Q: asNum(i.A) >= asNum(i.B) } }),
         },
         le: {
-            label: 'A ≤ B', tag: 'A<=B', category: 'Comparator',
+            label: text('blocks.le', 'A ≤ B'), tag: 'A<=B', category: CATEGORY.comparator,
             inputs: [{ name: 'A', kind: 'number' }, { name: 'B', kind: 'number' }],
             outputs: [{ name: 'Q', kind: 'bool' }],
             evaluate: (i) => ({ out: { Q: asNum(i.A) <= asNum(i.B) } }),
         },
         eq: {
-            label: 'A = B', tag: 'A=B', category: 'Comparator',
+            label: text('blocks.eq', 'A = B'), tag: 'A=B', category: CATEGORY.comparator,
             inputs: [{ name: 'A', kind: 'number' }, { name: 'B', kind: 'number' }],
             outputs: [{ name: 'Q', kind: 'bool' }],
             evaluate: (i) => ({ out: { Q: Math.abs(asNum(i.A) - asNum(i.B)) < EPS } }),
         },
         ne: {
-            label: 'A ≠ B', tag: 'A!=B', category: 'Comparator',
+            label: text('blocks.ne', 'A ≠ B'), tag: 'A!=B', category: CATEGORY.comparator,
             inputs: [{ name: 'A', kind: 'number' }, { name: 'B', kind: 'number' }],
             outputs: [{ name: 'Q', kind: 'bool' }],
             evaluate: (i) => ({ out: { Q: Math.abs(asNum(i.A) - asNum(i.B)) >= EPS } }),
@@ -194,19 +212,19 @@ const FBE = (function () {
 
         // — Math (number, number → number) —
         add: {
-            label: 'ADD', tag: 'ADD', category: 'Math',
+            label: text('blocks.add', 'ADD'), tag: 'ADD', category: CATEGORY.math,
             inputs: [{ name: 'A', kind: 'number' }, { name: 'B', kind: 'number' }],
             outputs: [{ name: 'O', kind: 'number' }],
             evaluate: (i) => ({ out: { O: asNum(i.A) + asNum(i.B) } }),
         },
         sub: {
-            label: 'SUBTRACT', tag: 'SUB', category: 'Math',
+            label: text('blocks.sub', 'SUBTRACT'), tag: 'SUB', category: CATEGORY.math,
             inputs: [{ name: 'A', kind: 'number' }, { name: 'B', kind: 'number' }],
             outputs: [{ name: 'O', kind: 'number' }],
             evaluate: (i) => ({ out: { O: asNum(i.A) - asNum(i.B) } }),
         },
         mul: {
-            label: 'MULTIPLY', tag: 'MUL', category: 'Math',
+            label: text('blocks.mul', 'MULTIPLY'), tag: 'MUL', category: CATEGORY.math,
             inputs: [{ name: 'A', kind: 'number' }, { name: 'B', kind: 'number' }],
             outputs: [{ name: 'O', kind: 'number' }],
             evaluate: (i) => ({ out: { O: asNum(i.A) * asNum(i.B) } }),
@@ -214,7 +232,7 @@ const FBE = (function () {
         div: {
             // Divide guards against /0 — a zero divisor outputs 0 rather
             // than Infinity / NaN, so a downstream comparator stays sane.
-            label: 'DIVIDE', tag: 'DIV', category: 'Math',
+            label: text('blocks.div', 'DIVIDE'), tag: 'DIV', category: CATEGORY.math,
             inputs: [{ name: 'A', kind: 'number' }, { name: 'B', kind: 'number' }],
             outputs: [{ name: 'O', kind: 'number' }],
             evaluate: (i) => {
@@ -223,13 +241,13 @@ const FBE = (function () {
             },
         },
         min: {
-            label: 'MIN', tag: 'MIN', category: 'Math',
+            label: text('blocks.min', 'MIN'), tag: 'MIN', category: CATEGORY.math,
             inputs: [{ name: 'A', kind: 'number' }, { name: 'B', kind: 'number' }],
             outputs: [{ name: 'O', kind: 'number' }],
             evaluate: (i) => ({ out: { O: Math.min(asNum(i.A), asNum(i.B)) } }),
         },
         max: {
-            label: 'MAX', tag: 'MAX', category: 'Math',
+            label: text('blocks.max', 'MAX'), tag: 'MAX', category: CATEGORY.math,
             inputs: [{ name: 'A', kind: 'number' }, { name: 'B', kind: 'number' }],
             outputs: [{ name: 'O', kind: 'number' }],
             evaluate: (i) => ({ out: { O: Math.max(asNum(i.A), asNum(i.B)) } }),
@@ -239,10 +257,10 @@ const FBE = (function () {
         ton: {
             // On-delay: Q goes true once IN has been continuously true
             // for `pt` seconds. ET is the running elapsed time.
-            label: 'TON', tag: 'TON', category: 'Timer', stateful: true,
+            label: text('blocks.ton', 'TON'), tag: 'TON', category: CATEGORY.timer, stateful: true,
             inputs: [{ name: 'IN', kind: 'bool' }],
             outputs: [{ name: 'Q', kind: 'bool' }, { name: 'ET', kind: 'number' }],
-            params: [{ name: 'pt', label: 'Preset (s)', kind: 'number', default: 5 }],
+            params: [{ name: 'pt', label: text('params.preset', 'Preset (s)'), kind: 'number', default: 5 }],
             evaluate: (i, p, s, dt) => {
                 const pt = Math.max(0, asNum(p.pt));
                 let et = s.et || 0;
@@ -254,10 +272,10 @@ const FBE = (function () {
         },
         tof: {
             // Off-delay: Q stays true for `pt` seconds after IN drops.
-            label: 'TOF', tag: 'TOF', category: 'Timer', stateful: true,
+            label: text('blocks.tof', 'TOF'), tag: 'TOF', category: CATEGORY.timer, stateful: true,
             inputs: [{ name: 'IN', kind: 'bool' }],
             outputs: [{ name: 'Q', kind: 'bool' }, { name: 'ET', kind: 'number' }],
-            params: [{ name: 'pt', label: 'Preset (s)', kind: 'number', default: 5 }],
+            params: [{ name: 'pt', label: text('params.preset', 'Preset (s)'), kind: 'number', default: 5 }],
             evaluate: (i, p, s, dt) => {
                 const pt = Math.max(0, asNum(p.pt));
                 let q = s.q || false;
@@ -271,7 +289,7 @@ const FBE = (function () {
 
         // — Selection —
         select: {
-            label: 'SELECT', tag: 'SEL', category: 'Selection',
+            label: text('blocks.select', 'SELECT'), tag: 'SEL', category: CATEGORY.selection,
             inputs: [
                 { name: 'SEL', kind: 'bool' },
                 { name: 'IN0', kind: 'number' },
@@ -281,12 +299,12 @@ const FBE = (function () {
             evaluate: (i) => ({ out: { O: asBool(i.SEL) ? asNum(i.IN1) : asNum(i.IN0) } }),
         },
         limit: {
-            label: 'LIMIT', tag: 'LIM', category: 'Selection',
+            label: text('blocks.limit', 'LIMIT'), tag: 'LIM', category: CATEGORY.selection,
             inputs: [{ name: 'IN', kind: 'number' }],
             outputs: [{ name: 'O', kind: 'number' }],
             params: [
-                { name: 'lo', label: 'Low', kind: 'number', default: 0 },
-                { name: 'hi', label: 'High', kind: 'number', default: 100 },
+                { name: 'lo', label: text('params.low', 'Low'), kind: 'number', default: 0 },
+                { name: 'hi', label: text('params.high', 'High'), kind: 'number', default: 100 },
             ],
             evaluate: (i, p) => ({ out: { O: clamp(asNum(i.IN), asNum(p.lo), asNum(p.hi)) } }),
         },
@@ -296,24 +314,24 @@ const FBE = (function () {
             // 'CONST', not 'CON': CON reads as *controller* in a BAS
             // context. The extra character is the tightest name budget
             // on the sheet — constants get 10 characters, not 12.
-            label: 'CONSTANT', tag: 'CONST', category: 'I/O',
+            label: text('blocks.constant', 'CONSTANT'), tag: 'CONST', category: CATEGORY.io,
             inputs: [],
             outputs: [{ name: 'O', kind: 'number' }],
-            params: [{ name: 'value', label: 'Value', kind: 'number', default: 0 }],
+            params: [{ name: 'value', label: text('params.value', 'Value'), kind: 'number', default: 0 }],
             evaluate: (i, p) => ({ out: { O: asNum(p.value) } }),
         },
         ai: {
-            label: 'ANALOG IN', tag: 'AI', category: 'I/O',
+            label: text('blocks.ai', 'ANALOG IN'), tag: 'AI', category: CATEGORY.io,
             inputs: [],
             outputs: [{ name: 'O', kind: 'number' }],
-            params: [{ name: 'value', label: 'Value', kind: 'number', default: 0 }],
+            params: [{ name: 'value', label: text('params.value', 'Value'), kind: 'number', default: 0 }],
             evaluate: (i, p) => ({ out: { O: asNum(p.value) } }),
         },
         bi: {
-            label: 'BINARY IN', tag: 'BI', category: 'I/O',
+            label: text('blocks.bi', 'BINARY IN'), tag: 'BI', category: CATEGORY.io,
             inputs: [],
             outputs: [{ name: 'O', kind: 'bool' }],
-            params: [{ name: 'state', label: 'State', kind: 'bool', default: false }],
+            params: [{ name: 'state', label: text('params.state', 'State'), kind: 'bool', default: false }],
             evaluate: (i, p) => ({ out: { O: p.state === true } }),
         },
         ao: {
@@ -325,13 +343,13 @@ const FBE = (function () {
             // editor invention — in the field an output is an output,
             // and the instance NAME says what it drives ('HW Vlv',
             // 'Fan Spd'). Don't reintroduce a type to carry that.
-            label: 'ANALOG OUT', tag: 'AO', category: 'I/O',
+            label: text('blocks.ao', 'ANALOG OUT'), tag: 'AO', category: CATEGORY.io,
             inputs: [{ name: 'IN', kind: 'number' }],
             outputs: [],
             evaluate: () => ({ out: {} }),
         },
         bo: {
-            label: 'BINARY OUT', tag: 'BO', category: 'I/O',
+            label: text('blocks.bo', 'BINARY OUT'), tag: 'BO', category: CATEGORY.io,
             inputs: [{ name: 'IN', kind: 'bool' }],
             outputs: [],
             evaluate: () => ({ out: {} }),
@@ -347,15 +365,15 @@ const FBE = (function () {
             // doesn't kick the output, matching the rule in pid-basics.
             // Distinct from pid-engine.js's simulatePid (a whole
             // step-response simulation) — this is one controller block.
-            label: 'PID', tag: 'PID', category: 'Control', stateful: true,
+            label: text('blocks.pid', 'PID'), tag: 'PID', category: CATEGORY.control, stateful: true,
             inputs: [{ name: 'SP', kind: 'number' }, { name: 'PV', kind: 'number' }],
             outputs: [{ name: 'OUT', kind: 'number' }],
             params: [
-                { name: 'kc', label: 'Gain (Kc)', kind: 'number', default: 4 },
-                { name: 'ti', label: 'Integral Ti (s)', kind: 'number', default: 60 },
-                { name: 'td', label: 'Derivative Td (s)', kind: 'number', default: 0 },
+                { name: 'kc', label: text('params.gain', 'Gain (Kc)'), kind: 'number', default: 4 },
+                { name: 'ti', label: text('params.integral', 'Integral Ti (s)'), kind: 'number', default: 60 },
+                { name: 'td', label: text('params.derivative', 'Derivative Td (s)'), kind: 'number', default: 0 },
                 {
-                    name: 'action', label: 'Action', kind: 'enum',
+                    name: 'action', label: text('params.action', 'Action'), kind: 'enum',
                     options: ['reverse', 'direct'], default: 'reverse',
                 },
             ],
@@ -392,7 +410,15 @@ const FBE = (function () {
     };
 
     // Palette group order.
-    const CATEGORIES = ['I/O', 'Boolean', 'Comparator', 'Math', 'Timer', 'Selection', 'Control'];
+    const CATEGORIES = [
+        CATEGORY.io,
+        CATEGORY.boolean,
+        CATEGORY.comparator,
+        CATEGORY.math,
+        CATEGORY.timer,
+        CATEGORY.selection,
+        CATEGORY.control,
+    ];
 
     // ── instance + graph helpers ────────────────────────────────────
 

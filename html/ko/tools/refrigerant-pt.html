@@ -1,0 +1,333 @@
+---
+title: 냉매 P-T·과열도 계산기 — controlsfreak.dev
+description: R-410A, R-22, R-134a, R-407C, R-404A, R-454B의 압력–온도 조회와 글라이드를 반영한 과열도·과냉도 계산 도구입니다.
+canonical: https://controlsfreak.dev/ko/tools/refrigerant-pt.html
+nav: tools
+category: hvac
+keywords: 냉매 압력 온도 P-T 차트 R-410A R-22 R-134a R-407C psig kPag 포화 글라이드 과열도 과냉도
+sourceContentHash: 06fda7e3d68a8b1a576b5b5902180dd1a741e4c3bf91a50e5e159b9ffb8beca3
+sourceMessageHash: 315f1325a16f68a10ad99c2119abd8d3adf54e93f7158f52584b06065857273f
+pageMessages:
+  labels:
+    bubbleTemperature: 기포점(포화액)
+    dewTemperature: 이슬점(포화증기)
+    bubblePressure: 기포점 압력
+    dewPressure: 이슬점 압력
+    dewAtPressure: 이 압력의 이슬점
+    bubbleAtPressure: 이 압력의 기포점
+    superheat: 과열도
+    subcooling: 과냉도
+  hints:
+    suction: '흡입관: 증발기 출구에서 압력과 클램프 온도계의 온도를 읽습니다. 이 도구는 이슬점을 기준으로 계산합니다.'
+    liquid: '액관: 응축기 출구에서 압력과 클램프 온도계의 온도를 읽습니다. 이 도구는 기포점을 기준으로 계산합니다.'
+  unitText:
+    gaugePressureUs: 게이지압력(psig)
+    gaugePressureMetric: 게이지압력(kPag)
+    temperatureUs: 온도(°F)
+    temperatureMetric: 온도(°C)
+    measuredLineTemperatureUs: 측정 관로 온도(°F)
+    measuredLineTemperatureMetric: 측정 관로 온도(°C)
+  copy:
+    temperature: 온도 복사
+    pressure: 압력 복사
+    superheat: 과열도 복사
+    subcooling: 과냉도 복사
+    temperatures: '기포점 {bubble} {unit} / 이슬점 {dew} {unit}'
+    pressures: '기포점 {bubble} {unit} / 이슬점 {dew} {unit}'
+    superheatValue: '과열도 {value} {unit}'
+    subcoolingValue: '과냉도 {value} {unit}'
+  status:
+    engineUnavailable: 냉매 계산 엔진을 사용할 수 없습니다. 페이지를 새로고침하세요.
+    dataUnavailable: 냉매 데이터를 사용할 수 없습니다. 페이지를 새로고침하세요.
+    enterPressure: 포화온도를 조회할 압력을 입력하세요.
+    enterTemperature: 포화압력을 조회할 온도를 입력하세요.
+    enterPressureAndTemperature: 압력과 관로 온도를 입력하세요.
+    pressureOutOfRange: '범위를 벗어났습니다. {refrigerant} 차트의 범위는 {low}~{high} {unit}입니다.'
+    temperatureOutOfRange: '범위를 벗어났습니다. {refrigerant} 차트의 범위는 {low}~{high} {unit}입니다.'
+    glideLarge: '{refrigerant}는 온도 글라이드가 있는 혼합냉매입니다. 기포점과 이슬점 차이는 {glide} {unit}이며, 과열도는 이슬점, 과냉도는 기포점을 기준으로 합니다.'
+    glideSmall: '{refrigerant}의 기포점과 이슬점 차이는 {glide} {unit}로 작지만, 과열도는 여전히 이슬점, 과냉도는 기포점을 기준으로 합니다.'
+    glideNegligible: '{refrigerant}는 온도 글라이드가 무시할 만큼 작아 기포점과 이슬점을 사실상 하나의 포화온도로 볼 수 있습니다.'
+    saturationPressure: '{refrigerant}의 {temperature} {unit} 포화압력입니다.'
+    negativeSuperheat: 과열도가 음수입니다. 액냉매가 압축기로 유입되는 액냉매 유입(floodback, 액백) 상태입니다. 운전하기 전에 팽창장치와 냉매 충전량을 점검하세요.
+    lowSuperheat: 과열도가 매우 낮아 액냉매 유입에 대한 여유가 거의 없습니다. 장비의 목표 과열도와 대조하세요.
+    highSuperheat: 과열도가 높아 증발기에 냉매가 부족합니다. 냉매 부족, 막힘 또는 팽창장치의 공급 부족을 점검하고 목표값과 대조하세요.
+    typicalSuperheat: '과열도 {value} {unit}는 일반적인 범위이지만 목표값은 시스템마다 다릅니다. TXV와 고정 오리피스의 목표값도 서로 다릅니다.'
+    negativeSubcooling: 과냉도가 음수이므로 응축기 출구에 액봉이 없고 액관에 플래시가스가 발생합니다. 냉매 충전량과 응축기 풍량을 점검하세요.
+    lowSubcooling: 과냉도가 매우 낮아 냉매 부족이나 응축기의 방열 부족이 의심됩니다. 장비의 목표 과냉도와 대조하세요.
+    highSubcooling: 과냉도가 높아 냉매 과충전이나 액관 막힘으로 응축기에 액냉매가 정체될 수 있습니다. 목표값과 대조하세요.
+    typicalSubcooling: '과냉도 {value} {unit}는 일반적인 범위이지만 목표값은 장비 제조사가 정합니다.'
+  formula:
+    pressureLookup: '{refrigerant}, {pressure} {pressureUnit} — 기포점 {bubble} {temperatureUnit}, 이슬점 {dew} {temperatureUnit}'
+    temperatureLookup: '{refrigerant}, {temperature} {temperatureUnit} — 기포점 {bubble} {pressureUnit}, 이슬점 {dew} {pressureUnit}'
+    superheat: '과열도 = 관로 {line} {temperatureUnit} − 이슬점 {saturation} {temperatureUnit} = {value} {deltaUnit}'
+    subcooling: '과냉도 = 기포점 {saturation} {temperatureUnit} − 관로 {line} {temperatureUnit} = {value} {deltaUnit}'
+---
+{% extends "html/tools/refrigerant-pt.html" %}
+{% from "related-links.njk" import relatedLinks with context %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 냉매 P-T</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                냉매 P-T·과열도 계산기
+                <span class="tool-tag">HVAC</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>포화 압력–온도 조회와 과열도·과냉도 점검 도구입니다.</summary>
+            <div class="preamble-rest">
+                P-T 탭에서는 냉매를 고르고 게이지압력을 입력해 포화온도를 조회합니다.
+                기포점과 이슬점을 모두 표시하므로 혼합냉매의 온도 글라이드를 바로 확인할
+                수 있습니다. 과열도·과냉도 탭에서는 압력과 측정 관로 온도를 입력해 결과와
+                타당성을 점검합니다. 기포점과 이슬점을 평균내지 않고 글라이드를 반영하므로
+                휴대용 P-T 카드보다 정확하게 사용할 수 있습니다.
+            </div>
+        </details>
+        <p class="ps-seed-note">입력란에는 예시 값이 들어 있습니다. 현장 측정값으로 바꿔 입력하세요.</p>
+
+        <section class="rf-type-strip">
+            <div class="ps-row">
+                <label class="ps-label" for="rf-refrigerant">냉매</label>
+                <select class="ps-input" id="rf-refrigerant">
+                    <option value="r410a" selected>R-410A</option>
+                    <option value="r22">R-22</option>
+                    <option value="r134a">R-134a</option>
+                    <option value="r407c">R-407C</option>
+                    <option value="r404a">R-404A</option>
+                    <option value="r454b">R-454B</option>
+                </select>
+            </div>
+        </section>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="pt">P-T(포화)</button>
+            <button class="tab-btn"        data-tab="sc">과열도 / 과냉도</button>
+        </div>
+
+        <!-- ── P-T (saturation) tab ── -->
+        <div id="tab-pt" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+
+                    <div class="ps-row" role="group" aria-labelledby="rf-pt-by-label">
+                        <span class="ps-label" id="rf-pt-by-label">조회 기준</span>
+                        <div class="btn-row">
+                            <button class="copy-btn active" id="rf-pt-by-p" type="button" aria-pressed="true">압력</button>
+                            <button class="copy-btn"        id="rf-pt-by-t" type="button" aria-pressed="false">온도</button>
+                        </div>
+                    </div>
+
+                    <div class="ps-row" id="rf-pt-pressure-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.gaugePressureUs }}" data-metric="{{ pageMessages.unitText.gaugePressureMetric }}" for="rf-pt-pressure">{{ pageMessages.unitText.gaugePressureUs }}</label>
+                        <input class="ps-input" type="number" id="rf-pt-pressure" step="1" value="118">
+                    </div>
+                    <div class="ps-row hidden" id="rf-pt-temp-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.temperatureUs }}" data-metric="{{ pageMessages.unitText.temperatureMetric }}" for="rf-pt-temp">{{ pageMessages.unitText.temperatureUs }}</label>
+                        <input class="ps-input" type="number" id="rf-pt-temp" step="0.5" value="40">
+                    </div>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="status-pill" id="rf-pt-status">{{ pageMessages.status.enterPressure }}</div>
+                    <div class="ps-row">
+                        <span class="ps-label" id="rf-pt-bubble-lbl">{{ pageMessages.labels.bubbleTemperature }}</span>
+                        <span class="ps-value muted" id="rf-pt-bubble">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" id="rf-pt-dew-lbl">{{ pageMessages.labels.dewTemperature }}</span>
+                        <span class="ps-value muted" id="rf-pt-dew">—</span>
+                    </div>
+                    <div class="ps-row" id="rf-pt-glide-row">
+                        <span class="ps-label">글라이드(이슬점 − 기포점)</span>
+                        <span class="ps-value muted" id="rf-pt-glide">—</span>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="copy-btn" id="rf-pt-copy">{{ pageMessages.copy.temperature }}</button>
+                    </div>
+                    <div class="result-formula wrap" id="rf-pt-formula"></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">계산 예시</h2>
+                <p class="ref-note worked-intro">
+                    R-410A 시스템의 증발기 출구에서 측정한 흡입압력이
+                    <span data-us="118 psig" data-metric="814 kPag">118 psig</span>인 경우입니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>냉매를 선택하고 게이지압력을 입력합니다. 도구는 해당 냉매의
+                        공인 P-T 곡선에서 포화온도를 찾습니다. 종이 차트의 두 행
+                        사이를 읽는 것처럼 행 사이 값은 선형 보간합니다.</li>
+                    <li>순수냉매(R-22, R-134a)는 각 압력에서 포화온도가 하나입니다.
+                        <strong>비공비 혼합냉매</strong>에는 두 온도가 있습니다. 액체가
+                        포화 상태에 이르는 온도인 <strong>기포점</strong>과 증기가 포화
+                        상태에 이르는 온도인 <strong>이슬점</strong>이며, 둘의 차이가
+                        <strong>온도 글라이드</strong>입니다.</li>
+                    <li>어느 값을 써야 하는지는 측정 대상에 따라 달라집니다. 과열도는
+                        <strong>이슬점</strong> 온도, 과냉도는 <strong>기포점</strong> 온도를
+                        기준으로 합니다. R-407C의 글라이드는 <span data-us="~10 °F" data-metric="~5.6 °C">~10 °F</span>에 이릅니다.
+                        둘을 평균내면 모든 과열도 측정값에 <span data-us="~5 °F" data-metric="~2.8 °C">~5 °F</span>의 오차가 생깁니다.</li>
+                </ol>
+                <p class="ref-note">
+                    압력은 매니폴드 게이지에서 읽는 게이지압력(psig / kPag)입니다.
+                    과열도·과냉도 탭으로 전환하면 관로 온도에서 실제 과열도 또는
+                    과냉도를 계산할 수 있습니다.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Superheat / Subcooling tab ── -->
+        <div id="tab-sc" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+
+                    <div class="ps-row" role="group" aria-labelledby="rf-sc-line-label">
+                        <span class="ps-label" id="rf-sc-line-label">관로</span>
+                        <div class="btn-row">
+                            <button class="copy-btn active" id="rf-sc-suction" type="button" aria-pressed="true">흡입관</button>
+                            <button class="copy-btn"        id="rf-sc-liquid"  type="button" aria-pressed="false">액관</button>
+                        </div>
+                    </div>
+
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.gaugePressureUs }}" data-metric="{{ pageMessages.unitText.gaugePressureMetric }}" for="rf-sc-pressure">{{ pageMessages.unitText.gaugePressureUs }}</label>
+                        <input class="ps-input" type="number" id="rf-sc-pressure" step="1" value="118">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.measuredLineTemperatureUs }}" data-metric="{{ pageMessages.unitText.measuredLineTemperatureMetric }}" for="rf-sc-temp">{{ pageMessages.unitText.measuredLineTemperatureUs }}</label>
+                        <input class="ps-input" type="number" id="rf-sc-temp" step="0.5" value="50">
+                    </div>
+                    <p class="ref-note" id="rf-sc-hint">{{ pageMessages.hints.suction }}</p>
+                    <p class="ref-note">
+                        기준은 관로에 따라 바뀝니다. 과열도는 증기측의
+                        <code>관로 온도 − 이슬점</code>이고, 과냉도는 액측의
+                        <code>기포점 − 관로 온도</code>입니다. 같은 게이지를
+                        사용하더라도 빼는 순서는 반대입니다.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="status-pill" id="rf-sc-status">{{ pageMessages.status.enterPressureAndTemperature }}</div>
+                    <div class="ps-row">
+                        <span class="ps-label" id="rf-sc-satref-lbl">{{ pageMessages.labels.dewAtPressure }}</span>
+                        <span class="ps-value muted" id="rf-sc-satref">—</span>
+                    </div>
+                    <div class="ps-row primary">
+                        <span class="ps-label" id="rf-sc-result-lbl">{{ pageMessages.labels.superheat }}</span>
+                        <span class="ps-value muted" id="rf-sc-result">—</span>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="copy-btn" id="rf-sc-copy">{{ pageMessages.copy.superheat }}</button>
+                    </div>
+                    <div class="result-formula wrap" id="rf-sc-formula"></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">계산 예시</h2>
+                <p class="ref-note worked-intro">
+                    같은 R-410A 시스템에서 흡입압력은
+                    <span data-us="118 psig" data-metric="814 kPag">118 psig</span>,
+                    흡입관에 설치한 클램프 온도계의 측정값은
+                    <span data-us="50 °F" data-metric="10.0 °C">50 °F</span>입니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li><strong>과열도</strong>(흡입관): 흡입압력에서 이슬점 온도를
+                        구한 다음 <code>과열도 = 관로 온도 − 이슬점 온도</code>로
+                        계산합니다. 여기서 <span data-us="~118 psig" data-metric="~814 kPag">~118 psig</span>의 이슬점은
+                        <span data-us="~40 °F" data-metric="~4.4 °C">~40 °F</span>이므로, 과열도는 약
+                        <span data-us="50 − 40 = 10 °F" data-metric="10.0 − 4.4 = 5.6 °C">50 − 40 = 10 °F</span>입니다. 즉, 증기가 포화온도보다 그만큼 높습니다.</li>
+                    <li><strong>과냉도</strong>(액관): 액관 압력에서 기포점 온도를
+                        구한 다음 <code>과냉도 = 기포점 온도 − 관로 온도</code>로
+                        계산합니다. 즉, 액체가 포화온도보다 낮은 정도입니다.</li>
+                    <li>과열도가 낮으면 액냉매가 압축기로 <button type="button" data-gloss="floodback">액냉매 유입</button>할
+                        위험이 있고, 높으면 증발기에 냉매 공급이 부족할 수 있습니다.
+                        과냉도가 낮으면 냉매 부족이나 액관 막힘이 의심됩니다. 목표값은
+                        <em>시스템마다 다릅니다</em>. TXV(열팽창밸브)는 고정 오리피스와
+                        다른 과열도를 유지하므로 판정 결과를 설정값이 아닌 점검 방향으로
+                        활용하세요.</li>
+                </ol>
+                <p class="ref-note">
+                    제조사 P-T 차트에 적힌 절차와 같습니다. 과열도는 이슬점 열,
+                    과냉도는 기포점 열을 사용합니다.
+                </p>
+            </section>
+        </div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h2 class="tool-card-title">데이터 정보</h2>
+        </div>
+        <div class="tool-body">
+            <p>
+                압력–온도 표는 제조사가 공개한 P-T 차트에서 옮겼습니다. R-22,
+                R-134a, R-407C, R-404A, R-454B는 Honeywell의 Genetron / Solstice
+                차트, R-410A는 iGas 차트를 사용했습니다. 현장 기술자가 종이 차트의
+                행 사이를 읽는 것처럼 이 도구도 차트 행 사이를 선형 보간합니다.
+                R-32와 다른 냉매는 신뢰할 수 있는 차트를 확보하는 대로 추가할 예정입니다.
+            </p>
+            <p>
+                <strong>기포점과 이슬점.</strong> 순수냉매는 주어진 압력에서 하나의
+                온도로 끓습니다. R-407C가 대표적인 <em>비공비 혼합냉매</em>는 일정한
+                온도 범위에서 끓습니다. <strong>기포점</strong>은 마지막 액체가 증발하는
+                지점이고, <strong>이슬점</strong>은 마지막 증기가 응축하는 지점입니다.
+                과열도는 이슬점, 과냉도는 기포점을 기준으로 측정합니다. 단일 열 P-T
+                카드는 두 값을 평균내므로 온도 글라이드가 있는 모든 혼합냉매에서
+                오차가 생깁니다.
+            </p>
+            <p>
+                <strong>압력은 절대압력이 아니라 매니폴드에서 읽는 게이지압력
+                (psig / kPag)입니다.</strong> <strong>목표 과열도와 과냉도는 시스템에
+                따라 달라집니다.</strong> 팽창장치, 장비 제조사, 운전 조건이 모두
+                영향을 줍니다. 이 도구는 측정값과 일반적인 점검 방향을 제시하지만,
+                경험 법칙보다 해당 장비의 기술 자료를 우선해야 합니다.
+            </p>
+            <p class="ref-note">
+                <strong>여기서 얻은 값은 교차 검증용이며 냉매 충전 절차가
+                아닙니다.</strong> 게이지 측정값으로 가설을 검증하고 관계를 학습하며,
+                진단을 재확인하는 데 사용하세요. 최종 판단은 제조사의 충전 차트와
+                커미셔닝 데이터에 따라야 합니다. 조회값 하나만으로 조치하면 글라이드를
+                잘못 읽어 충전량을 틀릴 수 있고, 그 결과 액냉매가 압축기로 역류할 수
+                있습니다.
+            </p>
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/refrigeration/', label: '냉동 사이클 참고 자료 허브'},
+        tools: [
+            {href: '/ko/tools/coil-sizing.html', label: '코일 용량 계산기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/refrigerant-loop.html', label: '냉매 사이클 시뮬레이터'}
+        ],
+        lessons: [
+            {href: '/ko/education/refrigerant-cycle-basics.html', label: '냉동 사이클 기초'},
+            {href: '/ko/education/superheat-subcooling.html', label: '과열도와 과냉도'},
+            {href: '/ko/education/metering-devices-txv-eev.html', label: 'TXV와 EEV 비교'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

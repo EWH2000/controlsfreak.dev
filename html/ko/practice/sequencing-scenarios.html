@@ -1,0 +1,63 @@
+---
+title: 운전 시퀀스 시나리오 실전 연습 — controlsfreak.dev
+description: 냉동기·보일러 대수제어, 외기냉방 절환, 제습 후 재열, 선행·후행 교대 등 실제 운전 시퀀스 판단을 점검하는 10문항 실전 연습입니다.
+sourceContentHash: 7149a302745513ac74878adbaa20145c87c7a716bf11f268f60505979c2f2e19
+canonical: https://controlsfreak.dev/ko/practice/sequencing-scenarios.html
+nav: practice
+category: field
+---
+{% extends "html/practice/sequencing-scenarios.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 운전 시퀀스 시나리오</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">운전 시퀀스 시나리오 실전 연습 <span class="tool-tag">현장 연습</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                실제 <strong>운전 시퀀스</strong>, 즉 개별 장비를 플랜트로 동작하게 하는 로직을 다루는
+                시나리오 10문항입니다. 냉동기·보일러 플랜트 대수제어, 단주기 운전을 막는 불감대와 최소
+                단계 유지 타이머, 균등한 마모를 위한 선행·후행 순환 교대, 공기조화기(AHU) 외기냉방 절환과
+                습한 기후에서 건구온도보다 엔탈피가 적합한 이유, 과냉각 후 재열하는 제습 캐스케이드와
+                노점온도가 핵심인 이유를 점검합니다. 해설은 문항 아래에 표시되며 관련 학습 자료로 바로
+                연결됩니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/economizer-ratio.html', label: '외기냉방 비율 계산기'},
+            {href: '/ko/tools/psychrometric-chart.html', label: '습공기선도'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/ddc-workbench.html', label: 'DDC 워크벤치 — 공기조화기'},
+            {href: '/ko/simulators/ddc-workbench-fcu.html', label: 'DDC 워크벤치 — 팬코일유닛'}
+        ],
+        lessons: [
+            {href: '/ko/education/economizers.html', label: '외기냉방'},
+            {href: '/ko/education/equipment-staging.html', label: '장비 대수제어'},
+            {href: '/ko/education/psychrometrics-basics.html', label: '습공기 상태 해석 기초'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/troubleshooting.html', label: '문제 해결'},
+            {href: '/ko/practice/controller-swap.html', label: '컨트롤러 교체'},
+            {href: '/ko/practice/controls-commissioning.html', label: '제어 커미셔닝'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

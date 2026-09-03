@@ -24,6 +24,18 @@ const CONTACT_ADDRESS = "contact@controlsfreak.dev";
 const ORIGIN_ALLOWED = "https://controlsfreak.dev";
 const MAX_BODY = 20 * 1024;       // 20 KB — legitimate form is < 6 KB.
 const FETCH_TIMEOUT_MS = 8000;    // Turnstile + Resend upstream hard cap.
+const CONTACT_ERRORS = Object.freeze({
+    BAD_ORIGIN: "Bad origin.",
+    MISSING_LENGTH: "Missing request length.",
+    BODY_TOO_LARGE: "Request body too large.",
+    FORM_UNREADABLE: "Could not read the form data.",
+    INVALID_EMAIL: "Please enter a valid email address.",
+    INVALID_MESSAGE: "Message must be between 1 and 5000 characters.",
+    NAME_TOO_LONG: "That name is too long.",
+    VERIFICATION_FAILED: "Verification failed — please refresh the page and try again.",
+    SEND_FAILED: "Could not send message right now.",
+    METHOD_NOT_ALLOWED: "Method not allowed.",
+});
 
 // Pages that moved from /tools/ to /simulators/ when the Simulators section
 // landed. 301 so search engines transfer signal to the new URL and so any
@@ -80,6 +92,10 @@ function json(data, status = 200, extraHeaders = {}) {
     });
 }
 
+function contactError(code, status, extraHeaders = {}) {
+    return json({ ok: false, code, error: CONTACT_ERRORS[code] }, status, extraHeaders);
+}
+
 // fetch() wrapper that aborts on timeout so a hung upstream can't stall the
 // user's spinner until Cloudflare kills the worker invocation.
 async function fetchWithTimeout(url, init, timeoutMs) {
@@ -98,7 +114,7 @@ async function handleContact(request, env) {
     // it's a CSRF / drive-by — short-circuit before any parsing cost.
     const origin = request.headers.get("origin");
     if (origin && origin !== ORIGIN_ALLOWED) {
-        return json({ ok: false, error: "Bad origin." }, 403);
+        return contactError("BAD_ORIGIN", 403);
     }
 
     // ── Body size pre-check ───────────────────────────────────
@@ -111,17 +127,17 @@ async function handleContact(request, env) {
     // polish; the previous comment claimed otherwise).
     const contentLength = parseInt(request.headers.get("content-length") || "", 10);
     if (!Number.isFinite(contentLength)) {
-        return json({ ok: false, error: "Missing request length." }, 411);
+        return contactError("MISSING_LENGTH", 411);
     }
     if (contentLength > MAX_BODY) {
-        return json({ ok: false, error: "Request body too large." }, 413);
+        return contactError("BODY_TOO_LARGE", 413);
     }
 
     let form;
     try {
         form = await request.formData();
     } catch (err) {
-        return json({ ok: false, error: "Could not read the form data." }, 400);
+        return contactError("FORM_UNREADABLE", 400);
     }
 
     // formData.get returns string | File | null. The form has no file inputs,
@@ -149,16 +165,16 @@ async function handleContact(request, env) {
     const token = field("cf-turnstile-response");
 
     if (!email || email.length > 200 || !EMAIL_RE.test(email)) {
-        return json({ ok: false, error: "Please enter a valid email address." }, 400);
+        return contactError("INVALID_EMAIL", 400);
     }
     if (!message || message.length > 5000) {
-        return json({ ok: false, error: "Message must be between 1 and 5000 characters." }, 400);
+        return contactError("INVALID_MESSAGE", 400);
     }
     if (name.length > 200) {
-        return json({ ok: false, error: "That name is too long." }, 400);
+        return contactError("NAME_TOO_LONG", 400);
     }
     if (!token) {
-        return json({ ok: false, error: "Verification failed — please refresh the page and try again." }, 400);
+        return contactError("VERIFICATION_FAILED", 400);
     }
 
     // ── Turnstile ─────────────────────────────────────────────
@@ -194,7 +210,7 @@ async function handleContact(request, env) {
         // load and submit; the recovery hint (refresh → fresh token) is for
         // them. A spoofed/wrong-host token also lands here and gets the same
         // terse line — no info leaked, and that path is for abuse, not help.
-        return json({ ok: false, error: "Verification failed — please refresh the page and try again." }, 400);
+        return contactError("VERIFICATION_FAILED", 400);
     }
 
     // ── Send via Resend ───────────────────────────────────────
@@ -230,13 +246,13 @@ async function handleContact(request, env) {
         );
     } catch (err) {
         console.error("Resend request failed", err);
-        return json({ ok: false, error: "Could not send message right now." }, 502);
+        return contactError("SEND_FAILED", 502);
     }
 
     if (!sent.ok) {
         const detail = await sent.text().catch(() => "");
         console.error("Resend returned non-2xx", sent.status, detail);
-        return json({ ok: false, error: "Could not send message right now." }, 502);
+        return contactError("SEND_FAILED", 502);
     }
 
     return json({ ok: true });
@@ -259,11 +275,7 @@ export default {
             if (request.method === "POST") {
                 return handleContact(request, env);
             }
-            return json(
-                { ok: false, error: "Method not allowed." },
-                405,
-                { allow: "POST" },
-            );
+            return contactError("METHOD_NOT_ALLOWED", 405, { allow: "POST" });
         }
         const assetRes = await env.ASSETS.fetch(request);
         // html_handling ("auto-trailing-slash") answers the non-canonical form

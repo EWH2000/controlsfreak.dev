@@ -1,0 +1,231 @@
+---
+title: 풍량 및 속도압 계산기 — controlsfreak.dev
+description: VAV K 계수식 CFM = K × √VP를 양방향으로 계산하고, 직사각형·원형 덕트에서 V = 4005 × √VP로 유속과 풍량을 구합니다.
+sourceContentHash: b2f5506c2935e5ac12f8b90c5a10717cc20166cc7eef619015299e885a6ce4c5
+sourceMessageHash: 35eac1dfe96db32d5ef8f74538a4938f4fc2f849c4b349ee4f66f56a6420d47c
+canonical: https://controlsfreak.dev/ko/tools/airflow.html
+nav: tools
+category: airflow
+keywords: cfm k 계수 속도압 vp 4005 fpm 덕트 트래버스 피토관 풍량후드 vav
+pageMessages:
+  output:
+    flow: 풍량
+    kFactor: K 계수
+  copy:
+    value: '{value} 복사'
+  errors:
+    velocityPressure: 속도압을 입력하세요.
+    pickupReversed: 속도압이 음수라면 일반적으로 센싱 튜브가 서로 바뀐 것입니다. 픽업 또는 트랜스듀서의 고압·저압 포트가 반대로 연결되었는지 확인하세요.
+    kFactor: 풍량을 구하려면 K 계수를 입력하세요.
+    kNegative: K는 음수일 수 없습니다.
+    measuredFlow: K를 역산하려면 측정 풍량을 입력하세요.
+    flowNegative: 풍량은 음수일 수 없습니다.
+    zeroVelocityPressure: VP가 0이면 K를 역산할 수 없습니다. 속도압이 없으므로 보정에 사용할 풍량 신호도 없습니다.
+    pitotReversed: 속도압이 음수라면 일반적으로 피토관 포트가 서로 바뀐 것입니다. 게이지의 전압·정압 연결이 반대인지 확인하세요.
+    diameter: 덕트 직경을 입력하세요.
+    diameterPositive: 직경은 0보다 커야 합니다.
+    dimensions: 덕트 폭과 높이를 입력하세요.
+    dimensionsPositive: 덕트 치수는 0보다 커야 합니다.
+---
+{% extends "html/tools/airflow.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 풍량</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                풍량 및 속도압
+                <span class="tool-tag">풍량</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>현장에서 사용하는 풍량 제곱근 식을 양방향으로 계산합니다.</summary>
+            <div class="preamble-rest">
+                <em>K 계수 풍량</em>은 VAV 박스의 <code>CFM = K × √VP</code>를 양방향으로 계산합니다. 픽업의 <button type="button" data-gloss="velocity-pressure">속도압</button>에서 풍량을 구하거나 풍량후드 측정값에서 K를 역산할 수 있습니다.
+                <em>덕트 유속</em>은 피토관 측정값을 <code>V = 4005 × √VP</code>로 FPM으로 바꾸고, 덕트 면적을 이용해 CFM을 구합니다.
+            </div>
+        </details>
+        <p class="ps-seed-note">입력란에는 예제가 미리 채워져 있습니다. 확인하려는 값으로 수정하세요.</p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="kfactor">K 계수 풍량</button>
+            <button class="tab-btn"        data-tab="velocity">덕트 유속</button>
+        </div>
+
+        <!-- ── K-factor flow ── -->
+        <div id="tab-kfactor" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="vp-k-solve">계산 항목</label>
+                        <select class="ps-input" id="vp-k-solve">
+                            <option value="flow">K + VP에서 풍량 계산</option>
+                            <option value="k">측정 풍량 + VP에서 K 계산</option>
+                        </select>
+                    </div>
+                    <div class="ps-row" id="vp-k-row-k">
+                        <label class="ps-label" for="vp-k-k">K 계수(1.0 in. w.c.에서 CFM)</label>
+                        <input class="ps-input" type="number" id="vp-k-k" step="any" min="0" placeholder="1000" value="1000">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="vp-k-vp">속도압 VP(in. w.c.)</label>
+                        <input class="ps-input" type="number" id="vp-k-vp" step="any" placeholder="0.36" value="0.36">
+                    </div>
+                    <div class="ps-row" id="vp-k-row-cfm">
+                        <label class="ps-label" for="vp-k-cfm">측정 풍량(CFM)</label>
+                        <input class="ps-input" type="number" id="vp-k-cfm" step="any" min="0" placeholder="800" value="800">
+                    </div>
+                    <p class="ref-note">
+                        K는 박스의 <button type="button" data-gloss="velocity-pressure">속도압</button> 픽업에 대한 제조사 풍량계수, 즉 정확히 1.0&nbsp;in.&nbsp;w.c.에서 표시하는 CFM입니다. 벤더와 제어기마다 관례가 다르기 때문에 두 번째 모드가 필요합니다. 밸런싱 작업자의 풍량후드 측정값과 제어기가 읽는 <button type="button" data-gloss="velocity-pressure">VP</button>로 K를 역산하면 문서에서 어떤 관례를 사용했든 박스를 보정할 수 있습니다.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="ps-row primary">
+                        <span class="ps-label" id="vp-k-out-label">풍량</span>
+                        <span class="ps-value muted" id="vp-k-out">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="vp-k-copy">값 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="vp-k-formula"></div>
+                    <div class="failure-callout" id="vp-k-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">계산 예제</h2>
+                <p class="ref-note worked-intro">
+                    K&nbsp;=&nbsp;1000인 VAV 박스의 풍량 픽업에서 <button type="button" data-gloss="velocity-pressure">속도압</button> 0.36&nbsp;in.&nbsp;w.c.가 측정되었습니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>풍량식: <code>CFM = K × √VP</code>.</li>
+                    <li>대입: <code>CFM = 1000 × √0.36 = 1000 × 0.6 = 600 CFM</code>.</li>
+                    <li>이제 보정 방향으로 계산합니다. 픽업이 <code>VP = 0.64</code>를 읽을 때 밸런싱 작업자의 풍량후드에서 실제 풍량이 <code>800 CFM</code>으로 측정되었습니다. 역산하면 <code>K = 800 ÷ √0.64 = 800 ÷ 0.8 = 1000</code>입니다. 설정된 K가 맞으므로 앞서 발생한 불일치의 원인은 다른 곳에 있습니다.</li>
+                </ol>
+                <p class="ref-note">
+                    박스 표시값과 풍량후드 측정값이 다르면 일반적으로 K가 잘못되었거나 센싱 튜브가 꺾였거나 픽업이 입구 엘보에 너무 가깝게 설치된 것입니다. 한 번의 역산으로 첫 번째 원인을 나머지 두 원인과 구분할 수 있습니다.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Duct velocity ── -->
+        <div id="tab-velocity" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="vp-d-vp">속도압 VP(in. w.c.)</label>
+                        <input class="ps-input" type="number" id="vp-d-vp" step="any" placeholder="0.0625" value="0.0625">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="vp-d-shape">덕트 형상</label>
+                        <select class="ps-input" id="vp-d-shape">
+                            <option value="rect">직사각형</option>
+                            <option value="round">원형</option>
+                        </select>
+                    </div>
+                    <div class="ps-row vp-rect-only">
+                        <label class="ps-label" for="vp-d-w">덕트 폭(in.)</label>
+                        <input class="ps-input" type="number" id="vp-d-w" step="any" min="0" placeholder="24" value="24">
+                    </div>
+                    <div class="ps-row vp-rect-only">
+                        <label class="ps-label" for="vp-d-h">덕트 높이(in.)</label>
+                        <input class="ps-input" type="number" id="vp-d-h" step="any" min="0" placeholder="12" value="12">
+                    </div>
+                    <div class="ps-row vp-round-only hidden">
+                        <label class="ps-label" for="vp-d-dia">덕트 직경(in.)</label>
+                        <input class="ps-input" type="number" id="vp-d-dia" step="any" min="0" placeholder="16" value="16">
+                    </div>
+                    <p class="ref-note">
+                        피토관 한 지점의 측정값은 점유속이며, 덕트 유속은 균일하지 않습니다. 중심에서 가장 빠르고 벽에서는 0에 가까워집니다. 공식 기록에 사용할 측정값을 얻으려면 덕트를 트래버스하여 등면적 격자의 여러 지점을 측정하고 유속을 평균해야 합니다. <a href="/ko/tools/duct-traverse.html">덕트 트래버스 계산기</a>는 격자 전체를 평균하며 이 탭은 각 지점의 계산을 수행합니다.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="ps-row">
+                        <span class="ps-label">유속(FPM)</span>
+                        <span class="ps-value muted" id="vp-d-vel">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">유속(m/s 환산값)</span>
+                        <span class="ps-value muted" id="vp-d-ms">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">덕트 면적(ft²)</span>
+                        <span class="ps-value muted" id="vp-d-area">—</span>
+                    </div>
+                    <div class="ps-row primary">
+                        <span class="ps-label">풍량(CFM)</span>
+                        <span class="ps-value muted" id="vp-d-cfm">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="vp-d-copy">CFM 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="vp-d-formula"></div>
+                    <div class="failure-callout" id="vp-d-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">계산 예제</h2>
+                <p class="ref-note worked-intro">
+                    24&nbsp;×&nbsp;12&nbsp;in. 급기 덕트의 피토관 트래버스 지점에서 VP&nbsp;=&nbsp;0.0625&nbsp;in.&nbsp;w.c.가 측정되었습니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>VP에서 유속 계산: <code>V = 4005 × √0.0625 = 4005 × 0.25 = 1001 FPM</code>.</li>
+                    <li>덕트 면적: <code>A = (24 ÷ 12) × (12 ÷ 12) = 2.0 ft²</code>.</li>
+                    <li>풍량: <code>Q = 1001 × 2.0 = 2002 CFM</code>.</li>
+                </ol>
+            </section>
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label">표준공기와 계수 4005의 유도</h2>
+            <p class="ref-note">
+                두 탭 모두 해수면, 약 70&nbsp;°F에서 밀도 0.075&nbsp;lb/ft³인 <strong>표준공기</strong>를 가정합니다. 4005는 이 밀도를 <code>V&nbsp;=&nbsp;√(2&nbsp;·&nbsp;ΔP&nbsp;/&nbsp;ρ)</code>에 포함한 계수이며 관례적으로 반올림한 값입니다(0.075&nbsp;lb/ft³에서 정확한 값은 약 4004). 따라서 밀도 전체 자릿수를 사용하는 정밀 계측기와 이 페이지의 결과가 FPM의 일부만큼 다를 수 있지만 이는 실제 불일치가 아니라 반올림 때문입니다. 고도가 높아지면 공기가 희박해져 같은 <button type="button" data-gloss="velocity-pressure">VP</button>에서도 실제 유속이 더 빠르며, 이 계산은 수천 피트마다 실제 유속을 몇 퍼센트 낮게 평가합니다. 대부분의 밸런싱 계측기는 내부에서 밀도를 보정하므로 해당 기능이 있다면 이 페이지보다 계측기 값을 신뢰하세요. 고도를 보정한 습공기 계산은 <a href="/ko/tools/psychrometric-chart.html">습공기선도</a>의 고도 입력을 사용하세요.
+            </p>
+            <p class="ref-note">
+                이 도구는 미국 단위(CFM, in.&nbsp;w.c., FPM)를 기준으로 합니다. 이 지역에서 K 계수와 피토관 선도가 발행되는 단위 체계이기 때문입니다. m/s 환산값은 함께 표시합니다. 미터법 <button type="button" data-gloss="velocity-pressure">VP</button> 모드(L/s, Pa, <code>V&nbsp;=&nbsp;1.291&nbsp;×&nbsp;√Pa</code>)는 후속 작업으로 계획되어 있습니다.
+            </p>
+        </section>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/forced-air/', label: '강제순환식 공조 참고 자료 허브'},
+        tools: [
+            {href: '/ko/tools/duct-traverse.html', label: '덕트 트래버스 계산기'},
+            {href: '/ko/tools/airside-load.html', label: '공기측 부하 계산기'},
+            {href: '/ko/tools/air-mixing.html', label: '공기 혼합 계산기'},
+            {href: '/ko/tools/coil-sizing.html', label: '코일 용량 계산기'},
+            {href: '/ko/tools/waterside-load.html', label: '수측 부하 계산기'},
+            {href: '/ko/tools/duct-sizer.html', label: '덕트 치수 계산기'}
+        ],
+        lessons: [
+            {href: '/ko/education/vav-systems.html', label: 'VAV 시스템'},
+            {href: '/ko/education/psychrometrics-basics.html', label: '습공기 상태 해석 기초'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/vav-systems.html', label: 'VAV 시스템 퀴즈'},
+            {href: '/ko/practice/psychrometrics-basics.html', label: '습공기 상태 해석 기초 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

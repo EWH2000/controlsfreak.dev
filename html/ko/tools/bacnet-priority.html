@@ -1,0 +1,214 @@
+---
+title: BACnet 우선순위 배열 — controlsfreak.dev
+description: BACnet 우선순위 배열 16개 슬롯에 값이나 NULL을 설정해 Present_Value가 최상위 non-NULL 슬롯 또는 Relinquish_Default로 결정되는 과정을 확인합니다.
+sourceContentHash: 6f43c7872f29034005966d1493e5e3287fec72b6369790661a650d58341461f8
+sourceMessageHash: 25cc9f6ad97b920fb35fc90bd4504a5463caecfb95705727d8d6760506e513b6
+canonical: https://controlsfreak.dev/ko/tools/bacnet-priority.html
+nav: tools
+category: protocols
+keywords: BACnet 우선순위 배열 Present_Value Relinquish_Default 명령 가능 오버라이드 쓰기 NULL 해제 16슬롯 운전자 수동 인명안전 최소 켜기 끄기 WriteProperty
+pageMessages:
+  slot:
+    withUse: 슬롯 {number}({use})
+    plain: 슬롯 {number}
+    useLabels:
+      '1': 수동 생명안전
+      '2': 자동 생명안전
+      '5': 중요 장비 제어
+      '6': 최소 켜짐/꺼짐
+      '8': 운전자 수동 명령
+  active:
+    status: '{slot}의 명령이 적용됨'
+    explanation: Present_Value는 NULL이 아닌 슬롯 중 번호가 가장 낮은 <strong>{slot}</strong>의 값입니다.
+    lowerHeldBack: ' 이보다 우선순위가 낮은 슬롯의 값은 보류됩니다.'
+    nextSlot: '{current}을 해제하면 {next}의 값({value})이 적용됩니다.'
+    nextDefault: '{current}을 해제하면 Present_Value가 Relinquish_Default({value})(으)로 내려갑니다.'
+    nextNull: '{current}을 해제하면 모든 슬롯이 NULL이 되어 Present_Value도 NULL이 됩니다.'
+  defaultValue:
+    status: Relinquish_Default에서 가져옴
+    explanation: 모든 슬롯이 NULL이므로 Present_Value는 기본 상태인 <strong>Relinquish_Default</strong>를 사용합니다.
+    next: 아무 슬롯에나 값을 쓰면 기본값보다 우선하는 명령이 적용됩니다.
+  nullValue:
+    status: NULL — 명령 가능한 값 없음
+    explanation: 모든 슬롯이 NULL이고 Relinquish_Default도 비어 있어 Present_Value는 NULL입니다.
+faqs:
+    - q: BACnet 우선순위 배열이란 무엇인가요?
+      a: 16슬롯 속성(<code>Priority_Array</code>)으로, 모든 <em>명령 가능한</em> 객체, 즉 Analog Output, Binary Output과 명령 가능하도록 구성한 Analog/Binary/Multi-state Value에 있습니다. <code>WriteProperty</code>로 <code>Present_Value</code>에 값을 써도 현재 값을 덮어쓰지 않고 선택한 우선순위의 슬롯 하나에 기록합니다. 슬롯 1의 우선순위가 가장 높고 슬롯 16이 가장 낮습니다.
+    - q: BACnet은 우선순위 배열에서 Present_Value를 어떻게 결정하나요?
+      a: <code>Present_Value</code>는 <strong>NULL이 아닌 슬롯 중 번호가 가장 낮은 슬롯</strong>, 즉 활성 명령 중 우선순위가 가장 높은 슬롯의 값입니다. 그보다 우선순위가 낮은 모든 슬롯의 값은 보류됩니다. 16개 슬롯이 모두 NULL이면 객체는 <code>Relinquish_Default</code> 속성값을 사용합니다.
+    - q: BACnet 우선순위에 NULL을 쓰면 어떻게 되나요?
+      a: 해당 슬롯을 <strong>해제(relinquish)</strong>합니다. 슬롯이 비어 명령을 중단합니다. 0을 쓰는 것이 아니라 명령을 제거하여 다음으로 우선순위가 높은 non-NULL 슬롯이 적용되게 합니다. 작업을 마친 뒤 NULL을 쓰지 않는 것은 오버라이드가 고착되는 가장 흔한 원인입니다.
+    - q: BACnet의 Relinquish_Default란 무엇인가요?
+      a: 명령 가능한 객체의 우선순위 배열 전체가 NULL일 때 사용하는 기본 상태값입니다. 슬롯 17이 아니라 별도로 쓸 수 있는 속성입니다. 많은 포인트에서 로직이나 운전자가 아무것도 요구하지 않을 때 객체가 유지해야 하는 안전/정지 값으로 설정합니다.
+    - q: BACnet 운전자 오버라이드는 어떤 우선순위를 사용하나요?
+      a: 관례상 우선순위 8인 "Manual Operator"는 워크스테이션이나 BMS에서 내리는 운전자의 수동 명령에 사용하고, 우선순위 16은 제어기 자체의 자동 프로그램이 가장 흔히 값을 쓰는 슬롯입니다. 따라서 8번 수동 오버라이드가 16번 시퀀스보다 우선하며, 8번에 NULL을 쓰면 16번 시퀀스가 다시 적용됩니다. 정확한 우선순위 맵은 현장마다 다르므로 제어기 설정을 확인하세요.
+    - q: BACnet 포인트가 고정되어 프로그램을 따르지 않는 이유는 무엇인가요?
+      a: 거의 항상 시퀀스보다 높은 우선순위에 남아 있는 오버라이드가 원인입니다. 프로그램이 예를 들어 슬롯 16에 쓰더라도, 누군가 몇 달 전에 설정한 수동 값이 슬롯 8에 남아 있으면 <code>Present_Value</code>는 이전 오버라이드로 결정됩니다. 시퀀스가 정상적으로 쓰고 있는데도 포인트가 "고장 난" 것처럼 보이는 이유입니다. 우선순위 배열 전체를 읽고 남아 있는 슬롯을 NULL 쓰기로 해제하세요.
+---
+{% extends "html/tools/bacnet-priority.html" %}
+
+{% block content %}
+{% set prioritySlots = [
+    { n: 1,  use: "Manual Life-Safety",         useKo: "수동 생명안전",    short: "생명안전",        tag: "std",   note: "가장 높은 우선순위이며 수동 생명안전 명령용으로 예약되어 있습니다. 어떤 명령도 이보다 우선하지 않습니다." },
+    { n: 2,  use: "Automatic Life-Safety",      useKo: "자동 생명안전",    short: "자동 생명안전",   tag: "std",   note: "연기 제어, 화재 대응 같은 자동 생명안전 기능에 사용합니다." },
+    { n: 3,  use: "Available",                  useKo: "사용 가능",        short: "",                tag: "avail", note: "애플리케이션별 용도로 사용할 수 있습니다." },
+    { n: 4,  use: "Available",                  useKo: "사용 가능",        short: "",                tag: "avail", note: "애플리케이션별 용도로 사용할 수 있습니다." },
+    { n: 5,  use: "Critical Equipment Control", useKo: "중요 장비 제어",   short: "중요 장비",       tag: "std",   note: "압축기나 반드시 완료해야 하는 제상 운전 등 장비를 보호합니다." },
+    { n: 6,  use: "Minimum On/Off",             useKo: "최소 켜짐/꺼짐",   short: "최소 켜짐/꺼짐", tag: "std",   note: "최소 켜짐/꺼짐 시간을 강제하는 용도, 즉 단주기 운전 방지 타이머용으로 예약되어 있습니다." },
+    { n: 7,  use: "Available",                  useKo: "사용 가능",        short: "",                tag: "avail", note: "애플리케이션별 용도로 사용할 수 있습니다." },
+    { n: 8,  use: "Manual Operator",            useKo: "운전자 수동 명령", short: "운전자 수동",     tag: "std",   note: "워크스테이션이나 BMS에서 내리는 운전자의 수동 오버라이드입니다.", seed: "0" },
+    { n: 9,  use: "Available",                  useKo: "사용 가능",        short: "",                tag: "avail", note: "애플리케이션별 용도로 사용할 수 있습니다." },
+    { n: 10, use: "Available",                  useKo: "사용 가능",        short: "",                tag: "avail", note: "애플리케이션별 용도로 사용할 수 있습니다." },
+    { n: 11, use: "Available",                  useKo: "사용 가능",        short: "",                tag: "avail", note: "애플리케이션별 용도로 사용할 수 있습니다." },
+    { n: 12, use: "Available",                  useKo: "사용 가능",        short: "",                tag: "avail", note: "애플리케이션별 용도로 사용할 수 있습니다." },
+    { n: 13, use: "Available",                  useKo: "사용 가능",        short: "",                tag: "avail", note: "애플리케이션별 용도로 사용할 수 있습니다." },
+    { n: 14, use: "Available",                  useKo: "사용 가능",        short: "",                tag: "avail", note: "애플리케이션별 용도로 사용할 수 있습니다." },
+    { n: 15, use: "Available",                  useKo: "사용 가능",        short: "",                tag: "avail", note: "애플리케이션별 용도로 사용할 수 있습니다." },
+    { n: 16, use: "Available",                  useKo: "사용 가능",        short: "시퀀스",          tag: "avail", note: "가장 낮은 우선순위이며 제어기 자체의 자동 프로그램이 흔히 값을 쓰는 슬롯입니다.", seed: "65" }
+] %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · BACnet 우선순위 배열</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                BACnet 우선순위 배열
+                <span class="tool-tag">BACnet</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>16개 명령 슬롯 중 아무 곳에나 값을 입력해 <code>Present_Value</code>가 결정되는 과정을 확인하세요. 번호가 가장 낮은 non-NULL 슬롯이 적용되고, 모두 비어 있으면 <code>Relinquish_Default</code>가 적용됩니다.</summary>
+            <div class="preamble-rest">
+                모든 <em>명령 가능한</em> BACnet 객체에는 16슬롯 <code>Priority_Array</code>가 있습니다. 쓰기 동작은 현재 값을 덮어쓰지 않고 지정한 우선순위의 슬롯 하나에 값을 넣습니다. 객체의 실제 <code>Present_Value</code>는 NULL이 아닌 슬롯 중 번호가 가장 낮은 슬롯의 값으로 결정됩니다. 값을 입력하면 해당 슬롯이 명령하고, 입력을 지우거나 <strong>×</strong>를 누르면 NULL을 써서 슬롯을 해제합니다. 적용 중인 슬롯은 강조 표시되며, 이 슬롯을 해제했을 때 어떤 값이 이어서 적용되는지도 패널에 표시됩니다.
+            </div>
+        </details>
+        <p class="ps-seed-note">배열에는 예제가 미리 설정되어 있습니다. 슬롯 16의 시퀀스 위에 슬롯 8의 수동 오버라이드가 놓인 상태입니다. 확인하려는 값으로 수정하세요.</p>
+
+        <div class="tool-body-2col">
+
+            <section>
+                <h2 class="ps-section-label">Priority_Array</h2>
+
+                <div class="widget-try" id="bpri-presets">
+                    <span class="lbl">예제:</span>
+                    <button type="button" data-preset="override">운전자 오버라이드</button>
+                    <button type="button" data-preset="sequence">시퀀스만</button>
+                    <button type="button" data-preset="lifesafety">생명안전 동작</button>
+                    <button type="button" data-preset="released">모두 해제</button>
+                </div>
+
+                <div class="bpri-array" id="bpri-array" role="group" aria-label="우선순위 배열 슬롯 1~16">
+                    {% for s in prioritySlots %}
+                    <div class="bpri-slot {% if s.tag == 'std' %}bpri-std{% else %}bpri-avail{% endif %}" data-slot="{{ s.n }}" data-tag="{{ s.tag }}" data-use="{{ s.use }}">
+                        <span class="bpri-num">{{ s.n }}</span>
+                        <span class="bpri-tag">{{ s.short }}</span>
+                        <input class="bpri-val" type="text" id="bpri-slot-{{ s.n }}" autocomplete="off" spellcheck="false" placeholder="NULL" value="{{ s.seed }}" aria-label="우선순위 {{ s.n }}{% if s.tag == 'std' %} — {{ s.useKo }}{% endif %} 값">
+                        <button type="button" class="bpri-release" data-release="{{ s.n }}" title="슬롯 {{ s.n }} 해제 — NULL 쓰기" aria-label="슬롯 {{ s.n }} 해제">×</button>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="bpri-rd">
+                    <label class="bpri-rd-label" for="bpri-rd">Relinquish_Default</label>
+                    <input class="bpri-val" type="text" id="bpri-rd" autocomplete="off" spellcheck="false" placeholder="(없음)" value="0">
+                    <span class="bpri-rd-note">모든 슬롯이 NULL일 때 사용</span>
+                </div>
+
+                <p class="bit-hint" style="margin-top:0.85rem;">빈칸 = NULL = 해제된 상태입니다. 값에는 포인트가 명령할 수 있는 무엇이든 입력할 수 있습니다. 퍼센트, 온도 또는 바이너리 객체의 <code>active</code>/<code>inactive</code> 등이 해당합니다.</p>
+            </section>
+
+            <section role="status">
+                <h2 class="ps-section-label">Present_Value</h2>
+                <span class="bpri-pv muted" id="bpri-pv">—</span>
+                <div class="status-pill" id="bpri-status">값을 입력하면 결과가 결정됩니다.</div>
+                <p class="ps-value" id="bpri-explain" style="margin:0.7rem 0 0; min-height:1.2em;"></p>
+                <p class="bit-hint" id="bpri-next" style="margin:0.55rem 0 0; min-height:1.1em;"></p>
+                <div class="btn-row">
+                    <button class="copy-btn" id="bpri-copy">값 복사</button>
+                </div>
+            </section>
+
+        </div>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="standard-slots">표준 우선순위 슬롯 16개</h2>
+            <p class="ref-note" style="margin-top:0;">
+                슬롯 1의 우선순위가 가장 높고 슬롯 16이 가장 낮습니다. 다섯 슬롯에는 표준에서 정한 용도가 있으며 강조선으로 표시됩니다. 나머지는 애플리케이션별 용도로 사용할 수 있습니다.
+            </p>
+            <div class="table-scroll">
+                <table class="ref-table-dense rt-stack">
+                    <thead><tr><th>우선순위</th><th>표준 용도</th><th>설명</th></tr></thead>
+                    <tbody>
+                        {% for s in prioritySlots %}
+                        <tr{% if s.tag == 'std' %} class="bpri-ref-std"{% endif %}>
+                            <td class="bpri-id">{{ s.n }}</td>
+                            <td>{{ s.useKo }}</td>
+                            <td>{{ s.note }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="ref-note">
+                표준은 이 가운데 일부만 고정합니다. 상위 슬롯(1–2)은 생명안전, 5번은 중요 장비 제어, 6번은 최소 켜짐/꺼짐 시간, 8번은 운전자의 수동 명령에 사용하며 나머지는 현장 정책에 맡깁니다. 슬롯 16은 단순히 가장 낮은 우선순위이지만, 제어기 자체의 자동 프로그램이 가장 흔히 값을 쓰는 슬롯입니다. <strong>제어기에는 자체 우선순위 맵이 있습니다. 눈앞의 포인트를 지배하는 것은 이 표가 아니라 해당 맵입니다.</strong> 슬롯 배정은 ASHRAE 135 명령 우선순위 관련 참조 자료와 대조했습니다.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="how-it-resolves">Present_Value가 결정되는 방식</h2>
+            <p class="ref-note" style="margin-top:0;">
+                배열은 위에서부터 순서대로 읽습니다. 슬롯 1에서 시작해 NULL이 아닌 <em>첫 번째</em> 슬롯의 값을 선택합니다. 그 값이 <code>Present_Value</code>가 되며, 그 아래의 우선순위가 낮은 슬롯은 값이 남아 있어도 명령하지 못하고 보류됩니다. 값을 더하거나 평균을 내거나 비교하지 않습니다. 활성 슬롯 중 우선순위가 가장 높은 단 하나가 그대로 적용됩니다.
+            </p>
+            <p class="ref-note">
+                16개 슬롯이 모두 NULL이면 객체에는 명령이 전혀 없으므로 <code>Present_Value</code>는 기본 상태인 <code>Relinquish_Default</code> 값을 사용합니다. <code>Relinquish_Default</code>는 별도로 쓸 수 있는 실제 속성입니다. "슬롯 17"이 아니며 배열 전체가 비어 있을 때만 영향을 줍니다.
+            </p>
+        </section>
+
+        <section class="tool-body-row">
+            <h2 class="ps-section-label" id="writing-null-releases">NULL 쓰기로 해제하기 — 현장에서 가장 흔한 실수</h2>
+            <p class="ref-note" style="margin-top:0;">
+                가장 많이 혼동하는 부분은 포인트의 제어권을 <em>돌려주려면</em> 0이 아니라 NULL을 자신의 슬롯에 써야 한다는 점입니다. 0을 쓰면 해당 우선순위에서 값 0을 명령하므로 포인트가 0으로 유지됩니다. NULL을 쓰면 슬롯이 해제되어 비고, 다음으로 우선순위가 높은 non-NULL 슬롯이 적용됩니다. 이 도구에서는 각 행의 <strong>×</strong> 버튼이 바로 그 동작을 합니다.
+            </p>
+            <p class="ref-note">
+                따라서 "이 포인트가 고장 났다"는 현장 문의의 원인은 대부분 시퀀스 고장이 아닙니다. 프로그램은 설계대로 슬롯 16에 65%를 쓰고 있지만, 몇 달 전에 누군가 설정한 수동 오버라이드가 슬롯 8에 남아 있는 경우가 많습니다. 슬롯 8이 슬롯 16보다 우선하므로 <code>Present_Value</code>는 오래된 오버라이드 값으로 결정됩니다. 그래픽에 표시된 값은 시퀀스가 쓰는 값이 아니라 <em>결정된</em> 값입니다. 배열 전체를 읽어 값이 남아 있는 상위 우선순위 슬롯을 찾아 해제하세요. 직접 쓰려고 할 때 <a href="/ko/tools/bacnet-error-codes.html">write-access-denied</a>가 발생하는 것도 흔히 같은 이유입니다. 값은 <code>Present_Value</code> 자체가 아니라 배열에서 결정되므로 우선순위를 지정해 명령해야 합니다.
+            </p>
+            <p class="ref-note">
+                오래된 오버라이드를 배열이 아닌 실제 장비에서 확인하려면 <a href="/ko/simulators/ddc-workbench.html">DDC 워크벤치</a>를 사용하세요. 운전 중인 공기조화기의 모든 명령 가능한 포인트에 각자의 우선순위 배열이 있으며, 제어 프로그램용 슬롯 16, 수동 명령용 슬롯 8, 프로그램 블록이 없는 포인트의 <code>Relinquish_Default</code> 대체값까지 세 단계로 명령합니다. <em>NULL — 해제됨</em> 상자의 선택을 해제하면 NULL을 다시 쓸 때까지 해당 포인트가 시퀀스를 따르지 않으며, <em>프로그램을 따르지 않는 포인트</em> 창에 두 원인 중 무엇이 포인트를 붙잡고 있는지 표시됩니다. 더 작은 장치로 시작하려면 <a href="/ko/simulators/ddc-workbench-fcu.html">팬코일 워크벤치</a>를 사용하세요.
+            </p>
+        </section>
+
+    </div>
+
+    {{ faqBlock(faqs, "BACnet 우선순위 배열 자주 묻는 질문") }}
+
+    {{ relatedLinks({
+        hub: {href: '/ko/bacnet/', label: 'BACnet 참고 자료 허브'},
+        tools: [
+            {href: '/ko/tools/bacnet-objects.html', label: 'BACnet 객체 참고 자료'},
+            {href: '/ko/tools/bacnet-error-codes.html', label: 'BACnet 오류 코드 디코더'},
+            {href: '/ko/tools/bacnet-units.html', label: 'BACnet 단위 디코더'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/ddc-workbench.html', label: 'DDC 워크벤치 — 공기조화기'},
+            {href: '/ko/simulators/ddc-workbench-fcu.html', label: 'DDC 워크벤치 — 팬코일'}
+        ],
+        lessons: [
+            {href: '/ko/education/bacnet-basics.html', label: 'BACnet 기초'},
+            {href: '/ko/education/bacnet-networking.html', label: 'BACnet 네트워킹'},
+            {href: '/ko/education/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/bacnet-basics.html', label: 'BACnet 기초'},
+            {href: '/ko/practice/bacnet-networking.html', label: 'BACnet 네트워킹'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

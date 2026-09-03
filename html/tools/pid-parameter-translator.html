@@ -5,9 +5,29 @@ canonical: https://controlsfreak.dev/tools/pid-parameter-translator.html
 nav: tools
 category: signals
 keywords: gain proportional band pb reset repeats per minute integral time ti td rate derivative kc kp ki kd isa standard series interacting parallel independent form convert
+pageMessages:
+    assume:
+        isa: "Entries are read as the standard (ISA) form — gain multiplies all three terms."
+        series: "Entries are read as the series (interacting) form — the derivative stage feeds the P·I stage."
+        parallel: "Entries are read as the parallel (independent) form — three separate gains with no shared multiplier."
+    validation:
+        entries: "Enter a value for each parameter to translate."
+        actionsNonnegative: "Integral and derivative entries can’t be negative — enter 0 to mean that action is off."
+        parallelNoEquivalent: "This parallel tuning has no standard-form equivalent — with Kp = 0 there is no gain for the standard form to multiply through the integral and derivative terms. A standard or series controller gets integral-heavy behaviour from a small gain and a short integral time, not from zero gain."
+        proportionalPositive: "The proportional entry must be greater than zero."
+    values:
+        off: "off"
+    copy:
+        pivotOn: "Kc = {kc} · PB = {pb} % · reset = {reset} rep/min · Ti = {tiMin} min = {tiSec} s · Td = {tdMin} min = {tdSec} s"
+        pivotOff: "Kc = {kc} · PB = {pb} % · integral off · Td = {tdMin} min = {tdSec} s"
+        standardOn: "Kc = {kc} · Ti = {ti} min · Td = {td} min"
+        standardOff: "Kc = {kc} · integral off · Td = {td} min"
+        seriesOn: "Kc′ = {kc} · Ti′ = {ti} min · Td′ = {td} min"
+        seriesOff: "Kc′ = {kc} · integral off · Td′ = {td} min"
+        parallel: "Kp = {kp} · Ki = {ki} /min · Kd = {kd} min"
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -357,9 +377,9 @@ keywords: gain proportional band pb reset repeats per minute integral time ti td
         // First sentence of the assumption line tracks the selected form;
         // the constant second sentence lives in the HTML.
         const ASSUME = {
-            isa: 'Entries are read as the standard (ISA) form — gain multiplies all three terms.',
-            series: 'Entries are read as the series (interacting) form — the derivative stage feeds the P·I stage.',
-            parallel: 'Entries are read as the parallel (independent) form — three separate gains with no shared multiplier.',
+            isa: 'assume.isa',
+            series: 'assume.series',
+            parallel: 'assume.parallel',
         };
 
         // Display rounds to 4 significant figures (and crushes float
@@ -410,39 +430,39 @@ keywords: gain proportional band pb reset repeats per minute integral time ti td
         }
 
         function calc() {
-            $('ppt-assume-form').textContent = ASSUME[formEl.value];
+            $('ppt-assume-form').textContent = CFI18n.page(ASSUME[formEl.value]);
             const s = readState();
 
             if (s.form === 'parallel') {
                 if (!isFinite(s.kp) || !isFinite(s.kiVal) || !isFinite(s.kdVal)) {
-                    muteAll('Enter a value for each parameter to translate.');
+                    muteAll(CFI18n.page('validation.entries'));
                     return;
                 }
                 if (s.kiVal < 0 || s.kdVal < 0) {
-                    muteAll('Integral and derivative entries can’t be negative — enter 0 to mean that action is off.');
+                    muteAll(CFI18n.page('validation.actionsNonnegative'));
                     return;
                 }
                 if (s.kp === 0 && (s.kiVal > 0 || s.kdVal > 0)) {
-                    muteAll('This parallel tuning has no standard-form equivalent — with Kp = 0 there is no gain for the standard form to multiply through the integral and derivative terms. A standard or series controller gets integral-heavy behaviour from a small gain and a short integral time, not from zero gain.');
+                    muteAll(CFI18n.page('validation.parallelNoEquivalent'));
                     return;
                 }
                 if (s.kp <= 0) {
-                    muteAll('The proportional entry must be greater than zero.');
+                    muteAll(CFI18n.page('validation.proportionalPositive'));
                     return;
                 }
                 s.kiPerMin = s.kiUnit === 'persec' ? s.kiVal * 60 : s.kiVal;
                 s.kdMin = s.kdUnit === 's' ? s.kdVal / 60 : s.kdVal;
             } else {
                 if (!isFinite(s.pVal) || !isFinite(s.iVal) || !isFinite(s.dVal)) {
-                    muteAll('Enter a value for each parameter to translate.');
+                    muteAll(CFI18n.page('validation.entries'));
                     return;
                 }
                 if (s.iVal < 0 || s.dVal < 0) {
-                    muteAll('Integral and derivative entries can’t be negative — enter 0 to mean that action is off.');
+                    muteAll(CFI18n.page('validation.actionsNonnegative'));
                     return;
                 }
                 if (s.pVal <= 0) {
-                    muteAll('The proportional entry must be greater than zero.');
+                    muteAll(CFI18n.page('validation.proportionalPositive'));
                     return;
                 }
             }
@@ -456,15 +476,15 @@ keywords: gain proportional band pb reset repeats per minute integral time ti td
 
             setVal('ppt-out-kc', disp(pivot.Kc), true);
             setVal('ppt-out-pb', disp(100 / pivot.Kc), true);
-            setVal('ppt-out-rep', intOff ? 'off' : disp(pivot.rep), true);
-            setVal('ppt-out-ti-min', intOff ? 'off' : disp(1 / pivot.rep), true);
-            setVal('ppt-out-ti-s', intOff ? 'off' : disp(60 / pivot.rep), true);
+            setVal('ppt-out-rep', intOff ? CFI18n.page('values.off') : disp(pivot.rep), true);
+            setVal('ppt-out-ti-min', intOff ? CFI18n.page('values.off') : disp(1 / pivot.rep), true);
+            setVal('ppt-out-ti-s', intOff ? CFI18n.page('values.off') : disp(60 / pivot.rep), true);
             setVal('ppt-out-td-min', disp(pivot.tdMin), true);
             setVal('ppt-out-td-s', disp(pivot.tdMin * 60), true);
 
             const set = (id, t) => { $(id).textContent = t; };
             set('ppt-c-p-std', 'Kc ' + disp(pivot.Kc));
-            set('ppt-c-i-std', intOff ? 'off' : 'Ti ' + disp(1 / pivot.rep) + ' min');
+            set('ppt-c-i-std', intOff ? CFI18n.page('values.off') : 'Ti ' + disp(1 / pivot.rep) + ' min');
             set('ppt-c-d-std', 'Td ' + disp(pivot.tdMin) + ' min');
             if (ser === null) {
                 set('ppt-c-p-ser', '—');
@@ -472,7 +492,7 @@ keywords: gain proportional band pb reset repeats per minute integral time ti td
                 set('ppt-c-d-ser', '—');
             } else {
                 set('ppt-c-p-ser', 'Kc′ ' + disp(ser.Kc));
-                set('ppt-c-i-ser', ser.tiMin === Infinity ? 'off' : 'Ti′ ' + disp(ser.tiMin) + ' min');
+                set('ppt-c-i-ser', ser.tiMin === Infinity ? CFI18n.page('values.off') : 'Ti′ ' + disp(ser.tiMin) + ' min');
                 set('ppt-c-d-ser', 'Td′ ' + disp(ser.tdMin) + ' min');
             }
             set('ppt-c-p-par', 'Kp ' + disp(par.kp));
@@ -487,33 +507,31 @@ keywords: gain proportional band pb reset repeats per minute integral time ti td
         $('ppt-copy-pivot').addEventListener('click', (e) => {
             if (last === null) return;
             const p = last.pivot;
-            copyText(e.currentTarget,
-                'Kc = ' + p.Kc + ' · PB = ' + (100 / p.Kc) + ' %'
-                + (p.rep === 0 ? ' · integral off'
-                    : ' · reset = ' + p.rep + ' rep/min · Ti = ' + (1 / p.rep) + ' min = ' + (60 / p.rep) + ' s')
-                + ' · Td = ' + p.tdMin + ' min = ' + (p.tdMin * 60) + ' s');
+            copyText(e.currentTarget, CFI18n.page(p.rep === 0 ? 'copy.pivotOff' : 'copy.pivotOn', {
+                kc: p.Kc, pb: 100 / p.Kc, reset: p.rep, tiMin: p.rep === 0 ? '' : 1 / p.rep,
+                tiSec: p.rep === 0 ? '' : 60 / p.rep, tdMin: p.tdMin, tdSec: p.tdMin * 60
+            }));
         });
         $('ppt-copy-std').addEventListener('click', (e) => {
             if (last === null) return;
             const p = last.pivot;
-            copyText(e.currentTarget,
-                'Kc = ' + p.Kc
-                + (p.rep === 0 ? ' · integral off' : ' · Ti = ' + (1 / p.rep) + ' min')
-                + ' · Td = ' + p.tdMin + ' min');
+            copyText(e.currentTarget, CFI18n.page(p.rep === 0 ? 'copy.standardOff' : 'copy.standardOn', {
+                kc: p.Kc, ti: p.rep === 0 ? '' : 1 / p.rep, td: p.tdMin
+            }));
         });
         $('ppt-copy-ser').addEventListener('click', (e) => {
             if (last === null || last.ser === null) return;
             const c = last.ser;
-            copyText(e.currentTarget,
-                'Kc′ = ' + c.Kc
-                + (c.tiMin === Infinity ? ' · integral off' : ' · Ti′ = ' + c.tiMin + ' min')
-                + ' · Td′ = ' + c.tdMin + ' min');
+            copyText(e.currentTarget, CFI18n.page(c.tiMin === Infinity ? 'copy.seriesOff' : 'copy.seriesOn', {
+                kc: c.Kc, ti: c.tiMin === Infinity ? '' : c.tiMin, td: c.tdMin
+            }));
         });
         $('ppt-copy-par').addEventListener('click', (e) => {
             if (last === null) return;
             const c = last.par;
-            copyText(e.currentTarget,
-                'Kp = ' + c.kp + ' · Ki = ' + c.kiPerMin + ' /min · Kd = ' + c.kdMin + ' min');
+            copyText(e.currentTarget, CFI18n.page('copy.parallel', {
+                kp: c.kp, ki: c.kiPerMin, kd: c.kdMin
+            }));
         });
 
         // ── Wiring ─────────────────────────────────────────────────

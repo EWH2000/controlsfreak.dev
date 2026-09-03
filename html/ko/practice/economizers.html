@@ -1,0 +1,55 @@
+---
+title: 외기냉방 퀴즈 — controlsfreak.dev
+description: 연동 댐퍼와 혼합공기 계산, 건구온도·엔탈피 절환 조건, 통합 대수제어와 현장 고장 판별을 빠짐없이 점검하는 외기냉방 10문항 퀴즈입니다.
+sourceContentHash: 97191c753dd16f7e951f0f730709dca78fd9a2028145369f4bf2f40b488a83d5
+canonical: https://controlsfreak.dev/ko/practice/economizers.html
+nav: practice
+category: forced-air
+pairedLesson: https://controlsfreak.dev/ko/education/economizers.html
+---
+{% extends "html/practice/economizers.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 외기냉방</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">외기냉방 퀴즈 <span class="tool-tag">공기 시스템</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/economizers.html">외기냉방</a> 학습 자료를 읽은 뒤 자연냉각 절환 판단을
+                기억해서 풀어 보세요. 학습 순서를 따르는 10문항입니다. 외기냉방의 실제 동작, 세 댐퍼가 한 조립체로
+                움직이는 이유, 혼합 방정식의 역산, 건구온도 절환 조건이 받아들이는 불리한 공기, 습도 센서가 없을 때의
+                대안, 통합 대수제어, 고착 댐퍼를 입증하는 트렌드 근거를 확인합니다. 각 문항의 해설에는 해당 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/economizer-ratio.html', label: '외기냉방 비율 도우미'},
+            {href: '/ko/tools/psychrometric-chart.html', label: '습공기선도'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/ddc-workbench.html', label: 'DDC 워크벤치 — 공기조화기'}
+        ],
+        lessons: [
+            {href: '/ko/education/economizers.html', label: '외기냉방'},
+            {href: '/ko/education/psychrometrics-basics.html', label: '습공기 기초'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

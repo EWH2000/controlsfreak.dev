@@ -61,10 +61,15 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { test, expect } = require('@playwright/test');
+const i18n = require('../html/_data/i18n.js');
+const { completeLocales } = require('../html/_data/i18nStatus.js');
 
 const SITE = path.join(__dirname, '..', '_site');
 const SRC = path.join(__dirname, '..', 'html');
 const BANK_DIR = path.join(SRC, '_data', 'quizzes');
+const localeDirs = new Set(i18n.locales
+    .map(({ code }) => code)
+    .filter(code => code !== i18n.defaultLocale));
 
 // Leading \s is load-bearing: it keeps `data-id=` and `aria-labelledby=`
 // out of the id set. Collect ALL id attributes, not headings only —
@@ -163,11 +168,20 @@ test('_site/ is current with html/ sources', () => {
 test('every fragment href resolves to a real id', () => {
     expect(builtHtml.length, 'sanity: built pages were found').toBeGreaterThanOrEqual(120);
     expect(allIds.size, 'sanity: ids were collected').toBeGreaterThanOrEqual(2000);
-    // EXACT, not a minimum — see the header note on hollowed guards.
-    expect(chipsByUrl.size, 'sanity: the four filter-chip landings were found').toBe(4);
+    // EXACT, not a minimum — see the header note on hollowed guards. Each
+    // completed locale contributes the same four localized landings.
+    const guardedChipPages = [...chipsByUrl.entries()].filter(([url]) => {
+        const firstSegment = url.split('/')[1];
+        return !localeDirs.has(firstSegment) || completeLocales.includes(firstSegment);
+    });
+    const expectedChipPages = 4 * (1 + completeLocales.length);
+    expect(guardedChipPages.length,
+        'sanity: four filter-chip landings per completed locale were found')
+        .toBe(expectedChipPages);
     let chipSlugs = 0;
-    for (const chips of chipsByUrl.values()) chipSlugs += chips.size;
-    expect(chipSlugs, 'sanity: chip route slugs were collected').toBeGreaterThanOrEqual(20);
+    for (const [, chips] of guardedChipPages) chipSlugs += chips.size;
+    expect(chipSlugs, 'sanity: chip route slugs were collected')
+        .toBeGreaterThanOrEqual(20 * (1 + completeLocales.length));
 
     const broken = [];
     let checked = 0;

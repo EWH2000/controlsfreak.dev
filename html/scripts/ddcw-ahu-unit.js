@@ -91,6 +91,20 @@
 const DDCWAhuUnit = (function () {
     'use strict';
 
+    // The browser page supplies its locale catalog. DOM-free physics
+    // harnesses and older callers omit it and retain the original English
+    // fallbacks, so this module stays usable without CFI18n.
+    let pageMessage = null;
+    function text(key, values, fallback) {
+        if (typeof pageMessage === 'function') return pageMessage(key, values);
+        let copy = fallback;
+        if (!values || typeof values !== 'object') return copy;
+        return copy.replace(/\{([A-Za-z][\w-]*)\}/g, function (match, name) {
+            return Object.prototype.hasOwnProperty.call(values, name)
+                ? String(values[name]) : match;
+        });
+    }
+
     // ═══════════════════════ PHYSICS — DOM-free ═══════════════════════
     // Nothing in this file reads `document` or `window`. Keep it that
     // way: the headless physics surface is the vm-spec seam.
@@ -1216,6 +1230,26 @@ const DDCWAhuUnit = (function () {
         // against.
         { id: 'econ-lockout',     kind: 'param', dir: 'param',    plantKey: 'econ-lockout',     name: 'Econ Lock', unit: '°F', conv: 'temp',      min: 45, max: 75, step: 1 },
     ];
+    const POINT_MESSAGE_KEYS = {
+        rat: 'points.rat',
+        oat: 'points.oat',
+        mat: 'points.mat',
+        dat: 'points.dat',
+        'space-temp': 'points.spaceTemp',
+        'fan-status': 'points.fanStatus',
+        'oa-damper': 'points.oaDamper',
+        'hw-valve': 'points.hwValve',
+        'fan-speed': 'points.fanSpeed',
+        'fan-enable': 'points.fanEnable',
+        y1: 'points.y1',
+        y2: 'points.y2',
+        'cooling-setpoint': 'points.coolingSetpoint',
+        'heating-setpoint': 'points.heatingSetpoint',
+        deadband: 'points.deadband',
+        'min-oa-pos': 'points.minimumOutdoorAir',
+        'econ-lockout': 'points.economizerLockout',
+    };
+    let activePoints = AHU_POINTS;
 
     // ═════════════════════ DOM — graphic + controls ═════════════════════
     // Everything below touches the page. NO element handle is resolved at
@@ -1588,8 +1622,8 @@ const DDCWAhuUnit = (function () {
     // itself out of the roster so a renamed point cannot leave a stale
     // label behind.
     function rosterPoint(id) {
-        for (let i = 0; i < AHU_POINTS.length; i++) {
-            if (AHU_POINTS[i].id === id) return AHU_POINTS[i];
+        for (let i = 0; i < activePoints.length; i++) {
+            if (activePoints[i].id === id) return activePoints[i];
         }
         return null;
     }
@@ -1701,7 +1735,7 @@ const DDCWAhuUnit = (function () {
         const d = plant.derived;
         if (d.invalid) {
             PAIR_IDS.forEach(function (row) { setBoth(out[row[0]], '—'); });
-            setVerdict('', 'Enter a value.');
+            setVerdict('', text('unit.enterValue', null, 'Enter a value.'));
             return;
         }
 
@@ -1776,8 +1810,8 @@ const DDCWAhuUnit = (function () {
         // ── booleans: text, state dot and the .is-false dim, together ──
         const y1 = plant.actuators.y1 === true;
         const y2 = plant.actuators.y2 === true;
-        setBoth(out['dx-stg1'], y1 ? 'ON' : 'OFF');
-        setBoth(out['dx-stg2'], y2 ? 'ON' : 'OFF');
+        setBoth(out['dx-stg1'], text(y1 ? 'shell.binaryOn' : 'shell.binaryOff', null, y1 ? 'ON' : 'OFF'));
+        setBoth(out['dx-stg2'], text(y2 ? 'shell.binaryOn' : 'shell.binaryOff', null, y2 ? 'ON' : 'OFF'));
         classBoth(out['dx-stg1'], 'is-false', !y1);
         classBoth(out['dx-stg2'], 'is-false', !y2);
         out.dotStg1.classList.toggle('is-off', !y1);
@@ -1798,10 +1832,12 @@ const DDCWAhuUnit = (function () {
         // showing the command left the two surfaces on screen together,
         // disagreeing, under the same word.
         const proof = s['fan-status'] === true;
-        setBoth(out['fan-run'], d.fanCmd ? 'ON' : 'OFF');
+        setBoth(out['fan-run'], text(d.fanCmd ? 'shell.binaryOn' : 'shell.binaryOff', null,
+            d.fanCmd ? 'ON' : 'OFF'));
         classBoth(out['fan-run'], 'is-false', !d.fanCmd);
         out.dotRun.classList.toggle('is-off', !d.fanCmd);
-        setBoth(out['fan-proof'], proof ? 'MADE' : 'NONE');
+        setBoth(out['fan-proof'], text(proof ? 'unit.proofMade' : 'unit.proofNone', null,
+            proof ? 'MADE' : 'NONE'));
         classBoth(out['fan-proof'], 'is-false', !proof);
         out.dotProof.classList.toggle('is-off', !proof);
 
@@ -1823,8 +1859,10 @@ const DDCWAhuUnit = (function () {
         const minOaFrac = Math.max(0, Math.min(1, p['min-oa-pos'] / 100));
         const economizing = d.oaFrac > minOaFrac + 0.02;
         out.dCall.textContent = d.stage > 0
-            ? 'Cooling'
-            : (d.hwFrac > 0 ? 'Heating' : 'Satisfied');
+            ? text('unit.callCooling', null, 'Cooling')
+            : (d.hwFrac > 0
+                ? text('unit.callHeating', null, 'Heating')
+                : text('unit.callSatisfied', null, 'Satisfied'));
         // THREE states, not two. "At minimum" alone collapsed two
         // physically different reasons — the high limit (or the
         // differential) says no, versus permitted but nothing is calling —
@@ -1834,9 +1872,13 @@ const DDCWAhuUnit = (function () {
         // with a differential comparison), read off `derived` rather than
         // off the sensors, so a forced OAT does not rewrite it.
         out.dEcon.textContent = economizing
-            ? 'Open'
-            : ((d.oaT >= p['econ-lockout'] || d.oaT >= d.eatT) ? 'Locked out' : 'At minimum');
-        out.dMech.textContent = d.stage === 0 ? 'Off' : ('Stage ' + d.stage);
+            ? text('unit.economizerOpen', null, 'Open')
+            : ((d.oaT >= p['econ-lockout'] || d.oaT >= d.eatT)
+                ? text('unit.economizerLockedOut', null, 'Locked out')
+                : text('unit.economizerAtMinimum', null, 'At minimum'));
+        out.dMech.textContent = d.stage === 0
+            ? text('unit.mechanicalOff', null, 'Off')
+            : text('unit.mechanicalStage', { stage: d.stage }, 'Stage {stage}');
 
         // ── FOGGING DISCLOSURE (codebase-issues #240) ─────────────────
         // `d.matFogging` is the physics half forwarding `mixStreams`' own
@@ -1931,12 +1973,14 @@ const DDCWAhuUnit = (function () {
         const llsKey      = (statTripped ? 'T' : 'N') + (defeated ? 'J' : '-');
         if (llsKey !== llsPainted) {
             llsPainted = llsKey;
-            out.llsState.textContent = statTripped ? 'TRIPPED' : 'NORMAL';
+            out.llsState.textContent = text(statTripped ? 'unit.lowLimitTripped' : 'unit.lowLimitNormal', null,
+                statTripped ? 'TRIPPED' : 'NORMAL');
             out.llsLed.className = statTripped ? 'led led--alarm' : 'led led--off';
             llsPanel.classList.toggle('is-tripped', statTripped);
             // Steady, not blinking: a jumper is a standing condition
             // somebody left behind, not an event that just happened.
-            out.llsJumperState.textContent = defeated ? 'JUMPERED' : 'NO JUMPER';
+            out.llsJumperState.textContent = text(defeated ? 'unit.jumperInstalled' : 'unit.jumperAbsent', null,
+                defeated ? 'JUMPERED' : 'NO JUMPER');
             out.llsJumperLed.className = defeated ? 'led led--warn' : 'led led--off';
             llsPanel.classList.toggle('is-defeated', defeated);
             llsJumperBtn.setAttribute('aria-pressed', defeated ? 'true' : 'false');
@@ -1986,16 +2030,22 @@ const DDCWAhuUnit = (function () {
         if (!d.airflowOn && (d.stage > 0 || d.hwFrac > 0)) {
             cls = 'error';
             txt = d.fanCmd
-                ? 'Fan commanded on but no air moving — a coil is loaded on dead air'
-                : 'Coil loaded with the fan off — no air across an active coil';
+                ? text('unit.verdict.commandedNoAirLoadedCoil', null,
+                    'Fan commanded on but no air moving — a coil is loaded on dead air')
+                : text('unit.verdict.fanOffLoadedCoil', null,
+                    'Coil loaded with the fan off — no air across an active coil');
         } else if (!d.airflowOn && d.fanCmd) {
-            cls = 'error'; txt = 'Fan commanded on but no air moving — airflow proof is down';
+            cls = 'error'; txt = text('unit.verdict.commandedNoAirProofDown', null,
+                'Fan commanded on but no air moving — airflow proof is down');
         } else if (!d.airflowOn) {
-            cls = '';      txt = 'Unit off — no air moving (idle)';
+            cls = '';      txt = text('unit.verdict.idle', null,
+                'Unit off — no air moving (idle)');
         } else if (d.stage > 0 && d.hwFrac > 0) {
-            cls = 'error'; txt = 'Heating valve open under a running compressor — the unit is fighting itself';
+            cls = 'error'; txt = text('unit.verdict.simultaneousHeatCool', null,
+                'Heating valve open under a running compressor — the unit is fighting itself');
         } else if (d.stage > 0 && d.fault === 'low-charge') {
-            cls = 'error'; txt = 'No ΔT across the machine — low charge, not cooling';
+            cls = 'error'; txt = text('unit.verdict.lowCharge', null,
+                'No ΔT across the machine — low charge, not cooling');
         } else if (d.stage > 0 && d.matT < FREEZE_WATCH) {
             // ENTERING AIR ALREADY NEAR FREEZING. This branch sits ABOVE
             // the no-ΔT one because it names the same symptom's real
@@ -2032,15 +2082,20 @@ const DDCWAhuUnit = (function () {
             // leave warmer than it entered) pins the delta near zero and
             // the plain no-ΔT branch reads it as a dead compressor.
             cls = 'error';
-            txt = 'Compressor running on air already near freezing — almost nothing left to take out';
+            txt = text('unit.verdict.nearFreezingEnteringAir', null,
+                'Compressor running on air already near freezing — almost nothing left to take out');
         } else if (d.stage > 0 && dt > COOL_DT_TRIP) {
-            cls = 'error'; txt = 'Compressor running with no ΔT — the coil is not cooling';
+            cls = 'error'; txt = text('unit.verdict.compressorNotCooling', null,
+                'Compressor running with no ΔT — the coil is not cooling');
         } else if (d.stage > 0 && d.coilLeaveT <= FREEZE_WATCH) {
-            cls = 'warn';  txt = 'Cooling — but the coil is running cold (freeze watch)';
+            cls = 'warn';  txt = text('unit.verdict.freezeWatch', null,
+                'Cooling — but the coil is running cold (freeze watch)');
         } else if (d.stage > 0) {
-            cls = 'ok';    txt = 'Mechanical cooling — clear ΔT across the machine';
+            cls = 'ok';    txt = text('unit.verdict.clearMechanicalCooling', null,
+                'Mechanical cooling — clear ΔT across the machine');
         } else if (d.hwFrac > 0 && dt < HEAT_DT_TRIP) {
-            cls = 'error'; txt = 'Heating valve open with no ΔT — no heat reaching the air';
+            cls = 'error'; txt = text('unit.verdict.heatingNoDelta', null,
+                'Heating valve open with no ΔT — no heat reaching the air');
         } else if (d.hwFrac > 0 && d.afterHeatT >= HW_LEAVE_MAX - 0.1) {
             // THE HOT BOUND, and the mirror of the freeze watch below the
             // cooling branch. HW_LEAVE_MAX binds silently otherwise: at a
@@ -2050,20 +2105,25 @@ const DDCWAhuUnit = (function () {
             // already hotter than the water the ceiling sits at the
             // entering air and this test cannot fire.
             cls = 'warn';
-            txt = 'Heating — the coil is at its leaving-air limit, so opening further adds nothing';
+            txt = text('unit.verdict.heatingAtLimit', null,
+                'Heating — the coil is at its leaving-air limit, so opening further adds nothing');
         } else if (d.hwFrac > 0) {
-            cls = 'ok';    txt = 'Heating — clear ΔT across the machine';
+            cls = 'ok';    txt = text('unit.verdict.clearHeating', null,
+                'Heating — clear ΔT across the machine');
         } else if (economizing) {
-            cls = 'ok';    txt = 'Economizing — free cooling only, no mechanical stage';
+            cls = 'ok';    txt = text('unit.verdict.economizing', null,
+                'Economizing — free cooling only, no mechanical stage');
         } else if (dt <= COOL_DT_TRIP || dt >= HEAT_DT_TRIP) {
             // Neither coil loaded, but the discharge has not caught up to
             // the mixed air yet — the coil-section lag again. Written with
             // `<=` / `>=` rather than a negation so a non-finite delta
             // falls THROUGH to the settled wording, per the ordering rule
             // above.
-            cls = 'warn';  txt = 'Neither coil loaded — the discharge is still settling';
+            cls = 'warn';  txt = text('unit.verdict.dischargeSettling', null,
+                'Neither coil loaded — the discharge is still settling');
         } else {
-            cls = 'warn';  txt = 'Fan running, neither coil loaded — no ΔT across the machine';
+            cls = 'warn';  txt = text('unit.verdict.fanOnly', null,
+                'Fan running, neither coil loaded — no ΔT across the machine');
         }
         setVerdict(cls, txt);
 
@@ -2075,7 +2135,10 @@ const DDCWAhuUnit = (function () {
         // The box's own °F/°C span is painted by paintSuffixSpans() up at
         // the rail — it is the same units-mode string as the four rail
         // suffixes and shares their one guard (#265).
-        zoneValLbl.textContent = 'zone ' + zoneN.toFixed(1) + t;
+        zoneValLbl.textContent = text('unit.zoneReadout', {
+            value: zoneN.toFixed(1),
+            unit: t.trim(),
+        }, 'zone {value} {unit}');
         const sel = ovrSelect.value;
         const selOvr = plant.override[sel];
         const selActive = !!(selOvr && selOvr.active);
@@ -2099,8 +2162,9 @@ const DDCWAhuUnit = (function () {
             }
         });
         setOvrState(forced.length
-            ? 'Forced: ' + forced.join(' · ')
-                + '. The program is sequencing on those numbers, not on the machine.'
+            ? text('unit.forcedState', {
+                points: forced.join(text('shell.listSeparator', null, ' · ')),
+            }, 'Forced: {points}. The program is sequencing on those numbers, not on the machine.')
             : '');
         ovrField.classList.toggle('is-forcing', forced.length > 0);
     }
@@ -2164,7 +2228,9 @@ const DDCWAhuUnit = (function () {
             b.setAttribute('aria-pressed', on ? 'true' : 'false');
         });
 
-        oadSlider.setAttribute('aria-valuetext', plant.actuators['oa-damper'] + ' percent open');
+        oadSlider.setAttribute('aria-valuetext', text('unit.percentOpen', {
+            percent: plant.actuators['oa-damper'],
+        }, '{percent} percent open'));
         document.getElementById('ahu-oad-val').textContent = plant.actuators['oa-damper'] + '%';
         document.getElementById('ahu-hw-val').textContent  = plant.actuators['hw-valve'] + '%';
         document.getElementById('ahu-fan-sval').textContent = plant.actuators['fan-speed'] + '%';
@@ -2175,7 +2241,8 @@ const DDCWAhuUnit = (function () {
         const forcing = !!(o && o.active);
         ovrToggle.classList.toggle('active', forcing);
         ovrToggle.setAttribute('aria-pressed', forcing ? 'true' : 'false');
-        ovrToggle.textContent = forcing ? 'Release' : 'Force sensor';
+        ovrToggle.textContent = text(forcing ? 'unit.releaseSensor' : 'unit.forceSensor', null,
+            forcing ? 'Release' : 'Force sensor');
         ovrInput.disabled = !forcing;
 
         // ── environment / clock readouts. These sliders are always live —
@@ -2209,8 +2276,8 @@ const DDCWAhuUnit = (function () {
                 if (writable) {
                     inp.removeAttribute('title');
                 } else {
-                    inp.title = 'The running sheet has no ' + pp.id
-                        + ' block, so there is nothing to write — the value shown is the last one read.';
+                    inp.title = text('unit.missingBlock', { blockId: pp.id },
+                        'The running sheet has no {blockId} block, so there is nothing to write — the value shown is the last one read.');
                 }
             }
         });
@@ -2408,11 +2475,13 @@ const DDCWAhuUnit = (function () {
             const r = ahuResetLowLimit(pl);
             host.requestRender();
             llsMsg.textContent = r === 'cleared'
-                ? 'Reset — the element is warm and the contacts are made.'
+                ? text('unit.reset.cleared', null,
+                    'Reset — the element is warm and the contacts are made.')
                 : (r === 'still-cold'
-                    ? 'Nothing happens. The element is still below its setting: '
-                        + 'clear the cause first, then push the button.'
-                    : 'Nothing to reset — this stat has not tripped.');
+                    ? text('unit.reset.stillCold', null,
+                        'Nothing happens. The element is still below its setting: clear the cause first, then push the button.')
+                    : text('unit.reset.notTripped', null,
+                        'Nothing to reset — this stat has not tripped.'));
         });
 
         // ── the jumper ────────────────────────────────────────────────
@@ -2440,14 +2509,15 @@ const DDCWAhuUnit = (function () {
             host.requestRender();
             llsMsg.textContent = nowIn
                 ? (wasTripped
-                    ? 'Jumper across the terminals. The stat was tripped — the fan '
-                        + 'is running again, and nothing has been fixed.'
-                    : 'Jumper across the terminals. Whatever this stat does now, '
-                        + 'the fan will not hear about it.')
+                    ? text('unit.jumper.installedAfterTrip', null,
+                        'Jumper across the terminals. The stat was tripped — the fan is running again, and nothing has been fixed.')
+                    : text('unit.jumper.installedNormal', null,
+                        'Jumper across the terminals. Whatever this stat does now, the fan will not hear about it.'))
                 : (wasTripped
-                    ? 'Jumper removed. The element had tripped while it was wired '
-                        + 'around — the fan just dropped.'
-                    : 'Jumper removed. The stat is back in the circuit.');
+                    ? text('unit.jumper.removedAfterTrip', null,
+                        'Jumper removed. The element had tripped while it was wired around — the fan just dropped.')
+                    : text('unit.jumper.removedNormal', null,
+                        'Jumper removed. The stat is back in the circuit.'));
         });
 
         // The three analog hand controls. Same shape each: ignore the drag
@@ -2650,8 +2720,10 @@ const DDCWAhuUnit = (function () {
                     // and the hint names the range so the reader knows
                     // what the field takes.
                     revert();
-                    railHint(pt.name + ' takes ' + railRangeText(pt)
-                        + ' — reverted to the live value.');
+                    railHint(text('unit.invalidParameter', {
+                        point: pt.name,
+                        range: railRangeText(pt),
+                    }, '{point} takes {range} — reverted to the live value.'));
                     return;
                 }
                 // Display-equality no-op: if the field reads exactly what
@@ -2680,8 +2752,10 @@ const DDCWAhuUnit = (function () {
                 // no-opping above; a clear here would wipe the
                 // announcement the keydown commit just made.
                 if (clamped) {
-                    railHint(pt.name + ' accepts ' + railRangeText(pt)
-                        + ' — held at the limit.');
+                    railHint(text('unit.clampedParameter', {
+                        point: pt.name,
+                        range: railRangeText(pt),
+                    }, '{point} accepts {range} — held at the limit.'));
                 }
             }
             inp.addEventListener('change', commit);
@@ -3072,9 +3146,17 @@ const DDCWAhuUnit = (function () {
 
     // ── the unit factory — the interface the shell calls through ──
     function create(cfg) {
-        return {
+        pageMessage = typeof cfg.message === 'function' ? cfg.message : null;
+        activePoints = pageMessage
+            ? AHU_POINTS.map(function (point) {
+                const localized = Object.assign({}, point);
+                localized.name = pageMessage(POINT_MESSAGE_KEYS[point.id]);
+                return localized;
+            })
+            : AHU_POINTS;
+        const unit = {
             id: 'ahu', prefix: 'ahu',
-            points: AHU_POINTS,
+            points: activePoints,
             programs: cfg.programs,
             programLabels: cfg.programLabels,
             defaultProgram: cfg.defaultProgram,
@@ -3090,6 +3172,9 @@ const DDCWAhuUnit = (function () {
             initAnim: ahuInitAnim,
             wireControls: ahuWireControls,
         };
+        if (pageMessage) unit.message = pageMessage;
+        if (cfg.blockLabels) unit.blockLabels = cfg.blockLabels;
+        return unit;
     }
 
     return {

@@ -1,0 +1,49 @@
+---
+title: 기동/정지 명령 퀴즈 — controlsfreak.dev
+description: BO에서 모터까지의 명령 경로, HOA 위치별 동작, 수동·자동 고장 범위와 소프트웨어가 아닌 하드와이어 안전 회로가 필요한 이유를 점검하는 10문항 퀴즈입니다.
+sourceContentHash: 258fa3d7ff16a44b9054eb7872be6e99f7d44d516867dff8c520cdfb78e2dd10
+canonical: https://controlsfreak.dev/ko/practice/start-stop-commands.html
+nav: practice
+category: signals
+pairedLesson: https://controlsfreak.dev/ko/education/start-stop-commands.html
+---
+{% extends "html/practice/start-stop-commands.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 기동/정지 명령</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">기동/정지 명령 퀴즈 <span class="tool-tag">신호</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/start-stop-commands.html">기동/정지 명령</a> 학습 자료를 읽은 뒤 자가 점검해 보세요. 바이너리 출력 명령 경로를 다루는 10문항입니다. BO와 모터 사이의 체인, 인터포징 릴레이가 필요한 이유, 각 HOA 위치가 명령과 상태의 일치 여부에 미치는 영향, Hand와 Auto로 고장 범위를 나누는 방법, 소프트웨어가 아니라 하드와이어 안전 회로에 두어야 할 트립을 확인합니다. 각 문항의 해설에는 해당 내용이 나온 절의 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        simulators: [
+            {href: '/ko/simulators/controller-wiring.html', label: '컨트롤러 배선 시뮬레이터'}
+        ],
+        lessons: [
+            {href: '/ko/education/start-stop-commands.html', label: '기동/정지 명령'},
+            {href: '/ko/education/controller-wiring.html', label: '컨트롤러 배선'},
+            {href: '/ko/education/vfds.html', label: 'VFD'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

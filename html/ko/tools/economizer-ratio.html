@@ -1,0 +1,365 @@
+---
+title: 외기냉방 외기 비율 계산기 — controlsfreak.dev
+description: 외기와 회기(RA)를 혼합해 목표 혼합공기 건구온도 설정값에 도달하는 외기 비율을 계산하고, 엔탈피 절환 조건도 함께 점검합니다.
+sourceContentHash: 2876dbea63d4bd3d559c81772f1c7a6aecae54a8185390e9c5074df89db426c5
+sourceMessageHash: fe7cfa4dbfbb66d25c6657724063457ee9c1bc4c805c2b775a37c43aa97c1e3e
+canonical: https://controlsfreak.dev/ko/tools/economizer-ratio.html
+nav: tools
+category: hvac
+pageMessages:
+    defineBy:
+        rh: "상대습도(%)"
+        wb: "습구온도({unit})"
+        dp: "노점({unit})"
+        w: "절대습도(함습비, W)({unit})"
+        h: "엔탈피({unit} 건공기)"
+    status:
+        feasibilityPrompt: "실현 가능성을 확인할 값을 입력하세요."
+        changeoverPrompt: "외기냉방 절환 판정을 확인할 값을 입력하세요."
+        statesRequired: "외기와 회기(RA)의 상태가 모두 있어야 비교할 수 있습니다."
+        dryBulbEqual: "외기와 회기(RA) 온도가 같으므로 어떤 비율로 혼합해도 온도가 같습니다."
+        dryBulbFeasible: "실현 가능 — 설정값이 외기와 회기(RA) 사이에 있으므로 외기 {percent} %로 혼합하면 설정값에 도달합니다. 약 10 % 미만이면 댐퍼가 최소 개도에 있고, 100 %에 가까우면 혼합만으로 부족한 나머지 부하는 코일이 담당합니다."
+        dryBulbAboveRange: "범위 초과 — 외기가 설정값보다 차갑지만 회기(RA)를 설정값까지 낮출 만큼 차갑지는 않습니다. 외기 댐퍼를 100 % 열어도 냉각 코일이 외기 비율 환산 {extra} %에 해당하는 나머지 부하를 제거해야 합니다."
+        dryBulbInfeasible: "실현 불가 — 외기가 설정값보다 뜨겁습니다. 어떤 혼합 비율로도 도달할 수 없으므로 외기냉방(economizer)을 최소 외기 개도로 닫고 냉각 코일이 부하를 모두 담당하게 하세요."
+        enthalpyEqual: "외기와 회기(RA)의 건구온도가 같아 혼합공기 온도가 고정됩니다."
+        enthalpyFeasible: "실현 가능 — 설정값이 외기와 회기(RA)의 건구온도 사이에 있으므로 외기 {percent} %로 혼합하면 설정값에 도달합니다."
+        enthalpyAboveRange: "범위 초과 — 외기가 설정값보다 차갑지만 회기(RA)를 설정값까지 낮출 만큼 차갑지는 않습니다. 외기 댐퍼를 100 % 열고 나머지는 코일이 담당합니다."
+        enthalpyInfeasible: "실현 불가 — 외기가 설정값보다 뜨겁습니다. 어떤 혼합 비율로도 도달할 수 없으므로 외기 댐퍼를 최소 외기 개도까지 닫으세요."
+    formula:
+        mix: "% OA = (MA − RA) ÷ (OA − RA) × 100 = ({ma} − {ra}) ÷ ({oa} − {ra}) × 100{result}"
+        result: " = {percent} %"
+        dryBulbEqual: "OA와 RA가 같아 혼합해도 온도가 변하지 않으며, 하나의 %OA 값으로 정할 수 없습니다."
+        enthalpyEqual: "OA와 RA의 건구온도가 같아 하나의 %OA 값으로 정할 수 없습니다."
+    changeover:
+        wash: "외기와 회기(RA)의 엔탈피 차이가 0.5 {unit} 이내이므로 사실상 같습니다. 최소 외기 개도가 더 안전합니다."
+        favorable: "유리 — 외기는 회기(RA)보다 건공기 단위 질량당 열량이 {difference} {unit} 낮습니다. 외기를 도입하면 전체 코일 부하가 줄어듭니다."
+        unfavorable: "불리 — 외기는 회기(RA)보다 건공기 단위 질량당 열량이 {difference} {unit} 높습니다. 건구온도가 더 낮더라도 잠열 부하 때문에 총부하가 증가하므로 최소 외기 개도를 사용하세요."
+    errors:
+        engineUnavailable: "습공기 상태 해석 엔진을 사용할 수 없습니다. 페이지를 새로고침하세요."
+        outdoorPrefix: "외기 — {message}"
+        returnPrefix: "회기(RA) — {message}"
+        mixedOutOfRange: "혼합공기 상태가 계산 범위를 벗어났습니다. 입력값을 확인하세요."
+        psychro:
+            numeric: "숫자 값을 입력하세요."
+            rhNegative: "상대습도는 음수일 수 없습니다."
+            rhAbove100: "상대습도는 100 %를 초과할 수 없습니다."
+            wetBulbAboveDryBulb: "습구온도는 건구온도보다 높을 수 없습니다."
+            dewPointAboveDryBulb: "노점은 건구온도보다 높을 수 없습니다."
+            humidityRatioNegative: "절대습도(함습비, W)는 음수일 수 없습니다."
+            enthalpyBelowDryAir: "엔탈피가 이 건구온도의 건공기 엔탈피보다 낮습니다. 물리적으로 불가능합니다."
+            propertyRequired: "상태점을 정의할 물성을 선택하세요."
+            rhPastSaturation: "이 상태점은 포화선을 벗어납니다(상대습도 100 % 초과). 물리적으로 불가능합니다."
+            wetBulbPastSaturation: "입력한 습구온도는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다."
+            dewPointPastSaturation: "입력한 노점은 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다."
+            humidityRatioPastSaturation: "입력한 절대습도(함습비, W)는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다."
+            enthalpyPastSaturation: "입력한 엔탈피는 포화선을 벗어납니다. 이 건구온도와 압력에서 공기가 보유할 수 있는 양보다 수분이 많습니다."
+    unitText:
+        outdoorDryBulb:
+            us: "외기 건구온도(°F)"
+            metric: "외기 건구온도(°C)"
+        returnDryBulb:
+            us: "회기(RA) 건구온도(°F)"
+            metric: "회기(RA) 건구온도(°C)"
+        mixedAirSetpoint:
+            us: "혼합공기 설정값(°F)"
+            metric: "혼합공기 설정값(°C)"
+        exampleOutdoor:
+            us: "60 °F"
+            metric: "15.6 °C"
+        exampleReturn:
+            us: "75 °F"
+            metric: "23.9 °C"
+        exampleSetpoint:
+            us: "65 °F"
+            metric: "18.3 °C"
+        exampleDryBulbFormula:
+            us: "(65 − 75) ÷ (60 − 75) × 100 = 66.7 %"
+            metric: "(18.3 − 23.9) ÷ (15.6 − 23.9) × 100 = 67.5 %"
+        exampleLowSetpoint:
+            us: "55 °F"
+            metric: "12.8 °C"
+        dryBulb:
+            us: "건구온도(°F)"
+            metric: "건구온도(°C)"
+        enthalpySetpoint:
+            us: "MA 설정값(°F)"
+            metric: "MA 설정값(°C)"
+        mixedAirDryBulb:
+            us: "MA 건구온도(°F)"
+            metric: "MA 건구온도(°C)"
+        mixedAirWetBulb:
+            us: "MA 습구온도(°F)"
+            metric: "MA 습구온도(°C)"
+        humidityRatio:
+            us: "절대습도(함습비, W)(gr/lb)"
+            metric: "절대습도(함습비, W)(g/kg)"
+        mixedAirEnthalpy:
+            us: "엔탈피(Btu/lb)"
+            metric: "엔탈피(kJ/kg)"
+        outdoorEnthalpy:
+            us: "OA 엔탈피(Btu/lb)"
+            metric: "OA 엔탈피(kJ/kg)"
+        returnEnthalpy:
+            us: "RA 엔탈피(Btu/lb)"
+            metric: "RA 엔탈피(kJ/kg)"
+        exampleOutdoorState:
+            us: "78 °F / 68 °F WB"
+            metric: "25.6 °C / 20 °C WB"
+        exampleReturnState:
+            us: "75 °F / 63 °F WB"
+            metric: "23.9 °C / 17.2 °C WB"
+        exampleEnthalpySetpoint:
+            us: "65 °F"
+            metric: "18.3 °C"
+        exampleEnthalpyFormula:
+            us: "% OA = (65 − 75) ÷ (78 − 75) × 100"
+            metric: "% OA = (18.3 − 23.9) ÷ (25.6 − 23.9) × 100"
+        massWord:
+            us: "파운드"
+            metric: "킬로그램"
+keywords: OA OAT 외기 비율 외기냉방 무상냉방 전환 혼합공기 댐퍼
+---
+{% extends "html/tools/economizer-ratio.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 외기냉방 외기 비율</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                외기냉방 외기 비율 계산기
+                <span class="tool-tag">HVAC</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>현재 조건에서 혼합공기 설정값에 도달하려면 외기 댐퍼를 얼마나 열어야 할까요?</summary>
+            <div class="preamble-rest">
+                건구온도 탭은 기술자가 제어반에서 사용하는 계산을 제공합니다. 엔탈피 탭은 전체 혼합공기 상태와 외기(OA)·회기(RA) 엔탈피 절환 판정을 추가하여, 고급 BAS <button type="button" data-gloss="economizer">외기냉방(economizer)</button>이
+                <button type="button" data-gloss="economizer">외기냉방</button>을 운전할 가치가 있는지 판단하는 방식을 보여 줍니다.
+            </div>
+        </details>
+        <p class="ps-seed-note">예시 값이 입력되어 있습니다. 현장 값으로 바꾸어 계산하세요.</p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="db">건구온도</button>
+            <button class="tab-btn"        data-tab="h">엔탈피(전체 상태)</button>
+        </div>
+
+        <!-- ── Dry-bulb tab ── -->
+        <div id="tab-db" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.outdoorDryBulb.us }}" data-metric="{{ pageMessages.unitText.outdoorDryBulb.metric }}" for="er-db-oa">외기 건구온도(°F)</label>
+                        <input class="ps-input" type="number" id="er-db-oa" step="0.5" min="-50" max="200" value="60">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.returnDryBulb.us }}" data-metric="{{ pageMessages.unitText.returnDryBulb.metric }}" for="er-db-ra">회기(RA) 건구온도(°F)</label>
+                        <input class="ps-input" type="number" id="er-db-ra" step="0.5" min="-50" max="200" value="75">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.mixedAirSetpoint.us }}" data-metric="{{ pageMessages.unitText.mixedAirSetpoint.metric }}" for="er-db-ma">혼합공기 설정값(°F)</label>
+                        <input class="ps-input" type="number" id="er-db-ma" step="0.5" min="-50" max="200" value="65">
+                    </div>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="status-pill" id="er-db-feas">{{ pageMessages.status.feasibilityPrompt }}</div>
+                    <div class="ps-row primary">
+                        <span class="ps-label">필요 외기 비율</span>
+                        <span class="ps-value muted" id="er-db-pct">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="er-db-copy">%OA 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="er-db-formula"></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">계산 예시</h2>
+                <p class="ref-note worked-intro">
+                    여름철 냉방 중 <button type="button" data-gloss="economizer">외기냉방</button>에 유리한 아침 조건입니다.
+                    OA는 <span data-us="{{ pageMessages.unitText.exampleOutdoor.us }}" data-metric="{{ pageMessages.unitText.exampleOutdoor.metric }}">60 °F</span>,
+                    RA는 <span data-us="{{ pageMessages.unitText.exampleReturn.us }}" data-metric="{{ pageMessages.unitText.exampleReturn.metric }}">75 °F</span>,
+                    혼합공기 설정값은 <span data-us="{{ pageMessages.unitText.exampleSetpoint.us }}" data-metric="{{ pageMessages.unitText.exampleSetpoint.metric }}">65 °F</span>입니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>설정값이 OA와 RA 사이에 있으므로 실현 가능합니다.</li>
+                    <li>혼합공기 온도를 설정값까지 낮추려면 댐퍼로 충분한 OA를 도입해야 합니다.<br>
+                        <code>% OA = (MA − RA) ÷ (OA − RA) × 100</code></li>
+                    <li>값을 대입하면 <code><span data-us="{{ pageMessages.unitText.exampleDryBulbFormula.us }}" data-metric="{{ pageMessages.unitText.exampleDryBulbFormula.metric }}">(65 − 75) ÷ (60 − 75) × 100 = 66.7 %</span></code>입니다.</li>
+                    <li>외기 약 3분의 2와 회기 약 3분의 1을 혼합하는 값이
+                        댐퍼 명령입니다.</li>
+                </ol>
+                <p class="ref-note">
+                    계산값이 0~100 %이면 그 값이 댐퍼 명령입니다. 이 범위를 벗어나는 혼합 상태는 물리적으로 실현할 수 없으므로 출력값은 <code>—</code>로 비워지고 실현 가능성 항목에 이유가 표시됩니다. 0 % 미만이면 OA가 설정값과 실내 온도보다 모두 높으므로 최소 외기만 도입하고 <button type="button" data-gloss="economizer">외기냉방</button>을 사용하지 않습니다.
+                    100 %를 초과하면 OA가 설정값보다 낮지만 단독으로 전체 부하를 감당할 만큼 차갑지는 않습니다(설정값을
+                    <span data-us="{{ pageMessages.unitText.exampleLowSetpoint.us }}" data-metric="{{ pageMessages.unitText.exampleLowSetpoint.metric }}">55 °F</span>로 낮추면 확인할 수 있습니다. 댐퍼가 완전히 열리고 코일이
+                    나머지 부하를 담당합니다).
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Enthalpy (full state) tab ── -->
+        <div id="tab-h" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력</h2>
+
+                    <h3 class="subhead">외기</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="er-h-oa-tdb">건구온도(°F)</label>
+                        <input class="ps-input" type="number" id="er-h-oa-tdb" step="0.5" min="-50" max="200" value="78">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="er-h-oa-mode">상태 정의 기준</label>
+                        <select class="ps-input" id="er-h-oa-mode">
+                            <option value="rh">상대습도</option>
+                            <option value="wb" selected>습구온도</option>
+                            <option value="dp">노점</option>
+                            <option value="w">절대습도(함습비, W)</option>
+                            <option value="h">엔탈피</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="er-h-oa-second-lbl" for="er-h-oa-second">습구온도(°F)</label>
+                        <input class="ps-input" type="number" id="er-h-oa-second" step="0.5" value="68">
+                    </div>
+
+                    <h3 class="subhead">회기(RA)</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.dryBulb.us }}" data-metric="{{ pageMessages.unitText.dryBulb.metric }}" for="er-h-ra-tdb">건구온도(°F)</label>
+                        <input class="ps-input" type="number" id="er-h-ra-tdb" step="0.5" min="-50" max="200" value="75">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="er-h-ra-mode">상태 정의 기준</label>
+                        <select class="ps-input" id="er-h-ra-mode">
+                            <option value="rh">상대습도</option>
+                            <option value="wb" selected>습구온도</option>
+                            <option value="dp">노점</option>
+                            <option value="w">절대습도(함습비, W)</option>
+                            <option value="h">엔탈피</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="er-h-ra-second-lbl" for="er-h-ra-second">습구온도(°F)</label>
+                        <input class="ps-input" type="number" id="er-h-ra-second" step="0.5" value="63">
+                    </div>
+
+                    <h3 class="subhead">혼합공기 목표값</h3>
+                    <div class="ps-row">
+                        <label class="ps-label" data-us="{{ pageMessages.unitText.enthalpySetpoint.us }}" data-metric="{{ pageMessages.unitText.enthalpySetpoint.metric }}" for="er-h-ma">MA 설정값(°F)</label>
+                        <input class="ps-input" type="number" id="er-h-ma" step="0.5" min="-50" max="200" value="65">
+                    </div>
+                    <p class="ref-note">
+                        대기압은 해수면 조건으로 고정됩니다. 습도와
+                        <button type="button" data-gloss="enthalpy">엔탈피</button>는 고도 0 ft로 설정한 선도 도구와 일치합니다. 고도 보정값이 필요하면
+                        고도를 입력할 수 있는
+                        <a href="/ko/tools/psychrometric-chart.html">습공기선도</a>를 사용하세요.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="status-pill" id="er-h-feas">{{ pageMessages.status.feasibilityPrompt }}</div>
+                    <div class="ps-row primary">
+                        <span class="ps-label">필요 외기 비율</span>
+                        <span class="ps-value muted" id="er-h-pct">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="er-h-copy">%OA 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="er-h-formula"></div>
+
+                    <h3 class="subhead">계산된 혼합공기 상태</h3>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.mixedAirDryBulb.us }}" data-metric="{{ pageMessages.unitText.mixedAirDryBulb.metric }}">MA 건구온도(°F)</span><span class="ps-value muted" id="er-h-ma-db">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.mixedAirWetBulb.us }}" data-metric="{{ pageMessages.unitText.mixedAirWetBulb.metric }}">MA 습구온도(°F)</span><span class="ps-value muted" id="er-h-ma-wb">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.humidityRatio.us }}" data-metric="{{ pageMessages.unitText.humidityRatio.metric }}">절대습도(함습비, W)(gr/lb)</span><span class="ps-value muted" id="er-h-ma-w">—</span></div>
+                    <div class="ps-row"><span class="ps-label">상대습도(%)</span><span class="ps-value muted" id="er-h-ma-rh">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.mixedAirEnthalpy.us }}" data-metric="{{ pageMessages.unitText.mixedAirEnthalpy.metric }}">엔탈피(Btu/lb)</span><span class="ps-value muted" id="er-h-ma-h">—</span></div>
+
+                    <h3 class="subhead">엔탈피 외기냉방 절환</h3>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.outdoorEnthalpy.us }}" data-metric="{{ pageMessages.unitText.outdoorEnthalpy.metric }}">OA 엔탈피(Btu/lb)</span><span class="ps-value muted" id="er-h-oa-h">—</span></div>
+                    <div class="ps-row"><span class="ps-label" data-us="{{ pageMessages.unitText.returnEnthalpy.us }}" data-metric="{{ pageMessages.unitText.returnEnthalpy.metric }}">RA 엔탈피(Btu/lb)</span><span class="ps-value muted" id="er-h-ra-h">—</span></div>
+                    <div class="status-pill" id="er-h-changeover">{{ pageMessages.status.changeoverPrompt }}</div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">계산 예시</h2>
+                <p class="ref-note worked-intro">
+                    온화하지만 습한 아침 조건입니다. OA는
+                    <span data-us="{{ pageMessages.unitText.exampleOutdoorState.us }}" data-metric="{{ pageMessages.unitText.exampleOutdoorState.metric }}">78 °F / 68 °F WB</span>,
+                    RA는 <span data-us="{{ pageMessages.unitText.exampleReturnState.us }}" data-metric="{{ pageMessages.unitText.exampleReturnState.metric }}">75 °F / 63 °F WB</span>,
+                    MA 설정값은 <span data-us="{{ pageMessages.unitText.exampleEnthalpySetpoint.us }}" data-metric="{{ pageMessages.unitText.exampleEnthalpySetpoint.metric }}">65 °F</span>입니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li>댐퍼가 제어하는 기준은 <button type="button" data-gloss="dry-bulb">건구온도</button>입니다.
+                        <code><span data-us="{{ pageMessages.unitText.exampleEnthalpyFormula.us }}" data-metric="{{ pageMessages.unitText.exampleEnthalpyFormula.metric }}">% OA = (65 − 75) ÷ (78 − 75) × 100</span></code>의 결과는
+                        음수입니다. OA가 RA보다 뜨거우므로
+                        <button type="button" data-gloss="dry-bulb">건구온도</button>만 보더라도 <button type="button" data-gloss="economizer">외기냉방</button>이 도움이 되지 않습니다. 최소 외기
+                        개도로 운전합니다.</li>
+                    <li>혼합 상태 출력값은 계산된 %OA에서 코일로 유입되는 공기 상태를 보여 줍니다. 계산 결과가
+                        0~100 %일 때 유용합니다.</li>
+                    <li><button type="button" data-gloss="enthalpy">엔탈피</button> 비교는 고급
+                        BAS가 더 보수적으로 판단하는 핵심 이유를 보여 줍니다. OA가 RA보다 2도 낮더라도
+                        수분이 많으면 건공기 단위 <span data-us="{{ pageMessages.unitText.massWord.us }}" data-metric="{{ pageMessages.unitText.massWord.metric }}">파운드</span>당 열량이 RA보다 클 수 있습니다. <button type="button" data-gloss="economizer">외기냉방</button>을 <button type="button" data-gloss="dry-bulb">건구온도</button>만으로 판단하면
+                        코일에 <button type="button" data-gloss="latent-heat">잠열</button> 부하가 추가됩니다.</li>
+                </ol>
+                <p class="ref-note">
+                    대부분의 상업용 <button type="button" data-gloss="economizer">외기냉방</button> 로직은 <button type="button" data-gloss="dry-bulb">건구온도</button>와
+                    습도 상한을 함께 사용합니다. <button type="button" data-gloss="enthalpy">엔탈피</button> <button type="button" data-gloss="economizer">외기냉방</button> 로직은
+                    <code>h<sub>OA</sub></code>와
+                    <code>h<sub>RA</sub></code>를 비교하여
+                    <button type="button" data-gloss="dry-bulb">건구온도</button> 비례제어를 시작하기 전에 댐퍼 운전 가능 여부를 결정합니다.
+                </p>
+            </section>
+        </div>
+
+        <section class="tool-body-row">
+            <p class="ref-note">
+                <strong>%OA 계산 결과는 설정값에 관한 이론일 뿐 안전한
+                명령이 아닙니다.</strong> 시퀀스의 계산이 맞는지 확인하고 전환 로직을 이해하는 데 사용한 뒤,
+                실제 댐퍼 개도는 저온 한계 보호 로직이 결정하도록 해야 합니다. 추운 날씨에는 <button type="button" data-gloss="economizer">외기
+                냉방</button> 비율을 구하는 같은 계산식이 코일을
+                <a href="/ko/tools/coil-freeze-risk.html">동결시킬 만큼</a> 많은 외기를 요구할 수 있습니다. 최종 제어 기준은
+                계산기가 아니라 <button type="button" data-gloss="freezestat">동결방지 온도조절기(freezestat)</button>와 <button type="button" data-gloss="mixed-air-low-limit">혼합공기 저온 한계</button>입니다.
+            </p>
+        </section>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/air-mixing.html', label: '공기 혼합 계산기'},
+            {href: '/ko/tools/duct-traverse.html', label: '덕트 트래버스 계산기'},
+            {href: '/ko/tools/psychrometric-chart.html', label: '습공기선도'},
+            {href: '/ko/tools/coil-freeze-risk.html', label: '코일 동결 위험 점검기'},
+            {href: '/ko/tools/minimum-outdoor-air.html', label: '최소 외기량 계산기'}
+        ],
+        lessons: [
+            {href: '/ko/education/economizers.html', label: '외기냉방'},
+            {href: '/ko/education/psychrometrics-basics.html', label: '습공기선도 기초'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/economizers.html', label: '외기냉방 퀴즈'},
+            {href: '/ko/practice/psychrometrics-basics.html', label: '습공기선도 기초 퀴즈'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

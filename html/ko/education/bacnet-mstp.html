@@ -1,0 +1,265 @@
+---
+title: BACnet MS/TP 통신 — controlsfreak.dev
+description: 장치가 MS/TP 트렁크에서 이탈하는 원인을 토큰 링과 Max_Master, MAC 주소와 장치 인스턴스의 차이, 하위 2선식 물리 계층으로 나누어 설명합니다.
+sourceContentHash: bc6275b2cdbab7da7337ca90fe7e95ec4bdc781f2a85de642d30ed5d67cbc0a9
+canonical: https://controlsfreak.dev/ko/education/bacnet-mstp.html
+nav: education
+category: protocols
+pairedQuiz: https://controlsfreak.dev/ko/practice/bacnet-mstp.html
+keywords: mstp ms/tp 토큰 링 max master max info frames 보드레이트 종단저항 eol 바이어스 극성 rs-485 트렁크
+---
+{% extends "html/education/bacnet-mstp.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">학습 · BACnet MS/TP</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">BACnet MS/TP <span class="tool-tag">BACnet</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                현장의 증상은 대체로 비슷합니다. 포인트 값이 갱신되지 않고, 컨트롤러가 온라인과 오프라인을 오가며, 오전 내내 정상인 트렁크가 오후 2시가 되면 무너지기도 합니다. 또는 새 장치의 배선과 주소 설정, 전원 공급을 모두 마쳤는데도 목록에 나타나지 않습니다.
+                <a href="/ko/education/bacnet-basics.html">BACnet 기초</a>와
+                <a href="/ko/education/bacnet-networking.html">BACnet 네트워킹</a>에서 미뤄 둔 이야기를 이 페이지에서 다룹니다. <strong>장치가 MS/TP 트렁크에서 이탈하는 이유와 토큰 링, 주소 체계, 두 가닥 배선이 각각 정상 상태를 유지하기 위해 필요한 조건</strong>을 설명합니다.
+                이 세 계층은 서로 다른 방식으로 고장 납니다. 현재 어느 계층을 보고 있는지 구분하는 것만으로도 진단의 대부분을 해결할 수 있습니다.
+            </p>
+
+            <h2 class="subhead" id="token-ring">토큰 링 — 어느 장치가 송신할 차례인가</h2>
+
+            <p>
+                MS/TP는 RS-485 한 쌍의 선로에서 동작하지만 RS-485에는 전송 순서를 중재하는 장치가 없습니다. 두 장치가 동시에 송신하면 두 메시지 모두 손상됩니다. BACnet은 이를 <strong>토큰</strong>으로 해결합니다. 트렁크의 마스터 장치는 MAC 주소 순서로 논리적 링을 구성하며, 토큰을 보유한 장치만 메시지를 개시할 수 있습니다. 송신을 마치거나 허용된 프레임 수를 모두 사용하면 링의 다음 마스터로 토큰을 넘깁니다. 가장 높은 주소 다음에는 가장 낮은 주소로 돌아가며, 정상 트렁크에서는 이 순환이 분당 수백 번 반복됩니다.
+            </p>
+
+            <p>
+                두 가지 장치 속성으로 링을 조정하며, 둘 다 일반적인 커미셔닝 설정 항목입니다. <code>Max_Info_Frames</code>는 한 번 토큰을 보유할 때 장치가 보낼 수 있는 메시지 수입니다. 현장 컨트롤러는 1이면 충분하지만, 트렁크 전체의 트래픽을 모으는 상위 관리 장치나 라우터에는 더 큰 값이 필요합니다(보통 10–20). 그렇지 않으면 다음 송신 차례를 기다리는 데 대부분의 시간을 씁니다. <code>Max_Master</code>는 검색 상한입니다. 토큰 보유자는 자신과 다음으로 알려진 마스터 사이의 주소에 주기적으로 <em>Poll-For-Master</em>를 보내 새 장치를 링에 참여시키지만, 자신의 <code>Max_Master</code>보다 높은 주소는 절대 폴링하지 않습니다.
+            </p>
+
+            <p>
+                이 상한 때문에 눈에 띄는 오류 없이 장치가 빠지는 전형적인 문제가 생깁니다. 장치 25대가 연결된 트렁크에서 검색 범위를 합리적으로 줄이기 위해 모든 장치의 값을 <code>Max_Master = 40</code>으로 설정했다고 가정해 보겠습니다. 이후 누군가 MAC&nbsp;45로 설정한 컨트롤러는 배선과 구성에 문제가 없어도 <strong>한 번도 폴링되지 않습니다</strong>. 해당 주소보다 낮은 곳에서 검색을 멈추는 링에는 참여할 수 없기 때문입니다. 고장 난 부품이 없으므로 전원을 껐다 켜거나 트랜시버를 교체하거나 같은 두 가닥 선의 종단 처리를 반복해도 해결되지 않습니다.
+            </p>
+
+            <svg class="bac-svg wide" viewBox="0 0 760 250" role="img"
+                 aria-labelledby="bm-token-title bm-token-desc">
+                <title id="bm-token-title">Max_Master로 제한된 MS/TP 토큰 링</title>
+                <desc id="bm-token-desc">하나의 MS/TP 트렁크에 컨트롤러 다섯 대가 있습니다. MAC 주소 1, 4, 9, 23인 장치들은 화살표를 따라 차례로 토큰을 전달하고 23에서 다시 1로 돌아갑니다. Max_Master = 40이라고 표시된 세로 점선 경계 바깥에는 회색으로 처리된 MAC 45 컨트롤러가 있으며 "폴링되지 않음"이라고 표시됩니다. Max_Master 상한보다 높은 주소의 장치는 링에 참여하도록 초대받지 못합니다.</desc>
+
+                <!-- Trunk -->
+                <line x1="40" y1="196" x2="720" y2="196" stroke="var(--text-dim)" stroke-width="2"/>
+                <text x="40" y="216" font-family="var(--mono)" font-size="10" fill="var(--text-dim)">MS/TP 트렁크 (RS-485 선로)</text>
+
+                <g font-family="var(--mono)" font-size="12" text-anchor="middle">
+                    <!-- Devices in the ring -->
+                    <rect id="bm-token-d1" x="58"  y="118" width="96" height="50" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="106" y="148" fill="var(--text-bright)">MAC 1</text>
+                    <line x1="106" y1="168" x2="106" y2="196" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                    <rect id="bm-token-d4" x="206" y="118" width="96" height="50" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="254" y="148" fill="var(--text-bright)">MAC 4</text>
+                    <line x1="254" y1="168" x2="254" y2="196" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                    <rect id="bm-token-d9" x="354" y="118" width="96" height="50" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="402" y="148" fill="var(--text-bright)">MAC 9</text>
+                    <line x1="402" y1="168" x2="402" y2="196" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                    <rect id="bm-token-d23" x="502" y="118" width="96" height="50" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="550" y="148" fill="var(--text-bright)">MAC 23</text>
+                    <line x1="550" y1="168" x2="550" y2="196" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                    <!-- Outside the ceiling -->
+                    <g id="bm-token-d45" opacity="0.45">
+                        <rect x="640" y="118" width="96" height="50" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                        <text x="688" y="148" fill="var(--text-bright)">MAC 45</text>
+                        <line x1="688" y1="168" x2="688" y2="196" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    </g>
+                    <text x="688" y="240" font-size="10.5" font-style="italic" fill="var(--text-dim)">폴링되지 않음</text>
+                </g>
+
+                <!-- Token hops -->
+                <g id="bm-token-hops" fill="none" stroke="var(--accent)" stroke-width="1.8">
+                    <path d="M 116 112 Q 180 70 244 112" marker-end="url(#bm-token-arrow)"/>
+                    <path d="M 264 112 Q 328 70 392 112" marker-end="url(#bm-token-arrow)"/>
+                    <path d="M 412 112 Q 476 70 540 112" marker-end="url(#bm-token-arrow)"/>
+                    <!-- wrap: highest known master back to lowest -->
+                    <path d="M 540 100 Q 328 18 116 100" stroke-dasharray="5 4" marker-end="url(#bm-token-arrow)"/>
+                </g>
+                <text x="328" y="34" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--accent)">토큰은 가장 낮은 MAC으로 돌아감</text>
+                <defs>
+                    <marker id="bm-token-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/>
+                    </marker>
+                </defs>
+
+                <!-- The ceiling -->
+                <line x1="622" y1="60" x2="622" y2="230" stroke="var(--red)" stroke-width="1.6" stroke-dasharray="6 5"/>
+                <text x="622" y="50" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="600" fill="var(--red)">Max_Master = 40</text>
+            </svg>
+
+            <p>
+                반대 실수는 통신 중단 대신 속도 저하를 일으킵니다. 장치 8대뿐인 트렁크에서 모든 장치를 출고 기본값인 <code>Max_Master = 127</code>로 두면 토큰 보유자는 비어 있는 백여 개 주소에 계속 Poll-For-Master를 보냅니다. 트렁크는 동작하지만 매 순환의 상당 부분을 존재하지 않는 장치에 말을 거는 데 씁니다. 정상적인 구성은 낮은 번호부터 연속된 MAC 주소를 사용하고, 모든 장치의 <code>Max_Master</code>를 동일하게 설정하는 것입니다. 사용 중인 가장 높은 MAC보다 조금 크게 두면 트렁크 전체 설정을 바꾸지 않고도 컨트롤러를 추가할 여유가 생깁니다.
+            </p>
+
+            <h2 class="subhead" id="two-addresses">두 주소 체계와 잘못된 원인 추정</h2>
+
+            <p>
+                <a href="/ko/education/bacnet-networking.html">BACnet 네트워킹</a>에서는 세 가지 주소를 설명했습니다. MS/TP 트렁크에서 중요한 두 주소는 혼동하기 쉽지만 서로 완전히 독립적입니다. <strong>MAC 주소</strong>(마스터는 0–127)는 이 물리적 트렁크에서 사용하는 1바이트 스테이션 주소입니다. 토큰 링은 이 주소를 기준으로 동작하며, DIP 스위치나 제조사 도구의 입력란으로 설정합니다. <em>이 세그먼트 안에서만</em> 고유하면 됩니다. <strong>장치 인스턴스</strong>(최대 4,194,302)는 BMS 프로그램이 참조하는 애플리케이션 계층 식별자이며, 현장 전체에서 고유해야 합니다. MAC&nbsp;5가 device&nbsp;100503일 수도 있습니다. 두 값의 조합은 임의이므로 한 값으로 다른 값을 추정하면 엉뚱한 컨트롤러를 다시 설정할 수 있습니다.
+            </p>
+
+            <p>
+                <strong>중복 MAC</strong>은 가장 이상한 증상을 보이는 주소 설정 오류입니다. 토큰이 공유 주소에 도달하면 두 장치가 모두 자신의 송신 차례라고 판단해 동시에 전송하고 프레임이 충돌해 손상됩니다. 타이밍에 따라 한 장치가 잠시 통신하는 동안 다른 장치는 죽은 것처럼 보이다가 역할이 뒤바뀝니다. 따라서 <button type="button" data-gloss="front-end">프런트엔드</button>에서는 두 컨트롤러가 <em>번갈아</em> 오프라인으로 깜박입니다. 장치 인스턴스가 전혀 달라 목록에서 멀리 떨어져 있을 수도 있습니다. 트렁크 전체의 재시도와 CRC 오류도 증가하므로 중복 MAC은 두 장치뿐 아니라 모든 장치의 성능을 떨어뜨립니다. 특히 컨트롤러 교체 시 자주 발생합니다. 교체품의 출고 기본값인 MAC&nbsp;0 또는 1은 이미 라우터가 사용하고 있는 경우가 많습니다.
+            </p>
+
+            <h2 class="subhead" id="two-wires">두 가닥 배선 — 전기 계층의 요구 조건</h2>
+
+            <p>
+                앞선 설명은 비트가 정상적으로 도착한다는 전제에 기반합니다. RS-485에서는 올바른 물리 배선이 그 조건을 결정하며, 각 규칙을 어기면 결국 장애 요청으로 이어집니다. 트렁크는 <strong>차폐 연선</strong>을 사용해 장치에서 다음 장치로 <strong>데이지 체인</strong> 방식으로 연결합니다. 케이블 하나가 들어오고 하나가 나가야 하며, 스타형 분기나 T자 접속을 만들지 않고 단말 블록이 허용하는 한 스텁 길이를 영에 가깝게 해야 합니다. 분기선은 겉보기에 문제가 없고 시험대에서는 동작할 수 있지만, 전기적으로는 종단되지 않은 반사 발생기입니다. 분기 길이와 보드레이트가 커질수록 프레임 손상도 커집니다.
+            </p>
+
+            <p>
+                이 선로는 <strong>극성에 민감</strong>합니다. 트렁크 전체의 모든 장치에서 +는 +에, −는 −에 연결해야 합니다. 장치 하나의 극성이 뒤바뀌면 해당 장치만이 아니라 세그먼트 전체가 멈출 수 있습니다. 트랜시버가 선로를 반대 극성으로 능동 구동하기 때문입니다. 제조사는 도체를 +/− 또는 A/B로 표시하지만 A와 B의 정의는 제조사마다 같지 않습니다. 문자보다 +와 − 표시를 따르거나 일관되게 시공된 배선 색상을 확인하세요. <strong>종단</strong>은 트렁크의 물리적 양쪽 <em>끝</em>에서 선로 사이에 120&nbsp;Ω 저항을 연결하는 것입니다. 정확히 두 개만 양 끝에 있어야 합니다. 대부분의 컨트롤러에는 저항이 내장되어 EOL 스위치나 점퍼로 켤 수 있습니다. 습관적으로 중간 장치까지 세네 개를 켜 두거나 하나도 켜지 않는 것이 흔한 고장 원인입니다. 또한 트렁크의 한 지점, 일반적으로 상위 관리 장치나 라우터가 <strong>페일세이프 바이어스</strong>를 제공합니다. 약한 풀업·풀다운으로 송신 사이의 유휴 상태를 일정하게 유지해 수신기가 잡음에 반응하지 않도록 합니다. 차폐선은 <em>한쪽</em> 끝에서만 접지합니다. 이는 <a href="/ko/education/controller-wiring.html">센서 배선</a>과 같은 원칙입니다.
+            </p>
+
+            <svg class="bac-svg wide" viewBox="0 0 760 240" role="img"
+                 aria-labelledby="bm-term-title bm-term-desc">
+                <title id="bm-term-title">MS/TP 트렁크 배선 — 데이지 체인, 양 끝 종단, 스타형 분기 금지</title>
+                <desc id="bm-term-desc">왼쪽에 +와 −가 표시된 2선식 트렁크를 따라 컨트롤러 네 대가 데이지 체인으로 연결되어 있습니다. 물리적 양쪽 끝에는 강조된 120옴 EOL 저항이 선로 사이를 연결하고, 왼쪽 끝 장치는 바이어스 지점으로 표시됩니다. 트렁크 중앙 아래로 다섯 번째 장치를 향한 분기선이 내려가며 "스타형 분기 금지"라는 문구와 빨간색 X가 표시됩니다. 분기선은 반사를 일으켜 프레임을 손상시킵니다.</desc>
+
+                <!-- The pair -->
+                <g stroke="var(--text-dim)" stroke-width="2">
+                    <line x1="70" y1="120" x2="690" y2="120"/>
+                    <line x1="70" y1="134" x2="690" y2="134"/>
+                </g>
+                <text x="58" y="124" text-anchor="end" font-family="var(--mono)" font-size="11" fill="var(--text-bright)">+</text>
+                <text x="58" y="139" text-anchor="end" font-family="var(--mono)" font-size="11" fill="var(--text-bright)">−</text>
+
+                <!-- EOL terminations, both physical ends -->
+                <g font-family="var(--mono)" font-size="10" text-anchor="middle">
+                    <rect id="bm-term-eol-left" x="64" y="118" width="12" height="18" fill="var(--accent-dim)" stroke="var(--accent)" stroke-width="1.6"/>
+                    <text x="70" y="160" fill="var(--accent)">120 Ω</text>
+                    <text x="70" y="172" fill="var(--accent)">EOL</text>
+                    <rect id="bm-term-eol-right" x="684" y="118" width="12" height="18" fill="var(--accent-dim)" stroke="var(--accent)" stroke-width="1.6"/>
+                    <text x="690" y="160" fill="var(--accent)">120 Ω</text>
+                    <text x="690" y="172" fill="var(--accent)">EOL</text>
+                </g>
+
+                <g font-family="var(--mono)" font-size="11.5" text-anchor="middle">
+                    <!-- Daisy-chained devices -->
+                    <rect id="bm-term-d1" x="92"  y="40" width="104" height="48" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="144" y="61" fill="var(--text-bright)">라우터</text>
+                    <text x="144" y="77" font-size="9.5" font-style="italic" fill="var(--text-dim)">바이어스 지점</text>
+                    <line x1="138" y1="88" x2="138" y2="120" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <line x1="150" y1="88" x2="150" y2="134" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                    <rect id="bm-term-d2" x="252" y="40" width="104" height="48" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="304" y="68" fill="var(--text-bright)">VAV-1</text>
+                    <line x1="298" y1="88" x2="298" y2="120" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <line x1="310" y1="88" x2="310" y2="134" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                    <rect id="bm-term-d3" x="412" y="40" width="104" height="48" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="464" y="68" fill="var(--text-bright)">VAV-2</text>
+                    <line x1="458" y1="88" x2="458" y2="120" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <line x1="470" y1="88" x2="470" y2="134" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                    <rect id="bm-term-d4" x="572" y="40" width="104" height="48" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.6"/>
+                    <text x="624" y="68" fill="var(--text-bright)">AHU-1</text>
+                    <line x1="618" y1="88" x2="618" y2="120" stroke="var(--text-dim)" stroke-width="1.4"/>
+                    <line x1="630" y1="88" x2="630" y2="134" stroke="var(--text-dim)" stroke-width="1.4"/>
+
+                    <!-- The forbidden star tap -->
+                    <g id="bm-term-startap" opacity="0.8">
+                        <line x1="384" y1="134" x2="384" y2="186" stroke="var(--red)" stroke-width="1.6" stroke-dasharray="4 3"/>
+                        <rect x="332" y="186" width="104" height="40" fill="var(--surface)" stroke="var(--red)" stroke-width="1.4" stroke-dasharray="4 3"/>
+                        <text x="384" y="210" fill="var(--red)">VAV-3</text>
+                        <line x1="372" y1="152" x2="396" y2="170" stroke="var(--red)" stroke-width="2.6"/>
+                        <line x1="396" y1="152" x2="372" y2="170" stroke="var(--red)" stroke-width="2.6"/>
+                    </g>
+                    <text x="452" y="210" text-anchor="start" font-size="10.5" fill="var(--red)">스타형 분기 금지 — 분기선에서 반사 발생</text>
+                </g>
+            </svg>
+
+            <p>
+                나머지 제한은 두 단계의 허용 한도로 이해할 수 있습니다. 상한은 표준에서 정합니다. ASHRAE&nbsp;135는 적합한 케이블, 즉 차폐 연선, 100–130&nbsp;Ω 임피던스, 저정전용량 케이블을 사용한 세그먼트에 대해 <strong>최대 4000&nbsp;ft(1200&nbsp;m)</strong>와 트랜시버 <strong>32 단위 부하</strong>를 규정합니다. 최신 ⅛부하 부품은 더 많은 장치를 연결할 수 있지만, 리피터 없이 세그먼트당 약 32대로 제한하는 제조사도 많습니다. 실제 운용 한도는 제조사가 정합니다. 현장 지침에는 높은 보드레이트에서 더 짧은 거리와 해당 하드웨어에 맞춘 더 엄격한 장치 수가 흔히 제시됩니다. <strong>제조사 기준을 넘으면 문제가 생길 수 있습니다.</strong> 케이블 품질, 온도, 잊고 있던 스텁 하나에 따라 트렁크가 버티기도 하고 무너지기도 하는 한계 영역입니다. <strong>표준 기준을 넘으면 문제가 있는 상태입니다.</strong> 트랜시버가 구동하도록 규정된 범위를 벗어나므로 종단 처리를 반복해도 복구할 수 없습니다. 리피터를 추가하거나 세그먼트를 나눠야 합니다. 세그먼트의 모든 장치는 <strong>같은 보드레이트</strong>로 동작합니다. 표준 값은 9600, 19200, 38400, 76800이며 현장에서는 38400과 76800을 주로 사용합니다. 보드레이트가 다른 장치는 통신하지 못하며, 해당 장치에 보내는 Poll-For-Master 트래픽은 다른 장치의 오실로스코프에서 잡음처럼 보입니다.
+            </p>
+
+            <h2 class="subhead" id="symptom-layer">증상으로 고장 계층 판별하기</h2>
+
+            <p>
+                세 계층으로 나누어 보면 계측기를 꺼내기 전에도 증상만으로 문제 계층을 대체로 좁힐 수 있습니다.
+            </p>
+
+            <div class="table-scroll">
+                <table class="ref-table-dense rt-stack">
+                    <thead>
+                        <tr><th>증상</th><th>계층</th><th>주요 원인</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>장치 하나만 나타나지 않고 나머지는 정상</td>
+                            <td>링 / 주소 설정</td>
+                            <td>MAC이 트렁크의 <code>Max_Master</code>보다 높음, 해당 장치의 보드레이트가 다름, 단자에서 +/−가 뒤바뀜, 트렁크 중간 장치의 EOL 스위치가 켜짐.</td>
+                        </tr>
+                        <tr>
+                            <td>장치 두 대가 번갈아 오프라인으로 깜박임</td>
+                            <td>주소 설정</td>
+                            <td>중복 MAC. 컨트롤러 교체품을 출고 기본값으로 둔 뒤 흔히 발생합니다.</td>
+                        </tr>
+                        <tr>
+                            <td>임의 장치가 이탈하며 특정 시간대에 악화</td>
+                            <td>전기 계층</td>
+                            <td>온도에 따라 불안정해지는 한계 상태의 종단 또는 바이어스, 같은 전선관을 쓰는 VFD의 전자기 간섭(EMI), 최근 개보수 때 추가되어 부하 조건에서 반사를 일으키는 스타형 분기.</td>
+                        </tr>
+                        <tr>
+                            <td>트렁크 전체가 온라인이지만 느림</td>
+                            <td>링 조정</td>
+                            <td>소규모 트렁크의 <code>Max_Master</code>가 127로 남아 있어 빈 주소를 폴링함, 모든 장치의 트래픽을 처리하는 라우터가 <code>Max_Info_Frames = 1</code>로 설정됨.</td>
+                        </tr>
+                        <tr>
+                            <td>트렁크 전체가 정지하거나 손상된 데이터만 보임</td>
+                            <td>전기 계층</td>
+                            <td>트렁크 중간에서 극성이 뒤바뀜, 종단이 없거나 세 개가 설치됨, 케이블 외피가 눌려 단락됨, 바이어스가 없어 선로가 부동 상태가 됨.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p>
+                페이지 처음의 사례로 돌아가 보겠습니다. 전기 작업자가 새 컨트롤러 네 대를 추가한 뒤 장치가 간헐적으로 이탈한다면, 대개 여러 문제가 <em>동시에</em> 존재합니다. 기존 끝단의 EOL이 이제 트렁크 중간에 있고, 새 장치가 출고 기본 MAC과 9600 보드로 설정되어 있으며, 연장 구간에는 다른 종류의 케이블을 사용했을 수 있습니다. 트렁크를 연장하면 모든 계층을 다시 검토해야 하므로 세 계층을 모두 확인하세요.
+            </p>
+
+            <h2 class="subhead">이 페이지에서 다루지 않은 내용</h2>
+
+            <p>
+                가상 트렁크를 구성하고, 종단 저항을 켜고 끄며, MAC을 중복시키고, <code>Max_Master</code>에 상한을 두어 링이 실시간으로 악화되는 모습을 확인하는 일은 실습형 <strong>버스 시뮬레이터</strong>에 적합합니다. 이 페이지와 짝을 이루는 시뮬레이터가 로드맵에 있으며, <a href="/ko/simulators/controller-wiring.html">컨트롤러 배선 시뮬레이터</a>에서 회색으로 표시된 NET 단자에 연결될 예정입니다. 스텁 금지 규칙의 배경이 되는 전송선 물리학(반사, 임피던스, 허용 한도가 정해진 이유)과 TLS로 보호되는 전송 방식인 <strong>BACnet/SC</strong>도 여기서는 다루지 않습니다. 트렁크를 통해 전달되는 프로토콜의 객체, 서비스, <button type="button" data-gloss="priority-array">우선순위 배열</button>은 <a href="/ko/education/bacnet-basics.html">BACnet 기초</a>를, 통신이 라우터를 통과할 때의 동작은 <a href="/ko/education/bacnet-networking.html">BACnet 네트워킹</a>을 참고하세요.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/bacnet/', label: 'BACnet 참고 자료 허브'},
+        tools: [
+            {href: '/ko/tools/bacnet-objects.html', label: 'BACnet 객체 참조표'},
+            {href: '/ko/tools/bacnet-ip-converter.html', label: 'BACnet/IP 16진수 변환기'},
+            {href: '/ko/tools/bacnet-vendor-ids.html', label: 'BACnet 공급업체 ID'}
+        ],
+        lessons: [
+            {href: '/ko/education/bacnet-basics.html', label: 'BACnet 기초'},
+            {href: '/ko/education/bacnet-networking.html', label: 'BACnet 네트워킹'},
+            {href: '/ko/education/controller-wiring.html', label: '컨트롤러 배선'},
+            {href: '/ko/education/modbus-basics.html', label: 'Modbus 기초'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 학습으로 돌아가기</a>
+
+</main>
+{% endblock %}

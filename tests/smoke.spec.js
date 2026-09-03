@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const i18n = require('../html/_data/i18n.js');
 
 // The vendor-ID tests derive their expectations from the generated
 // registry snapshot instead of pinning org strings — upstream renames
@@ -23,7 +24,7 @@ function watchErrors(page) {
 // below keeps it honest. See pages.js for the .html-vs-clean-URL note.
 const PAGES = require('./pages.js');
 
-test('PAGES array stays in sync with the generated sitemap', () => {
+test('PAGES array stays in sync with the English half of the generated sitemap', () => {
     // sitemap.xml is built from html/sitemap.njk (the sitemapPages
     // collection), so read the build output, not a source file. The
     // webServer in playwright.config.js builds _site/ before the run.
@@ -35,13 +36,18 @@ test('PAGES array stays in sync with the generated sitemap', () => {
     // compare membership on the extension-stripped path — a drift in the set
     // of pages still fails, but the deliberate .html-vs-clean form gap doesn't.
     const norm = (u) => u.replace(/^https?:\/\/[^/]+/, '').replace(/\.html$/, '');
+    const localizedPrefixes = i18n.locales
+        .map(({ code }) => code)
+        .filter(code => code !== i18n.defaultLocale)
+        .map(code => `/${code}/`);
     const sitemapPaths = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)]
         .map(m => norm(m[1]))
+        .filter(path => !localizedPrefixes.some(prefix => path.startsWith(prefix)))
         .sort();
     const pagesPaths = PAGES
         .map(p => norm(p.url))
         .sort();
-    expect(pagesPaths, 'every sitemap entry should appear in PAGES and vice versa').toEqual(sitemapPaths);
+    expect(pagesPaths, 'every English sitemap entry should appear in PAGES and vice versa').toEqual(sitemapPaths);
 });
 
 for (const { name, url } of PAGES) {

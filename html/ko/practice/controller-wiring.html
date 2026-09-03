@@ -1,0 +1,51 @@
+---
+title: 제어기 배선 퀴즈 — controlsfreak.dev
+description: 공유 COM 기준점, 변압기 위상, LOOP+와 AC 전원선, 유전압·무전압 접점 및 BO-C 전원 공급을 점검하는 10문항 퀴즈입니다.
+sourceContentHash: a5f91382002fb9923be10c776b09ab2b81da540725d329570d49c5901b99519f
+canonical: https://controlsfreak.dev/ko/practice/controller-wiring.html
+nav: practice
+category: signals
+pairedLesson: https://controlsfreak.dev/ko/education/controller-wiring.html
+---
+{% extends "html/practice/controller-wiring.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · 제어기 배선</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">제어기 배선 퀴즈 <span class="tool-tag">배선</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/controller-wiring.html">제어기 배선</a> 학습 자료를 읽은 뒤 자가 점검해 보세요. 단자 결선과 전원을 다루는 10문항입니다. 모든 리턴이 공유 COM으로 돌아오는 이유, 공유 변압기의 위상 규칙, 2선식 루프에 전원을 공급하는 단자와 DC여야 하는 이유, 유전압·무전압 접점, 출력 측의 함정인 신호만 내보내고 전원은 공급하지 않는 AO와 아무도 전원을 공급하지 않은 BO-C를 확인합니다. 각 문항의 해설에는 해당 내용이 나온 학습 자료의 절 링크가 있습니다. 센서 곡선, 스케일링 계산, 실드 실습은 함께 보는 <a href="/ko/practice/field-wiring-sensors.html">현장 배선 및 센서 연습문제</a>에서 다룹니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/transformer-sizing.html', label: '변압기 VA 용량 계산기'},
+            {href: '/ko/tools/signal-scaling.html', label: '신호 스케일링 계산기'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/controller-wiring.html', label: '컨트롤러 배선 시뮬레이터'}
+        ],
+        lessons: [
+            {href: '/ko/education/controller-wiring.html', label: '제어기 배선'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

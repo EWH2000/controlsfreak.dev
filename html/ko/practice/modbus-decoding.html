@@ -1,0 +1,48 @@
+---
+title: Modbus 디코딩 퀴즈 — controlsfreak.dev
+description: Modbus의 5자리 주소 함정, 부호 해석, 네 가지 32비트 바이트 순서, 스케일링과 예외 응답을 점검하는 10문항 퀴즈입니다.
+sourceContentHash: ca651507cd8d6f80732274032d73f82a0a3fc17c0790ed58564e4794b900760a
+canonical: https://controlsfreak.dev/ko/practice/modbus-decoding.html
+nav: practice
+category: modbus
+pairedLesson: https://controlsfreak.dev/ko/education/modbus-decoding.html
+---
+{% extends "html/practice/modbus-decoding.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">연습문제 · Modbus 디코딩</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Modbus 디코딩 퀴즈 <span class="tool-tag">Modbus</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                먼저 <a href="/ko/education/modbus-decoding.html">Modbus 디코딩</a> 학습 자료를 읽은 뒤 자가 점검해 보세요. 5자리 주소 표기의 함정, signed와 unsigned 해석, 네 가지 32비트 바이트 순서, 공학 단위 스케일링, FC03 / FC04 혼동과 실제 통신선에서의 예외 응답을 다루는 10문항입니다. 각 문항의 해설에는 해당 내용이 나온 학습 자료의 절 링크가 있습니다.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/modbus-register-viewer.html', label: 'Modbus 레지스터 뷰어'}
+        ],
+        lessons: [
+            {href: '/ko/education/modbus-decoding.html', label: 'Modbus 디코딩'},
+            {href: '/ko/education/modbus-basics.html', label: 'Modbus 기초'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/practice/">← 모든 연습문제</a>
+
+</main>
+{% endblock %}

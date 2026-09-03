@@ -14904,12 +14904,12 @@ extend the third arm's selector to
 (or bare `details`), run the sweep, and disposition whatever it
 finds before merging the widened spec.
 
-### 317. 52 `FAQPage` nodes ship but earn no rich result — Google restricted FAQ to government and health sites in Aug 2023 *(noticed 2026-08-27, SEO research round; decision-class — owner's call, not a bug)*
+### 317. 104 `FAQPage` nodes ship but earn no rich result — Google restricted FAQ to government and health sites in Aug 2023 *(noticed 2026-08-27, SEO research round; decision-class — owner's call, not a bug)*
 
 `head.njk` emits `FAQPage` JSON-LD from the `faqs:` frontmatter and the
-quiz banks; a build count puts it at **52 pages**. The mechanism works
-exactly as designed. What changed is outside the repo: in **August 2023**
-Google restricted FAQ rich results to "well-known, authoritative
+quiz banks; a build count puts it at **104 pages — 52 per locale**. The
+mechanism works exactly as designed. What changed is outside the repo: in
+**August 2023** Google restricted FAQ rich results to "well-known, authoritative
 government and health websites," so on this domain the markup renders no
 SERP treatment and has not since before most of it was written. The
 `faqBlock` macro shipped in PR #293 as an SEO quick win
@@ -14926,7 +14926,7 @@ and the choice is editorial:
 2. **Keep it but stop counting it as SEO.** Same output; correct the
    rationale where the repo still describes FAQ markup as a search win,
    so a future decision isn't made on a stale premise.
-3. **Retire it.** Removes 52 nodes of JSON-LD that earn nothing from
+3. **Retire it.** Removes 104 nodes of JSON-LD that earn nothing from
    the surface it was added for.
 
 Position 2 is the cheapest and loses nothing; positions 1 and 3 differ
@@ -14989,26 +14989,25 @@ silent deindexing. Logged rather than fixed because it is a vendor
 setting, not code. The September 15 2026 default change is *not* the
 risk — it is scoped to pages displaying ads, and this site shows none.
 
-### 320. 40 lesson pages declare `author` and `publisher` by dangling reference — the Person node exists only on the home page *(noticed 2026-08-27; DECISION-CLASS — needs an owner answer before any fix, see below)*
+### 320. 80 localized lesson pages declare `author` and `publisher` by dangling reference — each Person node exists only on its locale's home page *(noticed 2026-08-27; DECISION-CLASS — needs an owner answer before any fix, see below)*
 
-`techArticleJsonLd` (`.eleventy.js:1373-1391`) sets
-`"author": {"@id": "https://controlsfreak.dev/#author"}` and
-`"publisher": {"@id": "https://controlsfreak.dev/#website"}`. Both target
-nodes are described in exactly **one** built document — `_site/index.html`,
-where the `WebSite` + `Person` `@graph` is authored inline in
-`{% block head %}`. So on the **40 live education pages** that carry a
-TechArticle node, `author` ships as an identifier and nothing else: no
-`@type`, no `name`, no `url`.
+`techArticleJsonLd` (`.eleventy.js:2138-2159`) sets localized `author` and
+`publisher` `@id` references rooted at the current locale. Each pair of target
+nodes is described in exactly **one** built document for that locale —
+`_site/index.html` or `_site/ko/index.html` — where the shared `WebSite` +
+`Person` `@graph` is authored inline in `{% block head %}`. So on the **80 live
+education pages — 40 per locale** that carry a TechArticle node, `author` ships
+as an identifier and nothing else: no `@type`, no `name`, no `url`.
 
 **Precision matters here — the audit overclaimed.** A cross-document `@id`
 is *valid JSON-LD*; the defect is practical, not spec-level. Google
 flattens structured data per document, so it will not fetch the home page
 to resolve a lesson's author. The intent is explicit in the code comment
-at `:1365-1367` ("attributes authorship to the Person entity declared on
+at `:2130-2132` ("attributes authorship to the Person entity declared on
 the home page (E-E-A-T)") — the author knew the node lived elsewhere and
 assumed the reference carried. Nothing in the build links them, and no
 guard would notice. Note the neighbouring `hasPart`/`isPartOf` refs at
-`:1269,1388` *were* written with an explicit `@type`, which is what makes
+`:2028,2156` *were* written with an explicit `@type`, which is what makes
 this read as an oversight rather than a decision.
 
 `publisher` is the same dangle **plus a type error**: its target is a
@@ -15016,13 +15015,13 @@ this read as an oversight rather than a decision.
 `Person`.
 
 **Held for the owner deliberately — an adversarial reviewer blocked the
-"obvious" fix, and correctly.** Inlining the author node means **40
+"obvious" fix, and correctly.** Inlining the author node means **80
 indexed pages start publicly declaring an author name**. The only name in
-the repo is `Controls Freak` (`html/index.html:25`, appearing exactly once
-and never as visible text on any page). That is a personal-disclosure
-decision, not a markup decision. Two questions:
+the authored source is `Controls Freak` (`html/index.html:26`; it renders in
+both locale home documents and never as visible text on any page). That is a
+personal-disclosure decision, not a markup decision. Two questions:
 
-**A. What name ships as the author on 40 indexed pages?** `Controls
+**A. What name ships as the author on 80 indexed pages?** `Controls
 Freak`, a real name, or something else? Google's author guidance wants it
 to match a byline a reader can see — there is no byline today. A `sameAs`
 link (GitHub/LinkedIn) would strengthen it if you want the E-E-A-T signal
@@ -15038,21 +15037,21 @@ has never claimed. **(c) point it at the Person** — honest for a
 one-person site, but publicly asserts solo operation. The diagnosing lane
 recommended **(a)** on minimality grounds.
 
-Once both are answered the edit is a single hunk at `.eleventy.js:1384-1385`.
+Once both are answered the edit is a single hunk at `.eleventy.js:2152-2153`.
 Worth adding a cheap regression guard in the same PR, since nothing would
 catch a recurrence: assert that every `application/ld+json` block on an
 education page has, for each of `author`/`publisher` present, either a
 `name` or an `@id` that resolves **within the same document**.
 
-### 321. `nav: guides` has no `SECTION_MAP` entry, so the five guides pages emit a two-item breadcrumb *(noticed 2026-08-27 while fixing #86's contact follow-on; low severity)*
+### 321. `nav: guides` has no `SECTION_MAP` entry, so ten localized guides pages emit a two-item breadcrumb *(noticed 2026-08-27 while fixing #86's contact follow-on; low severity)*
 
 `SECTION_MAP` in `.eleventy.js` covers `tools` / `simulators` /
 `education` / `practice` / `contact`. It has no `guides` key, so
-`breadcrumbJsonLd`'s `SECTION_MAP[nav]` lookup returns undefined for the
-five `nav: guides` pages — `/guides/` plus the four topic hubs
-(`/bacnet/`, `/forced-air/`, `/hydronics/`, `/refrigeration/`) — and the
-`if (section)` branch never runs. They ship `Home → <page>` instead of
-`Home → Guides → <page>`.
+`breadcrumbJsonLd`'s `SECTION_MAP[nav]` lookup returns undefined for the ten
+`nav: guides` pages — five routes per locale: `/guides/` plus the four topic
+hubs (`/bacnet/`, `/forced-air/`, `/hydronics/`, `/refrigeration/`) — and the
+`if (section)` branch never runs. They ship `Home → <page>` instead of `Home →
+Guides → <page>` (with localized labels on Korean pages).
 
 Not obviously a bug: `/guides/` is itself a landing, and the four hubs are
 pillar pages that arguably sit directly under Home rather than under a

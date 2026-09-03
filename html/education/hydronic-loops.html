@@ -6,9 +6,20 @@ nav: education
 category: hydronics
 pairedQuiz: https://controlsfreak.dev/practice/hydronic-loops.html
 keywords: primary secondary direct reverse return delta t gpm pump loop
+pageMessages:
+  status:
+    highLimit: Boiler over-temperature — high-limit trip
+    belowMinimum: Below minimum pump speed
+    supplyHigh: System supply above setpoint — loads overheating
+    belowDesign: Below design — primary climbing toward high-limit
+    normal: Normal operation
+  alert:
+    pumpOff: >-
+      Forgot to enable the injection pump? I&#39;ve done it. Lucky the boiler I was working with had its own low-flow protection. Older ones don&#39;t — and it doesn&#39;t take an engineer to know what happens when there&#39;s too much heat and nowhere for it to go.
+    belowMinimum: Most BMS configurations disable the pump entirely below ~20 Hz.
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -830,28 +841,28 @@ keywords: primary secondary direct reverse return delta t gpm pump loop
             let statusClass, statusText;
             if (hz === 0) {
                 statusClass = 'fault';
-                statusText  = 'Boiler over-temperature — high-limit trip';
+                statusText  = CFI18n.page('status.highLimit');
             } else if (hz < 20) {
                 statusClass = 'warn';
-                statusText  = 'Below minimum pump speed';
+                statusText  = CFI18n.page('status.belowMinimum');
             } else if (tSystem > 150) {
                 statusClass = 'warn';
-                statusText  = 'System supply above setpoint — loads overheating';
+                statusText  = CFI18n.page('status.supplyHigh');
             } else if (tPrimary > 192) {
                 statusClass = 'warn';
-                statusText  = 'Below design — primary climbing toward high-limit';
+                statusText  = CFI18n.page('status.belowDesign');
             } else {
                 statusClass = '';
-                statusText  = 'Normal operation';
+                statusText  = CFI18n.page('status.normal');
             }
             statusEl.className = 'd3-w-status' + (statusClass ? ' ' + statusClass : '');
             statusEl.textContent = statusText;
 
             // Detail anecdote / warning area below the status line.
             if (hz === 0) {
-                alertEl.innerHTML = '<div class="widget-anecdote warn">Forgot to enable the injection pump? I\'ve done it. Lucky the boiler I was working with had its own low-flow protection. Older ones don\'t — and it doesn\'t take an engineer to know what happens when there\'s too much heat and nowhere for it to go.</div>';
+                alertEl.innerHTML = '<div class="widget-anecdote warn">' + CFI18n.page('alert.pumpOff') + '</div>';
             } else if (hz < 20) {
-                alertEl.innerHTML = '<div class="d3-w-warning">Most BMS configurations disable the pump entirely below ~20 Hz.</div>';
+                alertEl.innerHTML = '<div class="d3-w-warning">' + CFI18n.page('alert.belowMinimum') + '</div>';
             } else {
                 alertEl.innerHTML = '';
             }

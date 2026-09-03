@@ -1,0 +1,485 @@
+---
+title: 현장 전기 간편 계산기 — controlsfreak.dev
+description: 옴의 법칙과 DC 전력, 단상·삼상 AC 전력, 모터 HP·kW·전부하전류 추정, NEMA 삼상 선간전압 불평형 판정을 한곳에서 계산합니다.
+sourceContentHash: c946faf6759b21e242e58d182af1a87a28154a1ab1644a4472f3ee457b1944c9
+sourceMessageHash: 48d5fb8141d9e4bf857fd0aa1eb4df1131ba0627f59d13d4cb9ab022c2ac2ace
+canonical: https://controlsfreak.dev/ko/tools/electrical-quick-calc.html
+nav: tools
+category: electrical
+pageMessages:
+    labels:
+        voltage: "전압(V)"
+        current: "전류(A)"
+        resistance: "저항(Ω)"
+        power: "전력(W)"
+        solved: " · 계산값"
+        lineVoltageLl: "선간전압 Vₗ(L-L)"
+        lineVoltageLn: "선 전압 Vₗ(L-N)"
+        nameplatePowerHp: "명판 출력(HP)"
+        nameplatePowerKw: "명판 출력(kW)"
+    status:
+        motorPrompt: "추정값과 비교할 클램프 전류 측정값을 입력하세요."
+        motorConsistent: "측정값 {measured} A는 추정값 {estimate} A의 {percent}%로 명판 조건과 일치합니다."
+        motorAbove: "측정값 {measured} A는 추정값 {estimate} A의 {percent}%로 추정값보다 높습니다. 부하, 공급 전압 또는 기계적 구속을 확인하세요."
+        motorBelow: "측정값 {measured} A는 추정값 {estimate} A의 {percent}%로 추정값보다 낮습니다. 경부하인지 확인하고 PF·효율 가정을 다시 점검하세요."
+        motorFar: "측정값 {measured} A는 추정값 {estimate} A의 {percent}%로 차이가 큽니다. 상, 전압, PF·η 또는 클램프를 다시 확인하세요. CT 범위가 맞는지, 도체 두 개 이상을 함께 감싸지 않았는지도 확인해야 합니다."
+        imbalancePrompt: "판정할 세 선간전압 측정값을 입력하세요."
+        imbalanceOk: "{percent}% — NEMA MG-1 기준(≤ 1%) 이내이므로 용량 저감이 필요하지 않습니다."
+        imbalanceWarn: "{percent}% — 1%를 초과했습니다. NEMA는 모터 용량 저감을 권장합니다. 전류 불평형은 이 값의 약 6~10배로 권선 발열을 높이므로 느슨하게 체결된 러그 단자, 불균형한 단상 부하 또는 전력회사 측 원인을 찾아 해결하세요."
+        imbalanceError: "{percent}% — NEMA MG-1은 5%를 초과하는 조건에서 운전하지 않도록 권고합니다. 모터를 운전하기 전에 공급 전원을 바로잡으세요."
+    errors:
+        ohmNonNegative: "V, I, R, P는 크기값이므로 음수가 아닌 값을 입력하세요."
+        ohmTwoRequired: "V, I, R, P 중 두 값을 입력하면 나머지 두 값을 계산합니다."
+        ohmTooManyOne: "정확히 두 값만 입력해야 합니다. 해가 하나로 정해지도록 {count}개 값을 지우세요."
+        ohmTooManyMany: "정확히 두 값만 입력해야 합니다. 해가 하나로 정해지도록 {count}개 값을 지우세요."
+        ohmZeroBoth: "0 V와 0 A만으로는 저항이나 전력을 정할 수 없습니다. 둘 중 하나 이상에 0이 아닌 값을 입력하세요."
+        ohmOpenCircuit: "전압이 인가된 상태에서 전류가 0 A이면 개방회로이며 저항은 무한대입니다."
+        ohmDeadShort: "저항 0 Ω은 단락 상태이므로 전류가 무한대로 계산됩니다."
+        ohmZeroVoltage: "전력이 존재하는데 전압이 0 V인 상태는 정의할 수 없습니다. 전류를 흐르게 할 전압이 필요합니다."
+        ohmZeroPower: "전압이 인가된 상태에서 전력이 0 W이면 전류가 흐르지 않고 저항은 무한대입니다."
+        ohmZeroCurrentPower: "전력이 존재하는데 전류가 0 A인 상태는 정의할 수 없습니다. 전력에는 전류의 흐름이 필요합니다."
+        ohmNoFinite: "이 두 값으로는 유한한 해를 구할 수 없습니다. 입력값을 확인하세요."
+        acInputs: "선 전압과 역률을 입력하세요."
+        voltagePositive: "선 전압은 0보다 커야 합니다."
+        powerFactorRange: "역률은 0보다 크고 1 이하여야 합니다."
+        acMagnitudeRequired: "선 전류, 유효전력(kW), 피상전력(kVA) 중 하나를 입력하세요."
+        acOneMagnitude: "선 전류, kW, kVA 중 하나만 입력하고 나머지는 지우세요."
+        nonNegative: "음수가 아닌 값을 입력하세요."
+        indeterminate: "이 조합으로는 값을 정할 수 없습니다. 입력값을 확인하세요."
+        motorPower: "명판 출력(HP 또는 kW)을 입력하세요."
+        efficiencyRange: "효율은 0보다 크고 1 이하여야 합니다(또는 90과 같이 백분율로 입력)."
+        imbalanceReadings: "세 선간전압 측정값을 모두 입력하세요."
+        imbalancePositive: "전압 측정값은 0보다 커야 합니다."
+    formula:
+        ohmVi: "R = V ÷ I = {voltage} ÷ {current} = {resistance} Ω · P = V × I = {voltage} × {current} = {power} W"
+        ohmVr: "I = V ÷ R = {voltage} ÷ {resistance} = {current} A · P = V² ÷ R = {voltage}² ÷ {resistance} = {power} W"
+        ohmVp: "I = P ÷ V = {power} ÷ {voltage} = {current} A · R = V² ÷ P = {voltage}² ÷ {power} = {resistance} Ω"
+        ohmIr: "V = I × R = {current} × {resistance} = {voltage} V · P = I² × R = {current}² × {resistance} = {power} W"
+        ohmIp: "V = P ÷ I = {power} ÷ {current} = {voltage} V · R = P ÷ I² = {power} ÷ {current}² = {resistance} Ω"
+        ohmPr: "V = √(P × R) = √({power} × {resistance}) = {voltage} V · I = √(P ÷ R) = √({power} ÷ {resistance}) = {current} A"
+        ac: "S = {root}{voltage} × {current} = {apparent} kVA · P = S × {factor} = {real} kW · Q = √(S² − P²) = {reactive} kVAR"
+        motor: "FLA = ({horsepower} HP × 746) ÷ ({root}{voltage} × {factor} × {efficiency}) = {amps} A(추정값)"
+        imbalance: "평균 = ({ab} + {bc} + {ca}) ÷ 3 = {average} V · 최대 편차 = {deviation} V · 불평형률 = {deviation} ÷ {average} × 100 = {percent} %"
+    output:
+        phaseAngle: "{angle}°(PF {factor})"
+keywords: 옴의 법칙 와트 볼트 암페어 삼상 kVA kVAR 역률 모터 FLA hp kW 전압 불평형 NEMA NEC 430
+---
+{% extends "html/tools/electrical-quick-calc.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">도구 · 전기 간편 계산</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">
+                현장 전기 간편 계산기
+                <span class="tool-tag">전기</span>
+            </h1>
+        </div>
+
+        <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
+            <summary>서비스 현장에서 반복 확인하는 핵심 전기 계산을 한곳에 모았습니다.</summary>
+            <div class="preamble-rest">
+                <em>옴의 법칙 및 전력</em>은 V / I / R / P 중 두 값을 입력하면 나머지 두 값을 계산합니다.
+                <em>AC 전력</em>은 단상·삼상의 선 전압, 전류, kW, kVA, kVAR, 역률 관계를 계산합니다.
+                <em>모터 HP / kW / FLA</em>는 마력을 킬로와트로 환산하고 전부하전류를 추정합니다.
+                <em>전압 불평형</em>은 세 선간전압 측정값을 NEMA 기준으로 판정합니다.
+            </div>
+        </details>
+        <p class="ps-seed-note">예시 값이 입력되어 있습니다. 현장 값으로 바꾸어 계산하세요.</p>
+
+        <div class="tabs tabs-flush">
+            <button class="tab-btn active" data-tab="ohms">옴의 법칙 및 전력</button>
+            <button class="tab-btn"        data-tab="ac">AC 전력</button>
+            <button class="tab-btn"        data-tab="motor">모터 HP / kW / FLA</button>
+            <button class="tab-btn"        data-tab="imbalance">전압 불평형</button>
+        </div>
+
+        <!-- ── Ohm's Law & Power ── -->
+        <div id="tab-ohms" class="tab-pane active">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력 — V, I, R, P 중 두 값</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-ohm-v">전압(V)</label>
+                        <input class="ps-input" type="number" id="eq-ohm-v" step="any" min="0" placeholder="전압" value="12">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-ohm-i">전류(A)</label>
+                        <input class="ps-input" type="number" id="eq-ohm-i" step="any" min="0" placeholder="전류" value="3">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-ohm-r">저항(Ω)</label>
+                        <input class="ps-input" type="number" id="eq-ohm-r" step="any" min="0" placeholder="저항">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-ohm-p">전력(W)</label>
+                        <input class="ps-input" type="number" id="eq-ohm-p" step="any" min="0" placeholder="전력">
+                    </div>
+                    <p class="ref-note">
+                        정확히 <strong>두 값</strong>을 입력하세요. 나머지 두 값이 계산되어 파란색으로 표시됩니다. DC 또는 저항성 부하(PF&nbsp;=&nbsp;1)에 적용하며, 모터와 무효 부하에는 AC 전력 탭을 사용하세요.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="ps-row">
+                        <span class="ps-label" id="eq-ohm-lbl-v">전압(V)</span>
+                        <span class="ps-value muted" id="eq-ohm-out-v">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" id="eq-ohm-lbl-i">전류(A)</span>
+                        <span class="ps-value muted" id="eq-ohm-out-i">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" id="eq-ohm-lbl-r">저항(Ω)</span>
+                        <span class="ps-value muted" id="eq-ohm-out-r">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label" id="eq-ohm-lbl-p">전력(W)</span>
+                        <span class="ps-value muted" id="eq-ohm-out-p">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="eq-copy-ohm">네 값 모두 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="eq-ohm-formula"></div>
+                    <div class="failure-callout" id="eq-ohm-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">옴의 법칙 계산표</h2>
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr><th>계산 대상</th><th>다른 두 값으로 계산</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>V(볼트)</td><td><code>I·R</code> &nbsp;·&nbsp; <code>P/I</code> &nbsp;·&nbsp; <code>√(P·R)</code></td></tr>
+                        <tr><td>I(암페어)</td><td><code>V/R</code> &nbsp;·&nbsp; <code>P/V</code> &nbsp;·&nbsp; <code>√(P/R)</code></td></tr>
+                        <tr><td>R(옴)</td><td><code>V/I</code> &nbsp;·&nbsp; <code>V²/P</code> &nbsp;·&nbsp; <code>P/I²</code></td></tr>
+                        <tr><td>P(와트)</td><td><code>V·I</code> &nbsp;·&nbsp; <code>I²·R</code> &nbsp;·&nbsp; <code>V²/R</code></td></tr>
+                    </tbody>
+                </table>
+                <p class="ref-note worked-intro">
+                    <strong>계산 예시:</strong> <button type="button" data-gloss="contactor-coil">릴레이 코일</button>의 측정 저항은 <strong>R&nbsp;=&nbsp;4&nbsp;Ω</strong>이고 제어반에서 <strong>V&nbsp;=&nbsp;12&nbsp;V</strong>를 공급합니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li><code>I = V/R = 12 ÷ 4 = 3 A</code></li>
+                    <li><code>P = V²/R = 144 ÷ 4 = 36 W</code></li>
+                </ol>
+                <p class="ref-note">
+                    따라서 코일은 3&nbsp;A를 소비하고 36&nbsp;W의 전력을 사용합니다. 회로를 신뢰하기 전에 코일 정격 소비전력과 비교해 타당성을 확인하세요.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── AC Power ── -->
+        <div id="tab-ac" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력 — V, PF + I / kW / kVA 중 하나</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-ac-phase">상</label>
+                        <select class="ps-input" id="eq-ac-phase">
+                            <option value="3" selected>삼상(3φ)</option>
+                            <option value="1">단상(1φ)</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="eq-ac-vl-label" for="eq-ac-vl">선간전압 Vₗ(L-L)</label>
+                        <input class="ps-input" type="number" id="eq-ac-vl" step="any" min="0" placeholder="480" value="460">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-ac-pf">역률</label>
+                        <input class="ps-input" type="number" id="eq-ac-pf" step="0.01" min="0" max="1" placeholder="0.85" value="0.85">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-ac-i-in">선 전류 Iₗ(A)</label>
+                        <input class="ps-input" type="number" id="eq-ac-i-in" step="any" min="0" placeholder="30" value="30">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-ac-kw-in">유효전력(kW)</label>
+                        <input class="ps-input" type="number" id="eq-ac-kw-in" step="any" min="0" placeholder="예: 20">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-ac-kva-in">피상전력(kVA)</label>
+                        <input class="ps-input" type="number" id="eq-ac-kva-in" step="any" min="0" placeholder="예: 24">
+                    </div>
+                    <p class="ref-note">
+                        선 전압과 역률, 그리고 선 전류 / kW / kVA 중 <strong>정확히 하나</strong>를 입력하면 나머지 값이 계산됩니다. 여기서 선 전압은 120 / 277이 아니라 208 / 240 / 480과 같은 <strong>선간전압</strong>입니다. 삼상에는 √3 계수가 적용되며, 선-중성선 분기회로는 1φ를 선택하세요.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="ps-row">
+                        <span class="ps-label">선 전류 Iₗ</span>
+                        <span class="ps-value muted" id="eq-ac-i">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">유효전력</span>
+                        <span class="ps-value muted" id="eq-ac-kw">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">피상전력</span>
+                        <span class="ps-value muted" id="eq-ac-kva">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">무효전력</span>
+                        <span class="ps-value muted" id="eq-ac-kvar">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">위상각 θ</span>
+                        <span class="ps-value muted" id="eq-ac-angle">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="eq-copy-ac">kW / kVA 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="eq-ac-formula"></div>
+                    <div class="failure-callout" id="eq-ac-callout" hidden></div>
+                    <p class="ref-note">
+                        Q는 크기값이며 지상(유도성) 부하를 가정합니다. 도체와 차단기는 kW가 아니라 kVA에서 계산한 <strong>전류</strong>를 기준으로 선정하세요.
+                    </p>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">역률 → 위상각</h2>
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr><th>PF</th><th>위상각 θ</th><th>kW / kVA</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1.00</td><td>0.0°</td><td>1.00</td></tr>
+                        <tr><td>0.95</td><td>18.2°</td><td>0.95</td></tr>
+                        <tr><td>0.90</td><td>25.8°</td><td>0.90</td></tr>
+                        <tr><td>0.85</td><td>31.8°</td><td>0.85</td></tr>
+                        <tr><td>0.80</td><td>36.9°</td><td>0.80</td></tr>
+                    </tbody>
+                </table>
+                <p class="ref-note worked-intro">
+                    <strong>계산 예시(3φ):</strong> 460&nbsp;V 삼상 급기 팬이 <strong>PF&nbsp;0.85</strong>에서 <strong>30&nbsp;A</strong>를 소비합니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li><code>S = √3 × 460 × 30 = 23.90 kVA</code>(피상전력)</li>
+                    <li><code>P = S × 0.85 = 20.32 kW</code>(유효전력)</li>
+                    <li><code>Q = √(S² − P²) = 12.59 kVAR</code>(무효전력), θ = acos&nbsp;0.85 = 31.8°</li>
+                </ol>
+                <p class="ref-note">
+                    역산도 가능합니다. 선 전류를 비우고 <strong>20.32&nbsp;kW</strong>(또는 <strong>23.90&nbsp;kVA</strong>)를 입력하면 30&nbsp;A가 계산됩니다. 크기값은 정확히 하나만 입력해야 하며, 두 번째 값을 채우면 하나를 지우라는 안내가 표시됩니다.
+                </p>
+                <p class="ref-note">
+                    선간전압과 선-중성선 전압의 차이는 √3입니다(V<sub>LL</sub>&nbsp;=&nbsp;√3&nbsp;×&nbsp;V<sub>LN</sub>). 480&nbsp;V 계통은 중성선 기준으로 277&nbsp;V가 측정됩니다. 여기에는 L-L 값을 입력하세요.
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Motor HP / kW / FLA ── -->
+        <div id="tab-motor" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력 — 명판</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-motor-pmode">출력 입력 단위</label>
+                        <select class="ps-input" id="eq-motor-pmode">
+                            <option value="hp" selected>마력(HP)</option>
+                            <option value="kw">킬로와트(kW)</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" id="eq-motor-pval-label" for="eq-motor-pval">명판 출력(HP)</label>
+                        <input class="ps-input" type="number" id="eq-motor-pval" step="any" min="0" placeholder="10" value="10">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-motor-phase">상</label>
+                        <select class="ps-input" id="eq-motor-phase">
+                            <option value="3" selected>삼상(3φ)</option>
+                            <option value="1">단상(1φ)</option>
+                        </select>
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-motor-vl">선간전압 Vₗ(L-L)</label>
+                        <input class="ps-input" type="number" id="eq-motor-vl" step="any" min="0" placeholder="460" value="460">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-motor-pf">역률</label>
+                        <input class="ps-input" type="number" id="eq-motor-pf" step="0.01" min="0" max="1" placeholder="0.88" value="0.88">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-motor-eff">효율 η</label>
+                        <input class="ps-input" type="number" id="eq-motor-eff" step="any" min="0" placeholder="0.90" value="0.90">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-motor-meas">측정 전류(A, 선택 입력)</label>
+                        <input class="ps-input" type="number" id="eq-motor-meas" step="any" min="0" placeholder="클램프 측정값">
+                    </div>
+                    <p class="ref-note">
+                        PF와 η는 <strong>사용자가 가정하는 값</strong>입니다. 명판 값이 있으면 그 값으로 바꾸세요. 효율은 0.90 또는 90으로 입력할 수 있습니다.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력 — 추정값</h2>
+                    <div class="status-pill" id="eq-motor-status">{{ pageMessages.status.motorPrompt }}</div>
+                    <div class="ps-row">
+                        <span class="ps-label">HP ↔ kW</span>
+                        <span class="ps-value muted" id="eq-motor-twin">—</span>
+                    </div>
+                    <div class="ps-row primary">
+                        <span class="ps-label">추정 전부하전류</span>
+                        <span class="ps-value muted" id="eq-motor-fla">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="eq-copy-motor">FLA 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="eq-motor-formula"></div>
+                    <div class="failure-callout" id="eq-motor-callout" hidden></div>
+                    <div class="failure-callout">
+                        <strong>추정값일 뿐 법규상 기준값이 아닙니다.</strong> 입력한 PF와 효율로 계산한 값은 NEC 표보다 대략 10–25&nbsp;% 낮게 나오며, 5&nbsp;HP 미만에서는 차이가 더 커집니다. 모터 <strong>도체, 분기회로 보호장치 및 단로장치</strong>는 이 추정값이 아니라 NEC&nbsp;<strong>430.250</strong>(3φ)&nbsp;/&nbsp;<strong>430.248</strong>(1φ) 표의 FLC를 기준으로 선정하세요. 과부하 보호(430.32)는 명판 FLA를 사용합니다.
+                    </div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">일반 모터 전부하전류(NEC)</h2>
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr><th>모터 HP</th><th>3φ @ 460 V (A)</th><th>1φ @ 230 V (A)</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>2.1</td><td>8</td></tr>
+                        <tr><td>2</td><td>3.4</td><td>12</td></tr>
+                        <tr><td>3</td><td>4.8</td><td>17</td></tr>
+                        <tr><td>5</td><td>7.6</td><td>28</td></tr>
+                        <tr><td>7.5</td><td>11</td><td>40</td></tr>
+                        <tr><td>10</td><td>14</td><td>50</td></tr>
+                        <tr><td>15</td><td>21</td><td>—</td></tr>
+                        <tr><td>20</td><td>27</td><td>—</td></tr>
+                        <tr><td>25</td><td>34</td><td>—</td></tr>
+                        <tr><td>30</td><td>40</td><td>—</td></tr>
+                        <tr><td>50</td><td>65</td><td>—</td></tr>
+                    </tbody>
+                </table>
+                <p class="ref-note worked-intro">
+                    <strong>계산 예시:</strong> 10&nbsp;HP, 460&nbsp;V 삼상 모터의 PF가 0.88이고 η가 0.90입니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li><code>FLA = (10 × 746) / (√3 × 460 × 0.88 × 0.90) = 7460 ÷ 631 = 11.8 A</code> — 추정값입니다.</li>
+                    <li>NEC&nbsp;430.250에서 이 모터의 전류는 <strong>14&nbsp;A</strong>입니다. 따라서 추정값 11.8&nbsp;A는 표의 값보다 약 <strong>16&nbsp;% 낮으며</strong>, 위 주의사항에 설명한 10–25&nbsp;% 범위에 듭니다.</li>
+                </ol>
+                <p class="ref-note">
+                    이러한 차이는 표가 대표적인 낮은 PF와 효율을 반영하여 입력한 PF 기반 추정값보다 항상 높게 산정되기 때문입니다. <strong>11.8&nbsp;A 추정값이 아니라 14&nbsp;A의 표 값을 기준으로 선정하세요.</strong>
+                </p>
+            </section>
+        </div>
+
+        <!-- ── Voltage Imbalance ── -->
+        <div id="tab-imbalance" class="tab-pane">
+            <div class="tool-body-2col">
+
+                <section>
+                    <h2 class="ps-section-label">입력 — 세 선간전압 측정값</h2>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-imb-vab">V<sub>A-B</sub> (V)</label>
+                        <input class="ps-input" type="number" id="eq-imb-vab" step="any" min="0" placeholder="460" value="460">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-imb-vbc">V<sub>B-C</sub> (V)</label>
+                        <input class="ps-input" type="number" id="eq-imb-vbc" step="any" min="0" placeholder="455" value="455">
+                    </div>
+                    <div class="ps-row">
+                        <label class="ps-label" for="eq-imb-vca">V<sub>C-A</sub> (V)</label>
+                        <input class="ps-input" type="number" id="eq-imb-vca" step="any" min="0" placeholder="450" value="450">
+                    </div>
+                    <p class="ref-note">
+                        부하가 운전 중일 때 모터 단자에서 세 선간전압을 모두 측정하세요. NEMA는 평균값에 대한 최대 편차의 비율로 전압 불평형을 정의합니다.
+                    </p>
+                </section>
+
+                <section role="status" aria-atomic="false">
+                    <h2 class="ps-section-label">출력</h2>
+                    <div class="status-pill" id="eq-imb-status">{{ pageMessages.status.imbalancePrompt }}</div>
+                    <div class="ps-row">
+                        <span class="ps-label">평균 전압</span>
+                        <span class="ps-value muted" id="eq-imb-avg">—</span>
+                    </div>
+                    <div class="ps-row">
+                        <span class="ps-label">최대 편차</span>
+                        <span class="ps-value muted" id="eq-imb-dev">—</span>
+                    </div>
+                    <div class="ps-row primary">
+                        <span class="ps-label">전압 불평형률</span>
+                        <span class="ps-value muted" id="eq-imb-pct">—</span>
+                    </div>
+                    <div class="btn-row">
+                        <button class="copy-btn" id="eq-copy-imb">불평형률 복사</button>
+                    </div>
+                    <div class="result-formula wrap" id="eq-imb-formula"></div>
+                    <div class="failure-callout" id="eq-imb-callout" hidden></div>
+                </section>
+
+            </div>
+
+            <section class="tool-body-row">
+                <h2 class="ps-section-label">NEMA MG-1 전압 불평형 한계</h2>
+                <table class="ref-table-dense">
+                    <thead>
+                        <tr><th>불평형률</th><th>의미</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>≤ 1 %</td><td>허용 가능 — 용량 저감이 필요하지 않습니다.</td></tr>
+                        <tr><td>1 – 5 %</td><td>NEMA 곡선에 따라 모터 허용 부하를 낮추고 원인을 찾아 해결합니다.</td></tr>
+                        <tr><td>&gt; 5 %</td><td>운전 금지 — 먼저 공급 전원을 바로잡습니다.</td></tr>
+                    </tbody>
+                </table>
+                <p class="ref-note worked-intro">
+                    <strong>계산 예시:</strong> 모터의 세 선간전압이 <strong>460 / 455 / 450&nbsp;V</strong>로 측정됩니다.
+                </p>
+                <ol class="ref-note worked-list">
+                    <li><code>평균 = (460 + 455 + 450) ÷ 3 = 455 V</code></li>
+                    <li><code>최대 편차 = |460 − 455| = 5 V</code></li>
+                    <li><code>불평형률 = 5 ÷ 455 × 100 = 1.10 %</code> — 용량 저감 구간에 막 진입한 값입니다.</li>
+                </ol>
+                <p class="ref-note">
+                    전압 불평형은 모터에 큰 부담을 줍니다. <strong>전류</strong> 불평형은 전압 불평형의 약 6–10배이며, 늘어난 전류는 권선에서 그대로 열이 됩니다. 1&nbsp;%가 측정되면 느슨하게 체결된 러그 단자, 피더의 불균형한 단상 부하 또는 전력회사 측 원인을 추적하세요.
+                </p>
+            </section>
+        </div>
+
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/ko/tools/transformer-sizing.html', label: '변압기 VA 용량 산정'},
+            {href: '/ko/tools/power-energy-converter.html', label: '전력 및 에너지 변환기'},
+            {href: '/ko/tools/voltage-drop.html', label: '배선 길이 및 전압 강하'},
+            {href: '/ko/tools/signal-scaling.html', label: '신호 스케일링'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/controller-wiring.html', label: '컨트롤러 배선 시뮬레이터'}
+        ],
+        lessons: [
+            {href: '/ko/education/vfds.html', label: 'VFD'},
+            {href: '/ko/education/controller-wiring.html', label: '컨트롤러 배선'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/vfds.html', label: 'VFD 퀴즈'},
+            {href: '/ko/practice/field-wiring-sensors.html', label: '현장 배선 및 센서'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/tools/">← 모든 도구</a>
+
+</main>
+{% endblock %}

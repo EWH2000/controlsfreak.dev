@@ -6,9 +6,31 @@ nav: education
 category: forced-air
 pairedQuiz: https://controlsfreak.dev/practice/vav-systems.html
 keywords: vav box terminal box variable air volume damper flow ring flow cross velocity pressure k factor pressure independent minimum maximum cfm reheat bypass dump zone
+pageMessages:
+  widget:
+    reheat:
+      open: open
+      'off': 'off'
+    stages:
+      count: "{count} of 2"
+      held: held
+    coil:
+      protected: protected
+      idle: idle
+      ok: OK
+      thin: thin
+      starving: starving
+    status:
+      starving: "Stage running on {value} CFM/ton — suction diving, coil icing. Nothing in this design says stop."
+      held: Airflow below the stage floor — interlock holds the compressor off. Zones wait; the coil survives.
+      reheat: Overcooled zone — flow held at minimum, reheat carrying the room.
+      satisfied: Zone satisfied — box riding its minimum for ventilation.
+      tracking: Box tracking its zone — the coil breathes easy.
+    anecdote: >-
+      This preset is a pair of air handlers I'm still babysitting. Two big VAV units whose plant was improvised before my time — a retired chiller carved into two field-built DX circuits — serving a building of boxes with no bypass, no dump zone, no airflow interlock, and no low-pressure cutout anywhere: not a physical switch, not a line of logic, even though suction pressure was sitting right there on the controller. On mild days the zones satisfied, the boxes rode down, and the coil ran out of air to breathe. The mechanical crew found it iced solid; the controller's own trend showed suction diving every afternoon; the stages hunted and short-cycled, and the building had been losing compressors to it. The logic was in bad enough shape that I rewrote it — and until the sheet-metal fix arrives, the band-aid is mine: every box pinned to max flow (VAV in name, constant volume in software), stages held off return temperature, and the boilers running in July so the overcooled zones can reheat their way back. Horribly inefficient, and I know it. It also keeps compressors alive and people comfortable, which is the job until the real fix shows up.
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -577,7 +599,7 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
                     </div>
                     <div class="vav-w-line">
                         <div class="vav-w-line-name">Reheat valve</div>
-                        <div class="vav-w-line-value" id="vav-w-reheat">off</div>
+                        <div class="vav-w-line-value" id="vav-w-reheat">{{ pageMessages.widget.reheat.off }}</div>
                     </div>
                 </div>
 
@@ -594,11 +616,11 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
                     </div>
                     <div class="vav-w-line">
                         <div class="vav-w-line-name">Coil airflow</div>
-                        <div class="vav-w-line-value" id="vav-w-coil">435 CFM/ton · OK</div>
+                        <div class="vav-w-line-value" id="vav-w-coil">435 CFM/ton · {{ pageMessages.widget.coil.ok }}</div>
                     </div>
                 </div>
 
-                <div class="vav-w-status" id="vav-w-status" aria-live="polite">Box tracking its zone — the coil breathes easy.</div>
+                <div class="vav-w-status" id="vav-w-status" aria-live="polite">{{ pageMessages.widget.status.tracking }}</div>
                 <div class="vav-w-alert" id="vav-w-alert"></div>
             </div>
 
@@ -792,44 +814,55 @@ keywords: vav box terminal box variable air volume damper flow ring flow cross v
             flowEl.textContent = fmtFlow(cfm);
             vpEl.textContent = vp.toFixed(2) + ' in. w.c.';
             damperEl.innerHTML = damper + '<span class="unit"> %</span>';
-            reheatEl.innerHTML = reheat > 0 ? reheat + '<span class="unit"> % open</span>' : 'off';
+            reheatEl.innerHTML = reheat > 0
+                ? reheat + '<span class="unit"> % ' + CFI18n.page('widget.reheat.open') + '</span>'
+                : CFI18n.page('widget.reheat.off');
 
             // Paint the system strip.
             totalEl.textContent = fmtFlow(total);
-            stagesEl.textContent = stagesOn + ' of 2' + (held ? ' — held' : '');
+            stagesEl.textContent = CFI18n.page('widget.stages.count', { count: stagesOn }) +
+                (held ? ' — ' + CFI18n.page('widget.stages.held') : '');
             if (stagesOn === 0) {
-                coilEl.textContent = held ? 'protected' : 'idle';
+                coilEl.textContent = held
+                    ? CFI18n.page('widget.coil.protected')
+                    : CFI18n.page('widget.coil.idle');
             } else {
                 // Verdict edges track the equipment-airflow tool's owner-blessed
                 // 350/400/500 bands (and this page's own ~400 CFM/ton prose): OK
                 // is the 400-500 window, 350-400 is thin, below 350 is icing
                 // territory. Keep in step with tools/equipment-airflow.html.
-                coilEl.textContent = Math.round(cfmPerTon) + ' CFM/ton' +
-                    (cfmPerTon >= 400 ? ' · OK' : (cfmPerTon >= 350 ? ' · thin' : ' · starving'));
+                coilEl.textContent = Math.round(cfmPerTon) + ' CFM/ton · ' +
+                    (cfmPerTon >= 400
+                        ? CFI18n.page('widget.coil.ok')
+                        : (cfmPerTon >= 350
+                            ? CFI18n.page('widget.coil.thin')
+                            : CFI18n.page('widget.coil.starving')));
             }
 
             // Status line + anecdote latch.
             statusEl.classList.remove('warn', 'fault');
             if (starving) {
                 statusEl.classList.add('fault');
-                statusEl.textContent = 'Stage running on ' + Math.round(cfmPerTon) +
-                    ' CFM/ton — suction diving, coil icing. Nothing in this design says stop.';
+                statusEl.textContent = CFI18n.page('widget.status.starving', {
+                    value: Math.round(cfmPerTon)
+                });
                 state.anecdoteShown = true;
             } else if (held) {
                 statusEl.classList.add('warn');
-                statusEl.textContent = 'Airflow below the stage floor — interlock holds the compressor off. Zones wait; the coil survives.';
+                statusEl.textContent = CFI18n.page('widget.status.held');
             } else if (reheat > 0) {
-                statusEl.textContent = 'Overcooled zone — flow held at minimum, reheat carrying the room.';
+                statusEl.textContent = CFI18n.page('widget.status.reheat');
             } else if (cool === 0) {
-                statusEl.textContent = 'Zone satisfied — box riding its minimum for ventilation.';
+                statusEl.textContent = CFI18n.page('widget.status.satisfied');
             } else {
-                statusEl.textContent = 'Box tracking its zone — the coil breathes easy.';
+                statusEl.textContent = CFI18n.page('widget.status.tracking');
             }
 
             // The anecdote pins once revealed.
             if (state.anecdoteShown) {
                 if (!alertEl.firstChild) {
-                    alertEl.innerHTML = '<div class="widget-anecdote warn">This preset is a pair of air handlers I&#39;m still babysitting. Two big VAV units whose plant was improvised before my time — a retired chiller carved into two field-built DX circuits — serving a building of boxes with no bypass, no dump zone, no airflow interlock, and no low-pressure cutout anywhere: not a physical switch, not a line of logic, even though suction pressure was sitting right there on the controller. On mild days the zones satisfied, the boxes rode down, and the coil ran out of air to breathe. The mechanical crew found it iced solid; the controller&#39;s own trend showed suction diving every afternoon; the stages hunted and short-cycled, and the building had been losing compressors to it. The logic was in bad enough shape that I rewrote it — and until the sheet-metal fix arrives, the band-aid is mine: every box pinned to max flow (VAV in name, constant volume in software), stages held off return temperature, and the boilers running in July so the overcooled zones can reheat their way back. Horribly inefficient, and I know it. It also keeps compressors alive and people comfortable, which is the job until the real fix shows up.</div>';
+                    alertEl.innerHTML = '<div class="widget-anecdote warn">' +
+                        CFI18n.page('widget.anecdote') + '</div>';
                 }
             }
         }

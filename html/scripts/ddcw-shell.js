@@ -276,8 +276,11 @@ const DDCWShell = (function () {
     // strip and the graphic can't drift. p.conv distinguishes an
     // absolute temp from a delta; see the points schema in the unit
     // contract (header) for why `unit` can't.
-    function formatPointValue(p, raw) {
+    function formatPointValue(p, raw, message) {
         if (p.kind === 'bo' || p.kind === 'bi') {
+            if (typeof message === 'function') {
+                return message(raw === true ? 'shell.binaryOn' : 'shell.binaryOff');
+            }
             return raw === true ? 'ON' : 'OFF';
         }
         const n = Number(raw);
@@ -306,6 +309,18 @@ const DDCWShell = (function () {
     function createWorkbench(unit, opts) {
         const FBE       = window.FBE;
         const FBEEditor = window.FBEEditor;
+        // A unit may supply page-scoped messages without making the shared
+        // shell depend on a particular locale runtime. The fallback keeps
+        // older workbench pages and DOM-free harnesses source-compatible.
+        function text(key, values, fallback) {
+            if (typeof unit.message === 'function') return unit.message(key, values);
+            let copy = fallback;
+            if (!values || typeof values !== 'object') return copy;
+            return copy.replace(/\{([A-Za-z][\w-]*)\}/g, function (match, name) {
+                return Object.prototype.hasOwnProperty.call(values, name)
+                    ? String(values[name]) : match;
+            });
+        }
 
         // ── shell state (assigned in the init sequence at the bottom) ──
         let plant, graph;
@@ -357,6 +372,9 @@ const DDCWShell = (function () {
                 const g = JSON.parse(JSON.stringify(unit.programs[key]));
                 g.blocks.forEach(function (b) {
                     if (nameById[b.id]) b.name = nameById[b.id];
+                    else if (b.name && unit.blockLabels && unit.blockLabels[b.name]) {
+                        b.name = unit.blockLabels[b.name];
+                    }
                 });
                 programs[key] = g;
             });
@@ -463,7 +481,7 @@ const DDCWShell = (function () {
                 else raw = plant.actuators[p.plantKey];
                 let cls = '';
                 if (p.kind === 'bo' || p.kind === 'bi') cls = raw === true ? 'on' : 'off';
-                el.textContent = formatPointValue(p, raw);
+                el.textContent = formatPointValue(p, raw, unit.message);
                 el.className = 'ddcw-chip-val' + (cls ? ' ' + cls : '');
             });
         }
@@ -526,10 +544,9 @@ const DDCWShell = (function () {
             });
             const entries = families.map(function (fam) {
                 const many = fam.members.length > 1;
-                const all = many ? 'all ' : '';
                 const named = fam.members.map(function (m) {
-                    return m.point.name + ' ' + formatPointValue(m.point, m.value);
-                }).join(' · ');
+                    return m.point.name + ' ' + formatPointValue(m.point, m.value, unit.message);
+                }).join(text('shell.listSeparator', null, ' · '));
                 if (fam.slot === null) {
                     // Slot 16 can only be NULL when the block is gone: a
                     // present block always evaluates (unwired inputs read
@@ -539,20 +556,33 @@ const DDCWShell = (function () {
                     // is per point, and they are what a reader carries
                     // back to the wiresheet.
                     const ids = fam.members.map(function (m) { return m.point.id; });
-                    const blocks = many
-                        ? ids.slice(0, -1).join(', ') + ' or ' + ids[ids.length - 1] + ' blocks'
-                        : ids[0] + ' block';
-                    return named + ' — slot 16 is NULL (no ' + blocks
-                        + ' on the wiresheet) — ' + all + 'holding Relinquish_Default.';
+                    const blockIds = many
+                        ? ids.slice(0, -1).join(text('shell.idSeparator', null, ', '))
+                            + text('shell.idLastSeparator', null, ' or ') + ids[ids.length - 1]
+                        : ids[0];
+                    return text(many ? 'shell.releasedMany' : 'shell.releasedOne', {
+                        points: named,
+                        blockIds: blockIds,
+                    }, many
+                        ? '{points} — slot 16 is NULL (no {blockIds} blocks on the wiresheet) — all holding Relinquish_Default.'
+                        : '{points} — slot 16 is NULL (no {blockIds} block on the wiresheet) — holding Relinquish_Default.');
                 }
                 if (fam.slot === 8) {
-                    return named + ' — ' + all
-                        + 'commanded by slot 8 (Manual Operator) — write NULL to release.';
+                    return text(many ? 'shell.slot8Many' : 'shell.slot8One', {
+                        points: named,
+                    }, many
+                        ? '{points} — all commanded by slot 8 (Manual Operator) — write NULL to release.'
+                        : '{points} — commanded by slot 8 (Manual Operator) — write NULL to release.');
                 }
                 // Unreachable from the shell's own hooks (only 8 and 16
                 // are written), but the array underneath is a full
                 // sixteen slots — don't render a lie if that changes.
-                return named + ' — ' + all + 'commanded by slot ' + fam.slot + '.';
+                return text(many ? 'shell.otherSlotMany' : 'shell.otherSlotOne', {
+                    points: named,
+                    slot: fam.slot,
+                }, many
+                    ? '{points} — all commanded by slot {slot}.'
+                    : '{points} — commanded by slot {slot}.');
             });
             const sig = entries.join('\n');
             if (sig === offprogSig) return;
@@ -625,7 +655,7 @@ const DDCWShell = (function () {
             const custom = document.createElement('option');
             custom.value = 'custom';
             custom.disabled = true;
-            custom.textContent = 'Custom (edited)';
+            custom.textContent = text('shell.customProgram', null, 'Custom (edited)');
             sel.appendChild(custom);
         }
 
@@ -864,7 +894,8 @@ const DDCWShell = (function () {
                 window.setTimeout(function () {
                     const label = fresh ? fresh.textContent.trim() : '';
                     sr.textContent = msg.textContent.replace(/\s+/g, ' ').trim()
-                        + (label ? ' Use the ' + label + ' button to reset it.' : '');
+                        + (label ? ' ' + text('shell.resumedResetHint', { label: label },
+                            'Use the {label} button to reset it.') : '');
                 }, 0);
             }
         }

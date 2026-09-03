@@ -5,9 +5,14 @@ canonical: https://controlsfreak.dev/education/dedicated-outdoor-air.html
 nav: education
 category: forced-air
 keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep cooling coil reheat neutral supply dew point humidity control energy recovery enthalpy wheel ERV terminal unit fan coil chilled beam radiant ashrae 62.1 apparatus dew point
+pageMessages:
+  unitText:
+    leavingDewPoint:
+      us: in the mid-to-upper 40s °F
+      metric: near 7 to 9 °C
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block content %}
 <main id="main">
@@ -192,7 +197,7 @@ keywords: DOAS dedicated outdoor air ventilation latent sensible decouple deep c
                 cold-surface temperature the leaving air is pulled toward. A common target is a leaving-air dew point around
                 <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span>, and where a space needs tighter
                 humidity the coil is pushed further — toward a leaving dew point
-                <span data-us="in the mid-to-upper 40s&nbsp;°F" data-metric="near 7 to 9&nbsp;°C">in the mid-to-upper 40s&nbsp;°F</span>.
+                <span data-us="{{ pageMessages.unitText.leavingDewPoint.us }}" data-metric="{{ pageMessages.unitText.leavingDewPoint.metric }}">{{ pageMessages.unitText.leavingDewPoint.us }}</span>.
                 That is far colder than any space wants its supply air.
             </p>
 

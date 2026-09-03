@@ -1,0 +1,363 @@
+---
+title: 공기 밸런싱 — controlsfreak.dev
+description: 유량 링과 CFM = K√VP, VAV 최소·최대·재열 유량, 비례 밸런싱, 건물 압력까지 공기측을 설계 유량에 맞춰 커미셔닝하는 방법입니다.
+sourceContentHash: 76f94928008516a3f3776018093826b3df85d9106135471a7f1cd0934dcf6db2
+canonical: https://controlsfreak.dev/ko/education/air-balancing.html
+nav: education
+category: forced-air
+keywords: 공기 밸런싱 TAB 시험 조정 밸런싱 K 계수 유량 링 교차 유량 속도압 VAV 박스 최소 최대 재열 유량 압력 독립형 압력 종속형 바이패스 댐퍼 비례 밸런싱 인덱스 존 건물 가압 존 풍량 덕트 트래버스 최소 외기량 커미셔닝
+---
+{% extends "html/education/air-balancing.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">학습 · 공기 밸런싱</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">공기 밸런싱 <span class="tool-tag">공기 시스템</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                지금까지는 공기가 공기조화기에서 각 VAV 박스까지 이동하는 과정과 각 지점이 해야 할 일을
+                살펴봤습니다. 이 페이지에서는 실제로 그렇게 동작하는지 입증합니다. 처음부터 끝까지 하나의
+                질문을 다룹니다. <em>모든 존이 도면에 명시된 설계 풍량을 실제로 받도록 공기측을 어떻게
+                밸런싱하고 커미셔닝하며, 그렇지 않을 때는 어떻게 알아낼 수 있을까요?</em>
+            </p>
+
+            <div class="callout">
+                <p style="line-height:1.7;">
+                    공기 밸런싱은 시공된 시스템을 커미셔닝된 시스템으로 만드는 세 가지 작업 중 하나입니다.
+                    나머지 두 가지는 각각 별도 주제인 <a href="/ko/education/controls-commissioning.html">제어 기능
+                    시험</a>, 즉 각 시퀀스가 운전 시퀀스에 명시된 대로 동작하는지 입증하는 작업과 아래 내용의
+                    수배관측 쌍인 <a href="/ko/education/balancing.html">수배관 밸런싱</a>입니다. 이 페이지는 공기측에
+                    집중합니다. 수배관측은 <a href="/ko/education/balancing.html#cbv">각 부하의 밸브</a>로 유량을
+                    설정하고, 공기측은 <a href="/ko/education/vav-systems.html">각 존의 박스</a>로 풍량을 설정합니다.
+                    마지막 절에서 명확히 보듯 두 시스템의 불균형을 고르게 만드는 현장 방법은 같은 형태입니다.
+                </p>
+            </div>
+
+            <h2 class="subhead" id="the-flow-ring">박스가 계산하는 풍량</h2>
+
+            <p>
+                모든 공기 밸런싱의 출발점인 박스의 보고값부터 살펴봅니다. 압력 독립형
+                <a href="/ko/education/vav-systems.html#box-anatomy">VAV 박스</a>는 입구 단면에 여러 평균 측정구가
+                배치된 링 또는 십자형 구조인 <em>유량 링</em>으로 자체 풍량을 측정합니다. 한쪽 측정구는 기류를
+                마주 보고 다른 쪽은 반대 방향을 향합니다. 두 압력의 차이가 <em>속도압</em>이며 속도압은 공기
+                속도의 제곱에 비례하므로 풍량은 그 제곱근에 비례합니다.
+            </p>
+
+            <p style="text-align:center;font-family:var(--mono);font-size:1.05rem;color:var(--text-bright);margin:1.4rem 0;">
+                CFM = K × √VP<span style="color:var(--text-dim);font-size:0.85rem;">&nbsp;&nbsp;(Q = K√ΔP로도 표기)</span>
+            </p>
+
+            <p>
+                <strong>K는 측정값의 특성을 모두 결정합니다.</strong> K는 박스 제조사가 특정 입구에 정한
+                계수이며, 속도압이 정확히 1.0&nbsp;in.&nbsp;w.c.일 때 유량 링이 읽는 CFM 값입니다.
+                √1.0&nbsp;=&nbsp;1이기 때문입니다. K&nbsp;=&nbsp;1000인 박스에서 0.36&nbsp;in.&nbsp;w.c.가 측정되면 박스는
+                <span data-us="600&nbsp;CFM" data-metric="1,020&nbsp;m³/h">600&nbsp;CFM</span>이 흐른다고 계산합니다
+                (1000&nbsp;×&nbsp;√0.36 = 1000&nbsp;×&nbsp;0.6). K는 박스 크기별 카탈로그에서 가져옵니다. K 계수와
+                속도압 기준 자체가 미국 단위계에 기반하므로 미터법 박스의 라벨에는 다른 숫자가 표시됩니다.
+                따라서 이 절에서는 <a href="/ko/tools/airflow.html">풍량 계산기</a>와 마찬가지로 VP와 K를 현장에서
+                사용하는 IP 단위 체계로 유지합니다. 밸런싱에서 중요한 점은 K가 자연법칙이 아니라는 것입니다.
+                명판의 추정치일 뿐이며 설치된 덕트의 접근 조건, 전이부, 실제 유량 링에 따라 달라집니다.
+                <strong>커미셔닝하지 않은 박스는 아무도 확인하지 않은 숫자를 기준으로 유량 루프를 완벽하게
+                제어합니다.</strong>
+            </p>
+
+            <p>
+                따라서 공기 밸런싱의 첫 단계는 그 숫자를 의심하고 독립된 측정값을 얻는 것입니다.
+                <a href="/ko/tools/duct-traverse.html">덕트 트래버스</a>는 중심점 한 곳만 측정하지 않고
+                log-Tchebycheff 지점에 따라 덕트 단면의 피토관 측정값을 격자로 취득해 평균합니다. 이것이 박스
+                유량 링의 추정값을 확인할 수 있는 실제 측정입니다. 두 값을 나란히 비교하세요. 트래버스 또는
+                디퓨저의 교정된 풍량 후드가 실제 풍량을
+                <span data-us="660&nbsp;CFM" data-metric="1,120&nbsp;m³/h">660&nbsp;CFM</span>으로 측정했는데 같은
+                속도압에서 컨트롤러 계산값이 <span data-us="600&nbsp;CFM" data-metric="1,020&nbsp;m³/h">600&nbsp;CFM</span>이면
+                박스가 약 10% 낮게 읽는 것입니다. K를 고칠 때까지 박스에 입력하는 모든 설정값도 10%씩
+                어긋납니다. 계산은 간단합니다. 실제 K는 660&nbsp;÷&nbsp;√0.36&nbsp;=&nbsp;1100이므로 계수를 1000에서
+                1100으로 조정합니다(<a href="/ko/tools/airflow.html">풍량 계산기</a>의 두 번째 모드가 이 값을
+                역산합니다). 그 뒤에야 입력한 설정값이 표시된 CFM을 실제로 뜻합니다. 독립 측정은 선택사항이
+                아닙니다. 밸런싱된 박스와 숫자만 확신하는 박스를 구분하는 근거입니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 244" role="img" aria-labelledby="ab-d1-title ab-d1-desc" font-family="var(--mono)">
+                <title id="ab-d1-title">독립 트래버스 측정으로 박스 풍량을 현장 검증</title>
+                <desc id="ab-d1-desc">두 개의 병렬 신호 흐름입니다. 위쪽에서는 유량 링의 속도압 신호가 박스
+                    컨트롤러로 전달되고 컨트롤러는 K와 속도압 제곱근의 곱으로 풍량을 계산해 600 CFM을
+                    보고합니다. 아래쪽에서는 log-Tchebycheff 지점으로 평균한 독립 덕트 트래버스가 660 CFM을
+                    측정합니다. 두 값은 10% 차이가 나며, 아래 결론은 컨트롤러의 값이 트래버스와 같아질 때까지
+                    박스 계수 K를 조정하라는 것입니다.</desc>
+
+                <rect x="20" y="40" width="150" height="50" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="95" y="62" font-size="12" fill="var(--text-bright)" text-anchor="middle">유량 링</text>
+                <text x="95" y="79" font-size="11" fill="var(--text-dim)" text-anchor="middle">입구 속도압(VP)</text>
+
+                <line x1="170" y1="65" x2="205" y2="65" stroke="var(--text)" stroke-width="1.5"/>
+                <polygon points="205,60 205,70 213,65" fill="var(--text)"/>
+
+                <rect x="214" y="40" width="160" height="50" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="294" y="62" font-size="12" fill="var(--text-bright)" text-anchor="middle">박스 컨트롤러</text>
+                <text x="294" y="79" font-size="12" fill="var(--text-dim)" text-anchor="middle">CFM = K √VP</text>
+
+                <line x1="374" y1="65" x2="409" y2="65" stroke="var(--text)" stroke-width="1.5"/>
+                <polygon points="409,60 409,70 417,65" fill="var(--text)"/>
+
+                <rect x="418" y="40" width="104" height="50" fill="var(--bg)" stroke="var(--teal)"/>
+                <text x="470" y="60" font-size="11" fill="var(--text-dim)" text-anchor="middle">박스 계산값</text>
+                <text x="470" y="79" font-size="13" fill="var(--text-bright)" text-anchor="middle">600 CFM</text>
+
+                <rect x="20" y="154" width="150" height="50" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="95" y="176" font-size="12" fill="var(--text-bright)" text-anchor="middle">덕트 트래버스</text>
+                <text x="95" y="193" font-size="11" fill="var(--text-dim)" text-anchor="middle">log-Tcheb 평균</text>
+
+                <line x1="170" y1="179" x2="409" y2="179" stroke="var(--text)" stroke-width="1.5"/>
+                <polygon points="409,174 409,184 417,179" fill="var(--text)"/>
+
+                <rect x="418" y="154" width="104" height="50" fill="var(--bg)" stroke="var(--teal)"/>
+                <text x="470" y="174" font-size="11" fill="var(--text-dim)" text-anchor="middle">실제 측정값</text>
+                <text x="470" y="193" font-size="13" fill="var(--text-bright)" text-anchor="middle">660 CFM</text>
+
+                <line x1="470" y1="90" x2="470" y2="154" stroke="var(--heat)" stroke-width="1.5" stroke-dasharray="4 4"/>
+                <text x="462" y="126" font-size="12" fill="var(--heat)" text-anchor="end">10% 오차</text>
+
+                <text x="270" y="230" font-size="12" fill="var(--text)" text-anchor="middle">박스 값이 트래버스 값과 같아질 때까지 K 조정(×1.10)</text>
+            </svg>
+
+            <h2 class="subhead" id="setting-airflows">박스의 세 가지 풍량 설정값</h2>
+
+            <p>
+                K가 정확해지면 박스의 풍량값에 비로소 의미가 생기고, 밸런싱의 기준인 설정값을 입력할 수
+                있습니다. 세 가지 값이 핵심입니다. <strong>최대 풍량</strong>은 냉방 설계 풍량이며 존이 가장
+                더울 때 박스가 도달하려는 상한입니다. 기계 설비 일람표에서 존의 설계 냉방부하를 풍량으로
+                나타낸 값입니다. <strong>최소 풍량</strong>은 존이 만족되었을 때 유량 루프가 유지하는 하한입니다.
+                이 값을 쾌적성 기준으로 오해하기 쉽지만 실제로는 <em>환기 하한</em>입니다. 난방 가능한 박스에는
+                별도의 <strong>재열(난방) 최소 풍량</strong>이 있으며, 때로는 냉방 최소 풍량보다 높습니다.
+                재열 코일이 공기를 데우는 동안 박스가 유지할 풍량을 정합니다.
+            </p>
+
+            <p>
+                최소 풍량은 특히 중요합니다. 재실 중인 존에는 법규가 요구하는 외기량이 필요하고 이 외기는
+                급기와 함께 들어옵니다. 박스를 지나치게 닫으면 온도는 정상이어도 환기가 조용히 부족해질 수
+                있습니다. 하한은 임의로 고른 둥근 숫자가 아닙니다. <a href="/ko/tools/minimum-outdoor-air.html">ASHRAE
+                62.1 환기 계산</a>에서 인당·면적당 외기량을 합산하고 존 공기분배 유효도로 나눈 뒤 박스의 최소
+                CFM으로 환산한 결과입니다. 그보다 낮게 설정하면 냉방부하는 충족하지만 재실자에게 필요한
+                공기가 부족합니다. 불필요하게 높이면 존을 과냉한 뒤 <a href="/ko/education/vav-systems.html#minimums">다시
+                재열</a>하는 비용을 내며, 플랜트는 이미 냉각한 공기를 다시 가열하게 됩니다. 넉넉하게 잡는
+                대신 <em>정확히</em> 설정하는 것이 기술의 핵심입니다. 그래서 밸런싱 보고서에는 최소 풍량을
+                단순 쾌적성 수치가 아니라 환기 수치로 기록합니다.
+            </p>
+
+            <p>
+                박스 자체가 정확해도 생기는 함정이 있습니다. 박스는 <em>풍량</em>을 유지하지만 그 풍량에 포함된
+                외기 비율은 <em>공조기</em>에서 정합니다. VAV 시스템에서는 박스가 닫힐수록 급기팬 속도도 낮아지므로
+                외기댐퍼가 고정되어 있으면 저속에서 실제 외기량이 감소합니다. 설계일에 필요한 환기량을
+                공급하던 박스 최소 풍량도 공조기가 외기량을 측정하거나 제어하지 않으면 온화한 날에는 환기량이
+                부족할 수 있습니다. 박스 최소 풍량은 필요한 하한이지만 그것만으로 충분하지 않으며,
+                <a href="/ko/education/building-pressure.html#dampers-pressure">공조기도 맡은 역할</a>을 해야 합니다.
+            </p>
+
+            <h2 class="subhead" id="box-types">압력 독립형, 압력 종속형, 바이패스</h2>
+
+            <p>
+                모든 말단장치가 자체 풍량을 지키는 것은 아니며, 어떤 유형을 밸런싱하느냐에 따라 밸런싱의
+                의미가 달라집니다. 앞의 두 절에서 가정한 <strong>압력 독립형</strong> 박스는 유량 링을 읽고
+                댐퍼를 조절해 CFM 설정값을 유지합니다. 이웃 존이 조절되거나 팬 속도가 변해 주덕트 정압이
+                흔들려도 유량 루프가 그 영향을 흡수해 존에는 전달되지 않습니다. 박스 자체가 설정값을 계속
+                유지하므로 한 번 밸런싱하면 그 상태가 유지됩니다. 수배관측의
+                <a href="/ko/education/balancing.html#picv">PICV</a>와 같은 역할이며 이유도 같습니다. 위치가 아니라
+                유량을 계측합니다.
+            </p>
+
+            <p>
+                <strong>압력 종속형</strong> 박스에는 유량 링과 유량 루프가 없습니다. 댐퍼는 <em>개도</em> 명령만
+                받고 해당 개도에서 흐르는 공기량은 입구 정압에 전적으로 좌우됩니다. 다른 존이 열리거나 닫혀
+                주덕트 압력이 바뀌면 부하가 그대로인 이 존의 풍량도 함께 변합니다. 입력할 CFM 설정값 자체가
+                없습니다. 압력 종속형 시스템은 한 운전 조건에서 댐퍼 개도와 흔히 분기 수동 밸런싱 댐퍼를
+                설정하고, 그 조건 근처에서만 밸런스가 맞는다는 한계를 받아들여야 합니다. 수배관측의
+                <a href="/ko/education/balancing.html#cbv">눈금식 밸런싱 밸브</a>와 같은 취약점입니다. 그래서
+                압력 독립형 박스가 기본이 되었습니다. 건물 운전 상태가 달라져도 밸런스가 유지됩니다.
+            </p>
+
+            <p>
+                <strong>바이패스 시스템</strong>은 존이 아니라 공조기에서 불일치를 해결합니다. 바이패스 박스
+                또는 급기-회기 바이패스 댐퍼는 존이 닫힐 때 남는 급기를 회기측으로 직접 보내 팬에는 거의
+                일정한 풍량을, 존에는 변풍량을 제공합니다. 바이패스 댐퍼는
+                <a href="/ko/education/duct-static-control.html">덕트 정압</a>으로 제어됩니다. 존 댐퍼가 닫혀 정압이
+                상승하면 바이패스가 열려 남는 공기를 흘리고 주덕트 압력을 설정값으로 유지합니다. 저렴하고
+                소형 패키지 시스템에 흔하며 정풍량 공조기로 변풍량 건물을 운전할 수 있게 합니다. 그러나 팬은
+                하루 종일 설계 풍량을 이동시키고 일부는 원을 그리며 순환하므로 팬 에너지는 절감되지 않고,
+                차가운 급기가 회기 센서로 단락될 수도 있습니다. 바이패스 시스템은 댐퍼가 남는 풍량만 정확히
+                흘리도록 정압 설정값을 정한 뒤, 바이패스가 동작하는 동안에도 각 존이 설계 풍량에 도달하는지
+                입증해야 합니다. 정압과 무관하게 <em>풍량</em>을 유지하는 압력 독립형 박스와 정반대의 방식입니다.
+            </p>
+
+            <h2 class="subhead" id="building-pressure">건물을 약간 양압으로 설정</h2>
+
+            <p>
+                존별 풍량은 밸런싱의 절반일 뿐이며 건물 전체의 공기 수지도 맞아야 합니다. 공조기가 들여오는
+                외기 1 ft³는 어딘가로 나가야 하고, 릴리프 경로·전용 배기·누설로 빠져나간 뒤의 잔여량이 <em>곧</em>
+                건물 압력을 만듭니다. 목표는 중립이 아닙니다. 설계자는 건물을 외기보다
+                <strong>약간 양압</strong>인
+                <span data-us="+0.02 to +0.05&nbsp;in. w.c." data-metric="+5 to +12&nbsp;Pa">+0.02 to +0.05&nbsp;in. w.c.</span>
+                정도로 유지해 여과되지 않은 습한 외기가 틈으로 들어오는 대신 조화된 실내 공기가 밖으로
+                스며나가게 합니다. 잘못 설정하면 출입문이 알려 줍니다. 양압이 너무 높으면 외부 문이 도어
+                클로저를 이기고 열리며, 음압이면 문이 무거워지고 웨더스트립에서 휘파람 소리가 납니다.
+            </p>
+
+            <p>
+                밸런싱 담당자에게 이는 추종 관계로 나타납니다. <strong>급기, 회기, 배기, 릴리프 풍량의 합이
+                원하는 작은 양압 잉여량과 맞아야 합니다.</strong> 조립형 공조기에서는 보통 측정 풍량 오프셋을
+                두고 회기팬 또는 릴리프팬이 급기팬을 추종하게 합니다. 급기에서 회기를 뺀 값은 건물의 전용
+                배기가 공조기 영역에서 빼앗는 상시 배기량과 건물을 양압으로 유지할 잉여량의 합입니다. 이
+                오프셋은 임의 보정값이 아니라 공기 수지의 결과이며, 도면에만 있는 배기가 아니라 실제 설치된
+                배기를 기준으로 커미셔닝해야 합니다. 오프셋을 맞추는 지점에서 존 밸런싱과 건물 밸런싱이
+                만납니다. 외피 전체의 설명은 <a href="/ko/education/building-pressure.html">이 장의 별도 학습
+                자료</a>에 있으며, 하나의 댐퍼 위치가 아니라 전 운전 범위에서 압력이 목표를 유지해야 밸런싱이
+                끝납니다.
+            </p>
+
+            <div class="callout" style="margin-top:1.5rem;">
+                <p>
+                    <strong>실제 경험입니다.</strong> 경력 초기에 혼자 현장 프로그램을 맡았을 때 바로 이 부분을
+                    잘못 구현했습니다. 배기 박스는 급기 풍량이 변할 때 건물 압력을 유지하도록 급기를 체적유량
+                    기준으로 <em>추종</em>해야 했습니다. 그러나 저는 시퀀스를 정풍량 배기로 잘못 읽고 고정 CFM
+                    설정값을 유지하도록 프로그램했습니다. 그 결과 간헐적으로 발생해 원인을 찾기도, 설명하기도
+                    매우 어려운 압력 문제가 이어졌습니다. 경험이 더 쌓인 뒤 다시 돌아와 시퀀스와 로직을
+                    반복해서 읽다가 놓쳤던 추종 조건을 발견했습니다. 교훈은 분명했습니다. 급기를 추종해야 하는
+                    배기는 <em>정풍량이 아니며</em>, 이를 잘못 구현하면 건물 압력 제어가 매우 답답한 간헐 고장으로
+                    무너집니다. 박스를 프로그램하거나 밸런싱하기 전에 추종형인지 고정형인지 반드시 확인하세요.
+                </p>
+            </div>
+
+            <h2 class="subhead" id="proportional">비례 밸런싱: 존 간 불균형 맞추기</h2>
+
+            <p>
+                이제 현장 방법을 살펴봅니다. 말단장치끼리 상호작용한다는 같은 문제를 해결하므로
+                <a href="/ko/education/balancing.html#cbv">수배관측에서 사용하는</a> 방법과 같습니다. 가까운
+                말단을 조이면 그 말단이 차지하던 압력이 먼 말단으로 이동해 측정값이 바뀝니다. 따라서 주덕트를
+                한 번 돌며 각 말단을 설계 풍량에 맞추고 끝낼 수 없습니다. 마지막 말단에 도착할 때쯤 처음
+                조정한 말단은 이미 달라져 있습니다.
+            </p>
+
+            <p>
+                해법은 <em>비례 밸런싱</em>입니다. 기준으로 <strong>인덱스 말단</strong>, 즉 압력이 낮아질 때
+                가장 먼저 풍량을 잃는 보통 가장 멀거나 저항이 큰 최악 조건의 존을 선택합니다. 각 말단의
+                절대 CFM을 좇는 대신 자체 설계 풍량에 대한 <em>비율</em>을 측정해 인덱스와 <em>같은 비율</em>로
+                맞춥니다. 모든 말단이 설계 풍량의 90%를 공급한다면 아직 전풍량은 아니어도 시스템은 서로
+                <em>비례</em>한 상태입니다. 이제 팬을 조정하거나 인덱스를 완전히 열어 전체를 함께 100%로 올리면
+                됩니다. 말단끼리 이미 올바른 <em>비율</em>이므로 공통 공급량을 높이면 모두 같은 비율로 올라갑니다.
+                첫 조정이 기준을 움직였으므로 다시 확인해야 하며 두세 번 반복하는 것이 보통이고 대형 시스템은
+                더 필요합니다. 소형 시스템도 반나절, 대형은 일주일이 걸릴 수 있는 실제 작업이지만 결과는
+                단순히 풍량이 가득한 건물이 아니라 모든 곳이 고르게 공급되는 건물입니다.
+            </p>
+
+            <p>
+                공기측에는 수배관측과 다른 두 가지 특징이 있습니다. 첫째, 압력 독립형 박스에서는 이 작업의
+                상당 부분을 <em>소프트웨어로</em> 합니다. K와 최소·최대 설정값을 조정해 각 박스가 유지하는 풍량을
+                설계 비율과 맞춘 뒤 박스가 스스로 유지하게 합니다. 그러나 인덱스 존 원리는 같습니다. 최악
+                조건의 존이 목표 풍량에 도달할 수 있음을 입증하면 나머지도 따라옵니다. 둘째, 전체 수지가
+                맞아야 합니다. 밸런싱된 박스 풍량의 합은 급기 주덕트의 독립 트래버스 및 공조기의 설계 외기
+                비율과 일치해야 합니다. 각 존의 표시값은 맞는데 주덕트 트래버스의 합이 맞지 않으면 박스 측정
+                오류, 덕트 누설 또는 일람표와 실제 설치의 불일치를 의미합니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 540 268" role="img" aria-labelledby="ab-d2-title ab-d2-desc" font-family="var(--mono)">
+                <title id="ab-d2-title">인덱스 존을 기준으로 한 비례 공기 밸런싱</title>
+                <desc id="ab-d2-desc">왼쪽의 급기팬이 한 개의 주덕트를 통해 네 개의 말단과 네 개의 존에
+                    공기를 공급합니다. 각 말단에는 설계 풍량 대비 비율이 표시되고 네 개 모두 100%이므로 서로
+                    비례합니다. 가장 먼 말단은 최악 조건인 인덱스 존으로 표시됩니다. 모든 말단을 인덱스와 같은
+                    설계 비율로 맞추고, 공통 공급량을 올려 전체를 100%로 만든 뒤 반복하라는 방법이 설명됩니다.</desc>
+
+                <rect x="16" y="70" width="86" height="54" fill="var(--surface)" stroke="var(--border)"/>
+                <text x="59" y="94" font-size="12" fill="var(--text-bright)" text-anchor="middle">급기</text>
+                <text x="59" y="110" font-size="12" fill="var(--text-dim)" text-anchor="middle">팬</text>
+
+                <path id="ab-d2-trunk" data-flow="air" data-flow-static="true" d="M102 97 H505" fill="none" stroke="var(--blue)" stroke-width="4"/>
+                <polygon points="497,92 497,102 507,97" fill="var(--blue)"/>
+
+                <path id="ab-d2-dr1" data-flow="air" data-flow-static="true" data-flow-density="0.4" d="M170 97 V138" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="150" y="138" width="40" height="18" fill="var(--surface)" stroke="var(--text)"/>
+                <rect x="146" y="176" width="48" height="26" fill="none" stroke="var(--border)"/>
+                <text x="170" y="193" font-size="10" fill="var(--text-dim)" text-anchor="middle">존</text>
+                <text x="170" y="222" font-size="12" fill="var(--text-bright)" text-anchor="middle">100 %</text>
+
+                <path id="ab-d2-dr2" data-flow="air" data-flow-static="true" data-flow-density="0.4" d="M270 97 V138" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="250" y="138" width="40" height="18" fill="var(--surface)" stroke="var(--text)"/>
+                <rect x="246" y="176" width="48" height="26" fill="none" stroke="var(--border)"/>
+                <text x="270" y="193" font-size="10" fill="var(--text-dim)" text-anchor="middle">존</text>
+                <text x="270" y="222" font-size="12" fill="var(--text-bright)" text-anchor="middle">100 %</text>
+
+                <path id="ab-d2-dr3" data-flow="air" data-flow-static="true" data-flow-density="0.4" d="M370 97 V138" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="350" y="138" width="40" height="18" fill="var(--surface)" stroke="var(--text)"/>
+                <rect x="346" y="176" width="48" height="26" fill="none" stroke="var(--border)"/>
+                <text x="370" y="193" font-size="10" fill="var(--text-dim)" text-anchor="middle">존</text>
+                <text x="370" y="222" font-size="12" fill="var(--text-bright)" text-anchor="middle">100 %</text>
+
+                <path id="ab-d2-dr4" data-flow="air" data-flow-static="true" data-flow-density="0.4" d="M460 97 V138" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <rect x="440" y="138" width="40" height="18" fill="var(--surface)" stroke="var(--teal)" stroke-width="2"/>
+                <rect x="436" y="176" width="48" height="26" fill="none" stroke="var(--teal)" stroke-width="1.5"/>
+                <text x="460" y="193" font-size="10" fill="var(--text-dim)" text-anchor="middle">존</text>
+                <text x="460" y="222" font-size="12" fill="var(--text-bright)" text-anchor="middle">100 %</text>
+                <text x="460" y="242" font-size="11" fill="var(--teal)" text-anchor="middle">인덱스</text>
+                <text x="460" y="256" font-size="10" fill="var(--text-dim)" text-anchor="middle">최악 조건</text>
+
+                <text x="20" y="40" font-size="11" fill="var(--text)">1 · 모든 말단을 인덱스의 설계 비율에 맞춤</text>
+                <text x="20" y="58" font-size="11" fill="var(--text-dim)">2 · 공통 공급량을 100%로 높임 · 3 · 반복</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw sa"></span>급기</span>
+            </div>
+
+            <h2 class="subhead" id="verification">설계값과 대조해 검증</h2>
+
+            <p>
+                밸런싱은 다이얼 위치의 집합이 아니라 <em>기록</em>입니다. 최종 산출물은 공기 밸런싱 보고서이며
+                다음 기술자, 커미셔닝 담당자, 소유자가 실제로 의존하는 자료입니다. 각 말단의 설계 풍량,
+                측정 풍량, 설계 대비 비율과 각 공조기의 총 급기·회기·외기·배기 풍량을 기록해 수지가 맞는지
+                눈으로 확인할 수 있게 합니다. 보고서에서 교차 검증도 이뤄집니다. 박스 풍량의 합을 급기
+                주덕트 <a href="/ko/tools/duct-traverse.html">트래버스</a>와 비교하고, 공급 풍량을 공조기 명판과
+                <a href="/ko/tools/equipment-airflow.html">냉동톤당 CFM 및 인당 CFM 건전성 점검</a>으로 비교하며,
+                외기량을 <a href="/ko/tools/minimum-outdoor-air.html">ASHRAE 62.1 최소값</a>과 비교합니다. 이 중
+                두 값이 맞지 않는 것은 단순 반올림 오차가 아니라 조사할 사항입니다.
+            </p>
+
+            <p>
+                기록이 있어야 밸런스도 오래 유지할 수 있습니다. 밸런싱 담당자가 떠난 뒤 필터 교체 중 K가
+                바뀌거나, 박스를 다시 튜닝하고 확인하지 않거나, 코일 교체로 공조기 팬 곡선이 변하면서 건물은
+                몇 달 만에 불균형해질 수 있습니다. 당시의 정상값을 알 수 없다면 변화를 입증할 수도 없습니다.
+                실제 수치가 적힌 밸런싱 보고서와 표시 CFM이 실제 풍량을 뜻하는 박스는 기준선을 제공합니다.
+                그러면 "먼 존에 공기가 부족하다"는 불만이 수수께끼가 아니라 측정 가능한 문제가 됩니다.
+                처음부터 정직하게 밸런싱하는 목적은 오늘 공기측이 맞는 데 그치지 않고, 내일도 맞는지 누구나
+                입증할 수 있게 하는 것입니다.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/forced-air/', label: '강제순환식 공조 참고 자료 허브'},
+        tools: [
+            {href: '/ko/tools/duct-traverse.html', label: '덕트 트래버스 계산기'},
+            {href: '/ko/tools/equipment-airflow.html', label: '장비 풍량 점검'},
+            {href: '/ko/tools/airflow.html', label: '풍량 계산기'},
+            {href: '/ko/tools/minimum-outdoor-air.html', label: '최소 외기량 계산기'}
+        ],
+        lessons: [
+            {href: '/ko/education/air-handlers.html', label: '공기조화기'},
+            {href: '/ko/education/vav-systems.html', label: 'VAV 시스템'},
+            {href: '/ko/education/duct-static-control.html', label: '덕트 정압 제어'},
+            {href: '/ko/education/building-pressure.html', label: '건물 압력'},
+            {href: '/ko/education/balancing.html', label: '수배관 밸런싱'},
+            {href: '/ko/education/controls-commissioning.html', label: '제어 커미셔닝'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 모든 학습 자료</a>
+
+</main>
+{% endblock %}

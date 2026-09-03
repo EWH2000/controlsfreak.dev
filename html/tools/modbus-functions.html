@@ -5,9 +5,16 @@ canonical: https://controlsfreak.dev/tools/modbus-functions.html
 nav: tools
 category: protocols
 keywords: function code exception CRC CRC-16 RTU checksum register coil holding input frame
+pageMessages:
+    crc:
+        minimum: "Add at least 3 bytes to check an existing CRC."
+        empty: "Paste an RTU frame as hex bytes — e.g. 01 03 00 00 00 0A."
+        odd: "Hex needs an even number of digits — each byte is two."
+        valid: "Valid frame — the last two bytes match the CRC of everything before them. ✓"
+        invalid: "The last two bytes are not the CRC of the bytes before them. If they are all data, append {lo} {hi} to complete the frame."
 ---
 {% extends "layouts/page.njk" %}
-{% from "related-links.njk" import relatedLinks %}
+{% from "related-links.njk" import relatedLinks with context %}
 
 {% block head %}
     <style>
@@ -317,10 +324,10 @@ keywords: function code exception CRC CRC-16 RTU checksum register coil holding 
                 [wordEl, appendEl, frameEl].forEach(el => { el.className = 'ps-value muted'; el.textContent = '—'; });
                 calloutEl.textContent = msg;
                 calloutEl.hidden = false;
-                setVerify('Add at least 3 bytes to check an existing CRC.', '');
+                setVerify(CFI18n.page('crc.minimum'), '');
             };
-            if (res.empty) { mute('Paste an RTU frame as hex bytes — e.g. 01 03 00 00 00 0A.'); return; }
-            if (res.odd)   { mute('Hex needs an even number of digits — each byte is two.'); return; }
+            if (res.empty) { mute(CFI18n.page('crc.empty')); return; }
+            if (res.odd)   { mute(CFI18n.page('crc.odd')); return; }
             calloutEl.hidden = true;
 
             const bytes = res.bytes;
@@ -342,12 +349,12 @@ keywords: function code exception CRC CRC-16 RTU checksum register coil holding 
                 const clo = c & 0xFF, chi = (c >>> 8) & 0xFF;
                 const givenLo = bytes[bytes.length - 2], givenHi = bytes[bytes.length - 1];
                 if (givenLo === clo && givenHi === chi) {
-                    setVerify('Valid frame — the last two bytes match the CRC of everything before them. ✓', 'ok');
+                    setVerify(CFI18n.page('crc.valid'), 'ok');
                 } else {
-                    setVerify('The last two bytes are not the CRC of the bytes before them. If they are all data, append ' + hex2(lo) + ' ' + hex2(hi) + ' to complete the frame.', '');
+                    setVerify(CFI18n.page('crc.invalid', { lo: hex2(lo), hi: hex2(hi) }), '');
                 }
             } else {
-                setVerify('Add at least 3 bytes to check an existing CRC.', '');
+                setVerify(CFI18n.page('crc.minimum'), '');
             }
         }
 

@@ -1,0 +1,672 @@
+---
+title: 부하 배관 — controlsfreak.dev
+description: 수배관 부하의 2방·3방 밸브가 변유량과 정유량 시스템을 만드는 방식, 바이패스와 차압 및 펌프 제어에 미치는 영향을 설명합니다.
+canonical: https://controlsfreak.dev/ko/education/load-piping.html
+nav: education
+category: hydronics
+pairedQuiz: https://controlsfreak.dev/ko/practice/load-piping.html
+keywords: 2방 3방 밸브 코일 바이패스 분배 혼합 티
+sourceContentHash: 5724d094a23194d21faded899194900a1333c48c601d62da2d33919dd2255682
+sourceMessageHash: f19f99399580f8aa2b742afeeb25f2636777f4ce4a421962392b17f7cc536505
+pageMessages:
+  widget:
+    pump:
+      speed: 펌프 속도
+      head: 펌프 양정
+    state:
+      deadhead: 체절
+      warn: 저유량
+      ok: 정상
+---
+{% extends "html/education/load-piping.html" %}
+{% from "related-links.njk" import relatedLinks with context %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">교육 · 부하 배관</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">부하 배관 <span class="tool-tag">수배관</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                <a href="/ko/education/hydronic-loops.html">루프가 어떻게 구성되는지</a> 이해했다면 이제 한 가지 세부 사항이 남습니다. 각 부하는 루프에 실제로 어떻게 <em>접속</em>할까요? 코일, 팬코일유닛, 복사 매니폴드 등 어떤 부하든 짧은 연결부 반대편에서 유량을 소비합니다. 이 연결 지점에서 내리는 한 가지 결정이 주변 시스템 전체를 좌우하며, 선택지는 두 가지입니다.
+            </p>
+
+            <!-- ───────────────── 1 · Two-Way Valve — Variable System Flow ───────────────── -->
+            <h2 class="subhead" id="two-way">2방 밸브 — 변유량 시스템</h2>
+
+            <p>
+                <em>2방</em> 밸브는 이름 그대로 입구와 출구, 두 포트를 가지며 부하로 가는 공급 배관에 설치됩니다. 제어기가 밸브 개도를 조절해 코일에 도달하는 유량을 바꿉니다. 요구가 높으면 밸브가 열리고 코일 유량과 전달 열량(또는 냉량)이 증가합니다. 요구가 낮으면 밸브가 닫혀 유량이 줄어듭니다. 여기서 중요한 점은 밸브가 조여질 때 그 유량이 <em>다른 곳으로 흐르지 않는다</em>는 것입니다. 유량 자체가 줄어들어 분기와 시스템 루프의 총유량이 함께 감소합니다.
+            </p>
+
+            <!-- Diagram 1: two-way valve at the load. Single coil tap; supply main top, return main bottom;
+                 the modulating valve sits in the supply leg. Conventions established here propagate to the
+                 two 3-way diagrams below: supply solid + --blue, return dashed + --blue-cool, named <g>
+                 groups + semantic ids, data-flow attributes pre-annotated so a future animation pass
+                 picks this up without a markup retrofit. Selector convention from CLAUDE.md: id-pattern
+                 selectors are attribute-only (no element qualifier) since pipes are a mix of <line>
+                 and <path>. -->
+            <svg class="edu-svg" viewBox="0 0 660 320" role="img" aria-labelledby="lp-2w-title lp-2w-desc"
+                 font-family="var(--mono)">
+                <title id="lp-2w-title">부하에 설치된 2방 밸브</title>
+                <desc id="lp-2w-desc">그림 위에는 공급 주관이, 아래에는 환수 주관이 짧게 이어집니다. 가운데 코일 하나가 수직 입상관으로 공급 주관에서 분기됩니다. 코일 위 공급 입상관에 2방 비례제어 밸브가 설치되고 코일 환수관은 아래 환수 주관으로 곧게 내려갑니다. 밸브가 닫히는 방향으로 조절되면 코일과 이 시스템 루프 분기의 유량이 감소하며, 우회하는 유량은 없습니다.</desc>
+
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes pipe geometry — the closing widget shows and
+                     hides branches by recoloring particles through
+                     FlowEngine.setPathColor, which never rebuilds a pool. A future
+                     geometry write must refresh in the same breath, or the page must opt
+                     out via the `flowGeometryLive` frontmatter (flowStaticGuard,
+                     .eleventy.js). -->
+                <!-- piping: supply (solid, --blue) -->
+                <path id="lp-2w-supply-main" data-flow="supply" data-flow-static="true" d="M40 70 H620" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-2w-coil-supply-top" data-flow="supply" data-flow-static="true" x1="330" y1="70" x2="330" y2="125" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-2w-coil-supply-bot" data-flow="supply" data-flow-static="true" x1="330" y1="155" x2="330" y2="170" stroke="var(--blue)" stroke-width="3"/>
+                <!-- piping: return (dashed, --blue-cool) -->
+                <line id="lp-2w-coil-out" data-flow="return" data-flow-static="true" x1="330" y1="235" x2="330" y2="270" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="lp-2w-return-main" data-flow="return" data-flow-static="true" d="M620 270 H40" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- flow arrows -->
+                <g id="lp-2w-flow-arrows">
+                    <polygon points="200,65 209,70 200,75" fill="var(--blue)"/>
+                    <polygon points="500,65 509,70 500,75" fill="var(--blue)"/>
+                    <polygon points="325,105 330,116 335,105" fill="var(--blue)"/>
+                    <polygon points="325,255 330,244 335,244" fill="var(--blue-cool)"/>
+                    <polygon points="200,275 191,270 200,265" fill="var(--blue-cool)"/>
+                    <polygon points="500,275 491,270 500,265" fill="var(--blue-cool)"/>
+                </g>
+
+                <!-- equipment -->
+                <g id="lp-2w-valve">
+                    <!-- bowtie symbol: two triangles meeting apex-to-apex along the pipe axis -->
+                    <polygon points="315,125 345,125 330,140" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="315,155 345,155 330,140" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="365" y="143" font-size="11" font-weight="600" fill="var(--text-bright)">2방 밸브</text>
+                </g>
+                <g id="lp-2w-coil">
+                    <rect x="285" y="170" width="90" height="65" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="330" y="207" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">코일</text>
+                </g>
+
+                <!-- labels. Single-line annotation at top-right rather than a top/bottom split:
+                     reader doesn't have to eye-jump between corners to assemble the sentence. -->
+                <text x="80" y="60" class="edu-caption">공급 주관 →</text>
+                <text x="80" y="290" class="edu-caption">← 환수 주관</text>
+                <text x="615" y="58" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim)">밸브에 따라 시스템 유량 변동</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw supply"></span>공급수</span>
+                <span><span class="sw return"></span>환수</span>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                이것이 핵심이며 현대 시스템에서 2방 밸브가 기본인 이유입니다. 모든 부하가 2방 방식이면 코일 밸브가 조여질 때마다 시스템 총유량 요구가 감소합니다. 펌프는 온종일 같은 유량을 밀 필요 없이 건물 부하와 함께 감속할 수 있습니다. 이 배관에 <a href="/ko/education/vfds.html">가변속 펌프</a>를 조합하면 연중 대부분을 차지하는 부분 부하에서 동력을 크게 줄일 수 있습니다. 대신 시스템 압력 제어가 더 복잡해지며(VFD 교육에서 자세히 다룹니다), 보일러와 냉동기를 포함한 플랜트 전체가 변유량 배관을 허용해야 합니다.
+            </p>
+
+            <!-- ───────────────── 2 · Three-Way Valve — Constant System Flow ───────────────── -->
+            <h2 class="subhead" id="three-way">3방 밸브 — 정유량 시스템</h2>
+
+            <p>
+                <em>3방</em> 밸브에는 예상대로 포트가 세 개 있습니다. 이 방식에는 공급 측 물을 <em>코일을 거치지 않고</em> 환수 측으로 보내는 짧은 배관 루프인 <em>바이패스</em>가 추가됩니다. 부하 요구가 줄면 밸브가 유량을 차단하지 않고 코일 주변으로 우회시킵니다. 물은 계속 흐르지만 코일을 통과하며 열을 얻거나 잃지 않습니다. 시스템 루프에서 보면 이 분기의 총유량은 일정하고 펌프가 보는 요구도 온종일 같습니다.
+            </p>
+
+            <p>
+                일반적인 구성은 두 가지이며 형태는 달라도 기능은 같습니다. <em>혼합형</em> 밸브는 코일 출구에 설치되어 코일 환수와 바이패스 유량을 혼합한 뒤 환수 측으로 보냅니다. <em>분배형</em> 밸브는 코일 입구에 설치되어 유입 공급수를 코일과 바이패스로 나눕니다. 어느 쪽이든 시스템 측 유량은 일정하고 코일 측 유량은 0에서 전유량 사이로 변합니다.
+            </p>
+
+            <!-- Diagram 2: three-way MIXING valve. Valve at coil outlet, bypass tapped off supply riser
+                 takes hot water around the coil and joins coil-out at the mixing valve. -->
+            <svg class="edu-svg" viewBox="0 0 660 360" role="img" aria-labelledby="lp-3wm-title lp-3wm-desc"
+                 font-family="var(--mono)">
+                <title id="lp-3wm-title">부하에 설치된 3방 혼합 밸브</title>
+                <desc id="lp-3wm-desc">공급 주관은 위쪽에, 환수 주관은 아래쪽에 있습니다. 왼쪽 코일이 공급 주관에서 분기되고, 바이패스 분기는 공급 주관에서 아래 3방 혼합 밸브로 이어집니다. 코일 출구도 이 밸브로 연결됩니다. 혼합 밸브는 코일 환수와 바이패스 공급수를 가변 비율로 혼합해 환수 주관으로 보냅니다. 밸브가 조절되면 코일 유량은 변하지만 환수 측 총유량은 일정합니다.</desc>
+
+                <!-- piping: supply (solid, --blue) -->
+                <path id="lp-3wm-supply-main" data-flow="supply" data-flow-static="true" d="M40 70 H620" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-3wm-coil-supply" data-flow="supply" data-flow-static="true" x1="250" y1="70" x2="250" y2="140" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-3wm-bypass-down" data-flow="supply" data-flow-static="true" x1="410" y1="70" x2="410" y2="290" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-3wm-bypass-cross" data-flow="supply" data-flow-static="true" x1="410" y1="290" x2="345" y2="290" stroke="var(--blue)" stroke-width="3"/>
+
+                <!-- piping: return (dashed, --blue-cool) -->
+                <line id="lp-3wm-coil-out-v" data-flow="return" data-flow-static="true" x1="250" y1="220" x2="250" y2="290" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-3wm-coil-out-h" data-flow="return" data-flow-static="true" x1="250" y1="290" x2="315" y2="290" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-3wm-valve-out" data-flow="return" data-flow-static="true" x1="330" y1="305" x2="330" y2="320" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="lp-3wm-return-main" data-flow="return" data-flow-static="true" d="M620 320 H40" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- flow arrows -->
+                <g id="lp-3wm-flow-arrows">
+                    <polygon points="150,65 159,70 150,75" fill="var(--blue)"/>
+                    <polygon points="500,65 509,70 500,75" fill="var(--blue)"/>
+                    <polygon points="245,110 250,121 255,110" fill="var(--blue)"/>
+                    <polygon points="405,180 410,191 415,180" fill="var(--blue)"/>
+                    <polygon points="380,285 371,290 380,295" fill="var(--blue)"/>
+                    <polygon points="245,255 250,244 255,244" fill="var(--blue-cool)"/>
+                    <polygon points="285,295 294,290 285,285" fill="var(--blue-cool)"/>
+                    <polygon points="325,315 330,304 335,304" fill="var(--blue-cool)"/>
+                    <polygon points="500,325 491,320 500,315" fill="var(--blue-cool)"/>
+                    <polygon points="150,325 141,320 150,315" fill="var(--blue-cool)"/>
+                </g>
+
+                <!-- equipment -->
+                <g id="lp-3wm-coil">
+                    <rect x="205" y="140" width="90" height="80" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="250" y="186" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">코일</text>
+                </g>
+                <g id="lp-3wm-valve">
+                    <!-- three triangles meeting at the central junction: ports from left (coil-out),
+                         right (bypass), and below (combined output to return). Apex of each triangle
+                         points toward the centre. -->
+                    <polygon points="315,280 315,300 330,290" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="345,280 345,300 330,290" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="320,305 340,305 330,290" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="330" y="272" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright)">3방 혼합</text>
+                </g>
+
+                <!-- labels. Single-line annotation at top-right, no top/bottom split. The valve's
+                     position relative to the coil (here: outlet) reads from the geometry, so the
+                     "(at coil outlet)" parenthetical that used to dangle below the valve is dropped. -->
+                <text x="80" y="60" class="edu-caption">공급 주관 →</text>
+                <text x="80" y="340" class="edu-caption">← 환수 주관</text>
+                <text x="425" y="160" font-size="11" fill="var(--text)">바이패스</text>
+                <text x="615" y="58" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim)">시스템 유량 일정</text>
+            </svg>
+
+            <p style="margin-top:0.5rem;">
+                분배형은 같은 루프에서 밸브 위치만 반대로 배치합니다. 공급수가 먼저 밸브에 들어가 코일 분기와 바이패스로 나뉘고, 두 경로는 환수 측의 단순 티에서 다시 합쳐집니다. 시스템 관점의 기능은 같지만 밸브 <em>영향도(authority, β)</em>, 즉 밸브가 실제로 제어하는 시스템 압력손실의 비율과 유동에 따른 밸브 본체 마모가 달라집니다. 두 방식 모두 흔하며 현장에서 어느 것을 보게 될지는 설계자의 선호, 제조사 카탈로그, 시공 당시 확보한 자재에 따라 달라집니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 660 360" role="img" aria-labelledby="lp-3wd-title lp-3wd-desc"
+                 font-family="var(--mono)">
+                <title id="lp-3wd-title">부하에 설치된 3방 분배 밸브</title>
+                <desc id="lp-3wd-desc">앞과 같은 공급·환수 주관이지만 이제 공급 주관 바로 아래, 공급 입상관 상단에 3방 분배 밸브가 있습니다. 밸브는 유입 공급수를 두 출구로 나눠 하나는 아래 코일로, 다른 하나는 평행 하향 배관의 바이패스로 보냅니다. 코일 출구와 바이패스는 환수 측 단순 티에서 합쳐져 환수 주관으로 이어집니다. 밸브가 조절되면 코일 유량은 변하지만 환수 측 총유량은 일정합니다.</desc>
+
+                <!-- piping: supply (solid, --blue) -->
+                <path id="lp-3wd-supply-main" data-flow="supply" data-flow-static="true" d="M40 70 H620" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-3wd-valve-in" data-flow="supply" data-flow-static="true" x1="250" y1="70" x2="250" y2="115" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-3wd-coil-supply" data-flow="supply" data-flow-static="true" x1="250" y1="145" x2="250" y2="170" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-3wd-bypass-cross" data-flow="supply" data-flow-static="true" x1="265" y1="130" x2="410" y2="130" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-3wd-bypass-down" data-flow="supply" data-flow-static="true" x1="410" y1="130" x2="410" y2="310" stroke="var(--blue)" stroke-width="3"/>
+
+                <!-- piping: return (dashed, --blue-cool). The horizontal at y=310 is split into two
+                     segments because TWO flows converge at the tee at (330, 310): coil-out arrives
+                     from the LEFT (dashed return, walking L→R) and bypass arrives from the RIGHT
+                     (solid supply, walking R→L). The engine can only walk a single path in one
+                     direction, so a single line here would animate both halves the wrong way for
+                     one of them; the colour split is also pedagogically right (bypass water is still
+                     hot supply until it mixes at the tee). -->
+                <line id="lp-3wd-coil-out-v" data-flow="return" data-flow-static="true" x1="250" y1="250" x2="250" y2="310" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-3wd-coil-to-tee" data-flow="return" data-flow-static="true" x1="250" y1="310" x2="330" y2="310" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="lp-3wd-bypass-to-tee" data-flow="supply" data-flow-static="true" x1="410" y1="310" x2="330" y2="310" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-3wd-tee-out" data-flow="return" data-flow-static="true" x1="330" y1="310" x2="330" y2="325" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="lp-3wd-return-main" data-flow="return" data-flow-static="true" d="M620 325 H40" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- flow arrows -->
+                <g id="lp-3wd-flow-arrows">
+                    <polygon points="150,65 159,70 150,75" fill="var(--blue)"/>
+                    <polygon points="500,65 509,70 500,75" fill="var(--blue)"/>
+                    <polygon points="245,100 250,89 255,89" fill="var(--blue)"/>
+                    <polygon points="245,160 250,171 255,160" fill="var(--blue)"/>
+                    <polygon points="340,125 349,130 340,135" fill="var(--blue)"/>
+                    <polygon points="405,220 410,231 415,220" fill="var(--blue)"/>
+                    <polygon points="245,295 250,284 255,284" fill="var(--blue-cool)"/>
+                    <polygon points="305,305 314,310 305,315" fill="var(--blue-cool)"/>
+                    <polygon points="375,315 366,310 375,305" fill="var(--blue)"/>
+                    <polygon points="325,320 330,309 335,309" fill="var(--blue-cool)"/>
+                    <polygon points="500,330 491,325 500,320" fill="var(--blue-cool)"/>
+                    <polygon points="150,330 141,325 150,320" fill="var(--blue-cool)"/>
+                </g>
+
+                <!-- equipment -->
+                <g id="lp-3wd-valve">
+                    <!-- three triangles meeting at the centre: ports from above (supply-in),
+                         below (coil), and right (bypass). Label anchored snug to the left edge
+                         of the valve body (x=235 anchor-end, valve left edge at x=240) so the
+                         text reads as belonging to the valve, not floating in space. -->
+                    <polygon points="240,120 260,120 250,130" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="240,140 260,140 250,130" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="265,120 265,140 250,130" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="235" y="134" text-anchor="end" font-size="11" font-weight="600" fill="var(--text-bright)">3방 분배</text>
+                </g>
+                <g id="lp-3wd-coil">
+                    <rect x="205" y="170" width="90" height="80" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="250" y="216" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">코일</text>
+                </g>
+
+                <!-- labels. Single-line annotation at top-right, no top/bottom split. The valve's
+                     position relative to the coil (here: inlet) reads from the geometry, so the
+                     "(at coil inlet)" parenthetical the label used to carry is dropped. -->
+                <text x="80" y="60" class="edu-caption">공급 주관 →</text>
+                <text x="80" y="345" class="edu-caption">← 환수 주관</text>
+                <text x="425" y="200" font-size="11" fill="var(--text)">바이패스</text>
+                <text x="615" y="58" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim)">시스템 유량 일정</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw supply"></span>공급수</span>
+                <span><span class="sw return"></span>환수 / 혼합수</span>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                2방 대신 3방을 선택하는 이유는 주로 기존 관행과 장비 조합입니다. 3방 밸브는 정속 펌프와 일정 유량이 필요한 보일러·냉동기에 자연스럽게 맞으므로 오래된 건물과 플랜트가 정유량을 요구하는 신축 시스템에서 사용합니다. 단점은 그림에 보이는 그대로입니다. 바이패스가 열적 필요 없이 건물 전체로 물을 순환시킵니다. 부분 부하에서도 시스템 펌프는 유량이 필요 없는 코일을 지나 물을 보내기 위해 전부하로 일합니다. 이런 불필요한 에너지 소비가 업계를 2방 밸브와 가변속 조합으로 이끈 이유입니다.
+            </p>
+
+            <p>
+                함께 알아둘 점이 있습니다. 정유량 구성에서도 각 부하가 <em>설계</em> 유량을 받도록 루프를 <em>밸런싱</em>하려면 분기마다 회로 설정 밸브, 자동 밸런싱 밸브 또는 <button type="button" data-gloss="picv">압력 독립형 제어 밸브</button>(PICV)를 사용해야 합니다. 세 장치의 차이와 적용 시점, 루프의 밸런스가 무너진 징후는 <a href="/ko/education/balancing.html">수배관 밸런싱</a>에서 설명합니다.
+            </p>
+
+            <!-- ───────────────── 3 · Tying it back to the twin-T ───────────────── -->
+            <h2 class="subhead" id="tie-back">근접 배치 티 시스템과 연결하기</h2>
+
+            <p>
+                <a href="/ko/education/hydronic-loops.html#d3">1차-2차 근접 배치 티</a>를 살펴봤다면 여기서 남은 부분이 연결됩니다. 그 그림은 시스템 루프의 부하 두 개를 공급수가 들어가고 환수가 나오는 단순한 상자로만 표시해 접속 방식은 보여 주지 않았습니다. 방금 설명한 것이 그 세부 방식이며, 이 선택의 영향은 루프 전체로 전달됩니다.
+            </p>
+
+            <p>
+                같은 <button type="button" data-gloss="primary-secondary">근접 배치 티</button> 시스템에서 각 부하 상자 내부를 펼친 그림입니다. <em>부하 A</em>는 2방 방식, <em>부하 B</em>는 3방 분배 방식입니다. 실제 시스템은 루프의 모든 부하에 한 방식을 선택하지만, 여기서는 한 화면에서 비교할 수 있도록 두 방식을 함께 그렸습니다.
+            </p>
+
+            <!-- Tie-back diagram: deliberately mirrors hydronic-loops d3's positioning so the visual
+                 mapping is unmistakable — boiler primary on the left, bridge in the middle, system
+                 loop on the right with two loads. The new content is what's INSIDE each load box:
+                 Load A gets the 2-way config from section 1, Load B gets the 3-way diverting config
+                 from section 2 (chosen over mixing for visual parity with the last 3-way diagram the
+                 reader saw). Annotations under each load spell out the system-flow consequence if all
+                 loads on the loop were of that type. Animation-ready markup conventions match the
+                 rest of the page (lp-tt- prefix). -->
+            <svg class="edu-svg" viewBox="0 0 800 380" role="img" aria-labelledby="lp-tt-title lp-tt-desc"
+                 font-family="var(--mono)">
+                <title id="lp-tt-title">각 부하 형식을 명시한 근접 배치 티 시스템 루프</title>
+                <desc id="lp-tt-desc">수배관 루프 교육의 근접 배치 티 구성을 시스템 측 부하 두 개의 내부가 보이도록 다시 그렸습니다. 왼쪽에는 자체 펌프가 있는 보일러 1차 루프, 가운데에는 주입 펌프가 있는 브리지, 오른쪽에는 시스템 펌프와 부하 두 개가 있는 시스템 루프가 있습니다. 부하 A는 공급관의 2방 비례제어 밸브를 사용하고, 부하 B는 공급 입구의 3방 분배 밸브와 코일 바이패스 분기를 사용합니다. 펌프 반대편 시스템 루프 끝의 공급-환수 교차부에는 최소유량 바이패스가 있어 2방 부하가 조여져도 시스템 펌프의 최소유량을 보장하고 변유량 측 체절을 방지합니다. 모든 부하가 A와 같으면 총유량이 요구에 따라 변하고, 모두 B와 같으면 총유량이 일정합니다.</desc>
+
+                <!-- ── PRIMARY loop piping (solid + --blue) ── -->
+                <path id="lp-tt-primary-loop" data-flow="supply" data-flow-static="true" d="M90 130 V60 H280 V270 H90 V200" fill="none" stroke="var(--blue)" stroke-width="3"/>
+
+                <!-- ── BRIDGE: upper = hot injection (solid --blue), lower = return to primary (dashed --blue-cool) ── -->
+                <line id="lp-tt-inject-pipe" data-flow="supply" data-flow-static="true" x1="280" y1="150" x2="440" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-tt-bridge-return" data-flow="return" data-flow-static="true" x1="440" y1="190" x2="280" y2="190" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- ── SYSTEM loop piping ── -->
+                <path id="lp-tt-system-supply" data-flow="supply" data-flow-static="true" d="M440 250 V90 H760" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <path id="lp-tt-system-return" data-flow="return" data-flow-static="true" d="M760 90 V250 H440" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- ── LOAD A (2-way) piping: supply riser split by valve, single return riser ── -->
+                <line id="lp-tt-load-a-supply-top" data-flow="supply" data-flow-static="true" x1="540" y1="90" x2="540" y2="110" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-tt-load-a-supply-bot" data-flow="supply" data-flow-static="true" x1="540" y1="140" x2="540" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-tt-load-a-return" data-flow="return" data-flow-static="true" x1="540" y1="205" x2="540" y2="250" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- ── LOAD B (3-way diverting) piping: supply tap → 3-way → coil; bypass right → down →
+                     joins coil-return at a tee at (680, 225). Bypass segments are SUPPLY colour (hot
+                     water hasn't lost heat); below the tee the combined line is RETURN colour. ── -->
+                <line id="lp-tt-load-b-supply-top" data-flow="supply" data-flow-static="true" x1="680" y1="90" x2="680" y2="110" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-tt-load-b-coil-supply" data-flow="supply" data-flow-static="true" x1="680" y1="135" x2="680" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-tt-load-b-bypass-h" data-flow="supply" data-flow-static="true" x1="695" y1="122" x2="720" y2="122" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-tt-load-b-bypass-v" data-flow="supply" data-flow-static="true" x1="720" y1="122" x2="720" y2="225" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-tt-load-b-bypass-cross" data-flow="supply" data-flow-static="true" x1="720" y1="225" x2="680" y2="225" stroke="var(--blue)" stroke-width="3"/>
+                <line id="lp-tt-load-b-coil-return" data-flow="return" data-flow-static="true" x1="680" y1="205" x2="680" y2="250" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- flow arrows -->
+                <g id="lp-tt-flow-arrows">
+                    <!-- primary loop -->
+                    <polygon points="85,100 90,89 95,100" fill="var(--blue)"/>
+                    <polygon points="200,55 209,60 200,65" fill="var(--blue)"/>
+                    <polygon points="275,200 280,211 285,200" fill="var(--blue)"/>
+                    <polygon points="200,265 191,270 200,275" fill="var(--blue)"/>
+                    <polygon points="85,240 90,229 95,240" fill="var(--blue)"/>
+                    <!-- bridge -->
+                    <polygon points="416,146 423,150 416,154" fill="var(--blue)"/>
+                    <polygon points="312,186 305,190 312,194" fill="var(--blue-cool)"/>
+                    <!-- system loop main path -->
+                    <polygon points="435,160 440,149 445,160" fill="var(--blue)"/>
+                    <polygon points="480,85 489,90 480,95" fill="var(--blue)"/>
+                    <polygon points="620,85 629,90 620,95" fill="var(--blue)"/>
+                    <polygon points="755,150 760,161 765,150" fill="var(--blue-cool)"/>
+                    <polygon points="620,255 611,250 620,245" fill="var(--blue-cool)"/>
+                    <polygon points="480,255 471,250 480,245" fill="var(--blue-cool)"/>
+                    <!-- load A risers -->
+                    <polygon points="535,98 540,109 545,98" fill="var(--blue)"/>
+                    <polygon points="535,238 540,227 545,227" fill="var(--blue-cool)"/>
+                    <!-- load B: supply tap, coil supply (post-valve), bypass right, bypass down,
+                         bypass cross (back to tee), coil return -->
+                    <polygon points="675,98 680,109 685,98" fill="var(--blue)"/>
+                    <polygon points="675,143 680,154 685,143" fill="var(--blue)"/>
+                    <polygon points="708,118 715,122 708,126" fill="var(--blue)"/>
+                    <polygon points="716,175 720,184 724,175" fill="var(--blue)"/>
+                    <polygon points="700,221 693,225 700,229" fill="var(--blue)"/>
+                    <polygon points="675,238 680,227 685,227" fill="var(--blue-cool)"/>
+                </g>
+
+                <!-- equipment -->
+                <g id="lp-tt-boiler">
+                    <rect x="40" y="130" width="80" height="70" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="80" y="169" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">보일러</text>
+                </g>
+                <g id="lp-tt-boiler-pump">
+                    <circle cx="185" cy="270" r="13" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="191,264 179,270 191,276" fill="var(--text-dim)"/>
+                    <text x="185" y="297" text-anchor="middle" font-size="10" fill="var(--text)">보일러 펌프</text>
+                </g>
+                <g id="lp-tt-injection-pump">
+                    <circle cx="360" cy="150" r="13" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="354,144 366,150 354,156" fill="var(--text-dim)"/>
+                    <text x="360" y="125" text-anchor="middle" font-size="10" fill="var(--text)">주입 펌프</text>
+                </g>
+                <g id="lp-tt-system-pump">
+                    <circle cx="440" cy="222" r="13" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="434,228 440,216 446,228" fill="var(--text-dim)"/>
+                    <text x="378" y="226" text-anchor="middle" font-size="10" fill="var(--text)">시스템 펌프</text>
+                </g>
+
+                <!-- Load A — 2-way valve + coil. Valve label sits to the LEFT of the valve
+                     (in the empty band between the system pump and the coil), so it doesn't
+                     collide with Load B's "3-WAY (diverting)" label in the gap between loads. -->
+                <g id="lp-tt-load-a-valve">
+                    <polygon points="530,110 550,110 540,125" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="530,140 550,140 540,125" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="525" y="129" text-anchor="end" font-size="9" font-weight="600" fill="var(--text-bright)">2방</text>
+                </g>
+                <g id="lp-tt-load-a-coil">
+                    <rect x="505" y="150" width="70" height="55" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="540" y="181" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">부하 A</text>
+                </g>
+
+                <!-- Load B — 3-way valve + bypass + coil. Subtitle "diverting" uses italic + dim
+                     styling to read as a subtitle to "3-WAY"; parens are redundant once the styling
+                     already signals it. -->
+                <g id="lp-tt-load-b-valve">
+                    <polygon points="670,110 690,110 680,125" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="670,135 690,135 680,125" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="695,117 695,133 680,125" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="615" y="123" text-anchor="end" font-size="9" font-weight="600" fill="var(--text-bright)">3방</text>
+                    <text x="615" y="135" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-dim)">분배형</text>
+                </g>
+                <g id="lp-tt-load-b-coil">
+                    <rect x="645" y="150" width="70" height="55" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="680" y="181" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">부하 B</text>
+                </g>
+
+                <!-- Minimum-flow bypass — sits at the far end of the system loop
+                     on the right-edge vertical (x=760), the spot opposite the system pump where
+                     pump head climbs highest. The right-edge vertical is already part of the
+                     system-return path (data-flow="return"), so the valve is just a discrete
+                     symbol on top of the pipe; no topology change needed. Bowtie symbol matches
+                     the other 2-port valves on the page. -->
+                <g id="lp-tt-minflow">
+                    <polygon points="750,100 770,100 760,115" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="750,130 770,130 760,115" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="795" y="80" text-anchor="end" font-size="11" font-weight="600" fill="var(--text-bright)">최소유량</text>
+                </g>
+
+                <!-- top context label -->
+                <text x="400" y="25" text-anchor="middle" font-size="11" font-style="italic" fill="var(--text-dim)">수배관 루프와 같은 근접 배치 티 · 밸브 형식이 보이도록 부하를 펼침</text>
+
+                <!-- Consequence callouts under each load. Line 1 deliberately short ("If all 2-way:")
+                     because at the loads' x-positions (540 and 680, 140 units apart) anything wider
+                     than ~70 viewBox units crashes into the neighbour. -->
+                <g id="lp-tt-load-a-callout">
+                    <text x="540" y="295" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright)">모두 2방이면:</text>
+                    <text x="540" y="312" text-anchor="middle" font-size="11" fill="var(--blue)">시스템 유량 변동</text>
+                    <text x="540" y="330" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">→ 시스템 펌프 가변속</text>
+                </g>
+                <g id="lp-tt-load-b-callout">
+                    <text x="680" y="295" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text-bright)">모두 3방이면:</text>
+                    <text x="680" y="312" text-anchor="middle" font-size="11" fill="var(--blue)">시스템 유량 일정</text>
+                    <text x="680" y="330" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">→ 정속 펌프 적용</text>
+                </g>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw supply"></span>공급수</span>
+                <span><span class="sw return"></span>환수</span>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                <button type="button" data-gloss="primary-secondary">근접 배치 티</button>의 부하가 <em>2방</em>(위 부하 A)이면 시스템 루프는 변유량입니다. 부하 개도가 낮아질수록 시스템 펌프도 감속해야 하며, 시스템 요구가 변할 때 공급 온도를 안정적으로 유지하려면 주입 펌프도 조절해야 할 수 있습니다.
+            </p>
+
+            <p>
+                변유량 배관에는 놓치기 쉬운 요소가 하나 있으며, 위 시스템 루프 끝에 <strong>최소유량</strong>으로 표시했습니다. 펌프 반대편의 <em>최소유량 바이패스</em>는 제어된 소량의 공급수를 부하를 거치지 않고 환수 주관으로 바로 단락시킵니다. 대부분의 2방 밸브가 닫히면 시스템 유량이 지나치게 낮아져 펌프가 자체 토출에 맞서 <button type="button" data-gloss="deadhead">체절운전</button>할 수 있습니다. 최저 속도 아래로는 감속할 수 없는 VFD 시스템 펌프에도 이 유량 하한이 필요합니다. 보장된 최소유량은 변유량 시스템에 필요한 펌프 보호입니다. (비슷한 위치의 <em>차압 바이패스 밸브</em>는 <a href="/ko/education/pump-control.html">펌프 제어 교육</a>에서 다룹니다. DPBV는 Δp 설정값에서 열리는 전형적인 정속 펌프 대책이고, VFD 압력 제어에서는 드라이브가 이미 루프 Δp를 제한하므로 변유량 장치는 최소유량을 유지하도록 선정합니다.) 3방 시스템은 부하별 바이패스가 이미 펌프 유량을 일정하게 유지하므로 둘 다 필요하지 않습니다.
+            </p>
+
+            <p>
+                <button type="button" data-gloss="primary-secondary">근접 배치 티</button>의 부하가 <em>3방</em>(위 부하 B)이면 시스템 루프는 정유량입니다. 정속 시스템 펌프가 온종일 운전하고 부하에 따라 조절되는 장치는 주입 펌프뿐입니다. 어느 쪽이든 보일러는 자체 1차 루프에 있고 <button type="button" data-gloss="primary-secondary">근접 배치된 티</button>가 계속 디커플링하므로 영향을 받지 않습니다. 하지만 <em>시스템</em> 루프의 특성은 달라지며 그 특성을 결정하는 것이 부하 배관입니다.
+            </p>
+
+            <p>
+                이것이 <button type="button" data-gloss="primary-secondary">근접 배치 티</button> 그림에서 다루지 않은 차이입니다. 시스템에 맞지 않는 부하 형식을 고르면 정속 시스템 펌프가 건물 전체의 조여지는 2방 밸브와 맞서거나, 가변속 펌프가 유량을 줄이지 않는 3방 밸브 사이에서 감속하려는 상황이 생깁니다. 입상 배관도에서 각 부하의 연결점은 작아 보이지만 루프 나머지 부분이 할 수 있는 일을 결정합니다.
+            </p>
+
+            <!-- ───────────────── 4 · See what the bypass does ───────────────── -->
+            <h2 class="subhead">바이패스의 역할 확인하기</h2>
+
+            <p style="margin-top:1.25rem;">
+                아래에는 세 가지 조작부가 있습니다. 2방 부하 세 개를 동시에 조절하는 <em>건물 요구</em> 슬라이더, VFD와 정속을 고르는 <em>펌프 형식</em> 토글, <em>최소유량 바이패스</em>입니다. 바이패스를 끈 채 요구를 낮추면 물이 흐를 곳이 없어 PUMP 상태가 <em>저유량</em>을 거쳐 <em>체절</em>로 바뀝니다. 바이패스를 켜면 유량 하한이 다시 생깁니다.
+            </p>
+
+            <!-- Capstone widget. Three knobs (demand, pump type, bypass) feed a
+                 simple flow model that lights the PUMP state pill OK / WARN /
+                 DEADHEAD via data-state on the container. Math is intentionally
+                 abstract — % only, no Hz / ft / H-Q curve (those belong to
+                 pump-control.html). Page-id prefix lp-w- (matches pc-w- /
+                 bal-w- / vfd-w-). -->
+            <div class="widget" id="lp-w" data-state="ok">
+
+                <!-- Real <button>s, not <a href="#">: these set the widget's
+                     load, mode and bypass, they don't navigate, and an anchor
+                     whose handler has to preventDefault its own href is a
+                     link-shaped control (#299). Same .widget-try look either
+                     way — the shared stylesheet carries the button twin. -->
+                <div class="widget-try">
+                    시험하기:
+                    <button type="button" id="lp-w-try-design">설계일</button> ·
+                    <button type="button" id="lp-w-try-night">조용한 야간</button>
+                </div>
+
+                <div class="lp-w-grid">
+
+                    <!-- LEFT: schematic. Three loads on a supply/return main with
+                         the system pump on the left and a MIN-FLOW bypass at the
+                         far right. Pipes carry data-flow="supply|return" so the
+                         shared flow-engine animates them. The bypass leg's
+                         particles toggle visibility via FlowEngine.setPathColor()
+                         from the IIFE below. -->
+                    <div class="lp-w-schematic-wrap">
+                        <svg class="lp-w-schematic" id="lp-w-svg" viewBox="0 0 580 260"
+                             role="img" aria-labelledby="lp-w-svg-title lp-w-svg-desc"
+                             font-family="var(--mono)">
+                            <title id="lp-w-svg-title">끝단 최소유량 바이패스가 있는 수배관 루프의 부하 세 개</title>
+                            <desc id="lp-w-svg-desc">단순화한 수배관 루프입니다. 왼쪽 아래 시스템 펌프가 물을 위쪽 공급 주관으로 밀어 올립니다. 세 부하 A, B, C가 나비넥타이 모양 2방 밸브를 통해 공급 주관에서 분기되고 코일을 지난 뒤 아래 환수 주관으로 돌아와 펌프로 향합니다. 펌프 반대편 오른쪽 끝에서는 나비넥타이 밸브 하나가 있는 최소유량 바이패스가 공급 주관과 환수 주관을 연결합니다. 바이패스 밸브가 열리고 건물 부하가 조여지면 제어된 소량의 물이 부하를 우회해 펌프 체절을 방지합니다.</desc>
+
+                            <!-- piping: supply main (solid, --blue) -->
+                            <path id="lp-w-svg-supply" data-flow="supply" data-flow-static="true" d="M40 50 H 540" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                            <!-- piping: return main (dashed, --blue-cool); drawn right-to-left so engine particles walk that direction -->
+                            <path id="lp-w-svg-return" data-flow="return" data-flow-static="true" d="M540 210 H 40" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                            <!-- pump-side vertical link (the pump body covers this; not animated) -->
+                            <line id="lp-w-svg-pump-leg" x1="40" y1="50" x2="40" y2="210" stroke="var(--blue)" stroke-width="3"/>
+
+                            <!-- Load A risers -->
+                            <line id="lp-w-svg-load-a-sup-top" data-flow="supply" data-flow-static="true" x1="170" y1="50"  x2="170" y2="110" stroke="var(--blue)" stroke-width="3"/>
+                            <line id="lp-w-svg-load-a-sup-bot" data-flow="supply" data-flow-static="true" x1="170" y1="130" x2="170" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                            <line id="lp-w-svg-load-a-ret"     data-flow="return" data-flow-static="true" x1="170" y1="190" x2="170" y2="210" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                            <!-- Load B risers -->
+                            <line id="lp-w-svg-load-b-sup-top" data-flow="supply" data-flow-static="true" x1="290" y1="50"  x2="290" y2="110" stroke="var(--blue)" stroke-width="3"/>
+                            <line id="lp-w-svg-load-b-sup-bot" data-flow="supply" data-flow-static="true" x1="290" y1="130" x2="290" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                            <line id="lp-w-svg-load-b-ret"     data-flow="return" data-flow-static="true" x1="290" y1="190" x2="290" y2="210" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                            <!-- Load C risers -->
+                            <line id="lp-w-svg-load-c-sup-top" data-flow="supply" data-flow-static="true" x1="410" y1="50"  x2="410" y2="110" stroke="var(--blue)" stroke-width="3"/>
+                            <line id="lp-w-svg-load-c-sup-bot" data-flow="supply" data-flow-static="true" x1="410" y1="130" x2="410" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                            <line id="lp-w-svg-load-c-ret"     data-flow="return" data-flow-static="true" x1="410" y1="190" x2="410" y2="210" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                            <!-- MIN-FLOW bypass leg (grouped; particles toggled via setPathColor from the IIFE) -->
+                            <g id="lp-w-bypass-leg">
+                                <line id="lp-w-svg-bypass-up"   data-flow="supply" data-flow-static="true" x1="520" y1="50"  x2="520" y2="110" stroke="var(--blue)" stroke-width="3"/>
+                                <line id="lp-w-svg-bypass-down" data-flow="supply" data-flow-static="true" x1="520" y1="130" x2="520" y2="210" stroke="var(--blue)" stroke-width="3"/>
+                            </g>
+
+                            <!-- Static directional arrows — read under reduced-motion too -->
+                            <g id="lp-w-svg-arrows-supply" fill="var(--blue)">
+                                <polygon points="100,45 109,50 100,55"/>
+                                <polygon points="225,45 234,50 225,55"/>
+                                <polygon points="345,45 354,50 345,55"/>
+                                <polygon points="470,45 479,50 470,55"/>
+                                <polygon points="165,90 170,101 175,90"/>
+                                <polygon points="285,90 290,101 295,90"/>
+                                <polygon points="405,90 410,101 415,90"/>
+                            </g>
+                            <g id="lp-w-svg-arrows-return" fill="var(--blue-cool)">
+                                <polygon points="470,215 461,210 470,205"/>
+                                <polygon points="345,215 336,210 345,205"/>
+                                <polygon points="225,215 216,210 225,205"/>
+                                <polygon points="100,215 91,210 100,205"/>
+                                <polygon points="165,200 170,189 175,189"/>
+                                <polygon points="285,200 290,189 295,189"/>
+                                <polygon points="405,200 410,189 415,189"/>
+                            </g>
+
+                            <!-- Two-way valves at each load -->
+                            <g id="lp-w-svg-load-a-valve">
+                                <polygon class="lp-w-svg-valve-bow" points="155,110 185,110 170,120"/>
+                                <polygon class="lp-w-svg-valve-bow" points="155,130 185,130 170,120"/>
+                            </g>
+                            <g id="lp-w-svg-load-b-valve">
+                                <polygon class="lp-w-svg-valve-bow" points="275,110 305,110 290,120"/>
+                                <polygon class="lp-w-svg-valve-bow" points="275,130 305,130 290,120"/>
+                            </g>
+                            <g id="lp-w-svg-load-c-valve">
+                                <polygon class="lp-w-svg-valve-bow" points="395,110 425,110 410,120"/>
+                                <polygon class="lp-w-svg-valve-bow" points="395,130 425,130 410,120"/>
+                            </g>
+
+                            <!-- Coils -->
+                            <g id="lp-w-svg-load-a-coil">
+                                <rect x="140" y="150" width="60" height="40" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                                <text x="170" y="176" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">A</text>
+                            </g>
+                            <g id="lp-w-svg-load-b-coil">
+                                <rect x="260" y="150" width="60" height="40" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                                <text x="290" y="176" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">B</text>
+                            </g>
+                            <g id="lp-w-svg-load-c-coil">
+                                <rect x="380" y="150" width="60" height="40" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                                <text x="410" y="176" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">C</text>
+                            </g>
+
+                            <!-- MIN-FLOW bypass valve (default .closed; .closed toggled by the IIFE) -->
+                            <g id="lp-w-svg-minflow-valve">
+                                <polygon id="lp-w-svg-minflow-bow-top" class="lp-w-svg-valve-bow closed" points="505,110 535,110 520,120"/>
+                                <polygon id="lp-w-svg-minflow-bow-bot" class="lp-w-svg-valve-bow closed" points="505,130 535,130 520,120"/>
+                                <text x="500" y="125" text-anchor="end" font-size="9" font-weight="600" fill="var(--text-bright)">최소유량</text>
+                            </g>
+
+                            <!-- System pump at bottom-left, sitting on the supply↔return vertical link -->
+                            <g id="lp-w-svg-pump">
+                                <circle cx="40" cy="130" r="14" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                                <polygon points="34,138 46,138 40,122" fill="var(--text-dim)"/>
+                                <text x="60" y="134" font-size="10" fill="var(--text)">시스템 펌프</text>
+                            </g>
+
+                            <!-- Context labels -->
+                            <text x="80" y="38" font-size="10" fill="var(--text-dim)">공급 주관 →</text>
+                            <text x="80" y="232" font-size="10" fill="var(--text-dim)">← 환수 주관</text>
+                        </svg>
+                    </div>
+
+                    <!-- RIGHT: controls + readouts -->
+                    <div class="lp-w-controls">
+
+                        <label class="widget-section-label" for="lp-w-demand-slider">건물 요구</label>
+                        <div class="widget-slider-head">
+                            <span></span>
+                            <span class="v"><span id="lp-w-demand-val">50</span>%</span>
+                        </div>
+                        <input class="widget-slider" type="range" id="lp-w-demand-slider"
+                               min="0" max="100" step="1" value="50"
+                               aria-label="건물 요구 백분율"/>
+
+                        <span class="widget-section-label" id="lp-w-pump-label">펌프 형식</span>
+                        <div class="lp-w-seg" role="group" aria-labelledby="lp-w-pump-label">
+                            <button type="button" id="lp-w-pump-vfd" class="on" data-pump="vfd" aria-pressed="true">VFD</button>
+                            <button type="button" id="lp-w-pump-cs"             data-pump="cs"  aria-pressed="false">CS</button>
+                        </div>
+
+                        <span class="widget-section-label" id="lp-w-bypass-label">최소유량 바이패스</span>
+                        <div class="lp-w-seg" role="group" aria-labelledby="lp-w-bypass-label">
+                            <button type="button" id="lp-w-bypass-off" class="on" data-bypass="off" aria-pressed="true">OFF</button>
+                            <button type="button" id="lp-w-bypass-on"             data-bypass="on"  aria-pressed="false">ON</button>
+                        </div>
+
+                        <div class="lp-w-readouts">
+                            <div class="lp-w-readout lp-w-state-pill" aria-live="polite">
+                                <span class="widget-readout-label">펌프</span>
+                                <span class="widget-readout-value" id="lp-w-state-text">정상</span>
+                            </div>
+                            <div class="lp-w-readout">
+                                <span class="widget-readout-label">시스템 유량</span>
+                                <span class="widget-readout-value"><span id="lp-w-sys-flow">30</span><span class="unit" data-us="GPM" data-metric="L/s">GPM</span></span>
+                            </div>
+                            <div class="lp-w-readout">
+                                <span class="widget-readout-label" id="lp-w-pump-readout-label">펌프 속도</span>
+                                <span class="widget-readout-value"><span id="lp-w-pump-value">50</span><span class="unit">%</span></span>
+                            </div>
+                            <div class="lp-w-readout">
+                                <span class="widget-readout-label">바이패스 유량</span>
+                                <span class="widget-readout-value"><span id="lp-w-bypass-flow">0</span><span class="unit" data-us="GPM" data-metric="L/s">GPM</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FULL-WIDTH bar (grid-column: 1 / -1). Dual-coded:
+                         in VFD mode it tracks pump speed (shrinks below 100%);
+                         in CS mode it tracks pump head (grows past 100% toward
+                         shutoff at 140%). The 100% design tick anchors both. -->
+                    <div class="lp-w-bar-wrap">
+                        <span class="widget-section-label" id="lp-w-bar-label">펌프 속도</span>
+                        <div class="lp-w-bar" aria-hidden="true">
+                            <span id="lp-w-bar-fill" style="width: 35.7%;"></span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="widget-anecdote-wrap">
+                    <p class="widget-anecdote warn" id="lp-w-anecdote" hidden>
+                        <strong>찾았습니다.</strong> 요구 0%, VFD 펌프, 바이패스 없음 — 루프에서 물이 흐를 곳이 없습니다. 드라이브는 약 25% 아래로 감속할 수 없고 부하 밸브는 완전히 닫혀 있으므로 펌프가 닫힌 루프에 맞서 <button type="button" data-gloss="deadhead">체절운전</button>하며 볼류트 안의 물이 가열됩니다. 최소유량 바이패스가 이를 막는 하한입니다. 변유량 시스템의 나머지 내용은 펌프 감속을 가능하게 하는 드라이브를 다루는 <a href="/ko/education/vfds.html">VFD</a>와, BMS가 감속 시점을 결정하는 시퀀스를 다루는 <a href="/ko/education/pump-control.html">펌프 제어</a>에서 이어집니다.
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/hydronics/', label: '수배관 참고 자료 허브'},
+        tools: [
+            {href: '/ko/tools/valve-cv.html', label: '밸브 Cv 선정'}
+        ],
+        simulators: [
+            {href: '/ko/simulators/hydronic-loop-builder.html', label: '수배관 루프 구성기'}
+        ],
+        lessons: [
+            {href: '/ko/education/hydronic-loops.html', label: '수배관 루프'},
+            {href: '/ko/education/pump-control.html', label: '펌프 제어'},
+            {href: '/ko/education/balancing.html', label: '수배관 밸런싱'},
+            {href: '/ko/education/air-handlers.html', label: '공기조화기'},
+            {href: '/ko/education/vav-systems.html', label: 'VAV 시스템'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/load-piping.html', label: '부하 배관'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 교육으로 돌아가기</a>
+
+</main>
+{% endblock %}

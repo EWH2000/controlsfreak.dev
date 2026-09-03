@@ -82,6 +82,20 @@
 const DDCWFcuUnit = (function () {
     'use strict';
 
+    // The browser page supplies its own locale catalog. Headless physics
+    // harnesses and older callers omit it and retain the original English
+    // fallbacks, so the DOM-free API remains usable without CFI18n.
+    let pageMessage = null;
+    function text(key, values, fallback) {
+        if (typeof pageMessage === 'function') return pageMessage(key, values);
+        let copy = fallback;
+        if (!values || typeof values !== 'object') return copy;
+        return copy.replace(/\{([A-Za-z][\w-]*)\}/g, function (match, name) {
+            return Object.prototype.hasOwnProperty.call(values, name)
+                ? String(values[name]) : match;
+        });
+    }
+
     // ═══════════════════════ PHYSICS — DOM-free ═══════════════════════
     // Nothing in this half reads `document` or `window`. Keep it that
     // way: the headless physics surface is the vm-spec seam.
@@ -689,6 +703,19 @@ const DDCWFcuUnit = (function () {
         // wiresheet, where the constant is unguarded. (Ships at 3.)
         { id: 'deadband',         kind: 'param', dir: 'param',    plantKey: 'deadband',         name: 'Deadband',  unit: '°F', conv: 'deltaTemp', min: 1, max: 5, step: 0.5 },
     ];
+    const POINT_MESSAGE_KEYS = {
+        'space-temp': 'points.spaceTemp',
+        rat: 'points.rat',
+        dat: 'points.dat',
+        'fan-status': 'points.fanStatus',
+        'fan-speed': 'points.fanSpeed',
+        'fan-enable': 'points.fanEnable',
+        y1: 'points.y1',
+        y2: 'points.y2',
+        'cooling-setpoint': 'points.coolingSetpoint',
+        deadband: 'points.deadband',
+    };
+    let activePoints = FCU_POINTS;
 
     // ═════════════════════ DOM — graphic + controls ═════════════════════
     // Everything below touches the page. No element handle is resolved
@@ -870,8 +897,8 @@ const DDCWFcuUnit = (function () {
     // Roster lookup by point id — the params' min/max/step and conv all
     // live on FCU_POINTS, the single source the chips already read.
     function rosterPoint(id) {
-        for (let i = 0; i < FCU_POINTS.length; i++) {
-            if (FCU_POINTS[i].id === id) return FCU_POINTS[i];
+        for (let i = 0; i < activePoints.length; i++) {
+            if (activePoints[i].id === id) return activePoints[i];
         }
         return null;
     }
@@ -1053,7 +1080,7 @@ const DDCWFcuUnit = (function () {
         const d = plant.derived;
         if (d.invalid) {
             setBoth(out.rat, '—'); setBoth(out.dat, '—'); setBoth(out.dt, '—');
-            setVerdict('', 'Enter a value.');
+            setVerdict('', text('unit.enterValue', null, 'Enter a value.'));
             return;
         }
         const s = plant.sensors;
@@ -1100,12 +1127,18 @@ const DDCWFcuUnit = (function () {
         // "100% · ON" while the blades stand still and the Fan Sts chip
         // reads OFF. That disagreement is the tell, not a bug: an output
         // shows what was asked for, and proof is the separate claim.
-        const fanTxt = d.fanCmd ? (d.fanPct + '% · ON') : 'OFF';
+        const fanTxt = d.fanCmd
+            ? text('unit.fanOn', { percent: d.fanPct }, '{percent}% · ON')
+            : text('shell.binaryOff', null, 'OFF');
         out.fanG.textContent = fanTxt;
         out.fanR.textContent = fanTxt;
 
-        const compTxt = d.stage === 0 ? 'OFF' : ('Stage ' + d.stage + ' · ON');
-        out.compG.textContent = d.stage === 0 ? 'OFF' : ('STG ' + d.stage + ' · ON');
+        const compTxt = d.stage === 0
+            ? text('shell.binaryOff', null, 'OFF')
+            : text('unit.compressorOn', { stage: d.stage }, 'Stage {stage} · ON');
+        out.compG.textContent = d.stage === 0
+            ? text('shell.binaryOff', null, 'OFF')
+            : text('unit.compressorOnShort', { stage: d.stage }, 'STG {stage} · ON');
         out.compR.textContent = compTxt;
 
         // Compressor LED: producing (green), off (dim), or energized but
@@ -1160,16 +1193,22 @@ const DDCWFcuUnit = (function () {
         if (!d.airflowOn && d.stage > 0) {
             cls = 'error';
             txt = d.fanCmd
-                ? 'Fan commanded on but no air moving — compressor on a dead coil'
-                : 'Fan off with compressor on — no airflow across an active coil';
+                ? text('unit.verdict.commandedNoAirDeadCoil', null,
+                    'Fan commanded on but no air moving — compressor on a dead coil')
+                : text('unit.verdict.fanOffActiveCoil', null,
+                    'Fan off with compressor on — no airflow across an active coil');
         } else if (!d.airflowOn && d.fanCmd) {
-            cls = 'error'; txt = 'Fan commanded on but no air moving — airflow proof is down';
+            cls = 'error'; txt = text('unit.verdict.commandedNoAirProofDown', null,
+                'Fan commanded on but no air moving — airflow proof is down');
         } else if (!d.airflowOn) {
-            cls = '';      txt = 'No cooling call — fan off (idle)';
+            cls = '';      txt = text('unit.verdict.idle', null,
+                'No cooling call — fan off (idle)');
         } else if (d.stage === 0 && d.lowLimitLatched) {
-            cls = 'warn';  txt = 'DAT low-limit annunciator latched — stages off, fan moving air';
+            cls = 'warn';  txt = text('unit.verdict.lowLimitLatched', null,
+                'DAT low-limit annunciator latched — stages off, fan moving air');
         } else if (d.stage === 0) {
-            cls = 'warn';  txt = 'Compressor off — fan only, no ΔT across the coil';
+            cls = 'warn';  txt = text('unit.verdict.fanOnly', null,
+                'Compressor off — fan only, no ΔT across the coil');
         } else if (d.fault === 'low-charge') {
             // Symptom first, charge as ONE candidate — never the finding.
             // `d.fault` is injected ground truth the graphic never draws,
@@ -1185,7 +1224,8 @@ const DDCWFcuUnit = (function () {
             // disposition 3 on 2026-08-01: keep a distinct string, soften
             // the claim. Moves with the page's blocked-condenser
             // `.ref-note`, which names this verdict.
-            cls = 'error'; txt = 'No ΔT across coil — air moving; low charge is one candidate, gauges settle it';
+            cls = 'error'; txt = text('unit.verdict.lowChargeCandidate', null,
+                'No ΔT across coil — air moving; low charge is one candidate, gauges settle it');
         } else if (d.fault === 'blocked-condenser') {
             // The one verdict that points OFF the drawing, and that is
             // the lesson: the indoor side reads perfect — fan commanded,
@@ -1198,7 +1238,8 @@ const DDCWFcuUnit = (function () {
             // separate it from a dead compressor or a plugged metering
             // device. Naming the side is what the screen supports;
             // naming the part is what the scenario button already said.
-            cls = 'error'; txt = 'No ΔT across coil — air moving; look condenser-side, off this graphic';
+            cls = 'error'; txt = text('unit.verdict.condenserSide', null,
+                'No ΔT across coil — air moving; look condenser-side, off this graphic');
         } else if (datDeltaT(d) > COOLING_DT_TRIP) {
             // Signed ΔT: cooling drives it negative, so "no meaningful
             // cooling delta" is anything ABOVE the trip line. Canonical
@@ -1206,11 +1247,14 @@ const DDCWFcuUnit = (function () {
             // `>` test rather than `!(… <= …)`: a non-finite delta must
             // keep falling THROUGH this branch exactly as it did, and
             // the negated form would catch it instead.
-            cls = 'error'; txt = 'No ΔT across coil — compressor not cooling';
+            cls = 'error'; txt = text('unit.verdict.compressorNotCooling', null,
+                'No ΔT across coil — compressor not cooling');
         } else if (d.coilLeaveT <= 42) {
-            cls = 'warn';  txt = 'Cooling — but ΔT is high / airflow low (coil-freeze watch)';
+            cls = 'warn';  txt = text('unit.verdict.freezeWatch', null,
+                'Cooling — but ΔT is high / airflow low (coil-freeze watch)');
         } else {
-            cls = 'ok';    txt = 'Cooling — clear ΔT across the coil';
+            cls = 'ok';    txt = text('unit.verdict.clearCooling', null,
+                'Cooling — clear ΔT across the coil');
         }
         setVerdict(cls, txt);
 
@@ -1223,7 +1267,10 @@ const DDCWFcuUnit = (function () {
         // The box's own °F/°C span is painted by paintSuffixSpans() up at
         // the rail — it is the same units-mode string as the two rail
         // suffixes and shares their one guard (#265).
-        zoneValLbl.textContent = 'zone ' + zoneN.toFixed(1) + ' ' + tSuffix();
+        zoneValLbl.textContent = text('unit.zoneReadout', {
+            value: zoneN.toFixed(1),
+            unit: tSuffix(),
+        }, 'zone {value} {unit}');
         // The VISIBLE line's write stays unconditional on both branches —
         // it is the 10 Hz drift readout and pacing it would freeze the
         // hazard. Only the sr mirror is paced, through setOvrState: see
@@ -1238,9 +1285,11 @@ const DDCWFcuUnit = (function () {
         } else {
             const sensedN = dispTempNum(d.sensedT);
             const suffix  = tSuffix();
-            const ovrLine = 'Program reads ' + sensedN.toFixed(1) + ' ' + suffix
-                + ' — zone is actually ' + zoneN.toFixed(1) + ' ' + suffix
-                + '. The controller is staging on the forced value.';
+            const ovrLine = text('unit.overrideState', {
+                sensed: sensedN.toFixed(1),
+                actual: zoneN.toFixed(1),
+                unit: suffix,
+            }, 'Program reads {sensed} {unit} — zone is actually {actual} {unit}. The controller is staging on the forced value.');
             ovrState.textContent = ovrLine;
             setOvrState(ovrLine, 'on|' + sensedN.toFixed(1) + '|' + suffix,
                 plant.zoneT - d.sensedT);
@@ -1301,7 +1350,8 @@ const DDCWFcuUnit = (function () {
         const forcing = plant.override['space-temp'].active;
         ovrToggle.classList.toggle('active', forcing);
         ovrToggle.setAttribute('aria-pressed', forcing ? 'true' : 'false');
-        ovrToggle.textContent = forcing ? 'Release' : 'Force sensor';
+        ovrToggle.textContent = text(forcing ? 'unit.releaseSensor' : 'unit.forceSensor', null,
+            forcing ? 'Release' : 'Force sensor');
         ovrInput.disabled = !forcing;
         ovrField.classList.toggle('is-forcing', forcing);
 
@@ -1334,8 +1384,8 @@ const DDCWFcuUnit = (function () {
                 if (writable) {
                     inp.removeAttribute('title');
                 } else {
-                    inp.title = 'The running sheet has no ' + pp.id
-                        + ' block, so there is nothing to write — the value shown is the last one read.';
+                    inp.title = text('unit.missingBlock', { blockId: pp.id },
+                        'The running sheet has no {blockId} block, so there is nothing to write — the value shown is the last one read.');
                 }
             }
         });
@@ -1666,8 +1716,10 @@ const DDCWFcuUnit = (function () {
                     // and the hint names the range so the reader knows
                     // what the field takes.
                     revert();
-                    railHint(pt.name + ' takes ' + railRangeText(pt)
-                        + ' — reverted to the live value.');
+                    railHint(text('unit.invalidParameter', {
+                        point: pt.name,
+                        range: railRangeText(pt),
+                    }, '{point} takes {range} — reverted to the live value.'));
                     return;
                 }
                 // Display-equality no-op: if the field reads exactly what
@@ -1696,8 +1748,10 @@ const DDCWFcuUnit = (function () {
                 // no-opping above; a clear here would wipe the
                 // announcement the keydown commit just made.
                 if (clamped) {
-                    railHint(pt.name + ' accepts ' + railRangeText(pt)
-                        + ' — held at the limit.');
+                    railHint(text('unit.clampedParameter', {
+                        point: pt.name,
+                        range: railRangeText(pt),
+                    }, '{point} accepts {range} — held at the limit.'));
                 }
             }
             inp.addEventListener('change', commit);
@@ -1929,9 +1983,17 @@ const DDCWFcuUnit = (function () {
 
     // ── the unit factory — the interface the shell calls through ──
     function create(cfg) {
-        return {
+        pageMessage = typeof cfg.message === 'function' ? cfg.message : null;
+        activePoints = pageMessage
+            ? FCU_POINTS.map(function (point) {
+                const localized = Object.assign({}, point);
+                localized.name = pageMessage(POINT_MESSAGE_KEYS[point.id]);
+                return localized;
+            })
+            : FCU_POINTS;
+        const unit = {
             id: 'fcu', prefix: 'fcu',
-            points: FCU_POINTS,
+            points: activePoints,
             programs: cfg.programs,
             programLabels: cfg.programLabels,
             defaultProgram: cfg.defaultProgram,
@@ -1947,6 +2009,9 @@ const DDCWFcuUnit = (function () {
             initAnim: fcuInitAnim,
             wireControls: fcuWireControls,
         };
+        if (pageMessage) unit.message = pageMessage;
+        if (cfg.blockLabels) unit.blockLabels = cfg.blockLabels;
+        return unit;
     }
 
     return {

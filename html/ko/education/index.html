@@ -1,0 +1,415 @@
+---
+title: 학습 — controlsfreak.dev
+description: HVAC 빌딩 자동제어 기술자를 위한 실무 해설입니다. 업계 입문자와 제어 개념을 빠르게 복습하려는 분을 위해 쉽게 구성했습니다.
+sourceContentHash: 14b1429533e9961fd5222dcdfb1ff5ba36f77a4ad31bd29ceacb680d8ac3c4ef
+canonical: https://controlsfreak.dev/ko/education/
+nav: education
+---
+{% extends "html/education/index.html" %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <h1 class="section-label">학습</h1>
+        <div class="section-line"></div>
+    </div>
+
+    <p class="landing-intro">
+        업계에 처음 들어온 기술자를 위한 실무 학습 자료입니다. 제가 처음 일을 시작했을 때 어려움을 겪었던 내용을 바탕으로 만들었습니다. 시스템이 실제로 작동하는 방식, 그렇게 배관하거나 배선하는 이유, 장비 내부에서 일어나는 일을 설명합니다. 계산기는 <a href="/ko/tools/">도구</a>에 있습니다. 요청이나 정정할 내용이 있다면 언제든 <a href="/ko/contact.html">문의해 주세요</a>.
+    </p>
+
+    <p class="chip-row-preamble">익숙한 주제라면 바로 이동하세요:</p>
+
+    <div class="filter-chips" role="group" aria-label="범주별 학습 자료 필터">
+        <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
+            전체 <span class="filter-chip-count">40</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
+            기초 <span class="filter-chip-count">5</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="signals" aria-pressed="false">
+            신호 및 센싱 <span class="filter-chip-count">6</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="hydronics" aria-pressed="false">
+            수배관 <span class="filter-chip-count">5</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="refrigerant" aria-pressed="false">
+            냉매 <span class="filter-chip-count">3</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="forced-air" aria-pressed="false">
+            강제순환식 공조 시스템 <span class="filter-chip-count">8</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="programming" aria-pressed="false">
+            프로그래밍 <span class="filter-chip-count">6</span>
+        </button>
+        <button type="button" class="filter-chip" data-category="protocols" aria-pressed="false">
+            프로토콜 <span class="filter-chip-count">7</span>
+        </button>
+    </div>
+
+    <div class="card-grid">
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/pid-basics.html',
+            titleShort: 'PID 기초',
+            titleFull:  'PID 기초',
+            desc:       'HVAC 제어 루프에서 비례·적분·미분이 실제로 어떤 역할을 하는지 알아봅니다. 작은 시뮬레이터 세 개로 각 파라미터를 하나씩 조작할 수 있습니다.',
+            pills:      ['PID', 'P · I · D', '미니 시뮬레이터 3개'],
+            category:   'control'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/controller-wiring.html',
+            titleShort: '제어기 배선',
+            titleFull:  '제어기 배선',
+            desc:       '현장 포인트가 DDC 제어기에 연결되는 방법을 알아봅니다. 24 VAC 전원과 공통선, 입출력 유형, 자주 발생하는 배선 실수를 다룹니다. 제어기 배선 시뮬레이터와 함께 보세요.',
+            pills:      ['배선', '24 VAC + 공통선', 'UI / BI / AO / BO', '현장 주의사항'],
+            category:   'signals'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/analog-sensing.html',
+            titleShort: '아날로그 센싱',
+            titleFull:  '아날로그 센싱',
+            desc:       '원시 4–20 mA 또는 0–10 V 신호가 그래픽의 값으로 바뀌는 과정을 알아봅니다. 공표 범위가 의미하는 약속, 원격에서도 확인 가능한 라이브 제로 고장, 상한에 고정된 측정값을 다룹니다. 대화형 매핑 위젯이 포함되어 있습니다.',
+            pills:      ['신호', '범위 + 스케일링', '라이브 제로', '상한 고정 = 최대값'],
+            category:   'signals'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/temperature-sensors.html',
+            titleShort: '온도 센서',
+            titleFull:  '온도 센서',
+            desc:       '제어기가 배선에 연결된 센서 종류를 정확히 알아야 하는 이유를 설명합니다. 10K Type II와 Type III, 병렬 저항을 사용한 공급업체별 곡선, RTD에서 리드선 저항이 온도로 읽히는 현상, 계측기와 표를 이용한 검증 절차를 다룹니다.',
+            pills:      ['신호', '특성곡선 계열', 'RTD와 서미스터', '계측기 검증'],
+            category:   'signals'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/status-and-proof.html',
+            titleShort: '상태 및 운전 확인',
+            titleFull:  '상태 및 운전 확인 신호',
+            desc:       '팬 상태 포인트가 실제로 무엇을 입증하는지 알아봅니다. 보조접점, 전류 스위치, 차압 스위치, 운전 확인 대기시간과 기동 실패, 세 방식 중 두 가지를 속이는 벨트 파손을 다룹니다.',
+            pills:      ['신호', '보조접점 / 전류 / 차압', '운전 확인 대기시간', '기동 실패'],
+            category:   'signals'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/commanding-actuators.html',
+            titleShort: '액추에이터 명령',
+            titleFull:  '액추에이터 명령',
+            desc:       'AO가 50%를 지령했는데 댐퍼가 37.5%에 있는 이유를 알아봅니다. 지령 범위(0–10 / 2–10 V / 4–20 mA), 정동작·역동작, 스프링 리턴 고장 위치, 위치 피드백, 플로팅 액추에이터를 다룹니다.',
+            pills:      ['신호', '지령 범위', '고장 시 위치', '플로팅'],
+            category:   'signals'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/start-stop-commands.html',
+            titleShort: '기동/정지 명령',
+            titleFull:  '기동/정지 명령',
+            desc:       'BO가 ON을 지령한 뒤 모터가 기동하기까지의 경로를 알아봅니다. 인터포징 릴레이, 수동-정지-자동(HOA) 스위치, 하드와이어드 안전 회로를 다루고, 수동에서는 운전하지만 자동에서는 운전하지 않는 장비가 알려 주는 고장 위치를 설명합니다.',
+            pills:      ['신호', 'BO → 접촉기', 'HOA', '안전 회로'],
+            category:   'signals'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/controls-commissioning.html',
+            titleShort: '커미셔닝',
+            titleFull:  '제어 시스템 커미셔닝',
+            desc:       '제어기가 운전 시퀀스대로 동작하는지 검증합니다. 모든 AI·AO·BI·BO 포인트 투 포인트 점검, 재정의 관리, 인터록·리셋 시험, 시간에 따른 증거가 되는 트렌드 로그를 다룹니다.',
+            pills:      ['커미셔닝', '포인트 투 포인트 점검', 'AI · AO · BI · BO', '재정의'],
+            category:   'commissioning'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/hydronic-loops.html',
+            titleShort: '수배관 루프',
+            titleFull:  '수배관 루프',
+            desc:       '물이 건물 전체를 순환하는 방법을 알아봅니다. 2관식 직접환수와 역환수를 비교하고, 보일러의 근접 배치 티가 배관 실수가 아닌 이유를 설명합니다.',
+            pills:      ['수배관', '직접환수', '역환수', '1차 / 2차'],
+            category:   'hydronics'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/load-piping.html',
+            titleShort: '부하 배관',
+            titleFull:  '부하 배관',
+            desc:       '부하측 2방 밸브와 3방 밸브를 비교합니다. 가변·정유량 시스템에 각각 어떤 밸브가 적합한지와 이 선택이 나머지 루프 구성에 미치는 영향을 알아봅니다.',
+            pills:      ['수배관', '2방 밸브', '3방 밸브', '가변 / 정유량'],
+            category:   'hydronics'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/vfds.html',
+            titleShort: 'VFD',
+            titleFull:  'VFD',
+            desc:       '가변주파수 드라이브(VFD)의 역할, 세제곱 법칙에 따른 에너지 절감, 제어 기술자가 자주 접하는 운전 지령과 속도 지령 파라미터를 알아봅니다. 누구나 겪기 쉬운 설정 오류를 보여 주는 위젯도 포함되어 있습니다.',
+            pills:      ['드라이브', '세제곱 법칙', '운전 / 속도 소스', '위젯'],
+            category:   'drives'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/pump-control.html',
+            titleShort: '펌프 제어',
+            titleFull:  '펌프 제어',
+            desc:       'BMS가 수배관 펌프를 제어하는 방법을 알아봅니다. 펌프 곡선과 운전점, 원격 센서를 이용한 차압 제어, 차압 설정값 리셋을 다룹니다. VFD와 부하 배관 자료와 함께 보세요.',
+            pills:      ['수배관', '펌프 곡선', '차압 제어', '설정값 리셋'],
+            category:   'hydronics'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/equipment-staging.html',
+            titleShort: '장비 대수제어',
+            titleFull:  '장비 대수제어',
+            desc:       'BMS 대수제어 시퀀스가 병렬 펌프의 운전 대수, 증단·감단 시점, 선행 펌프를 결정하는 방법을 알아봅니다. 증단 지연과 선행·후행 교대를 다루는 위젯이 포함되어 있습니다.',
+            pills:      ['시퀀싱', '증단 / 감단', '선행 / 후행', '교대'],
+            category:   'sequencing'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/balancing.html',
+            titleShort: '밸런싱',
+            titleFull:  '수배관 밸런싱',
+            desc:       '모든 부하에 설계 유량을 공급하는 방법을 알아봅니다. 교정형 밸런싱 밸브, 자동 밸런싱 밸브, PICV를 비교하고 시스템 압력이 변할 때 각 방식이 어떻게 작동하는지 위젯으로 확인합니다.',
+            pills:      ['수배관', '수동 / 자동 / PICV', '설계 유량', '위젯'],
+            category:   'hydronics'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/coil-selection.html',
+            titleShort: '코일 선정',
+            titleFull:  '코일 선정',
+            desc:       '밸런싱의 목표인 설계 유량의 산정 근거를 알아봅니다. 부하에서 유량으로 이어지는 q = ṁ·cp·ΔT, 선택한 ΔT가 GPM을 결정하는 이유, 용량을 만족시키는 코일 변수(열 수, 핀, 면풍속, 어프로치)를 다룹니다.',
+            pills:      ['수배관', '부하 → 유량', '설계 ΔT', '열 수 · 면풍속'],
+            category:   'hydronics'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/refrigerant-cycle-basics.html',
+            titleShort: '냉매 사이클',
+            titleFull:  '냉매 사이클 기초',
+            desc:       '증기압축 시스템이 열을 이동시키는 원리를 알아봅니다. 네 가지 구성요소, 고압측과 저압측, 모든 냉매 센서 측정값의 바탕인 포화 압력-온도 관계를 다룹니다.',
+            pills:      ['HVAC', '구성요소 4개', '고압측 / 저압측', 'P-T'],
+            category:   'refrigerant'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/superheat-subcooling.html',
+            titleShort: '과열도 및 과냉도',
+            titleFull:  '과열도 및 과냉도',
+            desc:       '냉매 사이클의 정상 운전을 확인하는 두 측정값을 알아봅니다. 각 값이 무엇을 측정하고 어떤 센서로 계산되는지, 비정상 측정값이 무엇을 의미하는지 다룹니다.',
+            pills:      ['HVAC', '과열도', '과냉도', '고장 방향'],
+            category:   'refrigerant'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/metering-devices-txv-eev.html',
+            titleShort: 'TXV와 EEV',
+            titleFull:  'TXV와 EEV 비교',
+            desc:       '과열도를 목표값으로 유지하는 두 팽창장치를 알아봅니다. TXV의 기계식 힘 평형과 EEV의 제어기 기반 스테퍼 모터 루프를 비교합니다.',
+            pills:      ['HVAC', 'TXV', 'EEV', '힘 평형'],
+            category:   'refrigerant'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/psychrometrics-basics.html',
+            titleShort: '습공기 상태',
+            titleFull:  '습공기 상태 해석 기초',
+            desc:       '습공기선도의 일곱 가지 상태량, 각 값이 제어 엔지니어에게 알려 주는 정보, 자주 발생하는 실수를 알아봅니다. 노점을 주시해야 하는 이유를 보여 주는 수영장 위젯도 포함되어 있습니다.',
+            pills:      ['HVAC', '상태량 7개', '수영장 위젯', '노점'],
+            category:   'hvac'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/air-handlers.html',
+            titleShort: 'AHU',
+            titleFull:  '공기조화기',
+            desc:       '공기 한 덩어리를 따라 공기조화기를 통과합니다. 회기와 릴리프, 최소 외기량 조건의 혼합상자, 필터, 코일, 급기팬을 살펴보고 BMS 그래픽처럼 장비를 따라가는 센서 스트립 위젯을 사용합니다.',
+            pills:      ['공기 시스템', '혼합상자', '코일 · 팬', '센서 스트립'],
+            category:   'forced-air'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/economizers.html',
+            titleShort: '외기냉방',
+            titleFull:  '외기냉방',
+            desc:       '공기조화기가 코일 대신 외기를 이용해 냉방해야 하는 조건을 알아봅니다. 연동 댐퍼 조립체, 대화형 탐색 위젯을 이용한 건구온도·엔탈피 절환, 통합 냉방 대수제어, 현장 고장 유형을 다룹니다.',
+            pills:      ['공기 시스템', '외기냉방', '절환', '탐색 위젯'],
+            category:   'forced-air'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/building-pressure.html',
+            titleShort: '건물 압력',
+            titleFull:  '건물 압력',
+            desc:       '건물이 양압 또는 음압이 되는 이유를 알아봅니다. 공기 수지, 중력식 릴리프·동력 배기·회기팬 추종을 비교하고, 직접 건물 공기량을 맞추는 실시간 수지 위젯을 사용합니다.',
+            pills:      ['공기 시스템', '공기 수지', '동력 배기', '수지 위젯'],
+            category:   'forced-air'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/air-unit-identification.html',
+            titleShort: '공조 장비 식별',
+            titleFull:  '공조 장비 식별',
+            desc:       '익숙하지 않은 공기측 장비 앞에서 확인할 세 가지 현장 질문을 알아봅니다. RTU / AHU / MAU / 분리형 장비 구분, 명판과 장비일람표 읽기, 수수께끼를 푸는 장비 배열 탐색 위젯을 다룹니다.',
+            pills:      ['공기 시스템', 'RTU · AHU · MAU', '명판', '배열 탐색'],
+            category:   'forced-air'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/vav-systems.html',
+            titleShort: 'VAV 시스템',
+            titleFull:  'VAV 시스템',
+            desc:       '하나의 냉풍 주덕트와 여러 개의 유량 조절장치를 알아봅니다. 유량 링과 CFM = K·√VP, 압력 독립형 제어, 최소 풍량과 재열, DX 코일 풍량을 부족하게 만드는 위젯을 다룹니다.',
+            pills:      ['공기 시스템', '박스 · 재열', '유량 링', '박스 탐색'],
+            category:   'forced-air'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/duct-static-control.html',
+            titleShort: '덕트 정압',
+            titleFull:  '덕트 정압 제어',
+            desc:       '급기팬이 속도를 결정하는 방법을 알아봅니다. 주덕트 길이의 약 2/3 지점에 설치한 센서, 설정값 리셋, 안전장치, 정압이 정상이어도 풍량이 크게 줄어들 수 있는 이유를 다룹니다.',
+            pills:      ['공기 시스템', '팬 · VFD', '설정값 리셋', '루프 구동'],
+            category:   'forced-air'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/air-balancing.html',
+            titleShort: '공기 밸런싱',
+            titleFull:  '공기 밸런싱',
+            desc:       '공기측을 설계 풍량에 맞춰 커미셔닝합니다. 트래버스와 박스 CFM 비교, 박스 최소·최대 풍량과 재열 설정, 기준 존을 이용한 비례 밸런싱, 건물 압력을 다룹니다.',
+            pills:      ['공기 시스템', '유량 링 · K√VP', '최소 · 최대 · 재열', '비례 밸런싱'],
+            category:   'forced-air'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/dedicated-outdoor-air.html',
+            titleShort: 'DOAS',
+            titleFull:  '외기전담공조(DOAS)',
+            desc:       '100% 외기를 처리해 환기·잠열 부하를 현열 부하와 분리하는 장비를 알아봅니다. 저노점 냉각과 재열, 에너지 회수, 노점 제어, 실내 부하를 담당하는 말단장치를 다룹니다.',
+            pills:      ['공기 시스템', '잠열 / 현열', '저노점 냉각 · 재열', '노점 제어'],
+            category:   'forced-air'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/function-blocks.html',
+            titleShort: '기능 블록',
+            titleFull:  '기능 블록 기초',
+            desc:       '기능 블록과 와이어시트의 의미, 빌딩 제어 시퀀스를 상자와 배선으로 구성하는 이유, 시트의 실행 방식을 알아봅니다. 기능 블록 편집기와 함께 보세요.',
+            pills:      ['로직', '와이어시트', '실행 순서'],
+            category:   'programming'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/boolean-logic-latches.html',
+            titleShort: '불리언 로직',
+            titleFull:  '불리언 로직 및 래치',
+            desc:       'AND, OR, NOT으로 인터록·퍼미시브·안전 조건을 와이어시트 로직으로 만드는 방법을 알아봅니다. Set 우선형 SR 래치가 수동 리셋 전까지 트립을 유지하는 원리도 다룹니다.',
+            pills:      ['로직', '퍼미시브 체인', 'SR 래치'],
+            category:   'programming'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/comparators-and-deadband.html',
+            titleShort: '비교기',
+            titleFull:  '비교기 및 불감대',
+            desc:       '비교기가 숫자를 판단으로 바꾸는 방법, 단일 임계값에서 발생하는 채터링, 모든 불감대 블록 내부의 두 비교기 Set/Reset 구성을 알아봅니다.',
+            pills:      ['로직', '채터링', 'Set/Reset 대역'],
+            category:   'programming'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/timers-and-delays.html',
+            titleShort: '타이머 및 지연',
+            titleFull:  '타이머 및 지연',
+            desc:       'TON과 TOF의 실제 동작을 알아봅니다. 설정시간과 경과시간, 기동 실패 알람의 운전 확인 대기시간, 디바운스, 단주기 운전을 방지하는 최소 운전·정지 시간을 다룹니다.',
+            pills:      ['로직', 'TON / TOF', '운전 확인 대기시간', '최소 운전 / 정지'],
+            category:   'programming'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/setpoint-math-reset.html',
+            titleShort: '설정값 연산',
+            titleFull:  '설정값 연산 및 리셋 스케줄',
+            desc:       '와이어시트가 설정값을 계산하는 방법을 알아봅니다. 더하기·빼기 오프셋, 최소·최대 및 선택 블록, 네 개의 수학 블록으로 구성한 외기 리셋 스케줄(y = mx + b와 범위 제한)을 다룹니다.',
+            pills:      ['로직', '리셋 스케줄', 'y = mx + b', 'LIMIT'],
+            category:   'programming'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/reading-a-wiresheet.html',
+            titleShort: '와이어시트 읽기',
+            titleFull:  '와이어시트 읽기',
+            desc:       '직접 작성하지 않은 실시간 와이어시트를 진단하는 방법을 알아봅니다. 잘못된 출력에서 역방향으로 추적하고, 스캔 실행과 함께 값을 읽으며, 반복되는 블록 패턴을 인식해 효율적으로 추적합니다.',
+            pills:      ['로직', '역방향 추적', '실시간 값', '패턴'],
+            category:   'programming'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/modbus-basics.html',
+            titleShort: 'Modbus',
+            titleFull:  'Modbus 기초',
+            desc:       'Modbus의 개념, 실제 전송선의 요청 구조, 네 가지 데이터 테이블, 이를 읽고 쓰는 기능 코드, 예외 응답의 의미를 알아봅니다.',
+            pills:      ['Modbus', '데이터 테이블 4개', '기능 코드', '예외 응답'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/modbus-decoding.html',
+            titleShort: 'Modbus 디코딩',
+            titleFull:  'Modbus 디코딩',
+            desc:       '읽기 요청이 성공했는데도 Modbus 값이 잘못 표시되는 이유를 알아봅니다. 5자리 레지스터 표기의 함정, 부호 있음(signed)·부호 없음(unsigned), 네 가지 바이트 순서, 스케일링을 다룹니다.',
+            pills:      ['Modbus', '5자리 표기 함정', '부호 있음 / 부호 없음', '바이트 순서'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/bacnet-vs-modbus.html',
+            titleShort: 'BACnet과 Modbus',
+            titleFull:  'BACnet과 Modbus 비교',
+            desc:       '자기 기술형 객체와 원시 레지스터, 탐색, COV와 폴링, 우선순위와 최종 쓰기를 나란히 비교하고 게이트웨이가 두 프로토콜을 연결하는 지점을 알아봅니다.',
+            pills:      ['객체와 레지스터', '탐색', 'COV와 폴링', '게이트웨이'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/bacnet-basics.html',
+            titleShort: 'BACnet',
+            titleFull:  'BACnet 기초',
+            desc:       'BACnet의 자기 기술형 객체 모델, 속성을 읽고 쓰는 서비스, 우선순위 배열, Who-Is / I-Am 탐색이 실제 네트워크에서 어떻게 동작하는지 알아봅니다.',
+            pills:      ['BACnet', '객체 모델', '우선순위 배열', 'Who-Is / I-Am'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/bacnet-services.html',
+            titleShort: 'BACnet 서비스',
+            titleFull:  'BACnet 서비스',
+            desc:       'BACnet의 동작을 정의하는 확인 응답형(confirmed)·비확인 응답형(unconfirmed) 서비스와 서비스 계열을 알아보고, 장치가 실제로 지원하는 서비스를 나타내는 BIBB와 장치 프로파일을 살펴봅니다.',
+            pills:      ['BACnet', '서비스', 'BIBB', '장치 프로파일'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/bacnet-networking.html',
+            titleShort: 'BACnet 네트워킹',
+            titleFull:  'BACnet 네트워킹',
+            desc:       '주소 지정의 세 계층, BVLL/NPDU/APDU 프레임, BBMD와 외부 장치 등록(FDR), EBO의 16진수 블롭을 읽는 방법을 알아봅니다.',
+            pills:      ['BACnet', '주소 3계층', 'BVLL / NPDU / APDU', 'BBMD / FDR'],
+            category:   'protocols'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/ko/education/bacnet-mstp.html',
+            titleShort: 'BACnet MS/TP',
+            titleFull:  'BACnet MS/TP',
+            desc:       'MS/TP 트렁크에서 장치가 이탈하는 원인을 알아봅니다. 토큰 링과 Max_Master, MAC 주소와 장치 인스턴스의 차이, 종단·바이어스·극성, 증상별 계층 진단표를 다룹니다.',
+            pills:      ['BACnet', '토큰 링', 'Max_Master', '종단 저항'],
+            category:   'protocols'
+        }) }}
+    </div>
+
+</main>
+{% endblock %}

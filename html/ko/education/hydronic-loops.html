@@ -1,0 +1,416 @@
+---
+title: 수배관 루프 — controlsfreak.dev
+description: 2관 직접환수·역환수 배관과 근접 배치 티를 사용하는 1차·2차 보일러 인젝션 루프의 유량 경로와 제어 원리를 도식과 위젯으로 설명합니다.
+canonical: https://controlsfreak.dev/ko/education/hydronic-loops.html
+nav: education
+category: hydronics
+pairedQuiz: https://controlsfreak.dev/ko/practice/hydronic-loops.html
+keywords: 수배관 루프 2관식 직접환수 역환수 1차 2차 근접 배치 티 인젝션 펌프 유량 배관 보일러
+sourceContentHash: e033a3e6146bd163d5880032781dd14d5519b445c01d86a9ff8ab0ddaa6788b7
+sourceMessageHash: 1e4533fbf64a7a20a7e1fd4c772f51b2589975946c8cb9b75030e63ffec9d352
+pageMessages:
+  status:
+    highLimit: 보일러 과열 — 고온 제한 트립
+    belowMinimum: 펌프 최소 속도 미만
+    supplyHigh: 시스템 공급수 온도가 설정값 초과 — 부하 과열
+    belowDesign: 설계 유량 미만 — 1차측 온도가 고온 제한값으로 상승 중
+    normal: 정상 운전
+  alert:
+    pumpOff: >-
+      인젝션 펌프 사용 명령을 빠뜨린 적이 있습니까? 저도 그랬습니다. 다행히 당시 보일러에는 자체 저유량 보호 기능이 있었습니다. 오래된 보일러에는 이 기능이 없으며, 열은 너무 많은데 빠져나갈 곳이 없으면 어떤 일이 생기는지 엔지니어가 아니어도 알 수 있습니다.
+    belowMinimum: 대부분의 BMS 구성은 약 20 Hz 미만에서 펌프를 완전히 정지합니다.
+---
+{% extends "html/education/hydronic-loops.html" %}
+{% from "related-links.njk" import relatedLinks with context %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">교육 · 수배관 루프</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">수배관 루프 <span class="tool-tag">수배관 시스템</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                ‘수배관(hydronic)’ 시스템은 물로 건물 전체에 열에너지를 전달합니다. 여기서는 작성자가 냉동기보다 보일러에 더 익숙하므로 난방측을 중심으로 설명하지만, 대부분의 원리는 냉수에도 동일하게 적용됩니다. 장비 자체는 단순합니다. 보일러나 냉동기가 물에 열을 더하거나 빼고, 펌프가 물을 밀며, 코일은 필요한 열을 가져갑니다. 사람들이 어려워하는 부분은 루프를 어떻게 배치하고 왜 그렇게 하는지에 관한 <em>배관 토폴로지</em>입니다. 토폴로지를 이해하면 벽면을 가득 채운 펌프와 티가 복잡한 스파게티처럼 보이지 않고 서너 가지 구성의 반복으로 보입니다. 가장 자주 마주칠 세 가지를 살펴보겠습니다.
+            </p>
+
+            <!-- ───────────────── 1 · 2-Pipe Direct Return ───────────────── -->
+            <h2 class="subhead" id="d1">2관식 직접환수</h2>
+
+            <p>
+                가장 단순한 배치입니다. 열원인 보일러 또는 냉동기는 모든 부하를 지나가는 <em>공급 주관</em>으로 물을 보냅니다. 냉수도 도식은 같습니다. 각 부하는 공급수에서 분기해 일을 한 뒤 열원으로 곧바로 돌아가는 <em>환수 주관</em>에 물을 내보냅니다. ‘직접환수’라는 이름 그대로 각 부하의 환수는 ‘왔던 길로 바로 돌아갑니다.’
+            </p>
+
+            <p>
+                문제는 열원과 가장 가까운 부하의 전체 이동 거리가 짧다는 점입니다. 조금 나갔다가 조금만 돌아오면 됩니다. 가장 먼 부하의 물은 건물 전체를 가로질러 갔다가 같은 길이를 되돌아와야 합니다. 물은 전류처럼 저항이 가장 작은 경로를 따르므로 가까운 부하는 <em>유량이 너무 많고</em> 먼 부하는 <em>너무 적어집니다</em>. 그대로 두면 스스로 불균형해지는 배치입니다. 모든 부하에 <a href="/ko/education/balancing.html">밸런싱 밸브</a>가 필요하고 누군가 이를 설정해야 합니다. 배관 비용은 낮지만 커미셔닝이 까다롭습니다.
+            </p>
+
+            <!-- Diagram 1: 2-pipe direct return. Conventions set here propagate to the other two:
+                 equipment = labelled box; pump = circle with a flow-direction triangle; supply pipe =
+                 solid + --blue; return pipe = dashed + --blue-cool; flow arrows = small triangles in
+                 the pipe's colour. Named <g> groups + semantic ids so a future animated version (see
+                 site-ideas-and-friction.md) can drive elements individually. -->
+            <svg class="edu-svg" viewBox="0 0 700 360" role="img" aria-labelledby="d1-title d1-desc"
+                 font-family="var(--mono)">
+                <title id="d1-title">2관식 직접환수</title>
+                <desc id="d1-desc">펌프가 있는 보일러가 왼쪽에서 오른쪽으로 나란히 배치된 세 부하를 지나는 공급 주관에 물을 보냅니다. 각 부하의 물은 오른쪽에서 왼쪽으로 보일러에 곧바로 돌아가는 별도의 환수 주관으로 들어갑니다. 가까운 부하의 루프는 짧고 먼 부하의 물은 건물 전체 길이를 왕복하므로 밸런싱하지 않으면 유량이 가까운 부하로 자연스럽게 치우칩니다.</desc>
+
+                <!-- piping: supply (solid, --blue) — out the boiler top, along the supply main.
+                     data-flow="supply" hooks flow-engine.js; path/line drawing order matches flow direction. -->
+                <!-- data-flow-static="true" is an ASSERTION, not a hint (flow-engine.js
+                     header): the engine samples each path's geometry once instead of
+                     reading it per particle per frame, which holds only while every
+                     `d` / endpoint write is followed by FlowEngine.refreshPath().
+                     Nothing here writes pipe geometry — the pump blades spin via a CSS
+                     transform on <rect> elements, and the d3 widget's data-flow-density
+                     writes already refresh the paths they touch. A future geometry write
+                     must refresh in the same breath, or the page must opt out via the
+                     `flowGeometryLive` frontmatter (flowStaticGuard, .eleventy.js). -->
+                <path id="d1-supply-main" data-flow="supply" data-flow-static="true" d="M75 160 V85 H600" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d1-load1-supply" data-flow="supply" data-flow-static="true" x1="240" y1="85" x2="240" y2="160" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d1-load2-supply" data-flow="supply" data-flow-static="true" x1="420" y1="85" x2="420" y2="160" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d1-load3-supply" data-flow="supply" data-flow-static="true" x1="600" y1="85" x2="600" y2="160" stroke="var(--blue)" stroke-width="3"/>
+                <!-- piping: return (dashed, --blue-cool) — out the load bottoms, along the return main, back into the boiler bottom -->
+                <line id="d1-load1-return" data-flow="return" data-flow-static="true" x1="240" y1="215" x2="240" y2="300" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d1-load2-return" data-flow="return" data-flow-static="true" x1="420" y1="215" x2="420" y2="300" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d1-load3-return" data-flow="return" data-flow-static="true" x1="600" y1="215" x2="600" y2="300" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d1-return-main" data-flow="return" data-flow-static="true" d="M600 300 H75 V235" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- flow arrows -->
+                <g id="d1-flow-arrows">
+                    <polygon points="70,135 75,124 80,135" fill="var(--blue)"/>
+                    <polygon points="155,80 164,85 155,90" fill="var(--blue)"/>
+                    <polygon points="490,80 499,85 490,90" fill="var(--blue)"/>
+                    <polygon points="235,120 240,131 245,120" fill="var(--blue)"/>
+                    <polygon points="415,120 420,131 425,120" fill="var(--blue)"/>
+                    <polygon points="595,120 600,131 605,120" fill="var(--blue)"/>
+                    <polygon points="240,255 235,244 245,244" fill="var(--blue-cool)"/>
+                    <polygon points="420,255 415,244 425,244" fill="var(--blue-cool)"/>
+                    <polygon points="600,255 595,244 605,244" fill="var(--blue-cool)"/>
+                    <polygon points="510,295 501,300 510,305" fill="var(--blue-cool)"/>
+                    <polygon points="340,295 331,300 340,305" fill="var(--blue-cool)"/>
+                    <polygon points="160,295 151,300 160,305" fill="var(--blue-cool)"/>
+                    <polygon points="70,260 75,249 80,260" fill="var(--blue-cool)"/>
+                </g>
+
+                <!-- equipment -->
+                <g id="d1-boiler">
+                    <rect x="35" y="160" width="80" height="75" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="75" y="201" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">보일러</text>
+                </g>
+                <g id="d1-pump">
+                    <circle cx="140" cy="85" r="13" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="135,79 147,85 135,91" fill="var(--text-dim)"/>
+                    <text x="140" y="63" text-anchor="middle" font-size="11" fill="var(--text)">펌프</text>
+                </g>
+                <g id="d1-load-1">
+                    <rect x="205" y="160" width="70" height="55" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="240" y="184" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">부하 1</text>
+                    <text x="240" y="200" text-anchor="middle" font-size="9" fill="var(--text-dim)">(가장 가까움)</text>
+                </g>
+                <g id="d1-load-2">
+                    <rect x="385" y="160" width="70" height="55" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="420" y="191" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">부하 2</text>
+                </g>
+                <g id="d1-load-3">
+                    <rect x="565" y="160" width="70" height="55" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="600" y="184" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">부하 3</text>
+                    <text x="600" y="200" text-anchor="middle" font-size="9" fill="var(--text-dim)">(가장 멂)</text>
+                </g>
+
+                <!-- labels -->
+                <text x="350" y="76" text-anchor="middle" class="edu-caption">공급 주관 →</text>
+                <text x="340" y="322" text-anchor="middle" class="edu-caption">← 환수 주관(열원으로 바로 복귀)</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw supply"></span>공급수</span>
+                <span><span class="sw return"></span>환수</span>
+            </div>
+
+            <!-- ───────────────── 2 · 2-Pipe Reverse Return ───────────────── -->
+            <h2 class="subhead" id="d2">2관식 역환수</h2>
+
+            <p>
+                공급 주관과 부하는 같습니다. 차이는 환수에 있습니다. 환수 주관은 열원 쪽으로 바로 돌아가지 않고 모든 부하를 지나 <em>공급수와 같은 방향</em>으로 계속 진행한 다음 먼 길을 돌아옵니다. 따라서 가장 먼저 공급받는 부하가 가장 늦게 환수하고, 가장 늦게 공급받는 부하가 가장 먼저 환수합니다. 각 부하의 물이 지나가는 전체 배관 길이를 합하면 모두 거의 같습니다.
+            </p>
+
+            <p>
+                경로 길이가 거의 같으면 저항도 거의 같으므로 유량이 각 부하에 자연스럽게 비슷하게 나뉩니다. 이를 ‘자체 밸런싱’이라고 합니다. 여전히 <a href="/ko/education/balancing.html">밸런싱 밸브</a>가 필요하지만 큰 불균형을 바로잡는 것이 아니라 미세 조정만 담당합니다. 대가는 추가 배관입니다. 되돌아오는 루프가 환수 배관 한 줄을 사실상 더 늘리므로 설치비가 높습니다. 커미셔닝 노력과 배관·노무비 사이의 선택입니다.
+            </p>
+
+            <svg class="edu-svg" viewBox="0 0 700 360" role="img" aria-labelledby="d2-title d2-desc"
+                 font-family="var(--mono)">
+                <title id="d2-title">2관식 역환수</title>
+                <desc id="d2-desc">펌프가 있는 보일러가 왼쪽에서 오른쪽으로 나란히 배치된 세 부하를 지나는 공급 주관에 물을 보냅니다. 각 부하의 물은 역시 왼쪽에서 오른쪽으로 모든 부하를 지난 뒤 건물 전체 길이를 되돌아 보일러로 가는 환수 주관에 들어갑니다. 가장 먼저 공급받은 부하가 가장 늦게 환수하므로 각 부하의 전체 배관 경로가 거의 같아 자연스럽게 자체 밸런싱되지만 되돌아가는 추가 배관이 필요합니다.</desc>
+
+                <!-- piping: supply (solid, --blue) — out the boiler top, along the supply main.
+                     data-flow="supply" hooks flow-engine.js; path/line drawing order matches flow direction. -->
+                <path id="d2-supply-main" data-flow="supply" data-flow-static="true" d="M75 160 V85 H600" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d2-load1-supply" data-flow="supply" data-flow-static="true" x1="240" y1="85" x2="240" y2="160" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d2-load2-supply" data-flow="supply" data-flow-static="true" x1="420" y1="85" x2="420" y2="160" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d2-load3-supply" data-flow="supply" data-flow-static="true" x1="600" y1="85" x2="600" y2="160" stroke="var(--blue)" stroke-width="3"/>
+                <!-- piping: return (dashed, --blue-cool) — the collector runs WITH the supply past every load, then doubles back to the boiler -->
+                <line id="d2-load1-return" data-flow="return" data-flow-static="true" x1="240" y1="215" x2="240" y2="295" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d2-load2-return" data-flow="return" data-flow-static="true" x1="420" y1="215" x2="420" y2="295" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d2-load3-return" data-flow="return" data-flow-static="true" x1="600" y1="215" x2="600" y2="295" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d2-return-collector" data-flow="return" data-flow-static="true" d="M240 295 H665" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d2-return-main" data-flow="return" data-flow-static="true" d="M665 295 V325 H75 V235" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- flow arrows -->
+                <g id="d2-flow-arrows">
+                    <polygon points="70,135 75,124 80,135" fill="var(--blue)"/>
+                    <polygon points="155,80 164,85 155,90" fill="var(--blue)"/>
+                    <polygon points="490,80 499,85 490,90" fill="var(--blue)"/>
+                    <polygon points="235,120 240,131 245,120" fill="var(--blue)"/>
+                    <polygon points="415,120 420,131 425,120" fill="var(--blue)"/>
+                    <polygon points="595,120 600,131 605,120" fill="var(--blue)"/>
+                    <polygon points="240,255 235,244 245,244" fill="var(--blue-cool)"/>
+                    <polygon points="420,255 415,244 425,244" fill="var(--blue-cool)"/>
+                    <polygon points="600,255 595,244 605,244" fill="var(--blue-cool)"/>
+                    <polygon points="320,290 329,295 320,300" fill="var(--blue-cool)"/>
+                    <polygon points="540,290 549,295 540,300" fill="var(--blue-cool)"/>
+                    <polygon points="520,320 511,325 520,330" fill="var(--blue-cool)"/>
+                    <polygon points="270,320 261,325 270,330" fill="var(--blue-cool)"/>
+                    <polygon points="70,260 75,249 80,260" fill="var(--blue-cool)"/>
+                </g>
+
+                <!-- equipment -->
+                <g id="d2-boiler">
+                    <rect x="35" y="160" width="80" height="75" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="75" y="201" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">보일러</text>
+                </g>
+                <g id="d2-pump">
+                    <circle cx="140" cy="85" r="13" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="135,79 147,85 135,91" fill="var(--text-dim)"/>
+                    <text x="140" y="63" text-anchor="middle" font-size="11" fill="var(--text)">펌프</text>
+                </g>
+                <g id="d2-load-1">
+                    <rect x="205" y="160" width="70" height="55" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="240" y="184" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">부하 1</text>
+                    <text x="240" y="200" text-anchor="middle" font-size="9" fill="var(--text-dim)">(가장 가까움)</text>
+                </g>
+                <g id="d2-load-2">
+                    <rect x="385" y="160" width="70" height="55" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="420" y="191" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">부하 2</text>
+                </g>
+                <g id="d2-load-3">
+                    <rect x="565" y="160" width="70" height="55" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="600" y="184" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">부하 3</text>
+                    <text x="600" y="200" text-anchor="middle" font-size="9" fill="var(--text-dim)">(가장 멂)</text>
+                </g>
+
+                <!-- labels -->
+                <text x="350" y="76" text-anchor="middle" class="edu-caption">공급 주관 →</text>
+                <text x="370" y="318" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">환수는 공급수와 같은 방향으로 진행한 뒤 먼 길을 돌아옵니다. 추가 배관이 자체 밸런싱의 대가입니다</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw supply"></span>공급수</span>
+                <span><span class="sw return"></span>환수</span>
+            </div>
+
+            <!-- ─────── 3 · Primary-Secondary — the "Twin-T" Boiler Injection ─────── -->
+            <h2 class="subhead" id="d3">1차·2차 루프 — ‘트윈 티’ 보일러 인젝션</h2>
+
+            <p>
+                가장 오래 이해하기 어려운 구성입니다. 건물 전체의 물이 <em>보일러를 통과</em>하고 보일러는 순환 경로에서 물을 데우는 주전자 같은 지점일 것이라고 자연스럽게 생각하기 쉽지만 이는 틀렸습니다. 그렇다면 <span data-us="100-GPM" data-metric="6.3-L/s">100-GPM</span> 보일러로 <span data-us="200-GPM" data-metric="12.6-L/s">200-GPM</span> 건물을 담당할 수 없고, 저유량과 열충격에 취약한 보일러는 건물 부하가 줄어들 때마다 두 문제를 모두 겪게 됩니다. 그래서 배관은 그렇게 구성하지 않습니다.
+            </p>
+            <p>
+                보일러는 자체 전용 <em>보일러 펌프</em>가 있는 <em>짧은</em> 루프인 <em>1차측</em>에 놓입니다. 보일러 펌프는 건물의 운전 상태와 관계없이 보일러를 통과하는 유량을 항상 일정하게 유지하며, 이 일정한 유량이 보일러를 보호합니다. 별도의 <em>인젝션 펌프</em>는 1차측에서 온수를 끌어와 건물 루프인 <em>시스템</em> 루프에 밀어 넣습니다. 시스템 루프에는 부하를 통해 물을 순환하는 자체 <em>시스템 펌프</em>가 있습니다. 어느 순간에도 인젝션 펌프가 가져오는 일부 유량만 보일러를 거치고, 건물 물의 나머지는 부하를 순환하면서 인젝션 펌프가 더한 온수와 혼합됩니다. 두 루프가 만나는 티는 ‘근접 배치 티(closely-spaced tees)’, ‘공통 배관’, ‘트윈 티’라고 불리며 서로 매우 가까워 그 사이의 압력 강하가 사실상 없습니다. 이 작은 연결부 양단에 차압이 없기 때문에 보일러, 인젝션, 시스템의 세 펌프가 서로의 토출 압력과 싸우지 않고 각자 역할을 수행합니다.
+            </p>
+
+            <div class="callout" style="margin-top:1.5rem;">
+                <h3>계산 예시 <span>· 물의 경로 따라가기</span></h3>
+                <p style="line-height:1.7;">보일러 자체를 통과하는 설계 유량은 <span data-us="100&nbsp;GPM" data-metric="6.3&nbsp;L/s">100&nbsp;GPM</span>이며 보일러 펌프가 이 유량을 유지합니다. 건물의 시스템 펌프는 부하를 통해 <span data-us="200&nbsp;GPM" data-metric="12.6&nbsp;L/s">200&nbsp;GPM</span>을 순환시킵니다. 현재 인젝션 펌프는 1차측에서 시스템으로 <span data-us="40&nbsp;GPM" data-metric="2.5&nbsp;L/s">40&nbsp;GPM</span>을 보내고 있습니다. 따라서:</p>
+                <ul style="font-size:0.86rem;line-height:1.7;margin:0.6rem 0 0.7rem 1.25rem;">
+                    <li>건물의 요구와 관계없이 <span data-us="100&nbsp;GPM" data-metric="6.3&nbsp;L/s">100&nbsp;GPM</span>이 항상 보일러를 순환합니다.</li>
+                    <li>인젝션 펌프가 그중 <span data-us="40&nbsp;GPM" data-metric="2.5&nbsp;L/s">40&nbsp;GPM</span>을 시스템으로 끌어오며, 이 물은 부하 하나에라도 도달하기 전에 더 차가운 환수와 혼합됩니다.</li>
+                    <li>나머지 <span data-us="60&nbsp;GPM" data-metric="3.8&nbsp;L/s">60&nbsp;GPM</span>은 1차측에 남아 재가열되도록 보일러로 바로 돌아갑니다.</li>
+                    <li><span data-us="200&nbsp;GPM" data-metric="12.6&nbsp;L/s">200&nbsp;GPM</span>이 부하를 통과하지만 대부분은 보일러를 전혀 거치지 않습니다. 부하는 인젝션 지점 하류의 <em>혼합</em> 온도를 받습니다.</li>
+                    <li>이 혼합이 핵심입니다. <span data-us="40&nbsp;GPM" data-metric="2.5&nbsp;L/s">40&nbsp;GPM</span>의 <span data-us="180&nbsp;°F" data-metric="82.2&nbsp;°C">180&nbsp;°F</span> 1차수와 <span data-us="160&nbsp;GPM" data-metric="10.1&nbsp;L/s">160&nbsp;GPM</span>의 <span data-us="140&nbsp;°F" data-metric="60.0&nbsp;°C">140&nbsp;°F</span> 시스템 환수가 혼합되어 위젯에 표시된 <span data-us="148&nbsp;°F" data-metric="64.4&nbsp;°C">148&nbsp;°F</span>의 공급수가 부하로 갑니다.</li>
+                </ul>
+                <p style="line-height:1.7;">외기가 더 추워져 건물이 더 많은 열을 원하면 인젝션 펌프가 속도를 높여 1차측의 온수를 시스템으로 더 많이 끌어오고 부하의 공급수 온도가 올라갑니다. 보일러 유량은 변하지 않습니다. 제어점은 인젝션 펌프입니다.</p>
+            </div>
+
+            <p style="margin-top:1.25rem;">
+                현장에서 이것이 중요한 이유가 있습니다. 근접 배치 티를 처음 보면 누군가 보일러 양단을 바로 잇는 단락 배관을 잘못 설치한 것처럼 보입니다. 그러나 실수가 아닙니다. 이 짧은 공통 배관이야말로 하루 종일 수요가 변하는 건물에 일정한 유량만을 요구하는 보일러를 적용할 수 있는 <em>핵심 이유</em>입니다. 트윈 티를 알아보면 나머지 플랜트가 한눈에 들어오지만 놓치면 배관공이 잘못 시공했다고 생각하며 오후를 보낼 수 있습니다.
+            </p>
+
+            <!-- Diagram 3: primary-secondary with injection. Built to defeat "the whole loop goes
+                 through the boiler": the boiler is on its own small, distinct circuit on the LEFT;
+                 the building is on its own larger, distinct circuit on the RIGHT; the only connection
+                 is the closely-spaced tees with the injection pump on the bridge. Dense flow arrows
+                 around each loop (constant flow); a smaller, separate pair of arrows on the bridge
+                 (the partial diversion). Named <g> groups + semantic ids for a future animated version. -->
+            <svg class="edu-svg" viewBox="0 0 800 360" role="img" aria-labelledby="d3-title d3-desc"
+                 font-family="var(--mono)">
+                <title id="d3-title">1차·2차 ‘트윈 티’ 보일러 인젝션</title>
+                <desc id="d3-desc">분리된 두 루프입니다. 왼쪽의 작은 1차 루프에는 보일러와 전용 보일러 펌프가 있어 물을 항상 순환시킵니다. 오른쪽의 더 큰 시스템 루프에서는 시스템 펌프가 두 건물 부하를 통해 물을 순환시킵니다. 두 루프는 근접 배치된 티 한 쌍과 인젝션 펌프가 있는 짧은 연결부로만 이어집니다. 인젝션 펌프는 1차 루프의 온수 일부를 시스템 루프로 끌어와 더 차가운 환수와 혼합합니다. 건물 물의 대부분은 보일러를 거치지 않고 인젝션 펌프가 분기한 일부만 통과합니다. 인젝션 펌프 속도가 공급수 온도의 제어점입니다.</desc>
+
+                <!-- ── PRIMARY loop piping — solid + --blue all the way around (it's a short loop; it stays hot).
+                     data-flow="supply" carries the whole loop; constant flow at baseline density. -->
+                <path id="d3-primary-loop" data-flow="supply" data-flow-static="true" d="M90 130 V60 H280 V270 H90 V200" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <!-- ── BRIDGE: upper = hot injection (solid --blue), lower = return to primary (dashed --blue-cool).
+                     data-flow-density="0.4" encodes the worked-example ratio (~40 GPM diverted into a ~100 GPM
+                     system) so the bridge reads as visibly sparser than either loop — that's the pedagogical
+                     point of twin-T, and the injection-pump slider will mutate this attribute live. -->
+                <line id="d3-inject-pipe" data-flow="supply" data-flow-static="true" data-flow-density="0.2" x1="280" y1="150" x2="440" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d3-bridge-return" data-flow="return" data-flow-static="true" data-flow-density="0.2" x1="440" y1="190" x2="280" y2="190" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <!-- ── SYSTEM loop piping: supply main + risers solid --blue, return main + risers dashed --blue-cool ── -->
+                <path id="d3-system-supply" data-flow="supply" data-flow-static="true" d="M440 250 V90 H760" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d3-load-a-supply" data-flow="supply" data-flow-static="true" x1="540" y1="90" x2="540" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d3-load-b-supply" data-flow="supply" data-flow-static="true" x1="680" y1="90" x2="680" y2="150" stroke="var(--blue)" stroke-width="3"/>
+                <line id="d3-load-a-return" data-flow="return" data-flow-static="true" x1="540" y1="205" x2="540" y2="250" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <line id="d3-load-b-return" data-flow="return" data-flow-static="true" x1="680" y1="205" x2="680" y2="250" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+                <path id="d3-system-return" data-flow="return" data-flow-static="true" d="M760 90 V250 H440" fill="none" stroke="var(--blue-cool)" stroke-width="3" stroke-dasharray="9 5"/>
+
+                <!-- flow arrows. The data-d3-arrow tags drive page-level
+                     recoloring so primary-loop and system-supply arrows
+                     track their pipe stroke as the slider mutates loop
+                     temperatures. Return-side arrows and the bridge pair
+                     stay at the default tokens (return is always at fixed
+                     T_RETURN in the model; bridge pipes change density,
+                     not color). -->
+                <g id="d3-flow-arrows">
+                    <!-- primary loop — dense, constant flow -->
+                    <polygon data-d3-arrow="primary" points="85,100 90,89 95,100" fill="var(--blue)"/>
+                    <polygon data-d3-arrow="primary" points="150,55 159,60 150,65" fill="var(--blue)"/>
+                    <polygon data-d3-arrow="primary" points="240,55 249,60 240,65" fill="var(--blue)"/>
+                    <polygon data-d3-arrow="primary" points="275,110 280,121 285,110" fill="var(--blue)"/>
+                    <polygon data-d3-arrow="primary" points="275,230 280,241 285,230" fill="var(--blue)"/>
+                    <polygon data-d3-arrow="primary" points="240,265 231,270 240,275" fill="var(--blue)"/>
+                    <polygon data-d3-arrow="primary" points="150,265 141,270 150,275" fill="var(--blue)"/>
+                    <polygon data-d3-arrow="primary" points="85,240 90,229 95,240" fill="var(--blue)"/>
+                    <!-- bridge — a smaller pair, the partial diversion -->
+                    <polygon points="416,146 423,150 416,154" fill="var(--blue)"/>
+                    <polygon points="312,186 305,190 312,194" fill="var(--blue-cool)"/>
+                    <!-- system loop — dense, constant flow -->
+                    <polygon data-d3-arrow="system-supply" points="435,160 440,149 445,160" fill="var(--blue)"/>
+                    <polygon data-d3-arrow="system-supply" points="500,85 509,90 500,95" fill="var(--blue)"/>
+                    <polygon data-d3-arrow="system-supply" points="630,85 639,90 630,95" fill="var(--blue)"/>
+                    <polygon points="755,150 760,161 765,150" fill="var(--blue-cool)"/>
+                    <polygon points="755,210 760,221 765,210" fill="var(--blue-cool)"/>
+                    <polygon data-d3-arrow="system-supply" points="535,120 540,131 545,120" fill="var(--blue)"/>
+                    <polygon data-d3-arrow="system-supply" points="675,120 680,131 685,120" fill="var(--blue)"/>
+                    <polygon points="540,230 535,219 545,219" fill="var(--blue-cool)"/>
+                    <polygon points="680,230 675,219 685,219" fill="var(--blue-cool)"/>
+                    <polygon points="619,245 610,250 619,255" fill="var(--blue-cool)"/>
+                    <polygon points="490,245 481,250 490,255" fill="var(--blue-cool)"/>
+                </g>
+
+                <!-- equipment -->
+                <g id="d3-boiler">
+                    <rect x="40" y="130" width="80" height="70" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="80" y="169" text-anchor="middle" font-size="13" font-weight="600" fill="var(--text-bright)">보일러</text>
+                </g>
+                <g id="d3-boiler-pump">
+                    <circle cx="185" cy="270" r="13" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <rect class="d3-pump-blade" x="174" y="269" width="22" height="2" rx="1" fill="var(--text-dim)"/>
+                    <text x="185" y="297" text-anchor="middle" font-size="11" fill="var(--text)">보일러 펌프</text>
+                    <text x="185" y="310" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">정유량</text>
+                </g>
+                <g id="d3-injection-pump">
+                    <circle cx="360" cy="150" r="13" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <rect class="d3-pump-blade" x="349" y="149" width="22" height="2" rx="1" fill="var(--text-dim)"/>
+                    <text x="360" y="111" text-anchor="middle" font-size="11" fill="var(--text)">인젝션 펌프</text>
+                    <text x="360" y="124" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">제어점</text>
+                </g>
+                <g id="d3-system-pump">
+                    <circle cx="440" cy="222" r="13" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <rect class="d3-pump-blade" x="429" y="221" width="22" height="2" rx="1" fill="var(--text-dim)"/>
+                    <text x="378" y="226" text-anchor="middle" font-size="11" fill="var(--text)">시스템 펌프</text>
+                </g>
+                <g id="d3-load-a">
+                    <rect x="505" y="150" width="70" height="55" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="540" y="181" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">부하</text>
+                </g>
+                <g id="d3-load-b">
+                    <rect x="645" y="150" width="70" height="55" rx="2" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <text x="680" y="181" text-anchor="middle" font-size="12" font-weight="600" fill="var(--text-bright)">부하</text>
+                </g>
+
+                <!-- labels -->
+                <text x="200" y="100" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text)">1차 루프</text>
+                <text x="200" y="113" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">보일러 전용 루프</text>
+                <text x="600" y="78" text-anchor="middle" font-size="11" font-weight="600" fill="var(--text)">시스템 루프</text>
+                <!-- Two stacked lines: the single-line version was wider
+                     than the bridge gap and ran onto both risers
+                     (audit-2026-06 diagram polish). -->
+                <text x="360" y="173" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">근접 배치 티</text>
+                <text x="360" y="184" text-anchor="middle" font-size="9" font-style="italic" fill="var(--text-dim)">Δp ≈ 0</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw supply"></span>고온 공급수</span>
+                <span><span class="sw return"></span>더 차가운 환수 / 혼합수</span>
+            </div>
+
+            <div class="callout" style="margin-top:1.5rem;">
+                <p style="line-height:1.7;">
+                    이 시스템에서 아직 언급하지 않은 차이점을 찾았습니까? <a href="/ko/education/load-piping.html">무엇인지 알아보기 →</a>
+                </p>
+            </div>
+
+            <!-- Injection-pump widget: drives system supply temp via a simple mixing
+                 model (180 °F primary into 140 °F return) and live-mutates
+                 data-flow-density on the two bridge paths so the engine particle
+                 traffic on the bridge tracks the slider. See the inline <script> at
+                 page bottom for the math and state machine. -->
+            <div class="widget" id="d3-widget">
+                <div class="d3-w-readouts">
+                    <div>
+                        <div class="widget-readout-label">인젝션 유량</div>
+                        <div class="widget-readout-value" id="d3-w-gpm">40.0 <span class="unit">GPM</span></div>
+                    </div>
+                    <div>
+                        <div class="widget-readout-label">펌프 속도</div>
+                        <div class="widget-readout-value" id="d3-w-hz">45 <span class="unit">Hz</span></div>
+                    </div>
+                    <div>
+                        <div class="widget-readout-label">설계 속도 대비 비율</div>
+                        <div class="widget-readout-value" id="d3-w-pct">100<span class="unit"> %</span></div>
+                    </div>
+                </div>
+                <input class="widget-slider" id="d3-w-slider" type="range" min="0" max="60" step="1" value="45" aria-label="인젝션 펌프 속도(Hz)"/>
+                <div class="d3-w-temps">
+                    <div class="d3-w-temp">
+                        <span>1차 루프:</span>
+                        <span class="d3-w-temp-swatch" id="d3-w-primary-swatch"></span>
+                        <span class="d3-w-temp-value" id="d3-w-primary-temp">180.0 °F</span>
+                    </div>
+                    <div class="d3-w-temp">
+                        <span>시스템 공급수:</span>
+                        <span class="d3-w-temp-swatch" id="d3-w-system-swatch"></span>
+                        <span class="d3-w-temp-value" id="d3-w-system-temp">148.0 °F</span>
+                    </div>
+                </div>
+                <div class="d3-w-status" id="d3-w-status">정상 운전</div>
+                <div class="d3-w-alert" id="d3-w-alert"></div>
+            </div>
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/ko/hydronics/', label: '수배관 참고 자료 허브'},
+        simulators: [
+            {href: '/ko/simulators/hydronic-loop-builder.html', label: '수배관 루프 빌더'}
+        ],
+        lessons: [
+            {href: '/ko/education/load-piping.html', label: '부하 배관'},
+            {href: '/ko/education/pump-control.html', label: '펌프 제어'},
+            {href: '/ko/education/pid-basics.html', label: 'PID 기초'}
+        ],
+        quizzes: [
+            {href: '/ko/practice/hydronic-loops.html', label: '수배관 루프'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/ko/education/">← 교육으로 돌아가기</a>
+
+</main>
+{% endblock %}
