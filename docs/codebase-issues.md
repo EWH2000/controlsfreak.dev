@@ -14903,3 +14903,159 @@ extend the third arm's selector to
 `details.prose-fold, details.tool-preamble, details.pid-spoiler`
 (or bare `details`), run the sweep, and disposition whatever it
 finds before merging the widened spec.
+
+### 317. 104 `FAQPage` nodes ship but earn no rich result — Google restricted FAQ to government and health sites in Aug 2023 *(noticed 2026-08-27, SEO research round; decision-class — owner's call, not a bug)*
+
+`head.njk` emits `FAQPage` JSON-LD from the `faqs:` frontmatter and the
+quiz banks; a build count puts it at **104 pages — 52 per locale**. The
+mechanism works exactly as designed. What changed is outside the repo: in
+**August 2023** Google restricted FAQ rich results to "well-known, authoritative
+government and health websites," so on this domain the markup renders no
+SERP treatment and has not since before most of it was written. The
+`faqBlock` macro shipped in PR #293 as an SEO quick win
+([[seo-growth-plan-2026-07]]); that half of its rationale has expired.
+
+**This is deliberately NOT filed as a bug.** Three defensible positions,
+and the choice is editorial:
+
+1. **Keep it.** The markup is valid, costs a few KB, and AI answer
+   engines parse `FAQPage` even where Google renders nothing — a
+   reference site whose readers increasingly ask an assistant may want
+   exactly that. Cloudflare's own Agent Readiness framing points this
+   way.
+2. **Keep it but stop counting it as SEO.** Same output; correct the
+   rationale where the repo still describes FAQ markup as a search win,
+   so a future decision isn't made on a stale premise.
+3. **Retire it.** Removes 104 nodes of JSON-LD that earn nothing from
+   the surface it was added for.
+
+Position 2 is the cheapest and loses nothing; positions 1 and 3 differ
+only if the AI-parsing argument is worth bytes. **The visible on-page
+FAQ content is not in question either way** — it is useful copy and
+several pages' `faqs:` blocks read as genuine content. This is only
+about the JSON-LD twin.
+
+### 318. Speed Brain is enabled on the zone and 100% inert — every prefetch 503s against `run_worker_first: true` *(measured 2026-08-28; owner dashboard decision)*
+
+Measured live, reproduced on three URLs: controlsfreak.dev serves
+`speculation-rules: "/cdn-cgi/speculation"` to every Chromium visitor
+and every resulting prefetch returns **HTTP 503** with Cloudflare naming
+the cause in its own header —
+`cf-speculation-refused: prefetch refused: disabled for worker requests`.
+
+Cloudflare documents the limitation verbatim ("Speed Brain will not
+prefetch on routes that run Workers"), and `wrangler.jsonc` sets
+`run_worker_first: true`, which puts a Worker on every route. **That
+setting is deliberate and hard-won** — it is what makes the immutable
+asset-caching logic work (#84), and the glob alternative was tried and
+rejected for breaking `/api/contact`. So the trade-off was made
+correctly and this is simply its cost; Speed Brain is the casualty, not
+the mistake.
+
+Two defensible outcomes, both fine, neither urgent:
+
+- **Turn Speed Brain off** (Speed → Optimization, free) so the site
+  stops advertising a capability it cannot honour to every Chromium
+  visitor.
+- **Knowingly accept it.** The failed prefetch costs a refused request,
+  not a broken page load; nothing user-visible is wrong.
+
+What should NOT happen is leaving it unexamined, which is the current
+state. Note also that Speed Brain is **on by default** on free plans —
+this was never switched on deliberately, which is the general lesson:
+the zone carries vendor defaults the repo has no record of.
+
+### 319. The Cloudflare AI-crawler settings have never been verified on this zone, and one legacy toggle blocks Googlebot *(noticed 2026-08-27; owner dashboard check — cannot be settled from the repo)*
+
+Cloudflare's own words: blocking *Training* — including via the legacy
+one-click **"Block AI Scrapers and Crawlers"** toggle, free on every
+plan — "will block multi-purpose crawlers such as Googlebot, Applebot,
+and BingBot," because those are evaluated under the most restrictive
+matching rule. Third-party testing has recorded Googlebot receiving
+HTTP 403 on sitemap fetches after an operator enabled AI-training
+blocking. This is the single highest-stakes search-related setting
+Cloudflare offers, and it points down.
+
+**Status here: unknown, and not knowable from outside.** External probes
+came back clean — a Googlebot-UA and a bingbot-UA fetch of
+`/sitemap.xml` both returned 200, and `robots.txt` disallows nothing —
+but that only rules out a *user-agent-string* block. Cloudflare verifies
+Googlebot by reverse DNS, so a spoofed UA from an ordinary IP does not
+exercise the verified-bot path at all. Only the dashboard settles it.
+
+**Action: open Cloudflare → AI Crawl Control and confirm no Training or
+AI-bot block is set.** Thirty seconds; the downside of skipping it is
+silent deindexing. Logged rather than fixed because it is a vendor
+setting, not code. The September 15 2026 default change is *not* the
+risk — it is scoped to pages displaying ads, and this site shows none.
+
+### 320. 80 localized lesson pages declare `author` and `publisher` by dangling reference — each Person node exists only on its locale's home page *(noticed 2026-08-27; DECISION-CLASS — needs an owner answer before any fix, see below)*
+
+`techArticleJsonLd` (`.eleventy.js:2138-2159`) sets localized `author` and
+`publisher` `@id` references rooted at the current locale. Each pair of target
+nodes is described in exactly **one** built document for that locale —
+`_site/index.html` or `_site/ko/index.html` — where the shared `WebSite` +
+`Person` `@graph` is authored inline in `{% block head %}`. So on the **80 live
+education pages — 40 per locale** that carry a TechArticle node, `author` ships
+as an identifier and nothing else: no `@type`, no `name`, no `url`.
+
+**Precision matters here — the audit overclaimed.** A cross-document `@id`
+is *valid JSON-LD*; the defect is practical, not spec-level. Google
+flattens structured data per document, so it will not fetch the home page
+to resolve a lesson's author. The intent is explicit in the code comment
+at `:2130-2132` ("attributes authorship to the Person entity declared on
+the home page (E-E-A-T)") — the author knew the node lived elsewhere and
+assumed the reference carried. Nothing in the build links them, and no
+guard would notice. Note the neighbouring `hasPart`/`isPartOf` refs at
+`:2028,2156` *were* written with an explicit `@type`, which is what makes
+this read as an oversight rather than a decision.
+
+`publisher` is the same dangle **plus a type error**: its target is a
+`WebSite` node, but schema.org's `publisher` expects `Organization` or
+`Person`.
+
+**Held for the owner deliberately — an adversarial reviewer blocked the
+"obvious" fix, and correctly.** Inlining the author node means **80
+indexed pages start publicly declaring an author name**. The only name in
+the authored source is `Controls Freak` (`html/index.html:26`; it renders in
+both locale home documents and never as visible text on any page). That is a
+personal-disclosure decision, not a markup decision. Two questions:
+
+**A. What name ships as the author on 80 indexed pages?** `Controls
+Freak`, a real name, or something else? Google's author guidance wants it
+to match a byline a reader can see — there is no byline today. A `sameAs`
+link (GitHub/LinkedIn) would strengthen it if you want the E-E-A-T signal
+the comment was reaching for.
+
+**B. What should `publisher` be?** Three defensible options: **(a) delete
+it** — Google's current Article recommended-property list is `author` /
+`dateModified` / `datePublished` / `headline` / `image`, and `publisher`
+is *not* on it (it survives only for AMP/News carousels, which this site
+does not use); smallest change, adds no new assertion. **(b) inline a
+minimal `Organization`** — but that asserts a brand-new entity the site
+has never claimed. **(c) point it at the Person** — honest for a
+one-person site, but publicly asserts solo operation. The diagnosing lane
+recommended **(a)** on minimality grounds.
+
+Once both are answered the edit is a single hunk at `.eleventy.js:2152-2153`.
+Worth adding a cheap regression guard in the same PR, since nothing would
+catch a recurrence: assert that every `application/ld+json` block on an
+education page has, for each of `author`/`publisher` present, either a
+`name` or an `@id` that resolves **within the same document**.
+
+### 321. `nav: guides` has no `SECTION_MAP` entry, so ten localized guides pages emit a two-item breadcrumb *(noticed 2026-08-27 while fixing #86's contact follow-on; low severity)*
+
+`SECTION_MAP` in `.eleventy.js` covers `tools` / `simulators` /
+`education` / `practice` / `contact`. It has no `guides` key, so
+`breadcrumbJsonLd`'s `SECTION_MAP[nav]` lookup returns undefined for the ten
+`nav: guides` pages — five routes per locale: `/guides/` plus the four topic
+hubs (`/bacnet/`, `/forced-air/`, `/hydronics/`, `/refrigeration/`) — and the
+`if (section)` branch never runs. They ship `Home → <page>` instead of `Home →
+Guides → <page>` (with localized labels on Korean pages).
+
+Not obviously a bug: `/guides/` is itself a landing, and the four hubs are
+pillar pages that arguably sit directly under Home rather than under a
+"Guides" shelf — which is a taxonomy question, not a markup one. Logged
+rather than fixed because deciding it means deciding whether Guides is a
+real section or a nav lane over the hubs. Found while fixing the contact
+entry (#317-adjacent); deliberately not bundled into that PR.

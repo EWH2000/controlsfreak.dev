@@ -1756,7 +1756,9 @@ module.exports = function(eleventyConfig) {
     // trigger fired by the 2026-07 Search Console data). So every crawl
     // signal renders the clean, self-referential form via this filter;
     // frontmatter stays `.html` as the single source of truth, and internal
-    // `.html` anchors are unchanged (they 307 fine within the site). Applied
+    // `.html` anchors are unchanged (they 301 fine within the site — one
+    // cached permanent hop; the binding's raw 307 named above is upgraded to
+    // a 301 in src/worker.js, and worker.spec.js pins it). Applied
     // to canonical, og:url, the sitemap <loc>, and every JSON-LD url/@id so
     // the structured-data graph stays internally consistent (paired
     // hasPart/isPartOf @ids must byte-match their target's url).
@@ -1910,6 +1912,10 @@ module.exports = function(eleventyConfig) {
         simulators: { nameKey: "nav.simulators", path: "/simulators/" },
         education:  { nameKey: "nav.education",  path: "/education/" },
         practice:   { nameKey: "nav.practice",   path: "/practice/" },
+        // Keep the source-style path here so localization can insert `/ko`;
+        // the computed URL is cleaned below before comparison and emission.
+        // That produces `/contact` and `/ko/contact`, never the redirecting
+        // `.html` form that caused the duplicate Contact breadcrumb.
         contact:    { nameKey: "nav.contact",    path: "/contact.html" }
     };
     eleventyConfig.addFilter("breadcrumbJsonLd", (canonical, nav, title, locale) => {

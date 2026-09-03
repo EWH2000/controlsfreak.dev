@@ -53,7 +53,7 @@
     <script type="application/ld+json">{{ canonicalUrl | definedTermSetJsonLd(bacnetEnums[ts.key], ts.name, ts.fragment, ts.description, locale, bacnetEnumTranslations[locale][ts.key]) | safe }}</script>
     {%- endfor %}
     {% endif %}
-    {% if (nav == "tools" and (page.url | translationKey) != "/tools/") or (nav == "simulators" and (page.url | translationKey) != "/simulators/") %}
+    {% if canonicalUrl and ((nav == "tools" and (page.url | translationKey) != "/tools/") or (nav == "simulators" and (page.url | translationKey) != "/simulators/")) %}
     <script type="application/ld+json">{{ canonicalUrl | softwareApplicationJsonLd(title, description, locale) | safe }}</script>
     {% endif %}
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
