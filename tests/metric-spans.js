@@ -231,7 +231,7 @@ function extractPairs(files = scanFiles()) {
     const pairs = [];
     for (const file of files) {
         const src = fs.readFileSync(file, 'utf8');
-        const rel = path.relative(ROOT, file);
+        const rel = path.relative(ROOT, file).split(path.sep).join('/');
         let m;
         const re = new RegExp(OPEN_TAG.source, 'g');
         while ((m = re.exec(src))) {
@@ -265,7 +265,7 @@ function extractParentheticals(files = scanFiles(SCAN_ROOT, PROSE_FILES)) {
     const pairs = [];
     for (const file of files) {
         const src = normalise(fs.readFileSync(file, 'utf8'));
-        const rel = path.relative(ROOT, file);
+        const rel = path.relative(ROOT, file).split(path.sep).join('/');
         let m;
         const re = new RegExp(PARENTHETICAL.source, 'g');
         while ((m = re.exec(src))) {
