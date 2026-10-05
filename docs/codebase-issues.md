@@ -6726,7 +6726,7 @@ below this line. (Recorded 2026-08-09 after a handoff-verification
 round found open entries — #262, #266, #274, #275 — being classified
 as addressed by readers reasoning from the section header.)
 
-### 185. Quiz `snippet` path: one-way invariant publishes content the page never renders *(2026-07-19; authored-bank exposure CLOSED 2026-08-20 — blocking spec check; engine-side asymmetry remains as defense-in-depth debt, addendum below)*
+### 185. Quiz `snippet` path: one-way invariant publishes content the page never renders *(2026-07-19; authored-bank exposure CLOSED 2026-08-20 — blocking spec check; engine-side asymmetry remains as defense-in-depth debt, addendum below)* *(partially addressed 2026-08-20 — engine-side asymmetry still open)*
 
 Found by the Lane C review during PR #404 (`figure` field), deliberately
 left unfixed there to keep that PR's scope on the new field.

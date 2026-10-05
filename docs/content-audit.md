@@ -77,7 +77,7 @@ reference site: the shared math checked out.
 
 ## Substantive findings
 
-### 1. pid-basics.html — the derivative-action story contradicts itself
+### 1. pid-basics.html — the derivative-action story contradicts itself *(addressed 2026-05-21)*
 
 **Location:** the "D — Derivative / Rate" callout vs. the Sim 3 caption.
 **Lens:** engineer. **Status:** confirmed.
@@ -111,7 +111,7 @@ Td grows with τ, then attributes "slow HVAC loops mostly run PI" to D
 amplifying a noisy, slowly-changing measurement — consistent with the
 D callout and the pid-tuner cheat sheet.
 
-### 2. load-piping.html ↔ pump-control.html — the DPBV is framed two different ways
+### 2. load-piping.html ↔ pump-control.html — the DPBV is framed two different ways *(addressed 2026-05-21)*
 
 **Location:** load-piping "Tying it back to the twin-T" (DPBV paragraph)
 vs. pump-control §1 "Constant-Speed Pumps." **Lens:** engineer.
@@ -151,7 +151,7 @@ pump-control. `pump-control.html` keeps the DPBV as the constant-speed
 fix and no longer claims load-piping "covers" it; instead it points at
 load-piping's minimum-flow bypass as the variable-flow counterpart.
 
-### 3. vfds.html — "clogged filter" listed as a cause of motor overload
+### 3. vfds.html — "clogged filter" listed as a cause of motor overload *(addressed 2026-05-21)*
 
 **Location:** Fault-code category table, "Motor overload" row, "usual
 cause" column. **Lens:** engineer. **Status:** flagged.
@@ -178,7 +178,7 @@ curve" clause was dropped from the Motor-overload row. The cell still
 reads correctly with "Mechanical bind" and "undersized motor for the
 actual load" — both accurate causes.
 
-### 4. thermistor — type notes quote values the page's own table doesn't show
+### 4. thermistor — type notes quote values the page's own table doesn't show *(addressed 2026-05-21)*
 
 **Location:** `thermistor-data.js` 10K Type II `notes` (rendered
 on-page under the R/T table on `thermistor-calculator.html`).
@@ -209,7 +209,7 @@ canonical published values; the generated table above differs by up to
 ~1 °F — see 'About these tables'." — so the note no longer silently
 contradicts the table beside it.
 
-### 5. balancing.html — ABV compensation range: prose and widget disagree
+### 5. balancing.html — ABV compensation range: prose and widget disagree *(addressed 2026-05-21)*
 
 **Location:** "Automatic Balancing Valves" prose vs. the comparison
 widget's ABV model. **Lens:** engineer. **Status:** confirmed.
@@ -365,7 +365,7 @@ on R-410A's `blend` flag.
     when dew is omitted (single-component refrigerants). Correct.
   - One internal inconsistency drives finding #9 below.
 
-### 6. Section-heading `AV:NNN` prefix is BACnet-flavoured decoration that doesn't survive the engineer lens
+### 6. Section-heading `AV:NNN` prefix is BACnet-flavoured decoration that doesn't survive the engineer lens *(addressed 2026-05-23)*
 
 - **Where:** every `h2.section-label` carrying `data-objref` —
   `index.html` (Start Here / About: AV:001 / AV:002),
@@ -422,7 +422,7 @@ attribute name on the five h2s stays — it's an internal hook, not
 user-visible, and renaming it would touch every consuming page for
 no functional gain.
 
-### 7. Function-Block Editor's default econ example loads with the economizer disabled, while the partner lesson illustrates it enabled
+### 7. Function-Block Editor's default econ example loads with the economizer disabled, while the partner lesson illustrates it enabled *(addressed 2026-05-23)*
 
 - **Where:** `html/tools/function-block-editor.html` line 444 — the
   `EXAMPLES.econ` graph sets the OAT analog-input block to
@@ -467,7 +467,7 @@ wording ("the economizer above already built … load one, poke at
 the inputs, and see the logic respond") needs no edit — it now
 matches the editor's landing state.
 
-### 8. Function-block PID is derivative-on-error; pid-basics tells the reader to use derivative-on-measurement
+### 8. Function-block PID is derivative-on-error; pid-basics tells the reader to use derivative-on-measurement *(addressed 2026-05-23)*
 
 - **Where:** `html/scripts/fbe-engine.js` lines 305–326 — the PID
   block's `evaluate()` computes
@@ -518,7 +518,7 @@ formulation, so the existing worked PID example (which ships with
 longer produces the derivative kick that pid-basics warned against.
 Block docstring updated to record the choice.
 
-### 9. `refrigerant-data.js` marks R-410A `blend: false` but the file's own header rule says near-azeotropic blends are `blend: true`
+### 9. `refrigerant-data.js` marks R-410A `blend: false` but the file's own header rule says near-azeotropic blends are `blend: true` *(addressed 2026-05-23)*
 
 - **Where:** `html/scripts/refrigerant-data.js` line 76 — R-410A
   carries `blend: false, glide: 0.2`. Line 175 — R-404A, also a
@@ -706,7 +706,7 @@ focused on what *isn't* working:
 
 ### Substantive findings
 
-### 10. Home Browse stage is missing a Simulators card
+### 10. Home Browse stage is missing a Simulators card *(addressed 2026-05-24)*
 
 **[lens: engineer + newcomer | dimension: consistency + content]**
 
@@ -737,7 +737,7 @@ all show two Browse cards; nav has all three sections).
 (`773fb8d`); the `.card-grid.two` was kept as-is and CSS grid handles
 the three-card row without a class rename. Top-nav parity restored.
 
-### 11. "My Most Common Tools" framing is author-centric
+### 11. "My Most Common Tools" framing is author-centric *(addressed 2026-05-24)*
 
 **[lens: newcomer + engineer | dimension: content + voice]**
 
@@ -773,7 +773,7 @@ About section's "Hi, I'm…" voice is unchanged; the eyebrow now reads
 true for any visitor regardless of whether they've scrolled to the
 author paragraph. Single string edit at `html/index.html:70`.
 
-### 12. Education filter chips for singleton categories are non-features
+### 12. Education filter chips for singleton categories are non-features *(addressed 2026-05-24)*
 
 **[lens: field-tech + newcomer | dimension: UX]**
 
@@ -814,7 +814,7 @@ Fundamentals / Hydronics / Protocols). The chip-row preamble was
 reworded to "Know your way around? Jump to:" — framing the chips as
 a returning-user shortcut, not a newcomer's filter. Pairs with #17.
 
-### 13. titleShort abbreviation discipline drifts across nav cards
+### 13. titleShort abbreviation discipline drifts across nav cards *(addressed 2026-05-25)*
 
 **[lens: engineer | dimension: consistency + visual]**
 
@@ -864,7 +864,7 @@ the new bullet. Verified at 1920px viewport that the longest titles
 (`LESSON :: EQUIPMENT STAGING`, `LESSON :: BACNET NETWORKING`) still
 fit the titlebar slot without truncation.
 
-### 14. Simulators "Wiresheet" titleShort misnames the editor product
+### 14. Simulators "Wiresheet" titleShort misnames the editor product *(addressed 2026-05-25)*
 
 **[lens: newcomer + engineer | dimension: content]**
 
@@ -904,7 +904,7 @@ sibling cards' first-pill shape (subject-domain noun, cf. `'PID Loop'`
 / `'VFD'`) and the card's own `desc` copy. The `desc` keeps
 "wiresheet" as a load-bearing descriptor of the canvas type.
 
-### 15. Hero "More coming" badge reads as apologetic
+### 15. Hero "More coming" badge reads as apologetic *(addressed 2026-05-24)*
 
 **[lens: engineer + field-tech | dimension: content + voice]**
 
@@ -936,7 +936,7 @@ rather than an incomplete catalog. Matches the suggested direction
 ("replace with a concrete next badge"); the surrounding badges keep
 their illustrative-not-exhaustive set.
 
-### 16. Hero UPTIME 24×7 statline is the only beat that breaks the field-reference frame
+### 16. Hero UPTIME 24×7 statline is the only beat that breaks the field-reference frame *(addressed 2026-05-24)*
 
 **[lens: engineer | dimension: voice]**
 
@@ -972,7 +972,7 @@ version + build-date pair carries useful provenance. The field-reference
 frame the rest of the site cultivates is no longer broken by the one
 joke beat at the hero foot.
 
-### 17. Education card ordering tells one story; chip UI invites a different one
+### 17. Education card ordering tells one story; chip UI invites a different one *(addressed 2026-05-24)*
 
 **[lens: newcomer | dimension: UX + content]**
 
@@ -1015,7 +1015,7 @@ returning-user shortcut. Card-grid sequencing is unchanged; the
 prereq chain still tells its story top-to-bottom without competing
 chip-UI signals.
 
-### 18. Same lead-paragraph pattern, three different max-widths and one inline-style copy per landing
+### 18. Same lead-paragraph pattern, three different max-widths and one inline-style copy per landing *(addressed 2026-05-24)*
 
 **[lens: engineer | dimension: consistency + visual]**
 
@@ -1054,7 +1054,7 @@ the class to span the full content column rather than the audit's
 suggested ~660px cap, giving the lead paragraphs the breathing room
 the page composition needed.
 
-### 19. Education lead asks for "requests or corrections" but doesn't link to contact
+### 19. Education lead asks for "requests or corrections" but doesn't link to contact *(addressed 2026-05-24)*
 
 **[lens: field-tech + newcomer | dimension: UX + content]**
 
@@ -1174,7 +1174,7 @@ cross-link wiring.
 
 ### Substantive findings
 
-### 20. Three tools land cold; six land with a worked example — no rule
+### 20. Three tools land cold; six land with a worked example — no rule *(addressed 2026-05-24)*
 
 **[lens: newcomer + field-tech | dimension: UX + consistency]**
 
@@ -1232,7 +1232,7 @@ tabs (`dc3879b`), and `bacnet-ip-converter` defaults to a recognizable
 hex string (`6407832`). Each tool now lands with a worked example on
 the page rather than blank inputs + a muted `—`. Pairs with #21.
 
-### 21. HVAC tools carry preambles; the simpler tools don't
+### 21. HVAC tools carry preambles; the simpler tools don't *(addressed 2026-05-24)*
 
 **[lens: newcomer | dimension: content + consistency]**
 
@@ -1279,7 +1279,7 @@ gained `.tool-preamble` paragraphs in a single editorial pass
 Pairs with #20: defaults give the visitor a worked example; the
 preambles give them the framing.
 
-### 22. Psychrometric Chart's "New to Psychrometrics?" prereq link sits at the bottom
+### 22. Psychrometric Chart's "New to Psychrometrics?" prereq link sits at the bottom *(addressed 2026-05-24)*
 
 **[lens: newcomer | dimension: UX + content]**
 
@@ -1319,7 +1319,7 @@ was moved from the bottom of the page to inline near the preamble
 "New to psychrometrics? Start with the basics →" before scrolling
 past it. Matches the `fbe`/`vfd` placement shape. Pairs with #28.
 
-### 23. Modbus bit-grid cells are below the mobile tap-target threshold
+### 23. Modbus bit-grid cells are below the mobile tap-target threshold *(addressed 2026-05-24)*
 
 **[lens: field-tech | dimension: UX]**
 
@@ -1355,7 +1355,7 @@ desktop-primary intent (`7c259b0`). The mobile tap-target threshold
 is met without giving up the desktop 16-bit row layout. Adopts the
 #30 honesty-callout pattern.
 
-### 24. BACnet/IP Converter puts derived "Length" and "Format" readouts in the Input column
+### 24. BACnet/IP Converter puts derived "Length" and "Format" readouts in the Input column *(addressed 2026-05-24)*
 
 **[lens: engineer | dimension: UX + consistency]**
 
@@ -1394,7 +1394,7 @@ convention is restored, and the editable hex string sits alone in the
 Input column with its diagnostics rendered alongside the decoded
 address.
 
-### 25. Failure-state UX varies across tools — no shared idiom for "this doesn't compute"
+### 25. Failure-state UX varies across tools — no shared idiom for "this doesn't compute" *(addressed 2026-05-24)*
 
 **[lens: field-tech + engineer | dimension: UX + consistency]**
 
@@ -1439,7 +1439,7 @@ onto it — `signal-scaling` on all three tabs (`f3d1e11`),
 idiom now applies wherever a tool says "this doesn't compute"; the
 silent `—` mute path is gone from the swept tools.
 
-### 26. Copy-button labels swing between generic and task-specific
+### 26. Copy-button labels swing between generic and task-specific *(addressed 2026-05-24)*
 
 **[lens: field-tech | dimension: consistency]**
 
@@ -1585,7 +1585,7 @@ behavior.
 
 ### Substantive findings
 
-### 27. Function-Block Editor eyebrow still reads "Tools" — stale from the section move
+### 27. Function-Block Editor eyebrow still reads "Tools" — stale from the section move *(addressed 2026-05-24)*
 
 **[lens: engineer | dimension: content + consistency]**
 
@@ -1624,7 +1624,7 @@ Simulators nav-active state, and the tool-tag pill on the h1 already
 carried `Logic`, so the two markers agree. Stale-after-section-move
 artifact fully cleared.
 
-### 28. Prereq cross-link placement varies across sims — two follow fbe/vfd top-of-page model; pid-tuner mirrors the psych-chart bottom-of-page problem
+### 28. Prereq cross-link placement varies across sims — two follow fbe/vfd top-of-page model; pid-tuner mirrors the psych-chart bottom-of-page problem *(addressed 2026-05-24)*
 
 **[lens: newcomer | dimension: UX + consistency]**
 
@@ -1673,7 +1673,7 @@ from the bottom `.pid-note` paragraph to inline in the preamble
 (`880e35f`), matching the `fbe`/`vfd` placement and pairing with #22's
 twin fix on the psych chart.
 
-### 29. Sim eyebrow taxonomy is inconsistent — concept / equipment / legacy
+### 29. Sim eyebrow taxonomy is inconsistent — concept / equipment / legacy *(addressed 2026-05-24)*
 
 **[lens: engineer | dimension: consistency]**
 
@@ -1720,7 +1720,7 @@ Education's existing pattern. **Documented (2026-05-25):** the rule
 landed in CLAUDE.md under *Conventions* alongside the #13 titleShort
 sweep so the next session doesn't re-drift.
 
-### 30. Function-Block Editor's narrow-width honesty callout is a positive pattern the rest of the site could borrow
+### 30. Function-Block Editor's narrow-width honesty callout is a positive pattern the rest of the site could borrow *(addressed 2026-05-25)*
 
 **[lens: field-tech | dimension: UX + content]**
 
