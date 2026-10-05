@@ -17,7 +17,7 @@ Synthesis of the read-only state-map lanes (codebase-issues c1–c6 + refutation
 | Refutation overturns | 4 of 122 statuses (#19, #221, #310, #315) + 2 field corrections (#197, #178); 0 of 36 content-audit | §7 |
 | content-audit audited | 36 (#31–#64, #88, #89): resolved 32 · accepted 2 (#52, #64) · **open 2 (#88, #89)** | a1, a2 |
 | `[future:]` markers | 115 occurrences; 72 lack an inline shipped annotation; ~10 are prose mentions, 1 a rejected idea; **~35 distinct unshipped targets**; 3 stale tracking markers (friction 2786, 2793, 5558) + 2 stale prose mentions (80, 634) | friction notes |
-| Gloss | 399 `data-gloss` marks (arc doc claims 396); 74 entries (matches) | health #8 |
+| Gloss | 396 `data-gloss` marks in page markup (a raw grep says 399: three are documentation mentions in `glossary.js`, `gloss.js` and `styles.css` comments); 74 entries | health #8, corrected by `npm run status` |
 | Quiz banks | 41; **38 under 15** (34 at 10, 3 at 11, 1 at 13); 3 at ≥15; 0 at the 20+ goal; modbus-decoding frozen at 10 | health #9 |
 | Git | local main 0 ahead / **2 behind**; **8 branches to reap**; no stray worktrees; stash empty | health #10a/b |
 | Version | 3.90.0 (`package.json` = lock) | health #13 |
@@ -152,7 +152,7 @@ Rules applied: utility over SEO (owner 2026-07-14); flagship standard (RL sim); 
 | 18 | commit ef7cade vs #317–#321 | Title "repair three structured-data defects (#317–#321)" fixes none of them |
 | 19 | ledger #247 L11575-81 vs ddcw-ahu-unit.js:1998 | AHU over-claim live, untracked |
 | 20 | content-audit #44 vs hydronic-engine.js:199, :645 | Old formula in comment; slope −2a·Q·spd² |
-| 21 | glossary-arc.md (396) vs html (399 marks) | +3 unexplained |
+| 21 | ~~glossary-arc.md (396) vs html (399 marks)~~ | WITHDRAWN same day: the arc doc's 396 is correct; the raw grep counted three doc-comment mentions outside page markup |
 | 22 | README.md vs 24/25 canonical pages | Practice listed by group; 7 tools + privacy absent |
 | 23 | privacy.html vs CLAUDE.md "say which, per key" | localStorage families (cf_units, cf_theme, cf_psy_range, cf_rf_refrigerant, cf_th_type, cf_quiz_*) in prose only |
 | 24 | glossary-arc.md:588-590, :638-642; s4 proposal :689, :779 | Two owner items absent from ledger and friction |
@@ -182,3 +182,13 @@ Rules applied: utility over SEO (owner 2026-07-14); flagship standard (RL sim); 
 ## 8. Appendix
 
 Complete per-entry tables (122 ledger entries with lane and refutation columns, 36 content-audit entries, 50 friction items, 15 arc-doc items, 14 health checks, full PR #602 analysis, lane notes): `docs/audits/2026-10-reentry/appendix.md`
+
+## 9. Same-day reconciliation against `npm run status`
+
+The status script (PR #605) was run against this map before either merged. Three corrections, all in the script's favour:
+
+- **Gloss marks: 396, not 399.** The raw `grep -r 'data-gloss="'` counted three documentation mentions in comments (`html/_data/glossary.js`, `html/scripts/gloss.js`, `html/styles.css`); page markup carries 396, exactly the arc doc's figure. Drift row 21 is withdrawn.
+- **#293 is deferred, not open.** Its own heading says *log-don't-fix* — the ledger's rule makes the heading the authority, so the lane classification (open, upheld by its refuter) was wrong here.
+- **#185 is partial, and its heading now says so.** The heading read *CLOSED* for one arm while the body kept the other open; PR #603 appends a `partially addressed` marker so a heading-line grammar sees it.
+
+After PR #603, the script's codebase-issues open-class set is the 33 named in §1 minus #293, i.e. **32** — one more than the expected 31 only because #185 now reads as partial rather than resolved. Treat the script, not this table, as current.
