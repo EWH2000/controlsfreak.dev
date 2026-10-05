@@ -15060,3 +15060,39 @@ pillar pages that arguably sit directly under Home rather than under a
 rather than fixed because deciding it means deciding whether Guides is a
 real section or a nav lane over the hubs. Found while fixing the contact
 entry (#317-adjacent); deliberately not bundled into that PR.
+
+### 322. External localization PR #602 (Korean, 358 files) — closed; the conditions a second language would need *(addressed 2026-10-05 — owner ruling, PR closed with a fork suggestion)*
+
+An unsolicited external PR (2026-08-30, author `i2na`) added a complete
+Korean edition: 135 `html/ko/` thin-child pages, translation overlays for
+every quiz bank and glossary entry, hreflang/sitemap plumbing, and a
+string-externalisation refactor across ~120 live English pages and ten
+shared scripts (+49,546/−2,318). The craftsmanship was high and followed
+house style. It was **closed 2026-10-05** on the owner's ruling, for
+reasons that are structural rather than about the work's quality — the
+full assessment is `docs/audits/2026-10-reentry/pr602-assessment.md`:
+
+- **No review path.** A one-person site whose owner does not read Korean
+  cannot stand behind 135 pages of technical content, on a site whose
+  brand is accuracy (refutation rounds, primary-source verification,
+  owner-supplied anecdotes, damage-stakes notes).
+- **Build coupling with no off-switch.** Its guards (route bijection,
+  per-page source hashes, structure signatures, per-bank quiz hashes)
+  FAIL the build — never warn — on any English content edit: every
+  quiz-bank or glossary change, every new page. Measured against the
+  month before the PR, ~half of the merges to `main` touched a guarded
+  surface. Demoting the locale does not disable the per-page checks;
+  only deleting the twins does.
+- **CI never executed.** Both fork-PR runs expired unapproved after 30
+  days with zero jobs (`approval_policy=all_external_contributors`) —
+  so "failing CI" was not, and must never be cited as, a reason.
+
+**What a second language would need before it is reconsidered** (so the
+next offer has a precedent instead of a fresh debate): a native-speaking
+building-controls engineer who owns the terminology; locale demand
+visible in search data; and a **non-blocking** design — staleness warns
+and marks a page stale, the English-only authoring path is unchanged,
+translated pages sit inside the blocking contrast and responsive sweeps,
+and `CLAUDE.md`'s add-a-page checklists say what the locale layer asks
+of a new page. The fork route (MIT, own name/domain, link back) was
+offered in the close comment.
