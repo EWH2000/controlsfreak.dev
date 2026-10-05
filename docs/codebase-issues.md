@@ -728,7 +728,7 @@ statement inside the IIFE for the 12 page-inline scripts (matching
 balancing.html). CLAUDE.md "JS patterns" now carries an explicit
 `'use strict';` bullet recording the rule.
 
-### 19. Inline style proliferation — design-system items waiting to be born *(patterns 1-4 addressed 2026-05-17; pattern 5 → #23)*
+### 19. Inline style proliferation — design-system items waiting to be born *(patterns 1-4 addressed 2026-05-17; pattern 5 → #23)* *(addressed 2026-07-20 — pattern 5 closed via #23, the sibling-spacing rule via #190)*
 
 Five patterns are inline-styled enough times that they're effectively
 design-system classes that haven't been named:
@@ -10277,7 +10277,7 @@ equipment-graphics eye. Cheapest honest options, in order of preference:
 2. Restore a short station caption on each coil box (round 1's answer).
 3. Hatch one serpentine's return bends.
 
-### 232. `comparators-and-deadband.html` states a metric band delta the displayed operands do not produce *(noticed 2026-07-28, differential-nod review round — addressed 2026-08-08 · PR #482)*
+### 232. `comparators-and-deadband.html` states a metric band delta the displayed operands do not produce *(noticed 2026-07-28, differential-nod review round — addressed 2026-08-08 · PR #482)* *(addressed 2026-08-08 — PR #482)*
 
 `html/education/comparators-and-deadband.html:419` renders the total band as
 `<span data-us="2 °F" data-metric="1.1 °C">`. The metric worked-example
@@ -10337,7 +10337,7 @@ only against the operands painted two sentences away; that question is the
 report-only arm's, and it is advisory. See CLAUDE.md §*Local preview &
 tests* for the split.
 
-### 233. AHU plant: MAT and the RAT probe are sampled one Euler step apart *(noticed 2026-07-28, shipped knowingly with the AHU physics half — for the graphic lane — RE-DISPOSITIONED 2026-07-30 — deferred again, with the reason written down)*
+### 233. AHU plant: MAT and the RAT probe are sampled one Euler step apart *(noticed 2026-07-28, shipped knowingly with the AHU physics half — for the graphic lane — RE-DISPOSITIONED 2026-07-30 — deferred again, with the reason written down)* *(deferred 2026-07-30)*
 
 **Deferred again at the graphic lane, and this is the argument rather than a
 shrug.** The AHU page made the split VISIBLE for the first time: the point mirror
@@ -11221,7 +11221,7 @@ models — state the measured divergence and let whatever sets the range own the
 "how cold can it get" claim. If the range lands short of −30 °F, the extreme
 corner figures become illustrative-only and should say so.
 
-### 244. The wiresheet's cost scales with the CANVAS, not just its contents *(noticed 2026-07-30, FCU proof sweep — measured, accepted, unfixed)*
+### 244. The wiresheet's cost scales with the CANVAS, not just its contents *(noticed 2026-07-30, FCU proof sweep — measured, accepted, unfixed)* *(deferred 2026-07-30)*
 
 Adding the fan-proof interlock to `cool-2stage-safeties` cost frames on the
 Wiresheet tab, and the split is not where you would guess. Same-machine A/B
@@ -12974,7 +12974,7 @@ which is what proves it measures the other branch.
 cannot be made to catch this, since it measures overflow and there is
 none.
 
-### 273. The forced-sensor marker CSS is duplicated per page under page-prefixed classes *(noticed 2026-08-04, the Phase 8 graduation lane — deferred at graduation, wants a `.ddcw-forced-mark` rename)*
+### 273. The forced-sensor marker CSS is duplicated per page under page-prefixed classes *(noticed 2026-08-04, the Phase 8 graduation lane — deferred at graduation, wants a `.ddcw-forced-mark` rename)* *(deferred 2026-08-04 — graduation trigger; on the 2026-10-05 decision agenda)*
 
 The dashed accent ring that marks a forced sensor glyph is one drawn
 idea with two page-local copies: `.ahu-forced-mark`
@@ -14624,7 +14624,7 @@ page names, which would drift the moment a sixth adopts it. No
 version bump was spent: `styles.css`'s cache-bust bump rides the merge
 captain's close-out batch.
 
-### 305. The SVG diagram alt-text audit lived only in an archived doc *(logged 2026-08-12, the clear-the-decks hygiene pass — deferred SEO audit, LOW)*
+### 305. The SVG diagram alt-text audit lived only in an archived doc *(logged 2026-08-12, the clear-the-decks hygiene pass — deferred SEO audit, LOW)* *(deferred 2026-08-12 — GSC trigger)*
 
 The one still-open item anywhere under `docs/audits/` — the SVG
 diagram alt-text audit, named in
@@ -14935,7 +14935,7 @@ FAQ content is not in question either way** — it is useful copy and
 several pages' `faqs:` blocks read as genuine content. This is only
 about the JSON-LD twin.
 
-### 318. Speed Brain is enabled on the zone and 100% inert — every prefetch 503s against `run_worker_first: true` *(measured 2026-08-28; owner dashboard decision)*
+### 318. Speed Brain is enabled on the zone and 100% inert — every prefetch 503s against `run_worker_first: true` *(measured 2026-08-28; owner dashboard decision)* *(addressed 2026-10-05 — owner turned Speed Brain off)*
 
 Measured live, reproduced on three URLs: controlsfreak.dev serves
 `speculation-rules: "/cdn-cgi/speculation"` to every Chromium visitor
@@ -14965,7 +14965,15 @@ state. Note also that Speed Brain is **on by default** on free plans —
 this was never switched on deliberately, which is the general lesson:
 the zone carries vendor defaults the repo has no record of.
 
-### 319. The Cloudflare AI-crawler settings have never been verified on this zone, and one legacy toggle blocks Googlebot *(noticed 2026-08-27; owner dashboard check — cannot be settled from the repo)*
+**Resolution (2026-10-05, owner).** Speed Brain turned OFF in the
+Cloudflare dashboard — Speed → Settings → Content Optimization. The zone
+no longer advertises a `Speculation-Rules` header it cannot honour behind
+`run_worker_first: true`; nothing in the repo changes, and nothing
+user-visible changes either (the refused prefetches were harmless). The
+general lesson stands: the zone carries vendor defaults the repo has no
+record of, which is why #319 was checked in the same sitting.
+
+### 319. The Cloudflare AI-crawler settings have never been verified on this zone, and one legacy toggle blocks Googlebot *(noticed 2026-08-27; owner dashboard check — cannot be settled from the repo)* *(addressed 2026-10-05 — owner verified: AI Crawl Control on, zero refused requests)*
 
 Cloudflare's own words: blocking *Training* — including via the legacy
 one-click **"Block AI Scrapers and Crawlers"** toggle, free on every
@@ -14988,6 +14996,13 @@ AI-bot block is set.** Thirty seconds; the downside of skipping it is
 silent deindexing. Logged rather than fixed because it is a vendor
 setting, not code. The September 15 2026 default change is *not* the
 risk — it is scoped to pages displaying ads, and this site shows none.
+
+**Resolution (2026-10-05, owner).** Checked in the Cloudflare dashboard:
+**AI Crawl Control is ON**, and its trend data shows many successful
+crawler requests and **zero unsuccessful** — so no training/AI-bot block
+is in place and Googlebot is not being refused. The worst case this entry
+named (silent deindexing via the legacy toggle) is ruled out on this zone.
+Recheck only if that panel is ever changed.
 
 ### 320. 40 lesson pages declare `author` and `publisher` by dangling reference — the Person node exists only on the home page *(noticed 2026-08-27; DECISION-CLASS — needs an owner answer before any fix, see below)*
 
