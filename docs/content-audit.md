@@ -1882,7 +1882,7 @@ wiring, and `data-objref` numbering distribution.
 
 ### Substantive findings
 
-### 31. Education page title pattern splits 8/5 — older pages carry an em-dash subtitle, newer ones go bare
+### 31. Education page title pattern splits 8/5 — older pages carry an em-dash subtitle, newer ones go bare *(addressed 2026-05-24)*
 
 **[lens: newcomer | dimension: content + consistency]**
 
@@ -1947,7 +1947,7 @@ from the seven older education pages that carried it (`2d1753f`),
 unifying all 13 lessons on the bare-title shape. The titlecard
 inventory now reads as a single set rather than two cohorts.
 
-### 32. Cross-section eyebrow shape: Education uses `Education · Page Name`; Tools and Simulators use just the category
+### 32. Cross-section eyebrow shape: Education uses `Education · Page Name`; Tools and Simulators use just the category *(addressed 2026-05-24)*
 
 **[lens: engineer | dimension: consistency]**
 
@@ -1995,7 +1995,7 @@ education was already using. The cross-section inconsistency that
 made #29 and #32 a pair is gone. **Documented (2026-05-25):** rule
 captured in CLAUDE.md under *Conventions* alongside #29 and #13.
 
-### 33. `data-objref` SEC:NNN numbering lives on 2 pages of 13 — visual signal of "this is a curriculum sequence" doesn't extend to the rest
+### 33. `data-objref` SEC:NNN numbering lives on 2 pages of 13 — visual signal of "this is a curriculum sequence" doesn't extend to the rest *(addressed 2026-05-24)*
 
 **[lens: newcomer + engineer | dimension: consistency + content]**
 
@@ -2179,7 +2179,7 @@ exercised across the calc tools during that walk all checked out
 refrigerant-pt glide caveat, modbus byte/word-order, bacnet-ip);
 nothing new and confirmed-wrong surfaced.
 
-### 34. PID tuner's tuning cheat-sheet describes failure modes the simulator can't reach
+### 34. PID tuner's tuning cheat-sheet describes failure modes the simulator can't reach *(addressed 2026-05-30)*
 
 **Location:** `/simulators/pid-tuner.html` — the on-page tuning
 guidance ("Overshoots, then recovers → ↓ P") vs. the model's reachable
@@ -2225,7 +2225,7 @@ these entries summarize and point. Unambiguous factual corrections from
 the same audit (master #47, #48, #51, #52 + comment-level polish)
 shipped separately in the mechanical-fix sweep and are *not* re-listed.
 
-### 35. Refrigeration content cluster (3 lessons + quizzes) is imperial-only while its paired tool converts fully
+### 35. Refrigeration content cluster (3 lessons + quizzes) is imperial-only while its paired tool converts fully *(addressed 2026-06-10)*
 
 **Location:** education/superheat-subcooling, refrigerant-cycle-basics,
 metering-devices-txv-eev (zero `data-metric` spans between them); quiz
@@ -2258,7 +2258,7 @@ dual-stated with static parentheticals (the quiz DOM paints after the
 units walker runs); numeric answers stay in their stated unit. The
 rounding policy (#37) governs every converted pair.
 
-### 36. Worked-example formula/plug-in steps keep IP-only constants and numbers in metric, contradicting the converted prose around them
+### 36. Worked-example formula/plug-in steps keep IP-only constants and numbers in metric, contradicting the converted prose around them *(addressed 2026-06-10)*
 
 **Location:** coil-sizing (`ṁ = CFM × 60 ÷ v` under a dual-stated
 intro), economizer-ratio (US plug-in numbers on the metric page),
@@ -2289,7 +2289,7 @@ no IP constants), refrigerant-pt's SH/SC walkthrough and glide rules
 of thumb are dual-stated, and psychrometrics-basics names m³/kg and
 g/kg alongside the IP forms. The affinity-laws exception stands.
 
-### 37. Metric worked-example numbers don't reconcile internally — round-then-convert granularity makes the taught arithmetic fail
+### 37. Metric worked-example numbers don't reconcile internally — round-then-convert granularity makes the taught arithmetic fail *(addressed 2026-06-10)*
 
 **Location:** pid-basics in metric (SP 13 / PV 16 / error 2.8 °C — the
 subtraction being taught gives 3, not 2.8); economizer-ratio's default
@@ -2314,7 +2314,7 @@ under #35/#36 follows the policy (deltas are differences of displayed
 operands — e.g. subcooling 40.6 − 35.0 = 5.6). Census multi-pair
 lines audited; the two cited failures were the only ones.
 
-### 38. The 4–20 mA loop is taught as powered from the 24 VAC hot leg — wrong field practice, contradicted by the site's own quiz
+### 38. The 4–20 mA loop is taught as powered from the 24 VAC hot leg — wrong field practice, contradicted by the site's own quiz *(addressed 2026-07-14)*
 
 **Location:** education/controller-wiring.html (prose, inputs diagram,
 capstone loop, legend), the wiring sim's `loop` preset and engine
@@ -2353,7 +2353,7 @@ mismatch). This brings the page in line with the site's own
 `field-wiring-sensors` drill, which already teaches DC loop power.
 PR: fix/4-20ma-dc-loop-power.
 
-### 39. PID fast scene tells a physically wrong story — a "VAV damper" controlling duct static while the fan also tracks the same output
+### 39. PID fast scene tells a physically wrong story — a "VAV damper" controlling duct static while the fan also tracks the same output *(addressed 2026-06-10)*
 
 **Location:** simulators/pid-tuner.html — selector option "VAV damper
 · duct static pressure"; `updateScene` drives both the damper blades
@@ -2379,7 +2379,7 @@ AO, one actuator. The Loop Speed table row stands (it lists distinct
 fast-loop examples, not one loop). Visual-contract test updated to
 assert the fan's one-shot transform instead of a damper-blade angle.
 
-### 40. The 24 VAC leg-swap consequence is told three incompatible ways across drill, lesson, and sim
+### 40. The 24 VAC leg-swap consequence is told three incompatible ways across drill, lesson, and sim *(addressed 2026-07-14)*
 
 **Location:** surviving-first-months.js ("Cross-wiring won't damage
 equipment"), controller-wiring lesson (correctly scoped to shared
@@ -2419,7 +2419,7 @@ heads-up rather than a failure. Reversed-polarity engine test rewritten
 to the new contract + a shared-common-short test added.
 PR: fix/reversed-power-lone-runs.
 
-### 41. "Not 'around 40 °F' — at 40 °F" overshoots the site's own table
+### 41. "Not 'around 40 °F' — at 40 °F" overshoots the site's own table *(addressed 2026-06-10)*
 
 **Location:** refrigeration cluster prose; 118 psig interpolates to
 39.8 °F in the site's own P-T data, and the sibling lesson correctly
@@ -2437,7 +2437,7 @@ from the site's own R-410A table ([40, 118.8, 118.4]), so "not
 118 psig" worked-example references elsewhere in the cluster stand —
 they were already correctly hedged.
 
-### 42. TXV needle motion described in "turns"
+### 42. TXV needle motion described in "turns" *(addressed 2026-06-10)*
 
 **Location:** metering-devices-txv-eev lesson — "turns" belong to the
 adjustment screw (which the lesson states correctly elsewhere); the
@@ -2453,7 +2453,7 @@ walkthrough now reads "a sliver of lift out of the needle's total
 travel" with a parenthetical reserving "turns" for the adjustment
 screw; the screw paragraph's turn language stands (correct usage).
 
-### 43. Triac output description is imprecise — "won't switch a separate voltage"
+### 43. Triac output description is imprecise — "won't switch a separate voltage" *(addressed 2026-07-14)*
 
 **Location:** education/controller-wiring.html (outputs section, triac
 paragraph). **Lens:** content. **Verification status: verified**
@@ -2475,7 +2475,7 @@ floating/isolated contact — keeping the copy vendor-neutral (no product
 names, per the vendor-name guardrail). Shipped in
 fix/4-20ma-dc-loop-power (same file).
 
-### 44. Hydronic loop builder violates the affinity laws at reduced pump speed
+### 44. Hydronic loop builder violates the affinity laws at reduced pump speed *(addressed 2026-07-14)*
 
 **Location:** simulators/hydronic-loop-builder.html (the "How it works"
 formula) + the pump-curve model in scripts/hydronic-engine.js
@@ -2515,7 +2515,7 @@ agreement (details in codebase-issues #154). Four content-accuracy items
 surfaced and were fixed (#45-#48); two cross-widget cosmetics were logged
 to codebase-issues rather than fixed inline.
 
-### 45. pid-basics "P only" sim caption promises ringing the widget can't produce
+### 45. pid-basics "P only" sim caption promises ringing the widget can't produce *(addressed 2026-07-14)*
 
 **Location:** education/pid-basics.html (Sim 1 caption) vs. the reachable
 behavior of scripts/pid-engine.js on the fast/med/slow presets. **Lens:**
@@ -2541,7 +2541,7 @@ spec (`pure P cannot ring on the Sim 1 loops but rings on the dead-time
 loop`) pinning 0 overshoot on fast/med/slow at Kc ≤ 20 and > 5 % on vhigh.
 PR: issue-154/sim-tool-physics-audit.
 
-### 46. superheat-subcooling worked example claims the P-T tool "reads the same 10 °F back" — it interpolates to 10.2 / 9.6
+### 46. superheat-subcooling worked example claims the P-T tool "reads the same 10 °F back" — it interpolates to 10.2 / 9.6 *(addressed 2026-07-14)*
 
 **Location:** education/superheat-subcooling.html (worked example) vs.
 tools/refrigerant-pt.html + scripts/refrigerant-data.js. **Lens:** content
@@ -2565,7 +2565,7 @@ refined. (metering-devices-txv-eev.html uses the same 10 °F as a narrative
 anchor for the TXV-holds-superheat physics but makes no claim about tool
 output, so it was left unchanged.) PR: issue-154/sim-tool-physics-audit.
 
-### 47. R-454B's ~2 °F glide is labeled "negligible" by the P-T tool, contradicting the lesson that teaches it as a glide blend
+### 47. R-454B's ~2 °F glide is labeled "negligible" by the P-T tool, contradicting the lesson that teaches it as a glide blend *(addressed 2026-07-14)*
 
 **Location:** tools/refrigerant-pt.html (P-T status pill) vs.
 education/superheat-subcooling.html (blend glide). **Lens:** content
@@ -2590,7 +2590,7 @@ cleanly between R-404A (≤ 1.1 °F computed) and R-454B (≥ 1.8 °F). Added a
 data-integrity spec pinning each refrigerant into its tier. PR:
 issue-154/sim-tool-physics-audit.
 
-### 48. VAV coil-airflow widget's CFM/ton verdict disagrees with the equipment-airflow tool it links to
+### 48. VAV coil-airflow widget's CFM/ton verdict disagrees with the equipment-airflow tool it links to *(addressed 2026-07-14)*
 
 **Location:** education/vav-systems.html (coil-airflow widget) vs.
 tools/equipment-airflow.html (owner-blessed 350/400/500 bands). **Lens:**
@@ -2629,7 +2629,7 @@ the follow-up PR) and **one accepted as-is** (L2, a known/disclosed limitation).
 Full evidence, sources, and suggested fixes live in the triage doc:
 `docs/audits/2026-07-fresh-accuracy/triage.md`.
 
-### 49. R-32 mislabeled as a zeotropic glide blend in the superheat lesson
+### 49. R-32 mislabeled as a zeotropic glide blend in the superheat lesson *(addressed 2026-07-14)*
 
 **Location:** education/superheat-subcooling.html (~line 154, the glide
 footnote). **Lens:** content (refrigeration physics). **Verification status:
@@ -2651,7 +2651,7 @@ zeotropic list (R-407C and R-454B belong — R-454B's ~2 °F glide is real per
 and R-454B (R-454B's ~2 °F glide is real). PR: content/fresh-audit-cleancut-fixes.
 *(resolved 2026-07-14)*
 
-### 50. voltage-drop.html cites a false resistance-table source and temperature
+### 50. voltage-drop.html cites a false resistance-table source and temperature *(addressed 2026-07-14)*
 
 **Location:** tools/voltage-drop.html (line 158 rendered note, line 199 JS
 comment, line 200 `OHMS_PER_KFT`). **Lens:** content (electrical citation).
@@ -2671,7 +2671,7 @@ at 20 °C (standard AWG values)" and dropped the false NEC Ch. 9 Table 8
 attribution; the Ω/kft constant is unchanged. PR: content/fresh-audit-cleancut-fixes.
 *(resolved 2026-07-14)*
 
-### 51. airside-load.html Denver altitude figure understates the load over-read
+### 51. airside-load.html Denver altitude figure understates the load over-read *(addressed 2026-07-14)*
 
 **Location:** tools/airside-load.html (line 240, the "where 1.08 / 0.68 / 4.5
 come from" note). **Lens:** content (physics figure). **Verification status:
@@ -2690,7 +2690,7 @@ over-read verified against `pressFromAltitude` at 5,280 ft); kept the 3 %/1,000 
 rule. PR: content/fresh-audit-cleancut-fixes.
 *(resolved 2026-07-14)*
 
-### 52. bacnetUnits.js reactive-energy names use bacnet-stack word order
+### 52. bacnetUnits.js reactive-energy names use bacnet-stack word order *(deferred 2026-07-14)*
 
 **Location:** html/_data/bacnetUnits.js (lines 225–227 ids 203/204/205;
 264–266 ids 242/243/244); surfaced on tools/bacnet-units.html. **Lens:**
@@ -2713,7 +2713,7 @@ genuine 50/50, not worth churning the display strings; revisit only if a
 canonical-ASHRAE naming pass is done.
 *(accepted — known limitation, 2026-07-14)*
 
-### 53. modbus-functions.html exception-code table omits code 07 (NAK)
+### 53. modbus-functions.html exception-code table omits code 07 (NAK) *(addressed 2026-07-14)*
 
 **Location:** tools/modbus-functions.html (Exception-codes tab, lines
 148–159). **Lens:** content (Modbus completeness). **Verification status:
@@ -2732,7 +2732,7 @@ order (between 06 and 08); left the register-viewer's FC-only subset alone.
 PR: content/fresh-audit-cleancut-fixes.
 *(resolved 2026-07-14)*
 
-### 54. bacnet-basics.html MS/TP framing diagram collapses two CRCs into one
+### 54. bacnet-basics.html MS/TP framing diagram collapses two CRCs into one *(addressed 2026-07-14)*
 
 **Location:** education/bacnet-basics.html (MS/TP-vs-BACnet/IP framing SVG,
 ~lines 570–640, and its `<desc>` alt-text ~line 573). **Lens:** content
@@ -2753,7 +2753,7 @@ to cover both and the `<desc>` rewritten to enumerate the header and data CRCs
 and their positions. PR: content/fresh-audit-l4-l5-l2.
 *(resolved 2026-07-14)*
 
-### 55. bacnet-services.html buckets AtomicRead/WriteFile under "Data Sharing"
+### 55. bacnet-services.html buckets AtomicRead/WriteFile under "Data Sharing" *(addressed 2026-07-14)*
 
 **Location:** education/bacnet-services.html (service-families table, ~line
 114). **Lens:** content (BACnet service taxonomy). **Verification status:
@@ -2771,7 +2771,7 @@ is wrong. **Suggested direction:** relabel that row's area "File Access" (or
 PR: content/fresh-audit-l4-l5-l2.
 *(resolved 2026-07-14)*
 
-### 56. CDAB byte-order nickname inconsistent across tool, lesson, and quiz
+### 56. CDAB byte-order nickname inconsistent across tool, lesson, and quiz *(addressed 2026-07-14)*
 
 **Location:** tools/modbus-register-viewer.html (~line 181) +
 education/modbus-decoding.html (~line 292) call CDAB the "Modicon byte-swap";
@@ -2842,7 +2842,7 @@ Full evidence record, the seven refuted findings with their reasoning,
 the metric-sweep coverage note, and the guard as built:
 `docs/audits/2026-08-accuracy/triage.md`.
 
-### 57. comparators-and-deadband.html deadband swing contradicts its own painted operands
+### 57. comparators-and-deadband.html deadband swing contradicts its own painted operands *(addressed 2026-08-07)*
 
 **Location:** education/comparators-and-deadband.html line 419 (the "One
 number to be careful with" paragraph). Also logged as codebase-issues
@@ -2870,7 +2870,7 @@ Note the correct resolution of #232 is **two spans, not one** — see #58,
 which #232 does not name. PR: docs/audit-2026-08-accuracy.
 *(resolved 2026-08-07)*
 
-### 58. comparators-and-deadband.html typical-band range keeps the superseded conversion
+### 58. comparators-and-deadband.html typical-band range keeps the superseded conversion *(addressed 2026-08-07)*
 
 **Location:** education/comparators-and-deadband.html line 443 ("How
 wide should the band be?"). **Lens:** engineer (on-page consistency).
@@ -2890,7 +2890,7 @@ value. Triage: L1.
 **Resolved:** changed to `0.6–1.2 °C`. PR: docs/audit-2026-08-accuracy.
 *(resolved 2026-08-07)*
 
-### 59. comparators-and-deadband quiz bank carries the same metric defect in two questions
+### 59. comparators-and-deadband quiz bank carries the same metric defect in two questions *(addressed 2026-08-07)*
 
 **Location:** html/_data/quizzes/comparators-and-deadband.js —
 `cdb-band-edge-set-point` (prompt line 84, explain line 88) and
@@ -2913,7 +2913,7 @@ low; confidence high. Triage: L2.
 consistency with #58. PR: docs/audit-2026-08-accuracy.
 *(resolved 2026-08-07)*
 
-### 60. timers-and-delays.html calls its own eight-block sheet "seven blocks"
+### 60. timers-and-delays.html calls its own eight-block sheet "seven blocks" *(addressed 2026-08-07)*
 
 **Location:** education/timers-and-delays.html line 500 (the "Race the
 window yourself" capstone). **Lens:** engineer (prose-vs-artifact
@@ -2930,7 +2930,7 @@ they will count eight. Severity low; confidence high. Triage: L3.
 **Resolved:** "seven blocks" → "eight blocks".
 PR: docs/audit-2026-08-accuracy. *(resolved 2026-08-07)*
 
-### 61. setpoint-math-reset quiz gotcha snippet's ADD output doesn't equal its own operands
+### 61. setpoint-math-reset quiz gotcha snippet's ADD output doesn't equal its own operands *(addressed 2026-08-07)*
 
 **Location:** html/_data/quizzes/setpoint-math-reset.js,
 `smr-flipped-slope` — the `snippet` (line 131) and `explain` (line 138).
@@ -2949,7 +2949,7 @@ medium. Severity low; confidence high. Triage: L4.
 "reads 237" → "= 236.7" / "reads 236.7".
 PR: docs/audit-2026-08-accuracy. *(resolved 2026-08-07)*
 
-### 62. dedicated-outdoor-air.html capstone claims to mark five control points; it marks one
+### 62. dedicated-outdoor-air.html capstone claims to mark five control points; it marks one *(addressed 2026-08-07)*
 
 **Location:** education/dedicated-outdoor-air.html lines 313-317 (the
 claim) and the `doas-d3` SVG at lines 320-408. **Lens:** engineer +
@@ -3050,7 +3050,7 @@ further than four bolted-on markers:
 PR: docs/audit-2026-08-accuracy. *(resolved 2026-08-07; exhaust-fan
 follow-on 2026-08-07; placement + ink rulings 2026-08-08)*
 
-### 63. comparators-and-deadband.html capstone says the heating example differs only in two wires
+### 63. comparators-and-deadband.html capstone says the heating example differs only in two wires *(addressed 2026-08-07)*
 
 **Location:** education/comparators-and-deadband.html line 496 ("Walk
 the band yourself"). **Lens:** newcomer (an instruction that falsifies
@@ -3077,7 +3077,7 @@ S and R have traded places. (Its constants and block names read for
 heating; the shape underneath is identical.)"
 PR: docs/audit-2026-08-accuracy. *(resolved 2026-08-07)*
 
-### 64. reading-a-wiresheet.html says "every wire on it is grey" of a branch with a green wire
+### 64. reading-a-wiresheet.html says "every wire on it is grey" of a branch with a green wire *(deferred 2026-08-07)*
 
 **Location:** education/reading-a-wiresheet.html lines 492-493 (prose)
 and line 257 (the `raw-d1-desc` alt text). **Lens:** engineer +

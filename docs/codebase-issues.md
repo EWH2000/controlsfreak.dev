@@ -5188,7 +5188,7 @@ staging-sequencer halves stay **latent-only** — still fixed-px, still
 no fullscreen mode, so no live bug; apply the same pattern if either
 ever gains one. PR: issue-167/psychro-canvas-type.
 
-### 168. Form-label scan hierarchy: shared `label, .field-label` rule dims the scan targets *(2026-07-17 — STANDING ANSWER 2026-07-20: owner ruled working as designed; marker trued 2026-08-20, addendum below)*
+### 168. Form-label scan hierarchy: shared `label, .field-label` rule dims the scan targets *(2026-07-17 — STANDING ANSWER 2026-07-20: owner ruled working as designed; marker trued 2026-08-20, addendum below)* *(addressed 2026-07-20)*
 
 The shared rule in `styles.css` sets every form label to 0.7rem
 `--text-dim`, so on control-dense pages the captions you scan FOR are
@@ -7511,7 +7511,7 @@ Three things were deliberately **not** done, each with a revisit trigger:
 
 **(c) No shared idle-gate helper.** Four hand-rolled gates now exist, with four genuinely different predicates: `flow-engine.js:285-303` (rAF, IO-visibility + pending pulses), `fbe-editor.js:613-772` (setInterval, `document.hidden` + a desktop media query + `visibilitychange`), `simulators/controller-wiring.html:1146-1169` (setInterval drift, `reduceMotion` + `visibilitychange`), and now this one (rAF, reduced-motion + fan state + tab pane + `document.hidden`). The house rule is extract on the second *identical* instance; these are not identical, and a new file under `html/scripts/` would be a shared script — making the version bump cache-bust-load-bearing and obliging a site-wide sweep, disproportionate for one hidden page. A `// house idiom: flow-engine.js:285-303 (#113)` pointer is in the code instead. *Revisit trigger:* a fifth consumer, or any of the four drifting from its documented predicate.
 
-### 200. Idle animation cost regresses silently — nothing measured it until now *(instrumented 2026-07-24)*
+### 200. Idle animation cost regresses silently — nothing measured it until now *(instrumented 2026-07-24)* *(addressed 2026-07-24)*
 
 *Severity: medium · Category: perf · Confidence: high* — `tests/perf-profile.mjs`
 
@@ -10815,7 +10815,7 @@ saturation temperature for the pressure. Every current caller already checks
 1100 °F before this round added `HW_LEAVE_MAX`; the AHU no longer reaches it,
 but the engine is shared and the next caller might.
 
-### 239. The AHU mixing box drops `mixStreams`' fog condensate, so its moisture bookkeeping loses water in the cold-and-open corner *(noticed 2026-07-29, the #236 fix round)*
+### 239. The AHU mixing box drops `mixStreams`' fog condensate, so its moisture bookkeeping loses water in the cold-and-open corner *(noticed 2026-07-29, the #236 fix round)* *(deferred 2026-07-29)*
 
 With #236 resolved, `Psychro.mixStreams` now returns a `condensate` term
 alongside a saturated fogging state. `html/scripts/ddcw-ahu-unit.js` reads
@@ -11748,7 +11748,7 @@ is a **per-page decision** and explains why both current pages said no. The
 keydown binding stays — it is inert on a node that never takes focus, and it is
 what a future graphic that drops `role="img"` would use.
 
-### 252. Chromium does not prune a `role="img"` subtree, so #227(b)'s stated mechanism does not hold in the engine the site is tested in *(noticed 2026-07-30, AHU page review — measurement only, no action taken)*
+### 252. Chromium does not prune a `role="img"` subtree, so #227(b)'s stated mechanism does not hold in the engine the site is tested in *(noticed 2026-07-30, AHU page review — measurement only, no action taken)* *(addressed 2026-07-30)*
 
 `#227(b)`'s ruling rests on a mechanism claim: *"`img` is what currently prunes
 the subtree, so swapping un-hides all 19 `<text>` nodes."* Measured on the live
@@ -11986,7 +11986,7 @@ ruling — `Δ` / `≈` / `→` still come from system fallbacks everywhere they
 appear in prose, and the comparator `label`s still do in the palette. Cosmetic
 in every location.
 
-### 256. The wiresheet inspector's form controls sit outside the TOUCH-TARGET FLOOR block *(noticed 2026-07-31, FBE block-name lane — RULED 2026-08-01: written exemption, no code change; this entry is the record)*
+### 256. The wiresheet inspector's form controls sit outside the TOUCH-TARGET FLOOR block *(noticed 2026-07-31, FBE block-name lane — RULED 2026-08-01: written exemption, no code change; this entry is the record)* *(addressed 2026-08-01)*
 
 `styles.css`'s consolidated `TOUCH-TARGET FLOOR` block floors the form-control
 family at 44px under `@media (hover: none)`: `.field input`, `.field select`,
@@ -12025,7 +12025,7 @@ changes**: drop the `(hover: none) and (pointer: coarse)` arm, or relax the
 width arm, and the inspector becomes reachable on a touch-primary device, at
 which point the one-line addition to the form-control family is the fix.
 
-### 257. The AHU's chevron painter picks its ink in JS, and one of the five is a `-fill` token *(noticed 2026-07-31, PR #457's depiction review — raised as its fourth depiction guess and never logged at the time — **BLESSED 2026-08-01**, owner ruling: mechanism and depiction both correct, the mapping flagged for a future pass)*
+### 257. The AHU's chevron painter picks its ink in JS, and one of the five is a `-fill` token *(noticed 2026-07-31, PR #457's depiction review — raised as its fourth depiction guess and never logged at the time — **BLESSED 2026-08-01**, owner ruling: mechanism and depiction both correct, the mapping flagged for a future pass)* *(addressed 2026-08-01)*
 
 `html/scripts/ddcw-ahu-unit.js:1887` — `strokeChevron(el, band)` maps the band a
 chevron run is carrying to an ink by writing the token straight onto the
@@ -12347,7 +12347,7 @@ an AA failure: 2.5.5 is Level AAA, and the site's stated floor
 > height-only and the per-selector width audit has NOT been done. This
 > pass deliberately did not start it.
 
-### 263. The ~120-line param-rail wiring block is duplicated between the two unit scripts *(noticed 2026-08-03, PR #472's lane report — duplicated BY MANDATE, logged for the graduation trigger)*
+### 263. The ~120-line param-rail wiring block is duplicated between the two unit scripts *(noticed 2026-08-03, PR #472's lane report — duplicated BY MANDATE, logged for the graduation trigger)* *(deferred 2026-08-03)*
 
 `html/scripts/ddcw-ahu-unit.js:1915-2044` and
 `html/scripts/ddcw-fcu-unit.js:1243-1372` carry the same rail
@@ -12811,7 +12811,7 @@ glosses are **16**, not 17, and after the fold-widening restructure
 (PR #520) they sit at `html/simulators/ddc-workbench.html:2720-2783`,
 not `:2440-2503`. Counted and located at fix time.
 
-### 270. FCU collision-detector baseline: three em-box grazes against the cabinet outline are visually clean *(noticed 2026-08-03, PR #474's lane report — RECORDED AS BASELINE, no action)*
+### 270. FCU collision-detector baseline: three em-box grazes against the cabinet outline are visually clean *(noticed 2026-08-03, PR #474's lane report — RECORDED AS BASELINE, no action)* *(addressed 2026-08-03)*
 
 The browser-side text-bbox-versus-stroke detector reports three
 overlaps on the FCU graphic that are **false positives**, and they are
@@ -13332,7 +13332,7 @@ pass. Both rows were falsified before being trusted — with the call
 stubbed out each fails on the literal defect string,
 `Received: "Cool SP accepts 65.0–85.0 °F — held at the limit."`
 
-### 277. The display-units guard cannot see a display local hidden inside a call argument *(noticed 2026-08-09, the #229 planning round — guard-coverage note, no shipped defect)*
+### 277. The display-units guard cannot see a display local hidden inside a call argument *(noticed 2026-08-09, the #229 planning round — guard-coverage note, no shipped defect)* *(addressed 2026-08-09)*
 
 `tests/ddcw-display-units.spec.js`'s fixpoint derivation marks every
 name that carries a display value and fails any comparison with one
@@ -13847,7 +13847,7 @@ entry alleged could not ship unnoticed today. `styles.css`'s LED
 comment, which repeated the same false claim, was corrected in the
 same PR.
 
-### 290. Simulator prose is set smaller AND dimmer than lesson prose — squint territory *(reported 2026-08-11 by the owner — site-wide legibility, DESIGN CALL; survey measured; treatment ruled 2026-08-12 — both levers; **pass shipped 2026-08-12 · PR #530**)*
+### 290. Simulator prose is set smaller AND dimmer than lesson prose — squint territory *(reported 2026-08-11 by the owner — site-wide legibility, DESIGN CALL; survey measured; treatment ruled 2026-08-12 — both levers; **pass shipped 2026-08-12 · PR #530**)* *(addressed 2026-08-12)*
 
 Owner report, verbatim intent: a lot of the sim prose is almost too
 dark to read, and very small — the two combined make you squint.
@@ -14455,7 +14455,7 @@ with the pipe's and cut the failed-list out of the visible window. A
 test run's exit code and summary must come from the runner itself —
 redirect to a file, never pipe. (Tooling recipe updated the same day.)
 
-### 301. A mouse click on an edge-clipped gloss trigger can dismiss the panel it opens *(noticed 2026-08-12, the #300 diagnosis — page-side residual, DESIGN CALL, log-don't-fix)*
+### 301. A mouse click on an edge-clipped gloss trigger can dismiss the panel it opens *(noticed 2026-08-12, the #300 diagnosis — page-side residual, DESIGN CALL, log-don't-fix)* *(deferred 2026-08-12)*
 
 The narrow real-user shape of #300's mechanism 1, on the live page: a
 trigger sits partially clipped at the viewport's bottom edge, the
@@ -14743,7 +14743,7 @@ mechanism (`:nth-child(... of .tool-card)` has the same type-blind
 problem; a real fix probably wants explicit per-page classes or
 accepting the quirk in writing). Log-don't-fix.
 
-### 310. `#ddcw-statusbar` overflows its own box by 15px at a 320px viewport *(noticed 2026-08-12, the #262 lane — below every tested width, LOW)*
+### 310. `#ddcw-statusbar` overflows its own box by 15px at a 320px viewport *(noticed 2026-08-12, the #262 lane — below every tested width, LOW)* *(deferred 2026-08-12)*
 
 Both workbench pages, measured under touch emulation: at a 320px
 viewport the statusbar's content runs 15px past its box — internal
