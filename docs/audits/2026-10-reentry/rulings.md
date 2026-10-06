@@ -1,6 +1,6 @@
 # Decision-sitting rulings — 2026-10-05
 
-> **Disposition: the durable record of the owner's 2026-10-05 decision sitting (a record).** Sixteen agenda items, all ruled the same day, in the order they were taken. Each section carries the owner's verbatim words, the facts measured before the ruling, what ships and who merges it, and the marker now on the ledger or friction entry. **Supersedes** the perishable session-scratchpad list the rulings were first captured in — that file is not durable and must not be cited. The *live* state of each item is its ledger heading and `npm run status`; where this file and those disagree, they are current and this is history. Companion to `state-map.md` (the map these items came from — its §2 numbers are given per section) and `pr602-assessment.md`.
+> **Disposition: the durable record of the owner's 2026-10-05 decision sitting (a record).** Sixteen agenda items, all ruled the same day, in the order they were taken — plus item 17, the arc pick, ruled that evening. Each section carries the owner's verbatim words, the facts measured before the ruling, what ships and who merges it, and the marker now on the ledger or friction entry. **Supersedes** the perishable session-scratchpad list the rulings were first captured in — that file is not durable and must not be cited. The *live* state of each item is its ledger heading and `npm run status`; where this file and those disagree, they are current and this is history. Companion to `state-map.md` (the map these items came from — its §2 numbers are given per section) and `pr602-assessment.md`.
 >
 > **Marker grammar used below.** An item whose fix still needs a code or content PR carries `*(ruled 2026-10-05 — <verdict>; fix pending)*` at the end of its heading; `npm run status` counts it OPEN, sub-state *ruled* (never decision-class), and the `*(addressed …)*` marker appended when the fix merges closes it. An item closed with no code carries `*(addressed …)*` or `*(deferred …)*` directly.
 
@@ -131,6 +131,60 @@
 **Ruling:** plant a friction pointer now; one small content lane after the mechanical cleanup (absorbed by the arc if it picks the freeze lesson). Natural homes: P1/P4 → `tools/coil-freeze-risk.html` or the coil-freeze-protection lesson; P5 → `tools/economizer-ratio.html`'s reference section, carrying T7.
 **Ships:** the pointer (this PR, docs); the lane later → **owner merges**.
 **Marker:** new friction entry *Warm-climate freeze-protection copy — P1 / P4 / P5 blessed 2026-08-09, unshipped* `*(pointer planted 2026-10-05)*`, directly after the Coil Freeze Risk Checker entry.
+
+## 17. The next content arc *(state-map §2 item 3; owner ruling 4 had left it open)*
+
+**Owner:** *"Freeze season plus quizzes, your recommendation."* Then, on the night plan: *"You have my blessing to do everything listed, good plan."*
+**Presented:** three shapes — **freeze season plus quizzes** (recommended), **case-file spine first**, **finish the glossary (§7.2) first**. The recommendation moved from the plan file's earlier "F4 + freeze lesson + #228" because the owner's BACnet pages carry the traffic, the season is about to hand the freeze tool its busiest months, and he came back cost-conscious.
+**Ruling — the arc, in order:**
+1. **The coil-freeze-protection lesson first.** Its `[future:]` marker exists, the warm-climate research record (`docs/warm-climate-freeze-protection.md`) is done and verified, the tool's protection-stack row is its outline, it absorbs the mixed-air mass-vs-volume beat (item 15) and the P1 / P4 / P5 copy (item 16), and it is October with freezestat season weeks away.
+2. **Quiz-growth wave 2 alongside** — one bank per PR, Opus drafts, Fable refutes, owner merges. The first three the same night: air-handlers, economizers, pid-basics (no BACnet bank was under target).
+3. **#228 engine standardization** as the background tax lane — design note first.
+4. **The F4 case-file content type** as ONE mockup lane at the end of the arc; stories owner-supplied only after he has seen a shape.
+5. **The glossary §7.2 quiz-bank gloss component AFTER that** — real but marginal and unmeasured value, and an engine change on 42 live practice pages.
+6. **The remaining dev-arc-brief items** — A1, A4, C4, D2, D4, E2, the §0 N2 gap and the LON go/no-go (C2 / C3) — to a short sitting of their own, with the friction file's banked analysis as input.
+
+**Ships / merges:** this record and its markers (docs → merge on green); every arc lane on its own PR under the usual merge authority.
+**Markers:** state-map ruling 4 `⟨2026-10-05 evening: picked — freeze season + quizzes; rulings.md item 17⟩`; friction *dev-arc brief* heading `*(re-triaged 2026-10-05 — …)*` plus a dated closing paragraph; friction *Quiz expansion* heading `*(wave 2 opened 2026-10-05 — …)*`; `glossary-arc.md`'s three "§7.2 lane next" lines `⟨2026-10-05: sequenced AFTER the freeze-season + quizzes arc — rulings.md item 17⟩`.
+
+### Night 1 execution (2026-10-05 → 06)
+
+Read from `gh pr list` while this record was written; the arc lanes were still opening, so this lists what existed at that moment — the live state is GitHub.
+
+**Merged (since 2026-10-05):**
+- #603 docs: add heading status markers so the ledgers read by machine
+- #604 docs: record the 2026-10-05 re-entry state map and the PR #602 ruling
+- #605 chore: add npm run status — a report-only project-state readout
+- #606 docs: true up six ledger headings and record the two Cloudflare rulings
+- #611 docs: record the 2026-10-05 decision-sitting rulings in the ledgers
+- #614 tests: force-open every details in the contrast sweep (#316)
+- #628 tests: true up the gloss spec header's guard-arm list (#313)
+- #629 docs: true up re-entry drift in friction, air-side and name docs
+
+**Open — owner merges** (per each body's `## Merge authority` line):
+- #607 chore: bump eleventy 3.1.6, playwright 1.63, wrangler 4.147 *(no Merge-authority section; the Summary says "Worker toolchain → owner merges")*
+- #608 quiz: grow pid-basics bank 10 → 15 — arc lane 2
+- #609 quiz: grow air-handlers bank 10 → 15 — arc lane 2
+- #610 quiz: grow economizers bank 10 → 15 — arc lane 2
+- #612 ddcw: graduate the forced-sensor ring to .ddcw-forced-mark (#273)
+- #613 seo: inline lesson author, drop publisher, guides crumb (#320, #321)
+- #615 bacnet: soften the Annex J attribution and the Max_Master cost (content-audit #88, #89)
+- #616 pid-basics: name controller action in the P worked example
+- #617 seo: state the real purpose of the FAQPage JSON-LD (#317)
+- #618 ddcw-ahu: hedge the low-charge verdict to the FCU wording (#323)
+- #619 psychrometric: refuse buildState points at or above boiling (#238)
+- #620 education: coil freeze protection lesson — arc lane 1
+- #621 balancing: say proportional, not floating, for the PICV actuator
+- #622 tools: narrow the metric follow-up clauses in two scope notes
+- #623 print: stack every tab pane on paper, not just the active one (#286)
+- #624 styles: drop the dead .widget-try anchor rule (#306)
+- #625 quiz: anchor three bacnet subheads and retarget their deep links (#314)
+- #626 hydronic: unscale the pump-curve Jacobian slope and fix its comments (#326)
+- #627 styles: true up the tool-card stagger comment (#309)
+- #630 privacy: name every localStorage key and its lifetime (#327)
+- #631 docs: #228 engine-standardization design note — arc lane 3 *(docs only, but a proposal: "owner reads before merge")*
+
+**Open — merge on green:** none at the time of reading, other than this record's own PR.
 
 ---
 
