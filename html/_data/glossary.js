@@ -1307,7 +1307,10 @@ module.exports = {
     // beat + manual-reset teaching), boolean-logic-latches (the
     // device's trip/clear behaviour is the lesson's central motivating
     // case). Inventory 2026-08-15: 11 markable across 8 pages after
-    // the name-reference skip.
+    // the name-reference skip. coil-freeze-protection joined the
+    // owners 2026-10-05: its protection-stack beat teaches the device
+    // end to end (element, wiring, setpoint band, manual reset), so a
+    // mark there would shadow the lesson's own teaching.
     'freezestat': {
         term: 'freezestat',
         def: 'The hardwired coil-protection safety — a stat whose long '
@@ -1319,6 +1322,7 @@ module.exports = {
            + 'out why.',
         owners: [
             '/tools/coil-freeze-risk.html',
+            '/education/coil-freeze-protection.html',
             '/education/start-stop-commands.html',
             '/education/boolean-logic-latches.html',
         ],
@@ -2103,7 +2107,10 @@ module.exports = {
     // freeze stat, not this override. Owners: economizers (:398
     // defines the override in place) + coil-freeze-risk. Expected ~2
     // marks (economizer-ratio:239, minimum-outdoor-air:290).
-    // ≤2-mark-basket member.
+    // ≤2-mark-basket member. coil-freeze-protection joined the owners
+    // 2026-10-05: its protection-stack beat places the override above
+    // the hardware stat and names what defeats it, a teaching beat the
+    // panel would shadow.
     'mixed-air-low-limit': {
         term: 'mixed-air low-limit override',
         def: 'The economizer\'s freeze floor — an override that drives '
@@ -2117,6 +2124,7 @@ module.exports = {
         owners: [
             '/education/economizers.html',
             '/tools/coil-freeze-risk.html',
+            '/education/coil-freeze-protection.html',
         ],
     },
 };

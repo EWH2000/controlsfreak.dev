@@ -52,7 +52,7 @@ module.exports = [
             { id: 'c', text: 'Because code requires all dampers in a unit to share one signal.' },
             { id: 'd', text: 'To keep the filter loading evenly across its face.' }
         ],
-        explain: 'The three dampers are three faces of a single decision. More outdoor air in means less return air reused — and that displaced air has to exit the building, which is the relief damper\'s job. One signal drives the set so the recipe changes while total airflow through the unit stays roughly constant. What happens when the relief half of that bargain fails is the building-pressure story — its own page in this chapter.',
+        explain: 'The three dampers are three faces of a single decision. More outdoor air in means less return air reused — and that displaced air has to exit the building, which is the relief damper\'s job. One signal drives the set so the recipe changes while total airflow through the unit stays roughly constant. What happens when the relief half of that bargain fails is the building-pressure story, next in the chapter.',
         learnMore: { href: '/education/economizers.html#damper-assembly', label: 'Economizers — One Signal, Three Dampers' },
         tags: ['forced-air', 'economizer', 'dampers']
     },

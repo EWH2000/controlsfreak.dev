@@ -1946,11 +1946,12 @@ chips went HVAC 7→8, All 25→26). v3.37.0. Design notes:
   says "roughly in order"), and the freeze-band full-flow text now
   splits HW (preheat-coil condition, warn) from CHW (no heat to
   bring — error).
-- `[future: education/coil-freeze-protection.html]` — the lesson this
-  tool will eventually pair with; the protection-stack reference row
-  is its outline.
+- `[future: education/coil-freeze-protection.html]` *(shipped
+  2026-10-05, PR #620)* — the lesson this tool pairs with; the
+  protection-stack reference row was its outline, and now carries a
+  one-sentence pointer back to the lesson's mass-vs-volume beat.
 
-### Warm-climate freeze-protection copy — P1 / P4 / P5 blessed 2026-08-09, unshipped *(pointer planted 2026-10-05)*
+### Warm-climate freeze-protection copy — P1 / P4 / P5 blessed 2026-08-09 *(pointer planted 2026-10-05)* *(shipped in the lesson 2026-10-05, PR #620)*
 
 The research record is **`docs/warm-climate-freeze-protection.md`** —
 §5 holds the prose proposals; 8 claims, 8 survived adversarial
@@ -1984,6 +1985,22 @@ calls all around."* This entry is the pointer. The lane is **one small
 content lane after the mechanical cleanup**, absorbed by the arc if the
 arc picks the coil-freeze-protection lesson. Live pages → owner merges
 the lane; this heading takes a `*(shipped …)*` note when it lands.
+
+**Shipped in the lesson (2026-10-05, PR #620).** The arc picked the
+lesson, so all three blessed directions landed in
+`education/coil-freeze-protection.html` rather than on the tool pages:
+P1 closes the *What Actually Freezes* section (as the site's own
+framing, no citation — §4), P4 is the *Exposure Has Three Terms*
+section (Atlanta 100 %-OA vs Boston minimum-OA, the DX rooftop with
+no water coil to burst), and P5 opens *Why the Sequence Looks
+Different by Climate* with the T7 caveat spelled out in its own
+paragraph (warm end only; the 45 °F leaving-air line). **P2 and P3
+shipped too, as pattern-reading** — one paragraph of "the answer
+lives in this job's specification" (UFGS unconditional vs G36
+optional vs owner-standard silence) plus Texas 2021 as the
+silence-is-not-a-rule case — never as a rule and never as "southern
+jobs omit the stat". `tools/economizer-ratio.html` did **not** take a
+P5 twin; the lesson is the one home.
 
 ### Equipment Airflow Check *(shipped 2026-07-11)*
 
@@ -6514,7 +6531,7 @@ their own, with the banked analysis above as its input — record:
 
 ---
 
-### Mixed air, mass basis vs volume basis *(measured 2026-07-28 — owner ruled the sim's basis; the teaching beat is unbuilt)* *(ruled 2026-10-05 — reference row on coil-freeze-risk.html; small content lane pending)*
+### Mixed air, mass basis vs volume basis *(measured 2026-07-28 — owner ruled the sim's basis)* *(ruled 2026-10-05 — reference row on coil-freeze-risk.html)* *(shipped in the lesson 2026-10-05, PR #620 — the tool row shrank to a pointer)*
 
 The AHU's mixing box weights **volumetrically** — `%OA × OAT + %RA × RAT`,
 the arithmetic a tech actually does and the form `coil-freeze-risk.html`
@@ -6580,6 +6597,21 @@ mechanical cleanup; live tool page carrying a damage-stakes note →
 owner merges. **If the arc picks the coil-freeze-protection lesson, the
 beat moves there and this row shrinks to a pointer.** This heading
 takes a `*(shipped …)*` note when it lands.
+
+**Shipped in the lesson (2026-10-05, PR #620).** The arc picked the
+lesson, so the beat is the *Why the Hand Math Runs Warm on a Cold Day*
+section of `education/coil-freeze-protection.html`, and the
+coil-freeze-risk protection-stack row carries a one-sentence pointer
+to it instead of a section of its own. Every figure was re-derived
+from `Psychro.mixStreams` at authoring time, as ruled, and reproduced
+this note to the decimal: v 11.594 / 13.679 ft³/lb (18 % spread),
+22.78 % by mass, 58.132 °F mass-weighted against 60.0 linear, and the
+60.195 °F cp-weighted aside. Printed as 22.8 %, 58.1 vs 60.0 °F, about
+1.9 °F (1.1 °C — the delta from the displayed metric operands 15.6 and
+14.5). The lesson states the direction (a volume share understates
+the outdoor air by mass, so the hand number reads warm) and links
+`tools/air-mixing.html` for the mass basis. #228 (the inline MAT
+forms) is unchanged by this.
 
 ---
 
