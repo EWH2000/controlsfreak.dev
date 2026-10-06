@@ -14922,7 +14922,7 @@ component by its own separate rationale. Render-identical, proven
 statically (disjoint selectors, no order interplay) and by live
 computed style on both links.
 
-### 309. The `.tool-card` fadeUp stagger's comment misreads its own selector — `:nth-of-type` counts elements, not classes *(noticed 2026-08-12, the #178 lane — cosmetic, site-wide comment/behavior mismatch)*
+### 309. The `.tool-card` fadeUp stagger's comment misreads its own selector — `:nth-of-type` counts elements, not classes *(noticed 2026-08-12, the #178 lane — cosmetic, site-wide comment/behavior mismatch)* *(addressed 2026-10-05 · PR #627)*
 
 `styles.css`'s entrance-stagger block (`.tool-card:nth-of-type(1)` …
 `(4)` with stepped `animation-delay`s) carries a comment claiming
@@ -14940,6 +14940,22 @@ the comment to describe reality, or key the stagger on a class-aware
 mechanism (`:nth-child(... of .tool-card)` has the same type-blind
 problem; a real fix probably wants explicit per-page classes or
 accepting the quirk in writing). Log-don't-fix.
+
+**Resolution (2026-10-05, PR #627).** Took option 1, fixing the comment,
+per the 2026-10-05 ruling that accepts the quirk in writing.
+`html/styles.css`: the comment above `.tool-card:nth-of-type(1…4)` now
+says that `:nth-of-type` counts DIV siblings of any class, that
+interleaved `div.section-header`s shift which cards match, and that the
+stagger is therefore approximate and cosmetic (a 0.5s fade). The
+selector and the four rules are unchanged. The old comment's "4 on
+pid-basics" sizing note was dropped along with the false claim, because
+once indices count every div it no longer measures anything. No
+behaviour change, so no new measurement: build green, and the
+pid-basics smoke load check passes. The entry's core premise held
+(`:nth-of-type` counts div siblings; the old comment was false), but
+its "most of them" scope did not: a single-card page's card sits at
+index 2 and animates, and only multi-card pages such as pid-basics
+leave cards with no fade.
 
 ### 310. `#ddcw-statusbar` overflows its own box by 15px at a 320px viewport *(noticed 2026-08-12, the #262 lane — below every tested width, LOW)* *(deferred 2026-08-12)*
 
