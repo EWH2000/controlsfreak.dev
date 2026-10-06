@@ -107,6 +107,7 @@
 **Ruling:** soften both surfaces of each (lesson + quiz explain) in one lane. #88 → "Annex J's default 0xBAC0, then 0xBAC1/0xBAC2 by convention (IANA 47808–47823)". #89 → the amortized story (costs: an occasional `Tusage_timeout` stall, slower newcomer discovery, slower ring re-formation; the advice taught is unchanged), converging with PR #592's `max-master-where-to-set` explain. **The PR body must quote the clauses it relies on**; the owner verifies them there.
 **Ships:** live lessons + quiz banks → **owner merges**.
 **Markers:** #88 `*(ruled 2026-10-05 — soften both surfaces in one lane with #89; owner checks the clause on the PR; fix pending)*`; #89 `*(ruled 2026-10-05 — soften both surfaces to the amortized Npoll story in one lane with #88; owner checks the clause on the PR; fix pending)*`.
+**Correction (2026-10-05, PR #615 verifier round — the ruling above stands as recorded):** two premises under *Measured* were wrong. #88 — there is no IANA 47808–47823 block; IANA registers `bacnet` at 47808 only (47809/udp is PreSonus's `presonus-ucnet`; 47810–47999 unassigned). #89 — `Npoll` gates when a maintenance Poll-For-Master *sweep* starts, not the interval between polls: after ~50 quiet passes the master below the gap polls one address per token visit until the gap is swept, so on a small trunk at 127 most rotations carry a stall. PR #615 ships the sweep-and-rest story; details under content-audit #89.
 
 ## 14. PID basics — direct vs reverse acting *(item 16)*
 

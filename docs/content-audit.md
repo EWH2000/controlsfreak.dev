@@ -3114,7 +3114,7 @@ same reason: it describes the same branch under the same scoping, so
 changing one and not the other would be the real inconsistency.
 *(accepted — reads correctly as written, 2026-08-07)*
 
-### 88. bacnet-networking lesson attributes the sequential-port convention to Annex J more firmly than the standard supports *(flagged 2026-08-20, quiz-growth wave-1 refutation round)* *(ruled 2026-10-05 — soften both surfaces in one lane with #89; owner checks the clause on the PR; fix pending)*
+### 88. bacnet-networking lesson attributes the sequential-port convention to Annex J more firmly than the standard supports *(flagged 2026-08-20, quiz-growth wave-1 refutation round)* *(ruled 2026-10-05 — soften both surfaces in one lane with #89; owner checks the clause on the PR; fix pending)* *(addressed 2026-10-05 · PR #615)*
 
 **Location:** `html/education/bacnet-networking.html` (the Annex J
 paragraph in *Reading the hex blob*, ~L521: "ASHRAE 135 Annex J's
@@ -3151,7 +3151,24 @@ and the `second-network-next-port` explain
 (`html/_data/quizzes/bacnet-networking.js:207`, cite by id — the line
 moves when the bank grows).
 
-### 89. MS/TP lesson + one bank explain overstate the steady-state cost of Max_Master = 127 *(flagged 2026-08-21, quiz-growth wave-1 refutation round — mstp lane)* *(ruled 2026-10-05 — soften both surfaces to the amortized Npoll story in one lane with #88; owner checks the clause on the PR; fix pending)*
+**Resolution (2026-10-05, PR #615).** Softened on three surfaces, not
+two: the lesson's hex-blob paragraph, the `second-network-next-port`
+explain, and a third the entry missed — the port note in
+`html/tools/bacnet-ip-converter.html` ("Annex J describes a convention
+for additional networks on sequential ports"). All three now credit
+Annex J with the default `0xBAC0` and with *permitting* other ports for
+additional networks, and name counting up (`0xBAC1`, `0xBAC2`) as field
+convention. **The IANA 47808–47823 block named in the target wording
+does not exist**: IANA's Service Name and Transport Protocol Port
+Number Registry (checked 2026-10-05) registers `bacnet` at 47808
+(tcp/udp) only; 47809/udp is registered to PreSonus
+(`presonus-ucnet`, 2013); 47810–47999 are unassigned. The converter's
+"not IANA-registered" stands, and the sequential ports are field
+convention only — so the block stays out of reader prose on all three
+surfaces, as a settled fact rather than an open question.
+- [ ] Clause text verified by the owner on the PR.
+
+### 89. MS/TP lesson + one bank explain overstate the steady-state cost of Max_Master = 127 *(flagged 2026-08-21, quiz-growth wave-1 refutation round — mstp lane)* *(ruled 2026-10-05 — soften both surfaces to the amortized Npoll story in one lane with #88; owner checks the clause on the PR; fix pending)* *(addressed 2026-10-05 · PR #615)*
 
 **Location:** `html/education/bacnet-mstp.html:105` ("the token holder
 dutifully Poll-For-Masters its way through a hundred-odd empty
@@ -3199,3 +3216,43 @@ Surfaces: `html/education/bacnet-mstp.html:105` and the
 `max-info-frames-allowance` explain (`html/_data/quizzes/bacnet-mstp.js`,
 cite by id), converging with the `max-master-where-to-set` explain PR
 #592 already reworded so all three tell one mechanism.
+
+**Correction (2026-10-05, PR #615 verifier round).** The flag misread
+`Npoll`. Clause 9's maintenance Poll-For-Master is a per-rotation
+SWEEP of the gap that begins after ~`Npoll` quiet token passes and runs
+one address per token visit until `PS`+1 == `NS`, then rests; on a
+small trunk at 127 that is a stall on most rotations. `Npoll`'s own
+definition — tokens received or used before a Poll For Master *cycle*
+is executed — gates when a sweep STARTS, not the interval between
+polls: `SendMaintenancePFM` leaves `TokenCount` untouched, and only
+`ResetMaintenancePFM` (`TokenCount` = 1, when `PS`+1 == `NS`) and
+`ReceivedReplyToPFM` (`TokenCount` = 0) reset it (checked against two
+implementations that carry the standard's transition names:
+bacnet-stack `src/bacnet/datalink/mstp.c` and BACnet4J
+`npdu/mstp/ManagerNode.java`). The "target story" above is therefore
+the error; the original passage was overstated only in the word
+"every". Correct target: soften "every rotation" to the sweep-and-rest
+mechanism; keep the sluggish-trunk framing. A second slip in the first
+pass: the whole-range walk is triggered by ring FORMATION with the
+successor unknown (trunk power-up, or the top master dropping off so
+the one below inherits the gap), not by a lost token in general — an
+ordinary lost token walks only up to the next live address.
+
+**Resolution (2026-10-05, PR #615, as corrected).** Both surfaces
+rewritten to the sweep-and-rest mechanism:
+`html/education/bacnet-mstp.html`'s Max_Master = 127 paragraph and the
+`max-info-frames-allowance` explain now say that after about fifty
+quiet token passes the master below the empty range polls it one
+Poll-For-Master per token visit, one address per rotation, until the
+gap is swept, then rests — so on a small trunk at 127 most rotations
+carry a timeout stall — and that the whole-range walk happens when the
+ring forms with that master's successor unknown. The explain keeps
+"classic sluggish-trunk miss", so the lesson paragraph, the symptom
+table ("Whole trunk online but sluggish") and the bank tell one
+mechanism. The advice (one uniform `Max_Master`, a little above the
+highest MAC) is unchanged. The `max-master-where-to-set` explain was
+left as PR #592 shipped it — "walking a hundred-odd addresses nobody
+owns, over and over" is the sweep.
+- [ ] Clause text verified by the owner on the PR (9.5.6
+  DONE_WITH_TOKEN: does `SendMaintenancePFM` reset `TokenCount`? —
+  expected no; only `ResetMaintenancePFM` and `ReceivedReplyToPFM` do).

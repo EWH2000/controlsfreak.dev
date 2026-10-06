@@ -518,7 +518,10 @@ keywords: ms/tp mstp baud bbmd foreign device router subnet broadcast who-is
                 (<code>BAC1</code> = 47809, for example) means the device is
                 on a non-default BACnet/IP port, usually because someone
                 stood up a second logical BACnet/IP network on the same
-                host using ASHRAE 135 Annex J's sequential-port convention.
+                host. ASHRAE 135 Annex J makes <code>0xBAC0</code> the
+                default and permits other ports for additional networks;
+                counting up from it — <code>0xBAC1</code>, then
+                <code>0xBAC2</code> — is field convention.
             </p>
 
             <p>
