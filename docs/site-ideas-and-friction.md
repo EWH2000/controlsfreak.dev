@@ -6360,7 +6360,7 @@ of a real reader; do not open it as a general affordance.
 > either spelling. Proposed sentence — the owner tweaks it on the
 > live-page PR: *"The actuator on top is the same kind a BMS would
 > drive on any other control valve — a proportional analog input,
-> 0–100 % open."*
+> 0–100 % open."* Shipped PR #621.
 
 > **RULED 2026-10-05 — fail-to-start: parked into §7.2.** Owner: *"Park
 > it with the pointer."* Measured 2026-10-05: **zero markable sites

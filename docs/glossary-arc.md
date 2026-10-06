@@ -591,7 +591,7 @@ operational state; these two are the whole of what was lost.)*
   items. ⟨2026-10-05: both ruled — balancing:497 → "proportional", the
   floating mention drops; fail-to-start parked into §7.2 with a
   tracking line in the friction file's glossary-arc entry. Record:
-  `docs/audits/2026-10-reentry/rulings.md`.⟩
+  `docs/audits/2026-10-reentry/rulings.md`. Shipped PR #621.⟩
 
 - **2026-08-27 — §4 MARKING COMPLETE at 27 marks; the yield band
   was a hedge stripped in transit.** Both lanes merged owner-cleared
@@ -645,7 +645,7 @@ operational state; these two are the whole of what was lost.)*
   re-triage will actually read. ⟨2026-10-05: both ruled — balancing:497 → "proportional", the
   floating mention drops; fail-to-start parked into §7.2 with a
   tracking line in the friction file's glossary-arc entry. Record:
-  `docs/audits/2026-10-reentry/rulings.md`.⟩
+  `docs/audits/2026-10-reentry/rulings.md`. Shipped PR #621.⟩
 
 ## Open questions
 
