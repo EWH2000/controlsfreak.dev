@@ -15659,3 +15659,69 @@ gotten wrong: there was no missing key, so this is a form fix (per key +
 lifetime), not a disclosure gap. Numbering note: #325 and #326 were
 already claimed on other branches when this was written, so this entry
 takes #327.
+
+### 328. `bacnet-networking.html`'s "What this page didn't cover" list promises unbuilt pages in lesson body prose *(noticed 2026-10-05, #314 lane verifier)*
+
+`html/education/bacnet-networking.html`, the `What this page didn't
+cover` subhead (`:598`) and its bullet list. Two bullets promise a page
+that does not exist:
+
+- **Segmentation** (`:616-620`) — *"a deeper treatment belongs on its
+  own page."*
+- **BACnet/SC** (`:621-625`) — *"worth its own page once it's common
+  enough in BAS work to justify the depth."*
+
+Three more bullets in the same list carry the same shape in softer
+words: **Capture-driven troubleshooting** (`:626-631`, *"Worth its own
+treatment"*), **Alarms and event notifications** (`:632-638`, *"Their
+own page"*) and **Vendor profile differences** (`:639-645`, *"they
+belong on per-platform pages (Niagara, EBO, …) when those land"* — that
+one also names vendors, see #315 for the grandfathered precedent).
+`html/education/bacnet-basics.html` has the same subhead (`:690`); its
+second paragraph closes the out-of-scope list with *"The rest are their
+own future pages"* (`:715`). The MS/TP bullet and basics' `:684` point at
+a page that now exists and are fine.
+
+CLAUDE.md's *No coming-soon copy* convention bans these, and its
+**2026-10-05 amendment** does not save them: the amendment makes
+PROMINENCE the test — a brief clause at the tail of a scope `.ref-note`
+is acceptable, but *"a promise in body or lesson prose"* and a visible
+list of unbuilt features are not. This is a bulleted list in lesson
+body prose under its own `<h2>`, so it is in scope. The status script's
+coming-soon scan (`npm run status`, §5) reported zero for it — its
+regex did not carry the *"own page"* shapes until it was widened the
+same night (commit `970bef1`, PR #633, open when this was written).
+
+Options: (1) reword each bullet to state the scope boundary and why the
+topic sits outside it, with no page promise — the convention's own
+prescription; the topics stay listed, only the promise goes; (2) accept
+some or all of it as low-key under the amendment. Which one is the
+owner's call, since the amendment is the owner's own ruling on where
+the line sits. If (1), the roadmap side is a `[future:]` marker per
+topic in `site-ideas-and-friction.md`, not page copy. PR #625 (#314's
+lane) gives the same `bacnet-networking.html` subhead an
+`id="not-covered"`; a reword lane should land after it or rebase onto
+it. Open.
+
+### 329. `pid-basics.html`'s closing "PID block on a wiresheet" paragraph has no `id`, so no quiz `learnMore` can deep-link it *(noticed 2026-10-05, quiz wave-2 pid-basics lane)*
+
+`html/education/pid-basics.html:229-231` — the paragraph that opens *"In a
+building-automation controller, the PID you've just been tuning lives
+as a single block on a wiresheet …"* — carries no `id`, and neither
+does anything around it: it sits alone after the last tool-card, under
+only an HTML comment. The pid-basics bank's
+`pid-block-on-wiresheet` question (PR #608, open when this was written)
+tests exactly that paragraph but has to send its `learnMore` to
+`/education/function-blocks.html#families` instead — a different
+lesson.
+
+Same family as #314 (lesson subheads without ids can't receive quiz
+deep links). Note the lesson's anchor surface is thin: the only ids a
+`learnMore` can target are the three term callouts (`#p-term` `:46`,
+`#i-term` `:51`, `#d-term` `:56`) and the three simulator cards
+(`#sim1` `:79`, `#sim2` `:128`, `#sim3` `:178`), besides `#main`. Fix
+shape as #314: one `id` (on the paragraph, or on a subhead added above
+it), plus a retarget of `pid-block-on-wiresheet`'s `learnMore` in the
+same PR. No guard proposed, for #314's reason. Open —
+log-and-fix-opportunistically: any lane already touching
+`pid-basics.html` takes it.
