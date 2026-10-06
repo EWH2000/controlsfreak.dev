@@ -1202,10 +1202,14 @@ h2.section-label[data-stage]::before {
     overflow: hidden;
     margin-bottom: 1.5rem;
 }
-/* :nth-of-type counts tool-card siblings independently of a leading
-   .section-header div; nth-child counts all siblings and would shift
-   indices by one on every content page. Four indices covers the longest
-   tool-card stack today (4 on pid-basics: page topic + 3 mini-sims). */
+/* Entrance stagger — approximate by design. :nth-of-type counts DIV
+   siblings of ANY class, not .tool-card siblings, so every interleaved
+   div.section-header (and any other sibling div) takes an index and
+   shifts which cards match: on most pages some cards get a step, some
+   get none, and the order is not a clean 1-2-3-4. Accepted as such
+   (2026-10-05, codebase-issues #309): it is a cosmetic 0.5s fade, so
+   the selector stays and this comment records the quirk rather than
+   claiming a four-step stagger. */
 .tool-card:nth-of-type(1) { animation: fadeUp 0.5s 0.08s ease both; }
 .tool-card:nth-of-type(2) { animation: fadeUp 0.5s 0.16s ease both; }
 .tool-card:nth-of-type(3) { animation: fadeUp 0.5s 0.24s ease both; }
