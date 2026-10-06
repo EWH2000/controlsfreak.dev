@@ -146,7 +146,7 @@ module.exports = [
             { id: 'c', text: 'The OA-T sensor is reading high, which pushes the calculated enthalpy over the return.' },
             { id: 'd', text: 'The minimum-position setting is too high and is overriding the economizer.' }
         ],
-        explain: 'The enthalpy math is only as honest as the humidity sensor feeding it, and humidity sensors drift — the classic way a smart enthalpy economizer ends up underperforming a dumb dry-bulb one. At a believable 40 % RH, 66 °F (18.9 °C) air carries roughly 21.7 Btu/lb, well under the return\'s 28.1, so this is free cooling being thrown away all afternoon; a differential dry-bulb changeover would be economizing on it right now. Nothing in the snippet is internally inconsistent, which is the trap: the calculation is correct, the input is wrong.',
+        explain: 'The enthalpy math is only as honest as the humidity sensor feeding it, and humidity sensors drift — the classic way a smart enthalpy economizer ends up underperforming a dumb dry-bulb one. At a believable 40 % RH, 66 °F (18.9 °C) air carries roughly 21.7 Btu/lb, well under the return\'s 28.1, so this is free cooling being thrown away all afternoon; a differential dry-bulb changeover would be economizing on it right now. Nothing in the snippet is internally inconsistent, which is the trap: the calculation is correct, the input is wrong. Distractor (c) has a grain of truth — at 95 % RH, outside air crosses the return\'s 28.1 Btu/lb at about 63.4 °F (17.4 °C), so a few degrees of OA-T error would also tip the arithmetic — but no temperature error makes 95 % RH believable on a clear afternoon after a dry week: 66 °F (18.9 °C) at 95 % RH implies a 64.5 °F (18.1 °C) dew point.',
         learnMore: { href: '/education/economizers.html#changeover', label: 'Economizers — The Changeover Decision' },
         tags: ['forced-air', 'economizer', 'enthalpy']
     },
@@ -194,11 +194,11 @@ module.exports = [
     {
         type: 'numeric',
         id: 'eco-stuck-open-math',
-        prompt: 'A cold winter morning. The economizer is locked out and the dampers are commanded to minimum position — 20 % outdoor air. The trends read OA-T 25 °F (−3.9 °C), RA-T 70 °F (21.1 °C), and MA-T 34 °F (1.1 °C). Running the mixing equation backwards on the measured temperatures, what outdoor-air percentage is the unit actually taking in? Enter the answer in %.',
-        answer: 80,
+        prompt: 'A cold winter morning. The unit is heating with no cooling call, and the dampers are commanded to minimum position — 20 % outdoor air. The trends read OA-T 20 °F (−6.7 °C), RA-T 70 °F (21.1 °C), and MA-T 45 °F (7.2 °C). Running the mixing equation backwards on the measured temperatures, what outdoor-air percentage is the unit actually taking in? Enter the answer in %.',
+        answer: 50,
         tolerance: 1,
         unit: '%',
-        explain: 'Same arithmetic as the modulation, doing forensic duty: % OA = (MA − RA) ÷ (OA − RA) × 100 = (34 − 70) ÷ (25 − 70) × 100 = 80 % (in °C: (1.1 − 21.1) ÷ (−3.9 − 21.1) × 100 = 80 %). Commanded to 20 %, actually at 80 % — MA-T is tracking OA-T, so the dampers are stuck open and the heating coil is quietly paying for it all winter. Mixed air that close to freezing is also exactly the territory the low-limit override and the freeze-stat exist for.',
+        explain: 'Same arithmetic as the modulation, doing forensic duty: % OA = (MA − RA) ÷ (OA − RA) × 100 = (45 − 70) ÷ (20 − 70) × 100 = 50 % (in °C: (7.2 − 21.1) ÷ (−6.7 − 21.1) × 100 = 50 %). Commanded to 20 %, actually at 50 % — a true 20 % blend would mix to 60 °F (15.6 °C), and MA-T is reading far colder, so the dampers are not where the command says and the heating coil is quietly paying for the extra outdoor air all winter. The command is a wish; MA-T is the witness.',
         learnMore: { href: '/education/economizers.html#field-failures', label: 'Economizers — Where Economizers Fail in the Field' },
         tags: ['forced-air', 'economizer', 'mixed-air']
     },
@@ -219,7 +219,7 @@ module.exports = [
     {
         type: 'mcq',
         id: 'eco-low-limit-override',
-        prompt: 'A frigid morning. An interior zone is calling for cooling, the changeover gate is open, and the economizer is driving its dampers open to chase the mixed-air setpoint. MA-T starts falling toward freezing. What is supposed to happen?',
+        prompt: 'A frigid morning. An interior zone is calling for cooling, the changeover gate is open, and the economizer is driving its dampers open to chase a cool supply-air setpoint. MA-T starts falling toward freezing. What is supposed to happen?',
         choices: [
             { id: 'a', text: 'Nothing until the freeze-stat trips — the hardwired trip is the freeze protection, and the software should stay out of its way.' },
             { id: 'b', text: 'The cooling call keeps priority; the dampers hold their position until the zone is satisfied.' },
