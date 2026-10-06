@@ -11583,6 +11583,8 @@ is in that ladder.
 *(2026-10-05)* The AHU half is now tracked as **#323** (owner ruled the
 hedge the same day).
 
+*(2026-10-05)* The AHU half shipped in PR #618 (#323).
+
 ### 248. The AHU mockup still carries an inline copy of the sensor-glyph CSS that graduated to `styles.css` *(noticed 2026-07-30, AHU page lane — deliberately not fixed then; **RESOLVED 2026-08-12**, PR #561)*
 
 The `.ddcw-sensor*` glyph vocabulary and the `.ddcw-chip-hilite` pulse graduated
@@ -15260,7 +15262,7 @@ and `CLAUDE.md`'s add-a-page checklists say what the locale layer asks
 of a new page. The fork route (MIT, own name/domain, link back) was
 offered in the close comment.
 
-### 323. The AHU low-charge verdict still states the diagnosis the FCU's was hedged away from (#247's unfinished half) *(noticed 2026-08-01 in #247's resolution, carried here 2026-10-05)* *(ruled 2026-10-05 — hedge to the FCU's disposition-3 wording; fix pending)*
+### 323. The AHU low-charge verdict still states the diagnosis the FCU's was hedged away from (#247's unfinished half) *(noticed 2026-08-01 in #247's resolution, carried here 2026-10-05)* *(ruled 2026-10-05 — hedge to the FCU's disposition-3 wording; fix pending)* *(addressed 2026-10-05 · PR #618)*
 
 `html/scripts/ddcw-ahu-unit.js:1998` sets the AHU's `low-charge`
 verdict to *"No ΔT across the machine — low charge, not cooling"*. That
@@ -15289,6 +15291,20 @@ never asserts the verdict text. The FCU row at
 FCU wording, no ref-note. Live script → **owner merges**. On merge this
 heading takes `*(addressed YYYY-MM-DD — hedged to the FCU wording, spec
 row added, PR #NNN)*`.
+
+**Resolution (2026-10-05, PR #618).** Hedged as ruled.
+`html/scripts/ddcw-ahu-unit.js` — the `low-charge` branch (still at
+`:1998` on main when the lane started) now reads *"No ΔT across the
+machine — air moving; low charge is one candidate, gauges settle it"*,
+with a comment above it mirroring the FCU's: the scenario button knows
+which fault was set, the graphic does not; no `.ref-note`, and why.
+`tests/ddc-workbench-ahu-page.spec.js` — a new row in the verdict-ladder
+describe clicks `[data-preset="lowcharge"]`, waits on the condition, and
+pins the exact string, the `error` class and the `#ahu-verdict-sr`
+mirror in one snapshot. Measured: that spec 96/96 green, smoke's
+`ddc workbench ahu` row green. One correction to the entry: the spec row
+landed in `ddc-workbench-ahu-page.spec.js` (the spec that drives the
+built page), not `ddcw-ahu-unit.spec.js`, which is engine-direct.
 
 ### 324. The PID tuner's cheat sheet advises "flip acting (direct ↔ reverse)" — a control the tuner does not have *(noticed 2026-10-05, decision sitting — by-catch of the pid-basics direct/reverse aside; LOW, not ruled)*
 
