@@ -219,8 +219,9 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
                 <!-- equipment glyphs -->
                 <g id="ah-d1-filter">
                     <rect x="140" y="275" width="30" height="70" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
-                    <line x1="143" y1="342" x2="167" y2="278" stroke="var(--border)" stroke-width="1"/>
-                    <line x1="143" y1="322" x2="167" y2="298" stroke="var(--border)" stroke-width="1"/>
+                    <!-- pleated media in section (one zigzag the height of the
+                         rack); the old two-stroke hatch crossed itself. -->
+                    <path d="M144 280 L166 292 L144 304 L166 316 L144 328 L166 340" fill="none" stroke="var(--text-dim)" stroke-width="1"/>
                 </g>
                 <g id="ah-d1-htg">
                     <rect x="195" y="275" width="40" height="70" fill="var(--surface)" stroke="var(--heat)" stroke-width="2"/>
@@ -396,8 +397,11 @@ keywords: ahu mixing box mixed air return relief outside air supply fan filter c
                 <!-- filter + ΔP taps -->
                 <g id="ah-d3-filter">
                     <rect x="100" y="140" width="34" height="140" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
-                    <line x1="104" y1="272" x2="130" y2="148" stroke="var(--border)" stroke-width="1"/>
-                    <line x1="104" y1="230" x2="130" y2="190" stroke="var(--border)" stroke-width="1"/>
+                    <!-- pleated media in section, same idiom as the overview
+                         diagram above and the Coil Freeze Protection capstone;
+                         the old two-stroke hatch crossed at an odd angle at
+                         this rack's height (owner review, 2026-10-06). -->
+                    <path d="M104 145 L130 158 L104 171 L130 184 L104 197 L130 210 L104 223 L130 236 L104 249 L130 262 L104 275" fill="none" stroke="var(--text-dim)" stroke-width="1"/>
                 </g>
                 <g id="ah-d3-dp">
                     <line x1="85" y1="160" x2="85" y2="95" stroke="var(--text-dim)" stroke-width="1.5"/>
