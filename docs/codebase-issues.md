@@ -13836,9 +13836,23 @@ the `.tab-pane` rules. It sets `.tab-pane { display: block !important }`
 and gives `.tab-pane + .tab-pane` a 1.5rem gap and a 1px
 `var(--border)` top seam. The `.tabs` button row is unchanged. Measured
 under `emulateMedia({ media: 'print' })`, every pane has non-zero
-height: signal-scaling 3/3 (324/332/334 px), ddc-workbench 2/2
-(`#tab-wiresheet` 1037 px). The shim's folds inside `#tab-wiresheet`
-can now actually reach paper. `tests/details-print.spec.js` passes 6/6.
+height: signal-scaling 3/3 (324/332/334 px). The shim's folds inside
+`#tab-wiresheet` can now actually reach paper.
+`tests/details-print.spec.js` passes 6/6.
+The same block also hides `.tab-pane:not(.active) .fbe-live`. The
+workbench's Function-Block Editor mounts lazily, on the first Wiresheet
+open (`ensureEditor()` in `ddcw-shell.js`). Lifting an inactive
+Wiresheet therefore printed its simbar plus about 1000 px of empty
+palette, canvas and inspector frames. Round 1 measured 1037 px for that
+pane, and most of that height was the blank frame, so its "height > 0"
+check passed vacuously. With the editor rule, an inactive Wiresheet
+prints only its intro prose and its folds. Re-probed under print media,
+with full-page screenshots checked: ddc-workbench `#tab-wiresheet` is
+410 px with 8/8 folds, and ddc-workbench-fcu is 253 px with 5/5 folds.
+On both pages `.fbe-live` computes to `display: none`. A reader who
+prints while on the Wiresheet tab has a mounted editor, and it prints as
+rendered (648 px on both pages). So the live wiresheet reaches paper
+only from its own tab.
 One residual gap: a stacked pane carries no heading of its own. On
 paper the pane-to-tab mapping comes only from DOM order against the
 printed tab row.

@@ -1634,7 +1634,14 @@ button[data-gloss].gloss-open {
    the reader cannot get at all; details-print.js opening a fold inside an
    inactive pane was moot until this lifted. Panes stack in DOM order with
    a hairline seam between them. The .tabs button row still prints as-is —
-   it reads as a table of contents for the stacked panes. */
+   it reads as a table of contents for the stacked panes.
+   One exception: the DDC workbench's live Function-Block Editor
+   (.fbe-live) mounts LAZILY, on the first Wiresheet open
+   (ensureEditor() in ddcw-shell.js). In a pane that is not active it has
+   usually never been built, so lifting the pane would print its simbar
+   and ~1000px of empty palette / canvas / inspector frames. Keep it off
+   paper there; the pane's prose and folds still print. A Wiresheet the
+   reader is ON has a mounted editor and prints as rendered. */
 @media print {
     .tab-pane { display: block !important; }
     .tab-pane + .tab-pane {
@@ -1642,6 +1649,7 @@ button[data-gloss].gloss-open {
         padding-top: 1rem;
         border-top: 1px solid var(--border);
     }
+    .tab-pane:not(.active) .fbe-live { display: none !important; }
 }
 
 /* ── FORM ── */
