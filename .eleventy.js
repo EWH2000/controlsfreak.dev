@@ -1170,6 +1170,9 @@ module.exports = function(eleventyConfig) {
         simulators: { name: "Simulators", url: "https://controlsfreak.dev/simulators/" },
         education:  { name: "Education",  url: "https://controlsfreak.dev/education/" },
         practice:   { name: "Practice",   url: "https://controlsfreak.dev/practice/" },
+        // Guides is a real nav section (own dropdown + landing); the BACnet
+        // hubs carry real traffic, so they breadcrumb through it (#321).
+        guides:     { name: "Guides",     url: "https://controlsfreak.dev/guides/" },
         // Crawl-facing (clean) form, matching what head.njk feeds this filter
         // — `canonical | cleanCanonical`. contact is the only section whose
         // landing is a .html page, so it is the only entry where the house
@@ -1372,8 +1375,15 @@ module.exports = function(eleventyConfig) {
     });
 
     // TechArticle JSON-LD for education pages — establishes content type,
-    // attributes authorship to the Person entity declared on the home page
-    // (E-E-A-T), and carries datePublished / dateModified from git history.
+    // attributes authorship (E-E-A-T), and carries datePublished /
+    // dateModified from git history. The author is an INLINE Person that
+    // keeps the home page's `#author` @id, so it is the same entity the
+    // home page's @graph declares. A bare cross-document `{ "@id": … }`
+    // is valid JSON-LD, but Google reads structured data per document, so
+    // on a lesson that reference resolved to nothing — hence name /
+    // jobTitle / url are repeated here (keep them equal to html/index.html).
+    // No `publisher`: it is not on Google's recommended Article properties,
+    // and no Organization is asserted (owner ruling 2026-10-05, #320).
     // When the lesson sets `pairedQuiz:` frontmatter (a single 1:1 quiz
     // companion), the node also carries `hasPart` pointing at the quiz's
     // FAQPage node — schema.org pairing that mirrors the
@@ -1390,8 +1400,13 @@ module.exports = function(eleventyConfig) {
             "mainEntityOfPage": canonical,
             "datePublished": datePublished,
             "dateModified": dateModified,
-            "author": { "@id": "https://controlsfreak.dev/#author" },
-            "publisher": { "@id": "https://controlsfreak.dev/#website" }
+            "author": {
+                "@type": "Person",
+                "@id": "https://controlsfreak.dev/#author",
+                "name": "Controls Freak",
+                "jobTitle": "Controls Programmer",
+                "url": "https://controlsfreak.dev/"
+            }
         };
         if (pairedQuiz) {
             node.hasPart = { "@type": "FAQPage", "@id": pairedQuiz };
