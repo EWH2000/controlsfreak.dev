@@ -13819,7 +13819,7 @@ and the in-`settle()` comment were rewritten to state that contract.
 The mechanism described here was right. Measured: full contrast sweep
 17/17 green (14/14 WCAG shards, both themes), zero new failures.
 
-### 286. Print never reaches non-active tab panes — site-wide, pre-existing *(noticed 2026-08-10, the print-shim verification — LOW)*
+### 286. Print never reaches non-active tab panes — site-wide, pre-existing *(noticed 2026-08-10, the print-shim verification — LOW)* *(addressed 2026-10-05 · PR #623)*
 
 `.tab-pane { display: none }` is not lifted in any `@media print`
 block, so tab content off the active tab never prints anywhere on
@@ -13828,6 +13828,20 @@ all four folds sit inside `#tab-wiresheet` — a fold the shim opens
 still cannot reach paper unless the reader prints from that tab. Not
 a #507 regression; recorded so the shim's "paper shows the page"
 contract is understood as tab-scoped.
+
+**Resolution (2026-10-05, PR #623).** Verified first: the premise held
+as written. No `@media print` block in `html/styles.css` touched
+`.tab-pane`. `html/styles.css` now has a print-only block right after
+the `.tab-pane` rules. It sets `.tab-pane { display: block !important }`
+and gives `.tab-pane + .tab-pane` a 1.5rem gap and a 1px
+`var(--border)` top seam. The `.tabs` button row is unchanged. Measured
+under `emulateMedia({ media: 'print' })`, every pane has non-zero
+height: signal-scaling 3/3 (324/332/334 px), ddc-workbench 2/2
+(`#tab-wiresheet` 1037 px). The shim's folds inside `#tab-wiresheet`
+can now actually reach paper. `tests/details-print.spec.js` passes 6/6.
+One residual gap: a stacked pane carries no heading of its own. On
+paper the pane-to-tab mapping comes only from DOM order against the
+printed tab row.
 
 ### 287. details-print.js: two minor hardening notes *(noticed 2026-08-10, the pilot verification — MINOR; **RESOLVED 2026-08-13 · PR #563** — both reproduced at HEAD first; note (2) was the more serious of the two)*
 
