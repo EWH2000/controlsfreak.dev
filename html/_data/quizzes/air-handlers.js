@@ -7,7 +7,7 @@
 // kebab-case and stable across edits — they namespace the
 // cf_quiz_air-handlers_* localStorage keys. Pairs with the Air Handlers
 // lesson; learnMore hrefs deep-link its <h2> anchors. Sequential order
-// is the lesson walk: air path → mixing box → filter/coils → fan.
+// follows the lesson's own section order.
 //
 // Quiz prose is painted post-load (the units walker doesn't reach it),
 // so temperatures carry static metric parentheticals per the
@@ -140,9 +140,9 @@ module.exports = [
         prompt: 'On a built-up air handler, what is a common design target for the air leaving the cooling coil?',
         choices: [
             { id: 'a', text: 'About 45 °F (7.2 °C).' },
-            { id: 'b', text: 'About 65 °F (18.3 °C).' },
-            { id: 'c', text: 'About 72 °F (22.2 °C), room temperature.' },
-            { id: 'd', text: 'About 55 °F (12.8 °C).', correct: true }
+            { id: 'b', text: 'About 55 °F (12.8 °C).', correct: true },
+            { id: 'c', text: 'About 65 °F (18.3 °C).' },
+            { id: 'd', text: 'About 72 °F (22.2 °C), room temperature.' }
         ],
         explain: 'Around 55 °F (12.8 °C) is the common design target off a cooling coil — cold enough to carry the space\'s heat away with a reasonable airflow, and cold enough that the fins usually run below the air\'s dew point, so the coil does its second job and pulls moisture out. Supply air at room temperature would move no heat at all; the coil has to undershoot the room to cool it.',
         learnMore: { href: '/education/air-handlers.html#filter-coils', label: 'Air Handlers — Filter, Then Coils' },
@@ -153,7 +153,7 @@ module.exports = [
         id: 'ah-coils-are-hydronic-loads',
         prompt: 'The water coils inside a built-up air handler are a different animal from the loads on the hydronic loop — they need their own valve and piping arrangement rather than the two-way-valve load piping used elsewhere.',
         answer: false,
-        explain: 'False. On a built-up unit the heating and cooling coils ARE hydronic loads — the same two-way valve and the same supply and return piping as any other load on the loop, just wrapped around an airstream instead of sitting in a mechanical room. Everything you know about load piping applies at the coil. (A packaged RTU is the exception, because its coils are a gas heat exchanger and a DX evaporator rather than plant-fed water.)',
+        explain: 'False. On a built-up unit the heating and cooling coils ARE hydronic loads — the same two-way (or three-way) valve choices Load Piping teaches and the same supply and return piping as any other load on the loop, just wrapped around an airstream instead of sitting in a mechanical room. Everything you know about load piping applies at the coil. (A packaged RTU is the exception, because its coils are a gas heat exchanger and a DX evaporator rather than plant-fed water.)',
         learnMore: { href: '/education/air-handlers.html#filter-coils', label: 'Air Handlers — Filter, Then Coils' },
         tags: ['forced-air', 'coils', 'hydronics']
     },
@@ -192,11 +192,11 @@ module.exports = [
     {
         type: 'numeric',
         id: 'ah-min-oa-winter-safe',
-        prompt: 'A 10 °F (−12.2 °C) winter morning; return air comes back at 75 °F (23.9 °C). The lesson calls the 20 % minimum position winter-safe by arithmetic — how far would the outside-air fraction have to open before the mix reached the 38 °F (3.3 °C) freeze-stat line? Enter the answer in %.',
+        prompt: 'A 10 °F (−12.2 °C) winter morning; return air comes back at 75 °F (23.9 °C). The lesson calls the 20 % minimum position winter-safe by arithmetic — how high would the outside-air fraction have to climb before the mix reached the 38 °F (3.3 °C) freeze-stat line? Enter the answer in %.',
         answer: 57,
         tolerance: 1,
         unit: '%',
-        explain: 'Solve the blend for the fraction: (75 − 38) ÷ (75 − 10) = 37 ÷ 65 ≈ 57 % outside air (in SI: (23.9 − 3.3) ÷ (23.9 − (−12.2)) = 20.6 ÷ 36.1 ≈ 57 %) — nearly three times the minimum. That is what winter-safe by arithmetic means: at a true 20 % the mix sits at 0.8 × 75 + 0.2 × 10 = 62 °F (16.7 °C), and no morning on the lesson\'s slider can drag it near freezing. The only way MA-T reaches freeze-stat territory on a 10 °F day is a damper that isn\'t where the command says it is — the widget\'s failure preset.',
+        explain: 'Solve the blend for the fraction: (75 − 38) ÷ (75 − 10) = 37 ÷ 65 ≈ 57 % outside air (in SI: (23.9 − 3.3) ÷ (23.9 − (−12.2)) = 20.6 ÷ 36.1 ≈ 57 %) — nearly three times the minimum. That is what winter-safe by arithmetic means: at a true 20 % the mix sits at 0.8 × 75 + 0.2 × 10 = 62 °F (16.7 °C), and no morning on the lesson\'s slider can drag it near freezing. Short of a stratified plenum, the only way MA-T reaches freeze-stat territory on a 10 °F day is a damper that isn\'t where the command says it is — the widget\'s failure preset.',
         learnMore: { href: '/education/air-handlers.html#sensor-strip', label: 'Air Handlers — Walk the Unit with a Probe' },
         tags: ['forced-air', 'mixed-air']
     },
