@@ -77,7 +77,7 @@ brief): the site's identity is controls-first but the signals/IO
 shelf was the thinnest — the foundation PR seeded the `signals`
 category with controller-wiring as the boundary lesson, and the
 chapter now builds out from the
-`[future: education/analog-sensing.html]` marker the forced-air
+`[future: education/analog-sensing.html]` *(shipped)* marker the forced-air
 buildout left behind. Per-page contracts below, one at a time as
 lanes open. Chapter reading order (final, once all lanes land):
 controller-wiring → analog-sensing → temperature-sensors →
@@ -631,7 +631,7 @@ site's identity is controls-first, so the thinnest shelf for the core
 audience was signals/IO and function-block programming. The telling
 detail: the function-block wiresheet sim existed as **a capstone with
 no lessons behind it**, and the analog-sensing lesson had sat as a
-`[future:]` marker since the forced-air buildout. Lessons are cheap
+`[future:]` marker since the forced-air buildout *(shipped)*. Lessons are cheap
 relative to a flagship sim and run well as parallel lanes. Shipped:
 ten lessons across the two chapter entries above, each with a paired
 quiz, plus the issue appetizer. A `/controls/` hub was floated as a
@@ -722,6 +722,11 @@ Still open on it, in rough priority order:
 * **the fogging marker is ONE candidate** (codebase-issues #240),
   built cheap and reversible so the owner can redesign it after
   looking at it.
+
+*(2026-10-05: the first two bullets are stale — the second AHU sheet,
+`econ-2stage-lowlimits`, shipped 2026-08-02 (PR #468) with `mat` and
+`dat` wired. The current statement is `docs/air-side-sim.md`, the
+paragraph beginning "The **second AHU sheet SHIPPED 2026-08-02**".)*
 
 **The named next flagship: the air-side simulator.** Deliberately
 sequenced after this arc so it inherits field feedback on the
@@ -2836,14 +2841,18 @@ In scope (sections shipped):
   reset prose + Widget 2 (mode toggle, demand slider, valve cells,
   readouts, deadhead anecdote at demand=0)
 - *Lead/lag and parallel pumps — a note* — short forward-link to
-  `[future: sequencing.html]`; user explicitly said "sequencing
+  `[future: sequencing.html]` *(partly shipped 2026-05-21 — lead/lag
+  and staging as `education/equipment-staging.html`)*; user explicitly said "sequencing
   should get a lot of attention" so this page deliberately stays
   shallow on it
 - *Tying it together* — closing payoff to load-piping + VFDs
 
 Out of scope (forward links, not content):
 - Pump staging / lead-lag rotation / end-of-curve protection /
-  bumpless transitions — [future: sequencing.html]
+  bumpless transitions — [future: sequencing.html] *(partly shipped
+  2026-05-21 — staging and lead/lag rotation as
+  `education/equipment-staging.html`; end-of-curve protection and
+  bumpless transitions are still unbuilt)*
 - Hydronic balancing — [future: balancing.html] *(shipped 2026-05-16)*
   (reachable from load-piping)
 - Open-loop systems with static head (cooling towers, sumps) —
@@ -3336,7 +3345,7 @@ flat site-style keypad" decisions above — the face is now fully
 equipment-register.
 
 
-### Refrigerant cycle — Education section, possibly with calculator *(parked 2026-05-29 — revisit when the topic is next picked up)*
+### Refrigerant cycle — Education section, possibly with calculator *(parked 2026-05-29 — revisit when the topic is next picked up)* *(shipped — lessons 2026-05-27, Refrigerant Loop sim 2026-07-15, refrigeration hub 2026-07-18)*
 
 **Parked 2026-05-29.** The user is happy with where the refrigerant
 section sits. Shipped so far: the P-T / superheat tool
@@ -3403,7 +3412,7 @@ tool whose job is to be more correct than a pocket P-T card, not less.
 `/tools/refrigerant-pt.html` as a two-tab `.tool-body-2col` tool
 (page-id prefix `rf-`), the calculator half of this idea; the
 Education pages above stay future work (no forward-links, since the
-target pages don't exist yet).
+target pages don't exist yet). *(shipped 2026-05-27 — all three lessons; noted 2026-10-05)*
 
 Decisions settled during scoping:
 - *Two tabs* — P-T (saturation) with a Pressure ↔ Temperature
@@ -3453,7 +3462,8 @@ Out of scope / parked:
 - The P-T calculator and a future refrigerant-cycle animation might
   share saturation-curve / state-point math. Or not — wait until the
   second piece exists before deciding, same logic as the engines
-  question.
+  question. *(the animation shipped 2026-07-15 as
+  `simulators/refrigerant-loop.html`; noted 2026-10-05)*
 
 ### PID tuner — explicit loop speed numbers *(shipped 2026-05-16)*
 The original ask was to put concrete time-constant numbers somewhere
@@ -5609,7 +5619,9 @@ In scope (sections shipped):
 Out of scope (forward links, not content):
 - The commissioning procedure itself — proportional-balancing
   walk-through, sign-off documentation, tooling — [future:
-  commissioning.html], referenced in the closing forward callout
+  commissioning.html] *(partly shipped 2026-07-14 — the controls half
+  as `education/controls-commissioning.html`; the proportional-balancing
+  walk-through is still unbuilt)*, referenced in the closing forward callout
 - System-level DPBV — covered on `load-piping.html` (cross-link)
 - Reverse return as a passive balancing approach — covered on
   `hydronic-loops.html` d2 (cross-link from closing section)
@@ -5767,7 +5779,7 @@ the same session:
    without an animation pass, every arrow on a complex diagram
    benefits from a tracing-the-flow walk-through during review.
 
-### Protocol education pages — Modbus shipping, BACnet to follow
+### Protocol education pages — Modbus shipping, BACnet to follow *(both shipped — `modbus-basics.html` and `bacnet-basics.html`, 2026-05-23)*
 
 The site's education footprint was HVAC + hydronics heavy through
 2026-05; building-controls work is at least as protocol-heavy. The

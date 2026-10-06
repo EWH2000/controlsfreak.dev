@@ -60,6 +60,24 @@
 >    `cool-2stage` and `cool-2stage-fanon` still read `Stg2 Call`, and stay
 >    that way — the body records 2026-07-31; this correction supersedes it.
 
+## True-up 2026-10-05
+
+The status note and corrections above stop at 2026-08-04. Five block ids
+now ship under names that differ from both the §3 body **and** the
+corrections, so neither should be read as the shipped name for these.
+Grepped in source 2026-10-05; the runtime source is the literals and
+rosters named in the last column, as the status note says.
+
+| Block id | Inventory name (body / correction) | Shipped name | Where it is set |
+|---|---|---|---|
+| `dmpout` | `Occ Dmpr` → `Proof Dmpr` (correction 1) | **`Fan Sts Chk`** | `html/simulators/ddc-workbench.html`, both AHU sheets' literals |
+| `space-temp` | `Space` | **`Zone Temp`** | `html/scripts/ddcw-ahu-unit.js` + `ddcw-fcu-unit.js` rosters |
+| `y1` | `Y1` | **`Clg Stg 1`** | both unit rosters |
+| `y2` | `Y2` | **`Clg Stg 2`** | both unit rosters |
+| `gain` | `Heat Gain` | **`Heat Kp`** | `html/simulators/ddc-workbench.html`, both AHU sheets' literals |
+
+The historical body and corrections above are left as written.
+
 # FBE block-name inventory — `TAG · Name` head labels
 
 Read-only analysis for the approved "every block gets a name" feature.
