@@ -13715,7 +13715,8 @@ deliberately not widened, since force-opening 30+ pages' hidden
 prose could surface latent reds that are not a pilot's call. Widening
 the arm (and triaging what it finds) is its own pass.
 
-**Ruling (2026-10-05, owner).** Closes with **#316**'s widening — read
+**Ruling (2026-10-05, owner).** *"Widen with bare details."* (ruled
+jointly with #316) Closes with **#316**'s widening — read
 that entry's Ruling. Widening `settle()`'s third arm to bare `details`
 force-opens every `<details>` idiom before the walk, so no idiom's closed
 ink depends on Chromium's UA shadow-slot detail any more; the mechanism

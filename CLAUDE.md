@@ -542,9 +542,9 @@ section). **Category keys mirror the landing pages' `navCard()`
   lesson prose. A brief, low-key clause at the tail of a scope
   `.ref-note` ("a metric option is a tracked follow-up") is acceptable;
   narrow such clauses (drop unit lists and formulas) rather than delete
-  them. Owner's words: *"coming-soon is fine buried in the page, but I
-  don't want to advertise a list of features in a large and noticeable
-  way."*
+  them. Owner's words: *"coming-soon as [is] fine buried in the page,
+  but I don't want to advertise a list of features in a large and
+  noticeable way, but it's fine in the current context."*
 - **Avoid "plain English" / "plain-English" in copy** (owner
   preference, restored 2026-07-12 after it drifted out): **"Plain
   English" is the name of Schneider Electric's EBO / Continuum
