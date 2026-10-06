@@ -633,6 +633,92 @@ test('practice FAQPage answers join the explanation exactly once (#254)', () => 
     expect(terminalAnswers, 'some shipped answers should end in terminal punctuation').toBeGreaterThan(0);
 });
 
+// Built-page JSON-LD reader shared by the #320 / #321 guards below. Reads
+// _site the way a crawler would (per document), no browser.
+function builtJsonLd(sitePath) {
+    const fs = require('fs');
+    const html = fs.readFileSync('_site' + sitePath, 'utf8');
+    return [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+        .map(m => JSON.parse(m[1]));
+}
+
+// #320: lessons used to declare `author` / `publisher` as bare
+// `{ "@id": … }` references to nodes that exist only on the home page.
+// Valid JSON-LD, but Google reads per document, so on a lesson they
+// resolved to nothing. Guard: every author / publisher reference on an
+// education page carries a `name`, or an @id some node in the SAME
+// document actually declares — and the TechArticle has no publisher.
+test('education JSON-LD author / publisher references resolve within the page (#320)', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const htmlDir = path.join(__dirname, '..', 'html');
+    const lessons = [];
+    (function walk(dir) {
+        for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+            const p = path.join(dir, e.name);
+            if (e.isDirectory()) { if (e.name !== '_includes' && e.name !== '_data') walk(p); continue; }
+            if (!e.name.endsWith('.html')) continue;
+            const fm = fs.readFileSync(p, 'utf8').match(/^---\n([\s\S]*?)\n---/);
+            if (fm && /^nav:\s*education\s*$/m.test(fm[1])) lessons.push('/' + path.relative(htmlDir, p));
+        }
+    })(htmlDir);
+    const pages = lessons.filter(u => u !== '/education/index.html');
+    // Anti-vacuity: the sweep must actually reach the lesson set.
+    expect(pages.length, 'there should be education lessons to sweep').toBeGreaterThan(30);
+
+    for (const url of pages) {
+        const blocks = builtJsonLd(url);
+        const nodes = [];
+        (function collect(v) {
+            if (Array.isArray(v)) return v.forEach(collect);
+            if (v && typeof v === 'object') { nodes.push(v); Object.values(v).forEach(collect); }
+        })(blocks);
+        // A node "declares" an @id when it says something besides the id.
+        const declared = new Set(nodes
+            .filter(n => n['@id'] && Object.keys(n).some(k => k !== '@id'))
+            .map(n => n['@id']));
+        let refs = 0;
+        for (const n of nodes) {
+            for (const key of ['author', 'publisher']) {
+                if (!(key in n)) continue;
+                for (const ref of [].concat(n[key])) {
+                    refs++;
+                    const ok = (ref && ref.name) || (ref && declared.has(ref['@id']));
+                    expect(ok, `${url}: ${key} must carry a name or an in-document @id`).toBeTruthy();
+                }
+            }
+        }
+        const article = nodes.find(n => n['@type'] === 'TechArticle');
+        expect(article, `${url} should publish a TechArticle`).toBeTruthy();
+        expect(article.author && article.author.name, `${url}: TechArticle author needs a name`).toBeTruthy();
+        expect('publisher' in article, `${url}: TechArticle carries no publisher (owner ruling)`).toBe(false);
+        expect(refs, `${url}: the author reference should be swept`).toBeGreaterThan(0);
+    }
+});
+
+// #321: the guides pages breadcrumb through the Guides section like every
+// other nav section does — Home → Guides → hub, and the landing itself
+// Home → Guides.
+test('guides pages emit a Home → Guides breadcrumb (#321)', () => {
+    const expected = {
+        '/guides/index.html': ['Home', 'Guides'],
+        '/bacnet/index.html': ['Home', 'Guides', null],
+        '/forced-air/index.html': ['Home', 'Guides', null],
+        '/hydronics/index.html': ['Home', 'Guides', null],
+        '/refrigeration/index.html': ['Home', 'Guides', null],
+    };
+    for (const [url, names] of Object.entries(expected)) {
+        const crumb = builtJsonLd(url).find(n => n['@type'] === 'BreadcrumbList');
+        expect(crumb, `${url} should publish a BreadcrumbList`).toBeTruthy();
+        const items = crumb.itemListElement;
+        expect(items, `${url} breadcrumb length`).toHaveLength(names.length);
+        names.forEach((name, i) => {
+            if (name) expect(items[i].name, `${url} crumb ${i + 1}`).toBe(name);
+        });
+        expect(items[1].item, `${url} Guides crumb URL`).toBe('https://controlsfreak.dev/guides/');
+    }
+});
+
 test('modbus register viewer — single + pair tabs decode bits and bytes correctly', async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto('/tools/modbus-register-viewer.html');
