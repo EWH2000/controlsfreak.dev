@@ -3114,7 +3114,7 @@ same reason: it describes the same branch under the same scoping, so
 changing one and not the other would be the real inconsistency.
 *(accepted — reads correctly as written, 2026-08-07)*
 
-### 88. bacnet-networking lesson attributes the sequential-port convention to Annex J more firmly than the standard supports *(flagged 2026-08-20, quiz-growth wave-1 refutation round)*
+### 88. bacnet-networking lesson attributes the sequential-port convention to Annex J more firmly than the standard supports *(flagged 2026-08-20, quiz-growth wave-1 refutation round)* *(ruled 2026-10-05 — soften both surfaces in one lane with #89; owner checks the clause on the PR; fix pending)*
 
 **Location:** `html/education/bacnet-networking.html` (the Annex J
 paragraph in *Reading the hex blob*, ~L521: "ASHRAE 135 Annex J's
@@ -3134,7 +3134,24 @@ one pass — e.g. "Annex J's default 0xBAC0, then 0xBAC1, 0xBAC2 by
 convention" — the quiz was deliberately NOT fixed alone, since it must
 stay in sync with the lesson it sources.
 
-### 89. MS/TP lesson + one bank explain overstate the steady-state cost of Max_Master = 127 *(flagged 2026-08-21, quiz-growth wave-1 refutation round — mstp lane)*
+**Ruling (2026-10-05, owner).** *"Soften both, I'll check the clauses on
+the PR."* #88 and #89 ship as **one content lane**, every surface of
+each softened in the same pass so lesson and quiz bank cannot drift.
+The owner verifies the standard's text on the PR against his own copy of
+135, so **the PR body must quote the clauses it relies on** (Annex J's
+port wording for #88; Clause 9's `Npoll` / Poll-For-Master text for
+#89) — the PR is where the verification happens, not this entry. Live
+lessons + quiz banks → **owner merges**. On merge each heading takes
+`*(addressed YYYY-MM-DD — softened per the 2026-10-05 ruling, PR #NNN)*`.
+
+**#88's target wording:** Annex J's default `0xBAC0`, then
+`0xBAC1` / `0xBAC2` **by convention** (the IANA 47808–47823
+registration block) — on `html/education/bacnet-networking.html:521`
+and the `second-network-next-port` explain
+(`html/_data/quizzes/bacnet-networking.js:207`, cite by id — the line
+moves when the bank grows).
+
+### 89. MS/TP lesson + one bank explain overstate the steady-state cost of Max_Master = 127 *(flagged 2026-08-21, quiz-growth wave-1 refutation round — mstp lane)* *(ruled 2026-10-05 — soften both surfaces to the amortized Npoll story in one lane with #88; owner checks the clause on the PR; fix pending)*
 
 **Location:** `html/education/bacnet-mstp.html:105` ("the token holder
 dutifully Poll-For-Masters its way through a hundred-odd empty
@@ -3161,3 +3178,24 @@ the reworked `max-master-where-to-set` explain shipped in PR #592
 addresses nobody owns, over and over, and a newcomer waits longer to
 be found") was worded to be compatible with whatever softening these
 two get, so the three surfaces can converge on one mechanism.
+
+**Ruling (2026-10-05, owner).** *"Soften both, I'll check the clauses on
+the PR."* #88 and #89 ship as **one content lane**, every surface of
+each softened in the same pass so lesson and quiz bank cannot drift.
+The owner verifies the standard's text on the PR against his own copy of
+135, so **the PR body must quote the clauses it relies on** (Annex J's
+port wording for #88; Clause 9's `Npoll` / Poll-For-Master text for
+#89) — the PR is where the verification happens, not this entry. Live
+lessons + quiz banks → **owner merges**. On merge each heading takes
+`*(addressed YYYY-MM-DD — softened per the 2026-10-05 ruling, PR #NNN)*`.
+
+**#89's target story — amortized, not per-rotation:** one
+Poll-For-Master per `Npoll` = 50 token receipts, sent by the master
+sitting below the address gap; the real costs are an occasional
+`Tusage_timeout` stall as that poll goes unanswered, slower discovery of
+a newcomer, and slower ring re-formation. **The advice taught is
+unchanged** (one uniform `Max_Master`, a little above the highest MAC).
+Surfaces: `html/education/bacnet-mstp.html:105` and the
+`max-info-frames-allowance` explain (`html/_data/quizzes/bacnet-mstp.js`,
+cite by id), converging with the `max-master-where-to-set` explain PR
+#592 already reworded so all three tell one mechanism.

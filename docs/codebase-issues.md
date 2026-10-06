@@ -11580,6 +11580,9 @@ it is the same over-claim from the same injected `d.fault`, and the same
 disposition-3 wording would fit. Worth an owner call the next time someone
 is in that ladder.
 
+*(2026-10-05)* The AHU half is now tracked as **#323** (owner ruled the
+hedge the same day).
+
 ### 248. The AHU mockup still carries an inline copy of the sensor-glyph CSS that graduated to `styles.css` *(noticed 2026-07-30, AHU page lane — deliberately not fixed then; **RESOLVED 2026-08-12**, PR #561)*
 
 The `.ddcw-sensor*` glyph vocabulary and the `.ddcw-chip-hilite` pulse graduated
@@ -12701,7 +12704,7 @@ review). Because this is `html/simulators/ddc-workbench.html`, a
 comment-only change here is merge-freely today and stops being so at
 graduation.
 
-### 268. `#ahu-desc` is 5,609 characters in a single text node *(noticed 2026-08-03, PR #473's lane report — structure candidate; the CONTENT is owner-ruled and stays)*
+### 268. `#ahu-desc` is 5,609 characters in a single text node *(noticed 2026-08-03, PR #473's lane report — structure candidate; the CONTENT is owner-ruled and stays)* *(deferred 2026-10-05 — leave the single node; revisit trigger in the Ruling)*
 
 `html/simulators/ddc-workbench.html:1464` holds the AHU drawing's
 `<desc>`: **5,609 characters / 986 words**, one text node, no internal
@@ -12729,6 +12732,35 @@ point mirror already went for values. ⚠️ Two counts here have been
 wrong in briefs — one said ~4,600 — so **re-derive from the built page**
 (`grep`-count the `<desc>` in `_site/`) rather than citing this figure
 after any edit.
+
+**Ruling (2026-10-05, owner).** *"Leave it with the trigger."* The
+single node stays. **First, the count — this entry's figure is stale, as
+its own ⚠️ warned it would be.** Measured 2026-10-05 on the live page
+(`html/simulators/ddc-workbench.html:1641`): **6,060 characters / 1,071
+words / 33 sentences**; the FCU's (`ddc-workbench-fcu.html:993`) is still
+**1,729**. The heading's 5,609 is left as written per the ledger's
+append-only convention; cite this paragraph, not the heading.
+
+**Why leave it.** The topology-first ruling stands — the length is the
+content the owner asked for — and the skimming problem this entry names
+is already answered for the part a screen-reader user most needs to
+re-enter: every live value is repeated as real, navigable text in the
+live-points list below the drawing (the `<desc>`'s own closing sentence
+says so). What the single node costs is re-hearing the *topology*, which
+a reader takes in once per visit, not per value change. **Options 2 and 3
+rejected:** nested `<g role="img">` groups each with a short `<desc>`
+(option 2) and any hybrid of it behave differently across screen-reader
+/ browser engines — some prune the children of a `role="img"` node, some
+expose them — so the structure would be real on one stack and invisible
+on another, the #227b/#252 pruning argument again; and restructuring now
+spends a live-page change on a problem no reader has reported.
+
+**Revisit trigger:** screen-reader user feedback on this drawing, **or**
+the next restructure of the AHU drawing itself — whichever comes first.
+At that point the route is the HTML-prose one (the long description moves
+into reflowing HTML below the graphic and the `<desc>` points at it), the
+direction the points mirror already took for values. No code ships; this
+is a docs-only disposition.
 
 ### 269. The FCU point mirror carries none of the AHU's screen-reader provenance glosses *(noticed 2026-08-03, PR #474's lane report — harmonization candidate; **RESOLVED 2026-08-11 · PR #523** — the entry UNDERSTATED it, see the resolution block: the FCU has no commanded register at all, so colour was never the channel here, and one cell needed two glosses)*
 
@@ -12974,7 +13006,7 @@ which is what proves it measures the other branch.
 cannot be made to catch this, since it measures overflow and there is
 none.
 
-### 273. The forced-sensor marker CSS is duplicated per page under page-prefixed classes *(noticed 2026-08-04, the Phase 8 graduation lane — deferred at graduation, wants a `.ddcw-forced-mark` rename)* *(deferred 2026-08-04 — graduation trigger; on the 2026-10-05 decision agenda)*
+### 273. The forced-sensor marker CSS is duplicated per page under page-prefixed classes *(noticed 2026-08-04, the Phase 8 graduation lane — deferred at graduation, wants a `.ddcw-forced-mark` rename)* *(deferred 2026-08-04 — graduation trigger; on the 2026-10-05 decision agenda)* *(ruled 2026-10-05 — graduate to `.ddcw-forced-mark`; fix pending)*
 
 The dashed accent ring that marks a forced sensor glyph is one drawn
 idea with two page-local copies: `.ahu-forced-mark`
@@ -12992,6 +13024,26 @@ a rename across two SVGs and a spec did not belong in the go-live
 diff. The header-clearance pair the graduation also left in place is
 NOT this item — its selectors are site-wide (`.tool-card-header` /
 `.tool-card-title`), so its dedup is #272's open design call.
+
+**Ruling (2026-10-05, owner).** *"Graduate it."* The deferral above
+re-opens for work: one shared `.ddcw-forced-mark` rule in `styles.css`'s
+DDC WORKBENCH SHELL section (`html/styles.css:4959`), and both page-local
+copies go. Concretely: delete the AHU head block
+(`html/simulators/ddc-workbench.html:554-565`) and the FCU head block
+(`html/simulators/ddc-workbench-fcu.html:196-217`, comment included — its
+"deferred, codebase-issues #273" sentence retires with it); rename the
+rects and their comments in both SVGs (`ddc-workbench.html:2047`,
+`:2066/2083/2110/2129/2144`; `ddc-workbench-fcu.html:1203`,
+`:1211/1228/1242`); update the three selectors in
+`tests/ddc-workbench-fcu-sensors.spec.js` (`:240` comment, `:251`, `:260`);
+and a **patch bump 3.90.0 → 3.90.1**, because a `styles.css` change
+without one leaves returning visitors on the cached sheet (#84). The two
+page blocks are verbatim-identical in declarations (fill/stroke none;
+accent, 1.5, `3 2` dash when `.is-forced`), so the shared rule is a move,
+not a merge of two designs. Two live pages + the stylesheet → **owner
+merges**. On merge this heading takes `*(addressed YYYY-MM-DD — graduated
+to .ddcw-forced-mark, PR #NNN)*` after the ruled marker; the status
+script reads that later closing marker as resolved.
 
 ### 274. The simulators landing crossed its own chips threshold at nine cards *(noticed 2026-08-04, the Phase 8 graduation lane — DESIGN CALL, deliberately not decided at go-live; owner decided the taxonomy 2026-08-10, **RESOLVED 2026-08-11 · PR #519** — resolution block at the end, chip LABELS signed off by the owner 2026-08-12)*
 
@@ -13652,7 +13704,7 @@ FCU → AHU → FCU round-trip asserts only `offprog` / `program` /
 `forcedValue` while the AHU side asserts more; partly covered by the
 lane's new snapshot row.
 
-### 285. The older details idioms' closed ink is measured only through a Chromium UA implementation detail *(noticed 2026-08-10, the collapse pilot's guard work — LOW)*
+### 285. The older details idioms' closed ink is measured only through a Chromium UA implementation detail *(noticed 2026-08-10, the collapse pilot's guard work — LOW)* *(ruled 2026-10-05 — closes with #316's widening to bare `details`; fix pending)*
 
 The contrast sweep reaches closed-`<details>` ink on the ~30
 `details.tool-preamble` pages and the pid-spoiler only because
@@ -13662,6 +13714,15 @@ arm removes that dependence for `details.prose-fold` ONLY;
 deliberately not widened, since force-opening 30+ pages' hidden
 prose could surface latent reds that are not a pilot's call. Widening
 the arm (and triaging what it finds) is its own pass.
+
+**Ruling (2026-10-05, owner).** Closes with **#316**'s widening — read
+that entry's Ruling. Widening `settle()`'s third arm to bare `details`
+force-opens every `<details>` idiom before the walk, so no idiom's closed
+ink depends on Chromium's UA shadow-slot detail any more; the mechanism
+this entry describes was correct (the #316 premise was the one that was
+wrong). Same PR as #316; test-only → merge on green. On merge this
+heading takes `*(addressed YYYY-MM-DD — closed by #316's force-open
+widening, PR #NNN)*`.
 
 ### 286. Print never reaches non-active tab panes — site-wide, pre-existing *(noticed 2026-08-10, the print-shim verification — LOW)*
 
@@ -14880,7 +14941,7 @@ the modbus-decoding constraint: `smoke.spec.js` walks that quiz
 deterministically, so any text edit there must verify the spec's
 assertions in the same PR.
 
-### 316. Contrast sweep never opens the older `<details>` idioms — `details.tool-preamble` / `.pid-spoiler` ink is unmeasured *(noticed 2026-08-21, §4 tools marking lane; decision-class — the spec itself defers this as "a separate call")*
+### 316. Contrast sweep never opens the older `<details>` idioms — `details.tool-preamble` / `.pid-spoiler` ink is unmeasured *(noticed 2026-08-21, §4 tools marking lane; decision-class — the spec itself defers this as "a separate call")* *(ruled 2026-10-05 — widen the force-open to bare `details`; premise corrected; fix pending)*
 
 `tests/contrast-sweep.spec.js` force-opens `details.prose-fold` only;
 its own comment (~L459) scopes that deliberately "so the older idioms
@@ -14904,7 +14965,28 @@ extend the third arm's selector to
 (or bare `details`), run the sweep, and disposition whatever it
 finds before merging the widened spec.
 
-### 317. 52 `FAQPage` nodes ship but earn no rich result — Google restricted FAQ to government and health sites in Aug 2023 *(noticed 2026-08-27, SEO research round; decision-class — owner's call, not a bug)*
+**Ruling (2026-10-05, owner).** *"Widen with bare details."* `settle()`'s
+third arm (`tests/contrast-sweep.spec.js:462-464`) changes its selector
+from `details.prose-fold` to bare `details`, and its comment (`:454-461`,
+"widening it is a separate call") plus the header paragraph on the third
+arm (`:125` onward) are updated to say every idiom is force-opened.
+
+**Premise correction — this entry's "unmeasured" claim was wrong.**
+Measured 2026-10-05 in Playwright's Chromium 147: content inside a closed
+`<details>` reports non-zero rects and computed `display: block`, so the
+walker *already* measures it — through the UA shadow-slot detail #285
+describes. #285 had the mechanism right; this entry's title overstates
+it. And the cost the entry told us to budget did not materialise: the
+full sweep run with the widened selector passed **14/14 shards in both
+themes with zero new failures**, so there is **no fix pass to budget**.
+The widening is still worth shipping — it turns an implementation detail
+into a contract, which is what closes #285 too.
+
+Test-only → **merge on green**. On merge this heading takes
+`*(addressed YYYY-MM-DD — force-open widened to bare details; premise
+corrected, PR #NNN)*` after the ruled marker.
+
+### 317. 52 `FAQPage` nodes ship but earn no rich result — Google restricted FAQ to government and health sites in Aug 2023 *(noticed 2026-08-27, SEO research round; decision-class — owner's call, not a bug)* *(ruled 2026-10-05 — position 2: keep for answer-engine readers, correct the rationale; fix pending)*
 
 `head.njk` emits `FAQPage` JSON-LD from the `faqs:` frontmatter and the
 quiz banks; a build count puts it at **52 pages**. The mechanism works
@@ -14934,6 +15016,34 @@ only if the AI-parsing argument is worth bytes. **The visible on-page
 FAQ content is not in question either way** — it is useful copy and
 several pages' `faqs:` blocks read as genuine content. This is only
 about the JSON-LD twin.
+
+**Ruling (2026-10-05, owner).** *"I agree on position 2, with more
+people finding resources through AI it's useful but should be stated for
+what it is."* **Position 2: the 52 nodes stay, and the repo stops
+describing them as a search win.** The visible FAQ copy was never in
+question. What ships is rationale only — no output changes:
+
+- `.eleventy.js` — the comments above `faqPageJsonLd` (`:1228-1237`,
+  filter at `:1261`) and `faqJsonLd` (`:1282-1291`, filter at `:1292`)
+  say *what* the nodes contain but not *why* they exist; each gains the
+  purpose stated plainly — machine readers (AI answer engines) parse
+  `FAQPage` even where Google renders nothing — plus the August 2023
+  restriction, so nobody re-adds the SEO premise.
+- `html/_includes/faq.njk` — the header (`:1-20`) explains the
+  one-source-two-consumers pattern; it gets the same one-line purpose for
+  the JSON-LD twin. (Its "on-page ranking lever" note is about the `<h3>`
+  questions, not the JSON-LD, and stays.)
+- `docs/site-ideas-and-friction.md` — the mentions that count FAQ markup
+  toward SEO (`:6400`, "grows its FAQPage JSON-LD too, so … the SEO
+  trajectory feed each other"; and `:1436`, FAQPage chosen in place of a
+  DefinedTermSet for "rich-result payoff") get a dated correction note,
+  not a rewrite.
+
+Who merges: comment-only, but `.eleventy.js` and `_includes/` are on the
+needs-approval list regardless of what changes in them → **owner
+merges**. On merge this heading takes `*(addressed YYYY-MM-DD — owner
+ruled position 2: kept for answer-engine readers, rationale corrected)*`
+after the ruled marker.
 
 ### 318. Speed Brain is enabled on the zone and 100% inert — every prefetch 503s against `run_worker_first: true` *(measured 2026-08-28; owner dashboard decision)* *(addressed 2026-10-05 — owner turned Speed Brain off)*
 
@@ -15004,7 +15114,7 @@ is in place and Googlebot is not being refused. The worst case this entry
 named (silent deindexing via the legacy toggle) is ruled out on this zone.
 Recheck only if that panel is ever changed.
 
-### 320. 40 lesson pages declare `author` and `publisher` by dangling reference — the Person node exists only on the home page *(noticed 2026-08-27; DECISION-CLASS — needs an owner answer before any fix, see below)*
+### 320. 40 lesson pages declare `author` and `publisher` by dangling reference — the Person node exists only on the home page *(noticed 2026-08-27; DECISION-CLASS — needs an owner answer before any fix, see below)* *(ruled 2026-10-05 — pseudonym author inlined, publisher deleted; fix pending)*
 
 `techArticleJsonLd` (`.eleventy.js:1373-1391`) sets
 `"author": {"@id": "https://controlsfreak.dev/#author"}` and
@@ -15059,7 +15169,29 @@ catch a recurrence: assert that every `application/ld+json` block on an
 education page has, for each of `author`/`publisher` present, either a
 `name` or an `@id` that resolves **within the same document**.
 
-### 321. `nav: guides` has no `SECTION_MAP` entry, so the five guides pages emit a two-item breadcrumb *(noticed 2026-08-27 while fixing #86's contact follow-on; low severity)*
+**Ruling (2026-10-05, owner).** *"Pseudonym and delete publisher."*
+**A = the pseudonym `Controls Freak`**, inlined as a `Person` node with
+`name: "Controls Freak"` and `jobTitle: "Controls Programmer"` — the same
+two properties the home page's `@graph` carries (`html/index.html:25-26`).
+**B = delete `publisher`.** Reasoning: the pseudonym is already public in
+the home page's JSON-LD, so 40 lessons repeating it disclose nothing new;
+a real name is the one direction that does not undo cleanly once
+indexed; and `publisher` is not on Google's recommended Article
+properties, so deleting it is the minimal change and asserts no new
+entity.
+
+What ships: one hunk in `techArticleJsonLd` (`.eleventy.js:1382`; the
+`author` / `publisher` lines are `:1393-1394`, and the comment at
+`:1374-1376` that "attributes authorship to the Person entity declared on
+the home page" is trued in the same hunk), plus the **regression spec**
+this entry asked for: every `author` / `publisher` reference in an
+education page's JSON-LD has either a `name` or an `@id` that resolves
+**within the same document**. Live `<head>` output on 40 lessons →
+**owner merges**. Rides one PR with #321 (same file, same filter family).
+On merge this heading takes `*(addressed YYYY-MM-DD — owner ruled
+2026-10-05: pseudonym author inlined, publisher deleted, PR #NNN)*`.
+
+### 321. `nav: guides` has no `SECTION_MAP` entry, so the five guides pages emit a two-item breadcrumb *(noticed 2026-08-27 while fixing #86's contact follow-on; low severity)* *(ruled 2026-10-05 — add `guides` to `SECTION_MAP`; fix pending)*
 
 `SECTION_MAP` in `.eleventy.js` covers `tools` / `simulators` /
 `education` / `practice` / `contact`. It has no `guides` key, so
@@ -15075,6 +15207,21 @@ pillar pages that arguably sit directly under Home rather than under a
 rather than fixed because deciding it means deciding whether Guides is a
 real section or a nav lane over the hubs. Found while fixing the contact
 entry (#317-adjacent); deliberately not bundled into that PR.
+
+**Ruling (2026-10-05, owner).** *"Add it to the key, there's enough of a
+case for it just because of how much traffic my BACnet pages have been
+getting."* `SECTION_MAP` (`.eleventy.js:1168-1180`; the lookup is
+`:1185`) gains `guides: { name: "Guides", url:
+"https://controlsfreak.dev/guides/" }`. The taxonomy question this entry
+raised was already answered by the nav: Guides **is** the section there
+— it has its own dropdown (`html/_includes/nav.njk:16`), its own landing
+at `/guides/`, and `nav: guides` drives the active state — so the
+breadcrumb was the one surface disagreeing. Ship with a spec on the five
+`nav: guides` pages (`/bacnet/`, `/forced-air/`, `/hydronics/`,
+`/refrigeration/` emit a 3-item `Home → Guides → <page>` trail; the
+`/guides/` landing emits 2-item `Home → Guides`). Rides the #320 PR.
+Live `<head>` output on 5 pages → **owner merges**. On merge this heading
+takes `*(addressed YYYY-MM-DD — guides added to SECTION_MAP, PR #NNN)*`.
 
 ### 322. External localization PR #602 (Korean, 358 files) — closed; the conditions a second language would need *(addressed 2026-10-05 — owner ruling, PR closed with a fork suggestion)*
 
@@ -15111,3 +15258,53 @@ translated pages sit inside the blocking contrast and responsive sweeps,
 and `CLAUDE.md`'s add-a-page checklists say what the locale layer asks
 of a new page. The fork route (MIT, own name/domain, link back) was
 offered in the close comment.
+
+### 323. The AHU low-charge verdict still states the diagnosis the FCU's was hedged away from (#247's unfinished half) *(noticed 2026-08-01 in #247's resolution, carried here 2026-10-05)* *(ruled 2026-10-05 — hedge to the FCU's disposition-3 wording; fix pending)*
+
+`html/scripts/ddcw-ahu-unit.js:1998` sets the AHU's `low-charge`
+verdict to *"No ΔT across the machine — low charge, not cooling"*. That
+over-claims in exactly the way #247 corrected on the FCU: the readings on
+the graphic cannot separate low charge from a plugged condenser, a dead
+compressor or a plugged metering device. The verdict only *knows* because
+the scenario button injected `d.fault`, ground truth the drawing never
+renders. #247's resolution named this twin and left it out of scope; it
+was tracked nowhere else until the 2026-10-05 state map surfaced it.
+
+New string: *"No ΔT across the machine — air moving; low charge is one
+candidate, gauges settle it"* — the FCU's disposition-3 shape
+(`html/scripts/ddcw-fcu-unit.js:1188`), keeping **"across the machine"**
+because the AHU's ΔT is discharge minus mixed air across the whole unit,
+fan heat included, not a coil ΔT. **No `.ref-note`:** the FCU's note
+exists to explain the asymmetry between two neighbouring verdicts (the
+blocked-condenser one refuses to name a part); the AHU has no such
+neighbour, so there is nothing to explain. **Add a spec row** pinning the
+string and its `.sr-only` mirror (`#ahu-verdict-sr`, written by the one
+`setVerdict` writer at `ddcw-ahu-unit.js:1624-1630`) — nothing pins it
+today; `tests/ddcw-ahu-unit.spec.js` drives the `low-charge` fault but
+never asserts the verdict text. The FCU row at
+`tests/ddc-workbench-fcu.spec.js:1314` is the model.
+
+**Ruling (2026-10-05, owner).** *"Hedge it."* Option 2 of the hedge: the
+FCU wording, no ref-note. Live script → **owner merges**. On merge this
+heading takes `*(addressed YYYY-MM-DD — hedged to the FCU wording, spec
+row added, PR #NNN)*`.
+
+### 324. The PID tuner's cheat sheet advises "flip acting (direct ↔ reverse)" — a control the tuner does not have *(noticed 2026-10-05, decision sitting — by-catch of the pid-basics direct/reverse aside; LOW, not ruled)*
+
+`html/simulators/pid-tuner.html:423` — the Symptom→Move table's row
+*"PV runs away when the loop acts → flip acting (direct ↔ reverse)"*.
+The tuner's engine is fixed reverse-acting: it has no acting parameter,
+and the only place direction appears is an annotation — the comment at
+`:960` and the readout text at `:965` tell the reader a negative process
+gain means the loop should be set direct-acting, and that the gains use
+the magnitude. So the row is **defensible as advice about the reader's
+real loop** (a PV that runs away when the loop acts is the classic
+wrong-action symptom) but **reads as advice about the tool**, where the
+reader will look for a toggle that is not there.
+
+Options: (1) reword the row so it says it is advice for the field
+controller, not a control on this page — smallest; (2) add an acting
+toggle to the tuner — bigger, touches the engine and every preset;
+(3) leave it. Found while ruling the pid-basics direct/reverse aside
+(friction file, *PID basics — surface direct vs reverse acting?*). Open;
+not on the 2026-10-05 agenda.
