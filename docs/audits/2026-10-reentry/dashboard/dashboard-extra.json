@@ -1,0 +1,285 @@
+{
+ "mainSha": "a7d0d46",
+ "lastMergeDate": "2026-10-06",
+ "banksAtOrAbove": [
+  {
+   "slug": "bacnet-basics",
+   "count": 15
+  },
+  {
+   "slug": "bacnet-networking",
+   "count": 15
+  },
+  {
+   "slug": "bacnet-mstp",
+   "count": 18
+  },
+  {
+   "slug": "pid-basics",
+   "count": 15
+  },
+  {
+   "slug": "air-handlers",
+   "count": 15
+  },
+  {
+   "slug": "economizers",
+   "count": 15
+  }
+ ],
+ "deps": [
+  {
+   "name": "@11ty/eleventy",
+   "from": "3.1.5",
+   "to": "3.1.6"
+  },
+  {
+   "name": "@playwright/test",
+   "from": "1.59.1",
+   "to": "1.63.0"
+  },
+  {
+   "name": "wrangler",
+   "from": "4.94.0",
+   "to": "4.147.0"
+  }
+ ],
+ "suiteBaseline": "**1223 passed, 0 failed, 1 skipped** in 8.3 min on `:9489`, 2026-10-06, against `main` @ `1bf23ce` (after the three chain A merges that had no CI run of their own); chain B and the lesson merged after it, each CI-green on `main`.",
+ "rulings": [
+  "**All sixteen agenda items ruled 2026-10-05**, one by one with pros and cons; the owner reached the same call as the recommendation on every item before reading it. Record: `docs/audits/2026-10-reentry/rulings.md` (PR #611, merged).",
+  "**The arc is picked: freeze season + quizzes.** Coil-freeze-protection lesson first, quiz wave 2 alongside, #228 in the background; F4 case-file mockup at the arc's end; §7.2 after that.",
+  "**The no-coming-soon convention is amended:** the ban is on prominence. A low-key follow-up clause inside a scope note is acceptable — narrow it, don't delete it (CLAUDE.md carries the amendment).",
+  "**The status grammar gained a `ruled` state:** decided-but-unshipped entries no longer count as decision-class. Decision-class fell from 6 to 2 (#228, #283).",
+  "**PR #602** (Korean localization) closed courteously with the fork route; **#318** Speed Brain off; **#319** AI Crawl Control verified safe.",
+  "**Review-day rulings (2026-10-06, rulings.md §18):** no Td on reheat coils as a teaching default (bank question replaced, D callout tempered); coil valves are two-way *or* three-way; the PICV sentence scoped to *modulating* valves; the ASHRAE 135 paraphrases verified (\"Clauses check out\"); the #228 design-note defaults accepted (\"I like your defaults\"); filter racks are drawn as pleated media site-wide.",
+  "**Owner on the format:** *\"Forcing both of us to take a look at each PR in sequence may be the most balanced workflow we've used.\"*"
+ ],
+ "today": [
+  "`main` pulled to `e33a825` (PR #601, 2026-09-02) — it had been two commits behind — and then to `178af5c` after the four PRs below merged.",
+  "Eight merged local branches deleted (four `worktree-agent-*` leftovers, four shipped feature branches); every lane worktree removed afterwards.",
+  "PR #603 **merged** — 12 codebase-issues headings and all 66 content-audit headings now carry the ledger's own status marker, so status reads from the heading line.",
+  "PR #604 **merged** — the state map, per-entry appendix and PR #602 assessment live under `docs/audits/2026-10-reentry/`; ledger #322 records the PR #602 ruling.",
+  "PR #605 **merged** — `npm run status`, the readout this page is rendered from.",
+  "Full Playwright suite run on a free high port as the session baseline: 1215 passed, 0 failed.",
+  "Cloudflare dashboard checked by the owner: Speed Brain turned off (#318); AI Crawl Control confirmed on with zero refused requests (#319).",
+  "PR #606 **merged** — six more ledger headings trued up to the marker grammar, and the two Cloudflare rulings recorded in the ledger.",
+  "PR #611 **merged** — every ruling written into its ledger entry; the durable record is `docs/audits/2026-10-reentry/rulings.md`.",
+  "PR #607 opened — the three dependency bumps plus the matching CI Playwright image, green; owner merges (Worker toolchain).",
+  "Night 1: sixteen cleanup lanes, three quiz banks, the coil-freeze lesson, the two BACnet softenings, the PID aside and the #228 design note all ran as Opus/Fable lanes with adversarial verification; everything that reaches a live page is a PR for the owner, listed under **Pick up here**.",
+  "Three merge chains were pre-built so nothing conflicts on merge: the ledger-tail chain #619 → #632 → #626 → #630 → #634 (each appends a new ledger entry), and the version/bank chain ending in the lesson PR #620 (see each PR’s *Stacked on*). Merge top-down; GitHub retargets the child when the parent lands.",
+  "**Day 2 (2026-10-06): the whole queue merged, PR by PR, with the owner.** 25 PRs landed — the 23 from night 1 plus #635 (two lesson sentences from the review) and #636 (Air Handlers filter racks). **The Coil Freeze Protection lesson is live** at forced-air step 3; `main` is v3.91.0; zero open PRs.",
+  "Before the walk: two PRs had gone CONFLICTING overnight (adjacent-hunk ledger collisions) and chain B would have on first merge — all three fixed by rebase; a stray duplicate ledger entry on #625 was dropped.",
+  "Process gap caught mid-session: a stacked PR gets **no CI run** when GitHub retargets it to `main`. Three chain A PRs merged that way; a full suite on `main` was clean (1223/0/1), and the chain B children were rebase-pushed before merging. Logged as codebase-issues #331 (owner picks the trigger fix) and as a CLAUDE.md Workflow rule.",
+  "Wrap-up docs PR #637 (rulings §18, #228 accepted, #90 closed, new #99 / #330 / #331, CLAUDE.md notes) merges on green. LAN preview back on `main`."
+ ],
+ "agenda": [
+  {
+   "id": 1,
+   "tier": 1,
+   "title": "#319 Cloudflare AI-crawler settings",
+   "source": "codebase-issues #319",
+   "rec": "Owner action in the Cloudflare dashboard (Security → Bots / AI Crawl Control): confirm no training or AI-bot block is on. The legacy toggle also blocks Googlebot; the downside is silent deindexing.",
+   "done": "Done 2026-10-05 — Crawl Control is on; trend data shows many successful crawler requests and zero unsuccessful, so nothing is being blocked."
+  },
+  {
+   "id": 2,
+   "tier": 1,
+   "title": "#318 Speed Brain is on and 100% inert",
+   "source": "codebase-issues #318",
+   "rec": "Turn it off in the dashboard, or record acceptance. Every prefetch 503s against `run_worker_first`.",
+   "done": "Done 2026-10-05 — turned off in Speed → Settings → Content Optimization."
+  },
+  {
+   "id": 3,
+   "tier": 2,
+   "title": "#317 FAQPage JSON-LD — 52 nodes, no rich result since Aug 2023",
+   "source": "codebase-issues #317",
+   "rec": "Keep it and fix the rationale (still parsed by Bing and AI readers); cheapest of the three options.",
+   "done": "Ruled 2026-10-05 — position 2: keep the markup for answer-engine readers, correct the rationale. Owner: \"with more people finding resources through AI it's useful but should be stated for what it is.\""
+  },
+  {
+   "id": 4,
+   "tier": 2,
+   "title": "#320 author / publisher on 40 lesson pages",
+   "source": "codebase-issues #320 · `.eleventy.js` ~L1384",
+   "rec": "Owner decides what name ships publicly. Suggested: inline Person = \"Controls Freak\", delete `publisher`. One hunk once decided.",
+   "done": "Ruled 2026-10-05 — author = the pseudonym \"Controls Freak\" inlined as a Person (already public on the home page); `publisher` deleted. One hunk + a same-document resolution guard."
+  },
+  {
+   "id": 5,
+   "tier": 2,
+   "title": "#321 `nav: guides` has no SECTION_MAP entry",
+   "source": "codebase-issues #321",
+   "rec": "Add the key — otherwise the five guides pages keep a two-item breadcrumb.",
+   "done": "Ruled 2026-10-05 — add the `guides` key. Owner: \"enough of a case for it just because of how much traffic my BACnet pages have been getting.\""
+  },
+  {
+   "id": 6,
+   "tier": 3,
+   "title": "#316 widen the contrast sweep's force-open to the older `<details>` idioms",
+   "source": "codebase-issues #316 (= #285) · `contrast-sweep.spec.js` ~L459",
+   "rec": "Yes — the 2026-08-09 collapse direction already points there (~30 pages). Budget whatever the first run finds.",
+   "done": "Ruled 2026-10-05 — widen to bare `details`. Measured first: Chromium already reports closed-details ink as laid out (#285 was right, #316's \"unmeasured\" was wrong) and the widened sweep was 14/14 green in both themes, so there is no fix pass to budget. Closes #285 too."
+  },
+  {
+   "id": 7,
+   "tier": 3,
+   "title": "#268 `#ahu-desc` is 5,609 characters in one text node",
+   "source": "codebase-issues #268",
+   "rec": "Leave it. The length itself was ruled; this is only the node shape.",
+   "done": "Ruled 2026-10-05 — leave the single node (live count is 6,060 chars / 1,071 words); revisit on screen-reader feedback or the next drawing restructure, HTML-prose route then. Deferred."
+  },
+  {
+   "id": 8,
+   "tier": 3,
+   "title": "#247 AHU twin of the low-charge over-claim",
+   "source": "codebase-issues #247 · `ddcw-ahu-unit.js` ~L1998",
+   "rec": "Apply the FCU hedge (small). Live page, so the owner merges.",
+   "done": "Ruled 2026-10-05 — hedge to the FCU's disposition-3 wording (\"air moving; low charge is one candidate, gauges settle it\"), no ref-note. Tracked as new #323."
+  },
+  {
+   "id": 9,
+   "tier": 3,
+   "title": "#273 forced-mark CSS graduates to `styles.css`",
+   "source": "codebase-issues #273",
+   "rec": "Yes, as `.ddcw-forced-mark` — small, needs a version bump.",
+   "done": "Ruled 2026-10-05 — graduate to `.ddcw-forced-mark` in `styles.css`, patch bump."
+  },
+  {
+   "id": 10,
+   "tier": 4,
+   "title": "`balancing.html:497` \"floating-point input\"",
+   "source": "glossary-s4-collision-proposal.md:779",
+   "rec": "Owner answers: field usage or copy defect? Suggested \"floating (tri-state)\". Tracked only in the arc docs today.",
+   "done": "Ruled 2026-10-05 — say \"proportional\". Owner: \"a tri state is driven with 2 DOs, so we would either be adding confusion or trading one inaccuracy for another.\" The floating mention drops."
+  },
+  {
+   "id": 11,
+   "tier": 4,
+   "title": "Fail-to-start as a re-triage candidate",
+   "source": "glossary-s4-collision-proposal.md:689",
+   "rec": "Park until the §7.2 lane opens — its value is the quiz surface.",
+   "done": "Ruled 2026-10-05 — park into §7.2 with a pointer planted in the friction file. Measured: zero markable sites outside the owning pages (the wiresheet hit is an `<h3>`); the only consumer is the quiz surface."
+  },
+  {
+   "id": 12,
+   "tier": 4,
+   "title": "Three live \"tracked follow-up\" lines",
+   "source": "tools/airflow.html:183 · waterside-load.html:65 · voltage-drop.html:158",
+   "rec": "Remove — the no-coming-soon rule forbids promising unbuilt work in page copy.",
+   "done": "Ruled 2026-10-05 — NARROW, don't cut, and the convention is amended: the ban is on advertising unbuilt features prominently; a brief low-key clause in a scope note is fine. Airflow and voltage-drop lose their detail; waterside unchanged."
+  },
+  {
+   "id": 13,
+   "tier": 4,
+   "title": "content-audit #88 / #89 — soften two ASHRAE 135 claims",
+   "source": "content-audit #88, #89",
+   "rec": "Proceed; the direction is concrete (Annex J attribution; amortized Max_Master cost).",
+   "done": "Ruled 2026-10-05 — soften both pairs (lesson + quiz explain) in one lane; the owner checks the Annex J and Clause 9 text against his copy of 135 on the PR."
+  },
+  {
+   "id": 14,
+   "tier": 4,
+   "title": "PID basics — direct vs reverse acting",
+   "source": "friction L2397",
+   "rec": "An aside in the lesson, not an example swap. Pairs with the EXCLUDED-map re-open trigger.",
+   "done": "Ruled 2026-10-05 — a one-sentence aside in the P callout naming CONTROLLER action, linked to the deadband lesson; worked example untouched. By-catch logged as #324 (the tuner cheat sheet's \"flip acting\" row)."
+  },
+  {
+   "id": 15,
+   "tier": 4,
+   "title": "Mixed-air mass-vs-volume teaching beat",
+   "source": "friction L6410",
+   "rec": "Home it in the `coil-freeze-risk.html` reference column — that is where the stakes are.",
+   "done": "Ruled 2026-10-05 — a reference row on `coil-freeze-risk.html`; absorbed into the coil-freeze-protection lesson now that the arc picked it, the tool row shrinks to a pointer."
+  },
+  {
+   "id": 16,
+   "tier": 4,
+   "title": "Warm-climate freeze-protection copy P1/P4/P5",
+   "source": "warm-climate-freeze-protection.md:566",
+   "rec": "Blessed 2026-08-09, unshipped, no pointer anywhere. Log a friction pointer now; a small dedicated lane later.",
+   "done": "Ruled 2026-10-05 — pointer planted in the friction file now; P1/P4/P5 ship in the coil-freeze-protection lesson (arc night 1)."
+  },
+  {
+   "id": 17,
+   "tier": 5,
+   "title": "Which comes first: §7.2 quiz-bank gloss component, or the dev-arc-brief re-triage?",
+   "source": "glossary-arc.md:637 vs friction L6345 (trigger fired 2026-08-14)",
+   "rec": "Owner's call, deliberately deferred today. Prepared recommendation for that sitting: F4 case-file pilot (mockup-first, owner-supplied stories) + the coil-freeze-protection lesson + #228 as the tax lane.",
+   "done": "Ruled 2026-10-05 — arc = **freeze season + quizzes**: the coil-freeze-protection lesson first (research paid, season imminent), quiz wave 2 alongside, #228 as the background tax lane; F4 case-file as one mockup lane at the arc's end; §7.2 after that; the remaining brief items (A1/A4/C4/D2/D4/E2, LON go/no-go) to a short sitting of their own."
+  },
+  {
+   "id": 18,
+   "tier": 5,
+   "title": "Quiz-growth wave 2 (drills)",
+   "source": "friction L2532, L6302",
+   "rec": "Ruled and pipeline-proven; resumes whenever content lanes reopen. 37 banks sit under 15.",
+   "done": "Started 2026-10-05 night — wave 2 opened with air-handlers, economizers and pid-basics (no BACnet bank is under target). Drills next."
+  },
+  {
+   "id": 19,
+   "tier": 5,
+   "title": "Smaller yes/no items",
+   "source": "friction L7021, L2237, L2271, L2263, L7035",
+   "rec": "Second live hero demo; phone-width diagram legibility; URL deep links; palette recents; a late-October GSC export for the pillar re-read.",
+   "done": "Unchanged, with one note: the second hero demo's precondition (an air-side simulator) has been met since the workbench went live, so it is unblocked and cheap whenever a slot opens."
+  }
+ ],
+ "arcs": [
+  {
+   "name": "Freeze season + quizzes",
+   "state": "live · lesson shipped 2026-10-06",
+   "stateClass": "live",
+   "text": "The arc. **Shipped 2026-10-06:** the Coil Freeze Protection lesson (#620, v3.91.0, forced-air step 3), the two BACnet softenings (#615, clauses verified by the owner), the PID controller-action aside (#616), the #228 design note (#631, defaults accepted) and quiz wave 2 (#608/#609/#610 at 15 each). **Next:** more banks (34 under 15, none BACnet), the F4 case-file mockup lane at the arc's end, §7.2 after that, #228 execution (engine spec first, one page per PR), the short sitting on the brief items. **Owner calls waiting:** content-audit #99 (`bandTxt` 35–38 vs the lesson's 35–37), #328, #329, #324, #91–#98, codebase-issues #330/#331."
+  },
+  {
+   "name": "Glossary / tooltips",
+   "state": "paused · §7.2 sequenced after the content arc",
+   "stateClass": "paused",
+   "text": "§4 collision tier complete: 74 entries, 396 marks. The 2026-10-05 sitting sequenced the **§7.2 quiz-bank gloss component** AFTER the freeze-season + quizzes arc: its value is real but marginal and unmeasured, and it is an engine change on 42 live practice pages. fail-to-start is parked into it with a friction pointer; balancing:497 ruled \"proportional\"."
+  },
+  {
+   "name": "Quiz-bank growth",
+   "state": "live · wave 2 started 2026-10-05",
+   "stateClass": "live",
+   "text": "Wave 1 (BACnet cluster) complete: three banks at 15+, nothing BACnet left under target. Wave 2 opened the night of 2026-10-05 with air-handlers, economizers and pid-basics (Opus drafts, Fable refutes, one PR per bank, owner merges). 37 banks sit under 15; drills follow."
+  },
+  {
+   "name": "DDC Workbench",
+   "state": "live since 2026-08-04",
+   "stateClass": "live",
+   "text": "Phase 9 shipped 2026-08-09 (v3.83.0). Open follow-ons: #283 T-C (hold onto the statusbar chip, `@8` glyph ruled), #260 first-mount reset, #273, #307, #247; backlog in `docs/air-side-sim.md`."
+  },
+  {
+   "name": "SEO / structured data",
+   "state": "ruled · fixes in PRs",
+   "stateClass": "live",
+   "text": "#317 keep + rationale, #320 pseudonym author / no publisher, #321 guides breadcrumb — all ruled 2026-10-05 and in flight as cleanup PRs. The topic-primary nav rewrite stays decided-NO. The late-October GSC export for the pillar re-read is still due."
+  },
+  {
+   "name": "Owner's dev-arc brief (2026-08-07)",
+   "state": "re-triaged 2026-10-05",
+   "stateClass": "waiting",
+   "text": "Re-triaged at the re-entry sitting: the arc went to freeze season + quizzes; F4 (case files) gets one mockup lane at the arc's end, stories owner-supplied after he has seen a shape; #228 (≈ G2) is the tax lane with a design note first. Still to rule in a short sitting of their own: A1, A4, C4, D2, D4, E2, the §0 N2 gap and the LON go/no-go (C2/C3), with the banked analysis as input."
+  },
+  {
+   "name": "Mechanical cleanup",
+   "state": "live · lanes opened 2026-10-05 night",
+   "stateClass": "live",
+   "text": "All sixteen lanes opened PRs the night of 2026-10-05: #612 (#273, bumps 3.90.1) → #623 (#286) → #624 (#306) → #627 (#309) stacked; #613 (#320+#321); #617 (#317 comments, zero output change); #618 (#323 AHU hedge); #619 (#238) → #632 (consumer guards, closes #325) → #626 (hydronic slope, #326) → #630 (privacy per-key, #327) → #634 (by-catch #328/#329 + content-audit #90–#98) stacked; #621 balancing; #622 narrowed clauses; #625 (#314). Merged on green: #614, #628, #629. Every lane verified the entry first — most found a drifted line cite or a wrong premise."
+  }
+ ],
+ "depsPr": {
+  "number": 607,
+  "note": "**merged 2026-10-06** — eleventy 3.1.6 · playwright 1.63.0 · wrangler 4.147.0 · CI image v1.63.0-noble. Dependencies are current."
+ },
+ "mergedTonight": [
+  "**#611** — all sixteen rulings written into the ledgers; `ruled` grammar state; coming-soon scan narrowed.",
+  "**#614** — contrast sweep force-opens bare `details` (#316, #285 closed).",
+  "**#628** — gloss spec header arm count trued up (#313).",
+  "**#629** — docs-drift true-ups in friction, air-side and name docs.",
+  "**#633** — arc pick recorded (rulings.md §17), the two skipped annotations, coming-soon scan widened to the \"its own page\" shapes.",
+  "**Day 2, merged with the owner (2026-10-06):** #607 deps · #608 #609 #610 quiz banks · #613 author/breadcrumb · #615 BACnet softenings · #616 PID aside · #617 FAQ rationale · #618 AHU hedge · #619 → #632 → #626 → #630 → #634 (ledger-tail chain) · #621 balancing · #622 narrowed clauses · #625 subhead ids · #631 design note · #612 → #623 → #624 → #627 → #620 (version chain, the lesson) · #635 lesson sentences · #636 filter racks."
+ ]
+}
