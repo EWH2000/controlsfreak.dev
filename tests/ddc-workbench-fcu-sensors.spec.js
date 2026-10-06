@@ -237,9 +237,10 @@ test.describe('DDC Workbench — visible sensor glyphs', () => {
     });
 
     test('forcing draws the dashed ring on the glyph, and release clears it', async ({ page }) => {
-        // The forced-sensor marker (.fcu-forced-mark, the AHU page's
-        // dashed accent ring) — a forced input that leaves no mark on
-        // the drawing is how a wrong number survives a shift change.
+        // The forced-sensor marker (.ddcw-forced-mark, the shared
+        // dashed accent ring both workbench pages draw) — a forced
+        // input that leaves no mark on the drawing is how a wrong
+        // number survives a shift change.
         // Only space-temp has a force control today, so the wall plate
         // is the one glyph a user can light; the ring must also RELEASE,
         // or every drawing would eventually carry it.
@@ -248,7 +249,7 @@ test.describe('DDC Workbench — visible sensor glyphs', () => {
         await expect(glyph).not.toHaveClass(/is-forced/);
         // Every glyph carries a mark rect — the per-point seam.
         for (const g of GLYPHED) {
-            await expect(page.locator(`${glyphSel(g.point)} .fcu-forced-mark`),
+            await expect(page.locator(`${glyphSel(g.point)} .ddcw-forced-mark`),
                 `${g.point} carries a forced-mark rect`).toHaveCount(1);
         }
         await page.click('#fcu-ovr-toggle');
@@ -257,7 +258,7 @@ test.describe('DDC Workbench — visible sensor glyphs', () => {
         // stroke (it is stroke:none at rest, so the drawing carries no
         // extra ink unforced).
         const stroked = await page.evaluate((sel) => {
-            const m = document.querySelector(sel + ' .fcu-forced-mark');
+            const m = document.querySelector(sel + ' .ddcw-forced-mark');
             return getComputedStyle(m).stroke;
         }, glyphSel('space-temp'));
         expect(stroked).not.toBe('none');
