@@ -4092,17 +4092,8 @@ p.ref-note.compact {
     line-height: 1.7;
 }
 .widget-try .lbl { letter-spacing: 0.05em; text-transform: uppercase; margin-right: 0.6rem; }
-.widget-try a {
-    color: var(--accent-ink);
-    text-decoration: none;
-    margin-right: 0.85rem;
-    cursor: pointer;
-    border-bottom: 1px dashed var(--accent-dim);
-}
-.widget-try a:hover { color: var(--text-bright); border-bottom-color: var(--accent); }
-/* Button twin of the anchor row — same look, real <button> semantics
-   for keyboard/AT reach (the anchors above predate the #142/#143
-   audit finding; new try-rows should use buttons). */
+/* Try-row chips are real <button>s for keyboard/AT reach (#142/#143);
+   every row on the site uses them, so new try-rows should too. */
 .widget-try button {
     font: inherit;
     color: var(--accent-ink);
