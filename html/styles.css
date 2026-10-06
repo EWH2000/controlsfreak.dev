@@ -1629,6 +1629,20 @@ button[data-gloss].gloss-open {
 .tab-btn:hover:not(.active) { color: var(--text); }
 .tab-pane { display: none; }
 .tab-pane.active { display: block; }
+/* Print reaches every pane, not just the active one (codebase-issues
+   #286). Paper has no tab buttons to click, so a hidden pane is content
+   the reader cannot get at all; details-print.js opening a fold inside an
+   inactive pane was moot until this lifted. Panes stack in DOM order with
+   a hairline seam between them. The .tabs button row still prints as-is —
+   it reads as a table of contents for the stacked panes. */
+@media print {
+    .tab-pane { display: block !important; }
+    .tab-pane + .tab-pane {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+    }
+}
 
 /* ── FORM ── */
 .form-row {
