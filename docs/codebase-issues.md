@@ -14886,7 +14886,7 @@ offenders. The transform header's floor paragraph was rewritten in
 the same commit — no quoting variant sits outside the floor now; what
 remains outside is JS-painted prose only.
 
-### 313. `tests/gloss.spec.js` header still counts "seven gloss guard arms" — predates #312's malformed-spelling arm *(noticed 2026-08-20, session-open verification round; comment true-up next time the spec is touched)*
+### 313. `tests/gloss.spec.js` header still counts "seven gloss guard arms" — predates #312's malformed-spelling arm *(noticed 2026-08-20, session-open verification round; comment true-up next time the spec is touched)* *(addressed 2026-10-05 · PR #628)*
 
 The spec header enumerates "all SEVEN gloss guard arms" as
 hand-exercised, and its list does not name the malformed-attribute arm
@@ -14897,6 +14897,24 @@ under-tested; the arm COUNT is simply stale, the same
 comment-contradicts-code shape as the arm counts #576 trued up
 elsewhere. One-line comment fix; not worth its own PR. Fold into the
 next PR that touches `tests/gloss.spec.js`.
+
+**Resolution (2026-10-05, PR #628).** `tests/gloss.spec.js` — the
+header's "all SEVEN gloss guard arms" sentence is replaced by a list
+re-enumerated from `.eleventy.js` and grouped by construct, with no
+bare total. That list covers the `gloss` transform (malformed spelling
+via `MALFORMED_RE` — now at `.eleventy.js:851`, not `:776` — non-button,
+missing `type="button"`, unknown id, owning page, pre-set
+`aria-describedby`, `gloss-tip-<id>` collision, no `</body>`), then
+`glossaryGuard` (non-kebab id, missing `term` / `def`, non-array
+`owners`, stale owners path, and two anti-vacuity probes), then
+`glossaryExcludedGuard` (empty map, row lint, reserved id / reserved
+`term`). The provenance sentence now says which arms were
+hand-exercised on the introducing branch and which were probe-proven by
+their own PRs (#578, #594). The entry undercounted the drift: besides
+the #578 arm, the old list also lacked `glossaryExcludedGuard` (PR
+#594), the pre-set-`aria-describedby` and missing-`</body>` checks, and
+`glossaryGuard`'s shape and anti-vacuity legs. The fix is comment-only.
+`gloss.spec.js` passed 11/11.
 
 ### 314. Lesson subheads without `id`s can't receive quiz `learnMore` deep links *(noticed 2026-08-20, quiz-growth wave 1 lanes; log-and-fix-opportunistically)*
 
