@@ -269,7 +269,14 @@ keywords: freezestat freeze stat trip low limit mixed air mat glycol ethylene pr
                 it</a>. Averaging elements and honest damper arithmetic are the
                 countermeasures.
             </p>
-            <p class="ref-note"><strong>The protection stack, roughly in order:</strong></p>
+            <p class="ref-note">
+                <strong>The protection stack, roughly in order</strong> — each layer
+                has its own beat in the
+                <a href="/education/coil-freeze-protection.html">Coil Freeze Protection
+                lesson</a>, which also works out why the hand mixed-air math above
+                runs about <span data-us="1.9 °F" data-metric="1.1 °C">1.9 °F</span> warm
+                on a cold day (a volume share understates the outdoor air by mass):
+            </p>
             <ol class="ref-note worked-list">
                 <li><strong>Freezestat hard trip</strong> — manual reset, so a human has
                     to look before the fan comes back. An auto-reset stat cycles the fan
@@ -311,6 +318,7 @@ keywords: freezestat freeze stat trip low limit mixed air mat glycol ethylene pr
             {href: '/tools/minimum-outdoor-air.html', label: 'Minimum Outdoor Air Calculator'}
         ],
         lessons: [
+            {href: '/education/coil-freeze-protection.html', label: 'Coil Freeze Protection'},
             {href: '/education/air-handlers.html', label: 'Air Handlers'},
             {href: '/education/economizers.html', label: 'Economizers'}
         ],
