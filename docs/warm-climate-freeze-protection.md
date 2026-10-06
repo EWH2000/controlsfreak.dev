@@ -1,14 +1,16 @@
 # Warm-climate freeze protection — research record
 
-> **Disposition: research record. Feeds future page copy. No page copy
-> has shipped from it.** Written 2026-08-09 against **item 3** of the
-> then-current rolling handoff (`docs/next-session-handoff.md`, retired
-> 2026-08-21 — the item survives in history at `git show
-> 1a62666^:docs/next-session-handoff.md`), which the owner opened with
-> *"do this properly, with sources — not as a hedge in prose."* Nothing
-> in this file is reader-facing yet, and §5 is the only place that
-> proposes wording; those are **proposals awaiting an owner pick**
-> *(made 2026-08-09 — see the pick note in §5)*, not
+> **Disposition: research record. P1 / P4 / P5 shipped as page copy
+> 2026-10-05, with P2 / P3 shipped as pattern-reading, all in
+> `education/coil-freeze-protection.html` (PR #620).** Written
+> 2026-08-09 against **item 3** of the then-current rolling handoff
+> (`docs/next-session-handoff.md`, retired 2026-08-21 — the item
+> survives in history at `git show 1a62666^:docs/next-session-handoff.md`),
+> which the owner opened with *"do this properly, with sources — not as
+> a hedge in prose."* §5 is the
+> only place that proposes wording, and its blessed proposals are now
+> live in that lesson *(owner pick made 2026-08-09 — see the pick note
+> in §5)*; the rest of this file is the sourcing behind them, not
 > copy.
 >
 > **Method.** Four independent finder agents, one per angle

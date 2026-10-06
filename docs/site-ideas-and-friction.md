@@ -2000,9 +2000,7 @@ lives in this job's specification" (UFGS unconditional vs G36
 optional vs owner-standard silence) plus Texas 2021 as the
 silence-is-not-a-rule case — never as a rule and never as "southern
 jobs omit the stat". `tools/economizer-ratio.html` did **not** take a
-P5 twin; the lesson is the one home. The research record's
-disposition header still says no page copy has shipped from it —
-true it up when that file is next touched.
+P5 twin; the lesson is the one home.
 
 ### Equipment Airflow Check *(shipped 2026-07-11)*
 
