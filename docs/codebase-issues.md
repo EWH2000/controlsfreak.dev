@@ -9741,6 +9741,22 @@ become the fifth implementation.
 **Not this arc** (owner, 2026-07-27). Recorded here so the AHU brief can
 cite it.
 
+**Design note (2026-10-06): `docs/engine-standardization.md`, PR #631,
+awaiting owner pick.** Written as the proposal the owner reads before
+any extraction begins; it re-measures every form above against the
+engine and carries the helper-family contract, the per-site (a)/(b)/(c)
+verdicts, the migration order and three owner questions. Two lines of
+this entry have aged since it was written and the note supersedes them:
+`Psychro.mixStreams(streams, P)` **exists** (`2f2d556`, hardened by
+#236 / #238) — basis-agnostic weights, not the `(states, weights, opts)`
+signature proposed in the checklist — and it has exactly one consumer,
+the workbench AHU, so the five public surfaces still mix inline. The
+note also adds a divergence this entry could not list: the inline
+"exact" forms on air-mixing and the psych chart still carry the
+pre-#236 cold dry-bulb in the fog branch (10.42 against the engine's
+17.67 °F at its documented corner). Heading status unchanged on
+purpose — this entry stays open until the owner picks.
+
 
 ### 229. `#fcu-ovr-state` is a live region rewritten on every 10 Hz host tick *(noticed 2026-07-27; the AHU's twin shipped guarded 2026-07-30 — **RESOLVED 2026-08-09 · PR #493**, COV announcer per the owner-decision note; closing record at the end)*
 
