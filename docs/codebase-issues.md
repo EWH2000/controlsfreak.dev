@@ -14951,8 +14951,11 @@ selector and the four rules are unchanged. The old comment's "4 on
 pid-basics" sizing note was dropped along with the false claim, because
 once indices count every div it no longer measures anything. No
 behaviour change, so no new measurement: build green, and the
-pid-basics smoke load check passes. The entry's premise held as
-written.
+pid-basics smoke load check passes. The entry's core premise held
+(`:nth-of-type` counts div siblings; the old comment was false), but
+its "most of them" scope did not: a single-card page's card sits at
+index 2 and animates, and only multi-card pages such as pid-basics
+leave cards with no fade.
 
 ### 310. `#ddcw-statusbar` overflows its own box by 15px at a 320px viewport *(noticed 2026-08-12, the #262 lane — below every tested width, LOW)* *(deferred 2026-08-12)*
 

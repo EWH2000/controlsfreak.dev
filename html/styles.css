@@ -1205,8 +1205,10 @@ h2.section-label[data-stage]::before {
 /* Entrance stagger — approximate by design. :nth-of-type counts DIV
    siblings of ANY class, not .tool-card siblings, so every interleaved
    div.section-header (and any other sibling div) takes an index and
-   shifts which cards match: on most pages some cards get a step, some
-   get none, and the order is not a clean 1-2-3-4. Accepted as such
+   shifts which cards match: a lone card behind its section-header
+   lands at index 2 (the 0.16s step), and on a multi-card page later
+   cards can fall past index 4 and get no fade at all (pid-basics
+   today), so the order is not a clean 1-2-3-4. Accepted as such
    (2026-10-05, codebase-issues #309): it is a cosmetic 0.5s fade, so
    the selector stays and this comment records the quirk rather than
    claiming a four-step stagger. */
