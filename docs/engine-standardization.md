@@ -1,7 +1,11 @@
 # Engine standardization — the #228 mixing-helper design note
 
-> **Disposition: PROPOSAL, 2026-10-06 — awaiting owner pick. Supersedes
-> nothing; feeds `codebase-issues` #228's execution.** The design the
+> **Disposition: PROPOSAL, 2026-10-06 — ACCEPTED by the owner the same
+> day with the three §6 defaults (*"I like your defaults"*): add
+> `Psychro.mixAir` / `mixFraction` and keep `mixStreams`; no caveat text
+> in the engine; no workbench mass-delta readout for now. Supersedes
+> nothing; feeds `codebase-issues` #228's execution, a lane still to
+> schedule.** The design the
 > owner reads *before* any extraction begins (owner direction
 > 2026-07-27: *"it may be good to standardise some engines"*). Docs
 > only — no `html/` or script changed. Every number below was
@@ -11,8 +15,8 @@
 > loop behind the §1 maxima and cell counts — lives in the PR body, not
 > the repo, because §4 step 0's spec is what keeps the table honest
 > from then on.
-> §6 carries the three questions. The defaults chosen are what a lane
-> executes if the owner says only "go".
+> §6 carries the three questions and the defaults the owner took; a lane
+> executes them as written.
 
 ## 1. The problem, measured
 

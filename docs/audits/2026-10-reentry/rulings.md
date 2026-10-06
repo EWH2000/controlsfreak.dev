@@ -208,3 +208,60 @@ The first work after the sitting (state-map owner ruling 3: mechanical cleanup f
 2. **PID basics aside** — controller action named, linked to comparators-and-deadband. → **owner merges**.
 3. **Mixed-air reference row** on coil-freeze-risk (moves to the freeze lesson if the arc picks it). → **owner merges**.
 4. **Warm-climate P1 / P4 / P5** — one lane (absorbed by the arc if it picks the freeze lesson). → **owner merges**.
+
+
+## 18. Review-day rulings *(2026-10-06 — the owner and the assistant walked the night-1 queue PR by PR)*
+
+Every night-1 PR was presented in merge order with a summary and
+review pointers, and merged on the owner's word. Six rulings and two
+process findings came out of it.
+
+1. **Derivative on reheat coils.** Owner: *"I wouldn't normally use Td
+   on a reheat coil at all, and I don't want new programmers to start
+   implementing it without understanding how limited the use for it in
+   HVAC is."* → the pid-basics bank's Td-from-Ti question was replaced
+   by `derivative-last-knob` (slow the reset, trim the gain, leave Td at
+   zero; adding D first is the trap), and the lesson's D callout *When
+   it earns its keep* paragraph was tempered: the reheat coil stays the
+   textbook case, most programmers leave Td at zero even there, and the
+   ¼–⅛ of Ti ratio is demoted to "if you do reach for it" (PRs #608,
+   #635).
+2. **Coil valves are two-way or three-way.** Owner: *"a modulating
+   valve could still be 2 way or 3 way diverting/mixing."* →
+   `ah-coils-are-hydronic-loads` reworded, and `air-handlers.html:362`
+   now reads "the same two-way or three-way valve" (PRs #609, #635;
+   closes content-audit #90).
+3. **PICV actuator sentence scoped to modulating valves.** Owner: *"if
+   someone hasn't read all the lessons, I don't want them to think all
+   valves have a 0%-100% modulating output, some are two position."* →
+   "any other **modulating** control valve — a proportional analog
+   input, 0–100 % open" (PR #621).
+4. **ASHRAE 135 paraphrases verified.** Owner, on PR #615's Annex J and
+   Clause 9 reliance: *"Clauses check out."* Both content-audit
+   verification boxes ticked (PR #634).
+5. **#228 design note — defaults accepted.** Owner: *"I like your
+   defaults for 631."* Q1 add `Psychro.mixAir` / `mixFraction` and keep
+   `mixStreams`; Q2 no caveat text in the engine; Q3 no workbench
+   mass-delta readout for now. Execution is a lane still to schedule
+   (`docs/engine-standardization.md` §4: engine spec first, one page per
+   PR, workbench last).
+6. **Filter racks are drawn as pleated media.** Owner, on the lesson
+   capstone: *"the filter lines are not right on the unit drawing.
+   There are just two lines that intersect at an odd angle."* → one
+   full-height zigzag path per rack, and the same idiom applied to both
+   Air Handlers diagrams (PRs #620, #636). House idiom from here on.
+
+**Process findings.** (a) A stacked PR gets no CI run when GitHub
+retargets it to `main`: three chain A PRs merged on their lanes' local
+runs; a full suite on `main` (1223 passed) confirmed them, and the chain
+B children were rebase-pushed before merging (CLAUDE.md *Workflow*,
+codebase-issues #331). (b) `publish-preview.mjs` run from a worktree
+outside the repo's parent publishes to a sibling folder its suffix
+guard accepts (codebase-issues #330).
+
+Owner on the format: *"Forcing both of us to take a look at each PR in
+sequence may be the most balanced workflow we've used."*
+
+**Merged 2026-10-06:** #607 #608 #609 #610 #612 #613 #615 #616 #617
+#618 #619 #620 #621 #622 #623 #624 #625 #626 #627 #630 #631 #632 #634
+#635 #636. Open PRs after: none. `main` at 3.91.0.
