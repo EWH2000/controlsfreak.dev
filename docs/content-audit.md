@@ -3114,7 +3114,7 @@ same reason: it describes the same branch under the same scoping, so
 changing one and not the other would be the real inconsistency.
 *(accepted — reads correctly as written, 2026-08-07)*
 
-### 88. bacnet-networking lesson attributes the sequential-port convention to Annex J more firmly than the standard supports *(flagged 2026-08-20, quiz-growth wave-1 refutation round)* *(ruled 2026-10-05 — soften both surfaces in one lane with #89; owner checks the clause on the PR; fix pending)*
+### 88. bacnet-networking lesson attributes the sequential-port convention to Annex J more firmly than the standard supports *(flagged 2026-08-20, quiz-growth wave-1 refutation round)* *(ruled 2026-10-05 — soften both surfaces in one lane with #89; owner checks the clause on the PR; fix pending)* *(addressed 2026-10-05 · PR #615)*
 
 **Location:** `html/education/bacnet-networking.html` (the Annex J
 paragraph in *Reading the hex blob*, ~L521: "ASHRAE 135 Annex J's
@@ -3151,7 +3151,20 @@ and the `second-network-next-port` explain
 (`html/_data/quizzes/bacnet-networking.js:207`, cite by id — the line
 moves when the bank grows).
 
-### 89. MS/TP lesson + one bank explain overstate the steady-state cost of Max_Master = 127 *(flagged 2026-08-21, quiz-growth wave-1 refutation round — mstp lane)* *(ruled 2026-10-05 — soften both surfaces to the amortized Npoll story in one lane with #88; owner checks the clause on the PR; fix pending)*
+**Resolution (2026-10-05, PR #615).** Softened on three surfaces, not
+two: the lesson's hex-blob paragraph, the `second-network-next-port`
+explain, and a third the entry missed — the port note in
+`html/tools/bacnet-ip-converter.html` ("Annex J describes a convention
+for additional networks on sequential ports"). All three now credit
+Annex J with the default `0xBAC0` and with *permitting* other ports for
+additional networks, and name counting up (`0xBAC1`, `0xBAC2`) as field
+convention. The IANA 47808–47823 block named in the target wording was
+**left out of reader prose**: the converter page already states that
+47809+ are *not* IANA-registered, and the lane could not settle which
+is right without a primary source — the PR body flags it for the owner.
+- [ ] Clause text verified by the owner on the PR.
+
+### 89. MS/TP lesson + one bank explain overstate the steady-state cost of Max_Master = 127 *(flagged 2026-08-21, quiz-growth wave-1 refutation round — mstp lane)* *(ruled 2026-10-05 — soften both surfaces to the amortized Npoll story in one lane with #88; owner checks the clause on the PR; fix pending)* *(addressed 2026-10-05 · PR #615)*
 
 **Location:** `html/education/bacnet-mstp.html:105` ("the token holder
 dutifully Poll-For-Masters its way through a hundred-odd empty
@@ -3199,3 +3212,16 @@ Surfaces: `html/education/bacnet-mstp.html:105` and the
 `max-info-frames-allowance` explain (`html/_data/quizzes/bacnet-mstp.js`,
 cite by id), converging with the `max-master-where-to-set` explain PR
 #592 already reworded so all three tell one mechanism.
+
+**Resolution (2026-10-05, PR #615).** Both surfaces rewritten to the
+amortized mechanism: `html/education/bacnet-mstp.html`'s Max_Master =
+127 paragraph and the `max-info-frames-allowance` explain now say the
+master below the empty range polls it one address per 50 token visits
+(not every rotation), and name the real costs — a timeout stall per
+unanswered poll, slower discovery of a newcomer, and a full walk of the
+empty range when the ring re-forms after a lost token. The advice (one
+uniform `Max_Master`, a little above the highest MAC) is unchanged. The
+`max-master-where-to-set` explain was left as PR #592 shipped it — it
+already tells the same story ("part of its maintenance polling … a
+newcomer waits longer to be found").
+- [ ] Clause text verified by the owner on the PR.
