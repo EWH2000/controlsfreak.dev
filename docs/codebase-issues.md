@@ -14958,7 +14958,7 @@ moved to them:
   47808 firewall check. The header comment now states the rule for
   routing checklist scenarios.
 
-Measured: `quiz-banks.spec.js` 46/46, `link-integrity.spec.js` 4/4
+Measured: `quiz-banks.spec.js` 42/42, `link-integrity.spec.js` 4/4
 (its "every quiz-bank deep link resolves" test covers the new hrefs;
 no new assertion was needed), and smoke for both lessons and both
 practice pages, 4/4.
