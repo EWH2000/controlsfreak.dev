@@ -20,9 +20,9 @@
 // the gain never closes the droop), I (erasing the offset, too-fast
 // reset, integral time vs repeats per minute, why it does the real
 // work), D (noise, derivative-on-measurement, the overshoot sweet
-// spot, the Td-from-Ti starting point, and why fast clean loops skip
-// it), and where the loop lives in a controller — one block on the
-// wiresheet.
+// spot, why Ti and Kc come before Td on a lagging coil, and why fast
+// clean loops skip it), and where the loop lives in a controller —
+// one block on the wiresheet.
 
 module.exports = [
     // ── P — Proportional ───────────────────────────────────
@@ -189,17 +189,17 @@ module.exports = [
     },
     {
         type: 'mcq',
-        id: 'derivative-starting-td',
-        prompt: 'A big hot-water reheat coil with several minutes of lag runs PI with an integral time (Ti) of 8 min, and it still overshoots. The sensor signal is clean, so rather than slow the reset or drop the gain, the tech decides to add a little derivative. What is a reasonable starting Td?',
+        id: 'derivative-last-knob',
+        prompt: 'A big hot-water reheat coil with several minutes of lag runs PI and overshoots setpoint on every call. A new programmer reaches for derivative first — "it\'s the term built for lag." What is the better first move?',
         choices: [
-            { id: 'a', text: 'About 1 to 2 min — roughly a quarter to an eighth of Ti.', correct: true },
-            { id: 'b', text: '8 min — match Td to Ti so the two terms balance.' },
-            { id: 'c', text: '16 to 32 min — derivative has to look further ahead than integral looks back.' },
-            { id: 'd', text: 'A few seconds — on HVAC, derivative should only ever be a token amount.' }
+            { id: 'a', text: 'Add a small Td right away — derivative is the term built for lag, so it is the standard fix.' },
+            { id: 'b', text: 'Speed up the reset (shorter Ti) so the loop reaches setpoint before it can overshoot.' },
+            { id: 'c', text: 'Slow the reset (longer Ti), then trim the gain if it still rings. Leave Td at zero.', correct: true },
+            { id: 'd', text: 'Switch to P-only — the integral term is the one that overshoots.' }
         ],
-        explain: 'A common starting point is Td of roughly ¼ to ⅛ of Ti, so 8 ÷ 4 = 2 min down to 8 ÷ 8 = 1 min. That is enough for the loop to see PV racing toward setpoint and back off early while heat is still on its way through the coil. Start there and trim on the real loop — too much D and the response turns sluggish.',
+        explain: 'The overshoot is P + I pushing while heat is still on its way through the coil, so turn the knobs doing the work first: give the integral less authority (longer Ti), then back off the gain if the loop still rings. Derivative is almost always small or zero in HVAC — it amplifies sensor noise, most loops never need it, and plenty of experienced programmers never put Td on a reheat coil at all. Most HVAC loops are PI, not full PID; treat D as the last knob, not the first. Speeding up the reset makes the overshoot worse (the I-term worked example), and P-only trades the overshoot for droop.',
         learnMore: { href: '/education/pid-basics.html#d-term', label: 'PID Basics — D, Derivative / Rate' },
-        tags: ['pid', 'derivative']
+        tags: ['pid', 'derivative', 'integral']
     },
     {
         type: 'tf',
