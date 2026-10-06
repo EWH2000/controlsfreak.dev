@@ -169,3 +169,46 @@ test.describe('psychro-engine: computeProcess / invertProcess (#125)', () => {
     });
 
 });
+
+test.describe('psychro-engine: buildState boiling-point guard (#238)', () => {
+
+    // Above the boiling point for the pressure, satPress(tdb) ≥ P and the
+    // saturation humidity ratio degenerates (±Infinity or negative).
+    // buildState used to clamp W against that and hand back an ok:true,
+    // bone-dry state; it must now refuse the point with ok:false.
+
+    test('just below boiling at sea level stays a valid state', () => {
+        const { Psychro, P_STD, satHumRatio } = loadEngine();
+        // The entry's measured sanity value: still positive, just huge.
+        expect(satHumRatio(211.9, P_STD)).toBeCloseTo(584.96, 1);
+        const state = Psychro.buildState(211.9, 0.006, P_STD);
+        expect(state.ok).toBe(true);
+        expect(state.W).toBe(0.006);
+        expect(state.rh).toBeGreaterThan(0);
+        expect(Number.isFinite(state.tdp)).toBe(true);
+    });
+
+    test('212 °F at sea level is refused, not returned bone-dry', () => {
+        const { Psychro, P_STD, satHumRatio } = loadEngine();
+        expect(satHumRatio(212, P_STD)).toBeLessThan(0);
+        const state = Psychro.buildState(212, 0.006, P_STD);
+        expect(state.ok).toBe(false);
+        expect(state.error).toMatch(/boiling point/);
+        expect(state.W).toBeUndefined();
+    });
+
+    test('altitude lowers the threshold — 205 °F at 12.2 psia is refused', () => {
+        const { Psychro, P_STD, satPress } = loadEngine();
+        // Water boils near 202.7 °F at 12.2 psia (satPress(200) ≈ 11.54,
+        // satPress(205) ≈ 12.78), so 200 °F is still valid there and
+        // 205 °F — fine at sea level — is past boiling.
+        expect(satPress(200)).toBeLessThan(12.2);
+        expect(satPress(205)).toBeGreaterThan(12.2);
+        expect(Psychro.buildState(200, 0.006, 12.2).ok).toBe(true);
+        expect(Psychro.buildState(205, 0.006, P_STD).ok).toBe(true);
+        const state = Psychro.buildState(205, 0.006, 12.2);
+        expect(state.ok).toBe(false);
+        expect(state.error).toMatch(/boiling point/);
+    });
+
+});
