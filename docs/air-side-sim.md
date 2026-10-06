@@ -228,6 +228,7 @@ the Workbench is a react-baseline and reference point, not a surfaced page.
 > sheet carries no airflow proof, so its DAT low-limit goes blind when the fan
 > stops). Both deferred by owner decision to a single pre-live sweep alongside
 > the AHU programs. Read them before touching a sequence here.
+> ⟨2026-10-05: both RESOLVED 2026-07-30 — codebase-issues #225/#226⟩
 
 ### Rulings from the depiction review (2026-07-31)
 
