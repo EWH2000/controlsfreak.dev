@@ -1945,6 +1945,41 @@ chips went HVAC 7→8, All 25→26). v3.37.0. Design notes:
   tool will eventually pair with; the protection-stack reference row
   is its outline.
 
+### Warm-climate freeze-protection copy — P1 / P4 / P5 blessed 2026-08-09, unshipped *(pointer planted 2026-10-05)*
+
+The research record is **`docs/warm-climate-freeze-protection.md`** —
+§5 holds the prose proposals; 8 claims, 8 survived adversarial
+refutation (its §3 demotions and traps are what future copy must not
+fall into). The owner **blessed P1, P4 and P5** on 2026-08-09:
+
+- **P1 — the two cold surfaces.** Cold air is a hazard in both
+  climates, on opposite sides of the duct wall: a wet coil bursting up
+  north, a duct sweating in a hot attic down south.
+- **P4 — freeze exposure = design OA temperature × OA fraction × a wet
+  coil.** Gives the reader the multiplication instead of inventing a
+  southern setpoint.
+- **P5 — why the economizer sequence differs down south.** ⚠️ Must
+  carry **T7** (the code constrains only the warm end of the band, and
+  still contemplates economizing into freeze-risk air).
+
+P2 and P3 are provisional ("may earn their place"), not rejected.
+
+**Why it stalled.** The blessing was passive — draw on it when a lane
+next touches relevant copy — and the only pointer to it lived in the
+rolling handoff, retired 2026-08-21. No ledger or friction entry named
+it, so no lane ever went looking.
+
+**Natural homes.** P1 / P4 → `tools/coil-freeze-risk.html` (the entry
+above) or the coil-freeze-protection lesson (tracked by the roadmap
+marker that closes the entry above); P5 → the reference section of
+`tools/economizer-ratio.html`, carrying T7.
+
+**Ruling (2026-10-05, owner).** *"Pointer now plus a small lane, good
+calls all around."* This entry is the pointer. The lane is **one small
+content lane after the mechanical cleanup**, absorbed by the arc if the
+arc picks the coil-freeze-protection lesson. Live pages → owner merges
+the lane; this heading takes a `*(shipped …)*` note when it lands.
+
 ### Equipment Airflow Check *(shipped 2026-07-11)*
 
 Queue fill #3 of the **Airflow tools buildout** (Feature ideas
@@ -2394,7 +2429,7 @@ region (the metrics-announcer precedent). `[future: a "load these into
 the sliders" affordance was considered and skipped — user gains on the
 toy process would misread as a simulation of their loop]`
 
-### PID basics — surface direct vs reverse acting? *(idea, noted 2026-07-14)*
+### PID basics — surface direct vs reverse acting? *(idea, noted 2026-07-14)* *(ruled 2026-10-05 — one-sentence aside in the P callout; lane pending)*
 *Surfaced by the codebase-issues #154 sim/tool physics diff — an
 observation, not a defect: the physics on the page is correct.* The P
 callout's only worked example is a **chilled-water valve** (PV above SP,
@@ -2409,6 +2444,24 @@ parameter for (it's fixed reverse-acting). Candidate: a one-line aside in
 the P callout naming acting direction, or switch the worked example to a
 heating valve so it matches the sims. Low priority; the arithmetic is
 sound either way.
+
+**Ruling (2026-10-05, owner).** *"The aside."* One sentence after the
+worked example in `education/pid-basics.html`'s P callout (the
+chilled-water example is the `<p>` at `:48`), naming **controller
+action** explicitly — a cooling loop is direct-acting (output rises as
+PV rises); the sims below are heating loops, reverse-acting, driving up
+from below. Say *controller* action, not bare "acting": the site uses
+direct/reverse in a second sense too — actuator signal-to-stroke on
+`education/commanding-actuators.html:184-185` — so the aside says which
+one it means. Link the two terms to
+`education/comparators-and-deadband.html`, where controller action is
+taught (`:435-436`); the page exists, so the forward-link convention is
+satisfied. **Keep the chilled-water worked example** rather than
+swapping it for a heating valve: its 12.8 / 15.6 / 2.8 °C figures are
+CLAUDE.md's metric-rounding exemplar. Live lesson → owner merges; this
+heading takes a `*(shipped …)*` note when it lands. By-catch logged, not
+ruled: the tuner's cheat-sheet row is now `codebase-issues` #324 (its
+"flip acting" advice names a control the tuner does not have).
 
 ### PID tuner — live process visualization + tune-it-blind spoiler *(shipped 2026-06-08)*
 *The interactive home hero sells a live loop, then links to the tuner —
@@ -6297,6 +6350,30 @@ of a real reader; do not open it as a general affordance.
 > thin entries (**pump-head**, **valve-authority**, **manual-reset**,
 > **apparatus-dew-point**) re-pitch at the §7.2 surface, not before.
 
+> **RULED 2026-10-05 — `balancing.html:497` "floating-point input."**
+> Drop the floating mention and say proportional. Owner: *"I would
+> rather say proportional at that point, a tri state is driven with 2
+> DOs, so we would either be adding confusion or trading one inaccuracy
+> for another."* A floating actuator has no 0–100 % command input (two
+> DOs inch it; position is inferred from run time), so naming it in a
+> sentence built on *"tell the PICV to be 50 % open"* is wrong under
+> either spelling. Proposed sentence — the owner tweaks it on the
+> live-page PR: *"The actuator on top is the same kind a BMS would
+> drive on any other control valve — a proportional analog input,
+> 0–100 % open."*
+
+> **RULED 2026-10-05 — fail-to-start: parked into §7.2.** Owner: *"Park
+> it with the pointer."* Measured 2026-10-05: **zero markable sites
+> outside the two owners** — the wiresheet hit is an `<h3>`, three are
+> `navCard()` desc args, eight are quiz-bank uses — so its only consumer
+> is the quiz surface. **Decide it with the §7.2 design;** this line is
+> the tracking pointer the re-triage reads. A code comment in
+> `html/_data/glossary.js` rides the next approved `html/_data` PR (that
+> directory needs owner approval, so it is not in the docs PR that
+> recorded this ruling). Note there is no `fail-to-start` entry today —
+> the term appears only inside the `proof-window` entry's `def` — so the
+> comment lands beside that entry.
+
 ---
 
 ### Quiz expansion — grow the banks + new quizzes *(owner direction 2026-08-14; candidate for the post-glossary re-triage)*
@@ -6407,7 +6484,7 @@ not plumbing.
 
 ---
 
-### Mixed air, mass basis vs volume basis *(measured 2026-07-28 — owner ruled the sim's basis; the teaching beat is unbuilt)*
+### Mixed air, mass basis vs volume basis *(measured 2026-07-28 — owner ruled the sim's basis; the teaching beat is unbuilt)* *(ruled 2026-10-05 — reference row on coil-freeze-risk.html; small content lane pending)*
 
 The AHU's mixing box weights **volumetrically** — `%OA × OAT + %RA × RAT`,
 the arithmetic a tech actually does and the form `coil-freeze-risk.html`
@@ -6454,6 +6531,25 @@ Related: `codebase-issues` #228 (engine standardisation — the three
 disagreeing inline MAT forms) and #236 (the `mixStreams` fog branch).
 Rewiring the four public consumers onto the shared helper belongs to
 #228, not here.
+
+**Ruling (2026-10-05, owner).** *"The tool row."* The beat ships as a
+new `.tool-body-row` section on `tools/coil-freeze-risk.html`, beside
+the existing "Why …" rows (*Why steam coils split*, *Why coils split
+while the trend looks fine*) — working title *"Why hand mixed-air math
+runs warm on a cold day"*. Content: the bias direction (cold OA is
+denser, so a volumetric % understates the outdoor air by mass and the
+hand MAT reads warm) and the 0 °F / 75 °F / 20 % example — 20 % →
+22.8 % by mass; 60.0 → 58.1 °F, ~2 °F optimistic against the tool's
+35–38 °F band. Link to `tools/air-mixing.html`, whose mass-basis FAQ
+(*"Why weight by mass flow instead of CFM?"*) already exists. Metric
+twins per the rounding policy. ⚠️ **Re-derive every number from
+`Psychro.mixStreams` at authoring time** — do not copy them from this
+note (the 60.00 vs 60.20 °F aside above shows how easily the linear and
+enthalpy forms get conflated). Small content lane, queued after the
+mechanical cleanup; live tool page carrying a damage-stakes note →
+owner merges. **If the arc picks the coil-freeze-protection lesson, the
+beat moves there and this row shrinks to a pointer.** This heading
+takes a `*(shipped …)*` note when it lands.
 
 ---
 
