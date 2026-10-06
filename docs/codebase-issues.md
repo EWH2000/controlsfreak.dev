@@ -14916,7 +14916,7 @@ the #578 arm, the old list also lacked `glossaryExcludedGuard` (PR
 `glossaryGuard`'s shape and anti-vacuity legs. The fix is comment-only.
 `gloss.spec.js` passed 11/11.
 
-### 314. Lesson subheads without `id`s can't receive quiz `learnMore` deep links *(noticed 2026-08-20, quiz-growth wave 1 lanes; log-and-fix-opportunistically)*
+### 314. Lesson subheads without `id`s can't receive quiz `learnMore` deep links *(noticed 2026-08-20, quiz-growth wave 1 lanes; log-and-fix-opportunistically)* *(addressed 2026-10-05 · PR #625)*
 
 The quiz engine's `learnMore.href` convention deep-links a lesson's
 `<h2 class="subhead" id="…">` anchors — but only subheads that HAVE an
@@ -14941,6 +14941,37 @@ the id and retargets its bank's links. A guard is NOT proposed — most
 subheads legitimately never need an anchor, so "every subhead has an
 id" would be noise; the invariant that matters (every href resolves)
 is already blocking.
+
+**Resolution (2026-10-05, PR #625).** Ids added, and three questions
+moved to them:
+- `html/education/bacnet-basics.html`: `#who-is-i-am` on the Who-Is /
+  I-Am subhead.
+- `html/education/bacnet-networking.html`: `#discovery-fails` and
+  `#not-covered`.
+- `html/_data/quizzes/bacnet-basics.js`: `whois-outside-range` →
+  `#who-is-i-am`. The header comment no longer describes the
+  workaround.
+- `html/_data/quizzes/bacnet-networking.js`: `network-number-collision`
+  (was `#three-addresses`) and `tcp-firewall-rule` (was
+  `#bvll-npdu-apdu`) → `#discovery-fails`. The checklist is the only
+  place the page states the unique-network-number rule and the UDP
+  47808 firewall check. The header comment now states the rule for
+  routing checklist scenarios.
+
+Measured: `quiz-banks.spec.js` 46/46, `link-integrity.spec.js` 4/4
+(its "every quiz-bank deep link resolves" test covers the new hrefs;
+no new assertion was needed), and smoke for both lessons and both
+practice pages, 4/4.
+
+What the entry got wrong: it says *both* new PR #585 service
+questions anchored `#services` as a workaround. Only
+`whois-outside-range` is a Who-Is question. `cov-subscription-stale`
+tests COV and belongs on `#services`, so it was left there.
+`asymmetric-bdt` and `two-bbmds-one-subnet` match checklist items too,
+but they predate wave 1 and the `#bbmd` section teaches them, so they
+were left alone. BACnet Basics' own "What this page didn't cover"
+subhead also has no id. The entry did not name it, nothing links to
+it, and it was left untouched.
 
 ### 315. Vendor names in two shipped quiz questions — owner ruled GRANDFATHER *(noticed 2026-08-20, wave-1 mstp lane + full-bank sweep; RULED same day — accepted as standing mentions, do not re-flag)*
 
