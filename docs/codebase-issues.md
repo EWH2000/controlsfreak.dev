@@ -10781,7 +10781,7 @@ Guarded by a new row that sweeps fan 5→100 at 1 % steps and asserts the coil
 strictness is the wrong tool there. That shape is why the pre-existing monotone
 row (which sweeps 40/70/100, deliberately clear of the clamp) never saw this.
 
-### 238. `Psychro.buildState` silently returns `W = 0` when the saturation humidity ratio degenerates *(noticed 2026-07-28, AHU physics review round)*
+### 238. `Psychro.buildState` silently returns `W = 0` when the saturation humidity ratio degenerates *(noticed 2026-07-28, AHU physics review round)* *(addressed 2026-10-05 · PR #619)*
 
 `buildState` opens with
 
@@ -10814,6 +10814,43 @@ saturation temperature for the pressure. Every current caller already checks
 `.ok`. Surfaced by the AHU heating coil, which could drive its leaving air past
 1100 °F before this round added `HW_LEAVE_MAX`; the AHU no longer reaches it,
 but the engine is shared and the next caller might.
+
+**Resolution (2026-10-05, PR #619).** `html/scripts/psychro-engine.js`:
+`buildState` now computes `Wsat = satHumRatio(tdb, P)` once and returns
+`{ ok: false, error: 'Dry-bulb is at or above the boiling point for this
+pressure — outside the psychrometric range.' }` when
+`!(Wsat > 0 && isFinite(Wsat))`. The guard covers the `±Infinity` at
+`satPress = P` as well as the negative branch. The valid path reuses `Wsat`
+in the same clamp, so its numbers are unchanged. `mixStreams`' comment about
+the old clamp was trued up. `tests/psychro-engine.spec.js` adds three cases:
+211.9 °F at `P_STD` → `ok: true` with `satHumRatio` ≈ +584.96 (the measured
+value above), 212 °F → `ok: false`, and 205 °F at 12.2 psia → `ok: false`
+(200 °F is still valid there, since water boils near 202.7 °F at that
+pressure).
+
+**What the entry got wrong:** "the AHU no longer reaches it" is false. The
+AHU heating coil runs `invertProcess` on the *unclamped* fixed load and
+applies the `HW_LEAVE_MAX` ceiling afterwards. At a starved fan (≤ 25 %) the
+intermediate leaving state is above 212 °F, so the coil depended on
+`buildState` returning `ok: true` there. With the guard and no other change,
+the coil stopped heating (`tests/ddcw-ahu-unit.spec.js:438`, fan 25 %:
+afterHeatT == matT). `html/scripts/ddcw-ahu-unit.js` now binds the ceiling on
+`!heated.ok || heated.tdb > leaveMax`, which gives byte-identical output, and
+its `HW_LEAVE_MAX` comment was trued up.
+
+"Every current caller already checks `.ok`" was also not quite right:
+
+- `air-mixing.html` and `economizer-ratio.html` catch `ok:false` through
+  `!isFinite(state.h)`.
+- `coil-sizing.html:474` (heating, user-entered leaving dry-bulb) and
+  `psychrometric-chart.html:728` (HC stage) do not guard at all. Both are
+  logged as follow-ups in the PR body.
+- The remaining unguarded sites (AHU ceiling, chart HUM stage, chart drag)
+  can't produce an above-boiling dry-bulb.
+
+Verified: psychro-engine 12/12, psychro-mixstreams 19/19, ddcw-ahu-unit
+56/56, ddcw-fcu-unit 52/52, ddc-workbench-ahu-page + ddcw-shell 100/100,
+and smoke filtered to the nine pages that load the engine (16/16).
 
 ### 239. The AHU mixing box drops `mixStreams`' fog condensate, so its moisture bookkeeping loses water in the cold-and-open corner *(noticed 2026-07-29, the #236 fix round)* *(deferred 2026-07-29)*
 
