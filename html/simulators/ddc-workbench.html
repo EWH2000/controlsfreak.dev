@@ -551,18 +551,8 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
         .ahu-state-dot { fill: var(--accent); stroke: none; }
         .ahu-state-dot.is-off { fill: var(--text-dim); }
 
-        /* ── FORCED-SENSOR MARKER ──────────────────────────────────────────
-           A dashed accent ring around a glyph whose point is being forced.
-           ACCENT, NOT AMBER: inside this SVG amber means damper,
-           permanently, and the identity-colour block above reserves the
-           accent ring for exactly this job. Hidden until the class lands, so
-           an unforced drawing carries no extra ink. */
-        .ahu-forced-mark { fill: none; stroke: none; }
-        .ddcw-sensor.is-forced .ahu-forced-mark {
-            stroke: var(--accent);
-            stroke-width: 1.5;
-            stroke-dasharray: 3 2;
-        }
+        /* FORCED-SENSOR MARKER: the shared .ddcw-forced-mark rule in
+           styles.css (DDC WORKBENCH SHELL, codebase-issues #273). */
 
         /* ── FOGGING MARKER (codebase-issues #240) ─────────────────────────
            ONE CANDIDATE, built to be looked at and redesigned. When the
@@ -2044,7 +2034,7 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                      absent from the accessibility tree at the same time. The activation
                      affordance is the point-mirror buttons below the drawing.
 
-                     Each group carries a .ahu-forced-mark rect matching its hit area,
+                     Each group carries a .ddcw-forced-mark rect matching its hit area,
                      painted only while that sensor's value is being forced. -->
                 <g id="ahu-sensors">
 
@@ -2063,7 +2053,7 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                        transform="translate(58 266)">
                         <title>Outdoor-air temperature sensor — shielded head on the outside of the intake</title>
                         <rect class="ddcw-sensor-hit" x="-50" y="-8" width="50" height="50"/>
-                        <rect class="ahu-forced-mark" x="-50" y="-8" width="50" height="50"/>
+                        <rect class="ddcw-forced-mark" x="-50" y="-8" width="50" height="50"/>
                         <line class="ddcw-sensor-stem" x1="0" y1="0" x2="-8" y2="0"/>
                         <line class="ddcw-sensor-stem" x1="-28" y1="3" x2="-28" y2="33"/>
                         <path class="ddcw-sensor-solid" d="M-48 3 H-8 V-3 L-28 -5 L-48 -3 Z"/>
@@ -2080,7 +2070,7 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                        transform="translate(648 95)">
                         <title>Return-air temperature sensor — insertion probe in the return duct</title>
                         <rect class="ddcw-sensor-hit" x="-14" y="-21" width="28" height="44"/>
-                        <rect class="ahu-forced-mark" x="-14" y="-21" width="28" height="44"/>
+                        <rect class="ddcw-forced-mark" x="-14" y="-21" width="28" height="44"/>
                         <line class="ddcw-sensor-stem" x1="0" y1="0" x2="0" y2="19"/>
                         <rect class="ddcw-sensor-body" x="-6" y="-10" width="12" height="10"/>
                     </g>
@@ -2107,7 +2097,7 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                        transform="translate(244 250)">
                         <title>Mixed-air temperature sensor — averaging element strung across the mixed-air plenum</title>
                         <rect class="ddcw-sensor-hit" x="-16" y="-18" width="32" height="44"/>
-                        <rect class="ahu-forced-mark" x="-16" y="-18" width="32" height="44"/>
+                        <rect class="ddcw-forced-mark" x="-16" y="-18" width="32" height="44"/>
                         <rect class="ddcw-sensor-body" x="-7" y="-14" width="14" height="12"/>
                         <path class="ddcw-sensor-cap" d="M0 0 V97 Q0 101 4 101 H22 Q26 101 26 97 V12 Q26 8 30 8 H48 Q52 8 52 12 V97 Q52 101 56 101 H74 Q78 101 78 97 V12 Q78 8 82 8 H88"/>
                         <line class="ddcw-sensor-slot" x1="88" y1="2" x2="88" y2="16"/>
@@ -2126,7 +2116,7 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                        transform="translate(704 279)">
                         <title>Discharge-air temperature sensor — insertion probe in the supply duct</title>
                         <rect class="ddcw-sensor-hit" x="-14" y="-21" width="28" height="44"/>
-                        <rect class="ahu-forced-mark" x="-14" y="-21" width="28" height="44"/>
+                        <rect class="ddcw-forced-mark" x="-14" y="-21" width="28" height="44"/>
                         <line class="ddcw-sensor-stem" x1="0" y1="0" x2="0" y2="19"/>
                         <rect class="ddcw-sensor-body" x="-6" y="-10" width="12" height="10"/>
                     </g>
@@ -2141,7 +2131,7 @@ keywords: AHU air handler economizer damper DX cooling DDC graphic supervisory
                        transform="translate(836 156)">
                         <title>Space temperature sensor — wall plate in the zone</title>
                         <rect class="ddcw-sensor-hit" x="-32" y="-22" width="34" height="44"/>
-                        <rect class="ahu-forced-mark" x="-32" y="-22" width="34" height="44"/>
+                        <rect class="ddcw-forced-mark" x="-32" y="-22" width="34" height="44"/>
                         <rect class="ddcw-sensor-body" x="-15" y="-12" width="14" height="24"/>
                         <line class="ddcw-sensor-slot" x1="-11.5" y1="-5" x2="-4.5" y2="-5"/>
                         <line class="ddcw-sensor-slot" x1="-11.5" y1="0" x2="-4.5" y2="0"/>

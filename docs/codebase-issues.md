@@ -13070,7 +13070,7 @@ which is what proves it measures the other branch.
 cannot be made to catch this, since it measures overflow and there is
 none.
 
-### 273. The forced-sensor marker CSS is duplicated per page under page-prefixed classes *(noticed 2026-08-04, the Phase 8 graduation lane — deferred at graduation, wants a `.ddcw-forced-mark` rename)* *(deferred 2026-08-04 — graduation trigger; on the 2026-10-05 decision agenda)* *(ruled 2026-10-05 — graduate to `.ddcw-forced-mark`; fix pending)*
+### 273. The forced-sensor marker CSS is duplicated per page under page-prefixed classes *(noticed 2026-08-04, the Phase 8 graduation lane — deferred at graduation, wants a `.ddcw-forced-mark` rename)* *(deferred 2026-08-04 — graduation trigger; on the 2026-10-05 decision agenda)* *(ruled 2026-10-05 — graduate to `.ddcw-forced-mark`; fix pending)* *(addressed 2026-10-05 · PR #612)*
 
 The dashed accent ring that marks a forced sensor glyph is one drawn
 idea with two page-local copies: `.ahu-forced-mark`
@@ -13108,6 +13108,28 @@ not a merge of two designs. Two live pages + the stylesheet → **owner
 merges**. On merge this heading takes `*(addressed YYYY-MM-DD — graduated
 to .ddcw-forced-mark, PR #NNN)*` after the ruled marker; the status
 script reads that later closing marker as resolved.
+
+**Resolution (2026-10-05, PR #612).** Graduated as ruled. One shared
+pair now sits in `html/styles.css`'s DDC WORKBENCH SHELL section,
+right after the sensor-glyph vocabulary: `.ddcw-forced-mark { fill:
+none; stroke: none; }` plus the `.ddcw-sensor.is-forced` arm (accent,
+1.5, `3 2`). Its comment carries the accent-not-amber rationale from
+the AHU block. `html/simulators/ddc-workbench.html` lost its head
+block, and its 5 rects and SVG comment were renamed.
+`html/simulators/ddc-workbench-fcu.html` lost its head block (and the
+"deferred, #273" sentence with it), and its 3 rects and SVG comment
+were renamed. Each head keeps a one-line pointer comment.
+`tests/ddc-workbench-fcu-sensors.spec.js` follows the rename. The
+version went 3.90.0 → 3.90.1 (#84). Measured: the FCU space-temp
+ring's computed stroke is `none` at rest and `rgb(58, 122, 20)` /
+`1.5px` / `3px, 2px` when forced. The AHU page has 5
+`.ddcw-forced-mark` rects, matching the 5 `.ahu-forced-mark` rects it
+had before, and 0 old-class rects. The FCU sensors spec passes 10/10
+and the two workbench smoke loads pass 2/2. One cite in the original
+body had drifted: the spec's selectors sit at `:251/:260` (as the
+ruling has them), not `:248/:257`. The marker format
+used is the lane's `addressed … · PR` form instead of the ruling's
+suggested wording.
 
 ### 274. The simulators landing crossed its own chips threshold at nine cards *(noticed 2026-08-04, the Phase 8 graduation lane — DESIGN CALL, deliberately not decided at go-live; owner decided the taxonomy 2026-08-10, **RESOLVED 2026-08-11 · PR #519** — resolution block at the end, chip LABELS signed off by the owner 2026-08-12)*
 

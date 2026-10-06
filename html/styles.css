@@ -5375,6 +5375,18 @@ p.ddcw-sheet-mobile-note { display: none; }
     outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
+/* FORCED-SENSOR MARKER — a dashed ring around a glyph whose point is
+   being forced; renderUnit toggles .is-forced per override-map entry.
+   ACCENT, NOT AMBER: inside the workbench SVGs amber means damper,
+   permanently, and the accent ring is reserved for exactly this job.
+   Hidden until the class lands, so an unforced drawing carries no extra
+   ink. Graduated from the two page heads (codebase-issues #273). */
+.ddcw-forced-mark { fill: none; stroke: none; }
+.ddcw-sensor.is-forced .ddcw-forced-mark {
+    stroke: var(--accent);
+    stroke-width: 1.5;
+    stroke-dasharray: 3 2;
+}
 
 @media (prefers-reduced-motion: reduce) {
     .widget-fan-blades { transform: none !important; }

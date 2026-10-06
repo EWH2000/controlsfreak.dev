@@ -193,28 +193,8 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
            (see the graphic's own header comment below), and the shell
            still binds them generically. */
 
-        /* ── FORCED-SENSOR MARKER ──────────────────────────────────────────
-           A dashed accent ring around a glyph whose point is being forced —
-           the AHU page's marker, duplicated. The graduation trigger fired
-           (Phase 8, 2026-08-04) WITHOUT promoting this pair: the marker
-           classes are page-prefixed (.ahu-forced-mark / .fcu-forced-mark,
-           this one pinned by ddc-workbench-fcu-sensors.spec.js), so the
-           shared-sheet form wants a .ddcw-forced-mark rename across both
-           SVGs first — deferred, codebase-issues #273.
-           ACCENT for cross-page parity: the two
-           drawings share one glyph vocabulary, so the forced flag must read
-           identically on both — and amber stays the announcement register
-           the override block already owns. Hidden until the class lands, so
-           an unforced drawing carries no extra ink. renderUnit toggles
-           .is-forced per override-map entry; only space-temp has a force
-           control today, so only the wall plate can light — the rat / dat
-           rects are the same one-change-generalises seam as the map. */
-        .fcu-forced-mark { fill: none; stroke: none; }
-        .ddcw-sensor.is-forced .fcu-forced-mark {
-            stroke: var(--accent);
-            stroke-width: 1.5;
-            stroke-dasharray: 3 2;
-        }
+        /* FORCED-SENSOR MARKER: the shared .ddcw-forced-mark rule in
+           styles.css (DDC WORKBENCH SHELL, codebase-issues #273). */
 
         /* Supply-fan spin — a 5-blade impeller group; speed tracks fan
            fraction, still when off. Reduced motion freezes it (the per-blade
@@ -1200,15 +1180,15 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
                              (top y 188); the stem reaches the airstream
                              near the drop centerline (x 120), clear of the
                              static down arrow (y 205-213).
-                             Each sensor group carries a .fcu-forced-mark rect
+                             Each sensor group carries a .ddcw-forced-mark rect
                              matching its hit area — the dashed accent ring
                              renderUnit lights while that point's override is
                              active (space-temp is the only one a control
-                             reaches today; see the marker's CSS block). -->
+                             reaches today; see its shared rule in styles.css). -->
                         <g class="ddcw-sensor" id="fcu-sensor-rat" data-point="rat">
                             <title>Return-air temperature sensor — insertion probe in the return duct</title>
                             <rect class="ddcw-sensor-hit" x="76" y="141" width="34" height="44"/>
-                            <rect class="fcu-forced-mark" x="76" y="141" width="34" height="44"/>
+                            <rect class="ddcw-forced-mark" x="76" y="141" width="34" height="44"/>
                             <line class="ddcw-sensor-stem" x1="97" y1="163" x2="116" y2="163"/>
                             <rect class="ddcw-sensor-body" x="85" y="158" width="12" height="10"/>
                         </g>
@@ -1225,7 +1205,7 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
                         <g class="ddcw-sensor" id="fcu-sensor-dat" data-point="dat">
                             <title>Discharge-air temperature sensor — insertion probe in the supply duct</title>
                             <rect class="ddcw-sensor-hit" x="478" y="174" width="28" height="44"/>
-                            <rect class="fcu-forced-mark" x="478" y="174" width="28" height="44"/>
+                            <rect class="ddcw-forced-mark" x="478" y="174" width="28" height="44"/>
                             <line class="ddcw-sensor-stem" x1="492" y1="195" x2="492" y2="214"/>
                             <rect class="ddcw-sensor-body" x="486" y="185" width="12" height="10"/>
                         </g>
@@ -1239,7 +1219,7 @@ keywords: FCU fan coil DX cooling DDC graphic wiresheet supervisory
                         <g class="ddcw-sensor" id="fcu-sensor-space-temp" data-point="space-temp">
                             <title>Space temperature sensor — wall plate in the zone</title>
                             <rect class="ddcw-sensor-hit" x="666" y="156" width="34" height="44"/>
-                            <rect class="fcu-forced-mark" x="666" y="156" width="34" height="44"/>
+                            <rect class="ddcw-forced-mark" x="666" y="156" width="34" height="44"/>
                             <rect class="ddcw-sensor-body" x="683" y="166" width="14" height="24"/>
                             <line class="ddcw-sensor-slot" x1="686.5" y1="173" x2="693.5" y2="173"/>
                             <line class="ddcw-sensor-slot" x1="686.5" y1="178" x2="693.5" y2="178"/>
