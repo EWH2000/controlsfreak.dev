@@ -15115,7 +15115,7 @@ is in place and Googlebot is not being refused. The worst case this entry
 named (silent deindexing via the legacy toggle) is ruled out on this zone.
 Recheck only if that panel is ever changed.
 
-### 320. 40 lesson pages declare `author` and `publisher` by dangling reference — the Person node exists only on the home page *(noticed 2026-08-27; DECISION-CLASS — needs an owner answer before any fix, see below)* *(ruled 2026-10-05 — pseudonym author inlined, publisher deleted; fix pending)*
+### 320. 40 lesson pages declare `author` and `publisher` by dangling reference — the Person node exists only on the home page *(noticed 2026-08-27; DECISION-CLASS — needs an owner answer before any fix, see below)* *(ruled 2026-10-05 — pseudonym author inlined, publisher deleted; fix pending)* *(addressed 2026-10-05 · PR #613)*
 
 `techArticleJsonLd` (`.eleventy.js:1373-1391`) sets
 `"author": {"@id": "https://controlsfreak.dev/#author"}` and
@@ -15192,7 +15192,26 @@ education page's JSON-LD has either a `name` or an `@id` that resolves
 On merge this heading takes `*(addressed YYYY-MM-DD — owner ruled
 2026-10-05: pseudonym author inlined, publisher deleted, PR #NNN)*`.
 
-### 321. `nav: guides` has no `SECTION_MAP` entry, so the five guides pages emit a two-item breadcrumb *(noticed 2026-08-27 while fixing #86's contact follow-on; low severity)* *(ruled 2026-10-05 — add `guides` to `SECTION_MAP`; fix pending)*
+**Resolution (2026-10-05, PR #613).** `.eleventy.js` `techArticleJsonLd`:
+`author` is now an inline `{ "@type": "Person", "@id":
+"https://controlsfreak.dev/#author", "name": "Controls Freak",
+"jobTitle": "Controls Programmer", "url": "https://controlsfreak.dev/" }`
+— keeping the home page's `@id` so it is the same entity, with `name` /
+`jobTitle` / `url` copied from `html/index.html`'s `@graph` Person (the
+ruling named two properties; `url` was added on the lane brief as the
+same entity's home). `publisher` is deleted. The comment above the
+filter now says why the node is inlined (cross-document `@id` is valid
+JSON-LD, but Google reads per document). `tests/smoke.spec.js` gains the
+regression guard this entry asked for: for every `nav: education`
+lesson in the built site (derived from frontmatter, 40 today, floor
+>30), every `author` / `publisher` reference carries a `name` or an
+`@id` declared in the same document, the TechArticle author has a
+`name`, and the TechArticle has no `publisher` key. Measured: rendered
+`/education/pid-basics` TechArticle diffed before/after (the after-node
+is in the PR body). The line cites in this entry had drifted by the
+time of the fix (`:1384-1385` / `:1393-1394`); grep the filter name.
+
+### 321. `nav: guides` has no `SECTION_MAP` entry, so the five guides pages emit a two-item breadcrumb *(noticed 2026-08-27 while fixing #86's contact follow-on; low severity)* *(ruled 2026-10-05 — add `guides` to `SECTION_MAP`; fix pending)* *(addressed 2026-10-05 · PR #613)*
 
 `SECTION_MAP` in `.eleventy.js` covers `tools` / `simulators` /
 `education` / `practice` / `contact`. It has no `guides` key, so
@@ -15223,6 +15242,19 @@ breadcrumb was the one surface disagreeing. Ship with a spec on the five
 `/guides/` landing emits 2-item `Home → Guides`). Rides the #320 PR.
 Live `<head>` output on 5 pages → **owner merges**. On merge this heading
 takes `*(addressed YYYY-MM-DD — guides added to SECTION_MAP, PR #NNN)*`.
+
+**Resolution (2026-10-05, PR #613).** `.eleventy.js` `SECTION_MAP` gains
+`guides: { name: "Guides", url: "https://controlsfreak.dev/guides/" }`
+with a one-line reason comment. Measured on the built site: the four
+hubs now emit `Home → Guides → <hub>` (3 items; e.g. `/bacnet/`'s third
+crumb is `BACnet — Field Reference, Tools & Lessons`), and `/guides/`
+emits `Home → Guides`. One thing the entry's title got slightly wrong:
+`/guides/` already emitted two items before the fix — its second crumb
+was the page title `Guides — Field Reference by Topic`, now the section
+name `Guides`, the same landing-crumb shape every other section uses.
+`tests/smoke.spec.js` gains `guides pages emit a Home → Guides
+breadcrumb (#321)`, pinning the length, names and the Guides crumb URL
+on all five pages.
 
 ### 322. External localization PR #602 (Korean, 358 files) — closed; the conditions a second language would need *(addressed 2026-10-05 — owner ruling, PR closed with a fork suggestion)*
 
