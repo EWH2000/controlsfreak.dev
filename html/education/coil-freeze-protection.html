@@ -203,8 +203,12 @@ keywords: freezestat freeze stat low limit mixed air stratification glycol burst
                 <!-- filter -->
                 <g id="cfp-d1-filter">
                     <rect x="258" y="135" width="26" height="150" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
-                    <line x1="261" y1="282" x2="281" y2="140" stroke="var(--border)" stroke-width="1"/>
-                    <line x1="261" y1="225" x2="281" y2="190" stroke="var(--border)" stroke-width="1"/>
+                    <!-- pleated media in section: one zigzag the full height of
+                         the rack, so the filter reads as a filter at this box's
+                         aspect (the two-stroke hatch the shorter air-handlers
+                         boxes use crosses at an odd angle once the box is this
+                         tall — owner review, 2026-10-06). -->
+                    <path d="M262 140 L280 154 L262 168 L280 182 L262 196 L280 210 L262 224 L280 238 L262 252 L280 266 L262 280" fill="none" stroke="var(--text-dim)" stroke-width="1"/>
                 </g>
                 <polygon points="310,225 319,230 310,235" fill="var(--blue-cool)"/>
 
