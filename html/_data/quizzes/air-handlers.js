@@ -151,9 +151,10 @@ module.exports = [
     {
         type: 'tf',
         id: 'ah-coils-are-hydronic-loads',
-        prompt: 'The water coils inside a built-up air handler are a different animal from the loads on the hydronic loop — they need their own valve and piping arrangement rather than the two-way-valve load piping used elsewhere.',
+        prompt: 'The water coils inside a built-up air handler sit outside the hydronic loop\'s load-piping rules — a coil valve is its own kind of device, so the two-way and three-way arrangements Load Piping teaches don\'t apply to it.',
         answer: false,
-        explain: 'False. On a built-up unit the heating and cooling coils ARE hydronic loads — the same two-way (or three-way) valve choices Load Piping teaches and the same supply and return piping as any other load on the loop, just wrapped around an airstream instead of sitting in a mechanical room. Everything you know about load piping applies at the coil. (A packaged RTU is the exception, because its coils are a gas heat exchanger and a DX evaporator rather than plant-fed water.)',
+        explain: 'False. On a built-up unit the heating and cooling coils ARE hydronic loads, and every valve choice Load Piping teaches is on the table at the coil: a two-way valve that throttles flow through it, or a three-way mixing or diverting valve that varies coil flow while the loop keeps flowing. Same supply and return piping as any other load on the loop, just wrapped around an airstream instead of sitting in a mechanical room. (A packaged RTU is the exception, because its coils are a gas heat exchanger and a DX evaporator rather than plant-fed water.)',
+
         learnMore: { href: '/education/air-handlers.html#filter-coils', label: 'Air Handlers — Filter, Then Coils' },
         tags: ['forced-air', 'coils', 'hydronics']
     },
