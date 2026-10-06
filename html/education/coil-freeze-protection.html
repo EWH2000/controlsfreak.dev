@@ -1,0 +1,330 @@
+---
+title: Coil Freeze Protection — controlsfreak.dev
+description: Why water coils split, and what stands between a cold morning and a burst tube — the wet-coil hazard, the three exposure terms, and the protection stack.
+canonical: https://controlsfreak.dev/education/coil-freeze-protection.html
+nav: education
+category: forced-air
+keywords: freezestat freeze stat low limit mixed air stratification glycol burst point preheat face and bypass pump on freeze winter minimum outdoor air frozen coil split tubes
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* The capstone diagram rides the shared .edu-svg / .edu-legend
+           family in styles.css (static — it carries no data-flow). Only
+           the protection-stack list and two legend swatches the shared
+           set lacks are page-specific (cfp-*). */
+
+        /* Protection stack — an ordered list of prose beats. The lesson
+           prose-rhythm rule reaches p + p only, so the list spaces its
+           own items at the house 1.25rem. */
+        ol.cfp-stack {
+            padding-left: 1.4em;
+            margin-top: 1.25rem;
+            line-height: 1.75;
+        }
+        ol.cfp-stack li + li { margin-top: 1.25rem; }
+        ol.cfp-stack li::marker {
+            font-family: var(--mono);
+            color: var(--text-dim);
+        }
+
+        /* Legend swatches for the two drawn elements the shared
+           swatch set has no class for: the MA-T averaging element
+           (bright, thin — a sensing wire) and the freezestat
+           capillary + fan safety circuit (amber — control wiring,
+           the same ink the economizers signal wire uses). */
+        .edu-legend .sw.cfp-sense  { border-top: 2px solid var(--text-bright); }
+        .edu-legend .sw.cfp-safety { border-top: 2px solid var(--amber); }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Coil Freeze Protection</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Coil Freeze Protection <span class="tool-tag">Air Systems</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                A split coil is the air side's most expensive five minutes. Water in the tubes freezes, ice takes about nine percent more room than the water did, and a copper tube that was fine at 6 AM is weeping onto the mechanical-room floor by 7 — or into a ceiling two floors down. Every air handler with water in its coils and outdoor air at its intake carries this risk, and every one of them ships with a stack of protections against it that most people only meet when one of them trips. This page walks that stack: what is actually freezing, what sets how exposed a given unit is, and what each layer does. One question, start to finish: <em>why do coils split, and what stands between a cold morning and a split coil?</em>
+            </p>
+
+            <div class="callout">
+                <p style="line-height:1.7;">
+                    This page assumes the mixing box from <a href="/education/air-handlers.html#mixing-box">Air Handlers</a> — minimum position that is winter-safe by arithmetic — and the low-limit override from <a href="/education/economizers.html#field-failures">Economizers</a>, the software floor under free cooling. Neither is re-taught here; where this page needs them, it points.
+                </p>
+            </div>
+
+            <!-- ───────────────── 1 · What actually freezes ───────────────── -->
+            <h2 class="subhead" id="the-hazard">What Actually Freezes</h2>
+
+            <p>
+                Start with the quantity, because it is the one most often got wrong. The hazard is <em>not</em> the supply-air temperature. A unit designed to deliver <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span> air cannot freeze a coil with <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span> air — the coil freezes on the air that reaches its <em>face</em>, which in winter is the mixed air, or past a preheat coil, whatever that coil left behind. A healthy-looking discharge temperature on the graphic says nothing about what the first row of tubes felt at 6 AM. Watch <button type="button" data-gloss="mat">MA-T</button>, and watch what is in the tubes.
+            </p>
+            <p>
+                What is in the tubes decides whether there is a hazard at all. Freeze-burst protection — glycol, preheat, drainable coils, circulating pumps — is written for <strong>water and steam coils</strong>, because those are the coils with something inside them that expands. A hot-water heating coil is protected only while hot water is moving through it; the classic split is a modulating valve throttled nearly shut at light load, the coldest air of the morning meeting the slowest water of the day in the same tubes. A chilled-water coil sitting idle through winter is worse off: no heat source exists to rescue it, so it survives on glycol, on being drained, or on never seeing freezing air. A steam coil freezes its own way — a throttled valve pulls the coil below atmospheric pressure, the vacuum holds condensate up in the tubes, and sub-freezing air does the rest; the <a href="/tools/coil-freeze-risk.html">Coil Freeze Risk Checker</a>'s steam notes walk that mechanism and the face-and-bypass arrangement that defeats it. And a packaged <button type="button" data-gloss="dx">DX</button> rooftop with a gas furnace has no water coil to burst at all — its cold-weather concern is an evaporator icing over and losing airflow, a compressor problem rather than a burst problem.
+            </p>
+            <p>
+                One more framing before the numbers, because it explains why a southern sequence and a northern one can both be right. <strong>Cold air is a hazard in both climates — on opposite sides of the duct wall.</strong> Up north, air near freezing crossing a wet coil bursts the coil. Down south, <span data-us="55&nbsp;°F" data-metric="12.8&nbsp;°C">55&nbsp;°F</span> supply air inside a duct running through an attic at an <span data-us="80&nbsp;°F" data-metric="26.7&nbsp;°C">80&nbsp;°F</span> <button type="button" data-gloss="dew-point">dew point</button> sweats the <em>outside</em> of the duct, and the margin is thin enough that a southern job specifies the vapor barrier as carefully as the insulation's R-value. Two cold surfaces, two failures — and two different quantities: the coil-face temperature up north, the duct skin against the attic dew point down south. A tech reading a spec written for the other climate does well to notice which surface it was written against.
+            </p>
+
+            <!-- ───────────────── 2 · Exposure has three terms ───────────────── -->
+            <h2 class="subhead" id="three-terms">Exposure Has Three Terms</h2>
+
+            <p>
+                How exposed a unit is multiplies three things: the coldest outdoor air the design plans for, the outdoor-air fraction the mixing box runs, and a wet coil in the path. <strong>Climate sets exactly one of them.</strong>
+            </p>
+            <p>
+                Designers size winter equipment to a published heating design temperature — the 99.6&nbsp;% figure, the outdoor dry-bulb that only a few dozen hours a year fall below. Those figures put Miami near <span data-us="46&nbsp;°F" data-metric="7.8&nbsp;°C">46&nbsp;°F</span>, Houston just under freezing near <span data-us="28&nbsp;°F" data-metric="−2.2&nbsp;°C">28&nbsp;°F</span>, Atlanta near <span data-us="19&nbsp;°F" data-metric="−7.2&nbsp;°C">19&nbsp;°F</span>, Boston near <span data-us="8&nbsp;°F" data-metric="−13.3&nbsp;°C">8&nbsp;°F</span>, and Minneapolis near <span data-us="−15&nbsp;°F" data-metric="−26.1&nbsp;°C">−15&nbsp;°F</span>. In Miami the coldest air a designer plans for is roughly <span data-us="14&nbsp;°F" data-metric="7.8&nbsp;°C">14&nbsp;°F</span> <em>above</em> freezing — coil burst sits outside the design envelope. In Minneapolis it is roughly <span data-us="47&nbsp;°F" data-metric="26.1&nbsp;°C">47&nbsp;°F</span> below, and everything on this page is load-bearing every January morning.
+            </p>
+            <p>
+                The second term is independent of climate. A <strong>100&nbsp;%-outdoor-air unit</strong> — a makeup-air unit, a lab's exhaust-makeup unit, a <a href="/education/dedicated-outdoor-air.html">dedicated outdoor air unit</a> — has nothing to dilute the intake with: whatever the design temperature is, that is what hits the coil, and 100&nbsp;%-OA units are the ones the freeze-protection literature singles out as particularly at risk of bursting heating and cooling coils and flooding the building. A mixed-air unit at a 20&nbsp;% minimum is diluting one part of outdoor air into four parts of <span data-us="75&nbsp;°F" data-metric="23.9&nbsp;°C">75&nbsp;°F</span> return. Put the two side by side on their design mornings: a 100&nbsp;%-OA unit in Atlanta sees <span data-us="19&nbsp;°F" data-metric="−7.2&nbsp;°C">19&nbsp;°F</span> at the coil. A minimum-OA mixed-air unit in Boston sees, in&nbsp;°F, 0.2&nbsp;×&nbsp;8&nbsp;+&nbsp;0.8&nbsp;×&nbsp;75 = 1.6&nbsp;+&nbsp;60 = <span data-us="61.6&nbsp;°F" data-metric="16.5&nbsp;°C">61.6&nbsp;°F</span> (in&nbsp;°C: 0.2&nbsp;×&nbsp;(−13.3)&nbsp;+&nbsp;0.8&nbsp;×&nbsp;23.9&nbsp;≈&nbsp;16.5). The Atlanta unit is far more exposed, and the map had nothing to do with it.
+            </p>
+            <p>
+                The third term is the wet coil, and it is where the first two meet. Below 100&nbsp;% outdoor air, the two streams do not blend the instant they meet — cold outdoor air is denser and tends to stay stratified, so a cold layer can ride along the bottom of the plenum and freeze the bottom rows of a coil while the average mixed air reads comfortably warm. The <a href="/tools/coil-freeze-risk.html">Coil Freeze Risk Checker</a>'s note on coils that split while the trend looks fine puts a field number on that layer; the point here is that the OA fraction gives you an <em>average</em>, and coils do not freeze on averages.
+            </p>
+
+            <!-- ───────────────── 2b · Mass vs volume ───────────────── -->
+            <h2 class="subhead" id="mass-basis">Why the Hand Math Runs Warm on a Cold Day</h2>
+
+            <p>
+                The mixing arithmetic from <a href="/education/air-handlers.html#mixing-box">Air Handlers</a> — %OA&nbsp;×&nbsp;OAT&nbsp;+&nbsp;%RA&nbsp;×&nbsp;RAT — weights the streams by <em>volume</em>: the damper or CFM share. The coil does not care about volume. It cares about how many pounds of cold air arrive per pound of warm, and cold air is denser. At <span data-us="0&nbsp;°F" data-metric="−17.8&nbsp;°C">0&nbsp;°F</span> and 40&nbsp;% RH a pound of dry air occupies about <span data-us="11.6&nbsp;ft³" data-metric="0.72&nbsp;m³/kg">11.6&nbsp;ft³</span>; at <span data-us="75&nbsp;°F" data-metric="23.9&nbsp;°C">75&nbsp;°F</span> and 50&nbsp;% RH it occupies about <span data-us="13.7&nbsp;ft³" data-metric="0.85&nbsp;m³/kg">13.7&nbsp;ft³</span> — an 18&nbsp;% spread. So a 20&nbsp;% damper share on that morning is not 20&nbsp;% of the air by mass. It is <strong>22.8&nbsp;%</strong>.
+            </p>
+            <p>
+                Run those two streams through the site's moist-air engine on a dry-air mass basis and the mixed state lands near <span data-us="58.1&nbsp;°F" data-metric="14.5&nbsp;°C">58.1&nbsp;°F</span>, where the hand arithmetic says <span data-us="60.0&nbsp;°F" data-metric="15.6&nbsp;°C">60.0&nbsp;°F</span>. The hand number reads about <span data-us="1.9&nbsp;°F" data-metric="1.1&nbsp;°C">1.9&nbsp;°F</span> <em>warm</em> — and it reads warm on exactly the cold mornings when the margin matters, against a freezestat band that lives at <span data-us="35–38&nbsp;°F" data-metric="1.7–3.3&nbsp;°C">35–38&nbsp;°F</span>. That gap is a footnote on a <span data-us="60&nbsp;°F" data-metric="15.6&nbsp;°C">60&nbsp;°F</span> mix. It is a different conversation on a <span data-us="39&nbsp;°F" data-metric="3.9&nbsp;°C">39&nbsp;°F</span> one. The <a href="/tools/air-mixing.html">Air-Mixing Calculator</a> runs the mass basis and says why; the hand form is still the one to do on the roof — just know which way it leans.
+            </p>
+
+            <!-- ───────────────── 3 · The protection stack ───────────────── -->
+            <h2 class="subhead" id="protection-stack">The Protection Stack</h2>
+
+            <p>
+                Here is the stack, roughly in the order a unit reaches for it — the same order the <a href="/tools/coil-freeze-risk.html">Coil Freeze Risk Checker</a>'s reference row lists. Each layer exists because the one before it can fail.
+            </p>
+
+            <ol class="cfp-stack">
+                <li>
+                    <strong>The freezestat — the hardwired trip.</strong> A vapor-charged capillary element, <span data-us="20&nbsp;ft" data-metric="6&nbsp;m">20&nbsp;ft</span> or so of it, serpentined back and forth across the coil face on the <em>leaving-air</em> side, that trips when any <span data-us="8–12&nbsp;in." data-metric="20–30&nbsp;cm">8–12&nbsp;in.</span> of it sees air below setpoint. Not averaging — the opposite: it reacts to the coldest spot it crosses, which is the whole reason it can catch a stratified cold layer the <button type="button" data-gloss="mat">MA-T</button> average misses. It is wired as a normally-closed contact in series with the fan's <button type="button" data-gloss="safety-string">safety string</button> — to the starter, or to the drive's safety input on a VAV unit — so a trip stops the fan without asking the controller's permission, and the sequence then closes the outdoor dampers and drives the heating valve open. Mount it on the leaving side: on the entering side a short length of tube sitting in a cold stratified layer trips it while the coil itself is in no danger. Setpoint: stats ship set around <span data-us="35&nbsp;°F" data-metric="1.7&nbsp;°C">35&nbsp;°F</span>, adjustable, and most are applied between <span data-us="35 and 37&nbsp;°F" data-metric="1.7 and 2.8&nbsp;°C">35 and 37&nbsp;°F</span> — a national device band, not a regional one. A house setting of <span data-us="38&nbsp;°F" data-metric="3.3&nbsp;°C">38&nbsp;°F</span> sits at the top of that band: a deliberate early trip that buys a degree of margin and accepts a few more nuisance trips on marginal mornings. Write the number down; it is a choice, not a code line. And insist on <strong>manual reset</strong>: an auto-reset stat cycles the fan all night while the coil keeps icing, and nobody finds out why until the puddle.
+                </li>
+                <li>
+                    <strong>The mixed-air low-limit override — the software floor.</strong> Before the stat ever has to act, the controller should have seen the dive coming: when <button type="button" data-gloss="mat">MA-T</button> sags toward a low limit, the override drives the dampers back toward minimum whatever the free-cooling logic wants. <a href="/education/economizers.html#field-failures">Economizers</a> teaches it as the floor under free cooling, and that is where to read it. Two things belong here instead. First, it sits <em>above</em> the hardware stat on purpose — the <a href="/simulators/ddc-workbench.html">DDC Workbench</a>'s air handler runs its software limit at <span data-us="41&nbsp;°F" data-metric="5.0&nbsp;°C">41&nbsp;°F</span> over a stat at <span data-us="38&nbsp;°F" data-metric="3.3&nbsp;°C">38&nbsp;°F</span> — so software acts first and the stat stays the backstop rather than the first line. Second, it reads the same mixed-air sensor as everything else, so a single-point sensor parked in the warm half of a stratified plenum defeats it quietly; an averaging element across the plenum is the fix, and the <a href="/education/air-handlers.html#sensor-strip">sensor-strip widget in Air Handlers</a> hides a war story about a sensor that read the coil instead of the mix.
+                </li>
+                <li>
+                    <strong>Pump on freeze, valve open on trip.</strong> The strongest protection a water coil has is hot water moving through it. So the trip — or a mixed-air threshold, or outdoor temperature alone; sequences differ on the trigger and the spec says which — starts the coil's circulating pump and drives the heating valve wide open, dumping heat into the tubes the moment the hazard shows. The 100&nbsp;%-OA designs make it routine: run the cooling-coil circulation pump whenever the air leaving the preheat coil is below <span data-us="40&nbsp;°F" data-metric="4.4&nbsp;°C">40&nbsp;°F</span>. A valve that only cracks open is the hazard, not the protection — a trickle of hot water through a coil in freezing air freezes before it makes it back out.
+                </li>
+                <li>
+                    <strong>Glycol at burst strength.</strong> For the chilled-water coil idle all winter, where no heat exists to rescue it, the answer is in the fluid. Freeze point is where slush first forms; burst point sits far below it, because slush still flows and absorbs expansion — a 30&nbsp;% mix can sit in <span data-us="0&nbsp;°F" data-metric="−17.8&nbsp;°C">0&nbsp;°F</span> air all winter without splitting, which is burst protection, not an operating condition. The <a href="/tools/coil-freeze-risk.html">Coil Freeze Risk Checker</a> carries the freeze-and-burst table for ethylene and propylene glycol by concentration. Two field facts travel with it: glycol protects tubes, not trips — the stat reads air, so a glycol loop trips exactly as often as a water one — and loops drift lean as they get topped off with water, so a refractometer reading of the actual loop outranks the number on the fill tag.
+                </li>
+                <li>
+                    <strong>Drain what is truly idle.</strong> An empty coil cannot split. A chilled-water coil that will not run until spring can be isolated, drained, and blown out with compressed air — the blow-out matters, because a coil drained by gravity alone still holds water in the low return bends, and that water splits the bend. It costs a refill and an air bleed in the spring; it costs nothing in glycol's heat-carrying penalty.
+                </li>
+                <li>
+                    <strong>Winter-safe minimum positions.</strong> The quiet layer under all of the above: a minimum-OA share that keeps the calculated mixed air comfortably warm by arithmetic, so the routine morning never gets near the bands above. <a href="/education/air-handlers.html#mixing-box">Air Handlers</a> works the number — one part outdoor to four parts return holds the mix near <span data-us="60&nbsp;°F" data-metric="15.6&nbsp;°C">60&nbsp;°F</span> even at <span data-us="0&nbsp;°F" data-metric="−17.8&nbsp;°C">0&nbsp;°F</span> outdoors. Three things eat into that margin, and all three appear on this page: the mass basis (the hand number reads warm), stratification (the bottom of the coil is colder than the average), and the damper itself — flow is not linear with stroke, so a minimum set as a percentage on a mild October afternoon is not necessarily the same flow fraction in January. The margin is real. Just do not spend all of it.
+                </li>
+            </ol>
+
+            <p style="margin-top:1.25rem;">
+                Here is where each layer lives on the unit. The three exposure terms are numbered along the air path; the two low limits — software and hardware — sit where they read, which is not the same place.
+            </p>
+
+            <!-- Static capstone — no data-flow on purpose: the drawing is about
+                 WHERE things are mounted, and particles would compete with the
+                 two serpentined elements it exists to show. Ink follows the
+                 house rule for air diagrams (OA --teal, RA/MA --blue-cool, SA
+                 --blue); the freezestat capillary and its fan-safety-circuit
+                 leg take --amber, the control-wiring ink the economizers
+                 signal wire uses; the MA-T averaging element is a bright thin
+                 wire so it reads as a sensor, not a duct. No -fill tokens
+                 anywhere — none of this geometry needs the brighter light-
+                 theme step, and --amber / --heat / --blue stay inside their
+                 own names in both themes. -->
+            <svg class="edu-svg" viewBox="-30 0 720 420" role="img" aria-labelledby="cfp-d1-title cfp-d1-desc"
+                 font-family="var(--mono)">
+                <title id="cfp-d1-title">Where the freeze-protection stack lives on an air handler</title>
+                <desc id="cfp-d1-desc">A side view of an air handler casing drawn as one long box with five sections. At the left is the mixing box: return air comes down from above through a mostly-open damper, and outside air enters from the left through a damper held at minimum position. The outside-air intake is labelled as the first exposure term, design outdoor-air temperature; the damper pair is labelled as the second, the outdoor-air fraction. Near the mixing box's right wall a thin averaging element snakes top to bottom across the plenum, labelled MA-T, where the software low limit reads. Next comes a filter, then the heating coil, labelled as the third exposure term, a wet coil, with hot-water supply and return stubs and a circulating pump below it. Immediately downstream of the heating coil's leaving face, a freezestat capillary zigzags top to bottom across the full coil height and rises to a freezestat body mounted above the casing, marked manual reset; a dashed line runs from that body to the supply fan as the normally-closed contact in the fan safety circuit. Next is the chilled-water coil, labelled idle in winter, glycol or drain, with its own supply and return stubs. Last is the supply fan, and supply air leaves the casing to the right.</desc>
+
+                <!-- ducts (static strokes — this drawing carries no data-flow) -->
+                <path d="M200 22 V120" fill="none" stroke="var(--blue-cool)" stroke-width="3"/>
+                <polygon points="195,100 205,100 200,111" fill="var(--blue-cool)"/>
+                <path d="M-30 230 H100" fill="none" stroke="var(--teal)" stroke-width="3"/>
+                <polygon points="58,225 67,230 58,235" fill="var(--teal)"/>
+                <path d="M600 210 H690" fill="none" stroke="var(--blue)" stroke-width="3"/>
+                <polygon points="652,205 661,210 652,215" fill="var(--blue)"/>
+
+                <!-- casing + section dividers -->
+                <rect x="100" y="120" width="500" height="180" fill="none" stroke="var(--text-dim)" stroke-width="2"/>
+                <line x1="240" y1="120" x2="240" y2="300" stroke="var(--border)" stroke-width="1"/>
+                <line x1="300" y1="120" x2="300" y2="300" stroke="var(--border)" stroke-width="1"/>
+                <line x1="400" y1="120" x2="400" y2="300" stroke="var(--border)" stroke-width="1"/>
+                <line x1="500" y1="120" x2="500" y2="300" stroke="var(--border)" stroke-width="1"/>
+
+                <!-- return-air damper: mostly open (blades near-parallel to the vertical flow) -->
+                <g id="cfp-d1-ra-damper">
+                    <rect x="184" y="52" width="32" height="30" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="191" y1="56" x2="193" y2="78" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="200" y1="56" x2="202" y2="78" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="209" y1="56" x2="211" y2="78" stroke="var(--text-bright)" stroke-width="1.5"/>
+                </g>
+                <text x="222" y="40" text-anchor="start" font-size="13" fill="var(--text)">return air ↓</text>
+                <text x="178" y="72" text-anchor="end" font-size="11" fill="var(--text-dim)">mostly open</text>
+
+                <!-- outside-air damper: at minimum (blades steep to the flow) -->
+                <g id="cfp-d1-oa-damper">
+                    <rect x="110" y="212" width="30" height="36" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <line x1="119" y1="217" x2="113" y2="243" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="129" y1="217" x2="123" y2="243" stroke="var(--text-bright)" stroke-width="1.5"/>
+                    <line x1="139" y1="217" x2="133" y2="243" stroke="var(--text-bright)" stroke-width="1.5"/>
+                </g>
+                <text x="35" y="216" text-anchor="middle" font-size="12" fill="var(--text)">outside air →</text>
+                <text x="35" y="258" text-anchor="middle" font-size="10" fill="var(--text)">1 · design OA</text>
+                <text x="35" y="272" text-anchor="middle" font-size="10" fill="var(--text)">temperature</text>
+
+                <!-- in-chamber convergence arrows -->
+                <polygon points="195,132 205,132 200,143" fill="var(--blue-cool)"/>
+                <polygon points="146,225 155,230 146,235" fill="var(--teal)"/>
+                <text x="155" y="160" text-anchor="middle" font-size="10" fill="var(--text)">2 · OA fraction</text>
+                <text x="155" y="174" text-anchor="middle" font-size="10" fill="var(--text-dim)">damper share</text>
+
+                <!-- MA-T averaging element — serpentined across the mixing plenum -->
+                <path id="cfp-d1-mat" d="M204 150 H228 V168 H204 V186 H228 V204 H204 V222 H228 V240 H204 V258 H228 V276 H204" fill="none" stroke="var(--text-bright)" stroke-width="1.5"/>
+                <text x="216" y="293" text-anchor="middle" font-size="10" fill="var(--text-bright)">MA-T</text>
+
+                <!-- mixed air into the filter section -->
+                <polygon points="244,225 253,230 244,235" fill="var(--blue-cool)"/>
+
+                <!-- filter -->
+                <g id="cfp-d1-filter">
+                    <rect x="258" y="135" width="26" height="150" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <line x1="261" y1="282" x2="281" y2="140" stroke="var(--border)" stroke-width="1"/>
+                    <line x1="261" y1="225" x2="281" y2="190" stroke="var(--border)" stroke-width="1"/>
+                </g>
+                <polygon points="310,225 319,230 310,235" fill="var(--blue-cool)"/>
+
+                <!-- heating / preheat coil — the wet coil -->
+                <g id="cfp-d1-htg">
+                    <rect x="330" y="135" width="40" height="150" fill="var(--surface)" stroke="var(--heat)" stroke-width="2"/>
+                    <path d="M336 143 H364 V157 H336 V171 H364 V185 H336 V199 H364 V213 H336 V227 H364 V241 H336 V255 H364 V269 H336 V281 H364" fill="none" stroke="var(--heat)" stroke-width="1.5"/>
+                </g>
+                <text x="376" y="108" text-anchor="end" font-size="11" fill="var(--text)">3 · a wet coil</text>
+
+                <!-- hot-water stubs + circulating pump (pump on freeze, valve open on trip) -->
+                <path d="M342 300 V336" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+                <polygon points="337,314 347,314 342,304" fill="var(--blue)"/>
+                <path d="M358 300 V336" fill="none" stroke="var(--blue-cool)" stroke-width="2.5" stroke-dasharray="7 4"/>
+                <polygon points="353,324 363,324 358,334" fill="var(--blue-cool)"/>
+                <g id="cfp-d1-pump">
+                    <circle cx="342" cy="346" r="8" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <polygon points="339,342 347,346 339,350" fill="var(--text-dim)"/>
+                </g>
+
+                <!-- freezestat: capillary zigzagged across the LEAVING face, rising to the stat body -->
+                <g id="cfp-d1-fs">
+                    <path d="M386 135 V143 L392 150 L380 164 L392 178 L380 192 L392 206 L380 220 L392 234 L380 248 L392 262 L380 276 L386 283" fill="none" stroke="var(--amber)" stroke-width="1.5"/>
+                    <path d="M386 135 V86" fill="none" stroke="var(--amber)" stroke-width="1.5"/>
+                    <rect x="372" y="58" width="32" height="28" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="1.5"/>
+                    <text x="388" y="77" text-anchor="middle" font-size="12" fill="var(--text-bright)">FS</text>
+                </g>
+                <text x="388" y="48" text-anchor="middle" font-size="12" fill="var(--text)">FREEZESTAT</text>
+                <text x="364" y="78" text-anchor="end" font-size="11" fill="var(--text-dim)">manual reset</text>
+                <text x="392" y="104" text-anchor="start" font-size="10" fill="var(--text-dim)">capillary across the</text>
+                <text x="392" y="116" text-anchor="start" font-size="10" fill="var(--text-dim)">coil's leaving face</text>
+
+                <!-- NC contact in the fan safety circuit -->
+                <path d="M404 72 H545 V192" fill="none" stroke="var(--amber)" stroke-width="1.5" stroke-dasharray="4 3"/>
+                <text x="412" y="62" text-anchor="start" font-size="10" fill="var(--text-dim)">NC contact in the fan safety circuit</text>
+
+                <!-- chilled-water coil — idle in winter -->
+                <g id="cfp-d1-clg">
+                    <rect x="428" y="135" width="40" height="150" fill="var(--surface)" stroke="var(--blue)" stroke-width="2"/>
+                    <path d="M434 143 H462 V157 H434 V171 H462 V185 H434 V199 H462 V213 H434 V227 H462 V241 H434 V255 H462 V269 H434 V281 H462" fill="none" stroke="var(--blue)" stroke-width="1.5"/>
+                </g>
+                <path d="M440 300 V336" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+                <path d="M456 300 V336" fill="none" stroke="var(--blue-cool)" stroke-width="2.5" stroke-dasharray="7 4"/>
+                <polygon points="482,225 491,230 482,235" fill="var(--blue-cool)"/>
+
+                <!-- supply fan -->
+                <g id="cfp-d1-fan">
+                    <circle cx="550" cy="210" r="18" fill="var(--surface)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <polygon points="544,202 559,210 544,218" fill="var(--text-dim)"/>
+                </g>
+                <text x="645" y="232" text-anchor="middle" font-size="12" fill="var(--text)">supply air →</text>
+
+                <!-- station labels -->
+                <text x="170" y="372" text-anchor="middle" font-size="13" fill="var(--text)">MIXING BOX</text>
+                <text x="170" y="388" text-anchor="middle" font-size="10" fill="var(--text-dim)">software low limit reads MA-T</text>
+                <text x="271" y="372" text-anchor="middle" font-size="13" fill="var(--text)">FILTER</text>
+                <text x="350" y="372" text-anchor="middle" font-size="13" fill="var(--text)">HTG COIL</text>
+                <text x="350" y="388" text-anchor="middle" font-size="10" fill="var(--text-dim)">pump on freeze</text>
+                <text x="350" y="402" text-anchor="middle" font-size="10" fill="var(--text-dim)">valve to open</text>
+                <text x="448" y="372" text-anchor="middle" font-size="13" fill="var(--text)">CLG COIL</text>
+                <text x="448" y="388" text-anchor="middle" font-size="10" fill="var(--text-dim)">idle in winter</text>
+                <text x="448" y="402" text-anchor="middle" font-size="10" fill="var(--text-dim)">glycol or drain</text>
+                <text x="550" y="372" text-anchor="middle" font-size="13" fill="var(--text)">SUPPLY FAN</text>
+            </svg>
+            <div class="edu-legend">
+                <span><span class="sw oa"></span>outside air</span>
+                <span><span class="sw ra"></span>return / mixed air</span>
+                <span><span class="sw sa"></span>supply air</span>
+                <span><span class="sw cfp-sense"></span>MA-T averaging element</span>
+                <span><span class="sw cfp-safety"></span>freezestat element · fan safety circuit</span>
+            </div>
+
+            <!-- ───────────────── 4 · By climate ───────────────── -->
+            <h2 class="subhead" id="by-climate">Why the Sequence Looks Different by Climate</h2>
+
+            <p>
+                The <button type="button" data-gloss="economizer">economizer</button> sequence genuinely does look different down south, and the energy code is why. It does not ask for an airside economizer at all in the very-hot zones — 1A and 1B on the climate-zone map — because outdoor air there carries too much heat too much of the year for free cooling to pay back. Where an economizer exists in a humid zone, it locks out earlier: the fixed dry-bulb high limit sits at <span data-us="65&nbsp;°F" data-metric="18.3&nbsp;°C">65&nbsp;°F</span> outdoors in zones 1A through 4A, against <span data-us="70&nbsp;°F" data-metric="21.1&nbsp;°C">70&nbsp;°F</span> in 5A and 6A and <span data-us="75&nbsp;°F" data-metric="23.9&nbsp;°C">75&nbsp;°F</span> in the dry, marine, and cold zones — and differential dry-bulb changeover is not permitted in 1A through 4A at all, because comparing two thermometers admits humid air that costs more to dry than the free cooling saves. (Those are the 2013 energy standard's figures, confirmed against the 2018 model energy code; editions move, so read the one your jurisdiction adopted.)
+            </p>
+            <p>
+                Now the trap, because it is the one that reads perfectly well and is wrong. All of that constrains the <em>warm</em> end of the economizer band — when free cooling must stop. At the cold end the same standard points the other way: it contemplates economizing into freeze-risk air, saying the outdoor damper is not to begin closing for coil-freeze protection until the leaving-air temperature is below <span data-us="45&nbsp;°F" data-metric="7.2&nbsp;°C">45&nbsp;°F</span>. So a southern economizer running in a narrow mild band is a true description of where it happens to operate. It is <strong>not</strong> the code forbidding cold-weather economizing in the South, and a sequence written as if it were has misread the standard.
+            </p>
+            <p>
+                Is the hardwired stat required? The honest answer is that it lives in <em>this job's</em> specification — and the pattern is worth knowing before you go read it. No building code mandates a coil freezestat: the mechanical code's hydronic chapter has no freeze-protection section, and the energy code's one freeze-protection line regulates the controls <em>on</em> freeze-protection heating — shut it off above <span data-us="40&nbsp;°F" data-metric="4.4&nbsp;°C">40&nbsp;°F</span> — an energy rule, not an install mandate. The public federal guide spec (UFGS 23&nbsp;09&nbsp;93) puts a freezestat in every hydronic-coil air-handler sequence, unconditionally, hardwired to the fan starter with manual reset at the device; the word <em>climate</em> appears nowhere near it. The flagship sequence guideline (ASHRAE Guideline 36) treats the device as optional, layered over a mandatory software freeze sequence — "if a freeze-stat is present." And owner standards split by latitude in a telling way: cold-climate owners spell out every trip action; warm-climate owners simply never mention the device. <strong>Silence is not a rule.</strong> It is not permission to omit the stat and it is not a requirement to fit one — it is the absence of an answer, which means the answer is on this project's drawings and in its sequence. No authority anywhere waives or mandates the device by climate zone; practice varies, and "they don't use them down south" is a claim no source makes.
+            </p>
+            <p>
+                One more reading of the map. Houston's design temperature is below freezing too — worth remembering before anyone says it doesn't freeze here. February 2021 put Texas far outside its design envelope, and a balancing firm there documented a school district that set its freeze protocol aside, shut the central plant down, and flooded. The map sets one term of three. It does not zero the product.
+            </p>
+
+            <!-- ───────────────── 5 · Reading the trip ───────────────── -->
+            <h2 class="subhead" id="reading-the-trip">Reading the Trip</h2>
+
+            <p>
+                The freezestat tripped at 6 AM. Before anyone resets it, treat the trip as evidence — the stat is the one witness that was awake. Pull the <button type="button" data-gloss="mat">MA-T</button> trend against <button type="button" data-gloss="oat">OA-T</button> and the damper command for the hour before the trip: a mix that tracked outdoors with the dampers commanded to minimum is a damper that was not at minimum — a slipped linkage, a seized actuator, a return damper stuck half closed — and the stat did its job. Find the element and note where it sits: leaving side of the first wet coil, serpentined across the whole face, is right; a short run on the entering side, or a coil of it parked in one corner, is a nuisance-trip machine. Check the heating valve and the pump at the time of the trip — a valve cracked open at light load is the classic split, not a defense. Then take the numbers to the <a href="/tools/coil-freeze-risk.html">Coil Freeze Risk Checker</a>: place the mix against what is actually in the tubes — water, glycol at a <em>measured</em> strength, steam condensate — and read the margin. A trip with glycol in the coil was still right; the stat reads air. A stat set below the fluid's freeze point can only trip after ice is already possible. And a calm verdict on a calculated average is never a reason to skip a layer of the stack: the tool cannot see stratification, circuiting, or the cold corner the sensor misses — which is why the stack is a stack and not a single device.
+            </p>
+
+            <p class="ref-note">
+                <strong>What this page is — and isn't.</strong> A map of the hazard and of the stack built against it, so a trip reads as evidence instead of a nuisance and a protection design can be judged for what it is missing. It is not the protection, and neither is any number on it: the freezestat band, the software-limit gap, the burst points, and the design temperatures are patterns to recognize, not settings to copy. The coil manufacturer's data, the fluid maker's chart, and this job's own sequence and specification govern — and when the cost of being wrong is split tubes and a flooded floor, nothing on a web page outranks them.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/forced-air/', label: 'The forced-air reference hub'},
+        tools: [
+            {href: '/tools/coil-freeze-risk.html', label: 'Coil Freeze Risk Checker'},
+            {href: '/tools/air-mixing.html', label: 'Air-Mixing Calculator'},
+            {href: '/tools/economizer-ratio.html', label: 'Economizer Ratio Helper'}
+        ],
+        simulators: [
+            {href: '/simulators/ddc-workbench.html', label: 'DDC Workbench — Air Handler'}
+        ],
+        lessons: [
+            {href: '/education/air-handlers.html', label: 'Air Handlers'},
+            {href: '/education/economizers.html', label: 'Economizers'},
+            {href: '/education/dedicated-outdoor-air.html', label: 'Dedicated Outdoor Air'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}

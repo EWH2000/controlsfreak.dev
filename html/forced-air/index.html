@@ -22,7 +22,7 @@ keywords: forced air air handler ahu rtu economizer vav duct static building pre
     </p>
 
     <p class="landing-intro">
-        New to it? Take the lessons below in the order they're listed — they follow the air from the air handler out to the terminal boxes, commission it to its design flows, and meet the dedicated-outdoor-air unit that conditions ventilation air on its own. Already have a unit in front of you? Jump to the tools: size a duct, average a traverse, work the minimum outdoor air, or check a coil. Everything here is open, needs no login, and tracks nothing.
+        New to it? Take the lessons below in the order they're listed — they follow the air from the air handler out to the terminal boxes, stop to keep its coils from splitting on a cold morning, commission it to its design flows, and meet the dedicated-outdoor-air unit that conditions ventilation air on its own. Already have a unit in front of you? Jump to the tools: size a duct, average a traverse, work the minimum outdoor air, or check a coil. Everything here is open, needs no login, and tracks nothing.
     </p>
 
     <h2 class="hub-group">Start here — the lessons, in order</h2>
@@ -31,17 +31,19 @@ keywords: forced air air handler ahu rtu economizer vav duct static building pre
         <span class="hub-arrow">→</span>
         <span class="hub-step">2</span> <a href="/education/economizers.html">Economizers</a>
         <span class="hub-arrow">→</span>
-        <span class="hub-step">3</span> <a href="/education/building-pressure.html">Building Pressure</a>
+        <span class="hub-step">3</span> <a href="/education/coil-freeze-protection.html">Coil Freeze Protection</a>
         <span class="hub-arrow">→</span>
-        <span class="hub-step">4</span> <a href="/education/air-unit-identification.html">Unit ID</a>
+        <span class="hub-step">4</span> <a href="/education/building-pressure.html">Building Pressure</a>
         <span class="hub-arrow">→</span>
-        <span class="hub-step">5</span> <a href="/education/vav-systems.html">VAV Systems</a>
+        <span class="hub-step">5</span> <a href="/education/air-unit-identification.html">Unit ID</a>
         <span class="hub-arrow">→</span>
-        <span class="hub-step">6</span> <a href="/education/duct-static-control.html">Duct Static</a>
+        <span class="hub-step">6</span> <a href="/education/vav-systems.html">VAV Systems</a>
         <span class="hub-arrow">→</span>
-        <span class="hub-step">7</span> <a href="/education/air-balancing.html">Air Balancing</a>
+        <span class="hub-step">7</span> <a href="/education/duct-static-control.html">Duct Static</a>
         <span class="hub-arrow">→</span>
-        <span class="hub-step">8</span> <a href="/education/dedicated-outdoor-air.html">Dedicated Outdoor Air</a>
+        <span class="hub-step">8</span> <a href="/education/air-balancing.html">Air Balancing</a>
+        <span class="hub-arrow">→</span>
+        <span class="hub-step">9</span> <a href="/education/dedicated-outdoor-air.html">Dedicated Outdoor Air</a>
     </p>
 
     <div class="card-grid">
@@ -63,11 +65,19 @@ keywords: forced air air handler ahu rtu economizer vav duct static building pre
         }) }}
         {{ navCard({
             section:    'education',
+            href:       '/education/coil-freeze-protection.html',
+            titleShort: 'Coil Freeze',
+            titleFull:  'Coil Freeze Protection',
+            desc:       'Why water coils split and what stands between a cold morning and a burst tube — the wet-coil hazard, the three exposure terms (design temperature × OA fraction × a wet coil), and the protection stack from the freezestat down.',
+            pills:      ['Step 3', 'Freezestat', 'Exposure Terms']
+        }) }}
+        {{ navCard({
+            section:    'education',
             href:       '/education/building-pressure.html',
             titleShort: 'Building Pressure',
             titleFull:  'Building Pressure',
             desc:       'Why a building goes positive or negative — supply vs return vs exhaust, the relief path, and how the controls hold a building near neutral without the doors fighting you.',
-            pills:      ['Step 3', 'Supply / Return / Relief', 'Neutral']
+            pills:      ['Step 4', 'Supply / Return / Relief', 'Neutral']
         }) }}
         {{ navCard({
             section:    'education',
@@ -75,7 +85,7 @@ keywords: forced air air handler ahu rtu economizer vav duct static building pre
             titleShort: 'Unit ID',
             titleFull:  'Unit Identification',
             desc:       'Naming the box you\'re standing in front of — RTU vs AHU vs fan coil vs makeup air, single-zone vs VAV — and what the nameplate and the duct layout tell you about it.',
-            pills:      ['Step 4', 'RTU / AHU / MAU', 'Nameplate']
+            pills:      ['Step 5', 'RTU / AHU / MAU', 'Nameplate']
         }) }}
         {{ navCard({
             section:    'education',
@@ -83,7 +93,7 @@ keywords: forced air air handler ahu rtu economizer vav duct static building pre
             titleShort: 'VAV Systems',
             titleFull:  'VAV Systems',
             desc:       'One air handler, many zones that never agree — VAV boxes, the pressure-independent loop, reheat, and how the air handler holds duct static while thirty dampers move.',
-            pills:      ['Step 5', 'VAV Boxes', 'Pressure-Independent']
+            pills:      ['Step 6', 'VAV Boxes', 'Pressure-Independent']
         }) }}
         {{ navCard({
             section:    'education',
@@ -91,7 +101,7 @@ keywords: forced air air handler ahu rtu economizer vav duct static building pre
             titleShort: 'Duct Static',
             titleFull:  'Duct Static Control',
             desc:       'Holding supply-duct static pressure as the boxes open and close — where the sensor goes, the fan-speed (VFD) loop that chases setpoint, and the static reset that saves fan energy.',
-            pills:      ['Step 6', 'Static Setpoint', 'Fan Reset']
+            pills:      ['Step 7', 'Static Setpoint', 'Fan Reset']
         }) }}
         {{ navCard({
             section:    'education',
@@ -99,7 +109,7 @@ keywords: forced air air handler ahu rtu economizer vav duct static building pre
             titleShort: 'Air Balancing',
             titleFull:  'Air Balancing',
             desc:       'Commissioning the air side to design flow — verifying box CFM against a traverse, setting box min, max and reheat, proportional balancing against the index zone, and holding the building slightly positive.',
-            pills:      ['Step 7', 'Flow Rings · K√VP', 'Proportional']
+            pills:      ['Step 8', 'Flow Rings · K√VP', 'Proportional']
         }) }}
         {{ navCard({
             section:    'education',
@@ -107,7 +117,7 @@ keywords: forced air air handler ahu rtu economizer vav duct static building pre
             titleShort: 'DOAS',
             titleFull:  'Dedicated Outdoor Air',
             desc:       'The other way to bring in fresh air — a unit dedicated to 100% outdoor air that decouples ventilation and latent load from sensible, drives its coil deep to a dew-point setpoint, reheats to neutral, and leaves the space to the terminals.',
-            pills:      ['Step 8', 'Latent / Sensible', 'Deep Coil · Reheat']
+            pills:      ['Step 9', 'Latent / Sensible', 'Deep Coil · Reheat']
         }) }}
     </div>
 

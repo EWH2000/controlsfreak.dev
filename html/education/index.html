@@ -23,7 +23,7 @@ nav: education
 
     <div class="filter-chips" role="group" aria-label="Filter lessons by category">
         <button type="button" class="filter-chip active" data-category="all" aria-pressed="true">
-            All <span class="filter-chip-count">40</span>
+            All <span class="filter-chip-count">41</span>
         </button>
         <button type="button" class="filter-chip" data-category="fundamentals" aria-pressed="false">
             Fundamentals <span class="filter-chip-count">5</span>
@@ -38,7 +38,7 @@ nav: education
             Refrigerant <span class="filter-chip-count">3</span>
         </button>
         <button type="button" class="filter-chip" data-category="forced-air" aria-pressed="false">
-            Forced Air Systems <span class="filter-chip-count">8</span>
+            Forced Air Systems <span class="filter-chip-count">9</span>
         </button>
         <button type="button" class="filter-chip" data-category="programming" aria-pressed="false">
             Programming <span class="filter-chip-count">6</span>
@@ -240,6 +240,15 @@ nav: education
             titleFull:  'Economizers',
             desc:       'When an air handler should cool with outside air instead of the coil — the linked damper assembly, dry-bulb vs enthalpy changeover with a live explorer widget, integrated staging, and the field failure modes.',
             pills:      ['Air Systems', 'Free Cooling', 'Changeover', 'Explorer Widget'],
+            category:   'forced-air'
+        }) }}
+        {{ navCard({
+            section:    'education',
+            href:       '/education/coil-freeze-protection.html',
+            titleShort: 'Coil Freeze',
+            titleFull:  'Coil Freeze Protection',
+            desc:       'Why water coils split and what stands between a cold morning and a burst tube — the wet-coil hazard, the three exposure terms, why hand mixed-air math runs warm on a cold day, and the protection stack from freezestat to glycol.',
+            pills:      ['Air Systems', 'Freezestat', 'Exposure Terms', 'Protection Stack'],
             category:   'forced-air'
         }) }}
         {{ navCard({

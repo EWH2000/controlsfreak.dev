@@ -51,6 +51,7 @@ const order = [
     "/education/psychrometrics-basics.html",
     "/education/air-handlers.html",
     "/education/economizers.html",
+    "/education/coil-freeze-protection.html",
     "/education/building-pressure.html",
     "/education/air-unit-identification.html",
     "/education/vav-systems.html",

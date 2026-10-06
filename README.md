@@ -650,6 +650,24 @@ techs new to the industry and anyone wanting a refresh.
   real all-dry-bulb building where the occupants were the only
   humidity sensor. Page 2 of the forced-air chapter; pairs with the
   Economizers quiz.
+- **Coil Freeze Protection** — why water coils split and what stands
+  between a cold morning and a burst tube: the hazard is the air at
+  the coil face, not the supply temperature, and it lives in water
+  and steam coils (the two-cold-surfaces framing — a coil bursting up
+  north, a duct sweating down south); exposure as three multiplied
+  terms — design outdoor temperature × outdoor-air fraction × a wet
+  coil, with climate setting only the first (a 100 %-OA unit in
+  Atlanta against a minimum-OA unit in Boston); why hand mixed-air
+  math runs about 2 °F warm on a cold day (volume share vs dry-air
+  mass, re-derived through the shared psychro engine); the protection
+  stack in the tool's order — manual-reset freezestat, mixed-air
+  low-limit override, pump-on-freeze, glycol at burst strength,
+  draining, winter-safe minimums — on a static capstone drawing of
+  where each one lives; why the economizer sequence differs by
+  climate zone, with the code's warm-end-only caveat, and "silence is
+  not a rule" for the hardwired stat; closes by reading a trip as
+  evidence and handing off to the Coil Freeze Risk Checker. Page 3 of
+  the forced-air chapter.
 - **Building Pressure** — why a building goes positive or negative:
   the air ledger (outside air in vs exhaust, relief, and
   exfiltration out — pressure is the residual), the slightly-positive
@@ -660,7 +678,7 @@ techs new to the industry and anyone wanting a refresh.
   tracking. A pressure-ledger widget solves the building live against
   four relief strategies — its interlock-mistake preset replays the
   author's own program that ran power exhaust with the supply fan and
-  dragged a building negative all winter. Page 3 of the forced-air
+  dragged a building negative all winter. Page 4 of the forced-air
   chapter; pairs with the Building Pressure quiz.
 - **Unit Identification** — standing in front of an air-side unit
   you've never met: the three field questions (where does it sit,
@@ -673,7 +691,7 @@ techs new to the industry and anyone wanting a refresh.
   lies: the off-season override that makes an unlabeled system
   announce itself. A lineup-walker widget deals field mysteries,
   the last one replaying the author's own building where the
-  graphics, the prints, and the people all disagreed. Page 4 of
+  graphics, the prints, and the people all disagreed. Page 5 of
   the forced-air chapter; pairs with the Unit Identification quiz.
 - **VAV Systems** — one air handler, thirty zones that never agree:
   the cold trunk and the boxes that throttle volume, not temperature
@@ -685,9 +703,9 @@ techs new to the industry and anyone wanting a refresh.
   and the DX coil's own airflow floor; a box-walker widget with a
   system strip that starves a coil the way the author's real building
   did. Closes on the chapter cliff-hanger: every box shuts at once —
-  where does the pressure go? Page 5 of the forced-air chapter;
+  where does the pressure go? Page 6 of the forced-air chapter;
   pairs with the VAV Systems quiz.
-- **Duct Static Control** — answering page 5's
+- **Duct Static Control** — answering page 6's
   cliff-hanger: why the supply fan holds one static pressure instead
   of chasing flow (the pump-control mirror, drawn on air); the loop —
   a sensor two-thirds down the trunk, a setpoint in whole inches, a
@@ -699,7 +717,7 @@ techs new to the industry and anyone wanting a refresh.
   because pressure-independent boxes give a cranked fan nothing but
   pressure back. Safeties (the independent high-static cutout, the
   lying sensing tube), a drivable static-loop widget, and a closing
-  walk back through the chapter. Page 6 of the forced-air chapter; pairs
+  walk back through the chapter. Page 7 of the forced-air chapter; pairs
   with the Duct Static Control quiz.
 - **Air Balancing** — the air side of commissioning: proving every
   zone gets the design flow it was drawn for. The flow ring and
@@ -711,7 +729,7 @@ techs new to the industry and anyone wanting a refresh.
   slightly positive; then the proportional-balancing field method —
   proportion every terminal to the index zone, raise the common
   supply, iterate — the air-side mirror of hydronic balancing.
-  Closes on the air-balance report as the record. Page 7 of the
+  Closes on the air-balance report as the record. Page 8 of the
   forced-air chapter.
 - **Dedicated Outdoor Air (DOAS)** — the other way to bring fresh air
   in: a unit dedicated to 100% outdoor air that decouples ventilation
@@ -724,7 +742,7 @@ techs new to the industry and anyone wanting a refresh.
   controlled — a leaving-air dew-point setpoint, reheat, enthalpy
   recovery, and occupancy / DCV scheduling. Closes on a true story: a
   lab building whose DOAS was sized to a design dew point the climate
-  has since outrun. Page 8 of the forced-air chapter.
+  has since outrun. Page 9 of the forced-air chapter.
 - **Function-Block Basics** — what a block and a wiresheet are, why
   the industry builds sequences this way (the diagram is the program,
   you can watch it run live, the block vocabulary travels across

@@ -83,6 +83,7 @@ const PAGES = [
     { name: 'education — psychrometrics basics', url: '/education/psychrometrics-basics.html' },
     { name: 'education — air handlers', url: '/education/air-handlers.html' },
     { name: 'education — economizers', url: '/education/economizers.html' },
+    { name: 'education — coil freeze protection', url: '/education/coil-freeze-protection.html' },
     { name: 'education — building pressure', url: '/education/building-pressure.html' },
     { name: 'education — unit identification', url: '/education/air-unit-identification.html' },
     { name: 'education — vav systems', url: '/education/vav-systems.html' },
