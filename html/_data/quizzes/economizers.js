@@ -9,6 +9,19 @@
 // lesson; learnMore hrefs deep-link its <h2> anchors. Sequential order
 // is the lesson walk: damper assembly → changeover → staging → failures.
 //
+// The bank is deliberately larger than the page's defaultCount (10):
+// the engine samples an overflowing bank, so each run draws a
+// different subset (buildQueue() in quiz-engine.js). Coverage tracks
+// the lesson's sections — the linked damper assembly and its
+// mixed-air loop, the changeover gate (fixed vs differential
+// dry-bulb, enthalpy, the worst-case limit, and the humidity-sensor
+// drift that sinks an enthalpy economizer), integrated staging and
+// the high-limit return to minimum, and the field failures (stuck
+// closed, stuck open read off the mixing equation, hunting, and the
+// low-limit override under freeze protection). The changeover
+// explorer widget has its own anchor, but its teaching is restated
+// in the #changeover prose, so changeover questions link there.
+//
 // Quiz prose is painted post-load (the units walker doesn't reach it),
 // so temperatures carry static metric parentheticals per the
 // metric-rounding policy — results close on the displayed operands.
@@ -39,7 +52,7 @@ module.exports = [
             { id: 'c', text: 'Because code requires all dampers in a unit to share one signal.' },
             { id: 'd', text: 'To keep the filter loading evenly across its face.' }
         ],
-        explain: 'The three dampers are three faces of a single decision. More outdoor air in means less return air reused — and that displaced air has to exit the building, which is the relief damper\'s job. One signal drives the set so the recipe changes while total airflow through the unit stays roughly constant. What happens when the relief half of that bargain fails is the building-pressure story, next in the chapter.',
+        explain: 'The three dampers are three faces of a single decision. More outdoor air in means less return air reused — and that displaced air has to exit the building, which is the relief damper\'s job. One signal drives the set so the recipe changes while total airflow through the unit stays roughly constant. What happens when the relief half of that bargain fails is the building-pressure story — its own page in this chapter.',
         learnMore: { href: '/education/economizers.html#damper-assembly', label: 'Economizers — One Signal, Three Dampers' },
         tags: ['forced-air', 'economizer', 'dampers']
     },
@@ -113,6 +126,30 @@ module.exports = [
         learnMore: { href: '/education/economizers.html#changeover', label: 'Economizers — The Changeover Decision' },
         tags: ['forced-air', 'economizer', 'enthalpy']
     },
+    {
+        type: 'tf',
+        id: 'eco-differential-dry-bulb',
+        prompt: 'A <em>differential</em> dry-bulb changeover economizes whenever outside air is below a fixed temperature limit entered at commissioning.',
+        answer: false,
+        explain: 'False — that describes the fixed-limit flavor. A differential dry-bulb changeover compares OA-T against the return-air temperature itself, so its threshold moves with the space instead of sitting on one number. Both flavors share the same blind spot: a thermometer sees only sensible heat, so neither can tell that cool, near-saturated air may carry more total heat than the return.',
+        learnMore: { href: '/education/economizers.html#changeover', label: 'Economizers — The Changeover Decision' },
+        tags: ['forced-air', 'economizer', 'changeover']
+    },
+    {
+        type: 'gotcha',
+        id: 'eco-enthalpy-sensor-drift',
+        prompt: 'A clear spring afternoon after a dry week. The enthalpy economizer has been locked out since lunch and the cooling plant is carrying the building alone. The operator shrugs: "the controller does the enthalpy math — outside air must be too humid." The BMS shows the readings below. What\'s the story?',
+        snippet: '<pre class="quiz-snippet">OA-T           66.0 °F  (18.9 °C)\nOA-RH            95 %\nOA ENTHALPY    30.0 Btu/lb  (calculated)\nRA-T           75.0 °F  (23.9 °C)\nRA-RH            50 %\nRA ENTHALPY    28.1 Btu/lb  (calculated)\nECONOMIZER     LOCKED OUT — dampers at minimum\nCLG COIL VALVE   65 %</pre>',
+        choices: [
+            { id: 'a', text: 'The operator is right — the enthalpy comparison says outside air carries more total heat, so the lockout is doing its job.' },
+            { id: 'b', text: 'The outdoor humidity sensor has drifted high — 95 % RH on a clear, dry afternoon isn\'t believable, so the math is locking out air that is genuinely good for free cooling. Check it against a trusted reference.', correct: true },
+            { id: 'c', text: 'The OA-T sensor is reading high, which pushes the calculated enthalpy over the return.' },
+            { id: 'd', text: 'The minimum-position setting is too high and is overriding the economizer.' }
+        ],
+        explain: 'The enthalpy math is only as honest as the humidity sensor feeding it, and humidity sensors drift — the classic way a smart enthalpy economizer ends up underperforming a dumb dry-bulb one. At a believable 40 % RH, 66 °F (18.9 °C) air carries roughly 21.7 Btu/lb, well under the return\'s 28.1, so this is free cooling being thrown away all afternoon; a differential dry-bulb changeover would be economizing on it right now. Nothing in the snippet is internally inconsistent, which is the trap: the calculation is correct, the input is wrong. Distractor (c) has a grain of truth — at 95 % RH, outside air crosses the return\'s 28.1 Btu/lb at about 63.4 °F (17.4 °C), so a few degrees of OA-T error would also tip the arithmetic — but no temperature error makes 95 % RH believable on a clear afternoon after a dry week: 66 °F (18.9 °C) at 95 % RH implies a 64.5 °F (18.1 °C) dew point.',
+        learnMore: { href: '/education/economizers.html#changeover', label: 'Economizers — The Changeover Decision' },
+        tags: ['forced-air', 'economizer', 'enthalpy']
+    },
 
     // ── First stage of cooling ─────────────────────────────
     {
@@ -153,5 +190,44 @@ module.exports = [
         explain: 'The command is a wish, and even actuator feedback only proves the motor turned — a stripped coupling or broken linkage leaves the blades behind. MA-T is the witness that can\'t be argued with: on a cool day, 100 % outside air must drag the mixed-air temperature toward OA-T. If MA-T keeps reading like return air, the blend never changed, so the blades never moved. Same arithmetic as the mixing box, doing forensic duty.',
         learnMore: { href: '/education/economizers.html#field-failures', label: 'Economizers — Where Economizers Fail in the Field' },
         tags: ['forced-air', 'economizer', 'dampers']
+    },
+    {
+        type: 'numeric',
+        id: 'eco-stuck-open-math',
+        prompt: 'A cold winter morning. The unit is heating with no cooling call, and the dampers are commanded to minimum position — 20 % outdoor air. The trends read OA-T 20 °F (−6.7 °C), RA-T 70 °F (21.1 °C), and MA-T 45 °F (7.2 °C). Running the mixing equation backwards on the measured temperatures, what outdoor-air percentage is the unit actually taking in? Enter the answer in %.',
+        answer: 50,
+        tolerance: 1,
+        unit: '%',
+        explain: 'Same arithmetic as the modulation, doing forensic duty: % OA = (MA − RA) ÷ (OA − RA) × 100 = (45 − 70) ÷ (20 − 70) × 100 = 50 % (in °C: (7.2 − 21.1) ÷ (−6.7 − 21.1) × 100 = 50 %). Commanded to 20 %, actually at 50 % — a true 20 % blend would mix to 60 °F (15.6 °C), and MA-T is reading far colder, so the dampers are not where the command says and the heating coil is quietly paying for the extra outdoor air all winter. The command is a wish; MA-T is the witness.',
+        learnMore: { href: '/education/economizers.html#field-failures', label: 'Economizers — Where Economizers Fail in the Field' },
+        tags: ['forced-air', 'economizer', 'mixed-air']
+    },
+    {
+        type: 'mcq',
+        id: 'eco-hunting',
+        prompt: 'The trend shows the economizer dampers swinging open and closed in a steady cycle instead of settling, with MA-T oscillating right along with them. Which pair of causes should you check first?',
+        choices: [
+            { id: 'a', text: 'Loaded filters and a slipping fan belt.' },
+            { id: 'b', text: 'A loop tuned too hot, or a mixed-air sensor reading somewhere unrepresentative of the real blend.', correct: true },
+            { id: 'c', text: 'A minimum-position setting that is too high, or an undersized relief damper.' },
+            { id: 'd', text: 'A humidity sensor that has drifted, or a changeover limit set too low.' }
+        ],
+        explain: 'Hunting — dampers that swing instead of settling — usually traces to the loop or the sensor it listens to. A too-aggressive mixed-air loop overshoots every correction; a MA-T sensor sitting in a stratified corner of the mixing box reports a blend the supply air never actually sees, so the loop chases a number that doesn\'t mean what it thinks. Check where the sensor lives and how hard the loop is tuned before blaming the actuator.',
+        learnMore: { href: '/education/economizers.html#field-failures', label: 'Economizers — Where Economizers Fail in the Field' },
+        tags: ['forced-air', 'economizer', 'mixed-air']
+    },
+    {
+        type: 'mcq',
+        id: 'eco-low-limit-override',
+        prompt: 'A frigid morning. An interior zone is calling for cooling, the changeover gate is open, and the economizer is driving its dampers open to chase a cool supply-air setpoint. MA-T starts falling toward freezing. What is supposed to happen?',
+        choices: [
+            { id: 'a', text: 'Nothing until the freeze-stat trips — the hardwired trip is the freeze protection, and the software should stay out of its way.' },
+            { id: 'b', text: 'The cooling call keeps priority; the dampers hold their position until the zone is satisfied.' },
+            { id: 'c', text: 'A low-limit override drives the dampers toward minimum, whatever the cooling logic wants — with the freeze-stat hard trip behind it as the last line.', correct: true },
+            { id: 'd', text: 'The changeover high limit trips and closes the outside-air damper fully.' }
+        ],
+        explain: 'Free cooling has a floor. The low-limit override is the "when safe" half of "use cool air when safe": when MA-T drops too far it pulls the dampers back toward minimum no matter how hard the cooling logic wants them open, and the freeze-stat hard trip sits behind it in case that isn\'t enough. Relying on the freeze-stat alone means every cold morning ends in a nuisance shutdown at best; a unit missing both isn\'t aggressive, it\'s uninsured.',
+        learnMore: { href: '/education/economizers.html#field-failures', label: 'Economizers — Where Economizers Fail in the Field' },
+        tags: ['forced-air', 'economizer', 'freeze-protection']
     },
 ];
