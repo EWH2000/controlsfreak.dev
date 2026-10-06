@@ -9,7 +9,8 @@
 // lesson; learnMore hrefs deep-link the P/I/D term callouts (and the
 // Sim 1 card, #sim1, for the raise-the-gain droop trap). The
 // wiresheet paragraph near the end of the lesson has no anchor of its
-// own, so its question lands on the page's #main.
+// own, so its question deep-links Function-Block Basics' block-families
+// section (#families), whose Control callout makes the same point.
 //
 // The bank is deliberately larger than the page's defaultCount (10):
 // the engine samples an overflowing bank, so each run draws a
@@ -72,7 +73,7 @@ module.exports = [
         answer: 90,
         tolerance: 1,
         unit: '%',
-        explain: 'Error = 61 − 55 = 6 °F (3.3 °C), and 6 ÷ 20 = 30 % of span. Output = gain × error = 3 × 30 % = 90 % — the valve is driven most of the way open. As the supply cools and PV falls toward 55 °F (12.8 °C), the error shrinks and the output backs off in proportion; with P alone it parks a hair short of setpoint.',
+        explain: 'The error is 61 − 55 = 6 °F (3.3 °C) — PV above SP, which is the error that drives a cooling (direct-acting) loop open. 6 ÷ 20 = 30 % of span. Output = gain × error = 3 × 30 % = 90 % — the valve is driven most of the way open. As the supply cools and PV falls toward 55 °F (12.8 °C), the error shrinks and the output backs off in proportion; with P alone it parks a hair short of setpoint.',
         learnMore: { href: '/education/pid-basics.html#p-term', label: 'PID Basics — P, Proportional' },
         tags: ['pid', 'proportional']
     },
@@ -80,14 +81,14 @@ module.exports = [
         type: 'gotcha',
         id: 'raise-gain-to-kill-droop',
         prompt: 'A proportional-only space-temperature loop keeps parking just under setpoint. A tech doubles the gain to push it the rest of the way. What happens?',
-        snippet: '<pre class="quiz-snippet">before:  gain 2, PV settles 1 °F (0.6 °C) under SP\nchange:  gain doubled to 4\nhope:    PV lands right on setpoint</pre>',
+        snippet: '<pre class="quiz-snippet">before:  P only, PV settles 1 °F (0.6 °C) under SP\nchange:  gain doubled\nhope:    PV lands right on setpoint</pre>',
         choices: [
             { id: 'a', text: 'PV lands on setpoint — twice the gain is twice the push, which covers the last bit of error.' },
-            { id: 'b', text: 'The offset shrinks but never reaches zero; keep raising the gain on a loop with real dead time and you buy overshoot and hunting instead. Add integral to close the gap.', correct: true },
+            { id: 'b', text: 'The offset shrinks but never closes; push the gain far enough and the loop hunts instead. Integral is what closes the gap.', correct: true },
             { id: 'c', text: 'The offset grows, because a higher gain makes the loop more sluggish.' },
             { id: 'd', text: 'Nothing changes at steady state — gain only sets how fast the loop gets there.' }
         ],
-        explain: 'P needs some error to produce any output, so at any gain the loop settles where a small residual error holds the output it needs. More gain means that residual can be smaller, so the gap tightens — but it never closes. Push the gain far enough on a real loop with dead time and it overshoots and hunts. The droop is integral\'s job, not a reason to crank P.',
+        explain: 'Doubling the gain roughly halves the residual error — it never zeroes it. On Sim 1\'s Medium loop, going from gain 2 to gain 4 takes the offset from about 7.7 °F (4.3 °C) to 5.1 °F (2.8 °C): tighter, still there. Push the gain far enough on a real loop with dead time and it overshoots and hunts. The droop is integral\'s job, not a reason to crank P.',
         learnMore: { href: '/education/pid-basics.html#sim1', label: 'PID Basics — Sim 1, P only' },
         tags: ['pid', 'proportional']
     },
@@ -189,7 +190,7 @@ module.exports = [
     {
         type: 'mcq',
         id: 'derivative-starting-td',
-        prompt: 'A big hot-water reheat coil with several minutes of lag runs PI with an integral time (Ti) of 8 min, and it still overshoots. What\'s a reasonable starting derivative time (Td)?',
+        prompt: 'A big hot-water reheat coil with several minutes of lag runs PI with an integral time (Ti) of 8 min, and it still overshoots. The sensor signal is clean, so rather than slow the reset or drop the gain, the tech decides to add a little derivative. What is a reasonable starting Td?',
         choices: [
             { id: 'a', text: 'About 1 to 2 min — roughly a quarter to an eighth of Ti.', correct: true },
             { id: 'b', text: '8 min — match Td to Ti so the two terms balance.' },
@@ -222,7 +223,7 @@ module.exports = [
             { id: 'd', text: 'As a block that outputs the raw error, which the actuator integrates into a position.' }
         ],
         explain: 'The whole PID — all three terms — lives in one block. A setpoint and a measurement come in, the 0–100 % command goes out to the valve or damper, and the rest of the sequence is the supporting blocks that feed and gate it. Knowing that shape is what lets you find the loop on an unfamiliar sheet.',
-        learnMore: { href: '/education/pid-basics.html#main', label: 'PID Basics' },
+        learnMore: { href: '/education/function-blocks.html#families', label: 'Function-Block Basics — The block families' },
         tags: ['pid', 'function-blocks']
     }
 ];
