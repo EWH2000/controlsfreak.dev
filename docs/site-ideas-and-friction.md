@@ -2429,7 +2429,7 @@ region (the metrics-announcer precedent). `[future: a "load these into
 the sliders" affordance was considered and skipped — user gains on the
 toy process would misread as a simulation of their loop]`
 
-### PID basics — surface direct vs reverse acting? *(idea, noted 2026-07-14)* *(ruled 2026-10-05 — one-sentence aside in the P callout; lane pending)*
+### PID basics — surface direct vs reverse acting? *(idea, noted 2026-07-14)* *(ruled 2026-10-05 — one-sentence aside in the P callout)* *(shipped 2026-10-05 · PR #616)*
 *Surfaced by the codebase-issues #154 sim/tool physics diff — an
 observation, not a defect: the physics on the page is correct.* The P
 callout's only worked example is a **chilled-water valve** (PV above SP,
@@ -2461,7 +2461,7 @@ swapping it for a heating valve: its 12.8 / 15.6 / 2.8 °C figures are
 CLAUDE.md's metric-rounding exemplar. Live lesson → owner merges; this
 heading takes a `*(shipped …)*` note when it lands. By-catch logged, not
 ruled: the tuner's cheat-sheet row is now `codebase-issues` #324 (its
-"flip acting" advice names a control the tuner does not have).
+"flip acting" advice names a control the tuner does not have). Shipped as PR #616.
 
 ### PID tuner — live process visualization + tune-it-blind spoiler *(shipped 2026-06-08)*
 *The interactive home hero sells a live loop, then links to the tuner —
