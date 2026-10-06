@@ -196,7 +196,7 @@ const HYDRO = (function () {
 
         pump: {
             label: 'Pump', category: 'Pumps',
-            // Centrifugal pump: head source H=(H₀−a·Q²)·(speed/100)² plus a small
+            // Centrifugal pump: head source H=H₀·(speed/100)² − a·Q² plus a small
             // casing resistance. The speed² term is the VFD / affinity lesson.
             ports: [
                 { name: 'in',  role: 'inlet',  dx: -0.7, dz: 0 },
@@ -632,8 +632,9 @@ const HYDRO = (function () {
     // The pump curve's slope dHsrc/dQ at the current flow — fed into the branch
     // Jacobian for the Newton step (solveHydraulics). Non-pump branches, an off
     // pump, and the clamped-flat region past max flow are all slope-0. In the
-    // active region hsrc = h0·spd² − a·Q², so dHsrc/dQ = −2a·Q·spd² (≤ 0 for
-    // forward flow, which ADDS to the friction tangent once negated in f').
+    // active region hsrc = h0·spd² − a·Q², so dHsrc/dQ = −2a·Q (≤ 0 for forward
+    // flow, which ADDS to the friction tangent once negated in f'). Speed enters
+    // only through H₀, so it moves the clamp boundary but not the slope.
     function branchHsrcSlope(b) {
         if (b.kind !== 'pump') return 0;
         const p = b.comp.params;
@@ -642,7 +643,7 @@ const HYDRO = (function () {
         const a  = asNum(p.a, 0.012);
         const spd = clamp(asNum(p.speed, 100), 0, 100) / 100;
         if (h0 * spd * spd - a * b.Q * b.Q <= 0) return 0;   // clamped flat → no slope
-        const s = -2 * a * b.Q * spd * spd;
+        const s = -2 * a * b.Q;
         return isFin(s) ? s : 0;
     }
 
@@ -689,7 +690,7 @@ const HYDRO = (function () {
     // driving head d = (P_from − P_to) − ΔZ is net of elevation. Per iteration
     // each branch is linearized by a TRUE Newton step: the tangent (differential)
     // conductance g = 1/f'(Q) with f'(Q) = 2k|Q| − hsrc'(Q) feeds the pump-curve
-    // slope hsrc'(Q) = −2a·Q·spd² back into the linearization, instead of freezing
+    // slope hsrc'(Q) = −2a·Q back into the linearization, instead of freezing
     // hsrc as a constant injection — which is what overshot on steep a·Q² curves
     // (codebase-issues #134). The Norton current inj = Q − g·(f(Q) + ΔZ) makes the
     // flow map Q = g·(P_from − P_to) + inj CONSISTENT with that tangent (the trap
@@ -720,10 +721,10 @@ const HYDRO = (function () {
                 const aq = Math.max(Math.abs(b.Q), Q_COND_FLOOR);
                 // Newton (tangent) conductance g = 1/f'(Q) for f(Q) = k·Q·|Q| − hsrc(Q):
                 //   f'(Q) = 2k|Q| − hsrc'(Q)  — the friction tangent PLUS the pump-curve
-                // slope fed back (−hsrc' = 2a|Q|spd² for forward flow). This is the fix
+                // slope fed back (−hsrc' = 2a|Q| for forward flow). This is the fix
                 // the old secant chord lacked: freezing hsrc as a constant injection
                 // overshot on a steep a·Q² curve (codebase-issues #134). Guard: if
-                // backflow through a pump would drive f'(Q) ≤ 0 (a·spd² > k), fall back
+                // backflow through a pump would drive f'(Q) ≤ 0 (a > k), fall back
                 // to the always-positive friction tangent 2k|Q| so g stays finite and
                 // the nodal matrix stays an M-matrix (positive-definite, invertible).
                 let fp = 2 * b.k * aq - branchHsrcSlope(b);
