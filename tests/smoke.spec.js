@@ -745,6 +745,26 @@ test('psychrometric chart computes the AHU chain on load', async ({ page }) => {
     expect(errors, 'psychrometric behavioral should log no page / console errors').toEqual([]);
 });
 
+// #238 follow-up: buildState refuses a dry-bulb at or above boiling, so
+// an HC stage driven past 212 °F must take the same not-ok arm the CC
+// stage has — error in #psy-msg, no truthy ok:false state handed on to
+// HUM / SA, and no NaN anywhere on the page.
+test('psychrometric chart — an above-boiling HC leaving DB errors cleanly (#238)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/psychrometric-chart.html');
+    await page.click('.psy-pill[data-step="hc"]');
+    await page.check('#hc-on');
+    await page.selectOption('#hc-mode', 'ldb');
+    await page.fill('#hc-val', '250');
+    await expect(page.locator('#psy-msg')).toContainText('HC: Dry-bulb is at or above the boiling point');
+    await expect(page.locator('#ro-db')).toHaveText('—');
+    await page.click('.psy-pill[data-step="sa"]');
+    await expect(page.locator('#ro-db')).toHaveText('—');
+    const body = await page.locator('main').innerText();
+    expect(body, 'no NaN should reach any readout').not.toContain('NaN');
+    expect(errors, 'psychrometric above-boiling HC should log no page / console errors').toEqual([]);
+});
+
 test.describe('psychrometric chart — Cold range preset', () => {
     // No cleanup hook on purpose: Playwright gives every test its own
     // browser context, so localStorage writes (cf_psy_range here) can't
@@ -986,6 +1006,25 @@ test('coil sizing — capacity and leaving-state tabs compute their cases', asyn
     await expect(page.locator('#cs-lvg-out-db')).toHaveText('—');
 
     expect(errors, 'coil-sizing behavioral should log no page / console errors').toEqual([]);
+});
+
+// #238 follow-up: a heating-coil leaving dry-bulb at or above boiling
+// makes buildState return ok:false; the capacity tab must mute and show
+// the engine's error instead of printing NaN MBH.
+test('coil sizing — an above-boiling heating leaving DB mutes the capacity tab (#238)', async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto('/tools/coil-sizing.html');
+    await page.selectOption('#cs-coil-type', 'heat');
+    await page.fill('#cs-cap-lvg-tdb', '250');
+    await expect(page.locator('#cs-cap-status')).toContainText('Leaving air — Dry-bulb is at or above the boiling point');
+    for (const id of ['cs-cap-q-total', 'cs-cap-ddb', 'cs-cap-dh']) {
+        await expect(page.locator('#' + id)).toHaveText('—');
+        await expect(page.locator('#' + id)).toHaveClass(/muted/);
+    }
+    await expect(page.locator('#cs-cap-formula')).toHaveText('');
+    const body = await page.locator('main').innerText();
+    expect(body, 'no NaN should reach any readout').not.toContain('NaN');
+    expect(errors, 'coil-sizing above-boiling heating should log no page / console errors').toEqual([]);
 });
 
 test('power & energy converter — convert, time bridge, and boiler turndown', async ({ page }) => {

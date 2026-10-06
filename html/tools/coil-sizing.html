@@ -472,6 +472,7 @@ keywords: cfm gpm delta t mbh btu tons sensible latent shr capacity
                 if (!lvgState.ok) { clearCap('Leaving air — ' + lvgState.error, 'error'); return; }
             } else {
                 lvgState = Psychro.buildState(U.toCanonical.temp(lvgState.pendingTdb), entState.W, P_STD);
+                if (!lvgState.ok) { clearCap('Leaving air — ' + lvgState.error, 'error'); return; }
             }
 
             const cfm = U.toCanonical.airflow(cfmD);
