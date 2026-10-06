@@ -13704,7 +13704,7 @@ FCU → AHU → FCU round-trip asserts only `offprog` / `program` /
 `forcedValue` while the AHU side asserts more; partly covered by the
 lane's new snapshot row.
 
-### 285. The older details idioms' closed ink is measured only through a Chromium UA implementation detail *(noticed 2026-08-10, the collapse pilot's guard work — LOW)* *(ruled 2026-10-05 — closes with #316's widening to bare `details`; fix pending)*
+### 285. The older details idioms' closed ink is measured only through a Chromium UA implementation detail *(noticed 2026-08-10, the collapse pilot's guard work — LOW)* *(ruled 2026-10-05 — closes with #316's widening to bare `details`; fix pending)* *(addressed 2026-10-05 · PR #614)*
 
 The contrast sweep reaches closed-`<details>` ink on the ~30
 `details.tool-preamble` pages and the pid-spoiler only because
@@ -13724,6 +13724,14 @@ this entry describes was correct (the #316 premise was the one that was
 wrong). Same PR as #316; test-only → merge on green. On merge this
 heading takes `*(addressed YYYY-MM-DD — closed by #316's force-open
 widening, PR #NNN)*`.
+
+**Resolution (2026-10-05, PR #614).** Closed by #316's widening, same
+PR. `tests/contrast-sweep.spec.js`'s `settle()` third arm now sets
+`open` on bare `details`, so no idiom's closed ink depends on the UA
+shadow-slot detail this entry names; the header's third-arm paragraph
+and the in-`settle()` comment were rewritten to state that contract.
+The mechanism described here was right. Measured: full contrast sweep
+17/17 green (14/14 WCAG shards, both themes), zero new failures.
 
 ### 286. Print never reaches non-active tab panes — site-wide, pre-existing *(noticed 2026-08-10, the print-shim verification — LOW)*
 
@@ -14942,7 +14950,7 @@ the modbus-decoding constraint: `smoke.spec.js` walks that quiz
 deterministically, so any text edit there must verify the spec's
 assertions in the same PR.
 
-### 316. Contrast sweep never opens the older `<details>` idioms — `details.tool-preamble` / `.pid-spoiler` ink is unmeasured *(noticed 2026-08-21, §4 tools marking lane; decision-class — the spec itself defers this as "a separate call")* *(ruled 2026-10-05 — widen the force-open to bare `details`; premise corrected; fix pending)*
+### 316. Contrast sweep never opens the older `<details>` idioms — `details.tool-preamble` / `.pid-spoiler` ink is unmeasured *(noticed 2026-08-21, §4 tools marking lane; decision-class — the spec itself defers this as "a separate call")* *(ruled 2026-10-05 — widen the force-open to bare `details`; premise corrected; fix pending)* *(addressed 2026-10-05 · PR #614)*
 
 `tests/contrast-sweep.spec.js` force-opens `details.prose-fold` only;
 its own comment (~L459) scopes that deliberately "so the older idioms
@@ -14986,6 +14994,23 @@ into a contract, which is what closes #285 too.
 Test-only → **merge on green**. On merge this heading takes
 `*(addressed YYYY-MM-DD — force-open widened to bare details; premise
 corrected, PR #NNN)*` after the ruled marker.
+
+**Resolution (2026-10-05, PR #614).** `tests/contrast-sweep.spec.js` —
+`settle()`'s third arm selector changed from `details.prose-fold` to
+bare `details`; the header's third-arm paragraph and the in-`settle()`
+comment ("widening it is a separate call") rewritten to state that
+every disclosure is opened before the walk and to record the
+2026-10-05 measurement. `COLLAPSED_CHROME` untouched. Measured: full
+`contrast-sweep.spec.js` 17/17 passed — all 14 WCAG shards (7 per
+theme) plus the three self-check tests — with zero new failures, so
+no fix pass was needed. Non-vacuity checked: on
+`/tools/psychrometric-chart.html` the `.preamble-rest` disclosure is
+closed at load and `open === true` after the arm runs. **This entry's
+premise was wrong:** the older idioms' ink was never unmeasured —
+Chromium 147 lays out closed-details content (non-zero rects,
+`display: block`), so the walker already reached it through the UA
+detail #285 describes; #285 had the mechanism right. The change turns
+that implementation detail into a contract.
 
 ### 317. 52 `FAQPage` nodes ship but earn no rich result — Google restricted FAQ to government and health sites in Aug 2023 *(noticed 2026-08-27, SEO research round; decision-class — owner's call, not a bug)* *(ruled 2026-10-05 — position 2: keep for answer-engine readers, correct the rationale; fix pending)*
 
