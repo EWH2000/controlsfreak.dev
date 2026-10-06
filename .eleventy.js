@@ -1235,6 +1235,13 @@ module.exports = function(eleventyConfig) {
     // the reciprocal of the lesson's `hasPart`. Emitted from head.njk only
     // when nav: practice AND _data/quizzes/<page.fileSlug>.js exists, so the
     // practice landing (which has neither) gets nothing.
+    // WHY IT EXISTS — not a Google search win. In August 2023 Google
+    // restricted FAQ rich results to well-known government and health
+    // sites, so this markup earns no SERP treatment on this domain. It is
+    // kept because answer engines (Bing/Copilot, Perplexity, ChatGPT
+    // search) parse FAQPage even where Google renders nothing. Owner
+    // ruling 2026-10-05, codebase-issues #317 — don't re-add the SEO
+    // premise when weighing whether to keep it.
     const stripHtml = (s) =>
         String(s || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
     const buildQuestionName = (q) =>
@@ -1289,6 +1296,10 @@ module.exports = function(eleventyConfig) {
     // copy. Answers may carry inline HTML for display; it's stripped for the
     // schema text. Emitted from head.njk whenever `faqs` is set; keep it off
     // practice pages so a page never emits two FAQPage nodes.
+    // Same purpose as faqPageJsonLd above: no Google rich result here since
+    // the August 2023 FAQ restriction (government/health sites only); kept
+    // for answer engines (Bing/Copilot, Perplexity, ChatGPT search), which
+    // parse FAQPage. Owner ruling 2026-10-05, codebase-issues #317.
     eleventyConfig.addFilter("faqJsonLd", (canonical, faqs, title) => {
         if (!canonical || !Array.isArray(faqs) || !faqs.length) return "";
         return scriptSafeStringify({
