@@ -99,6 +99,7 @@
 **Ruling:** narrow, don't cut; the no-coming-soon rule is amended — the ban is on PROMINENCE (a visible list of unbuilt features, a "coming soon" look, a promise in body or lesson prose), and a brief low-key clause at the tail of a scope `.ref-note` is acceptable.
 **Ships:** airflow → "…The m/s readout rides along; a metric VP mode is a tracked follow-up."; voltage-drop → "…a metric option is a tracked follow-up."; waterside-load unchanged. Live tool pages → **owner merges**. In this PR: the CLAUDE.md amendment and the status script's coming-soon regex narrowed to the banned shapes (merge on green).
 **Marker:** no ledger entry; the three friction `[future:]` markers (metric VP mode / glycol row / mm² option) stay as the tracking mechanism.
+Shipped in PR #622 (airflow + voltage-drop narrowed; waterside unchanged).
 
 ## 13. content-audit #88 + #89 — ASHRAE 135 softenings *(item 15)*
 
