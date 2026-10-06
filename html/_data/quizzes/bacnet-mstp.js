@@ -65,7 +65,7 @@ module.exports = [
             { id: 'c', text: 'The router can reach MAC addresses above the Max_Master ceiling.' },
             { id: 'd', text: 'The router holds the token permanently until its queue empties.' }
         ],
-        explain: '<code>Max_Info_Frames</code> is the talking allowance — how many messages a device may initiate each time it holds the token. Field controllers are fine at 1; the supervisor or router carrying everyone\'s traffic wants 10–20, or it spends most of the day waiting for its next turn. The other classic sluggish-trunk miss is <code>Max_Master</code> left at the factory 127 on a small trunk: every rotation wastes time polling a hundred-odd empty addresses.',
+        explain: '<code>Max_Info_Frames</code> is the talking allowance — how many messages a device may initiate each time it holds the token. Field controllers are fine at 1; the supervisor or router carrying everyone\'s traffic wants 10–20, or it spends most of the day waiting for its next turn. The other classic miss is <code>Max_Master</code> left at the factory 127 on a small trunk — not a per-rotation cost, since the master below the empty range polls it one address per 50 token visits, but each unanswered poll is a timeout stall, a newcomer is found slowly, and a ring re-forming after a lost token walks the whole hundred-odd addresses.',
         learnMore: { href: '/education/bacnet-mstp.html#token-ring', label: 'BACnet MS/TP — The token ring' },
         tags: ['bacnet', 'mstp', 'token-ring']
     },
