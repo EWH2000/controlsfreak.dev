@@ -10852,6 +10852,15 @@ Verified: psychro-engine 12/12, psychro-mixstreams 19/19, ddcw-ahu-unit
 56/56, ddcw-fcu-unit 52/52, ddc-workbench-ahu-page + ddcw-shell 100/100,
 and smoke filtered to the nine pages that load the engine (16/16).
 
+**Follow-up (2026-10-05, PR #632).** Both unguarded consumers now handle
+`ok:false`. `html/tools/coil-sizing.html:475`: after the heating-branch
+`buildState` (:474), `if (!lvgState.ok) { clearCap('Leaving air — ' + lvgState.error, 'error'); return; }`,
+the same line the cooling branch uses. `html/tools/psychrometric-chart.html:729-732`:
+the HC stage (:728) now has the CC stage's `!ok` branch (`r.hc` carries
+the error, `setErr('HC: …')`, `current = null`). `tests/smoke.spec.js`
+adds one 250 °F row per page (error text, muted readouts, no NaN, no
+console errors), and both rows fail with the page fixes reverted.
+
 ### 239. The AHU mixing box drops `mixStreams`' fog condensate, so its moisture bookkeeping loses water in the cold-and-open corner *(noticed 2026-07-29, the #236 fix round)* *(deferred 2026-07-29)*
 
 With #236 resolved, `Psychro.mixStreams` now returns a `condensate` term
@@ -15494,7 +15503,7 @@ toggle to the tuner — bigger, touches the engine and every preset;
 (friction file, *PID basics — surface direct vs reverse acting?*). Open;
 not on the 2026-10-05 agenda.
 
-### 325. `buildState` ok:false reaches two unguarded consumers — coil-sizing heating NaN, psych-chart HC stage *(noticed 2026-10-05, #238 fix round)*
+### 325. `buildState` ok:false reaches two unguarded consumers — coil-sizing heating NaN, psych-chart HC stage *(noticed 2026-10-05, #238 fix round)* *(addressed 2026-10-05 · PR #632)*
 
 #238's guard makes `Psychro.buildState` return `{ ok: false, error }` for a
 dry-bulb at or above boiling for the pressure. Two callers that accept a
@@ -15517,3 +15526,13 @@ user-entered leaving dry-bulb never check `.ok`:
   arm before the success path, like the other HC guards beside it.
 
 Both are live-page changes (needs approval to merge). Open.
+
+**Resolution (2026-10-05, PR #632).** Both consumers now guard `ok:false`.
+`html/tools/coil-sizing.html:475` runs
+`if (!lvgState.ok) { clearCap('Leaving air — ' + lvgState.error, 'error'); return; }`
+after the heating-branch `buildState`. `html/tools/psychrometric-chart.html:729-732`
+gives the HC stage the CC stage's `!ok` branch (`r.hc` carries the error,
+`setErr('HC: …')`, `current = null`). `tests/smoke.spec.js` adds
+`coil sizing — an above-boiling heating leaving DB mutes the capacity tab (#238)`
+and `psychrometric chart — an above-boiling HC leaving DB errors cleanly (#238)`.
+Both fail with the fixes reverted.

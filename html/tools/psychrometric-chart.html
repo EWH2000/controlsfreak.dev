@@ -726,9 +726,15 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                         current = null;
                     } else {
                         const hc = Psychro.buildState(tdb_hc, current.W, P);
-                        r.hc = { ...hc, enabled: true, inlet: current };
-                        stages.push({ key: 'hc', type: 'heat', inlet: current, outlet: hc });
-                        current = hc;
+                        if (!hc.ok) {
+                            r.hc = { ...hc, enabled: true };
+                            setErr('HC: ' + hc.error);
+                            current = null;
+                        } else {
+                            r.hc = { ...hc, enabled: true, inlet: current };
+                            stages.push({ key: 'hc', type: 'heat', inlet: current, outlet: hc });
+                            current = hc;
+                        }
                     }
                 }
             } else {
