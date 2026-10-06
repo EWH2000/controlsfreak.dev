@@ -14832,7 +14832,7 @@ A natural trigger: if a GSC read shows education pages
 underperforming on impressions relative to tools, this is the first
 cheap lever to reach for.
 
-### 306. `.widget-try a` is dead CSS as of the #299 conversion *(noticed 2026-08-12, the #299 lane — cleanup, LOW)*
+### 306. `.widget-try a` is dead CSS as of the #299 conversion *(noticed 2026-08-12, the #299 lane — cleanup, LOW)* *(addressed 2026-10-05 · PR #624)*
 
 The anchor half of the `.widget-try` chip rule (`styles.css`, the
 `WIDGET CHROME` block) plus its `:hover` twin. #281 / #297 / #299
@@ -14858,6 +14858,20 @@ re-introduces a `.widget-try` anchor. That is now a convention rather
 than a guarantee — there is no build guard on it, and the four
 conversions were each caught by a hand-run grep, so re-run the one
 above before deleting.
+
+**Resolution (2026-10-05, PR #624).** Re-ran the check above first: it
+returns nothing, and no shared script, partial or `_data` file builds a
+`.widget-try` row, so the premise held exactly as written.
+`html/styles.css` (WIDGET CHROME): removed `.widget-try a` and
+`.widget-try a:hover`, and reworded the button rule's comment, which
+had described it as the "twin of the anchor row", into a standalone
+note that try-row chips are `<button>`s (#142/#143). No colour or button
+declaration changed, so the contrast sweep was not run; build plus the
+`smoke.spec.js` vfds / pump-control / economizers / load-piping tests
+(14/14) pass. No version bump: the PR is stacked on #623, which rides
+#273's bump. The caveat above still stands — nothing guards against a
+`.widget-try` anchor coming back, which would now render unstyled
+rather than silently styled.
 
 ### 307. The FCU register key's sample wells are hand-authored literals of a computed state *(noticed 2026-08-12, the #219 lane — the mechanism behind that entry's live half; structural, LOW)*
 
