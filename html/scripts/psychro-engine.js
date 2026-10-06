@@ -180,8 +180,23 @@ const Psychro = (function () {
     }
 
     // Build a state directly from (dry-bulb, humidity ratio).
+    //
+    // At or above the boiling point for the pressure (satPress(tdb) ≥ P —
+    // 212 °F at sea level, lower at altitude) the saturation humidity
+    // ratio has no meaning and its formula degenerates: P − pw goes to
+    // zero or negative, so satHumRatio comes back ±Infinity or NEGATIVE.
+    // Clamping W against that ceiling used to hand back an ok:true,
+    // bone-dry state (W 0, rh 0, tdp −Infinity) whatever moisture the
+    // caller passed in. Refuse the point instead, in the same ok:false
+    // shape solveState uses, so every caller's existing .ok guard catches
+    // it. Same out-of-range-is-loud stance as dewPointFromVapPress's
+    // Infinity return (codebase-issues #103, #238).
     function buildState(tdb, W, P) {
-        W = Math.max(0, Math.min(W, satHumRatio(tdb, P)));
+        const Wsat = satHumRatio(tdb, P);
+        if (!(Wsat > 0 && isFinite(Wsat))) {
+            return { ok: false, error: 'Dry-bulb is at or above the boiling point for this pressure — outside the psychrometric range.' };
+        }
+        W = Math.max(0, Math.min(W, Wsat));
         const pw = vapPressFromHumRatio(W, P);
         return {
             ok: true, tdb, W, P, pw,
@@ -504,8 +519,8 @@ const Psychro = (function () {
         // `Wsat > 0` is not paranoia: above the boiling point for the
         // pressure the saturation formula degenerates NEGATIVE
         // (codebase-issues #238), which would read as fog on bone-dry air.
-        // Route that to the clear-of-the-curve arm, where buildState's own
-        // clamp handles it exactly as it did before this branch existed.
+        // Route that to the clear-of-the-curve arm, where buildState
+        // refuses the point with ok:false (#238).
         if (!(Wsat > 0) || !(W > Wsat)) {
             const clear = buildState(tdb, W, P);
             clear.fogging = false;
