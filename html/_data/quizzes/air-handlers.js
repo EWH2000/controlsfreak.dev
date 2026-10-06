@@ -7,11 +7,21 @@
 // kebab-case and stable across edits — they namespace the
 // cf_quiz_air-handlers_* localStorage keys. Pairs with the Air Handlers
 // lesson; learnMore hrefs deep-link its <h2> anchors. Sequential order
-// is the lesson walk: air path → mixing box → filter/coils → fan.
+// follows the lesson's own section order.
 //
 // Quiz prose is painted post-load (the units walker doesn't reach it),
 // so temperatures carry static metric parentheticals per the
 // metric-rounding policy — results close on the displayed operands.
+//
+// The bank is deliberately larger than the page's defaultCount (10):
+// the engine samples an overflowing bank, so each run draws a
+// different subset (buildQueue() in quiz-engine.js). Coverage tracks
+// the lesson's sections — the air path, the mixing box, filter then
+// coils (the coil target, the coils as hydronic loads), the supply
+// fan and what sets its speed, and the probe walk down the sensor
+// strip. The sensor-placement gotcha draws on the field anecdote the
+// sensor-strip widget reveals after its damper-failure preset, so it
+// deep-links #sensor-strip, the section that hosts the widget.
 
 module.exports = [
     // ── The air path ───────────────────────────────────────
@@ -124,6 +134,30 @@ module.exports = [
         learnMore: { href: '/education/air-handlers.html#filter-coils', label: 'Air Handlers — Filter, Then Coils' },
         tags: ['forced-air', 'coils', 'dew-point']
     },
+    {
+        type: 'mcq',
+        id: 'ah-cooling-coil-target',
+        prompt: 'On a built-up air handler, what is a common design target for the air leaving the cooling coil?',
+        choices: [
+            { id: 'a', text: 'About 45 °F (7.2 °C).' },
+            { id: 'b', text: 'About 55 °F (12.8 °C).', correct: true },
+            { id: 'c', text: 'About 65 °F (18.3 °C).' },
+            { id: 'd', text: 'About 72 °F (22.2 °C), room temperature.' }
+        ],
+        explain: 'Around 55 °F (12.8 °C) is the common design target off a cooling coil — cold enough to carry the space\'s heat away with a reasonable airflow, and cold enough that the fins usually run below the air\'s dew point, so the coil does its second job and pulls moisture out. Supply air at room temperature would move no heat at all; the coil has to undershoot the room to cool it.',
+        learnMore: { href: '/education/air-handlers.html#filter-coils', label: 'Air Handlers — Filter, Then Coils' },
+        tags: ['forced-air', 'coils']
+    },
+    {
+        type: 'tf',
+        id: 'ah-coils-are-hydronic-loads',
+        prompt: 'The water coils inside a built-up air handler sit outside the hydronic loop\'s load-piping rules — a coil valve is its own kind of device, so the two-way and three-way arrangements Load Piping teaches don\'t apply to it.',
+        answer: false,
+        explain: 'False. On a built-up unit the heating and cooling coils ARE hydronic loads, and every valve choice Load Piping teaches is on the table at the coil: a two-way valve that throttles flow through it, or a three-way mixing or diverting valve that varies coil flow while the loop keeps flowing. Same supply and return piping as any other load on the loop, just wrapped around an airstream instead of sitting in a mechanical room. (A packaged RTU is the exception, because its coils are a gas heat exchanger and a DX evaporator rather than plant-fed water.)',
+
+        learnMore: { href: '/education/air-handlers.html#filter-coils', label: 'Air Handlers — Filter, Then Coils' },
+        tags: ['forced-air', 'coils', 'hydronics']
+    },
 
     // ── The supply fan ─────────────────────────────────────
     {
@@ -139,6 +173,48 @@ module.exports = [
         explain: 'The fan is the only mover in the box, and it isn\'t free: the work it does on the air becomes heat, so discharge air runs about 1 °F (0.6 °C) warmer than the air leaving the coil. That\'s why DA-T never quite matches the coil math — the difference is the fan announcing itself.',
         learnMore: { href: '/education/air-handlers.html#supply-fan', label: 'Air Handlers — The Supply Fan' },
         tags: ['forced-air', 'fans']
+    },
+    {
+        type: 'mcq',
+        id: 'ah-fan-speed-loop',
+        prompt: 'On a modern VAV air handler the supply fan rides a VFD. Which control loop typically decides how fast it runs?',
+        choices: [
+            { id: 'a', text: 'The discharge-air temperature loop.' },
+            { id: 'b', text: 'The mixed-air temperature loop.' },
+            { id: 'c', text: 'The outside-air damper\'s ventilation loop.' },
+            { id: 'd', text: 'The duct static pressure loop.', correct: true }
+        ],
+        explain: 'Fan speed follows the duct-static-pressure loop: the controller holds a pressure in the supply duct, and as the boxes downstream open and close, the VFD speeds the fan up or slows it down to keep that pressure. Discharge-air temperature is the coils\' job, and the dampers handle mixing and ventilation — the fan is the only mover in the box, and its loop is about how hard to push.',
+        learnMore: { href: '/education/air-handlers.html#supply-fan', label: 'Air Handlers — The Supply Fan' },
+        tags: ['forced-air', 'fans', 'vfd']
+    },
+
+    // ── Walk the unit with a probe ─────────────────────────
+    {
+        type: 'numeric',
+        id: 'ah-min-oa-winter-safe',
+        prompt: 'A 10 °F (−12.2 °C) winter morning; return air comes back at 75 °F (23.9 °C). The lesson calls the 20 % minimum position winter-safe by arithmetic — how high would the outside-air fraction have to climb before the mix reached the 38 °F (3.3 °C) freeze-stat line? Enter the answer in %.',
+        answer: 57,
+        tolerance: 1,
+        unit: '%',
+        explain: 'Solve the blend for the fraction: (75 − 38) ÷ (75 − 10) = 37 ÷ 65 ≈ 57 % outside air (in SI: (23.9 − 3.3) ÷ (23.9 − (−12.2)) = 20.6 ÷ 36.1 ≈ 57 %) — nearly three times the minimum. That is what winter-safe by arithmetic means: at a true 20 % the mix sits at 0.8 × 75 + 0.2 × 10 = 62 °F (16.7 °C), and no morning on the lesson\'s slider can drag it near freezing. Short of a stratified plenum, the only way MA-T reaches freeze-stat territory on a 10 °F day is a damper that isn\'t where the command says it is — the widget\'s failure preset.',
+        learnMore: { href: '/education/air-handlers.html#sensor-strip', label: 'Air Handlers — Walk the Unit with a Probe' },
+        tags: ['forced-air', 'mixed-air']
+    },
+    {
+        type: 'gotcha',
+        id: 'ah-ma-t-reads-the-coil',
+        prompt: 'A rooftop unit hunts all through a mild spring morning — economizer dampers swinging, compressor short-cycling. The trend is below. What\'s the story?',
+        snippet: '<pre class="quiz-snippet">TIME   MA-T                CLG STG 1  OA DMPR\n09:10  58.4 °F (14.7 °C)   OFF        64 %\n09:13  50.1 °F (10.1 °C)   ON         41 %\n09:16  58.9 °F (14.9 °C)   OFF        66 %\n09:19  49.7 °F (9.8 °C)    ON         39 %</pre>',
+        choices: [
+            { id: 'a', text: 'The economizer loop is tuned too aggressively — slow its gains and it will settle.' },
+            { id: 'b', text: 'The OA damper actuator is sticking and releasing on its own.' },
+            { id: 'c', text: 'The MA-T sensor sits too close to the DX coil — it reads the coil, not the mix.', correct: true },
+            { id: 'd', text: 'Low refrigerant charge is short-cycling the compressor.' }
+        ],
+        explain: 'Look at what MA-T moves in lockstep with: every time cooling stage 1 comes on, mixed air "drops" — 8.3 °F (4.6 °C) between the first two rows — and the economizer chases that phantom cold by closing toward minimum. Real mixing doesn\'t care about the compressor — a sensor mounted too close to the coil does. Retuning gains only slows the sawtooth; an averaging element across the mixing plenum ends it. Mixing happens where it happens; the sensor only reports where it sits.',
+        learnMore: { href: '/education/air-handlers.html#sensor-strip', label: 'Air Handlers — Walk the Unit with a Probe' },
+        tags: ['forced-air', 'mixed-air', 'sensors']
     },
 
     // ── Capstone: the RTU is the same drawing ──────────────
