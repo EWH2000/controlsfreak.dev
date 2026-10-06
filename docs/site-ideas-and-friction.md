@@ -2429,7 +2429,7 @@ region (the metrics-announcer precedent). `[future: a "load these into
 the sliders" affordance was considered and skipped — user gains on the
 toy process would misread as a simulation of their loop]`
 
-### PID basics — surface direct vs reverse acting? *(idea, noted 2026-07-14)* *(ruled 2026-10-05 — one-sentence aside in the P callout)* *(shipped 2026-10-05 · PR #616)*
+### PID basics — surface direct vs reverse acting? *(idea, noted 2026-07-14)* *(ruled 2026-10-05 — one-sentence aside in the P callout)* *(shipped 2026-10-05, PR #616)*
 *Surfaced by the codebase-issues #154 sim/tool physics diff — an
 observation, not a defect: the physics on the page is correct.* The P
 callout's only worked example is a **chilled-water valve** (PV above SP,
@@ -2462,6 +2462,13 @@ CLAUDE.md's metric-rounding exemplar. Live lesson → owner merges; this
 heading takes a `*(shipped …)*` note when it lands. By-catch logged, not
 ruled: the tuner's cheat-sheet row is now `codebase-issues` #324 (its
 "flip acting" advice names a control the tuner does not have). Shipped as PR #616.
+
+*Correction (2026-10-05):* the premise above that every mini-sim is a
+heating loop is wrong. Each mini-sim's **Fast** chip is a duct
+static-pressure loop (`scripts/pid-engine.js` preset: SP 1.5 in. w.c.);
+only Medium and Slow are warming loops (°F). All three ARE
+reverse-acting (more output raises PV), so the shipped aside names
+reverse action and drops the "heating loops" wording.
 
 ### PID tuner — live process visualization + tune-it-blind spoiler *(shipped 2026-06-08)*
 *The interactive home hero sells a live loop, then links to the tuner —
