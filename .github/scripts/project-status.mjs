@@ -154,6 +154,17 @@
 //      dropped 2026-10-05 by owner ruling: a low-key follow-up clause at the
 //      tail of a scope `.ref-note` is accepted copy (CLAUDE.md's amended
 //      no-coming-soon bullet), so reporting those forever would be noise.
+//      WIDENED 2026-10-05 (the same evening) with the "its own page"
+//      promise shapes — `(belongs|wants|worth|deserves)( on)? its own
+//      page` and `own page once` — after that day's lanes found the scan
+//      reporting zero while html/education/bacnet-networking.html's "What
+//      this page didn't cover" bullets promised two unbuilt pages ("a
+//      deeper treatment belongs on its own page"; "worth its own page
+//      once it's common enough"). The scan is per LINE, so a phrase
+//      wrapped across a source line break is caught only by the fragment
+//      that lands on one line — that is why `own page once` exists beside
+//      `worth its own page`. The copy itself is logged as a separate
+//      ledger entry; this widening only makes the shape visible.
 //
 // 6. DEPS (only with --deps). `npm outdated --json` exits 1 when anything is
 //    outdated, so its stdout is parsed regardless of status.
@@ -487,7 +498,7 @@ function contentSection() {
         for (const x of live) if (!(x[1] in glossary)) unknownIds.add(x[1]);
     }
 
-    const COMING = /gets its own (lesson|page)|coming (soon|later)|a (future|later) page/i;
+    const COMING = /gets its own (lesson|page)|coming (soon|later)|a (future|later) page|(belongs|wants|worth|deserves)( on)? its own page|own page once/i;
     const comingSoon = [];
     for (const f of walk(HTML, (p) => p.endsWith('.html') && !p.includes(`${path.sep}_includes${path.sep}`))) {
         maskHtmlComments(read(f)).split('\n').forEach((l, i) => {
