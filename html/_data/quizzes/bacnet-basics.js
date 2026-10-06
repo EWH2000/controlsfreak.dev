@@ -8,8 +8,7 @@
 // kebab-case and stable across edits — they namespace the
 // cf_quiz_bacnet-basics_* localStorage keys. Pairs with the
 // BACnet Basics lesson; learnMore hrefs deep-link its <h2> anchors
-// (the Who-Is / I-Am section has no anchor of its own, so discovery
-// questions land on #services, where the pair is introduced).
+// (discovery questions land on #who-is-i-am, the pair's own section).
 //
 // The bank is deliberately larger than the page's defaultCount (10):
 // the engine samples an overflowing bank, so each run draws a
@@ -108,7 +107,7 @@ module.exports = [
             { id: 'd', text: '<code>Who-Is</code> carried a device-instance range, and 2050 sits outside it.', correct: true }
         ],
         explain: 'A <code>Who-Is</code> can go out with no range — "everybody speak up" — or with low and high device-instance bounds, and a device answers only when its instance falls inside them. This scan asked for 1000–1999, so <code>device:2050</code> stayed silent by design: nothing is offline, blocked, or broken. On the <em>same</em> subnet, check the scan\'s range before suspecting the device. (Across subnets, "missing from discovery" really is a broadcast problem — that story belongs to <a href="/education/bacnet-networking.html">BACnet Networking</a>.) As for the lost acknowledgment: Who-Is and I-Am are both unconfirmed — no acknowledgment is ever owed.',
-        learnMore: { href: '/education/bacnet-basics.html#services', label: 'BACnet Basics — The services you\'ll see' },
+        learnMore: { href: '/education/bacnet-basics.html#who-is-i-am', label: 'BACnet Basics — Who-Is / I-Am' },
         tags: ['bacnet', 'services', 'troubleshooting']
     },
     {
