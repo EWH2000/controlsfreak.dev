@@ -15597,3 +15597,43 @@ is a correctness fix, not a speed win; retuning `RELAX` (or relaxing
 less once the Jacobian is exact) is a separate question, not opened
 here. Specs: `hydronic-engine.spec.js` 44/44, `smoke.spec.js -g
 hydronic` 8/8.
+
+### 327. `privacy.html` names the sessionStorage keys per key but the localStorage values only in prose *(noticed 2026-10-05, re-entry cleanup lane; LOW)* *(addressed 2026-10-05 · PR #630)*
+
+The on-device-storage section of `html/privacy.html` has two paragraphs.
+The sessionStorage one names its keys (`cf_ddcw_ahu`, `cf_ddcw_fcu`) and
+says how long session storage lasts (per tab). The localStorage one only
+lists *what* is remembered (units choice, theme, psychrometric range,
+refrigerant, thermistor type, quiz best/time/attempts/last-played). It
+names no key and never says how long local storage lasts. CLAUDE.md's
+convention (*New `cf_*` browser-storage keys update `privacy.html`*)
+requires the policy to say which area holds each key and what that
+area's lifetime is. So the paragraph that reads as exhaustive was
+exhaustive in substance but not by key, and the localStorage lifetime
+was only implied by "between visits".
+
+Real key set, from a grep of every `localStorage` / `sessionStorage`
+`getItem` / `setItem` / `removeItem` call site under `html/` at `main`
+`b54a6c8`:
+`cf_units` (`scripts/units.js`, `_includes/head.njk`), `cf_theme`
+(`scripts/theme.js`, `head.njk`), `cf_psy_range`
+(`tools/psychrometric-chart.html`), `cf_rf_refrigerant`
+(`tools/refrigerant-pt.html` + `simulators/refrigerant-loop.html`,
+shared), `cf_th_type` (`tools/thermistor-calculator.html`),
+`cf_quiz_<slug>_{best,best_total,best_time_ms,attempts,last_iso}`
+(`scripts/quiz-engine.js`; `practice/index.html` reads `best` /
+`best_total`), and sessionStorage `cf_ddcw_<unit.id>`
+(`scripts/ddcw-session.js`, units `ahu` / `fcu`). Every one was already
+described; none was missing from the policy's substance.
+
+**Resolution (2026-10-05, PR #630).** `html/privacy.html`: the
+localStorage paragraph now gives each key or key family with what it
+stores, in the same voice as the sessionStorage paragraph. It also says
+local storage persists: it survives closing the tab and the browser and
+stays until cleared. The quiz family is spelled
+`cf_quiz_<quiz>_*` with its five suffixes. No other file changed. Smoke
+`privacy loads cleanly` passes. What the entry would otherwise have
+gotten wrong: there was no missing key, so this is a form fix (per key +
+lifetime), not a disclosure gap. Numbering note: #325 and #326 were
+already claimed on other branches when this was written, so this entry
+takes #327.

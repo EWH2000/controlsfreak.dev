@@ -95,17 +95,29 @@ canonical: https://controlsfreak.dev/privacy.html
                     The site does keep a few small preference and
                     progress values in your browser's
                     <code>localStorage</code> so a page can remember
-                    your choices between visits: whether you have the
-                    US or Metric units toggle selected; whether you
-                    have the Dark or Light theme selected; the
-                    temperature range you picked on the psychrometric
-                    chart; the refrigerant you last used on the
-                    refrigerant P-T calculator and the refrigerant
-                    loop simulator (they share one memory) and the
-                    sensor type you last used on the thermistor
-                    calculator; and, on the practice quizzes, your
-                    best score and its time, how many times you have
-                    attempted each one, and when you last played it.
+                    your choices between visits. Local storage
+                    persists: it survives closing the tab and the
+                    browser, and stays until you clear it. The keys
+                    are <code>cf_units</code>, whether you have the US
+                    or Metric units toggle selected;
+                    <code>cf_theme</code>, whether you have the Dark
+                    or Light theme selected; <code>cf_psy_range</code>,
+                    the temperature range you picked on the
+                    psychrometric chart;
+                    <code>cf_rf_refrigerant</code>, the refrigerant you
+                    last used on the refrigerant P-T calculator and the
+                    refrigerant loop simulator (they share one memory);
+                    <code>cf_th_type</code>, the sensor type you last
+                    used on the thermistor calculator; and, on the
+                    practice quizzes, one family of keys per quiz,
+                    named after it: <code>cf_quiz_&lt;quiz&gt;_best</code>
+                    and <code>cf_quiz_&lt;quiz&gt;_best_total</code>
+                    hold your best score,
+                    <code>cf_quiz_&lt;quiz&gt;_best_time_ms</code> its
+                    time, <code>cf_quiz_&lt;quiz&gt;_attempts</code> how
+                    many times you have attempted it, and
+                    <code>cf_quiz_&lt;quiz&gt;_last_iso</code> when you
+                    last played it.
                 </p>
                 <p>
                     The two DDC Workbench simulators keep one more
