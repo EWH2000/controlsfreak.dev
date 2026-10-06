@@ -7,8 +7,10 @@
 > only — no `html/` or script changed. Every number below was
 > re-measured on 2026-10-06 against `html/scripts/psychro-engine.js` at
 > `b54a6c8` by a vm script that transcribes each page's inline form from
-> the lines cited; the script lives in the PR body, not the repo,
-> because §4 step 0's spec is what keeps the table honest from then on.
+> the lines cited; the script — the seven-case table *and* the sweep
+> loop behind the §1 maxima and cell counts — lives in the PR body, not
+> the repo, because §4 step 0's spec is what keeps the table honest
+> from then on.
 > §6 carries the three questions. The defaults chosen are what a lane
 > executes if the owner says only "go".
 
@@ -37,16 +39,18 @@ fraction at sea level, mixed-air dry-bulb in °F:
 Three disagreements sit in that table, an order of magnitude apart each:
 
 - **Formula** (A/E against B/C/D). ~0.1 °F across the ordinary band —
-  a 13,400-cell sweep (OA −20…110 °F, 20–90 % RH; RA 68–80 °F / 50 %;
-  10–100 % OA, fog cells skipped) peaks at 0.84 °F only at 110 °F /
-  90 % / 50 %, and the sign flips on hot-dry mixes (1,642 cells
+  a 13,400-cell sweep (OA −20…110 °F step 5, 20–90 % RH step 10;
+  RA 68–80 °F step 2 at 50 %; 10–100 % OA step 10 — 15,120 cells less
+  the 1,720 that fog) peaks at 0.84 °F only at 110 °F /
+  90 % / 50 %, and the sign flips on hot-dry mixes (1,161 cells
   negative). Small, but the tools print one decimal: #228's closure
   check fails by exactly this — economizer-ratio answers 50.0 % for a
   55 °F setpoint, and air-mixing reads that 50 % back as 55.1 °F. The
   bench row's secondaries move with it: RH 68.8 vs 69.0 %, h 20.09 vs
   20.06 Btu/lb.
 - **Basis** (A against F). What "% OA" *means*. ~2 °F at a 20 % minimum
-  on a 0 °F morning; 3.97 °F at −15 °F / 20 % RH / 30 %. Not a formula
+  on a 0 °F morning; 3.97 °F at −15 °F / 20 % RH / 30 % (same grid).
+  Not a formula
   defect — a **label** defect: same digits, different quantity, and only
   air-mixing says which one it wants.
 - **Fog** (A against E, last row — the one #228 could not list, because
@@ -74,7 +78,7 @@ page reason.
 | `education/air-handlers.html` | `:729-731` | linear T only, `RA_T = 75` | (b)-shaped executable | **Keep inline**, naming comment. The lesson teaches the linear form, is dry-bulb-only by design, and carries no moisture input — there is no state to build. |
 | `scripts/ddcw-ahu-unit.js` | `:726-729` | `mixStreams`, volumetric weights | ruled | **Keep.** Model basis is the owner's (friction file). Display path only, §4 last. |
 | `coil-sizing.html:189/:308`, `air-mixing.html:213-214`, `psychrometric-chart.html:476/:480` | — | `<code>` prose | (b) | **Leave.** Not executable. |
-| `psychro-engine.js` | `:208/:215/:245` | `0.240 + 0.444·W` ×3 | (a), internal | Fold into a private `cp(W)` in §4 step 0. Same file, zero change. |
+| `psychro-engine.js` | `:209/:216/:246` | `0.240 + 0.444·W` ×3 | (a), internal | Fold into a private `cp(W)` in §4 step 0. Same file, zero change. (`:502` is the inversion, same constant pair.) |
 
 **What "% OA" will mean after migration** — each page states its basis
 in the label *and* in the `basis` argument, so the two cannot drift:
