@@ -10844,7 +10844,7 @@ its `HW_LEAVE_MAX` comment was trued up.
   `!isFinite(state.h)`.
 - `coil-sizing.html:474` (heating, user-entered leaving dry-bulb) and
   `psychrometric-chart.html:728` (HC stage) do not guard at all. Both are
-  logged as follow-ups in the PR body.
+  tracked as open entry #325 (a PR body is not a ledger).
 - The remaining unguarded sites (AHU ceiling, chart HUM stage, chart drag)
   can't produce an above-boiling dry-bulb.
 
@@ -15346,3 +15346,27 @@ toggle to the tuner — bigger, touches the engine and every preset;
 (3) leave it. Found while ruling the pid-basics direct/reverse aside
 (friction file, *PID basics — surface direct vs reverse acting?*). Open;
 not on the 2026-10-05 agenda.
+
+### 325. `buildState` ok:false reaches two unguarded consumers — coil-sizing heating NaN, psych-chart HC stage *(noticed 2026-10-05, #238 fix round)*
+
+#238's guard makes `Psychro.buildState` return `{ ok: false, error }` for a
+dry-bulb at or above boiling for the pressure. Two callers that accept a
+user-entered leaving dry-bulb never check `.ok`:
+
+- **`html/tools/coil-sizing.html:474`** — the heating branch rebuilds
+  `lvgState` with `buildState` and goes straight to `computeProcess`. With
+  Coil type = heat and a leaving dry-bulb of 230 °F, the page now prints
+  *"Heating coil — NaN MBH sensible."* plus `NaN MBH`, `NaN °F` and
+  `NaN Btu/lb` (reproduced on the built site, verifier round 1 of PR #619).
+  Before #238 it printed a bone-dry but finite number, so this is a
+  **regression on a live tool introduced by the #238 fix**. Fix: after the
+  heating-branch `buildState`, add
+  `if (!lvgState.ok) { clearCap('Leaving air — ' + lvgState.error, 'error'); return; }`
+  — the same shape the cooling branch already uses two lines up.
+- **`html/tools/psychrometric-chart.html:728`** — the HC stage spreads the
+  result into `r.hc`, pushes a stage and sets `current = hc`, so an
+  above-boiling HC leaving temperature hands a truthy `ok: false` object to
+  every downstream stage. Fix: an `if (!hc.ok) { r.hc = { ...hc, enabled: true }; setErr('HC: ' + hc.error); current = null; }`
+  arm before the success path, like the other HC guards beside it.
+
+Both are live-page changes (needs approval to merge). Open.
