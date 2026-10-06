@@ -13819,7 +13819,7 @@ and the in-`settle()` comment were rewritten to state that contract.
 The mechanism described here was right. Measured: full contrast sweep
 17/17 green (14/14 WCAG shards, both themes), zero new failures.
 
-### 286. Print never reaches non-active tab panes — site-wide, pre-existing *(noticed 2026-08-10, the print-shim verification — LOW)*
+### 286. Print never reaches non-active tab panes — site-wide, pre-existing *(noticed 2026-08-10, the print-shim verification — LOW)* *(addressed 2026-10-05 · PR #623)*
 
 `.tab-pane { display: none }` is not lifted in any `@media print`
 block, so tab content off the active tab never prints anywhere on
@@ -13828,6 +13828,34 @@ all four folds sit inside `#tab-wiresheet` — a fold the shim opens
 still cannot reach paper unless the reader prints from that tab. Not
 a #507 regression; recorded so the shim's "paper shows the page"
 contract is understood as tab-scoped.
+
+**Resolution (2026-10-05, PR #623).** Verified first: the premise held
+as written. No `@media print` block in `html/styles.css` touched
+`.tab-pane`. `html/styles.css` now has a print-only block right after
+the `.tab-pane` rules. It sets `.tab-pane { display: block !important }`
+and gives `.tab-pane + .tab-pane` a 1.5rem gap and a 1px
+`var(--border)` top seam. The `.tabs` button row is unchanged. Measured
+under `emulateMedia({ media: 'print' })`, every pane has non-zero
+height: signal-scaling 3/3 (324/332/334 px). The shim's folds inside
+`#tab-wiresheet` can now actually reach paper.
+`tests/details-print.spec.js` passes 6/6.
+The same block also hides `.tab-pane:not(.active) .fbe-live`. The
+workbench's Function-Block Editor mounts lazily, on the first Wiresheet
+open (`ensureEditor()` in `ddcw-shell.js`). Lifting an inactive
+Wiresheet therefore printed its simbar plus about 1000 px of empty
+palette, canvas and inspector frames. Round 1 measured 1037 px for that
+pane, and most of that height was the blank frame, so its "height > 0"
+check passed vacuously. With the editor rule, an inactive Wiresheet
+prints only its intro prose and its folds. Re-probed under print media,
+with full-page screenshots checked: ddc-workbench `#tab-wiresheet` is
+410 px with 8/8 folds, and ddc-workbench-fcu is 253 px with 5/5 folds.
+On both pages `.fbe-live` computes to `display: none`. A reader who
+prints while on the Wiresheet tab has a mounted editor, and it prints as
+rendered (648 px on both pages). So the live wiresheet reaches paper
+only from its own tab.
+One residual gap: a stacked pane carries no heading of its own. On
+paper the pane-to-tab mapping comes only from DOM order against the
+printed tab row.
 
 ### 287. details-print.js: two minor hardening notes *(noticed 2026-08-10, the pilot verification — MINOR; **RESOLVED 2026-08-13 · PR #563** — both reproduced at HEAD first; note (2) was the more serious of the two)*
 
