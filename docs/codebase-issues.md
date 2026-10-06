@@ -13061,10 +13061,9 @@ ring's computed stroke is `none` at rest and `rgb(58, 122, 20)` /
 `1.5px` / `3px, 2px` when forced. The AHU page has 5
 `.ddcw-forced-mark` rects, matching the 5 `.ahu-forced-mark` rects it
 had before, and 0 old-class rects. The FCU sensors spec passes 10/10
-and the two workbench smoke loads pass 2/2. The entry's cites had
-drifted slightly: the AHU head block was at `:555-566`, not
-`:554-565`, and the spec's selectors at `:251/:260` matched the
-ruling, not the `:248/:257` in the original body. The marker format
+and the two workbench smoke loads pass 2/2. One cite in the original
+body had drifted: the spec's selectors sit at `:251/:260` (as the
+ruling has them), not `:248/:257`. The marker format
 used is the lane's `addressed … · PR` form instead of the ruling's
 suggested wording.
 
