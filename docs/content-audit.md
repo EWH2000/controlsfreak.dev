@@ -3257,7 +3257,7 @@ owns, over and over" is the sweep.
   DONE_WITH_TOKEN: does `SendMaintenancePFM` reset `TokenCount`? —
   expected no; only `ResetMaintenancePFM` and `ReceivedReplyToPFM` do).
 
-### 90. air-handlers.html says the coils take "the same two-way valve" as any loop load — Load Piping teaches two-way and three-way *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(ruled 2026-10-06 — owner asked for the lesson fix; shipped as "two-way or three-way valve" in PR #635, open at this writing)*
+### 90. air-handlers.html says the coils take "the same two-way valve" as any loop load — Load Piping teaches two-way and three-way *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(addressed 2026-10-06 · PR #635)*
 
 **Location:** `html/education/air-handlers.html:362` — *"on a built-up
 unit these coils are hydronic loads — the same two-way valve, same
@@ -3275,6 +3275,15 @@ air-handlers bank's `ah-coils-are-hydronic-loads` explain already says
 not the lesson, so the two now disagree. **Suggested direction:** bring
 the lesson to the bank's wording — "the same two-way (or three-way)
 valve choices" — so lesson and explain say one thing.
+
+**Resolution (2026-10-06, PR #635).** `html/education/air-handlers.html:362`
+now reads *"the same two-way or three-way valve, same supply and return
+piping you met in Load Piping"*. The bank's `ah-coils-are-hydronic-loads`
+was reworded in the same review (PR #609) so its false statement no longer
+implies loads elsewhere are two-way only, and its explain names the two-way
+throttling valve and the three-way mixing or diverting valve. Owner's words
+on the ruling: *"a modulating valve could still be 2 way or 3 way
+diverting/mixing."*
 
 ### 91. air-handlers.html — the 38 °F freeze threshold lives only in the widget; the prose names none *(flagged 2026-10-05, quiz-growth wave-2 refutation round)*
 
@@ -3428,3 +3437,21 @@ purpose. **Verification:** confirmed by reading the four questions.
 **Suggested direction:** none now. If the economizers twin ever
 grates, the owner's own freeze-season story is the material that
 would differentiate it.
+
+
+### 99. coil-freeze-risk.html's `bandTxt` says "Typical settings run 35–38 °F" while the Coil Freeze Protection lesson calls 35–37 °F the device band and 38 a house choice *(flagged 2026-10-06, PR #620 verifier round 3; owner's call)*
+
+**Location:** `html/tools/coil-freeze-risk.html` — the `bandTxt` string
+in the page script (pre-existing, outside PR #620) vs
+`html/education/coil-freeze-protection.html` (the freezestat band in
+*What Actually Freezes* and protection-stack item 1). **Lens:** working
+engineer. **Issue:** two surfaces, two bands. The lesson's figure is the
+research record §4's device band (Honeywell 35, HPAC "typically 37",
+EAB 35, NIH 37) with the 38 °F house setting "a degree above it"; the
+tool's line reads as "where stats get set, house choices included" and
+is not labelled a device band, so neither is wrong on its own terms,
+but a reader who opens both sees two different numbers for the same
+device. **Suggested direction:** owner picks one — either the tool's
+`bandTxt` becomes "Typical device bands run 35–37 °F; 38 °F is a common
+house setting a degree above", or the lesson adopts 35–38 as the
+practical band. Tool page → owner merges either way.

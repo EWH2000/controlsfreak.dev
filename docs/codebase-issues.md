@@ -9755,7 +9755,9 @@ note also adds a divergence this entry could not list: the inline
 "exact" forms on air-mixing and the psych chart still carry the
 pre-#236 cold dry-bulb in the fog branch (10.42 against the engine's
 17.67 °F at its documented corner). Heading status unchanged on
-purpose — this entry stays open until the owner picks.
+purpose — this entry stays open until the owner picks. Owner picked the §6 defaults on 2026-10-06 (add `mixAir` /
+`mixFraction`, keep `mixStreams`; no engine caveat text; no workbench
+mass-delta readout); the execution lane is open to schedule.
 
 
 ### 229. `#fcu-ovr-state` is a live region rewritten on every 10 Hz host tick *(noticed 2026-07-27; the AHU's twin shipped guarded 2026-07-30 — **RESOLVED 2026-08-09 · PR #493**, COV announcer per the owner-decision note; closing record at the end)*
@@ -15783,3 +15785,48 @@ it), plus a retarget of `pid-block-on-wiresheet`'s `learnMore` in the
 same PR. No guard proposed, for #314's reason. Open —
 log-and-fix-opportunistically: any lane already touching
 `pid-basics.html` takes it.
+
+
+### 330. `publish-preview.mjs`'s destination guard is suffix-only, so a worktree outside the repo's parent publishes to a sibling folder it creates *(noticed 2026-10-06, review-and-merge session; LOW)*
+
+`.github/scripts/publish-preview.mjs:80-84` resolves the default
+destination as `../caddy/dashboard/cfdev` relative to the checkout and
+asserts only that the resolved path ends with `/caddy/dashboard/cfdev`.
+Run from a worktree under the session scratchpad, that resolved to
+`<scratchpad>/caddy/dashboard/cfdev`, passed the guard, was created by
+the `mkdirSync({ recursive: true })` branch, received the full rsync,
+and the script printed *"live at https://cfdev.home.arpa/"* — while the
+hub kept serving the August build and the new lesson 404'd. Nothing was
+damaged (the stray tree sat in the scratchpad), but the success message
+was false. `CF_PREVIEW_DIR=/home/ehill/caddy/dashboard/cfdev` works from
+anywhere (CLAUDE.md's LAN-preview bullet now says so).
+
+**Fix shape:** resolve the default against `os.homedir()` — the hub's
+docroot is a home-directory path, not a repo-relative one — and have
+the guard assert the path is under `$HOME` as well as ending with the
+suffix; keep `CF_PREVIEW_DIR` as the override. Script only → merge on
+green.
+
+### 331. `test.yml` never runs for a stacked PR that GitHub retargets to `main` after its parent merges *(noticed 2026-10-06, review-and-merge session; process gap, owner's call on the fix)*
+
+`.github/workflows/test.yml` triggers on `pull_request` with
+`branches: [main]`, and the default activity types are `opened`,
+`synchronize` and `reopened`. A child PR in a stack opens against its
+parent's branch, so nothing runs; when the parent merges and GitHub
+retargets the child to `main`, that is an `edited` event (with
+`changes.base`), which does not run either. The child shows no `test`
+check at all, `mergeStateStatus` reads CLEAN, and `gh pr merge` goes
+through. Three chain A PRs (#632, #626, #630) merged that way on
+2026-10-06 before the gap was noticed. A full local suite on `main`
+afterwards was clean (1223 passed, 1 skipped, 0 failed), and the chain
+B children (#623, #624, #627, #620) were rebased onto `main` and
+force-pushed before merging — the push is a `synchronize`, which runs.
+
+**Fix shape:** add `types: [opened, synchronize, reopened, edited]` and
+gate the job with
+`if: github.event.action != 'edited' || github.event.changes.base != null`,
+so a retarget runs the suite and a title or body edit does not.
+Alternatively (or also) add `push: branches: [main]`, so `main` itself
+is tested after every merge, not only the PR before it. CI config →
+owner picks. CLAUDE.md's Workflow section carries the rebase-push rule
+in the meantime.

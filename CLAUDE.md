@@ -1474,6 +1474,23 @@ public `html/<key>.txt`). Run it by hand with `npm run indexnow`
 (changed since last commit) or `npm run indexnow -- --all` (full
 re-submit); add `--dry-run` to print the URL list without POSTing.
 
+**Stacked PRs get no CI run when they retarget.** `test.yml` fires on
+`pull_request` pushes to a PR whose base is `main`. A child in a stack
+opens against its parent's branch (no run), and when the parent merges
+GitHub retargets the child to `main` with an `edited` event (still no
+run) — so it shows **no `test` check at all**, `mergeStateStatus` reads
+CLEAN, and `gh pr merge` goes through untested. Three chain PRs merged
+that way on 2026-10-06 before anyone noticed (a full local suite on
+`main` came back clean, 1223/0/1). **Rule:** after a parent merges,
+rebase the child onto `origin/main` and force-push (the push is a
+`synchronize`, which runs), then merge only when
+`gh pr view N --json statusCheckRollup` shows a `test` check with
+`SUCCESS` — a green parent is not evidence about the child. The
+workflow-side fix is codebase-issues #331. Before a merge session, a
+pairwise `git merge-tree --write-tree A B` over the whole queue finds
+the adjacent-hunk ledger conflicts GitHub only reports once a parent
+has merged.
+
 ## Local preview & tests
 
 - **Preview:** `npm run dev` (`eleventy --serve --port=8000`, live
@@ -1484,7 +1501,12 @@ re-submit); add `--dry-run` to print the URL list without POSTing.
   `https://cfdev.home.arpa/`. **Owner's box only** — it is a home-lab
   convenience, not part of the deploy path, and it no-ops nowhere
   else (the destination guard refuses any path not ending
-  `/caddy/dashboard/cfdev`). It publishes a **snapshot, not a
+  `/caddy/dashboard/cfdev`). **From a worktree outside the repo's
+  parent directory, pass `CF_PREVIEW_DIR=$HOME/caddy/dashboard/cfdev`**
+  — the default resolves `../caddy/dashboard/cfdev` relative to the
+  checkout, and the suffix guard accepts the sibling folder that
+  creates, so the script reports "live" while the hub serves the old
+  build (codebase-issues #330). It publishes a **snapshot, not a
   server**: nothing watches, so every build you want to see needs
   another publish. It also can't exercise the Worker — clean-URL
   301s, the legacy tool redirects and `POST /api/contact` are all
