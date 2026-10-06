@@ -1200,6 +1200,41 @@ test.describe('AHU workbench page: the verdict ladder\'s coil bounds', () => {
         await expect(v).toHaveClass(/ok/);
         await expect(v).toContainText('clear ΔT');
     });
+
+    test('the low-charge verdict states the symptom and hedges the cause (#323)', async ({ page }) => {
+        // The scenario button knows which fault it set; the graphic does
+        // not. The readings cannot separate low charge from a plugged
+        // condenser, a dead compressor or a plugged metering device, so
+        // the verdict names the symptom, offers charge as ONE candidate
+        // and names the instrument that settles it — the FCU's #247
+        // wording, with "across the machine" kept for the AHU's
+        // whole-unit ΔT. The preset seizes manual control of the five
+        // points; that is expected and is what holds the state.
+        await open(page);
+        await page.click('[data-preset="lowcharge"]');
+
+        // Wait on the condition, not a duration: the ladder branches on
+        // the fault the instant the preset writes it.
+        await page.waitForFunction(() =>
+            document.getElementById('ahu-verdict').textContent.includes('one candidate'),
+        null, { timeout: 30000 });
+
+        const low = await page.evaluate(() => ({
+            verdict: document.getElementById('ahu-verdict').textContent.trim(),
+            sr: document.getElementById('ahu-verdict-sr').textContent.trim(),
+            pill: document.getElementById('ahu-verdict').className,
+            label: document.querySelector('[data-preset="lowcharge"]').textContent.trim(),
+        }));
+
+        expect(low.label, 'the button still names the scenario').toBe('Low charge');
+        expect(low.verdict, 'the verdict states the symptom and hedges the cause')
+            .toBe('No ΔT across the machine — air moving; low charge is one candidate, gauges settle it');
+        expect(low.pill, 'a dead machine under a cooling call is still an error state')
+            .toContain('error');
+        // The pill is mute; the .sr-only live region is what a screen
+        // reader hears (#227a), so the hedge has to reach both.
+        expect(low.sr, 'the screen-reader mirror carries the same hedge').toBe(low.verdict);
+    });
 });
 
 test.describe('AHU workbench page: the tabs and the wiresheet', () => {

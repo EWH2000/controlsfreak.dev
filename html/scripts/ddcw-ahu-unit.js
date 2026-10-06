@@ -1995,7 +1995,21 @@ const DDCWAhuUnit = (function () {
         } else if (d.stage > 0 && d.hwFrac > 0) {
             cls = 'error'; txt = 'Heating valve open under a running compressor — the unit is fighting itself';
         } else if (d.stage > 0 && d.fault === 'low-charge') {
-            cls = 'error'; txt = 'No ΔT across the machine — low charge, not cooling';
+            // Symptom first, charge as ONE candidate — never the finding.
+            // `d.fault` is injected ground truth the graphic never draws:
+            // the scenario button knows which fault was set, the graphic
+            // does not. These readings cannot separate low charge from a
+            // plugged condenser, a dead compressor or a plugged metering
+            // device, so a verdict that says "low charge" reports what the
+            // MODEL knows, not what the SCREEN shows. Naming the instrument
+            // that WOULD settle it is the honest close — the FCU's
+            // disposition-3 wording (codebase-issues #247), hedged here
+            // per #323 (owner ruling 2026-10-05). "Across the machine",
+            // not "across coil": this ΔT is discharge minus mixed air over
+            // the whole unit, fan heat included. No `.ref-note` — the
+            // FCU's note explains an asymmetry with a neighbouring verdict
+            // the AHU does not have.
+            cls = 'error'; txt = 'No ΔT across the machine — air moving; low charge is one candidate, gauges settle it';
         } else if (d.stage > 0 && d.matT < FREEZE_WATCH) {
             // ENTERING AIR ALREADY NEAR FREEZING. This branch sits ABOVE
             // the no-ΔT one because it names the same symptom's real
