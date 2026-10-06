@@ -15389,3 +15389,48 @@ gives the HC stage the CC stage's `!ok` branch (`r.hc` carries the error,
 `coil sizing — an above-boiling heating leaving DB mutes the capacity tab (#238)`
 and `psychrometric chart — an above-boiling HC leaving DB errors cleanly (#238)`.
 Both fail with the fixes reverted.
+
+### 326. hydronic-engine.js keeps the pre-#44 pump-curve formula in its catalog comment, and `branchHsrcSlope` scales the slope by spd² (Jacobian only) *(noticed 2026-10-05, re-entry audit refutation lane)* *(addressed 2026-10-05 · PR #626)*
+
+Content-audit #44 corrected the pump curve to *H = H₀·(speed/100)² −
+a·Q²* — only the shutoff head scales with speed, so the operating point
+on a k·Q² system curve moves as Q ∝ speed, matching
+`affinity-laws.html`. The implementation (`branchHsrc`,
+`html/scripts/hydronic-engine.js:628`), the file header (`:58`) and the
+loop-builder prose (`html/simulators/hydronic-loop-builder.html:470`)
+all carry that form. Two leftovers of the old whole-curve form survived:
+
+- the pump catalog comment at `hydronic-engine.js:199` still read
+  *H=(H₀−a·Q²)·(speed/100)²*;
+- `branchHsrcSlope` (`:637-647`) returned `−2a·Q·spd²`, the derivative of
+  the OLD curve. d/dQ of the implemented curve is `−2a·Q`. The comments
+  restating it in `solveHydraulics` (`:692`, `:723`, and the backflow
+  guard's `a·spd² > k` at `:726`) repeated the scaled form.
+
+The error is in the Newton Jacobian only: the branch law and the Norton
+injection use the true `hsrc`, so the converged operating point is
+unaffected; at reduced speed the steps were mis-scaled. Identical at
+100 % speed.
+
+**Resolution (2026-10-05, PR #626).** `html/scripts/hydronic-engine.js`
+only: the catalog comment now reads *H=H₀·(speed/100)² − a·Q²*;
+`branchHsrcSlope` returns `−2a·Q` (clamped-flat `0` branch kept — speed
+still moves that boundary, so `spd` stays in the clamp test); its comment
+and the three `solveHydraulics` comments are de-scaled, the backflow
+guard condition becoming `a > k`. Measured with a Node vm load of the
+engine over the loop builder's three `EXAMPLES` at 100 / 60 / 30 %
+speed, cold `solve()`: converged flows agree before vs after to
+≤ 4.9e-5 gpm (TOL is 1e-4), bit-identical at 100 %; all converge.
+**What the entry's framing got wrong:** "mis-scaled steps" read as a
+convergence cost, but correcting the slope makes the cold solve
+**slower**, not faster, at reduced speed — 28→32 / 26→32 (single,
+60 / 30 %), 31→33 / 29→31 (parallel), 31→33 / 27→30 (threeway), and a
+warm 100→60 % speed step 15/13/16 → 19/19/19 iterations (the following
+warm tick is 1 either way). Mechanism: the solver applies a fixed
+`RELAX = 0.5`; the old under-sized slope inflated `g = 1/f'`, so each
+step overshot the Newton step and partly cancelled the damping. With
+the true slope the relaxed step is exactly half a Newton step. The fix
+is a correctness fix, not a speed win; retuning `RELAX` (or relaxing
+less once the Jacobian is exact) is a separate question, not opened
+here. Specs: `hydronic-engine.spec.js` 44/44, `smoke.spec.js -g
+hydronic` 8/8.
