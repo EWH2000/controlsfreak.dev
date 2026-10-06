@@ -10852,6 +10852,15 @@ Verified: psychro-engine 12/12, psychro-mixstreams 19/19, ddcw-ahu-unit
 56/56, ddcw-fcu-unit 52/52, ddc-workbench-ahu-page + ddcw-shell 100/100,
 and smoke filtered to the nine pages that load the engine (16/16).
 
+**Follow-up (2026-10-05, PR #632).** Both unguarded consumers now handle
+`ok:false`. `html/tools/coil-sizing.html:475`: after the heating-branch
+`buildState` (:474), `if (!lvgState.ok) { clearCap('Leaving air — ' + lvgState.error, 'error'); return; }`,
+the same line the cooling branch uses. `html/tools/psychrometric-chart.html:729-732`:
+the HC stage (:728) now has the CC stage's `!ok` branch (`r.hc` carries
+the error, `setErr('HC: …')`, `current = null`). `tests/smoke.spec.js`
+adds one 250 °F row per page (error text, muted readouts, no NaN, no
+console errors), and both rows fail with the page fixes reverted.
+
 ### 239. The AHU mixing box drops `mixStreams`' fog condensate, so its moisture bookkeeping loses water in the cold-and-open corner *(noticed 2026-07-29, the #236 fix round)* *(deferred 2026-07-29)*
 
 With #236 resolved, `Psychro.mixStreams` now returns a `condensate` term
