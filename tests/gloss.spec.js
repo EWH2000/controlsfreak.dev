@@ -23,13 +23,28 @@
 // for that — navCategoryGuard, educationSequenceGuard, flowStaticGuard
 // and quizOrderGuard are none of them covered by a spec; a build guard
 // is proven by the build, and `npm run build` is what CI and the
-// Cloudflare deploy both run. All SEVEN gloss guard arms (unknown id,
-// non-button trigger, missing type="button", mark on an owning page,
-// gloss-tip-<id> namespace collision, stale owners path, non-kebab
-// entry id) were exercised by hand against this branch and each one
-// failed the build with a named offender; the comment-masking arm was
-// verified in the other direction, by confirming a commented-out
-// trigger builds clean and injects nothing. Arm 1's
+// Cloudflare deploy both run. The gloss guard arms in .eleventy.js,
+// each failing the build with a named offender, are:
+//   - the `gloss` transform (per page): malformed attribute spelling
+//     (MALFORMED_RE — single-quoted, unquoted, valueless or spaced-=
+//     `data-gloss`; PR #578), non-button trigger, missing
+//     type="button", unknown id, mark on an owning page, a trigger that
+//     already carries aria-describedby, gloss-tip-<id> namespace
+//     collision, and a marked page with no </body> to inject into;
+//   - glossaryGuard (the data file): non-kebab entry id, missing
+//     `term`, missing `def`, non-array `owners`, stale owners path,
+//     plus its two anti-vacuity probes (empty glossary, no canonical
+//     pages to resolve owners against);
+//   - glossaryExcludedGuard (the §4 reserved-headword map; PR #594):
+//     empty map, row lint (non-kebab key, missing `reason`, missing
+//     `ruled`, empty `reopen`), and a reserved headword reached as an
+//     entry id or through an entry's kebab-normalized `term`.
+// The original transform/glossaryGuard arms were exercised by hand
+// against the introducing branch; PR #578's malformed-spelling arm and
+// PR #594's reserved-headword legs were probe-proven by their own PRs
+// (break each, confirm the named failure, restore). The comment-masking
+// arm was verified in the other direction, by confirming a
+// commented-out trigger builds clean and injects nothing. Arm 1's
 // anti-vacuity floor is what keeps the guards from decaying into a
 // silent pass between those hand checks.
 
