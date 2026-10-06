@@ -80,10 +80,22 @@
 //           RESOLVED / CLOSED / FIXED / BLESSED / STANDING ANSWER anywhere.
 //           Case-sensitive on purpose: the ledgers shout their verdicts, and
 //           a lower-case "closed" in a title ("a closed <details>") is prose.
-//        3. DEFERRED if `*(deferred|declined|accepted` or GRANDFATHER /
+//        3. RULED if `*(ruled` (case-insensitive). RULED is a sub-state of
+//           OPEN, not a fifth bucket: it counts in tally.open, adds to
+//           tally.openRuled, and sets `ruled: true` on the entry. A ruled
+//           entry is NEVER decision-class, even when its heading still says
+//           DECISION-CLASS / owner — the decision has been taken; the entry
+//           is waiting on work, not on a person. Tested AFTER resolved and
+//           BEFORE deferred, and both neighbours are load-bearing: a ruling
+//           RE-OPENS a deferred entry for work (#273 carries a 2026-08-04
+//           `*(deferred` marker followed by a 2026-10-05 `*(ruled` one, and
+//           must read open), while the `*(addressed …)*` marker appended
+//           after the ruling when the fix merges CLOSES it (resolved wins).
+//           Grammar added 2026-10-05 with the decision sitting's rulings.
+//        4. DEFERRED if `*(deferred|declined|accepted` or GRANDFATHER /
 //           log-don't-fix / no action / RECORDED AS BASELINE / written
 //           exemption (case-insensitive — these are phrases, not verdicts).
-//        4. else OPEN; an OPEN heading matching DECISION-CLASS / DESIGN CALL /
+//        5. else OPEN; an OPEN heading matching DECISION-CLASS / DESIGN CALL /
 //           owner is counted as DECISION-CLASS (a sub-count of OPEN — it is
 //           waiting on a person, not on work).
 //    * ANTI-VACUITY. A grammar over prose has blind spots, and a blind spot
@@ -136,7 +148,12 @@
 //      gloss.js, styles.css), which are not page markup and are out of scope.
 //    * Coming-soon scan: CLAUDE.md's no-coming-soon rule, as a regex over
 //      html/**/*.html with HTML comments masked, `_includes` excluded. Hits
-//      are candidates — read the sentence.
+//      are candidates — read the sentence. The regex keeps only the BANNED
+//      page-promise shapes (gets its own lesson/page, coming soon/later, a
+//      future/later page). `tracked follow-up` / `planned follow-up` were
+//      dropped 2026-10-05 by owner ruling: a low-key follow-up clause at the
+//      tail of a scope `.ref-note` is accepted copy (CLAUDE.md's amended
+//      no-coming-soon bullet), so reporting those forever would be noise.
 //
 // 6. DEPS (only with --deps). `npm outdated --json` exits 1 when anything is
 //    outdated, so its stdout is parsed regardless of status.
@@ -340,6 +357,7 @@ function classifyHeading(h) {
     if (/partially/i.test(h)) return 'partial';
     if (/\*\((addressed|resolved|closed|fixed|shipped)/i.test(h)
         || /\b(RESOLVED|CLOSED|FIXED|BLESSED|STANDING ANSWER)\b/.test(h)) return 'resolved';
+    if (/\*\(ruled/i.test(h)) return 'ruled';
     if (/\*\((deferred|declined|accepted)/i.test(h)
         || /\b(GRANDFATHER|log-don't-fix|no action|RECORDED AS BASELINE|written exemption)\b/i.test(h)) return 'deferred';
     return 'open';
@@ -352,16 +370,21 @@ function ledgerSection(file) {
     let m;
     while ((m = re.exec(src))) {
         const heading = m[2];
-        let status = classifyHeading(heading);
-        const decision = status === 'open' && /DECISION-CLASS|DESIGN CALL|owner/i.test(heading);
+        const cls = classifyHeading(heading);
+        // 'ruled' is a sub-state of OPEN (see the header): fold it back into
+        // open and carry it as a flag. A ruled entry is never decision-class.
+        const ruled = cls === 'ruled';
+        const status = ruled ? 'open' : cls;
+        const decision = status === 'open' && !ruled && /DECISION-CLASS|DESIGN CALL|owner/i.test(heading);
         const paren = heading.match(/\*\(\**\s*([^\s)]*)/);
         const firstWord = paren ? (paren[1].match(/^[A-Za-z'-]+/) || [''])[0].toLowerCase() : null;
         const title = heading.split(/\s\*\(/)[0];
-        entries.push({ n: Number(m[1]), line: lineOf(src, m.index), status, decision, firstWord, title, heading });
+        entries.push({ n: Number(m[1]), line: lineOf(src, m.index), status, ruled, decision, firstWord, title, heading });
     }
-    const tally = { resolved: 0, deferred: 0, partial: 0, open: 0, openDecision: 0 };
+    const tally = { resolved: 0, deferred: 0, partial: 0, open: 0, openRuled: 0, openDecision: 0 };
     for (const e of entries) {
         tally[e.status] += 1;
+        if (e.ruled) tally.openRuled += 1;
         if (e.decision) tally.openDecision += 1;
     }
     const nums = entries.map((e) => e.n);
@@ -371,7 +394,7 @@ function ledgerSection(file) {
         maxNumber: nums.length ? Math.max(...nums) : null,
         tally,
         open: entries.filter((e) => e.status === 'open' || e.status === 'partial')
-            .map((e) => ({ n: e.n, status: e.status, decision: e.decision, title: trunc(e.title, 90) })),
+            .map((e) => ({ n: e.n, status: e.status, ruled: e.ruled, decision: e.decision, title: trunc(e.title, 90) })),
         noStatusParenthetical: entries.filter((e) => e.firstWord === null).map((e) => e.n),
         unclassifiedShapes: entries
             .filter((e) => e.firstWord !== null && !MARKER_WORDS.has(e.firstWord))
@@ -464,7 +487,7 @@ function contentSection() {
         for (const x of live) if (!(x[1] in glossary)) unknownIds.add(x[1]);
     }
 
-    const COMING = /gets its own (lesson|page)|coming (soon|later)|tracked follow-up|planned follow-up|a (future|later) page/i;
+    const COMING = /gets its own (lesson|page)|coming (soon|later)|a (future|later) page/i;
     const comingSoon = [];
     for (const f of walk(HTML, (p) => p.endsWith('.html') && !p.includes(`${path.sep}_includes${path.sep}`))) {
         maskHtmlComments(read(f)).split('\n').forEach((l, i) => {
@@ -586,13 +609,13 @@ if (asJson) {
     for (const l of report.ledgers) {
         const t = l.tally;
         p(`── ${l.file} — ${l.total} entries, max #${l.maxNumber} ──`);
-        p(`  resolved ${t.resolved} · deferred ${t.deferred} · partial ${t.partial} · OPEN ${t.open} (of which decision-class ${t.openDecision})`);
+        p(`  resolved ${t.resolved} · deferred ${t.deferred} · partial ${t.partial} · OPEN ${t.open} (of which ruled, fix pending ${t.openRuled}; decision-class ${t.openDecision})`);
         if (l.noStatusParenthetical.length) {
             p(`  ${l.noStatusParenthetical.length} heading(s) carry NO status parenthetical — they read OPEN by default (a shape gap, not necessarily open work):`);
             p(`    #${l.noStatusParenthetical.join(', #')}`);
         }
         p(`  open + partial (${l.open.length}):`);
-        list(l.open, (x) => `#${x.n}${x.status === 'partial' ? ' [partial]' : x.decision ? ' [decision]' : ''}  ${x.title}`);
+        list(l.open, (x) => `#${x.n}${x.status === 'partial' ? ' [partial]' : x.ruled ? ' [ruled, fix pending]' : x.decision ? ' [decision]' : ''}  ${x.title}`);
         p(`  unclassified heading shapes (${l.unclassifiedShapes.length}) — first word outside the marker vocabulary:`);
         list(l.unclassifiedShapes, (x) => `#${x.n} (L${x.line}) "${x.firstWord}" → counted ${x.bucket}`);
         p();

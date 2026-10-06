@@ -62,6 +62,8 @@ Each: source · ask · what the owner needs to know.
 21. **Education-diagram phone legibility** (friction:2237; 12+ pages) — dedicated audit cycle or opportunistic.
 22. **Smaller yes/no**: URL deep links (friction:2271), palette recents (2263), FBE annotation primitive + value heads (4728, 4758), CamelCase note (4789), war-story sheets (air-side-sim.md:370), workbench backlog (LLS annunciation :860, preset :870, thermographics :853), #228 scheduling (L9444), GSC export for the late-October pillar re-read (friction:7035).
 
+> **2026-10-05, after the sitting:** the decision agenda — items 2 and 4–18 above — was ruled in full: all sixteen ruled 2026-10-05; see `rulings.md` beside this file for the owner's words, the rulings and the lanes they produce. Item 1 was ruled earlier the same day (PR #602 closed); item 3 and Tier 5 (19–22) stay open.
+
 ## 3. Open work by arc
 
 Sizes from entry text; "?" = text does not support one.

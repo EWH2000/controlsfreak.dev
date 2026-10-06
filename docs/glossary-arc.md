@@ -588,7 +588,10 @@ operational state; these two are the whole of what was lost.)*
   state again. Still open from the §4 round's routing:
   balancing:497's 'floating-point input' (field usage or copy
   defect?) and the fail-to-start re-triage candidate — both owner
-  items.
+  items. ⟨2026-10-05: both ruled — balancing:497 → "proportional", the
+  floating mention drops; fail-to-start parked into §7.2 with a
+  tracking line in the friction file's glossary-arc entry. Record:
+  `docs/audits/2026-10-reentry/rulings.md`.⟩
 
 - **2026-08-27 — §4 MARKING COMPLETE at 27 marks; the yield band
   was a hedge stripped in transit.** Both lanes merged owner-cleared
@@ -639,7 +642,10 @@ operational state; these two are the whole of what was lost.)*
   'floating-point input', and the fail-to-start re-triage candidate
   — which is tracked **only** here and in the §4 proposal, i.e. not
   in the friction file or `codebase-issues.md`, the ledgers the
-  re-triage will actually read.
+  re-triage will actually read. ⟨2026-10-05: both ruled — balancing:497 → "proportional", the
+  floating mention drops; fail-to-start parked into §7.2 with a
+  tracking line in the friction file's glossary-arc entry. Record:
+  `docs/audits/2026-10-reentry/rulings.md`.⟩
 
 ## Open questions
 
