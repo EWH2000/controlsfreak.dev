@@ -1441,7 +1441,7 @@ build time. Decisions worth remembering:
   no rich-result payoff; the page carries FAQPage +
   SoftwareApplication + BreadcrumbList instead. The SEO surface is the
   build-time-rendered rows themselves (~35 KB gzipped, the accepted
-  cost of full crawlability).
+  cost of full crawlability). ⟨2026-10-05: Google dropped FAQ rich results for sites like this one in Aug 2023 — kept for answer engines, see codebase-issues #317⟩
 - **Decode box + filter are separate inputs** — exact-ID decode gives
   status semantics a substring filter can't ("260" as a filter also
   matches 1260), and the four pill states (registered / reserved /
@@ -6417,7 +6417,7 @@ the 2026-07-30 date belongs to the bank-growth direction, not the
 engine change; a grown bank starts varying with no code change)*;
 growing a bank quietly grows
 its FAQPage JSON-LD too, so the CEO's favorite feature and the SEO
-trajectory feed each other; and the quiz-bank gloss-component lane
+trajectory feed each other; ⟨2026-10-05: Google dropped FAQ rich results for sites like this one in Aug 2023 — kept for answer engines, see codebase-issues #317⟩ and the quiz-bank gloss-component lane
 (§7.2, ruled IN scope 2026-08-12) is sequenced in the same
 post-phase-3 window — bank *content* growth and that engine lane
 barely conflict (data files vs engine), but sequence them

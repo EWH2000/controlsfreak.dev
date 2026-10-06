@@ -15032,7 +15032,7 @@ Chromium 147 lays out closed-details content (non-zero rects,
 detail #285 describes; #285 had the mechanism right. The change turns
 that implementation detail into a contract.
 
-### 317. 52 `FAQPage` nodes ship but earn no rich result — Google restricted FAQ to government and health sites in Aug 2023 *(noticed 2026-08-27, SEO research round; decision-class — owner's call, not a bug)* *(ruled 2026-10-05 — position 2: keep for answer-engine readers, correct the rationale; fix pending)*
+### 317. 52 `FAQPage` nodes ship but earn no rich result — Google restricted FAQ to government and health sites in Aug 2023 *(noticed 2026-08-27, SEO research round; decision-class — owner's call, not a bug)* *(ruled 2026-10-05 — position 2: keep for answer-engine readers, correct the rationale; fix pending)* *(addressed 2026-10-05 · PR #617)*
 
 `head.njk` emits `FAQPage` JSON-LD from the `faqs:` frontmatter and the
 quiz banks; a build count puts it at **52 pages**. The mechanism works
@@ -15090,6 +15090,31 @@ needs-approval list regardless of what changes in them → **owner
 merges**. On merge this heading takes `*(addressed YYYY-MM-DD — owner
 ruled position 2: kept for answer-engine readers, rationale corrected)*`
 after the ruled marker.
+
+**Resolution (2026-10-05, PR #617).** Comments and docs only. The built
+site is byte-identical: `npm run build` on `origin/main` (b54a6c8) and on
+the branch, then `diff -rq` across all 182 `_site` files, gave empty
+output.
+
+- `.eleventy.js`: the `faqPageJsonLd` comment gains a *why it exists*
+  paragraph. It names the August 2023 restriction (no SERP treatment on
+  this domain), says the markup is kept because answer engines
+  (Bing/Copilot, Perplexity, ChatGPT search) parse `FAQPage`, and cites
+  this ruling. The `faqJsonLd` comment gets the same purpose in short
+  form.
+- `html/_includes/faq.njk`: the header (a `{# #}` comment, so nothing
+  renders) states the purpose of the JSON-LD twin. The `<h3>` "on-page
+  ranking lever" note stays.
+- `docs/site-ideas-and-friction.md`: a dated `⟨2026-10-05: …⟩` note is
+  appended to the two lines this entry named (`:1436` and `:6400`, both
+  still accurate at fix time). No historical text was rewritten.
+- `CLAUDE.md` was checked and left alone. Its FAQPage mentions describe
+  the one-source-two-consumers mechanism, not an SEO payoff.
+
+The entry's line cites held. The one thing it gets slightly wrong is the
+heading marker it pre-wrote for merge time: the lane convention used
+here is the `addressed … · PR #N` form, so that marker went on in its
+place.
 
 ### 318. Speed Brain is enabled on the zone and 100% inert — every prefetch 503s against `run_worker_first: true` *(measured 2026-08-28; owner dashboard decision)* *(addressed 2026-10-05 — owner turned Speed Brain off)*
 

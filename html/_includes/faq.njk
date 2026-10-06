@@ -3,6 +3,10 @@
    head.njk feeds to the faqJsonLd filter for the FAQPage structured data,
    so the on-page copy and the schema can't drift (the site's
    one-source-two-consumers pattern, as with quiz banks).
+   The JSON-LD twin is for answer engines (Bing/Copilot, Perplexity,
+   ChatGPT search), not Google: Google restricted FAQ rich results to
+   government/health sites in August 2023, so it earns no SERP treatment
+   here (owner ruling 2026-10-05, codebase-issues #317).
 
        ---
        faqs:
