@@ -448,7 +448,8 @@ operational state; these two are the whole of what was lost.)*
   extend the arm vs accept). Remaining arc phases per §9: multi-benign
   (§5) with written matching rules, then the collision tier (§4) with
   per-context handling, then the §7.2 quiz-bank component lane — the
-  brief re-triage follows.
+  brief re-triage follows. ⟨2026-10-05: sequenced AFTER the
+  freeze-season + quizzes arc — rulings.md item 17⟩
 
 - **2026-08-15 — §5 multi-benign SHIPPED; the close's decision batch
   cleared.** One session, five merged PRs: #576 (ledger marker
@@ -492,6 +493,8 @@ operational state; these two are the whole of what was lost.)*
   deliverable) → **the §7.2 quiz-bank component lane** → the brief
   re-triage (the friction file's quiz-expansion entry — owner
   direction 2026-08-14 — carries the CEO signal into that pick).
+  ⟨2026-10-05: sequenced AFTER the freeze-season + quizzes arc —
+  rulings.md item 17⟩
 
 - **2026-08-20 — the §4 collision tier RULED; the disambiguation
   component will NOT be built.** One session: the 4-lane inventory
@@ -638,7 +641,8 @@ operational state; these two are the whole of what was lost.)*
   outside that list drifted** — worth a standing rider line on the
   next phase's execution PR.
   Next per §9: **the §7.2 quiz-bank component lane** → the brief
-  re-triage. Owner items still open, unchanged: balancing:497's
+  re-triage. ⟨2026-10-05: sequenced AFTER the freeze-season + quizzes
+  arc — rulings.md item 17⟩ Owner items still open, unchanged: balancing:497's
   'floating-point input', and the fail-to-start re-triage candidate
   — which is tracked **only** here and in the §4 proposal, i.e. not
   in the friction file or `codebase-issues.md`, the ledgers the

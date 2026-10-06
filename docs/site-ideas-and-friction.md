@@ -6388,7 +6388,7 @@ of a real reader; do not open it as a general affordance.
 
 ---
 
-### Quiz expansion — grow the banks + new quizzes *(owner direction 2026-08-14; candidate for the post-glossary re-triage)*
+### Quiz expansion — grow the banks + new quizzes *(owner direction 2026-08-14; candidate for the post-glossary re-triage)* *(wave 2 opened 2026-10-05 — air-handlers, economizers, pid-basics; see rulings.md item 17)*
 
 The owner's CEO was shown the site by a third party and was "VERY
 impressed," singling out **the quizzes** as what he liked most. Owner
@@ -6418,7 +6418,7 @@ deliberately.
 
 ---
 
-### The owner's dev-arc brief (2026-08-07) — triaged 2026-08-12, PARKED *(re-triage when glossary phases 2–3 are done)*
+### The owner's dev-arc brief (2026-08-07) — triaged 2026-08-12, PARKED *(re-triage when glossary phases 2–3 are done)* *(re-triaged 2026-10-05 — arc = freeze season + quizzes; F4 one mockup lane at the arc's end; A1/A4/C4/D2/D4/E2, §0 N2 and the LON go/no-go to a short sitting of their own; see docs/audits/2026-10-reentry/rulings.md item 17)*
 
 An owner-authored, deliberately broad brief (~30 items across seven
 themes: bus/physical-layer reality, gateway quirks, platform
@@ -6493,6 +6493,17 @@ calculator math is unreachable by them until extracted — G1 and G2
 are one workstream. The pipeline supports a new content type
 trivially; the cost is taxonomy (and the sharp-shelves preference),
 not plumbing.
+
+**Re-triaged 2026-10-05 (owner, the evening after the decision
+sitting):** the arc is **freeze season + quizzes** — the
+coil-freeze-protection lesson first, quiz-bank growth wave 2
+alongside, #228 as the background tax lane — with the F4 case-file
+type as ONE mockup lane at the arc's end (stories owner-supplied only
+after he has seen a shape) and the glossary §7.2 quiz-bank component
+after that. The remaining brief items (A1, A4, C4, D2, D4, E2, the
+§0 N2 gap and the LON go/no-go on C2/C3) go to a short sitting of
+their own, with the banked analysis above as its input — record:
+`docs/audits/2026-10-reentry/rulings.md` item 17.
 
 ---
 
