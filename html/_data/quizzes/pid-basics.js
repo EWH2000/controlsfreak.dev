@@ -6,7 +6,23 @@
 // Schema lives in html/scripts/quiz-engine.js's header. `id`s are
 // kebab-case and stable across edits — they namespace the
 // cf_quiz_pid-basics_* localStorage keys. Pairs with the PID Basics
-// lesson; learnMore hrefs deep-link the P/I/D term callouts.
+// lesson; learnMore hrefs deep-link the P/I/D term callouts (and the
+// Sim 1 card, #sim1, for the raise-the-gain droop trap). The
+// wiresheet paragraph near the end of the lesson has no anchor of its
+// own, so its question deep-links Function-Block Basics' block-families
+// section (#families), whose Control callout makes the same point.
+//
+// The bank is deliberately larger than the page's defaultCount (10):
+// the engine samples an overflowing bank, so each run draws a
+// different subset (buildQueue() in quiz-engine.js). Coverage tracks
+// the lesson's sections — P (what it answers to, droop, proportional
+// band, the error-as-percent-of-span worked example, and why raising
+// the gain never closes the droop), I (erasing the offset, too-fast
+// reset, integral time vs repeats per minute, why it does the real
+// work), D (noise, derivative-on-measurement, the overshoot sweet
+// spot, why Ti and Kc come before Td on a lagging coil, and why fast
+// clean loops skip it), and where the loop lives in a controller —
+// one block on the wiresheet.
 
 module.exports = [
     // ── P — Proportional ───────────────────────────────────
@@ -47,6 +63,33 @@ module.exports = [
         unit: '%',
         explain: 'PB = 100 ÷ gain = 100 ÷ 5 = 20 %. A 20 % proportional band means the output swings across its full range as the input moves across 20 % of its span — the narrower the band, the more aggressive the loop. PB and gain are just two ways of expressing the same knob (PB = 100/gain), and different vendors prefer different ones.',
         learnMore: { href: '/education/pid-basics.html#p-term', label: 'PID Basics — P, Proportional' },
+        tags: ['pid', 'proportional']
+    },
+
+    {
+        type: 'numeric',
+        id: 'p-output-percent-of-span',
+        prompt: 'A chilled-water valve loop runs proportional-only with a gain of 3. SP = 55 °F (12.8 °C), PV = 61 °F (16.1 °C), and the input span is 20 °F (11.1 °C). Working the error as a percent of span, then multiplying by the gain, what\'s the proportional output, in percent?',
+        answer: 90,
+        tolerance: 1,
+        unit: '%',
+        explain: 'The error is 61 − 55 = 6 °F (3.3 °C) — PV above SP, which is the error that drives a cooling (direct-acting) loop open. 6 ÷ 20 = 30 % of span. Output = gain × error = 3 × 30 % = 90 % — the valve is driven most of the way open. As the supply cools and PV falls toward 55 °F (12.8 °C), the error shrinks and the output backs off in proportion; with P alone it parks a hair short of setpoint.',
+        learnMore: { href: '/education/pid-basics.html#p-term', label: 'PID Basics — P, Proportional' },
+        tags: ['pid', 'proportional']
+    },
+    {
+        type: 'gotcha',
+        id: 'raise-gain-to-kill-droop',
+        prompt: 'A proportional-only space-temperature loop keeps parking just under setpoint. A tech doubles the gain to push it the rest of the way. What happens?',
+        snippet: '<pre class="quiz-snippet">before:  P only, PV settles 1 °F (0.6 °C) under SP\nchange:  gain doubled\nhope:    PV lands right on setpoint</pre>',
+        choices: [
+            { id: 'a', text: 'PV lands on setpoint — twice the gain is twice the push, which covers the last bit of error.' },
+            { id: 'b', text: 'The offset shrinks but never closes; push the gain far enough and the loop hunts instead. Integral is what closes the gap.', correct: true },
+            { id: 'c', text: 'The offset grows, because a higher gain makes the loop more sluggish.' },
+            { id: 'd', text: 'Nothing changes at steady state — gain only sets how fast the loop gets there.' }
+        ],
+        explain: 'Doubling the gain roughly halves the residual error — it never zeroes it. On Sim 1\'s Medium loop, going from gain 2 to gain 4 takes the offset from about 7.7 °F (4.3 °C) to 5.1 °F (2.8 °C): tighter, still there. Push the gain far enough on a real loop with dead time and it overshoots and hunts. The droop is integral\'s job, not a reason to crank P.',
+        learnMore: { href: '/education/pid-basics.html#sim1', label: 'PID Basics — Sim 1, P only' },
         tags: ['pid', 'proportional']
     },
 
@@ -143,5 +186,44 @@ module.exports = [
         explain: 'Derivative sees PV racing toward setpoint and starts backing off early, so a small amount collapses the overshoot at almost no cost. But it\'s a brake — pile on too much and the loop becomes sluggish, and on a real noisy sensor it would start jittering. The sweet spot is small; beyond it you trade overshoot for slowness.',
         learnMore: { href: '/education/pid-basics.html#d-term', label: 'PID Basics — D, Derivative / Rate' },
         tags: ['pid', 'derivative']
+    },
+    {
+        type: 'mcq',
+        id: 'derivative-last-knob',
+        prompt: 'A big hot-water reheat coil with several minutes of lag runs PI and overshoots setpoint on every call. A new programmer reaches for derivative first — "it\'s the term built for lag." What is the better first move?',
+        choices: [
+            { id: 'a', text: 'Add a small Td right away — derivative is the term built for lag, so it is the standard fix.' },
+            { id: 'b', text: 'Speed up the reset (shorter Ti) so the loop reaches setpoint before it can overshoot.' },
+            { id: 'c', text: 'Slow the reset (longer Ti), then trim the gain if it still rings. Leave Td at zero.', correct: true },
+            { id: 'd', text: 'Switch to P-only — the integral term is the one that overshoots.' }
+        ],
+        explain: 'The overshoot is P + I pushing while heat is still on its way through the coil, so turn the knobs doing the work first: give the integral less authority (longer Ti), then back off the gain if the loop still rings. Derivative is almost always small or zero in HVAC — it amplifies sensor noise, most loops never need it, and plenty of experienced programmers never put Td on a reheat coil at all. Most HVAC loops are PI, not full PID; treat D as the last knob, not the first. Speeding up the reset makes the overshoot worse (the I-term worked example), and P-only trades the overshoot for droop.',
+        learnMore: { href: '/education/pid-basics.html#d-term', label: 'PID Basics — D, Derivative / Rate' },
+        tags: ['pid', 'derivative', 'integral']
+    },
+    {
+        type: 'tf',
+        id: 'fast-loop-skips-derivative',
+        prompt: 'On a fast, clean loop such as duct static pressure or VFD speed, adding derivative is the usual way to tighten control.',
+        answer: false,
+        explain: 'False. Derivative earns its keep on a process with a lot of lag, where P + I keeps pushing while the effect is still on its way. A fast loop has little lag to anticipate, so D buys almost nothing and still amplifies whatever noise the sensor carries. Fast, clean loops run PI.',
+        learnMore: { href: '/education/pid-basics.html#d-term', label: 'PID Basics — D, Derivative / Rate' },
+        tags: ['pid', 'derivative']
+    },
+
+    // ── Where the loop lives ───────────────────────────────
+    {
+        type: 'mcq',
+        id: 'pid-block-on-wiresheet',
+        prompt: 'In a building-automation controller, how does the PID loop you tune usually appear on the wiresheet?',
+        choices: [
+            { id: 'a', text: 'As a single block: setpoint and measurement wired in on the left, a 0–100 % command leaving on the right.', correct: true },
+            { id: 'b', text: 'As three separate P, I and D blocks whose outputs you sum by hand.' },
+            { id: 'c', text: 'It doesn\'t appear — the loop is a fixed routine set only from the controller\'s front panel.' },
+            { id: 'd', text: 'As a block that outputs the raw error, which the actuator integrates into a position.' }
+        ],
+        explain: 'The whole PID — all three terms — lives in one block. A setpoint and a measurement come in, the 0–100 % command goes out to the valve or damper, and the rest of the sequence is the supporting blocks that feed and gate it. Knowing that shape is what lets you find the loop on an unfamiliar sheet.',
+        learnMore: { href: '/education/function-blocks.html#families', label: 'Function-Block Basics — The block families' },
+        tags: ['pid', 'function-blocks']
     }
 ];
