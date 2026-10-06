@@ -3166,7 +3166,7 @@ Number Registry (checked 2026-10-05) registers `bacnet` at 47808
 "not IANA-registered" stands, and the sequential ports are field
 convention only — so the block stays out of reader prose on all three
 surfaces, as a settled fact rather than an open question.
-- [ ] Clause text verified by the owner on the PR.
+- [x] Clause text verified by the owner on the PR *(owner, 2026-10-06: "Clauses check out")*.
 
 ### 89. MS/TP lesson + one bank explain overstate the steady-state cost of Max_Master = 127 *(flagged 2026-08-21, quiz-growth wave-1 refutation round — mstp lane)* *(ruled 2026-10-05 — soften both surfaces to the amortized Npoll story in one lane with #88; owner checks the clause on the PR; fix pending)* *(addressed 2026-10-05 · PR #615)*
 
@@ -3253,6 +3253,178 @@ mechanism. The advice (one uniform `Max_Master`, a little above the
 highest MAC) is unchanged. The `max-master-where-to-set` explain was
 left as PR #592 shipped it — "walking a hundred-odd addresses nobody
 owns, over and over" is the sweep.
-- [ ] Clause text verified by the owner on the PR (9.5.6
+- [x] Clause text verified by the owner on the PR *(owner, 2026-10-06: "Clauses check out")* (9.5.6
   DONE_WITH_TOKEN: does `SendMaintenancePFM` reset `TokenCount`? —
   expected no; only `ResetMaintenancePFM` and `ReceivedReplyToPFM` do).
+
+### 90. air-handlers.html says the coils take "the same two-way valve" as any loop load — Load Piping teaches two-way and three-way *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(ruled 2026-10-06 — owner asked for the lesson fix; shipped as "two-way or three-way valve" in PR #635, open at this writing)*
+
+**Location:** `html/education/air-handlers.html:362` — *"on a built-up
+unit these coils are hydronic loads — the same two-way valve, same
+supply and return piping you met in Load Piping"*. **Lens:** working
+engineer. **Issue:** absolutism. The sentence's point (an AHU coil is a
+loop load like any other) is right, but it names one valve
+arrangement as *the* arrangement, while the lesson it cites teaches
+two-way AND three-way at a load. A hot-water preheat coil with its own
+circulator and a three-way valve, piped for freeze protection, is a
+common built-up arrangement, so a reader who has seen one is told it
+does not exist. **Verification:** confirmed by reading the line; the
+air-handlers bank's `ah-coils-are-hydronic-loads` explain already says
+*"the same two-way (or three-way) valve choices Load Piping teaches"*
+(PR #609, open when this was written) — the refuter softened the bank,
+not the lesson, so the two now disagree. **Suggested direction:** bring
+the lesson to the bank's wording — "the same two-way (or three-way)
+valve choices" — so lesson and explain say one thing.
+
+### 91. air-handlers.html — the 38 °F freeze threshold lives only in the widget; the prose names none *(flagged 2026-10-05, quiz-growth wave-2 refutation round)*
+
+**Location:** `html/education/air-handlers.html` — the sensor-strip
+widget's `const FREEZE_AT = 38;` (`:676`, commented *"freeze-stat
+territory"*), used at `:754` / `:780`, and the status string *"Mixed air
+near freezing — freeze-stat territory"* (`:756`). **Lens:** reader /
+quiz author. **Issue:** the only number the lesson has for where freeze
+trouble starts is a script constant; no prose sentence on the page
+names a threshold or a freeze stat at all. A quiz question about the
+trip point has nothing in the lesson to cite, and a reader who skips
+the widget never meets the number. **Verification:** confirmed — a grep
+of the page for `freeze` and `38` finds only the script and a CSS
+comment. **Suggested direction:** do not add the number here; the
+coil-freeze-protection lesson (PR #620, open when this was written)
+states a 38 °F house setting and should own it. Once that lesson
+ships, give the air-handlers prose one pointer to it near the widget.
+Do not promise the lesson in copy before it is live (CLAUDE.md, *No
+coming-soon copy*); PR #620 currently adds it to the page's
+`relatedLinks` only.
+
+### 92. air-handlers.html — the MA-T-reads-the-coil war story exists only as a script string behind the failure preset *(flagged 2026-10-05, quiz-growth wave-2 refutation round)*
+
+**Location:** `html/education/air-handlers.html:782` — the
+`widget-anecdote` HTML string (MA-T *"sawtoothing in lockstep with the
+compressor stage"* because the sensor sat too close to the DX coil),
+revealed only once the `damper linkage failure` preset (`:515`) drives
+MA-T below `FREEZE_AT` (`:780`). **Lens:** reader / quiz author.
+**Issue:** a reader who never presses that preset cannot find the story
+anywhere in prose. The bank's `ah-ma-t-reads-the-coil` gotcha (PR #609)
+is built on it and links `#sensor-strip`, where the prose (`:505`)
+introduces the widget but not the story. `economizers.html:398` points
+readers at it too (*"the Air Handlers lesson's widget hides a war story
+about exactly that"*), so the hiding is acknowledged, not accidental.
+**Verification:** confirmed by reading the widget code and the
+`#sensor-strip` prose. **Suggested direction:** one prose sentence near
+the widget naming the lesson (a mixed-air sensor mounted too close to
+the coil reads the coil, not the mix), leaving the war story itself in
+the widget — or accept, on the ground that the economizers page
+discloses where it is.
+
+### 93. air-handlers.html — the worked example's "damper flow isn't linear with stroke" caveat is untested *(flagged 2026-10-05, quiz-growth wave-2 refutation round)*
+
+**Location:** `html/education/air-handlers.html:352`, the mixing
+worked example's aside *"calling the commanded position a flow fraction
+to keep the arithmetic readable — real damper flow isn't linear with
+stroke"*. **Lens:** practice design. **Issue:** a field-relevant
+caveat (the reason a 20 % command is not 20 % outdoor air) that no
+question in the air-handlers bank exercises; a grep of the PR #609 bank
+for `linear` / `stroke` finds nothing. Candidate beat for a later quiz
+wave, or a slightly longer prose treatment. **Verification:** confirmed
+by grep. **Dropped half of the original note:** the refuter also said
+the lesson never states the relief/exhaust damper sits upstream of the
+mixing box. It does — the opening walk (`:172`, *"Just before the unit,
+some of it is thrown away — pushed out the exhaust / relief opening —
+and the rest drops into the mixing box"*) and the first diagram's
+`<desc>` (`:178`, *"Before the mixing box, an exhaust and relief
+branch …"*). Not logged as a finding. **Suggested direction:** a
+candidate question for the next air-handlers wave; no page change
+needed.
+
+### 94. pid-basics.html calls duct static a "fast, clean loop" — in the field it is a famously jittery signal *(flagged 2026-10-05, quiz-growth wave-2 refutation round)*
+
+**Location:** `html/education/pid-basics.html:58`, the D callout's
+*When it earns its keep* paragraph — *"On a fast, clean loop (duct
+pressure, VFD speed), don't bother"*. **Lens:** working engineer.
+**Issue:** "fast" is right, "clean" is not: a duct static transmitter
+reads turbulence, and the signal is often noisy enough to need input
+filtering before it is usable. The page's own D callout, one line up
+(`:57`), says D *"amplifies sensor noise"*, and the bank's
+`derivative-noise` explain says the same — so the stronger reason to
+skip D on duct static is that it is noisy, and the lesson names the
+opposite. The advice (no D on duct static) stands either way.
+**Verification:** confirmed by reading the line. **Suggested
+direction:** soften "clean" — e.g. "a fast loop (duct pressure), where D
+has little lag to anticipate and plenty of noise to amplify" — or name
+the variation (some installs filter it smooth, many don't).
+
+### 95. pid-basics.html and the PID tuner list "VFD speed" as a loop — it is the OUTPUT of the static loop *(flagged 2026-10-05, quiz-growth wave-2 refutation round)*
+
+**Location:** `html/education/pid-basics.html:58` (*"duct pressure, VFD
+speed"* as examples of a fast loop) and
+`html/simulators/pid-tuner.html:383`, the Fast row of the time-constant
+table (*"Duct static pressure, mixing-box damper position, fan VFD
+speed"*). `tools/pid-parameter-translator.html` was checked and does
+not carry it. **Lens:** working engineer. **Issue:** both lists read as
+"loops whose measured variable is X", and VFD speed is normally not a
+PV — it is what the duct static loop commands. A beginner can take it
+to mean speed is controlled by its own PID. *Mixing-box damper
+position* in the tuner row has the same shape (damper position is an
+output; the loop measures mixed-air temperature). **Verification:**
+confirmed by grep. **Suggested direction:** name the measured variable
+(duct static pressure; mixed-air temperature) and, where useful, the
+output it drives ("duct static, which the loop holds by commanding fan
+speed").
+
+### 96. economizers.html defines "lockout" only as the high-limit half of changeover; other surfaces use it for the cold end *(flagged 2026-10-05, quiz-growth wave-2 refutation round)*
+
+**Location:** `html/education/economizers.html:219` — *"you'll also
+hear high-limit lockout for its other half — the condition that slams
+the gate shut"*; the changeover widget's pill *"Lock out — minimum OA"*
+(`:525`). **Lens:** reader / terminology. **Issue:** the page gives
+"lockout" one meaning (too warm or too humid outside to economize). The
+DDC Workbench agrees: `html/scripts/ddcw-ahu-unit.js:1838` reads
+*Locked out* only when OA-T is at or above the high limit or the
+differential, and *At minimum* otherwise. But the sequencing-scenarios
+bank's `economizer-low-limit` question uses *"low-limit / mixed-air
+lockout"* and *"an OA-temp lockout"* for the cold end
+(`html/_data/quizzes/sequencing-scenarios.js:93`, `:96`), and the field
+uses it both ways. A reader who meets the cold-end sense will ask
+"locked out by what?". **Verification:** confirmed by grep across the
+three surfaces. **Suggested direction:** one sentence on the economizers
+page saying the word is used at both ends (high-limit lockout of free
+cooling; a low-ambient lockout or low-limit at the cold end), in the
+disclosure register the deadband convention uses — name both senses,
+don't legislate one.
+
+### 97. practice/economizers.html says "Ten questions" over a 15-question bank *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(accepted 2026-10-05 — run claim, not a bank count; see #241)*
+
+**Location:** `html/practice/economizers.html:3` (`description`) and
+`:28` (intro, *"ten questions down the lesson walk"*), with
+`defaultCount: 10` at `:72`, against the 15-question bank PR #610 grows
+it to. **Lens:** practice design. **Issue:** none — recorded so nobody
+"fixes" it. Page copy and nav-card pills are RUN claims: a run
+presents `defaultCount` = 10 questions sampled from the bank, so
+"ten questions" stays true however large the bank grows.
+`practice/bacnet-basics.html` is the precedent (same copy, 15-question
+bank). The rule is in the friction file's *Quiz banks grow past their
+presented count* entry, set when codebase-issues #241 grew the first
+bank past ten; a FORMAT pill, unlike a count, is a bank claim and does
+have to be checked. **Verification:** confirmed by reading the page and
+the bank. **Suggested direction:** none.
+
+### 98. Two cross-bank near-overlaps in the wave-2 banks *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(accepted 2026-10-05 — pedagogy, not a defect; the owner's own freeze-season story would differentiate the first pair)*
+
+**Location / lens:** practice design.
+
+- `eco-low-limit-override` (economizers bank, PR #610) is a near-twin of
+  `economizer-low-limit` (`html/_data/quizzes/sequencing-scenarios.js`)
+  — the same frigid-morning premise and the same answer (a low-limit
+  override drives the dampers toward minimum, with the freeze stat
+  behind it). A reader who drills both practice pages meets it twice.
+- `ah-min-oa-winter-safe` and `ah-ma-mix-calc` (air-handlers bank, PR
+  #609) solve the same blend equation for different unknowns; the
+  refuter measured them drawn together in ~43 % of 10-of-15 runs.
+
+**Issue:** neither is a defect. The economizers pair sits on two pages
+with different scopes (the lesson's drill vs a cross-topic scenario
+drill), and the air-handlers pair is inverse-problem practice on
+purpose. **Verification:** confirmed by reading the four questions.
+**Suggested direction:** none now. If the economizers twin ever
+grates, the owner's own freeze-season story is the material that
+would differentiate it.
