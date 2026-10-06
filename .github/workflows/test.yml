@@ -8,8 +8,8 @@ name: test
 # across full-Chrome and headless-shell alike, and blocking merges.
 #
 # The image tag MUST track the @playwright/test version in
-# package.json / package-lock.json (currently pinned 1.59.1, browser
-# revision v1217) — a mismatch makes Playwright try to fetch the right
+# package.json / package-lock.json (currently pinned 1.63.0, browser
+# revision v1243) — a mismatch makes Playwright try to fetch the right
 # revision at runtime, reintroducing the very download this avoids.
 # Bump the tag and the dependency together.
 #
@@ -29,7 +29,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v1.59.1-noble
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd  # v5
         # Full history — sitemap.njk derives <lastmod> from `git log` per
