@@ -177,7 +177,7 @@ module.exports = [
             { id: 'c', text: 'Raising the duct static setpoint so the mixing dampers see design pressure again.' },
             { id: 'd', text: 'Holding the supply fan at full speed whenever the outside-air damper sits at minimum.' }
         ],
-        explain: 'A damper position fixes a geometry, not a flow — the same lesson the boxes taught, replayed at the unit. As the supply fan slows, less air is pulled through that same opening, so a minimum-OA angle that was honest at design flow is a fiction at half flow; it is not a fixed share of whatever the fan moves. The honest floor is a measured one: serious VAV units measure their outside air or actively control to it. Raising duct static only buys some fan speed back at an energy cost and still measures nothing; pinning the fan at full speed throws away the cube-law fan saving that is where VAV earns its keep.',
+        explain: 'A damper position fixes a geometry, not a flow — the same lesson the boxes taught, replayed at the unit. As the supply fan slows, less air is pulled through that same opening, so a minimum-OA angle that was honest at design flow is a fiction at half flow. The code dose is a CFM, not a fraction: a fixed share of a shrinking flow is a shrinking dose. The honest floor is a measured one: serious VAV units measure their outside air or actively control to it. Raising duct static only buys some fan speed back at an energy cost and still measures nothing; pinning the fan at full speed throws away the cube-law fan saving that is where VAV earns its keep.',
         learnMore: { href: '/education/vav-systems.html#minimums', label: 'VAV Systems — The Floors' },
         tags: ['forced-air', 'vav', 'ventilation']
     },
