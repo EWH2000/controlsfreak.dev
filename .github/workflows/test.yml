@@ -1,8 +1,9 @@
 name: test
 
-# Runs the Playwright suite on every PR to main, inside the official
-# Playwright container image — browsers and their system libraries are
-# baked in, so CI never downloads a browser from cdn.playwright.dev.
+# Runs the Playwright suite on every PR to main and on every push to
+# main, inside the official Playwright container image — browsers and
+# their system libraries are baked in, so CI never downloads a browser
+# from cdn.playwright.dev.
 # That download was hanging *at 100%* (post-transfer, during extraction
 # / connection-close) deterministically on the GitHub-hosted runners,
 # across full-Chrome and headless-shell alike, and blocking merges.
@@ -17,9 +18,29 @@ name: test
 # _site/ with python3 (the guard step below ensures it's present);
 # GitHub Actions sets CI so reuseExistingServer stays off. The deploy
 # pipeline (Cloudflare Workers Build) is untouched.
+#
+# Why two triggers (codebase-issues #331). A child PR in a stack opens
+# against its parent's branch, so the `branches: [main]` filter skips
+# it; when the parent merges, GitHub retargets the child to main with
+# an `edited` event — not one of pull_request's default activity types
+# (opened / synchronize / reopened) — so the child showed no `test`
+# check at all, `mergeStateStatus` read CLEAN, and it merged untested.
+# Two chain PRs did exactly that on 2026-10-06. So:
+#   - pull_request also listens for `edited`, and the job's `if:` lets
+#     an edit through ONLY when it changed the base branch
+#     (`github.event.changes.base` is present on a retarget, absent on
+#     a title/body edit) — a retarget runs the suite, a typo fix in the
+#     PR description does not;
+#   - push to main runs the suite on main itself after every merge, so
+#     whatever reached main by any route (a retarget missed some other
+#     way, a direct push, a merge of two individually green PRs that
+#     conflict semantically) is tested where it actually lives.
 
 on:
   pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
+  push:
     branches: [main]
 
 permissions:
@@ -27,6 +48,8 @@ permissions:
 
 jobs:
   test:
+    # Skip a title/body edit; run a base-branch retarget (see header).
+    if: github.event_name != 'pull_request' || github.event.action != 'edited' || github.event.changes.base != null
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.63.0-noble
