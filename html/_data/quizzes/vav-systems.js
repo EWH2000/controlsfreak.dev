@@ -17,6 +17,19 @@
 // metric-rounding policy — except velocity pressure and CFM-per-ton,
 // which stay in their IP field frames (the airflow tool's US-native
 // posture: a metric K is a different number on a different label).
+//
+// The bank is deliberately larger than the page's defaultCount (10):
+// the engine samples an overflowing bank, so each run draws a
+// different subset (buildQueue() in quiz-engine.js). Coverage follows
+// the lesson's own section order — the shape and where the fan earns
+// its keep, the box's anatomy and its flow math, pressure independence
+// and the commissioning that keeps it honest, the ventilation and
+// reheat floors plus the outside-air floor at the unit, and the
+// machine's own floor (chilled water against DX, the per-ton
+// arithmetic, the starved-coil trend). The uncalibrated-box gotcha
+// draws on the "Where min and max come from" callout, which carries
+// no anchor of its own, so it deep-links #pressure-independence, the
+// section that hosts it.
 
 module.exports = [
     // ── One trunk, thirty claims ───────────────────────────
@@ -40,6 +53,20 @@ module.exports = [
         prompt: 'When a VAV zone gets too warm, its box responds by delivering colder air.',
         answer: false,
         explain: 'False. It delivers <em>more</em> of the same air — the trunk temperature barely moves all day. The volume knob is the box\'s only knob, which is the load-piping story with the fluid swapped: two-way valves throttle water, boxes throttle air, and in both systems something upstream has to answer for the throttling.',
+        learnMore: { href: '/education/vav-systems.html#one-to-thirty', label: 'VAV Systems — One Trunk, Thirty Claims' },
+        tags: ['forced-air', 'vav']
+    },
+    {
+        type: 'mcq',
+        id: 'vav-fan-part-load',
+        prompt: 'A mild afternoon leaves most of the building\'s boxes idling near their minimums. Where does a VAV system bank the biggest air-side saving from that part-load hour?',
+        choices: [
+            { id: 'a', text: 'At the boxes — a throttled damper draws less power than an open one.' },
+            { id: 'b', text: 'Nowhere on the air side — a VAV supply fan runs full speed all day.' },
+            { id: 'c', text: 'At the supply fan — its VFD slows with the building; cube law pays.', correct: true },
+            { id: 'd', text: 'At the reheat coils, which all lock out once the boxes reach minimum.' }
+        ],
+        explain: 'Total supply flow is just the sum of what the boxes are taking, so when they throttle, the fan has less to move — and on a VFD, fan power falls roughly with the cube of speed, so a modest slowdown is a large saving. That is where VAV earns its keep. A box damper saves nothing by itself; it only adds resistance, and reheat runs <em>at</em> minimum, not instead of it. How the fan learns how far to slow is duct static control, the answering half of the mirror.',
         learnMore: { href: '/education/vav-systems.html#one-to-thirty', label: 'VAV Systems — One Trunk, Thirty Claims' },
         tags: ['forced-air', 'vav']
     },
@@ -95,6 +122,21 @@ module.exports = [
         learnMore: { href: '/education/vav-systems.html#pressure-independence', label: 'VAV Systems — Why the Box Chases Flow' },
         tags: ['forced-air', 'vav']
     },
+    {
+        type: 'gotcha',
+        id: 'vav-uncalibrated-gotcha',
+        prompt: 'Hot call from a corner office. The box controller looks perfect on the graphic — but the balancer\'s flow hood disagrees. What is going on?',
+        snippet: '<pre class="quiz-snippet">VAV-214        CORNER OFFICE · COOLING CALL\nZONE TEMP      77.5 °F (25.3 °C) · setpoint 74.0 °F (23.3 °C)\nFLOW SETPOINT  900 CFM (1,530 m³/h) · scheduled maximum\nFLOW (BOX)     900 CFM (1,530 m³/h) · loop on setpoint\nHOOD READING   640 CFM (1,090 m³/h) at the diffusers</pre>',
+        choices: [
+            { id: 'a', text: 'Duct static is too low — the box is starved and can\'t reach its maximum.' },
+            { id: 'b', text: 'The flow reading was never calibrated — the loop chases an unverified K.', correct: true },
+            { id: 'c', text: 'The damper actuator is slipping on its shaft, so the blade never opened.' },
+            { id: 'd', text: 'The hood is wrong — the box\'s own flow ring is the better instrument here.' }
+        ],
+        explain: 'A flow loop is only as honest as the number it chases. This box is doing exactly what a pressure-independent box should — holding its <em>measured</em> CFM on setpoint — but the measurement is off, so it delivers 640 while believing 900. Low static or a slipping actuator would show a flow reading stuck <em>below</em> setpoint with the damper driven wide open; here the loop is satisfied. That is why commissioning puts a hood on the diffusers and back-solves K from the hood reading and the velocity pressure the controller sees: a box that was never commissioned obeys its flow loop perfectly, around a number no one ever verified.',
+        learnMore: { href: '/education/vav-systems.html#pressure-independence', label: 'VAV Systems — Why the Box Chases Flow' },
+        tags: ['forced-air', 'vav', 'airflow']
+    },
 
     // ── The floors ─────────────────────────────────────────
     {
@@ -125,8 +167,47 @@ module.exports = [
         learnMore: { href: '/education/vav-systems.html#minimums', label: 'VAV Systems — The Floors' },
         tags: ['forced-air', 'vav', 'reheat']
     },
+    {
+        type: 'mcq',
+        id: 'vav-oa-at-part-flow',
+        prompt: 'A VAV unit\'s minimum outside air was set as a damper position during commissioning, with the supply fan at full speed. On a mild afternoon the fan has slowed to half speed. What keeps that unit\'s ventilation floor honest?',
+        choices: [
+            { id: 'a', text: 'Nothing extra — a damper position is a fixed share of whatever the fan moves, so the ventilation share holds.' },
+            { id: 'b', text: 'Measuring the outside airflow, or controlling to a measured value, rather than trusting the damper angle.', correct: true },
+            { id: 'c', text: 'Raising the duct static setpoint so the mixing dampers see design pressure again.' },
+            { id: 'd', text: 'Holding the supply fan at full speed whenever the outside-air damper sits at minimum.' }
+        ],
+        explain: 'A damper position fixes a geometry, not a flow — the same lesson the boxes taught, replayed at the unit. As the supply fan slows, less air is pulled through that same opening, so a minimum-OA angle that was honest at design flow is a fiction at half flow. The code dose is a CFM, not a fraction: a fixed share of a shrinking flow is a shrinking dose. The honest floor is a measured one: serious VAV units measure their outside air or actively control to it. Raising duct static only buys some fan speed back at an energy cost and still measures nothing; pinning the fan at full speed throws away the cube-law fan saving that is where VAV earns its keep.',
+        learnMore: { href: '/education/vav-systems.html#minimums', label: 'VAV Systems — The Floors' },
+        tags: ['forced-air', 'vav', 'ventilation']
+    },
 
     // ── The coil floor ─────────────────────────────────────
+    {
+        type: 'mcq',
+        id: 'vav-chw-vs-dx',
+        prompt: 'Two VAV air handlers ride the same mild afternoon down to a quarter of design airflow. One has a chilled-water coil; the other has a DX coil whose lead stage — half the unit\'s tonnage — is still running. Which coil is in trouble?',
+        choices: [
+            { id: 'a', text: 'The chilled-water coil — water keeps flowing through it, so it ices first.' },
+            { id: 'b', text: 'Neither — a VAV coil is sized for part flow, so both just ride it down.' },
+            { id: 'c', text: 'Both alike — any cooling coil starved of airflow ices over the same way.' },
+            { id: 'd', text: 'The DX coil — the compressor keeps moving refrigerant, air or no air.', correct: true }
+        ],
+        explain: 'On a chilled-water coil, part flow is graceful: less air picks up less heat, the modulating valve throttles back, and the water side shrugs. A DX coil is the evaporator of a refrigerant circuit, and a running compressor moves refrigerant whether or not there is warm air to boil it. A quarter of the air for half the tonnage is about 200 CFM per ton, half the field floor — suction pressure dives, the fins drop below freezing, and the condensate freezes onto them instead of dripping off. Ice chokes the airflow further, which starves the coil further: a runaway with a ratchet.',
+        learnMore: { href: '/education/vav-systems.html#the-coil-floor', label: 'VAV Systems — The Machine Has a Minimum Too' },
+        tags: ['forced-air', 'vav', 'dx']
+    },
+    {
+        type: 'numeric',
+        id: 'vav-tons-per-airflow',
+        prompt: 'A mild afternoon: the boxes have throttled a packaged VAV unit\'s total supply down to 6,000 CFM (10,200 m³/h). Using the field rule of thumb of roughly 400 CFM of air per ton of active cooling, about how many tons of running DX can that airflow carry without starving the coil? Enter the answer in tons.',
+        answer: 15,
+        tolerance: 0.5,
+        unit: 'tons',
+        explain: '6,000 CFM ÷ 400 CFM per ton = 15 tons. If the stage still running is bigger than that — a 25-ton first stage wants about 10,000 CFM (17,000 m³/h) — the coil is starving, and suction is on its way down. That mismatch is why staging interlocked to proven airflow locks a stage out rather than run it starved: the interlock chooses the compressor over the complaint. CFM-per-ton stays in its IP field frame, like the K-factor.',
+        learnMore: { href: '/education/vav-systems.html#the-coil-floor', label: 'VAV Systems — The Machine Has a Minimum Too' },
+        tags: ['forced-air', 'vav', 'dx']
+    },
     {
         type: 'gotcha',
         id: 'vav-starved-gotcha',
