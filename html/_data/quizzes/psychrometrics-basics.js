@@ -9,6 +9,22 @@
 // cf_quiz_psychrometrics-basics_* localStorage keys. Pairs with the
 // Psychrometrics Basics lesson; learnMore hrefs deep-link its <h2>
 // anchors.
+//
+// Quiz prose is painted post-load (the units walker doesn't reach it),
+// so temperatures carry static metric parentheticals per the
+// metric-rounding policy — results close on the displayed operands.
+//
+// The bank is deliberately larger than the page's defaultCount (10):
+// the engine samples an overflowing bank, so each run draws a
+// different subset (buildQueue() in quiz-engine.js). Coverage tracks
+// the lesson's sections — the seven properties (wet-bulb as the
+// evaporative floor among them), why two lock the rest and which
+// field pair earns trust at a coil, the process families including
+// cooling with dehumidification, the gotchas with the CFM-to-mass-flow
+// arithmetic worked by hand, and the pool-room condensation widget.
+// That capstone sits under a section heading with no id, so its
+// question deep-links #pool-widget, the widget container itself —
+// the nearest id that exists (no ids are added to the lesson here).
 
 module.exports = [
     // ── The seven properties ───────────────────────────────
@@ -54,6 +70,20 @@ module.exports = [
         learnMore: { href: '/education/psychrometrics-basics.html#properties', label: 'Psychrometrics Basics — The Seven Properties' },
         tags: ['psychrometrics', 'specific-volume']
     },
+    {
+        type: 'mcq',
+        id: 'psy-wet-bulb-floor',
+        prompt: 'A cooling tower rejects heat by evaporating some of its water into the outdoor air. Which property of that air sets the lowest temperature the tower could ever cool its water to?',
+        choices: [
+            { id: 'a', text: 'Dew point — the temperature where the air\'s vapor starts to condense.' },
+            { id: 'b', text: 'Dry-bulb — the outdoor temperature the thermometer reads.' },
+            { id: 'c', text: 'Relative humidity — the percent on the outdoor-air sensor.' },
+            { id: 'd', text: 'Wet-bulb — the evaporative limit of that air.', correct: true }
+        ],
+        explain: 'Wet-bulb is the evaporative-cooling floor: water evaporating off a wet sock pulls the thermometer down to the air\'s evaporative limit, and that is the lowest temperature you can ever cool water to with that air — the number the cooling-tower industry lives on. Dew point sits below wet-bulb in unsaturated air, which is what makes it the tempting wrong answer, but evaporation pulls water toward wet-bulb. WB equals DB only at saturation; the drier the air, the bigger the depression and the more cooling the air can do.',
+        learnMore: { href: '/education/psychrometrics-basics.html#properties', label: 'Psychrometrics Basics — The Seven Properties' },
+        tags: ['psychrometrics', 'wet-bulb']
+    },
 
     // ── Two properties lock the rest ───────────────────────
     {
@@ -84,6 +114,15 @@ module.exports = [
         learnMore: { href: '/education/psychrometrics-basics.html#two-lock', label: 'Psychrometrics Basics — Two Properties Lock the Rest' },
         tags: ['psychrometrics', 'state']
     },
+    {
+        type: 'tf',
+        id: 'psy-coil-leaving-pair',
+        prompt: 'For a trustworthy cooling-coil leaving-air reading, the DB + RH pair from a duct humidity probe is the gold standard — wet-bulb readings are a holdover from the sling-psychrometer days.',
+        answer: false,
+        explain: 'False. DB + WB — from a sling psychrometer or an aspirated wet/dry pair — is the original field measurement and still the gold standard for a coil leaving-air reading. DB + RH is the everyday pair because almost every sensor reports it, and it is also the pair with the most footguns. Either pair locks the state, since any two independent properties fix the other five; the question is which pair you trust at the coil.',
+        learnMore: { href: '/education/psychrometrics-basics.html#two-lock', label: 'Psychrometrics Basics — Two Properties Lock the Rest' },
+        tags: ['psychrometrics', 'state', 'wet-bulb']
+    },
 
     // ── Process families ───────────────────────────────────
     {
@@ -105,6 +144,20 @@ module.exports = [
         explain: 'Mixed DB = 0.25 × 95 + 0.75 × 75 = 23.75 + 56.25 = 80 °F (in SI: 0.25 × 35.0 + 0.75 × 23.9 = 26.7 °C). The mixed state lands on the straight line between the two source points, at the mass-weighted fraction — 25 % of the way from RA toward OA. The chart tool\'s MA node does exactly this, for every property at once, not just dry-bulb.',
         learnMore: { href: '/education/psychrometrics-basics.html#processes', label: 'Psychrometrics Basics — Process Families' },
         tags: ['psychrometrics', 'processes', 'mixing']
+    },
+    {
+        type: 'mcq',
+        id: 'psy-cooling-dehumidification',
+        prompt: 'A cooling coil\'s surface runs below the entering air\'s dew point. Compared with the entering air, what happens to the air leaving the coil?',
+        choices: [
+            { id: 'a', text: 'Dry-bulb drops; humidity ratio and dew point hold steady while RH climbs.' },
+            { id: 'b', text: 'Dry-bulb drops; humidity ratio rises as the wet coil adds moisture.' },
+            { id: 'c', text: 'Dry-bulb, humidity ratio and dew point all fall together.', correct: true },
+            { id: 'd', text: 'Dry-bulb holds steady while humidity ratio drops — the coil removes moisture only.' }
+        ],
+        explain: 'Below the entering dew point the coil condenses moisture out of the air and it drains away, so the leaving air carries less water — lower humidity ratio, lower dew point — as well as a lower dry-bulb. On the chart the path bends down-and-to-the-left toward the coil\'s apparatus dew point, the effective coil-surface temperature the leaving air is pulled toward. A steady humidity ratio is the sensible line, which only holds while the coil stays above the entering dew point.',
+        learnMore: { href: '/education/psychrometrics-basics.html#processes', label: 'Psychrometrics Basics — Process Families' },
+        tags: ['psychrometrics', 'processes', 'dew-point']
     },
     {
         type: 'mcq',
@@ -150,5 +203,33 @@ module.exports = [
         explain: 'A cooling coil on a humid day does two jobs: drop the temperature (sensible) and wring out moisture (latent). ṁ·Cp·ΔT captures only the sensible part and undersizes the coil. Enthalpy bundles sensible and latent into one number, so ṁ·Δh gives the true total — and it\'s why an enthalpy economizer compares OA vs. RA on total heat, not dry-bulb alone (hot-but-dry air can carry less total heat than cool-but-wet air).',
         learnMore: { href: '/education/psychrometrics-basics.html#gotchas', label: 'Psychrometrics Basics — Gotchas' },
         tags: ['psychrometrics', 'enthalpy']
+    },
+    {
+        type: 'numeric',
+        id: 'psy-cfm-to-mass-flow',
+        prompt: 'A cooling coil handles 10,000 CFM (17,000 m³/h) of entering air with a specific volume of 13.5 ft³/lb (0.84 m³/kg). Using <code>ṁ = CFM · 60 / v</code>, what mass flow does the coil actually see? Enter the answer in lb/h.',
+        answer: 44444,
+        tolerance: 50,
+        unit: 'lb/h',
+        explain: '10,000 × 60 / 13.5 = 600,000 / 13.5 ≈ 44,444 lb/h — the 60 turns per-minute into per-hour, and dividing by v turns volume into mass. (The formula computes in IP; a metric reader lands on the same mass, about 20,200 kg/h.) Push the same 10,000 CFM through warmer, wetter entering air at v = 14.0 ft³/lb (0.87 m³/kg) and the coil sees 600,000 / 14.0 ≈ 42,857 lb/h — about 3.6 % less mass, one reason coil performance drops off at design conditions.',
+        learnMore: { href: '/education/psychrometrics-basics.html#gotchas', label: 'Psychrometrics Basics — Gotchas' },
+        tags: ['psychrometrics', 'specific-volume']
+    },
+
+    // ── Does this air sweat the windows? ───────────────────
+    {
+        type: 'gotcha',
+        id: 'psy-pool-glass-at-spec',
+        prompt: 'A pool room is holding its humidity spec exactly. On a cold winter day the tech reads the BAS and says the windows can\'t be sweating. The readings are below. What\'s the catch?',
+        snippet: '<pre class="quiz-snippet">SPACE DB     82 °F (27.8 °C)\nSPACE RH     60 %        spec: ≤ 60 % RH\nGLASS SURF   50 °F (10.0 °C)\nclaim: "humidity is at spec, so the glass stays dry"</pre>',
+        choices: [
+            { id: 'a', text: 'The glass sweats — this room\'s dew point sits near 67 °F (19.4 °C), well above the glass.', correct: true },
+            { id: 'b', text: 'Nothing — the room is holding its RH spec, so the glass stays dry and the claim is correct.' },
+            { id: 'c', text: 'The glass is fine; 60 % RH is a comfort limit and says nothing about condensation on surfaces.' },
+            { id: 'd', text: 'The glass only starts sweating once the room climbs past its 60 % RH limit, so it is dry today.' }
+        ],
+        explain: 'Meeting the RH spec says nothing about the glass until you back out the dew point: 82 °F (27.8 °C) at 60 % RH has a dew point near 67 °F (19.4 °C), so the 50 °F (10.0 °C) glass sits about 17 °F (9.4 °C) below it and grows water. The control target is dew point below the coldest surface in the room, with margin to spare — the lesson\'s widget opens on exactly this case and reads condensation. The fight is won at the coil, by driving leaving-air dew point well below the glass.',
+        learnMore: { href: '/education/psychrometrics-basics.html#pool-widget', label: 'Psychrometrics Basics — Does This Air Sweat the Windows?' },
+        tags: ['psychrometrics', 'dew-point', 'relative-humidity']
     }
 ];
