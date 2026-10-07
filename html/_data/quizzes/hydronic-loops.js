@@ -185,7 +185,7 @@ module.exports = [
             { id: 'c', text: 'System return water — the common pipe only adds heat on the next pass.' },
             { id: 'd', text: 'A blend of injected primary water and cooler system return.', correct: true }
         ],
-        explain: 'The loads see the mixed temperature. Injected primary water joins the system loop at the tees and blends with cooler system return before it reaches a single load — in the lesson\'s worked example, 180 °F (82.2 °C) primary and 140 °F (60.0 °C) return blend to a 148 °F (64.4 °C) supply. More injection puts more hot water in the blend, which is how the injection pump sets supply temperature.',
+        explain: 'The loads see the mixed temperature. Injected primary water joins the system loop at the tees and blends with cooler system return before it reaches a single load — in the lesson\'s worked example, 40 GPM of 180 °F (82.2 °C) primary meets 160 GPM of 140 °F (60.0 °C) return at the tees, and the loads get the flow-weighted average of the two, not either one. More injection puts more hot water in the blend, which is how the injection pump sets supply temperature.',
         learnMore: { href: '/education/hydronic-loops.html#d3', label: 'Hydronic Loops — Primary-secondary twin-T' },
         tags: ['hydronics', 'primary-secondary', 'injection']
     },
