@@ -1425,8 +1425,9 @@ under *Git conventions*). Stage specific file lists, not
     `package.json` version bump.
   - ⚠️ **The trap is SHARED code — "the PR is about a hidden page" is
     NOT the test.** PR #452 was about the hidden AHU but modified
-    `html/scripts/psychro-engine.js`, which **eight pages load and
-    seven of those are live**: even a purely additive function ships
+    `html/scripts/psychro-engine.js`, which **eight pages loaded and
+    seven of those were live** (nine live consumers as of 2026-10-06 —
+    derive it with a grep, never cite this count): even a purely additive function ships
     new bytes to all seven, and a parse error there breaks all seven.
   - The boundary **moved at graduation** (Phase 8, 2026-08-04): the
     workbench pages gained canonicals, entered the sitemap, and every
@@ -1648,3 +1649,14 @@ has merged.
 Near-term work — new tools, psych chart *floating state-point chip*,
 more Education pages — lives in `site-ideas-and-friction.md`
 (feature ideas) and `codebase-issues.md` (code-quality holds).
+
+**Session start:** `git pull --ff-only`, then `npm run status` (ledger and
+content numbers, report-only) and `docs/next-session-handoff.md` — the
+rolling brief the `/handoff` skill writes and `/verify-handoff` checks;
+every claim in it is a hypothesis until a command confirms it. Owner
+rulings live in `docs/audits/2026-10-reentry/rulings.md`. `npm run
+dashboard` renders the status dashboard to `_dashboard/dashboard.html`
+from `npm run status --json`, the open-PR list and the hand-authored
+`docs/audits/2026-10-reentry/dashboard/dashboard-extra.json`. The
+quiz-bank growth lane is a committed named Workflow,
+`.claude/workflows/quiz-bank-growth.js` (its header has the arguments).

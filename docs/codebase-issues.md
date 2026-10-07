@@ -9441,7 +9441,7 @@ prohibited) are itemised in
 `textContent` rewritten unguarded at 10 Hz (item 18) — shipped with (a)
 above; see there for why it could not wait.
 
-### 228. Engineering math is re-implemented per page — air mixing carries three disagreeing forms and no shared helper exists *(noticed 2026-07-27, owner direction — scheduled separately, not this arc)*
+### 228. Engineering math is re-implemented per page — air mixing carries three disagreeing forms and no shared helper exists *(noticed 2026-07-27, owner direction — scheduled separately, not this arc)* *(ruled 2026-10-06 — the design note's §6 defaults accepted; execution lane pending, `docs/engine-standardization.md` §4)*
 
 Owner direction, 2026-07-27: *"The air mixing disagreeing seems like an
 issue I'd like to fix, with all these things using it, it may be good to

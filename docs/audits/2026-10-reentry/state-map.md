@@ -3,6 +3,10 @@
 > **Disposition: the state-of-project map (a record).** Produced 2026-10-05, the owner's first session back after a two-month pause, by a read-only 21-agent workflow (6 Sonnet ledger-classification lanes + 2 content-audit lanes, each adversarially refuted by an Opus lane; Opus lanes over the friction file, the arc docs and the open external PR; a Sonnet drift-check lane; one Fable synthesis). Repo read at local main `44a1322` with origin/main at `e33a825` (PR #601). **A snapshot, not live state** — the live readout is `npm run status`; where this file and that script disagree, the script is current. Superseded by nothing yet.
 >
 > **Owner rulings taken the same day, on this material:** (1) the dashboard is a durable report-only `npm run status` script plus this record; (2) **PR #602 (external Korean localization) was CLOSED** courteously with a fork suggestion — see `pr602-assessment.md`; (3) the first work lanes after the decision sitting are **mechanical cleanup only**; (4) **the next content arc is deliberately NOT picked** — §2 item 3 (the §7.2 gloss lane vs the dev-arc-brief re-triage) stays an open owner item. ⟨2026-10-05 evening: picked — freeze season + quizzes; rulings.md item 17⟩
+>
+> **2026-10-06:** the night-1 queue this map led to is merged (rulings.md
+> §18); the rolling brief for what comes next is `docs/next-session-handoff.md`,
+> and `npm run dashboard` re-renders the dashboard this map was first drawn for.
 
 
 Synthesis of the read-only state-map lanes (codebase-issues c1–c6 + refutation, content-audit a1–a2 + refutation, friction file, arc docs, health, PR #602). Repo read at local main `44a1322`; origin/main is `e33a825` (PR #601, 2026-09-02). Appendix: `appendix.md` beside this file.

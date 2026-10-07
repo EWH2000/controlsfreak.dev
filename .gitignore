@@ -22,6 +22,7 @@ Thumbs.db
 # need its own un-ignore line here.
 .claude/*
 !.claude/skills/
+!.claude/workflows/
 
 # Node / npm
 node_modules/
@@ -58,3 +59,8 @@ controlsfreak.dev_SearchPerformanceOverview_*.csv
 # worktree can't stage one by accident.
 controlsfreak-dev-arc-brief.md
 OtherProjectHandoffsDoNotGitCommit/
+
+# Status dashboard render — `npm run dashboard` writes status.json, prs.json
+# and dashboard.html here; the hand-authored input lives in
+# docs/audits/2026-10-reentry/dashboard/. Generated, never committed.
+_dashboard/
