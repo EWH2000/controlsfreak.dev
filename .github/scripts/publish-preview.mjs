@@ -46,16 +46,40 @@
 //   THE DESTINATION GUARD IS THE POINT. `rsync -a --delete` aimed one path
 //   component short — at ~/caddy/dashboard instead of ~/caddy/dashboard/cfdev —
 //   would erase the hub's index.html, its self-hosted fonts, and the published
-//   Android APK. ~/caddy IS NOT A GIT REPO. There is no undo. So the resolved
-//   destination is asserted to end with /caddy/dashboard/cfdev before --delete
-//   is allowed anywhere near it, the source tree is sanity-checked so a
-//   half-deleted _site can't --delete the live preview into nothing, and a
-//   non-empty destination without a _built.txt marker is refused as
-//   "not ours".
+//   Android APK. ~/caddy IS NOT A GIT REPO. There is no undo. So before
+//   --delete is allowed anywhere near it, the resolved destination must pass
+//   THREE checks: it ends with /caddy/dashboard/cfdev, it sits under the home
+//   directory (os.homedir()), and its parent (…/caddy/dashboard) already
+//   exists. The source tree is sanity-checked so a half-deleted _site can't
+//   --delete the live preview into nothing, and a non-empty destination
+//   without a _built.txt marker is refused as "not ours".
+//
+//   WHY THE DEFAULT IS HOME-RELATIVE, NOT REPO-RELATIVE (codebase-issues
+//   #330). The default used to be ../caddy/dashboard/cfdev resolved against
+//   the checkout, which is only the hub's docroot when the checkout sits
+//   directly in ~. From a worktree anywhere else — a session scratchpad under
+//   /tmp, .claude/worktrees/<name> — it resolved to a sibling path that still
+//   ended with the suffix, so the suffix-only guard passed, mkdir -p created
+//   the whole tree, rsync filled it, and the script printed "live at
+//   https://cfdev.home.arpa/" while the hub kept serving the old build. The
+//   docroot is a property of the BOX, not of the checkout, so the default is
+//   now ~/caddy/dashboard/cfdev from os.homedir() wherever the script runs.
+//   The two extra checks catch the same mistake made by hand through
+//   CF_PREVIEW_DIR: the home check refuses anything outside ~ (a lexical
+//   path.relative test — a `..` that climbs out is refused; symlinks are not
+//   chased), and the parent check means the script will create the cfdev
+//   leaf but never invent a caddy/dashboard tree to put it in.
 //
 // CONFIG
-//   CF_PREVIEW_DIR  dir to publish into (default ../caddy/dashboard/cfdev)
+//   CF_PREVIEW_DIR  dir to publish into (default ~/caddy/dashboard/cfdev, from
+//                   os.homedir(); a relative value resolves against the
+//                   checkout). Held to the same three checks as the default.
 //   --build         rm -rf _site and rebuild BEFORE publishing (opt-in)
+//   --dry-run       run every guard (destination, source, ownership) and
+//                   report what WOULD happen, then stop: no rm, no rebuild,
+//                   no mkdir, no rsync, no stamp. The safe way to check where
+//                   a checkout would publish. With --build it only says it
+//                   would rebuild, and the source guard reads _site as found.
 //
 //   --build IS OPT-IN ON PURPOSE. 11ty never cleans its output dir, so a page
 //   deleted from html/ survives in _site and gets published — and `rsync
@@ -68,18 +92,26 @@
 // USAGE
 //   npm run build && npm run publish:preview   # publish what's there
 //   npm run publish:preview -- --build         # clean rebuild, then publish
-//   CF_PREVIEW_DIR=/tmp/scratch npm run publish:preview
+//   npm run publish:preview -- --dry-run       # guards only, touch nothing
+//   CF_PREVIEW_DIR=~/scratch/caddy/dashboard/cfdev npm run publish:preview
+//     (test target — must sit under ~, end with the suffix, and have its
+//      caddy/dashboard parent created first: mkdir -p ~/scratch/caddy/dashboard)
 
 'use strict';
 
 import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
-import { resolve, dirname, join } from 'node:path';
+import { homedir } from 'node:os';
+import { resolve, dirname, join, relative, isAbsolute, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SRC = join(ROOT, '_site');
-const DEST = resolve(ROOT, process.env.CF_PREVIEW_DIR || '../caddy/dashboard/cfdev');
+// The hub's docroot is a home-directory path, not a repo-relative one — see
+// "WHY THE DEFAULT IS HOME-RELATIVE" in the header (codebase-issues #330).
+const HOME = resolve(homedir());
+const DEFAULT_DEST = join(HOME, 'caddy', 'dashboard', 'cfdev');
+const DEST = process.env.CF_PREVIEW_DIR ? resolve(ROOT, process.env.CF_PREVIEW_DIR) : DEFAULT_DEST;
 
 const DEST_SUFFIX = '/caddy/dashboard/cfdev';
 const MARKER = '_built.txt';
@@ -88,6 +120,7 @@ const MIN_HTML = 100;
 const REQUIRED = ['index.html', '404.html', 'styles.css'];
 
 const build = process.argv.includes('--build');
+const dryRun = process.argv.includes('--dry-run');
 
 function log(msg) {
     console.log(`[publish-preview] ${msg}`);
@@ -174,7 +207,9 @@ function walk(dir) {
 // --- destination guard: run FIRST, before anything can rm or --delete --------
 // One path component short and --delete eats the whole hub. Non-negotiable,
 // and it applies to CF_PREVIEW_DIR too — point a test run at a scratch tree
-// ending in the same three components (e.g. /tmp/xyz/caddy/dashboard/cfdev).
+// under ~ ending in the same three components, with its parent pre-created
+// (e.g. mkdir -p ~/scratch/caddy/dashboard, then
+// CF_PREVIEW_DIR=~/scratch/caddy/dashboard/cfdev).
 if (!DEST.endsWith(DEST_SUFFIX)) {
     die(
         `refusing to publish: destination must end with ${DEST_SUFFIX}`,
@@ -183,7 +218,32 @@ if (!DEST.endsWith(DEST_SUFFIX)) {
         'and the published APK — and ~/caddy is not a git repo, so there is no undo',
     );
 }
-if (DEST !== resolve(ROOT, '../caddy/dashboard/cfdev')) log(`non-default destination: ${DEST}`);
+// Lexical containment: path.relative climbs with `..` when DEST is outside
+// HOME (and comes back absolute across Windows drive roots). An empty result
+// would mean DEST === HOME, which the suffix check has already ruled out.
+const fromHome = relative(HOME, DEST);
+if (!fromHome || fromHome === '..' || fromHome.startsWith(`..${sep}`) || isAbsolute(fromHome)) {
+    die(
+        `refusing to publish: destination must be under the home directory (${HOME})`,
+        `resolved: ${DEST}`,
+        `the hub serves ${DEFAULT_DEST}; a path outside ~ can only be a stray copy`,
+        'that nothing serves — publishing there would report "live" while the hub',
+        'kept the old build (codebase-issues #330)',
+    );
+}
+// The script may create the cfdev leaf, but never the caddy/dashboard tree it
+// lives in: a missing parent means this is not the hub's docroot.
+if (!existsSync(dirname(DEST)) || !statSync(dirname(DEST)).isDirectory()) {
+    die(
+        `refusing to publish: ${dirname(DEST)} does not exist`,
+        `resolved: ${DEST}`,
+        'the preview docroot lives inside the hub\'s existing dashboard dir —',
+        'a missing parent means this path is not the hub (codebase-issues #330)',
+    );
+}
+if (DEST !== DEFAULT_DEST) log(`non-default destination: ${DEST}`);
+else log(`destination: ${DEST}`);
+if (dryRun) log('--dry-run: guards only — nothing will be removed, built, copied or stamped');
 
 // Captured BEFORE the build, so `commit:` names the tree eleventy is about to
 // read. Without --build it can only describe the checkout as it stands now,
@@ -191,7 +251,9 @@ if (DEST !== resolve(ROOT, '../caddy/dashboard/cfdev')) log(`non-default destina
 const provenance = gitProvenance();
 
 // --- optional clean rebuild --------------------------------------------------
-if (build) {
+if (build && dryRun) {
+    log('--dry-run: would rm -rf _site and rebuild (skipped; checking _site as found)');
+} else if (build) {
     log('--build: removing _site for a clean rebuild');
     log('  (nothing else may be using this tree — no npm test, no http.server)');
     rmSync(SRC, { recursive: true, force: true });
@@ -243,10 +305,21 @@ if (existsSync(DEST)) {
         // An empty marker is a reachable state, not a bug: the ownership
         // guard's own advice for adopting a docroot is `touch _built.txt`.
         const [was] = readFileSync(join(DEST, MARKER), 'utf8').trim().split('\n');
-        log(`replacing build from ${was.replace(/^built:\s*/, '') || '(unstamped)'}`);
+        log(`${dryRun ? 'would replace' : 'replacing'} build from ${was.replace(/^built:\s*/, '') || '(unstamped)'}`);
     }
+} else if (dryRun) {
+    log(`--dry-run: would create ${DEST}`);
 } else {
-    mkdirSync(DEST, { recursive: true });
+    // Not recursive: the destination guard has already proved the parent
+    // exists, and the leaf is the only thing this script may create.
+    mkdirSync(DEST);
+}
+
+if (dryRun) {
+    log(`--dry-run: would rsync -a --delete ${SRC}/ -> ${DEST}/ (${srcFiles.length} files, ${srcHtml} .html)`);
+    log(`--dry-run: would write ${join(DEST, MARKER)}`);
+    log('--dry-run: all guards passed; nothing was changed');
+    process.exit(0);
 }
 
 // --- the copy ----------------------------------------------------------------
