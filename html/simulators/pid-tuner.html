@@ -380,7 +380,7 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
                             <td>Fast</td>
                             <td>~5–15 s</td>
                             <td>~1–3 s</td>
-                            <td>Duct static pressure, mixing-box damper position, fan VFD speed</td>
+                            <td>Duct static pressure (held by commanding fan speed), mixed-air temperature (held by the mixing-box dampers)</td>
                         </tr>
                         <tr>
                             <td>Medium</td>
@@ -420,7 +420,7 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
                         <tr><td class="use">Oscillates / hunts</td><td>↓ P · ↓ I</td></tr>
                         <tr><td class="use">Jumpy / noisy output</td><td>↓ D · filter input</td></tr>
                         <tr><td class="use">Pinned at 0 % / 100 %</td><td>check sizing &amp; sequencing</td></tr>
-                        <tr><td class="use">PV runs away when the loop acts</td><td>flip acting (direct ↔ reverse)</td></tr>
+                        <tr><td class="use">PV runs away when the loop acts</td><td>wrong action on the real controller — flip direct ↔ reverse there</td></tr>
                     </tbody>
                 </table>
 
