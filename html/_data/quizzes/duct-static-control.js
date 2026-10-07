@@ -190,7 +190,7 @@ module.exports = [
     {
         type: 'gotcha',
         id: 'ds-tube-stuck-high',
-        prompt: 'Hottest afternoon of the month, and the complaint calls are all coming from the end of the longest run. The front end shows this. What\'s going on?',
+        prompt: 'Hottest afternoon of the month, and the complaint calls are all coming from the end of the longest run. The front end shows this. What\'s the first thing to suspect?',
         snippet: '<pre class="quiz-snippet">SUPPLY STATIC    1.80 in. w.c. (450 Pa) · SP 1.50 in. w.c. (375 Pa)\nSUPPLY FAN       20 Hz · its minimum speed\nFAR-END BOXES    dampers 100 % · flow well short of setpoint\nNEAR BOXES       satisfied</pre>',
         choices: [
             { id: 'a', text: 'The far boxes\' actuators or flow rings have failed — the trunk clearly has pressure to spare.' },
@@ -198,7 +198,7 @@ module.exports = [
             { id: 'c', text: 'The setpoint is too low for the longest run — raise it to 2.0 in. w.c. (500 Pa) and the far end recovers.' },
             { id: 'd', text: 'The far run is out of balance and needs a rebalance — static is above setpoint, so the fan is doing its part.' }
         ],
-        explain: 'Read the fan, not the static: on the hottest afternoon of the month the fan is at its minimum, which no real building load explains — the loop is answering a number that says the duct is over-pressurized. A sensing tube pinched, plugged or kinked so it reads high is the quiet twin of the dangerous stuck-low tube: the fan idles and the far zones starve first. The far boxes are behaving exactly right, wide open and asking for more — and raising the setpoint above a reading that won\'t move sends the fan chasing it toward full speed while the real static climbs toward the cutout. Put a manometer on the tap before you touch anything else.',
+        explain: 'Read the fan, not the static: on the hottest afternoon of the month the fan is at its minimum, which no real building load explains — the loop is answering a number that says the duct is over-pressurized. A sensing tube pinched, plugged or kinked so it reads high is the quiet twin of the dangerous stuck-low tube: the fan idles and the far zones starve first. The far boxes are behaving exactly right, wide open and asking for more — and raising the setpoint above a reading that won\'t move sends the fan chasing it toward full speed while the real static climbs toward the cutout. Put a manometer on the tap before you touch anything else — if it reads 1.5 in. w.c. (375 Pa) and the transducer says 1.8 (450 Pa), the tube or transducer is lying; if it agrees with the transducer, the sensor is honest and the trunk is dead-ended downstream of it (a dropped fire damper, a closed volume damper), which paints exactly the same picture from the front end.',
         learnMore: { href: '/education/duct-static-control.html#safeties', label: 'Duct Static Control — When the Loop Can\'t Save You' },
         tags: ['forced-air', 'duct-static', 'safeties']
     },
