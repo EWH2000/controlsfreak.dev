@@ -8,6 +8,19 @@
 // cf_quiz_load-piping_* localStorage keys. Pairs with the Load Piping
 // lesson; learnMore hrefs deep-link its <h2> anchors. No numeric items —
 // the material is qualitative, so the landing card omits the Numeric pill.
+//
+// The bank is deliberately larger than the page's defaultCount (10):
+// the engine samples an overflowing bank, so each run draws a
+// different subset (buildQueue() in quiz-engine.js). Coverage tracks
+// the lesson's sections — the two-way valve and variable system flow,
+// the three-way valve (mixing vs diverting and how to tell them apart
+// in the piping, the part-load cost of the bypass, and why constant
+// flow still needs balancing), and the twin-T tie-back (pump pairing,
+// what modulates on a three-way loop, and the minimum-flow bypass).
+// The VFD-and-bypass gotcha draws on the closing widget ("See what the
+// bypass does"), whose heading carries no id, so it deep-links
+// #tie-back — the section just above the widget, whose prose
+// introduces the minimum-flow bypass the widget exercises.
 
 module.exports = [
     // ── Two-way valves ────────────────────────────────────
@@ -117,6 +130,44 @@ module.exports = [
         tags: ['hydronics', 'three-way', 'vfd', 'energy']
     },
 
+    {
+        type: 'mcq',
+        id: 'three-way-part-load-waste',
+        prompt: 'At part load, what\'s the energy downside of a building full of three-way (constant-flow) loads?',
+        choices: [
+            { id: 'a', text: 'The coils overshoot at low load and dump surplus heat into the space.' },
+            { id: 'b', text: 'Each actuator draws extra power holding its valve at mid-stroke all day.' },
+            { id: 'c', text: 'The pump does full work pushing bypass water that moves no heat.', correct: true },
+            { id: 'd', text: 'Constant flow erodes the coil tubes faster once the load drops off.' }
+        ],
+        explain: 'The bypass moves water around the building for no thermal reason — it never picks up or drops off heat. At part load, which is most of the day, the system pump is still doing full work to push water past coils that don\'t want it. That wasted pumping energy is exactly the argument that pushed the industry toward two-way valves and variable-speed pumps.',
+        learnMore: { href: '/education/load-piping.html#three-way', label: 'Load Piping — Three-way valve' },
+        tags: ['hydronics', 'three-way', 'constant-flow', 'energy']
+    },
+    {
+        type: 'mcq',
+        id: 'identify-diverting-arrangement',
+        prompt: 'Tracing a coil in the field, you find a three-way valve at the coil\'s <em>inlet</em>. One outlet feeds the coil; the other feeds a bypass that rejoins the coil\'s leaving water at a plain tee on the return side. What are you looking at?',
+        choices: [
+            { id: 'a', text: 'A three-way mixing valve arrangement.' },
+            { id: 'b', text: 'A two-way valve with a minimum-flow bypass.' },
+            { id: 'c', text: 'A differential-pressure bypass valve.' },
+            { id: 'd', text: 'A three-way diverting valve arrangement.', correct: true }
+        ],
+        explain: 'A diverting valve sits at the coil\'s inlet and splits incoming supply between the coil and the bypass; the two paths reunite at a passive tee on the return side. A mixing valve flips the geometry — it sits at the coil outlet and does the combining itself. From the system\'s point of view the two are functionally identical (constant system-side flow); the difference shows up in valve authority and in how the valve body wears.',
+        learnMore: { href: '/education/load-piping.html#three-way', label: 'Load Piping — Three-way valve' },
+        tags: ['hydronics', 'three-way']
+    },
+    {
+        type: 'tf',
+        id: 'three-way-still-needs-balancing',
+        prompt: 'Because a three-way system holds its system flow constant, every load on it automatically receives its design flow — no balancing required.',
+        answer: false,
+        explain: 'False. Constant <em>total</em> flow says nothing about how that flow splits between branches. Even on a constant-flow setup, each load only sees its design flow if the loop is balanced — circuit setters, automatic balancing valves, or pressure-independent control valves (PICVs) at each branch. The Hydronic Balancing lesson covers each of the three and how to tell when a loop has drifted.',
+        learnMore: { href: '/education/load-piping.html#three-way', label: 'Load Piping — Three-way valve' },
+        tags: ['hydronics', 'three-way', 'balancing']
+    },
+
     // ── Tying it back ─────────────────────────────────────
     {
         type: 'tf',
@@ -140,5 +191,34 @@ module.exports = [
         explain: 'The load-valve type sets the loop\'s entire personality. All two-way → variable flow → pair with a variable-speed pump and DP control. All three-way → constant flow → a constant-speed pump fits. Get the pairing wrong (constant-speed pump fighting two-way valves, or a VFD that can\'t ramp down on three-way loads) and the system never works the way it should.',
         learnMore: { href: '/education/load-piping.html#tie-back', label: 'Load Piping — Tying it back to the twin-T' },
         tags: ['hydronics', 'system-design']
+    },
+    {
+        type: 'mcq',
+        id: 'three-way-injection-modulates',
+        prompt: 'On the twin-T with every system load piped three-way, the system pump runs fixed-speed all day. Apart from the three-way valves at the coils themselves, what modulates in response to load?',
+        choices: [
+            { id: 'a', text: 'The injection pump across the bridge.', correct: true },
+            { id: 'b', text: 'The boiler pump on the primary loop.' },
+            { id: 'c', text: 'The minimum-flow bypass at the far end.' },
+            { id: 'd', text: 'Nothing else; the whole loop runs fixed.' }
+        ],
+        explain: 'With three-way loads the system loop is constant-flow, so a fixed-speed system pump runs all day and the injection pump becomes the only thing modulating in response to load. The boiler doesn\'t care either way — it stays on its own primary loop, decoupled by the closely-spaced tees. And a three-way loop needs no minimum-flow bypass at all: the per-load bypasses already keep flow through the pump constant.',
+        learnMore: { href: '/education/load-piping.html#tie-back', label: 'Load Piping — Tying it back to the twin-T' },
+        tags: ['hydronics', 'three-way', 'constant-flow', 'system-design']
+    },
+    {
+        type: 'gotcha',
+        id: 'vfd-does-not-replace-min-flow',
+        prompt: 'A retrofit on an all-two-way system adds a VFD to the system pump and, in the same breath, deletes the minimum-flow bypass at the far end of the main. What\'s wrong with the reasoning?',
+        snippet: '<pre class="quiz-snippet">loads:            all two-way, modulating\nsystem pump:      add VFD\nmin-flow bypass:  REMOVE\nrationale:        "the drive slows to match the load, so the bypass is redundant"</pre>',
+        choices: [
+            { id: 'a', text: 'Nothing — with a VFD the pump just slows to match whatever flow the loads want.' },
+            { id: 'b', text: 'The bypass should stay, but as a DPBV set to open on a pressure setpoint.' },
+            { id: 'c', text: 'Two-way loads need a constant-speed pump, so the VFD itself is the mistake.' },
+            { id: 'd', text: 'A drive only slows so far — with every valve shut, the pump dead-heads.', correct: true }
+        ],
+        explain: 'A VFD lets the pump slow with the building, but not to zero — the lesson\'s widget drive can\'t go below about 25 % speed. With every two-way valve modulated shut there\'s nowhere for the water to go, and a pump still turning against a closed loop dead-heads, heating the water in its volute. The minimum-flow bypass is the floor that catches this; a DPBV opening on a Δp setpoint is the constant-speed-pump fix instead, since under VFD pressure control the drive already caps loop Δp.',
+        learnMore: { href: '/education/load-piping.html#tie-back', label: 'Load Piping — Tying it back to the twin-T' },
+        tags: ['hydronics', 'two-way', 'vfd', 'minimum-flow', 'deadhead']
     }
 ];
