@@ -619,33 +619,41 @@ keywords: ms/tp mstp baud bbmd foreign device router subnet broadcast who-is
                 <li><strong>Segmentation of long messages.</strong> When an
                     APDU is too big for one frame, how segmentation breaks
                     it up and how the receiver reassembles. Hinted at in
-                    the discovery-fails list above; a deeper treatment
-                    belongs on its own page.</li>
+                    the discovery-fails list above, which covers the one
+                    place it usually surfaces in the field. The mechanics
+                    behind it sit in the application layer, below the
+                    discovery-and-routing question this page is built
+                    around.</li>
                 <li><strong>BACnet/SC — Secure Connect.</strong> The newer
                     TLS-WebSocket transport. Different framing, different
-                    discovery (no broadcasts at all — hub-and-spoke), worth
-                    its own page once it's common enough in BAS work to
-                    justify the depth.</li>
+                    discovery (no broadcasts at all — hub-and-spoke). Out
+                    of scope because almost none of this page's
+                    broadcast, BBMD and Foreign Device machinery applies
+                    to it, and most installed BAS networks still run
+                    BACnet/IP.</li>
                 <li><strong>Capture-driven troubleshooting.</strong> A
                     Wireshark or Yabe walkthrough — what a Who-Is looks like
                     in a capture, how to spot a Forwarded-NPDU, what an
-                    Abort or Reject PDU is telling you. Worth its own
-                    treatment given how often a capture is the fastest path
-                    to a root cause.</li>
+                    Abort or Reject PDU is telling you. A capture is often
+                    the fastest path to a root cause, but reading one is a
+                    tool skill layered on top of the concepts here, so this
+                    page stops at what each message means.</li>
                 <li><strong>Alarms and event notifications.</strong> The
                     confirmed and unconfirmed alarm services, the
                     Notification Class object, recipient lists, <button type="button"
                     data-gloss="change-of-value">COV</button>-style
-                    push for events. Their own page; touches BACnet's
-                    biggest object-model surface outside the
+                    push for events. Out of scope here because it is
+                    object-model and services territory, not networking —
+                    BACnet's biggest object-model surface outside the
                     analog/binary/multi-state core.</li>
                 <li><strong>Vendor profile differences.</strong> The
                     practical reality that two BACnet devices, both
                     advertising the same object types, may expose them
                     with very different property sets and command
-                    behavior. Vendor-specific notes don't fit on a general
-                    education page; they belong on per-platform pages
-                    (Niagara, EBO, …) when those land.</li>
+                    behavior. Per-platform differences vary too widely
+                    to cover fairly on a general education page, so this
+                    one stays with what the standard itself
+                    guarantees.</li>
             </ul>
 
         </div>
