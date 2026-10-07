@@ -1,6 +1,6 @@
 {
- "mainSha": "a7d0d46",
- "lastMergeDate": "2026-10-06",
+ "mainSha": "a2ad39f",
+ "lastMergeDate": "2026-10-07",
  "banksAtOrAbove": [
   {
    "slug": "bacnet-basics",
@@ -44,7 +44,7 @@
    "to": "4.147.0"
   }
  ],
- "suiteBaseline": "**1223 passed, 0 failed, 1 skipped** in 8.3 min on `:9489`, 2026-10-06, against `main` @ `1bf23ce` (after the three chain A merges that had no CI run of their own); chain B and the lesson merged after it, each CI-green on `main`.",
+ "suiteBaseline": "**1242 passed, 0 failed, 1 skipped in 8.2 min on `:9661`, 2026-10-07, against the scratch merge `a3cef82` of all fifteen open PRs on `main` @ `a2ad39f`** (the owner-walk queue); the 2026-10-06 baseline on `main` @ `1bf23ce` was 1223/0/1.",
  "rulings": [
   "**All sixteen agenda items ruled 2026-10-05**, one by one with pros and cons; the owner reached the same call as the recommendation on every item before reading it. Record: `docs/audits/2026-10-reentry/rulings.md` (PR #611, merged).",
   "**The arc is picked: freeze season + quizzes.** Coil-freeze-protection lesson first, quiz wave 2 alongside, #228 in the background; F4 case-file mockup at the arc's end; §7.2 after that.",
@@ -52,25 +52,15 @@
   "**The status grammar gained a `ruled` state:** decided-but-unshipped entries no longer count as decision-class. Decision-class fell from 6 to 2 (#228, #283).",
   "**PR #602** (Korean localization) closed courteously with the fork route; **#318** Speed Brain off; **#319** AI Crawl Control verified safe.",
   "**Review-day rulings (2026-10-06, rulings.md §18):** no Td on reheat coils as a teaching default (bank question replaced, D callout tempered); coil valves are two-way *or* three-way; the PICV sentence scoped to *modulating* valves; the ASHRAE 135 paraphrases verified (\"Clauses check out\"); the #228 design-note defaults accepted (\"I like your defaults\"); filter racks are drawn as pleated media site-wide.",
-  "**Owner on the format:** *\"Forcing both of us to take a look at each PR in sequence may be the most balanced workflow we've used.\"*"
+  "**Owner on the format:** *\"Forcing both of us to take a look at each PR in sequence may be the most balanced workflow we've used.\"*",
+  "**Evening rulings before the overnight lanes (2026-10-06, rulings.md §19):** the lesson adopts 35–38 °F (#99); #331 both triggers, merge on green; #328 narrow to scope statements; #324 reword as field advice; #91/#92/#94/#95/#96 fix, #93 no page change; hero badge → the Coil Freeze Protection lesson for the season; quiz wave 3 = six banks in two triples; F4 mockup on hold; #228 step 0 + step 1 as stacked PRs; combined LAN preview for the walk; the Workbench filter rack redrawn pleated."
  ],
  "today": [
-  "`main` pulled to `e33a825` (PR #601, 2026-09-02) — it had been two commits behind — and then to `178af5c` after the four PRs below merged.",
-  "Eight merged local branches deleted (four `worktree-agent-*` leftovers, four shipped feature branches); every lane worktree removed afterwards.",
-  "PR #603 **merged** — 12 codebase-issues headings and all 66 content-audit headings now carry the ledger's own status marker, so status reads from the heading line.",
-  "PR #604 **merged** — the state map, per-entry appendix and PR #602 assessment live under `docs/audits/2026-10-reentry/`; ledger #322 records the PR #602 ruling.",
-  "PR #605 **merged** — `npm run status`, the readout this page is rendered from.",
-  "Full Playwright suite run on a free high port as the session baseline: 1215 passed, 0 failed.",
-  "Cloudflare dashboard checked by the owner: Speed Brain turned off (#318); AI Crawl Control confirmed on with zero refused requests (#319).",
-  "PR #606 **merged** — six more ledger headings trued up to the marker grammar, and the two Cloudflare rulings recorded in the ledger.",
-  "PR #611 **merged** — every ruling written into its ledger entry; the durable record is `docs/audits/2026-10-reentry/rulings.md`.",
-  "PR #607 opened — the three dependency bumps plus the matching CI Playwright image, green; owner merges (Worker toolchain).",
-  "Night 1: sixteen cleanup lanes, three quiz banks, the coil-freeze lesson, the two BACnet softenings, the PID aside and the #228 design note all ran as Opus/Fable lanes with adversarial verification; everything that reaches a live page is a PR for the owner, listed under **Pick up here**.",
-  "Three merge chains were pre-built so nothing conflicts on merge: the ledger-tail chain #619 → #632 → #626 → #630 → #634 (each appends a new ledger entry), and the version/bank chain ending in the lesson PR #620 (see each PR’s *Stacked on*). Merge top-down; GitHub retargets the child when the parent lands.",
-  "**Day 2 (2026-10-06): the whole queue merged, PR by PR, with the owner.** 25 PRs landed — the 23 from night 1 plus #635 (two lesson sentences from the review) and #636 (Air Handlers filter racks). **The Coil Freeze Protection lesson is live** at forced-air step 3; `main` is v3.91.0; zero open PRs.",
-  "Before the walk: two PRs had gone CONFLICTING overnight (adjacent-hunk ledger collisions) and chain B would have on first merge — all three fixed by rebase; a stray duplicate ledger entry on #625 was dropped.",
-  "Process gap caught mid-session: a stacked PR gets **no CI run** when GitHub retargets it to `main`. Three chain A PRs merged that way; a full suite on `main` was clean (1223/0/1), and the chain B children were rebase-pushed before merging. Logged as codebase-issues #331 (owner picks the trigger fix) and as a CLAUDE.md Workflow rule.",
-  "Wrap-up docs PR #637 (rulings §18, #228 accepted, #90 closed, new #99 / #330 / #331, CLAUDE.md notes) merges on green. LAN preview back on `main`."
+  "**Overnight 2026-10-06 → 07 (autonomous):** the handoff was verified as a workflow first (140 claims: 127 verified, 12 corrected, 1 unverifiable — counts and framings carried forward), then five sequential workflows ran: nine small-fix lanes, two quiz triples, #228 steps 0–1, and the wrap-up.",
+  "**Merged on the owner's grant:** #645 (CI: `edited` gate + `push: main`, #331) and #646 (preview-script guard, #330). The first two `push: main` suite runs both passed — `main` had never been tested directly before.",
+  "**Fifteen PRs wait for the walk:** #639–#644 and #647 (small content fixes, the hero badge, the Workbench filter rack), #648/#649/#650 and #653/#654/#655 (wave 3, all six banks to 15), #651 → #652 (#228 steps 0 and 1, stacked). Zero conflicting pairs in the merge-tree matrix; the scratch merge of all fifteen passed the full suite (see *Repo and toolchain*) and is published at cfdev.home.arpa.",
+  "Walk notes with review pointers: `docs/audits/2026-10-reentry/walk-2026-10-07.md`. Ledger by-catch from the night: codebase-issues #332–#337, content-audit #100–#104 (docs PR, merged on green).",
+  "Every lane reported at least one drifted line cite in the entry it closed; CLAUDE.md's Workflow and LAN-preview bullets trued up for #645/#646, the hero-badge pointer relabelled `Featured`."
  ],
  "agenda": [
   {

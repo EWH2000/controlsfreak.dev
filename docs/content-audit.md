@@ -3285,7 +3285,7 @@ throttling valve and the three-way mixing or diverting valve. Owner's words
 on the ruling: *"a modulating valve could still be 2 way or 3 way
 diverting/mixing."*
 
-### 91. air-handlers.html — the 38 °F freeze threshold lives only in the widget; the prose names none *(flagged 2026-10-05, quiz-growth wave-2 refutation round)*
+### 91. air-handlers.html — the 38 °F freeze threshold lives only in the widget; the prose names none *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(ruled 2026-10-06 — fix)* *(addressed 2026-10-06 · PR #640)*
 
 **Location:** `html/education/air-handlers.html` — the sensor-strip
 widget's `const FREEZE_AT = 38;` (`:676`, commented *"freeze-stat
@@ -3305,7 +3305,20 @@ Do not promise the lesson in copy before it is live (CLAUDE.md, *No
 coming-soon copy*); PR #620 currently adds it to the page's
 `relatedLinks` only.
 
-### 92. air-handlers.html — the MA-T-reads-the-coil war story exists only as a script string behind the failure preset *(flagged 2026-10-05, quiz-growth wave-2 refutation round)*
+**Resolution (2026-10-06, rulings.md §19.5):** one sentence appended to
+the `#sensor-strip` intro paragraph (`air-handlers.html:~510`): once the
+preset drags the mix below 38 °F (3.3 °C) the strip raises a freeze
+fault — that figure is a freezestat setting the Coil Freeze Protection
+lesson walks through, and that lesson is the place to read where freeze
+trouble starts. The number itself stays owned by the freeze lesson. Line
+cites in the entry above have drifted (`FREEZE_AT` is at `:681`, the
+status string at `:761`, the anecdote at `:785-787`, the preset button
+at `:520`). The widget keys its fault off mixed-air (coil-entering)
+temperature while the lesson's 38 °F is a leaving-air freezestat
+setting; the sentence claims only that the figure IS a stat setting (see
+#103).
+
+### 92. air-handlers.html — the MA-T-reads-the-coil war story exists only as a script string behind the failure preset *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(ruled 2026-10-06 — fix)* *(addressed 2026-10-06 · PR #640)*
 
 **Location:** `html/education/air-handlers.html:782` — the
 `widget-anecdote` HTML string (MA-T *"sawtoothing in lockstep with the
@@ -3325,7 +3338,15 @@ the coil reads the coil, not the mix), leaving the war story itself in
 the widget — or accept, on the ground that the economizers page
 discloses where it is.
 
-### 93. air-handlers.html — the worked example's "damper flow isn't linear with stroke" caveat is untested *(flagged 2026-10-05, quiz-growth wave-2 refutation round)*
+**Resolution (2026-10-06, rulings.md §19.5):** the suggested direction's
+first option — one prose sentence after the #91 pointer: the preset also
+unlocks a field story whose point holds even if you never press it — a
+mixed-air sensor mounted too close to the coil reads the coil, not the
+mix. The war story itself stays in the widget's anecdote string. Follow-
+on nit: `coil-freeze-protection.html:118` still says the widget "hides"
+the story, which is now a slight overstatement.
+
+### 93. air-handlers.html — the worked example's "damper flow isn't linear with stroke" caveat is untested *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(accepted 2026-10-06 — no page change; candidate question for a later air-handlers wave)*
 
 **Location:** `html/education/air-handlers.html:352`, the mixing
 worked example's aside *"calling the commanded position a flow fraction
@@ -3345,7 +3366,12 @@ branch …"*). Not logged as a finding. **Suggested direction:** a
 candidate question for the next air-handlers wave; no page change
 needed.
 
-### 94. pid-basics.html calls duct static a "fast, clean loop" — in the field it is a famously jittery signal *(flagged 2026-10-05, quiz-growth wave-2 refutation round)*
+**Ruling (2026-10-06, rulings.md §19.8):** no page change. The damper-
+stroke caveat is a candidate question whenever the air-handlers bank
+grows again (it sits at 15 after wave 2); the entry stays as that
+pointer.
+
+### 94. pid-basics.html calls duct static a "fast, clean loop" — in the field it is a famously jittery signal *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(ruled 2026-10-06 — fix)* *(addressed 2026-10-06 · PR #641)*
 
 **Location:** `html/education/pid-basics.html:58`, the D callout's
 *When it earns its keep* paragraph — *"On a fast, clean loop (duct
@@ -3362,7 +3388,15 @@ direction:** soften "clean" — e.g. "a fast loop (duct pressure), where D
 has little lag to anticipate and plenty of noise to amplify" — or name
 the variation (some installs filter it smooth, many don't).
 
-### 95. pid-basics.html and the PID tuner list "VFD speed" as a loop — it is the OUTPUT of the static loop *(flagged 2026-10-05, quiz-growth wave-2 refutation round)*
+**Resolution (2026-10-06, rulings.md §19.6):** `pid-basics.html:58` now
+reads, in substance, "on a fast loop like duct static pressure — which
+the loop holds by commanding fan speed — don't bother: D has little lag
+to anticipate and plenty of noise to amplify." The bank's `fast-loop-
+skips-derivative` prompt and explain, which carried the same "fast,
+clean loop" wording, were reworded in the same PR so the quiz and the
+lesson agree (question id and key unchanged).
+
+### 95. pid-basics.html and the PID tuner list "VFD speed" as a loop — it is the OUTPUT of the static loop *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(ruled 2026-10-06 — fix)* *(addressed 2026-10-06 · PR #641)*
 
 **Location:** `html/education/pid-basics.html:58` (*"duct pressure, VFD
 speed"* as examples of a fast loop) and
@@ -3380,7 +3414,17 @@ confirmed by grep. **Suggested direction:** name the measured variable
 output it drives ("duct static, which the loop holds by commanding fan
 speed").
 
-### 96. economizers.html defines "lockout" only as the high-limit half of changeover; other surfaces use it for the cold end *(flagged 2026-10-05, quiz-growth wave-2 refutation round)*
+**Resolution (2026-10-06, rulings.md §19.6):** the lesson names the
+measured variable (above, #94), and the tuner's Fast row (`:383`) now
+lists "duct static pressure (held by commanding fan speed)" and "mixed-
+air temperature (held by the mixing-box dampers)". Walk pointer: the
+refuter questions whether mixed-air temperature belongs in the Fast
+bucket once damper stroke time is counted; if the owner agrees, drop it
+from the row rather than move it — Medium already carries three
+examples. The Medium row itself has the same output-as-loop shape
+(#100).
+
+### 96. economizers.html defines "lockout" only as the high-limit half of changeover; other surfaces use it for the cold end *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(ruled 2026-10-06 — fix, one disclosure sentence)* *(addressed 2026-10-06 · PR #642)*
 
 **Location:** `html/education/economizers.html:219` — *"you'll also
 hear high-limit lockout for its other half — the condition that slams
@@ -3400,6 +3444,17 @@ page saying the word is used at both ends (high-limit lockout of free
 cooling; a low-ambient lockout or low-limit at the cold end), in the
 disclosure register the deadband convention uses — name both senses,
 don't legislate one.
+
+**Resolution (2026-10-06, rulings.md §19.7):** one sentence after the
+high-limit parenthetical at `economizers.html:219`: the field uses
+*lockout* at both ends of the range — a high-limit lockout of free
+cooling when it is too warm or humid outside, and a *low-ambient* or
+*low-limit* lockout at the cold end that drives the dampers back toward
+minimum to protect the coil — so when a sequence or a tech says *locked
+out*, ask which end they mean. The following sentence's "The simplest
+version" became "The simplest changeover" so it does not read as a
+version of lockout. Drifted cites: the Workbench branch is at `ddcw-ahu-
+unit.js:1846`, the pill text at `economizers.html:526`.
 
 ### 97. practice/economizers.html says "Ten questions" over a 15-question bank *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(accepted 2026-10-05 — run claim, not a bank count; see #241)*
 
@@ -3439,7 +3494,7 @@ grates, the owner's own freeze-season story is the material that
 would differentiate it.
 
 
-### 99. coil-freeze-risk.html's `bandTxt` says "Typical settings run 35–38 °F" while the Coil Freeze Protection lesson calls 35–37 °F the device band and 38 a house choice *(flagged 2026-10-06, PR #620 verifier round 3; owner's call)*
+### 99. coil-freeze-risk.html's `bandTxt` says "Typical settings run 35–38 °F" while the Coil Freeze Protection lesson calls 35–37 °F the device band and 38 a house choice *(flagged 2026-10-06, PR #620 verifier round 3; owner's call)* *(ruled 2026-10-06 — the lesson adopts 35–38 °F; `bandTxt` stays)* *(addressed 2026-10-06 · PR #639)*
 
 **Location:** `html/tools/coil-freeze-risk.html` — the `bandTxt` string
 in the page script (pre-existing, outside PR #620) vs
@@ -3455,3 +3510,91 @@ device. **Suggested direction:** owner picks one — either the tool's
 `bandTxt` becomes "Typical device bands run 35–37 °F; 38 °F is a common
 house setting a degree above", or the lesson adopts 35–38 as the
 practical band. Tool page → owner merges either way.
+
+**Resolution (2026-10-06, rulings.md §19.1):** the owner chose the
+second option, against the recommendation. `coil-freeze-protection.html`
+*What Actually Freezes* (`:103`) and protection-stack item 1 (`:115`)
+now state the practical freezestat band as 35–38 °F (1.7–3.3 °C); the
+sentence keeps the research record's finding that published guidance
+clusters at 35–37 °F and says field settings reach 38 °F at the top —
+that 38 rests on the owner's own practice (the record traces it to PR
+#488's Northeast house setting; no published source gives it), which is
+his claim to read on the walk. The tool's `bandTxt` is unchanged. The
+research record's device-band evidence is §2 *Freeze-stat practice*
+(Honeywell 35, HPAC 37, EAB 35, NIH 37), not "§4" as the entry says; §4
+is *Still not established*. A different string on the tool is logged as
+#102.
+
+### 100. pid-tuner.html's Medium row lists two valve outputs as loops — the #95 shape one row below the fixed one *(flagged 2026-10-06, Batch A pid-loops refuter)*
+
+**Location:** `html/simulators/pid-tuner.html:389`, the Loop Speed
+Reference table's Medium row — *"Discharge air temperature, chilled-water
+valve, hot-water valve"*. **Lens:** working engineer. **Issue:** the same
+output-named-as-loop shape content-audit #95 removed from the Fast row:
+the chilled- and hot-water valves are what the discharge-air loop
+commands, not loops of their own. **Verification:** confirmed by reading
+the row on PR #641's branch. **Suggested direction:** "Discharge-air
+temperature (held by the chilled- or hot-water valve)", matching the
+fixed Fast row's phrasing. Also noted: at 375 px the table scrolls
+sideways inside `.table-scroll` with the examples column ~70 px wide, so
+the longer Fast cell wraps to ~9 lines — pre-existing wrapper behaviour,
+cosmetic.
+
+### 101. bacnet-networking.html's not-covered intro says the topics are out of scope "across" the BACnet lessons while its first bullet says MS/TP has its own page *(flagged 2026-10-06, Batch A bacnet-scope refuter)*
+
+**Location:** `html/education/bacnet-networking.html:607-608` (the
+intro above the *What this page didn't cover* list) vs `:614-618` (the
+MS/TP bullet, *"Now its own page"*). **Lens:** reader. **Issue:** a
+one-clause contradiction — the list is out of scope on *this* page, not
+across the shelf, and the alarms bullet now says alarms are "object-model
+and services territory" while `bacnet-basics.html:714` and
+`bacnet-services.html:227` both disclaim them too, so no BACnet lesson
+owns alarms. **Verification:** confirmed by reading all three pages.
+**Suggested direction:** "deliberately out of scope on this page"; and
+note alarms/event notification as unowned across the BACnet shelf in
+the friction file rather than promising it anywhere. The promise-shaped
+copy on the two sibling lessons is codebase-issues #333.
+
+### 102. coil-freeze-risk.html's mute text calls 38 °F "the common default" while the lesson says stats ship set around 35 °F *(flagged 2026-10-06, Batch A freeze-band refuter)*
+
+**Location:** `html/tools/coil-freeze-risk.html:484`, the muted hint
+*"38 °F (3.3 °C) is the common default"*. **Lens:** working engineer.
+**Issue:** "default" reads as the device's factory setting, and the
+lesson (after #99) says the stats ship around 35 °F with field settings
+reaching 38 at the top; the tool means its own input default. The
+`bandTxt` string the owner held as-is under #99 is a different string.
+**Verification:** confirmed by grep. **Suggested direction:** "a common
+field setting" or "this tool's starting point". Tool page → owner
+merges.
+
+### 103. air-handlers.html's sensor-strip widget models a mixed-air low-limit but labels it freeze-stat territory *(flagged 2026-10-06, Batch A air-handlers refuter; owner glance)*
+
+**Location:** `html/education/air-handlers.html:759-761` — the fault
+branch keys off MA-T < 38 °F (the coil-entering mix) and the failure
+preset runs in heat mode, so the DA-T readout sits at the heating target
+while the status announces *"freeze-stat territory"*;
+`coil-freeze-protection.html:115` places the freezestat on the coil's
+leaving-air side. **Lens:** working engineer. **Issue:** the widget is
+modelling a mixed-air low-limit (a legitimate protection, the lesson's
+own protection-stack item) and naming it as the stat. PR #640's prose
+pointer was written so it claims only that 38 °F IS a stat setting the
+freeze lesson walks through, never that the widget measures what the
+stat measures. **Verification:** confirmed by reading the widget script.
+**Suggested direction:** either relabel the status string ("mixed-air
+low-limit territory") or leave the widget and let the lesson pointer
+carry the distinction — the owner's call, since the widget is his field
+story. Adjacent nit: the ref-note at `:579` ends *"and Coil Freeze
+Protection is what stands behind it when it is"* — the trailing "when it
+is" has no clear antecedent.
+
+### 104. psychrometric-chart.html's MA ref-note says the mixed point "falls on the straight line between OA and RA" — true only to ~0.8 °F *(flagged 2026-10-06, #228 step 1 verifier; LOW)*
+
+**Location:** `html/tools/psychrometric-chart.html:~337`, the MA
+ref-note's pre-existing sentence. **Lens:** working engineer. **Issue:**
+in tdb–W space the cp-weighted exact dry-bulb sits up to ~0.84 °F off
+the OA–RA chord across the design note's §1 sweep (the chart's drag
+inversion projects onto the chord, which is consistent with a mass
+fraction since W is mass-linear). Invisible at chart scale; a (b)-class
+prose claim. **Verification:** by computation in the step-1 verify
+round. **Suggested direction:** "on (very nearly) the straight line".
+Not this PR's wording; take it with step 2 of #228.

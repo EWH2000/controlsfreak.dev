@@ -6412,7 +6412,7 @@ of a real reader; do not open it as a general affordance.
 
 ---
 
-### Quiz expansion — grow the banks + new quizzes *(owner direction 2026-08-14; candidate for the post-glossary re-triage)* *(wave 2 opened 2026-10-05 — air-handlers, economizers, pid-basics; see rulings.md item 17)*
+### Quiz expansion — grow the banks + new quizzes *(owner direction 2026-08-14; candidate for the post-glossary re-triage)* *(wave 2 opened 2026-10-05 — air-handlers, economizers, pid-basics; see rulings.md item 17)* *(wave 3 opened 2026-10-06 — six banks in two batches, building-pressure / duct-static-control / vav-systems then psychrometrics-basics / hydronic-loops / load-piping; see rulings.md §19)*
 
 The owner's CEO was shown the site by a third party and was "VERY
 impressed," singling out **the quizzes** as what he liked most. Owner
