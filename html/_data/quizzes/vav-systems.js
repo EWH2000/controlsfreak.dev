@@ -173,7 +173,7 @@ module.exports = [
         prompt: 'A VAV unit\'s minimum outside air was set as a damper position during commissioning, with the supply fan at full speed. On a mild afternoon the fan has slowed to half speed. What keeps that unit\'s ventilation floor honest?',
         choices: [
             { id: 'a', text: 'Nothing extra — a damper position is a fixed share of whatever the fan moves, so the ventilation share holds.' },
-            { id: 'b', text: 'Measuring the outside airflow, or actively controlling to a measured outside-air value, rather than trusting the damper angle.', correct: true },
+            { id: 'b', text: 'Measuring the outside airflow, or controlling to a measured value, rather than trusting the damper angle.', correct: true },
             { id: 'c', text: 'Raising the duct static setpoint so the mixing dampers see design pressure again.' },
             { id: 'd', text: 'Holding the supply fan at full speed whenever the outside-air damper sits at minimum.' }
         ],
