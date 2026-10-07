@@ -209,7 +209,7 @@ module.exports = [
         id: 'psy-cfm-to-mass-flow',
         prompt: 'A cooling coil handles 10,000 CFM (17,000 m³/h) of entering air with a specific volume of 13.5 ft³/lb (0.84 m³/kg). Using <code>ṁ = CFM · 60 / v</code>, what mass flow does the coil actually see? Enter the answer in lb/h.',
         answer: 44444,
-        tolerance: 50,
+        tolerance: 250,
         unit: 'lb/h',
         explain: '10,000 × 60 / 13.5 = 600,000 / 13.5 ≈ 44,444 lb/h — the 60 turns per-minute into per-hour, and dividing by v turns volume into mass. (The formula computes in IP; a metric reader lands on the same mass, about 20,200 kg/h.) Push the same 10,000 CFM through warmer, wetter entering air at v = 14.0 ft³/lb (0.87 m³/kg) and the coil sees 600,000 / 14.0 ≈ 42,857 lb/h — about 3.6 % less mass, one reason coil performance drops off at design conditions.',
         learnMore: { href: '/education/psychrometrics-basics.html#gotchas', label: 'Psychrometrics Basics — Gotchas' },
