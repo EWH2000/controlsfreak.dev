@@ -20,13 +20,13 @@
 // different subset (buildQueue() in quiz-engine.js). Coverage tracks
 // the lesson's sections — the ledger and the positive setpoint, the
 // relief lineup down to return-fan tracking (why the offset is held
-// in flow, and what the offset is made of), power exhaust and its
-// enable, the two ways the dampers break the ledger plus the VAV
-// wrinkle, and the measuring section: probe placement, a windward
-// outdoor reference, and building static versus duct static. The
-// duct-static question tests the "Not the same pressure" callout,
-// which carries no id of its own, so it deep-links #measuring-it, the
-// section that hosts it.
+// in flow, and what happens to a commissioned offset when the ledger
+// moves), power exhaust and its enable, the two ways the dampers
+// break the ledger plus the VAV wrinkle, and the measuring section:
+// probe placement, a windward outdoor reference, and building static
+// versus duct static. The duct-static question tests the "Not the
+// same pressure" callout, which carries no id of its own, so it
+// deep-links #measuring-it, the section that hosts it.
 
 module.exports = [
     // ── The air ledger ─────────────────────────────────────
@@ -97,11 +97,11 @@ module.exports = [
     {
         type: 'numeric',
         id: 'bp-tracking-offset-sizing',
-        prompt: 'A return fan tracks its supply fan in measured flow. The floors the unit serves lose 1,500 CFM (2,550 m³/h) to restroom and janitor-closet exhaust that never returns to the unit, and the design wants a 500 CFM (850 m³/h) surplus to hold the building positive. How far below the supply flow should the return fan be commissioned to run? Enter the answer in CFM.',
-        answer: 2000,
+        prompt: 'A return fan tracks its supply fan in measured flow. At commissioning the offset was set from the ledger: 1,500 CFM (2,550 m³/h) of restroom and janitor-closet exhaust that never returns to the unit, plus a 500 CFM (850 m³/h) surplus to hold the building positive. A year later a kitchen hood drawing 1,200 CFM (2,040 m³/h), with no makeup air of its own, is added on the same floors. What offset below supply flow must the return fan hold now, with the hood running? Enter the answer in CFM.',
+        answer: 3200,
         tolerance: 50,
         unit: 'CFM',
-        explain: 'The tracking offset is not a fudge factor — it is the ledger again: the exhaust the dedicated fans steal from the unit\'s territory plus the surplus that keeps the building positive, 1,500 + 500 = 2,000 CFM (2,550 + 850 = 3,400 m³/h). Commission it lazily and the fan balances a ledger nobody wrote down; and a fixed offset stays fixed when the ledger moves, so an exhaust load added later (a kitchen hood switching on) leaves the old number short.',
+        explain: 'The commissioned offset was the ledger of its day: 1,500 + 500 = 2,000 CFM (2,550 + 850 = 3,400 m³/h). The hood is a new withdrawal the unit must cover, so the offset becomes 2,000 + 1,200 = 3,200 CFM (3,400 + 2,040 = 5,440 m³/h). A fixed offset stays fixed when the ledger moves: left at 2,000, the return fan balances a ledger that no longer exists, and the building drifts negative every time the hood runs.',
         learnMore: { href: '/education/building-pressure.html#relief-lineup', label: 'Building Pressure — The Relief Lineup' },
         tags: ['forced-air', 'building-pressure', 'relief']
     },
