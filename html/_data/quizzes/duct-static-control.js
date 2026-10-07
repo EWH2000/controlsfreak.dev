@@ -123,11 +123,11 @@ module.exports = [
     {
         type: 'numeric',
         id: 'ds-cube-law',
-        prompt: 'Supply-fan power follows the <em>cube</em> of speed. With reset walking the setpoint down far enough that the fan runs at half its design speed, roughly what percentage of design power does it draw? Enter the answer in %.',
-        answer: 12.5,
-        tolerance: 0.6,
+        prompt: 'Supply-fan power follows the <em>cube</em> of speed. With reset walking the setpoint down far enough that the fan runs at 60 % of its design speed, roughly what percentage of design power does it draw? Enter the answer in %.',
+        answer: 21.6,
+        tolerance: 1.0,
         unit: '%',
-        explain: 'Half speed cubed: 0.5 × 0.5 × 0.5 = 0.125, so about 12.5 % — an eighth of design power, the ideal figure the affinity-laws tool computes. That cube is why reset is worth the trouble: the fan is the biggest motor on the unit, and every tenth of an inch the setpoint walks down lets it run slower for the same delivered air. A fixed setpoint captures some of that money; reset goes back for the rest.',
+        explain: '0.6 × 0.6 × 0.6 = 0.216, so about 22 % — a little over a fifth of design power, the ideal figure the affinity-laws tool computes; the lesson\'s half-speed example lands at an eighth (≈13 %) by the same cube. That cube is why reset is worth the trouble: the fan is the biggest motor on the unit, and every tenth of an inch the setpoint walks down lets it run slower for the same delivered air. A fixed setpoint captures some of that money; reset goes back for the rest.',
         learnMore: { href: '/education/duct-static-control.html#reset', label: 'Duct Static Control — Setpoint Reset' },
         tags: ['forced-air', 'duct-static', 'reset']
     },
