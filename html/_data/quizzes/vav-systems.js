@@ -168,11 +168,16 @@ module.exports = [
         tags: ['forced-air', 'vav', 'reheat']
     },
     {
-        type: 'tf',
+        type: 'mcq',
         id: 'vav-oa-at-part-flow',
-        prompt: 'On a VAV unit, a fixed minimum outside-air damper position set at full fan speed passes <em>less</em> actual outside air once the supply fan slows with the boxes.',
-        answer: true,
-        explain: 'True. A damper position fixes a geometry, not a flow — the same lesson the boxes taught, replayed at the unit. As the supply fan slows, less air is pulled through that same opening, so a minimum-OA setting that was honest at design flow is a fiction at half flow. That is why serious VAV units measure their outside air or actively control to it, rather than trusting a damper angle set one afternoon at full speed.',
+        prompt: 'A VAV unit\'s minimum outside air was set as a damper position during commissioning, with the supply fan at full speed. On a mild afternoon the fan has slowed to half speed. What keeps that unit\'s ventilation floor honest?',
+        choices: [
+            { id: 'a', text: 'Nothing extra — a damper position is a fixed share of whatever the fan moves, so the ventilation share holds.' },
+            { id: 'b', text: 'Measuring the outside airflow, or actively controlling to a measured outside-air value, rather than trusting the damper angle.', correct: true },
+            { id: 'c', text: 'Raising the duct static setpoint so the mixing dampers see design pressure again.' },
+            { id: 'd', text: 'Holding the supply fan at full speed whenever the outside-air damper sits at minimum.' }
+        ],
+        explain: 'A damper position fixes a geometry, not a flow — the same lesson the boxes taught, replayed at the unit. As the supply fan slows, less air is pulled through that same opening, so a minimum-OA angle that was honest at design flow is a fiction at half flow; it is not a fixed share of whatever the fan moves. The honest floor is a measured one: serious VAV units measure their outside air or actively control to it. Raising duct static only buys some fan speed back at an energy cost and still measures nothing; pinning the fan at full speed throws away the cube-law fan saving that is where VAV earns its keep.',
         learnMore: { href: '/education/vav-systems.html#minimums', label: 'VAV Systems — The Floors' },
         tags: ['forced-air', 'vav', 'ventilation']
     },
@@ -181,14 +186,14 @@ module.exports = [
     {
         type: 'mcq',
         id: 'vav-chw-vs-dx',
-        prompt: 'Two VAV air handlers ride the same mild afternoon down to a quarter of design airflow. One has a chilled-water coil; the other has a DX coil with a stage still running. Which coil is in trouble?',
+        prompt: 'Two VAV air handlers ride the same mild afternoon down to a quarter of design airflow. One has a chilled-water coil; the other has a DX coil whose lead stage — half the unit\'s tonnage — is still running. Which coil is in trouble?',
         choices: [
             { id: 'a', text: 'The chilled-water coil — water keeps flowing through it, so it ices first.' },
             { id: 'b', text: 'Neither — a VAV coil is sized for part flow, so both just ride it down.' },
             { id: 'c', text: 'Both alike — any cooling coil starved of airflow ices over the same way.' },
             { id: 'd', text: 'The DX coil — the compressor keeps moving refrigerant, air or no air.', correct: true }
         ],
-        explain: 'On a chilled-water coil, part flow is graceful: less air picks up less heat, the modulating valve throttles back, and the water side shrugs. A DX coil is the evaporator of a refrigerant circuit, and a running compressor moves refrigerant whether or not there is warm air to boil it — suction pressure dives, the fins drop below freezing, and the condensate freezes onto them instead of dripping off. Ice chokes the airflow further, which starves the coil further: a runaway with a ratchet.',
+        explain: 'On a chilled-water coil, part flow is graceful: less air picks up less heat, the modulating valve throttles back, and the water side shrugs. A DX coil is the evaporator of a refrigerant circuit, and a running compressor moves refrigerant whether or not there is warm air to boil it. A quarter of the air for half the tonnage is about 200 CFM per ton, half the field floor — suction pressure dives, the fins drop below freezing, and the condensate freezes onto them instead of dripping off. Ice chokes the airflow further, which starves the coil further: a runaway with a ratchet.',
         learnMore: { href: '/education/vav-systems.html#the-coil-floor', label: 'VAV Systems — The Machine Has a Minimum Too' },
         tags: ['forced-air', 'vav', 'dx']
     },
