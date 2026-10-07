@@ -15,6 +15,19 @@
 // metric-rounding policy — except the transducer's volts-to-inches
 // frame and fan Hz, which stay in their IP field frames (the same
 // US-native posture the airflow tool takes with K and VP).
+//
+// The bank is deliberately larger than the page's defaultCount (10):
+// the engine samples an overflowing bank, so each run draws a
+// different subset (buildQueue() in quiz-engine.js). Coverage tracks
+// the lesson's sections — why the fan holds static and which way the
+// sign runs, the loop itself (where the sensor sits, how fast the
+// loop is and why it is tuned gently, and the pressure profile it
+// pivots around the sensor), reset and the cube-law money it goes
+// after, static-is-not-flow with its masked restriction and the old
+// fix, the safeties (the cutout, a sensing tube stuck reading high,
+// a duct breach the loop reads as demand), and the who-decides-what
+// synthesis. The sensing-tube and breach questions both anchor
+// #safeties, the subhead that hosts those paragraphs.
 
 module.exports = [
     // ── The signal ─────────────────────────────────────────
@@ -58,6 +71,29 @@ module.exports = [
         tags: ['forced-air', 'duct-static']
     },
     {
+        type: 'mcq',
+        id: 'ds-loop-speed',
+        prompt: 'Compared with the zone temperature loops out at the VAV boxes, how quick is the duct-static loop — and what does that mean for its tuning?',
+        choices: [
+            { id: 'a', text: 'Slow — duct pressure takes minutes to settle, so it can carry aggressive gain.' },
+            { id: 'b', text: 'About as quick as a zone loop, so the same tuning carries straight over.' },
+            { id: 'c', text: 'Fast — static answers a speed change in seconds, so it wants gentle gain.', correct: true },
+            { id: 'd', text: 'Fast — so it needs high gain to keep up with thirty boxes moving at once.' }
+        ],
+        explain: 'Zone loops think in minutes: a room warms slowly and the world catches up. Duct pressure answers the fan in seconds — touch the speed reference and the sensor feels it almost immediately — and loops that quick are tuned gently or they hunt. High gain on a fast loop is how you get a fan surging up and down the trunk. The PID tuner\'s supply-fan scene is this exact loop, and it shows how little gain it wants.',
+        learnMore: { href: '/education/duct-static-control.html#the-loop', label: 'Duct Static Control — One Sensor, Two-Thirds Down the Duct' },
+        tags: ['forced-air', 'duct-static']
+    },
+    {
+        type: 'tf',
+        id: 'ds-pressure-profile',
+        prompt: 'With a fixed static setpoint, the pressure at the fan discharge stays about the same from a design afternoon to a mild evening — it is the reading out at the sensor that moves with the load.',
+        answer: false,
+        explain: 'False — it is the other way round. The sensor\'s point is the one that never moves: the loop pivots the whole pressure profile around the number it holds. On a design afternoon the trunk is a steep hill, high at the fan and spent on friction along the run; on a mild evening it is nearly flat, so discharge pressure falls toward setpoint. That swing is exactly why a sensor at the fan discharge forces a high setpoint all day.',
+        learnMore: { href: '/education/duct-static-control.html#the-loop', label: 'Duct Static Control — One Sensor, Two-Thirds Down the Duct' },
+        tags: ['forced-air', 'duct-static']
+    },
+    {
         type: 'numeric',
         id: 'ds-scaling',
         prompt: 'A duct-static transducer spans 0–2.5 in. w.c. over a 0–10 V output. The BMS reads 6.0 V. What static is it reporting? Enter the answer in in. w.c.',
@@ -81,6 +117,17 @@ module.exports = [
             { id: 'd', text: 'Dropping the setpoint to zero whenever the building is unoccupied.' }
         ],
         explain: 'A fixed setpoint is sized for the worst afternoon of the year, and every other hour the boxes throttle the surplus away across their own dampers — pressure the fan paid cube-law money to make. Trim & respond polls the boxes: nobody near wide open, trim the setpoint down; some box driving toward its stops, respond back up. The steady state parks the most-open damper near fully open, doing no throttling. It\'s pump control\'s most-open-valve reset with air in it. The loop stays a static loop throughout — box positions move the <em>setpoint</em>, never the fan directly — and there\'s a floor, not zero, so far boxes can still make their ventilation minimums.',
+        learnMore: { href: '/education/duct-static-control.html#reset', label: 'Duct Static Control — Setpoint Reset' },
+        tags: ['forced-air', 'duct-static', 'reset']
+    },
+    {
+        type: 'numeric',
+        id: 'ds-cube-law',
+        prompt: 'Supply-fan power follows the <em>cube</em> of speed. With reset walking the setpoint down far enough that the fan runs at half its design speed, roughly what percentage of design power does it draw? Enter the answer in %.',
+        answer: 12.5,
+        tolerance: 0.6,
+        unit: '%',
+        explain: 'Half speed cubed: 0.5 × 0.5 × 0.5 = 0.125, so about 12.5 % — an eighth of design power, the ideal figure the affinity-laws tool computes. That cube is why reset is worth the trouble: the fan is the biggest motor on the unit, and every tenth of an inch the setpoint walks down lets it run slower for the same delivered air. A fixed setpoint captures some of that money; reset goes back for the rest.',
         learnMore: { href: '/education/duct-static-control.html#reset', label: 'Duct Static Control — Setpoint Reset' },
         tags: ['forced-air', 'duct-static', 'reset']
     },
@@ -137,6 +184,35 @@ module.exports = [
             { id: 'd', text: 'Because the BMS isn\'t allowed to stop equipment.' }
         ],
         explain: 'Trace the failure that pops ductwork: a sensing tube plugs and reads low, the loop sees a starving duct, and it drives the fan toward 100% while the <em>real</em> static runs away high — with the transducer swearing everything\'s low the entire time. Logic on that signal protects nothing, because the signal is the thing that failed. The cutout is a separate device on its own tap, set well above setpoint, usually manual-reset so a human has to come find out why. Speed helps, but it\'s not the reason — independence is. A unit without one isn\'t aggressive, it\'s uninsured.',
+        learnMore: { href: '/education/duct-static-control.html#safeties', label: 'Duct Static Control — When the Loop Can\'t Save You' },
+        tags: ['forced-air', 'duct-static', 'safeties']
+    },
+    {
+        type: 'gotcha',
+        id: 'ds-tube-stuck-high',
+        prompt: 'Hottest afternoon of the month, and the complaint calls are all coming from the end of the longest run. The front end shows this. What\'s going on?',
+        snippet: '<pre class="quiz-snippet">SUPPLY STATIC    1.80 in. w.c. (450 Pa) · SP 1.50 in. w.c. (375 Pa)\nSUPPLY FAN       20 Hz · its minimum speed\nFAR-END BOXES    dampers 100 % · flow well short of setpoint\nNEAR BOXES       satisfied</pre>',
+        choices: [
+            { id: 'a', text: 'The far boxes\' actuators or flow rings have failed — the trunk clearly has pressure to spare.' },
+            { id: 'b', text: 'The static reading is the lie — the sensing tube or transducer is stuck reading high, so the fan idles.', correct: true },
+            { id: 'c', text: 'The setpoint is too low for the longest run — raise it to 2.0 in. w.c. (500 Pa) and the far end recovers.' },
+            { id: 'd', text: 'The far run is out of balance and needs a rebalance — static is above setpoint, so the fan is doing its part.' }
+        ],
+        explain: 'Read the fan, not the static: on the hottest afternoon of the month the fan is at its minimum, which no real building load explains — the loop is answering a number that says the duct is over-pressurized. A sensing tube pinched, plugged or kinked so it reads high is the quiet twin of the dangerous stuck-low tube: the fan idles and the far zones starve first. The far boxes are behaving exactly right, wide open and asking for more — and raising the setpoint above a reading that won\'t move sends the fan chasing it toward full speed while the real static climbs toward the cutout. Put a manometer on the tap before you touch anything else.',
+        learnMore: { href: '/education/duct-static-control.html#safeties', label: 'Duct Static Control — When the Loop Can\'t Save You' },
+        tags: ['forced-air', 'duct-static', 'safeties']
+    },
+    {
+        type: 'mcq',
+        id: 'ds-duct-breach',
+        prompt: 'Mid-afternoon the supply fan ramps to full speed and stays there. Duct static sits below setpoint and never reaches it, and every zone past one point in the trunk loses its airflow at once. What is the likeliest cause?',
+        choices: [
+            { id: 'a', text: 'The sensing tube is plugged and stuck reading low, so the loop chases it.' },
+            { id: 'b', text: 'The setpoint is set higher than the fan can make even at full speed.' },
+            { id: 'c', text: 'The VFD has been left in hand at full speed after a service call.' },
+            { id: 'd', text: 'A blown flex joint or an open access door upstream of the sensor.', correct: true }
+        ],
+        explain: 'A hole in the duct upstream of the sensor is something the loop cannot tell from demand: static can\'t build, so the fan pegs at full speed holding a setpoint it can never reach, conditioning a ceiling plenum. The tell is fan speed that no longer matches the load plus a block of zones past the breach going quiet together. A tube stuck low pegs the fan too, but then the real static runs away high and the boxes pinch to hold their flow — nobody starves — and an out-of-reach setpoint starves the longest runs gradually, not one stretch of trunk at once. A VFD left in hand would drive static <em>up</em>, not leave it short.',
         learnMore: { href: '/education/duct-static-control.html#safeties', label: 'Duct Static Control — When the Loop Can\'t Save You' },
         tags: ['forced-air', 'duct-static', 'safeties']
     },
