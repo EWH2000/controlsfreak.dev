@@ -265,3 +265,84 @@ sequence may be the most balanced workflow we've used."*
 **Merged 2026-10-06:** #607 #608 #609 #610 #612 #613 #615 #616 #617
 #618 #619 #620 #621 #622 #623 #624 #625 #626 #627 #630 #631 #632 #634
 #635 #636. Open PRs after: none. `main` at 3.91.0.
+
+## 19. Evening rulings before the overnight lanes *(2026-10-06 — frontloaded in the first two hours, then the assistant worked the queue alone)*
+
+The session opened with `/verify-handoff` on `docs/next-session-handoff.md`
+(140 claims: 127 verified, 12 corrected, 1 unverifiable — the corrections
+are in the handoff's *Corrections* block) and then put every open call to
+the owner in four rounds. He answered each one, then slept; the lanes ran
+overnight and their PRs wait for the morning walk. Where a
+recommendation was offered, he took it on every item but two (marked).
+
+1. **content-audit #99 — the lesson adopts 35–38 °F** as the practical
+   freezestat band (*What Actually Freezes* and protection-stack item 1 in
+   `coil-freeze-protection.html`); the tool's `bandTxt` stays. *Against
+   the recommendation*, which had been to relabel the tool. PR #639.
+2. **codebase-issues #331 — both triggers**: `pull_request` listens for
+   `edited` with a base-change gate, AND `push: branches: [main]` runs the
+   suite on `main` after every merge. **Merge on green granted** (the
+   recommendation had been to hold it for the walk). PR #645, merged
+   2026-10-07 01:14Z; the first `push` runs on `main` followed immediately.
+3. **codebase-issues #328 — narrow to scope statements.** All five
+   *What this page didn't cover* bullets on `bacnet-networking.html`
+   (segmentation, BACnet/SC, capture-driven troubleshooting, alarms and
+   events, vendor profiles) plus `bacnet-basics.html`'s "their own future
+   pages" line. The topics stay listed; the promise goes. PR #643.
+4. **codebase-issues #324 — reword as field advice.** The tuner's
+   cheat-sheet row now says to flip direct ↔ reverse on the real
+   controller, not on this page. PR #641.
+5. **content-audit #91 + #92 — fix, two sentences.** One prose pointer
+   near the sensor-strip widget to the freeze lesson's 38 °F figure, and
+   one sentence giving the MA-T-reads-the-coil point in prose (the story
+   itself stays in the widget). PR #640.
+6. **content-audit #94 + #95 — fix.** `pid-basics.html` softens "fast,
+   clean loop" (duct static is noisy: D has little lag to anticipate and
+   plenty of noise to amplify) and names the measured variable; the
+   tuner's Fast row names duct static pressure and mixed-air temperature
+   as the PVs, with the outputs they drive. PR #641 (with #324 and #329).
+7. **content-audit #96 — fix, one disclosure sentence.** "Lockout" is used
+   at both ends of changeover — high-limit lockout of free cooling, and a
+   low-ambient / low-limit lockout at the cold end. Name both, legislate
+   neither (the deadband-convention register). PR #642.
+8. **content-audit #93 — no page change.** The damper-stroke caveat is a
+   candidate question for a later air-handlers wave; the entry stays open
+   as that pointer.
+9. **Home hero badge — feature the Coil Freeze Protection lesson** for
+   freezestat season; revert to the DDC Workbench in spring (the old
+   anchor is preserved in an HTML comment beside the badge). PR #644.
+10. **Quiz wave 3 — six banks, two batches of three.** `building-pressure`,
+    `duct-static-control`, `vav-systems`, then `psychrometrics-basics`,
+    `hydronic-loops`, `load-piping` — freeze-season neighbours of the new
+    lesson first. Owner merges each bank PR.
+11. **F4 case-file mockup — hold** until wave 3 is further along.
+12. **#228 — step 0 + step 1 as stacked PRs.** Engine helpers
+    (`Psychro.mixAir` / `mixFraction`) + `tests/psychro-mixair.spec.js` +
+    the minor bump first; the psychrometric-chart page with its
+    before/after fixture stacked on it. Owner merges both; the child is
+    rebase-pushed after the parent lands (or rides #331's fix).
+13. **Morning walk — combined LAN preview.** Every live-page PR merged
+    into one scratch tree, published to `cfdev.home.arpa`, with full-page
+    screenshots (dark + light) in the walk notes.
+14. **DDC Workbench filter rack — redraw it tonight** with the pleated
+    idiom (the handoff verification found the Workbench's `#ahu-filter`
+    still drew the old parallel-line rack; §18.6's "site-wide" had
+    covered the three lesson racks only). PR #647.
+15. **Session shape.** Owner: *"use Sonnet and Opus agents for mechanical
+    tasks, you judge if Opus is needed based on complexity. But use other
+    Fable agents for design tasks … let's try to frontload that into the
+    first 2 hours or so and then I'll want you to work after I go to
+    sleep."* Merge authority overnight: #330, #331 and the wrap-up docs PR
+    only; everything that reaches a live page waits for the walk.
+
+**Overnight output (for the morning walk, in order):** #639 freeze band · #640 air-handlers pointer · #641 pid loops · #642 economizer lockout · #643 bacnet scope · #644 hero badge · #647 workbench filter rack · #650 building-pressure · #648 duct-static-control · #649 vav-systems · #651 psychro step 0 · #652 psych chart step 1 (stacked on #651) · #655 psychrometrics-basics · #654 hydronic-loops · #653 load-piping. Merged on the grant: #645 (#331), #646 (#330). Walk notes: `docs/audits/2026-10-reentry/walk-2026-10-07.md`.
+
+**Process notes from the night.** (a) PR #645's `push: main` arm ran on
+its own merge commit and on #646's and passed both times — the first
+suite runs `main` has ever had. (b) A PR body edit now leaves a SKIPPED
+`test` check beside the real one (codebase-issues #331 resolution). (c)
+The quiz workflow's second refute round can leave an open item that the
+Opus fixer then applies without a third refute; both wave-3 batch-1
+open items were applied verbatim and are called out in the walk notes.
+(d) Every lane reported at least one drifted line cite in the entry it
+was fixing (the 2026-08-12 lesson, again).

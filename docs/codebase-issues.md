@@ -9441,7 +9441,7 @@ prohibited) are itemised in
 `textContent` rewritten unguarded at 10 Hz (item 18) — shipped with (a)
 above; see there for why it could not wait.
 
-### 228. Engineering math is re-implemented per page — air mixing carries three disagreeing forms and no shared helper exists *(noticed 2026-07-27, owner direction — scheduled separately, not this arc)* *(ruled 2026-10-06 — the design note's §6 defaults accepted; execution lane pending, `docs/engine-standardization.md` §4)*
+### 228. Engineering math is re-implemented per page — air mixing carries three disagreeing forms and no shared helper exists *(noticed 2026-07-27, owner direction — scheduled separately, not this arc)* *(ruled 2026-10-06 — the design note's §6 defaults accepted; execution lane pending, `docs/engine-standardization.md` §4)* *(partially addressed 2026-10-06 · PR #651 step 0, PR #652 step 1; steps 2+ pending)*
 
 Owner direction, 2026-07-27: *"The air mixing disagreeing seems like an
 issue I'd like to fix, with all these things using it, it may be good to
@@ -9759,6 +9759,27 @@ purpose — this entry stays open until the owner picks. Owner picked the §6 de
 `mixFraction`, keep `mixStreams`; no engine caveat text; no workbench
 mass-delta readout); the execution lane is open to schedule.
 
+**Execution, 2026-10-06 (rulings.md §19.12):** step 0 is PR #651 —
+`Psychro.mixAir` / `mixFraction` in `psychro-engine.js`, a private
+`cp(W)` folded into the three `0.240 + 0.444·W` sites and the inversion
+(`:224/:231/:261/:517` on `a2ad39f`, not the `:209/:216/:246/:502` the
+design note cites), `tests/psychro-mixair.spec.js` (17 tests; the mass
+basis reproduces `mixStreams` exactly — a 836-pair × 4-weight
+`Object.is` sweep found 0 mismatches), the §1 table reproduced from the
+engine (all seven rows unchanged) and the minor bump 3.91.0 → 3.92.0.
+Design choices the verifier asks the owner to confirm: a missing `P`
+defaults to `streams[0].state.P` (not `P_STD`) so an altitude state is
+never re-mixed at sea level; a kernel `ok:false` is returned as-is. Step
+1 is PR #652, stacked on #651 — `psychrometric-chart.html` calls
+`mixAir` (basis `'mass'`), the label reads "Outdoor air (% by mass)",
+the MA ref-note names the mass basis and the fog re-solve; the
+before/after fixture (21 cases × US/metric, 1,419 fields) is byte-
+identical except past saturation, where the §1 fog corner moves 10.4 →
+17.7 °F as #236 intended. Steps 2+ (air-mixing, the workbench last,
+display-only) are still to schedule. Two doc follow-ups once these
+merge, left out of the docs PR to avoid colliding with #651's hunk: the
+§2 table's stale cp cites, and a "Landed" line under §4 step 1. By-
+catch: #336.
 
 ### 229. `#fcu-ovr-state` is a live region rewritten on every 10 Hz host tick *(noticed 2026-07-27; the AHU's twin shipped guarded 2026-07-30 — **RESOLVED 2026-08-09 · PR #493**, COV announcer per the owner-decision note; closing record at the end)*
 
@@ -15581,7 +15602,7 @@ mirror in one snapshot. Measured: that spec 96/96 green, smoke's
 landed in `ddc-workbench-ahu-page.spec.js` (the spec that drives the
 built page), not `ddcw-ahu-unit.spec.js`, which is engine-direct.
 
-### 324. The PID tuner's cheat sheet advises "flip acting (direct ↔ reverse)" — a control the tuner does not have *(noticed 2026-10-05, decision sitting — by-catch of the pid-basics direct/reverse aside; LOW, not ruled)*
+### 324. The PID tuner's cheat sheet advises "flip acting (direct ↔ reverse)" — a control the tuner does not have *(noticed 2026-10-05, decision sitting — by-catch of the pid-basics direct/reverse aside; LOW, not ruled)* *(ruled 2026-10-06 — reword as field advice)* *(addressed 2026-10-06 · PR #641)*
 
 `html/simulators/pid-tuner.html:423` — the Symptom→Move table's row
 *"PV runs away when the loop acts → flip acting (direct ↔ reverse)"*.
@@ -15600,6 +15621,14 @@ toggle to the tuner — bigger, touches the engine and every preset;
 (3) leave it. Found while ruling the pid-basics direct/reverse aside
 (friction file, *PID basics — surface direct vs reverse acting?*). Open;
 not on the 2026-10-05 agenda.
+
+**Resolution (2026-10-06, rulings.md §19.4):** option (1). The row now
+reads "wrong action on the real controller — flip direct ↔ reverse
+there", so it is advice about the reader's loop and no longer points at
+a toggle this page lacks. Shipped on PR #641 with content-audit #94 /
+#95 and #329 (one `pid-tuner.html` + `pid-basics.html` lane). Refuter
+note: the cell is now the longest in the terse cheat sheet (four lines
+at 375 px, no overflow).
 
 ### 325. `buildState` ok:false reaches two unguarded consumers — coil-sizing heating NaN, psych-chart HC stage *(noticed 2026-10-05, #238 fix round)* *(addressed 2026-10-05 · PR #632)*
 
@@ -15720,7 +15749,7 @@ lifetime), not a disclosure gap. Numbering note: #325 and #326 were
 already claimed on other branches when this was written, so this entry
 takes #327.
 
-### 328. `bacnet-networking.html`'s "What this page didn't cover" list promises unbuilt pages in lesson body prose *(noticed 2026-10-05, #314 lane verifier)*
+### 328. `bacnet-networking.html`'s "What this page didn't cover" list promises unbuilt pages in lesson body prose *(noticed 2026-10-05, #314 lane verifier)* *(ruled 2026-10-06 — narrow to scope statements)* *(addressed 2026-10-06 · PR #643)*
 
 `html/education/bacnet-networking.html`, the `What this page didn't
 cover` subhead (`:598`) and its bullet list. Two bullets promise a page
@@ -15763,7 +15792,18 @@ lane) gives the same `bacnet-networking.html` subhead an
 `id="not-covered"`; a reword lane should land after it or rebase onto
 it. Open.
 
-### 329. `pid-basics.html`'s closing "PID block on a wiresheet" paragraph has no `id`, so no quiz `learnMore` can deep-link it *(noticed 2026-10-05, quiz wave-2 pid-basics lane)*
+**Resolution (2026-10-06, rulings.md §19.3):** option (1), applied to
+all five bullets (segmentation, BACnet/SC, capture-driven
+troubleshooting, alarms and events, vendor profiles) plus `bacnet-
+basics.html`'s "their own future pages" line. Each bullet keeps its
+description of the topic and states why it sits outside this page; no
+page is promised, and the vendor names left with the vendor bullet. `npm
+run status` §5 reports 0 coming-soon candidates on the branch. The
+subhead is `:601` (not `:598`) after PR #625's `id="not-covered"`. Two
+sibling lessons carry the same shape in words the §5 regex does not see
+— logged as #333.
+
+### 329. `pid-basics.html`'s closing "PID block on a wiresheet" paragraph has no `id`, so no quiz `learnMore` can deep-link it *(noticed 2026-10-05, quiz wave-2 pid-basics lane)* *(addressed 2026-10-06 · PR #641)*
 
 `html/education/pid-basics.html:229-231` — the paragraph that opens *"In a
 building-automation controller, the PID you've just been tuning lives
@@ -15786,8 +15826,16 @@ same PR. No guard proposed, for #314's reason. Open —
 log-and-fix-opportunistically: any lane already touching
 `pid-basics.html` takes it.
 
+**Resolution (2026-10-06):** `id="pid-on-a-wiresheet"` on the paragraph
+itself (`pid-basics.html:~228`, with a keep-it comment naming it a quiz
+deep-link target; no subhead added), and `pid-block-on-wiresheet`'s
+`learnMore` retargeted to `/education/pid-basics.html#pid-on-a-
+wiresheet` with the label "PID Basics — The PID block on a wiresheet".
+The bank's header comment, which said the paragraph had no anchor, was
+trued up in the same commit. `link-integrity.spec.js`'s fragment arm
+resolves it.
 
-### 330. `publish-preview.mjs`'s destination guard is suffix-only, so a worktree outside the repo's parent publishes to a sibling folder it creates *(noticed 2026-10-06, review-and-merge session; LOW)*
+### 330. `publish-preview.mjs`'s destination guard is suffix-only, so a worktree outside the repo's parent publishes to a sibling folder it creates *(noticed 2026-10-06, review-and-merge session; LOW)* *(addressed 2026-10-06 · PR #646, merged)*
 
 `.github/scripts/publish-preview.mjs:80-84` resolves the default
 destination as `../caddy/dashboard/cfdev` relative to the checkout and
@@ -15807,7 +15855,22 @@ the guard assert the path is under `$HOME` as well as ending with the
 suffix; keep `CF_PREVIEW_DIR` as the override. Script only → merge on
 green.
 
-### 331. `test.yml` never runs for a stacked PR that GitHub retargets to `main` after its parent merges *(noticed 2026-10-06, review-and-merge session; process gap, owner's call on the fix)*
+**Resolution (2026-10-06):** the default destination is now
+`path.join(os.homedir(), 'caddy', 'dashboard', 'cfdev')`
+(`CF_PREVIEW_DIR` still overrides; a relative override still resolves
+against the checkout), and the guard has **three** checks, not the two
+the fix shape named: the suffix, under-`$HOME` (a lexical
+`path.relative` test, no symlink following), and **the `caddy/dashboard`
+parent must already exist** — `mkdirSync(DEST)` no longer creates it.
+The third check is load-bearing, not polish: from an in-home lane
+worktree (`.claude/worktrees/<name>`) the old repo-relative default
+resolves to `<repo>/.claude/worktrees/caddy/dashboard/cfdev`, which
+passes BOTH of the ruled checks and is refused only by the parent check.
+A `--dry-run` flag runs every guard and prints the plan without touching
+the docroot. Six-case guard matrix in the PR body; CLAUDE.md's LAN-
+preview bullet rewritten to match.
+
+### 331. `test.yml` never runs for a stacked PR that GitHub retargets to `main` after its parent merges *(noticed 2026-10-06, review-and-merge session; process gap, owner's call on the fix)* *(ruled 2026-10-06 — both triggers; merge on green granted)* *(addressed 2026-10-06 · PR #645, merged)*
 
 `.github/workflows/test.yml` triggers on `pull_request` with
 `branches: [main]`, and the default activity types are `opened`,
@@ -15816,8 +15879,9 @@ parent's branch, so nothing runs; when the parent merges and GitHub
 retargets the child to `main`, that is an `edited` event (with
 `changes.base`), which does not run either. The child shows no `test`
 check at all, `mergeStateStatus` reads CLEAN, and `gh pr merge` goes
-through. Three chain A PRs (#632, #626, #630) merged that way on
-2026-10-06 before the gap was noticed. A full local suite on `main`
+through. Two chain A PRs (#632, #630) merged that way on 2026-10-06
+before the gap was noticed *(corrected 2026-10-06 — this entry first
+said three and named #626, whose merged SHA carries a `test` SUCCESS)*. A full local suite on `main`
 afterwards was clean (1223 passed, 1 skipped, 0 failed), and the chain
 B children (#623, #624, #627, #620) were rebased onto `main` and
 force-pushed before merging — the push is a `synchronize`, which runs.
@@ -15830,3 +15894,115 @@ Alternatively (or also) add `push: branches: [main]`, so `main` itself
 is tested after every merge, not only the PR before it. CI config →
 owner picks. CLAUDE.md's Workflow section carries the rebase-push rule
 in the meantime.
+
+**Resolution (2026-10-06, rulings.md §19.2):** both shapes shipped.
+`pull_request` now carries `types: [opened, synchronize, reopened,
+edited]` and the job is gated with the **shipped** expression `if:
+github.event_name != 'pull_request' || github.event.action != 'edited'
+|| github.event.changes.base != null` — the `event_name` clause is not
+in the sketch above and is needed so a `push` event (where `action` is
+null) passes on its own terms, not by accident. `push: branches: [main]`
+runs the suite on `main` after every merge; runs 37556093557 (`6d659c2`,
+after #645) and 37556097855 (`a2ad39f`, after #646) are the first two
+and both passed. Two observed consequences: (a) a title or body edit
+fires `edited`, the gate skips the job, and `gh pr view N --json
+statusCheckRollup` lists a `test` check with conclusion SKIPPED
+**beside** the real run on the same head — read SUCCESS on the head SHA,
+ignore the SKIPPED twin; (b) the automatic retarget `edited` event has
+not yet been observed to dispatch a run (no stacked child has merged
+since) — PR #652 on #651 is the first test; until then the rebase-push
+rule in CLAUDE.md stays as the backstop. CLAUDE.md *Workflow* trued up
+(two PRs, fix landed).
+
+### 332. "freeze-stat" vs "freezestat" — the lessons spell it one way, the widget strings and quiz banks the other *(noticed 2026-10-06, Batch A air-handlers refuter; owner spelling ruling + sweep)*
+
+Every lesson's prose writes **freezestat** (`coil-freeze-protection.html`,
+`air-handlers.html` after PR #640, the glossary entry), while the
+visible widget status string in `air-handlers.html` (`:761`, *"Mixed air
+near freezing — freeze-stat territory"*), the air-handlers bank
+(`html/_data/quizzes/air-handlers.js:196,200`), `economizers.js`,
+`sequencing-scenarios.js`, `boolean-logic-latches.html:229` and comments
+in `glossary.js` write **freeze-stat** — 22 hyphenated hits site-wide at
+`a2ad39f`. PR #640 avoided quoting the widget string in prose so one
+sentence would not spell it both ways. Both forms are current in the
+trade; the site should pick one. **Fix shape:** owner picks the house
+spelling (the lessons' unhyphenated form is the larger set), then one
+sweep PR over strings and banks — `quiz-banks.spec.js` is shape-only, so
+no spec changes. Open.
+
+### 333. Two more lessons promise unbuilt work in body prose, in shapes the §5 coming-soon scan does not carry *(noticed 2026-10-06, Batch A bacnet-scope refuter — same family as #328)*
+
+`html/education/bacnet-services.html:227` — the out-of-scope paragraph
+says segmentation is *"worth its own treatment"*; and
+`html/education/bacnet-mstp.html:238` — the "What this page didn't
+cover" paragraph says a bus simulator is *"on the roadmap as this page's
+practice pair"*, names the Controller Wiring Simulator's NET terminals
+as *"the seam it will plug into"*, and says BACnet/SC *"will eventually
+inherit much of this work"*. Both are plain `<p>` lesson body prose, so
+both sit on the banned side of the 2026-10-05 prominence amendment, and
+`npm run status` §5 reports 0 for both: its regex carries the "own
+page" shapes added 2026-10-05 but not `worth its own treatment` or `on
+the roadmap`. Also pre-existing on `bacnet-networking.html:607-608`: the
+intro above the not-covered list says the topics are *"deliberately out
+of scope across"* the BACnet lessons while the first bullet says MS/TP is
+*"Now its own page"* — one clause ("out of scope on this page") fixes
+it. **Fix shape:** narrow the two paragraphs to scope statements per the
+#328 ruling (the mstp one is a simulator promise rather than a page
+promise, so the owner may want to call it), and add `worth its own
+treatment` and `on the roadmap` to the §5 banned-shape set in
+`.github/scripts/project-status.mjs` so the scan's zero means more than
+it does today. Open.
+
+### 334. The quiz engine grades a numeric answer typed with a thousands separator as its leading digits *(noticed 2026-10-06, Batch B vav-systems lane; engine, LOW)*
+
+`html/scripts/quiz-engine.js` reads numeric answers with `parseFloat`,
+so a reader who types `10,000` is graded as `10` — and marked wrong with
+no hint why. Banks with answers at or above 1,000 are exposed today:
+`bacnet-basics` (47808), `building-pressure` (3000 and the new 3200),
+`field-wiring-sensors`, `surviving-first-months` (10000). The wave-3
+lanes avoided adding more. **Fix shape:** strip `,` (and the thin/narrow
+no-break space a metric reader may paste) before parsing, in one place
+in the engine; a one-line test in `quiz-engine`'s spec. Live script on
+42 practice pages → owner merges. Open.
+
+### 335. Several ten-question banks key every choice on "a", and the keyed choice is usually the longest — the engine does not shuffle choices *(noticed 2026-10-06, Batch B duct-static-control + vav-systems lanes; bank-wide sweep wanted)*
+
+`duct-static-control.js` keys all ten original questions on `a`;
+`vav-systems.js` keys all seven of its original mcq/gotcha questions on
+`a`, and in six of those the key is also the longest choice (e.g.
+`ds-cutout`, 206 characters against 95). `quiz-engine.js` shuffles
+question order but presents choices in authored order, so a test-wise
+reader learns the letter. The wave-3 lanes kept their five new keys off
+`a` and no longer than the longest distractor, which moves the split
+only to a10/b1/c1/d1 and a7/b1/c1/d1. **Fix shape:** a sweep over every
+bank that reorders choices (ids are per-question, nothing references
+them) and trims over-long keys, bank by bank for the owner to read —
+the air-handlers refuter did this for one bank in wave 2. No spec
+change: `quiz-banks.spec.js` does not read letter distribution, and
+`modbus-decoding` is walked deterministically by smoke and must keep its
+order. Open.
+
+### 336. `Psychro.buildState` has no finite/positive-`P` guard, so a bad pressure is reported as "at or above the boiling point" *(noticed 2026-10-06, #228 step 0 verifier; pre-existing, LOW)*
+
+`html/scripts/psychro-engine.js` `buildState(tdb, W, P)` (`~:218`) takes
+`P` positionally and never validates it, while `solveState` does
+(`![tdb, second, P].every(isFinite) || P <= 0`). A caller passing `NaN`,
+`null` or `0` drives `satHumRatio` to `NaN` and gets the #238
+`ok:false` refusal *"Dry-bulb is at or above the boiling point for this
+pressure…"* — a cause-dishonest message in the same family audit-2026-06
+polished out of the over-saturation path. `mixAir` / `mixFraction`
+(PR #651) inherit it: an explicit bad `P` passes their `=== undefined`
+default check and reaches the kernel. No page hits it today (every
+caller `parseFloat`s its inputs first). **Fix shape:** one guard at the
+top of `buildState` returning the engine's "Enter numeric values" shape;
+a spec line in `psychro-engine.spec.js`. Shared script → owner merges.
+Open.
+
+### 337. `building-pressure.html`'s "Not the same pressure" callout has no `id`, so the new bank question links its parent section *(noticed 2026-10-06, Batch B building-pressure lane; #314 family, log-and-fix-opportunistically)*
+
+The callout that separates building static from duct static carries no
+`id`; `bp-duct-static-not-building` (PR #650) tests exactly that beat
+and sends its `learnMore` to `#measuring-it`, the section that hosts it
+(the bank's header comment says so). Same shape and same fix as #314 /
+#329: one `id` on the callout, retarget the `learnMore` in the same PR.
+Any lane touching `building-pressure.html` takes it. Open.

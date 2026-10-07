@@ -1138,10 +1138,13 @@ section headers).
    as exhaustive, and this step wasn't in the checklist — which is
    how the README drifted 24 page bullets (plus the Practice counts:
    8 quizzes and 3 drills unlisted) behind by 2026-07-01.
-6. Consider bumping the home-page hero's `Latest: <name>` badge
-   to point at the new tool — `html/index.html`, the
-   `<p class="hero-latest">` paragraph (~L382). Editorial pick; skip
-   on small revisions.
+6. Consider pointing the home-page hero's `Featured · <name>` badge
+   at the new tool — `html/index.html`, the `<p class="hero-latest">`
+   paragraph (~L400; relabelled from `Latest:` 2026-07-19, owner
+   decision). Editorial pick; skip on small revisions. As of 2026-10-06
+   it is a **seasonal pick** — the Coil Freeze Protection lesson for
+   freezestat season, with the DDC Workbench anchor preserved in an
+   HTML comment beside it for the spring revert.
 7. Bump `package.json.version` when shipping something notable; the
    footer reads it via `html/_data/site.js`. A new tool is a minor
    bump (`1.X.0`); a bug fix is a patch bump (`1.X.Y`). Bump with
@@ -1266,7 +1269,7 @@ opt-out.
 7. Add the quiz/drill to `README.md`'s Practice groups and bump its
    count sentence (same reason as tools step 5b — the tour is
    exhaustive).
-8. Same `Latest:` badge + `package.json.version` rules as tools.
+8. Same `Featured` badge + `package.json.version` rules as tools.
 
 ## Git conventions
 
@@ -1480,17 +1483,25 @@ re-submit); add `--dry-run` to print the URL list without POSTing.
 opens against its parent's branch (no run), and when the parent merges
 GitHub retargets the child to `main` with an `edited` event (still no
 run) — so it shows **no `test` check at all**, `mergeStateStatus` reads
-CLEAN, and `gh pr merge` goes through untested. Three chain PRs merged
+CLEAN, and `gh pr merge` goes through untested. Two chain PRs merged
 that way on 2026-10-06 before anyone noticed (a full local suite on
-`main` came back clean, 1223/0/1). **Rule:** after a parent merges,
-rebase the child onto `origin/main` and force-push (the push is a
+`main` came back clean, 1223/0/1). **Fixed on the workflow side
+2026-10-06 (PR #645, codebase-issues #331):** `pull_request` now also
+listens for `edited`, gated so only a base change runs the job, and
+`push: branches: [main]` tests `main` itself after every merge. Two
+things to know: a title or body edit still fires `edited`, the gate
+skips the job, and the rollup then shows a `test` check with conclusion
+SKIPPED **beside** the real run on the same head — read SUCCESS on the
+head SHA and ignore the SKIPPED twin. And the automatic-retarget arm
+was unproven when this was written (no stacked child had merged since),
+so the belt-and-braces **rule stands:** after a parent merges, rebase
+the child onto `origin/main` and force-push (the push is a
 `synchronize`, which runs), then merge only when
 `gh pr view N --json statusCheckRollup` shows a `test` check with
-`SUCCESS` — a green parent is not evidence about the child. The
-workflow-side fix is codebase-issues #331. Before a merge session, a
-pairwise `git merge-tree --write-tree A B` over the whole queue finds
-the adjacent-hunk ledger conflicts GitHub only reports once a parent
-has merged.
+`SUCCESS` — a green parent is not evidence about the child. Before a
+merge session, a pairwise `git merge-tree --write-tree A B` over the
+whole queue finds the adjacent-hunk ledger conflicts GitHub only
+reports once a parent has merged.
 
 ## Local preview & tests
 
@@ -1501,13 +1512,17 @@ has merged.
   home server's hub docroot, where a rootless Caddy serves it at
   `https://cfdev.home.arpa/`. **Owner's box only** — it is a home-lab
   convenience, not part of the deploy path, and it no-ops nowhere
-  else (the destination guard refuses any path not ending
-  `/caddy/dashboard/cfdev`). **From a worktree outside the repo's
-  parent directory, pass `CF_PREVIEW_DIR=$HOME/caddy/dashboard/cfdev`**
-  — the default resolves `../caddy/dashboard/cfdev` relative to the
-  checkout, and the suffix guard accepts the sibling folder that
-  creates, so the script reports "live" while the hub serves the old
-  build (codebase-issues #330). It publishes a **snapshot, not a
+  else. **The default destination is home-relative**
+  (`~/caddy/dashboard/cfdev`, since PR #646 / codebase-issues #330), so
+  it works from any checkout or worktree; `CF_PREVIEW_DIR` overrides it.
+  The guard has three checks and refuses on any of them: the path must
+  end `/caddy/dashboard/cfdev`, sit under `$HOME`, and its
+  `caddy/dashboard` parent must already exist (the script no longer
+  creates it — that third check is what catches an in-home lane
+  worktree, where the old repo-relative default passed the other two
+  and reported "live" while the hub served the old build).
+  `npm run publish:preview -- --dry-run` runs every guard and prints
+  the plan without touching the docroot. It publishes a **snapshot, not a
   server**: nothing watches, so every build you want to see needs
   another publish. It also can't exercise the Worker — clean-URL
   301s, the legacy tool redirects and `POST /api/contact` are all
