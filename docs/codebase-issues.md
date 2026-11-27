@@ -16224,8 +16224,9 @@ so a long line does not wrap; it scrolls sideways inside its box. At
 375 px a 33-character line just fits and a 47-character one is cut
 mid-word, with no visible cue in the render that there is more — seen on
 `cfp-trip-reads-as-fan-failure`, whose note was re-wrapped before PR
-#662 was opened. Across the banks, 58 of 69 snippets have a line over 33
-characters; the widest is 84 (`bacnet-basics`). The phone-width walks of
+#662 was opened. Across the banks, 58 of 70 snippets have a line over 33
+characters (counted with PR #662's question in its bank; 58 of 69
+without it); the widest is 84 (`bacnet-basics`). The phone-width walks of
 the 2026-11-26 run checked page-level overflow, which a scrolling box
 does not trip. **Fix shape:** by snippet kind. A prose note re-wraps by
 hand. A tabular snippet (frames, trend rows) needs its columns, so it
