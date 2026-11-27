@@ -29,6 +29,7 @@ module.exports = [
     { slug: 'psychrometrics-basics',    label: 'Psychrometrics Basics' },
     { slug: 'air-handlers',             label: 'Air Handlers' },
     { slug: 'economizers',              label: 'Economizers' },
+    { slug: 'coil-freeze-protection',   label: 'Coil Freeze Protection' },
     { slug: 'building-pressure',        label: 'Building Pressure' },
     { slug: 'air-unit-identification',  label: 'Unit Identification' },
     { slug: 'vav-systems',              label: 'VAV Systems' },
