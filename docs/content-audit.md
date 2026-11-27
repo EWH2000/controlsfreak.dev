@@ -3680,4 +3680,16 @@ brief; none made a merged sentence false. One needs the owner.
   the one place it means the other thing.
 - **Air Handlers.** "the strip" in the sensor-walk prose has no
   antecedent for a reader who skipped the widget.
+- **Coil Freeze Protection quiz (PR #660, five blind reviews, no wrong
+  key found).** Left as built: the keyed choice is the *shortest* in
+  five of twelve choice questions (the mirror of the longest-key tell;
+  the engine shuffle does not cure length); `cfp-winter-minimum-margin`'s
+  stem still rules out its own "it won't" choice; one glycol distractor
+  is half true; and "climate sets exactly one of the three terms" is
+  taught only inside the Boston question's explanation — the obvious
+  beat for a sixteenth question, or for the owner's own gotcha.
+  **Reverse links unpaid, payer named:** `tools/coil-freeze-risk.html`
+  and `simulators/ddc-workbench.html` list the lesson and sibling
+  quizzes in `relatedLinks` but not this quiz; the freeze-season
+  loose-ends run pays both.
 

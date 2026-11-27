@@ -469,3 +469,9 @@ a fix, a ruling above, or a named later run — none dropped)*:
 What the blind reviews raised beyond these points, and the merges did
 not need, is collected in codebase-issues #338 and content-audit #105.
 
+**The second of the five shipped the same night.** The Coil Freeze
+Protection quiz merged 2026-11-27 as PR #660 (v3.93.0): fifteen questions
+drawn only from the lesson, in the "freeze stat" spelling. Five blind
+reviews found no wrong key and nothing unsourced; six explanations and
+stems were tightened before merge on their advice, and what was left
+alone — with the two reverse links still owed — is in content-audit #105.
