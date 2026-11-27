@@ -193,18 +193,18 @@ module.exports = [
             { id: 'c', text: 'Both alike — any cooling coil starved of airflow ices over the same way.' },
             { id: 'd', text: 'The DX coil — the compressor keeps moving refrigerant, air or no air.', correct: true }
         ],
-        explain: 'On a chilled-water coil, part flow is graceful: less air picks up less heat, the modulating valve throttles back, and the water side shrugs. A DX coil is the evaporator of a refrigerant circuit, and a running compressor moves refrigerant whether or not there is warm air to boil it. A quarter of the air for half the tonnage is about 200 CFM per ton, half the field floor — suction pressure dives, the fins drop below freezing, and the condensate freezes onto them instead of dripping off. Ice chokes the airflow further, which starves the coil further: a runaway with a ratchet.',
+        explain: 'On a chilled-water coil, part flow is graceful: less air picks up less heat, the modulating valve throttles back, and the water side shrugs. A DX coil is the evaporator of a refrigerant circuit, and a running compressor moves refrigerant whether or not there is warm air to boil it. A quarter of the air for half the tonnage is about 200 CFM per ton, half the rule-of-thumb 400 — suction pressure dives, the fins drop below freezing, and the condensate freezes onto them instead of dripping off. Ice chokes the airflow further, which starves the coil further: a runaway with a ratchet.',
         learnMore: { href: '/education/vav-systems.html#the-coil-floor', label: 'VAV Systems — The Machine Has a Minimum Too' },
         tags: ['forced-air', 'vav', 'dx']
     },
     {
         type: 'numeric',
         id: 'vav-tons-per-airflow',
-        prompt: 'A mild afternoon: the boxes have throttled a packaged VAV unit\'s total supply down to 6,000 CFM (10,200 m³/h). Using the field rule of thumb of roughly 400 CFM of air per ton of active cooling, about how many tons of running DX can that airflow carry without starving the coil? Enter the answer in tons.',
+        prompt: 'A mild afternoon: the boxes have throttled a packaged VAV unit\'s total supply down to 6,000 CFM (10,200 m³/h). Using the field rule of thumb of roughly 400 CFM of air per ton of active cooling, about how many tons of running DX does that airflow support at the rule of thumb? Enter the answer in tons.',
         answer: 15,
         tolerance: 0.5,
         unit: 'tons',
-        explain: '6,000 CFM ÷ 400 CFM per ton = 15 tons. If the stage still running is bigger than that — a 25-ton first stage wants about 10,000 CFM (17,000 m³/h) — the coil is starving, and suction is on its way down. That mismatch is why staging interlocked to proven airflow locks a stage out rather than run it starved: the interlock chooses the compressor over the complaint. CFM-per-ton stays in its IP field frame, like the K-factor.',
+        explain: '6,000 CFM ÷ 400 CFM per ton = 15 tons. If the stage still running is far bigger than that — a 25-ton first stage wants about 10,000 CFM (17,000 m³/h) — the coil is starving, and suction is on its way down. That mismatch is why staging interlocked to proven airflow locks a stage out rather than run it starved: the interlock chooses the compressor over the complaint. CFM-per-ton stays in its IP field frame, like the K-factor.',
         learnMore: { href: '/education/vav-systems.html#the-coil-floor', label: 'VAV Systems — The Machine Has a Minimum Too' },
         tags: ['forced-air', 'vav', 'dx']
     },
