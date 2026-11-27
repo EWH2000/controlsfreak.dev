@@ -165,6 +165,9 @@
 //      that lands on one line — that is why `own page once` exists beside
 //      `worth its own page`. The copy itself is logged as a separate
 //      ledger entry; this widening only makes the shape visible.
+//      WIDENED again 2026-11-27 with `worth its own treatment` and `on the
+//      roadmap` (codebase-issues #333): two BACnet lessons promised unbuilt
+//      work in those words while this scan reported zero.
 //
 // 6. DEPS (only with --deps). `npm outdated --json` exits 1 when anything is
 //    outdated, so its stdout is parsed regardless of status.
@@ -498,7 +501,7 @@ function contentSection() {
         for (const x of live) if (!(x[1] in glossary)) unknownIds.add(x[1]);
     }
 
-    const COMING = /gets its own (lesson|page)|coming (soon|later)|a (future|later) page|(belongs|wants|worth|deserves)( on)? its own page|own page once/i;
+    const COMING = /gets its own (lesson|page)|coming (soon|later)|a (future|later) page|(belongs|wants|worth|deserves)( on)? its own page|own page once|worth its own treatment|on the roadmap/i;
     const comingSoon = [];
     for (const f of walk(HTML, (p) => p.endsWith('.html') && !p.includes(`${path.sep}_includes${path.sep}`))) {
         maskHtmlComments(read(f)).split('\n').forEach((l, i) => {

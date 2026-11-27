@@ -605,7 +605,7 @@ keywords: ms/tp mstp baud bbmd foreign device router subnet broadcast who-is
                 need to read a point list, form a request, route a message
                 across a router, and reason about why a device isn't
                 showing up in a discovery scan. What's left, deliberately
-                out of scope across them:
+                out of scope on this page:
             </p>
 
             <ul>
@@ -626,13 +626,13 @@ keywords: ms/tp mstp baud bbmd foreign device router subnet broadcast who-is
                     around.</li>
                 <li><strong>BACnet/SC — Secure Connect.</strong> The newer
                     TLS-WebSocket transport. Different framing, different
-                    discovery (no broadcasts at all — hub-and-spoke). Out
+                    discovery (no IP broadcasts — hub-and-spoke). Out
                     of scope because almost none of this page's
                     broadcast, BBMD and Foreign Device machinery applies
                     to it.</li>
                 <li><strong>Capture-driven troubleshooting.</strong> A
-                    Wireshark or Yabe walkthrough — what a Who-Is looks like
-                    in a capture, how to spot a Forwarded-NPDU, what an
+                    Wireshark walkthrough — what a Who-Is looks like
+                    in a capture, what an
                     Abort or Reject PDU is telling you. A capture is often
                     the fastest path to a root cause, but reading one is a
                     tool skill layered on top of the concepts here, so it

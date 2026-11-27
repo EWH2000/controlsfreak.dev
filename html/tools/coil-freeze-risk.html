@@ -326,7 +326,8 @@ keywords: freezestat freeze stat trip low limit mixed air mat glycol ethylene pr
         ],
         quizzes: [
             {href: '/practice/sequencing-scenarios.html', label: 'Sequencing Scenarios'},
-            {href: '/practice/air-handlers.html', label: 'Air Handlers Quiz'}
+            {href: '/practice/air-handlers.html', label: 'Air Handlers Quiz'},
+            {href: '/practice/coil-freeze-protection.html', label: 'Coil Freeze Protection Quiz'}
         ]
     }) }}
 
@@ -481,7 +482,7 @@ keywords: freezestat freeze stat trip low limit mixed air mat glycol ethylene pr
             if (statOn) {
                 sp = snap(parseFloat(el.sp.value), 1);
                 if (!isFinite(sp)) {
-                    mute('Enter the freezestat setpoint — 38 °F (3.3 °C) is the common default.');
+                    mute('Enter the freeze stat setpoint — this tool starts at 38 °F (3.3 °C).');
                     return;
                 }
             } else {
