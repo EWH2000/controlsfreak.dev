@@ -132,6 +132,7 @@ const PAGES = [
     { name: 'practice — psychrometrics basics', url: '/practice/psychrometrics-basics.html' },
     { name: 'practice — air handlers', url: '/practice/air-handlers.html' },
     { name: 'practice — economizers', url: '/practice/economizers.html' },
+    { name: 'practice — coil freeze protection', url: '/practice/coil-freeze-protection.html' },
     { name: 'practice — building pressure', url: '/practice/building-pressure.html' },
     { name: 'practice — unit identification', url: '/practice/air-unit-identification.html' },
     { name: 'practice — vav systems', url: '/practice/vav-systems.html' },
