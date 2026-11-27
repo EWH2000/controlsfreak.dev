@@ -3628,16 +3628,18 @@ brief; none made a merged sentence false. One needs the owner.
   fast loops *"can take more aggressive gain"*;
   `education/duct-static-control.html` says *"Loops that quick are tuned
   gently or they hunt"*. The owner ruled for the lesson and gave the
-  reason beyond the loop math: a second of sag in duct static is rarely
-  a problem, where a dip in a heat-pump loop's differential pressure
-  trips units. The tuner's clause is gone and both pages carry his
-  reason. The same check found that the lesson's instruction to *"feel
-  how little gain it wants"* in the tuner was false at runtime — the
-  tuner's duct-static scene takes its hottest preset without overshoot —
-  so PR #663 reworded that too; the simulator itself is codebase-issues
-  #340. One sentence was left as built: the lesson's widget note still
-  credits the PID tuner with the hunting and the tuning, which is true
-  of the tuner as a whole (its other scenes hunt), not of the fan scene.
+  reason beyond the loop math: a second of sag in duct static is not
+  generally a problem, where a dip in a heat-pump loop's differential
+  pressure trips units. The tuner's clause is gone and both pages carry
+  his reason. The same check found that the lesson's instruction to
+  *"feel how little gain it wants"* in the tuner was false at runtime —
+  the tuner's duct-static scene takes its hottest preset without
+  overshoot — so PR #663 reworded that, and the two other places the
+  lesson said the tuner shows this loop hunting (the widget note and the
+  closing paragraph). The blind review of that PR also caught a retained
+  tuner sentence that had slower loops needing "gentler tuning", against
+  the page's own SIMC rule; it now says they need a slower reset. The
+  simulator itself is codebase-issues #340.
 - **PID pages.** `pid-basics.html` says "static transmitter" where the
   Duct Static lesson and its quiz say "transducer" throughout; the
   tuner's symptom table sends a wrong-way loop to "the real controller",
@@ -3701,6 +3703,12 @@ brief; none made a merged sentence false. One needs the owner.
   beat for one more question. (The sixteenth went to the owner's own
   gotcha, `cfp-trip-reads-as-fan-failure`, PR #662, 2026-11-27; the
   five-of-twelve count above is of the original fifteen.)
+  **A question for the owner that PR #662's review raised, not yet
+  asked:** the lesson's first layer says the sequence then closes the
+  outdoor dampers and drives the heating valve open, and its third
+  starts the pump on the trip. Both assume the controller is told. On a
+  unit where the stat is not landed on an input, what does the trip
+  response look like? Ask before the lesson says anything about it.
   **Reverse links unpaid, payer named:** `tools/coil-freeze-risk.html`
   and `simulators/ddc-workbench.html` list the lesson and sibling
   quizzes in `relatedLinks` but not this quiz; the freeze-season

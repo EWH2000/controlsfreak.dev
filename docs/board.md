@@ -26,7 +26,7 @@
 ## Shipped
 
 - **Nov 27** — Your freeze stat gotcha is on the site: the Coil Freeze Protection lesson and its quiz now cover the trip that shows up as a fan failure, because the stat is wired into the safety circuit and nowhere else. [#662](https://github.com/EWH2000/controlsfreak.dev/pull/662)
-- **Nov 27** — Duct static is tuned gently, and the PID tuner and the Duct Static lesson now both say why in your terms: a second of sag is rarely a problem, where a dip in a heat-pump loop's differential pressure trips units. The tuner no longer says fast loops can take more gain. [#663](https://github.com/EWH2000/controlsfreak.dev/pull/663)
+- **Nov 27** — Duct static is tuned gently, and the PID tuner and the Duct Static lesson now both say why in your terms: a second of sag is not generally a problem, where a dip in a heat-pump loop's differential pressure trips units. The tuner no longer says fast loops can take more gain. [#663](https://github.com/EWH2000/controlsfreak.dev/pull/663)
 - **Nov 27** — New: the Coil Freeze Protection quiz. Fifteen questions drawn from the lesson, linked both ways with it (v3.93.0). [#660](https://github.com/EWH2000/controlsfreak.dev/pull/660)
 - **Nov 26–27** — Six quizzes grew from 10 to 15 questions: Duct Static Control (with your "sensor first" call), VAV Systems, Building Pressure, Hydronic Loops, Psychrometrics Basics and Load Piping. [#648](https://github.com/EWH2000/controlsfreak.dev/pull/648) [#649](https://github.com/EWH2000/controlsfreak.dev/pull/649) [#650](https://github.com/EWH2000/controlsfreak.dev/pull/650) [#654](https://github.com/EWH2000/controlsfreak.dev/pull/654) [#655](https://github.com/EWH2000/controlsfreak.dev/pull/655) [#653](https://github.com/EWH2000/controlsfreak.dev/pull/653)
 - **Nov 27** — Three lessons corrected: PID Basics and the PID tuner (duct static is not a "clean" loop, mixed-air temperature is not a fast one), Economizers ("lockout" at both ends of the free-cooling range), BACnet Networking (scope statements instead of promised pages). [#641](https://github.com/EWH2000/controlsfreak.dev/pull/641) [#642](https://github.com/EWH2000/controlsfreak.dev/pull/642) [#643](https://github.com/EWH2000/controlsfreak.dev/pull/643)
@@ -49,6 +49,7 @@
 - Your gotcha went in as a sixteenth question instead of replacing one. Nothing in the bank had earned its way out.
 - The Duct Static lesson told readers to drive the tuner's fan scene and feel how little gain it wants. I ran the tuner: on gain and reset alone that scene never overshoots, however hot you set it. I changed the lesson's wording now; fixing the scene itself waits for your answer above.
 - Item 5 was "the case-file format". Your answer pointed at a lesson instead, so that is what it now says.
+- A second agent reviewed both changes before they merged. It caught four things in my wording, among them "rarely a problem" where you had said "not generally", and a tuner sentence that pointed the wrong way. All four were fixed first.
 
 ### Menu for the next five
 

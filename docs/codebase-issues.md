@@ -16169,6 +16169,21 @@ steps of 0.05, rate 0–0.15 min in steps of 0.01 — 389,136 settings):
   anywhere is 2.6 % of the step.
 - With rate at 0.07 min or more, none do.
 
+What rate does to it is not hunting a reader would recognise from the
+readouts: Too Hot with rate at 0.02 min never settles, the process
+variable swinging about 0.17 in. w.c. (11 % of the step) under setpoint
+for the whole window, while Overshoot still reads "none".
+
+**What else on the page this contradicts.** The cheat-sheet's rule of
+thumb — "Start with reset off, raise the gain until the loop just begins
+to cycle" — cannot be followed on this scene, and the scene's own
+caption calls the loop "Easy to control". The caution PR #663 added sits
+inside the collapsed *Reveal loop details* block, so a reader who opens
+the tuner cold sees the fan scene accept Too Hot with no caveat in view.
+Same family as content-audit #34 (the tuner's cheat-sheet describing
+failure modes the simulator could not reach) and #45 (the PID Basics
+caption promising ringing its widget could not produce).
+
 **Mechanism.** `PID_PRESETS` in `pid-tuner.html` is one set of canonical
 values applied to every scene, and the reset slider stops at 6
 repeats/min — an integral time of 10 s at its fastest, against this
@@ -16189,13 +16204,18 @@ field practice. A change to `pid-engine.js` is a shared-script change: it is loa
 carries a version bump, the full suite, and a re-read of
 `pid-basics.html`'s sims against their prose. When the scene changes,
 re-true the two sentences PR #663 added — the tuner's "it takes the Too
-Hot preset without overshoot" and the lesson's matching clause.
+Hot preset without overshoot" and the lesson's matching clause. A test
+added in that PR, *the duct-static scene takes the Too Hot preset
+without overshoot (prose pin)* in `tests/pid-engine.spec.js`, fails
+when either the preset or the scene moves, so the prose cannot go stale
+quietly.
 
-**Correction to PR #663's own record.** Its commit message says the
-model never crosses setpoint "across the whole slider range", from a
+**Correction to PR #663's own record.** Its first commit message says
+the model never crosses setpoint "across the whole slider range", from a
 coarser sweep of 2,080 settings. The full sweep above shows that holds
-only with rate at zero. The page text PR #663 shipped claims only the
-preset result, which is true. Open, MEDIUM.
+only with rate at zero; the PR's second commit message says so. The
+page text PR #663 shipped claims only the preset result, which is true.
+Open, MEDIUM.
 
 ### 341. Quiz snippets wider than about 33 characters run off a phone screen *(noticed 2026-11-27, rendering PR #662's question at 375 px)*
 
