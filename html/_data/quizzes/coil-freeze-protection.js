@@ -83,7 +83,7 @@ module.exports = [
     {
         type: 'mcq',
         id: 'cfp-stratified-layer',
-        prompt: 'An averaging mixed-air sensor reads comfortably above freezing, yet the freeze stat on the coil trips. How can both instruments be telling the truth?',
+        prompt: 'An averaging mixed-air sensor reads comfortably above freezing, yet the freeze stat on the coil trips. What explains the disagreement?',
         choices: [
             { id: 'a', text: 'Cold outdoor air is denser and can ride the bottom of the plenum; any short length of the stat\'s element seeing it trips the stat.', correct: true },
             { id: 'b', text: 'They can\'t both be right — an averaging element is the better instrument, so a trip against a warm average is a nuisance trip to reset and log.' },
@@ -99,14 +99,14 @@ module.exports = [
     {
         type: 'mcq',
         id: 'cfp-mass-basis-lean',
-        prompt: 'On a 0 °F (−17.8 °C) morning, the volume-share mixing arithmetic puts a 20 % minimum against 75 °F (23.9 °C) return at 60.0 °F (15.6 °C). Which way is that hand number off, and why?',
+        prompt: 'On a 0 °F (−17.8 °C) morning, the volume-share mixing arithmetic puts a 20 % minimum against 75 °F (23.9 °C) return at 60.0 °F (15.6 °C). How does that hand number compare with what actually reaches the coil, and why?',
         choices: [
             { id: 'a', text: 'It reads cold, so the real mix at the coil has a little more margin than the hand number shows.' },
             { id: 'b', text: 'It is exact — the coil responds to the volume share, and the volume share is what the damper sets.' },
             { id: 'c', text: 'It reads warm — cold air is denser, so a 20 % damper share is more than 20 % of the air by mass at the coil.', correct: true },
             { id: 'd', text: 'It reads warm on a 100 % outdoor-air unit only; for a mixed-air unit the arithmetic is exact.' }
         ],
-        explain: 'The hand arithmetic weights the streams by volume — the damper or CFM share. The coil cares about how many pounds of cold air arrive per pound of warm, and cold air is denser: at 0 °F (−17.8 °C) and 40 % RH a pound of dry air occupies about 11.6 ft³, at 75 °F (23.9 °C) and 50 % RH about 13.7 ft³ — an 18 % spread — so that 20 % damper share is 22.8 % by mass. On a dry-air mass basis the mix lands near 58.1 °F (14.5 °C), so the hand number reads about 1.9 °F (1.1 °C) warm, on exactly the cold mornings when the margin matters, against a freeze stat band that lives at 35–38 °F (1.7–3.3 °C). The hand form is still the one to do on the roof — just know which way it leans.',
+        explain: 'The hand arithmetic weights the streams by volume — the damper or CFM share. The coil cares about how many pounds of cold air arrive per pound of warm, and cold air is denser: at 0 °F (−17.8 °C) and 40 % RH a pound of dry air occupies about 11.6 ft³ (a kilogram, about 0.72 m³), at 75 °F (23.9 °C) and 50 % RH about 13.7 ft³ (0.85 m³) — an 18 % spread — so that 20 % damper share is 22.8 % by mass. On a dry-air mass basis the mix lands near 58.1 °F (14.5 °C), so the hand number reads about 1.9 °F (1.1 °C) warm, on exactly the cold mornings when the margin matters. The hand form is still the one to do on the roof — just know which way it leans.',
         learnMore: { href: '/education/coil-freeze-protection.html#mass-basis', label: 'Coil Freeze Protection — Why the Hand Math Runs Warm on a Cold Day' },
         tags: ['forced-air', 'freeze-protection', 'mixed-air', 'psychrometrics']
     },
@@ -115,7 +115,7 @@ module.exports = [
     {
         type: 'gotcha',
         id: 'cfp-freeze-stat-submittal',
-        prompt: 'A submittal for the freeze stat on an air handler\'s hot-water coil lands on your desk. Which line do you send back?',
+        prompt: 'A submittal for the freeze stat on an air handler\'s hot-water coil lands on your desk. Which line, if any, do you send back?',
         snippet: '<pre class="quiz-snippet">FREEZE STAT — HOT-WATER COIL\nElement   vapor-charged capillary, 20 ft (6 m),\n          serpentined across the full coil face\nMounting  entering-air side of the coil\nContact   NC, in series with the supply fan\'s\n          safety string</pre>',
         choices: [
             { id: 'a', text: 'Element — it should be a single-point bulb, not a long capillary.' },
@@ -146,7 +146,7 @@ module.exports = [
             { id: 'c', text: 'As low as the dial goes, so the fan only ever stops when ice is certain and never on a marginal morning.' },
             { id: 'd', text: 'Somewhere in the 35–38 °F (1.7–3.3 °C) practical band — a choice to make and write down, not a code line.', correct: true }
         ],
-        explain: 'Stats ship set around 35 °F (1.7 °C), adjustable, and the practical band runs 35–38 °F (1.7–3.3 °C). Published application guidance clusters between 35 and 37 °F (1.7 and 2.8 °C) — a national range, not a regional one — and field settings reach 38 °F (3.3 °C) at the top: a deliberate early trip that buys a degree of margin and accepts a few more nuisance trips on marginal mornings. Write the number down; it is a choice, not a code line. And the low end has a hard floor: a stat set below the fluid\'s freeze point can only trip after ice is already possible.',
+        explain: 'Stats ship set around 35 °F (1.7 °C), adjustable, and the practical band runs 35–38 °F (1.7–3.3 °C). Published application guidance clusters between 35 and 37 °F (1.7 and 2.8 °C) — a national range, not a regional one — and field settings reach 38 °F (3.3 °C) at the top: a deliberate early trip that buys a degree of margin and accepts a few more nuisance trips on marginal mornings. Write the number down; it is a choice, not a code line. And a stat set below the fluid\'s freeze point can only trip after ice is already possible.',
         learnMore: { href: '/education/coil-freeze-protection.html#protection-stack', label: 'Coil Freeze Protection — The Protection Stack' },
         tags: ['forced-air', 'freeze-protection', 'freeze-stat']
     },
@@ -162,7 +162,7 @@ module.exports = [
             { id: 'c', text: 'So the stat never has to trip at all, which lets it be wired to an alarm input instead of the fan circuit.' },
             { id: 'd', text: 'Because the controller\'s temperature sensors read warm, and the higher number makes up for that error.' }
         ],
-        explain: 'Software acts first, and the stat stays the backstop. Before the stat ever has to act, the controller should have seen the dive coming: when MA-T sags toward a low limit, the mixed-air override drives the dampers back toward minimum whatever the free-cooling logic wants. Each layer exists because the one before it can fail — and the software floor can fail quietly. It reads the same mixed-air sensor as everything else, so a single-point sensor parked in the warm half of a stratified plenum defeats it; an averaging element across the plenum is the fix.',
+        explain: 'Software acts first, and the stat stays the backstop. Before the stat ever has to act, the controller should have seen the dive coming: when MA-T sags toward a low limit, the mixed-air override drives the dampers back toward minimum whatever the free-cooling logic wants. On the Workbench that override is a separate modulating loop that starts throttling the dampers at a 50 °F (10.0 °C) floor. Each layer exists because the one before it can fail — and the software floor can fail quietly. It reads the same mixed-air sensor as everything else, so a single-point sensor parked in the warm half of a stratified plenum defeats it; an averaging element across the plenum is the fix.',
         learnMore: { href: '/education/coil-freeze-protection.html#protection-stack', label: 'Coil Freeze Protection — The Protection Stack' },
         tags: ['forced-air', 'freeze-protection', 'low-limit']
     },
@@ -199,7 +199,7 @@ module.exports = [
             { id: 'c', text: 'Closing the vents once it has drained, so no cold air can get into the empty tubes over the winter.' },
             { id: 'd', text: 'Blowing it out with compressed air after the drain — gravity leaves water in the low return bends.', correct: true }
         ],
-        explain: 'An empty coil cannot split — but a coil drained by gravity alone still holds water in the low return bends, and that water splits the bend. So a coil that will not run until spring is isolated, drained, and blown out with compressed air. It costs a refill and an air bleed in the spring; it costs nothing in glycol\'s heat-carrying penalty.',
+        explain: 'An empty coil cannot split — but a coil drained by gravity alone still holds water in the low return bends, and that water splits the bend. So a coil that will not run until spring can be isolated, drained, and blown out with compressed air. It costs a refill and an air bleed in the spring; it costs nothing in glycol\'s heat-carrying penalty.',
         learnMore: { href: '/education/coil-freeze-protection.html#protection-stack', label: 'Coil Freeze Protection — The Protection Stack' },
         tags: ['forced-air', 'freeze-protection', 'coils']
     },
