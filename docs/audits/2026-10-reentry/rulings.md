@@ -349,12 +349,11 @@ was fixing (the 2026-08-12 lesson, again).
 
 ## 20. Re-entry rulings and the operating model *(2026-11-26 — after seven weeks away; the 2026-10-07 walk of §19's fifteen PRs never happened)*
 
-**What the forensics found.** Every stall on this project began with a
-queue waiting on the owner — seven PRs in June, three in August, fifteen
-in October — and the share of work a visitor could see shrank as each
-burst aged. The owner named both halves himself: *"The review queue"* and
-losing the thread (*"things are just so big it's easy to get lost, or I'm
-just not seeing the progress"*).
+**What the history showed.** Every pause on this project began with a
+queue of pull requests waiting on the owner — seven in June, three in
+August, fifteen in October — and the share of work a visitor could see
+shrank as each burst aged. The owner named the same two things to fix:
+the review queue, and keeping hold of the thread on a project this size.
 
 **Rulings, in the owner's words where quoted:**
 
@@ -375,9 +374,8 @@ just not seeing the progress"*).
    crossed off, on his home hub — *"Sort of a running dashboard that lets
    me check an overview of work at any point."* Shipped as `docs/board.md`
    → `npm run board` → `https://command.home.arpa/cfboard/`.
-5. **Involvement:** daily if possible; at least two or three longer
-   sessions a week. Sessions are for stories, mockups and steering — never
-   a review gate.
+5. **Sessions** are for stories, mockups and steering — never a review
+   gate.
 6. **The first five — "Freeze season":** clear the fifteen waiting changes
    · a Coil Freeze Protection quiz · quizzes you can't game (the always-"b"
    tell, the comma input, six more banks) · freeze-season loose ends · the
@@ -397,13 +395,77 @@ just not seeing the progress"*).
 11. **Pacing:** *"Don't work longer just for the sake of working, that's
     not a road we want to go down again."* Runs are scope-bound and start
     only on his word; one item per run after the catch-up night.
+12. **The always-one-letter quiz tell — "Shuffle in the engine."** *(asked
+    and answered the same night; codebase-issues #335)* The quiz engine
+    will randomise choice order for every bank. The explanations that
+    refer to a choice by its letter are rewritten first, and a lint keeps
+    new ones out. A later run, not the catch-up night.
+13. **The home page's About paragraph** *(his request, same night)*: the
+    "side project … exploring vibe coding" line is replaced by a plain
+    statement that the site is built with AI tools, his field experience
+    and direction leading it — *"merging the strengths of AI with an
+    industry lacking resources"* was his brief. Shipped as PR #659 on his
+    "Ship it".
 
 **Calls the assistant made under that authority (each reversible, each
-listed on the board):** Node pinned to 24 in CI and the job-level skip on
-PR edits removed, so every `test` check is a real run (PR #657; §19.2's
-"both triggers" is intact) · #651's two engine defaults accepted as built
-· no nightly timer · `docs/next-session-handoff.md` and the October
-dashboard retired, not replaced by another document.
+listed on the board under *Calls I made*):** Node pinned to 24 in CI and
+the job-level skip on PR edits removed, so every `test` check is a real
+run (PR #657; §19.2's "both triggers" is intact) · #651's two engine
+defaults accepted as built · no nightly timer ·
+`docs/next-session-handoff.md` and the October dashboard retired, not
+replaced by another document · the cold-end lockout on the Economizers
+page is named "low-limit or mixed-air", not §19.7's "low-ambient" (see
+#642 below).
 
 **Not re-asked, still standing from §19:** the 35–38 °F band (§19.1), the
-freeze-season hero badge (§19.9), "% by mass" on the psych chart (§19.12).
+freeze-season hero badge (§19.9), and the psych chart's "% by mass" label,
+which shipped with #228 step 1 (§19.12 ruled the step; the label is #652's).
+
+**October's walk points, each with one disposition** *(the "Read for" lines
+of `walk-2026-10-07.md`; the walk did not happen, so each was settled by
+a fix, a ruling above, or a named later run — none dropped)*:
+
+- **#639** — "a national figure" became "range". 38 °F at the top of it
+  stays the owner's own claim (§19.1).
+- **#640** — the dangling ref-note clause is trimmed; the three in-prose
+  anchors to the freeze lesson stay; the widget label is §20.9, the
+  spelling §20.7.
+- **#641** — mixed-air temperature is out of the Fast row (§20.8). The
+  Medium row's two valve outputs are content-audit #100, in the
+  loose-ends run.
+- **#642** — "at both ends of the free-cooling range". The cold end is
+  named "low-limit or mixed-air lockout": a blind review showed that
+  "low-ambient lockout" (§19.7's word) usually means the compressor
+  lockout in the field, which leaves the dampers modulating. The
+  high-limit sense being stated twice is left.
+- **#643** — the alarms bullet no longer points at pages that disclaim
+  alarms; an unsourced "most installed networks run BACnet/IP" is gone;
+  the segmentation claim is softened; the vendor bullet no longer says
+  the page is standard-only. Content-audit #101 and codebase-issues #333
+  are in the loose-ends run.
+- **#644** — the badge wrapping to three lines at phone width is
+  accepted; the shorter string is kept.
+- **#647** — reads as a filter at cockpit scale in dark, light and
+  fullscreen; the `--text-dim` stroke is accepted.
+- **#648** — sensor first (§20.10); the explanation is reworded without a
+  new number. The one-letter keys are §20.12.
+- **#649** — 400 CFM per ton is called the rule of thumb, not a floor;
+  "the code dose is a CFM, not a fraction" stands. Keys as above.
+- **#650** — the invented trend snippet is removed and the question is a
+  plain multiple-choice; the reused distractor stays; codebase-issues
+  #337 is in the loose-ends run.
+- **#651** — both design choices accepted as built; the pressure guard
+  is still wanted (codebase-issues #336).
+- **#652** — retargeting it to `main` dispatched a real test run, which
+  settles codebase-issues #331's open half.
+- **#653** — the reworded explanation was read by the blind reviewer and
+  holds. Keys as above.
+- **#654** — the lesson-gap note (two widget constants the prose never
+  states) is logged in content-audit #105. Keys as above.
+- **#655** — the comma in the prompt waits for the engine change
+  (codebase-issues #334, mechanism corrected); the shared dew-point beat
+  is accepted.
+
+What the blind reviews raised beyond these points, and the merges did
+not need, is collected in codebase-issues #338 and content-audit #105.
+

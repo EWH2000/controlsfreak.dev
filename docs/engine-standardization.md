@@ -173,7 +173,8 @@ load-bearing).
    the §1 table regenerated from the engine**, so this document's
    figures acquire a guard. Blast radius: nine live pages load the
    engine.
-   *Landed 2026-10-06 (v3.92.0) — `tests/psychro-mixair.spec.js`.* The
+   *Written 2026-10-06, merged 2026-11-26 (v3.92.0, PR #651) —
+   `tests/psychro-mixair.spec.js`.* The
    §1 table reproduced from the engine figure for figure, so it is
    unchanged here. The spec now recomputes every row under forms A / E
    / B / F (plus C / D, which are B at the page's precision) and checks
@@ -188,6 +189,12 @@ load-bearing).
    call the private `cp(W)`.
 1. **psychrometric-chart** — one call site, already loads the engine;
    label `:334` gains "by mass". Smallest diff, first page.
+   *Merged 2026-11-26 (PR #652).* The chart's mixed-air point now comes
+   from `mixAir({ basis: 'mass' })` and the fraction label reads "% by
+   mass". The line cites for this page in §1 and §2 (`:672-676`,
+   `:334`) describe the inline form that PR removed; read them as the
+   pre-migration record. Two follow-ups a blind review raised are in
+   codebase-issues #338.
 2. **air-mixing** — both tabs, three streams. `exact.fogging` becomes
    available; surfacing it in the status pill is a *follow-on*, not
    this PR.

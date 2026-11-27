@@ -3285,7 +3285,7 @@ throttling valve and the three-way mixing or diverting valve. Owner's words
 on the ruling: *"a modulating valve could still be 2 way or 3 way
 diverting/mixing."*
 
-### 91. air-handlers.html — the 38 °F freeze threshold lives only in the widget; the prose names none *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(ruled 2026-10-06 — fix)* *(addressed 2026-10-06 · PR #640)*
+### 91. air-handlers.html — the 38 °F freeze threshold lives only in the widget; the prose names none *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(ruled 2026-10-06 — fix)* *(addressed 2026-10-06 · PR #640, merged 2026-11-27)*
 
 **Location:** `html/education/air-handlers.html` — the sensor-strip
 widget's `const FREEZE_AT = 38;` (`:676`, commented *"freeze-stat
@@ -3318,7 +3318,7 @@ temperature while the lesson's 38 °F is a leaving-air freezestat
 setting; the sentence claims only that the figure IS a stat setting (see
 #103).
 
-### 92. air-handlers.html — the MA-T-reads-the-coil war story exists only as a script string behind the failure preset *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(ruled 2026-10-06 — fix)* *(addressed 2026-10-06 · PR #640)*
+### 92. air-handlers.html — the MA-T-reads-the-coil war story exists only as a script string behind the failure preset *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(ruled 2026-10-06 — fix)* *(addressed 2026-10-06 · PR #640, merged 2026-11-27)*
 
 **Location:** `html/education/air-handlers.html:782` — the
 `widget-anecdote` HTML string (MA-T *"sawtoothing in lockstep with the
@@ -3371,7 +3371,7 @@ stroke caveat is a candidate question whenever the air-handlers bank
 grows again (it sits at 15 after wave 2); the entry stays as that
 pointer.
 
-### 94. pid-basics.html calls duct static a "fast, clean loop" — in the field it is a famously jittery signal *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(ruled 2026-10-06 — fix)* *(addressed 2026-10-06 · PR #641)*
+### 94. pid-basics.html calls duct static a "fast, clean loop" — in the field it is a famously jittery signal *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(ruled 2026-10-06 — fix)* *(addressed 2026-10-06 · PR #641, merged 2026-11-27)*
 
 **Location:** `html/education/pid-basics.html:58`, the D callout's
 *When it earns its keep* paragraph — *"On a fast, clean loop (duct
@@ -3396,7 +3396,7 @@ skips-derivative` prompt and explain, which carried the same "fast,
 clean loop" wording, were reworded in the same PR so the quiz and the
 lesson agree (question id and key unchanged).
 
-### 95. pid-basics.html and the PID tuner list "VFD speed" as a loop — it is the OUTPUT of the static loop *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(ruled 2026-10-06 — fix)* *(addressed 2026-10-06 · PR #641)*
+### 95. pid-basics.html and the PID tuner list "VFD speed" as a loop — it is the OUTPUT of the static loop *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(ruled 2026-10-06 — fix)* *(addressed 2026-10-06 · PR #641, merged 2026-11-27)*
 
 **Location:** `html/education/pid-basics.html:58` (*"duct pressure, VFD
 speed"* as examples of a fast loop) and
@@ -3424,7 +3424,7 @@ from the row rather than move it — Medium already carries three
 examples. The Medium row itself has the same output-as-loop shape
 (#100).
 
-### 96. economizers.html defines "lockout" only as the high-limit half of changeover; other surfaces use it for the cold end *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(ruled 2026-10-06 — fix, one disclosure sentence)* *(addressed 2026-10-06 · PR #642)*
+### 96. economizers.html defines "lockout" only as the high-limit half of changeover; other surfaces use it for the cold end *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(ruled 2026-10-06 — fix, one disclosure sentence)* *(addressed 2026-10-06 · PR #642, merged 2026-11-27)*
 
 **Location:** `html/education/economizers.html:219` — *"you'll also
 hear high-limit lockout for its other half — the condition that slams
@@ -3455,6 +3455,17 @@ out*, ask which end they mean. The following sentence's "The simplest
 version" became "The simplest changeover" so it does not read as a
 version of lockout. Drifted cites: the Workbench branch is at `ddcw-ahu-
 unit.js:1846`, the pill text at `economizers.html:526`.
+
+**As shipped (2026-11-27, PR #642 merged):** the sentence differs from
+the resolution above in two places, both from blind reviews of the
+final head. "At both ends of the range" had no antecedent and reads
+*at both ends of the free-cooling range*. And the cold end is named a
+*low-limit* or *mixed-air* lockout — the pair the sequencing drill
+already uses — not *low-ambient*: in the field that phrase usually
+means the compressor lockout on a DX unit, which leaves the dampers
+modulating, so the sentence's own test ("ask which end they mean")
+could not have separated it. Recorded as a call on the board; the
+`oat` gloss still says "low-ambient lockouts" (#105).
 
 ### 97. practice/economizers.html says "Ten questions" over a 15-question bank *(flagged 2026-10-05, quiz-growth wave-2 refutation round)* *(accepted 2026-10-05 — run claim, not a bank count; see #241)*
 
@@ -3494,7 +3505,7 @@ grates, the owner's own freeze-season story is the material that
 would differentiate it.
 
 
-### 99. coil-freeze-risk.html's `bandTxt` says "Typical settings run 35–38 °F" while the Coil Freeze Protection lesson calls 35–37 °F the device band and 38 a house choice *(flagged 2026-10-06, PR #620 verifier round 3; owner's call)* *(ruled 2026-10-06 — the lesson adopts 35–38 °F; `bandTxt` stays)* *(addressed 2026-10-06 · PR #639)*
+### 99. coil-freeze-risk.html's `bandTxt` says "Typical settings run 35–38 °F" while the Coil Freeze Protection lesson calls 35–37 °F the device band and 38 a house choice *(flagged 2026-10-06, PR #620 verifier round 3; owner's call)* *(ruled 2026-10-06 — the lesson adopts 35–38 °F; `bandTxt` stays)* *(addressed 2026-10-06 · PR #639, merged 2026-11-27)*
 
 **Location:** `html/tools/coil-freeze-risk.html` — the `bandTxt` string
 in the page script (pre-existing, outside PR #620) vs
@@ -3525,7 +3536,7 @@ research record's device-band evidence is §2 *Freeze-stat practice*
 is *Still not established*. A different string on the tool is logged as
 #102.
 
-### 100. pid-tuner.html's Medium row lists two valve outputs as loops — the #95 shape one row below the fixed one *(flagged 2026-10-06, Batch A pid-loops refuter)*
+### 100. pid-tuner.html's Medium row lists two valve outputs as loops — the #95 shape one row below the fixed one *(flagged 2026-10-06, Batch A pid-loops refuter)* *(scheduled 2026-11-26 — the freeze-season loose-ends run; not folded into PR #641)*
 
 **Location:** `html/simulators/pid-tuner.html:389`, the Loop Speed
 Reference table's Medium row — *"Discharge air temperature, chilled-water
@@ -3540,7 +3551,7 @@ sideways inside `.table-scroll` with the examples column ~70 px wide, so
 the longer Fast cell wraps to ~9 lines — pre-existing wrapper behaviour,
 cosmetic.
 
-### 101. bacnet-networking.html's not-covered intro says the topics are out of scope "across" the BACnet lessons while its first bullet says MS/TP has its own page *(flagged 2026-10-06, Batch A bacnet-scope refuter)*
+### 101. bacnet-networking.html's not-covered intro says the topics are out of scope "across" the BACnet lessons while its first bullet says MS/TP has its own page *(flagged 2026-10-06, Batch A bacnet-scope refuter)* *(scheduled 2026-11-26 — the freeze-season loose-ends run, with codebase-issues #333)*
 
 **Location:** `html/education/bacnet-networking.html:607-608` (the
 intro above the *What this page didn't cover* list) vs `:614-618` (the
@@ -3567,7 +3578,7 @@ reaching 38 at the top; the tool means its own input default. The
 field setting" or "this tool's starting point". Tool page → owner
 merges.
 
-### 103. air-handlers.html's sensor-strip widget models a mixed-air low-limit but labels it freeze-stat territory *(flagged 2026-10-06, Batch A air-handlers refuter; owner glance)*
+### 103. air-handlers.html's sensor-strip widget models a mixed-air low-limit but labels it freeze-stat territory *(flagged 2026-10-06, Batch A air-handlers refuter; owner glance)* *(ruled 2026-11-26 — keep the meaning; the label stays)*
 
 **Location:** `html/education/air-handlers.html:759-761` — the fault
 branch keys off MA-T < 38 °F (the coil-entering mix) and the failure
@@ -3587,6 +3598,13 @@ story. Adjacent nit: the ref-note at `:579` ends *"and Coil Freeze
 Protection is what stands behind it when it is"* — the trailing "when it
 is" has no clear antecedent.
 
+**Ruling (2026-11-26, rulings.md §20.9): "Keep the meaning."** The
+status string keeps saying what it says — the widget is the owner's
+field story and the low-limit it models is part of the same protection
+stack — and takes only the house spelling ("freeze stat territory") when
+the spelling sweep reaches it. The dangling ref-note clause was trimmed
+in PR #640's follow-up commit before it merged. Closed.
+
 ### 104. psychrometric-chart.html's MA ref-note says the mixed point "falls on the straight line between OA and RA" — true only to ~0.8 °F *(flagged 2026-10-06, #228 step 1 verifier; LOW)*
 
 **Location:** `html/tools/psychrometric-chart.html:~337`, the MA
@@ -3598,3 +3616,53 @@ fraction since W is mass-linear). Invisible at chart scale; a (b)-class
 prose claim. **Verification:** by computation in the step-1 verify
 round. **Suggested direction:** "on (very nearly) the straight line".
 Not this PR's wording; take it with step 2 of #228.
+
+### 105. Content advisories from the 2026-11-26 blind reviews that did not block a merge, collected *(flagged 2026-11-26/27, the catch-up run's second-agent reviews)*
+
+The content half of codebase-issues #338. **Lens:** working engineer /
+reader. Each was raised by a reviewer who had not seen the change's
+brief; none made a merged sentence false. One needs the owner.
+
+- **Needs the owner — how is duct static tuned?**
+  `simulators/pid-tuner.html`'s loop-speed note says fast loops *"can
+  take more aggressive gain"*; `education/duct-static-control.html` says
+  *"Loops that quick are tuned gently or they hunt"*. Since PR #641 the
+  tuner's Fast row names duct static alone, so the two pages now
+  disagree about that one loop. On the board as a *Your turn* line.
+- **PID pages.** `pid-basics.html` says "static transmitter" where the
+  Duct Static lesson and its quiz say "transducer" throughout; the
+  tuner's symptom table sends a wrong-way loop to "the real controller",
+  while `commanding-actuators.html` teaches that the inversion can sit
+  at the actuator and to fix the layer that is wrong.
+- **Economizers.** The `oat` gloss lists "low-ambient lockouts" without
+  saying what is locked out — the phrase PR #642 took out of the lesson
+  because in the field it usually means the compressor lockout. And
+  "ask which end they mean" does not separate a low-limit (dampers back
+  to minimum) from a freeze stat trip (fan off, dampers shut); "ask what
+  is locked out, and by what" would.
+- **BACnet Networking's not-covered list.** "No broadcasts at all" for
+  BACnet/SC is loose (the hub distributes logical broadcasts; "no IP
+  broadcasts" is exact); "how to spot a Forwarded-NPDU" is listed as
+  uncovered though the page gives its function byte and the quiz asks
+  it; "BACnet's biggest object-model surface" is an unsupported
+  superlative; "this page stops at what each message means" is slightly
+  more than the page does for Abort and Reject. With #101 and
+  codebase-issues #333, one pass over that list in the loose-ends run.
+- **Quiz banks.** `hydronic-loops`: the `injection-pump-stopped` snippet
+  shows a climbing 196 °F reading that is a scenario value, not a lesson
+  figure. The same lane noted a lesson gap: the bypass floor (25 %)
+  and the 20 GPM per load are widget constants the prose never states. `load-piping`: in a sequential run the `twin-t` numeric comes
+  before `loads-see-mixed-temp` and hands over part of its reasoning;
+  "the lesson's widget drive" is awkward. `psychrometrics-basics`:
+  `psy-pool-glass-at-spec` gives 19.4 / 9.4 °C where the lesson's widget
+  shows 19.3 / 9.3 for the same point (rounding path). Practice-card
+  pills count a run, not a bank (#97's ruling), which reads oddly beside
+  the larger banks.
+- **Home and README.** `README.md` calls the BACnet error descriptions
+  "hand-authored" (meaning not script-imported), which now sits beside
+  the home page's plain statement that AI does much of the drafting.
+  "AI" on this site otherwise means analog input; the About paragraph is
+  the one place it means the other thing.
+- **Air Handlers.** "the strip" in the sensor-walk prose has no
+  antecedent for a reader who skipped the widget.
+

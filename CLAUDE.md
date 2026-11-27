@@ -1524,8 +1524,8 @@ parent has merged.
   truth for the list. Don't restructure scaffolding without being
   asked.
 - **CI:** `.github/workflows/test.yml` runs the same `npm test` on
-  every PR to `main`. Deploy stays with Cloudflare Workers Build —
-  CI gates the PR, it doesn't deploy.
+  every PR to `main` and on every push to `main`. Deploy stays with
+  Cloudflare Workers Build — CI gates the PR, it doesn't deploy.
 - **Eyeball a change:** `const { chromium } = require('@playwright/test')`
   + `page.screenshot({ path, fullPage: true })`. For `contact.html`
   use `waitUntil: 'domcontentloaded'`. Rebuild (`npm run build`)
@@ -1632,8 +1632,9 @@ parent has merged.
 
 - Background in building automation / controls programming (BACnet,
   Modbus TCP, Niagara, EBO); Northeast U.S.
-- Solid IP networking fundamentals; learning software dev workflows;
-  side project for "exploring vibe coding."
+- Solid IP networking fundamentals; learning software dev workflows.
+  Builds this site with AI tools and says so on the home page — his
+  field experience and direction, AI's drafting, code and cross-checking.
 - Comfortable in a terminal, getting comfortable with Git.
 - Wants to understand what's happening, not just have it work — when
   introducing a new concept or command, briefly explain it.
