@@ -25,7 +25,8 @@
 // limit above it, the valve driven wide open, glycol freeze vs burst
 // point, blowing out a drained coil, and what eats a winter-safe
 // minimum's margin); what the energy code does and does not say by
-// climate; and a trip read as evidence.
+// climate; a trip read as evidence; and the trip that reaches the
+// front end only as a fan failure.
 //
 // This is a damage-stakes topic: every keyed answer is the
 // conservative one the lesson states, and none tells a reader a layer
@@ -247,6 +248,21 @@ module.exports = [
             { id: 'd', text: 'The low-limit override should have caught it, so the fault is in the controller\'s program and the dampers are cleared.' }
         ],
         explain: 'Treat the trip as evidence — the stat is the one witness that was awake. A mix that tracked outdoors with the dampers commanded to minimum is a damper that was not at minimum: a slipped linkage, a seized actuator, a return damper stuck half closed. The stat did its job. The rest of the walk follows the same logic: find the element and note where it sits, check the heating valve and the pump at the time of the trip, then take the numbers to the Coil Freeze Risk Checker and read the margin against what is actually in the tubes.',
+        learnMore: { href: '/education/coil-freeze-protection.html#reading-the-trip', label: 'Coil Freeze Protection — Reading the Trip' },
+        tags: ['forced-air', 'freeze-protection', 'troubleshooting']
+    },
+    {
+        type: 'gotcha',
+        id: 'cfp-trip-reads-as-fan-failure',
+        prompt: 'A cold morning. An air handler with a hot-water coil is down on the alarm below, and a tech has left a note under it. What, if anything, did the note miss?',
+        snippet: '<pre class="quiz-snippet">AHU-2   SUPPLY FAN FAILURE\n        commanded ON · status OFF\n\nTECH NOTE\n"No freeze stat point on this\n controller, so it is not a\n freeze trip. Starting at the\n drive."</pre>',
+        choices: [
+            { id: 'a', text: 'Nothing. With no freeze stat point on the controller, a freeze trip is off the list, and the drive is the right place to start.' },
+            { id: 'b', text: 'The wiring. A freeze stat can sit in the fan\'s safety string alone. Tripped, it stops the fan, and no point names it.', correct: true },
+            { id: 'c', text: 'The mixed-air trend. A freeze trip shows there first, so a mix that held above the stat\'s setpoint clears the stat.' },
+            { id: 'd', text: 'The clock. A tripped stat lets the fan restart once the air warms up, so a fan that is still down points at the motor.' }
+        ],
+        explain: 'A freeze stat is a normally-closed contact in series with the fan\'s safety string, so a trip stops the fan without asking the controller\'s permission — and, where nothing is landed on a controller input, without telling it either. No point says freeze stat. The controller commands the fan, the fan never proves, and what shows up is a fan-failure alarm. So a missing point does not clear the stat. Neither does a mixed-air trend that held above setpoint: the element reacts to the coldest spot it crosses, which the average can miss. And a fan that is still down proves nothing, because a manual-reset stat holds it down until someone resets it. On a cold morning, a fan failure on a unit with a water coil puts the stat\'s reset on the list with the motor and the drive.',
         learnMore: { href: '/education/coil-freeze-protection.html#reading-the-trip', label: 'Coil Freeze Protection — Reading the Trip' },
         tags: ['forced-air', 'freeze-protection', 'troubleshooting']
     },
