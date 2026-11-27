@@ -40,7 +40,8 @@ jobs:
 
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444  # v5
         with:
-          node-version: lts/*
+          # Pinned to match test.yml — see the note there.
+          node-version: 24
 
       # Zero dependencies — the script uses only Node builtins + global
       # fetch, so there's no npm install step.
