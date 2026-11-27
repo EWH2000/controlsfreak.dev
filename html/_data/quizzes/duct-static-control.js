@@ -80,7 +80,7 @@ module.exports = [
             { id: 'c', text: 'Fast — static answers a speed change in seconds, so it wants gentle gain.', correct: true },
             { id: 'd', text: 'Fast — so it needs high gain to keep up with thirty boxes moving at once.' }
         ],
-        explain: 'Zone loops think in minutes: a room warms slowly and the world catches up. Duct pressure answers the fan in seconds — touch the speed reference and the sensor feels it almost immediately — and loops that quick are tuned gently or they hunt. High gain on a fast loop is how you get a fan surging up and down the trunk. The PID tuner\'s supply-fan scene is this exact loop, and it shows how little gain it wants.',
+        explain: 'Zone loops think in minutes: a room warms slowly and the world catches up. Duct pressure answers the fan in seconds — touch the speed reference and the sensor feels it almost immediately — and loops that quick are tuned gently or they hunt. High gain on a fast loop is how you get a fan surging up and down the trunk.',
         learnMore: { href: '/education/duct-static-control.html#the-loop', label: 'Duct Static Control — One Sensor, Two-Thirds Down the Duct' },
         tags: ['forced-air', 'duct-static']
     },
@@ -212,7 +212,7 @@ module.exports = [
             { id: 'c', text: 'The VFD has been left in hand at full speed after a service call.' },
             { id: 'd', text: 'A blown flex joint or an open access door upstream of the sensor.', correct: true }
         ],
-        explain: 'A hole in the duct upstream of the sensor is something the loop cannot tell from demand: static can\'t build, so the fan pegs at full speed holding a setpoint it can never reach, conditioning a ceiling plenum. The tell is fan speed that no longer matches the load plus a block of zones past the breach going quiet together. A tube stuck low pegs the fan too, but then the real static runs away high and the boxes pinch to hold their flow — nobody starves — and an out-of-reach setpoint starves the longest runs gradually, not one stretch of trunk at once. A VFD left in hand would drive static <em>up</em>, not leave it short.',
+        explain: 'A hole in the duct upstream of the sensor is something the loop cannot tell from demand: static can\'t build, so the fan pegs at full speed holding a setpoint it can never reach, conditioning a ceiling plenum. The tell is fan speed that no longer matches the load plus a block of zones past the breach going quiet together. A tube stuck low pegs the fan too, but then the real static runs away high and the boxes pinch to hold their flow — nobody starves — and a setpoint beyond the fan\'s reach pegs the fan as well, but it does not take out one stretch of trunk at once. A VFD left in hand would drive static <em>up</em>, not leave it short.',
         learnMore: { href: '/education/duct-static-control.html#safeties', label: 'Duct Static Control — When the Loop Can\'t Save You' },
         tags: ['forced-air', 'duct-static', 'safeties']
     },
