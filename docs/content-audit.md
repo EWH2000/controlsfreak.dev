@@ -3714,7 +3714,9 @@ brief; none made a merged sentence false. One needs the owner.
   PR #662's final head** (none blocked the merge): the new paragraph and
   the question's explanation say a fan-failure alarm *"shows up"* where
   the owner said it *"may look like a fan fail"*, which assumes the unit
-  has fan proof with an alarm on it; the sentence crediting Start/Stop
+  has fan proof with an alarm on it; the paragraph says the safety
+  string *"is the only place it is wired"* where he said only *"not
+  hooked to a DI"*; the sentence crediting Start/Stop
   Commands with walking *"the whole string contact by contact"* lands on
   `#finding-the-break`, where the reader is told to do the walking (the
   string is laid out at `#command-path`); the keyed choice's *"sit in
