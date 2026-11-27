@@ -7,10 +7,9 @@
 // kebab-case and stable across edits — they namespace the
 // cf_quiz_pid-basics_* localStorage keys. Pairs with the PID Basics
 // lesson; learnMore hrefs deep-link the P/I/D term callouts (and the
-// Sim 1 card, #sim1, for the raise-the-gain droop trap). The
-// wiresheet paragraph near the end of the lesson has no anchor of its
-// own, so its question deep-links Function-Block Basics' block-families
-// section (#families), whose Control callout makes the same point.
+// Sim 1 card, #sim1, for the raise-the-gain droop trap) and the
+// wiresheet paragraph near the end of the lesson
+// (#pid-on-a-wiresheet).
 //
 // The bank is deliberately larger than the page's defaultCount (10):
 // the engine samples an overflowing bank, so each run draws a
@@ -21,7 +20,7 @@
 // reset, integral time vs repeats per minute, why it does the real
 // work), D (noise, derivative-on-measurement, the overshoot sweet
 // spot, why Ti and Kc come before Td on a lagging coil, and why fast
-// clean loops skip it), and where the loop lives in a controller —
+// loops skip it), and where the loop lives in a controller —
 // one block on the wiresheet.
 
 module.exports = [
@@ -204,9 +203,9 @@ module.exports = [
     {
         type: 'tf',
         id: 'fast-loop-skips-derivative',
-        prompt: 'On a fast, clean loop such as duct static pressure or VFD speed, adding derivative is the usual way to tighten control.',
+        prompt: 'On a fast loop such as duct static pressure, adding derivative is the usual way to tighten control.',
         answer: false,
-        explain: 'False. Derivative earns its keep on a process with a lot of lag, where P + I keeps pushing while the effect is still on its way. A fast loop has little lag to anticipate, so D buys almost nothing and still amplifies whatever noise the sensor carries. Fast, clean loops run PI.',
+        explain: 'False. Derivative earns its keep on a process with a lot of lag, where P + I keeps pushing while the effect is still on its way. A fast loop has little lag to anticipate, so D buys almost nothing — and a duct static transmitter reads turbulence, so D has plenty of noise to amplify. Fast loops run PI.',
         learnMore: { href: '/education/pid-basics.html#d-term', label: 'PID Basics — D, Derivative / Rate' },
         tags: ['pid', 'derivative']
     },
@@ -223,7 +222,7 @@ module.exports = [
             { id: 'd', text: 'As a block that outputs the raw error, which the actuator integrates into a position.' }
         ],
         explain: 'The whole PID — all three terms — lives in one block. A setpoint and a measurement come in, the 0–100 % command goes out to the valve or damper, and the rest of the sequence is the supporting blocks that feed and gate it. Knowing that shape is what lets you find the loop on an unfamiliar sheet.',
-        learnMore: { href: '/education/function-blocks.html#families', label: 'Function-Block Basics — The block families' },
+        learnMore: { href: '/education/pid-basics.html#pid-on-a-wiresheet', label: 'PID Basics — The PID block on a wiresheet' },
         tags: ['pid', 'function-blocks']
     }
 ];
