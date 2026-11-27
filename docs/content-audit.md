@@ -3703,12 +3703,12 @@ brief; none made a merged sentence false. One needs the owner.
   beat for one more question. (The sixteenth went to the owner's own
   gotcha, `cfp-trip-reads-as-fan-failure`, PR #662, 2026-11-27; the
   five-of-twelve count above is of the original fifteen.)
-  **A question for the owner that PR #662's review raised, not yet
-  asked:** the lesson's first layer says the sequence then closes the
+  **A question for the owner that PR #662's review raised, on the
+  board as a *Your turn* line since 2026-11-27:** the lesson's first layer says the sequence then closes the
   outdoor dampers and drives the heating valve open, and its third
   starts the pump on the trip. Both assume the controller is told. On a
   unit where the stat is not landed on an input, what does the trip
-  response look like? Ask before the lesson says anything about it.
+  response look like? The lesson says nothing about it until he answers.
   **Reverse links unpaid, payer named:** `tools/coil-freeze-risk.html`
   and `simulators/ddc-workbench.html` list the lesson and sibling
   quizzes in `relatedLinks` but not this quiz; the freeze-season

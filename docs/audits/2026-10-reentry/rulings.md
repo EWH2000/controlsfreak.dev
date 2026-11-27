@@ -492,8 +492,9 @@ are his; the page text built on them is in the PRs named.
    lesson, built hidden and launched on his yes, with the story told as a
    synthetic job — no site, customer or trade detail. Pattern first, meter
    last. Why the meter misled stays out of it: that was never his finding.
-   Two questions are back on the board for the build (the page's shape;
-   where he splits a trunk and what tells him which half is good).
+   Two questions went back on the board for the build (the page's shape;
+   where he splits a trunk and what tells him which half is good). Both
+   are answered below.
 2. **Duct static is tuned gently**, and "not just because of the PID
    math": "if duct static drops for a second, not generally an issue",
    where the differential pressure on a water-source heat-pump loop
@@ -504,7 +505,7 @@ are his; the page text built on them is in the PRs named.
    open item in content-audit #105. Checking it turned up a fault in the
    simulator rather than the prose — codebase-issues #340 — and one
    question for him on the board (what makes a hot static loop hunt on a
-   real unit).
+   real unit), answered below.
 3. **A freeze stat gotcha.** A freeze stat is sometimes in the fan's
    safety circuit without being landed on a DI, and a trip then looks
    like a fan failure. *Disposition:* one paragraph in the lesson's
@@ -515,3 +516,28 @@ are his; the page text built on them is in the PRs named.
 
 These were session follow-through on his answers, not one of the five:
 items 3–5 still start only on his word.
+
+**The three follow-up questions, answered the same afternoon.**
+
+4. **The dead-trunk page's shape — approved.** A hidden lesson on finding
+   a break by sections, opening with the story as a made-up job: "it
+   makes it feel like a game and builds real skills." *Disposition:* item
+   5 is built that way, as something the reader plays rather than reads.
+5. **How he isolates a break.** In order: find a bus layout and look for
+   an obvious spot. With no layout, go by the MAC addresses or, better,
+   the room numbers of the offline devices, and start at the highest or
+   the lowest. If the whole bus is flaky, break it at the midpoint and
+   see whether the half nearer the supervisor or BACnet router becomes
+   stable, "since sometimes a device can be spamming TX and take others
+   down." *Disposition:* this is the source for the lesson's method
+   section. He named one vendor's supervisor; the page says "supervisor
+   or BACnet router".
+6. **What makes a hot duct static loop hunt on a real unit.** The three
+   candidates put to him were the drive's ramp, the boxes reacting, and a
+   noisy transducer. His answer: "All three of those could cause it", all
+   three are easy to check from a DDC workbench given drive feedback, and
+   the drive is probably the least likely — a loop fighting a reasonable
+   drive ramp probably has a deeper problem. *Disposition:*
+   codebase-issues #340 models transducer noise or the boxes' reaction in
+   the tuner's fan scene, not a ramp. The same three checks are a
+   candidate troubleshooting beat for the Duct Static lesson.

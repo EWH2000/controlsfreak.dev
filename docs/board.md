@@ -7,7 +7,7 @@
      "Shipped" lines go at the TOP, in plain language. -->
 
 **Week:** Nov 27 – Dec 3
-**Run:** done — Your three answers are in. Two became live changes the same day (your freeze stat gotcha; duct static tuned gently), and your story reshaped item 5. Nothing is open. The next run starts when you say "run it".
+**Run:** done — Your answers are in. The freeze stat gotcha and the duct static wording are live, and the dead-trunk lesson has its shape and your method. Nothing is open. The next run starts when you say "run it".
 
 ## The five
 
@@ -15,13 +15,12 @@
 - [x] Coil Freeze Protection quiz
 - [ ] Quizzes you can't game
 - [ ] Freeze-season loose ends
-- [ ] Finding a break in a dead trunk (your story, as a lesson)
+- [ ] Finding a break in a dead trunk (your story and your method, as a lesson you play)
 
 ## Your turn
 
-- **The dead-trunk page.** I'll build it as a hidden lesson on finding a break by sections: read what is offline against the floorplan first, meter last, opening with your story told as a made-up job. Say so if you'd rather case files were their own format.
-- **One field question for it:** when you split a dead trunk to find the break, where do you split it, and what tells you which half is good?
-- **One for the PID tuner:** on a real unit, what makes a hot duct static loop hunt — the drive's ramp, the boxes reacting, a noisy transducer? In the tuner's fan scene no amount of gain or reset makes it hunt today, and I would rather model your answer than guess.
+- *Optional, for the freeze lesson:* on a unit where the freeze stat is not landed on a DI, what happens on a trip besides the fan stopping? Do the dampers and the valve still respond, off fan status, or does the unit just sit there?
+- *Optional:* the Start/Stop lesson has an open slot for the morning you walked up to a unit and found the freeze stat latched out. Tell me that one when you have a minute.
 
 ## Shipped
 
@@ -47,8 +46,9 @@
 - I merged the 15 without the October walk, each after a second agent reviewed its final version. Those reviews caught a real problem in three of them (Economizers, BACnet Networking, the Duct Static quiz), fixed before merge. What they raised and I left alone is logged for the loose-ends run.
 - This repository is public, so your remarks about why the project stalled are paraphrased, not quoted, in the rulings file.
 - Your gotcha went in as a sixteenth question instead of replacing one. Nothing in the bank had earned its way out.
-- The Duct Static lesson told readers to drive the tuner's fan scene and feel how little gain it wants. I ran the tuner: on gain and reset alone that scene never overshoots, however hot you set it. I changed the lesson's wording now; fixing the scene itself waits for your answer above.
-- Item 5 was "the case-file format". Your answer pointed at a lesson instead, so that is what it now says.
+- The Duct Static lesson told readers to drive the tuner's fan scene and feel how little gain it wants. I ran the tuner: on gain and reset alone that scene never overshoots, however hot you set it. I changed the lesson's wording now; fixing the scene itself is on the Menu, with your answer on what makes a real one hunt.
+- Item 5 was "the case-file format". Your answer pointed at a lesson instead, and you approved that shape, so that is what it now says.
+- The trunk lesson will say "supervisor or BACnet router" where you said JACE, to keep the page off one vendor's product name.
 - A second agent reviewed both changes before they merged. It caught four things in my wording, among them "rarely a problem" where you had said "not generally", and a tuner sentence that pointed the wrong way. All four were fixed first.
 
 ### Menu for the next five
@@ -57,6 +57,6 @@
 - Trend capacity planner (how many days of history a controller really holds)
 - Schedules, calendars and exceptions (lesson, drill, and a "which entry won" simulator)
 - The MS/TP bus simulator
-- Make the PID tuner's scenes behave like the loops they name (the fan scene will not hunt on gain or reset; "Decent PI" does not settle on the opening scene)
+- Make the PID tuner's scenes behave like the loops they name. The fan scene first: it will not hunt on gain or reset today, and you named what makes a real one hunt (a noisy transducer or the boxes reacting; the drive probably least likely). Also "Decent PI" does not settle on the opening scene.
 - A fresh Search Console export (your account, about ten minutes)
 - A public "What's new" page

@@ -16196,10 +16196,15 @@ against each lag.
 
 **Fix shape.** Per-scene presets and a per-scene reset range — the
 `PID_DMAX` pattern, applied to reset — and, for the fan scene, whatever
-makes a real static loop hunt. That last part is a field question, on
-the board as a *Your turn* line; do not pick a non-ideality to make the
-model behave, because a constant tuned for the model reads on screen as
-field practice. A change to `pid-engine.js` is a shared-script change: it is loaded by
+makes a real static loop hunt. That last part was a field question,
+and the owner answered it (rulings §21.6): the drive's ramp, the boxes
+reacting and a noisy transducer can each do it, the drive is probably
+the least likely, and a loop fighting a reasonable ramp probably has a
+deeper problem. So
+model transducer noise or the boxes' reaction, not a ramp — and take the
+size of either from him, because a constant tuned to make the model
+behave reads on screen as field practice. A change to `pid-engine.js` is
+a shared-script change: it is loaded by
 `simulators/pid-tuner.html` and `education/pid-basics.html`, so it
 carries a version bump, the full suite, and a re-read of
 `pid-basics.html`'s sims against their prose. When the scene changes,
