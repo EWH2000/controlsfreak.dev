@@ -206,17 +206,16 @@ module.exports = [
         tags: ['forced-air', 'building-pressure', 'sensors']
     },
     {
-        type: 'gotcha',
+        type: 'mcq',
         id: 'bp-windward-reference',
-        prompt: 'A gusty afternoon, wind out of the west. A building-static loop modulates the exhaust fan\'s VFD, and the outdoor reference is a short open tube through the west wall. The tech on site wants to retune the loop: <em>it can\'t keep up.</em> The trend is below. What\'s the story?',
-        snippet: '<pre class="quiz-snippet">BLDG STATIC   +0.06 → −0.03 → +0.05 in. w.c.\n              (+15 → −7.5 → +12.5 Pa)  every few seconds\nEF-2 VFD       38 % → 92 % → 41 %\nOA DAMPER CMD  35 %\nSF-1 STATUS    ON</pre>',
+        prompt: 'A gusty afternoon, wind out of the west. A building-static loop modulates the exhaust fan\'s VFD, and the outdoor reference is a short open tube through the west wall. The static reading keeps swinging quickly above and below setpoint, the exhaust fan swings with it, and the tech on site wants to retune the loop: <em>it can\'t keep up.</em> What\'s the story?',
         choices: [
             { id: 'a', text: 'The loop is tuned too slowly — raise the gain so the exhaust fan catches each swing before it grows.' },
             { id: 'b', text: 'The envelope is too leaky to hold a setpoint — those swings are the building\'s real pressure.' },
             { id: 'c', text: 'The exhaust fan\'s drive is hunting on its own, and the pressure reading is just following the fan.' },
             { id: 'd', text: 'The bare tube on the windward wall reads gusts, not pressure — the loop is chasing weather.', correct: true }
         ],
-        explain: 'The tell is how crisply it moves. Real building pressure is a whisper that shifts slowly with the ledger, and a breath of wind on the wrong wall face is bigger than the whole setpoint — so a bare tube on the windward wall reads wind, and the loop dutifully chases it with the fan. More gain (a) chases it harder. The fix starts at the reference: a shielded static-averaging tip, ideally sampling more than one face, then heavy filtering, a wide deadband (a band around setpoint where the loop holds still), slow loop action, and patient alarms. A pressure point that swings confidently is usually reporting on its own placement, not the building.',
+        explain: 'The tell is how crisply it moves. Real building pressure is a whisper that shifts slowly with the ledger, and a breath of wind on the wrong wall face is bigger than the whole setpoint — so a bare tube on the windward wall reads wind, and the loop dutifully chases it with the fan. More gain chases it harder. The fix starts at the reference: a shielded static-averaging tip, ideally sampling more than one face, then heavy filtering, a wide deadband (a band around setpoint where the loop holds still), slow loop action, and patient alarms. A pressure point that swings confidently is usually reporting on its own placement, not the building.',
         learnMore: { href: '/education/building-pressure.html#measuring-it', label: 'Building Pressure — Measuring a Whisper' },
         tags: ['forced-air', 'building-pressure', 'sensors']
     },
