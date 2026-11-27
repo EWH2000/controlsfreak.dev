@@ -652,8 +652,9 @@ Calls the assistant made in the quiz run (each reversible):
   from that choice's own text replaces it.
 - **The lint is narrow on purpose.** `tests/quiz-banks.spec.js` fails on
   a parenthesised choice letter, on "answer (c)"-style phrases and on
-  "of the above" choices. It does not catch position words ("the first
-  three"); those stay a convention.
+  "of the above" choices. It does not catch a bare letter ("B is
+  wrong") or position words ("the first three"); those stay a
+  convention.
 - **`modbus-decoding` needed no opt-out.** No spec depends on the
   order of choices: the ones that need the keyed choice find it by its
   mark.
@@ -662,4 +663,6 @@ Calls the assistant made in the quiz run (each reversible):
   bump.
 - **Item 3 takes more than one run.** §22 recorded one run per item;
   §20.6 gave item 3 three parts. The shuffle was this run. The number
-  box is the next, and the six more banks follow it.
+  box is next, then the dead-trunk lesson (item 5), then the six more
+  banks. The order is the assistant's, and the board says he can
+  change it.

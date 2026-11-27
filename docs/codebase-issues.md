@@ -16055,7 +16055,8 @@ choice inside the quiz engine run. Open, LOW.
 it. The count is still 42: `html/practice/` holds 43 files and the
 landing does not load the engine. Not taken in the first quiz run,
 which shipped the shuffle; this is the next quiz run's work, with
-#341.)*
+#341. "Owner merges" above predates the 2026-11-26 ruling: engine work
+now merges behind the gate.)*
 
 ### 335. Several ten-question banks key every choice on "a", and the keyed choice is usually the longest — the engine does not shuffle choices *(noticed 2026-10-06, Batch B duct-static-control + vav-systems lanes; bank-wide sweep wanted)* *(ruled 2026-11-27 — shuffle in the engine)* *(addressed 2026-11-27 · PR #668 and #669, merged)*
 
@@ -16337,7 +16338,8 @@ the snippets that run off a phone screen (#341).
   text "both / none of these" followed by a noun is flagged. Misses:
   bare capitals ("B is wrong", "Both A and C") and every position word
   ("the first three"). The spec's comment says positional phrasing is
-  not matched; it does not mention bare capitals. The anti-vacuity test
+  not matched; it does not list a bare-capital choice reference as a
+  miss. The anti-vacuity test
   does not cover the tag strip, the open-parenthesis carve-out, or the
   choice-text-only scope of the "of the above" check. And the lint runs
   before the choices-shape check, so a truthy non-array `choices` throws

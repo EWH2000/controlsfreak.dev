@@ -7,7 +7,7 @@
      "Shipped" lines go at the TOP, in plain language. -->
 
 **Week:** Nov 27 – Dec 3
-**Run:** done — Quiz answer choices are now shuffled every time a question is shown, and your two answers from this evening are on the site. Next, under your green light for items 3 to 5: the quiz number box (next in item 3), then the dead-trunk lesson.
+**Run:** done — Quiz answer choices are now shuffled every time a question is shown, and your two answers from this evening are on the site. Next, under your green light for items 3 to 5: the quiz number box, then the dead-trunk lesson, then six more quiz banks (the last part of item 3). Say so if you want a different order.
 
 ## The five
 
@@ -34,11 +34,11 @@
 - **Nov 27** — Three lessons corrected: PID Basics and the PID tuner (duct static is not a "clean" loop, mixed-air temperature is not a fast one), Economizers ("lockout" at both ends of the free-cooling range), BACnet Networking (scope statements instead of promised pages). [#641](https://github.com/EWH2000/controlsfreak.dev/pull/641) [#642](https://github.com/EWH2000/controlsfreak.dev/pull/642) [#643](https://github.com/EWH2000/controlsfreak.dev/pull/643)
 - **Nov 27** — The home page's About paragraph says plainly how the site is built: your field experience and direction, AI for much of the drafting, code and cross-checking. [#659](https://github.com/EWH2000/controlsfreak.dev/pull/659)
 - **Nov 26–27** — Freeze season on the site: the lesson's freeze stat range reads 35–38 °F (your number), Air Handlers points at it from the sensor walk, and the home page features it. [#639](https://github.com/EWH2000/controlsfreak.dev/pull/639) [#640](https://github.com/EWH2000/controlsfreak.dev/pull/640) [#644](https://github.com/EWH2000/controlsfreak.dev/pull/644)
-- **Nov 26** — Earlier: the psych chart labels its mixed-air input by mass and corrects a mix that fogs (v3.92.0); the Workbench filter rack is drawn as pleated media; `main` is locked behind a passing test run. [#651](https://github.com/EWH2000/controlsfreak.dev/pull/651) [#652](https://github.com/EWH2000/controlsfreak.dev/pull/652) [#647](https://github.com/EWH2000/controlsfreak.dev/pull/647) [#657](https://github.com/EWH2000/controlsfreak.dev/pull/657)
+- **Nov 26** — The psych chart labels its mixed-air input by mass and corrects a mix that fogs (v3.92.0); the Workbench filter rack is drawn as pleated media; `main` is locked behind a passing test run. [#651](https://github.com/EWH2000/controlsfreak.dev/pull/651) [#652](https://github.com/EWH2000/controlsfreak.dev/pull/652) [#647](https://github.com/EWH2000/controlsfreak.dev/pull/647) [#657](https://github.com/EWH2000/controlsfreak.dev/pull/657)
 
 ### Calls I made
 
-- Standing from the catch-up night: tests run on a pinned Node version, and editing a PR's title or body re-runs them; `main` takes changes by pull request only, after the tests pass, for you too; no nightly timer; the psych engine's two defaults ship as built; Economizers calls the cold-end lockout "low-limit or mixed-air"; October's handoff and dashboard are retired.
+- Standing from the catch-up night: tests run on a pinned Node version, and editing a PR's title or body re-runs them; `main` takes changes by pull request only, after the tests pass, for you too; no nightly timer (nothing runs unless you say "run it"); the psych engine's two defaults ship as built; Economizers calls the cold-end lockout "low-limit or mixed-air"; October's handoff and dashboard are retired.
 - I merged the 15 without the October walk, each after a second agent reviewed its final version. Those reviews caught a real problem in three of them (Economizers, BACnet Networking, the Duct Static quiz), fixed before merge. What they raised and I left alone is in the ledgers; the loose-ends run took the ones scheduled for it.
 - This repository is public, so your remarks about why the project stalled are paraphrased, not quoted, in the rulings file.
 - Your gotcha went in as a sixteenth question instead of replacing one. Nothing in the bank had earned its way out.
@@ -52,7 +52,7 @@
 - The freeze tool's blank-field hint says "this tool starts at 38 °F" instead of calling 38 "the common default".
 - The glossary tip is headed "freeze stat" and says "Also written freezestat".
 - True/False is not shuffled. One question whose choices climb in order (the Air Handlers cooling-coil target: about 45 / 55 / 65 / 72 °F) now comes up out of order like the rest. Say so if you want ladders kept in order.
-- A test now fails if a quiz explanation points at a choice by its letter. It cannot catch "the first three"; that stays a rule for whoever writes the question.
+- A test now fails if a quiz explanation points at a choice by a letter in brackets, like "(b)", or after a word like "answer". It cannot catch a bare "B is wrong" or "the first three"; those stay a rule for whoever writes the question.
 - The freeze quiz question built from your gotcha had the right answer as its longest choice. I trimmed it.
 
 ### Menu for the next five
