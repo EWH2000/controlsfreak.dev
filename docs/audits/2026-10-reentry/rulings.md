@@ -633,9 +633,10 @@ message while the quiz run was in flight.
    the freeze stat has an input, or the whole circuit has one, and that
    sometimes there is none; Start/Stop Commands adds the duct smoke
    detector. The freeze lesson's trip "may look like a fan failure" when
-   the front end has no information about the safety circuit. The DDC Workbench's teaching paragraph called a stat
-   with no point "extremely common in the field"; it now says "which
-   sometimes happens in the field" (found by a blind reviewer; PR #670).
+   the front end has no information about the safety circuit. The DDC
+   Workbench's teaching paragraph called a stat with no point
+   "extremely common in the field"; it now says "which sometimes
+   happens in the field" (found by a blind reviewer; PR #670).
 
 Calls the assistant made in the quiz run (each reversible):
 
@@ -657,4 +658,8 @@ Calls the assistant made in the quiz run (each reversible):
   order of choices: the ones that need the keyed choice find it by its
   mark.
 - **Version 3.93.1, a patch.** The quiz engine is loaded unversioned by
-  the 43 practice pages, so no cache-buster rode on the bump.
+  the 42 practice pages that mount a quiz, so no cache-buster rode on the
+  bump.
+- **Item 3 takes more than one run.** §22 recorded one run per item;
+  §20.6 gave item 3 three parts. The shuffle was this run. The number
+  box is the next, and the six more banks follow it.

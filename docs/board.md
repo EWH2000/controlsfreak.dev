@@ -7,13 +7,13 @@
      "Shipped" lines go at the TOP, in plain language. -->
 
 **Week:** Nov 27 – Dec 3
-**Run:** done — Quiz answers now come up in a different order every time, and your two answers from this evening are on the site. Next on your green light: the quiz number box (the other half of item 3), then the dead-trunk lesson.
+**Run:** done — Quiz answer choices are now shuffled every time a question is shown, and your two answers from this evening are on the site. Next, under your green light for items 3 to 5: the quiz number box (next in item 3), then the dead-trunk lesson.
 
 ## The five
 
 - [x] Clear the 15 waiting changes
 - [x] Coil Freeze Protection quiz
-- [ ] Quizzes you can't game (the shuffle is done; the number box is next)
+- [ ] Quizzes you can't game (the shuffle is done; the number box is next, then six more banks)
 - [x] Freeze-season loose ends
 - [ ] Finding a break in a dead trunk (your story and your method, as a lesson)
 
@@ -24,7 +24,7 @@
 ## Shipped
 
 - **Nov 27** — Your two answers from this evening are on the site. Coil Freeze Protection says the outdoor and exhaust dampers fail closed and the return damper fails open. Start/Stop Commands no longer calls a safety with no input "the common case": it says the freeze stat most often has an input, or the whole circuit does, and that it is more common for the controller not to know the status of the duct smoke detector. The Workbench said an unlanded stat was "extremely common"; it now says "sometimes". [#670](https://github.com/EWH2000/controlsfreak.dev/pull/670)
-- **Nov 27** — Quiz answers come up in a different order every time a question is shown, so "it's always b" stops working. True/False still reads True, then False. Sixteen explanations that pointed at a choice by its letter or position now name it by what it says (v3.93.1). [#668](https://github.com/EWH2000/controlsfreak.dev/pull/668) [#669](https://github.com/EWH2000/controlsfreak.dev/pull/669)
+- **Nov 27** — Quiz answer choices are shuffled every time a question is shown, so "it's always b" stops working. True/False still reads True, then False. Sixteen explanations that pointed at a choice by its letter or position now name it by what it says (v3.93.1). [#668](https://github.com/EWH2000/controlsfreak.dev/pull/668) [#669](https://github.com/EWH2000/controlsfreak.dev/pull/669)
 - **Nov 27** — "Freeze stat" is spelled one way across the site, two words, as you ruled, in lessons, tools, simulators, quizzes and the glossary. The old spellings stay as keywords for the site's own search. [#666](https://github.com/EWH2000/controlsfreak.dev/pull/666)
 - **Nov 27** — Your two answers from this afternoon are on the site. Coil Freeze Protection says the trip "may look like a fan failure" when the stat is not on an input, and that on a proper safety circuit the dampers and heating valve lose 24 V: dampers fail closed, heating valve fails open. Your reset-after-a-cold-night calls are the story in Start/Stop Commands. A handful of small fixes went with it: two BACnet lessons no longer promise unbuilt work, and the PID tuner's table names loops, not valves. [#665](https://github.com/EWH2000/controlsfreak.dev/pull/665)
 - **Nov 27** — Your freeze stat gotcha is on the site: the Coil Freeze Protection lesson and its quiz now cover the trip that can show up as a fan failure, because the stat is wired into the safety circuit and not landed on a DI. [#662](https://github.com/EWH2000/controlsfreak.dev/pull/662)
@@ -34,11 +34,11 @@
 - **Nov 27** — Three lessons corrected: PID Basics and the PID tuner (duct static is not a "clean" loop, mixed-air temperature is not a fast one), Economizers ("lockout" at both ends of the free-cooling range), BACnet Networking (scope statements instead of promised pages). [#641](https://github.com/EWH2000/controlsfreak.dev/pull/641) [#642](https://github.com/EWH2000/controlsfreak.dev/pull/642) [#643](https://github.com/EWH2000/controlsfreak.dev/pull/643)
 - **Nov 27** — The home page's About paragraph says plainly how the site is built: your field experience and direction, AI for much of the drafting, code and cross-checking. [#659](https://github.com/EWH2000/controlsfreak.dev/pull/659)
 - **Nov 26–27** — Freeze season on the site: the lesson's freeze stat range reads 35–38 °F (your number), Air Handlers points at it from the sensor walk, and the home page features it. [#639](https://github.com/EWH2000/controlsfreak.dev/pull/639) [#640](https://github.com/EWH2000/controlsfreak.dev/pull/640) [#644](https://github.com/EWH2000/controlsfreak.dev/pull/644)
-- **Nov 26** — Earlier this week: the psych chart labels its mixed-air input by mass and corrects a mix that fogs (v3.92.0); the Workbench filter rack is drawn as pleated media; `main` is locked behind a passing test run. [#651](https://github.com/EWH2000/controlsfreak.dev/pull/651) [#652](https://github.com/EWH2000/controlsfreak.dev/pull/652) [#647](https://github.com/EWH2000/controlsfreak.dev/pull/647) [#657](https://github.com/EWH2000/controlsfreak.dev/pull/657)
+- **Nov 26** — Earlier: the psych chart labels its mixed-air input by mass and corrects a mix that fogs (v3.92.0); the Workbench filter rack is drawn as pleated media; `main` is locked behind a passing test run. [#651](https://github.com/EWH2000/controlsfreak.dev/pull/651) [#652](https://github.com/EWH2000/controlsfreak.dev/pull/652) [#647](https://github.com/EWH2000/controlsfreak.dev/pull/647) [#657](https://github.com/EWH2000/controlsfreak.dev/pull/657)
 
 ### Calls I made
 
-- Standing from the catch-up night: tests run on a pinned Node version; `main` takes changes by pull request only, after the tests pass, for you too; no nightly timer; the psych engine's two defaults ship as built; Economizers calls the cold-end lockout "low-limit or mixed-air"; October's handoff and dashboard are retired.
+- Standing from the catch-up night: tests run on a pinned Node version, and editing a PR's title or body re-runs them; `main` takes changes by pull request only, after the tests pass, for you too; no nightly timer; the psych engine's two defaults ship as built; Economizers calls the cold-end lockout "low-limit or mixed-air"; October's handoff and dashboard are retired.
 - I merged the 15 without the October walk, each after a second agent reviewed its final version. Those reviews caught a real problem in three of them (Economizers, BACnet Networking, the Duct Static quiz), fixed before merge. What they raised and I left alone is in the ledgers; the loose-ends run took the ones scheduled for it.
 - This repository is public, so your remarks about why the project stalled are paraphrased, not quoted, in the rulings file.
 - Your gotcha went in as a sixteenth question instead of replacing one. Nothing in the bank had earned its way out.

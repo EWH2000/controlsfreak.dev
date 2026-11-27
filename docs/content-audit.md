@@ -3763,7 +3763,7 @@ brief; none made a merged sentence false. One needs the owner.
     common case"*; the freeze lesson, one click away, says *"Sometimes"*
     for a freeze stat not on an input. If "the common case" is not the
     owner's, it is a short question for him. **Answered 2026-11-27
-    (rulings §23; PR #670):** it was not his; both pages now carry his
+    (rulings §23; PR #670):** he corrected it; both pages now carry his
     frequencies.
   - His story says a call can be *"as simple as"* resetting the stat;
     the freeze lesson says to treat the trip as evidence before anyone
@@ -3794,14 +3794,14 @@ brief; none made a merged sentence false. One needs the owner.
   merge).** Left as built:
   - Start/Stop Commands says *"it is more common for the controller not
     to know the status of the duct smoke detector"*, his sentence nearly
-    word for word. The comparison is to the freeze stat; read alone it
-    can be taken as "more common than not".
+    word for word. Read in context the comparison is to the freeze
+    stat; read alone it can be taken as "more common than not".
   - That page now names one device three ways: "duct smoke detector",
     "duct detector", "duct-detector shutdown contact".
   - The same paragraph's *"There are plenty of units that give an
     operator no reason they shouldn't be running"* is unaltered. It
     lists three causes and does not call an unpointed string usual, but
-    it sits two sentences after "Most often the freeze stat has an
+    it sits three sentences after "Most often the freeze stat has an
     input".
   - The freeze lesson now mentions an exhaust damper once; its diagram
     draws the return and outdoor dampers only, and other pages call the
