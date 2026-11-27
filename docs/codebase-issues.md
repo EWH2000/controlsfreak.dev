@@ -16050,7 +16050,12 @@ own parse, which then has to decide what a lone comma means; the cheap
 one is a "digits only, no separators" hint beside the box. A design
 choice inside the quiz engine run. Open, LOW.
 
-### 335. Several ten-question banks key every choice on "a", and the keyed choice is usually the longest — the engine does not shuffle choices *(noticed 2026-10-06, Batch B duct-static-control + vav-systems lanes; bank-wide sweep wanted)* *(ruled 2026-11-27 — shuffle in the engine)*
+*(2026-11-27: the first paragraph's "Live script on 42 practice pages"
+is 43 today, and the script is loaded unversioned — it is not a
+`?v=`-versioned file, so no cache-buster rides on a version bump for
+it.)*
+
+### 335. Several ten-question banks key every choice on "a", and the keyed choice is usually the longest — the engine does not shuffle choices *(noticed 2026-10-06, Batch B duct-static-control + vav-systems lanes; bank-wide sweep wanted)* *(ruled 2026-11-27 — shuffle in the engine)* *(addressed 2026-11-27 · PR #668 and #669, merged)*
 
 `duct-static-control.js` keys all ten original questions on `a`;
 `vav-systems.js` keys all seven of its original mcq/gotcha questions on
@@ -16076,6 +16081,20 @@ ones out. `modbus-decoding`'s deterministic smoke walk needs either an
 opt-out or a walk that finds the keyed choice by its mark, not its
 position. Trimming over-long keys stays a bank-by-bank matter. Open
 until the engine change lands.
+
+**Landed (2026-11-27).** PR #669: `quiz-engine.js` shuffles a copy of
+the choices of every `mcq` and `gotcha` question at the one place a
+question is rendered; True/False is left in order; a new spec,
+`tests/quiz-choice-shuffle.spec.js`, drives it with a stubbed
+`Math.random`. PR #668, merged first: the fourteen explanations that
+cited a choice by letter and two more that cited one by position
+(`boolean-logic-latches` / `bll-permissive-combination`,
+`controls-commissioning` / `trends-catch-what-a-walk-cannot`) name the
+choice by what it says, and `tests/quiz-banks.spec.js` gained a
+`choiceLetterRefs()` lint with an anti-vacuity test. No opt-out was
+needed for `modbus-decoding`: every spec that needs the keyed choice
+finds it by `data-correct`. Trimming over-long keys is still bank by bank
+(#342). Closed.
 
 ### 336. `Psychro.buildState` has no finite/positive-`P` guard, so a bad pressure is reported as "at or above the boiling point" *(noticed 2026-10-06, #228 step 0 verifier; pre-existing, LOW)*
 
@@ -16302,3 +16321,47 @@ does not trip. **Fix shape:** by snippet kind. A prose note re-wraps by
 hand. A tabular snippet (frames, trend rows) needs its columns, so it
 wants a visible scroll cue or a smaller size below 480 px rather than
 `pre-wrap`. Belongs with the quiz-engine run. Open, LOW.
+
+### 342. Leftovers from the first quiz run, collected *(noticed 2026-11-27, the blind reviews of PR #668, #669 and #670; each LOW, take opportunistically)*
+
+None blocked a merge. Listed so the next quiz run starts from them.
+
+- **The choice-letter lint has known edges** (`tests/quiz-banks.spec.js`,
+  `choiceLetterRefs()`). False positives an honest author can hit: on a
+  four-choice question any parenthesised single letter a–d is taken for
+  a choice ("terminals (A) and (B)", "section 6.2.1(a)"), and in choice
+  text "both / none of these" followed by a noun is flagged. Misses:
+  bare capitals ("B is wrong", "Both A and C") and every position word
+  ("the first three") — those stay a convention, by the spec's own
+  comment. The anti-vacuity test does not cover the tag strip, the
+  open-parenthesis carve-out, or the choice-text-only scope of the
+  "of the above" check. And the lint runs before the choices-shape
+  check, so a truthy non-array `choices` throws a bare `TypeError` that
+  names no question.
+- **No test pins the re-draw on a re-render.** Every test in
+  `tests/quiz-choice-shuffle.spec.js` reads the first render of a fresh
+  mount, so an engine that shuffled once per mount would pass. The code
+  has one render path today.
+- **One ascending ladder now comes up out of order:** `air-handlers` /
+  `ah-cooling-coil-target` (about 45 / 55 / 65 / 72 °F). If ladders
+  should hold their order, that is a per-question opt-out in the engine
+  (rulings §23).
+- **Over-long keys are still a bank-by-bank matter** (from #335): where
+  the keyed choice is the longest, the shuffle moves it but does not
+  hide it.
+- **`modbus-decoding` / `fc03-vs-fc04-poll`'s explanation says "#1 being
+  the 5-digit off-by-one above".** That points at another question, and
+  dangles when the reader picks Random order.
+- **Three stale comments.** `quiz-engine.js:60` still calls the
+  drill-figure `<desc>` rule "an open question with the owner"
+  (`CLAUDE.md` records it settled 2026-07-20). `wiresheet-traces.js`'s
+  header (~:27) says the engine only shuffles questions under Random and
+  that sampling "has NOT landed"; it has. `tests/ddcw-ahu-unit.spec.js`
+  (~:1183) says the low-limit stat is "very often" not wired back; the
+  owner's word is "sometimes" (rulings §23), and the page and the unit
+  script now say so.
+- **The glossary's freeze stat entry says a trip is "closing dampers"**
+  without saying which; the freeze lesson now names the outdoor and
+  exhaust dampers. Match it when that entry is next touched.
+
+Open, LOW.

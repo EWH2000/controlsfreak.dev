@@ -611,3 +611,50 @@ Calls made in the loose-ends run, none of them his to make:
   tool starts at 38 °F (3.3 °C)" instead of calling 38 "the common
   default" (content-audit #102). It states what the page does and no
   field default.
+
+## 23. Two more answers, and the first quiz run *(2026-11-27, evening)*
+
+The owner answered the board's two optional *Your turn* lines in one
+message while the quiz run was in flight.
+
+1. **Which dampers fail which way.** "You got it right, the return
+   damper fails open and OA and EA fail closed." *Disposition:* the
+   freeze lesson's *Reading the Trip* names all three — the outdoor and
+   exhaust dampers fail closed, the return damper fails open (PR #670).
+2. **How often a safety has no input.** "The most common case is a
+   freeze stat input or a whole saftey circuit input, but sometimes
+   there's none at all. Most common I see is a freeze stat input, it's
+   more common for the controller to not know status of the duct
+   smoke." And of the gotcha he gave at midday (§21): "The original
+   point was sometimes there's no information about what the saftey
+   circuit is doing at all, and in those cases it can look like fan
+   failure." *Disposition:* Start/Stop Commands no longer calls a string
+   with no input "the common case". Both pages now say that most often
+   the freeze stat has an input, or the whole circuit has one, and that
+   sometimes there is none; Start/Stop Commands adds the duct smoke
+   detector. The freeze lesson's trip "may look like a fan failure" when
+   the front end has no information about the safety circuit. The DDC Workbench's teaching paragraph called a stat
+   with no point "extremely common in the field"; it now says "which
+   sometimes happens in the field" (found by a blind reviewer; PR #670).
+
+Calls the assistant made in the quiz run (each reversible):
+
+- **True/False is not shuffled.** It always reads True, then False.
+  §20.12's "Shuffle in the engine" is applied to `mcq` and `gotcha`.
+- **A number ladder shuffles like any other set of choices.** One
+  question's choices are an ascending ladder as authored
+  (`air-handlers` / `ah-cooling-coil-target`: about 45 / 55 / 65 /
+  72 °F) and now come up out of order. No opt-out was built.
+- **Sixteen explanations no longer point at a choice by letter or
+  position** (PR #668): where the sentence already named the choice the
+  letter went, and where the letter was the only handle a short phrase
+  from that choice's own text replaces it.
+- **The lint is narrow on purpose.** `tests/quiz-banks.spec.js` fails on
+  a parenthesised choice letter, on "answer (c)"-style phrases and on
+  "of the above" choices. It does not catch position words ("the first
+  three"); those stay a convention.
+- **`modbus-decoding` needed no opt-out.** No spec depends on the
+  order of choices: the ones that need the keyed choice find it by its
+  mark.
+- **Version 3.93.1, a patch.** The quiz engine is loaded unversioned by
+  the 43 practice pages, so no cache-buster rode on the bump.
