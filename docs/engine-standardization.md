@@ -173,6 +173,19 @@ load-bearing).
    the §1 table regenerated from the engine**, so this document's
    figures acquire a guard. Blast radius: nine live pages load the
    engine.
+   *Landed 2026-10-06 (v3.92.0) — `tests/psychro-mixair.spec.js`.* The
+   §1 table reproduced from the engine figure for figure, so it is
+   unchanged here. The spec now recomputes every row under forms A / E
+   / B / F (plus C / D, which are B at the page's precision) and checks
+   each figure twice: against literals in the spec, and against **this
+   table's own cells**, which it parses out of §1 — so an edit to the
+   table that the engine does not back goes red, and the table's
+   markdown shape (row labels, column order) is now load-bearing.
+   Column A stays the *inline* page form, transcribed in the spec, since
+   that is the pre-#236 arithmetic steps 1–2 replace. Line cites in §2
+   for the engine's `cp` sites predate the fold: it was `:224` / `:231`
+   / `:261` plus the inversion at `:517` on `a2ad39f`, and all four now
+   call the private `cp(W)`.
 1. **psychrometric-chart** — one call site, already loads the engine;
    label `:334` gains "by mass". Smallest diff, first page.
 2. **air-mixing** — both tabs, three streams. `exact.fogging` becomes

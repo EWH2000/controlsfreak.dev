@@ -33,6 +33,8 @@
 //        Psychro.computeProcess(stage, cfm)
 //        Psychro.invertProcess(inlet, opts)
 //        Psychro.mixStreams(streams, P)
+//        Psychro.mixAir({ streams: [{ state, share }, …], basis, P })
+//        Psychro.mixFraction({ oa, ra, targetTdb, basis, recovery, P })
 //
 // Why two tiers: the primitives are the unopinionated ASHRAE math any
 // future psych tool will want directly (a coil-sizing calculator wants
@@ -43,8 +45,35 @@
 // math in computeProcess) — keeping those namespaced gives future tools
 // room to grow their own solver methods (Psychro.coilSizing, etc.)
 // without bare-name collisions and lets a future Psychro.* namespace
-// flip survive contained churn. Candidate second consumers — air-mixing,
-// coil-sizing, economizer-ratio — are tracked in site-ideas-and-friction.
+// flip survive contained churn.
+//
+// mixStreams is the KERNEL — basis-agnostic weights, fog re-solve — and
+// mixAir / mixFraction are the PAGE-FACING combinators over it
+// (codebase-issues #228; design note docs/engine-standardization.md §3).
+// What a stream's `share` IS depends on the `basis` the caller names:
+//   • basis 'volume' — `share` is CFM, or anything proportional to
+//     volumetric flow (a damper split, a % OA by volume). Each share is
+//     converted to a dry-air mass weight as share ÷ state.v before the
+//     kernel sees it, which is the exact arithmetic air-mixing's flow
+//     tab does by hand (CFM ÷ v).
+//   • basis 'mass' — `share` is lb_da/h or a plain mass fraction, and
+//     goes to the kernel unchanged.
+// Either way the shares are normalised, so fractions need not sum to 1
+// (a page's own sum check stays on the page), and the result reports
+// BOTH normalised sets — shares.mass and shares.volume — so a page can
+// print which quantity its "% OA" was. `linear` is the hand arithmetic
+// (Σ share·tdb, Σ share·W) on the shares AS GIVEN, i.e. on the stated
+// basis; `exact` is always the kernel on the MASS weights.
+// mixFraction inverts the two-stream case: 'linear' recovery is
+// (MA − RA) ÷ (OA − RA) on dry-bulbs, 'exact' bisects mixAir's exact
+// dry-bulb onto the target, and the returned fraction is on the basis
+// named. `within` is true when the target lies between the two stream
+// dry-bulbs (inclusive). Outside them, 'linear' still returns the
+// arithmetic fraction (below 0 or above 1) with within:false, and
+// 'exact' returns ok:false — a two-stream mix has no bracket there.
+// When `P` is omitted, both default to the pressure the first stream's
+// state was solved at (`state.P`), never to sea level, so a state
+// solved at altitude is not silently re-mixed at P_STD.
 //
 // What lives here: anything pure. What does NOT live here: anything that
 // touches the DOM, window.Units, or any specific page's HTML structure.
@@ -135,6 +164,12 @@ function wetBulbFromHumRatio(W, tdb, P) {
 const Psychro = (function () {
     'use strict';
 
+    // Humid specific heat, Btu / (lb_da·°F): the 0.240 dry-air term plus
+    // 0.444·W for the vapour the pound of dry air carries. Private — one
+    // home for the constant pair computeProcess, invertProcess and the
+    // mixStreams dry-bulb recovery all use.
+    const cp = W => 0.240 + 0.444 * W;
+
     // Build moist-air state from (mode, dry-bulb, the second value, pressure).
     // mode ∈ {rh, wb, dp, w, h}.
     function solveState(mode, tdb, second, P) {
@@ -221,14 +256,14 @@ const Psychro = (function () {
         if (cfm && inlet.v > 0) {
             const mDot = cfm * 60 / inlet.v;            // lb_da / h
             qTotal = mDot * dH;                         // Btu/h
-            const cpIn = 0.240 + 0.444 * inlet.W;       // Btu/(lb_da·°F)
+            const cpIn = cp(inlet.W);                   // Btu/(lb_da·°F)
             qSens = mDot * cpIn * dDb;
             qLat  = qTotal - qSens;
         }
         let shr = null;
         if (type === 'cool') {
             // SHR by enthalpy ratios (CFM-independent — works even without flow).
-            const cpIn = 0.240 + 0.444 * inlet.W;
+            const cpIn = cp(inlet.W);
             const dhSens = cpIn * dDb;
             if (Math.abs(dH) > 1e-9) shr = dhSens / dH;
         }
@@ -258,7 +293,7 @@ const Psychro = (function () {
         if (!isFinite(qSens) || qSens < 0) return { ok: false, error: 'Sensible load can’t be negative.' };
         if (type === 'cool' && (!isFinite(qLat) || qLat < 0)) return { ok: false, error: 'Latent load can’t be negative.' };
         const mDot = cfm * 60 / inlet.v;                 // lb dry air / h
-        const cpIn = 0.240 + 0.444 * inlet.W;            // Btu / (lb_da·°F)
+        const cpIn = cp(inlet.W);                        // Btu / (lb_da·°F)
         const sign = type === 'cool' ? -1 : 1;           // cooling lowers dry-bulb and enthalpy
         const tdbOut = inlet.tdb + sign * qSens / (mDot * cpIn);
         const hOut   = inlet.h   + sign * (qSens + qLat) / mDot;
@@ -514,7 +549,7 @@ const Psychro = (function () {
             W += f * streams[i].state.W;
             h += f * streams[i].state.h;
         }
-        const tdb = (h - 1061 * W) / (0.240 + 0.444 * W);
+        const tdb = (h - 1061 * W) / cp(W);
         const Wsat = satHumRatio(tdb, P);
         // `Wsat > 0` is not paranoia: above the boiling point for the
         // pressure the saturation formula degenerates NEGATIVE
@@ -540,5 +575,154 @@ const Psychro = (function () {
         return out;
     }
 
-    return { solveState, buildState, computeProcess, invertProcess, mixStreams };
+    // Page-facing mixer over the mixStreams kernel (codebase-issues #228,
+    // docs/engine-standardization.md §3). opts =
+    //   { streams: [{ state, share }, …], basis: 'mass' | 'volume', P }
+    // `state` is a solveState / buildState result; what `share` means is
+    // set by `basis` (see the header). Returns
+    //   { ok: true, basis, P,
+    //     shares: { mass: [f…], volume: [f…] },   both sets normalised
+    //     exact:  mixStreams on the MASS weights  (fogging / condensate too)
+    //     linear: { tdb, W, state } }             Σ share·x on the shares as
+    //                                             given, + buildState of it
+    // or buildState's { ok: false, error } shape. Guards run in a fixed
+    // order — no streams · an invalid state · a share non-finite or
+    // negative after ONE Number() coercion (mixStreams' '0200' lesson) ·
+    // zero total · basis outside the enum · under 'volume', a state with
+    // no positive specific volume — and a kernel refusal (a mix past the
+    // boiling point, #238) is handed back as-is.
+    //
+    // Under 'mass' the kernel gets the coerced shares unchanged, so
+    // `exact` IS mixStreams on the same weights, bit for bit. Under
+    // 'volume' it gets share ÷ v per stream — air-mixing's CFM ÷ v.
+    // The engine knows nothing about display precision: rounding the
+    // linear blend to what a page prints is the page's arithmetic.
+    function mixAir(opts) {
+        const o = opts || {};
+        const streams = o.streams;
+        if (!Array.isArray(streams) || streams.length < 1) {
+            return { ok: false, error: 'Mix at least one air stream.' };
+        }
+        const raw = [];
+        for (let i = 0; i < streams.length; i++) {
+            const s = streams[i];
+            if (!s || !s.state || !s.state.ok) {
+                return { ok: false, error: 'One of the mixed streams has an invalid air state.' };
+            }
+        }
+        let total = 0;
+        for (let i = 0; i < streams.length; i++) {
+            const f = Number(streams[i].share);
+            if (!isFinite(f)) return { ok: false, error: 'Enter a numeric share for every stream.' };
+            if (f < 0)        return { ok: false, error: 'Stream share can’t be negative.' };
+            raw.push(f);
+            total += f;
+        }
+        if (!(total > 0)) return { ok: false, error: 'Enter a positive total share.' };
+        const basis = o.basis;
+        if (basis !== 'mass' && basis !== 'volume') {
+            return { ok: false, error: 'Name the mixing basis — mass or volume.' };
+        }
+        if (basis === 'volume') {
+            for (let i = 0; i < streams.length; i++) {
+                if (!(streams[i].state.v > 0)) {
+                    return { ok: false, error: 'One of the mixed streams has no positive specific volume.' };
+                }
+            }
+        }
+        const P = o.P === undefined ? streams[0].state.P : o.P;
+
+        const given = raw.map(f => f / total);
+        // Kernel weights: the shares themselves on a mass basis, share ÷ v
+        // (dry-air mass per unit of volumetric share) on a volume basis.
+        const massW = basis === 'mass'
+            ? raw
+            : raw.map((f, i) => f / streams[i].state.v);
+        const volW = basis === 'volume'
+            ? raw
+            : raw.map((f, i) => f * streams[i].state.v);
+        const sum = a => a.reduce((x, y) => x + y, 0);
+        const massTotal = sum(massW);
+        const volTotal  = sum(volW);
+        const shares = {
+            mass:   basis === 'mass'   ? given : massW.map(m => m / massTotal),
+            volume: basis === 'volume' ? given : volW.map(q => q / volTotal),
+        };
+
+        const exact = mixStreams(
+            streams.map((s, i) => ({ state: s.state, flow: massW[i] })), P);
+        if (!exact.ok) return exact;
+
+        let tdb = 0, W = 0;
+        for (let i = 0; i < streams.length; i++) {
+            tdb += given[i] * streams[i].state.tdb;
+            W   += given[i] * streams[i].state.W;
+        }
+        return {
+            ok: true, basis, P, shares, exact,
+            linear: { tdb, W, state: buildState(tdb, W, P) },
+        };
+    }
+
+    // Inverse of a two-stream mixAir: the outdoor-air fraction that lands
+    // the mixed dry-bulb on `targetTdb`. opts =
+    //   { oa, ra, targetTdb, basis: 'mass' | 'volume',
+    //     recovery: 'linear' | 'exact', P }
+    // `oa` / `ra` are solveState / buildState results. Returns
+    //   { ok: true, fraction, within }
+    // with `fraction` the OA share on the basis named (0…1, not percent).
+    //   • 'linear' — (MA − RA) ÷ (OA − RA), economizer-ratio's form, which
+    //     is exactly the inverse of mixAir(…).linear.tdb. Basis-free in
+    //     its arithmetic; the basis argument names what the fraction is.
+    //     A target outside the two dry-bulbs still returns the arithmetic
+    //     fraction, below 0 or above 1, with within:false.
+    //   • 'exact' — bisects mixAir(…).exact.tdb onto the target. Outside
+    //     the two dry-bulbs there is no bracket, so it returns ok:false.
+    // Guards, in order: an invalid stream state · a non-finite target ·
+    // basis outside the enum · recovery outside the enum · OA and RA at
+    // the same dry-bulb (no unique fraction) · ('exact' only) no bracket.
+    function mixFraction(opts) {
+        const o = opts || {};
+        const oa = o.oa, ra = o.ra;
+        if (!oa || !oa.ok || !ra || !ra.ok) {
+            return { ok: false, error: 'Outdoor or return air has an invalid air state.' };
+        }
+        const target = Number(o.targetTdb);
+        if (!isFinite(target)) return { ok: false, error: 'Enter a numeric mixed-air target.' };
+        const basis = o.basis;
+        if (basis !== 'mass' && basis !== 'volume') {
+            return { ok: false, error: 'Name the mixing basis — mass or volume.' };
+        }
+        const recovery = o.recovery;
+        if (recovery !== 'linear' && recovery !== 'exact') {
+            return { ok: false, error: 'Name the recovery — linear or exact.' };
+        }
+        if (oa.tdb === ra.tdb) {
+            return { ok: false, error: 'Outdoor and return air share a dry-bulb — no unique fraction.' };
+        }
+        const within = target >= Math.min(oa.tdb, ra.tdb) && target <= Math.max(oa.tdb, ra.tdb);
+        if (recovery === 'linear') {
+            return { ok: true, fraction: (target - ra.tdb) / (oa.tdb - ra.tdb), within };
+        }
+        if (!within) {
+            return { ok: false, error: 'The target is outside the two air streams — no mix reaches it.' };
+        }
+        const P = o.P === undefined ? oa.P : o.P;
+        // More outdoor air moves the mix toward OA's dry-bulb, so `dir`
+        // says which side of the target a too-small fraction lands on.
+        const dir = oa.tdb > ra.tdb ? 1 : -1;
+        let lo = 0, hi = 1;
+        for (let i = 0; i < 64; i++) {
+            const mid = (lo + hi) / 2;
+            const m = mixAir({
+                streams: [{ state: oa, share: mid }, { state: ra, share: 1 - mid }],
+                basis, P,
+            });
+            if (!m.ok) return m;
+            if ((m.exact.tdb - target) * dir < 0) lo = mid; else hi = mid;
+        }
+        return { ok: true, fraction: (lo + hi) / 2, within };
+    }
+
+    return { solveState, buildState, computeProcess, invertProcess, mixStreams, mixAir, mixFraction };
 })();
