@@ -74,6 +74,18 @@
 //     silently paint nothing.
 //   ── mcq / gotcha ──
 //     choices: [{ id, text, correct? }]            -- exactly one `correct`
+//     Choices are SHOWN in a random order, drawn fresh on every render
+//     (each time a question is shown, restarts included). The array's
+//     order is authoring order only — the engine shuffles a copy and
+//     never reorders the bank. Why: authors had keyed the right answer
+//     on one letter far more often than chance, and some banks on a
+//     single letter throughout, so a test-wise reader could learn the
+//     letter instead of the answer. True/False is NOT shuffled (it
+//     always reads True, then False). Consequence for authors: never
+//     refer to a choice by letter or position — "(c)", "answer b",
+//     "the first option", "both of the above" — in a prompt, an
+//     explanation or a choice; tests/quiz-banks.spec.js lints it.
+//     Identify choices by `id`, never by index.
 //   ── gotcha ── (mcq + snippet)
 //     snippet: inline HTML (typically a <pre class="quiz-snippet">)
 //   ── tf ──
@@ -99,6 +111,9 @@
 // - Choices are <button role="radio"> inside <div role="radiogroup">
 //   (ARIA radio pattern). aria-checked, NOT aria-pressed (radio
 //   semantics, not toggle).
+// - Keyboard follows the RENDERED (shuffled) order, never the bank's:
+//   the first choice drawn carries tabindex 0 and takes initial focus,
+//   and the arrow keys walk the choices in the order they appear.
 // - Reveal panel is aria-live="polite", lives in the DOM at all times
 //   so its content-change is what's announced (not its insertion).
 //   Content is built in a DocumentFragment and assigned once so screen
@@ -580,11 +595,25 @@
             numericEl.classList.remove('correct', 'wrong');
 
             if (q.type === 'mcq' || q.type === 'gotcha') {
-                renderChoices(q.choices.map(function (c) {
+                // Display order is drawn fresh on every render (owner
+                // ruling, #335): authors had keyed the right answer on
+                // one letter far more than chance, so a test-wise
+                // reader could learn the letter instead of the trade.
+                // The map() builds new item objects, so the shuffle
+                // runs on a copy: the bank's own q.choices is never
+                // reordered, and every render draws afresh from the
+                // authored order. Nothing downstream may read a choice
+                // by position — submit() and reveal() match on
+                // data-choice-id / data-correct, and the "Right answer"
+                // line finds the keyed choice by its `correct` mark.
+                renderChoices(shuffleInPlace(q.choices.map(function (c) {
                     return { id: c.id, text: c.text, correct: !!c.correct };
-                }));
+                })));
                 choicesEl.hidden = false;
             } else if (q.type === 'tf') {
+                // Deliberately NOT shuffled: True-then-False is a
+                // convention readers expect, and a two-item order
+                // carries no letter to learn.
                 renderChoices([
                     { id: 'true',  text: 'True',  correct: q.answer === true },
                     { id: 'false', text: 'False', correct: q.answer === false }
@@ -622,7 +651,11 @@
         }
 
         function renderChoices(items) {
-            // Track the currently focused choice index for keyboard nav.
+            // Roving tabindex over the RENDERED order: the first item
+            // drawn is the group's single Tab stop, whatever its
+            // position in the bank, and the arrow keys walk DOM order
+            // (focusChoiceByOffset), so keyboard order always matches
+            // what the reader sees.
             items.forEach(function (item, idx) {
                 const btn = el('button', {
                     type: 'button',
