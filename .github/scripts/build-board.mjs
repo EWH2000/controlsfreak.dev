@@ -134,12 +134,13 @@ function esc(s) {
 
 // Escape first, then re-admit the four inline forms. Links are limited to
 // http(s) and root-relative targets, so board.md cannot emit a javascript: URL.
+// A target that starts // or /\ names another host, not this one, and stays text.
 function inline(s) {
     return esc(s)
         .replace(/`([^`]+)`/g, '<code>$1</code>')
         .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
         .replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<em>$2</em>')
-        .replace(/\[([^\]]+)\]\(((?:https?:\/\/|\/)[^)\s]+)\)/g, '<a href="$2">$1</a>');
+        .replace(/\[([^\]]+)\]\(((?:https?:\/\/|\/(?![/\\]))[^)\s]+)\)/g, '<a href="$2">$1</a>');
 }
 
 const board = parse(readFileSync(SOURCE, 'utf8'));

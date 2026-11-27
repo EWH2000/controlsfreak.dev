@@ -24,6 +24,12 @@ rest live here until someone decides what to do about them.
   headers further down are historical; open and resolved entries mix
   freely below them (see the continuation header before #185). Never
   classify an entry by the section it happens to sit under.
+- **"Owner merges" in an entry written before 2026-11-26 is history,
+  not a rule.** Since that date the assistant merges everything except
+  new-page launches, behind the lock on `main` and a blind review of
+  the final head (`rulings.md` §20.1, CLAUDE.md *Workflow*). What stays
+  the owner's is listed there; a fix shape that ends "→ owner merges"
+  no longer waits on him.
 
 ---
 
@@ -9441,7 +9447,7 @@ prohibited) are itemised in
 `textContent` rewritten unguarded at 10 Hz (item 18) — shipped with (a)
 above; see there for why it could not wait.
 
-### 228. Engineering math is re-implemented per page — air mixing carries three disagreeing forms and no shared helper exists *(noticed 2026-07-27, owner direction — scheduled separately, not this arc)* *(ruled 2026-10-06 — the design note's §6 defaults accepted; execution lane pending, `docs/engine-standardization.md` §4)* *(partially addressed 2026-10-06 · PR #651 step 0, PR #652 step 1; steps 2+ pending)*
+### 228. Engineering math is re-implemented per page — air mixing carries three disagreeing forms and no shared helper exists *(noticed 2026-07-27, owner direction — scheduled separately, not this arc)* *(ruled 2026-10-06 — the design note's §6 defaults accepted; execution lane pending, `docs/engine-standardization.md` §4)* *(partially addressed 2026-10-06 · PR #651 step 0, PR #652 step 1, both merged 2026-11-26; steps 2+ pending)*
 
 Owner direction, 2026-07-27: *"The air mixing disagreeing seems like an
 issue I'd like to fix, with all these things using it, it may be good to
@@ -15602,7 +15608,7 @@ mirror in one snapshot. Measured: that spec 96/96 green, smoke's
 landed in `ddc-workbench-ahu-page.spec.js` (the spec that drives the
 built page), not `ddcw-ahu-unit.spec.js`, which is engine-direct.
 
-### 324. The PID tuner's cheat sheet advises "flip acting (direct ↔ reverse)" — a control the tuner does not have *(noticed 2026-10-05, decision sitting — by-catch of the pid-basics direct/reverse aside; LOW, not ruled)* *(ruled 2026-10-06 — reword as field advice)* *(addressed 2026-10-06 · PR #641)*
+### 324. The PID tuner's cheat sheet advises "flip acting (direct ↔ reverse)" — a control the tuner does not have *(noticed 2026-10-05, decision sitting — by-catch of the pid-basics direct/reverse aside; LOW, not ruled)* *(ruled 2026-10-06 — reword as field advice)* *(addressed 2026-10-06 · PR #641, merged 2026-11-27)*
 
 `html/simulators/pid-tuner.html:423` — the Symptom→Move table's row
 *"PV runs away when the loop acts → flip acting (direct ↔ reverse)"*.
@@ -15749,7 +15755,7 @@ lifetime), not a disclosure gap. Numbering note: #325 and #326 were
 already claimed on other branches when this was written, so this entry
 takes #327.
 
-### 328. `bacnet-networking.html`'s "What this page didn't cover" list promises unbuilt pages in lesson body prose *(noticed 2026-10-05, #314 lane verifier)* *(ruled 2026-10-06 — narrow to scope statements)* *(addressed 2026-10-06 · PR #643)*
+### 328. `bacnet-networking.html`'s "What this page didn't cover" list promises unbuilt pages in lesson body prose *(noticed 2026-10-05, #314 lane verifier)* *(ruled 2026-10-06 — narrow to scope statements)* *(addressed 2026-10-06 · PR #643, merged 2026-11-27)*
 
 `html/education/bacnet-networking.html`, the `What this page didn't
 cover` subhead (`:598`) and its bullet list. Two bullets promise a page
@@ -15803,7 +15809,7 @@ subhead is `:601` (not `:598`) after PR #625's `id="not-covered"`. Two
 sibling lessons carry the same shape in words the §5 regex does not see
 — logged as #333.
 
-### 329. `pid-basics.html`'s closing "PID block on a wiresheet" paragraph has no `id`, so no quiz `learnMore` can deep-link it *(noticed 2026-10-05, quiz wave-2 pid-basics lane)* *(addressed 2026-10-06 · PR #641)*
+### 329. `pid-basics.html`'s closing "PID block on a wiresheet" paragraph has no `id`, so no quiz `learnMore` can deep-link it *(noticed 2026-10-05, quiz wave-2 pid-basics lane)* *(addressed 2026-10-06 · PR #641, merged 2026-11-27)*
 
 `html/education/pid-basics.html:229-231` — the paragraph that opens *"In a
 building-automation controller, the PID you've just been tuning lives
@@ -15870,7 +15876,7 @@ A `--dry-run` flag runs every guard and prints the plan without touching
 the docroot. Six-case guard matrix in the PR body; CLAUDE.md's LAN-
 preview bullet rewritten to match.
 
-### 331. `test.yml` never runs for a stacked PR that GitHub retargets to `main` after its parent merges *(noticed 2026-10-06, review-and-merge session; process gap, owner's call on the fix)* *(ruled 2026-10-06 — both triggers; merge on green granted)* *(addressed 2026-10-06 · PR #645, merged)*
+### 331. `test.yml` never runs for a stacked PR that GitHub retargets to `main` after its parent merges *(noticed 2026-10-06, review-and-merge session; process gap, owner's call on the fix)* *(ruled 2026-10-06 — both triggers; merge on green granted)* *(addressed 2026-10-06 · PR #645, merged)* *(gate removed 2026-11-26 · PR #657 — every `test` check is a real run)*
 
 `.github/workflows/test.yml` triggers on `pull_request` with
 `branches: [main]`, and the default activity types are `opened`,
@@ -15914,7 +15920,21 @@ since) — PR #652 on #651 is the first test; until then the rebase-push
 rule in CLAUDE.md stays as the backstop. CLAUDE.md *Workflow* trued up
 (two PRs, fix landed).
 
-### 332. "freeze-stat" vs "freezestat" — the lessons spell it one way, the widget strings and quiz banks the other *(noticed 2026-10-06, Batch A air-handlers refuter; owner spelling ruling + sweep)*
+**Superseded in part (2026-11-26, rulings.md §20, PR #657):** the
+job-level `if:` is gone. A skipped job reports as passing to a required
+check, and `main` now requires `test` (ruleset `main-requires-test`), so
+the gate would have let a title edit satisfy the lock. Consequence (a)
+above no longer happens for new events: a title or body edit re-runs the
+suite, and there is no SKIPPED twin to read past — except on heads whose
+last event predates #657, where the newest check can still be an old
+SKIPPED one (seen on #654 and #655; a fresh event gives a real run).
+Consequence (b) is settled: retargeting #652 to `main` by hand
+(`gh pr edit 652 --base main`) dispatched a real run on its head, which
+passed before it merged. The rebase-push backstop is retired; CLAUDE.md
+*Workflow* says so. Node is pinned to 24 in the same PR (the floating
+`lts/*` had moved to a major CI had never run).
+
+### 332. "freeze-stat" vs "freezestat" — the lessons spell it one way, the widget strings and quiz banks the other *(noticed 2026-10-06, Batch A air-handlers refuter; owner spelling ruling + sweep)* *(ruled 2026-11-26 — "freeze stat", two words; sweep pending)*
 
 Every lesson's prose writes **freezestat** (`coil-freeze-protection.html`,
 `air-handlers.html` after PR #640, the glossary entry), while the
@@ -15930,7 +15950,16 @@ spelling (the lessons' unhyphenated form is the larger set), then one
 sweep PR over strings and banks — `quiz-banks.spec.js` is shape-only, so
 no spec changes. Open.
 
-### 333. Two more lessons promise unbuilt work in body prose, in shapes the §5 coming-soon scan does not carry *(noticed 2026-10-06, Batch A bacnet-scope refuter — same family as #328)*
+**Ruling (2026-11-26, rulings.md §20.7):** the house spelling is
+**freeze stat**, two words — neither of the two forms above. Visible
+text only: ids, anchors, `data-gloss` keys, glossary ids, quiz ids and
+URLs keep their names, and the other spellings stay as search keywords.
+The sweep is a hand pass (a blind replace would break the glossary key
+and the `data-gloss` attributes that carry it), scheduled as its own
+run. New text written since the ruling already uses the house form.
+Open until the sweep lands.
+
+### 333. Two more lessons promise unbuilt work in body prose, in shapes the §5 coming-soon scan does not carry *(noticed 2026-10-06, Batch A bacnet-scope refuter — same family as #328)* *(scheduled 2026-11-26 — the freeze-season loose-ends run)*
 
 `html/education/bacnet-services.html:227` — the out-of-scope paragraph
 says segmentation is *"worth its own treatment"*; and
@@ -15953,7 +15982,7 @@ treatment` and `on the roadmap` to the §5 banned-shape set in
 `.github/scripts/project-status.mjs` so the scan's zero means more than
 it does today. Open.
 
-### 334. The quiz engine grades a numeric answer typed with a thousands separator as its leading digits *(noticed 2026-10-06, Batch B vav-systems lane; engine, LOW)*
+### 334. The quiz engine grades a numeric answer typed with a thousands separator as its leading digits *(noticed 2026-10-06, Batch B vav-systems lane; engine, LOW)* *(mechanism measured 2026-11-27)*
 
 `html/scripts/quiz-engine.js` reads numeric answers with `parseFloat`,
 so a reader who types `10,000` is graded as `10` — and marked wrong with
@@ -15965,7 +15994,30 @@ no-break space a metric reader may paste) before parsing, in one place
 in the engine; a one-line test in `quiz-engine`'s spec. Live script on
 42 practice pages → owner merges. Open.
 
-### 335. Several ten-question banks key every choice on "a", and the keyed choice is usually the longest — the engine does not shuffle choices *(noticed 2026-10-06, Batch B duct-static-control + vav-systems lanes; bank-wide sweep wanted)*
+**Correction (2026-11-27, measured):** whether this happens depends on
+the browser's locale. The answer box is `type: 'number'`
+(`quiz-engine.js:403`), and a number input reads what is typed by the
+browser locale's own separators before the engine's `parseFloat` runs.
+Driven in headless Chromium 153 against a bare `<input type="number">`,
+typing each string:
+
+- **en-US:** `10,000` → `value` `10000`, `44,444` → `44444` — the comma
+  does not reach `value` and the answer grades right. `10,5` → `105`.
+- **de-DE and fr-FR:** `10,000` → `value` `10.000`, so `parseFloat`
+  gives `10`; `44,444` → `44.444`. The comma is taken as the decimal
+  point — the symptom in this entry's title.
+
+So the title holds for a reader whose browser uses a decimal comma and
+not for an English-locale one. Not measured: any engine other than
+Chromium (the only one installed on this box). **Fix shape, revised:**
+stripping `,` after the read cannot help — by the time the engine reads
+`value` the comma is already gone or already a decimal point. The
+durable fix is a text input with `inputmode="decimal"` and the engine's
+own parse, which then has to decide what a lone comma means; the cheap
+one is a "digits only, no separators" hint beside the box. A design
+choice inside the quiz engine run. Open, LOW.
+
+### 335. Several ten-question banks key every choice on "a", and the keyed choice is usually the longest — the engine does not shuffle choices *(noticed 2026-10-06, Batch B duct-static-control + vav-systems lanes; bank-wide sweep wanted)* *(ruled 2026-11-27 — shuffle in the engine)*
 
 `duct-static-control.js` keys all ten original questions on `a`;
 `vav-systems.js` keys all seven of its original mcq/gotcha questions on
@@ -15981,6 +16033,16 @@ the air-handlers refuter did this for one bank in wave 2. No spec
 change: `quiz-banks.spec.js` does not read letter distribution, and
 `modbus-decoding` is walked deterministically by smoke and must keep its
 order. Open.
+
+**Ruling (2026-11-27, rulings.md §20.12): "Shuffle in the engine."**
+The engine randomises choice order for every bank instead of a
+hand reorder. Two things come first, in the same run: the explanations
+that refer to a choice by its letter are rewritten to name the choice
+by what it says (a shuffled "b" is no longer "b"), and a lint keeps new
+ones out. `modbus-decoding`'s deterministic smoke walk needs either an
+opt-out or a walk that finds the keyed choice by its mark, not its
+position. Trimming over-long keys stays a bank-by-bank matter. Open
+until the engine change lands.
 
 ### 336. `Psychro.buildState` has no finite/positive-`P` guard, so a bad pressure is reported as "at or above the boiling point" *(noticed 2026-10-06, #228 step 0 verifier; pre-existing, LOW)*
 
@@ -15998,7 +16060,12 @@ top of `buildState` returning the engine's "Enter numeric values" shape;
 a spec line in `psychro-engine.spec.js`. Shared script → owner merges.
 Open.
 
-### 337. `building-pressure.html`'s "Not the same pressure" callout has no `id`, so the new bank question links its parent section *(noticed 2026-10-06, Batch B building-pressure lane; #314 family, log-and-fix-opportunistically)*
+*(2026-11-26: #651 merged with this behaviour as built — a missing
+pressure defaults to the readings' own and an engine error passes
+straight through; the only caller always supplies pressure. The guard
+is still wanted. Its merge is no longer the owner's — rulings §20.1.)*
+
+### 337. `building-pressure.html`'s "Not the same pressure" callout has no `id`, so the new bank question links its parent section *(noticed 2026-10-06, Batch B building-pressure lane; #314 family, log-and-fix-opportunistically)* *(scheduled 2026-11-26 — the freeze-season loose-ends run)*
 
 The callout that separates building static from duct static carries no
 `id`; `bp-duct-static-not-building` (PR #650) tests exactly that beat
@@ -16006,3 +16073,59 @@ and sends its `learnMore` to `#measuring-it`, the section that hosts it
 (the bank's header comment says so). Same shape and same fix as #314 /
 #329: one `id` on the callout, retarget the `learnMore` in the same PR.
 Any lane touching `building-pressure.html` takes it. Open.
+
+### 338. Advisories from the 2026-11-26 blind reviews that did not block a merge, collected *(noticed 2026-11-26/27, the catch-up run's second-agent reviews; each LOW, take opportunistically)*
+
+Every change merged in the catch-up run was read blind by a second
+agent. These are the code-side points the reviewers raised and the
+merges did not need; the content-side ones are content-audit #105. Line
+numbers are as merged and will drift.
+
+- **Psych chart, after #652.** Dragging the mixed-air dot while the mix
+  is in fog behaves worse than before the migration (the drag inverts
+  along the OA–RA chord; the engine's fog branch moves the point off
+  it), and `smoke.spec.js` does not pin the MA readout, so a wrong
+  figure there would pass.
+- **`mixFraction` (#651).** The test for its pressure default cannot
+  fail — a mutation that breaks the default leaves it green; an empty
+  string coerces through `Number('')` to 0; an explicit bad `P` is not
+  validated (the #336 family).
+- **`tests/link-integrity.spec.js`'s `ID_RE` reads HTML comments.**
+  `pid-basics.html` carries a comment that spells
+  `id="pid-on-a-wiresheet"` two lines above the element that owns it,
+  so the deep-link guard for that anchor is vacuous: strip the id from
+  the `<p>` and the regex still finds it. Mask comments before
+  collecting ids — the `gloss` transform already does this for its own
+  scan.
+- **Stale comments:** `vav-systems.html`'s airflow-band comment and its
+  `<300` flag disagree with the thresholds the script uses (OK ≥ 400,
+  thin ≥ 350, starving below); `ddc-workbench.html` has one stale
+  comment near the filter-rack markup; `tests/psychro-mixair.spec.js`
+  still cites the psych chart's inline form by line as "the INLINE page
+  form today".
+- **FAQ JSON-LD doubles a true/false verdict.** A `tf` explanation that
+  opens "False." is published after an answer that already says False
+  (house-wide, from how `buildAnswerText` in `.eleventy.js` builds the
+  answer text).
+- **`.claude/workflows/quiz-bank-growth.js`:** `reviewedFinalHead` stays
+  true when a fixer fails; the header does not say a head with a cut
+  question is reviewed once more; `<br>` is allowed in the schema text
+  at one site and not at two others; a cut question's id stays in
+  `newQuestions`; `git checkout -B` in a fresh worktree is refused, so
+  lanes should use a detached checkout.
+
+Open.
+
+### 339. No `scroll-margin` under the sticky nav, so every deep link lands with its first lines hidden *(noticed 2026-11-27, PR #641 blind review; site-wide, pre-existing)*
+
+`html/styles.css` has no `scroll-margin-top` or `scroll-padding-top`
+anywhere (grep: 0), and `.site-nav` is `position: sticky`. A link to
+`#some-anchor` — every quiz `learnMore`, every in-lesson cross-link —
+puts the target at the top of the viewport, under the bar: about 55 px
+of it at 375 px wide, which is two lines of a paragraph or the whole of
+a `.subhead` heading. The reader lands on text that starts mid-thought.
+**Fix shape:** one rule — `scroll-padding-top` on `html`, sized from the
+nav's height (it differs below 620 px, where the bar collapses) — and a
+spec that follows one deep link and asserts the target's top is below
+the nav's bottom. `styles.css` change, so it carries a version bump and
+the full suite. Open.
