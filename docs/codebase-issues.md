@@ -16130,7 +16130,7 @@ spec that follows one deep link and asserts the target's top is below
 the nav's bottom. `styles.css` change, so it carries a version bump and
 the full suite. Open.
 
-### 340. The PID tuner's duct-static scene does not hunt on gain or reset, and its presets do not behave as named *(measured 2026-11-27 while checking the owner's duct-static ruling — rulings §21.2)*
+### 340. The PID tuner's duct-static scene does not hunt on gain or reset, and its presets do not behave as named *(measured 2026-11-27 while checking the duct-static ruling — rulings §21.2)*
 
 `education/duct-static-control.html` teaches that the duct-static loop
 is tuned gently or it hunts, and until PR #663 sent the reader to
@@ -16240,7 +16240,8 @@ changes. Its first sim's note says its three loops "stay well-damped as
 you push"; with reset off at gain 20 all three ring under setpoint (9,
 14 and 32 swings over 1 % of the step on the fast, medium and slow
 loops), with zero overshoot. The test titled *pure P cannot ring on the
-Sim 1 loops* asserts the zero overshoot, not the absence of ringing.
+Sim 1 loops but rings on the dead-time loop (#154)* asserts the zero
+overshoot on those three, not the absence of ringing.
 
 **Correction to PR #663's own record.** Its first commit message says
 the model never crosses setpoint "across the whole slider range", from a

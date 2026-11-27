@@ -49,7 +49,7 @@
 - The Duct Static lesson told readers to drive the tuner's fan scene and feel how little gain it wants. I ran the tuner: on gain and reset alone that scene never overshoots, however hot you set it. I changed the lesson's wording now; fixing the scene itself is on the Menu, with your answer on what can make a real one hunt.
 - Item 5 was "The case-file format". Your answer pointed at a lesson instead, and you approved that shape, so that is what it now says.
 - The trunk lesson will say "the supervisor or router" where you named one vendor's controller. That is what the MS/TP lesson already calls it, and it keeps the page vendor-neutral.
-- A second agent reviewed both changes and this record before they merged. Most of what it caught was me saying more than you had: "rarely a problem" where you said "not generally", a check order you never gave. It also caught a tuner sentence that pointed the wrong way. All fixed before merge.
+- A second agent reviewed both changes and this record before they merged. Most of what it caught was me saying more than you had: "rarely a problem" where you said "not generally", a check order you never gave. It also caught a tuner sentence that pointed the wrong way. Those were fixed before merge. What it raised and I left alone is logged for the loose-ends run, including one spot where the freeze lesson still says a little more than you did: the alarm "shows up", where you said it "may look like a fan fail".
 
 ### Menu for the next five
 
