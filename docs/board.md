@@ -15,7 +15,7 @@
 - [x] Coil Freeze Protection quiz
 - [ ] Quizzes you can't game
 - [ ] Freeze-season loose ends
-- [ ] Finding a break in a dead trunk (your story and your method, as a lesson you play)
+- [ ] Finding a break in a dead trunk (your story and your method, as a lesson)
 
 ## Your turn
 

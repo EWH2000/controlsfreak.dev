@@ -527,9 +527,8 @@ items 3–5 still start only on his word.
 4. **The dead-trunk page's shape — approved.** A hidden lesson on finding
    a break by sections, opening with the story as a made-up job: "it
    makes it feel like a game and builds real skills." *Disposition:* item
-   5 will be built that way, as something the reader plays rather than
-   reads.
-5. **How he isolates a break.** In order: first try to find a bus layout
+   5 will be built that way, and it should feel like a game.
+5. **How he isolates a break.** First try to find a bus layout
    and see whether an obvious spot shows. With no layout, go by the MAC
    addresses or, better, the room numbers of the offline devices, and
    start at the highest or the lowest. If the whole bus is flaky, break

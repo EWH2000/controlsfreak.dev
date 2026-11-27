@@ -16154,10 +16154,18 @@ built page, 2026-11-27):
   19.5 % / 9:59 min.
 
 So the page opens on "Decent PI" with Settling Time reading "> 8 min".
-Too Hot is
-the quickest preset to settle on three of the four scenes, and on two of
-those — the fan scene and the reheat scene — it is the only one that
-settles inside the chart at all.
+By the readouts, Too Hot shows the shortest settling time on three of
+the four scenes, and on two of those — the fan scene and the reheat
+scene — it is the only preset that shows a time at all.
+
+On the reheat scene that time is not a settle. Under Too Hot the loop is
+still cycling about −5.6 / +2.9 °F around setpoint at the end of the
+window, against a ±0.3 °F band, and more than ninety of the last hundred
+samples are outside the band. The readout shows 9:59 min because
+`settled` in `pid-engine.js` is the time of the sample after the last
+out-of-band one, and the final two samples happen to fall inside the
+band mid-swing. A sustained cycle that ends in band reports a settling
+time.
 
 **The model, at every slider position on the duct-static scene** (the
 engine run in Node; gain 0–20 in steps of 0.1, reset 0–6 repeats/min in
@@ -16193,9 +16201,7 @@ calls this loop "Easy to control". A reader who opens the tuner cold
 sees the fan scene accept Too Hot with that caution out of view; the
 caveat that is showing is the page's general "A toy loop, not your loop"
 preamble.
-Same family as content-audit #34 (the tuner's cheat-sheet describing
-failure modes the simulator could not reach) and #45 (the PID Basics
-caption promising ringing its widget could not produce).
+Same family as content-audit #34 and #45.
 
 **Mechanism.** `PID_PRESETS` in `pid-tuner.html` is one set of canonical
 values applied to every scene, and the reset slider stops at 6
@@ -16225,8 +16231,16 @@ Hot preset without overshoot" and the lesson's matching clause. A test
 added in that PR, *the duct-static scene takes the Too Hot preset
 without overshoot (prose pin)* in `tests/pid-engine.spec.js`, fails
 when a change to the preset or the scene makes that sentence false —
-overshoot appears, the preset stops settling, or another preset carries
-more gain — so the prose cannot go stale quietly.
+overshoot appears, the preset stops reporting a settling time, or
+another preset carries more gain. Given the readout defect above, a
+reported settling time is weaker evidence than it looks.
+
+The re-read of `pid-basics.html` is owed whether or not the engine
+changes. Its first sim's note says its three loops "stay well-damped as
+you push"; with reset off at gain 20 all three ring under setpoint (9,
+14 and 32 swings over 1 % of the step on the fast, medium and slow
+loops), with zero overshoot. The test titled *pure P cannot ring on the
+Sim 1 loops* asserts the zero overshoot, not the absence of ringing.
 
 **Correction to PR #663's own record.** Its first commit message says
 the model never crosses setpoint "across the whole slider range", from a
