@@ -221,12 +221,12 @@ module.exports = [
         id: 'eco-low-limit-override',
         prompt: 'A frigid morning. An interior zone is calling for cooling, the changeover gate is open, and the economizer is driving its dampers open to chase a cool supply-air setpoint. MA-T starts falling toward freezing. What is supposed to happen?',
         choices: [
-            { id: 'a', text: 'Nothing until the freeze-stat trips — the hardwired trip is the freeze protection, and the software should stay out of its way.' },
+            { id: 'a', text: 'Nothing until the freeze stat trips — the hardwired trip is the freeze protection, and the software should stay out of its way.' },
             { id: 'b', text: 'The cooling call keeps priority; the dampers hold their position until the zone is satisfied.' },
-            { id: 'c', text: 'A low-limit override drives the dampers toward minimum, whatever the cooling logic wants — with the freeze-stat hard trip behind it as the last line.', correct: true },
+            { id: 'c', text: 'A low-limit override drives the dampers toward minimum, whatever the cooling logic wants — with the freeze stat hard trip behind it as the last line.', correct: true },
             { id: 'd', text: 'The changeover high limit trips and closes the outside-air damper fully.' }
         ],
-        explain: 'Free cooling has a floor. The low-limit override is the "when safe" half of "use cool air when safe": when MA-T drops too far it pulls the dampers back toward minimum no matter how hard the cooling logic wants them open, and the freeze-stat hard trip sits behind it in case that isn\'t enough. Relying on the freeze-stat alone means every cold morning ends in a nuisance shutdown at best; a unit missing both isn\'t aggressive, it\'s uninsured.',
+        explain: 'Free cooling has a floor. The low-limit override is the "when safe" half of "use cool air when safe": when MA-T drops too far it pulls the dampers back toward minimum no matter how hard the cooling logic wants them open, and the freeze stat hard trip sits behind it in case that isn\'t enough. Relying on the freeze stat alone means every cold morning ends in a nuisance shutdown at best; a unit missing both isn\'t aggressive, it\'s uninsured.',
         learnMore: { href: '/education/economizers.html#field-failures', label: 'Economizers — Where Economizers Fail in the Field' },
         tags: ['forced-air', 'economizer', 'freeze-protection']
     },

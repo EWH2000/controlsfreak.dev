@@ -90,12 +90,12 @@ module.exports = [
     {
         type: 'mcq',
         id: 'interlock-is-the-whole-response',
-        prompt: 'The sequence says a freeze trip shall stop the supply fan, close the outside-air damper, drive the heating valve open, and annunciate an alarm. You trip the freezestat and the freeze point goes to ALARM on the graphic. Is the interlock verified?',
+        prompt: 'The sequence says a freeze trip shall stop the supply fan, close the outside-air damper, drive the heating valve open, and annunciate an alarm. You trip the freeze stat and the freeze point goes to ALARM on the graphic. Is the interlock verified?',
         choices: [
             { id: 'a', text: 'Yes — the alarm proves the trip point is wired and the logic saw it.' },
             { id: 'b', text: 'No. The alarm is one of four promised reactions; the interlock is the relationship, so every programmed response has to be observed.', correct: true },
-            { id: 'c', text: 'Yes, provided the alarm clears when the freezestat resets.' },
-            { id: 'd', text: 'No — a freezestat can only be verified by lowering the actual mixed-air temperature.' }
+            { id: 'c', text: 'Yes, provided the alarm clears when the freeze stat resets.' },
+            { id: 'd', text: 'No — a freeze stat can only be verified by lowering the actual mixed-air temperature.' }
         ],
         explain: 'Proving each point moves is necessary and not sufficient. A sequence is a set of <em>relationships</em>: this condition trips, so those outputs respond. Verifying one means making the triggering condition real and confirming the whole programmed reaction — fan off, damper closed, valve open, alarm annunciated — not confirming that the trigger point merely reads. It is entirely possible for the alarm to annunciate while one of the three output responses was never programmed, and the alarm looks like success.',
         learnMore: { href: '/education/controls-commissioning.html#ccx-interlocks', label: 'Controls Commissioning — Interlocks and sequence logic' },
@@ -104,15 +104,15 @@ module.exports = [
     {
         type: 'gotcha',
         id: 'hardwired-trip-must-act-on-its-own',
-        prompt: 'A freezestat is hardwired into the supply-fan starter circuit, and it also lands on a BI so the controller can annunciate the alarm and shut the unit down in software. Here is the test that was run to verify it. Why does this not verify the hardwired trip?',
-        snippet: '<pre class="quiz-snippet">action:  freezestat tripped by hand at the device\nBI:      FREEZE ALARM   (controller saw it)\nBO:      SF-1 → OFF     (software dropped the fan)\nfan:     stopped ✓</pre>',
+        prompt: 'A freeze stat is hardwired into the supply-fan starter circuit, and it also lands on a BI so the controller can annunciate the alarm and shut the unit down in software. Here is the test that was run to verify it. Why does this not verify the hardwired trip?',
+        snippet: '<pre class="quiz-snippet">action:  freeze stat tripped by hand at the device\nBI:      FREEZE ALARM   (controller saw it)\nBO:      SF-1 → OFF     (software dropped the fan)\nfan:     stopped ✓</pre>',
         choices: [
             { id: 'a', text: 'It does — the fan stopped, and stopping the fan is the required response.' },
             { id: 'b', text: 'Both paths were live, so the software would have dropped that fan whether or not the hardwired trip was intact. Nothing in the record shows the copper could have stopped it on its own.', correct: true },
             { id: 'c', text: 'A hand trip is not a valid test — the element has to be chilled below its actual setting for the result to count.' },
-            { id: 'd', text: 'One freezestat should never serve both a hardwired trip and a BI, so the arrangement itself is the defect.' }
+            { id: 'd', text: 'One freeze stat should never serve both a hardwired trip and a BI, so the arrangement itself is the defect.' }
         ],
-        explain: 'A hardwired safety exists for exactly the moments the controller cannot be trusted — a railed sensor, a hung program, a value stuck at a number that looks perfectly reasonable and that nothing downstream knows is wrong. A test with both paths live cannot say anything about the one that matters, because the software drops that fan either way — a jumpered-out contact, a broken wire, a trip landed on the wrong terminal, and this record still reads exactly the same. Prove the copper by taking the software out of the path and leaving it watching: hold the fan <em>commanded on</em> from the controller, trip the freezestat, and confirm the fan drops anyway while the BO still reads ON. That is the whole shape of the arrangement — the controller reports the trip, the wiring performs it. Restore the command and verify the software response as its own step, so the record ends with both paths proven instead of one of them assumed.',
+        explain: 'A hardwired safety exists for exactly the moments the controller cannot be trusted — a railed sensor, a hung program, a value stuck at a number that looks perfectly reasonable and that nothing downstream knows is wrong. A test with both paths live cannot say anything about the one that matters, because the software drops that fan either way — a jumpered-out contact, a broken wire, a trip landed on the wrong terminal, and this record still reads exactly the same. Prove the copper by taking the software out of the path and leaving it watching: hold the fan <em>commanded on</em> from the controller, trip the freeze stat, and confirm the fan drops anyway while the BO still reads ON. That is the whole shape of the arrangement — the controller reports the trip, the wiring performs it. Restore the command and verify the software response as its own step, so the record ends with both paths proven instead of one of them assumed.',
         learnMore: { href: '/education/controls-commissioning.html#ccx-interlocks', label: 'Controls Commissioning — Interlocks and sequence logic' },
         tags: ['commissioning', 'interlocks', 'safety']
     },

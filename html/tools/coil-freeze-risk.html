@@ -1,10 +1,10 @@
 ---
 title: Coil Freeze Risk Checker — controlsfreak.dev
-description: Was the freezestat right to trip? Mixed-air margin against glycol freeze and burst points, flow state, and steam-coil mechanics — a protection verdict.
+description: Was the freeze stat right to trip? Mixed-air margin against glycol freeze and burst points, flow state, and steam-coil mechanics — a protection verdict.
 canonical: https://controlsfreak.dev/tools/coil-freeze-risk.html
 nav: tools
 category: hvac
-keywords: freezestat freeze stat trip low limit mixed air mat glycol ethylene propylene burst point steam coil vacuum breaker face and bypass preheat split tubes winter
+keywords: freezestat freeze-stat freeze stat trip low limit mixed air mat glycol ethylene propylene burst point steam coil vacuum breaker face and bypass preheat split tubes winter
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -26,7 +26,7 @@ keywords: freezestat freeze stat trip low limit mixed air mat glycol ethylene pr
         </div>
 
         <details class="tool-preamble" style="padding:1.1rem 1.5rem 0;">
-            <summary>The freezestat tripped at 6 AM &mdash; was it right?</summary>
+            <summary>The freeze stat tripped at 6 AM &mdash; was it right?</summary>
             <div class="preamble-rest">
                 A margin check, not a physics model: place the mixed air, set it
                 against what&rsquo;s actually in the tubes &mdash; water, glycol, or steam
@@ -108,14 +108,14 @@ keywords: freezestat freeze stat trip low limit mixed air mat glycol ethylene pr
                     </select>
                 </div>
                 <div class="ps-row">
-                    <label class="ps-label" for="cfr-stat">Freezestat installed</label>
+                    <label class="ps-label" for="cfr-stat">Freeze stat installed</label>
                     <select class="ps-input" id="cfr-stat">
                         <option value="yes" selected>Yes</option>
                         <option value="none">No</option>
                     </select>
                 </div>
                 <div class="ps-row" id="cfr-row-sp">
-                    <label class="ps-label" data-us="Freezestat setpoint (°F)" data-metric="Freezestat setpoint (°C)" for="cfr-sp">Freezestat setpoint (°F)</label>
+                    <label class="ps-label" data-us="Freeze stat setpoint (°F)" data-metric="Freeze stat setpoint (°C)" for="cfr-sp">Freeze stat setpoint (°F)</label>
                     <input class="ps-input" type="number" id="cfr-sp" step="0.5" min="-50" max="200" value="38">
                 </div>
                 <p class="ref-note">
@@ -161,7 +161,7 @@ keywords: freezestat freeze stat trip low limit mixed air mat glycol ethylene pr
         <section class="tool-body-row">
             <h2 class="ps-section-label">Worked example</h2>
             <p class="ref-note worked-intro">
-                A 6 AM freezestat trip in January: <button type="button" data-gloss="oat">OAT</button>
+                A 6 AM freeze stat trip in January: <button type="button" data-gloss="oat">OAT</button>
                 <span data-us="5 °F" data-metric="−15 °C">5 °F</span>, return air at
                 <span data-us="70 °F" data-metric="21.1 °C">70 °F</span> — and the
                 trend shows the return-damper linkage stuck at half, so the box is
@@ -262,7 +262,7 @@ keywords: freezestat freeze stat trip low limit mixed air mat glycol ethylene pr
                 layers instead of mixing runs cold blankets
                 <span data-us="10–20 °F" data-metric="6–11 °C">10–20 °F</span> below that
                 average along the bottom of the plenum — which is why coils split while
-                the trend looks healthy, why freezestat elements are serpentined across
+                the trend looks healthy, why freeze stat elements are serpentined across
                 the whole coil face (the stat trips on its coldest foot of capillary, not
                 the average), and why a single-point <button type="button" data-gloss="mat">MA-T</button> sensor
                 <a href="/education/air-handlers.html#sensor-strip">can lie about all of
@@ -280,7 +280,7 @@ keywords: freezestat freeze stat trip low limit mixed air mat glycol ethylene pr
                 outdoors — because a volume share understates the outdoor air by mass:
             </p>
             <ol class="ref-note worked-list">
-                <li><strong>Freezestat hard trip</strong> — manual reset, so a human has
+                <li><strong>Freeze stat hard trip</strong> — manual reset, so a human has
                     to look before the fan comes back. An auto-reset stat cycles the fan
                     all night while the coil keeps icing.</li>
                 <li><strong>Low-limit <button type="button" data-gloss="mat">MA-T</button> override</strong> — drive the dampers toward
@@ -305,7 +305,7 @@ keywords: freezestat freeze stat trip low limit mixed air mat glycol ethylene pr
                 It is not the protection: it can&rsquo;t see stratification,
                 circuiting, or the cold corner the sensor misses, and a calm verdict
                 is never a reason to skip anything in the stack above. When the cost
-                of being wrong is split tubes, the freezestat, the glycol, and the
+                of being wrong is split tubes, the freeze stat, the glycol, and the
                 manufacturer&rsquo;s requirements govern — not a calculator.
             </p>
         </section>
@@ -481,7 +481,7 @@ keywords: freezestat freeze stat trip low limit mixed air mat glycol ethylene pr
             if (statOn) {
                 sp = snap(parseFloat(el.sp.value), 1);
                 if (!isFinite(sp)) {
-                    mute('Enter the freezestat setpoint — 38 °F (3.3 °C) is the common default.');
+                    mute('Enter the freeze stat setpoint — 38 °F (3.3 °C) is the common default.');
                     return;
                 }
             } else {
@@ -532,13 +532,13 @@ keywords: freezestat freeze stat trip low limit mixed air mat glycol ethylene pr
             }
 
             if (!statOn) {
-                setPill(el.stat_pill, 'No freezestat — nothing stops the fan when the arithmetic goes wrong. First fix on the list.', 'error');
+                setPill(el.stat_pill, 'No freeze stat — nothing stops the fan when the arithmetic goes wrong. First fix on the list.', 'error');
             } else if (sp <= freeze) {
-                setPill(el.stat_pill, 'Freezestat set at ' + s + ' — at or below the fluid’s freeze point, it can only trip after ice is already possible. Typical settings run ' + bandTxt + '.', 'warn');
+                setPill(el.stat_pill, 'Freeze stat set at ' + s + ' — at or below the fluid’s freeze point, it can only trip after ice is already possible. Typical settings run ' + bandTxt + '.', 'warn');
             } else if (sp < floor) {
-                setPill(el.stat_pill, 'Freezestat set at ' + s + ' — below the ' + floorTxt + ' floor where trips normally live, so it fires late. Typical settings run ' + bandTxt + '.', 'warn');
+                setPill(el.stat_pill, 'Freeze stat set at ' + s + ' — below the ' + floorTxt + ' floor where trips normally live, so it fires late. Typical settings run ' + bandTxt + '.', 'warn');
             } else {
-                setPill(el.stat_pill, 'Freezestat in and set at ' + s + ' — the hard trip backstopping everything above.', 'ok');
+                setPill(el.stat_pill, 'Freeze stat in and set at ' + s + ' — the hard trip backstopping everything above.', 'ok');
             }
 
             // ── Overall verdict — banded on the displayed values ──
@@ -548,16 +548,16 @@ keywords: freezestat freeze stat trip low limit mixed air mat glycol ethylene pr
                     : (sp <= freeze
                         ? ' The stat at ' + s + ' has not tripped yet — at or below the fluid’s freeze point, it only fires once ice is already possible; typical settings run ' + bandTxt + '.'
                         : ' The stat at ' + s + ' has not tripped yet — set under the ' + floorTxt + ' floor, it fires late; typical settings run ' + bandTxt + '.'))
-                : ' There is no freezestat to catch it.';
+                : ' There is no freeze stat to catch it.';
 
             function protectedText() {
                 const diff = snap(mat - sp, 1);
-                const edge = statOn ? 'freezestat setpoint' : 'line a stat would watch';
+                const edge = statOn ? 'freeze stat setpoint' : 'line a stat would watch';
                 return 'Protected — mixed air at ' + m + (diff > 0
                         ? ' clears the ' + s + ' ' + edge + ' by ' + disp(diff, 1) + suf + '.'
                         : ' sits exactly at the ' + s + ' ' + edge + ' — no room for a colder hour.')
                     + (matMode === 'calc' ? ' That is a calculated average — trust it as far as the mixing box actually mixes.' : '')
-                    + (statOn ? '' : ' With no freezestat, protection here is arithmetic only — a stuck damper on a colder morning has no backstop.');
+                    + (statOn ? '' : ' With no freeze stat, protection here is arithmetic only — a stuck damper on a colder morning has no backstop.');
             }
 
             if (isSteam) {
@@ -571,12 +571,12 @@ keywords: freezestat freeze stat trip low limit mixed air mat glycol ethylene pr
                     const modeClause = steamMode === 'mod'
                         ? ' A modulating steam valve throttles hardest exactly when the air is coldest — below freezing, the condensate-trapping mechanism arms.'
                         : ' Two-position with face-and-bypass keeps the coil at full pressure — the right arrangement for air this cold.';
-                    setPill(el.pill, 'At risk — mixed air at ' + m + ' is below ' + floorTxt + ', under any credible freezestat setting.' + modeClause + statClause, 'warn');
+                    setPill(el.pill, 'At risk — mixed air at ' + m + ' is below ' + floorTxt + ', under any credible freeze stat setting.' + modeClause + statClause, 'warn');
                 } else if (mat < sp) {
                     if (statOn) {
-                        setPill(el.pill, 'Freezestat territory — mixed air at ' + m + ' is under the ' + s + ' setpoint. Expect the stat to trip before anything is damaged; a 6 AM trip here is the protection working, not a malfunction.', 'warn');
+                        setPill(el.pill, 'Freeze stat territory — mixed air at ' + m + ' is under the ' + s + ' setpoint. Expect the stat to trip before anything is damaged; a 6 AM trip here is the protection working, not a malfunction.', 'warn');
                     } else {
-                        setPill(el.pill, 'Thin margin — mixed air at ' + m + ' sits where freezestats normally live (' + bandTxt + '), and this unit has none. Nothing trips the fan if tonight runs colder.', 'warn');
+                        setPill(el.pill, 'Thin margin — mixed air at ' + m + ' sits where freeze stats normally live (' + bandTxt + '), and this unit has none. Nothing trips the fan if tonight runs colder.', 'warn');
                     }
                 } else {
                     setPill(el.pill, protectedText(), 'ok');
@@ -612,15 +612,15 @@ keywords: freezestat freeze stat trip low limit mixed air mat glycol ethylene pr
                     const fluidClause = isWater
                         ? ' Water in the tubes has ' + disp(margin, 1) + suf + ' of margin left.'
                         : ' The ' + fl.label + ' keeps the fluid margin at ' + disp(margin, 1) + suf + ' — the tubes are covered even while the air-side alarm math is not.';
-                    setPill(el.pill, 'At risk — mixed air at ' + m + ' is below ' + floorTxt + ', under any credible freezestat setting.' + fluidClause + statClause, 'warn');
+                    setPill(el.pill, 'At risk — mixed air at ' + m + ' is below ' + floorTxt + ', under any credible freeze stat setting.' + fluidClause + statClause, 'warn');
                 }
             } else if (mat < sp) {
                 const glycolClause = isWater ? ''
                     : ' The ' + fl.label + ' holds the fluid to ' + f + ' — the stat reads air, not fluid, so glycol doesn’t buy fewer trips; chronic trips are a mixing or setpoint conversation.';
                 if (statOn) {
-                    setPill(el.pill, 'Freezestat territory — mixed air at ' + m + ' is under the ' + s + ' setpoint. Expect the stat to trip before anything is damaged; a 6 AM trip here is the protection working, not a malfunction.' + glycolClause, 'warn');
+                    setPill(el.pill, 'Freeze stat territory — mixed air at ' + m + ' is under the ' + s + ' setpoint. Expect the stat to trip before anything is damaged; a 6 AM trip here is the protection working, not a malfunction.' + glycolClause, 'warn');
                 } else {
-                    setPill(el.pill, 'Thin margin — mixed air at ' + m + ' sits where freezestats normally live (' + bandTxt + '), and this unit has none. Nothing trips the fan if tonight runs colder.' + glycolClause, 'warn');
+                    setPill(el.pill, 'Thin margin — mixed air at ' + m + ' sits where freeze stats normally live (' + bandTxt + '), and this unit has none. Nothing trips the fan if tonight runs colder.' + glycolClause, 'warn');
                 }
             } else {
                 setPill(el.pill, protectedText(), 'ok');

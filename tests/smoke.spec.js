@@ -3645,7 +3645,7 @@ test('coil-freeze-risk — bands walk the ladder, glycol splits trips from tubes
     await page.selectOption('#cfr-stat', 'none');
     await expect(page.locator('#cfr-row-sp')).toBeHidden();
     await expect(page.locator('#cfr-stat-pill')).toHaveClass(/\berror\b/);
-    await expect(page.locator('#cfr-stat-pill')).toContainText('No freezestat');
+    await expect(page.locator('#cfr-stat-pill')).toContainText('No freeze stat');
 
     // Teaching mutes: an impossible OA share, then a missing input.
     // The inactive service's factor pill stays hidden through a mute
