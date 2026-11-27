@@ -15994,25 +15994,28 @@ no-break space a metric reader may paste) before parsing, in one place
 in the engine; a one-line test in `quiz-engine`'s spec. Live script on
 42 practice pages → owner merges. Open.
 
-**Correction (2026-11-27, measured):** the mechanism above does not
-happen in Chromium. The answer box is `type: 'number'`
-(`quiz-engine.js:403`), and a number input refuses a comma. Driven in
-headless Chromium 153 against a bare `<input type="number">`: typing
-`10,000` or `44,444` leaves `value` at `10000` / `44444` (the comma
-keystroke is dropped), and inserted text behaves the same — so
-`parseFloat` never sees a comma and the answer grades right. Nobody is
-graded as `10` there. What is NOT measured is any other engine: the
-HTML rule for a number input is that a value which is not a valid
-number sanitises to the empty string, so a browser that lets the comma
-into the box would report `''` and the entry would read as no answer at
-all, with no hint why. This box has only Chromium installed. **Fix
-shape, revised:** stripping `,` after the read cannot help, because the
-comma never reaches `value` in either case. If another engine is shown
-to swallow the entry, the box becomes a text input with
-`inputmode="decimal"` and its own parse (strip grouping separators,
-then `Number`), or keeps `type="number"` and says "digits only, no
-commas" beside it. Until then this is a check to make in the quiz
-engine run, not a known defect. Open, LOW.
+**Correction (2026-11-27, measured):** whether this happens depends on
+the browser's locale. The answer box is `type: 'number'`
+(`quiz-engine.js:403`), and a number input reads what is typed by the
+browser locale's own separators before the engine's `parseFloat` runs.
+Driven in headless Chromium 153 against a bare `<input type="number">`,
+typing each string:
+
+- **en-US:** `10,000` → `value` `10000`, `44,444` → `44444` — the comma
+  does not reach `value` and the answer grades right. `10,5` → `105`.
+- **de-DE and fr-FR:** `10,000` → `value` `10.000`, so `parseFloat`
+  gives `10`; `44,444` → `44.444`. The comma is taken as the decimal
+  point — the symptom in this entry's title.
+
+So the title holds for a reader whose browser uses a decimal comma and
+not for an English-locale one. Not measured: any engine other than
+Chromium (the only one installed on this box). **Fix shape, revised:**
+stripping `,` after the read cannot help — by the time the engine reads
+`value` the comma is already gone or already a decimal point. The
+durable fix is a text input with `inputmode="decimal"` and the engine's
+own parse, which then has to decide what a lone comma means; the cheap
+one is a "digits only, no separators" hint beside the box. A design
+choice inside the quiz engine run. Open, LOW.
 
 ### 335. Several ten-question banks key every choice on "a", and the keyed choice is usually the longest — the engine does not shuffle choices *(noticed 2026-10-06, Batch B duct-static-control + vav-systems lanes; bank-wide sweep wanted)* *(ruled 2026-11-27 — shuffle in the engine)*
 
