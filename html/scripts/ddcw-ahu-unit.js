@@ -226,8 +226,8 @@ const DDCWAhuUnit = (function () {
     // commanding, on BOTH sheets, and no sequence can disable it.
     //
     // ⚠ IT IS DELIBERATELY NOT IN AHU_POINTS, AND THAT ABSENCE IS THE
-    // LESSON. In the field this stat is very often not wired back to the
-    // controller at all: the unit stops, and the program has no idea why.
+    // LESSON. In the field this stat is sometimes not wired back to the
+    // controller at all: then the unit stops, and the program has no idea why.
     // The front end then shows a dead machine with nothing explaining it —
     // which is exactly what this model reproduces. Do not "fix" it by
     // adding a BI. Two consequences follow and both are load-bearing:
