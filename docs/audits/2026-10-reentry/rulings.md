@@ -477,3 +477,74 @@ drawn only from the lesson, in the "freeze stat" spelling. Five blind
 reviews found no wrong key and nothing unsourced; six explanations and
 stems were tightened before merge on their advice, and what was left
 alone — with the two reverse links still owed — is in content-audit #105.
+
+## 21. Three answers to the board's *Your turn* lines *(2026-11-27, the day the catch-up run ended)*
+
+The owner answered all three lines in one message. The field statements
+are his; the page text built on them is in the PRs named.
+
+1. **The dead-trunk story — what it teaches.** In his words, "the bigger
+   lesson in that story was to not get bogged down with the likes of
+   trying to use a DMM on a bus and theorize based on just those numbers",
+   and to look instead at more apparent problems, such as all of the
+   rooms in one area being out. He was "going around all day", and had he
+   studied
+   "the floorplan and what was offline" first, he "could have found the
+   break in the bus way faster." He suggested "a lesson on bus section
+   isolation". *Disposition:* item 5 of the week becomes that lesson,
+   built hidden and launched on his yes, with the story told as a
+   synthetic job — no site, customer or trade detail. Pattern first, meter
+   last. What the meter readings meant stays out of it: that was never
+   his finding.
+   Two questions went back on the board for the build (the page's shape;
+   where he splits a trunk and what tells him which half is good). Both
+   are answered below.
+2. **Duct static "should be more gentle"**, and "not just because of the
+   PID math": "if duct static drops for a second, not generally an issue",
+   where the differential pressure on a water-source heat-pump loop
+   dropping too low trips heat pumps — "It's not ideal but that's why
+   duct static is less aggressive than something like HPLDP."
+   *Disposition:* the Duct Static lesson's "tuned gently" teaching
+   stands; the PID tuner's "fast loops can take more aggressive gain" is
+   gone; both pages carry his reason (PR #663). This answers the
+   open item in content-audit #105. Checking it turned up a fault in the
+   simulator, not in the teaching — codebase-issues #340 — and one
+   question for him on the board (what makes a hot static loop hunt on a
+   real unit), answered below.
+3. **A freeze stat gotcha.** A freeze stat is sometimes in the safety
+   circuit without being landed on a DI, and a trip may then look
+   like a fan failure. *Disposition:* one paragraph in the lesson's
+   *Reading the Trip* and a sixteenth quiz question,
+   `cfp-trip-reads-as-fan-failure` (PR #662). Added, not swapped: the
+   board had offered a swap, and no question in the bank had earned its
+   way out.
+
+These were session follow-through on his answers, not one of the five:
+items 3–5 still start only on his word.
+
+**The three follow-up questions, answered the same afternoon.**
+
+4. **The dead-trunk page's shape — approved.** A hidden lesson on finding
+   a break by sections, opening with the story as a made-up job: "it
+   makes it feel like a game and builds real skills." *Disposition:* item
+   5 will be built that way, keeping the game feel he liked.
+5. **How he isolates a break.** First try to find a bus layout
+   and see whether an obvious spot shows. With no layout, go by the MAC
+   addresses or, better, the room numbers of the offline devices, and
+   start at the highest or the lowest. If the whole bus is flaky, break
+   it at the midpoint and see whether the half closer to the supervisor
+   or other BACnet router becomes stable, "since sometimes a device can
+   be spamming TX and take others down." *Disposition:* this is the
+   source for the lesson's method section. He named one vendor's
+   controller; the page will say "the supervisor or router", the wording
+   `education/bacnet-mstp.html` already uses for that device.
+6. **What makes a hot duct static loop hunt on a real unit.** The three
+   candidates put to him were the drive's ramp, the boxes reacting, and a
+   noisy transducer. His answer: "All three of those could cause it", all
+   three are easy to check from a DDC workbench given drive feedback, and
+   the drive is probably the least likely — a loop fighting a reasonable
+   drive ramp probably has a deeper problem. *Disposition:* the
+   fix recorded in codebase-issues #340 is to model transducer noise or
+   the boxes' reaction in the tuner's fan scene before a drive ramp. The
+   same three checks are a candidate troubleshooting beat for the Duct
+   Static lesson.

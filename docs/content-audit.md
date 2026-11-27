@@ -3623,12 +3623,23 @@ The content half of codebase-issues #338. **Lens:** working engineer /
 reader. Each was raised by a reviewer who had not seen the change's
 brief; none made a merged sentence false. One needs the owner.
 
-- **Needs the owner — how is duct static tuned?**
-  `simulators/pid-tuner.html`'s loop-speed note says fast loops *"can
-  take more aggressive gain"*; `education/duct-static-control.html` says
-  *"Loops that quick are tuned gently or they hunt"*. Since PR #641 the
-  tuner's Fast row names duct static alone, so the two pages now
-  disagree about that one loop. On the board as a *Your turn* line.
+- **Answered 2026-11-27 — duct static is tuned gently** *(rulings
+  §21.2; PR #663)*. `simulators/pid-tuner.html`'s loop-speed note said
+  fast loops *"can take more aggressive gain"*;
+  `education/duct-static-control.html` says *"Loops that quick are tuned
+  gently or they hunt"*. The owner ruled for the lesson and gave the
+  reason beyond the loop math: a second of sag in duct static is not
+  ideal but not generally a problem, where a water-source heat-pump loop's
+  differential pressure dropping too low trips the heat pumps. The
+  tuner's clause is gone and both pages carry his reason. The same check found that the lesson's instruction to
+  *"feel how little gain it wants"* in the tuner was false at runtime —
+  the tuner's duct-static scene takes its hottest preset without
+  overshoot — so PR #663 reworded that, and the two other places the
+  lesson said the tuner shows this loop hunting (the widget note and the
+  closing paragraph). The blind review of that PR also caught a retained
+  tuner sentence that had slower loops needing "gentler tuning", against
+  the page's own SIMC rule; it now says they need a slower reset. The
+  simulator itself is codebase-issues #340.
 - **PID pages.** `pid-basics.html` says "static transmitter" where the
   Duct Static lesson and its quiz say "transducer" throughout; the
   tuner's symptom table sends a wrong-way loop to "the real controller",
@@ -3689,7 +3700,29 @@ brief; none made a merged sentence false. One needs the owner.
   stem still rules out its own "it won't" choice; one glycol distractor
   is half true; and the "climate sets exactly one of them" beat is
   taught only inside the Boston question's explanation — the obvious
-  beat for a sixteenth question, or for the owner's own gotcha.
+  beat for one more question. (The sixteenth went to the owner's own
+  gotcha, `cfp-trip-reads-as-fan-failure`, PR #662, 2026-11-27; the
+  five-of-twelve count above is of the original fifteen.)
+  **A question for the owner that PR #662's review raised, on the
+  board as a *Your turn* line since 2026-11-27:** the lesson's first layer says the sequence then closes the
+  outdoor dampers and drives the heating valve open, and its third
+  can start the pump on the trip. Where the trip is the trigger, both
+  assume the controller is told. On a
+  unit where the stat is not landed on an input, what does the trip
+  response look like? The lesson says nothing about it until he answers.
+  **Left for the freeze-season loose-ends run, from the blind review of
+  PR #662's final head** (none blocked the merge): the new paragraph and
+  the question's explanation say a fan-failure alarm *"shows up"* where
+  the owner said it *"may look like a fan fail"*, which assumes the unit
+  has fan proof with an alarm on it; the paragraph says the safety
+  string *"is the only place it is wired"* where he said only *"not
+  hooked to a DI"*; the sentence crediting Start/Stop
+  Commands with walking *"the whole string contact by contact"* lands on
+  `#finding-the-break`, where the reader is told to do the walking (the
+  string is laid out at `#command-path`); the keyed choice's *"sit in
+  the fan's safety string alone"* can be read as the only device in the
+  string; neither linked lesson links back, and `README.md`'s tour
+  bullet for the lesson does not mention the beat.
   **Reverse links unpaid, payer named:** `tools/coil-freeze-risk.html`
   and `simulators/ddc-workbench.html` list the lesson and sibling
   quizzes in `relatedLinks` but not this quiz; the freeze-season

@@ -16129,3 +16129,140 @@ nav's height (it differs below 620 px, where the bar collapses) — and a
 spec that follows one deep link and asserts the target's top is below
 the nav's bottom. `styles.css` change, so it carries a version bump and
 the full suite. Open.
+
+### 340. The PID tuner's duct-static scene does not hunt on gain or reset, and its presets do not behave as named *(measured 2026-11-27 while checking the duct-static ruling — rulings §21.2)*
+
+`education/duct-static-control.html` teaches that the duct-static loop
+is tuned gently or it hunts, and until PR #663 sent the reader to
+`simulators/pid-tuner.html` to feel that. The tuner shows the reverse.
+
+**The page's own readouts**, every Equipment scene against every *Try a
+Tuning* preset, as overshoot / settling time (driven in a browser on the
+built page, 2026-11-27):
+
+- *Supply fan VFD · duct static pressure:* Sluggish none / > 80 s ·
+  Decent PI
+  none / > 80 s · Aggressive none / > 80 s · Too Hot none / 37 s.
+- *2-way valve · discharge-air temp* (the scene the page opens on):
+  Sluggish none / > 8 min · Decent PI none / > 8 min · Aggressive none /
+  86 s · Too Hot 0.8 % / 72 s.
+- *Radiator · space temperature:* Sluggish none / > 40 min · Decent PI
+  12.1 % / 13:12 min · Aggressive 10.7 % / > 40 min · Too Hot 9.0 % /
+  > 40 min.
+- *Reheat coil · end of a long duct run:* Sluggish none / > 10 min ·
+  Decent PI none / > 10 min · Aggressive 19.5 % / > 10 min · Too Hot
+  19.5 % / 9:59 min.
+
+So the page opens on "Decent PI" with Settling Time reading "> 8 min".
+By the readouts, Too Hot shows the shortest settling time on three of
+the four scenes, and on two of those — the fan scene and the reheat
+scene — it is the only preset that shows a time at all.
+
+On the reheat scene that time is not a settle. Under Too Hot the loop is
+still cycling about −5.6 / +2.9 °F around setpoint at the end of the
+window, against a ±0.3 °F band, and more than ninety of the last hundred
+samples are outside the band. The readout shows 9:59 min because
+`settled` in `pid-engine.js` is the time of the sample after the last
+out-of-band one, and the final two samples happen to fall inside the
+band mid-swing. A sustained cycle that ends in band reports a settling
+time.
+
+**The model, at every slider position on the duct-static scene** (the
+engine run in Node; gain 0–20 in steps of 0.1, reset 0–6 repeats/min in
+steps of 0.05, rate 0–0.15 min in steps of 0.01 — 389,136 settings):
+
+- With rate at zero — all 24,321 gain × reset positions, which includes
+  all four presets — the process variable never crosses setpoint and
+  overshoot is zero at every one.
+- With rate between 0.01 and 0.06 min, 1,227 settings cross setpoint at
+  least once and 1,112 of them three or more times (none of those below
+  a gain of 4.5); the largest overshoot anywhere is 2.6 % of the step.
+- With rate at 0.07 min or more, none cross at all — and from 0.12 min
+  up, no setting settles inside the 80 s window either.
+
+*Hunt* here is the site's own sense: never coming to rest. The scene
+does ring. With reset off and rate at zero, gain 20 gives nine swings
+over 1 % of the step, the first 0.16 in. w.c., all of it under setpoint
+and dying out to the proportional-only offset.
+
+What rate does to it is not hunting a reader would recognise from the
+readouts: Too Hot with rate at 0.02 min never settles. From about 10 s
+the process variable cycles under setpoint to the end of the window,
+about 0.13 in. w.c. peak to trough (8–9 % of the step), while Overshoot
+still reads "none".
+
+**What else on the page this sits against.** The page's *Rule of thumb
+on this tool* note — "Start with reset off, raise the gain until the
+loop just begins to cycle" — is hard to follow on this scene from the
+readouts: the ring above stays under setpoint, so Overshoot reads "none"
+at every gain. The caution PR #663 added sits inside the collapsed
+*Reveal loop details* block, and so does the loop-detail line that
+calls this loop "Easy to control". A reader who opens the tuner cold
+sees the fan scene accept Too Hot with that caution out of view; the
+caveat that is showing is the page's general "A toy loop, not your loop"
+preamble.
+Same family as content-audit #34 and #45.
+
+**Mechanism.** `PID_PRESETS` in `pid-tuner.html` is one set of canonical
+values applied to every scene, and the reset slider stops at 6
+repeats/min — an integral time of 10 s at its fastest, against this
+scene's 8 s lag (`PID_PROC.fast` in `scripts/pid-engine.js`). Integral
+can never outrun the process. Only the rate slider re-ranges per scene
+(`PID_DMAX`). The fast, medium and slow scenes have nearly the same
+dead-time-to-lag ratio (0.125, 0.133, 0.125), so in normalised terms
+they are nearly one plant; what differs is how quick the fixed reset values are
+against each lag.
+
+**Fix shape.** Per-scene presets and a per-scene reset range — the
+`PID_DMAX` pattern, applied to reset — and, for the fan scene, whatever
+makes a real static loop hunt. That last part was a field question,
+and the owner answered it (rulings §21.6): the drive's ramp, the boxes
+reacting and a noisy transducer can each do it, the drive is probably
+the least likely, and a loop fighting a reasonable ramp probably has a
+deeper problem. So model transducer noise or the boxes' reaction before
+a ramp — and take the size of either from him, because a constant tuned
+to make the model behave reads on screen as field practice. A change to
+`pid-engine.js` is a shared-script change: it is loaded by
+`simulators/pid-tuner.html` and `education/pid-basics.html`, so it needs
+the full suite and a re-read of `pid-basics.html`'s sims against their
+prose. When the scene changes,
+re-true the two sentences PR #663 added — the tuner's "takes the Too
+Hot preset without overshoot" and the lesson's matching clause. A test
+added in that PR, *the duct-static scene takes the Too Hot preset
+without overshoot (prose pin)* in `tests/pid-engine.spec.js`, fails
+when a change to the preset or the scene makes that sentence false —
+overshoot appears, the preset stops reporting a settling time, or
+another preset carries more gain. Given the readout defect above, a
+reported settling time is weaker evidence than it looks.
+
+The re-read of `pid-basics.html` is owed whether or not the engine
+changes. Its first sim's note says its three loops "stay well-damped as
+you push"; with reset off at gain 20 all three ring under setpoint (9,
+14 and 32 swings over 1 % of the step on the fast, medium and slow
+loops), with zero overshoot. The test titled *pure P cannot ring on the
+Sim 1 loops but rings on the dead-time loop (#154)* asserts the zero
+overshoot on those three, not the absence of ringing.
+
+**Correction to PR #663's own record.** Its first commit message says
+the model never crosses setpoint "across the whole slider range", from a
+coarser sweep of 2,080 settings. The full sweep above shows it fails
+with rate between 0.01 and 0.06 min; the PR's second commit message
+carries the correction. No page text PR #663 shipped makes the
+whole-range claim.
+Open, MEDIUM.
+
+### 341. Quiz snippets wider than about 33 characters run off a phone screen *(noticed 2026-11-27, rendering PR #662's question at 375 px)*
+
+`.quiz-snippet` is `white-space: pre; overflow-x: auto` (`styles.css`),
+so a long line does not wrap; it scrolls sideways inside its box. At
+375 px a 33-character line just fits and a 47-character one is cut
+mid-word, with no visible cue in the render that there is more — seen on
+`cfp-trip-reads-as-fan-failure`, whose note was re-wrapped before PR
+#662 was opened. Across the banks, 58 of 70 snippets have a line over 33
+characters (counted with PR #662's question in its bank; 58 of 69
+without it); the widest is 84 (`bacnet-basics`). The phone-width walks of
+the 2026-11-26 run checked page-level overflow, which a scrolling box
+does not trip. **Fix shape:** by snippet kind. A prose note re-wraps by
+hand. A tabular snippet (frames, trend rows) needs its columns, so it
+wants a visible scroll cue or a smaller size below 480 px rather than
+`pre-wrap`. Belongs with the quiz-engine run. Open, LOW.
