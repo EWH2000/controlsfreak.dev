@@ -619,8 +619,8 @@ keywords: ms/tp mstp baud bbmd foreign device router subnet broadcast who-is
                 <li><strong>Segmentation of long messages.</strong> When an
                     APDU is too big for one frame, how segmentation breaks
                     it up and how the receiver reassembles. Hinted at in
-                    the discovery-fails list above, which covers the one
-                    place it usually surfaces in the field. The mechanics
+                    the discovery-fails list above, which covers a common
+                    place it surfaces in the field. The mechanics
                     behind it are application-layer APDU handling, not the
                     addressing-and-routing question this page is built
                     around.</li>
@@ -629,8 +629,7 @@ keywords: ms/tp mstp baud bbmd foreign device router subnet broadcast who-is
                     discovery (no broadcasts at all — hub-and-spoke). Out
                     of scope because almost none of this page's
                     broadcast, BBMD and Foreign Device machinery applies
-                    to it, and most installed BAS networks still run
-                    BACnet/IP.</li>
+                    to it.</li>
                 <li><strong>Capture-driven troubleshooting.</strong> A
                     Wireshark or Yabe walkthrough — what a Who-Is looks like
                     in a capture, how to spot a Forwarded-NPDU, what an
@@ -642,9 +641,10 @@ keywords: ms/tp mstp baud bbmd foreign device router subnet broadcast who-is
                     confirmed and unconfirmed alarm services, the
                     Notification Class object, recipient lists, <button type="button"
                     data-gloss="change-of-value">COV</button>-style
-                    push for events. Out of scope here because it is
-                    object-model and services territory, not networking —
-                    BACnet's biggest object-model surface outside the
+                    push for events. Out of scope here because alarming is
+                    an application-layer subject — objects and services,
+                    not addressing or routing. It is BACnet's biggest
+                    object-model surface outside the
                     analog/binary/multi-state core.</li>
                 <li><strong>Vendor profile differences.</strong> The
                     practical reality that two BACnet devices, both
