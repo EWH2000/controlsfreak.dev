@@ -16152,7 +16152,8 @@ built page, 2026-11-27):
   Decent PI none / > 10 min · Aggressive 19.5 % / > 10 min · Too Hot
   19.5 % / 9:59 min.
 
-So the page opens on "Decent PI" reading "Settling > 8 min". Too Hot is
+So the page opens on "Decent PI" with Settling Time reading "> 8 min".
+Too Hot is
 the quickest preset to settle on three of the four scenes, and on two of
 those — the fan scene and the reheat scene — it is the only one that
 settles inside the chart at all.
@@ -16164,20 +16165,29 @@ steps of 0.05, rate 0–0.15 min in steps of 0.01 — 389,136 settings):
 - With rate at zero — all 24,321 gain × reset positions, which includes
   all four presets — the process variable never crosses setpoint and
   overshoot is zero at every one.
-- With rate between 0.01 and 0.06 min, 1,112 settings cross setpoint
-  three or more times (none below a gain of 4.5); the largest overshoot
-  anywhere is 2.6 % of the step.
-- With rate at 0.07 min or more, none do.
+- With rate between 0.01 and 0.06 min, 1,227 settings cross setpoint at
+  least once and 1,112 of them three or more times (none of those below
+  a gain of 4.5); the largest overshoot anywhere is 2.6 % of the step.
+- With rate at 0.07 min or more, none cross at all — and from 0.12 min
+  up, no setting settles inside the 80 s window either.
+
+*Hunt* here is the site's own sense: never coming to rest. The scene
+does ring. With reset off and rate at zero, gain 20 gives nine swings
+over 1 % of the step, the first 0.16 in. w.c., all of it under setpoint
+and dying out to the proportional-only offset.
 
 What rate does to it is not hunting a reader would recognise from the
-readouts: Too Hot with rate at 0.02 min never settles, the process
-variable swinging about 0.17 in. w.c. (11 % of the step) under setpoint
-for the whole window, while Overshoot still reads "none".
+readouts: Too Hot with rate at 0.02 min never settles. From about 10 s
+the process variable cycles under setpoint to the end of the window,
+about 0.13 in. w.c. peak to trough (8–9 % of the step), while Overshoot
+still reads "none".
 
-**What else on the page this contradicts.** The cheat-sheet's rule of
-thumb — "Start with reset off, raise the gain until the loop just begins
-to cycle" — cannot be followed on this scene, and the scene's own
-caption calls the loop "Easy to control". The caution PR #663 added sits
+**What else on the page this sits against.** The page's *Rule of thumb
+on this tool* note — "Start with reset off, raise the gain until the
+loop just begins to cycle" — is hard to follow on this scene from the
+readouts: the ring above stays under setpoint, so Overshoot reads "none"
+at every gain. The scene's own caption calls the loop "Easy to
+control". The caution PR #663 added sits
 inside the collapsed *Reveal loop details* block, so a reader who opens
 the tuner cold sees the fan scene accept Too Hot with no caveat in view.
 Same family as content-audit #34 (the tuner's cheat-sheet describing
@@ -16200,26 +16210,27 @@ makes a real static loop hunt. That last part was a field question,
 and the owner answered it (rulings §21.6): the drive's ramp, the boxes
 reacting and a noisy transducer can each do it, the drive is probably
 the least likely, and a loop fighting a reasonable ramp probably has a
-deeper problem. So
-model transducer noise or the boxes' reaction, not a ramp — and take the
-size of either from him, because a constant tuned to make the model
-behave reads on screen as field practice. A change to `pid-engine.js` is
-a shared-script change: it is loaded by
-`simulators/pid-tuner.html` and `education/pid-basics.html`, so it
-carries a version bump, the full suite, and a re-read of
-`pid-basics.html`'s sims against their prose. When the scene changes,
+deeper problem. So model transducer noise or the boxes' reaction before
+a ramp — and take the size of either from him, because a constant tuned
+to make the model behave reads on screen as field practice. A change to
+`pid-engine.js` is a shared-script change: it is loaded by
+`simulators/pid-tuner.html` and `education/pid-basics.html`, so it needs
+the full suite and a re-read of `pid-basics.html`'s sims against their
+prose. When the scene changes,
 re-true the two sentences PR #663 added — the tuner's "it takes the Too
 Hot preset without overshoot" and the lesson's matching clause. A test
 added in that PR, *the duct-static scene takes the Too Hot preset
 without overshoot (prose pin)* in `tests/pid-engine.spec.js`, fails
-when either the preset or the scene moves, so the prose cannot go stale
-quietly.
+when a change to the preset or the scene makes that sentence false —
+overshoot appears, the preset stops settling, or another preset carries
+more gain — so the prose cannot go stale quietly.
 
 **Correction to PR #663's own record.** Its first commit message says
 the model never crosses setpoint "across the whole slider range", from a
-coarser sweep of 2,080 settings. The full sweep above shows that holds
-only with rate at zero; the PR's second commit message says so. The
-page text PR #663 shipped claims only the preset result, which is true.
+coarser sweep of 2,080 settings. The full sweep above shows it fails
+with rate between 0.01 and 0.06 min; the PR's second commit message
+carries the correction. The page text PR #663 shipped claims only the
+preset result, which is true.
 Open, MEDIUM.
 
 ### 341. Quiz snippets wider than about 33 characters run off a phone screen *(noticed 2026-11-27, rendering PR #662's question at 375 px)*

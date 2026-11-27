@@ -3629,9 +3629,9 @@ brief; none made a merged sentence false. One needs the owner.
   `education/duct-static-control.html` says *"Loops that quick are tuned
   gently or they hunt"*. The owner ruled for the lesson and gave the
   reason beyond the loop math: a second of sag in duct static is not
-  generally a problem, where a dip in a heat-pump loop's differential
-  pressure trips units. The tuner's clause is gone and both pages carry
-  his reason. The same check found that the lesson's instruction to
+  generally a problem, where a water-source heat-pump loop's
+  differential pressure dropping too low trips the heat pumps. The
+  tuner's clause is gone and both pages carry his reason. The same check found that the lesson's instruction to
   *"feel how little gain it wants"* in the tuner was false at runtime —
   the tuner's duct-static scene takes its hottest preset without
   overshoot — so PR #663 reworded that, and the two other places the
@@ -3709,6 +3709,17 @@ brief; none made a merged sentence false. One needs the owner.
   starts the pump on the trip. Both assume the controller is told. On a
   unit where the stat is not landed on an input, what does the trip
   response look like? The lesson says nothing about it until he answers.
+  **Left for the freeze-season loose-ends run, from the blind review of
+  PR #662's final head** (none blocked the merge): the new paragraph and
+  the question's explanation say a fan-failure alarm *"shows up"* where
+  the owner said it *"may look like a fan fail"*, which assumes the unit
+  has fan proof with an alarm on it; the sentence crediting Start/Stop
+  Commands with walking *"the whole string contact by contact"* lands on
+  `#finding-the-break`, where the reader is told to do the walking (the
+  string is laid out at `#command-path`); the keyed choice's *"sit in
+  the fan's safety string alone"* can be read as the only device in the
+  string; neither linked lesson links back, and `README.md`'s tour
+  bullet for the lesson does not mention the beat.
   **Reverse links unpaid, payer named:** `tools/coil-freeze-risk.html`
   and `simulators/ddc-workbench.html` list the lesson and sibling
   quizzes in `relatedLinks` but not this quiz; the freeze-season
