@@ -257,8 +257,12 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 slowly, a damper strokes, the world catches up. Duct pressure answers the fan in <em>seconds</em>: touch
                 the speed reference and the sensor feels it almost immediately. Loops that quick are tuned gently or
                 they <button type="button" data-gloss="hunting">hunt</button>, and this exact loop — supply fan VFD, duct static — is one of the scenes in the <a
-                href="/simulators/pid-tuner.html">PID tuner</a>. Drive it there and feel how little gain it wants;
-                that's the hands-on pair for this page.
+                href="/simulators/pid-tuner.html">PID tuner</a>, the hands-on pair for this page. One caution when
+                you drive it: the tuner's model of this loop is a clean one, and it takes even the tuner's hottest
+                preset without overshoot. Take the loop's speed from it, not a gain. And there is a second reason to
+                tune this loop gently, beyond the loop math: what a miss costs. If duct static drops for a second it is
+                not ideal, but it is not generally a problem. Compare the differential pressure on a water-source
+                heat-pump loop, where the heat pumps trip if it drops too low — that loop is tuned more aggressively.
             </p>
 
             <p>
@@ -588,7 +592,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
 
             <p class="ref-note">
                 What the widget holds still: loop dynamics (speeds land instantly — the
-                <a href="/simulators/pid-tuner.html">PID tuner</a> has the <button type="button" data-gloss="hunting">hunting</button> and the tuning), trim &amp; respond's
+                <a href="/simulators/pid-tuner.html">PID tuner</a> has the dynamics), trim &amp; respond's
                 slow walk (reset shows where the setpoint lands, not the minutes of trimming), and the box side (thirty
                 boxes compressed into one demand slider — their own story is the
                 <a href="/education/vav-systems.html">last page</a>). The high-static cutout isn't modeled either;
@@ -632,7 +636,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 href="/tools/airflow.html">airflow calculator</a> is a flow ring with the sheet metal off. The <a
                 href="/tools/affinity-laws.html">affinity-laws tool</a> is this page's savings argument with real
                 numbers in it. The <a href="/simulators/pid-tuner.html">PID tuner's</a> supply-fan scene is the loop
-                you just drove, <button type="button" data-gloss="hunting">hunting</button> and all. So here's the field move these pages have been building toward: next
+                you just drove, with the dynamics this page's widget held still. So here's the field move these pages have been building toward: next
                 time you stand in front of an air handler, read it the way these pages did — walk the stations,
                 name the unit, find the dampers' minimum, ask where the relief goes, follow the trunk to a box, and
                 put your cursor on two numbers before you believe anything anyone tells you: fan speed, and what the

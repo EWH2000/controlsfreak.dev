@@ -51,6 +51,33 @@ test('pure P cannot ring on the Sim 1 loops but rings on the dead-time loop (#15
     expect(simulatePid(PID_PROC.vhigh, 20, 0, 0).overshoot).toBeGreaterThan(5);
 });
 
+// Pins two sentences of prose to the engine. The tuner's Loop Speed
+// Reference says its duct-static scene "takes the Too Hot preset without
+// overshoot", and education/duct-static-control.html says the tuner's
+// model "takes even the tuner's hottest preset without overshoot" — the
+// caution that stops a reader taking a gain from a scene more forgiving
+// than the real loop. The preset is read from the page, not copied here,
+// so retuning either the preset or PID_PROC.fast (codebase-issues #340)
+// fails this first: re-true both sentences in the same change.
+test('the duct-static scene takes the Too Hot preset without overshoot (prose pin)', () => {
+    const page = fs.readFileSync(
+        path.join(__dirname, '..', 'html', 'simulators', 'pid-tuner.html'),
+        'utf8',
+    );
+    const m = page.match(/hot:\s*\{\s*kc:\s*([\d.]+),\s*ki:\s*([\d.]+),\s*kd:\s*([\d.]+)\s*\}/);
+    expect(m, 'PID_PRESETS.hot not found in pid-tuner.html').not.toBeNull();
+    const [kc, ki, kd] = m.slice(1).map(Number);
+    // "Hottest" is the lesson's word: no other preset may carry more gain.
+    const gains = [...page.matchAll(/^\s*(\w+):\s*\{\s*kc:\s*([\d.]+),\s*ki:/gm)].map((g) => Number(g[2]));
+    expect(gains.length, 'preset rows found').toBeGreaterThanOrEqual(4);
+    expect(Math.max(...gains)).toBe(kc);
+    const r = simulatePid(PID_PROC.fast, kc, ki, kd);
+    expect(r.overshoot).toBe(0);
+    // "Takes" means it also settles: a preset that gained rate can hold
+    // overshoot at zero while the loop cycles under setpoint all window.
+    expect(r.settled).not.toBeNull();
+});
+
 test('adding integral removes the offset (med, Kc=2, 1 repeat/min)', () => {
     const r = simulatePid(PID_PROC.med, 2, 1, 0);
     expect(Math.abs(r.ssErr)).toBeLessThan(0.1);
