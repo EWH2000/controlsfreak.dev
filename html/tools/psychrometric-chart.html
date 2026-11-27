@@ -331,10 +331,10 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
                 <!-- MA editor -->
                 <div class="psy-editor" data-step="ma">
                     <div class="ps-row">
-                        <label class="ps-label" for="ma-pct">Outdoor air (%)</label>
+                        <label class="ps-label" for="ma-pct">Outdoor air (% by mass)</label>
                         <input class="ps-input" type="number" id="ma-pct" step="1" min="0" max="100" value="20">
                     </div>
-                    <p class="ref-note">Mass-weighted mix of OA and RA. The mixed point falls on the straight line between OA and RA on the chart, at the OA% fraction of the way from RA to OA.</p>
+                    <p class="ref-note">Mass-weighted mix of OA and RA — the % is a share of the dry-air mass flow, not of CFM. The mixed point falls on the straight line between OA and RA on the chart, at the OA% fraction of the way from RA to OA. If that point lands past the saturation curve, the excess moisture condenses as fog and the mixed point settles onto the curve instead.</p>
                     <div class="ps-row"><span class="ps-label" data-us="MA dry-bulb (°F)" data-metric="MA dry-bulb (°C)">MA dry-bulb (°F)</span><span class="ps-value live" id="ma-tdb-out">—</span></div>
                     <div class="ps-row"><span class="ps-label" data-us="MA humidity ratio (gr/lb)" data-metric="MA humidity ratio (g/kg)">MA humidity ratio (gr/lb)</span><span class="ps-value live" id="ma-w-out">—</span></div>
                     <div class="ps-row"><span class="ps-label">MA rel. humidity (%)</span><span class="ps-value live" id="ma-rh-out">—</span></div>
@@ -661,19 +661,24 @@ keywords: humidity enthalpy wet bulb dew point dewpoint grains mixing coil AHU O
             r.ra = Psychro.solveState(eRa.mode, eRa.tdb, eRa.second, P);
             if (!r.ra.ok) setErr('RA: ' + r.ra.error);
 
-            // MA — mass-weighted enthalpy + humidity-ratio mix
+            // MA — mass-weighted enthalpy + humidity-ratio mix. % OA is a
+            // MASS fraction (the editor label says so): the engine blends
+            // W and h, which conserve by mass, and recovers the dry-bulb —
+            // re-solved onto the saturation curve when the mix fogs
+            // (codebase-issues #228 / #236, docs/engine-standardization.md).
             if (r.oa.ok && r.ra.ok) {
                 const pct = parseFloat(document.getElementById('ma-pct').value);
                 if (!isFinite(pct) || pct < 0 || pct > 100) {
                     r.ma = { ok: false, error: '% OA must be 0–100' };
                     setErr('MA: % OA must be 0–100');
                 } else {
-                    const fOa = pct / 100, fRa = 1 - fOa;
-                    const W_ma = fOa * r.oa.W + fRa * r.ra.W;
-                    const h_ma = fOa * r.oa.h + fRa * r.ra.h;
-                    // back out tdb from h = (0.240 + 0.444·W)·tdb + 1061·W
-                    const tdb_ma = (h_ma - 1061 * W_ma) / (0.240 + 0.444 * W_ma);
-                    r.ma = Psychro.buildState(tdb_ma, W_ma, P);
+                    const mix = Psychro.mixAir({
+                        streams: [{ state: r.oa, share: pct }, { state: r.ra, share: 100 - pct }],
+                        basis: 'mass',
+                        P,
+                    });
+                    r.ma = mix.ok ? mix.exact : mix;
+                    if (!r.ma.ok) setErr('MA: ' + r.ma.error);
                 }
             } else {
                 r.ma = { ok: false, error: 'awaiting OA / RA' };
