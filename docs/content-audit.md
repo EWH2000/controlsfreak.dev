@@ -3658,6 +3658,21 @@ brief; none made a merged sentence false. One needs the owner.
   shows 19.3 / 9.3 for the same point (rounding path). Practice-card
   pills count a run, not a bank (#97's ruling), which reads oddly beside
   the larger banks.
+- **Duct Static bank (final review of PR #648).** Pre-existing:
+  `ds-masked-restriction`'s explain says a drifting sensor "changes the
+  static story, not the Hz-at-flow story" — inside a closed loop the
+  reverse holds (a sensor drifting low stays on setpoint on the trend
+  and raises Hz at the same flow), so its drifting-sensor distractor is
+  defensible on mechanism; what separates the two is magnitude. The fix
+  belongs in that explain. New text: "a fan surging up and down the
+  trunk" borrows a fan-aerodynamics word for loop hunting; `ds-cube-law`
+  asks for "roughly" and rejects 20 (tolerance 1.0 on 21.6); the
+  manometer check in `ds-tube-stuck-high` is ordinary practice with no
+  line in the lesson, and "tap" should mean the duct tap. The lesson's
+  "the fan is the biggest motor on the unit" holds for a chilled-water
+  air handler, not a packaged DX unit.
+- **BACnet Networking, one more.** "A Wireshark or Yabe walkthrough"
+  pairs a capture tool with a BACnet explorer.
 - **Home and README.** `README.md` calls the BACnet error descriptions
   "hand-authored" (meaning not script-imported), which now sits beside
   the home page's plain statement that AI does much of the drafting.

@@ -7,11 +7,11 @@
      "Shipped" lines go at the TOP, in plain language. -->
 
 **Week:** Nov 27 – Dec 3
-**Run:** running — Overnight catch-up. Thirteen of the 15 are merged and live, plus your About paragraph. The last two are on a final re-review. The Coil Freeze Protection quiz is built and tested, and a second agent is checking every answer.
+**Run:** running — Overnight catch-up. All 15 waiting changes are merged and live, plus your About paragraph. The Coil Freeze Protection quiz is built and tested; a second agent is checking every answer before it ships.
 
 ## The five
 
-- [ ] Clear the 15 waiting changes
+- [x] Clear the 15 waiting changes
 - [ ] Coil Freeze Protection quiz
 - [ ] Quizzes you can't game
 - [ ] Freeze-season loose ends
@@ -25,6 +25,8 @@
 
 ## Shipped
 
+- **Nov 27** — Duct Static Control quiz grew from 10 to 15 questions, with your "sensor first" call in it. [#648](https://github.com/EWH2000/controlsfreak.dev/pull/648)
+- **Nov 27** — BACnet Networking's "not covered" list states scope instead of promising future pages. [#643](https://github.com/EWH2000/controlsfreak.dev/pull/643)
 - **Nov 27** — The home page's About paragraph says plainly how the site is built: your field experience and direction, AI for much of the drafting, code and cross-checking. [#659](https://github.com/EWH2000/controlsfreak.dev/pull/659)
 - **Nov 27** — VAV Systems and Building Pressure quizzes grew from 10 to 15 questions each. [#649](https://github.com/EWH2000/controlsfreak.dev/pull/649) [#650](https://github.com/EWH2000/controlsfreak.dev/pull/650)
 - **Nov 27** — Economizers: a sentence on how the field uses "lockout" at both ends of the free-cooling range. [#642](https://github.com/EWH2000/controlsfreak.dev/pull/642)

@@ -15755,7 +15755,7 @@ lifetime), not a disclosure gap. Numbering note: #325 and #326 were
 already claimed on other branches when this was written, so this entry
 takes #327.
 
-### 328. `bacnet-networking.html`'s "What this page didn't cover" list promises unbuilt pages in lesson body prose *(noticed 2026-10-05, #314 lane verifier)* *(ruled 2026-10-06 — narrow to scope statements)* *(addressed 2026-10-06 · PR #643)*
+### 328. `bacnet-networking.html`'s "What this page didn't cover" list promises unbuilt pages in lesson body prose *(noticed 2026-10-05, #314 lane verifier)* *(ruled 2026-10-06 — narrow to scope statements)* *(addressed 2026-10-06 · PR #643, merged 2026-11-27)*
 
 `html/education/bacnet-networking.html`, the `What this page didn't
 cover` subhead (`:598`) and its bullet list. Two bullets promise a page
