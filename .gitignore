@@ -60,7 +60,7 @@ controlsfreak.dev_SearchPerformanceOverview_*.csv
 controlsfreak-dev-arc-brief.md
 OtherProjectHandoffsDoNotGitCommit/
 
-# Status dashboard render — `npm run dashboard` writes status.json, prs.json
-# and dashboard.html here; the hand-authored input lives in
-# docs/audits/2026-10-reentry/dashboard/. Generated, never committed.
+# Output of the retired October status dashboard (replaced 2026-11-26 by
+# `npm run board`, which writes to the home hub, not the repo). Still ignored
+# so a leftover local copy can't be staged.
 _dashboard/

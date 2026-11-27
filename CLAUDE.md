@@ -1378,64 +1378,45 @@ The standard loop is branch → edit → commit → push → open PR (shapes
 under *Git conventions*). Stage specific file lists, not
 `git add -A` / `git add .`.
 
-- **Merge approval is scoped to the LIVE site** (owner amendment,
-  2026-07-29). Where a change reaches a page a visitor can land on, the
-  old rule stands: `gh pr merge` only on explicit request ("merge it,"
-  "go ahead and merge"), the user reviews on GitHub. Everywhere else the
-  default **flips from ask to merge** — a mergeable PR left open is now
-  the thing to avoid (*"I don't want PRs to pile up … I just want our
-  git work as clean as possible"*). **`sitemap.xml` is the operational
-  PROXY, not the definition.** It is generated from `canonical`
-  frontmatter, so it enumerates what is *indexed*, while everything in
-  `_site/` is *served* — read it as the definition and you classify the
-  404 page as private. The real test is whether a visitor can land on a
-  page **without already knowing its URL**: via the nav, the search
-  index, the sitemap, or the not-found handler. **Derive the
-  `canonical`-less set, never cite a count for it** — a new hidden page
-  joins it silently, and this file has already carried a stale number
-  once. `npm run build`, then diff `_site/**/*.html` against
-  `_site/sitemap.xml`'s `<loc>`s; every page the diff returns is a
-  candidate, and `html/404.html` is the one it answers wrong about (see
-  *Needs approval*).
-  - *Merge freely:* the **genuinely unreachable hidden pages'** own HTML
-    — as of 2026-08-04 (Phase 8 graduated both workbench unit pages)
-    that is `styleguide.html` plus `simulators/ddc-workbench-ahu-mockup.html`.
-    ⚠️ **The test is not "no inbound anchor anywhere in `html/`"** — the
-    correct test is *no inbound anchor from a page a visitor can land
-    on* (the unit-selector era proved the difference: the then-hidden
-    workbench pages cross-anchored each other and stayed hidden). It
-    holds for both remaining pages — nothing anchors either, and
-    `searchPages` filters on `canonical` too, so they are absent from
-    the palette as well as the sitemap. A script ONLY hidden pages load
-    (today: none — the mockup and the styleguide load only the
-    site-wide layout set, no per-page scripts; `ddcw-shell.js` and both
-    unit scripts became live-page scripts at graduation — verify with a
-    `grep` over
-    `html/`, since a live page picking one up is exactly the trap
-    below); anything under `tests/` or `docs/`; plus `CLAUDE.md` and
-    `README.md`.
-  - *Needs approval:* any page carrying a `canonical`, **plus
-    `html/404.html`** — `wrangler.jsonc` sets
-    `not_found_handling: "404-page"`, so it is served for every
-    unmatched URL and is live-facing despite carrying the exact
-    hidden-page frontmatter shape *Gotchas* describes. This is the one
-    page the proxy answers wrong about. Also `styles.css`, **any script
-    a live page loads** (site-wide from `layouts/page.njk` *or*
-    per-page — see the trap below), anything in `_includes/` or
-    `html/_data/` (a quiz bank or an enum table is not itself a page,
-    but it renders into one — that is the whole basis of #241),
-    `.eleventy.js`, `src/worker.js`, `wrangler.jsonc`, and a
-    `package.json` version bump.
-  - ⚠️ **The trap is SHARED code — "the PR is about a hidden page" is
-    NOT the test.** PR #452 was about the hidden AHU but modified
-    `html/scripts/psychro-engine.js`, which **eight pages loaded and
-    seven of those were live** (nine live consumers as of 2026-10-06 —
-    derive it with a grep, never cite this count): even a purely additive function ships
-    new bytes to all seven, and a parse error there breaks all seven.
-  - The boundary **moved at graduation** (Phase 8, 2026-08-04): the
-    workbench pages gained canonicals, entered the sitemap, and every
-    merge-freely row flipped for them and their scripts. The rule keeps
-    governing any future hidden page the same way.
+- **Claude merges; the owner launches** (owner ruling 2026-11-26,
+  replacing the 2026-07-29 live-vs-hidden split — every stall on this
+  project began with a PR queue waiting on him). Claude merges fixes,
+  quiz banks, new quizzes for existing lessons, engine work and
+  improvements to existing pages **when all four hold**:
+  1. **CI.** The newest `test` check-run on the head SHA is `success`,
+     none is queued, running or failed, and the Workers build is green.
+  2. **Blind review of the final head.** An agent that did not write the
+     change reads the 3-dot diff and the source pages — never the PR
+     body or the fix brief — and returns clean, with each factual claim
+     as claim · file:line · quote. Grep every quote; one that matches
+     only a comment does not count. A head that changes is reviewed
+     again.
+  3. **Scope.** The diff is what the PR says. A change to `styles.css`
+     or a `?v=`-versioned shared script carries a version bump and the
+     full suite. ⚠️ Shared code is the trap: a script "for one page" may
+     be loaded by many — derive the consumers with a grep.
+  4. **New quiz questions are rendered once in full.** Banks are
+     sampled, so CI never shows them all.
+
+  After a merge wave: wait for the `push: main` suite to go green, then
+  spot-check the changed pages on production. Red `main` → revert first,
+  diagnose second.
+  - *Stays the owner's:* **launching** a new lesson / simulator / tool
+    (build it hidden — `noindex`, no `canonical` — merge it hidden, and
+    cut the graduation PR only after his yes); a field-practice fact
+    with no source in a standard, a manufacturer document or his own
+    words (ask it as a short question, ship the conservative wording
+    meanwhile); `src/worker.js`, `wrangler.jsonc`, Cloudflare and DNS;
+    deleting a page or changing a URL; the ruleset on `main`.
+  - *Never, attended or not:* `--admin` merges, force-pushes, a merge of
+    a head not reviewed in its final form, a regex sweep of prose.
+  - **`main` is locked** by the repository ruleset `main-requires-test`:
+    changes arrive by pull request, and only with a passing `test`. That
+    binds the owner and Claude alike — a docs fix is a PR too.
+  - **End every run with zero open PRs.** The owner sees the work on the
+    board (`docs/board.md`, *Local preview & tests*), never as a review
+    queue; a question for him is a *Your turn* line there, three at
+    most, and never holds a merge.
 - **Log caught issues.** Code-quality issues noticed in passing —
   *even if unrelated to the current task* — get appended to
   `codebase-issues.md` under *Open*. Don't silently fix inline
@@ -1478,30 +1459,17 @@ public `html/<key>.txt`). Run it by hand with `npm run indexnow`
 (changed since last commit) or `npm run indexnow -- --all` (full
 re-submit); add `--dry-run` to print the URL list without POSTing.
 
-**Stacked PRs get no CI run when they retarget.** `test.yml` fires on
-`pull_request` pushes to a PR whose base is `main`. A child in a stack
-opens against its parent's branch (no run), and when the parent merges
-GitHub retargets the child to `main` with an `edited` event (still no
-run) — so it shows **no `test` check at all**, `mergeStateStatus` reads
-CLEAN, and `gh pr merge` goes through untested. Two chain PRs merged
-that way on 2026-10-06 before anyone noticed (a full local suite on
-`main` came back clean, 1223/0/1). **Fixed on the workflow side
-2026-10-06 (PR #645, codebase-issues #331):** `pull_request` now also
-listens for `edited`, gated so only a base change runs the job, and
-`push: branches: [main]` tests `main` itself after every merge. Two
-things to know: a title or body edit still fires `edited`, the gate
-skips the job, and the rollup then shows a `test` check with conclusion
-SKIPPED **beside** the real run on the same head — read SUCCESS on the
-head SHA and ignore the SKIPPED twin. And the automatic-retarget arm
-was unproven when this was written (no stacked child had merged since),
-so the belt-and-braces **rule stands:** after a parent merges, rebase
-the child onto `origin/main` and force-push (the push is a
-`synchronize`, which runs), then merge only when
-`gh pr view N --json statusCheckRollup` shows a `test` check with
-`SUCCESS` — a green parent is not evidence about the child. Before a
+**Every `test` check is a real run** (codebase-issues #331; PRs #645
+and #657). `test.yml` fires on `pull_request` (`opened`, `synchronize`,
+`reopened`, `edited`) and on `push` to `main`, with no job-level skip —
+a skipped job would satisfy the required check. So a stacked child gets
+its suite when it is retargeted to `main` (`gh pr edit N --base main`
+does it by hand; no rebase, no force-push), and **editing a PR's title
+or body re-runs the suite — edit the body before the last push, not
+after.** Node is pinned in the workflow; bump it in its own PR. Before a
 merge session, a pairwise `git merge-tree --write-tree A B` over the
-whole queue finds the adjacent-hunk ledger conflicts GitHub only
-reports once a parent has merged.
+queue finds the adjacent-hunk conflicts GitHub only reports once a
+parent has merged.
 
 ## Local preview & tests
 
@@ -1534,6 +1502,17 @@ reports once a parent has merged.
   `~/caddy/CLAUDE.md` §*Site preview (Controls Freak)*; the script
   header in `.github/scripts/publish-preview.mjs` is the durable
   copy.
+- **The board:** `npm run board` renders `docs/board.md` — the owner's
+  one-screen status page — to the hub at
+  `https://command.home.arpa/cfboard/` (same destination guard and
+  SELinux rule as the preview; **owner's box only**, a snapshot, never
+  in the deploy path). `--dry-run` runs the guards only; `--stdout`
+  prints the HTML. An unattended run rebuilds it at every phase
+  boundary. The source format — and what the script adds itself, so it
+  never goes stale in the file — is in
+  `.github/scripts/build-board.mjs`'s header. Keep `docs/board.md` to
+  about 40 visible lines: the week's five, *Your turn* (three at most),
+  *Shipped* in plain language, newest first.
 - **Tests:** `npm test` (Chromium only). `playwright.config.js` has
   a `webServer` block that builds and serves `_site/`, so a fresh
   checkout needs no second terminal; a running `npm run dev` on
@@ -1665,13 +1644,10 @@ Near-term work — new tools, psych chart *floating state-point chip*,
 more Education pages — lives in `site-ideas-and-friction.md`
 (feature ideas) and `codebase-issues.md` (code-quality holds).
 
-**Session start:** `git pull --ff-only`, then `npm run status` (ledger and
-content numbers, report-only) and `docs/next-session-handoff.md` — the
-rolling brief the `/handoff` skill writes and `/verify-handoff` checks;
-every claim in it is a hypothesis until a command confirms it. Owner
-rulings live in `docs/audits/2026-10-reentry/rulings.md`. `npm run
-dashboard` renders the status dashboard to `_dashboard/dashboard.html`
-from `npm run status --json`, the open-PR list and the hand-authored
-`docs/audits/2026-10-reentry/dashboard/dashboard-extra.json`. The
-quiz-bank growth lane is a committed named Workflow,
-`.claude/workflows/quiz-bank-growth.js` (its header has the arguments).
+**Session start:** `git pull --ff-only`, then read `docs/board.md` — the
+week's five, what shipped, what is waiting on the owner. `npm run board`
+re-renders it to his home hub; `npm run status` prints ledger and content
+numbers (report-only). Owner rulings live in
+`docs/audits/2026-10-reentry/rulings.md`. The quiz-bank growth lane is a
+committed named Workflow, `.claude/workflows/quiz-bank-growth.js` (its
+header has the arguments).

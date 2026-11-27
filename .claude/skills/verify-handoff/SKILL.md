@@ -14,17 +14,20 @@ lane it touches and lands in merged history.
 
 ## What to verify
 
-Default target: **`docs/next-session-handoff.md`** — the rolling brief,
-and the file `/handoff` writes. Read it without being given a path.
+Default target: **`operating-brief.md` in the memory directory** plus
+**`docs/board.md`** — the two places `/handoff` writes since 2026-11-26
+(`docs/next-session-handoff.md` was retired that day; do not expect it).
+Read both without being given a path.
 
-Verify something else when the user names a path, pastes a brief inline,
-or the work is arc-scoped: an arc with its own multi-session identity uses
-`docs/<arc>-handoff.md`, and completed cycles archive to
-`docs/audits/<topic>/handoff.md`. Same paths `/handoff` writes to — the
-two skills are two ends of one loop, so keep them in step if either moves.
+Verify something else when the user names a path or pastes a brief
+inline — most often a lane brief about to be dispatched. Older arcs left
+`docs/<arc>-handoff.md` files and archives under
+`docs/audits/<topic>/handoff.md`; those are history, verify one only when
+asked. `/handoff` and this skill are two ends of one loop, so keep them
+in step if either moves.
 
 If the default is absent, say so and stop rather than hunting for a
-substitute; a missing handoff is itself worth reporting.
+substitute; a missing brief is itself worth reporting.
 
 ## Why this exists
 
