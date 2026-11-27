@@ -3749,7 +3749,7 @@ brief; none made a merged sentence false. One needs the owner.
     its four (138 characters against 127). A trim that stays inside the
     owner's words: *"A freeze stat can be in the safety circuit but not
     on an input."* For the quiz run.
-  - The new sentence says *"the dampers fail closed"* (his words); the
+  - The new sentence says the dampers *"fail closed"* (his words); the
     lesson's first layer and Commanding Actuators both say the
     *outdoor* dampers, and the drawing shows a return damper too.
     "The outdoor dampers" would say less than he did and agree with
@@ -3776,8 +3776,11 @@ brief; none made a merged sentence false. One needs the owner.
   - The Coil Freeze Risk Checker's hint hard-codes 38 / 3.3: 38 lives
     in the input's `value`, and 3.3 is its converted form on a metric
     load. No spec reads the hint.
-  - `building-pressure.js`'s header still says every `learnMore` lands
-    on an `<h2>`; one now lands on a callout. `smoke.spec.js`'s anchor
-    loop for that lesson does not list the new id (`link-integrity`
-    covers it).
+  - `smoke.spec.js`'s anchor loop for the Building Pressure lesson
+    does not list the new id (`link-integrity` covers it).
+  - PR #665 put an in-prose link from the freeze lesson to Commanding
+    Actuators (`#direction-and-fail`); Commanding Actuators has no link
+    back. Payer: the quiz run's content PR, one related-links entry.
+  - The HTML comment above the Start/Stop callout says "in his words";
+    the callout is his two sentences lightly recast. Same payer.
 

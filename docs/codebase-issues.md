@@ -15968,9 +15968,9 @@ tags, URLs, and comments (bar the four named below). What changed beside
 the spelling: the glossary
 entry's `term` is "freeze stat" and its def says "Also written
 freezestat, or called a low-limit stat" (the old clause would have
-defined the term by itself), with the two comments and the
+defined the term by itself), with the comment and the
 `glossaryExcluded.js` string that quote it updated, and two more
-comments in `glossary.js` that quote a respelled lesson phrase; the
+comment lines in `glossary.js` that quote a respelled lesson phrase; the
 seven pages whose description or keywords name the device carry all
 three spellings across the two; one expected string in `smoke.spec.js` follows the Coil
 Freeze Risk Checker's pill. Two things a later reader will trip on:

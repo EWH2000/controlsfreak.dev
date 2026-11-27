@@ -20,11 +20,11 @@
 ## Your turn
 
 - *Optional:* you said the dampers fail closed on that trip. Is that the outdoor (and exhaust) dampers, with the return damper failing open? The lesson uses your words as you gave them; one more word would make it exact.
-- *Optional:* Start/Stop Commands says a safety string with no input on any of its contacts is "the common case". For a freeze stat you said "Sometimes". Is "the common case" fair for the string as a whole?
+- *Optional:* Start/Stop Commands says a safety string with no input landed anywhere on it is "the common case". For a freeze stat you said "Sometimes". Is "the common case" fair for the string as a whole?
 
 ## Shipped
 
-- **Nov 27** — "Freeze stat" is spelled one way across the site, two words, as you ruled: about 80 places in lessons, tools, quizzes and the glossary. Searching for the old spellings still finds the pages. [#666](https://github.com/EWH2000/controlsfreak.dev/pull/666)
+- **Nov 27** — "Freeze stat" is spelled one way across the site, two words, as you ruled, in lessons, tools, simulators, quizzes and the glossary. The old spellings stay as keywords for the site's own search. [#666](https://github.com/EWH2000/controlsfreak.dev/pull/666)
 - **Nov 27** — Your two answers from this afternoon are on the site. Coil Freeze Protection says the trip "may look like a fan failure" when the stat is not on an input, and that on a proper safety circuit the dampers and heating valve lose 24 V: dampers fail closed, heating valve fails open. Your reset-after-a-cold-night calls are the story in Start/Stop Commands. A handful of small fixes went with it: two BACnet lessons no longer promise unbuilt work, and the PID tuner's table names loops, not valves. [#665](https://github.com/EWH2000/controlsfreak.dev/pull/665)
 - **Nov 27** — Your freeze stat gotcha is on the site: the Coil Freeze Protection lesson and its quiz now cover the trip that can show up as a fan failure, because the stat is wired into the safety circuit and not landed on a DI. [#662](https://github.com/EWH2000/controlsfreak.dev/pull/662)
 - **Nov 27** — Duct static is tuned gently, and the PID tuner and the Duct Static lesson now both say why in your terms: a second of sag is not ideal but not generally a problem, where a water-source heat-pump loop's differential pressure dropping too low trips the heat pumps. The tuner no longer says fast loops can take more gain. [#663](https://github.com/EWH2000/controlsfreak.dev/pull/663)
@@ -45,7 +45,7 @@
 - The psych engine's two defaults ship as built: a missing pressure uses the readings' own, and an engine error passes straight through.
 - The Economizers page names the cold-end lockout "low-limit or mixed-air", not "low-ambient" as October's note had it. In the field that phrase usually means the compressor lockout.
 - October's handoff document and dashboard are retired. This board replaces both.
-- I merged the 15 without the October walk, each after a second agent reviewed its final version. Those reviews caught a real problem in three of them (Economizers, BACnet Networking, the Duct Static quiz), fixed before merge. What they raised and I left alone is in the ledgers; the loose-ends run took the freeze-season ones.
+- I merged the 15 without the October walk, each after a second agent reviewed its final version. Those reviews caught a real problem in three of them (Economizers, BACnet Networking, the Duct Static quiz), fixed before merge. What they raised and I left alone is in the ledgers; the loose-ends run took the ones scheduled for it.
 - This repository is public, so your remarks about why the project stalled are paraphrased, not quoted, in the rulings file.
 - Your gotcha went in as a sixteenth question instead of replacing one. Nothing in the bank had earned its way out.
 - The Duct Static lesson told readers to drive the tuner's fan scene and feel how little gain it wants. I ran the tuner: on gain and reset alone that scene never overshoots, however hot you set it. I changed the lesson's wording now; fixing the scene itself is on the Menu, with your answer on what can make a real one hunt.

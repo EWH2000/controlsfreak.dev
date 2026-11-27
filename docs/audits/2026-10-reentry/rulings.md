@@ -588,7 +588,9 @@ text built on them is in PR #665.
 
 Calls made in the loose-ends run, none of them his to make:
 
-- **The two phrases §21 left in the freeze lesson are gone.** It says
+- **The two phrases §21's run left in the freeze lesson are gone**
+  ("shows up" and "is the only place it is wired", content-audit #105).
+  It says
   the trip "may look like a fan failure" and that the stat is "not
   landed on a controller input" (PR #665).
 - **The spelling sweep (§20.7) is done** (PR #666): 88 changed lines in
