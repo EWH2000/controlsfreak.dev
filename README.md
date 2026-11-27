@@ -667,7 +667,7 @@ techs new to the industry and anyone wanting a refresh.
   climate zone, with the code's warm-end-only caveat, and "silence is
   not a rule" for the hardwired stat; closes by reading a trip as
   evidence and handing off to the Coil Freeze Risk Checker. Page 3 of
-  the forced-air chapter.
+  the forced-air chapter; pairs with the Coil Freeze Protection quiz.
 - **Building Pressure** — why a building goes positive or negative:
   the air ledger (outside air in vs exhaust, relief, and
   exfiltration out — pressure is the residual), the slightly-positive
@@ -895,7 +895,7 @@ flavors share the same engine:
   When a topic recurs in feedback, it becomes a candidate for a
   new education page.
 
-Shipped so far — thirty-four content quizzes (each a 10-question run
+Shipped so far — thirty-five content quizzes (each a 10-question run
 drawn from its bank, paired 1:1 with its lesson and deep-linking the
 gotchas) plus seven field drills:
 
@@ -966,15 +966,19 @@ gotchas) plus seven field drills:
 - **Content quizzes — psychrometrics:** Psychrometrics Basics.
   Seven properties, why any two lock the rest, the four chart
   process families, and the RH / dew-point / enthalpy gotchas.
-- **Content quizzes — forced air:** Air Handlers, Economizers,
-  Building Pressure, Unit Identification, VAV Systems, Duct Static
-  Control. The station order down the air path, minimum outside air
-  and where the relief goes, the mixed-air arithmetic and its
-  stuck-damper gotcha readout, filter ΔP, coil condensate, and fan
-  heat; then free cooling end to end — the linked damper set, the
-  mixing math run backwards, the deceptive air a dry-bulb changeover
-  admits, the no-humidity-sensor fallback, and integrated staging;
-  then the air ledger — OA-minimum sizing, barometric vs power
+- **Content quizzes — forced air:** Air Handlers, Economizers, Coil
+  Freeze Protection, Building Pressure, Unit Identification, VAV
+  Systems, Duct Static Control. The station order down the air path,
+  minimum outside air and where the relief goes, the mixed-air
+  arithmetic and its stuck-damper gotcha readout, filter ΔP, coil
+  condensate, and fan heat; then free cooling end to end — the linked
+  damper set, the mixing math run backwards, the deceptive air a
+  dry-bulb changeover admits, the no-humidity-sensor fallback, and
+  integrated staging; then the freeze stack — coil-face air, the
+  three exposure terms, which way the hand mix leans, the freeze
+  stat's placement, reset and setpoint, the software floor above it,
+  glycol vs draining, the code-by-climate review gotcha, and a trip
+  read as evidence; then the air ledger — OA-minimum sizing, barometric vs power
   exhaust vs tracking, and the heavy-door interlock diagnosis; then
   naming the box — the three field questions, the family tells,
   tonnage from a model number, and the mislabeled-fan-coil gotcha;

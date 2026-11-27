@@ -1,0 +1,74 @@
+---
+title: Coil Freeze Protection Quiz — controlsfreak.dev
+description: Ten questions on the Coil Freeze Protection lesson — coil-face air, the three exposure terms, the freeze stat and the rest of the stack, and reading a trip.
+canonical: https://controlsfreak.dev/practice/coil-freeze-protection.html
+nav: practice
+category: forced-air
+pairedLesson: https://controlsfreak.dev/education/coil-freeze-protection.html
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Practice · Coil Freeze Protection</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Coil Freeze Protection Quiz <span class="tool-tag">Air Systems</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                Read the <a href="/education/coil-freeze-protection.html">Coil Freeze Protection</a> lesson first, then
+                work the stack from memory — ten questions down the lesson walk: what actually freezes and which
+                coils can burst, the three exposure terms and the mixing arithmetic, which way the hand number
+                leans, the freeze stat's element, placement, reset and setpoint, the software floor above it, glycol
+                and draining, what the code does and doesn't say by climate, and a trip read as evidence. Each
+                reveal links back to the section it came from.
+            </p>
+
+            <div id="quiz"></div>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        tools: [
+            {href: '/tools/coil-freeze-risk.html', label: 'Coil Freeze Risk Checker'},
+            {href: '/tools/air-mixing.html', label: 'Air-Mixing Calculator'}
+        ],
+        lessons: [
+            {href: '/education/coil-freeze-protection.html', label: 'Coil Freeze Protection'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/practice/">← All practice</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/quiz-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // Question bank lives in html/_data/quizzes/coil-freeze-protection.js
+        // so the FAQPage JSON-LD emitted from head.njk can read the same source.
+        const questions = {{ quizzes['coil-freeze-protection'] | safeScriptJson | safe }};
+
+        Quiz.mount('#quiz', questions, {
+            next: {{ page.fileSlug | nextQuiz | safeScriptJson | safe }},
+            slug: 'coil-freeze-protection',
+            title: 'Coil Freeze Protection',
+            defaultCount: 10,
+            defaultOrder: 'sequential'
+        });
+    })();
+</script>
+{% endblock %}
