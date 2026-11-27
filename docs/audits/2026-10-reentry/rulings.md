@@ -346,3 +346,64 @@ Opus fixer then applies without a third refute; both wave-3 batch-1
 open items were applied verbatim and are called out in the walk notes.
 (d) Every lane reported at least one drifted line cite in the entry it
 was fixing (the 2026-08-12 lesson, again).
+
+## 20. Re-entry rulings and the operating model *(2026-11-26 — after seven weeks away; the 2026-10-07 walk of §19's fifteen PRs never happened)*
+
+**What the forensics found.** Every stall on this project began with a
+queue waiting on the owner — seven PRs in June, three in August, fifteen
+in October — and the share of work a visitor could see shrank as each
+burst aged. The owner named both halves himself: *"The review queue"* and
+losing the thread (*"things are just so big it's easy to get lost, or I'm
+just not seeing the progress"*).
+
+**Rulings, in the owner's words where quoted:**
+
+1. **Merge authority — "All but new-page launches."** The assistant merges
+   fixes, quiz banks, engine work and improvements to existing pages, gated
+   on green CI plus an independent adversarial review by a second agent.
+   New simulators / lessons / tools are built hidden; going live takes one
+   yes. Unsourced field-practice claims reach him as short questions, never
+   as diffs. *("I'm happy to let you take over more PR merging yourself
+   since you're more likely to catch mistakes there than I am.")* This
+   **supersedes** the 2026-07-29 live-vs-hidden split and §19.15's
+   "everything that reaches a live page waits for the walk".
+2. **New quizzes for existing lessons are the assistant's to ship.**
+3. **Lock `main`: yes.** Nothing merges without a passing test run; it
+   binds the assistant too. Shipped as the repository ruleset
+   `main-requires-test`.
+4. **Progress he can see:** a plain "what shipped" note and a short list
+   crossed off, on his home hub — *"Sort of a running dashboard that lets
+   me check an overview of work at any point."* Shipped as `docs/board.md`
+   → `npm run board` → `https://command.home.arpa/cfboard/`.
+5. **Involvement:** daily if possible; at least two or three longer
+   sessions a week. Sessions are for stories, mockups and steering — never
+   a review gate.
+6. **The first five — "Freeze season":** clear the fifteen waiting changes
+   · a Coil Freeze Protection quiz · quizzes you can't game (the always-"b"
+   tell, the comma input, six more banks) · freeze-season loose ends · the
+   case-file format.
+7. **House spelling: "freeze stat"** (two words), visible text only — ids,
+   anchors, `data-gloss` keys, glossary ids, quiz ids and URLs keep their
+   names; the other spellings stay as search keywords. *(closes the
+   question in codebase-issues #332; the sweep itself is a later run)*
+8. **Mixed-air temperature is not a fast loop — "No — drop it from the
+   table."** The PID tuner's Fast row keeps duct static only. **Supersedes
+   the MAT half of §19.6.**
+9. **Air-handlers widget label — "Keep the meaning."** "Freeze stat
+   territory" stays. *(content-audit #103)*
+10. **Duct static reads high with the fan at minimum — "Yes — sensor
+    first."** The sensing tube / transducer is the first suspect: commoner,
+    and cheapest to check. #648's key stands.
+11. **Pacing:** *"Don't work longer just for the sake of working, that's
+    not a road we want to go down again."* Runs are scope-bound and start
+    only on his word; one item per run after the catch-up night.
+
+**Calls the assistant made under that authority (each reversible, each
+listed on the board):** Node pinned to 24 in CI and the job-level skip on
+PR edits removed, so every `test` check is a real run (PR #657; §19.2's
+"both triggers" is intact) · #651's two engine defaults accepted as built
+· no nightly timer · `docs/next-session-handoff.md` and the October
+dashboard retired, not replaced by another document.
+
+**Not re-asked, still standing from §19:** the 35–38 °F band (§19.1), the
+freeze-season hero badge (§19.9), "% by mass" on the psych chart (§19.12).
