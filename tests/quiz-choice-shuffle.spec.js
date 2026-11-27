@@ -44,6 +44,10 @@ const STUB_IDENTITY = 0.999999;
 // ONE — the head goes to the tail — which for a bank keyed on its first
 // choice moves the key to the last position.
 const STUB_ZERO = 0;
+// 0.25 → on four choices j = 1, 0, 0 for i = 3, 2, 1: [a3, a2, a0, a1].
+// Neither a rotation nor head-preserving, so a keyboard walk keyed to
+// bank order parts company with rendered order at the first step.
+const STUB_QUARTER = 0.25;
 
 const KEYED_TEXT = 'A current switch reading above its trip point';
 const MCQ = {
@@ -62,6 +66,7 @@ const MCQ = {
 };
 const AUTHORED_IDS  = ['keyed', 'dist-one', 'dist-two', 'dist-three'];
 const ZERO_STUB_IDS = ['dist-one', 'dist-two', 'dist-three', 'keyed'];
+const QUARTER_STUB_IDS = ['dist-three', 'dist-two', 'keyed', 'dist-one'];
 
 const GOTCHA = {
     type: 'gotcha',
@@ -226,23 +231,26 @@ test.describe('quiz engine — choice shuffle at render (#335)', () => {
         await expect(page.locator(`${HOST} .quiz-snippet-slot .quiz-snippet`)).toHaveCount(1);
     });
 
-    // (f) Keyboard follows what the reader SEES. Under the zero stub the
-    // first rendered choice is not the first authored one, so a roving
-    // tabindex or arrow walk keyed to bank order would fail here.
+    // (f) Keyboard follows what the reader SEES. Not the zero stub: its
+    // rotation keeps every cyclic neighbour, so an arrow walk in bank
+    // order would land on the same choice. Under the quarter stub the
+    // first rendered choice is not the authored head (a Tab stop keyed
+    // to bank order fails), and ArrowDown from it must reach dist-two
+    // where a bank-order walk reaches keyed.
     test('the first rendered choice is the Tab stop and ArrowDown walks rendered order', async ({ page }) => {
-        const r = await mountFixture(page, [MCQ], STUB_ZERO);
-        expect(r.rendered).toEqual(ZERO_STUB_IDS);
+        const r = await mountFixture(page, [MCQ], STUB_QUARTER);
+        expect(r.rendered).toEqual(QUARTER_STUB_IDS);
 
         const choices = page.locator(`${HOST} .quiz-choice`);
-        await expect(choices.nth(0)).toHaveAttribute('data-choice-id', ZERO_STUB_IDS[0]);
+        await expect(choices.nth(0)).toHaveAttribute('data-choice-id', QUARTER_STUB_IDS[0]);
         await expect(choices.nth(0)).toHaveAttribute('tabindex', '0');
-        for (let i = 1; i < ZERO_STUB_IDS.length; i++) {
+        for (let i = 1; i < QUARTER_STUB_IDS.length; i++) {
             await expect(choices.nth(i)).toHaveAttribute('tabindex', '-1');
         }
         await expect(choices.nth(0)).toBeFocused();
 
         await page.keyboard.press('ArrowDown');
-        await expect(choices.nth(1)).toHaveAttribute('data-choice-id', ZERO_STUB_IDS[1]);
+        await expect(choices.nth(1)).toHaveAttribute('data-choice-id', QUARTER_STUB_IDS[1]);
         await expect(choices.nth(1)).toBeFocused();
         await expect(choices.nth(1)).toHaveAttribute('aria-checked', 'true');
         await expect(choices.nth(1)).toHaveAttribute('tabindex', '0');

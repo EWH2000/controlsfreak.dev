@@ -84,7 +84,7 @@
 //     always reads True, then False). Consequence for authors: never
 //     refer to a choice by letter or position — "(c)", "answer b",
 //     "the first option", "both of the above" — in a prompt, an
-//     explanation or a choice; tests/quiz-banks.spec.js lints it.
+//     explanation or a choice.
 //     Identify choices by `id`, never by index.
 //   ── gotcha ── (mcq + snippet)
 //     snippet: inline HTML (typically a <pre class="quiz-snippet">)
