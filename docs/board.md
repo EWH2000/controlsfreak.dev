@@ -7,7 +7,7 @@
      "Shipped" lines go at the TOP, in plain language. -->
 
 **Week:** Nov 27 – Dec 3
-**Run:** done — Freeze-season loose ends are finished: your two answers are on the site, and "freeze stat" is spelled one way everywhere. The quiz engine (item 3) is next, on your green light.
+**Run:** done — Freeze-season loose ends are finished: your two answers are on the site, and "freeze stat" is spelled one way across the site. The quiz engine (item 3) is next, on your green light.
 
 ## The five
 
@@ -20,7 +20,7 @@
 ## Your turn
 
 - *Optional:* you said the dampers fail closed on that trip. Is that the outdoor (and exhaust) dampers, with the return damper failing open? The lesson uses your words as you gave them; one more word would make it exact.
-- *Optional:* Start/Stop Commands says a safety string with no input on any of its contacts is "the common case". For a freeze stat you said "sometimes". Is "the common case" fair for the string as a whole?
+- *Optional:* Start/Stop Commands says a safety string with no input on any of its contacts is "the common case". For a freeze stat you said "Sometimes". Is "the common case" fair for the string as a whole?
 
 ## Shipped
 
@@ -45,15 +45,15 @@
 - The psych engine's two defaults ship as built: a missing pressure uses the readings' own, and an engine error passes straight through.
 - The Economizers page names the cold-end lockout "low-limit or mixed-air", not "low-ambient" as October's note had it. In the field that phrase usually means the compressor lockout.
 - October's handoff document and dashboard are retired. This board replaces both.
-- I merged the 15 without the October walk, each after a second agent reviewed its final version. Those reviews caught a real problem in three of them (Economizers, BACnet Networking, the Duct Static quiz), fixed before merge. What they raised and I left alone is logged for the loose-ends run.
+- I merged the 15 without the October walk, each after a second agent reviewed its final version. Those reviews caught a real problem in three of them (Economizers, BACnet Networking, the Duct Static quiz), fixed before merge. What they raised and I left alone is in the ledgers; the loose-ends run took the freeze-season ones.
 - This repository is public, so your remarks about why the project stalled are paraphrased, not quoted, in the rulings file.
 - Your gotcha went in as a sixteenth question instead of replacing one. Nothing in the bank had earned its way out.
 - The Duct Static lesson told readers to drive the tuner's fan scene and feel how little gain it wants. I ran the tuner: on gain and reset alone that scene never overshoots, however hot you set it. I changed the lesson's wording now; fixing the scene itself is on the Menu, with your answer on what can make a real one hunt.
 - Item 5 was "The case-file format". Your answer pointed at a lesson instead, and you approved that shape, so that is what it now says.
 - The trunk lesson will say "the supervisor or router" where you named one vendor's controller. That is what the MS/TP lesson already calls it, and it keeps the page vendor-neutral.
-- A second agent reviewed both changes and this record before they merged. Most of what it caught was me saying more than you had: "rarely a problem" where you said "not generally", a check order you never gave. It also caught a tuner sentence that pointed the wrong way. Those were fixed before merge. What it raised and I left alone was logged for the loose-ends run. The two spots where the freeze lesson said a little more than you did ("shows up", "the only place it is wired") are fixed now.
-- Your story went into Start/Stop Commands in your words, first person, with nothing added inside it.
-- One "freeze-stat" stays hyphenated: the freeze lesson quotes ASHRAE Guideline 36 word for word, and a quotation keeps its source's spelling.
+- A second agent reviewed both changes and this record before they merged. Most of what it caught was me saying more than you had: "rarely a problem" where you said "not generally", a check order you never gave. It also caught a tuner sentence that pointed the wrong way. Those were fixed before merge. What it raised and I left alone is in the ledgers. The two spots where the freeze lesson said a little more than you did ("shows up", "the only place it is wired") are fixed now.
+- Your story went into Start/Stop Commands in first person, lightly recast from your message, under a lead-in I wrote: "True story, many times over." No fact is added. Say so if you want it word for word, or the lead-in gone.
+- One "freeze-stat" stays hyphenated: the freeze lesson quotes ASHRAE Guideline 36 there, and a quotation keeps its source's spelling.
 - The MS/TP lesson no longer says a bus simulator is "on the roadmap". It is still on the Menu below; the page just does not announce it.
 - The freeze tool's blank-field hint says "this tool starts at 38 °F" instead of calling 38 "the common default".
 - The glossary tip is headed "freeze stat" and says "Also written freezestat".

@@ -3566,9 +3566,10 @@ owns alarms. **Verification:** confirmed by reading all three pages.
 note alarms/event notification as unowned across the BACnet shelf in
 the friction file rather than promising it anywhere. The promise-shaped
 copy on the two sibling lessons is codebase-issues #333.
-**Addressed 2026-11-27 (PR #665):** the intro reads "out of scope on
-this page", and the friction file's BACnet note records that no lesson
-owns alarms and event notification.
+**Addressed 2026-11-27 (PR #665; the friction-file note in the run's
+record PR):** the intro reads "out of scope on this page", and the
+friction file's BACnet note records that no lesson owns alarms and
+event notification.
 
 ### 102. coil-freeze-risk.html's mute text calls 38 °F "the common default" while the lesson says stats ship set around 35 °F *(flagged 2026-10-06, Batch A freeze-band refuter)* *(addressed 2026-11-27 · PR #665, merged)*
 
@@ -3762,15 +3763,19 @@ brief; none made a merged sentence false. One needs the owner.
     owner's, it is a short question for him.
   - His story says a call can be *"as simple as"* resetting the stat;
     the freeze lesson says to treat the trip as evidence before anyone
-    resets it. The new related link is the only bridge. Nothing can be
-    added inside his callout.
+    resets it. The new related link is the only bridge; the callout
+    holds only his story.
+  - The callout's lead-in, *"True story, many times over."*, is the
+    page's, and his two sentences are lightly recast into the page's
+    first person. The board tells him so.
   - The story holds that page's first "front end", unglossed; the
     glossed one is two paragraphs down.
   - `bacnet-mstp.html` now states another page's UI ("its NET terminals
     are greyed out"), which no spec pins; on screen the group reads
     "Network" with rows NET+ / NET− / REF.
-  - The Coil Freeze Risk Checker's hint hard-codes 38 / 3.3, which live
-    in the input's `value`; no spec reads the hint.
+  - The Coil Freeze Risk Checker's hint hard-codes 38 / 3.3: 38 lives
+    in the input's `value`, and 3.3 is its converted form on a metric
+    load. No spec reads the hint.
   - `building-pressure.js`'s header still says every `learnMore` lands
     on an `<h2>`; one now lands on a callout. `smoke.spec.js`'s anchor
     loop for that lesson does not list the new id (`link-integrity`

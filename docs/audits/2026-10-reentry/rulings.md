@@ -571,15 +571,20 @@ text built on them is in PR #665.
    putting eyes on the unit and resetting the freeze stat after a very
    cold night. Sometimes even as simple as resetting software freeze
    protection latching logic the user missed on the front end."
-   *Disposition:* a first-person callout in *Finding the Break*, in
-   those words. Nothing is added inside it.
-3. **"Green light for items 3 through 5."** Three runs, one item each,
-   each ending with no open pull request. The freeze-season loose ends
+   *Disposition:* a first-person callout in *Finding the Break*: his
+   two sentences lightly recast ("I have been on tons of service calls
+   where…", "Sometimes it was even as simple as…") under a lead-in
+   that is the page's, not his: "True story, many times over." No fact
+   is added.
+3. **"Green light for items 3 through 5."** *Disposition:* three runs,
+   one item each (§20.11), each ending with no open pull request. The
+   freeze-season loose ends
    went first (his two answers belong there, and the run clears the two
    phrases §21's record left in the lesson); the quiz engine and the
    dead-trunk lesson, built hidden, follow.
-4. **The LAN page "has been very useful."** The board and the preview
-   keep being republished at every phase boundary.
+4. **The LAN page "has been very useful."** *Disposition (the
+   assistant's):* the board and the preview keep being republished at
+   every phase boundary.
 
 Calls made in the loose-ends run, none of them his to make:
 
@@ -588,11 +593,12 @@ Calls made in the loose-ends run, none of them his to make:
   landed on a controller input" (PR #665).
 - **The spelling sweep (§20.7) is done** (PR #666): 88 changed lines in
   29 files, one of them a test's expected string. Ids, the glossary key and its 11 `data-gloss` attributes,
-  quiz ids and tags, URLs and comments keep their names. The glossary
+  quiz ids and tags, URLs and comments keep their names, except four
+  comment lines in `glossary.js` that quote respelled text. The glossary
   term is "freeze stat"; its definition now says "Also written
   freezestat", because "Also called a freeze stat" would have defined
-  the term by itself. The seven pages that name the device carry all
-  three spellings across their description and search keywords.
+  the term by itself. The seven pages whose description or keywords
+  name the device carry all three spellings across the two.
 - **One old spelling stays on purpose.** The freeze lesson quotes
   ASHRAE Guideline 36, "if a freeze-stat is present." A quotation keeps
   its source's spelling.

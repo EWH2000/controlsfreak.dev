@@ -15964,13 +15964,15 @@ then every changed line paired against its original by a second agent
 (no collateral edits; no id, link, key or tag changed) and the built
 pages' visible text searched for the old spellings. What kept its name:
 ids, the glossary key and its 11 `data-gloss` attributes, quiz ids and
-tags, URLs, comments. What changed beside the spelling: the glossary
+tags, URLs, and comments (bar the four named below). What changed beside
+the spelling: the glossary
 entry's `term` is "freeze stat" and its def says "Also written
 freezestat, or called a low-limit stat" (the old clause would have
-defined the term by itself), with the comments and
-`glossaryExcluded.js` strings that quote it updated; the seven pages
-that name the device carry all three spellings across description and
-`keywords`; one expected string in `smoke.spec.js` follows the Coil
+defined the term by itself), with the two comments and the
+`glossaryExcluded.js` string that quote it updated, and two more
+comments in `glossary.js` that quote a respelled lesson phrase; the
+seven pages whose description or keywords name the device carry all
+three spellings across the two; one expected string in `smoke.spec.js` follows the Coil
 Freeze Risk Checker's pill. Two things a later reader will trip on:
 `coil-freeze-protection.html` keeps *"if a freeze-stat is present."*
 because it quotes ASHRAE Guideline 36, and the tool's setpoint label
