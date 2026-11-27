@@ -367,7 +367,7 @@ keywords: gain reset rate kc ti td overshoot tuning loop deadtime simc lambda bu
                 <h2 class="ps-section-label" style="margin-top:1.75rem;">Loop Speed Reference</h2>
 
                 <p style="margin-bottom:1.1rem;font-size:0.9rem;line-height:1.75;color:var(--text);">
-                    "Fast loop / slow loop" is loose shorthand for the dominant time constant — roughly how long the process takes to get most of the way to a new value after the output changes. Loops with longer time constants and more dead time need gentler tuning and benefit more from integral; fast loops can take more aggressive gain. The Equipment selector picks one of these buckets:
+                    "Fast loop / slow loop" is loose shorthand for the dominant time constant — roughly how long the process takes to get most of the way to a new value after the output changes. Loops with longer time constants and more dead time need gentler tuning and benefit more from integral. Speed is not a license to tune hot, though. This model's duct-static scene is a forgiving one — it takes the Too Hot preset without overshoot — and that is the model, not the field: a real static loop is tuned gently. Part of the reason is what a miss costs. If duct static sags for a second it is rarely a problem; a loop where a dip trips equipment, such as the differential pressure on a water-source heat-pump loop, is tuned harder on purpose. The Equipment selector picks one of these buckets:
                 </p>
 
                 <div class="table-scroll">
