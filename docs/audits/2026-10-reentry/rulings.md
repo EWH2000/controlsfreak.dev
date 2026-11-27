@@ -439,7 +439,7 @@ a fix, a ruling above, or a named later run — none dropped)*:
   lockout in the field, which leaves the dampers modulating. The
   high-limit sense being stated twice is left.
 - **#643** — the alarms bullet no longer points at pages that disclaim
-  alarms; an unsourced "most installed networks run BACnet/IP" is gone;
+  alarms; an unsourced "most installed BAS networks still run BACnet/IP" is gone;
   the segmentation claim is softened; the vendor bullet no longer says
   the page is standard-only. Content-audit #101 and codebase-issues #333
   are in the loose-ends run.
@@ -458,13 +458,15 @@ a fix, a ruling above, or a named later run — none dropped)*:
   is still wanted (codebase-issues #336).
 - **#652** — retargeting it to `main` dispatched a real test run, which
   settles codebase-issues #331's open half.
-- **#653** — the reworded explanation was read by the blind reviewer and
-  holds. Keys as above.
-- **#654** — the lesson-gap note (two widget constants the prose never
+- **#653** — the lesson-gap note (two widget constants the prose never
   states) is logged in content-audit #105. Keys as above.
+- **#654** — the reworded explanation was read by the blind reviewer and
+  holds. Keys as above.
 - **#655** — the comma in the prompt waits for the engine change
-  (codebase-issues #334, mechanism corrected); the shared dew-point beat
-  is accepted.
+  (codebase-issues #334, mechanism measured); the shared dew-point beat
+  is accepted; the lane's refused read of `quiz-engine.js` was answered
+  by inlining the question schema in the workflow script (PR #658). Keys
+  as above.
 
 What the blind reviews raised beyond these points, and the merges did
 not need, is collected in codebase-issues #338 and content-audit #105.

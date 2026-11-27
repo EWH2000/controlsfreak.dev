@@ -191,9 +191,11 @@ load-bearing).
    label `:334` gains "by mass". Smallest diff, first page.
    *Merged 2026-11-26 (PR #652).* The chart's mixed-air point now comes
    from `mixAir({ basis: 'mass' })` and the fraction label reads "% by
-   mass". The line cites for this page in §1 and §2 (`:672-676`,
-   `:334`) describe the inline form that PR removed; read them as the
-   pre-migration record. Two follow-ups a blind review raised are in
+   mass". The `:672-676` cite for this page in the §2 table is the inline
+   form that PR removed — read it as the pre-migration record; `:334`
+   is still the label line. The chart already weighted by mass before
+   the change: results differ only when the mix fogs, where the engine
+   re-solves the point onto the saturation curve. Two follow-ups a blind review raised are in
    codebase-issues #338.
 2. **air-mixing** — both tabs, three streams. `exact.fogging` becomes
    available; surfacing it in the status pill is a *follow-on*, not

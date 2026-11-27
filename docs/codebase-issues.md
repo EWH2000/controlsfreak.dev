@@ -15959,7 +15959,7 @@ and the `data-gloss` attributes that carry it), scheduled as its own
 run. New text written since the ruling already uses the house form.
 Open until the sweep lands.
 
-### 333. Two more lessons promise unbuilt work in body prose, in shapes the §5 coming-soon scan does not carry *(noticed 2026-10-06, Batch A bacnet-scope refuter — same family as #328)*
+### 333. Two more lessons promise unbuilt work in body prose, in shapes the §5 coming-soon scan does not carry *(noticed 2026-10-06, Batch A bacnet-scope refuter — same family as #328)* *(scheduled 2026-11-26 — the freeze-season loose-ends run)*
 
 `html/education/bacnet-services.html:227` — the out-of-scope paragraph
 says segmentation is *"worth its own treatment"*; and
@@ -15982,7 +15982,7 @@ treatment` and `on the roadmap` to the §5 banned-shape set in
 `.github/scripts/project-status.mjs` so the scan's zero means more than
 it does today. Open.
 
-### 334. The quiz engine grades a numeric answer typed with a thousands separator as its leading digits *(noticed 2026-10-06, Batch B vav-systems lane; engine, LOW)* *(mechanism corrected 2026-11-26)*
+### 334. The quiz engine grades a numeric answer typed with a thousands separator as its leading digits *(noticed 2026-10-06, Batch B vav-systems lane; engine, LOW)* *(mechanism measured 2026-11-27)*
 
 `html/scripts/quiz-engine.js` reads numeric answers with `parseFloat`,
 so a reader who types `10,000` is graded as `10` — and marked wrong with
@@ -15994,18 +15994,25 @@ no-break space a metric reader may paste) before parsing, in one place
 in the engine; a one-line test in `quiz-engine`'s spec. Live script on
 42 practice pages → owner merges. Open.
 
-**Correction (2026-11-26):** the mechanism above is wrong in the common
-case. The answer box is `type: 'number'` (`quiz-engine.js:403`), and a
-number input refuses a comma: the browser reports an empty `value`, so
-`parseFloat` sees `''`, not `'10,000'`. The reader is not graded as
-`10`; the entry is treated as no answer at all, with no hint why. The
-exposure list and the reader's experience (a correct figure that will
-not go in) stand. **Fix shape, revised:** stripping `,` after the read
-cannot work, because there is nothing to strip — the box has to become
-a text input with `inputmode="decimal"` and its own parse (strip
-grouping separators, then `Number`), or keep `type="number"` and say
-"digits only, no commas" beside it. A design choice inside the quiz
-engine run. Open.
+**Correction (2026-11-27, measured):** the mechanism above does not
+happen in Chromium. The answer box is `type: 'number'`
+(`quiz-engine.js:403`), and a number input refuses a comma. Driven in
+headless Chromium 153 against a bare `<input type="number">`: typing
+`10,000` or `44,444` leaves `value` at `10000` / `44444` (the comma
+keystroke is dropped), and inserted text behaves the same — so
+`parseFloat` never sees a comma and the answer grades right. Nobody is
+graded as `10` there. What is NOT measured is any other engine: the
+HTML rule for a number input is that a value which is not a valid
+number sanitises to the empty string, so a browser that lets the comma
+into the box would report `''` and the entry would read as no answer at
+all, with no hint why. This box has only Chromium installed. **Fix
+shape, revised:** stripping `,` after the read cannot help, because the
+comma never reaches `value` in either case. If another engine is shown
+to swallow the entry, the box becomes a text input with
+`inputmode="decimal"` and its own parse (strip grouping separators,
+then `Number`), or keeps `type="number"` and says "digits only, no
+commas" beside it. Until then this is a check to make in the quiz
+engine run, not a known defect. Open, LOW.
 
 ### 335. Several ten-question banks key every choice on "a", and the keyed choice is usually the longest — the engine does not shuffle choices *(noticed 2026-10-06, Batch B duct-static-control + vav-systems lanes; bank-wide sweep wanted)* *(ruled 2026-11-27 — shuffle in the engine)*
 
@@ -16055,7 +16062,7 @@ pressure defaults to the readings' own and an engine error passes
 straight through; the only caller always supplies pressure. The guard
 is still wanted. Its merge is no longer the owner's — rulings §20.1.)*
 
-### 337. `building-pressure.html`'s "Not the same pressure" callout has no `id`, so the new bank question links its parent section *(noticed 2026-10-06, Batch B building-pressure lane; #314 family, log-and-fix-opportunistically)*
+### 337. `building-pressure.html`'s "Not the same pressure" callout has no `id`, so the new bank question links its parent section *(noticed 2026-10-06, Batch B building-pressure lane; #314 family, log-and-fix-opportunistically)* *(scheduled 2026-11-26 — the freeze-season loose-ends run)*
 
 The callout that separates building static from duct static carries no
 `id`; `bp-duct-static-not-building` (PR #650) tests exactly that beat
@@ -16091,11 +16098,12 @@ numbers are as merged and will drift.
   `<300` flag disagree with the thresholds the script uses (OK ≥ 400,
   thin ≥ 350, starving below); `ddc-workbench.html` has one stale
   comment near the filter-rack markup; `tests/psychro-mixair.spec.js`
-  still cites the psych chart's inline form by line as "the page form
-  today".
+  still cites the psych chart's inline form by line as "the INLINE page
+  form today".
 - **FAQ JSON-LD doubles a true/false verdict.** A `tf` explanation that
   opens "False." is published after an answer that already says False
-  (house-wide, from how `head.njk` builds the answer text).
+  (house-wide, from how `buildAnswerText` in `.eleventy.js` builds the
+  answer text).
 - **`.claude/workflows/quiz-bank-growth.js`:** `reviewedFinalHead` stays
   true when a fixer fails; the header does not say a head with a cut
   question is reviewed once more; `<br>` is allowed in the schema text

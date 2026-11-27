@@ -3640,20 +3640,22 @@ brief; none made a merged sentence false. One needs the owner.
   "ask which end they mean" does not separate a low-limit (dampers back
   to minimum) from a freeze stat trip (fan off, dampers shut); "ask what
   is locked out, and by what" would.
-- **BACnet Networking's not-covered list.** "No broadcasts at all" for
+- **BACnet Networking's not-covered list.** "no broadcasts at all" for
   BACnet/SC is loose (the hub distributes logical broadcasts; "no IP
   broadcasts" is exact); "how to spot a Forwarded-NPDU" is listed as
   uncovered though the page gives its function byte and the quiz asks
-  it; "BACnet's biggest object-model surface" is an unsupported
-  superlative; "this page stops at what each message means" is slightly
-  more than the page does for Abort and Reject. With #101 and
-  codebase-issues #333, one pass over that list in the loose-ends run.
+  it. With #101 and codebase-issues #333, one pass over that list in the
+  loose-ends run. (Two more the same review raised — an unsupported
+  superlative and an over-broad "this page stops at" clause — were fixed
+  before PR #643 merged.)
 - **Quiz banks.** `hydronic-loops`: the `injection-pump-stopped` snippet
   shows a climbing 196 °F reading that is a scenario value, not a lesson
-  figure. The same lane noted a lesson gap: the bypass floor (25 %)
-  and the 20 GPM per load are widget constants the prose never states. `load-piping`: in a sequential run the `twin-t` numeric comes
-  before `loads-see-mixed-temp` and hands over part of its reasoning;
-  "the lesson's widget drive" is awkward. `psychrometrics-basics`:
+  figure; in a sequential run the `twin-t-mixed-supply-temp` numeric
+  comes before `loads-see-mixed-temp` and hands over part of its
+  reasoning. `load-piping`: the lane noted a lesson gap — the bypass
+  floor (25 %) and the 20 GPM per load are widget constants the prose
+  never states; "the lesson's widget drive" is awkward.
+  `psychrometrics-basics`:
   `psy-pool-glass-at-spec` gives 19.4 / 9.4 °C where the lesson's widget
   shows 19.3 / 9.3 for the same point (rounding path). Practice-card
   pills count a run, not a bank (#97's ruling), which reads oddly beside
@@ -3685,7 +3687,7 @@ brief; none made a merged sentence false. One needs the owner.
   five of twelve choice questions (the mirror of the longest-key tell;
   the engine shuffle does not cure length); `cfp-winter-minimum-margin`'s
   stem still rules out its own "it won't" choice; one glycol distractor
-  is half true; and "climate sets exactly one of the three terms" is
+  is half true; and the "climate sets exactly one of them" beat is
   taught only inside the Boston question's explanation — the obvious
   beat for a sixteenth question, or for the owner's own gotcha.
   **Reverse links unpaid, payer named:** `tools/coil-freeze-risk.html`
