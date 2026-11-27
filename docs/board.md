@@ -24,7 +24,7 @@
 
 ## Shipped
 
-- **Nov 27** — Your freeze stat gotcha is on the site: the Coil Freeze Protection lesson and its quiz now cover the trip that shows up as a fan failure, because the stat is wired into the safety circuit and nowhere else. [#662](https://github.com/EWH2000/controlsfreak.dev/pull/662)
+- **Nov 27** — Your freeze stat gotcha is on the site: the Coil Freeze Protection lesson and its quiz now cover the trip that can show up as a fan failure, because the stat is wired into the safety circuit and nowhere else. [#662](https://github.com/EWH2000/controlsfreak.dev/pull/662)
 - **Nov 27** — Duct static is tuned gently, and the PID tuner and the Duct Static lesson now both say why in your terms: a second of sag is not ideal but not generally a problem, where a water-source heat-pump loop's differential pressure dropping too low trips the heat pumps. The tuner no longer says fast loops can take more gain. [#663](https://github.com/EWH2000/controlsfreak.dev/pull/663)
 - **Nov 27** — New: the Coil Freeze Protection quiz. Fifteen questions drawn from the lesson, linked both ways with it (v3.93.0). [#660](https://github.com/EWH2000/controlsfreak.dev/pull/660)
 - **Nov 26–27** — Six quizzes grew from 10 to 15 questions: Duct Static Control (with your "sensor first" call), VAV Systems, Building Pressure, Hydronic Loops, Psychrometrics Basics and Load Piping. [#648](https://github.com/EWH2000/controlsfreak.dev/pull/648) [#649](https://github.com/EWH2000/controlsfreak.dev/pull/649) [#650](https://github.com/EWH2000/controlsfreak.dev/pull/650) [#654](https://github.com/EWH2000/controlsfreak.dev/pull/654) [#655](https://github.com/EWH2000/controlsfreak.dev/pull/655) [#653](https://github.com/EWH2000/controlsfreak.dev/pull/653)
@@ -46,9 +46,9 @@
 - I merged the 15 without the October walk, each after a second agent reviewed its final version. Those reviews caught a real problem in three of them (Economizers, BACnet Networking, the Duct Static quiz), fixed before merge. What they raised and I left alone is logged for the loose-ends run.
 - This repository is public, so your remarks about why the project stalled are paraphrased, not quoted, in the rulings file.
 - Your gotcha went in as a sixteenth question instead of replacing one. Nothing in the bank had earned its way out.
-- The Duct Static lesson told readers to drive the tuner's fan scene and feel how little gain it wants. I ran the tuner: on gain and reset alone that scene never overshoots, however hot you set it. I changed the lesson's wording now; fixing the scene itself is on the Menu, with your answer on what makes a real one hunt.
+- The Duct Static lesson told readers to drive the tuner's fan scene and feel how little gain it wants. I ran the tuner: on gain and reset alone that scene never overshoots, however hot you set it. I changed the lesson's wording now; fixing the scene itself is on the Menu, with your answer on what can make a real one hunt.
 - Item 5 was "The case-file format". Your answer pointed at a lesson instead, and you approved that shape, so that is what it now says.
-- The trunk lesson will say "the supervisor or router" where you said JACE. That is what the MS/TP lesson already calls it, and it keeps the page off one vendor's product name.
+- The trunk lesson will say "the supervisor or router" where you named one vendor's controller. That is what the MS/TP lesson already calls it, and it keeps the page vendor-neutral.
 - A second agent reviewed both changes and this record before they merged. Most of what it caught was me saying more than you had: "rarely a problem" where you said "not generally", a check order you never gave. It also caught a tuner sentence that pointed the wrong way. All fixed before merge.
 
 ### Menu for the next five
@@ -57,6 +57,6 @@
 - Trend capacity planner (how many days of history a controller really holds)
 - Schedules, calendars and exceptions (lesson, drill, and a "which entry won" simulator)
 - The MS/TP bus simulator
-- Make the PID tuner's scenes behave like the loops they name. The fan scene first: it will not overshoot or keep cycling on gain or reset today, and you named what makes a real one hunt (a noisy transducer or the boxes reacting; the drive probably least likely). Also "Decent PI" does not settle on the opening scene.
+- Make the PID tuner's scenes behave like the loops they name. The fan scene first: it will not overshoot or keep cycling on gain or reset today, and you confirmed what can make a real one hunt (a noisy transducer, the boxes reacting or the drive's ramp; the drive probably least likely). Also "Decent PI" does not settle inside the chart on the opening scene.
 - A fresh Search Console export (your account, about ten minutes)
 - A public "What's new" page

@@ -3629,7 +3629,7 @@ brief; none made a merged sentence false. One needs the owner.
   `education/duct-static-control.html` says *"Loops that quick are tuned
   gently or they hunt"*. The owner ruled for the lesson and gave the
   reason beyond the loop math: a second of sag in duct static is not
-  generally a problem, where a water-source heat-pump loop's
+  ideal but not generally a problem, where a water-source heat-pump loop's
   differential pressure dropping too low trips the heat pumps. The
   tuner's clause is gone and both pages carry his reason. The same check found that the lesson's instruction to
   *"feel how little gain it wants"* in the tuner was false at runtime —
@@ -3706,7 +3706,8 @@ brief; none made a merged sentence false. One needs the owner.
   **A question for the owner that PR #662's review raised, on the
   board as a *Your turn* line since 2026-11-27:** the lesson's first layer says the sequence then closes the
   outdoor dampers and drives the heating valve open, and its third
-  starts the pump on the trip. Both assume the controller is told. On a
+  can start the pump on the trip. Where the trip is the trigger, both
+  assume the controller is told. On a
   unit where the stat is not landed on an input, what does the trip
   response look like? The lesson says nothing about it until he answers.
   **Left for the freeze-season loose-ends run, from the blind review of

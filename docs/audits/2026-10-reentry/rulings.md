@@ -486,8 +486,9 @@ are his; the page text built on them is in the PRs named.
 1. **The dead-trunk story — what it teaches.** In his words, "the bigger
    lesson in that story was to not get bogged down with the likes of
    trying to use a DMM on a bus and theorize based on just those numbers",
-   and to look instead at the more apparent problem: all of the rooms in
-   one area were out. He was "going around all day", and had he studied
+   and to look instead at more apparent problems, such as all of the
+   rooms in one area being out. He was "going around all day", and had he
+   studied
    "the floorplan and what was offline" first, he "could have found the
    break in the bus way faster." He suggested "a lesson on bus section
    isolation". *Disposition:* item 5 of the week becomes that lesson,
@@ -498,8 +499,8 @@ are his; the page text built on them is in the PRs named.
    Two questions went back on the board for the build (the page's shape;
    where he splits a trunk and what tells him which half is good). Both
    are answered below.
-2. **Duct static is tuned gently**, and "not just because of the PID
-   math": "if duct static drops for a second, not generally an issue",
+2. **Duct static "should be more gentle"**, and "not just because of the
+   PID math": "if duct static drops for a second, not generally an issue",
    where the differential pressure on a water-source heat-pump loop
    dropping too low trips heat pumps — "It's not ideal but that's why
    duct static is less aggressive than something like HPLDP."
@@ -507,11 +508,11 @@ are his; the page text built on them is in the PRs named.
    stands; the PID tuner's "fast loops can take more aggressive gain" is
    gone; both pages carry his reason (PR #663). This answers the
    open item in content-audit #105. Checking it turned up a fault in the
-   simulator rather than the prose — codebase-issues #340 — and one
+   simulator, not in the teaching — codebase-issues #340 — and one
    question for him on the board (what makes a hot static loop hunt on a
    real unit), answered below.
-3. **A freeze stat gotcha.** A freeze stat is sometimes in the fan's
-   safety circuit without being landed on a DI, and a trip may then look
+3. **A freeze stat gotcha.** A freeze stat is sometimes in the safety
+   circuit without being landed on a DI, and a trip may then look
    like a fan failure. *Disposition:* one paragraph in the lesson's
    *Reading the Trip* and a sixteenth quiz question,
    `cfp-trip-reads-as-fan-failure` (PR #662). Added, not swapped: the
@@ -526,7 +527,8 @@ items 3–5 still start only on his word.
 4. **The dead-trunk page's shape — approved.** A hidden lesson on finding
    a break by sections, opening with the story as a made-up job: "it
    makes it feel like a game and builds real skills." *Disposition:* item
-   5 is built that way, as something the reader plays rather than reads.
+   5 will be built that way, as something the reader plays rather than
+   reads.
 5. **How he isolates a break.** In order: first try to find a bus layout
    and see whether an obvious spot shows. With no layout, go by the MAC
    addresses or, better, the room numbers of the offline devices, and
@@ -542,7 +544,8 @@ items 3–5 still start only on his word.
    noisy transducer. His answer: "All three of those could cause it", all
    three are easy to check from a DDC workbench given drive feedback, and
    the drive is probably the least likely — a loop fighting a reasonable
-   drive ramp probably has a deeper problem. *Disposition:*
-   codebase-issues #340 models transducer noise or the boxes' reaction in
-   the tuner's fan scene before a drive ramp. The same three checks are a
-   candidate troubleshooting beat for the Duct Static lesson.
+   drive ramp probably has a deeper problem. *Disposition:* the
+   fix recorded in codebase-issues #340 is to model transducer noise or
+   the boxes' reaction in the tuner's fan scene before a drive ramp. The
+   same three checks are a candidate troubleshooting beat for the Duct
+   Static lesson.

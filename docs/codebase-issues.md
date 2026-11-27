@@ -16140,7 +16140,8 @@ is tuned gently or it hunts, and until PR #663 sent the reader to
 Tuning* preset, as overshoot / settling time (driven in a browser on the
 built page, 2026-11-27):
 
-- *Supply fan VFD · duct static:* Sluggish none / > 80 s · Decent PI
+- *Supply fan VFD · duct static pressure:* Sluggish none / > 80 s ·
+  Decent PI
   none / > 80 s · Aggressive none / > 80 s · Too Hot none / 37 s.
 - *2-way valve · discharge-air temp* (the scene the page opens on):
   Sluggish none / > 8 min · Decent PI none / > 8 min · Aggressive none /
@@ -16186,10 +16187,12 @@ still reads "none".
 on this tool* note — "Start with reset off, raise the gain until the
 loop just begins to cycle" — is hard to follow on this scene from the
 readouts: the ring above stays under setpoint, so Overshoot reads "none"
-at every gain. The scene's own caption calls the loop "Easy to
-control". The caution PR #663 added sits
-inside the collapsed *Reveal loop details* block, so a reader who opens
-the tuner cold sees the fan scene accept Too Hot with no caveat in view.
+at every gain. The caution PR #663 added sits inside the collapsed
+*Reveal loop details* block, and so does the loop-detail line that
+calls this loop "Easy to control". A reader who opens the tuner cold
+sees the fan scene accept Too Hot with that caution out of view; the
+caveat that is showing is the page's general "A toy loop, not your loop"
+preamble.
 Same family as content-audit #34 (the tuner's cheat-sheet describing
 failure modes the simulator could not reach) and #45 (the PID Basics
 caption promising ringing its widget could not produce).
@@ -16201,7 +16204,7 @@ scene's 8 s lag (`PID_PROC.fast` in `scripts/pid-engine.js`). Integral
 can never outrun the process. Only the rate slider re-ranges per scene
 (`PID_DMAX`). The fast, medium and slow scenes have nearly the same
 dead-time-to-lag ratio (0.125, 0.133, 0.125), so in normalised terms
-they are one plant; what differs is how quick the fixed reset values are
+they are nearly one plant; what differs is how quick the fixed reset values are
 against each lag.
 
 **Fix shape.** Per-scene presets and a per-scene reset range — the
@@ -16217,7 +16220,7 @@ to make the model behave reads on screen as field practice. A change to
 `simulators/pid-tuner.html` and `education/pid-basics.html`, so it needs
 the full suite and a re-read of `pid-basics.html`'s sims against their
 prose. When the scene changes,
-re-true the two sentences PR #663 added — the tuner's "it takes the Too
+re-true the two sentences PR #663 added — the tuner's "takes the Too
 Hot preset without overshoot" and the lesson's matching clause. A test
 added in that PR, *the duct-static scene takes the Too Hot preset
 without overshoot (prose pin)* in `tests/pid-engine.spec.js`, fails
@@ -16229,8 +16232,8 @@ more gain — so the prose cannot go stale quietly.
 the model never crosses setpoint "across the whole slider range", from a
 coarser sweep of 2,080 settings. The full sweep above shows it fails
 with rate between 0.01 and 0.06 min; the PR's second commit message
-carries the correction. The page text PR #663 shipped claims only the
-preset result, which is true.
+carries the correction. No page text PR #663 shipped makes the
+whole-range claim.
 Open, MEDIUM.
 
 ### 341. Quiz snippets wider than about 33 characters run off a phone screen *(noticed 2026-11-27, rendering PR #662's question at 375 px)*
