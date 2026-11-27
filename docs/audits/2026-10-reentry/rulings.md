@@ -477,3 +477,41 @@ drawn only from the lesson, in the "freeze stat" spelling. Five blind
 reviews found no wrong key and nothing unsourced; six explanations and
 stems were tightened before merge on their advice, and what was left
 alone — with the two reverse links still owed — is in content-audit #105.
+
+## 21. Three answers to the board's *Your turn* lines *(2026-11-27, the day after the catch-up run)*
+
+The owner answered all three lines in one message. The field statements
+are his; the page text built on them is in the PRs named.
+
+1. **The dead-trunk story — what it teaches.** His lesson from the job is
+   order of attack, not meter technique. He spent the day metering the bus
+   and reasoning from the readings, and says that reading which rooms were
+   offline against the floorplan first would have found the break far
+   sooner: every dead room sat in one area. He suggested "a lesson on bus
+   section isolation". *Disposition:* item 5 of the week becomes that
+   lesson, built hidden and launched on his yes, with the story told as a
+   synthetic job — no site, customer or trade detail. Pattern first, meter
+   last. Why the meter misled stays out of it: that was never his finding.
+   Two questions are back on the board for the build (the page's shape;
+   where he splits a trunk and what tells him which half is good).
+2. **Duct static is tuned gently**, and "not just because of the PID
+   math": "if duct static drops for a second, not generally an issue",
+   where the differential pressure on a water-source heat-pump loop
+   dropping too low trips heat pumps — "that's why duct static is less
+   aggressive than something like HPLDP." *Disposition:* the Duct Static
+   lesson stands; the PID tuner's "fast loops can take more aggressive
+   gain" is gone; both pages carry his reason (PR #663). This answers the
+   open item in content-audit #105. Checking it turned up a fault in the
+   simulator rather than the prose — codebase-issues #340 — and one
+   question for him on the board (what makes a hot static loop hunt on a
+   real unit).
+3. **A freeze stat gotcha.** A freeze stat is sometimes in the fan's
+   safety circuit without being landed on a DI, and a trip then looks
+   like a fan failure. *Disposition:* one paragraph in the lesson's
+   *Reading the Trip* and a sixteenth quiz question,
+   `cfp-trip-reads-as-fan-failure` (PR #662). Added, not swapped: the
+   board had offered a swap, and no question in the bank had earned its
+   way out.
+
+These were session follow-through on his answers, not one of the five:
+items 3–5 still start only on his word.

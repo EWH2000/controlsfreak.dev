@@ -3623,12 +3623,21 @@ The content half of codebase-issues #338. **Lens:** working engineer /
 reader. Each was raised by a reviewer who had not seen the change's
 brief; none made a merged sentence false. One needs the owner.
 
-- **Needs the owner — how is duct static tuned?**
-  `simulators/pid-tuner.html`'s loop-speed note says fast loops *"can
-  take more aggressive gain"*; `education/duct-static-control.html` says
-  *"Loops that quick are tuned gently or they hunt"*. Since PR #641 the
-  tuner's Fast row names duct static alone, so the two pages now
-  disagree about that one loop. On the board as a *Your turn* line.
+- **Answered 2026-11-27 — duct static is tuned gently** *(rulings
+  §21.2; PR #663)*. `simulators/pid-tuner.html`'s loop-speed note said
+  fast loops *"can take more aggressive gain"*;
+  `education/duct-static-control.html` says *"Loops that quick are tuned
+  gently or they hunt"*. The owner ruled for the lesson and gave the
+  reason beyond the loop math: a second of sag in duct static is rarely
+  a problem, where a dip in a heat-pump loop's differential pressure
+  trips units. The tuner's clause is gone and both pages carry his
+  reason. The same check found that the lesson's instruction to *"feel
+  how little gain it wants"* in the tuner was false at runtime — the
+  tuner's duct-static scene takes its hottest preset without overshoot —
+  so PR #663 reworded that too; the simulator itself is codebase-issues
+  #340. One sentence was left as built: the lesson's widget note still
+  credits the PID tuner with the hunting and the tuning, which is true
+  of the tuner as a whole (its other scenes hunt), not of the fan scene.
 - **PID pages.** `pid-basics.html` says "static transmitter" where the
   Duct Static lesson and its quiz say "transducer" throughout; the
   tuner's symptom table sends a wrong-way loop to "the real controller",
@@ -3689,7 +3698,9 @@ brief; none made a merged sentence false. One needs the owner.
   stem still rules out its own "it won't" choice; one glycol distractor
   is half true; and the "climate sets exactly one of them" beat is
   taught only inside the Boston question's explanation — the obvious
-  beat for a sixteenth question, or for the owner's own gotcha.
+  beat for one more question. (The sixteenth went to the owner's own
+  gotcha, `cfp-trip-reads-as-fan-failure`, PR #662, 2026-11-27; the
+  five-of-twelve count above is of the original fifteen.)
   **Reverse links unpaid, payer named:** `tools/coil-freeze-risk.html`
   and `simulators/ddc-workbench.html` list the lesson and sibling
   quizzes in `relatedLinks` but not this quiz; the freeze-season

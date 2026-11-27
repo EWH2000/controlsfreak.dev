@@ -7,7 +7,7 @@
      "Shipped" lines go at the TOP, in plain language. -->
 
 **Week:** Nov 27 – Dec 3
-**Run:** done — Overnight catch-up finished. All 15 waiting changes are merged and live, your About paragraph is updated, and the Coil Freeze Protection quiz is out. Nothing is open. The next run starts when you say "run it".
+**Run:** done — Your three answers are in. Two became live changes the same day (your freeze stat gotcha; duct static tuned gently), and your story reshaped item 5. Nothing is open. The next run starts when you say "run it".
 
 ## The five
 
@@ -15,16 +15,18 @@
 - [x] Coil Freeze Protection quiz
 - [ ] Quizzes you can't game
 - [ ] Freeze-season loose ends
-- [ ] The case-file format
+- [ ] Finding a break in a dead trunk (your story, as a lesson)
 
 ## Your turn
 
-- **One real callout story** for the case-file format. The dead RS-485 trunk from your troubleshooting notes looks like the one. Tell it your way next session and I'll write it up.
-- **One field call:** the PID tuner says fast loops "can take more aggressive gain"; the Duct Static lesson says loops that quick "are tuned gently or they hunt". Which do you teach for duct static?
-- *Optional:* a freeze stat gotcha of your own to swap into the new quiz.
+- **The dead-trunk page.** I'll build it as a hidden lesson on finding a break by sections: read what is offline against the floorplan first, meter last, opening with your story told as a made-up job. Say so if you'd rather case files were their own format.
+- **One field question for it:** when you split a dead trunk to find the break, where do you split it, and what tells you which half is good?
+- **One for the PID tuner:** on a real unit, what makes a hot duct static loop hunt — the drive's ramp, the boxes reacting, a noisy transducer? In the tuner's fan scene no amount of gain or reset makes it hunt today, and I would rather model your answer than guess.
 
 ## Shipped
 
+- **Nov 27** — Your freeze stat gotcha is on the site: the Coil Freeze Protection lesson and its quiz now cover the trip that shows up as a fan failure, because the stat is wired into the safety circuit and nowhere else. [#662](https://github.com/EWH2000/controlsfreak.dev/pull/662)
+- **Nov 27** — Duct static is tuned gently, and the PID tuner and the Duct Static lesson now both say why in your terms: a second of sag is rarely a problem, where a dip in a heat-pump loop's differential pressure trips units. The tuner no longer says fast loops can take more gain. [#663](https://github.com/EWH2000/controlsfreak.dev/pull/663)
 - **Nov 27** — New: the Coil Freeze Protection quiz. Fifteen questions drawn from the lesson, linked both ways with it (v3.93.0). [#660](https://github.com/EWH2000/controlsfreak.dev/pull/660)
 - **Nov 26–27** — Six quizzes grew from 10 to 15 questions: Duct Static Control (with your "sensor first" call), VAV Systems, Building Pressure, Hydronic Loops, Psychrometrics Basics and Load Piping. [#648](https://github.com/EWH2000/controlsfreak.dev/pull/648) [#649](https://github.com/EWH2000/controlsfreak.dev/pull/649) [#650](https://github.com/EWH2000/controlsfreak.dev/pull/650) [#654](https://github.com/EWH2000/controlsfreak.dev/pull/654) [#655](https://github.com/EWH2000/controlsfreak.dev/pull/655) [#653](https://github.com/EWH2000/controlsfreak.dev/pull/653)
 - **Nov 27** — Three lessons corrected: PID Basics and the PID tuner (duct static is not a "clean" loop, mixed-air temperature is not a fast one), Economizers ("lockout" at both ends of the free-cooling range), BACnet Networking (scope statements instead of promised pages). [#641](https://github.com/EWH2000/controlsfreak.dev/pull/641) [#642](https://github.com/EWH2000/controlsfreak.dev/pull/642) [#643](https://github.com/EWH2000/controlsfreak.dev/pull/643)
@@ -44,6 +46,9 @@
 - October's handoff document and dashboard are retired. This board replaces both.
 - I merged the 15 without the October walk, each after a second agent reviewed its final version. Those reviews caught a real problem in three of them (Economizers, BACnet Networking, the Duct Static quiz), fixed before merge. What they raised and I left alone is logged for the loose-ends run.
 - This repository is public, so your remarks about why the project stalled are paraphrased, not quoted, in the rulings file.
+- Your gotcha went in as a sixteenth question instead of replacing one. Nothing in the bank had earned its way out.
+- The Duct Static lesson told readers to drive the tuner's fan scene and feel how little gain it wants. I ran the tuner: on gain and reset alone that scene never overshoots, however hot you set it. I changed the lesson's wording now; fixing the scene itself waits for your answer above.
+- Item 5 was "the case-file format". Your answer pointed at a lesson instead, so that is what it now says.
 
 ### Menu for the next five
 
@@ -51,5 +56,6 @@
 - Trend capacity planner (how many days of history a controller really holds)
 - Schedules, calendars and exceptions (lesson, drill, and a "which entry won" simulator)
 - The MS/TP bus simulator
+- Make the PID tuner's scenes behave like the loops they name (the fan scene will not hunt on gain or reset; "Decent PI" does not settle on the opening scene)
 - A fresh Search Console export (your account, about ten minutes)
 - A public "What's new" page

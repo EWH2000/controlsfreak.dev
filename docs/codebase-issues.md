@@ -16129,3 +16129,85 @@ nav's height (it differs below 620 px, where the bar collapses) — and a
 spec that follows one deep link and asserts the target's top is below
 the nav's bottom. `styles.css` change, so it carries a version bump and
 the full suite. Open.
+
+### 340. The PID tuner's duct-static scene does not hunt on gain or reset, and its presets do not behave as named *(measured 2026-11-27 while checking the owner's duct-static ruling — rulings §21.2)*
+
+`education/duct-static-control.html` teaches that the duct-static loop
+is tuned gently or it hunts, and until PR #663 sent the reader to
+`simulators/pid-tuner.html` to feel that. The tuner shows the reverse.
+
+**The page's own readouts**, every Equipment scene against every *Try a
+Tuning* preset, as overshoot / settling time (driven in a browser on the
+built page, 2026-11-27):
+
+- *Supply fan VFD · duct static:* Sluggish none / > 80 s · Decent PI
+  none / > 80 s · Aggressive none / > 80 s · Too Hot none / 37 s.
+- *2-way valve · discharge-air temp* (the scene the page opens on):
+  Sluggish none / > 8 min · Decent PI none / > 8 min · Aggressive none /
+  86 s · Too Hot 0.8 % / 72 s.
+- *Radiator · space temperature:* Sluggish none / > 40 min · Decent PI
+  12.1 % / 13:12 min · Aggressive 10.7 % / > 40 min · Too Hot 9.0 % /
+  > 40 min.
+- *Reheat coil · end of a long duct run:* Sluggish none / > 10 min ·
+  Decent PI none / > 10 min · Aggressive 19.5 % / > 10 min · Too Hot
+  19.5 % / 9:59 min.
+
+So the page opens on "Decent PI" reading "Settling > 8 min". Too Hot is
+the quickest preset to settle on three of the four scenes, and on two of
+those — the fan scene and the reheat scene — it is the only one that
+settles inside the chart at all.
+
+**The model, at every slider position on the duct-static scene** (the
+engine run in Node; gain 0–20 in steps of 0.1, reset 0–6 repeats/min in
+steps of 0.05, rate 0–0.15 min in steps of 0.01 — 389,136 settings):
+
+- With rate at zero — all 24,321 gain × reset positions, which includes
+  all four presets — the process variable never crosses setpoint and
+  overshoot is zero at every one.
+- With rate between 0.01 and 0.06 min, 1,112 settings cross setpoint
+  three or more times (none below a gain of 4.5); the largest overshoot
+  anywhere is 2.6 % of the step.
+- With rate at 0.07 min or more, none do.
+
+**Mechanism.** `PID_PRESETS` in `pid-tuner.html` is one set of canonical
+values applied to every scene, and the reset slider stops at 6
+repeats/min — an integral time of 10 s at its fastest, against this
+scene's 8 s lag (`PID_PROC.fast` in `scripts/pid-engine.js`). Integral
+can never outrun the process. Only the rate slider re-ranges per scene
+(`PID_DMAX`). The fast, medium and slow scenes have nearly the same
+dead-time-to-lag ratio (0.125, 0.133, 0.125), so in normalised terms
+they are one plant; what differs is how quick the fixed reset values are
+against each lag.
+
+**Fix shape.** Per-scene presets and a per-scene reset range — the
+`PID_DMAX` pattern, applied to reset — and, for the fan scene, whatever
+makes a real static loop hunt. That last part is a field question, on
+the board as a *Your turn* line; do not pick a non-ideality to make the
+model behave, because a constant tuned for the model reads on screen as
+field practice. A change to `pid-engine.js` is a shared-script change: it is loaded by
+`simulators/pid-tuner.html` and `education/pid-basics.html`, so it
+carries a version bump, the full suite, and a re-read of
+`pid-basics.html`'s sims against their prose. When the scene changes,
+re-true the two sentences PR #663 added — the tuner's "it takes the Too
+Hot preset without overshoot" and the lesson's matching clause.
+
+**Correction to PR #663's own record.** Its commit message says the
+model never crosses setpoint "across the whole slider range", from a
+coarser sweep of 2,080 settings. The full sweep above shows that holds
+only with rate at zero. The page text PR #663 shipped claims only the
+preset result, which is true. Open, MEDIUM.
+
+### 341. Quiz snippets wider than about 33 characters run off a phone screen *(noticed 2026-11-27, rendering PR #662's question at 375 px)*
+
+`.quiz-snippet` is `white-space: pre; overflow-x: auto` (`styles.css`),
+so a long line does not wrap; it scrolls sideways inside its box. At
+375 px a 33-character line just fits and a 47-character one is cut
+mid-word, with no visible cue in the render that there is more — seen on
+`cfp-trip-reads-as-fan-failure`, whose note was re-wrapped before PR
+#662 was opened. Across the banks, 58 of 69 snippets have a line over 33
+characters; the widest is 84 (`bacnet-basics`). The phone-width walks of
+the 2026-11-26 run checked page-level overflow, which a scrolling box
+does not trip. **Fix shape:** by snippet kind. A prose note re-wraps by
+hand. A tabular snippet (frames, trend rows) needs its columns, so it
+wants a visible scroll cue or a smaller size below 480 px rather than
+`pre-wrap`. Belongs with the quiz-engine run. Open, LOW.
