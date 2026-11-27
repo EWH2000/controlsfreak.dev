@@ -25,7 +25,7 @@ module.exports = [
             { id: 'c', text: 'It can survive pressures up to 250 psi without damage.' },
             { id: 'd', text: 'The signal will never leave the 4–20 mA band.' }
         ],
-        explain: 'The published range is a <em>contract</em>: two endpoints plus linearity, nothing more. Everything the graphic ever shows for the point is read off that straight line, which is why the software\'s scale has to copy <strong>both</strong> endpoints exactly. Note that (d) is false in a useful way — the signal absolutely can leave the band, and the space outside it (under 4 mA, saturated above 20 mA) is exactly the diagnostic vocabulary the other questions in this quiz drill. Survivable overpressure (c) is a separate spec on the datasheet, not the range.',
+        explain: 'The published range is a <em>contract</em>: two endpoints plus linearity, nothing more. Everything the graphic ever shows for the point is read off that straight line, which is why the software\'s scale has to copy <strong>both</strong> endpoints exactly. Note that the never-leaves-the-band claim is false in a useful way — the signal absolutely can leave the band, and the space outside it (under 4 mA, saturated above 20 mA) is exactly the diagnostic vocabulary the other questions in this quiz drill. Survivable overpressure is a separate spec on the datasheet, not the range.',
         learnMore: { href: '/education/analog-sensing.html#ranges-scaling', label: 'Analog Sensing — ranges and scaling' },
         tags: ['analog-sensing', 'signals', 'scaling']
     },
@@ -95,7 +95,7 @@ module.exports = [
             { id: 'c', text: 'The chilled-water loop is pulling a vacuum.' },
             { id: 'd', text: 'The software span is inverted (250–0 instead of 0–250).' }
         ],
-        explain: 'Scale 0 mA through the line and you get <code>(0 − 4) / 16 = −25%</code> of span → −62.5 psi: the <strong>b</strong> in the point\'s y = mx + b, and a number no real gauge could ever read. That impossibility is the feature — a dead 4–20 loop announces itself with a value that can\'t be mistaken for data. Calibration drift (a) is small and plausible-looking, not a quarter of the range negative; a vacuum (c) doesn\'t reach −62.5 psi; an inverted span (d) would read high, not impossible-low.',
+        explain: 'Scale 0 mA through the line and you get <code>(0 − 4) / 16 = −25%</code> of span → −62.5 psi: the <strong>b</strong> in the point\'s y = mx + b, and a number no real gauge could ever read. That impossibility is the feature — a dead 4–20 loop announces itself with a value that can\'t be mistaken for data. Calibration drift is small and plausible-looking, not a quarter of the range negative; a vacuum doesn\'t reach −62.5 psi; an inverted span would read high, not impossible-low.',
         learnMore: { href: '/education/analog-sensing.html#live-zero', label: 'Analog Sensing — live zero' },
         tags: ['analog-sensing', 'signals', 'live-zero', 'failure-modes']
     },
@@ -111,7 +111,7 @@ module.exports = [
             { id: 'c', text: 'Command the point out of service and back to force a refresh.' },
             { id: 'd', text: 'You can\'t — only a meter on the loop can tell.' }
         ],
-        explain: 'Scaled values are a <em>presentation</em> — they can clamp, round, or default, and this front end clamps. The raw signal is the wire\'s own testimony: anything below ~3.8 mA sits under the live zero where no real measurement lives, so 0 mA raw settles it without leaving the chair. (A flat trend (a) is consistent with a dead loop but also with a dead-calm process; and note the same trick is weaker on a 0–10 V point, where 0 V raw is still ambiguous — the live-zero advantage restated.)',
+        explain: 'Scaled values are a <em>presentation</em> — they can clamp, round, or default, and this front end clamps. The raw signal is the wire\'s own testimony: anything below ~3.8 mA sits under the live zero where no real measurement lives, so 0 mA raw settles it without leaving the chair. (A flat trend is consistent with a dead loop but also with a dead-calm process; and note the same trick is weaker on a 0–10 V point, where 0 V raw is still ambiguous — the live-zero advantage restated.)',
         learnMore: { href: '/education/analog-sensing.html#live-zero', label: 'Analog Sensing — live zero' },
         tags: ['analog-sensing', 'signals', 'live-zero', 'diagnosis']
     },
@@ -127,7 +127,7 @@ module.exports = [
             { id: 'c', text: 'The controller flags any 0 V reading as a fault automatically.' },
             { id: 'd', text: 'Watch for readings that go negative, below range-min.' }
         ],
-        explain: 'The signal can\'t tell you, but the physics can: outdoor air is never at 0% RH, a proven-on fan never moves zero air, an occupied space is never at 0 ppm CO2. A 0–10 V point pinned at range-min for hours is a <em>suspicion</em> the graphic can raise even though only a meter can confirm it — which is the half-truth in (a). Choice (d) is the 4–20 mA story, not the 0–10 V one: with no live zero there\'s no below-range space for a fault to land in. This ambiguity is exactly why critical points earn live-zero signals.',
+        explain: 'The signal can\'t tell you, but the physics can: outdoor air is never at 0% RH, a proven-on fan never moves zero air, an occupied space is never at 0 ppm CO2. A 0–10 V point pinned at range-min for hours is a <em>suspicion</em> the graphic can raise even though only a meter can confirm it — which is the half-truth in the only-a-meter-can-tell answer. Watching for readings below range-min is the 4–20 mA story, not the 0–10 V one: with no live zero there\'s no below-range space for a fault to land in. This ambiguity is exactly why critical points earn live-zero signals.',
         learnMore: { href: '/education/analog-sensing.html#live-zero', label: 'Analog Sensing — live zero' },
         tags: ['analog-sensing', 'signals', 'live-zero', 'diagnosis']
     },
@@ -143,7 +143,7 @@ module.exports = [
             { id: 'c', text: 'The sensor has failed and the value is meaningless.' },
             { id: 'd', text: 'The trend\'s sample rate is too slow to catch the variation.' }
         ],
-        explain: 'A railed reading carries exactly one bit: <em>the truth is at least this much</em>. It\'s a ceiling, not a measurement. The tells are all there — a round number, sitting exactly at range max, suspiciously smooth (real processes wander; ceilings don\'t). Note (c) misses the point in a dangerous way: the sensor hasn\'t failed, it\'s answering honestly at the edge of what it can say — and whatever pushed the duct past its range is still out there, above the flatline.',
+        explain: 'A railed reading carries exactly one bit: <em>the truth is at least this much</em>. It\'s a ceiling, not a measurement. The tells are all there — a round number, sitting exactly at range max, suspiciously smooth (real processes wander; ceilings don\'t). Note the sensor-has-failed verdict misses the point in a dangerous way: the sensor hasn\'t failed, it\'s answering honestly at the edge of what it can say — and whatever pushed the duct past its range is still out there, above the flatline.',
         learnMore: { href: '/education/duct-static-control.html#static-is-not-flow', label: 'Duct Static Control — the railed transducer, in the field' },
         tags: ['analog-sensing', 'signals', 'railed']
     },
@@ -159,7 +159,7 @@ module.exports = [
             { id: 'c', text: '0–2.5 in. w.c. — the operating point lives mid-span, with resolution to read it and headroom above it to see an abnormal excursion.', correct: true },
             { id: 'd', text: 'Any range works — the software scaling makes them all read correctly.' }
         ],
-        explain: 'Both extremes fail, in opposite directions. Range-topped at the setpoint (a), the sensor rails during exactly the events you most need to see — every abnormal excursion vanishes over the ceiling. Oversized (b), normal operation lives in the bottom 15% of the scale, where an accuracy spec written as a percent <em>of full scale</em> becomes a big slice of the reading. Mid-span (c) buys both resolution and headroom. And (d) confuses <em>correct</em> with <em>useful</em>: scaling faithfully maps whatever the sensor can say — it can\'t add precision or extend the ceiling.',
+        explain: 'Both extremes fail, in opposite directions. Range-topped at the setpoint, the sensor rails during exactly the events you most need to see — every abnormal excursion vanishes over the ceiling. Oversized, normal operation lives in the bottom 15% of the scale, where an accuracy spec written as a percent <em>of full scale</em> becomes a big slice of the reading. Mid-span buys both resolution and headroom. And the any-range-works answer confuses <em>correct</em> with <em>useful</em>: scaling faithfully maps whatever the sensor can say — it can\'t add precision or extend the ceiling.',
         learnMore: { href: '/education/analog-sensing.html#railed', label: 'Analog Sensing — railed signals' },
         tags: ['analog-sensing', 'signals', 'railed', 'range-selection']
     }

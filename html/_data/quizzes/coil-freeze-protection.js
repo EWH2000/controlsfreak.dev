@@ -258,7 +258,7 @@ module.exports = [
         snippet: '<pre class="quiz-snippet">AHU-2   SUPPLY FAN FAILURE\n        commanded ON · status OFF\n\nTECH NOTE\n"No freeze stat point on this\n controller, so it is not a\n freeze trip. Starting at the\n drive."</pre>',
         choices: [
             { id: 'a', text: 'Nothing. With no freeze stat point on the controller, a freeze trip is off the list, and the drive is the right place to start.' },
-            { id: 'b', text: 'The wiring. A freeze stat can be in the safety circuit without being landed on an input. Tripped, it stops the fan, and no point names it.', correct: true },
+            { id: 'b', text: 'The wiring. A freeze stat can be in the safety circuit without being landed on an input, so no point names the trip.', correct: true },
             { id: 'c', text: 'The mixed-air trend. A freeze trip shows there first, so a mix that held above the stat\'s setpoint clears the stat.' },
             { id: 'd', text: 'The clock. A tripped stat lets the fan restart once the air warms up, so a fan that is still down points at the motor.' }
         ],

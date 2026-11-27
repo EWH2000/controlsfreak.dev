@@ -128,7 +128,7 @@ module.exports = [
             { id: 'c', text: 'A swapped pair of binary outputs.' },
             { id: 'd', text: 'A loop that settles fine when you nudge it but hunts for twenty minutes after a real load step.', correct: true }
         ],
-        explain: 'The first three are exactly what a walk catches — they are all visible the moment you exercise the point. The fourth is not, because it only appears across real operating swings, and a checkout nudge is not a load step. A walk proves a point moved once; it does not prove the loop holds setpoint at three in the morning, that lead/lag actually rotated on schedule, or that staging does not short-cycle on a marginal deadband. That proof lives in trends. A commissioning record that ends at the walk has proven the plumbing — the trends are what prove the sequence.',
+        explain: 'A wrong-range input, a part-travel actuator, and a swapped output pair are exactly what a walk catches — they are all visible the moment you exercise the point. The hunting loop is not, because it only appears across real operating swings, and a checkout nudge is not a load step. A walk proves a point moved once; it does not prove the loop holds setpoint at three in the morning, that lead/lag actually rotated on schedule, or that staging does not short-cycle on a marginal deadband. That proof lives in trends. A commissioning record that ends at the walk has proven the plumbing — the trends are what prove the sequence.',
         learnMore: { href: '/education/controls-commissioning.html#ccx-trends', label: 'Controls Commissioning — Trend logs, proof over time' },
         tags: ['commissioning', 'trends', 'loops']
     },
