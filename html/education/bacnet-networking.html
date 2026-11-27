@@ -620,7 +620,7 @@ keywords: ms/tp mstp baud bbmd foreign device router subnet broadcast who-is
                     APDU is too big for one frame, how segmentation breaks
                     it up and how the receiver reassembles. Hinted at in
                     the discovery-fails list above, which covers a common
-                    place it surfaces in the field. The mechanics
+                    place segmentation surfaces in the field. The mechanics
                     behind it are application-layer APDU handling, not the
                     addressing-and-routing question this page is built
                     around.</li>
@@ -635,16 +635,16 @@ keywords: ms/tp mstp baud bbmd foreign device router subnet broadcast who-is
                     in a capture, how to spot a Forwarded-NPDU, what an
                     Abort or Reject PDU is telling you. A capture is often
                     the fastest path to a root cause, but reading one is a
-                    tool skill layered on top of the concepts here, so this
-                    page stops at what each message means.</li>
+                    tool skill layered on top of the concepts here, so it
+                    stays out of scope on this page.</li>
                 <li><strong>Alarms and event notifications.</strong> The
                     confirmed and unconfirmed alarm services, the
                     Notification Class object, recipient lists, <button type="button"
                     data-gloss="change-of-value">COV</button>-style
                     push for events. Out of scope here because alarming is
                     an application-layer subject — objects and services,
-                    not addressing or routing. It is BACnet's biggest
-                    object-model surface outside the
+                    not addressing or routing. It is one of BACnet's
+                    biggest object-model surfaces outside the
                     analog/binary/multi-state core.</li>
                 <li><strong>Vendor profile differences.</strong> The
                     practical reality that two BACnet devices, both
