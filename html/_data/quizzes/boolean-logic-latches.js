@@ -23,7 +23,7 @@ module.exports = [
             { id: 'c', text: 'OCCUPIED FALSE, OAT-OK TRUE, FREEZE-TRIP FALSE.' },
             { id: 'd', text: 'OCCUPIED TRUE, OAT-OK FALSE, FREEZE-TRIP FALSE.' }
         ],
-        explain: 'Read the chain as a sentence: run only when occupied AND the outdoor air is OK AND the freeze stat is NOT tripped. The AND needs every input TRUE, and the NOT flips the trip signal to OK-sense — so FREEZE-TRIP must be FALSE for its leg to read TRUE. Only the first combination satisfies all three; each of the others has one leg FALSE, and one FALSE anywhere drops the permit.',
+        explain: 'Read the chain as a sentence: run only when occupied AND the outdoor air is OK AND the freeze stat is NOT tripped. The AND needs every input TRUE, and the NOT flips the trip signal to OK-sense — so FREEZE-TRIP must be FALSE for its leg to read TRUE. Only OCCUPIED TRUE, OAT-OK TRUE, FREEZE-TRIP FALSE satisfies all three; each of the others has one leg FALSE, and one FALSE anywhere drops the permit.',
         learnMore: { href: '/education/boolean-logic-latches.html#permissives', label: 'Boolean Logic & Latches — The permissive chain' },
         tags: ['boolean-logic-latches', 'logic', 'permissives']
     },

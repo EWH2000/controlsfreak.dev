@@ -228,7 +228,7 @@ module.exports = [
             { id: 'c', text: 'The fan decides flow and the boxes decide pressure at their inlets.' },
             { id: 'd', text: 'The BMS schedules both from the occupancy calendar.' }
         ],
-        explain: 'Division of labor is the chapter\'s spine: thirty boxes each chase a CFM for their own room, and the sum of what they take <em>is</em> total flow — nobody upstream commands it. The fan\'s one job is to keep the trunk pressurized enough that every box can take what it wants, which is why its loop watches static and nothing else. It\'s the same division the hydronic arc drew with valves and a pump. Answer (c) is exactly backwards, and it\'s the misread behind half the bad fixes on VAV systems — including cranking a fan to make flow that only the boxes can grant.',
+        explain: 'Division of labor is the chapter\'s spine: thirty boxes each chase a CFM for their own room, and the sum of what they take <em>is</em> total flow — nobody upstream commands it. The fan\'s one job is to keep the trunk pressurized enough that every box can take what it wants, which is why its loop watches static and nothing else. It\'s the same division the hydronic arc drew with valves and a pump. The fan-decides-flow, boxes-decide-pressure answer is exactly backwards, and it\'s the misread behind half the bad fixes on VAV systems — including cranking a fan to make flow that only the boxes can grant.',
         learnMore: { href: '/education/duct-static-control.html#the-whole-path', label: 'Duct Static Control — The Whole Path, One More Time' },
         tags: ['forced-air', 'duct-static']
     },

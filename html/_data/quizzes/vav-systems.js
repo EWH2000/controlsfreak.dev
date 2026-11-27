@@ -109,7 +109,7 @@ module.exports = [
             { id: 'c', text: 'Nothing — the damper holds the position it was commanded to.' },
             { id: 'd', text: 'Trips its high-pressure safety and shuts.' }
         ],
-        explain: 'The zone loop asked for a CFM, not a degrees-open. When inlet pressure rises, the ring reads rising flow and the flow loop closes the damper until the reading sits back on setpoint — the disturbance dies at the box, before the zone feels it. Answers (b) and (c) describe a pressure-<em>dependent</em> box: position fixed, airflow at the mercy of the neighbors. That machine needs rebalancing every time the building changes its mind.',
+        explain: 'The zone loop asked for a CFM, not a degrees-open. When inlet pressure rises, the ring reads rising flow and the flow loop closes the damper until the reading sits back on setpoint — the disturbance dies at the box, before the zone feels it. Delivering more air and holding the commanded position both describe a pressure-<em>dependent</em> box: position fixed, airflow at the mercy of the neighbors. That machine needs rebalancing every time the building changes its mind.',
         learnMore: { href: '/education/vav-systems.html#pressure-independence', label: 'VAV Systems — Why the Box Chases Flow' },
         tags: ['forced-air', 'vav']
     },

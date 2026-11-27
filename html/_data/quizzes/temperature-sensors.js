@@ -58,7 +58,7 @@ module.exports = [
             { id: 'c', text: 'One thermistor and one RTD, so their error curves average out.' },
             { id: 'd', text: 'Any two sensors on the same curve — curve agreement is all that matters.' }
         ],
-        explain: 'Energy is flow × ΔT, so a single degree of disagreement between the pair is a 10% error on a 10 °F (5.6 °C) ΔT — forever, on a number that may feed a bill. That\'s the RTD\'s home turf: matched platinum pairs hold their <em>difference</em> accurately, and platinum drifts far less over years than a thermistor. Thermistors own space and duct sensing, where their big signal and low cost win and a degree of absolute error is invisible. Same-curve agreement (d) doesn\'t help — two sensors can share a curve and still each drift.',
+        explain: 'Energy is flow × ΔT, so a single degree of disagreement between the pair is a 10% error on a 10 °F (5.6 °C) ΔT — forever, on a number that may feed a bill. That\'s the RTD\'s home turf: matched platinum pairs hold their <em>difference</em> accurately, and platinum drifts far less over years than a thermistor. Thermistors own space and duct sensing, where their big signal and low cost win and a degree of absolute error is invisible. Same-curve agreement doesn\'t help — two sensors can share a curve and still each drift.',
         learnMore: { href: '/education/temperature-sensors.html#rtds-vs-thermistors', label: 'Temperature Sensors — RTDs, the Other Family' },
         tags: ['temperature-sensors', 'rtd', 'selection']
     },
@@ -103,7 +103,7 @@ module.exports = [
             { id: 'c', text: 'Meter the ohms with the sensor still landed on the input, so you don\'t disturb the wiring, then look the value up.' },
             { id: 'd', text: 'Enter a calibration offset that makes the graphic match the reference thermometer, and close the call.' }
         ],
-        explain: 'Order matters. Disconnect <em>first</em>: landed, the meter reads the sensor in parallel with the input\'s own circuit, and the number lies. The ohms are the sensor\'s honest testimony; the table (the thermistor-calculator carries it for every common curve) turns them into a temperature; the reference thermometer closes the loop. Swapping first (b) can replace a good sensor to fix a config problem, and an offset (d) that papers over a curve mismatch fixes one temperature while the error keeps moving everywhere else.',
+        explain: 'Order matters. Disconnect <em>first</em>: landed, the meter reads the sensor in parallel with the input\'s own circuit, and the number lies. The ohms are the sensor\'s honest testimony; the table (the thermistor-calculator carries it for every common curve) turns them into a temperature; the reference thermometer closes the loop. Swapping first can replace a good sensor to fix a config problem, and an offset that papers over a curve mismatch fixes one temperature while the error keeps moving everywhere else.',
         learnMore: { href: '/education/temperature-sensors.html#verification', label: 'Temperature Sensors — Prove It With a Meter' },
         tags: ['temperature-sensors', 'verification', 'workflow']
     },
@@ -119,7 +119,7 @@ module.exports = [
             { id: 'c', text: 'Change the configured curve type and watch whether the reading recovers.' },
             { id: 'd', text: 'Switch the input between resistance and voltage modes to reset it.' }
         ],
-        explain: 'The display signature told you <em>what</em> (open circuit → cold rail); metering at both ends tells you <em>where</em>. The circuit is sensor + run + terminations in series, so one measurement at each end splits it: healthy ohms at the head with OL back at the panel means the break is between them — and loose terminations and damaged splices fail far more often than elements do. A curve change (c) can\'t fix an open — no curve maps infinite ohms to a mild morning.',
+        explain: 'The display signature told you <em>what</em> (open circuit → cold rail); metering at both ends tells you <em>where</em>. The circuit is sensor + run + terminations in series, so one measurement at each end splits it: healthy ohms at the head with OL back at the panel means the break is between them — and loose terminations and damaged splices fail far more often than elements do. A curve change can\'t fix an open — no curve maps infinite ohms to a mild morning.',
         learnMore: { href: '/education/temperature-sensors.html#verification', label: 'Temperature Sensors — reading the verdict' },
         tags: ['temperature-sensors', 'verification', 'failure-modes']
     },
@@ -136,7 +136,7 @@ module.exports = [
             { id: 'c', text: 'Lead resistance on the long outdoor run is adding 3 °F — re-land it as a 3-wire input.' },
             { id: 'd', text: 'It\'s within normal sensor tolerance — enter a −3 °F calibration offset and move on.' }
         ],
-        explain: 'The mild-weather clue is the tell: near the 77 °F (25.0 °C) crossover the two curves agree, so the mismatch hid until the weather left the crossover — the signature of a curve problem, not a hardware one. The offset (d) is the tempting wrong fix: the error <em>varies</em> with temperature (zero at 77 °F, ≈3 °F near freezing, ≈5 °F at 0 °F / −17.8 °C), so a constant offset just relocates the lie. And (c) is the RTD failure mode — a 10K thermistor shrugs off a couple of ohms of leads. Match the config to the label; the wire can\'t do it for you.',
+        explain: 'The mild-weather clue is the tell: near the 77 °F (25.0 °C) crossover the two curves agree, so the mismatch hid until the weather left the crossover — the signature of a curve problem, not a hardware one. The offset is the tempting wrong fix: the error <em>varies</em> with temperature (zero at 77 °F, ≈3 °F near freezing, ≈5 °F at 0 °F / −17.8 °C), so a constant offset just relocates the lie. And lead resistance is the RTD failure mode — a 10K thermistor shrugs off a couple of ohms of leads. Match the config to the label; the wire can\'t do it for you.',
         learnMore: { href: '/education/temperature-sensors.html#curve-families', label: 'Temperature Sensors — the quiet failure' },
         tags: ['temperature-sensors', 'curves', 'configuration']
     },
