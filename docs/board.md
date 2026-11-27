@@ -7,23 +7,25 @@
      "Shipped" lines go at the TOP, in plain language. -->
 
 **Week:** Nov 27 – Dec 3
-**Run:** done — Your answers are in. The freeze stat gotcha and the duct static wording are live, and the dead-trunk lesson has its shape and your method. Nothing is open. The next run starts when you say "run it".
+**Run:** done — Freeze-season loose ends are finished: your two answers are on the site, and "freeze stat" is spelled one way everywhere. The quiz engine (item 3) is next, on your green light.
 
 ## The five
 
 - [x] Clear the 15 waiting changes
 - [x] Coil Freeze Protection quiz
 - [ ] Quizzes you can't game
-- [ ] Freeze-season loose ends
+- [x] Freeze-season loose ends
 - [ ] Finding a break in a dead trunk (your story and your method, as a lesson)
 
 ## Your turn
 
-- *Optional, for the freeze lesson:* on a unit where the freeze stat is not landed on a DI, what happens on a trip besides the fan stopping? Do the dampers and the valve still respond, off fan status, or does the unit just sit there?
-- *Optional:* the Start/Stop Commands lesson has an open slot for a real service call: a unit that works in Hand and is dead in Auto, or a morning-after freeze stat waiting on its manual reset. If you have one, tell it when you have a minute.
+- *Optional:* you said the dampers fail closed on that trip. Is that the outdoor (and exhaust) dampers, with the return damper failing open? The lesson uses your words as you gave them; one more word would make it exact.
+- *Optional:* Start/Stop Commands says a safety string with no input on any of its contacts is "the common case". For a freeze stat you said "sometimes". Is "the common case" fair for the string as a whole?
 
 ## Shipped
 
+- **Nov 27** — "Freeze stat" is spelled one way across the site, two words, as you ruled: about 80 places in lessons, tools, quizzes and the glossary. Searching for the old spellings still finds the pages. [#666](https://github.com/EWH2000/controlsfreak.dev/pull/666)
+- **Nov 27** — Your two answers from this afternoon are on the site. Coil Freeze Protection says the trip "may look like a fan failure" when the stat is not on an input, and that on a proper safety circuit the dampers and heating valve lose 24 V: dampers fail closed, heating valve fails open. Your reset-after-a-cold-night calls are the story in Start/Stop Commands. A handful of small fixes went with it: two BACnet lessons no longer promise unbuilt work, and the PID tuner's table names loops, not valves. [#665](https://github.com/EWH2000/controlsfreak.dev/pull/665)
 - **Nov 27** — Your freeze stat gotcha is on the site: the Coil Freeze Protection lesson and its quiz now cover the trip that can show up as a fan failure, because the stat is wired into the safety circuit and not landed on a DI. [#662](https://github.com/EWH2000/controlsfreak.dev/pull/662)
 - **Nov 27** — Duct static is tuned gently, and the PID tuner and the Duct Static lesson now both say why in your terms: a second of sag is not ideal but not generally a problem, where a water-source heat-pump loop's differential pressure dropping too low trips the heat pumps. The tuner no longer says fast loops can take more gain. [#663](https://github.com/EWH2000/controlsfreak.dev/pull/663)
 - **Nov 27** — New: the Coil Freeze Protection quiz. Fifteen questions drawn from the lesson, linked both ways with it (v3.93.0). [#660](https://github.com/EWH2000/controlsfreak.dev/pull/660)
@@ -49,7 +51,12 @@
 - The Duct Static lesson told readers to drive the tuner's fan scene and feel how little gain it wants. I ran the tuner: on gain and reset alone that scene never overshoots, however hot you set it. I changed the lesson's wording now; fixing the scene itself is on the Menu, with your answer on what can make a real one hunt.
 - Item 5 was "The case-file format". Your answer pointed at a lesson instead, and you approved that shape, so that is what it now says.
 - The trunk lesson will say "the supervisor or router" where you named one vendor's controller. That is what the MS/TP lesson already calls it, and it keeps the page vendor-neutral.
-- A second agent reviewed both changes and this record before they merged. Most of what it caught was me saying more than you had: "rarely a problem" where you said "not generally", a check order you never gave. It also caught a tuner sentence that pointed the wrong way. Those were fixed before merge. What it raised and I left alone is logged for the loose-ends run, including two spots where the freeze lesson still says a little more than you did: the alarm "shows up", where you said it "may look like a fan fail", and the safety string is "the only place it is wired", where you said only "not hooked to a DI".
+- A second agent reviewed both changes and this record before they merged. Most of what it caught was me saying more than you had: "rarely a problem" where you said "not generally", a check order you never gave. It also caught a tuner sentence that pointed the wrong way. Those were fixed before merge. What it raised and I left alone was logged for the loose-ends run. The two spots where the freeze lesson said a little more than you did ("shows up", "the only place it is wired") are fixed now.
+- Your story went into Start/Stop Commands in your words, first person, with nothing added inside it.
+- One "freeze-stat" stays hyphenated: the freeze lesson quotes ASHRAE Guideline 36 word for word, and a quotation keeps its source's spelling.
+- The MS/TP lesson no longer says a bus simulator is "on the roadmap". It is still on the Menu below; the page just does not announce it.
+- The freeze tool's blank-field hint says "this tool starts at 38 °F" instead of calling 38 "the common default".
+- The glossary tip is headed "freeze stat" and says "Also written freezestat".
 
 ### Menu for the next five
 

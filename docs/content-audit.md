@@ -3536,7 +3536,7 @@ research record's device-band evidence is §2 *Freeze-stat practice*
 is *Still not established*. A different string on the tool is logged as
 #102.
 
-### 100. pid-tuner.html's Medium row lists two valve outputs as loops — the #95 shape one row below the fixed one *(flagged 2026-10-06, Batch A pid-loops refuter)* *(scheduled 2026-11-26 — the freeze-season loose-ends run; not folded into PR #641)*
+### 100. pid-tuner.html's Medium row lists two valve outputs as loops — the #95 shape one row below the fixed one *(flagged 2026-10-06, Batch A pid-loops refuter)* *(scheduled 2026-11-26 — the freeze-season loose-ends run; not folded into PR #641)* *(addressed 2026-11-27 · PR #665, merged)*
 
 **Location:** `html/simulators/pid-tuner.html:389`, the Loop Speed
 Reference table's Medium row — *"Discharge air temperature, chilled-water
@@ -3546,12 +3546,13 @@ the chilled- and hot-water valves are what the discharge-air loop
 commands, not loops of their own. **Verification:** confirmed by reading
 the row on PR #641's branch. **Suggested direction:** "Discharge-air
 temperature (held by the chilled- or hot-water valve)", matching the
-fixed Fast row's phrasing. Also noted: at 375 px the table scrolls
+fixed Fast row's phrasing. **Addressed 2026-11-27 (PR #665)** in
+those words. Also noted: at 375 px the table scrolls
 sideways inside `.table-scroll` with the examples column ~70 px wide, so
 the longer Fast cell wraps to ~9 lines — pre-existing wrapper behaviour,
 cosmetic.
 
-### 101. bacnet-networking.html's not-covered intro says the topics are out of scope "across" the BACnet lessons while its first bullet says MS/TP has its own page *(flagged 2026-10-06, Batch A bacnet-scope refuter)* *(scheduled 2026-11-26 — the freeze-season loose-ends run, with codebase-issues #333)*
+### 101. bacnet-networking.html's not-covered intro says the topics are out of scope "across" the BACnet lessons while its first bullet says MS/TP has its own page *(flagged 2026-10-06, Batch A bacnet-scope refuter)* *(scheduled 2026-11-26 — the freeze-season loose-ends run, with codebase-issues #333)* *(addressed 2026-11-27 · PR #665, merged)*
 
 **Location:** `html/education/bacnet-networking.html:607-608` (the
 intro above the *What this page didn't cover* list) vs `:614-618` (the
@@ -3565,8 +3566,11 @@ owns alarms. **Verification:** confirmed by reading all three pages.
 note alarms/event notification as unowned across the BACnet shelf in
 the friction file rather than promising it anywhere. The promise-shaped
 copy on the two sibling lessons is codebase-issues #333.
+**Addressed 2026-11-27 (PR #665):** the intro reads "out of scope on
+this page", and the friction file's BACnet note records that no lesson
+owns alarms and event notification.
 
-### 102. coil-freeze-risk.html's mute text calls 38 °F "the common default" while the lesson says stats ship set around 35 °F *(flagged 2026-10-06, Batch A freeze-band refuter)*
+### 102. coil-freeze-risk.html's mute text calls 38 °F "the common default" while the lesson says stats ship set around 35 °F *(flagged 2026-10-06, Batch A freeze-band refuter)* *(addressed 2026-11-27 · PR #665, merged)*
 
 **Location:** `html/tools/coil-freeze-risk.html:484`, the muted hint
 *"38 °F (3.3 °C) is the common default"*. **Lens:** working engineer.
@@ -3576,7 +3580,9 @@ reaching 38 at the top; the tool means its own input default. The
 `bandTxt` string the owner held as-is under #99 is a different string.
 **Verification:** confirmed by grep. **Suggested direction:** "a common
 field setting" or "this tool's starting point". Tool page → owner
-merges.
+merges. **Addressed 2026-11-27 (PR #665):** the hint reads *"this tool
+starts at 38 °F (3.3 °C)"* — what the page does, and no field default.
+The input's starting value is 38 in US units and 3.3 in metric.
 
 ### 103. air-handlers.html's sensor-strip widget models a mixed-air low-limit but labels it freeze-stat territory *(flagged 2026-10-06, Batch A air-handlers refuter; owner glance)* *(ruled 2026-11-26 — keep the meaning; the label stays)*
 
@@ -3656,7 +3662,11 @@ brief; none made a merged sentence false. One needs the owner.
   broadcasts" is exact); "how to spot a Forwarded-NPDU" is listed as
   uncovered though the page gives its function byte and the quiz asks
   it. With #101 and codebase-issues #333, one pass over that list in the
-  loose-ends run. (Two more the same review raised — an unsupported
+  loose-ends run. **Done 2026-11-27 (PR #665):** "no IP broadcasts";
+  the Forwarded-NPDU item is off the not-covered list. Its reviewer
+  noted the same overlap one clause over: the list still names "what a
+  Who-Is looks like in a capture", and the page's frame figure is a
+  Forwarded-NPDU Who-Is on the wire. (Two more the same review raised — an unsupported
   superlative and an over-broad "this page stops at" clause — were fixed
   before PR #643 merged.)
 - **Quiz banks.** `hydronic-loops`: the `injection-pump-stopped` snippet
@@ -3685,7 +3695,8 @@ brief; none made a merged sentence false. One needs the owner.
   "the fan is the biggest motor on the unit" holds for a chilled-water
   air handler, not a packaged DX unit.
 - **BACnet Networking, one more.** "A Wireshark or Yabe walkthrough"
-  pairs a capture tool with a BACnet explorer.
+  pairs a capture tool with a BACnet explorer. **Done 2026-11-27 (PR
+  #665):** "A Wireshark walkthrough".
 - **Home and README.** `README.md` calls the BACnet error descriptions
   "hand-authored" (meaning not script-imported), which now sits beside
   the home page's plain statement that AI does much of the drafting.
@@ -3703,15 +3714,18 @@ brief; none made a merged sentence false. One needs the owner.
   beat for one more question. (The sixteenth went to the owner's own
   gotcha, `cfp-trip-reads-as-fan-failure`, PR #662, 2026-11-27; the
   five-of-twelve count above is of the original fifteen.)
-  **A question for the owner that PR #662's review raised, on the
-  board as a *Your turn* line since 2026-11-27:** the lesson's first layer says the sequence then closes the
+  **A question for the owner that PR #662's review raised — answered
+  2026-11-27 (rulings §22.1; PR #665):** the lesson's first layer says the sequence then closes the
   outdoor dampers and drives the heating valve open, and its third
   can start the pump on the trip. Where the trip is the trigger, both
   assume the controller is told. On a
   unit where the stat is not landed on an input, what does the trip
-  response look like? The lesson says nothing about it until he answers.
+  response look like? His answer: on a proper safety circuit the dampers
+  and the heat valve lose 24 V; the dampers fail closed and the heat
+  valve fails open. *Reading the Trip* now says so, with his condition.
   **Left for the freeze-season loose-ends run, from the blind review of
-  PR #662's final head** (none blocked the merge): the new paragraph and
+  PR #662's final head — all addressed 2026-11-27 (PR #665; the README
+  bullet in the run's record PR)** (none had blocked the merge): the new paragraph and
   the question's explanation say a fan-failure alarm *"shows up"* where
   the owner said it *"may look like a fan fail"*, which assumes the unit
   has fan proof with an alarm on it; the paragraph says the safety
@@ -3726,5 +3740,39 @@ brief; none made a merged sentence false. One needs the owner.
   **Reverse links unpaid, payer named:** `tools/coil-freeze-risk.html`
   and `simulators/ddc-workbench.html` list the lesson and sibling
   quizzes in `relatedLinks` but not this quiz; the freeze-season
-  loose-ends run pays both.
+  loose-ends run pays both. **Paid 2026-11-27 (PR #665)**, with
+  Start/Stop Commands and Status & Proof linking back to the lesson.
+- **Loose-ends run (PR #665 and #666, three blind reviews, nothing
+  blocking).** Left as built:
+  - `cfp-trip-reads-as-fan-failure`'s keyed choice is now the longest of
+    its four (138 characters against 127). A trim that stays inside the
+    owner's words: *"A freeze stat can be in the safety circuit but not
+    on an input."* For the quiz run.
+  - The new sentence says *"the dampers fail closed"* (his words); the
+    lesson's first layer and Commanding Actuators both say the
+    *outdoor* dampers, and the drawing shows a return damper too.
+    "The outdoor dampers" would say less than he did and agree with
+    both.
+  - The lesson now carries two routes to the same end state — "the
+    sequence then closes the outdoor dampers" in the first layer, the
+    loss of 24 V in *Reading the Trip* — without connecting them.
+  - `start-stop-commands.html` calls an unpointed safety string *"the
+    common case"*; the freeze lesson, one click away, says *"Sometimes"*
+    for a freeze stat not on an input. If "the common case" is not the
+    owner's, it is a short question for him.
+  - His story says a call can be *"as simple as"* resetting the stat;
+    the freeze lesson says to treat the trip as evidence before anyone
+    resets it. The new related link is the only bridge. Nothing can be
+    added inside his callout.
+  - The story holds that page's first "front end", unglossed; the
+    glossed one is two paragraphs down.
+  - `bacnet-mstp.html` now states another page's UI ("its NET terminals
+    are greyed out"), which no spec pins; on screen the group reads
+    "Network" with rows NET+ / NET− / REF.
+  - The Coil Freeze Risk Checker's hint hard-codes 38 / 3.3, which live
+    in the input's `value`; no spec reads the hint.
+  - `building-pressure.js`'s header still says every `learnMore` lands
+    on an `<h2>`; one now lands on a callout. `smoke.spec.js`'s anchor
+    loop for that lesson does not list the new id (`link-integrity`
+    covers it).
 
