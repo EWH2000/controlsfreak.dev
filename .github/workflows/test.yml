@@ -26,11 +26,15 @@ name: test
 # (opened / synchronize / reopened) — so the child showed no `test`
 # check at all, `mergeStateStatus` read CLEAN, and it merged untested.
 # Two chain PRs did exactly that on 2026-10-06. So:
-#   - pull_request also listens for `edited`, and the job's `if:` lets
-#     an edit through ONLY when it changed the base branch
-#     (`github.event.changes.base` is present on a retarget, absent on
-#     a title/body edit) — a retarget runs the suite, a typo fix in the
-#     PR description does not;
+#   - pull_request also listens for `edited`, so a retarget runs the
+#     suite. There is deliberately NO job-level `if:` narrowing that to
+#     base changes (there was one until 2026-11-26). A job skipped by a
+#     conditional reports Success to a required status check, and `main`
+#     now requires `test` (repository ruleset `main-requires-test`), so
+#     a title/body edit stamped a passing `test` on a head whose real
+#     run could still be pending or failed. Every `test` check is now a
+#     real run; the price is that editing a PR's title or body re-runs
+#     the suite, so edit the body BEFORE the last push, not after;
 #   - push to main runs the suite on main itself after every merge, so
 #     whatever reached main by any route (a retarget missed some other
 #     way, a direct push, a merge of two individually green PRs that
@@ -48,8 +52,8 @@ permissions:
 
 jobs:
   test:
-    # Skip a title/body edit; run a base-branch retarget (see header).
-    if: github.event_name != 'pull_request' || github.event.action != 'edited' || github.event.changes.base != null
+    # No `if:` here on purpose — a skipped job passes a required check
+    # (see header).
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.63.0-noble
@@ -70,7 +74,10 @@ jobs:
 
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444  # v5
         with:
-          node-version: lts/*
+          # Pinned, not `lts/*`. The floating alias moved CI from Node 24
+          # to 26 between two runs (26 entered LTS 2026-10-28) with no
+          # commit to bisect. Bump it deliberately, in its own PR.
+          node-version: 24
           cache: npm
 
       - run: npm ci
