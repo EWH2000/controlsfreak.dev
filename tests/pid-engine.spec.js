@@ -73,6 +73,9 @@ test('the duct-static scene takes the Too Hot preset without overshoot (prose pi
     expect(Math.max(...gains)).toBe(kc);
     const r = simulatePid(PID_PROC.fast, kc, ki, kd);
     expect(r.overshoot).toBe(0);
+    // "Takes" means it also settles: a preset that gained rate can hold
+    // overshoot at zero while the loop cycles under setpoint all window.
+    expect(r.settled).not.toBeNull();
 });
 
 test('adding integral removes the offset (med, Kc=2, 1 repeat/min)', () => {

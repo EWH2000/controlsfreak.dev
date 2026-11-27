@@ -259,10 +259,10 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 they <button type="button" data-gloss="hunting">hunt</button>, and this exact loop — supply fan VFD, duct static — is one of the scenes in the <a
                 href="/simulators/pid-tuner.html">PID tuner</a>, the hands-on pair for this page. One caution when
                 you drive it: the tuner's model of this loop is a clean one, and it takes even the tuner's hottest
-                preset without overshoot. Take the loop's speed from it, not a gain. And gentle is the field's choice
-                for a second reason, beyond the loop math: a sag costs little here. If duct static drops for a second
-                it is not generally a problem. Compare the differential pressure on a water-source heat-pump loop, where the
-                heat pumps trip if it drops too low — that loop is tuned harder on purpose.
+                preset without overshoot. Take the loop's speed from it, not a gain. And there is a second reason to
+                tune this loop gently, beyond the loop math: what a miss costs. If duct static drops for a second it is
+                not ideal, but it is not generally a problem. Compare the differential pressure on a water-source
+                heat-pump loop, where the heat pumps trip if it drops too low — that loop is tuned harder on purpose.
             </p>
 
             <p>
