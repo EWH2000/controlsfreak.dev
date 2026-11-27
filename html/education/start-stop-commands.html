@@ -306,10 +306,15 @@ keywords: BO binary output start stop HOA hand off auto interposing relay contac
                 The call comes in as "the fan won't run," and the first move isn't a meter — it's the HOA, because one flip of that switch cuts the whole chain into two halves and tells you which half to hunt in. <strong>Runs in Hand, dead in Auto:</strong> Hand just proved everything downstream of the HOA — the safety string, the contactor coil, control power, the starter, the motor itself — in one move. The fault is upstream, in the Auto leg: the BO (is the point actually commanding? check it before touching a wire), the interposing relay (is the coil getting its 24 V? is it clicking? is the contact actually closing?), or the wiring between them. <strong>Dead in Hand and Auto both:</strong> now the upstream half is exonerated instead — nothing the controller does or doesn't do explains a unit that won't run in Hand. Hunt downstream: walk the safety string contact by contact until you find the open one (freeze stats are commonly manual-reset — a trip at <span data-us="38&nbsp;°F" data-metric="3.3&nbsp;°C">38&nbsp;°F</span> overnight stays tripped until someone presses the button), then the contactor coil, then control power itself.
             </p>
 
-            <!-- // anecdote slot: a works-in-Hand-dead-in-Auto service call (or the
-                 morning-after manual-reset freeze stat) — owner to supply -->
+            <!-- Owner anecdote (supplied 2026-11-27), in his words: the
+                 morning-after freeze stat reset, and its software twin. -->
+            <div class="callout" style="margin-top:1.25rem;">
+                <p style="margin:0;line-height:1.7;">
+                    <strong>True story, many times over.</strong> I have been on tons of service calls where it was as simple as putting eyes on the unit and resetting the freeze stat after a very cold night. Sometimes it was even as simple as resetting software freeze protection latching logic the user missed on the front end.
+                </p>
+            </div>
 
-            <p>
+            <p style="margin-top:1.25rem;">
                 The safety string deserves one more beat, because a fair question hides in it: the controller already knows the discharge temperature — why not let the program catch a freeze condition and stop the fan in software? Some sequences do exactly that, as a first line. But the hardwired string exists for every moment software can't be trusted with: the controller powered down, the program mid-download, the network dark, the point overridden by someone troubleshooting three floors away. A trip that protects people or destroys equipment when missed — the firestat, the freeze stat guarding a coil full of water — has to outrank <em>all</em> of that, and copper in series with the coil is the only authority that does. That's the dividing line: <strong>life-safety and equipment-destroying trips live in copper; software <button type="button" data-gloss="interlock">interlocks</button> handle the polite coordination</strong> — sequencing, optimization, the <button type="button" data-gloss="interlock">interlocks</button> that make the plant graceful rather than safe. The BMS gets <em>told</em> about a hardwired trip (ideally through a status or alarm point); it doesn't get a vote in it.
             </p>
 
@@ -332,6 +337,7 @@ keywords: BO binary output start stop HOA hand off auto interposing relay contac
                 lessons: [
                     {href: '/education/controller-wiring.html', label: 'Controller Wiring'},
                     {href: '/education/status-and-proof.html', label: 'Status & Proof'},
+                    {href: '/education/coil-freeze-protection.html', label: 'Coil Freeze Protection'},
                     {href: '/education/vfds.html', label: 'VFDs'}
                 ],
                 quizzes: [

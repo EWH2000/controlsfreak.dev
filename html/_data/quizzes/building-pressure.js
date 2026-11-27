@@ -25,8 +25,7 @@
 // break the ledger plus the VAV wrinkle, and the measuring section:
 // probe placement, a windward outdoor reference, and building static
 // versus duct static. The duct-static question tests the "Not the
-// same pressure" callout, which carries no id of its own, so it
-// deep-links #measuring-it, the section that hosts it.
+// same pressure" callout and deep-links its id, #not-the-same-pressure.
 
 module.exports = [
     // ── The air ledger ─────────────────────────────────────
@@ -230,7 +229,7 @@ module.exports = [
             { id: 'd', text: 'That the building sits near a fiftieth of it, about +0.03 in. w.c. (+7.5 Pa) — the usual ratio.' }
         ],
         explain: 'Two different pressures: duct static is the supply fan\'s control variable, measured inside the ductwork in whole inches; building static is the envelope\'s residual, measured space-to-outdoors in hundredths. Different magnitude, different sensor, different loop, different failure symptoms — a healthy duct static says nothing about the ledger. The doors are the witness here, and they say positive: look at the relief path and the dampers, not the fan\'s loop. (The lesson\'s fifty-to-one comparison shows how small the building signal is; it is not a relationship between the two.)',
-        learnMore: { href: '/education/building-pressure.html#measuring-it', label: 'Building Pressure — Measuring a Whisper' },
+        learnMore: { href: '/education/building-pressure.html#not-the-same-pressure', label: 'Building Pressure — Not the same pressure' },
         tags: ['forced-air', 'building-pressure', 'sensors', 'duct-static']
     },
 ];
