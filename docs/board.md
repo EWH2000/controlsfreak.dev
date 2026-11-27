@@ -20,7 +20,7 @@
 ## Your turn
 
 - *Optional, for the freeze lesson:* on a unit where the freeze stat is not landed on a DI, what happens on a trip besides the fan stopping? Do the dampers and the valve still respond, off fan status, or does the unit just sit there?
-- *Optional:* the Start/Stop lesson has an open slot for the morning you walked up to a unit and found the freeze stat latched out. Tell me that one when you have a minute.
+- *Optional:* the Start/Stop Commands lesson has an open slot for a real service call: a unit that works in Hand and is dead in Auto, or a morning-after freeze stat waiting on its manual reset. If you have one, tell it when you have a minute.
 
 ## Shipped
 
