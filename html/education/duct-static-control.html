@@ -262,7 +262,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
                 preset without overshoot. Take the loop's speed from it, not a gain. And there is a second reason to
                 tune this loop gently, beyond the loop math: what a miss costs. If duct static drops for a second it is
                 not ideal, but it is not generally a problem. Compare the differential pressure on a water-source
-                heat-pump loop, where the heat pumps trip if it drops too low — that loop is tuned harder.
+                heat-pump loop, where the heat pumps trip if it drops too low — that loop is tuned more aggressively.
             </p>
 
             <p>
@@ -592,7 +592,7 @@ keywords: duct static pressure supply fan vfd speed control static sensor placem
 
             <p class="ref-note">
                 What the widget holds still: loop dynamics (speeds land instantly — the
-                <a href="/simulators/pid-tuner.html">PID tuner</a> has the dynamics and the tuning), trim &amp; respond's
+                <a href="/simulators/pid-tuner.html">PID tuner</a> has the dynamics), trim &amp; respond's
                 slow walk (reset shows where the setpoint lands, not the minutes of trimming), and the box side (thirty
                 boxes compressed into one demand slider — their own story is the
                 <a href="/education/vav-systems.html">last page</a>). The high-static cutout isn't modeled either;
