@@ -430,7 +430,7 @@
 //                      end', 'high-latent designs') is a different
 //                      lexical item; never marked.
 //   NAME-REFERENCE   — a proper-name reference to a page's own example
-//                      ('load its freeze-stat example') is a name, not
+//                      ('load its freeze stat example') is a name, not
 //                      a use; never marked.
 //   JS-PAINTED PROSE — widget-anecdote innerHTML strings render real
 //                      prose the build-time transform can never reach
@@ -1301,7 +1301,7 @@ module.exports = {
     // device and a bare 'low-limit' side by side (coil-freeze-risk:277,
     // economizers:398, minimum-outdoor-air:289-290,
     // economizer-ratio:239). Never mark anaphoric 'the stat'.
-    // NAME-REFERENCE applies (function-blocks:196 'its freeze-stat
+    // NAME-REFERENCE applies (function-blocks:196 'its freeze stat
     // example' skips). Owners: coil-freeze-risk (the tool's whole
     // frame), start-stop-commands (defines it inside the safety-string
     // beat + manual-reset teaching), boolean-logic-latches (the
@@ -1312,12 +1312,12 @@ module.exports = {
     // end to end (element, wiring, setpoint band, manual reset), so a
     // mark there would shadow the lesson's own teaching.
     'freezestat': {
-        term: 'freezestat',
+        term: 'freeze stat',
         def: 'The hardwired coil-protection safety — a stat whose long '
            + 'capillary element snakes across the coil face and trips '
            + 'on the coldest foot of it, stopping the fan and closing '
            + 'dampers before a water coil can freeze and burst. Also '
-           + 'called a freeze stat or low-limit stat, and commonly '
+           + 'written freezestat, or called a low-limit stat, and commonly '
            + 'manual-reset: a trip stays tripped until a person finds '
            + 'out why.',
         owners: [
@@ -2099,8 +2099,8 @@ module.exports = {
     // 'low-limit override' where the referent is the economizer's
     // mixed-air floor. NEVER bare 'low-limit' / 'low limit' — a
     // reserved headword (glossaryExcluded.js); the freezestat sense is
-    // pre-paid by freezestat's own def ('Also called a freeze stat or
-    // low-limit stat'), and controls-commissioning:128's 'low-limit
+    // pre-paid by freezestat's own def ('Also written freezestat, or
+    // called a low-limit stat'), and controls-commissioning:128's 'low-limit
     // thermostat' sits two words after a live freezestat button.
     // air-mixing:362's 'low-limit hardware' is a DELIBERATE NEAR-MISS
     // the written rule does not reach — hardware there means the

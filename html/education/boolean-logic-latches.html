@@ -226,7 +226,7 @@ keywords: AND OR NOT XOR latch SR interlock permissive safety truth table
             </p>
 
             <p>
-                Walk the freeze-stat case through and you'll see why. The stat trips on a
+                Walk the freeze stat case through and you'll see why. The stat trips on a
                 near-freezing coil, the permit drops, the fan stops. But with no airflow
                 across it, the coil drifts back toward room temperature — so the freeze stat
                 clears itself. If the trip were plain combinational logic, the permit would
@@ -356,7 +356,7 @@ keywords: AND OR NOT XOR latch SR interlock permissive safety truth table
             <p>
                 Everything on this page is running, right now, in the
                 <a href="/simulators/function-block-editor.html">Function-Block Editor</a> —
-                load its <em>freeze-stat shutdown</em> example and you're looking at this
+                load its <em>freeze stat shutdown</em> example and you're looking at this
                 lesson as a live sheet: a freeze binary input sets an <code>SR latch</code>,
                 a <code>NOT</code> drops the fan output, and an alarm output lights. Trip the
                 freeze stat and watch the latch catch it. Then clear the stat — and watch the

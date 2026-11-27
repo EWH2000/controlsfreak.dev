@@ -199,8 +199,8 @@ module.exports = {
               + 'attaches to six-plus referents taught on different '
               + 'pages, plus the BACnet Low_Limit property (rendered '
               + 'from bacnetEnums.js). The freezestat sense is pre-paid '
-              + 'by freezestat\'s own def (\'Also called a freeze stat '
-              + 'or low-limit stat\'); the economizer floor ships '
+              + 'by freezestat\'s own def (\'Also written freezestat, '
+              + 'or called a low-limit stat\'); the economizer floor ships '
               + 'compound-keyed as mixed-air-low-limit.',
         ruled: '2026-08-20',
     },

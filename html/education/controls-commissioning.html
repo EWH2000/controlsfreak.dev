@@ -4,7 +4,7 @@ description: Point-to-point checkout — verifying a controller does what its se
 canonical: https://controlsfreak.dev/education/controls-commissioning.html
 nav: education
 category: fundamentals
-keywords: point-to-point checkout functional testing startup sequence of operations override trend verification BAS commissioning interlock freezestat
+keywords: point-to-point checkout functional testing startup sequence of operations override trend verification BAS commissioning interlock freezestat freeze-stat freeze stat
 ---
 {% extends "layouts/page.njk" %}
 {% from "related-links.njk" import relatedLinks %}
@@ -125,11 +125,11 @@ keywords: point-to-point checkout functional testing startup sequence of operati
             <h2 class="subhead" id="ccx-interlocks">Interlocks and sequence logic, against design intent</h2>
 
             <p>
-                Proving each point moves is necessary and not sufficient. The sequence is a set of <em>relationships</em> — this condition trips, so that output responds — and those get verified by making the triggering condition real and confirming the programmed reaction, not by confirming the trigger point merely reads. Trip the <button type="button" data-gloss="freezestat">freezestat</button> (a low-limit thermostat set just above freezing) and confirm the sequence does everything it promises: fan off, outside-air damper closed, heating valve driven open, alarm annunciated — the whole response, not just "the freeze point went to ALARM." Trip the <button type="button" data-gloss="high-static-cutout">high-static cutout</button> and confirm the supply fan actually stops. Put the unit in unoccupied mode and confirm setbacks, damper positions, and fan state all follow. Drive a reset input across its range and confirm the reset output walks the way the sequence draws it.
+                Proving each point moves is necessary and not sufficient. The sequence is a set of <em>relationships</em> — this condition trips, so that output responds — and those get verified by making the triggering condition real and confirming the programmed reaction, not by confirming the trigger point merely reads. Trip the <button type="button" data-gloss="freezestat">freeze stat</button> (a low-limit thermostat set just above freezing) and confirm the sequence does everything it promises: fan off, outside-air damper closed, heating valve driven open, alarm annunciated — the whole response, not just "the freeze point went to ALARM." Trip the <button type="button" data-gloss="high-static-cutout">high-static cutout</button> and confirm the supply fan actually stops. Put the unit in unoccupied mode and confirm setbacks, damper positions, and fan state all follow. Drive a reset input across its range and confirm the reset output walks the way the sequence draws it.
             </p>
 
             <p>
-                Hardwired safeties get special attention, because they exist for exactly the moments the software can't be trusted. A <button type="button" data-gloss="freezestat">freezestat</button> or high-static switch wired to drop the fan through hardware has to be proven to drop the fan <em>through hardware</em> — controller watching, but not in the path. The whole point of a hardwired safety is that it works when the software's number is a lie: a <button type="button" data-gloss="railed">railed</button> sensor, a crashed controller, a value stuck where nothing downstream can see it's wrong. Test it the way it will be asked to work.
+                Hardwired safeties get special attention, because they exist for exactly the moments the software can't be trusted. A <button type="button" data-gloss="freezestat">freeze stat</button> or high-static switch wired to drop the fan through hardware has to be proven to drop the fan <em>through hardware</em> — controller watching, but not in the path. The whole point of a hardwired safety is that it works when the software's number is a lie: a <button type="button" data-gloss="railed">railed</button> sensor, a crashed controller, a value stuck where nothing downstream can see it's wrong. Test it the way it will be asked to work.
             </p>
 
             <!-- ───────────────── 5 · Trends ───────────────── -->

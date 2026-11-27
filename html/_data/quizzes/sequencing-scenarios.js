@@ -97,7 +97,7 @@ module.exports = [
             { id: 'c', text: 'The supply fan should run faster to warm the air.' },
             { id: 'd', text: 'The return dampers should also open fully.' }
         ],
-        explain: 'Free cooling has a floor. A correct economizer sequence carries a <strong>low-limit</strong>: a mixed-air (or discharge) temperature override that forces the outdoor dampers back toward minimum position when mixed-air drops too low, plus a freeze-stat as the hard backstop, plus an outdoor-air-temperature lockout that disables economizing below a setpoint. Without them, the loop happily drives the dampers wide chasing a cold supply target on a frigid morning and freezes a hydronic coil. The economizer\'s job is "use cool air <em>when safe</em>," and the low-limit is the "when safe" half.',
+        explain: 'Free cooling has a floor. A correct economizer sequence carries a <strong>low-limit</strong>: a mixed-air (or discharge) temperature override that forces the outdoor dampers back toward minimum position when mixed-air drops too low, plus a freeze stat as the hard backstop, plus an outdoor-air-temperature lockout that disables economizing below a setpoint. Without them, the loop happily drives the dampers wide chasing a cold supply target on a frigid morning and freezes a hydronic coil. The economizer\'s job is "use cool air <em>when safe</em>," and the low-limit is the "when safe" half.',
         learnMore: { href: '/education/economizers.html#field-failures', label: 'Economizers — Where Economizers Fail in the Field' },
         tags: ['sequencing-scenarios', 'economizer', 'freeze-protection']
     },
@@ -137,7 +137,7 @@ module.exports = [
         choices: [
             { id: 'a', text: 'Low return water prevents the pumps from overheating.' },
             { id: 'b', text: 'A condensing boiler only reaches its high efficiency when return water is cool enough (roughly below ~130°F / ~54 °C) to condense flue-gas water vapor and reclaim its latent heat; high return water keeps it out of the condensing region.', correct: true },
-            { id: 'c', text: 'Low return water is required to satisfy the freeze-stat.' },
+            { id: 'c', text: 'Low return water is required to satisfy the freeze stat.' },
             { id: 'd', text: 'It has no effect — efficiency depends only on supply temp.' }
         ],
         explain: 'A condensing boiler earns its name (and its efficiency premium) by cooling the flue gas enough to condense the water vapor in it and capture that latent heat — but that only happens when the <strong>return</strong> water is below the flue-gas dew point, roughly the mid-120s to low-130s °F. Run the return hot and the boiler never condenses; you\'ve bought a condensing boiler and operate it like a conventional one. So the sequence pairs outdoor-air-reset (lowest supply temp that still meets load) with system design that keeps return water low — wide ΔT, no needless bypass — to stay in the condensing band as much of the season as possible.',

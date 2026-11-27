@@ -165,13 +165,13 @@ Calculators, converters, and lookups — open one, get an answer.
   leaving-air state, flagging the apparatus dew point when a latent
   load drives the leaving point onto the saturation curve. Cooling
   or heating coil; sea-level pressure.
-- **Coil Freeze Risk Checker** — freezestat-season triage. Place the
+- **Coil Freeze Risk Checker** — freeze stat season triage. Place the
   mixed air (straight OAT/RAT/%OA average, or the MA-T straight off
   the trend), set it against what's actually in the tubes — plain
   water, ethylene or propylene glycol at strength (freeze *and* burst
   points — slush flows without splitting), or trapped steam
   condensate — and read a margin plus a protection verdict. The
-  freezestat setpoint drives the top band, so "the stat was right to
+  freeze stat setpoint drives the top band, so "the stat was right to
   trip" is a possible answer; flow state is categorical (full /
   modulating low / valve closed / pump off) because tube velocity
   isn't computable without circuiting. Steam path teaches the
@@ -403,7 +403,7 @@ paired with an Education explainer for the underlying concepts.
   as a short tag and takes an instance name you type in the
   inspector, so its head reads `TAG · Name` — `A>B · Cool Set`
   rather than another anonymous box. Worked examples built in,
-  from a freeze-stat lockout and the direct/reverse-acting
+  from a freeze stat lockout and the direct/reverse-acting
   thermostat pair to a proof-of-flow alarm and an OAT hot-water
   reset. Pairs with the Function-Block Basics explainer.
 - **Equipment Staging Sequencer** — a continuously-running parallel
@@ -660,7 +660,7 @@ techs new to the industry and anyone wanting a refresh.
   Atlanta against a minimum-OA unit in Boston); why hand mixed-air
   math runs about 2 °F warm on a cold day (volume share vs dry-air
   mass, re-derived through the shared psychro engine); the protection
-  stack in the tool's order — manual-reset freezestat, mixed-air
+  stack in the tool's order — manual-reset freeze stat, mixed-air
   low-limit override, pump-on-freeze, glycol at burst strength,
   draining, winter-safe minimums — on a static capstone drawing of
   where each one lives; why the economizer sequence differs by
@@ -761,7 +761,7 @@ techs new to the industry and anyone wanting a refresh.
   signal, why safeties latch instead of self-clearing (the
   set-dominant SR latch and the manual-reset idiom, timed out on a
   four-trace diagram), and XOR as the command/status disagreement
-  detector. Capstones into the editor's freeze-stat example. Pairs
+  detector. Capstones into the editor's freeze stat example. Pairs
   with a Boolean Logic & Latches quiz.
 - **Comparators & Deadband** — how a number becomes a decision: the
   comparator family as the analog-to-digital bridge (why > vs ≥ never

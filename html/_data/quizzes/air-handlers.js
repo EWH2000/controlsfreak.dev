@@ -193,11 +193,11 @@ module.exports = [
     {
         type: 'numeric',
         id: 'ah-min-oa-winter-safe',
-        prompt: 'A 10 °F (−12.2 °C) winter morning; return air comes back at 75 °F (23.9 °C). The lesson calls the 20 % minimum position winter-safe by arithmetic — how high would the outside-air fraction have to climb before the mix reached the 38 °F (3.3 °C) freeze-stat line? Enter the answer in %.',
+        prompt: 'A 10 °F (−12.2 °C) winter morning; return air comes back at 75 °F (23.9 °C). The lesson calls the 20 % minimum position winter-safe by arithmetic — how high would the outside-air fraction have to climb before the mix reached the 38 °F (3.3 °C) freeze stat line? Enter the answer in %.',
         answer: 57,
         tolerance: 1,
         unit: '%',
-        explain: 'Solve the blend for the fraction: (75 − 38) ÷ (75 − 10) = 37 ÷ 65 ≈ 57 % outside air (in SI: (23.9 − 3.3) ÷ (23.9 − (−12.2)) = 20.6 ÷ 36.1 ≈ 57 %) — nearly three times the minimum. That is what winter-safe by arithmetic means: at a true 20 % the mix sits at 0.8 × 75 + 0.2 × 10 = 62 °F (16.7 °C), and no morning on the lesson\'s slider can drag it near freezing. Short of a stratified plenum, the only way MA-T reaches freeze-stat territory on a 10 °F day is a damper that isn\'t where the command says it is — the widget\'s failure preset.',
+        explain: 'Solve the blend for the fraction: (75 − 38) ÷ (75 − 10) = 37 ÷ 65 ≈ 57 % outside air (in SI: (23.9 − 3.3) ÷ (23.9 − (−12.2)) = 20.6 ÷ 36.1 ≈ 57 %) — nearly three times the minimum. That is what winter-safe by arithmetic means: at a true 20 % the mix sits at 0.8 × 75 + 0.2 × 10 = 62 °F (16.7 °C), and no morning on the lesson\'s slider can drag it near freezing. Short of a stratified plenum, the only way MA-T reaches freeze stat territory on a 10 °F day is a damper that isn\'t where the command says it is — the widget\'s failure preset.',
         learnMore: { href: '/education/air-handlers.html#sensor-strip', label: 'Air Handlers — Walk the Unit with a Probe' },
         tags: ['forced-air', 'mixed-air']
     },

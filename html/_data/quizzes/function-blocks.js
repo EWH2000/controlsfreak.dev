@@ -75,7 +75,7 @@ module.exports = [
             { id: 'c', text: 'A comparator.' },
             { id: 'd', text: 'An on-delay timer.' }
         ],
-        explain: 'An SR latch remembers: once set, it holds until a reset arrives. That memory is what builds interlocks, permissives, and safety chains — a freeze-stat that latches the fan off, for instance, and won\'t un-latch on its own. AND/OR/NOT/XOR are combinational (their output is purely a function of the present inputs); the latch is the one with state.',
+        explain: 'An SR latch remembers: once set, it holds until a reset arrives. That memory is what builds interlocks, permissives, and safety chains — a freeze stat that latches the fan off, for instance, and won\'t un-latch on its own. AND/OR/NOT/XOR are combinational (their output is purely a function of the present inputs); the latch is the one with state.',
         learnMore: { href: '/education/function-blocks.html#families', label: 'Function Blocks — The block families' },
         tags: ['function-blocks', 'logic', 'boolean']
     },
