@@ -650,11 +650,11 @@ Calls the assistant made in the quiz run (each reversible):
   position** (PR #668): where the sentence already named the choice the
   letter went, and where the letter was the only handle a short phrase
   from that choice's own text replaces it.
-- **The lint is narrow on purpose.** `tests/quiz-banks.spec.js` fails on
-  a parenthesised choice letter, on "answer (c)"-style phrases and on
-  "of the above" choices. It does not catch a bare letter ("B is
-  wrong") or position words ("the first three"); those stay a
-  convention.
+- **The lint is a backstop, not the rule.** `tests/quiz-banks.spec.js`
+  flags a parenthesised choice letter such as "(b)" and an "of the
+  above" choice. Phrasings measured to pass it are listed in
+  codebase-issues #342; the rule stays with whoever writes the
+  question.
 - **`modbus-decoding` needed no opt-out.** No spec depends on the
   order of choices: the ones that need the keyed choice find it by its
   mark.

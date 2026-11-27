@@ -16332,18 +16332,19 @@ beside the two entries that run already owns: the number box (#334) and
 the snippets that run off a phone screen (#341).
 
 - **The choice-letter lint has known edges** (`tests/quiz-banks.spec.js`,
-  `choiceLetterRefs()`). False positives an honest author can hit: on a
-  four-choice question any parenthesised single letter a–d is taken for
-  a choice ("terminals (A) and (B)", "section 6.2.1(a)"), and in choice
-  text "both / none of these" followed by a noun is flagged. Misses:
-  bare capitals ("B is wrong", "Both A and C") and every position word
-  ("the first three"). The spec's comment says positional phrasing is
-  not matched; it does not list a bare-capital choice reference as a
-  miss. The anti-vacuity test
-  does not cover the tag strip, the open-parenthesis carve-out, or the
-  choice-text-only scope of the "of the above" check. And the lint runs
-  before the choices-shape check, so a truthy non-array `choices` throws
-  a bare `TypeError` that names no question.
+  `choiceLetterRefs()`). Each string below was run through the function
+  on a four-choice question, 2026-11-27. Flagged though innocent, as an
+  explanation: "Land the pair on terminals (A) and (B)." and "See
+  section 6.2.1(a) of the standard."; as choice text: "Both of these
+  readings are plausible." Passes though it points at a choice, as an
+  explanation: "B is wrong because the fan is off.", "Both A and C
+  describe it.", "so b is wrong", "The answer is b.", "Answer a
+  describes a box.", "Answer b's claim is wrong.", "All of the above
+  are true here." and "The first three are symptoms." The anti-vacuity
+  test does not cover the tag strip, the open-parenthesis carve-out, or
+  the choice-text-only scope of the "of the above" check. And the lint
+  runs before the choices-shape check, so a truthy non-array `choices`
+  throws a bare `TypeError` that names no question.
 - **No test pins the re-draw on a re-render.** Every test in
   `tests/quiz-choice-shuffle.spec.js` reads the first render of a fresh
   mount, so an engine that shuffled once per mount would pass. The code

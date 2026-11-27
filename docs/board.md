@@ -52,7 +52,6 @@
 - The freeze tool's blank-field hint says "this tool starts at 38 °F" instead of calling 38 "the common default".
 - The glossary tip is headed "freeze stat" and says "Also written freezestat".
 - True/False is not shuffled. One question whose choices climb in order (the Air Handlers cooling-coil target: about 45 / 55 / 65 / 72 °F) now comes up out of order like the rest. Say so if you want ladders kept in order.
-- A test now fails if a quiz explanation points at a choice by a letter in brackets, like "(b)", or after a word like "answer". It cannot catch a bare "B is wrong" or "the first three"; those stay a rule for whoever writes the question.
 - The freeze quiz question built from your gotcha had the right answer as its longest choice. I trimmed it.
 
 ### Menu for the next five
