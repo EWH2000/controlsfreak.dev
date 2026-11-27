@@ -1204,6 +1204,9 @@ opt-out.
    one of `mcq` / `tf` / `gotcha` / `numeric`; shared
    `id` / `prompt` / `explain` / `learnMore` / `tags` / `figure`
    across all types. `id` is kebab-case and stable across edits.
+   **`mcq` / `gotcha` choices are shuffled at render** (True/False
+   stays put), so no prompt, explanation or choice may refer to a
+   choice by letter or position.
    **A question that needs a diagram uses `figure`, never an SVG
    inside `prompt`** — `prompt` is stripped to text by the
    Review/miss table *and* by `head.njk`'s FAQPage JSON-LD, so an
