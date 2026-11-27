@@ -874,7 +874,11 @@ priority-array resolver, Services/BIBBs lesson, BACnet vs Modbus, and
 the `/bacnet/` hub). Cluster now 11 pages — 6 tools + 5 lessons — under
 one pillar, every page cross-linked and every spoke pointing back. Next
 BACnet work (BACnet/SC, deeper alarm/event, segmentation) is fresh
-scope, not part of this arc; re-pull GSC mid-Aug 2026 (per
+scope, not part of this arc *(2026-11-27: no BACnet lesson owns the
+mechanics of alarms and event notification — Basics, Services and
+Networking each put them out of scope, Services after listing the alarm
+services, and none promises them; `[future: BACnet alarms and event
+notification]`)*; re-pull GSC mid-Aug 2026 (per
 `seo-growth-plan-2026-07`) to see what the cluster earned.
 *(Pulled + read 2026-08-12, off the owner's 2026-08-07 export: the
 cluster's TOOLS are the site's engine — ~37 of the site's 60 total

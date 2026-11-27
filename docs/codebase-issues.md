@@ -15934,7 +15934,7 @@ passed before it merged. The rebase-push backstop is retired; CLAUDE.md
 *Workflow* says so. Node is pinned to 24 in the same PR (the floating
 `lts/*` had moved to a major CI had never run).
 
-### 332. "freeze-stat" vs "freezestat" — the lessons spell it one way, the widget strings and quiz banks the other *(noticed 2026-10-06, Batch A air-handlers refuter; owner spelling ruling + sweep)* *(ruled 2026-11-26 — "freeze stat", two words; sweep pending)*
+### 332. "freeze-stat" vs "freezestat" — the lessons spell it one way, the widget strings and quiz banks the other *(noticed 2026-10-06, Batch A air-handlers refuter; owner spelling ruling + sweep)* *(ruled 2026-11-26 — "freeze stat", two words; sweep pending)* *(addressed 2026-11-27 · PR #666, merged)*
 
 Every lesson's prose writes **freezestat** (`coil-freeze-protection.html`,
 `air-handlers.html` after PR #640, the glossary entry), while the
@@ -15959,7 +15959,29 @@ and the `data-gloss` attributes that carry it), scheduled as its own
 run. New text written since the ruling already uses the house form.
 Open until the sweep lands.
 
-### 333. Two more lessons promise unbuilt work in body prose, in shapes the §5 coming-soon scan does not carry *(noticed 2026-10-06, Batch A bacnet-scope refuter — same family as #328)* *(scheduled 2026-11-26 — the freeze-season loose-ends run)*
+**Swept (2026-11-27, PR #666).** 88 changed lines in 29 files, by hand,
+then every changed line paired against its original by a second agent
+(no collateral edits; no id, link, key or tag changed) and the built
+pages' visible text searched for the old spellings. What kept its name:
+ids, the glossary key and its 11 `data-gloss` attributes, quiz ids and
+tags, URLs, and comments (bar the four named below). What changed beside
+the spelling: the glossary
+entry's `term` is "freeze stat" and its def says "Also written
+freezestat, or called a low-limit stat" (the old clause would have
+defined the term by itself), with the comment and the
+`glossaryExcluded.js` string that quote it updated, and two more
+comment lines in `glossary.js` that quote a respelled lesson phrase; the
+seven pages whose description or keywords name the device carry all
+three spellings across the two; one expected string in `smoke.spec.js` follows the Coil
+Freeze Risk Checker's pill. Two things a later reader will trip on:
+`coil-freeze-protection.html` keeps *"if a freeze-stat is present."*
+because it quotes ASHRAE Guideline 36, and the tool's setpoint label
+carries its text in `data-us` / `data-metric`, which `units.js` paints
+into the element — those two attributes are display text, and were
+respelled. No file under `html/scripts/` changed (its two hits are
+comments), so no version bump.
+
+### 333. Two more lessons promise unbuilt work in body prose, in shapes the §5 coming-soon scan does not carry *(noticed 2026-10-06, Batch A bacnet-scope refuter — same family as #328)* *(scheduled 2026-11-26 — the freeze-season loose-ends run)* *(addressed 2026-11-27 · PR #665, merged)*
 
 `html/education/bacnet-services.html:227` — the out-of-scope paragraph
 says segmentation is *"worth its own treatment"*; and
@@ -15981,6 +16003,17 @@ promise, so the owner may want to call it), and add `worth its own
 treatment` and `on the roadmap` to the §5 banned-shape set in
 `.github/scripts/project-status.mjs` so the scan's zero means more than
 it does today. Open.
+
+**Addressed (2026-11-27, PR #665).** `bacnet-services.html` drops
+"worth its own treatment". `bacnet-mstp.html` says the hands-on view is
+a bus simulator's job, not a lesson's, and that the Controller Wiring
+Simulator does not go there (its NET terminals are greyed out); the
+BACnet/SC clause loses "will eventually inherit much of this work". The
+simulator promise was narrowed by the #328 precedent without a separate
+ruling, and the call is listed on the board for the owner to overturn;
+the simulator itself stays on the board's Menu. The
+§5 scan carries both shapes and reports 0. `bacnet-networking.html`'s
+intro is content-audit #101.
 
 ### 334. The quiz engine grades a numeric answer typed with a thousands separator as its leading digits *(noticed 2026-10-06, Batch B vav-systems lane; engine, LOW)* *(mechanism measured 2026-11-27)*
 
@@ -16065,7 +16098,7 @@ pressure defaults to the readings' own and an engine error passes
 straight through; the only caller always supplies pressure. The guard
 is still wanted. Its merge is no longer the owner's — rulings §20.1.)*
 
-### 337. `building-pressure.html`'s "Not the same pressure" callout has no `id`, so the new bank question links its parent section *(noticed 2026-10-06, Batch B building-pressure lane; #314 family, log-and-fix-opportunistically)* *(scheduled 2026-11-26 — the freeze-season loose-ends run)*
+### 337. `building-pressure.html`'s "Not the same pressure" callout has no `id`, so the new bank question links its parent section *(noticed 2026-10-06, Batch B building-pressure lane; #314 family, log-and-fix-opportunistically)* *(scheduled 2026-11-26 — the freeze-season loose-ends run)* *(addressed 2026-11-27 · PR #665, merged)*
 
 The callout that separates building static from duct static carries no
 `id`; `bp-duct-static-not-building` (PR #650) tests exactly that beat
@@ -16073,6 +16106,9 @@ and sends its `learnMore` to `#measuring-it`, the section that hosts it
 (the bank's header comment says so). Same shape and same fix as #314 /
 #329: one `id` on the callout, retarget the `learnMore` in the same PR.
 Any lane touching `building-pressure.html` takes it. Open.
+
+**Addressed (2026-11-27, PR #665).** The callout is
+`#not-the-same-pressure` and `bp-duct-static-not-building` links it.
 
 ### 338. Advisories from the 2026-11-26 blind reviews that did not block a merge, collected *(noticed 2026-11-26/27, the catch-up run's second-agent reviews; each LOW, take opportunistically)*
 

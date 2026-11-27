@@ -548,3 +548,66 @@ items 3–5 still start only on his word.
    the boxes' reaction in the tuner's fan scene before a drive ramp. The
    same three checks are a candidate troubleshooting beat for the Duct
    Static lesson.
+
+## 22. Two more answers and the go-ahead for items 3 to 5 *(2026-11-27, afternoon)*
+
+The owner answered both optional *Your turn* lines in one message and
+released the rest of the week. The field statements are his; the page
+text built on them is in PR #665.
+
+1. **What a trip does on a unit whose freeze stat is not on a DI.** The
+   board had asked whether the dampers and the valve still respond. His
+   answer, with its condition: "if it's a proper" safety circuit, "the
+   dampers and heat valve" lose 24 V, the dampers fail closed and the
+   "heat valve fails open." *Disposition:* one
+   sentence in the freeze lesson's *Reading the Trip*, with his
+   condition kept, linked to the fail-posture section of Commanding
+   Actuators. The lesson's first protection layer still says "the
+   sequence then closes the outdoor dampers and drives the heating valve
+   open"; that describes the unit whose controller is told, and it is
+   left as written.
+2. **The story for the open slot in Start/Stop Commands.** "There have
+   been tons of service calls I've been on where it was as simple as
+   putting eyes on the unit and resetting the freeze stat after a very
+   cold night. Sometimes even as simple as resetting software freeze
+   protection latching logic the user missed on the front end."
+   *Disposition:* a first-person callout in *Finding the Break*: his
+   two sentences lightly recast ("I have been on tons of service calls
+   where…", "Sometimes it was even as simple as…") under a lead-in
+   that is the page's, not his: "True story, many times over." No fact
+   is added.
+3. **"Green light for items 3 through 5."** *Disposition:* three runs,
+   one item each (§20.11), each ending with no open pull request. The
+   freeze-season loose ends
+   went first (his two answers belong there, and the run clears the two
+   phrases §21's record left in the lesson); the quiz engine and the
+   dead-trunk lesson, built hidden, follow.
+4. **The LAN page "has been very useful."** *Disposition (the
+   assistant's):* the board and the preview keep being republished at
+   every phase boundary.
+
+Calls made in the loose-ends run, none of them his to make:
+
+- **The two phrases §21's run left in the freeze lesson are gone**
+  ("shows up" and "is the only place it is wired", content-audit #105).
+  It says
+  the trip "may look like a fan failure" and that the stat is "not
+  landed on a controller input" (PR #665).
+- **The spelling sweep (§20.7) is done** (PR #666): 88 changed lines in
+  29 files, one of them a test's expected string. Ids, the glossary key and its 11 `data-gloss` attributes,
+  quiz ids and tags, URLs and comments keep their names, except four
+  comment lines in `glossary.js` that quote respelled text. The glossary
+  term is "freeze stat"; its definition now says "Also written
+  freezestat", because "Also called a freeze stat" would have defined
+  the term by itself. The seven pages whose description or keywords
+  name the device carry all three spellings across the two.
+- **One old spelling stays on purpose.** The freeze lesson quotes
+  ASHRAE Guideline 36, "if a freeze-stat is present." A quotation keeps
+  its source's spelling.
+- **The MS/TP lesson's bus-simulator promise is a scope statement**
+  (codebase-issues #333, by the #328 precedent). The simulator stays on
+  the board's Menu; the page no longer announces it.
+- **The Coil Freeze Risk Checker's blank-setpoint hint** says "this
+  tool starts at 38 °F (3.3 °C)" instead of calling 38 "the common
+  default" (content-audit #102). It states what the page does and no
+  field default.
