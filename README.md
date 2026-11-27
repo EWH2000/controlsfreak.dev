@@ -667,8 +667,8 @@ techs new to the industry and anyone wanting a refresh.
   climate zone, with the code's warm-end-only caveat, and "silence is
   not a rule" for the hardwired stat; closes by reading a trip as
   evidence — including the trip that may look like a fan failure
-  because the stat is not on a controller input — and handing off to
-  the Coil Freeze Risk Checker. Page 3 of
+  because nothing on the safety circuit reaches a controller input —
+  and handing off to the Coil Freeze Risk Checker. Page 3 of
   the forced-air chapter; pairs with the Coil Freeze Protection quiz.
 - **Building Pressure** — why a building goes positive or negative:
   the air ledger (outside air in vs exhaust, relief, and
