@@ -730,10 +730,12 @@ page says a little less than his message did.
 
 **His question about an earlier message on subagents and model
 choice.** No such message is in this session's transcript; it was
-searched. He was told so and asked to send it again. The rule in force
-until he does is his own of 2026-08-01: Opus agents for mechanical
-fixes, the session's model for design and judgment work, and on mixed
-work Opus executes and the session's model verifies.
+searched. He was told so and asked to send it again, and told the rule
+the assistant was working by: Opus agents for mechanical fixes, the
+session's model for design and judgment work, and on mixed work Opus
+executes and the session's model verifies. The most recent instruction
+on record is §19.15 (2026-10-06), which says much the same and may be
+the message he meant.
 
 Calls the assistant made on the privacy change (each reversible):
 
@@ -816,9 +818,11 @@ lines.** On the lesson, verbatim:
 > point since one may not understand why picking that worked, 2 is good
 > but could use a bit more depth, and 3 is great.
 
-On the agent rule as stated above, he said it is "mostly correct", and
-that "Opus is a capable model, so don't be afraid to use it a bit
-more."
+On the agent rule as it was put to him in conversation, he said it is
+"mostly correct", and that "Opus is a capable model, so don't be afraid
+to use it a bit more."
+
+Dispositions (the assistant's, not his words):
 
 - **Jobs 1 and 2 are reworked before any launch**, still hidden. Job 1
   will say why the pick worked. What "more depth" means for job 2 is
@@ -827,7 +831,8 @@ more."
 - **"3 is great" is taken as approval of the third job as played,**
   repeated halving included. The board says so and invites a no.
 - **Agents run on Opus by default from here on**, with the session's
-  own model kept for the occasional small, hard call. The lesson's
-  build and every review in this run had inherited the session's
-  model; that was the waste he was pointing at.
+  own model kept for the occasional small, hard call. That goes
+  further than "a bit more"; the board says so and invites a no. The
+  lesson's build and the reviews in this run up to that point had
+  inherited the session's model.
 

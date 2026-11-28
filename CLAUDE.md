@@ -675,10 +675,10 @@ section). **Category keys mirror the landing pages' `navCard()`
   `canonical`, plus `eleventyExcludeFromCollections` where the page
   must also stay out of the collections) — the AHU depiction mockup
   under `html/simulators/` carries all three, and so does the Bus
-  Section Isolation lesson under `html/education/` until its launch;
-  `styleguide.html` is `noindex`-only. (The two workbench unit pages graduated out of this
-  set 2026-08-04.) Hidden pages are covered only because specs name
-  their URLs directly. **Any new hidden page needs its own
+  Section Isolation lesson under `html/education/` while it stays
+  hidden; `styleguide.html` is `noindex`-only. (The two workbench unit
+  pages graduated out of this set 2026-08-04.) Hidden pages are
+  covered only because specs name their URLs directly. **Any new hidden page needs its own
   hand-written spec**; the omission from `tests/pages.js` is correct
   and must not be "fixed."
 - **Inline `<style>` in `{% block head %}` is indented to column 4**
