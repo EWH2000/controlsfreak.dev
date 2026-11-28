@@ -344,9 +344,10 @@ section). **Category keys mirror the landing pages' `navCard()`
   genuinely shared JS goes in `html/scripts/` as a classic script.
 - Prefer semantic HTML over div soup. Fast and accessible: no heavy
   media, no auto-play, no tracking or analytics in the site's own code.
-  (One edge-side exception, owner ruling 2026-11-27: Cloudflare Web
-  Analytics is injected into served pages, kept on purpose, and
-  disclosed in `privacy.html` — that page must stay true to it.)
+  (Edge-side, not in the repo: Cloudflare injects its Web Analytics
+  script — kept on purpose, owner ruling 2026-11-27 — and its bot-check
+  script into served pages. `privacy.html` discloses both and must stay
+  true to them; no page may say "nothing tracked".)
 - **Form-input labels are `<label for="…">`, not `<span>`.** In the
   property-sheet pattern, `<label class="ps-label" for="x">` pairs
   with `<input/select/textarea class="ps-input" id="x">`. Rows that

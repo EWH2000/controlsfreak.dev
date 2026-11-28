@@ -68,6 +68,14 @@ canonical: https://controlsfreak.dev/privacy.html
                     <a href="https://www.cloudflare.com/privacypolicy/" rel="noopener">Cloudflare's privacy policy</a>
                     for what they retain and for how long.
                 </p>
+                <p>
+                    Cloudflare also adds a small script of its own to
+                    each page, loaded through this site's own address
+                    under <code>/cdn-cgi/challenge-platform/</code>.
+                    Cloudflare documents scripts on that path as its
+                    <a href="https://developers.cloudflare.com/cloudflare-challenges/challenge-types/javascript-detections/" rel="noopener">JavaScript Detections</a>,
+                    which help it identify automated requests.
+                </p>
             </section>
 
             <section>
@@ -77,13 +85,15 @@ canonical: https://controlsfreak.dev/privacy.html
                     <a href="https://www.cloudflare.com/web-analytics/" rel="noopener">Web Analytics</a>
                     script to the pages it serves. The script loads
                     from <code>static.cloudflareinsights.com</code>
-                    and reports when a page has finished loading and
-                    when you leave it. From that, Cloudflare shows me
-                    counts of visits and page views, broken down by
+                    and sends its reports to Cloudflare through this
+                    site's own address, at <code>/cdn-cgi/rum</code>.
+                    From that, Cloudflare shows me counts of visits
+                    and page views, broken down by things such as the
                     page, the site a visit came from, country,
                     browser, operating system and type of device,
                     along with how quickly pages loaded. Cloudflare
-                    lists everything it reports in its
+                    describes the metrics and breakdowns it reports in
+                    its
                     <a href="https://developers.cloudflare.com/web-analytics/data-metrics/" rel="noopener">documentation</a>.
                     Cloudflare states that it collects these numbers
                     without cookies or any other storage in your
@@ -91,9 +101,9 @@ canonical: https://controlsfreak.dev/privacy.html
                     individuals to produce them.
                 </p>
                 <p>
-                    That data is used for one purpose only: to let me
-                    see how much use this site gets and where the
-                    demand comes from.
+                    I use that data for one purpose only: to see how
+                    much use this site gets and where the demand comes
+                    from.
                 </p>
             </section>
 
@@ -117,7 +127,7 @@ canonical: https://controlsfreak.dev/privacy.html
                     There is no advertising script on this site and
                     no cookie set by the site itself. The site's own
                     code does no fingerprinting, and the only
-                    measurement script is Cloudflare Web Analytics,
+                    analytics script is Cloudflare Web Analytics,
                     described above.
                 </p>
                 <p>
@@ -174,9 +184,12 @@ canonical: https://controlsfreak.dev/privacy.html
                 </p>
                 <p>
                     Cloudflare may set its own cookies for security
-                    and bot protection, independently of anything on
-                    this site. Those are covered by their privacy
-                    policy linked above.
+                    and bot protection, independently of anything in
+                    this site's own code. Its documentation says the
+                    result of the JavaScript Detections script is
+                    stored in one of them, named
+                    <code>cf_clearance</code>. Those are covered by
+                    their privacy policy linked above.
                 </p>
             </section>
 
@@ -198,8 +211,7 @@ canonical: https://controlsfreak.dev/privacy.html
                 </p>
                 <p>
                     Request data that Cloudflare sees as part of
-                    delivering the page, and the analytics data
-                    described above, are handled under its own
+                    delivering the page is handled under its own
                     policy; if you want to exercise rights against
                     Cloudflare, you would need to contact them
                     directly. (Fonts are served from this site's own
