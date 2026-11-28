@@ -64,14 +64,17 @@ noindex: true
         /* Focus rings. styles.css keeps a consolidated FOCUS INDICATORS
            block for shared classes; these are widget internals with no
            shared class, so the ring lives here with them. Same 2px
-           accent ring; the offset is 2px, not the shared 3px, because
-           the plan packs controllers 8px apart at phone width. */
+           accent ring. On the buttons above the plan the offset is 2px,
+           not the shared 3px. On a room it is drawn INSIDE (-5px): the
+           rooms tile the plan wall to wall, so a ring outside one would
+           be painted over by its neighbours. */
         .bsi-job-btn:focus-visible,
         .bsi-new:focus-visible,
         .bsi-room:focus-visible {
             outline: 2px solid var(--accent);
             outline-offset: 2px;
         }
+        .bsi-room:focus-visible { outline-offset: -5px; }
 
         /* The call for the selected job. */
         .bsi-job-title {
@@ -111,36 +114,280 @@ noindex: true
         .bsi-report dd { color: var(--text); font-variant-numeric: tabular-nums; }
 
         /* ── The plan ──────────────────────────────────────────────
-           Sixteen controllers on a SNAKE: the first row reads left to
-           right, the next right to left, so the drawn trunk is one
-           unbroken line and still reads in room order. Columns
-           alternate controller / link, rows alternate controller /
-           link, with a row at each end for whatever sits at that end
-           of the trunk (the supervisor or router, or the end-of-trunk
-           tag). Both ends of the snake land in the first column, at
-           the top and at the bottom.
+           One made-up floor, drawn as a plan: sixteen rooms round the
+           outside, a corridor loop inside them, and a core in the middle
+           (two stairs, the elevator, the restrooms and the electrical
+           room, which holds the supervisor or router). The room numbers
+           walk the ring, so 201 and 216 share a wall right under the
+           electrical room, and the trunk never joins them: they are its
+           two ends.
 
-           Every row is sized explicitly, so the plan is the same
-           height on every job and "New job" never moves underfoot.
+           WALLS are the plan's own background showing through. The plan
+           is filled with --text-dim and padded (the exterior wall); every
+           space is tiled on it with no gap, and each one's 1px border is
+           half of the wall it shares with its neighbour. A room's border
+           is also its status border (solid / dashed / dotted), so an
+           offline room's outline is dashed inside solid walls.
+
+           THE TRUNK runs inside the rooms, in a LANE just inside each
+           room's corridor wall: in through one partition, past the
+           controller, out through the next. So it reads as one daisy
+           chain, never as a line down the corridor with drops off it.
+           Each controller's node sits on a grid line (the edge of the
+           lane track, and the line between the room's two halves, or
+           the other lane on a corner room), so every link is one
+           straight box from node to node, with its line on one edge of
+           the box.
+
+           Every track is a fixed size except the room widths, so the
+           plan is the same height on every job and "New job" never
+           moves underfoot.
 
            The script writes each element's place for BOTH layouts as
-           custom properties (--bsi-c8 / --bsi-r8 for eight across,
-           --bsi-c4 / --bsi-r4 for four across); the media query below
-           picks the pair. No resize listener. */
+           grid lines: --bsi-cw / --bsi-rw for the wide plan (six rooms
+           along the top and bottom), --bsi-cn / --bsi-rn for the narrow
+           one (four). The media queries below pick the pair, and the
+           per-layout attributes (-w / -n) beside them. No resize
+           listener. */
         .bsi-plan {
-            --bsi-gap: 0.75rem;
-            --bsi-end: 1.9rem;
+            --bsi-lane: 8px;        /* trunk lane: node line to corridor wall */
+            --bsi-hall: 2rem;       /* corridor width */
+            --bsi-row: 4.6rem;      /* a top or bottom room, less its lane */
+            --bsi-side: 5.5rem;     /* a side room */
+            --bsi-wall: 3px;        /* exterior wall, less the room's own 1px */
+            --bsi-clear: 4px;       /* room text to the trunk line */
+            --bsi-pad-y: 0.35rem;
+            --bsi-pad-x: 0.4rem;
+            --bsi-stub-gap: 0.75rem;
+            --bsi-mark: 1rem;
+            --bsi-door: 0.85rem;
+            --bsi-door-in: 0.5rem;
             display: grid;
-            grid-template-columns: repeat(7, minmax(0, 1fr) var(--bsi-gap)) minmax(0, 1fr);
-            grid-template-rows:
-                var(--bsi-end) var(--bsi-gap)
-                auto var(--bsi-gap) auto
-                var(--bsi-gap) var(--bsi-end);
+            max-width: 50rem;
             margin: 0.35rem 0 0;
+            padding: var(--bsi-wall);
+            background: var(--text-dim);
         }
-        .bsi-room,
-        .bsi-link { grid-column: var(--bsi-c8); grid-row: var(--bsi-r8); }
 
+        /* Wide, above 700px: six rooms along the top and the bottom,
+           two up each side. A middle room needs about 70px to carry
+           OFFLINE beside its glyph, and gets more than that at 701px. */
+        @media (min-width: 701px) {
+            .bsi-plan {
+                grid-template-columns:
+                    minmax(0, 2fr) var(--bsi-lane) var(--bsi-hall)
+                    repeat(8, minmax(0, 1fr))
+                    var(--bsi-hall) var(--bsi-lane) minmax(0, 2fr);
+                grid-template-rows:
+                    var(--bsi-row) var(--bsi-lane) var(--bsi-hall)
+                    calc(var(--bsi-side) / 2 - var(--bsi-hall))
+                    calc(var(--bsi-side) / 2) calc(var(--bsi-side) / 2)
+                    calc(var(--bsi-side) / 2 - var(--bsi-hall))
+                    var(--bsi-hall) var(--bsi-lane) var(--bsi-row);
+            }
+            .bsi-plan > * { grid-column: var(--bsi-cw); grid-row: var(--bsi-rw); }
+
+            /* Keep the text off the trunk lane. */
+            .bsi-room[data-bsi-sw="t"] { padding-bottom: calc(var(--bsi-pad-y) + var(--bsi-lane)); }
+            .bsi-room[data-bsi-sw="b"] { padding-top: calc(var(--bsi-pad-y) + var(--bsi-lane)); }
+            .bsi-room[data-bsi-sw="l"] { padding-right: calc(var(--bsi-lane) + var(--bsi-clear)); }
+            .bsi-room[data-bsi-sw="r"] { padding-left: calc(var(--bsi-lane) + var(--bsi-clear)); }
+            .bsi-room[data-bsi-sw="b"] .bsi-badge { top: calc(2 * var(--bsi-lane)); }
+            .bsi-room[data-bsi-sw="l"] .bsi-badge { right: calc(var(--bsi-lane) + var(--bsi-clear) + 0.2rem); }
+
+            /* The line, along one edge of the link's box. */
+            .bsi-link[data-bsi-lw="t"]::before { left: -1px; right: -1px; top: -1px; height: 3px; }
+            .bsi-link[data-bsi-lw="b"]::before { left: -1px; right: -1px; bottom: -1px; height: 3px; }
+            .bsi-link[data-bsi-lw="l"]::before { top: -1px; bottom: -1px; left: -1px; width: 3px; }
+            .bsi-link[data-bsi-lw="r"]::before { top: -1px; bottom: -1px; right: -1px; width: 3px; }
+            .bsi-link[data-bsi-lw="t"],
+            .bsi-link[data-bsi-lw="b"] { --bsi-mx: var(--bsi-ma); }
+            .bsi-link[data-bsi-lw="l"],
+            .bsi-link[data-bsi-lw="r"] { --bsi-my: var(--bsi-ma); }
+            .bsi-link[data-bsi-lw="t"] { --bsi-my: 0.5px; }
+            .bsi-link[data-bsi-lw="b"] { --bsi-my: calc(100% - 0.5px); }
+            .bsi-link[data-bsi-lw="l"] { --bsi-mx: 0.5px; }
+            .bsi-link[data-bsi-lw="r"] { --bsi-mx: calc(100% - 0.5px); }
+            /* Where along the link the partition between its two rooms
+               falls (see the marks, below). */
+            .bsi-link[data-bsi-mw="m"] { --bsi-ma: 50%; }
+            .bsi-link[data-bsi-mw="s1"] { --bsi-ma: var(--bsi-lane); }
+            .bsi-link[data-bsi-mw="s2"] { --bsi-ma: calc(var(--bsi-lane) + var(--bsi-hall)); }
+            .bsi-link[data-bsi-mw="e1"] { --bsi-ma: calc(100% - var(--bsi-lane)); }
+            .bsi-link[data-bsi-mw="e2"] { --bsi-ma: calc(100% - var(--bsi-lane) - var(--bsi-hall)); }
+
+            /* Doors: an opening in the corridor wall. */
+            .bsi-room[data-bsi-sw="t"]::after { bottom: 0; height: 1px; width: var(--bsi-door); box-shadow: 0 1px 0 var(--surface), 0 2px 0 var(--surface); }
+            .bsi-room[data-bsi-sw="b"]::after { top: 0; height: 1px; width: var(--bsi-door); box-shadow: 0 -1px 0 var(--surface), 0 -2px 0 var(--surface); }
+            .bsi-room[data-bsi-sw="l"]::after { right: 0; width: 1px; height: var(--bsi-door); box-shadow: 1px 0 0 var(--surface), 2px 0 0 var(--surface); }
+            .bsi-room[data-bsi-sw="r"]::after { left: 0; width: 1px; height: var(--bsi-door); box-shadow: -1px 0 0 var(--surface), -2px 0 0 var(--surface); }
+            .bsi-room[data-bsi-sw="t"][data-bsi-dw="s"]::after,
+            .bsi-room[data-bsi-sw="b"][data-bsi-dw="s"]::after { left: var(--bsi-door-in); }
+            .bsi-room[data-bsi-sw="t"][data-bsi-dw="e"]::after,
+            .bsi-room[data-bsi-sw="b"][data-bsi-dw="e"]::after { right: var(--bsi-door-in); }
+            .bsi-room[data-bsi-sw="l"][data-bsi-dw="s"]::after,
+            .bsi-room[data-bsi-sw="r"][data-bsi-dw="s"]::after { top: var(--bsi-door-in); }
+            .bsi-room[data-bsi-dw="hs"]::after { left: calc((var(--bsi-hall) - var(--bsi-door)) / 2 - 1px); }
+            .bsi-room[data-bsi-dw="he"]::after { right: calc((var(--bsi-hall) - var(--bsi-door)) / 2 - 1px); }
+        }
+
+        /* Narrow, 700px and below: four rooms along the top and the
+           bottom, four down each side. The same rules on the -n
+           attributes. */
+        @media (max-width: 700px) {
+            .bsi-plan {
+                --bsi-lane: 7px;
+                --bsi-hall: 1rem;
+                --bsi-row: 3.7rem;
+                --bsi-side: 3.75rem;
+                --bsi-wall: 2px;
+                --bsi-mark: 0.8rem;
+                --bsi-door: 0.55rem;
+                --bsi-door-in: 0.35rem;
+                max-width: 30rem;
+                grid-template-columns:
+                    minmax(0, 1.9fr) var(--bsi-lane) var(--bsi-hall)
+                    repeat(4, minmax(0, 1fr))
+                    var(--bsi-hall) var(--bsi-lane) minmax(0, 1.9fr);
+                grid-template-rows:
+                    var(--bsi-row) var(--bsi-lane) var(--bsi-hall)
+                    calc(var(--bsi-side) / 2 - var(--bsi-hall))
+                    repeat(6, calc(var(--bsi-side) / 2))
+                    calc(var(--bsi-side) / 2 - var(--bsi-hall))
+                    var(--bsi-hall) var(--bsi-lane) var(--bsi-row);
+            }
+            .bsi-plan > * { grid-column: var(--bsi-cn); grid-row: var(--bsi-rn); }
+
+            .bsi-room[data-bsi-sn="t"] { padding-bottom: calc(var(--bsi-pad-y) + var(--bsi-lane)); }
+            .bsi-room[data-bsi-sn="b"] { padding-top: calc(var(--bsi-pad-y) + var(--bsi-lane)); }
+            .bsi-room[data-bsi-sn="l"] { padding-right: calc(var(--bsi-lane) + var(--bsi-clear)); }
+            .bsi-room[data-bsi-sn="r"] { padding-left: calc(var(--bsi-lane) + var(--bsi-clear)); }
+            .bsi-room[data-bsi-sn="b"] .bsi-badge { top: calc(2 * var(--bsi-lane)); }
+            .bsi-room[data-bsi-sn="l"] .bsi-badge { right: calc(var(--bsi-lane) + var(--bsi-clear) + 0.2rem); }
+
+            .bsi-link[data-bsi-ln="t"]::before { left: -1px; right: -1px; top: -1px; height: 3px; }
+            .bsi-link[data-bsi-ln="b"]::before { left: -1px; right: -1px; bottom: -1px; height: 3px; }
+            .bsi-link[data-bsi-ln="l"]::before { top: -1px; bottom: -1px; left: -1px; width: 3px; }
+            .bsi-link[data-bsi-ln="r"]::before { top: -1px; bottom: -1px; right: -1px; width: 3px; }
+            .bsi-link[data-bsi-ln="t"],
+            .bsi-link[data-bsi-ln="b"] { --bsi-mx: var(--bsi-ma); }
+            .bsi-link[data-bsi-ln="l"],
+            .bsi-link[data-bsi-ln="r"] { --bsi-my: var(--bsi-ma); }
+            .bsi-link[data-bsi-ln="t"] { --bsi-my: 0.5px; }
+            .bsi-link[data-bsi-ln="b"] { --bsi-my: calc(100% - 0.5px); }
+            .bsi-link[data-bsi-ln="l"] { --bsi-mx: 0.5px; }
+            .bsi-link[data-bsi-ln="r"] { --bsi-mx: calc(100% - 0.5px); }
+            .bsi-link[data-bsi-mn="m"] { --bsi-ma: 50%; }
+            .bsi-link[data-bsi-mn="s1"] { --bsi-ma: var(--bsi-lane); }
+            .bsi-link[data-bsi-mn="s2"] { --bsi-ma: calc(var(--bsi-lane) + var(--bsi-hall)); }
+            .bsi-link[data-bsi-mn="e1"] { --bsi-ma: calc(100% - var(--bsi-lane)); }
+            .bsi-link[data-bsi-mn="e2"] { --bsi-ma: calc(100% - var(--bsi-lane) - var(--bsi-hall)); }
+
+            .bsi-room[data-bsi-sn="t"]::after { bottom: 0; height: 1px; width: var(--bsi-door); box-shadow: 0 1px 0 var(--surface), 0 2px 0 var(--surface); }
+            .bsi-room[data-bsi-sn="b"]::after { top: 0; height: 1px; width: var(--bsi-door); box-shadow: 0 -1px 0 var(--surface), 0 -2px 0 var(--surface); }
+            .bsi-room[data-bsi-sn="l"]::after { right: 0; width: 1px; height: var(--bsi-door); box-shadow: 1px 0 0 var(--surface), 2px 0 0 var(--surface); }
+            .bsi-room[data-bsi-sn="r"]::after { left: 0; width: 1px; height: var(--bsi-door); box-shadow: -1px 0 0 var(--surface), -2px 0 0 var(--surface); }
+            .bsi-room[data-bsi-sn="t"][data-bsi-dn="s"]::after,
+            .bsi-room[data-bsi-sn="b"][data-bsi-dn="s"]::after { left: var(--bsi-door-in); }
+            .bsi-room[data-bsi-sn="t"][data-bsi-dn="e"]::after,
+            .bsi-room[data-bsi-sn="b"][data-bsi-dn="e"]::after { right: var(--bsi-door-in); }
+            .bsi-room[data-bsi-sn="l"][data-bsi-dn="s"]::after,
+            .bsi-room[data-bsi-sn="r"][data-bsi-dn="s"]::after { top: var(--bsi-door-in); }
+            .bsi-room[data-bsi-dn="hs"]::after { left: calc((var(--bsi-hall) - var(--bsi-door)) / 2 - 1px); }
+            .bsi-room[data-bsi-dn="he"]::after { right: calc((var(--bsi-hall) - var(--bsi-door)) / 2 - 1px); }
+        }
+
+        /* ── Spaces that are not rooms: the corridor, the core and the
+           rooms in it. aria-hidden and not interactive; the plan's
+           geometry, nothing more. ─────────────────────────────────── */
+        .bsi-space {
+            position: relative;
+            min-width: 0;
+            padding: 0.3rem 0.35rem;
+            background: var(--surface-2);
+            border: 1px solid var(--text-dim);
+        }
+        .bsi-space.is-hall {
+            padding: 0;
+            text-align: center;
+            background: var(--surface);
+        }
+        /* The core draws only its outer wall: the rooms in it carry the
+           inner half of it, as every room does. */
+        .bsi-space.is-core {
+            padding: 0;
+            border: 0;
+            outline: 1px solid var(--text-dim);
+        }
+        .bsi-space-label {
+            display: block;
+            font-family: var(--mono);
+            font-size: 0.55rem;
+            line-height: 1;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            white-space: nowrap;
+        }
+        .bsi-space.is-hall .bsi-space-label { line-height: calc(var(--bsi-hall) - 2px); }
+        /* Stair treads and the elevator car: plan symbols in the quiet
+           --border ink, hard-edged lines, no shading. */
+        .bsi-space.is-stair::before,
+        .bsi-space.is-elev::before {
+            content: "";
+            position: absolute;
+            left: 0.35rem;
+            right: 0.35rem;
+            top: 1.05rem;
+            bottom: 0.35rem;
+            border: 1px solid var(--border);
+        }
+        .bsi-space.is-stair::before {
+            background: repeating-linear-gradient(to bottom,
+                transparent 0, transparent 0.3rem,
+                var(--border) 0.3rem, var(--border) calc(0.3rem + 1px));
+        }
+        .bsi-space.is-stair::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 1.05rem;
+            bottom: 0.35rem;
+            width: 1px;
+            background: var(--border);
+        }
+        .bsi-space.is-elev::before { left: 0.6rem; right: 0.6rem; bottom: 0.5rem; }
+
+        /* ── The supervisor or router: one fixed place in the electrical
+           room, wide enough to sit over both 201 and 216, so it can drop
+           into either and its place says nothing about which. It stays
+           drawn on every job, the one with no layout included. ─────── */
+        .bsi-head {
+            position: relative;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+            margin: 1.05rem 0.45rem 0.35rem;
+            padding: 0 0.3rem;
+            font-family: var(--mono);
+            font-size: 0.66rem;
+            line-height: 1.15;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            text-align: center;
+            color: var(--text-bright);
+            background: var(--surface);
+            border: 1px solid var(--text-dim);
+        }
+        /* The narrow plan's electrical room is shorter: smaller type and
+           margins, so the name fits on two lines where it must wrap. */
+        @media (max-width: 700px) {
+            .bsi-head { font-size: 0.58rem; letter-spacing: 0.02em; margin: 0.95rem 0.25rem 0.2rem; }
+        }
+
+        /* ── Rooms: one controller each ──────────────────────────── */
         .bsi-room {
             position: relative;
             display: flex;
@@ -148,8 +395,7 @@ noindex: true
             align-items: flex-start;
             gap: 0.1rem;
             min-width: 0;
-            min-height: 4.1rem;
-            padding: 0.35rem 0.4rem;
+            padding: var(--bsi-pad-y) var(--bsi-pad-x);
             font-family: var(--mono);
             text-align: left;
             color: var(--text);
@@ -161,9 +407,19 @@ noindex: true
             cursor: pointer;
         }
         .bsi-room:hover { background: var(--surface); }
+        /* The door: an opening in the corridor wall. A 1px strip just
+           inside the room's corridor wall, painting nothing itself, with
+           two hard 1px offsets in corridor floor: one over the room's half
+           of the wall, one over the corridor's. Offsets, not a wider box,
+           because a box reaching past the room's padding edge counts as
+           overflow. A paint, not a shadow: no blur, no spread. Side and
+           end per layout above. */
+        .bsi-room::after {
+            content: "";
+            position: absolute;
+        }
         .bsi-room.is-offline { border-style: dashed; }
         .bsi-room.is-flaky { border-style: dotted; }
-        .bsi-room.is-suspect { box-shadow: inset 0 -3px 0 var(--blue); }
         .bsi-room.is-found,
         .bsi-room.is-beside { box-shadow: inset 0 0 0 2px var(--accent); }
 
@@ -208,61 +464,70 @@ noindex: true
         }
         .bsi-room .bsi-badge { position: absolute; top: 0.25rem; right: 0.25rem; }
         .bsi-badge[hidden] { display: none; }
-
-        /* Trunk links. Each sits in a link track between two
-           controllers and draws a 2px line along it; which way the
-           line runs depends on the layout, hence the paired
-           attributes. */
-        .bsi-link { position: relative; }
-        .bsi-link::before { content: ""; position: absolute; background: var(--text-dim); }
-        .bsi-link[data-bsi-dir8="h"]::before { left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px; }
-        .bsi-link[data-bsi-dir8="v"]::before { top: 0; bottom: 0; left: 50%; width: 2px; margin-left: -1px; }
-
-        /* The two ends of the trunk: a link up or down from the first
-           column to the row that names what is there. */
-        .bsi-head,
-        .bsi-end {
-            grid-column: 1 / -1;
-            justify-self: start;
-            display: flex;
-            align-items: center;
-            font-family: var(--mono);
-            font-size: 0.66rem;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            white-space: nowrap;
+        /* What may still hold the fault on job 3: the "?" itself, on a
+           solid tile. A tile, not a bar along a wall, so it can never be
+           read as a stretch of trunk, wherever the room sits on the
+           plan. The glyph carries it without the colour. */
+        .bsi-room.is-suspect .bsi-badge,
+        .bsi-badge.is-suspect {
+            color: var(--surface);
+            background: var(--blue);
+            border-color: var(--blue);
         }
-        .bsi-head {
-            padding: 0 0.6rem;
-            color: var(--text-bright);
-            background: var(--surface);
-            border: 1px solid var(--text-dim);
+
+        /* ── The trunk ─────────────────────────────────────────────
+           One link per segment: the fifteen between rooms, and the drop
+           from the supervisor or router into the first room. Teal, the
+           site's comm-trace colour, and 3px, so it does not read as a
+           2px wall. */
+        .bsi-link {
+            position: relative;
+            z-index: 2;
+            pointer-events: none;
         }
-        .bsi-end { color: var(--text-dim); }
-        .bsi-head.at-top,
-        .bsi-end.at-top { grid-row: 1; }
-        .bsi-head.at-bottom,
-        .bsi-end.at-bottom { grid-row: -2; }
-        .bsi-link.is-cap { grid-column: 1; }
-        .bsi-link.is-cap.at-top { grid-row: 2; }
-        .bsi-link.is-cap.at-bottom { grid-row: -3; }
-        /* End of the trunk: the line stops at a short crossbar. */
+        .bsi-link::before { content: ""; position: absolute; background: var(--teal); }
+
+        /* End of the trunk: the line runs on from the last controller
+           toward the 201 | 216 wall and stops at a crossbar short of it. */
+        .bsi-link.is-tail[data-bsi-gap="l"]::before { left: var(--bsi-stub-gap); }
+        .bsi-link.is-tail[data-bsi-gap="r"]::before { right: var(--bsi-stub-gap); }
         .bsi-link.is-tail::after {
             content: "";
             position: absolute;
-            left: 50%;
-            width: 0.8rem;
-            height: 2px;
-            margin-left: -0.4rem;
-            background: var(--text-dim);
+            bottom: calc(-1 * min(0.3rem, var(--bsi-lane) - 1px));
+            width: 3px;
+            height: calc(2 * min(0.3rem, var(--bsi-lane) - 1px));
+            background: var(--teal);
         }
-        .bsi-link.is-tail.at-top::after { top: 0; }
-        .bsi-link.is-tail.at-bottom::after { bottom: 0; }
+        .bsi-link.is-tail[data-bsi-gap="l"]::after { left: calc(var(--bsi-stub-gap) - 1px); }
+        .bsi-link.is-tail[data-bsi-gap="r"]::after { right: calc(var(--bsi-stub-gap) - 1px); }
+
+        /* The tag over it, in the corridor, on the end room's side. Its
+           own background is the corridor floor, so its ink is measured
+           against what it really sits on. */
+        .bsi-end {
+            position: relative;
+            z-index: 1;
+            align-self: center;
+            padding: 0 0.3rem;
+            font-family: var(--mono);
+            font-size: 0.55rem;
+            line-height: 1;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            color: var(--text-dim);
+            background: var(--surface);
+        }
+        .bsi-end[data-bsi-gap="l"] { justify-self: start; }
+        .bsi-end[data-bsi-gap="r"] { justify-self: end; }
 
         /* Marks on the trunk: a cross where it is broken, a hollow
            square where the reader split it. Either one replaces the
            line, so the mark is a different SHAPE and not just a
-           different colour. The key below the plan reuses them. */
+           different colour, and it sits on the partition between the
+           two rooms the link joins (--bsi-ma, per layout above). The
+           key below the plan reuses them. */
         .bsi-link.is-break::before,
         .bsi-link.is-split::before { background: transparent; }
         .bsi-link.is-break::after,
@@ -271,11 +536,11 @@ noindex: true
             content: "";
             position: absolute;
             z-index: 1;
-            left: 50%;
-            top: 50%;
-            width: 1rem;
-            height: 1rem;
-            margin: -0.5rem 0 0 -0.5rem;
+            left: var(--bsi-mx);
+            top: var(--bsi-my);
+            width: var(--bsi-mark);
+            height: var(--bsi-mark);
+            margin: calc(var(--bsi-mark) / -2) 0 0 calc(var(--bsi-mark) / -2);
         }
         .bsi-link.is-break::after,
         .bsi-key-mark.is-break {
@@ -292,10 +557,11 @@ noindex: true
             border: 2px solid var(--amber);
         }
 
-        /* A job with no layout: the route and both ends stay undrawn
-           (hidden, not removed, so the plan keeps its height). */
+        /* A job with no layout: the route and its end stay undrawn
+           (hidden, not removed, so the plan keeps its height). The
+           supervisor or router's box stays: its one place is the same
+           on every job, so it gives nothing away. */
         .bsi-plan.is-routeless .bsi-link,
-        .bsi-plan.is-routeless .bsi-head,
         .bsi-plan.is-routeless .bsi-end { visibility: hidden; }
 
         /* The result line — the one live region on the page. Height
@@ -334,42 +600,17 @@ noindex: true
             color: var(--text-dim);
         }
         ul.bsi-key li { display: flex; align-items: center; gap: 0.4rem; }
-        .bsi-key-mark { position: static; flex: none; margin: 0; }
+        .bsi-key-mark { position: static; flex: none; margin: 0; width: 1rem; height: 1rem; }
         .bsi-key-mark.is-split { margin: 0 0.15rem; }
+        .bsi-key-line { flex: none; width: 1.1rem; height: 3px; background: var(--teal); }
 
-        /* Four across at 900px and below — the width the house two-column
-           grids collapse at. Eight across needs roughly 70px a controller
-           to carry the word OFFLINE beside its glyph, and between there
-           and about 820px the card does not have that to give. */
-        @media (max-width: 900px) {
-            .bsi-plan {
-                --bsi-gap: 0.5rem;
-                grid-template-columns: repeat(3, minmax(0, 1fr) var(--bsi-gap)) minmax(0, 1fr);
-                grid-template-rows:
-                    var(--bsi-end) var(--bsi-gap)
-                    auto var(--bsi-gap) auto var(--bsi-gap) auto var(--bsi-gap) auto
-                    var(--bsi-gap) var(--bsi-end);
-            }
-            .bsi-room,
-            .bsi-link { grid-column: var(--bsi-c4); grid-row: var(--bsi-r4); }
-            .bsi-link[data-bsi-dir8]::before {
-                left: auto;
-                right: auto;
-                top: auto;
-                bottom: auto;
-                width: auto;
-                height: auto;
-                margin: 0;
-            }
-            .bsi-link[data-bsi-dir4="h"]::before { left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px; }
-            .bsi-link[data-bsi-dir4="v"]::before { top: 0; bottom: 0; left: 50%; width: 2px; margin-left: -1px; }
-        }
         /* Phone width. The word OFFLINE is the widest thing a controller
-           carries, and four across in a 375px viewport left it spilling
-           over the controller's own border. So the plan takes room back
-           wherever it can: half the card's side padding (the negative
-           margins), tighter gaps, tighter controllers, no tracking on
-           the word. */
+           carries, and the side rooms are the narrowest, so the plan
+           takes room back wherever it can: half the card's side padding
+           (the negative margins), a narrower lane and corridor, tighter
+           controllers, no tracking on the word. These come after the
+           700px block on purpose: they override its tokens by source
+           order. */
         @media (max-width: 480px) {
             #bsi-game {
                 margin-left: -0.75rem;
@@ -377,22 +618,39 @@ noindex: true
                 padding-left: 0.5rem;
                 padding-right: 0.5rem;
             }
-            .bsi-plan { --bsi-gap: 0.4rem; }
-            .bsi-room { padding: 0.3rem 0.25rem; }
+            .bsi-plan {
+                --bsi-lane: 6px;
+                --bsi-hall: 0.85rem;
+                --bsi-clear: 1px;
+                --bsi-pad-y: 0.3rem;
+                --bsi-pad-x: 0.25rem;
+            }
             .bsi-room-word { letter-spacing: 0; }
         }
         /* Narrower than 360px there is not room for glyph and word side
            by side. The glyph goes; the word and the border style still
-           carry the status without colour. */
+           carry the status without colour. The corridor narrows again,
+           and the end tag and the space labels drop their tracking, so
+           the tag still fits the corridor beside the 201 | 216 wall. */
         @media (max-width: 359px) {
             .bsi-glyph { display: none; }
+            .bsi-plan {
+                --bsi-lane: 5px;
+                --bsi-hall: 0.7rem;
+                --bsi-pad-x: 0.15rem;
+                --bsi-door: 0.5rem;
+            }
+            .bsi-space { padding: 0.25rem 0.2rem; }
+            .bsi-space-label,
+            .bsi-end { font-size: 0.5rem; letter-spacing: 0; }
+            .bsi-end { padding: 0 0.1rem; }
         }
 
         /* Touch-target floor, page-local: these are widget internals
            with no shared class, so they are floored here rather than in
            the shared TOUCH-TARGET FLOOR block (the vfds source-select
-           precedent). The controllers already stand taller than 44px;
-           the rule pins that against a later restyle. */
+           precedent). Every room is a fixed size taller than 44px; the
+           rule pins that against a later restyle. */
         @media (hover: none) {
             .bsi-job-btn,
             .bsi-new,
@@ -441,11 +699,11 @@ noindex: true
                a coin toss because one end is fully offline, so you just
                click the same place as one"), joined to the same chain logic;
                it names no room, no end and no habit of his. The third step
-               carries no added sentence: he gave ONE split, and what repeated splits add
-               up to is a rule of the made-up floor, so that arithmetic
-               lives in the Job 3 call and nowhere up here. Anything about
-               how often, what usually, or what to check at the controller
-               is not his and does not belong here. #}
+               carries no added sentence: he gave ONE split, and what
+               repeated splits add up to is a rule of the made-up floor, so
+               that arithmetic lives in the Job 3 call and nowhere up here.
+               Anything about how often, what usually, or what to check at
+               the controller is not his and does not belong here. #}
             <p>
                 <strong>First, try to find a bus layout</strong>, and see whether an obvious spot shows on it. On a daisy chain a single break takes out every controller past it, so on a drawn route the dead section starts at the break.
             </p>
@@ -467,7 +725,7 @@ noindex: true
             <h2 class="subhead">Work the floor</h2>
 
             <p>
-                One made-up floor: sixteen zone controllers in rooms 201 to 216, on one daisy-chained MS/TP trunk that starts at the supervisor or router. The trunk runs in room-number order, and the MAC addresses were handed out the same way, MAC&nbsp;1 in room 201 through MAC&nbsp;16 in room 216. Which end the supervisor or router sits on is part of each job. What you see is what the supervisor or router reports: each controller online, offline, or flaky (dropping in and out).
+                One made-up floor: sixteen zone controllers in rooms 201 to 216, around a core that holds the stairs, the elevator, the restrooms and an electrical room. All sixteen are on one daisy-chained MS/TP trunk that starts at the supervisor or router, in the electrical room. The trunk runs in room-number order, and the MAC addresses were handed out the same way, MAC&nbsp;1 in room 201 through MAC&nbsp;16 in room 216. The room numbers run right around the floor, so 201 and 216 are next to each other on the plan, but the trunk does not join them: it leaves the electrical room into one of the two and ends in the other, and which way round is part of each job. What you see is what the supervisor or router reports: each controller online, offline, or flaky (dropping in and out).
             </p>
 
             <p>
@@ -495,7 +753,7 @@ noindex: true
                 <div class="bsi-brief" data-bsi-brief="no-layout" hidden>
                     <h3 class="bsi-job-title">Job 2 · A dead section, no layout</h3>
                     <p>
-                        A made-up call: a run of rooms is offline again, and nobody has a layout. The route is not drawn until you find the break, and the call does not say which end the supervisor or router is on. What you have is the offline list: room numbers and MAC addresses. Pick the controller where you would stop first. A stop works as before: it shows the trunk on both sides of that controller, and it finds the break if the break is on either side.
+                        A made-up call: a run of rooms is offline again, and nobody has a layout. The route is not drawn until you find the break, and the call does not say which way the trunk leaves the electrical room, into 201 or into 216. What you have is the floor plan and the offline list: room numbers and MAC addresses. Pick the controller where you would stop first. A stop works as before: it shows the trunk on both sides of that controller, and it finds the break if the break is on either side.
                     </p>
                 </div>
                 <div class="bsi-brief" data-bsi-brief="flaky" hidden>
@@ -529,15 +787,16 @@ noindex: true
 
                 <div class="widget-readout-label" id="bsi-plan-lbl">Floor plan · pick a controller</div>
                 <div class="bsi-plan" id="bsi-plan" role="group" aria-labelledby="bsi-plan-lbl">
-                    <span class="bsi-head at-top" id="bsi-head">Supervisor or router</span>
-                    <span class="bsi-end at-bottom" id="bsi-end">End of trunk</span>
+                    <span class="bsi-head" id="bsi-head">Supervisor or router</span>
+                    <span class="bsi-end" id="bsi-end">End of trunk</span>
                 </div>
 
                 <p class="bsi-feedback" id="bsi-feedback" role="status" aria-live="polite"></p>
 
                 <ul class="bsi-key" aria-label="Key to the marks on the plan">
+                    <li><span class="bsi-key-line" aria-hidden="true"></span> the trunk, where it is drawn</li>
                     <li><span class="bsi-badge" aria-hidden="true">×</span> you stopped here; break on neither side</li>
-                    <li><span class="bsi-badge" aria-hidden="true">?</span> may still be the troublemaker</li>
+                    <li><span class="bsi-badge is-suspect" aria-hidden="true">?</span> may still be the troublemaker</li>
                     <li><span class="bsi-badge" aria-hidden="true">!</span> the troublemaker, found</li>
                     <li><span class="bsi-key-mark is-break" aria-hidden="true"></span> the break, once found</li>
                     <li><span class="bsi-key-mark is-split" aria-hidden="true"></span> where you split the trunk</li>
@@ -614,39 +873,99 @@ noindex: true
         const STATUS_WORD = { online: 'Online', offline: 'Offline', flaky: 'Flaky' };
         const BADGE = { checked: '×', suspect: '?', found: '!' };
 
-        // ── The snake ───────────────────────────────────────────────
-        // Where room r (0 = the lowest room) sits when the plan is
-        // `cols` across: even rows read left to right, odd rows right
-        // to left, so consecutive rooms are always neighbours.
-        function cell(r, cols) {
-            const row = Math.floor(r / cols);
-            const pos = r % cols;
-            return { row: row, col: row % 2 === 0 ? pos : cols - 1 - pos };
-        }
-
-        // Write an element's grid place for both layouts. Controllers
-        // take the odd tracks; a link between room r and room r + 1
-        // takes the even track between them — across the row, or down
-        // to the next row at a turn of the snake.
-        function place(el, r, isLink) {
-            [8, 4].forEach(function (cols) {
-                const a = cell(r, cols);
-                let col = 2 * a.col + 1;
-                let row = 2 * a.row + 3;
-                if (isLink) {
-                    const b = cell(r + 1, cols);
-                    if (a.row === b.row) {
-                        col = 2 * Math.min(a.col, b.col) + 2;
-                        el.setAttribute('data-bsi-dir' + cols, 'h');
-                    } else {
-                        row += 1;
-                        el.setAttribute('data-bsi-dir' + cols, 'v');
-                    }
-                }
-                el.style.setProperty('--bsi-c' + cols, String(col));
-                el.style.setProperty('--bsi-r' + cols, String(row));
-            });
-        }
+        // ── The plan ────────────────────────────────────────────────
+        // Sixteen rooms round a corridor loop, a core in the middle. The
+        // room numbers walk the ring clockwise from 201 at the bottom, so
+        // 201 and 216 share a wall under the electrical room. Every place
+        // below is a pair of grid lines, "start / end", for grid-column
+        // and grid-row: the wide plan (w, above 700px) and the narrow one
+        // (n). The CSS picks the pair for the width in force.
+        //
+        // ROOMS: [colW, rowW, sideW, doorW, colN, rowN, sideN, doorN].
+        // side is the room's corridor wall (t / b / l / r), which is the
+        // wall its trunk lane runs inside; it sets the padding that keeps
+        // the text off the line, and the wall the door is in. door is
+        // where on that wall: s / e near its start / end, hs / he centred
+        // on the corridor-width end of a corner room.
+        const ROOMS = {
+            201: ['6 / 8',   '9 / 11', 'b', 's',  '4 / 6',  '13 / 15', 'b', 's'],
+            202: ['4 / 6',   '9 / 11', 'b', 's',  '1 / 4',  '13 / 15', 'b', 'he'],
+            203: ['1 / 4',   '9 / 11', 'b', 'he', '1 / 3',  '10 / 13', 'l', 's'],
+            204: ['1 / 3',   '6 / 9',  'l', 's',  '1 / 3',  '8 / 10',  'l', 's'],
+            205: ['1 / 3',   '3 / 6',  'l', 's',  '1 / 3',  '6 / 8',   'l', 's'],
+            206: ['1 / 4',   '1 / 3',  't', 'he', '1 / 3',  '3 / 6',   'l', 's'],
+            207: ['4 / 6',   '1 / 3',  't', 's',  '1 / 4',  '1 / 3',   't', 'he'],
+            208: ['6 / 8',   '1 / 3',  't', 's',  '4 / 6',  '1 / 3',   't', 's'],
+            209: ['8 / 10',  '1 / 3',  't', 's',  '6 / 8',  '1 / 3',   't', 's'],
+            210: ['10 / 12', '1 / 3',  't', 's',  '8 / 11', '1 / 3',   't', 'hs'],
+            211: ['12 / 15', '1 / 3',  't', 'hs', '9 / 11', '3 / 6',   'r', 's'],
+            212: ['13 / 15', '3 / 6',  'r', 's',  '9 / 11', '6 / 8',   'r', 's'],
+            213: ['13 / 15', '6 / 9',  'r', 's',  '9 / 11', '8 / 10',  'r', 's'],
+            214: ['12 / 15', '9 / 11', 'b', 'hs', '9 / 11', '10 / 13', 'r', 's'],
+            215: ['10 / 12', '9 / 11', 'b', 'e',  '8 / 11', '13 / 15', 'b', 'hs'],
+            216: ['8 / 10',  '9 / 11', 'b', 'e',  '6 / 8',  '13 / 15', 'b', 'e'],
+        };
+        // LINKS, keyed by n: the link joining room n and room n + 1.
+        // [colW, rowW, edgeW, markW, colN, rowN, edgeN, markN]. Each box
+        // runs from one room's controller to the next one's, and edge is
+        // the side of the box the line is drawn on. mark is where along
+        // the box the partition between the two rooms falls, which is
+        // where a break or a split is drawn: m the middle; s1 / s2 one
+        // lane / a lane and a corridor in from the start; e1 / e2 the
+        // same back from the end. (The CSS turns those into lengths, so
+        // the mark is on the wall at every width.)
+        const LINKS = {
+            201: ['5 / 7',   '9 / 10', 'b', 'm',  '2 / 5',  '13 / 14', 'b', 's2'],
+            202: ['2 / 5',   '9 / 10', 'b', 's2', '2 / 3',  '11 / 14', 'l', 'e1'],
+            203: ['2 / 3',   '7 / 10', 'l', 'e1', '2 / 3',  '9 / 11',  'l', 'm'],
+            204: ['2 / 3',   '5 / 7',  'l', 'm',  '2 / 3',  '7 / 9',   'l', 'm'],
+            205: ['2 / 3',   '2 / 5',  'l', 's1', '2 / 3',  '5 / 7',   'l', 'm'],
+            206: ['2 / 5',   '2 / 3',  't', 's2', '2 / 3',  '2 / 5',   'l', 's1'],
+            207: ['5 / 7',   '2 / 3',  't', 'm',  '2 / 5',  '2 / 3',   't', 's2'],
+            208: ['7 / 9',   '2 / 3',  't', 'm',  '5 / 7',  '2 / 3',   't', 'm'],
+            209: ['9 / 11',  '2 / 3',  't', 'm',  '7 / 10', '2 / 3',   't', 'e2'],
+            210: ['11 / 14', '2 / 3',  't', 'e2', '9 / 10', '2 / 5',   'r', 's1'],
+            211: ['13 / 14', '2 / 5',  'r', 's1', '9 / 10', '5 / 7',   'r', 'm'],
+            212: ['13 / 14', '5 / 7',  'r', 'm',  '9 / 10', '7 / 9',   'r', 'm'],
+            213: ['13 / 14', '7 / 10', 'r', 'e1', '9 / 10', '9 / 11',  'r', 'm'],
+            214: ['11 / 14', '9 / 10', 'b', 'e2', '9 / 10', '11 / 14', 'r', 'e1'],
+            215: ['9 / 11',  '9 / 10', 'b', 'm',  '7 / 10', '13 / 14', 'b', 'e2'],
+        };
+        // The ends of the trunk, by the end the supervisor or router is
+        // on ('low' feeds 201, 'high' feeds 216). HEAD_LINK is the drop
+        // from its box into the first room: [colW, rowW, edgeW, colN,
+        // rowN, edgeN]. TAIL is the stub past the last controller, toward
+        // the 201 | 216 wall, stopping short of it: the same, plus the
+        // side the gap is on. END_TAG is the "End of trunk" tag, in the
+        // corridor on the last room's side: [colW, rowW, colN, rowN, side].
+        const HEAD_LINK = {
+            low:  ['7 / 8',  '7 / 10', 'l', '5 / 6', '11 / 14', 'l'],
+            high: ['9 / 10', '7 / 10', 'l', '7 / 8', '11 / 14', 'l'],
+        };
+        const TAIL = {
+            low:  ['8 / 9', '9 / 10', 'b', '6 / 7', '13 / 14', 'b', 'l'],
+            high: ['7 / 8', '9 / 10', 'b', '5 / 6', '13 / 14', 'b', 'r'],
+        };
+        const END_TAG = {
+            low:  ['8 / 12', '8 / 9', '6 / 9', '12 / 13', 'l'],
+            high: ['4 / 8',  '8 / 9', '3 / 6', '12 / 13', 'r'],
+        };
+        // The supervisor or router's box, in the electrical room: one
+        // place on every job, spanning the drop into 201 and the drop
+        // into 216 alike. [colW, rowW, colN, rowN].
+        const HEAD_BOX = ['6 / 10', '6 / 8', '4 / 8', '10 / 12'];
+        // Spaces that are not rooms: [kind, label, colW, rowW, colN,
+        // rowN]. The corridor spans the whole inner rectangle and the
+        // core sits on it; the core's rooms sit on the core.
+        const SPACES = [
+            ['hall',  'Corridor',  '3 / 13',  '3 / 9', '3 / 9', '3 / 13'],
+            ['core',  '',          '4 / 12',  '4 / 8', '4 / 8', '4 / 12'],
+            ['stair', 'Stair',     '4 / 6',   '4 / 8', '4 / 6', '4 / 7'],
+            ['elev',  'Elev.',     '6 / 8',   '4 / 6', '6 / 8', '4 / 7'],
+            ['wc',    'Restrooms', '8 / 10',  '4 / 6', '4 / 6', '7 / 10'],
+            ['stair', 'Stair',     '10 / 12', '4 / 8', '6 / 8', '7 / 10'],
+            ['elec',  'Elec.',     '6 / 10',  '6 / 8', '4 / 8', '10 / 12'],
+        ];
 
         function make(tag, cls, text) {
             const el = document.createElement(tag);
@@ -655,14 +974,38 @@ noindex: true
             return el;
         }
 
-        // Controllers first, in room order, so the tab order walks the
-        // trunk; then the links, which are decoration to a keyboard.
+        // Write an element's place for both layouts.
+        function put(el, colW, rowW, colN, rowN) {
+            el.style.setProperty('--bsi-cw', colW);
+            el.style.setProperty('--bsi-rw', rowW);
+            el.style.setProperty('--bsi-cn', colN);
+            el.style.setProperty('--bsi-rn', rowN);
+        }
+
+        // The spaces go in first, so the rooms and the trunk paint over
+        // them, and nothing in them is interactive or read aloud.
+        SPACES.forEach(function (s) {
+            const el = make('span', 'bsi-space is-' + s[0]);
+            el.setAttribute('aria-hidden', 'true');
+            if (s[1]) el.appendChild(make('span', 'bsi-space-label', s[1]));
+            put(el, s[2], s[3], s[4], s[5]);
+            plan.insertBefore(el, headBox);
+        });
+        put(headBox, HEAD_BOX[0], HEAD_BOX[1], HEAD_BOX[2], HEAD_BOX[3]);
+
+        // Controllers in room order, so the tab order walks the trunk;
+        // then the links, which are decoration to a keyboard.
         const rooms = [];
         for (let r = 0; r < BI.ROOM_COUNT; r++) {
             const room = BI.FIRST_ROOM + r;
+            const p = ROOMS[room];
             const btn = make('button', 'bsi-room');
             btn.type = 'button';
             btn.setAttribute('data-bsi-room', String(room));
+            btn.setAttribute('data-bsi-sw', p[2]);
+            btn.setAttribute('data-bsi-dw', p[3]);
+            btn.setAttribute('data-bsi-sn', p[6]);
+            btn.setAttribute('data-bsi-dn', p[7]);
             const word = make('span', 'bsi-room-word');
             const state = make('span', 'bsi-room-state');
             state.appendChild(make('span', 'bsi-glyph'));
@@ -672,28 +1015,54 @@ noindex: true
             btn.appendChild(make('span', 'bsi-room-mac', 'MAC ' + BI.macOf(room)));
             btn.appendChild(state);
             btn.appendChild(badge);
-            place(btn, r, false);
+            put(btn, p[0], p[1], p[4], p[5]);
             plan.appendChild(btn);
             rooms.push({ btn: btn, word: word, badge: badge });
         }
 
-        // roomLinks[r] joins room r and room r + 1.
+        // roomLinks[r] joins room r and room r + 1 (r counted from 201).
         const roomLinks = [];
         for (let r = 0; r < BI.ROOM_COUNT - 1; r++) {
+            const p = LINKS[BI.FIRST_ROOM + r];
             const link = make('span', 'bsi-link');
-            place(link, r, true);
+            link.setAttribute('aria-hidden', 'true');
+            link.setAttribute('data-bsi-lw', p[2]);
+            link.setAttribute('data-bsi-mw', p[3]);
+            link.setAttribute('data-bsi-ln', p[6]);
+            link.setAttribute('data-bsi-mn', p[7]);
+            put(link, p[0], p[1], p[4], p[5]);
             plan.appendChild(link);
             roomLinks.push(link);
         }
-        // The two ends: the link to the supervisor or router, and the
-        // stub that ends the trunk. Both run vertically in column one.
-        const headLink = make('span', 'bsi-link is-cap at-top');
-        const tailLink = make('span', 'bsi-link is-cap is-tail at-bottom');
+        // The two ends: the drop from the supervisor or router, and the
+        // stub that ends the trunk. Made with every attribute they will
+        // ever carry, so placing them later only rewrites values.
+        const headLink = make('span', 'bsi-link is-cap');
+        const tailLink = make('span', 'bsi-link is-cap is-tail');
         [headLink, tailLink].forEach(function (el) {
-            el.setAttribute('data-bsi-dir8', 'v');
-            el.setAttribute('data-bsi-dir4', 'v');
+            el.setAttribute('aria-hidden', 'true');
+            el.setAttribute('data-bsi-lw', 'l');
+            el.setAttribute('data-bsi-ln', 'l');
             plan.appendChild(el);
         });
+        tailLink.setAttribute('data-bsi-gap', 'l');
+        endTag.setAttribute('data-bsi-gap', 'l');
+
+        // Put the two ends and the tag at the end the job says.
+        function placeEnds(at) {
+            const h = HEAD_LINK[at];
+            headLink.setAttribute('data-bsi-lw', h[2]);
+            headLink.setAttribute('data-bsi-ln', h[5]);
+            put(headLink, h[0], h[1], h[3], h[4]);
+            const t = TAIL[at];
+            tailLink.setAttribute('data-bsi-lw', t[2]);
+            tailLink.setAttribute('data-bsi-ln', t[5]);
+            tailLink.setAttribute('data-bsi-gap', t[6]);
+            put(tailLink, t[0], t[1], t[3], t[4]);
+            const e = END_TAG[at];
+            endTag.setAttribute('data-bsi-gap', e[4]);
+            put(endTag, e[0], e[1], e[2], e[3]);
+        }
 
         // ── State ───────────────────────────────────────────────────
         // Each kind opens on the same job for every reader
@@ -763,11 +1132,6 @@ noindex: true
             feedback.replaceChildren(...nodes);
         }
 
-        function setAt(el, atTop) {
-            el.classList.toggle('at-top', atTop);
-            el.classList.toggle('at-bottom', !atTop);
-        }
-
         function render() {
             const v = BI.view(jobs[current]);
 
@@ -811,15 +1175,13 @@ noindex: true
                         ' (' + v.suspects.count + ' may still hold the fault)';
             }
 
-            // The plan. While the route is hidden the two ends park at
-            // a fixed default, so nothing in the DOM says which end the
-            // supervisor or router is really on.
+            // The plan. The supervisor or router's box never moves. The
+            // drop from it, the stub that ends the trunk and the end tag
+            // go to the end the job puts it on; while the route is hidden
+            // they park, hidden, at one fixed default (the 201 end), so
+            // nothing in the DOM says which end it is really on.
             plan.classList.toggle('is-routeless', !v.routeShown);
-            const headAtTop = v.headEnd !== 'high';
-            setAt(headBox, headAtTop);
-            setAt(headLink, headAtTop);
-            setAt(endTag, !headAtTop);
-            setAt(tailLink, !headAtTop);
+            placeEnds(v.routeShown ? v.headEnd : 'low');
 
             v.controllers.forEach(function (c, i) {
                 const ui = rooms[i];
