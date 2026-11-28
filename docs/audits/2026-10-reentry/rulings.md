@@ -705,3 +705,134 @@ Found on the way and left for him: Cloudflare is injecting its Web
 Analytics beacon into served pages (three checked), and the privacy
 page says there are no analytics (codebase-issues #344). The dashboard is his,
 so it is a *Your turn* line and no page was changed.
+
+## 25. Keep the analytics; the dead-trunk lesson, built hidden *(2026-11-27, late night, into the 28th)*
+
+The owner answered §24's open line while the lesson run was under way.
+His message, verbatim (typos his):
+
+> I want to the Cloudflare policy as is so go ahead and reword that.
+> You can note in the privacy policy that the data collected is used
+> for the sole purpose of allowing me to see how much use this site
+> gets and where the demmand comes from. Also can you confirm you got
+> my earlier message about subagnets and using the right model for the
+> task, I may have missed but I don't think I saw confirmation. Great
+> work
+
+**Ruling: Cloudflare Web Analytics stays on, and the privacy page says
+so** (PR #674, v3.93.3; codebase-issues #344 has the detail). His
+purpose is on the page in the first person: "I use that data for one
+purpose only: to see how much use this site gets and where the demand
+comes from." The first draft put it in the passive ("That data is
+used…"); a reviewer pointed out that the passive also promises what
+Cloudflare does with the data, which is not his to promise, so the
+page says a little less than his message did.
+
+**His question about an earlier message on subagents and model
+choice.** No such message is in this session's transcript; it was
+searched. He was told so and asked to send it again, and told the rule
+the assistant was working by: Opus agents for mechanical fixes, the
+session's model for design and judgment work, and on mixed work Opus
+executes and the session's model verifies. The most recent instruction
+on record is §19.15 (2026-10-06), which covers the first two parts and
+may be the message he meant.
+
+Calls the assistant made on the privacy change (each reversible):
+
+- **"No tracking" was removed, not softened.** The home page and
+  `README.md` now say "No login, no ads". A softer phrase would have
+  been a new claim of his that he had not made.
+- **Six more sentences went the same way** when a review found them:
+  two landing intros and four hub intros.
+- **Three sentences were added that he did not ask for** (two in the
+  *Cloudflare* section, one in the cookie paragraph): the privacy page
+  now names Cloudflare's bot-check script, which a review found in the
+  served pages it checked, and the cookie Cloudflare's documentation
+  ties to it. The page already said Cloudflare blocks abusive traffic
+  and may set cookies for bot protection; this names the mechanism. It
+  is a line on the board for him to strike if he would rather not have
+  it.
+- **The *Your rights* section was left as it was.**
+- **Version 3.93.3, a patch:** a fix to shipped copy.
+
+**The dead-trunk lesson** (item 5; PR #675) was built in the same run
+under §22's go-ahead, from his story and method as recorded in §21. It is
+merged as a hidden page (`noindex`, no `canonical`, excluded from
+collections) and is launched only on his yes. Calls the assistant
+made, each reversible before launch:
+
+- **The name is "Bus Section Isolation"**, his phrase, filed under the
+  protocols category beside BACnet MS/TP.
+- **The method section holds his three steps and one sentence of plain
+  chain logic on each of the first two.** The third has none: he gave
+  one midpoint split. That repeated splits halve the suspects is stated
+  in the game's third job as a rule of the made-up floor, where one
+  controller is the whole cause. A first draft put that arithmetic in
+  the method section; a blind review flagged it as more than he said
+  and it was cut.
+- **One made-up floor, and the page says so:** sixteen controllers in
+  rooms 201 to 216, MAC 1 to 16 in the same order, one daisy-chained
+  trunk in room order from "the supervisor or router", which sits at
+  one end. One fault per job.
+- **Three jobs, one per step:** a dead section with the layout drawn;
+  a dead section with no layout; a whole trunk that is flaky. Every
+  move is picking a controller, and the score is stops or splits.
+- **Two sentences about real trunks are the assistant's, not his,**
+  and hold by construction: a real trunk can carry more than one fault
+  at once, and a break leaves the still-connected section without the
+  terminator that sat at the far end.
+- **Nothing about the meter beyond his own sentence and one scope
+  line** ("Meter work on the bus is left out on purpose"). No reading,
+  no reason, no detail of the job.
+- **His "spamming TX" reads "transmitting constantly"** in the steps,
+  and "transmitting when it should not (the troublemaker)" in the
+  game's description. Two reviews pulled in opposite directions on
+  this; it is a question to him on the board.
+- **His story is recast in the first person, the day first and the
+  lesson second.** He led with the lesson. Left for him. §21 recorded
+  the shape as the story told as a made-up job; as built, the story is
+  a short first-person callout under a lead-in the assistant wrote
+  ("True story."), and the made-up jobs are separate.
+- **The no-layout job says "Reading the pattern first gets it in 1"**
+  to a reader who took two stops by starting at the highest or lowest.
+  That ranks a reading he did not give above his stated method. Left,
+  and asked on the board.
+- **One clause in the shared head template** (`html/_includes/head.njk`):
+  the education block now needs a canonical, as the tools block
+  already did. A whole-site build before and after differs in one
+  file, the hidden page.
+- **No version bump.** No existing page, stylesheet or versioned
+  script changed; the new page is reachable only by its address.
+- **Three source comments in the page were HTML comments** and so
+  shipped in the built page; one described his story in words he did
+  not use. This record's pull request makes them template comments and
+  drops that sentence, and trims a test's sample of a banned sentence.
+
+What the launch owes, and the review leftovers, are in
+codebase-issues #345.
+
+**Later the same night (about 01:20 on the 28th) he answered both open
+lines.** On the lesson, verbatim:
+
+> Picking 209 first in job 1 out of intuition doesn't drive home the
+> point since one may not understand why picking that worked, 2 is good
+> but could use a bit more depth, and 3 is great.
+
+On the agent rule as it was put to him in conversation, he said it is
+"mostly correct", and that "Opus is a capable model, so don't be afraid
+to use it a bit more."
+
+Dispositions (the assistant's, not his words):
+
+- **Jobs 1 and 2 are reworked before any launch**, still hidden. Job 1
+  will say why the pick worked. What "more depth" means for job 2 is
+  asked on the board; explanation of what each stop tells the reader
+  is built meanwhile.
+- **"3 is great" is taken as approval of the third job as played,**
+  repeated halving included. The board says so and invites a no.
+- **Agents run on Opus by default from here on**, with the session's
+  own model kept for the occasional small, hard call. That goes
+  further than "a bit more"; the board says so and invites a no. The
+  lesson's build and the reviews in this run up to that point had
+  inherited the session's model.
+

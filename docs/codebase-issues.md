@@ -16467,7 +16467,7 @@ with `setAttribute`; the helper is unchanged); and a reveal-panel
 locator on `.quiz-reveal-right` can now match two paragraphs, because
 the read line reuses that class. Open, LOW.
 
-### 344. Cloudflare injects its Web Analytics beacon at the edge; the privacy page says there are no analytics *(noticed 2026-11-27, a real-browser check of production after PR #672; owner's to settle — the Cloudflare dashboard is his)*
+### 344. Cloudflare injects its Web Analytics beacon at the edge; the privacy page says there are no analytics *(noticed 2026-11-27, a real-browser check of production after PR #672; owner's to settle — the Cloudflare dashboard is his)* *(addressed 2026-11-27 · PR #674, merged)*
 
 A browser load of production requested
 `https://static.cloudflareinsights.com/beacon.min.js/…`. Measured the
@@ -16497,4 +16497,154 @@ automatic setup" → Update, by community reports; nobody here has seen
 his dashboard, so the path may not match), or keep it and reword the
 two privacy sentences and the "no tracking" on the home page and in
 `README.md`, as the board offers. On the board as a *Your turn* line.
-No page was changed. Open.
+No page was changed.
+
+**Resolved 2026-11-27 (PR #674, v3.93.3): the owner chose to keep the
+analytics and reword the policy** (his words are in `rulings.md` §25).
+
+- *The inventory above was short.* The first blind review swept the
+  repository and found six sentences it had missed: "nothing tracked" in
+  the Tools and Simulators landing intros, and "tracks nothing" in the
+  intro of each of the four topic hubs. Every one is changed: the home
+  hero and `README.md` now read "No login, no ads"; the two landing
+  intros say "no login, nothing to install"; the hubs read "Everything
+  here is open and needs no login."
+- *`html/privacy.html`* has a *Cloudflare Web Analytics* section: the
+  host the script loads from, that it reports through the site's own
+  address at `/cdn-cgi/rum`, what Cloudflare shows the owner, Cloudflare's
+  statements about cookies and fingerprinting (attributed to
+  Cloudflare), and the owner's purpose in the first person. The opening
+  paragraph and the device-storage section no longer say there are no
+  analytics. Sources are Cloudflare's own pages, linked from the
+  privacy page itself.
+- *A second edge script.* The same review found that Cloudflare also
+  injects an inline snippet that loads
+  `/cdn-cgi/challenge-platform/scripts/jsd/main.js`. Cloudflare
+  documents scripts under `/cdn-cgi/challenge-platform/` as its
+  JavaScript Detections (bot detection), and says the script's result
+  is stored in a cookie named `cf_clearance`. The privacy
+  page's *Cloudflare* section now names the script and its cookie
+  paragraph names the cookie, both attributed to Cloudflare's
+  documentation. Measured afterwards in a headless Chromium load of
+  production `/tools/`: a GET of that script, a POST under
+  `/cdn-cgi/challenge-platform/`, and a `cf_clearance` cookie for
+  `.controlsfreak.dev` in the browser afterwards.
+- *`CLAUDE.md`'s convention line* names both edge scripts, and a
+  template comment in `html/_includes/head.njk` that said the site had
+  one third-party origin is scoped to the repository's own markup.
+
+**Not measured, and why.** The `/cdn-cgi/rum` sentence rests on
+Cloudflare's documentation. No report request was seen from the
+development box: the analytics script does not load there, in `curl` or
+in a headless browser, so there was nothing to watch. Whether a
+filter-chip tap on a landing (which calls `history.replaceState`) sends
+an extra report could not be checked for the same reason; the page does
+not say when the script reports.
+
+**Left as built** (review advisories, none a false statement):
+
+- The device-storage paragraph's "It is never sent to me or to anyone
+  else" is true of the repository's code and was not rescoped to "the
+  site's own code" the way its neighbours were.
+- The *Your rights* section does not mention the analytics data. A
+  first draft extended "handled under its own policy" to it; nobody
+  had read Cloudflare's privacy policy for that claim, so the sentence
+  went back to its original wording.
+- No retention figure for the analytics is given. Cloudflare's FAQ has
+  one.
+- Served responses carry `nel` and `report-to` headers naming
+  `a.nel.cloudflare.com` (seen on `/privacy`). The policy does not
+  mention them.
+- "Cloudflare may set its own cookies" is softer than Cloudflare's
+  documentation, which says the script's result is stored in the
+  `cf_clearance` cookie.
+- The "Cloudflare states" sentence takes its words from the product
+  page linked at the top of the paragraph, not from the documentation
+  link just before it.
+
+Closed.
+
+### 345. Bus Section Isolation is merged hidden: what its launch owes, and what its reviews left *(noticed 2026-11-28, PR #675; launch is the owner's call)*
+
+`html/education/bus-section-isolation.html` is on `main` as a hidden
+page: `noindex: true`, no `canonical`, `eleventyExcludeFromCollections:
+true`. No manifest-driven sweep loads it: it is absent from
+`tests/pages.js`, so smoke, responsive and contrast-sweep never render
+it. What renders and plays it is `tests/bus-section-isolation.spec.js`,
+with the rules proven in `tests/bus-isolation-engine.spec.js`. The
+source and built-file scans (link-integrity, metric-spans,
+fill-token-misuse) still reach it. Launching it is the owner's call.
+
+Owner feedback after playing it, 2026-11-28 (verbatim in `rulings.md`
+§25): picking 209 first by intuition in the first job does not show
+why that pick worked; the second is good but could use a bit more
+depth; the third is great. The first two are reworked before any
+launch.
+
+**The graduation pull request owes all of these** (no other lane pays
+them; none is done):
+
+- Frontmatter: add `canonical`, drop `noindex` and
+  `eleventyExcludeFromCollections`. The description is inside the
+  guarded 140 to 160 characters today; the page's own spec pins it.
+- `html/_data/educationSequence.js`: add the page to `order`.
+- `html/education/index.html`: a nav card with the same `category`
+  (`protocols`), and the chip counts.
+- Reverse links: `relatedLinks()` on `html/education/bacnet-mstp.html`,
+  and a step or card on `html/bacnet/index.html`. No page on the site
+  links to it today, by design (the board in this repository does, for
+  the owner). The lesson's own `relatedLinks()` names four lessons and
+  a quiz; the graduation decides whether `bacnet-basics`,
+  `bacnet-networking`, `controller-wiring` and the MS/TP quiz link
+  back as well.
+- The BACnet hub card on the home page and on the Guides landing
+  (`html/index.html`, `html/guides/index.html`): its lesson-count pill
+  and the reading order its desc names. Neither is guarded.
+- `CLAUDE.md`'s hidden-page paragraph names this lesson as hidden;
+  take it out there.
+- No `[future:]` marker in `docs/site-ideas-and-friction.md` names
+  this page (checked), so there is none to retire.
+- `tests/pages.js`: add the URL. The page spec asserts the opposite
+  today (not in the manifest, not in the sitemap, search index or
+  menus, one `noindex`, no canonical, no JSON-LD); those tests flip,
+  and so do the test that no built file mentions the address (it trips
+  as soon as the page has a canonical), the `og:url` count, the
+  frontmatter assertions, and the header comments of both specs.
+- `README.md` tour, the home page count pills, a minor version bump.
+- Decide whether the four section headings get anchor ids (the builder
+  dropped them so that every id on the page is `bsi-*` or `main`).
+- Answers to the board's questions may change the copy first.
+
+**Review leftovers** (advisories from the final blind reviews; none was
+a must-fix):
+
+- The page keeps its own `:focus-visible` rule where the convention
+  puts a hover-styled control's selector in the consolidated block of
+  `styles.css`. (Its page-local touch-target floor is what the
+  convention asks of widget internals.)
+- Light theme: `--text-dim` on `--surface-3` computes to 4.60:1 by a
+  reviewer's arithmetic, close to the 4.5:1 floor. On this page that
+  pair is measured only by the page's own spec, since the shared sweep
+  never loads a hidden page. That contrast test covers text inside
+  `#bsi-game` only; non-text marks are not measured.
+- The controller's MAC line and status word are 0.62rem. Legibility on
+  a phone is the owner's eye.
+- `tests/bus-section-isolation.spec.js`: `geometry()` reads positions
+  while the card may still be in its entrance animation (a possible
+  rare flake, not seen); keyboard-only play is tested on the third job
+  only; the page-source scan bans storage and timers but not `fetch`,
+  `XMLHttpRequest`, `indexedDB` or `sendBeacon`.
+- `aria-labelledby` on the report's `<dl>` may not be exposed by every
+  screen reader, and a repeated identical result sentence may not be
+  re-announced by the live region.
+- In the third job a pick on the last controller counts as a split
+  though it cuts nothing off (run: `counted: true`). The reader is
+  told at pick time that nothing is cut off. No sentence on the page
+  says the pick still counts; only the Splits readout goes up.
+- `tests/smoke.spec.js`'s lesson JSON-LD walk now skips a lesson with
+  no canonical. A listed lesson that lost its canonical line would
+  leave that walk quietly; the manifest-against-sitemap drift test
+  would still catch it.
+
+Open (the rework first, then the owner's yes).
+
