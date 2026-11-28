@@ -16065,8 +16065,8 @@ headless Chromium: under an English browser locale `61,6` → `616`,
 `9,5` → `95`, `10.000` → `10.000`; with the process locale set to
 German, `10,000` → `10.000` and `61,6` → `61.6`. Playwright's `locale`
 option alone does not change that parser, so the correction above holds
-for a browser running in German, and an English browser had its own
-half of the defect: a decimal comma silently dropped. An entry that can
+for a browser running in German, and Chromium under an English locale
+had its own half of the defect: a decimal comma silently dropped. An entry that can
 be read two ways (one to three digits with no leading zero, one
 separator, exactly three digits after it) gets **one** reading, by the
 browser's own decimal mark, and the reveal says which. A first build
@@ -16087,11 +16087,11 @@ is shown whenever a two-way entry is submitted.
 Left as built (2026-11-27). The input → output pairs were measured by
 running the merged parser; the last item says what it is:
 
-- An entry outside the two-way shape is read as a decimal under either
-  mark, with no reveal line: `05,000` → 5, `010,000` → 10, `0,500` →
-  0.5, `1234,567` → 1234.567. So `05,000` grades right on a 5 ± 0.1
-  answer. The fix for the zero-padded case is to widen the two-way
-  shape.
+- An entry with one separator that falls outside the two-way shape is
+  read as a decimal under either mark, with no reveal line: `05,000` →
+  5, `010,000` → 10, `0,500` → 0.5, `1234,567` → 1234.567. So `05,000`
+  grades right on a 5 ± 0.1 answer. The fix for the zero-padded case is
+  to widen the two-way shape.
 - NFKC folds more than full-width forms: `10²` → 102, `3²` → 32, `⑩` →
   10. Two of those land on a shipped answer (32 ± 0; 10 ± 0). No
   shipped question asks for an entry written that way.
@@ -16443,7 +16443,9 @@ order:
   at 15.2 px in `--text` where its own rule asks for 0.72rem in
   `--text-dim`; the reveal status renders 15.2 px where its rule asks
   for 0.78rem. The status *colour* is right, because its state rules
-  are 0,2,0.
+  are 0,2,0. By the same cascade, and not measured: `.quiz-results-sub`
+  (a `<p>`, 0,1,0, `font-size: 0.82rem; color: var(--text-dim)`) loses
+  both of those declarations too.
 - **`input[type="number"], input[type="text"]`** (0,1,1) beats
   `.quiz-numeric-input` (0,1,0): its `width: 9rem`, background, padding,
   font size and colour do not apply, so the answer box ships at
@@ -16475,23 +16477,24 @@ carries one `<script type="module">` tag whose `src` is
 `https://static.cloudflareinsights.com/beacon.min.js/…`. The built
 `_site/` has none (`grep -rl cloudflareinsights _site` finds no file),
 so the tag is added by Cloudflare on the way out, not by this
-repository. On `/privacy` the tag came with `Accept: text/html` and did
-not come with no `Accept` header, with `Accept: */*`, or with only an
-`Accept-Language` header, which is how a plain fetch can miss it. When
-the injection started is not known.
+repository. On `/privacy` the tag came with `Accept: text/html` and
+with the `Accept` header removed (`-H 'Accept:'`); it did not come with
+`Accept: */*`, which is what `curl` sends when left alone, with or
+without an `Accept-Language` header. That is how a plain fetch can miss
+it. When the injection started is not known.
 
 `html/privacy.html` says "There are no analytics" in its opening
 paragraph (the words cross a line break in the source) and "There is
 no analytics platform on this site" under *No tracking*. Both are
 false while the beacon is injected. The home page and `README.md` both
 say "No login, no ads, no tracking", and `CLAUDE.md`'s "no tracking or
-analytics" convention rests on the same fact; whether this beacon
-counts as tracking is the owner's judgement.
+analytics" convention rests on the same fact.
 
 **Two ways to make the page true again,** and the choice is the
 owner's: switch the beacon off in the Cloudflare dashboard (Web
 Analytics → the site → Manage site → Advanced Options → "Disable
 automatic setup" → Update, by community reports; nobody here has seen
 his dashboard, so the path may not match), or keep it and reword the
-two sentences. On the board as a *Your turn* line. No
-page was changed. Open.
+two privacy sentences and the "no tracking" on the home page and in
+`README.md`, as the board offers. On the board as a *Your turn* line.
+No page was changed. Open.
