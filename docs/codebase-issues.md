@@ -16503,12 +16503,12 @@ No page was changed.
 analytics and reword the policy** (his words are in `rulings.md` §25).
 
 - *The inventory above was short.* The first blind review swept the
-  repository and found six sentences it had missed: "nothing tracked" in
-  the Tools and Simulators landing intros, and "tracks nothing" in the
-  intro of each of the four topic hubs. Every one is changed: the home
-  hero and `README.md` now read "No login, no ads"; the two landing
-  intros say "no login, nothing to install"; the hubs read "Everything
-  here is open and needs no login."
+  repository and found six sentences the inventory had missed: "nothing
+  tracked" in the Tools and Simulators landing intros, and "tracks
+  nothing" in the intro of each of the four topic hubs. Every one is
+  changed: the home hero and `README.md` now read "No login, no ads";
+  the two landing intros say "no login, nothing to install"; the hubs
+  read "Everything here is open and needs no login."
 - *`html/privacy.html`* has a *Cloudflare Web Analytics* section: the
   host the script loads from, that it reports through the site's own
   address at `/cdn-cgi/rum`, what Cloudflare shows the owner, Cloudflare's
@@ -16578,8 +16578,9 @@ fill-token-misuse) still reach it. Launching it is the owner's call.
 Owner feedback after playing it, 2026-11-28 (verbatim in `rulings.md`
 §25): picking 209 first by intuition in the first job does not show
 why that pick worked; the second is good but could use a bit more
-depth; the third is great. The first two are reworked before any
-launch.
+depth; the third is great. The first two were reworked in PR #677:
+every result in those jobs now says why, and the third is unchanged.
+What he meant by depth for the second is asked on the board.
 
 **The graduation pull request owes all of these** (no other lane pays
 them; none is done):
@@ -16640,11 +16641,19 @@ a must-fix):
 - In the third job a pick on the last controller counts as a split
   though it cuts nothing off (run: `counted: true`). The reader is
   told at pick time that nothing is cut off. No sentence on the page
-  says the pick still counts; only the Splits readout goes up.
+  says the pick still counts; the Splits readout goes up, and the
+  final score includes it.
 - `tests/smoke.spec.js`'s lesson JSON-LD walk now skips a lesson with
   no canonical. A listed lesson that lost its canonical line would
   leave that walk quietly; the manifest-against-sitemap drift test
   would still catch it.
 
-Open (the rework first, then the owner's yes).
+- From the rework (PR #677): the first job's reason on a find restates
+  the first step's sentence above the game, on purpose; the second
+  job's results say "block" where the steps say "one run"; on a phone
+  the longest result runs to about nine lines, which moves the key
+  down but not the plan.
+
+Open (waits on the owner's yes; his answer on the second job may
+change it first).
 
