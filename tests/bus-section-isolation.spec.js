@@ -1858,7 +1858,7 @@ test.describe('bus section isolation: what the page keeps, and what it says', ()
             expect(offenders(text), name + ' source').toEqual([]);
         }
         // Anti-vacuity for the word list itself.
-        expect(offenders('a reading of two volts, said the customer'))
+        expect(offenders('volt / reading of / customer'))
             .toEqual([String(/\bvolt/i), String(/\breading of\b/i), String(/\bcustomer\b/i)]);
     });
 
