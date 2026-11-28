@@ -313,6 +313,13 @@ noindex: true
             border-left: 3px solid var(--blue);
         }
         p.bsi-feedback.is-found { border-left-color: var(--accent); }
+        /* On a break job the result says why, and the why gets a line of
+           its own, with the score line (when there is one) on the next.
+           Same ink and size as the rest: it is one sentence, laid out in
+           parts, inside the one live region. The flaky job has no reason,
+           so its results are drawn exactly as before. */
+        p.bsi-feedback .bsi-why,
+        p.bsi-feedback .bsi-after { display: block; margin-top: 0.35rem; }
 
         /* Key to the marks. */
         ul.bsi-key {
@@ -688,11 +695,13 @@ noindex: true
         // Each kind opens on the same job for every reader
         // (BusIsolation.OPENING); "New job" draws a seed from
         // Math.random and the engine does the rest.
+        // said[kind] is what that job's result line shows: the sentence,
+        // and the part of it that says why (break jobs; null otherwise).
         const jobs = {};
         const said = {};
         BI.KINDS.forEach(function (kind) {
             jobs[kind] = BI.newJob(kind, BI.OPENING[kind]);
-            said[kind] = BI.view(jobs[kind]).prompt;
+            said[kind] = { text: BI.view(jobs[kind]).prompt, reason: null };
         });
         let current = BI.KINDS[0];
 
@@ -726,6 +735,28 @@ noindex: true
             if (c.besideBreak) name += ', beside the break';
             if (c.found) name += ', found: this is the troublemaker';
             return name;
+        }
+
+        // The result line. Its text is the engine's sentence, character
+        // for character; when the sentence carries a reason, that part is
+        // wrapped so it can sit on a line of its own, and whatever follows
+        // it (the score line) goes on the next. The paragraph itself is
+        // the one live region and is updated in place, never replaced, so
+        // a screen reader hears the reason once, with its result. The new
+        // nodes are built first and swapped in with one replaceChildren
+        // call, so the region changes once per result, not up to three
+        // times.
+        function say(s) {
+            const at = s.reason ? s.text.indexOf(s.reason) : -1;
+            const head = at === -1 ? s.text : s.text.slice(0, at);
+            const nodes = [];
+            if (head !== '') nodes.push(document.createTextNode(head));
+            if (at !== -1) {
+                nodes.push(make('span', 'bsi-why', s.reason));
+                const rest = s.text.slice(at + s.reason.length);
+                if (rest.trim() !== '') nodes.push(make('span', 'bsi-after', rest));
+            }
+            feedback.replaceChildren(...nodes);
         }
 
         function setAt(el, atTop) {
@@ -812,7 +843,7 @@ noindex: true
                 el.classList.add(link.state === 'break' ? 'is-break' : 'is-split');
             });
 
-            feedback.textContent = said[current];
+            say(said[current]);
             feedback.classList.toggle('is-found', v.solved);
         }
 
@@ -821,7 +852,7 @@ noindex: true
             const btn = e.target.closest('.bsi-room');
             if (!btn) return;
             const result = BI.pick(jobs[current], Number(btn.getAttribute('data-bsi-room')));
-            said[current] = result.text;
+            said[current] = { text: result.text, reason: result.reason || null };
             render();
         });
 
@@ -835,7 +866,7 @@ noindex: true
         newBtn.addEventListener('click', function () {
             const seed = Math.floor(Math.random() * 4294967296);
             jobs[current] = BI.nextJob(current, seed, jobs[current]);
-            said[current] = 'New job. ' + BI.view(jobs[current]).prompt;
+            said[current] = { text: 'New job. ' + BI.view(jobs[current]).prompt, reason: null };
             render();
         });
 

@@ -828,6 +828,12 @@ Dispositions (the assistant's, not his words):
   will say why the pick worked. What "more depth" means for job 2 is
   asked on the board; explanation of what each stop tells the reader
   is built meanwhile.
+- **The rework landed the same night (PR #677).** In jobs 1 and 2
+  every result now carries its reason, in the engine's sentences, and
+  the engine's tests check each reason against every break the game
+  can deal. The third job is unchanged. "A bit more depth" for job 2
+  was read as explanation of what each stop tells the reader; the
+  board asks whether he meant something else.
 - **"3 is great" is taken as approval of the third job as played,**
   repeated halving included. The board says so and invites a no.
 - **Agents run on Opus by default from here on**, with the session's
