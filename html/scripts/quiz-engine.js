@@ -97,45 +97,65 @@
 //     inputmode: 'decimal' | 'numeric'             -- optional, default 'decimal'
 //     The answer box is a TEXT input (inputmode still picks the phone
 //     keypad), read by parseNumericInput — also exposed as
-//     Quiz.parseNumericInput. It is NOT <input type="number">: a number
-//     input hands the page whatever the BROWSER's number parser made of
-//     the keystrokes — the browser's convention, not the reader's. Under
-//     English parsing a German reader's "61,6" arrived as 616 and
-//     "10.000" as ten; under German parsing an English reader's "10,000"
-//     becomes ten. Either way a reader who knew the answer was marked
-//     wrong with no hint why.
+//     Quiz.parseNumericInput(raw, decimalMark). It is NOT
+//     <input type="number">, because a number input parses by the
+//     browser's own locale. Measured 2026-11-27 in headless Chromium, a
+//     bare number input, real keystrokes: an English-locale browser
+//     turns a typed "61,6" into 616 and reads "10.000" as 10, and one
+//     running under a German process locale turns "10,000" into 10.
+//     Each time, a reader who knew the answer was marked wrong with no
+//     hint why.
 //     What is accepted. First the entry is normalised: NFKC (full-width
 //     digits and separators, and the no-break / narrow / thin spaces,
 //     become ASCII), U+2212 MINUS SIGN becomes '-', and every space is
 //     removed. Then: an optional single leading '+' or '-', and a body of
 //     digits, '.' and ',' only, with at least one digit.
-//       - No separator: one reading.
+//       - No separator: the digits.
 //       - Both '.' and ',': whichever comes LAST is the decimal mark and
 //         occurs once; the other groups thousands in well-formed groups of
 //         three. "10,000.5" and "10.000,5" both read 10000.5.
 //       - One kind, twice or more: thousands grouping, well-formed
 //         ("1,000,000"; "1.2.3" is not a number).
-//       - One kind, once: a decimal mark — "12,5" is 12.5, "0,500" is
-//         0.5, "1234,567" is 1234.567 — EXCEPT the shape 1-3 digits not
-//         starting with 0, the mark, exactly three digits ("10,000",
-//         "47.808"). That shape is genuinely ambiguous: the same
-//         keystrokes mean ten thousand in one locale and ten in another.
-//         It carries BOTH readings and grades correct if EITHER is within
-//         tolerance, so a reader is never marked wrong for their own
-//         number format. Reading order (it decides only what is stored on
-//         a miss): decimal first for '.', grouped first for ','.
-//       - The sign applies to every reading.
-//     Anything else ("12abc", "1,2,3.4", "1e3") has no reading: Submit
-//     stays disabled, a one-line format hint appears under the box, and
-//     the input carries aria-invalid="true". What the reader typed is
-//     never stripped or rewritten.
-//     The price of the two-readings rule is a bounded false accept: on an
-//     answer of 10, "10,000" grades correct, because its decimal reading
-//     is 10. It needs the answer and the decoy three orders of magnitude
-//     apart AND typed in exactly the ambiguous shape; accepted as cheaper
-//     than marking a German reader wrong for writing ten thousand their
-//     own way. The stored `given` is the first reading within tolerance,
-//     else the first reading.
+//       - One kind, once: a decimal mark with digits on at least one
+//         side — "12,5" is 12.5, "0,500" is 0.5, "1234,567" is
+//         1234.567 — EXCEPT the AMBIGUOUS shape: 1-3 digits not starting
+//         with 0, the mark, exactly three digits ("10,000", "47.808").
+//         Those keystrokes mean ten thousand under one number convention
+//         and ten under the other, so they are read by the reader's
+//         browser's convention: a separator equal to `decimalMark` is a
+//         decimal point, the other one is a thousands separator. On an
+//         English-locale browser "10,000" is 10000 and "10.000" is 10; on
+//         a German one, the reverse.
+//       - The sign applies to the value.
+//     None of these rules but the ambiguous one depends on decimalMark.
+//     `decimalMark` is '.' or ','. Omitted (or anything else), it is the
+//     browser's: localeDecimalMark() asks new Intl.NumberFormat() for the
+//     decimal part of 1.5 — ',' if that is a comma, '.' for anything
+//     else, '.' if Intl is missing or throws. A mount computes it once.
+//     Every entry has ONE reading or none: parseNumericInput returns
+//     null, or { value, ambiguous } — plus `sep` (the separator typed)
+//     and `readAs` ('decimal' | 'group') when `ambiguous` is true. The
+//     answer is correct iff |value - answer| <= tolerance, and `given`
+//     is the value.
+//     The browser's number convention stands in for the reader's habit;
+//     it is not a measurement of it. A reader whose browser language
+//     differs from their own habit can still be read the other way on
+//     the ambiguous shape, the one rule the convention decides. For that
+//     case the reveal
+//     adds one line saying how the separator was read ("The comma in
+//     your entry was read as a thousands separator."), on every
+//     submitted ambiguous entry, graded right or wrong, never on a Skip.
+//     Not a number. An entry with no reading keeps Submit disabled. The
+//     format hint ("Enter a number, like 1250 or 12.5.") and
+//     aria-invalid="true" appear only when (a) the normalised entry holds
+//     a character no number can contain — anything but ASCII digits, '.',
+//     ',', '+', '-' and whitespace — or (b) the reader presses Enter on
+//     a non-empty entry with no reading. A number still being typed ("-",
+//     ".", "1,000,0") is never flagged before (b). Every input event
+//     re-evaluates by (a) alone, so the next keystroke after (b) clears
+//     the hint unless it adds a foreign character; the hint also clears
+//     on reveal and whenever a question is shown. What the reader typed
+//     is never stripped or rewritten.
 //
 // localStorage keys (per the site-wide cf_<feature>_<key> convention):
 //   cf_quiz_<slug>_best          integer 0..N
@@ -160,13 +180,13 @@
 //   Content is built in a DocumentFragment and assigned once so screen
 //   readers announce a single update per submit.
 // - Focus moves programmatically to the action button after submit.
-// - The numeric box's format hint is one element per mount, after the
-//   .quiz-numeric row, referenced by the input's aria-describedby and
-//   aria-live="polite". It is `hidden` and EMPTY until an entry fails to
-//   parse: a description is computed even from a hidden node, so leaving
-//   the text in place would read the hint out on every numeric question
-//   while a sighted reader sees nothing — the two must hear and see the
-//   same thing.
+// - The numeric box's format hint is one element per mount, inside
+//   .quiz-numeric under the box + unit row (so it hides with it),
+//   referenced by the input's aria-describedby and aria-live="polite". It is `hidden` and EMPTY until rule (a) or
+//   (b) above shows it: a description is computed even from a hidden
+//   node, so leaving the text in place would read the hint out on every
+//   numeric question while a sighted reader sees nothing — the two must
+//   hear and see the same thing.
 // ──────────────────────────────────────────────────────────────────────
 
 (function () {
@@ -296,62 +316,93 @@
     }
 
     // ── Numeric answer parsing ──────────────────────────────────────
-    // Pure: the text a reader typed → every number it can honestly mean,
-    // as an array of finite numbers; [] when it is not a number at all.
-    // The rules and the reason for the two-readings case are in the
-    // numeric section of the header. Exposed as Quiz.parseNumericInput
-    // so a spec can table-test it.
+    // Pure: the text a reader typed → its one reading, or null when it is
+    // not a number at all. The grammar, the ambiguous shape and why the
+    // browser's number convention decides it are in the numeric section
+    // of the header. Exposed as Quiz.parseNumericInput so a spec can
+    // table-test it.
     const NUMERIC_GROUPED = {
         '.': /^\d{1,3}(\.\d{3})+$/,
         ',': /^\d{1,3}(,\d{3})+$/
     };
     const NUMERIC_AMBIGUOUS = /^[1-9]\d{0,2}[.,]\d{3}$/;
+    // A character no number can contain, tested on the NORMALISED entry
+    // (whitespace already removed). Drives the format hint's rule (a).
+    const NUMERIC_FOREIGN = /[^0-9.,+-]/;
 
-    function parseNumericInput(raw) {
-        if (raw === null || raw === undefined) return [];
-        const s = String(raw)
+    function normaliseNumericEntry(raw) {
+        if (raw === null || raw === undefined) return '';
+        return String(raw)
             .normalize('NFKC')
             .replace(/\u2212/g, '-')
             .replace(/\s+/g, '');
+    }
+
+    // The browser's decimal mark: ',' or '.', never anything else. A
+    // locale whose decimal part is neither (Arabic U+066B, say) gets '.',
+    // and so does a browser without Intl or formatToParts.
+    function localeDecimalMark() {
+        try {
+            const parts = new Intl.NumberFormat().formatToParts(1.5);
+            for (let i = 0; i < parts.length; i++) {
+                if (parts[i].type === 'decimal') return parts[i].value === ',' ? ',' : '.';
+            }
+        } catch (_) { /* no Intl, or no formatToParts */ }
+        return '.';
+    }
+
+    function parseNumericInput(raw, decimalMark) {
+        const s = normaliseNumericEntry(raw);
         const m = /^([+-]?)([0-9.,]+)$/.exec(s);
-        if (!m || !/[0-9]/.test(m[2])) return [];
+        if (!m || !/[0-9]/.test(m[2])) return null;
         const sign = m[1] === '-' ? -1 : 1;
         const body = m[2];
         const dots = body.split('.').length - 1;
         const commas = body.split(',').length - 1;
-        let readings;
+        let value;
+        let ambiguousSep = null;
+        let readAs = null;
 
         if (!dots && !commas) {
-            readings = [Number(body)];
+            value = Number(body);
         } else if (dots && commas) {
             // The kind that comes last is the decimal mark; every
             // grouping mark therefore sits in front of it.
             const mark = body.lastIndexOf('.') > body.lastIndexOf(',') ? '.' : ',';
             const group = mark === '.' ? ',' : '.';
-            if ((mark === '.' ? dots : commas) !== 1) return [];
+            if ((mark === '.' ? dots : commas) !== 1) return null;
             const at = body.indexOf(mark);
             const whole = body.slice(0, at);
-            if (!NUMERIC_GROUPED[group].test(whole)) return [];
-            readings = [Number(whole.split(group).join('') + '.' + body.slice(at + 1))];
+            if (!NUMERIC_GROUPED[group].test(whole)) return null;
+            value = Number(whole.split(group).join('') + '.' + body.slice(at + 1));
         } else {
             const sep = dots ? '.' : ',';
+            const parts = body.split(sep);
             if (dots + commas > 1) {
-                if (!NUMERIC_GROUPED[sep].test(body)) return [];
-                readings = [Number(body.split(sep).join(''))];
+                if (!NUMERIC_GROUPED[sep].test(body)) return null;
+                value = Number(parts.join(''));
+            } else if (NUMERIC_AMBIGUOUS.test(body)) {
+                // The one shape the keystrokes alone cannot settle: read
+                // it by the reader's own number convention. Resolved
+                // lazily, so an unambiguous entry never asks Intl.
+                const mark = (decimalMark === '.' || decimalMark === ',')
+                    ? decimalMark
+                    : localeDecimalMark();
+                ambiguousSep = sep;
+                readAs = sep === mark ? 'decimal' : 'group';
+                value = Number(readAs === 'decimal'
+                    ? parts[0] + '.' + parts[1]
+                    : parts[0] + parts[1]);
             } else {
-                const parts = body.split(sep);
-                const asDecimal = Number((parts[0] || '0') + '.' + (parts[1] || '0'));
-                if (NUMERIC_AMBIGUOUS.test(body)) {
-                    const asGrouped = Number(parts[0] + parts[1]);
-                    readings = sep === '.' ? [asDecimal, asGrouped] : [asGrouped, asDecimal];
-                } else {
-                    readings = [asDecimal];
-                }
+                value = Number((parts[0] || '0') + '.' + (parts[1] || '0'));
             }
         }
-        return readings
-            .map(function (v) { return v === 0 ? 0 : sign * v; })
-            .filter(function (v) { return isFinite(v); });
+        if (!isFinite(value)) return null;
+        if (value !== 0) value = sign * value;   // "-0" reads 0, never -0
+        if (ambiguousSep) {
+            return { value: value, ambiguous: true, sep: ambiguousSep, readAs: readAs };
+        }
+        return { value: value, ambiguous: false };
     }
 
     // ── Shuffle (Fisher-Yates) ──────────────────────────────────────
@@ -447,6 +498,9 @@
         const slug = opts.slug;
         const title = opts.title || '';
         const storeKeys = storeKeysForSlug(slug);
+        // The browser's decimal mark, asked once per mount — every
+        // keystroke and the grading read the ambiguous shape by it.
+        const decimalMark = localeDecimalMark();
 
         // Does this bank hold more questions than the page's configured run
         // presents? That — not the runtime Questions select — is what
@@ -524,7 +578,7 @@
         const numericEl = el('div', { class: 'quiz-numeric', hidden: true });
         // A TEXT input, not type="number" — see the numeric section of the
         // header: a number input hands over what the browser locale made
-        // of the keystrokes, and parseNumericInput reads both conventions.
+        // of the keystrokes, and parseNumericInput reads the text itself.
         const numericInput = el('input', {
             type: 'text',
             class: 'quiz-numeric-input',
@@ -541,23 +595,29 @@
         numericInput.setAttribute('autocapitalize', 'off');
         numericInput.setAttribute('spellcheck', 'false');
         const numericUnit = el('span', { class: 'quiz-numeric-unit' });
-        numericEl.appendChild(numericInput);
-        numericEl.appendChild(numericUnit);
-        // Format hint: shown only for a non-empty entry with no reading.
-        // Hidden AND empty otherwise — see the accessibility notes in the
-        // header for why the text is not left in place.
+        // Format hint: shown only by rule (a) or (b) in the header, hidden
+        // AND empty otherwise — see the accessibility notes for why the
+        // text is not left in place. .quiz-numeric holds the box + unit
+        // ROW and, under it, the hint (styles.css, .quiz-numeric-row): the
+        // hint sits just under the box, out of reach of the question
+        // pane's gap, hides along with .quiz-numeric on a non-numeric
+        // question, and never touches the row's own flex layout.
         const numericHint = el('p', {
             class: 'quiz-numeric-hint',
             id: idify('numeric-hint'),
             'aria-live': 'polite',
             hidden: true
         });
+        const numericRow = el('div', { class: 'quiz-numeric-row' });
+        numericRow.appendChild(numericInput);
+        numericRow.appendChild(numericUnit);
+        numericEl.appendChild(numericRow);
+        numericEl.appendChild(numericHint);
         questionPane.appendChild(promptEl);
         questionPane.appendChild(figureSlot);
         questionPane.appendChild(snippetSlot);
         questionPane.appendChild(choicesEl);
         questionPane.appendChild(numericEl);
-        questionPane.appendChild(numericHint);
 
         // Reveal panel — present in DOM from start, empty until submit.
         const revealEl = el('div', {
@@ -624,13 +684,15 @@
             }
         }
 
-        // Submit is enabled exactly when the box holds a number; the hint
-        // shows only for a non-empty entry that has no reading. Never
-        // edits what the reader typed.
+        // On every input event: Submit is enabled exactly when the box
+        // holds a number, and the hint follows rule (a) ALONE — a foreign
+        // character. A number still being typed ("-", ".", "1,000,0") has
+        // no reading yet but is not flagged, so the hint never flashes
+        // mid-entry; rule (b) lives in the Enter handler. Never edits what
+        // the reader typed.
         function paintNumericEntry() {
-            const readings = parseNumericInput(numericInput.value);
-            submitBtn.disabled = readings.length === 0;
-            setNumericHint(numericInput.value.trim() !== '' && readings.length === 0);
+            submitBtn.disabled = !parseNumericInput(numericInput.value, decimalMark);
+            setNumericHint(NUMERIC_FOREIGN.test(normaliseNumericEntry(numericInput.value)));
         }
 
         function markSettingsDirty() {
@@ -885,8 +947,14 @@
         numericInput.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                if (state.phase === 'asking' && !submitBtn.disabled) submit();
-                else if (state.phase === 'revealed') advance();
+                if (state.phase === 'asking') {
+                    if (parseNumericInput(numericInput.value, decimalMark)) submit();
+                    // Rule (b): the reader tried to submit something that
+                    // is not a number — now, and only now, say so.
+                    else if (normaliseNumericEntry(numericInput.value) !== '') setNumericHint(true);
+                } else if (state.phase === 'revealed') {
+                    advance();
+                }
             }
         });
 
@@ -944,6 +1012,7 @@
             const q = questions[qi];
             let given = null;
             let correct = false;
+            let numericRead = null;
 
             if (isSkip) {
                 given = null;
@@ -954,23 +1023,26 @@
                 given = sel.getAttribute('data-choice-id');
                 correct = sel.getAttribute('data-correct') === 'true';
             } else if (q.type === 'numeric') {
-                // Correct if ANY reading is within tolerance — an
-                // ambiguous "10,000" carries both of its meanings (header).
-                const readings = parseNumericInput(numericInput.value);
-                if (!readings.length) return;  // shouldn't happen — submit is disabled
-                const hit = readings.filter(function (v) {
-                    return Math.abs(v - q.answer) <= q.tolerance;
-                });
-                correct = hit.length > 0;
-                given = correct ? hit[0] : readings[0];
+                // ONE reading (header): the ambiguous shape was already
+                // settled by the browser's number convention.
+                numericRead = parseNumericInput(numericInput.value, decimalMark);
+                if (!numericRead) return;  // shouldn't happen — submit is disabled
+                given = numericRead.value;
+                correct = Math.abs(numericRead.value - q.answer) <= q.tolerance;
             }
 
             state.answers.push({ qi: qi, given: given, correct: correct });
-            reveal(q, given, correct, isSkip);
+            reveal(q, given, correct, isSkip, numericRead);
         }
 
-        function reveal(q, given, correct, isSkip) {
+        // `numericRead` is the submitted entry's reading (null on a Skip
+        // and for every non-numeric question); an ambiguous one earns the
+        // line saying how its separator was read.
+        function reveal(q, given, correct, isSkip, numericRead) {
             state.phase = 'revealed';
+            // A Skip can land while the format hint is up ("12abc", then
+            // Skip): it must not stay on screen under "Skipped.".
+            setNumericHint(false);
 
             // Disable choice buttons; mark right/wrong.
             const buttons = choicesEl.querySelectorAll('.quiz-choice');
@@ -992,6 +1064,26 @@
                 class: 'quiz-reveal-status'
             }, [isSkip ? 'Skipped.' : (correct ? 'Correct.' : 'Not quite.')]);
             frag.appendChild(statusEl);
+
+            // How an ambiguous entry ("10,000", "47.808") was read — right
+            // or wrong, so a reader whose browser language differs from
+            // their own number habit can see why (header, numeric). It
+            // wears the "Right answer" line's class. Inside .tool-body,
+            // where every quiz ships, `.tool-body p` (0,1,1) out-specifies
+            // that single-class rule on colour and size, so the line
+            // renders in `.tool-body p`'s --text at 0.95rem with
+            // .quiz-reveal-right's margin — exactly what the "Right
+            // answer" line renders in — and needs no CSS of its own.
+            // .quiz-reveal-read is the marker the specs find it by.
+            if (!isSkip && numericRead && numericRead.ambiguous) {
+                const sepName = numericRead.sep === ',' ? 'comma' : 'period';
+                const readName = numericRead.readAs === 'group'
+                    ? 'a thousands separator'
+                    : 'a decimal point';
+                frag.appendChild(el('p', { class: 'quiz-reveal-right quiz-reveal-read' }, [
+                    'The ' + sepName + ' in your entry was read as ' + readName + '.'
+                ]));
+            }
 
             if (!correct) {
                 let rightAnswerText = '';
