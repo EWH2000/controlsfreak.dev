@@ -56,9 +56,9 @@
 //     .eleventy.js reads only `prompt` + `snippet`), either of which
 //     would otherwise publish every <title>/<desc>/<text> node.
 //     Accessibility contract: the figure names itself natively —
-//     role="img" + <title> (+ <desc>). How much a DRILL figure's <desc>
-//     may reveal is an open question with the owner, not a settled rule
-//     — see the quiz section of CLAUDE.md before authoring one.
+//     role="img" + <title> (+ <desc>). A DRILL figure's <desc> describes
+//     the topology and live values fully, but never names the fault or
+//     states the verdict (owner, settled 2026-07-20 — CLAUDE.md, quiz).
 //     The clone must NOT rely on aria-labelledby/aria-describedby;
 //     validateQuestion rejects a figure that carries either, because the
 //     accessible name would be recomputed from the renamed ids (see
@@ -95,6 +95,47 @@
 //     tolerance: number                            -- absolute
 //     unit:      string                            -- rendered as a suffix label
 //     inputmode: 'decimal' | 'numeric'             -- optional, default 'decimal'
+//     The answer box is a TEXT input (inputmode still picks the phone
+//     keypad), read by parseNumericInput — also exposed as
+//     Quiz.parseNumericInput. It is NOT <input type="number">: a number
+//     input hands the page whatever the BROWSER's number parser made of
+//     the keystrokes — the browser's convention, not the reader's. Under
+//     English parsing a German reader's "61,6" arrived as 616 and
+//     "10.000" as ten; under German parsing an English reader's "10,000"
+//     becomes ten. Either way a reader who knew the answer was marked
+//     wrong with no hint why.
+//     What is accepted. First the entry is normalised: NFKC (full-width
+//     digits and separators, and the no-break / narrow / thin spaces,
+//     become ASCII), U+2212 MINUS SIGN becomes '-', and every space is
+//     removed. Then: an optional single leading '+' or '-', and a body of
+//     digits, '.' and ',' only, with at least one digit.
+//       - No separator: one reading.
+//       - Both '.' and ',': whichever comes LAST is the decimal mark and
+//         occurs once; the other groups thousands in well-formed groups of
+//         three. "10,000.5" and "10.000,5" both read 10000.5.
+//       - One kind, twice or more: thousands grouping, well-formed
+//         ("1,000,000"; "1.2.3" is not a number).
+//       - One kind, once: a decimal mark — "12,5" is 12.5, "0,500" is
+//         0.5, "1234,567" is 1234.567 — EXCEPT the shape 1-3 digits not
+//         starting with 0, the mark, exactly three digits ("10,000",
+//         "47.808"). That shape is genuinely ambiguous: the same
+//         keystrokes mean ten thousand in one locale and ten in another.
+//         It carries BOTH readings and grades correct if EITHER is within
+//         tolerance, so a reader is never marked wrong for their own
+//         number format. Reading order (it decides only what is stored on
+//         a miss): decimal first for '.', grouped first for ','.
+//       - The sign applies to every reading.
+//     Anything else ("12abc", "1,2,3.4", "1e3") has no reading: Submit
+//     stays disabled, a one-line format hint appears under the box, and
+//     the input carries aria-invalid="true". What the reader typed is
+//     never stripped or rewritten.
+//     The price of the two-readings rule is a bounded false accept: on an
+//     answer of 10, "10,000" grades correct, because its decimal reading
+//     is 10. It needs the answer and the decoy three orders of magnitude
+//     apart AND typed in exactly the ambiguous shape; accepted as cheaper
+//     than marking a German reader wrong for writing ten thousand their
+//     own way. The stored `given` is the first reading within tolerance,
+//     else the first reading.
 //
 // localStorage keys (per the site-wide cf_<feature>_<key> convention):
 //   cf_quiz_<slug>_best          integer 0..N
@@ -119,6 +160,13 @@
 //   Content is built in a DocumentFragment and assigned once so screen
 //   readers announce a single update per submit.
 // - Focus moves programmatically to the action button after submit.
+// - The numeric box's format hint is one element per mount, after the
+//   .quiz-numeric row, referenced by the input's aria-describedby and
+//   aria-live="polite". It is `hidden` and EMPTY until an entry fails to
+//   parse: a description is computed even from a hidden node, so leaving
+//   the text in place would read the hint out on every numeric question
+//   while a sighted reader sees nothing — the two must hear and see the
+//   same thing.
 // ──────────────────────────────────────────────────────────────────────
 
 (function () {
@@ -126,6 +174,7 @@
 
     const ENGINE_VERSION = 1;
     const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+    const NUMERIC_HINT_TEXT = 'Enter a number, like 1250 or 12.5.';
 
     // ── localStorage helpers ────────────────────────────────────────
     function storeGet(key) {
@@ -244,6 +293,65 @@
         const m = Math.floor(totalSec / 60);
         const s = totalSec - m * 60;
         return m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    // ── Numeric answer parsing ──────────────────────────────────────
+    // Pure: the text a reader typed → every number it can honestly mean,
+    // as an array of finite numbers; [] when it is not a number at all.
+    // The rules and the reason for the two-readings case are in the
+    // numeric section of the header. Exposed as Quiz.parseNumericInput
+    // so a spec can table-test it.
+    const NUMERIC_GROUPED = {
+        '.': /^\d{1,3}(\.\d{3})+$/,
+        ',': /^\d{1,3}(,\d{3})+$/
+    };
+    const NUMERIC_AMBIGUOUS = /^[1-9]\d{0,2}[.,]\d{3}$/;
+
+    function parseNumericInput(raw) {
+        if (raw === null || raw === undefined) return [];
+        const s = String(raw)
+            .normalize('NFKC')
+            .replace(/\u2212/g, '-')
+            .replace(/\s+/g, '');
+        const m = /^([+-]?)([0-9.,]+)$/.exec(s);
+        if (!m || !/[0-9]/.test(m[2])) return [];
+        const sign = m[1] === '-' ? -1 : 1;
+        const body = m[2];
+        const dots = body.split('.').length - 1;
+        const commas = body.split(',').length - 1;
+        let readings;
+
+        if (!dots && !commas) {
+            readings = [Number(body)];
+        } else if (dots && commas) {
+            // The kind that comes last is the decimal mark; every
+            // grouping mark therefore sits in front of it.
+            const mark = body.lastIndexOf('.') > body.lastIndexOf(',') ? '.' : ',';
+            const group = mark === '.' ? ',' : '.';
+            if ((mark === '.' ? dots : commas) !== 1) return [];
+            const at = body.indexOf(mark);
+            const whole = body.slice(0, at);
+            if (!NUMERIC_GROUPED[group].test(whole)) return [];
+            readings = [Number(whole.split(group).join('') + '.' + body.slice(at + 1))];
+        } else {
+            const sep = dots ? '.' : ',';
+            if (dots + commas > 1) {
+                if (!NUMERIC_GROUPED[sep].test(body)) return [];
+                readings = [Number(body.split(sep).join(''))];
+            } else {
+                const parts = body.split(sep);
+                const asDecimal = Number((parts[0] || '0') + '.' + (parts[1] || '0'));
+                if (NUMERIC_AMBIGUOUS.test(body)) {
+                    const asGrouped = Number(parts[0] + parts[1]);
+                    readings = sep === '.' ? [asDecimal, asGrouped] : [asGrouped, asDecimal];
+                } else {
+                    readings = [asDecimal];
+                }
+            }
+        }
+        return readings
+            .map(function (v) { return v === 0 ? 0 : sign * v; })
+            .filter(function (v) { return isFinite(v); });
     }
 
     // ── Shuffle (Fisher-Yates) ──────────────────────────────────────
@@ -414,21 +522,42 @@
         const snippetSlot = el('div', { class: 'quiz-snippet-slot' });
         const choicesEl = el('div', { class: 'quiz-choices', role: 'radiogroup' });
         const numericEl = el('div', { class: 'quiz-numeric', hidden: true });
+        // A TEXT input, not type="number" — see the numeric section of the
+        // header: a number input hands over what the browser locale made
+        // of the keystrokes, and parseNumericInput reads both conventions.
         const numericInput = el('input', {
-            type: 'number',
-            inputmode: 'decimal',
+            type: 'text',
             class: 'quiz-numeric-input',
             id: idify('numeric'),
-            'aria-label': 'Numeric answer'
+            'aria-label': 'Numeric answer',
+            'aria-describedby': idify('numeric-hint')
         });
+        // Set as attributes, never through el()'s property fallback: the
+        // property is `inputMode`, so a lowercase `inputmode` key only
+        // made an expando, and `spellcheck` is a boolean property that
+        // reads the STRING 'false' as true.
+        numericInput.setAttribute('inputmode', 'decimal');
+        numericInput.setAttribute('autocomplete', 'off');
+        numericInput.setAttribute('autocapitalize', 'off');
+        numericInput.setAttribute('spellcheck', 'false');
         const numericUnit = el('span', { class: 'quiz-numeric-unit' });
         numericEl.appendChild(numericInput);
         numericEl.appendChild(numericUnit);
+        // Format hint: shown only for a non-empty entry with no reading.
+        // Hidden AND empty otherwise — see the accessibility notes in the
+        // header for why the text is not left in place.
+        const numericHint = el('p', {
+            class: 'quiz-numeric-hint',
+            id: idify('numeric-hint'),
+            'aria-live': 'polite',
+            hidden: true
+        });
         questionPane.appendChild(promptEl);
         questionPane.appendChild(figureSlot);
         questionPane.appendChild(snippetSlot);
         questionPane.appendChild(choicesEl);
         questionPane.appendChild(numericEl);
+        questionPane.appendChild(numericHint);
 
         // Reveal panel — present in DOM from start, empty until submit.
         const revealEl = el('div', {
@@ -475,6 +604,33 @@
             } else {
                 bestReadout.textContent = 'Best: —';
             }
+        }
+
+        // Show or clear the numeric format hint and the input's
+        // aria-invalid together. The text is written only on the
+        // hidden → shown edge, so a polite live region announces it once
+        // per bad entry rather than on every keystroke.
+        function setNumericHint(on) {
+            if (on) {
+                if (numericHint.hidden) {
+                    numericHint.textContent = NUMERIC_HINT_TEXT;
+                    numericHint.hidden = false;
+                }
+                numericInput.setAttribute('aria-invalid', 'true');
+            } else {
+                numericHint.hidden = true;
+                numericHint.textContent = '';
+                numericInput.removeAttribute('aria-invalid');
+            }
+        }
+
+        // Submit is enabled exactly when the box holds a number; the hint
+        // shows only for a non-empty entry that has no reading. Never
+        // edits what the reader typed.
+        function paintNumericEntry() {
+            const readings = parseNumericInput(numericInput.value);
+            submitBtn.disabled = readings.length === 0;
+            setNumericHint(numericInput.value.trim() !== '' && readings.length === 0);
         }
 
         function markSettingsDirty() {
@@ -593,6 +749,7 @@
             numericInput.value = '';
             numericInput.disabled = false;
             numericEl.classList.remove('correct', 'wrong');
+            setNumericHint(false);
 
             if (q.type === 'mcq' || q.type === 'gotcha') {
                 // Display order is drawn fresh on every render (owner
@@ -724,10 +881,7 @@
             }
         });
 
-        numericInput.addEventListener('input', function () {
-            const v = parseFloat(numericInput.value);
-            submitBtn.disabled = !isFinite(v);
-        });
+        numericInput.addEventListener('input', paintNumericEntry);
         numericInput.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -800,10 +954,15 @@
                 given = sel.getAttribute('data-choice-id');
                 correct = sel.getAttribute('data-correct') === 'true';
             } else if (q.type === 'numeric') {
-                const v = parseFloat(numericInput.value);
-                if (!isFinite(v)) return;
-                given = v;
-                correct = Math.abs(v - q.answer) <= q.tolerance;
+                // Correct if ANY reading is within tolerance — an
+                // ambiguous "10,000" carries both of its meanings (header).
+                const readings = parseNumericInput(numericInput.value);
+                if (!readings.length) return;  // shouldn't happen — submit is disabled
+                const hit = readings.filter(function (v) {
+                    return Math.abs(v - q.answer) <= q.tolerance;
+                });
+                correct = hit.length > 0;
+                given = correct ? hit[0] : readings[0];
             }
 
             state.answers.push({ qi: qi, given: given, correct: correct });
@@ -1087,6 +1246,7 @@
 
     window.Quiz = {
         mount: mount,
+        parseNumericInput: parseNumericInput,
         version: ENGINE_VERSION
     };
 })();

@@ -23,7 +23,8 @@
 // drives exactly this mount's shuffle and nothing else on the page. The
 // fixtures mount with no defaultCount and the default 'sequential'
 // order, so buildQueue() never draws — the choice shuffle is the only
-// consumer of the stub.
+// consumer of the stub. The one test that re-renders inside a mount
+// stubs its Restart click the same way.
 
 const { test, expect } = require('@playwright/test');
 
@@ -255,6 +256,49 @@ test.describe('quiz engine — choice shuffle at render (#335)', () => {
         await expect(choices.nth(1)).toHaveAttribute('aria-checked', 'true');
         await expect(choices.nth(1)).toHaveAttribute('tabindex', '0');
         await expect(choices.nth(0)).toHaveAttribute('aria-checked', 'false');
+    });
+
+    // (f2) "Drawn fresh on every render" means inside ONE mount too.
+    // Every test above reads the first render of a fresh mount, so an
+    // engine that shuffled once per mount (say, cached the order at
+    // validate time) would pass them all. Here one mount renders twice:
+    // the first render under the zero stub, then Skip → "See results →"
+    // → Restart, with the quarter stub in force for exactly the
+    // (synchronous) Restart click and restored in a finally. A one-bank
+    // fixture with no defaultCount never samples, so the choice shuffle
+    // is still the stub's only consumer. Neither stub is the identity,
+    // so an order that never left the authored one fails too.
+    test('a restart inside one mount re-draws the order', async ({ page }) => {
+        const first = await mountFixture(page, [MCQ], STUB_ZERO);
+        expect(first.mounted).toBe(true);
+        expect(first.rendered, 'first render, zero stub').toEqual(ZERO_STUB_IDS);
+
+        const second = await page.evaluate(({ mountId, random }) => {
+            const host = document.getElementById(mountId);
+            host.querySelector('.quiz-action-secondary').click();   // Skip
+            host.querySelector('.quiz-action-primary').click();     // "See results →"
+            const restart = host.querySelector('.quiz-restart-btn');
+            if (!restart || host.querySelector('.quiz-results').hidden) return { reached: false };
+            const realRandom = Math.random;
+            Math.random = () => random;
+            try {
+                restart.click();
+            } finally {
+                Math.random = realRandom;
+            }
+            return {
+                reached: true,
+                sameHost: document.getElementById(mountId) === host,
+                cardShown: !host.querySelector('.quiz-card').hidden,
+                rendered: [...host.querySelectorAll('.quiz-choice')]
+                    .map((b) => b.getAttribute('data-choice-id'))
+            };
+        }, { mountId: MOUNT_ID, random: STUB_QUARTER });
+
+        expect(second.reached, 'the run reached its results card').toBe(true);
+        expect(second.sameHost, 'still the one mount').toBe(true);
+        expect(second.cardShown, 'Restart showed the question again').toBe(true);
+        expect(second.rendered, 'second render, quarter stub').toEqual(QUARTER_STUB_IDS);
     });
 
     // (g) The real thing, unstubbed: the key has to move. Fisher-Yates

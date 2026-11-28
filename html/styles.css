@@ -3456,6 +3456,19 @@ p.chip-row-preamble {
 }
 .quiz-numeric.correct .quiz-numeric-input { border-color: var(--accent); background: var(--accent-dim); }
 .quiz-numeric.wrong .quiz-numeric-input { border-color: var(--red); background: var(--red-dim); }
+/* Format hint under the numeric box, shown only while the entry is not a
+   number (quiz-engine.js). Element-qualified so it ties `.tool-body p`
+   and wins on cascade. It sets no `display`, so the UA [hidden] rule
+   still hides it — unlike .quiz-numeric above, it needs no re-assert.
+   It ships hidden, so no page sweep ever measures its ink:
+   tests/quiz-numeric-input.spec.js does, in both themes. */
+p.quiz-numeric-hint {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--text-dim);
+    margin: 0.45rem 0 0;
+}
 
 .quiz-actions {
     display: flex;
