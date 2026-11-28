@@ -24,14 +24,13 @@
 // banks (function-blocks, reading-a-wiresheet) already own them.
 //
 // BANK SIZE: intentionally larger than the 10 a default run presents.
-// NOTE — the page mounts with defaultOrder: 'sequential', and the engine
-// only shuffles when order === 'random', so a default run is always
-// questions 1-10 in order and the tail (wst-grey-not-dead,
-// wst-permit-proven, wst-prune-with-sibling) renders only when the reader
-// sets Questions to All. The replayability this size was chosen for needs
-// a sampling change that has NOT landed; until it does, treat the tail as
-// opt-in, not as rotation. Open for the owner: sample-then-present-in-order
-// in the engine, flip this page to 'random', or present all 13.
+// The page mounts with defaultCount: 10 and defaultOrder: 'sequential',
+// and the engine SAMPLES a bank that holds more than its defaultCount
+// (buildQueue() in quiz-engine.js): each run draws a random 10 from the
+// whole bank and presents them in bank order, so the tail
+// (wst-grey-not-dead, wst-permit-proven, wst-prune-with-sibling) rotates
+// into default runs. Setting Questions to All presents every question,
+// in bank order.
 //
 // FIGURES: three questions carry a `figure` — the kebab-case id of a
 // hidden <svg> in the static figure bank on practice/wiresheet-traces.html.

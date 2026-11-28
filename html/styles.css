@@ -3278,10 +3278,12 @@ p.chip-row-preamble {
     transition: color 0.18s, background 0.18s;
 }
 .quiz-restart-now:hover { color: var(--surface); background: var(--amber); }
-/* The dirty-notice and numeric rows below set display: flex / inline-flex,
-   which would override the UA-default `[hidden] { display: none }`. Same
-   trap that .nav-card[hidden] solves above — re-assert hidden for the
-   elements the engine toggles via the `hidden` attribute. */
+/* The dirty-notice row sets display: flex, which would override the
+   UA-default `[hidden] { display: none }`. Same trap that .nav-card[hidden]
+   solves above — re-assert hidden for the elements the engine toggles via
+   the `hidden` attribute. .quiz-numeric is a plain block now (its flex row
+   is .quiz-numeric-row, inside it) and stays listed so a display rule
+   added to it later cannot unhide it on a non-numeric question. */
 .quiz-dirty-notice[hidden],
 .quiz-numeric[hidden] { display: none; }
 
@@ -3429,8 +3431,17 @@ p.chip-row-preamble {
     opacity: 1;
 }
 
-.quiz-numeric {
-    display: inline-flex;
+/* .quiz-numeric (no rule of its own) holds this box + unit row and, under
+   it, p.quiz-numeric-hint. The row carries the declarations .quiz-numeric
+   itself used to, unchanged: the hint must not reach its flex layout. That
+   rules out wrapping the hint inside the row — the global
+   input[type="text"] block sets the box to width: 100% (it out-specifies
+   .quiz-numeric-input's 9rem), so any wrapping row breaks the unit onto a
+   line of its own, and a smaller flex-basis on the box stops it squeezing
+   a two-word unit ("in. w.c.") the way it always has. Blockified as a
+   flex item of the pane, the old inline-flex already computed to flex. */
+.quiz-numeric-row {
+    display: flex;
     align-items: baseline;
     gap: 0.5rem;
 }
@@ -3456,6 +3467,23 @@ p.chip-row-preamble {
 }
 .quiz-numeric.correct .quiz-numeric-input { border-color: var(--accent); background: var(--accent-dim); }
 .quiz-numeric.wrong .quiz-numeric-input { border-color: var(--red); background: var(--red-dim); }
+/* Format hint under the numeric box, shown only for a foreign character
+   or an Enter on a non-number (quiz-engine.js, numeric header). It sits
+   inside .quiz-numeric, after .quiz-numeric-row, so its 0.4rem margin is
+   the whole box-to-hint spacing — .quiz-question-pane's 1.1rem gap falls
+   outside .quiz-numeric — and it hides with .quiz-numeric on a
+   non-numeric question. Element-qualified so it ties `.tool-body p` and
+   wins on cascade. It sets no `display`, so the UA [hidden] rule still
+   hides it and needs no re-assert. It ships hidden, so no page sweep ever
+   measures its ink: tests/quiz-numeric-input.spec.js does, in both
+   themes, inside the .tool-card where it ships. */
+p.quiz-numeric-hint {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--text-dim);
+    margin: 0.4rem 0 0;
+}
 
 .quiz-actions {
     display: flex;
