@@ -79,7 +79,7 @@
 - The floor plan is one of three I had mocked up (the others were a double corridor and two wings off a lobby). I chose rooms around a core because it stays about as tall on a phone as the old grid, and because it has exactly one pair of rooms that are neighbours on the plan and not on the trunk, 201 and 216. That pair is what job 2 now turns on. You looked at the three and said: "I really like what you decided on, it's also a very common real world layout".
 - All three jobs are drawn on the plan, not only job 2, since it is one floor. Job 3's rules and sentences did not change.
 - Two of job 2's results gained one sentence each, naming the two rooms the trunk does not join. Job 2's brief now says the call does not tell you which way the trunk leaves the electrical room. Nothing else the game says changed.
-- The second step now ends: "It is not a coin toss between the two: everything past a single break is dead, so one end of the trunk is fully offline, and the break is at the other edge of the dead run, the one next to devices still online. That is the same spot a layout would have shown." The first half is your answer; "the one next to devices still online" is my reading of "the same place as one". Say so if it says more than you meant.
+- The second step now ends: "It is not a coin toss between the two: everything past a single break is dead, so one end of the trunk is fully offline, and the break is at the other edge of the dead run. That is the same spot a layout would have shown." "Not a coin toss" and "one end is fully offline" are your words. "The other edge of the dead run" is how I put "the same place as one". Say so if it says more than you meant.
 
 ### Menu for the next five
 

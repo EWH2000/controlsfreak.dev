@@ -904,9 +904,11 @@ Dispositions (the assistant's, not his words), all in PR #678:
   "transmitting when it should not", the phrase he confirmed.
 - **The second step says the choice is not a coin toss,** in his terms
   joined to the logic of a single chain: one end of the trunk is fully
-  offline, so the break is at the other edge of the dead run. The
-  clause "the one next to devices still online" is the assistant's
-  reading of "the same place as one"; the board says so. This also
+  offline, so the break is at the other edge of the dead run. "The
+  other edge of the dead run" is the assistant's wording for "the
+  same place as one"; the board says so. A first draft added "the one
+  next to devices still online" and it was cut: on the game's plan
+  both edges of the dead rooms sit beside online rooms. This also
   settles §25's open point about the second job's score line ("Reading
   the pattern first gets it in 1"): reading which edge it is, is his
   method, not a reading placed above it.
