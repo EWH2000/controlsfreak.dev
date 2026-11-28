@@ -742,12 +742,14 @@ Calls the assistant made on the privacy change (each reversible):
   been a new claim of his that he had not made.
 - **Six more sentences went the same way** when a review found them:
   two landing intros and four hub intros.
-- **One sentence was added that he did not ask for:** the privacy page
-  now names Cloudflare's bot-check script, which a review found on
-  every served page, and the cookie Cloudflare's documentation ties to
-  it. The page already said Cloudflare blocks abusive traffic and may
-  set cookies for bot protection; this names the mechanism. It is a
-  line on the board for him to strike if he would rather not have it.
+- **Three sentences were added that he did not ask for** (two in the
+  *Cloudflare* section, one in the cookie paragraph): the privacy page
+  now names Cloudflare's bot-check script, which a review found in the
+  served pages it checked, and the cookie Cloudflare's documentation
+  ties to it. The page already said Cloudflare blocks abusive traffic
+  and may set cookies for bot protection; this names the mechanism. It
+  is a line on the board for him to strike if he would rather not have
+  it.
 - **The *Your rights* section was left as it was.**
 - **Version 3.93.3, a patch:** a fix to shipped copy.
 
@@ -777,14 +779,18 @@ made, each reversible before launch:
   and hold by construction: a real trunk can carry more than one fault
   at once, and a break leaves the still-connected section without the
   terminator that sat at the far end.
-- **Nothing about the meter beyond his own sentence.** No reading, no
-  reason, no detail of the job.
+- **Nothing about the meter beyond his own sentence and one scope
+  line** ("Meter work on the bus is left out on purpose"). No reading,
+  no reason, no detail of the job.
 - **His "spamming TX" reads "transmitting constantly"** in the steps,
   and "transmitting when it should not (the troublemaker)" in the
   game's description. Two reviews pulled in opposite directions on
   this; it is a question to him on the board.
 - **His story is recast in the first person, the day first and the
-  lesson second.** He led with the lesson. Left for him.
+  lesson second.** He led with the lesson. Left for him. §21 recorded
+  the shape as the story told as a made-up job; as built, the story is
+  a short first-person callout under a lead-in the assistant wrote
+  ("True story."), and the made-up jobs are separate.
 - **The no-layout job says "Reading the pattern first gets it in 1"**
   to a reader who took two stops by starting at the highest or lowest.
   That ranks a reading he did not give above his stated method. Left,
@@ -793,7 +799,8 @@ made, each reversible before launch:
   the education block now needs a canonical, as the tools block
   already did. A whole-site build before and after differs in one
   file, the hidden page.
-- **No version bump.** Nothing a visitor can reach changed.
+- **No version bump.** No existing page, stylesheet or versioned
+  script changed; the new page is reachable only by its address.
 - **Three source comments in the page were HTML comments** and so
   shipped in the built page; one described his story in words he did
   not use. This record's pull request makes them template comments and
@@ -801,4 +808,26 @@ made, each reversible before launch:
 
 What the launch owes, and the review leftovers, are in
 codebase-issues #345.
+
+**Later the same night (about 01:20 on the 28th) he answered both open
+lines.** On the lesson, verbatim:
+
+> Picking 209 first in job 1 out of intuition doesn't drive home the
+> point since one may not understand why picking that worked, 2 is good
+> but could use a bit more depth, and 3 is great.
+
+On the agent rule as stated above, he said it is "mostly correct", and
+that "Opus is a capable model, so don't be afraid to use it a bit
+more."
+
+- **Jobs 1 and 2 are reworked before any launch**, still hidden. Job 1
+  will say why the pick worked. What "more depth" means for job 2 is
+  asked on the board; explanation of what each stop tells the reader
+  is built meanwhile.
+- **"3 is great" is taken as approval of the third job as played,**
+  repeated halving included. The board says so and invites a no.
+- **Agents run on Opus by default from here on**, with the session's
+  own model kept for the occasional small, hard call. The lesson's
+  build and every review in this run had inherited the session's
+  model; that was the waste he was pointing at.
 
