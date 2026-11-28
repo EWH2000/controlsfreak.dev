@@ -26,7 +26,7 @@
     {% if breadcrumbJson %}
     <script type="application/ld+json">{{ breadcrumbJson | safe }}</script>
     {% endif %}
-    {% if nav == "education" and page.url != "/education/" %}
+    {% if canonicalUrl and nav == "education" and page.url != "/education/" %}
     <script type="application/ld+json">{{ canonicalUrl | techArticleJsonLd(title, description, page.inputPath | gitFirstmod, page.inputPath | gitLastmod, pairedQuiz | cleanCanonical) | safe }}</script>
     {% set eduRels = educationSequence[page.url] %}
     {% if eduRels.prev %}<link rel="prev" href="{{ eduRels.prev }}">{% endif %}
