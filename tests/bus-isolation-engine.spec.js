@@ -33,6 +33,19 @@
 // is tested by asking the oracle whether those are the rooms past the
 // split. The wording itself is pinned once, by the hand-worked transcripts
 // at the bottom.
+//
+// ONE SPLIT AT A TIME, AND WHAT THAT DOES TO THE WORDS. A new split
+// rejoins the trunk and opens it at the new spot, so a room that was cut
+// off one move ago can be connected now and a room that read online can
+// read flaky. A sentence that says a room is "still connected", or that the
+// connected part "went stable" or is "still flaky", is therefore false in
+// most second-split states even when its conclusion is right (an earlier
+// draft said exactly that on 28 of the 32 jobs played by the midpoint).
+// checkSplitSentence() holds every split sentence to the trunk as it is NOW
+// — each named room's status, from the oracle — and refuses the continuity
+// words outright. The suspects are the one thing that does carry over, and
+// "may still hold the fault" is checked as what it claims: the set only
+// shrinks and always contains the talker.
 
 const fs   = require('node:fs');
 const path = require('node:path');
@@ -74,17 +87,45 @@ const canon = (v) => JSON.stringify(v, (key, val) => (
         : val));
 const show = (v) => (v === undefined ? 'undefined' : canon(v));
 
+// A plain structural comparison, tried first: two JSON passes per check is
+// what the enumeration of every flaky state (214,272 picks) spent most of
+// its half-minute on. It can only say "equal" where canon() would too, and
+// anything it does not call equal still goes to canon(), so the answer is
+// canon()'s either way — this is a fast path, not a second definition.
+function same(a, b) {
+    if (Object.is(a, b)) return true;
+    if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;
+    if (Array.isArray(a) !== Array.isArray(b)) return false;
+    if (Array.isArray(a)) {
+        if (a.length !== b.length) return false;
+        for (let i = 0; i < a.length; i++) if (!same(a[i], b[i])) return false;
+        return true;
+    }
+    const keys = Object.keys(a);
+    if (keys.length !== Object.keys(b).length) return false;
+    for (const k of keys) {
+        if (!Object.prototype.hasOwnProperty.call(b, k) || !same(a[k], b[k])) return false;
+    }
+    return true;
+}
+const equal = (a, b) => same(a, b) || canon(a) === canon(b);
+
 function check(actual, label) {
+    // `label` may be a function, so a sweep does not build a string for
+    // every one of its passing checks.
     const fail = (verb, expected) => {
-        throw new Error((label ? label + '\n' : '') +
+        const name = typeof label === 'function' ? label() : label;
+        throw new Error((name ? name + '\n' : '') +
             '  expected ' + verb + ': ' + show(expected) + '\n  actual: ' + show(actual));
     };
-    const has = (item) => (typeof actual === 'string'
-        ? actual.includes(item)
-        : Array.from(actual).some((x) => canon(x) === canon(item)));
+    const has = (item) => {
+        if (typeof actual === 'string') return actual.includes(item);
+        const items = Array.from(actual);
+        return items.some((x) => same(x, item)) || items.some((x) => canon(x) === canon(item));
+    };
     return {
         toBe(expected) { if (!Object.is(actual, expected)) fail('to be', expected); },
-        toEqual(expected) { if (canon(actual) !== canon(expected)) fail('to equal', expected); },
+        toEqual(expected) { if (!equal(actual, expected)) fail('to equal', expected); },
         toBeNull() { if (actual !== null) fail('to be', null); },
         toContain(item) { if (!has(item)) fail('to contain', item); },
         toHaveLength(n) { if (actual.length !== n) fail('to have length', n); },
@@ -173,11 +214,12 @@ function checkStopSentence(text, job, room) {
     });
 
     let m;
-    if ((m = /^Found it\. The break is between (\d+) and (\d+)\. /.exec(body))) {
+    if ((m = /^Found it\. The break is between (\d+) and (\d+)\. (Found in .*)$/.exec(body))) {
         const pair = [Number(m[1]), Number(m[2])];
         check(pair, text).toEqual([Math.min(liveSide, deadSide), Math.max(liveSide, deadSide)]);
         check([liveSide, deadSide], 'a stop finds only a break on one of its own sides')
             .toContain(room);
+        checkScoreLine(m[3], job, text);
         return 'found';
     }
     if ((m = /^Live trunk on both sides of (\d+)\. The break is not here\.$/.exec(body))) {
@@ -223,37 +265,60 @@ function checkStopSentence(text, job, room) {
 
 // The same for the flaky job. `before` is the suspect set the reader could
 // already have worked out before this split.
+// Words that claim something carried over from the move before. With one
+// split open at a time nothing about a room's connection or status does,
+// so no split sentence may use them. ("May still hold the fault" is the
+// suspects, which do carry over, and is checked on its own terms.)
+const CONTINUITY = /\bstill (?:connected|flaky|stable)\b|\bstays?\b|\bstayed\b|\bwent\b|\bremains?\b|\bno longer\b/i;
+
 function checkSplitSentence(text, job, room, before) {
     const order = route(job.headEnd);
     const talker = order[job.fault.index];
     const pos = order.indexOf(room);
     const connectedWant = order.slice(0, pos + 1).sort((a, b) => a - b);
     const cutWant = order.slice(pos + 1).sort((a, b) => a - b);
+    check(CONTINUITY.test(text), 'no continuity word in a split sentence: ' + text).toBe(false);
+    // The whole of what follows the split's own sentence, nothing before it
+    // and nothing after: a template cannot grow a clause this does not read.
     const holding = (s) => {
-        const m = /Still holding the fault: ([\d to]+)\.$/.exec(s);
-        check(m, 'an unsolved split says what still holds the fault: ' + s).not.toBeNull();
+        const m = /^May still hold the fault: ([\d to]+)\.$/.exec(s);
+        check(m, 'an unsolved split ends on what may still hold the fault: ' + text).not.toBeNull();
         const rooms = range(m[1]);
-        check(rooms, s).toContain(talker);
+        check(rooms, text).toContain(talker);
         return rooms;
     };
+    // The trunk as it is after this pick, from the model alone.
+    const now = (splitPast) => expectedStatuses(job, splitPast);
 
     let m;
-    if ((m = /^(\d+) is the last controller on the trunk, so (?:a split past it cuts nothing off\. All 16 controllers are still connected and still flaky|nothing is cut off past it)\./.exec(text))) {
+    if ((m = /^(\d+) is the last controller on the trunk, so (?:a split past it cuts nothing off\. All 16 controllers are connected and flaky|nothing is cut off past it)\. (.*)$/.exec(text))) {
         check(Number(m[1])).toBe(room);
         check(room, text).toBe(order[order.length - 1]);
-        return { after: holding(text), solved: false };
+        // "Connected and flaky", all sixteen: the trunk is whole, with the
+        // talker on it, whatever split was open a move ago.
+        check(job.split, text).toBeNull();
+        check(Object.values(now(null)).every((st) => st === 'flaky'), text).toBe(true);
+        return { after: holding(m[2]), solved: false };
     }
-    if ((m = /^The trunk is already split past (\d+)\./.exec(text))) {
+    if ((m = /^The trunk is already split past (\d+)\. (.*)$/.exec(text))) {
         check(Number(m[1])).toBe(room);
-        return { after: holding(text), solved: false };
+        // "Already": the split in place is the one past this room.
+        check(job.split === null ? null : order[job.split], text).toBe(room);
+        return { after: holding(m[2]), solved: false };
     }
-    m = /^Trunk split past (\d+): ([\d to]+) still connected, ([\d to]+) cut off\. The connected part (went stable|is still flaky), (so the troublemaker is in the part cut off|so the troublemaker is in it|which the earlier splits already told you)\. (.*)$/.exec(text);
+    m = /^Trunk split past (\d+): ([\d to]+) connected, ([\d to]+) cut off\. The connected part is (stable|flaky), (so the troublemaker is in the part cut off|so the troublemaker is in it|which the earlier splits already told you)\. (.*)$/.exec(text);
     if (!m) throw new Error('unrecognised split sentence: "' + text + '"');
     check(Number(m[1])).toBe(room);
     check(range(m[2]), text).toEqual(connectedWant);
     check(range(m[3]), text).toEqual(cutWant);
-    const stable = m[4] === 'went stable';
+    const stable = m[4] === 'stable';
     check(stable, text).toBe(cutWant.includes(talker));
+    // Room by room, in the present tense: every room the sentence calls
+    // connected reports what the sentence says the connected part is, and
+    // every room it calls cut off reports offline.
+    const st = now(room);
+    check(range(m[2]).every((r) => st[r] === (stable ? 'online' : 'flaky')), text).toBe(true);
+    check(range(m[3]).every((r) => st[r] === 'offline'), text).toBe(true);
     if (m[5] === 'so the troublemaker is in the part cut off') {
         check(stable, text).toBe(true);
     } else if (m[5] === 'so the troublemaker is in it') {
@@ -264,9 +329,10 @@ function checkSplitSentence(text, job, room, before) {
         const side = stable ? cutWant : connectedWant;
         check(before.every((r) => side.includes(r)), text).toBe(true);
     }
-    const found = /^One controller left: (\d+) is the troublemaker\. /.exec(m[6]);
+    const found = /^One controller left: (\d+) is the troublemaker\. (Found in .*)$/.exec(m[6]);
     if (found) {
         check(Number(found[1]), text).toBe(talker);
+        checkScoreLine(found[2], job, text);
         return { after: [talker], solved: true };
     }
     const after = holding(m[6]);
@@ -274,6 +340,62 @@ function checkSplitSentence(text, job, room, before) {
     const side = stable ? cutWant : connectedWant;
     check(after, text).toEqual(before.filter((r) => side.includes(r)));
     return { after, solved: false };
+}
+
+// A pick after the job is solved. The page prints each result over the
+// last, so this sentence has to say again where the fault is and what the
+// score was — and say it truly. `first` is the sentence that found it.
+const SCORE_TAILS = [
+    ', the fewest this job takes.',
+    '. Reading the layout first gets it in 1.',
+    '. Reading the pattern first gets it in 1.',
+    '. Splitting at the midpoint each time gets it in 4.',
+    '. Splitting at the midpoint each time takes 4, wherever the troublemaker is.',
+    ', on a lucky cut. Splitting at the midpoint each time takes 4, wherever the troublemaker is.',
+];
+
+// "Found in N stops…", wherever it is printed: the count is the job's own,
+// the unit is the job's, and the rest of the line is the one that count
+// earns — 1 is the floor on a break job, 4 is what the midpoint promises on
+// the flaky one. Matched to the end of the line.
+function checkScoreLine(line, job, text) {
+    const m = /^Found in (\d+) (stops?|splits?)(.*)$/.exec(line);
+    check(m, 'a score line: ' + text).not.toBeNull();
+    const n = Number(m[1]);
+    check(n, 'the count quoted is the count: ' + text).toBe(job.stops);
+    const unit = job.fault.type === 'break' ? 'stop' : 'split';
+    check(m[2], text).toBe(n === 1 ? unit : unit + 's');
+    let tail;
+    if (job.fault.type === 'break') {
+        tail = n === 1 ? SCORE_TAILS[0] : (job.kind === 'layout' ? SCORE_TAILS[1] : SCORE_TAILS[2]);
+    } else {
+        tail = n > 4 ? SCORE_TAILS[3] : (n === 4 ? SCORE_TAILS[4] : SCORE_TAILS[5]);
+    }
+    check(m[3], 'the score line fits the count: ' + text).toBe(tail);
+}
+
+function checkDoneSentence(text, job, first) {
+    const order = route(job.headEnd);
+    let m;
+    let line;
+    if (job.fault.type === 'break') {
+        m = /^This job is finished\. The break is between (\d+) and (\d+)\. (Found in .*) New job deals another\.$/.exec(text);
+        check(m, 'a finished break job restates the break: ' + text).not.toBeNull();
+        const liveSide = order[job.fault.index - 1];
+        const deadSide = order[job.fault.index];
+        check([Number(m[1]), Number(m[2])], text)
+            .toEqual([Math.min(liveSide, deadSide), Math.max(liveSide, deadSide)]);
+        line = m[3];
+    } else {
+        m = /^This job is finished\. (\d+) is the troublemaker\. (Found in .*) New job deals another\.$/.exec(text);
+        check(m, 'a finished flaky job restates the troublemaker: ' + text).not.toBeNull();
+        check(Number(m[1]), text).toBe(order[job.fault.index]);
+        line = m[2];
+    }
+    checkScoreLine(line, job, text);
+    // The whole score line is the one the finding sentence ended on.
+    if (first !== undefined) check(first.endsWith(line), text + '\n  vs: ' + first).toBe(true);
+    return 'done';
 }
 
 // ── Loading ────────────────────────────────────────────────────────────
@@ -580,6 +702,7 @@ test.describe('bus-isolation engine: a stop never claims what it did not find', 
     test('every stop on every break job reports the trunk as it is', () => {
         const B = loadEngine();
         let stops = 0;
+        let doubled = 0;
         for (const kind of BREAK_KINDS) {
             for (const make of everyJob(B, kind)) {
                 for (let room = 201; room <= 216; room++) {
@@ -613,6 +736,16 @@ test.describe('bus-isolation engine: a stop never claims what it did not find', 
                             type: 'break',
                             between: beside.slice().sort((a, b) => a - b),
                         });
+                        // The double click: the same controller again, and
+                        // any other one, still say where the break is.
+                        for (const again of [room, 201, 216]) {
+                            const d = B.pick(job, again);
+                            check(d.code, where).toBe('done');
+                            check(d.counted, where).toBe(false);
+                            check(job.stops, where).toBe(1);
+                            checkDoneSentence(d.text, job, r.text);
+                            doubled += 1;
+                        }
                     } else {
                         check(r.found, where).toBeNull();
                     }
@@ -620,6 +753,9 @@ test.describe('bus-isolation engine: a stop never claims what it did not find', 
             }
         }
         expect(stops, 'the sweep ran').toBe(2 * 22 * 16);
+        // Two finding controllers on each of the 44 break jobs, three picks
+        // after each find.
+        expect(doubled, 'the double click was tried on every finding stop').toBe(2 * 22 * 2 * 3);
     });
 
     test('a miss costs a stop; the same ceiling again does not; a finished job is finished', () => {
@@ -641,14 +777,22 @@ test.describe('bus-isolation engine: a stop never claims what it did not find', 
         expect(job.stops).toBe(4);
         expect(job.solved).toBe(false);
 
-        expect(B.pick(job, 208).code).toBe('found');
+        const found = B.pick(job, 208);
+        expect(found.code).toBe('found');
         expect(job.stops).toBe(5);
         const done = B.pick(job, 204);
         expect(done.code).toBe('done');
         expect(done.counted).toBe(false);
-        expect(done.text).toBe('This job is finished. New job deals another.');
+        // Printed over the "Found it" line, so it carries the finding and
+        // the score line with it.
+        expect(done.text).toBe('This job is finished. The break is between 208 and 209. ' +
+            'Found in 5 stops. Reading the pattern first gets it in 1. New job deals another.');
+        checkDoneSentence(done.text, job, found.text);
         expect(job.stops, 'nothing counts after the job is solved').toBe(5);
         expect(plain(done.found)).toEqual({ type: 'break', between: [208, 209] });
+        // The finding controller itself, picked again: the same sentence.
+        expect(B.pick(job, 208).text).toBe(done.text);
+        expect(job.stops).toBe(5);
     });
 
     test('random play: whatever the reader picks, every sentence is true and the count is honest', () => {
@@ -675,6 +819,13 @@ test.describe('bus-isolation engine: a stop never claims what it did not find', 
                 // Sixteen rooms, two of them beside the break, and a
                 // second look at a room is free: fifteen is the ceiling.
                 check(counted).toBeLessThanOrEqual(15);
+                // Whatever the count came to, a pick after the find
+                // restates the break and that count.
+                const finding = job.last.text;
+                const done = B.pick(job, 201 + Math.floor(next() * 16));
+                check(done.code).toBe('done');
+                checkDoneSentence(done.text, job, finding);
+                check(done.stops, 'nothing counts after the job is solved').toBe(counted);
                 solved += 1;
                 mostStops = Math.max(mostStops, counted);
             }
@@ -786,6 +937,17 @@ test.describe('bus-isolation engine: the method solves at the stated best', () =
             expect(plain(job.found)).toEqual({ type: 'talker', room: talker });
             expect(job.last.text.endsWith('Found in 4 splits. Splitting at the midpoint each time ' +
                 'takes 4, wherever the troublemaker is.')).toBe(true);
+            // The last split again (the double click), then any other room.
+            const finding = job.last.text;
+            for (const again of [B.roomAt(job, job.lastPick), talker, 201]) {
+                const d = B.pick(job, again);
+                expect(d.code).toBe('done');
+                expect(d.text).toBe(`This job is finished. ${talker} is the troublemaker. Found in 4 ` +
+                    'splits. Splitting at the midpoint each time takes 4, wherever the troublemaker ' +
+                    'is. New job deals another.');
+                checkDoneSentence(d.text, job, finding);
+                expect(job.stops).toBe(4);
+            }
         }
     });
 
@@ -969,6 +1131,101 @@ test.describe('bus-isolation engine: a split never claims what it did not show',
         expect(foundInOne).toBe(4);
     });
 
+    // The enumeration. A flaky job's state is the split in place, the last
+    // counted pick and the suspects; this walks EVERY such state each of the
+    // 32 faults can reach, makes every pick from it, and holds the sentence
+    // to the trunk as it is after that pick. Nothing here is sampled.
+    test('every state a flaky job can reach, every pick from it: the sentence is true of the trunk as it is now', () => {
+        // About six seconds on the old box this was written on; the
+        // headroom is for a loaded CI runner, not for more work.
+        test.setTimeout(120_000);
+        const B = loadEngine();
+        // pick() mutates the job and its suspects, and replaces the rest.
+        const copy = (job) => Object.assign({}, job, {
+            suspects: Object.assign({}, job.suspects), checked: job.checked.slice(), last: null,
+        });
+        const key = (j) => [j.split, j.lastPick, j.suspects.lo, j.suspects.hi].join(',');
+        let states = 0;
+        let transitions = 0;
+        let finds = 0;
+        let rejoins = 0;      // picks that reconnected a room the split in place had cut off
+        let cutOffPicked = 0; // picks of a controller that was cut off when picked
+        let views = 0;
+        const codes = new Set();
+        for (const make of everyJob(B, 'flaky')) {
+            const start = make();
+            const order = route(start.headEnd);
+            const talker = order[start.fault.index];
+            const seen = new Set([key(start)]);
+            const reported = new Map([[null, statuses(B, start)]]);
+            let frontier = [start];
+            while (frontier.length) {
+                const next = [];
+                for (const state of frontier) {
+                    states += 1;
+                    const known = order.slice(state.suspects.lo, state.suspects.hi + 1).sort((a, b) => a - b);
+                    const before = reported.get(state.split);
+                    for (let room = 201; room <= 216; room++) {
+                        const job = copy(state);
+                        const r = B.pick(job, room);
+                        transitions += 1;
+                        codes.add(r.code);
+                        const where = () => `${start.headEnd} talker ${talker}, state ${key(state)}, pick ${room}`;
+                        const facts = checkSplitSentence(r.text, job, room, known);
+                        check(facts.after, where).toContain(talker);
+                        // One split open at a time, and it is past the room
+                        // picked — or none at all, at the last controller.
+                        const open = job.split === null ? null : order[job.split];
+                        check(open, where).toBe(room === order[15] ? null : room);
+                        // What the floor reports depends on the fault and
+                        // the split in place and on nothing else, so it is
+                        // read from the engine once per split and reused.
+                        // (Inside the vm every room lookup pays a slow
+                        // global read; 214,272 fresh views cost ~5 s here.)
+                        let now = reported.get(job.split);
+                        if (!now) {
+                            const v = B.view(job);
+                            now = {};
+                            for (const c of v.controllers) {
+                                now[c.room] = c.status;
+                                check(c.cutOff, where).toBe(c.status === 'offline');
+                            }
+                            check(now, where).toEqual(expectedStatuses(job, open));
+                            check(v.links.filter((l) => l.state === 'split').map((l) => [l.a, l.b]), where)
+                                .toEqual(open === null ? [] : [[open, order[job.split + 1]]]);
+                            reported.set(job.split, now);
+                            views += 1;
+                        }
+                        if (before[room] === 'offline') cutOffPicked += 1;
+                        for (let rm = 201; rm <= 216; rm++) {
+                            if (before[rm] === 'offline' && now[rm] !== 'offline') { rejoins += 1; break; }
+                        }
+                        if (job.solved) {
+                            finds += 1;
+                            check(facts.solved, where).toBe(true);
+                            check(job.found.room, where).toBe(talker);
+                            checkDoneSentence(B.pick(job, room).text, job, r.text);
+                            continue;
+                        }
+                        check(facts.solved, where).toBe(false);
+                        if (!seen.has(key(job))) { seen.add(key(job)); next.push(job); }
+                    }
+                }
+                frontier = next;
+            }
+        }
+        // Pinned: the size of the space. A change to the rules moves these.
+        expect({ states, transitions, finds }).toEqual({ states: 13392, transitions: 214272, finds: 4964 });
+        // Fifteen places to split each of the 32 trunks (the whole trunk is
+        // read before the walk starts).
+        expect(views, 'every split of every trunk was read from the engine').toBe(32 * 15);
+        // The states the old wording got wrong are in the walk, in bulk.
+        expect(cutOffPicked).toBeGreaterThan(10000);
+        expect(rejoins).toBeGreaterThan(10000);
+        expect([...codes].sort()).toEqual(['connected-part', 'cut-off-part', 'found',
+            'known-flaky', 'known-stable', 'nothing-past', 'repeat']);
+    });
+
     test('random play: every sentence is true, suspects only shrink, and the right room is found', () => {
         const B = loadEngine();
         const seenCodes = new Set();
@@ -1007,8 +1264,10 @@ test.describe('bus-isolation engine: a split never claims what it did not show',
             check(job.found.room).toBe(talker);
             check(B.view(job).controllers.filter((c) => c.found).map((c) => c.room)).toEqual([talker]);
             check(B.view(job).controllers.some((c) => c.suspect), 'no suspects once found').toBe(false);
+            const finding = job.last.text;
             const done = B.pick(job, 205);
             check(done.code).toBe('done');
+            checkDoneSentence(done.text, job, finding);
             check(job.stops, 'nothing counts after the job is solved').toBe(counted);
             solved += 1;
         }
@@ -1069,52 +1328,131 @@ test.describe('bus-isolation engine: hand-worked transcripts', () => {
         const B = loadEngine();
         const job = B.newJob('flaky', B.OPENING.flaky);
         expect(B.pick(job, 208).text)
-            .toBe('Trunk split past 208: 201 to 208 still connected, 209 to 216 cut off. ' +
-                'The connected part went stable, so the troublemaker is in the part cut off. ' +
-                'Still holding the fault: 209 to 216.');
+            .toBe('Trunk split past 208: 201 to 208 connected, 209 to 216 cut off. ' +
+                'The connected part is stable, so the troublemaker is in the part cut off. ' +
+                'May still hold the fault: 209 to 216.');
         expect(B.pick(job, 203).text)
-            .toBe('Trunk split past 203: 201 to 203 still connected, 204 to 216 cut off. ' +
-                'The connected part went stable, which the earlier splits already told you. ' +
-                'Still holding the fault: 209 to 216.');
+            .toBe('Trunk split past 203: 201 to 203 connected, 204 to 216 cut off. ' +
+                'The connected part is stable, which the earlier splits already told you. ' +
+                'May still hold the fault: 209 to 216.');
+        // The trunk was split past 203 a move ago, with 204 to 216 cut off.
+        // This pick rejoins it: all sixteen are connected, none "still".
         expect(B.pick(job, 216).text)
             .toBe('216 is the last controller on the trunk, so a split past it cuts nothing off. ' +
-                'All 16 controllers are still connected and still flaky. ' +
-                'Still holding the fault: 209 to 216.');
+                'All 16 controllers are connected and flaky. ' +
+                'May still hold the fault: 209 to 216.');
         expect(B.pick(job, 216).text)
             .toBe('216 is the last controller on the trunk, so nothing is cut off past it. ' +
-                'Still holding the fault: 209 to 216.');
+                'May still hold the fault: 209 to 216.');
         expect(B.pick(job, 212).text)
-            .toBe('Trunk split past 212: 201 to 212 still connected, 213 to 216 cut off. ' +
-                'The connected part is still flaky, so the troublemaker is in it. ' +
-                'Still holding the fault: 209 to 212.');
+            .toBe('Trunk split past 212: 201 to 212 connected, 213 to 216 cut off. ' +
+                'The connected part is flaky, so the troublemaker is in it. ' +
+                'May still hold the fault: 209 to 212.');
         expect(B.pick(job, 212).text)
-            .toBe('The trunk is already split past 212. Still holding the fault: 209 to 212.');
+            .toBe('The trunk is already split past 212. May still hold the fault: 209 to 212.');
         expect(B.pick(job, 214).text)
-            .toBe('Trunk split past 214: 201 to 214 still connected, 215 to 216 cut off. ' +
-                'The connected part is still flaky, which the earlier splits already told you. ' +
-                'Still holding the fault: 209 to 212.');
+            .toBe('Trunk split past 214: 201 to 214 connected, 215 to 216 cut off. ' +
+                'The connected part is flaky, which the earlier splits already told you. ' +
+                'May still hold the fault: 209 to 212.');
         expect(B.pick(job, 210).text)
-            .toBe('Trunk split past 210: 201 to 210 still connected, 211 to 216 cut off. ' +
-                'The connected part went stable, so the troublemaker is in the part cut off. ' +
-                'Still holding the fault: 211 to 212.');
+            .toBe('Trunk split past 210: 201 to 210 connected, 211 to 216 cut off. ' +
+                'The connected part is stable, so the troublemaker is in the part cut off. ' +
+                'May still hold the fault: 211 to 212.');
         expect(B.pick(job, 211).text)
-            .toBe('Trunk split past 211: 201 to 211 still connected, 212 to 216 cut off. ' +
-                'The connected part went stable, so the troublemaker is in the part cut off. ' +
+            .toBe('Trunk split past 211: 201 to 211 connected, 212 to 216 cut off. ' +
+                'The connected part is stable, so the troublemaker is in the part cut off. ' +
                 'One controller left: 212 is the troublemaker. ' +
                 'Found in 7 splits. Splitting at the midpoint each time gets it in 4.');
         expect(job.stops).toBe(7);
+        expect(B.pick(job, 211).text)
+            .toBe('This job is finished. 212 is the troublemaker. Found in 7 splits. ' +
+                'Splitting at the midpoint each time gets it in 4. New job deals another.');
+        expect(job.stops, 'the double click is free').toBe(7);
+    });
+
+    // The job-3 method on the opening job, which is where the old wording
+    // went wrong: the second split picks a controller the first one had
+    // cut off. Before 212 is picked the plan shows 201 to 208 online and
+    // 209 to 216 offline; after it, 201 to 212 are connected and flaky.
+    // "201 to 212 still connected" and "still flaky" were false of that.
+    test('job 3 by the midpoint — a second split rejoins the trunk, and the words say only what is', () => {
+        const B = loadEngine();
+        const job = B.newJob('flaky', B.OPENING.flaky);
+        B.pick(job, 208);
+        expect(statuses(B, job)[208]).toBe('online');
+        expect(statuses(B, job)[212], '212 is cut off by the first split').toBe('offline');
+        const second = B.pick(job, 212);
+        expect(second.text)
+            .toBe('Trunk split past 212: 201 to 212 connected, 213 to 216 cut off. ' +
+                'The connected part is flaky, so the troublemaker is in it. ' +
+                'May still hold the fault: 209 to 212.');
+        expect(statuses(B, job)[208], '208 read online a move ago').toBe('flaky');
+        expect(statuses(B, job)[212], '212 was cut off a move ago').toBe('flaky');
+        expect(CONTINUITY.test(second.text)).toBe(false);
+        // Anti-vacuity for the word list: it does catch the old sentences.
+        for (const old of ['201 to 212 still connected, 213 to 216 cut off.',
+            'The connected part is still flaky, so the troublemaker is in it.',
+            'The connected part went stable, so the troublemaker is in the part cut off.',
+            'that controller and everything nearer stay connected']) {
+            expect(CONTINUITY.test(old), old).toBe(true);
+        }
+    });
+
+    // Every state the method can reach, and every state anything can: one
+    // split open at a time is a rule of the floor, so it is pinned as one.
+    test('only one split is ever open, and a pick past the last controller rejoins the trunk', () => {
+        const B = loadEngine();
+        let states = 0;
+        let rejoined = 0;
+        let regained = 0;
+        for (const make of everyJob(B, 'flaky')) {
+            for (let a = 201; a <= 216; a++) {
+                for (let b = 201; b <= 216; b++) {
+                    const job = make();
+                    const order = route(job.headEnd);
+                    const first = B.pick(job, a);
+                    const known = checkSplitSentence(first.text, job, a, route('low')).after;
+                    if (job.solved) continue;
+                    const before = statuses(B, job);
+                    const r = B.pick(job, b);
+                    states += 1;
+                    const v = B.view(job);
+                    const open = v.links.filter((l) => l.state === 'split');
+                    const last = order[15];
+                    check(open.length, `${a} then ${b}`).toBe(b === last ? 0 : 1);
+                    if (b !== last) {
+                        // The open segment is the one on b's far side.
+                        check([open[0].a, open[0].b], `${a} then ${b}`)
+                            .toEqual([b, order[order.indexOf(b) + 1]]);
+                    } else if (a !== last) {
+                        rejoined += 1;
+                    }
+                    check(statuses(B, job), `${a} then ${b}`)
+                        .toEqual(expectedStatuses(job, b === last ? null : b));
+                    // The second split put back rooms the first had cut off.
+                    if (Object.keys(before).some((room) =>
+                        before[room] === 'offline' && statuses(B, job)[room] !== 'offline')) regained += 1;
+                    check(r.code === 'repeat', `${a} then ${b}`).toBe(a === b);
+                    checkSplitSentence(r.text, job, b, known);
+                }
+            }
+        }
+        // Every pair of picks, less the four jobs one split solves.
+        expect(states).toBe(32 * 16 * 16 - 4 * 16);
+        expect(rejoined, 'a pick past the last controller closed an open split').toBeGreaterThan(400);
+        expect(regained, 'a later split reconnected rooms an earlier one cut off').toBeGreaterThan(3000);
     });
 
     test('the supervisor or router on the high end reads the same way, mirrored', () => {
         const B = loadEngine();
         const job = B.makeJob('flaky', 'high', 0);       // talker in 216, wired straight to it
         expect(B.pick(job, 209).text)
-            .toBe('Trunk split past 209: 209 to 216 still connected, 201 to 208 cut off. ' +
-                'The connected part is still flaky, so the troublemaker is in it. ' +
-                'Still holding the fault: 209 to 216.');
+            .toBe('Trunk split past 209: 209 to 216 connected, 201 to 208 cut off. ' +
+                'The connected part is flaky, so the troublemaker is in it. ' +
+                'May still hold the fault: 209 to 216.');
         expect(B.pick(job, 216).text)
-            .toBe('Trunk split past 216: 216 still connected, 201 to 215 cut off. ' +
-                'The connected part is still flaky, so the troublemaker is in it. ' +
+            .toBe('Trunk split past 216: 216 connected, 201 to 215 cut off. ' +
+                'The connected part is flaky, so the troublemaker is in it. ' +
                 'One controller left: 216 is the troublemaker. ' +
                 'Found in 2 splits, on a lucky cut. Splitting at the midpoint each time takes 4, ' +
                 'wherever the troublemaker is.');

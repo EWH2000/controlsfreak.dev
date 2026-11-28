@@ -427,11 +427,14 @@ noindex: true
             <h2 class="subhead">The order of attack</h2>
 
             <!-- The three steps are the owner's, in his order and his terms.
-                 The LAST sentence of each paragraph is plain logic that holds
-                 on any single daisy chain — worded as what follows from the
-                 chain, never as field practice. Anything about how often,
-                 what usually, or what to check at the controller is not his
-                 and does not belong here. -->
+                 The LAST sentence of the first two paragraphs is plain logic
+                 that holds on any single daisy chain — worded as what follows
+                 from the chain, never as field practice. The third step
+                 carries none: he gave ONE split, and what repeated splits add
+                 up to is a rule of the made-up floor, so that arithmetic
+                 lives in the Job 3 call and nowhere up here. Anything about
+                 how often, what usually, or what to check at the controller
+                 is not his and does not belong here. -->
             <p>
                 <strong>First, try to find a bus layout</strong>, and see whether an obvious spot shows on it. On a daisy chain a single break takes out every controller past it, so on a drawn route the dead section starts at the break.
             </p>
@@ -441,13 +444,13 @@ noindex: true
             </p>
 
             <p>
-                <strong>Whole trunk flaky?</strong> Break it at the midpoint and see whether the half nearer the supervisor or router becomes stable, since sometimes a device can be transmitting when it should not and take the others down. Each midpoint split halves the part that can still hold the fault, so sixteen controllers take four splits.
+                <strong>Whole trunk flaky?</strong> Break it at the midpoint and see whether the half nearer the supervisor or router becomes stable, since sometimes a device can be transmitting constantly and take others down.
             </p>
 
             <h2 class="subhead">What the made-up floor leaves out</h2>
 
             <p>
-                The floor in the game below is made up, and it is simpler than a real one in two ways. It carries one fault per job, where a real trunk can carry more than one at once. And its break only cuts rooms off, where a real break also leaves the still-connected section without the terminator that sat at the far end. Termination is in <a href="/education/bacnet-mstp.html#two-wires">the two wires</a>, and reading a symptom back to its layer is in <a href="/education/bacnet-mstp.html#symptom-layer">reading the symptom</a>, both in the MS/TP lesson.
+                The floor in the game below is made up, and it is simpler than a real one. It carries one fault per job, where a real trunk can carry more than one at once. Its break only cuts rooms off, where a real break also leaves the still-connected section without the terminator that sat at the far end. And its trunk runs in room-number order, with the MAC addresses handed out the same way: that order is a given of this made-up floor, and the job with no layout depends on it. Termination is in <a href="/education/bacnet-mstp.html#two-wires">the two wires</a>, and reading a symptom back to its layer is in <a href="/education/bacnet-mstp.html#symptom-layer">reading the symptom</a>, both in the MS/TP lesson.
             </p>
 
             <h2 class="subhead">Work the floor</h2>
@@ -457,7 +460,7 @@ noindex: true
             </p>
 
             <p>
-                Every job has a single fault: a break in the trunk, or one controller transmitting when it should not (the troublemaker). Every move is the same gesture, picking a controller on the plan, and the score is how many picks it took. <em>New job</em> deals a fresh fault of the same kind.
+                Every job has a single fault: a break in the trunk, or one controller transmitting when it should not (the troublemaker). Every move is the same gesture, picking a controller on the plan, and the score is how many stops or splits it took. <em>New job</em> deals a fresh fault of the same kind.
             </p>
 
             <div class="widget" id="bsi-game">
@@ -481,13 +484,13 @@ noindex: true
                 <div class="bsi-brief" data-bsi-brief="no-layout" hidden>
                     <h3 class="bsi-job-title">Job 2 · A dead section, no layout</h3>
                     <p>
-                        A made-up call: a run of rooms is offline again, and nobody has a layout. The route is not drawn, and you are not told which end the supervisor or router is on. What you have is the offline list: room numbers and MAC addresses. Pick the controller where you would stop first. A stop works as before: it shows the trunk on both sides of that controller, and it finds the break if the break is on either side.
+                        A made-up call: a run of rooms is offline again, and nobody has a layout. The route is not drawn until you find the break, and the call does not say which end the supervisor or router is on. What you have is the offline list: room numbers and MAC addresses. Pick the controller where you would stop first. A stop works as before: it shows the trunk on both sides of that controller, and it finds the break if the break is on either side.
                     </p>
                 </div>
                 <div class="bsi-brief" data-bsi-brief="flaky" hidden>
                     <h3 class="bsi-job-title">Job 3 · The whole trunk is flaky</h3>
                     <p>
-                        A made-up call: every controller on the trunk is dropping in and out. Picking a controller splits the trunk on its far side: that controller and everything nearer the supervisor or router stay connected, and everything past it is cut off. The plan then shows whether the connected part went stable. Stable means the troublemaker is in the part you cut off; still flaky means it is in the part still connected. Keep splitting whatever still holds the fault until one controller is left.
+                        A made-up call: every controller on the trunk is dropping in and out. Picking a controller splits the trunk on its far side: that controller and everything nearer the supervisor or router are connected, and everything past it is cut off. Only one split is open at a time: a new pick rejoins the trunk and splits it at the new spot. The plan then shows whether the connected part is stable or flaky. Stable means the troublemaker is in the part cut off; flaky means it is in the connected part. Keep splitting until one controller is left that may hold the fault. On this made-up floor, where one controller is the whole cause, splitting what may still hold the fault at its midpoint halves it each time: sixteen controllers, four splits.
                     </p>
                 </div>
 
@@ -500,7 +503,7 @@ noindex: true
                 </div>
 
                 <div class="widget-readout-label" id="bsi-report-lbl">What you have to go on</div>
-                <dl class="bsi-report" id="bsi-report">
+                <dl class="bsi-report" id="bsi-report" aria-labelledby="bsi-report-lbl">
                     <dt>Trunk</dt>
                     <dd id="bsi-r-trunk"></dd>
                     <dt>Online</dt>
@@ -534,7 +537,7 @@ noindex: true
             <h2 class="subhead">What this page didn't cover</h2>
 
             <p>
-                This page stops at finding the section. What to check once you are standing at the spot is a different question, and the three layers it could belong to — the token ring, the addressing, the two wires — are walked in <a href="/education/bacnet-mstp.html">BACnet MS/TP</a>. Meter work on the bus is left out on purpose: the question here is where to go first, and the answer is the pattern.
+                This page stops at finding the section. What to check once you are standing at the spot is a different question, and the three layers a fault could belong to — the token ring, the addressing, the two wires — are walked in <a href="/education/bacnet-mstp.html">BACnet MS/TP</a>. Meter work on the bus is left out on purpose: the question here is where to go first, and the answer is the pattern.
             </p>
 
         </div>
@@ -750,7 +753,10 @@ noindex: true
                     ? 'Supervisor or router, then ' + BI.FIRST_ROOM + ' up to ' + BI.LAST_ROOM
                     : 'Supervisor or router, then ' + BI.LAST_ROOM + ' down to ' + BI.FIRST_ROOM;
             } else {
-                report.trunk.textContent = 'No layout: route and ends not known';
+                // Says only what holds until the job is solved. A stop at
+                // either end of the trunk names that end in the result
+                // line, so this row must not claim the ends are unknown.
+                report.trunk.textContent = 'No layout: route not drawn';
             }
             report.online.textContent = runs(v.controllers, 'online');
             report.offline.textContent = runs(v.controllers, 'offline') +
@@ -767,7 +773,7 @@ noindex: true
                     : (v.suspects.from === v.suspects.to
                         ? String(v.suspects.from)
                         : v.suspects.from + ' to ' + v.suspects.to) +
-                        ' (' + v.suspects.count + ' still holding the fault)';
+                        ' (' + v.suspects.count + ' may still hold the fault)';
             }
 
             // The plan. While the route is hidden the two ends park at

@@ -83,18 +83,27 @@
 //
 //   On the flaky job, a SPLIT past that controller. The trunk is opened
 //   on the controller's far side: it and everything nearer the
-//   supervisor or router stay connected, everything past it is cut off
-//   and reports offline. The connected part goes stable if the talker
-//   was cut off, and stays flaky if it was not. Each split replaces the
-//   last one (one split at a time), and the engine keeps the SUSPECTS —
-//   the chain-index range that can still hold the talker given every
-//   split so far. The job is solved when one suspect is left.
+//   supervisor or router are connected, everything past it is cut off
+//   and reports offline. The connected part is stable if the talker is
+//   in the part cut off, and flaky if it is not.
+//
+//   ONLY ONE SPLIT IS OPEN AT A TIME. A new pick rejoins the trunk and
+//   splits it at the new spot, so a controller that was cut off a move
+//   ago can be connected now, and one that read online can read flaky.
+//   That is why no sentence about a split says "still" or "stays" of a
+//   controller's connection or status: after a second split those words
+//   are false about half the floor. The sentences state what the trunk
+//   is NOW. The one thing that does carry over is the SUSPECTS — the
+//   chain-index range that may still hold the talker given every split
+//   so far — which only ever shrinks. The job is solved when one
+//   suspect is left.
 //
 // SCORING. Every pick costs one, except picking the same controller
 // again on a break job, repeating the split that is already in place,
-// and any pick after the job is solved. BEST is the number the score
-// line quotes, and METHOD_MAX is the most picks the owner's method can
-// take:
+// and any pick after the job is solved. (A split past the last
+// controller costs one although it cuts nothing off.) BEST is the
+// number the score line quotes, and METHOD_MAX is the most picks the
+// owner's method can take:
 //
 //   layout     BEST 1, METHOD_MAX 1 — the layout shows where the dead
 //              section starts; that controller or the live one before
@@ -189,6 +198,10 @@
 //         Flaky-job codes:  found · cut-off-part · connected-part ·
 //                           known-stable · known-flaky · nothing-past ·
 //                           repeat · done
+//         A 'done' result (any pick after the job is solved) RESTATES
+//         the finding and the score line. The page prints each result
+//         over the last, so a double click on the controller that finds
+//         the fault would otherwise wipe out where the fault is.
 //     method(job) → [room, …] — the pick(s) the owner's method makes
 //         next, low room first; any of them follows the method. Empty
 //         once the job is solved.
@@ -388,7 +401,16 @@ const BusIsolation = (function () {
             : '. Reading the pattern first gets it in 1.');
     }
 
-    const DONE_TEXT = 'This job is finished. New job deals another.';
+    // Any pick after the job is solved. The page prints this over the
+    // "Found it" line, so it says again where the fault is and what the
+    // score was: a double click on the finding controller must not cost
+    // the reader the one sentence the job was played for.
+    function doneText(job) {
+        const where = job.found.type === 'break'
+            ? 'The break is between ' + job.found.between[0] + ' and ' + job.found.between[1] + '.'
+            : job.found.room + ' is the troublemaker.';
+        return 'This job is finished. ' + where + ' ' + scoreText(job) + ' New job deals another.';
+    }
 
     // ── Break jobs: a stop ───────────────────────────────────────────
     function segmentState(job, segment) {
@@ -437,7 +459,7 @@ const BusIsolation = (function () {
     }
 
     function stopAt(job, index) {
-        if (job.solved) return { code: 'done', counted: false, text: DONE_TEXT };
+        if (job.solved) return { code: 'done', counted: false, text: doneText(job) };
         const room = roomAt(job, index);
         const sides = sidesAt(job, index);
         if (job.checked.indexOf(index) !== -1) {
@@ -471,10 +493,12 @@ const BusIsolation = (function () {
     function suspectRange(job) { return roomRange(job, job.suspects.lo, job.suspects.hi); }
 
     function splitPast(job, index) {
-        if (job.solved) return { code: 'done', counted: false, text: DONE_TEXT };
+        if (job.solved) return { code: 'done', counted: false, text: doneText(job) };
         const room = roomAt(job, index);
+        // "May": the range is every controller the splits so far have
+        // not ruled out. One of them holds the fault, not all of them.
         const holding = function () {
-            return ' Still holding the fault: ' + rangeText(suspectRange(job)) + '.';
+            return ' May still hold the fault: ' + rangeText(suspectRange(job)) + '.';
         };
         if (job.lastPick === index) {
             return {
@@ -489,8 +513,8 @@ const BusIsolation = (function () {
         job.stops += 1;
         job.lastPick = index;
         if (index === LAST_INDEX) {
-            // Nothing lies past the end of the run: the trunk is whole
-            // again and the talker is still on it.
+            // Nothing lies past the end of the run, so this pick only
+            // rejoins the trunk: it is whole, and the talker is on it.
             job.split = null;
             return {
                 code: 'nothing-past',
@@ -501,8 +525,8 @@ const BusIsolation = (function () {
                 cutOff: null,
                 suspects: suspectRange(job),
                 text: room + ' is the last controller on the trunk, so a split past it cuts ' +
-                    'nothing off. All ' + ROOM_COUNT + ' controllers are still connected and ' +
-                    'still flaky.' + holding(),
+                    'nothing off. All ' + ROOM_COUNT + ' controllers are connected and ' +
+                    'flaky.' + holding(),
             };
         }
         job.split = index;
@@ -517,16 +541,18 @@ const BusIsolation = (function () {
         }
         const connected = roomRange(job, 0, index);
         const cutOff = roomRange(job, index + 1, LAST_INDEX);
+        // Present tense, no "still", no "went": an earlier split may have
+        // had these rooms cut off, or reading online, one move ago.
         let text = 'Trunk split past ' + room + ': ' + rangeText(connected) +
-            ' still connected, ' + rangeText(cutOff) + ' cut off.';
+            ' connected, ' + rangeText(cutOff) + ' cut off.';
         if (stable) {
             text += narrowed
-                ? ' The connected part went stable, so the troublemaker is in the part cut off.'
-                : ' The connected part went stable, which the earlier splits already told you.';
+                ? ' The connected part is stable, so the troublemaker is in the part cut off.'
+                : ' The connected part is stable, which the earlier splits already told you.';
         } else {
             text += narrowed
-                ? ' The connected part is still flaky, so the troublemaker is in it.'
-                : ' The connected part is still flaky, which the earlier splits already told you.';
+                ? ' The connected part is flaky, so the troublemaker is in it.'
+                : ' The connected part is flaky, which the earlier splits already told you.';
         }
         let code;
         if (job.suspects.lo === job.suspects.hi) {

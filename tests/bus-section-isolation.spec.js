@@ -18,8 +18,10 @@
 // This file proves the other half: that the PAGE draws what the engine
 // says and nothing else. Each played job runs a second copy of the engine
 // here in Node (the MIRROR), feeds it the same picks, and compares the
-// page to it after every click — every controller's status word, mark and
-// accessible name, the count, the trunk marks, and the feedback sentence.
+// page to it after every click — every controller's status word, mark,
+// classes and accessible name, the count, the four report rows, the
+// feedback sentence, and the trunk marks: not how many there are but WHICH
+// two controllers each one is drawn between, measured off the screen.
 //
 // The picks themselves are NOT taken from the engine. `readerPick()` works
 // out the next move from what a reader can see on the page (the trunk
@@ -116,6 +118,30 @@ async function readPlan(page) {
         const shown = (el) => !el.hidden && getComputedStyle(el).visibility !== 'hidden' &&
             el.getClientRects().length > 0;
         const text = (id) => document.getElementById(id).textContent;
+        // Where a mark on the trunk is DRAWN: the two controllers nearest
+        // the marked link, by the centres of their boxes. On the snake a
+        // link's two neighbours are always nearer than any other room, in a
+        // row or at a turn, so this is the pair a reader sees it between —
+        // read off the layout, not off the script's own bookkeeping.
+        const centre = (el) => {
+            const r = el.getBoundingClientRect();
+            return [r.left + r.width / 2, r.top + r.height / 2];
+        };
+        const roomEls = Array.from(plan.querySelectorAll('.bsi-room'));
+        const roomLinks = Array.from(plan.querySelectorAll('.bsi-link:not(.is-cap)'));
+        const marks = roomLinks.map((el, i) => {
+            const brk = el.classList.contains('is-break');
+            const split = el.classList.contains('is-split');
+            if (!brk && !split) return null;
+            const [x, y] = centre(el);
+            const between = roomEls
+                .map((b) => {
+                    const [bx, by] = centre(b);
+                    return { room: Number(b.getAttribute('data-bsi-room')), d: Math.hypot(bx - x, by - y) };
+                })
+                .sort((a, b) => a.d - b.d).slice(0, 2).map((n) => n.room).sort((a, b) => a - b);
+            return { mark: brk && split ? 'both' : brk ? 'break' : 'split', index: i, between };
+        }).filter(Boolean);
         return {
             kind: g.getAttribute('data-bsi-kind'),
             countLabel: text('bsi-count-lbl'),
@@ -128,6 +154,10 @@ async function readPlan(page) {
             linksShown: Array.from(plan.querySelectorAll('.bsi-link')).filter(shown).length,
             breaks: plan.querySelectorAll('.bsi-link.is-break').length,
             splits: plan.querySelectorAll('.bsi-link.is-split').length,
+            marks,
+            roomLinks: roomLinks.length,
+            caps: plan.querySelectorAll('.bsi-link.is-cap').length,
+            capMarks: plan.querySelectorAll('.bsi-link.is-cap.is-break, .bsi-link.is-cap.is-split').length,
             trunk: text('bsi-r-trunk'),
             online: text('bsi-r-online'),
             offline: text('bsi-r-offline'),
@@ -142,6 +172,7 @@ async function readPlan(page) {
                     mac: b.querySelector('.bsi-room-mac').textContent,
                     word: b.querySelector('.bsi-room-word').textContent,
                     badge: shown(badge) ? badge.textContent : '',
+                    classes: Array.from(b.classList).filter((c) => c.startsWith('is-')).sort(),
                     label: b.getAttribute('aria-label'),
                     type: b.getAttribute('type'),
                     tag: b.tagName,
@@ -215,6 +246,10 @@ async function expectPageShows(page, B, job, said) {
             mac: 'MAC ' + c.mac,
             word: c.status[0].toUpperCase() + c.status.slice(1),
             badge: c.found ? '!' : c.checked ? '×' : c.suspect ? '?' : '',
+            // The only visual cue on the two controllers beside a found
+            // break is a class (no badge), so the classes are mirrored too.
+            classes: ['is-' + c.status, c.suspect && 'is-suspect', c.found && 'is-found',
+                c.besideBreak && 'is-beside'].filter(Boolean).sort(),
             label,
             type: 'button',
             tag: 'BUTTON',
@@ -228,6 +263,19 @@ async function expectPageShows(page, B, job, said) {
     expect(seen.linksShown, where).toBe(v.routeShown ? 17 : 0);
     expect(seen.breaks, where).toBe(v.links.filter((l) => l.state === 'break').length);
     expect(seen.splits, where).toBe(v.links.filter((l) => l.state === 'split').length);
+    // WHICH link carries the mark. A count alone would pass with the break
+    // or the split drawn one gap over. The engine names the two rooms the
+    // open segment joins; the page must draw the mark between those two,
+    // and on the link the script files under the lower of them.
+    const wantMarks = v.links.filter((l) => l.state !== 'whole').map((l) => {
+        if (l.a === 'head') throw new Error(where + ': the engine never opens the first segment');
+        const between = [l.a, l.b].sort((a, b) => a - b);
+        return { mark: l.state, index: between[0] - 201, between };
+    });
+    expect(seen.marks, `${where}: which link is marked`).toEqual(wantMarks);
+    for (const m of wantMarks) expect(m.between[1] - m.between[0], where).toBe(1);
+    expect([seen.roomLinks, seen.caps], where).toEqual([15, 2]);
+    expect(seen.capMarks, `${where}: neither end of the trunk is ever marked`).toBe(0);
     if (v.routeShown) {
         expect(seen.headAtTop, where).toBe(v.headEnd === 'low');
         expect(seen.trunk, where).toBe(v.headEnd === 'low'
@@ -236,9 +284,50 @@ async function expectPageShows(page, B, job, said) {
     } else {
         // Parked at the default, so the DOM says nothing about the end.
         expect(seen.headAtTop, where).toBe(true);
-        expect(seen.trunk, where).toBe('No layout: route and ends not known');
+        // True until the job is solved, a stop at either end included: it
+        // claims the route is not drawn, and nothing about the ends.
+        expect(seen.trunk, where).toBe('No layout: route not drawn');
     }
+
+    // The report rows are the drawing in words, so they are held to the
+    // engine on every pick and deal — worked out here from the statuses,
+    // not read back from the page's own helper.
+    const runsOf = (status) => {
+        const parts = [];
+        let run = [];
+        const close = () => {
+            if (run.length === 1) parts.push(`${run[0].room} · MAC ${run[0].mac}`);
+            if (run.length > 1) {
+                const last = run[run.length - 1];
+                parts.push(`${run[0].room} to ${last.room} · MAC ${run[0].mac} to ${last.mac}`);
+            }
+            run = [];
+        };
+        for (const c of v.controllers) {
+            if (c.status === status) run.push(c); else close();
+        }
+        close();
+        return parts.length ? parts.join(', ') : 'none';
+    };
+    expect(seen.online, `${where}: Online row`).toBe(runsOf('online'));
+    expect(seen.offline, `${where}: Offline row`).toBe(runsOf('offline') +
+        (v.controllers.some((c) => c.cutOff) ? ' (cut off by your split)' : ''));
+    expect(seen.flaky, `${where}: Flaky row`).toBe(runsOf('flaky'));
+    // Every controller is in exactly one of the three rows.
+    expect(v.controllers.filter((c) => !['online', 'offline', 'flaky'].includes(c.status)), where).toEqual([]);
     expect(seen.suspectsShown, where).toBe(v.suspects !== null);
+    if (v.suspects === null) {
+        expect(seen.suspects, `${where}: no stale suspects on a break job`).toBe('');
+    } else if (v.solved) {
+        expect(seen.suspects, `${where}: Suspects row`)
+            .toBe(`${v.found.room} · MAC ${v.found.room - 200}, the troublemaker`);
+    } else {
+        const span = v.suspects.from === v.suspects.to
+            ? String(v.suspects.from) : `${v.suspects.from} to ${v.suspects.to}`;
+        expect(seen.suspects, `${where}: Suspects row`)
+            .toBe(`${span} (${v.suspects.count} may still hold the fault)`);
+        expect(v.suspects.count, where).toBe(v.controllers.filter((c) => c.suspect).length);
+    }
     return seen;
 }
 
@@ -308,6 +397,20 @@ test.describe('bus section isolation: the page loads, hidden', () => {
         expect(front).not.toMatch(/^canonical:/m);
     });
 
+    // No canonical means no address to describe, so the hidden page ships
+    // no structured data at all — not a TechArticle, not a breadcrumb, and
+    // not an empty script element (which is what it shipped before
+    // head.njk's education block learned to ask for a canonical).
+    test('ships no JSON-LD script element', async ({ page }) => {
+        await open(page);
+        await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(0);
+        expect(fs.readFileSync(path.join(SITE, 'education', SLUG + '.html'), 'utf8'))
+            .not.toContain('application/ld+json');
+        // Anti-vacuity: the selector does find the blocks on a listed lesson.
+        await page.goto('/education/bacnet-mstp.html');
+        expect(await page.locator('script[type="application/ld+json"]').count()).toBeGreaterThan(0);
+    });
+
     test('absent from the sitemap, the search index, the page manifest and every menu', async ({ page, request }) => {
         const sitemap = await (await request.get('/sitemap.xml')).text();
         const index = await (await request.get('/search-index.json')).text();
@@ -316,8 +419,14 @@ test.describe('bus section isolation: the page loads, hidden', () => {
         expect(index).toContain('/education/bacnet-mstp.html');
         expect(sitemap).not.toContain(SLUG);
         expect(index).not.toContain(SLUG);
-        expect(PAGES.some((p) => String(p).includes(SLUG)), 'tests/pages.js must not list a hidden page')
-            .toBe(false);
+        // The manifest holds { name, url } objects, so the address is
+        // compared, not the object (String(object) is "[object Object]" and
+        // matches nothing — the first form of this line could not fail).
+        const listed = (needle) => PAGES.some((p) => String(p.url).includes(needle));
+        expect(PAGES.length, 'sanity: the manifest was loaded').toBeGreaterThan(100);
+        expect(PAGES.every((p) => typeof p.url === 'string'), 'every manifest entry has a url').toBe(true);
+        expect(listed('/education/bacnet-mstp.html'), 'anti-vacuity: a listed sibling IS found').toBe(true);
+        expect(listed(SLUG), 'tests/pages.js must not list a hidden page').toBe(false);
 
         // The menus, on the page itself and on the pages most likely to
         // grow a link: every anchor in the document, dropdowns included.
@@ -378,10 +487,55 @@ test.describe('bus section isolation: the three jobs, played by the method', () 
         await expect(room(page, 209)).toHaveAttribute('aria-label', 'Room 209, MAC 9, online, beside the break');
         await expect(room(page, 210)).toHaveAttribute('aria-label', 'Room 210, MAC 10, offline, beside the break');
 
-        // A finished job stays finished.
+        // The mark is drawn between the two controllers the sentence names.
+        expect((await readPlan(page)).marks).toEqual([{ mark: 'break', index: 8, between: [209, 210] }]);
+
+        // A finished job stays finished, and still says where the break is.
         await room(page, 204).click();
-        await expect(feedback(page)).toHaveText('This job is finished. New job deals another.');
+        await expect(feedback(page)).toHaveText('This job is finished. The break is between 209 and 210. ' +
+            'Found in 1 stop, the fewest this job takes. New job deals another.');
         await expect(count(page)).toHaveText('1');
+        await expect(feedback(page)).toHaveClass(/is-found/);
+        expect(errors).toEqual([]);
+    });
+
+    // A double click, a double tap or a held Enter on the controller that
+    // finds the fault fires two picks. The second result is printed over
+    // the first, so it has to carry the finding and the score line: the
+    // first draft answered "This job is finished. New job deals another."
+    // and the reader never saw where the break was.
+    test('a double click on the finding controller leaves the finding and the score on screen', async ({ page }) => {
+        const { errors } = await open(page);
+        await room(page, 210).dblclick();
+        await expect(feedback(page)).toHaveText('This job is finished. The break is between 209 and 210. ' +
+            'Found in 1 stop, the fewest this job takes. New job deals another.');
+        await expect(count(page), 'the second click of the pair is free').toHaveText('1');
+        await expect(feedback(page)).toHaveClass(/is-found/);
+        expect((await readPlan(page)).marks).toEqual([{ mark: 'break', index: 8, between: [209, 210] }]);
+
+        // Job 2, the slow way, then the double click on the finding stop.
+        await selectJob(page, 'no-layout');
+        await room(page, 201).click();
+        await room(page, 205).dblclick();
+        await expect(feedback(page)).toHaveText('This job is finished. The break is between 205 and 206. ' +
+            'Found in 2 stops. Reading the pattern first gets it in 1. New job deals another.');
+        await expect(count(page)).toHaveText('2');
+
+        // Job 3: three splits, then the fourth double-clicked; and a held
+        // Enter, which is the same thing from the keyboard.
+        await selectJob(page, 'flaky');
+        for (const pick of [208, 212, 210]) await room(page, pick).click();
+        await room(page, 211).dblclick();
+        const done = 'This job is finished. 212 is the troublemaker. Found in 4 splits. Splitting at the ' +
+            'midpoint each time takes 4, wherever the troublemaker is. New job deals another.';
+        await expect(feedback(page)).toHaveText(done);
+        await expect(count(page)).toHaveText('4');
+        await room(page, 211).focus();
+        await page.keyboard.press('Enter');
+        await page.keyboard.press('Enter');
+        await expect(feedback(page)).toHaveText(done);
+        await expect(count(page)).toHaveText('4');
+        await expect(room(page, 212).locator('.bsi-badge')).toHaveText('!');
         expect(errors).toEqual([]);
     });
 
@@ -430,17 +584,17 @@ test.describe('bus section isolation: the three jobs, played by the method', () 
         // Each line hand-worked: the troublemaker is in 212 and the
         // supervisor or router is at 201.
         const steps = [
-            [208, 'Trunk split past 208: 201 to 208 still connected, 209 to 216 cut off. ' +
-                'The connected part went stable, so the troublemaker is in the part cut off. ' +
-                'Still holding the fault: 209 to 216.'],
-            [212, 'Trunk split past 212: 201 to 212 still connected, 213 to 216 cut off. ' +
-                'The connected part is still flaky, so the troublemaker is in it. ' +
-                'Still holding the fault: 209 to 212.'],
-            [210, 'Trunk split past 210: 201 to 210 still connected, 211 to 216 cut off. ' +
-                'The connected part went stable, so the troublemaker is in the part cut off. ' +
-                'Still holding the fault: 211 to 212.'],
-            [211, 'Trunk split past 211: 201 to 211 still connected, 212 to 216 cut off. ' +
-                'The connected part went stable, so the troublemaker is in the part cut off. ' +
+            [208, 'Trunk split past 208: 201 to 208 connected, 209 to 216 cut off. ' +
+                'The connected part is stable, so the troublemaker is in the part cut off. ' +
+                'May still hold the fault: 209 to 216.'],
+            [212, 'Trunk split past 212: 201 to 212 connected, 213 to 216 cut off. ' +
+                'The connected part is flaky, so the troublemaker is in it. ' +
+                'May still hold the fault: 209 to 212.'],
+            [210, 'Trunk split past 210: 201 to 210 connected, 211 to 216 cut off. ' +
+                'The connected part is stable, so the troublemaker is in the part cut off. ' +
+                'May still hold the fault: 211 to 212.'],
+            [211, 'Trunk split past 211: 201 to 211 connected, 212 to 216 cut off. ' +
+                'The connected part is stable, so the troublemaker is in the part cut off. ' +
                 'One controller left: 212 is the troublemaker. ' +
                 'Found in 4 splits. Splitting at the midpoint each time takes 4, wherever the troublemaker is.'],
         ];
@@ -448,6 +602,17 @@ test.describe('bus section isolation: the three jobs, played by the method', () 
             expect(readerPick(await readPlan(page)), `midpoint before the split past ${pick}`).toEqual([pick]);
             await room(page, pick).click();
             await expect(feedback(page)).toHaveText(sentence);
+            // What the sentence says is what the plan shows at that moment,
+            // read off the controllers: the rooms it calls connected all
+            // carry one word (the one it names), the rest read Offline, and
+            // the one open split is drawn past the room just picked.
+            const seen = await readPlan(page);
+            const [, from, to, part] = /: (\d+) to (\d+) connected, .* The connected part is (stable|flaky),/.exec(sentence);
+            const words = (lo, hi) => [...new Set(seen.rooms.filter((r) => r.room >= lo && r.room <= hi)
+                .map((r) => r.word))];
+            expect(words(Number(from), Number(to)), sentence).toEqual([part === 'stable' ? 'Online' : 'Flaky']);
+            expect(words(Number(to) + 1, 216), sentence).toEqual(['Offline']);
+            expect(seen.marks, sentence).toEqual([{ mark: 'split', index: pick - 201, between: [pick, pick + 1] }]);
         }
         await expect(count(page)).toHaveText('4');
         await expect(room(page, 212)).toHaveAttribute('aria-label',
@@ -486,6 +651,18 @@ test.describe('bus section isolation: the three jobs, played by the method', () 
                     expect(said, `seed ${seed}`).toMatch(
                         /One controller left: \d+ is the troublemaker\. Found in 4 splits\. Splitting at the midpoint each time takes 4, wherever the troublemaker is\.$/);
                 }
+
+                // A pick once it is over: free, and the finding stays put.
+                const after = 201 + (seed % 16);
+                await room(page, after).click();
+                const done = B.pick(job, after);
+                expect(done.code, `seed ${seed}`).toBe('done');
+                await expectPageShows(page, B, job, done.text);
+                expect(done.text, `seed ${seed}`).toMatch(kind === 'flaky'
+                    ? /^This job is finished\. \d+ is the troublemaker\. Found in 4 splits\. .* New job deals another\.$/
+                    : /^This job is finished\. The break is between \d+ and \d+\. Found in [12] stops?[.,] .* New job deals another\.$/);
+                // The score line of the finding sentence is carried whole.
+                expect(done.text, `seed ${seed}`).toContain(/(Found in .*)$/.exec(said)[1]);
             }
             // The scores the page quotes, held on every deal.
             if (kind === 'layout') expect(tally).toEqual(SEEDS.map(() => 1));
@@ -573,17 +750,31 @@ test.describe('bus section isolation: a wrong pick says what it found, truthfull
         await room(page, 201).click();
         await expect(feedback(page)).toHaveText('201 is the end of the run: dead trunk toward 202, and nothing ' +
             'past it. The break is at the other edge of the dead group.');
+        // The result line has just named an end of the trunk. The Trunk
+        // row beside it claims only that the route is not drawn — an
+        // earlier draft said "route and ends not known" at this moment.
+        await expect(page.locator('#bsi-r-trunk')).toHaveText('No layout: route not drawn');
+        await room(page, 216).click();
+        await expect(feedback(page)).toHaveText('216 is the first controller on the trunk: the supervisor ' +
+            'or router on one side, live trunk to 215 on the other. The break is not here.');
+        await expect(page.locator('#bsi-r-trunk')).toHaveText('No layout: route not drawn');
+        await expect(page.locator('#bsi-r-trunk')).not.toHaveText(/not known|ends/);
         await room(page, 203).click();
         await expect(feedback(page)).toHaveText('Dead trunk on both sides of 203. The break is not here.');
-        // Two misses in, the route is still not drawn.
+        // Three misses in, the route is still not drawn.
         await expect(page.locator('#bsi-plan')).toHaveClass(/is-routeless/);
         await expect(page.locator('#bsi-head')).toBeHidden();
         expect(readerPick(await readPlan(page)), 'only the other end is left to the method').toEqual([205]);
 
         await room(page, 205).click();
         await expect(feedback(page)).toHaveText(
-            'Found it. The break is between 205 and 206. Found in 3 stops. Reading the pattern first gets it in 1.');
+            'Found it. The break is between 205 and 206. Found in 4 stops. Reading the pattern first gets it in 1.');
         await expect(page.locator('#bsi-plan')).not.toHaveClass(/is-routeless/);
+        // Found: the route is drawn now, and the call above the plan said
+        // "until you find the break" rather than "is not drawn".
+        await expect(page.locator('#bsi-r-trunk')).toHaveText('Supervisor or router, then 216 down to 201');
+        await expect(page.locator('[data-bsi-brief="no-layout"]')).toContainText(
+            'The route is not drawn until you find the break, and the call does not say which end');
     });
 
     test('job 3: a split that cuts nothing off, a split that tells nothing new, and a repeat', async ({ page }) => {
@@ -591,14 +782,14 @@ test.describe('bus section isolation: a wrong pick says what it found, truthfull
         await selectJob(page, 'flaky');
         await room(page, 216).click();
         await expect(feedback(page)).toHaveText('216 is the last controller on the trunk, so a split past it ' +
-            'cuts nothing off. All 16 controllers are still connected and still flaky. ' +
-            'Still holding the fault: 201 to 216.');
+            'cuts nothing off. All 16 controllers are connected and flaky. ' +
+            'May still hold the fault: 201 to 216.');
         await expect(count(page)).toHaveText('1');
         await expect(page.locator('#bsi-plan .bsi-link.is-split')).toHaveCount(0);
         await expect(page.locator('#bsi-plan .bsi-room.is-flaky')).toHaveCount(16);
 
         await room(page, 208).click();
-        await expect(feedback(page)).toHaveText(/The connected part went stable, so the troublemaker is in the part cut off\. Still holding the fault: 209 to 216\.$/);
+        await expect(feedback(page)).toHaveText(/The connected part is stable, so the troublemaker is in the part cut off\. May still hold the fault: 209 to 216\.$/);
         // What the plan shows after that split, read off the controllers.
         await expect(page.locator('#bsi-plan .bsi-room.is-online')).toHaveCount(8);
         await expect(page.locator('#bsi-plan .bsi-room.is-offline')).toHaveCount(8);
@@ -606,21 +797,76 @@ test.describe('bus section isolation: a wrong pick says what it found, truthfull
         await expect(room(page, 209)).toHaveAttribute('aria-label',
             'Room 209, MAC 9, offline, cut off by your split, may still be the troublemaker');
         await expect(page.locator('#bsi-r-offline')).toHaveText('209 to 216 · MAC 9 to 16 (cut off by your split)');
-        await expect(page.locator('#bsi-r-suspects')).toHaveText('209 to 216 (8 still holding the fault)');
+        await expect(page.locator('#bsi-r-suspects')).toHaveText('209 to 216 (8 may still hold the fault)');
         await expect(page.locator('#bsi-plan .bsi-link.is-split')).toHaveCount(1);
 
         await room(page, 203).click();
-        await expect(feedback(page)).toHaveText('Trunk split past 203: 201 to 203 still connected, 204 to 216 ' +
-            'cut off. The connected part went stable, which the earlier splits already told you. ' +
-            'Still holding the fault: 209 to 216.');
+        await expect(feedback(page)).toHaveText('Trunk split past 203: 201 to 203 connected, 204 to 216 ' +
+            'cut off. The connected part is stable, which the earlier splits already told you. ' +
+            'May still hold the fault: 209 to 216.');
         await expect(count(page), 'a split that tells nothing still costs one').toHaveText('3');
 
         await room(page, 203).click();
         await expect(feedback(page)).toHaveText(
-            'The trunk is already split past 203. Still holding the fault: 209 to 216.');
+            'The trunk is already split past 203. May still hold the fault: 209 to 216.');
         await expect(count(page), 'the same split again is free').toHaveText('3');
         // One split at a time: the mark moved, it did not multiply.
         await expect(page.locator('#bsi-plan .bsi-link.is-split')).toHaveCount(1);
+        expect((await readPlan(page)).marks).toEqual([{ mark: 'split', index: 2, between: [203, 204] }]);
+
+        // The last controller with a split open: the pick rejoins the
+        // trunk. A moment ago 201 to 203 read Online and 204 to 216 were cut
+        // off; now all sixteen are connected and flaky, and the sentence
+        // says so without a "still".
+        await room(page, 216).click();
+        await expect(feedback(page)).toHaveText('216 is the last controller on the trunk, so a split past it ' +
+            'cuts nothing off. All 16 controllers are connected and flaky. ' +
+            'May still hold the fault: 209 to 216.');
+        await expect(page.locator('#bsi-plan .bsi-room.is-flaky')).toHaveCount(16);
+        await expect(page.locator('#bsi-plan .bsi-link.is-split')).toHaveCount(0);
+        await expect(page.locator('#bsi-r-offline')).toHaveText('none');
+        // And the call says the rule out loud.
+        await expect(page.locator('[data-bsi-brief="flaky"]')).toContainText(
+            'Only one split is open at a time: a new pick rejoins the trunk and splits it at the new spot.');
+    });
+
+    // Every state a second split can reach on the opening job, on the page:
+    // sixteen first picks, then one second pick each, mirrored. This is
+    // where "still connected" and "still flaky" used to be false of the
+    // plan the reader was looking at.
+    test('job 3: after any second split, the sentence, the rows and the mark all describe the trunk as it is', async ({ page }) => {
+        const { errors } = await open(page);
+        await selectJob(page, 'flaky');
+        const B = loadEngine();
+        let job = B.newJob('flaky', B.OPENING.flaky);
+        let regained = 0;
+        let played = 0;
+        for (let first = 201; first <= 216; first++) {
+            // A second pick well away from the first, on either side of it.
+            const second = first <= 208 ? first + 6 : first - 6;
+            await room(page, first).click();
+            const r1 = B.pick(job, first);
+            const before = await expectPageShows(page, B, job, r1.text);
+            await room(page, second).click();
+            const r2 = B.pick(job, second);
+            const after = await expectPageShows(page, B, job, r2.text);
+            expect(r2.text, `${first} then ${second}`).not.toMatch(/still connected|still flaky|went stable|\bstays?\b/);
+            const was = Object.fromEntries(before.rooms.map((r) => [r.room, r.word]));
+            if (after.rooms.some((r) => was[r.room] === 'Offline' && r.word !== 'Offline')) regained += 1;
+            played += 1;
+            // Deal the opening fault again for the next pair.
+            await dealSeed(page, B.OPENING.flaky + 1);
+            await dealSeed(page, B.OPENING.flaky);
+            job = B.nextJob('flaky', B.OPENING.flaky,
+                B.nextJob('flaky', B.OPENING.flaky + 1, job));
+            expect(B.sameFault(job, B.newJob('flaky', B.OPENING.flaky)), 'the opening fault is back').toBe(true);
+            await expectPageShows(page, B, job, 'New job. ' + B.view(job).prompt);
+        }
+        expect(played).toBe(16);
+        // Anti-vacuity: in half of them the second split reconnected rooms
+        // the first had cut off — the case the old wording got wrong.
+        expect(regained).toBeGreaterThanOrEqual(8);
+        expect(errors).toEqual([]);
     });
 });
 
@@ -662,17 +908,17 @@ test.describe('bus section isolation: reachable without a mouse or colour', () =
         expect(await tabTo(page, '[data-bsi-room="208"]')).toBe(7);
         expect(await focusRing(page)).toEqual({ style: 'solid', width: 2, ringed: true });
         await page.keyboard.press('Enter');
-        await expect(feedback(page)).toHaveText(/^Trunk split past 208: .* Still holding the fault: 209 to 216\.$/);
+        await expect(feedback(page)).toHaveText(/^Trunk split past 208: .* May still hold the fault: 209 to 216\.$/);
         expect(await focusedRoom(page), 'the plan is updated in place, so focus stays put').toBe('208');
 
         expect(await tabTo(page, '[data-bsi-room="212"]')).toBe(4);
         await page.keyboard.press('Space');
-        await expect(feedback(page)).toHaveText(/Still holding the fault: 209 to 212\.$/);
+        await expect(feedback(page)).toHaveText(/May still hold the fault: 209 to 212\.$/);
         expect(await focusedRoom(page)).toBe('212');
 
         expect(await tabTo(page, '[data-bsi-room="210"]', 'Shift+Tab')).toBe(2);
         await page.keyboard.press('Enter');
-        await expect(feedback(page)).toHaveText(/Still holding the fault: 211 to 212\.$/);
+        await expect(feedback(page)).toHaveText(/May still hold the fault: 211 to 212\.$/);
 
         expect(await tabTo(page, '[data-bsi-room="211"]')).toBe(1);
         await page.keyboard.press('Space');
@@ -1243,19 +1489,78 @@ test.describe('bus section isolation: what the page keeps, and what it says', ()
     // slipping in is not something a word list can catch without naming
     // brands in a public repo, so that one is pinned from the other side:
     // the engine's HEAD_NAME, and the phrase's count in the prose.)
-    test('the story is told once, and the page says nothing about the meter beyond his words', async ({ page }) => {
+    //
+    // WHAT IS SWEPT. Not the text on screen at one moment — that leaves
+    // out the two calls that are hidden, every result sentence not being
+    // shown, and every accessible name. Four things, which between them are
+    // everything the page and the engine CAN say:
+    //   1. the lesson's textContent (hidden calls included);
+    //   2. the text and the accessible names in <main>, gathered at every
+    //      step of all three jobs played through a miss, a repeat, the
+    //      find, a pick after the find and a new deal;
+    //   3. every sentence the engine returns, enumerated in Node over
+    //      every fault it can deal;
+    //   4. the two source files themselves, comments and all — the closure:
+    //      a string neither file contains cannot reach the reader.
+    const BANNED = [/capacit/i, /\bvolt/i, /\bohm/i, /resistan/i, /\bmillivolt/i, /\breading of\b/i,
+        /multimeter/i, /oscilloscope/i, /plain.english/i, /coming soon/i,
+        /\bcustomer\b/i, /\bschool\b/i, /\bhospital\b/i];
+    const offenders = (text) => BANNED.filter((re) => re.test(text)).map(String);
+
+    // Every sentence the engine can hand the page, by playing every fault:
+    // each first pick and its repeat, each second pick and its repeat, the
+    // method to the end, the slowest way to the end, and a pick after each.
+    function everyEngineSentence(B) {
+        const said = new Set();
+        const codes = new Set();
+        const pick = (job, room) => {
+            const r = B.pick(job, room);
+            said.add(r.text);
+            codes.add(job.fault.type + ':' + r.code);
+            return r;
+        };
+        for (const kind of B.KINDS) {
+            const flaky = kind === 'flaky';
+            for (const headEnd of B.HEAD_ENDS) {
+                for (let at = flaky ? 0 : B.BREAK_MIN; at <= (flaky ? B.ROOM_COUNT - 1 : B.BREAK_MAX); at++) {
+                    const fresh = () => B.makeJob(kind, headEnd, at);
+                    said.add(B.view(fresh()).prompt);
+                    said.add('New job. ' + B.view(fresh()).prompt);
+                    for (let a = B.FIRST_ROOM; a <= B.LAST_ROOM; a++) {
+                        for (let b = B.FIRST_ROOM; b <= B.LAST_ROOM; b++) {
+                            const job = fresh();
+                            pick(job, a);
+                            pick(job, a);
+                            pick(job, b);
+                            pick(job, b);
+                        }
+                    }
+                    const byMethod = fresh();
+                    while (!byMethod.solved) pick(byMethod, B.method(byMethod)[0]);
+                    pick(byMethod, B.FIRST_ROOM);
+                    // The long way round: every controller in turn, from the
+                    // far end of the trunk inward.
+                    const slow = fresh();
+                    for (let i = B.ROOM_COUNT - 1; i >= 0 && !slow.solved; i--) pick(slow, B.roomAt(slow, i));
+                    pick(slow, B.LAST_ROOM);
+                }
+            }
+        }
+        return { said: [...said], codes: [...codes].sort() };
+    }
+
+    test('the story is told once, and nothing the page or the engine can say goes past his words', async ({ page }) => {
         await open(page);
         const lesson = page.locator('main .tool-card');
         await expect(lesson.locator('.callout')).toHaveCount(1);
         await expect(lesson.locator('.callout strong')).toHaveText('True story.');
-        const prose = (await lesson.innerText()).replace(/\s+/g, ' ');
+        // textContent, not innerText: the calls that are hidden right now
+        // are still things the page says.
+        const prose = (await lesson.evaluate((el) => el.textContent)).replace(/\s+/g, ' ');
         expect(prose.match(/True story\./g)).toHaveLength(1);
         expect(prose.match(/\bDMM\b/g), 'his word, used once, in his story').toHaveLength(1);
-        for (const banned of [/capacit/i, /\bvolt/i, /\bohm/i, /resistan/i, /\bmillivolt/i, /\breading of\b/i,
-            /multimeter/i, /oscilloscope/i, /plain.english/i, /coming soon/i,
-            /\bcustomer\b/i, /\bschool\b/i, /\bhospital\b/i]) {
-            expect(prose, 'the lesson must not say ' + banned).not.toMatch(banned);
-        }
+        expect(prose.match(/A made-up call:/g), 'all three calls are in the text swept').toHaveLength(3);
+        expect(offenders(prose), 'the lesson text').toEqual([]);
         expect(await page.evaluate(() => window.BusIsolation.HEAD_NAME)).toBe('the supervisor or router');
         expect(prose.match(/supervisor or router/gi).length).toBeGreaterThanOrEqual(5);
         // The made-up job is called made up, in the prose and in each call.
@@ -1264,6 +1569,133 @@ test.describe('bus section isolation: what the page keeps, and what it says', ()
             els.map((el) => el.textContent.replace(/\s+/g, ' ').trim()));
         expect(briefs).toHaveLength(3);
         for (const brief of briefs) expect(brief).toMatch(/A made-up call:/);
+
+        // 2. Everything <main> shows or names, at every step of every job.
+        const everything = () => page.evaluate(() => {
+            const main = document.querySelector('main');
+            const named = [];
+            for (const el of main.querySelectorAll('*')) {
+                for (const name of ['aria-label', 'title', 'alt', 'placeholder']) {
+                    if (el.hasAttribute(name)) named.push(el.getAttribute(name));
+                }
+            }
+            return (main.textContent + ' ' + named.join(' ')).replace(/\s+/g, ' ');
+        });
+        const shown = [await everything()];
+        for (const kind of KINDS) {
+            await selectJob(page, kind);
+            shown.push(await everything());
+            for (const pick of [216, 216, 203, 201, 208, 208]) {
+                await room(page, pick).click();
+                shown.push(await everything());
+            }
+            for (let guard = 0; guard < 8; guard++) {
+                const seen = await readPlan(page);
+                if (seen.found) break;
+                await room(page, readerPick(seen)[0]).click();
+                shown.push(await everything());
+            }
+            expect((await readPlan(page)).found, `${kind}: played to the find`).toBe(true);
+            await room(page, 204).click();
+            shown.push(await everything());
+            await dealSeed(page, 7);
+            shown.push(await everything());
+        }
+        const all = shown.join(' ');
+        expect(offenders(all), 'everything shown or named while playing').toEqual([]);
+        // Anti-vacuity: the walk reached the states it was sent to.
+        for (const reached of ['you stopped here and the break was on neither side', 'beside the break',
+            'cut off by your split', 'may still be the troublemaker', 'found: this is the troublemaker',
+            'You already stopped at', 'is the end of the run', 'is the first controller on the trunk',
+            'This job is finished. The break is between', 'is the troublemaker. Found in', 'New job. ',
+            'which the earlier splits already told you', 'may still hold the fault)',
+            'No layout: route not drawn', 'Key to the marks on the plan']) {
+            expect(all, 'the walk should have shown: ' + reached).toContain(reached);
+        }
+
+        // 3. Every sentence the engine can return.
+        const engine = everyEngineSentence(loadEngine());
+        expect(engine.codes).toEqual([
+            'break:dead-both', 'break:done', 'break:end-of-run', 'break:first-on-trunk', 'break:found',
+            'break:live-both', 'break:repeat',
+            'talker:connected-part', 'talker:cut-off-part', 'talker:done', 'talker:found',
+            'talker:known-flaky', 'talker:known-stable', 'talker:nothing-past', 'talker:repeat']);
+        expect(engine.said.length, 'distinct engine sentences').toBeGreaterThan(1500);
+        const bad = engine.said.filter((text) => offenders(text).length > 0);
+        expect(bad, 'engine sentences past his words').toEqual([]);
+        // The same list, held to the one-split rule: nothing the engine says
+        // about a split claims a room's connection or status carried over.
+        expect(engine.said.filter((text) => /still connected|still flaky|still stable|went stable|\bstays?\b/.test(text)))
+            .toEqual([]);
+        // Every score line the engine can print, by its tail.
+        for (const tail of [', the fewest this job takes.', 'Reading the layout first gets it in 1.',
+            'Reading the pattern first gets it in 1.', 'Splitting at the midpoint each time gets it in 4.',
+            'on a lucky cut. Splitting at the midpoint each time takes 4, wherever the troublemaker is.',
+            'splits. Splitting at the midpoint each time takes 4, wherever the troublemaker is.']) {
+            expect(engine.said.some((text) => text.endsWith(tail)), 'a finding sentence ends: ' + tail).toBe(true);
+            expect(engine.said.some((text) => text.endsWith(tail + ' New job deals another.')),
+                'a finished-job sentence carries: ' + tail).toBe(true);
+        }
+
+        // 4. The sources, comments and all.
+        const sources = {
+            page: fs.readFileSync(SOURCE, 'utf8'),
+            engine: fs.readFileSync(ENGINE, 'utf8'),
+        };
+        for (const [name, text] of Object.entries(sources)) {
+            expect(text.length, name + ' source was read').toBeGreaterThan(20000);
+            expect(offenders(text), name + ' source').toEqual([]);
+        }
+        // Anti-vacuity for the word list itself.
+        expect(offenders('a reading of 2.4 volts across the cable capacitance, said the customer'))
+            .toEqual([String(/capacit/i), String(/\bvolt/i), String(/\breading of\b/i), String(/\bcustomer\b/i)]);
+    });
+
+    // What review took OUT of the prose, pinned so it stays out. Each of
+    // these said more than the owner did, or said something the page's own
+    // next paragraph contradicted.
+    test('the method section gives one split, and the made-up floor owns the arithmetic', async ({ page }) => {
+        await open(page);
+        // The three steps: the paragraphs between the two subheads.
+        const steps = await page.locator('main .tool-body').evaluate((body) => {
+            const heads = Array.from(body.querySelectorAll('h2.subhead'));
+            const from = heads.find((h) => h.textContent.trim() === 'The order of attack');
+            const out = [];
+            for (let el = from.nextElementSibling; el && el.tagName !== 'H2'; el = el.nextElementSibling) {
+                if (el.tagName === 'P') out.push(el.textContent.replace(/\s+/g, ' ').trim());
+            }
+            return out;
+        });
+        expect(steps).toHaveLength(3);
+        expect(steps[0]).toMatch(/^First, try to find a bus layout/);
+        expect(steps[1]).toMatch(/^No layout\? /);
+        // His one split, with both of his hedges, and nothing after it: no
+        // repeat, no count, no floor the reader has not met yet.
+        expect(steps[2]).toBe('Whole trunk flaky? Break it at the midpoint and see whether the half nearer ' +
+            'the supervisor or router becomes stable, since sometimes a device can be transmitting ' +
+            'constantly and take others down.');
+        for (const step of steps) expect(step).not.toMatch(/\b(sixteen|four|halve[sd]?|each)\b/i);
+
+        // The arithmetic lives in the Job 3 call, scoped to the made-up
+        // floor in so many words, beside the rule that makes it true.
+        const call = (await page.locator('[data-bsi-brief="flaky"]').evaluate((el) => el.textContent))
+            .replace(/\s+/g, ' ');
+        expect(call).toContain('On this made-up floor, where one controller is the whole cause, splitting ' +
+            'what may still hold the fault at its midpoint halves it each time: sixteen controllers, four splits.');
+        expect(call).toContain('Only one split is open at a time: a new pick rejoins the trunk and splits ' +
+            'it at the new spot.');
+        expect(call).not.toMatch(/stay connected|still connected|still flaky|went stable/);
+
+        // "Simpler than a real one", with no count of the ways, and the
+        // room-number order named as a given of the made-up floor.
+        const prose = (await page.locator('main .tool-body').evaluate((el) => el.textContent)).replace(/\s+/g, ' ');
+        expect(prose).toContain('The floor in the game below is made up, and it is simpler than a real one. ');
+        expect(prose).not.toMatch(/\b(?:two|three|four|\d+) ways\b/i);
+        expect(prose).toContain('that order is a given of this made-up floor, and the job with no layout depends on it.');
+        expect(prose).toContain('the score is how many stops or splits it took');
+        // The report list is named by its caption.
+        await expect(page.locator('#bsi-report')).toHaveAttribute('aria-labelledby', 'bsi-report-lbl');
+        await expect(page.locator('#bsi-report-lbl')).toHaveText('What you have to go on');
     });
 
     test('every link out of the lesson lands on a real page and a real anchor', async ({ page, request }) => {
