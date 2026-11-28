@@ -7,22 +7,23 @@
      "Shipped" lines go at the TOP, in plain language. -->
 
 **Week:** Nov 27 – Dec 3
-**Run:** done — Quiz answer choices are now shuffled every time a question is shown, and your two answers from this evening are on the site. Next, under your green light for items 3 to 5: the quiz number box, then the dead-trunk lesson, then six more quiz banks (the last part of item 3). Say so if you want a different order.
+**Run:** done — The quiz number box now reads what you type itself instead of leaving it to the browser, so a decimal comma is no longer dropped. Next, under your green light for items 3 to 5: the dead-trunk lesson, then six more quiz banks. Say so if you want a different order.
 
 ## The five
 
 - [x] Clear the 15 waiting changes
 - [x] Coil Freeze Protection quiz
-- [ ] Quizzes you can't game (the shuffle is done; the number box is next, then six more banks)
+- [ ] Quizzes you can't game (the shuffle and the number box are done; six more banks to go)
 - [x] Freeze-season loose ends
 - [ ] Finding a break in a dead trunk (your story and your method, as a lesson)
 
 ## Your turn
 
-- Nothing is waiting on you. Both optional questions are answered and on the site.
+- Cloudflare is now adding its Web Analytics script to the site's pages (I checked three, the privacy page among them; it is not in our code, Cloudflare puts it in on the way out). The privacy page says the site has no analytics. To switch it off: Cloudflare dashboard → Web Analytics → controlsfreak.dev → Manage site → Advanced Options → "Disable automatic setup" → Update (labels may differ a little). Tell me when it is off and I will check the live pages. Or say "keep it" and I will reword the privacy page instead.
 
 ## Shipped
 
+- **Nov 27** — The quiz number box reads your entry itself instead of leaving it to the browser. A decimal comma now counts: "61,6" used to be read as 616 in an English-language browser. Where an entry could be read two ways ("10,000" is ten thousand in English and ten in German), it is read the way your browser's language writes numbers, and the result says how it was read. If you type something that is not a number, a one-line hint says so (v3.93.2). [#672](https://github.com/EWH2000/controlsfreak.dev/pull/672)
 - **Nov 27** — Your two answers from this evening are on the site. Coil Freeze Protection says the outdoor and exhaust dampers fail closed and the return damper fails open. Start/Stop Commands no longer calls a safety with no input "the common case": it says the freeze stat most often has an input, or the whole circuit does, and that it is more common for the controller not to know the status of the duct smoke detector. The Workbench said an unlanded stat was "extremely common"; it now says "sometimes". [#670](https://github.com/EWH2000/controlsfreak.dev/pull/670)
 - **Nov 27** — Quiz answer choices are shuffled every time a question is shown, so "it's always b" stops working. True/False still reads True, then False. Sixteen explanations that pointed at a choice by its letter or position now name it by what it says (v3.93.1). [#668](https://github.com/EWH2000/controlsfreak.dev/pull/668) [#669](https://github.com/EWH2000/controlsfreak.dev/pull/669)
 - **Nov 27** — "Freeze stat" is spelled one way across the site, two words, as you ruled, in lessons, tools, simulators, quizzes and the glossary. The old spellings stay as keywords for the site's own search. [#666](https://github.com/EWH2000/controlsfreak.dev/pull/666)
@@ -53,6 +54,10 @@
 - The glossary tip is headed "freeze stat" and says "Also written freezestat".
 - True/False is not shuffled. One question whose choices climb in order (the Air Handlers cooling-coil target: about 45 / 55 / 65 / 72 °F) now comes up out of order like the rest. Say so if you want ladders kept in order.
 - The freeze quiz question built from your gotcha had the right answer as its longest choice. I trimmed it.
+- The number box reads an entry like "10,000" one way only. My first build counted it right if either reading fit; a reviewer ran that against the banks and it marked "5,000" right on the 5-ton question, so I rebuilt it before anything went live.
+- One case is left on purpose: in a browser set to a comma-decimal language, someone with English habits who is off by exactly a thousand can be marked right ("5,000" read as five). The result line tells them how it was read. The other choice was to mark German-habit readers wrong for writing five their way.
+- The number box no longer takes entries like "1e4". No answer needs one.
+- Quiz snippets that run off a phone screen are still not fixed. That is a look-and-feel change to the stylesheet; it goes with the six banks, and I will show you a before and after.
 
 ### Menu for the next five
 

@@ -666,3 +666,37 @@ Calls the assistant made in the quiz run (each reversible):
   box is next, then the dead-trunk lesson (item 5), then the six more
   banks. The order is the assistant's, and the board says he can
   change it.
+
+## 24. The number-box run *(2026-11-27, night — no new word from the owner)*
+
+Run under §22's go-ahead for items 3 to 5. Calls the assistant made
+(each reversible, each on the board):
+
+- **One reading, by the browser's number convention.** An entry with
+  one separator and exactly three digits after it ("10,000", "44.444")
+  can mean two numbers. The engine reads it by the decimal mark the
+  browser's own language uses, and the reveal says which way it was
+  read (PR #672; codebase-issues #334 has the measurements).
+- **The first build was withdrawn before it reached a pull request.** It
+  graded such an entry right if either reading was within tolerance. A
+  blind review ran it against the shipped banks and found it marking
+  unit slips right: "5,000" on a 5-ton answer, "44.444" on a 44,444 lb/h
+  one. The old engine graded both wrong.
+- **One case is left on purpose.** In a browser whose decimal mark is a
+  comma, a reader with period habits who is off by exactly a thousand
+  can be read as right. The reveal line is shown in every such case.
+  The alternative marks a comma-habit reader wrong for their own
+  format.
+- **Exponent entries ("1e4") are no longer accepted.** The old number
+  input took them; no shipped answer needs one.
+- **The phone-width snippets (#341) were not taken.** A stylesheet
+  change with a look to judge; it goes with the six-bank run.
+- **Three small quiz leftovers rode in the same pull request** and its
+  description names them: a test that pins the shuffle's re-draw inside
+  one mount, and two stale comments (codebase-issues #342).
+- **Version 3.93.2, a patch.**
+
+Found on the way and left for him: Cloudflare is injecting its Web
+Analytics beacon into every served page, and the privacy page says
+there are no analytics (codebase-issues #344). The dashboard is his,
+so it is a *Your turn* line and no page was changed.
