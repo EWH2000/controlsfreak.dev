@@ -16015,7 +16015,7 @@ the simulator itself stays on the board's Menu. The
 §5 scan carries both shapes and reports 0. `bacnet-networking.html`'s
 intro is content-audit #101.
 
-### 334. The quiz engine grades a numeric answer typed with a thousands separator as its leading digits *(noticed 2026-10-06, Batch B vav-systems lane; engine, LOW)* *(mechanism measured 2026-11-27)*
+### 334. The quiz engine grades a numeric answer typed with a thousands separator as its leading digits *(noticed 2026-10-06, Batch B vav-systems lane; engine, LOW)* *(mechanism measured 2026-11-27)* *(addressed 2026-11-27 · PR #672, merged)*
 
 `html/scripts/quiz-engine.js` reads numeric answers with `parseFloat`,
 so a reader who types `10,000` is graded as `10` — and marked wrong with
@@ -16057,6 +16057,50 @@ landing does not load the engine. Not taken in the first quiz run,
 which shipped the shuffle; this is the next quiz run's work, with
 #341. "Owner merges" above predates the 2026-11-26 ruling: engine work
 now merges behind the gate.)*
+
+**Landed (2026-11-27, PR #672, v3.93.2).** The box is a text input and
+the engine reads it itself (`parseNumericInput`, exposed on `Quiz`).
+Measured again that night, real keystrokes into a bare number input in
+headless Chromium: under an English browser locale `61,6` → `616`,
+`9,5` → `95`, `10.000` → `10.000`; with the process locale set to
+German, `10,000` → `10.000` and `61,6` → `61.6`. Playwright's `locale`
+option alone does not change that parser, so the correction above holds
+for a browser running in German, and Chromium under an English locale
+had its own half of the defect: a decimal comma silently dropped. An
+entry that can be read two ways (one to three digits with no leading
+zero, one separator, exactly three digits after it) gets **one**
+reading, by the browser's own decimal mark, and the reveal says which.
+A first build graded such an entry right if *either* reading fit; a
+blind review ran it against the shipped banks and found it marking unit
+slips right (`5,000` on a 5-ton answer, `44.444` on a 44,444 lb/h one),
+and it was reworked before any pull request. Closed.
+
+Left standing, by design. A reader whose own habit is the opposite of
+the browser's decimal mark gets the other reading of a two-way entry,
+so a right answer can be marked wrong and an answer wrong by a factor
+of exactly a thousand can be marked right. Run through the merged
+parser: under a comma mark `5,000` → 5 and `44.444` → 44444; under a
+period mark `5.000` → 5 and `44,444` → 44444. Each is inside the
+tolerance of a shipped answer (5 ± 0.1; 44444 ± 250). The reveal line
+is shown whenever a two-way entry is submitted.
+
+Left as built (2026-11-27). The input → output pairs were measured by
+running the merged parser; the last item says what it is:
+
+- An entry with one separator that falls outside the two-way shape is
+  read as a decimal under either mark, with no reveal line: `05,000` →
+  5, `010,000` → 10, `0,500` → 0.5, `1234,567` → 1234.567. So `05,000`
+  grades right on a 5 ± 0.1 answer. The fix for the zero-padded case is
+  to widen the two-way shape.
+- NFKC folds more than full-width forms: `10²` → 102, `3²` → 32, `⑩` →
+  10. Two of those land on a shipped answer (32 ± 0; 10 ± 0). No
+  shipped question asks for an entry written that way.
+- `10k`, `34%` and `1e4` have no reading: Submit stays off and the hint
+  shows. `1..5` has no reading and shows no hint until Enter is
+  pressed; that second rule needs an Enter key, which not every phone
+  keypad has.
+- Not checked with a real screen reader: whether the hint's polite live
+  region is announced when it appears already filled.
 
 ### 335. Several ten-question banks key every choice on "a", and the keyed choice is usually the longest — the engine does not shuffle choices *(noticed 2026-10-06, Batch B duct-static-control + vav-systems lanes; bank-wide sweep wanted)* *(ruled 2026-11-27 — shuffle in the engine)* *(addressed 2026-11-27 · PR #668 and #669, merged)*
 
@@ -16325,11 +16369,20 @@ hand. A tabular snippet (frames, trend rows) needs its columns, so it
 wants a visible scroll cue or a smaller size below 480 px rather than
 `pre-wrap`. Belongs with the quiz-engine run. Open, LOW.
 
+*(2026-11-27: not taken in either quiz run. It is a stylesheet change
+with a look to judge, and each run carried its one shared-code change
+already — the shuffle, then the number box. Next: with the six-bank
+run, whose new snippets it also constrains, in one stylesheet change
+with #343. The owner is shown a before and after.)*
+
 ### 342. Leftovers from the first quiz run, collected *(noticed 2026-11-27, the blind reviews of PR #668, #669 and #670; each LOW, take opportunistically)*
 
 None blocked a merge. Listed so the next quiz run starts from them,
 beside the two entries that run already owns: the number box (#334) and
 the snippets that run off a phone screen (#341).
+
+*(2026-11-27, later: that run was the number-box run. It closed #334
+and took the two items marked below; #341 moved to the six-bank run.)*
 
 - **The choice-letter lint has known edges** (`tests/quiz-banks.spec.js`,
   `choiceLetterRefs()`). Each string below was run through the function
@@ -16345,7 +16398,8 @@ the snippets that run off a phone screen (#341).
   the choice-text-only scope of the "of the above" check. And the lint
   runs before the choices-shape check, so a truthy non-array `choices`
   throws a bare `TypeError` that names no question.
-- **No test pins the re-draw on a re-render.** Every test in
+- **No test pins the re-draw on a re-render.** *(Pinned 2026-11-27,
+  PR #672: a restart inside one mount, under a second stub.)* Every test in
   `tests/quiz-choice-shuffle.spec.js` reads the first render of a fresh
   mount, so an engine that shuffled once per mount would pass. The code
   has one render path today.
@@ -16359,7 +16413,9 @@ the snippets that run off a phone screen (#341).
 - **`modbus-decoding` / `fc03-vs-fc04-poll`'s explanation says "#1 being
   the 5-digit off-by-one above".** That points at another question, and
   dangles when the reader picks Random order.
-- **Three stale comments.** `quiz-engine.js:60` still calls the
+- **Three stale comments.** *(Two fixed 2026-11-27, PR #672: the
+  engine header and `wiresheet-traces.js`. The test comment remains.)*
+  `quiz-engine.js:60` still calls the
   drill-figure `<desc>` rule "an open question with the owner"
   (`CLAUDE.md` records it settled 2026-07-20). `wiresheet-traces.js`'s
   header (~:27) says the engine only shuffles questions under Random and
@@ -16372,3 +16428,73 @@ the snippets that run off a phone screen (#341).
   exhaust dampers. Match it when that entry is next touched.
 
 Open, LOW.
+
+### 343. Quiz paragraph and input rules lose to two broader selectors, so several of their declarations do not apply *(noticed 2026-11-27, the number-box lane and its blind reviews; pre-existing, LOW)*
+
+Every quiz mounts inside `.tool-card > .tool-body`. Two general rules
+out-rank the quiz block's single-class rules there, whatever the source
+order:
+
+- **`.tool-body p`** (`styles.css`, specificity 0,1,1: `font-size:
+  0.95rem; line-height: 1.8; color: var(--text)`) beats
+  `.quiz-progress-text`, `.quiz-reveal-status`, `.quiz-reveal-right`
+  and `.quiz-reveal-learn-more` (0,1,0 each) on every property both
+  declare. Measured by the lane in a browser: the progress line renders
+  at 15.2 px in `--text` where its own rule asks for 0.72rem in
+  `--text-dim`; the reveal status renders 15.2 px where its rule asks
+  for 0.78rem. The status *colour* is right, because its state rules
+  are 0,2,0. By the same cascade, and not measured: `.quiz-results-sub`
+  (a `<p>`, 0,1,0, `font-size: 0.82rem; color: var(--text-dim)`) loses
+  both of those declarations too.
+- **`input[type="number"], input[type="text"]`** (0,1,1) beats
+  `.quiz-numeric-input` (0,1,0): its `width: 9rem`, background, padding,
+  font size and colour do not apply, so the answer box ships at
+  `width: 100%`. Measured by the lane: that width squeezes a two-word
+  unit onto two lines ("in." over "w.c.").
+
+The number-box change left all of this as it was on purpose and wrote
+its new paragraph rule element-qualified (`p.quiz-numeric-hint`).
+**Fix shape:** element-qualify the quiz paragraph rules, as the prose
+utilities already are, and give the answer box a selector that wins —
+but that changes how every quiz page looks (smaller progress and status
+lines, a narrower box), so it wants the owner's eye on a before/after,
+not a silent merge. Next: with #341, as one stylesheet change in the
+six-bank run. Two smaller items from the same lane: the engine's
+`el()` helper assigns any key outside its attribute list as a
+*property*, so a lowercase `inputmode` becomes an expando and a string
+`'false'` for `spellcheck` reads as true (the number box now sets those
+with `setAttribute`; the helper is unchanged); and a reveal-panel
+locator on `.quiz-reveal-right` can now match two paragraphs, because
+the read line reuses that class. Open, LOW.
+
+### 344. Cloudflare injects its Web Analytics beacon at the edge; the privacy page says there are no analytics *(noticed 2026-11-27, a real-browser check of production after PR #672; owner's to settle — the Cloudflare dashboard is his)*
+
+A browser load of production requested
+`https://static.cloudflareinsights.com/beacon.min.js/…`. Measured the
+same night with `curl` sending `Accept: text/html`: the served HTML of
+`/privacy`, `/tools/signal-scaling` and `/practice/modbus-decoding` each
+carries one `<script type="module">` tag whose `src` is
+`https://static.cloudflareinsights.com/beacon.min.js/…`. The built
+`_site/` has none (`grep -rl cloudflareinsights _site` finds no file),
+so the tag is added by Cloudflare on the way out, not by this
+repository. On `/privacy` the tag came with `Accept: text/html` and
+with the `Accept` header removed (`-H 'Accept:'`); it did not come with
+`Accept: */*`, which is what `curl` sends when left alone, with or
+without an `Accept-Language` header. That is how a plain fetch can miss
+it. When the injection started is not known.
+
+`html/privacy.html` says "There are no analytics" in its opening
+paragraph (the words cross a line break in the source) and "There is
+no analytics platform on this site" under *No tracking*. Both are
+false while the beacon is injected. The home page and `README.md` both
+say "No login, no ads, no tracking", and `CLAUDE.md`'s "no tracking or
+analytics" convention rests on the same fact.
+
+**Two ways to make the page true again,** and the choice is the
+owner's: switch the beacon off in the Cloudflare dashboard (Web
+Analytics → the site → Manage site → Advanced Options → "Disable
+automatic setup" → Update, by community reports; nobody here has seen
+his dashboard, so the path may not match), or keep it and reword the
+two privacy sentences and the "no tracking" on the home page and in
+`README.md`, as the board offers. On the board as a *Your turn* line.
+No page was changed. Open.

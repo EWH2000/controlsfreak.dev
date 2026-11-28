@@ -666,3 +666,42 @@ Calls the assistant made in the quiz run (each reversible):
   box is next, then the dead-trunk lesson (item 5), then the six more
   banks. The order is the assistant's, and the board says he can
   change it.
+
+## 24. The number-box run *(2026-11-27, night — no new word from the owner)*
+
+Run under §22's go-ahead for items 3 to 5. Calls the assistant made
+(each reversible; the ones the owner would notice are on the board):
+
+- **One reading, by the browser's number convention.** An entry of one
+  to three digits with no leading zero, one separator and exactly three
+  digits after it ("10,000", "44.444") can mean two numbers. The engine
+  reads it by the decimal mark the browser's own language uses, and the
+  reveal says which way it was read (PR #672; codebase-issues #334 has
+  the measurements).
+- **The first build was withdrawn before it reached a pull request.** It
+  graded such an entry right if either reading was within tolerance. A
+  blind review ran it against the shipped banks and found it marking
+  unit slips right: "5,000" on a 5-ton answer, "44.444" on a 44,444 lb/h
+  one.
+- **One kind of slip is left on purpose.** A reader whose own number
+  habit is the opposite of their browser's gets the other reading of a
+  two-way entry: a right answer can be marked wrong, and an answer
+  wrong by a factor of exactly a thousand can be marked right. The
+  reveal line is shown whenever a two-way entry is submitted. The
+  alternative, always reading such an entry the English way, marks a
+  reader in a comma-decimal browser wrong for writing "5,000" to mean
+  five.
+- **Exponent entries ("1e4") have no reading.** No shipped answer needs
+  one: the numeric answers run from 0.9 to 47808.
+- **The phone-width snippets (#341) were not taken.** A stylesheet
+  change with a look to judge; it goes with the six-bank run, together
+  with the quiz style rules that do not apply (#343).
+- **Three small quiz leftovers rode in the same pull request** and its
+  description names them: a test that pins the shuffle's re-draw inside
+  one mount, and two stale comments (codebase-issues #342).
+- **Version 3.93.2, a patch.**
+
+Found on the way and left for him: Cloudflare is injecting its Web
+Analytics beacon into served pages (three checked), and the privacy
+page says there are no analytics (codebase-issues #344). The dashboard is his,
+so it is a *Your turn* line and no page was changed.
