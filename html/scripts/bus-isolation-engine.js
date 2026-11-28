@@ -187,21 +187,28 @@
 //         result: { code, text, counted, room, stops, solved, found,
 //           sides (break jobs: { toward: { to, state }, away: { to,
 //             state } }, "toward" being the supervisor or router's side),
+//           reason (break jobs: the part of `text` that says why),
 //           stable, narrowed, connected, cutOff, suspects (flaky job) }
 //         `text` is the sentence the page prints. It is written here,
 //         next to the rule it reports, because it is instructional
 //         prose: every sentence has to be TRUE of the job's state, and
 //         tests/bus-isolation-engine.spec.js checks each one against
 //         the fault for every job the generator can make.
+//         On a break job every result says WHY (see "Break jobs: why"
+//         below), and `reason` is that part of `text`, verbatim: the
+//         end of it on a miss or a repeat, the middle of it (before the
+//         score line) on a find or a 'done'. The page lays it out on a
+//         line of its own. The flaky job's results carry no reason.
 //         Break-job codes:  found · live-both · first-on-trunk ·
 //                           dead-both · end-of-run · repeat · done
 //         Flaky-job codes:  found · cut-off-part · connected-part ·
 //                           known-stable · known-flaky · nothing-past ·
 //                           repeat · done
 //         A 'done' result (any pick after the job is solved) RESTATES
-//         the finding and the score line. The page prints each result
-//         over the last, so a double click on the controller that finds
-//         the fault would otherwise wipe out where the fault is.
+//         the finding, its reason and the score line. The page prints
+//         each result over the last, so a double click on the controller
+//         that finds the fault would otherwise wipe out where the fault
+//         is and why.
 //     method(job) → [room, …] — the pick(s) the owner's method makes
 //         next, low room first; any of them follows the method. Empty
 //         once the job is solved.
@@ -402,14 +409,105 @@ const BusIsolation = (function () {
     }
 
     // Any pick after the job is solved. The page prints this over the
-    // "Found it" line, so it says again where the fault is and what the
-    // score was: a double click on the finding controller must not cost
-    // the reader the one sentence the job was played for.
+    // "Found it" line, so it says again where the fault is, WHY it had to
+    // be there (break jobs), and what the score was: a double click on the
+    // finding controller must not cost the reader the one sentence the job
+    // was played for, nor the reason that makes it worth playing.
     function doneText(job) {
         const where = job.found.type === 'break'
-            ? 'The break is between ' + job.found.between[0] + ' and ' + job.found.between[1] + '.'
+            ? 'The break is between ' + job.found.between[0] + ' and ' + job.found.between[1] +
+                '. ' + foundReason(job)
             : job.found.room + ' is the troublemaker.';
         return 'This job is finished. ' + where + ' ' + scoreText(job) + ' New job deals another.';
+    }
+
+    // ── Break jobs: why ──────────────────────────────────────────────
+    // Every result on a break job says WHY, not only what. The owner
+    // played the first draft, found the job 1 break first try by
+    // instinct, and said that did not drive the point home, since a
+    // player may not see why the pick worked. So every stop carries a
+    // reason, argued from what that job gives the player to go on:
+    //
+    //   layout     the drawn route. A miss says which way the break lies
+    //              along it (away from the supervisor or router, or back
+    //              toward it) and why; the find says why the break had to
+    //              be in that one span.
+    //   no-layout  the offline list, and nothing else: no route, and no
+    //              word on which end the supervisor or router is on. The
+    //              reason argues from the offline rooms as ONE BLOCK,
+    //              which they always are here because this made-up floor
+    //              runs its trunk in room order. The break is at the one
+    //              edge of the block that has an online room next to it;
+    //              the other edge is the end of the run.
+    //
+    // A reason is a function of the fault, the job kind and the room
+    // picked, never of the picks before it, so it holds in every pick
+    // order. Each one states facts about THIS floor (one trunk, one daisy
+    // chain, one break) and nothing about real buildings: no "usually",
+    // nothing about what to do at a controller. The spec parses every
+    // reason back into the rooms, direction, block and neighbour it names
+    // and checks each against the fault, for every job the generator can
+    // deal. Plain words, short sentences, no dashes or semicolons.
+    //
+    // result.reason carries the reason on its own; it is also inside
+    // result.text, which is what the page prints and announces, so a
+    // screen reader hears it once, with the result it belongs to.
+
+    // The offline rooms, low room first. On a break job they are always
+    // one block: the trunk runs in room order and everything past the
+    // break is offline.
+    function offlineBlock(job) { return roomRange(job, job.fault.index, LAST_INDEX); }
+
+    // Why the break had to be where it was found.
+    function foundReason(job) {
+        const b = job.fault.index;
+        const live = roomAt(job, b - 1);
+        const dead = roomAt(job, b);
+        if (job.kind === 'layout') {
+            return 'Follow the drawn route from ' + HEAD_NAME + ': every controller as far as ' +
+                live + ' is online, and every one from ' + dead + ' to the end of the run is ' +
+                'offline. A break cuts off everything past it on the trunk and nothing before it, ' +
+                'so it had to be in the span between those two.';
+        }
+        return 'On this made-up floor the trunk runs in room order, so the offline rooms, ' +
+            rangeText(offlineBlock(job)) + ', are one block. The break sits between an online ' +
+            'room and an offline one, so it is at the one edge of the block that has an online ' +
+            'room next to it: ' + dead + ', next to ' + live + '.';
+    }
+
+    // What a stop that did not find the break tells the player.
+    function missReason(job, index) {
+        const room = roomAt(job, index);
+        const code = missCode(job, index);
+        if (job.kind === 'layout') {
+            if (code === 'first-on-trunk' || code === 'live-both') {
+                return 'The trunk is still live past ' + room + ', so the break is farther along ' +
+                    'the route, away from ' + HEAD_NAME + '.';
+            }
+            return 'The trunk was already dead when it got to ' + room + ', so the break is back ' +
+                'along the route, toward ' + HEAD_NAME +
+                (code === 'end-of-run' ? ', where the dead section starts.' : '.');
+        }
+        const block = offlineBlock(job);
+        // The offline room beside the break: the block's edge that the
+        // trunk reaches first.
+        const edge = roomAt(job, job.fault.index);
+        if (code === 'first-on-trunk') {
+            return 'The trunk comes in at ' + room + ' and runs in room order. The first offline ' +
+                'room it reaches is ' + edge + ', so the break is next to ' + edge + '.';
+        }
+        if (code === 'live-both') {
+            return 'This stop rules out only the trunk on either side of ' + room + '. The break ' +
+                'sits between an online room and an offline one, so it is at an edge of the ' +
+                'offline block, ' + rangeText(block) + '. ' + room + ' is not next to that block.';
+        }
+        if (code === 'end-of-run') {
+            return 'Trunk on one side only, and it is dead, so this is the far end of the trunk. ' +
+                'The trunk comes in from the other side, through the offline block, and the break ' +
+                'is at the other edge of the block, next to ' + edge + '.';
+        }
+        return 'A stop inside the offline block cannot say which way ' + HEAD_NAME + ' is. ' +
+            'A stop at either edge of it, ' + block.from + ' or ' + block.to + ', can.';
     }
 
     // ── Break jobs: a stop ───────────────────────────────────────────
@@ -439,27 +537,31 @@ const BusIsolation = (function () {
         return index === LAST_INDEX ? 'end-of-run' : 'dead-both';
     }
 
+    // What the stop shows, then why it matters. The reason always ends
+    // the sentence on a miss.
     function missText(job, index) {
         const room = roomAt(job, index);
         const code = missCode(job, index);
+        let shows;
         if (code === 'first-on-trunk') {
-            return room + ' is the first controller on the trunk: ' + HEAD_NAME +
+            shows = room + ' is the first controller on the trunk: ' + HEAD_NAME +
                 ' on one side, live trunk to ' + roomAt(job, 1) +
                 ' on the other. The break is not here.';
+        } else if (code === 'live-both') {
+            shows = 'Live trunk on both sides of ' + room + '. The break is not here.';
+        } else if (code === 'end-of-run') {
+            shows = room + ' is the end of the run: dead trunk toward ' +
+                roomAt(job, LAST_INDEX - 1) + ', and nothing past it.';
+        } else {
+            shows = 'Dead trunk on both sides of ' + room + '. The break is not here.';
         }
-        if (code === 'live-both') {
-            return 'Live trunk on both sides of ' + room + '. The break is not here.';
-        }
-        if (code === 'end-of-run') {
-            return room + ' is the end of the run: dead trunk toward ' +
-                roomAt(job, LAST_INDEX - 1) + ', and nothing past it. ' +
-                'The break is at the other edge of the dead group.';
-        }
-        return 'Dead trunk on both sides of ' + room + '. The break is not here.';
+        return shows + ' ' + missReason(job, index);
     }
 
     function stopAt(job, index) {
-        if (job.solved) return { code: 'done', counted: false, text: doneText(job) };
+        if (job.solved) {
+            return { code: 'done', counted: false, reason: foundReason(job), text: doneText(job) };
+        }
         const room = roomAt(job, index);
         const sides = sidesAt(job, index);
         if (job.checked.indexOf(index) !== -1) {
@@ -467,6 +569,7 @@ const BusIsolation = (function () {
                 code: 'repeat',
                 counted: false,
                 sides: sides,
+                reason: missReason(job, index),
                 text: 'You already stopped at ' + room + '. ' + missText(job, index),
             };
         }
@@ -477,16 +580,24 @@ const BusIsolation = (function () {
             const dead = roomAt(job, b);
             job.solved = true;
             job.found = { type: 'break', between: [Math.min(live, dead), Math.max(live, dead)] };
+            const reason = foundReason(job);
             return {
                 code: 'found',
                 counted: true,
                 sides: sides,
+                reason: reason,
                 text: 'Found it. The break is between ' + job.found.between[0] + ' and ' +
-                    job.found.between[1] + '. ' + scoreText(job),
+                    job.found.between[1] + '. ' + reason + ' ' + scoreText(job),
             };
         }
         job.checked.push(index);
-        return { code: missCode(job, index), counted: true, sides: sides, text: missText(job, index) };
+        return {
+            code: missCode(job, index),
+            counted: true,
+            sides: sides,
+            reason: missReason(job, index),
+            text: missText(job, index),
+        };
     }
 
     // ── Flaky job: a split ───────────────────────────────────────────
