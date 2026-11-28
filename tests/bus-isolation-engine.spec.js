@@ -39,7 +39,7 @@
 // home). Job 1 argues from the drawn route, job 2 from the offline list
 // alone, and each reason is parsed back into what it claims — the rooms
 // online as far as where, the way the break lies along the route, the
-// rooms of the offline block, the edge and its online neighbour — and
+// rooms of the offline section, the edge and its online neighbour — and
 // every claim is decided by the oracle. The pair sweep plays every ordered
 // pair of stops on every break job, so "true in every pick order" is
 // checked, not assumed.
@@ -212,7 +212,7 @@ const range = (text) => {
 // "doesn't drive home the point since one may not understand why picking
 // that worked"). The why is a set of claims — which rooms are online as
 // far as where, which way the break lies along the route, which rooms
-// make up the offline block, which edge has an online room beside it —
+// make up the offline section, which edge has an online room beside it —
 // and each one is decided here by the oracle, never by the engine. Job 1
 // (the layout) argues from the drawn route; job 2 (no layout) argues from
 // the offline list alone, so its templates are separate and each is
@@ -233,9 +233,15 @@ const besideRooms = (r) => [r - 1, r + 1].filter((n) => n >= 201 && n <= 216);
 // the oracle. `s` begins with the reason; returns { reason, rest }, `rest`
 // being whatever follows it, unread. Throws on a reason it does not know.
 const FOUND_REASON = {
-    'layout': /^Follow the drawn route from the supervisor or router: every controller as far as (\d+) is online, and every one from (\d+) to the end of the run is offline\. A break cuts off everything past it on the trunk and nothing before it, so it had to be in the span between those two\./,
-    'no-layout': /^On this made-up floor the trunk runs in room order, so the offline rooms, (\d+) to (\d+), are one block\. The break sits between an online room and an offline one, so it is at the one edge of the block that has an online room next to it: (\d+), next to (\d+)\./,
+    'layout': /^Follow the drawn route from the supervisor or router: every controller as far as (\d+) is online, and every one from (\d+) to the end of the run is offline\. On this floor a break cuts off everything past it on the trunk and nothing before it, so it had to be in the span between those two\./,
+    'no-layout': /^On this made-up floor the trunk runs in room order, so the offline rooms, (\d+) to (\d+), are one section\. The break sits between an online room and an offline one, so it is at the one edge of the section that has an online room next to it: (\d+), next to (\d+)\./,
 };
+
+// The offline rooms are a "section" in every sentence jobs 1 and 2 print,
+// the lesson's own word (it is called Bus Section Isolation, and the job
+// titles say "a dead section"). An earlier draft called them a "block";
+// that word must not come back in any break-job result.
+const NOT_ON_BREAK_JOBS = /\bblocks?\b/i;
 
 function checkFoundReason(s, job, text) {
     const order = route(job.headEnd);
@@ -262,12 +268,12 @@ function checkFoundReason(s, job, text) {
         return { reason: m[0], rest };
     }
     const block = offlineRooms(job);
-    // "The offline rooms, A to B, are one block": exactly the offline rooms.
-    check(range(m[1] + ' to ' + m[2]), 'the block named is the offline list: ' + text).toEqual(block);
+    // "The offline rooms, A to B, are one section": exactly the offline rooms.
+    check(range(m[1] + ' to ' + m[2]), 'the section named is the offline list: ' + text).toEqual(block);
     const edge = Number(m[3]);
     const next = Number(m[4]);
     const edges = [block[0], block[block.length - 1]];
-    check(edges, 'the room named is an edge of the block: ' + text).toContain(edge);
+    check(edges, 'the room named is an edge of the section: ' + text).toContain(edge);
     check(besideRooms(edge), 'its neighbour is beside it: ' + text).toContain(next);
     check(st[next], 'the neighbour named is online: ' + text).toBe('online');
     // "The ONE edge … that has an online room next to it": the other edge
@@ -378,21 +384,20 @@ function checkStopSentence(text, job, room, reason) {
     }
 
     // ── Job 2: argued from the offline list alone ───────────────────────
-    if ((m = /^Live trunk on both sides of (\d+)\. The break is not here\. (This stop rules out only the trunk on either side of (\d+)\. The break sits between an online room and an offline one, so it is at an edge of the offline block, (\d+) to (\d+)\. (\d+) is not next to that block\.)$/.exec(body))) {
+    if ((m = /^Live trunk on both sides of (\d+)\. The break is not here\. (The break sits between an online room and an offline one, so it is at an edge of the offline section, (\d+) to (\d+)\. (\d+) is not next to that section\.)$/.exec(body))) {
         kindIs('no-layout');
         check(Number(m[1])).toBe(room);
-        check(Number(m[3])).toBe(room);
-        check(Number(m[6])).toBe(room);
+        check(Number(m[5])).toBe(room);
         check(st[room], text).toBe('online');
         check(toward, 'a room with trunk on both sides is not first on the trunk').not.toBeNull();
         check(st[toward], text).toBe('online');
         check(st[away], text).toBe('online');
-        // The block named is the offline list, and the break is at an edge
-        // of it, between an online room and an offline one.
-        check(range(m[4] + ' to ' + m[5]), text).toEqual(block);
+        // The section named is the offline list, and the break is at an
+        // edge of it, between an online room and an offline one.
+        check(range(m[3] + ' to ' + m[4]), text).toEqual(block);
         check(edges, text).toContain(deadSide);
         check([st[liveSide], st[deadSide]], text).toEqual(['online', 'offline']);
-        // "Not next to that block": no neighbour of it is offline.
+        // "Not next to that section": no neighbour of it is offline.
         check(besideRooms(room).some((n) => block.includes(n)), text).toBe(false);
         return why('miss', m[2]);
     }
@@ -415,43 +420,45 @@ function checkStopSentence(text, job, room, reason) {
         check([liveSide, deadSide], 'the break is next to the room named: ' + text).toContain(first);
         return why('miss', m[3]);
     }
-    if ((m = /^Dead trunk on both sides of (\d+)\. The break is not here\. (A stop inside the offline block cannot say which way the supervisor or router is\. A stop at either edge of it, (\d+) or (\d+), can\.)$/.exec(body))) {
+    if ((m = /^Dead trunk on both sides of (\d+)\. The break is not here\. (A stop inside the offline section cannot say which way the supervisor or router is\. A stop at either edge of it, (\d+) or (\d+), can\.)$/.exec(body))) {
         kindIs('no-layout');
         check(Number(m[1])).toBe(room);
         check(st[room], text).toBe('offline');
         check(st[toward], text).toBe('offline');
         check(away, 'a room with trunk on both sides is not the end of the run').not.toBeNull();
         check(st[away], text).toBe('offline');
-        // "Inside the offline block": strictly between its two edges.
-        check(room > edges[0] && room < edges[1], 'the room is inside the block: ' + text).toBe(true);
+        // "Inside the offline section": strictly between its two edges.
+        check(room > edges[0] && room < edges[1], 'the room is inside the section: ' + text).toBe(true);
         // "Either edge of it, A or B": the two edges, low first...
         check([Number(m[3]), Number(m[4])], text).toEqual(edges);
         // ...and each one CAN say: one is beside the break (a stop there
         // finds it), the other is the end of the run (a stop there says
-        // the trunk comes in from the other side).
+        // the trunk reaches it through the offline section).
         check(edges.slice().sort((x, y) => x - y), text)
             .toEqual([deadSide, order[order.length - 1]].sort((x, y) => x - y));
         return why('miss', m[2]);
     }
-    if ((m = /^(\d+) is the end of the run: dead trunk toward (\d+), and nothing past it\. (Trunk on one side only, and it is dead, so this is the far end of the trunk\. The trunk comes in from the other side, through the offline block, and the break is at the other edge of the block, next to (\d+)\.)$/.exec(body))) {
+    if ((m = /^(\d+) is the end of the run: dead trunk toward (\d+), and nothing past it\. (The trunk reaches (\d+) through the offline section, so the break is at the other edge of the section, next to (\d+)\.)$/.exec(body))) {
         kindIs('no-layout');
         check(Number(m[1])).toBe(room);
+        // The reason names the room picked...
+        check(Number(m[4]), 'the reason names the room picked: ' + text).toBe(room);
         check(away, text).toBeNull();
         check(Number(m[2]), text).toBe(toward);
         check(st[room], text).toBe('offline');
         check(st[toward], text).toBe('offline');
-        // "The far end": the end of the trunk away from the supervisor or
-        // router, which is an edge of the offline block.
+        // "The end of the run": the end of the trunk away from the
+        // supervisor or router, which is an edge of the offline section.
         check(room, text).toBe(order[order.length - 1]);
         check(edges, text).toContain(room);
-        // "The other edge of the block, next to E": E is the other edge,
-        // and it is the offline room beside the break.
+        // ...and "the other edge of the section, next to E": E is the other
+        // edge, and it is the offline room beside the break.
         const other = edges[0] === room ? edges[1] : edges[0];
-        check(Number(m[4]), text).toBe(other);
-        check(deadSide, text).toBe(other);
-        // "Through the offline block, from the other side": the room the
-        // trunk arrives from lies toward that edge, and every room from
-        // here to that edge is offline.
+        check(Number(m[5]), text).toBe(other);
+        check(deadSide, 'the reason names the room beside the break: ' + text).toBe(other);
+        // "Reaches it through the offline section": the room the trunk
+        // arrives from lies toward that edge, and every room from here to
+        // that edge is offline, which is the whole section.
         check(Math.sign(toward - room), text).toBe(Math.sign(other - room));
         check(range(Math.min(room, other) + ' to ' + Math.max(room, other)), text).toEqual(block);
         return why('miss', m[3]);
@@ -968,13 +975,17 @@ test.describe('bus-isolation engine: a stop never claims what it did not find', 
     // pair of stops (repeats included) on every break job either kind can
     // deal, and holds each result's reason to the oracle through
     // checkStopSentence / checkDoneSentence: the rooms it names, the way
-    // it points along the route (job 1), the block and the neighbour it
-    // names (job 2). It also holds the results apart: a new result never
-    // prints the sentence that is already on screen, so a screen reader
-    // never has to tell two results apart by nothing.
+    // it points along the route (job 1), the section and the neighbour it
+    // names (job 2). No result says "block" (NOT_ON_BREAK_JOBS). It also
+    // holds counted picks apart: a pick that counts never prints the
+    // sentence that is already on screen, so a screen reader never has to
+    // tell two results apart by nothing. Free picks are not held to that,
+    // and cannot be: a second pick after the find prints the same 'done'
+    // sentence as the first.
     test('every pair of stops on every break job, in either order: each result says why, and it is true', () => {
         const B = loadEngine();
         let results = 0;
+        let sections = 0;
         const reached = { 'layout': new Set(), 'no-layout': new Set() };
         for (const kind of BREAK_KINDS) {
             for (const make of everyJob(B, kind)) {
@@ -997,10 +1008,13 @@ test.describe('bus-isolation engine: a stop never claims what it did not find', 
                             check(r2.code === 'repeat', where).toBe(a === b);
                             if (r2.code === 'repeat') check(r2.reason, where).toBe(r1.reason);
                         }
-                        // Every break result carries its reason, inside its text.
+                        // Every break result carries its reason, inside its
+                        // text, and none of it calls the offline rooms a block.
                         for (const r of [r1, r2]) {
                             check(typeof r.reason === 'string' && r.reason.length > 0, where).toBe(true);
                             check(r.text.includes(r.reason), where).toBe(true);
+                            check(NOT_ON_BREAK_JOBS.test(r.text), () => where() + ': ' + r.text).toBe(false);
+                            if (kind === 'no-layout' && /\bsection\b/.test(r.text)) sections += 1;
                         }
                         // A counted pick never repeats the sentence before it.
                         if (r2.counted) check(r2.text === r1.text, where).toBe(false);
@@ -1010,6 +1024,15 @@ test.describe('bus-isolation engine: a stop never claims what it did not find', 
             }
         }
         expect(results, 'every ordered pair on every break job').toBe(2 * 22 * 16 * 16 * 2);
+        // Anti-vacuity for the word check: the sentences that name the
+        // offline rooms as a group were in the sweep, in bulk, and the
+        // pattern does catch the old wording.
+        expect(sections, 'job 2 results naming the offline section').toBeGreaterThan(1000);
+        for (const old of ['so the offline rooms, 201 to 205, are one block.',
+            'A stop inside the offline block cannot say which way the supervisor or router is.',
+            'it is at an edge of the offline Block, 201 to 205.']) {
+            expect(NOT_ON_BREAK_JOBS.test(old), old).toBe(true);
+        }
         // Anti-vacuity: both kinds reached every code a stop has.
         for (const kind of BREAK_KINDS) {
             expect([...reached[kind]].sort(), kind).toEqual(['dead-both', 'done', 'end-of-run',
@@ -1052,9 +1075,48 @@ test.describe('bus-isolation engine: a stop never claims what it did not find', 
             }
         }
         expect(seen).toBe(2 * 22 * 16);
-        // The flaky job carries none: its results are what they were.
-        const flaky = B.newJob('flaky', B.OPENING.flaky);
-        expect(B.pick(flaky, 208).reason).toBeUndefined();
+    });
+
+    // The flaky job carries no reason, on any result. Every talker the
+    // generator can deal; on each, every first split, the same split again,
+    // every second split, then the midpoint to the end and a pick after the
+    // find. No result has a `reason` field at all, so the page never draws
+    // a why line on job 3.
+    test('the flaky job carries no reason, on any deal or any pick', () => {
+        const B = loadEngine();
+        let results = 0;
+        let plays = 0;
+        const codes = new Set();
+        const none = (r, where) => {
+            check(Object.prototype.hasOwnProperty.call(r, 'reason'), where).toBe(false);
+            check(r.reason, where).toBe(undefined);
+            codes.add(r.code);
+            results += 1;
+        };
+        for (const make of everyJob(B, 'flaky')) {
+            for (let a = 201; a <= 216; a++) {
+                for (let b = 201; b <= 216; b++) {
+                    const job = make();
+                    const where = () => `${job.headEnd} talker ${job.fault.index}: ${a}, ${a}, ${b}`;
+                    none(B.pick(job, a), where);
+                    none(B.pick(job, a), where);
+                    none(B.pick(job, b), where);
+                    for (let guard = 0; guard < 16 && !job.solved; guard++) {
+                        none(B.pick(job, B.method(job)[0]), where);
+                    }
+                    check(job.solved, where).toBe(true);
+                    none(B.pick(job, a), where);
+                    plays += 1;
+                }
+            }
+        }
+        // Every talker, every ordered pair of splits, and at least the
+        // four fixed picks of each play.
+        expect(plays).toBe(32 * 16 * 16);
+        expect(results).toBeGreaterThanOrEqual(plays * 4);
+        // Anti-vacuity: every code a split has was among the results.
+        expect([...codes].sort()).toEqual(['connected-part', 'cut-off-part', 'done', 'found',
+            'known-flaky', 'known-stable', 'nothing-past', 'repeat']);
     });
 
     test('a miss costs a stop; the same ceiling again does not; a finished job is finished', () => {
@@ -1068,7 +1130,7 @@ test.describe('bus-isolation engine: a stop never claims what it did not find', 
         expect(again.counted).toBe(false);
         expect(job.stops, 'looking again is free').toBe(1);
         expect(again.text).toBe('You already stopped at 212. Dead trunk on both sides of 212. The break is not here. ' +
-            'A stop inside the offline block cannot say which way the supervisor or router is. ' +
+            'A stop inside the offline section cannot say which way the supervisor or router is. ' +
             'A stop at either edge of it, 209 or 216, can.');
         checkStopSentence(again.text, job, 212, again.reason);
 
@@ -1088,8 +1150,8 @@ test.describe('bus-isolation engine: a stop never claims what it did not find', 
         // reason and the score line with it.
         expect(done.text).toBe('This job is finished. The break is between 208 and 209. ' +
             'On this made-up floor the trunk runs in room order, so the offline rooms, 209 to 216, ' +
-            'are one block. The break sits between an online room and an offline one, so it is at ' +
-            'the one edge of the block that has an online room next to it: 209, next to 208. ' +
+            'are one section. The break sits between an online room and an offline one, so it is at ' +
+            'the one edge of the section that has an online room next to it: 209, next to 208. ' +
             'Found in 5 stops. Reading the pattern first gets it in 1. New job deals another.');
         checkDoneSentence(done.text, job, found.text, done.reason);
         expect(done.reason).toBe(found.reason);
@@ -1188,8 +1250,10 @@ test.describe('bus-isolation engine: the method solves at the stated best', () =
                 // then has exactly one room left to try.
                 expect(r1.code).toBe('end-of-run');
                 expect(checkStopSentence(r1.text, job, first, r1.reason)).toBe('miss');
-                // And it points at the one room the method has left.
-                expect(r1.reason.endsWith(`the break is at the other edge of the block, next to ${other}.`)).toBe(true);
+                // It names the room picked, and points at the one room the
+                // method has left.
+                expect(r1.reason).toBe(`The trunk reaches ${first} through the offline section, so the ` +
+                    `break is at the other edge of the section, next to ${other}.`);
                 expect(plain(B.method(job))).toEqual([other]);
                 const r2 = B.pick(job, other);
                 expect(r2.solved).toBe(true);
@@ -1216,7 +1280,7 @@ test.describe('bus-isolation engine: the method solves at the stated best', () =
                 expect(r.code, `${room} inside ${dead[0]}-${dead[dead.length - 1]}`).toBe('dead-both');
                 // The two edges named are the two ends of the offline list.
                 expect(r.text).toBe(`Dead trunk on both sides of ${room}. The break is not here. ` +
-                    'A stop inside the offline block cannot say which way the supervisor or router is. ' +
+                    'A stop inside the offline section cannot say which way the supervisor or router is. ' +
                     `A stop at either edge of it, ${dead[0]} or ${dead[dead.length - 1]}, can.`);
                 expect(r.solved).toBe(false);
                 expect(job.stops).toBe(1);
@@ -1598,10 +1662,12 @@ test.describe('bus-isolation engine: hand-worked transcripts', () => {
     // Job 1's reasons walk the drawn route: a miss says which way along it
     // the break lies and why, and the find says why it had to be in that
     // one span.
+    // The second sentence is scoped to the made-up floor ("On this floor"):
+    // it is the rule of this game, not a claim about real trunks.
     const JOB1_WHY = 'Follow the drawn route from the supervisor or router: every controller as far as ' +
-        '209 is online, and every one from 210 to the end of the run is offline. A break cuts off ' +
-        'everything past it on the trunk and nothing before it, so it had to be in the span ' +
-        'between those two.';
+        '209 is online, and every one from 210 to the end of the run is offline. On this floor a ' +
+        'break cuts off everything past it on the trunk and nothing before it, so it had to be in ' +
+        'the span between those two.';
 
     test('job 1 opening — 201 to 209 live, break between 209 and 210, supervisor or router at 201', () => {
         const B = loadEngine();
@@ -1666,17 +1732,17 @@ test.describe('bus-isolation engine: hand-worked transcripts', () => {
         expect(B.pick(job, 211).text)
             .toBe('Found it. The break is between 210 and 211. Follow the drawn route from the ' +
                 'supervisor or router: every controller as far as 211 is online, and every one ' +
-                'from 210 to the end of the run is offline. A break cuts off everything past it ' +
-                'on the trunk and nothing before it, so it had to be in the span between those ' +
-                'two. Found in 5 stops. Reading the layout first gets it in 1.');
+                'from 210 to the end of the run is offline. On this floor a break cuts off ' +
+                'everything past it on the trunk and nothing before it, so it had to be in the ' +
+                'span between those two. Found in 5 stops. Reading the layout first gets it in 1.');
     });
 
     // Job 2's reasons argue from the offline list alone: the rooms as one
-    // block, which edge has an online room beside it, and what a stop at
+    // section, which edge has an online room beside it, and what a stop at
     // each kind of controller can and cannot tell you.
     const JOB2_WHY = 'On this made-up floor the trunk runs in room order, so the offline rooms, ' +
-        '201 to 205, are one block. The break sits between an online room and an offline one, so ' +
-        'it is at the one edge of the block that has an online room next to it: 205, next to 206.';
+        '201 to 205, are one section. The break sits between an online room and an offline one, so ' +
+        'it is at the one edge of the section that has an online room next to it: 205, next to 206.';
 
     test('job 2 opening — 201 to 205 dark, break between 205 and 206, supervisor or router at 216', () => {
         const B = loadEngine();
@@ -1684,18 +1750,16 @@ test.describe('bus-isolation engine: hand-worked transcripts', () => {
         expect(plain(B.method(job))).toEqual([201, 205]);
         expect(B.pick(job, 201).text)
             .toBe('201 is the end of the run: dead trunk toward 202, and nothing past it. ' +
-                'Trunk on one side only, and it is dead, so this is the far end of the trunk. ' +
-                'The trunk comes in from the other side, through the offline block, and the break ' +
-                'is at the other edge of the block, next to 205.');
+                'The trunk reaches 201 through the offline section, so the break is at the other ' +
+                'edge of the section, next to 205.');
         expect(B.pick(job, 203).text)
             .toBe('Dead trunk on both sides of 203. The break is not here. ' +
-                'A stop inside the offline block cannot say which way the supervisor or router is. ' +
+                'A stop inside the offline section cannot say which way the supervisor or router is. ' +
                 'A stop at either edge of it, 201 or 205, can.');
         expect(B.pick(job, 210).text)
             .toBe('Live trunk on both sides of 210. The break is not here. ' +
-                'This stop rules out only the trunk on either side of 210. The break sits between ' +
-                'an online room and an offline one, so it is at an edge of the offline block, ' +
-                '201 to 205. 210 is not next to that block.');
+                'The break sits between an online room and an offline one, so it is at an edge of ' +
+                'the offline section, 201 to 205. 210 is not next to that section.');
         expect(B.pick(job, 216).text)
             .toBe('216 is the first controller on the trunk: the supervisor or router on one side, ' +
                 'live trunk to 215 on the other. The break is not here. ' +
@@ -1713,7 +1777,7 @@ test.describe('bus-isolation engine: hand-worked transcripts', () => {
             .toBe('Found it. The break is between 205 and 206. ' + JOB2_WHY + ' ' +
                 'Found in 1 stop, the fewest this job takes.');
         // The online room on the other side of the break finds it too, and
-        // the reason is the same: it is about the block, not the pick.
+        // the reason is the same: it is about the section, not the pick.
         const other = B.newJob('no-layout', B.OPENING['no-layout']);
         expect(B.pick(other, 206).reason).toBe(JOB2_WHY);
     });
@@ -1723,9 +1787,8 @@ test.describe('bus-isolation engine: hand-worked transcripts', () => {
         const job = B.makeJob('no-layout', 'low', 8);
         expect(B.pick(job, 216).text)
             .toBe('216 is the end of the run: dead trunk toward 215, and nothing past it. ' +
-                'Trunk on one side only, and it is dead, so this is the far end of the trunk. ' +
-                'The trunk comes in from the other side, through the offline block, and the break ' +
-                'is at the other edge of the block, next to 209.');
+                'The trunk reaches 216 through the offline section, so the break is at the other ' +
+                'edge of the section, next to 209.');
         expect(B.pick(job, 201).text)
             .toBe('201 is the first controller on the trunk: the supervisor or router on one side, ' +
                 'live trunk to 202 on the other. The break is not here. ' +
@@ -1733,18 +1796,17 @@ test.describe('bus-isolation engine: hand-worked transcripts', () => {
                 'reaches is 209, so the break is next to 209.');
         expect(B.pick(job, 204).text)
             .toBe('Live trunk on both sides of 204. The break is not here. ' +
-                'This stop rules out only the trunk on either side of 204. The break sits between ' +
-                'an online room and an offline one, so it is at an edge of the offline block, ' +
-                '209 to 216. 204 is not next to that block.');
+                'The break sits between an online room and an offline one, so it is at an edge of ' +
+                'the offline section, 209 to 216. 204 is not next to that section.');
         expect(B.pick(job, 212).text)
             .toBe('Dead trunk on both sides of 212. The break is not here. ' +
-                'A stop inside the offline block cannot say which way the supervisor or router is. ' +
+                'A stop inside the offline section cannot say which way the supervisor or router is. ' +
                 'A stop at either edge of it, 209 or 216, can.');
         expect(B.pick(job, 208).text)
             .toBe('Found it. The break is between 208 and 209. On this made-up floor the trunk ' +
-                'runs in room order, so the offline rooms, 209 to 216, are one block. The break ' +
+                'runs in room order, so the offline rooms, 209 to 216, are one section. The break ' +
                 'sits between an online room and an offline one, so it is at the one edge of the ' +
-                'block that has an online room next to it: 209, next to 208. ' +
+                'section that has an online room next to it: 209, next to 208. ' +
                 'Found in 5 stops. Reading the pattern first gets it in 1.');
     });
 

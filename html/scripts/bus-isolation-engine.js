@@ -205,10 +205,12 @@
 //                           known-stable · known-flaky · nothing-past ·
 //                           repeat · done
 //         A 'done' result (any pick after the job is solved) RESTATES
-//         the finding, its reason and the score line. The page prints
-//         each result over the last, so a double click on the controller
-//         that finds the fault would otherwise wipe out where the fault
-//         is and why.
+//         what was found. On the two break jobs that is the finding, its
+//         reason and the score line. On the flaky job it is the finding
+//         and the score line, and the result carries no reason. The page
+//         prints each result over the last, so a double click on the
+//         controller that finds the fault would otherwise wipe out where
+//         the fault is (and, on a break job, why).
 //     method(job) → [room, …] — the pick(s) the owner's method makes
 //         next, low room first; any of them follows the method. Empty
 //         once the job is solved.
@@ -434,18 +436,20 @@ const BusIsolation = (function () {
     //              be in that one span.
     //   no-layout  the offline list, and nothing else: no route, and no
     //              word on which end the supervisor or router is on. The
-    //              reason argues from the offline rooms as ONE BLOCK,
+    //              reason argues from the offline rooms as ONE SECTION,
     //              which they always are here because this made-up floor
     //              runs its trunk in room order. The break is at the one
-    //              edge of the block that has an online room next to it;
-    //              the other edge is the end of the run.
+    //              edge of the section that has an online room next to
+    //              it. The other edge is the end of the run. (The printed
+    //              word is "section", the lesson's own word, never
+    //              "block". offlineBlock() keeps its name: it is internal.)
     //
     // A reason is a function of the fault, the job kind and the room
     // picked, never of the picks before it, so it holds in every pick
     // order. Each one states facts about THIS floor (one trunk, one daisy
     // chain, one break) and nothing about real buildings: no "usually",
     // nothing about what to do at a controller. The spec parses every
-    // reason back into the rooms, direction, block and neighbour it names
+    // reason back into the rooms, direction, section and neighbour it names
     // and checks each against the fault, for every job the generator can
     // deal. Plain words, short sentences, no dashes or semicolons.
     //
@@ -454,7 +458,7 @@ const BusIsolation = (function () {
     // screen reader hears it once, with the result it belongs to.
 
     // The offline rooms, low room first. On a break job they are always
-    // one block: the trunk runs in room order and everything past the
+    // one section: the trunk runs in room order and everything past the
     // break is offline.
     function offlineBlock(job) { return roomRange(job, job.fault.index, LAST_INDEX); }
 
@@ -464,14 +468,17 @@ const BusIsolation = (function () {
         const live = roomAt(job, b - 1);
         const dead = roomAt(job, b);
         if (job.kind === 'layout') {
+            // "On this floor": the second sentence is the rule of this
+            // made-up floor (one trunk, one break), not a claim about
+            // every trunk there is.
             return 'Follow the drawn route from ' + HEAD_NAME + ': every controller as far as ' +
                 live + ' is online, and every one from ' + dead + ' to the end of the run is ' +
-                'offline. A break cuts off everything past it on the trunk and nothing before it, ' +
-                'so it had to be in the span between those two.';
+                'offline. On this floor a break cuts off everything past it on the trunk and ' +
+                'nothing before it, so it had to be in the span between those two.';
         }
         return 'On this made-up floor the trunk runs in room order, so the offline rooms, ' +
-            rangeText(offlineBlock(job)) + ', are one block. The break sits between an online ' +
-            'room and an offline one, so it is at the one edge of the block that has an online ' +
+            rangeText(offlineBlock(job)) + ', are one section. The break sits between an online ' +
+            'room and an offline one, so it is at the one edge of the section that has an online ' +
             'room next to it: ' + dead + ', next to ' + live + '.';
     }
 
@@ -489,7 +496,7 @@ const BusIsolation = (function () {
                 (code === 'end-of-run' ? ', where the dead section starts.' : '.');
         }
         const block = offlineBlock(job);
-        // The offline room beside the break: the block's edge that the
+        // The offline room beside the break: the section's edge that the
         // trunk reaches first.
         const edge = roomAt(job, job.fault.index);
         if (code === 'first-on-trunk') {
@@ -497,16 +504,17 @@ const BusIsolation = (function () {
                 'room it reaches is ' + edge + ', so the break is next to ' + edge + '.';
         }
         if (code === 'live-both') {
-            return 'This stop rules out only the trunk on either side of ' + room + '. The break ' +
-                'sits between an online room and an offline one, so it is at an edge of the ' +
-                'offline block, ' + rangeText(block) + '. ' + room + ' is not next to that block.';
+            return 'The break sits between an online room and an offline one, so it is at an ' +
+                'edge of the offline section, ' + rangeText(block) + '. ' + room +
+                ' is not next to that section.';
         }
         if (code === 'end-of-run') {
-            return 'Trunk on one side only, and it is dead, so this is the far end of the trunk. ' +
-                'The trunk comes in from the other side, through the offline block, and the break ' +
-                'is at the other edge of the block, next to ' + edge + '.';
+            // One sentence: the line before it has already said this room
+            // is the end of the run, with dead trunk on its one side.
+            return 'The trunk reaches ' + room + ' through the offline section, so the break is ' +
+                'at the other edge of the section, next to ' + edge + '.';
         }
-        return 'A stop inside the offline block cannot say which way ' + HEAD_NAME + ' is. ' +
+        return 'A stop inside the offline section cannot say which way ' + HEAD_NAME + ' is. ' +
             'A stop at either edge of it, ' + block.from + ' or ' + block.to + ', can.';
     }
 

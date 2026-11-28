@@ -64,12 +64,12 @@ function loadEngine() {
 // between 205 and 206) from the offline list alone. Every finding, and
 // every pick after it, carries its job's reason.
 const JOB1_WHY = 'Follow the drawn route from the supervisor or router: every controller as far as ' +
-    '209 is online, and every one from 210 to the end of the run is offline. A break cuts off ' +
-    'everything past it on the trunk and nothing before it, so it had to be in the span between ' +
-    'those two.';
+    '209 is online, and every one from 210 to the end of the run is offline. On this floor a break ' +
+    'cuts off everything past it on the trunk and nothing before it, so it had to be in the span ' +
+    'between those two.';
 const JOB2_WHY = 'On this made-up floor the trunk runs in room order, so the offline rooms, 201 to ' +
-    '205, are one block. The break sits between an online room and an offline one, so it is at the ' +
-    'one edge of the block that has an online room next to it: 205, next to 206.';
+    '205, are one section. The break sits between an online room and an offline one, so it is at the ' +
+    'one edge of the section that has an online room next to it: 205, next to 206.';
 
 // ── Opening the page ───────────────────────────────────────────────────
 // The theme is chosen through prefers-color-scheme, which the head
@@ -619,7 +619,7 @@ test.describe('bus section isolation: the three jobs, played by the method', () 
         { kind: 'layout', pick: 209, why: JOB1_WHY,
             names: ['every controller as far as 209 is online', 'every one from 210 to the end of the run is offline'] },
         { kind: 'no-layout', pick: 205, why: JOB2_WHY,
-            names: ['the offline rooms, 201 to 205, are one block', 'next to it: 205, next to 206.'] },
+            names: ['the offline rooms, 201 to 205, are one section', 'next to it: 205, next to 206.'] },
     ];
     for (const [width, height] of [[1280, 900], [375, 800]]) {
         for (const c of FIRST_TRY) {
@@ -711,6 +711,40 @@ test.describe('bus section isolation: the three jobs, played by the method', () 
         }
     }
 
+    // The result line is the one live region, and a result with a reason
+    // is up to three nodes (the sentence, the why, the score line). They
+    // go in with ONE change to the paragraph, so a screen reader is never
+    // handed half a result. An earlier draft wrote them one at a time.
+    test('the result line changes once per pick, never in pieces', async ({ page }) => {
+        const { errors } = await open(page);
+        await page.evaluate(() => {
+            window.__bsiChanges = [];
+            window.__bsiObserver = new MutationObserver((records) => {
+                window.__bsiChanges.push(...records);
+            });
+            window.__bsiObserver.observe(document.getElementById('bsi-feedback'),
+                { childList: true, characterData: true, subtree: true });
+        });
+        // Every change to the paragraph since the last call, as
+        // "type:nodes added", delivered or still queued.
+        const changes = () => page.evaluate(() => {
+            const all = window.__bsiChanges.concat(window.__bsiObserver.takeRecords());
+            window.__bsiChanges = [];
+            return all.map((r) => r.type + ':' + r.addedNodes.length);
+        });
+        await room(page, 213).click();                  // job 1 miss: sentence + why
+        expect(await changes(), 'a miss').toEqual(['childList:2']);
+        await room(page, 209).click();                  // the find: sentence + why + score
+        expect(await changes(), 'the find').toEqual(['childList:3']);
+        await room(page, 216).click();                  // after the find: the same three
+        expect(await changes(), 'a pick after the find').toEqual(['childList:3']);
+        await selectJob(page, 'flaky');                 // the prompt: one text node
+        expect(await changes(), 'a job change').toEqual(['childList:1']);
+        await room(page, 208).click();                  // a split: no reason, one text node
+        expect(await changes(), 'a split').toEqual(['childList:1']);
+        expect(errors).toEqual([]);
+    });
+
     test('job 3 opening: four midpoint splits walk sixteen suspects down to room 212', async ({ page }) => {
         const { errors } = await open(page);
         await selectJob(page, 'flaky');
@@ -784,22 +818,22 @@ test.describe('bus section isolation: the three jobs, played by the method', () 
                 const why = (await readPlan(page)).why;
                 if (kind === 'layout') {
                     expect(said, `seed ${seed}`).toMatch(
-                        /^Found it\. The break is between \d+ and \d+\. Follow the drawn route from the supervisor or router: every controller as far as \d+ is online, and every one from \d+ to the end of the run is offline\. A break cuts off everything past it on the trunk and nothing before it, so it had to be in the span between those two\. Found in 1 stop, the fewest this job takes\.$/);
+                        /^Found it\. The break is between \d+ and \d+\. Follow the drawn route from the supervisor or router: every controller as far as \d+ is online, and every one from \d+ to the end of the run is offline\. On this floor a break cuts off everything past it on the trunk and nothing before it, so it had to be in the span between those two\. Found in 1 stop, the fewest this job takes\.$/);
                     const [, asFar, from] = /as far as (\d+) is online, and every one from (\d+) /.exec(why);
                     expect([asFar, from].sort(), `seed ${seed}: the reason names the finding's two rooms`)
                         .toEqual([pair[1], pair[2]].sort());
                 } else if (kind === 'no-layout') {
                     expect(said, `seed ${seed}`).toMatch(new RegExp('^Found it\\. The break is between \\d+ and \\d+\\. ' +
-                        'On this made-up floor the trunk runs in room order, so the offline rooms, \\d+ to \\d+, are one block\\. ' +
-                        'The break sits between an online room and an offline one, so it is at the one edge of the block that ' +
+                        'On this made-up floor the trunk runs in room order, so the offline rooms, \\d+ to \\d+, are one section\\. ' +
+                        'The break sits between an online room and an offline one, so it is at the one edge of the section that ' +
                         'has an online room next to it: \\d+, next to \\d+\\. ' + (job.stops === 1
                         ? 'Found in 1 stop, the fewest this job takes\\.$'
                         : 'Found in 2 stops\\. Reading the pattern first gets it in 1\\.$')));
                     const [, edge, next] = /: (\d+), next to (\d+)\.$/.exec(why);
                     expect([edge, next].sort(), `seed ${seed}: the reason names the finding's two rooms`)
                         .toEqual([pair[1], pair[2]].sort());
-                    // The block named is what the Offline row shows.
-                    const [, lo, hi] = /the offline rooms, (\d+) to (\d+), are one block/.exec(why);
+                    // The section named is what the Offline row shows.
+                    const [, lo, hi] = /the offline rooms, (\d+) to (\d+), are one section/.exec(why);
                     expect((await readPlan(page)).offline, `seed ${seed}`).toMatch(new RegExp(`^${lo} to ${hi} · MAC `));
                 } else {
                     expect(said, `seed ${seed}`).toMatch(
@@ -920,9 +954,12 @@ test.describe('bus section isolation: a wrong pick says what it found, truthfull
         // stop says why from the offline list alone: no route is drawn.
         await room(page, 201).click();
         await expect(feedback(page)).toHaveText('201 is the end of the run: dead trunk toward 202, and nothing ' +
-            'past it. Trunk on one side only, and it is dead, so this is the far end of the trunk. The trunk ' +
-            'comes in from the other side, through the offline block, and the break is at the other edge of ' +
-            'the block, next to 205.');
+            'past it. The trunk reaches 201 through the offline section, so the break is at the other edge ' +
+            'of the section, next to 205.');
+        // The why is one sentence on its own line, after the line that
+        // already said this is the end of the run.
+        await expect(page.locator('#bsi-feedback .bsi-why')).toHaveText('The trunk reaches 201 through the ' +
+            'offline section, so the break is at the other edge of the section, next to 205.');
         // The result line has just named an end of the trunk. The Trunk
         // row beside it claims only that the route is not drawn — an
         // earlier draft said "route and ends not known" at this moment.
@@ -936,12 +973,11 @@ test.describe('bus section isolation: a wrong pick says what it found, truthfull
         await expect(page.locator('#bsi-r-trunk')).not.toHaveText(/not known|ends/);
         await room(page, 210).click();
         await expect(feedback(page)).toHaveText('Live trunk on both sides of 210. The break is not here. ' +
-            'This stop rules out only the trunk on either side of 210. The break sits between an online ' +
-            'room and an offline one, so it is at an edge of the offline block, 201 to 205. 210 is not ' +
-            'next to that block.');
+            'The break sits between an online room and an offline one, so it is at an edge of the offline ' +
+            'section, 201 to 205. 210 is not next to that section.');
         await room(page, 203).click();
         await expect(feedback(page)).toHaveText('Dead trunk on both sides of 203. The break is not here. ' +
-            'A stop inside the offline block cannot say which way the supervisor or router is. A stop at ' +
+            'A stop inside the offline section cannot say which way the supervisor or router is. A stop at ' +
             'either edge of it, 201 or 205, can.');
         // Four misses in, the route is still not drawn.
         await expect(page.locator('#bsi-plan')).toHaveClass(/is-routeless/);
@@ -1688,7 +1724,7 @@ test.describe('bus section isolation: what the page keeps, and what it says', ()
     //      a string neither file contains cannot reach the reader.
     const BANNED = [/capacit/i, /\bvolt/i, /\bohm/i, /resistan/i, /\bmillivolt/i, /\breading of\b/i,
         /multimeter/i, /oscilloscope/i, /plain.english/i, /coming soon/i,
-        /\bcustomer\b/i, /\bschool\b/i, /\bhospital\b/i];
+        /\bcustomers?\b/i, /\bschool\b/i, /\bhospital\b/i];
     const offenders = (text) => BANNED.filter((re) => re.test(text)).map(String);
 
     // Every sentence the engine can hand the page, by playing every fault:
@@ -1800,8 +1836,9 @@ test.describe('bus section isolation: what the page keeps, and what it says', ()
             // The why on jobs 1 and 2, each kind of it.
             'so the break is farther along the route', 'so the break is back along the route',
             'where the dead section starts', 'Follow the drawn route from the supervisor or router',
-            'are one block', 'cannot say which way the supervisor or router is',
-            'This stop rules out only', 'The first offline room it reaches', 'this is the far end of the trunk']) {
+            'are one section', 'cannot say which way the supervisor or router is',
+            'is not next to that section', 'The first offline room it reaches',
+            'through the offline section, so the break is at the other edge of the section']) {
             expect(all, 'the walk should have shown: ' + reached).toContain(reached);
         }
 
@@ -1826,12 +1863,33 @@ test.describe('bus section isolation: what the page keeps, and what it says', ()
         const offFloor = (text) => OFF_FLOOR.filter((re) => re.test(text)).map(String);
         expect(engine.said.filter((text) => offFloor(text).length > 0), 'engine sentences off this floor')
             .toEqual([]);
-        // Anti-vacuity for that list.
-        expect(offFloor('A meter usually tells you; check the site — often.'))
-            .toEqual(OFF_FLOOR.filter((re) => !/typically|field|cause|building/.test(String(re))).map(String));
+        // Anti-vacuity for that list: a sample for every pattern, in the
+        // list's own order, and each pattern fires on its own sample. A
+        // pattern added without a sample fails the length check. (The last
+        // pattern is a character class, so each of its three characters
+        // gets a sample.)
+        const OFF_FLOOR_SAMPLES = [
+            ['A good tech usually finds it.'],
+            ['The break is typically near the end.'],
+            ['Seen often enough.'],
+            ['Learned in the field.'],
+            ['Read it with the meter.', 'Two meters.'],
+            ['The cause of a dead trunk.', 'Two causes.'],
+            ['Check the wiring at the controller.'],
+            ['The whole building went dark.', 'Two buildings.'],
+            ['Walk the site first.', 'Two sites.'],
+            ['Live trunk — dead trunk.', 'Live trunk – dead trunk.', 'Live trunk; dead trunk.'],
+        ];
+        expect(OFF_FLOOR_SAMPLES, 'one row of samples per pattern').toHaveLength(OFF_FLOOR.length);
+        OFF_FLOOR.forEach((re, i) => {
+            for (const sample of OFF_FLOOR_SAMPLES[i]) {
+                expect(offFloor(sample), String(re) + ' fires on: ' + sample).toContain(String(re));
+            }
+        });
         // The reasons themselves were in the list swept.
-        for (const part of ['so it had to be in the span between those two.', 'are one block.',
-            'A stop at either edge of it,', 'so the break is next to']) {
+        for (const part of ['so it had to be in the span between those two.', 'are one section.',
+            'A stop at either edge of it,', 'so the break is next to',
+            'through the offline section, so the break is at the other edge of the section, next to']) {
             expect(engine.said.some((text) => text.includes(part)), 'swept: ' + part).toBe(true);
         }
         // The same list, held to the one-split rule: nothing the engine says
@@ -1859,7 +1917,8 @@ test.describe('bus section isolation: what the page keeps, and what it says', ()
         }
         // Anti-vacuity for the word list itself.
         expect(offenders('volt / reading of / customer'))
-            .toEqual([String(/\bvolt/i), String(/\breading of\b/i), String(/\bcustomer\b/i)]);
+            .toEqual([String(/\bvolt/i), String(/\breading of\b/i), String(/\bcustomers?\b/i)]);
+        expect(offenders('his customers'), 'the plural is caught too').toEqual([String(/\bcustomers?\b/i)]);
     });
 
     // What review took OUT of the prose, pinned so it stays out. Each of
