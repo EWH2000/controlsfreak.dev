@@ -148,15 +148,19 @@ function loadEngine() {
 // WHY the break had to be where it is, on the two opening break jobs,
 // hand-worked: job 1 (break between 209 and 210, the supervisor or router
 // at 201) argues from the drawn route; job 2 (201 to 205 offline, break
-// between 205 and 206) from the offline list alone. Every finding, and
-// every pick after it, carries its job's reason.
+// between 205 and 206) from the offline list alone: the trunk ends inside
+// the section, at 201, so the break is at its other edge, 205. (Not "the
+// edge with an online room next to it": on the plan 201 is next to 216, so
+// both edges have one.) Every finding, and every pick after it, carries
+// its job's reason.
 const JOB1_WHY = 'Follow the drawn route from the supervisor or router: every controller as far as ' +
     '209 is online, and every one from 210 to the end of the run is offline. On this floor a break ' +
     'cuts off everything past it on the trunk and nothing before it, so it had to be in the span ' +
     'between those two.';
 const JOB2_WHY = 'On this made-up floor the trunk runs in room order, so the offline rooms, 201 to ' +
-    '205, are one section. The break sits between an online room and an offline one, so it is at the ' +
-    'one edge of the section that has an online room next to it: 205, next to 206.';
+    '205, are one section, and a break cuts off every controller past it, out to the end of the ' +
+    'trunk. So the trunk ends inside that section, at 201, and the break is at the section\'s other ' +
+    'edge, at 205.';
 
 // ── Opening the page ───────────────────────────────────────────────────
 // The theme is chosen through prefers-color-scheme, which the head
@@ -707,8 +711,10 @@ test.describe('bus section isolation: the three jobs, played by the method', () 
     // The owner played the first draft and found the job 1 break first try,
     // by instinct, and said that "doesn't drive home the point since one may
     // not understand why picking that worked". So a first-try find on job 1
-    // or job 2 must say WHY, on screen, on a line of its own, naming the two
-    // rooms beside the break; a screen reader must hear it once, with the
+    // or job 2 must say WHY, on screen, on a line of its own, naming the
+    // rooms it argues from (job 1: the two rooms beside the break; job 2:
+    // the section, the room the trunk ends in, and the room at the break,
+    // the section's other edge); a screen reader must hear it once, with the
     // result; and it must stay up for as long as the finding does. At phone
     // width too, where the longer result sits under the plan and must not
     // move it or spill out of its box.
@@ -716,7 +722,8 @@ test.describe('bus section isolation: the three jobs, played by the method', () 
         { kind: 'layout', pick: 209, why: JOB1_WHY,
             names: ['every controller as far as 209 is online', 'every one from 210 to the end of the run is offline'] },
         { kind: 'no-layout', pick: 205, why: JOB2_WHY,
-            names: ['the offline rooms, 201 to 205, are one section', 'next to it: 205, next to 206.'] },
+            names: ['the offline rooms, 201 to 205, are one section', 'So the trunk ends inside that section, at 201,',
+                'the break is at the section\'s other edge, at 205.'] },
     ];
     for (const [width, height] of [[1280, 900], [375, 800]]) {
         for (const c of FIRST_TRY) {
@@ -909,8 +916,9 @@ test.describe('bus section isolation: the three jobs, played by the method', () 
                 tally.push(await playByMethod(page, B, job));
 
                 const said = await feedback(page).textContent();
-                // The two rooms of the finding, which the reason must name
-                // again (job 1: as far as / from; job 2: edge, next to).
+                // The two rooms of the finding, which job 1's reason must
+                // name again (as far as / from). Job 2's names where the
+                // trunk ends and the room at the break, one of the two.
                 const pair = /^Found it\. The break is between (\d+) and (\d+)\. /.exec(said);
                 const why = (await readPlan(page)).why;
                 if (kind === 'layout') {
@@ -921,17 +929,36 @@ test.describe('bus section isolation: the three jobs, played by the method', () 
                         .toEqual([pair[1], pair[2]].sort());
                 } else if (kind === 'no-layout') {
                     expect(said, `seed ${seed}`).toMatch(new RegExp('^Found it\\. The break is between \\d+ and \\d+\\. ' +
-                        'On this made-up floor the trunk runs in room order, so the offline rooms, \\d+ to \\d+, are one section\\. ' +
-                        'The break sits between an online room and an offline one, so it is at the one edge of the section that ' +
-                        'has an online room next to it: \\d+, next to \\d+\\. ' + (job.stops === 1
-                        ? 'Found in 1 stop, the fewest this job takes\\.$'
-                        : 'Found in 2 stops\\. Reading the pattern first gets it in 1\\.$')));
-                    const [, edge, next] = /: (\d+), next to (\d+)\.$/.exec(why);
-                    expect([edge, next].sort(), `seed ${seed}: the reason names the finding's two rooms`)
-                        .toEqual([pair[1], pair[2]].sort());
+                        'On this made-up floor the trunk runs in room order, so the offline rooms, \\d+ to \\d+, are one section, ' +
+                        'and a break cuts off every controller past it, out to the end of the trunk\\. ' +
+                        'So the trunk ends inside that section, at \\d+, and the break is at the section\'s other edge, at \\d+\\. ' +
+                        (job.stops === 1
+                            ? 'Found in 1 stop, the fewest this job takes\\.$'
+                            : 'Found in 2 stops\\. Reading the pattern first gets it in 1\\.$')));
+                    const [, end, last] = /So the trunk ends inside that section, at (\d+), and the break is at the section's other edge, at (\d+)\.$/.exec(why);
                     // The section named is what the Offline row shows.
                     const [, lo, hi] = /the offline rooms, (\d+) to (\d+), are one section/.exec(why);
-                    expect((await readPlan(page)).offline, `seed ${seed}`).toMatch(new RegExp(`^${lo} to ${hi} · MAC `));
+                    const now = await readPlan(page);
+                    expect(now.offline, `seed ${seed}`).toMatch(new RegExp(`^${lo} to ${hi} · MAC `));
+                    // Where the trunk ends: the edge of the section that is
+                    // room 201 or room 216, and the end of the trunk as the
+                    // page now draws it (solved, so the route is shown): the
+                    // stub that ends the trunk lies in it, and the Trunk row
+                    // runs out to it. That is chain index 15.
+                    expect([lo, hi], `seed ${seed}: the trunk ends at an edge of the section`).toContain(end);
+                    expect([lo, hi].filter((r) => r === '201' || r === '216'), `seed ${seed}: the edge at 201 or 216`)
+                        .toEqual([end]);
+                    expect(now.tailIn, `seed ${seed}: the drawn trunk ends in the room named`).toBe(Number(end));
+                    expect(now.trunk, `seed ${seed}`).toMatch(new RegExp(` to ${end}$`));
+                    expect(B.roomAt(job, 15), `seed ${seed}: chain index 15`).toBe(Number(end));
+                    // The room at the break: the section's other edge, and
+                    // one of the two rooms the finding names, the offline
+                    // one; the other room of the pair reads Online.
+                    expect(last, `seed ${seed}: the other edge`).toBe(end === lo ? hi : lo);
+                    expect([pair[1], pair[2]], `seed ${seed}: the break is at the room named`).toContain(last);
+                    const across = pair[1] === last ? pair[2] : pair[1];
+                    expect(now.rooms.find((r) => r.room === Number(across)).word, `seed ${seed}`).toBe('Online');
+                    expect(now.rooms.find((r) => r.room === Number(last)).word, `seed ${seed}`).toBe('Offline');
                 } else {
                     expect(said, `seed ${seed}`).toMatch(
                         /One controller left: \d+ is the troublemaker\. Found in 4 splits\. Splitting at the midpoint each time takes 4, wherever the troublemaker is\.$/);
@@ -2181,7 +2208,8 @@ test.describe('bus section isolation: what the page keeps, and what it says', ()
             // The why on jobs 1 and 2, each kind of it.
             'so the break is farther along the route', 'so the break is back along the route',
             'where the dead section starts', 'Follow the drawn route from the supervisor or router',
-            'are one section', 'cannot say which way the supervisor or router is',
+            'are one section', 'So the trunk ends inside that section, at',
+            'cannot say which way the supervisor or router is',
             'is not next to that section', 'The first offline room it reaches',
             'through the offline section, so the break is at the other edge of the section',
             'On the plan 201 is next to 216, but the trunk does not join them.',
@@ -2234,7 +2262,9 @@ test.describe('bus section isolation: what the page keeps, and what it says', ()
             }
         });
         // The reasons themselves were in the list swept.
-        for (const part of ['so it had to be in the span between those two.', 'are one section.',
+        for (const part of ['so it had to be in the span between those two.',
+            'are one section, and a break cuts off every controller past it, out to the end of the trunk.',
+            'So the trunk ends inside that section, at', 'and the break is at the section\'s other edge, at',
             'A stop at either edge of it,', 'so the break is next to',
             'through the offline section, so the break is at the other edge of the section, next to',
             'On the plan 201 is next to 216, but the trunk does not join them.',
