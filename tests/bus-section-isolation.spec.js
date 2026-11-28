@@ -21,7 +21,19 @@
 // page to it after every click — every controller's status word, mark,
 // classes and accessible name, the count, the four report rows, the
 // feedback sentence, and the trunk marks: not how many there are but WHICH
-// two controllers each one is drawn between, measured off the screen.
+// two controllers each one is drawn between, measured off the screen as the
+// two rooms whose shared wall the mark sits on.
+//
+// THE PLAN. The page draws the floor as a plan: rooms round a corridor
+// loop, a core in the middle, the supervisor or router in the electrical
+// room. The room numbers walk the ring, so 201 and 216 share a wall, and
+// they are the two ends of the trunk, which never joins them. Two of the
+// engine's sentences on the no-layout job say exactly that ("On the plan
+// 201 is next to 216, but the trunk does not join them"), so the block
+// "the floor plan" below pins it on the drawn page, at both layouts and
+// for both ends: every pair of consecutive rooms shares a wall and its own
+// link, 201 and 216 share a wall and no link, and no other two rooms that
+// are not consecutive share one.
 //
 // The picks themselves are NOT taken from the engine. `readerPick()` works
 // out the next move from what a reader can see on the page (the trunk
@@ -54,6 +66,81 @@ const KINDS = ['layout', 'no-layout', 'flaky'];
 // exactly what the both-ends assertion in the deal tests is there to catch.
 const SEEDS = [1, 7, 9, 42, 77, 1000, 4294967295];
 
+// Measuring the drawn plan, installed into every page the tests open (an
+// init script, so it survives a navigation). Everything is measured from
+// the plan's own corner: a click scrolls the page, and each job's call is
+// a different length, so viewport coordinates would compare nothing.
+//   box(el)   an element's border box
+//   line(el)  the line a link DRAWS: its ::before, which the CSS lays along
+//             one edge of the link's box. `ends` are its two ends, 2px in
+//             (the line overhangs its box by 1px to close the corners).
+//   mark(el)  the centre of a link's ::after, where a break or split is drawn
+//   roomAt(p) the one room whose box holds point p, or null
+//   near(p)   every room whose box comes within 1.5px of p
+function installGeometry() {
+    window.__bsiGeo = (() => {
+        const px = (v) => parseFloat(v) || 0;
+        const box = (el) => {
+            const o = document.getElementById('bsi-plan').getBoundingClientRect();
+            const r = el.getBoundingClientRect();
+            const l = r.left - o.left;
+            const t = r.top - o.top;
+            return { l, t, r: l + r.width, b: t + r.height, w: r.width, h: r.height,
+                cx: l + r.width / 2, cy: t + r.height / 2 };
+        };
+        const line = (el) => {
+            const b = box(el);
+            const cs = getComputedStyle(el, '::before');
+            const l = b.l + px(cs.left);
+            const t = b.t + px(cs.top);
+            const w = px(cs.width);
+            const h = px(cs.height);
+            const out = { l, t, r: l + w, b: t + h, w, h, cx: l + w / 2, cy: t + h / 2 };
+            out.ends = w >= h ? [[l + 2, out.cy], [l + w - 2, out.cy]] : [[out.cx, t + 2], [out.cx, t + h - 2]];
+            return out;
+        };
+        const mark = (el) => {
+            const b = box(el);
+            const cs = getComputedStyle(el, '::after');
+            return [b.l + px(cs.left) + px(cs.marginLeft) + px(cs.width) / 2,
+                b.t + px(cs.top) + px(cs.marginTop) + px(cs.height) / 2];
+        };
+        const rooms = () => Array.from(document.querySelectorAll('#bsi-plan .bsi-room'))
+            .map((el) => ({ room: Number(el.getAttribute('data-bsi-room')), box: box(el) }));
+        const within = (p, r, m) => p[0] > r.l + m && p[0] < r.r - m && p[1] > r.t + m && p[1] < r.b - m;
+        const roomAt = (p) => {
+            const hit = rooms().filter((x) => within(p, x.box, 0.5));
+            return hit.length === 1 ? hit[0].room : null;
+        };
+        const near = (p) => rooms().filter((x) => within(p, x.box, -1.5)).map((x) => x.room).sort((a, b) => a - b);
+        return { box, line, mark, rooms, within, roomAt, near };
+    })();
+}
+
+// The wall two boxes share, or null: they touch along an edge for more than
+// 4px. Rooms tile the plan with no gap, so neighbours touch exactly.
+function sharedWall(a, b) {
+    const touch = (x, y) => Math.abs(x - y) < 1;
+    const span = (a1, a2, b1, b2) => [Math.max(a1, b1), Math.min(a2, b2)];
+    if (touch(a.r, b.l) || touch(b.r, a.l)) {
+        const [from, to] = span(a.t, a.b, b.t, b.b);
+        const x = touch(a.r, b.l) ? (a.r + b.l) / 2 : (b.r + a.l) / 2;
+        return to - from > 4 ? { axis: 'x', at: x, from, to } : null;
+    }
+    if (touch(a.b, b.t) || touch(b.b, a.t)) {
+        const [from, to] = span(a.l, a.r, b.l, b.r);
+        const y = touch(a.b, b.t) ? (a.b + b.t) / 2 : (b.b + a.t) / 2;
+        return to - from > 4 ? { axis: 'y', at: y, from, to } : null;
+    }
+    return null;
+}
+
+// Is point p on that wall: within 1.5px of its line, and inside its length.
+function onWall(p, wall) {
+    const [across, along] = wall.axis === 'x' ? [p[0], p[1]] : [p[1], p[0]];
+    return Math.abs(across - wall.at) <= 1.5 && along > wall.from && along < wall.to;
+}
+
 function loadEngine() {
     return vm.runInNewContext(fs.readFileSync(ENGINE, 'utf8') + '\n; BusIsolation;', {});
 }
@@ -61,15 +148,19 @@ function loadEngine() {
 // WHY the break had to be where it is, on the two opening break jobs,
 // hand-worked: job 1 (break between 209 and 210, the supervisor or router
 // at 201) argues from the drawn route; job 2 (201 to 205 offline, break
-// between 205 and 206) from the offline list alone. Every finding, and
-// every pick after it, carries its job's reason.
+// between 205 and 206) from the offline list alone: the trunk ends inside
+// the section, at 201, so the break is at its other edge, 205. (Not "the
+// edge with an online room next to it": on the plan 201 is next to 216, so
+// both edges have one.) Every finding, and every pick after it, carries
+// its job's reason.
 const JOB1_WHY = 'Follow the drawn route from the supervisor or router: every controller as far as ' +
     '209 is online, and every one from 210 to the end of the run is offline. On this floor a break ' +
     'cuts off everything past it on the trunk and nothing before it, so it had to be in the span ' +
     'between those two.';
 const JOB2_WHY = 'On this made-up floor the trunk runs in room order, so the offline rooms, 201 to ' +
-    '205, are one section. The break sits between an online room and an offline one, so it is at the ' +
-    'one edge of the section that has an online room next to it: 205, next to 206.';
+    '205, are one section, and a break cuts off every controller past it, out to the end of the ' +
+    'trunk. So the trunk ends inside that section, at 201, and the break is at the section\'s other ' +
+    'edge, at 205.';
 
 // ── Opening the page ───────────────────────────────────────────────────
 // The theme is chosen through prefers-color-scheme, which the head
@@ -90,6 +181,7 @@ async function open(page, opts) {
     page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
     page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
     page.on('requestfailed', (r) => errors.push('requestfailed: ' + r.url()));
+    await page.addInitScript(installGeometry);
     await page.setViewportSize({ width: o.width, height: o.height });
     await page.emulateMedia({ colorScheme: o.theme, reducedMotion: o.motion });
     const response = await page.goto(URL_PATH);
@@ -131,30 +223,27 @@ async function readPlan(page) {
         const shown = (el) => !el.hidden && getComputedStyle(el).visibility !== 'hidden' &&
             el.getClientRects().length > 0;
         const text = (id) => document.getElementById(id).textContent;
-        // Where a mark on the trunk is DRAWN: the two controllers nearest
-        // the marked link, by the centres of their boxes. On the snake a
-        // link's two neighbours are always nearer than any other room, in a
-        // row or at a turn, so this is the pair a reader sees it between —
-        // read off the layout, not off the script's own bookkeeping.
-        const centre = (el) => {
-            const r = el.getBoundingClientRect();
-            return [r.left + r.width / 2, r.top + r.height / 2];
-        };
-        const roomEls = Array.from(plan.querySelectorAll('.bsi-room'));
+        const geo = window.__bsiGeo;
+        // Where a mark on the trunk is DRAWN: the rooms whose boxes come
+        // within 1.5px of the mark's centre. A mark on the partition between
+        // two rooms is within reach of exactly those two, so this is the
+        // pair a reader sees it between — read off the layout, not off the
+        // script's own bookkeeping.
         const roomLinks = Array.from(plan.querySelectorAll('.bsi-link:not(.is-cap)'));
         const marks = roomLinks.map((el, i) => {
             const brk = el.classList.contains('is-break');
             const split = el.classList.contains('is-split');
             if (!brk && !split) return null;
-            const [x, y] = centre(el);
-            const between = roomEls
-                .map((b) => {
-                    const [bx, by] = centre(b);
-                    return { room: Number(b.getAttribute('data-bsi-room')), d: Math.hypot(bx - x, by - y) };
-                })
-                .sort((a, b) => a.d - b.d).slice(0, 2).map((n) => n.room).sort((a, b) => a - b);
-            return { mark: brk && split ? 'both' : brk ? 'break' : 'split', index: i, between };
+            return { mark: brk && split ? 'both' : brk ? 'break' : 'split', index: i, between: geo.near(geo.mark(el)) };
         }).filter(Boolean);
+        // Where the two ends of the trunk are drawn, hidden or not: the room
+        // the drop from the supervisor or router lands in, the room the stub
+        // that ends the trunk lies in, and which side of the 201 | 216 wall
+        // the end tag is on (216 sits right of 201 at both layouts).
+        const headLine = geo.line(plan.querySelector('.bsi-link.is-cap:not(.is-tail)'));
+        const tailLine = geo.line(plan.querySelector('.bsi-link.is-tail'));
+        const tailRooms = tailLine.ends.map(geo.roomAt);
+        const wall = geo.box(plan.querySelector('[data-bsi-room="201"]')).r;
         return {
             kind: g.getAttribute('data-bsi-kind'),
             countLabel: text('bsi-count-lbl'),
@@ -173,7 +262,10 @@ async function readPlan(page) {
             found: document.getElementById('bsi-feedback').classList.contains('is-found'),
             routeless: plan.classList.contains('is-routeless'),
             headShown: shown(document.getElementById('bsi-head')),
-            headAtTop: document.getElementById('bsi-head').classList.contains('at-top'),
+            endShown: shown(document.getElementById('bsi-end')),
+            headLands: geo.roomAt(headLine.ends[1]),
+            tailIn: tailRooms[0] === tailRooms[1] ? tailRooms[0] : null,
+            endSide: geo.box(document.getElementById('bsi-end')).cx > wall ? 216 : 201,
             linksShown: Array.from(plan.querySelectorAll('.bsi-link')).filter(shown).length,
             breaks: plan.querySelectorAll('.bsi-link.is-break').length,
             splits: plan.querySelectorAll('.bsi-link.is-split').length,
@@ -288,9 +380,12 @@ async function expectPageShows(page, B, job, said, reason) {
     });
     expect(seen.rooms, where).toEqual(want);
 
-    // The trunk: drawn only when the engine says the route is known.
+    // The trunk: drawn only when the engine says the route is known. The
+    // supervisor or router's box is drawn on every job: it has one place,
+    // whichever end the trunk leaves it from.
     expect(seen.routeless, where).toBe(!v.routeShown);
-    expect(seen.headShown, where).toBe(v.routeShown);
+    expect(seen.headShown, where).toBe(true);
+    expect(seen.endShown, where).toBe(v.routeShown);
     expect(seen.linksShown, where).toBe(v.routeShown ? 17 : 0);
     expect(seen.breaks, where).toBe(v.links.filter((l) => l.state === 'break').length);
     expect(seen.splits, where).toBe(v.links.filter((l) => l.state === 'split').length);
@@ -308,13 +403,19 @@ async function expectPageShows(page, B, job, said, reason) {
     expect([seen.roomLinks, seen.caps], where).toEqual([15, 2]);
     expect(seen.capMarks, `${where}: neither end of the trunk is ever marked`).toBe(0);
     if (v.routeShown) {
-        expect(seen.headAtTop, where).toBe(v.headEnd === 'low');
+        // The drop lands in the first room on the trunk, and the stub and
+        // the tag are at the last.
+        const [first, last] = v.headEnd === 'low' ? [201, 216] : [216, 201];
+        expect([seen.headLands, seen.tailIn, seen.endSide], `${where}: the ends of the trunk`)
+            .toEqual([first, last, last]);
         expect(seen.trunk, where).toBe(v.headEnd === 'low'
             ? 'Supervisor or router, then 201 up to 216'
             : 'Supervisor or router, then 216 down to 201');
     } else {
-        // Parked at the default, so the DOM says nothing about the end.
-        expect(seen.headAtTop, where).toBe(true);
+        // Hidden, and parked at the default (the 201 end) whichever end
+        // the job really has, so the DOM says nothing about it.
+        expect([seen.headLands, seen.tailIn, seen.endSide], `${where}: the ends, parked`)
+            .toEqual([201, 216, 216]);
         // True until the job is solved, a stop at either end included: it
         // claims the route is not drawn, and nothing about the ends.
         expect(seen.trunk, where).toBe('No layout: route not drawn');
@@ -583,26 +684,26 @@ test.describe('bus section isolation: the three jobs, played by the method', () 
         expect(seen.offline).toBe('201 to 205 · MAC 1 to 5');
         expect(seen.online).toBe('206 to 216 · MAC 6 to 16');
 
-        // Nothing on the plan gives the end away: no trunk, no end tag, no
-        // supervisor box — hidden, and parked where a low-end job has it
-        // although this job's supervisor or router is on the HIGH end.
+        // Nothing on the plan gives the end away: no trunk and no end tag,
+        // hidden, and parked where a low-end job has them although this
+        // job's supervisor or router feeds the HIGH end. Its box stays in
+        // its one place in the electrical room.
         expect(job.headEnd).toBe('high');
         expect(seen.routeless).toBe(true);
-        expect(seen.headShown).toBe(false);
-        expect(seen.headAtTop).toBe(true);
+        expect(seen.headShown).toBe(true);
+        expect([seen.headLands, seen.tailIn, seen.endSide]).toEqual([201, 216, 216]);
         await expect(page.locator('#bsi-end')).toBeHidden();
-        await expect(page.locator('#bsi-head')).toHaveClass(/at-top/);
-        await expect(page.locator('#bsi-end')).toHaveClass(/at-bottom/);
+        await expect(page.locator('#bsi-head')).toBeVisible();
 
         expect(readerPick(seen)).toEqual([205, 201]);
         await room(page, 205).click();
         const result = B.pick(job, 205);
         expect(result.text).toBe('Found it. The break is between 205 and 206. ' + JOB2_WHY +
             ' Found in 1 stop, the fewest this job takes.');
-        await expectPageShows(page, B, job, result.text, result.reason);
-        // Once found, the route is drawn — from the high end.
-        await expect(page.locator('#bsi-head')).toBeVisible();
-        await expect(page.locator('#bsi-head')).toHaveClass(/at-bottom/);
+        const solved = await expectPageShows(page, B, job, result.text, result.reason);
+        // Once found, the route is drawn: into 216, ending at 201.
+        await expect(page.locator('#bsi-end')).toBeVisible();
+        expect([solved.headLands, solved.tailIn, solved.endSide]).toEqual([216, 201, 201]);
         await expect(page.locator('#bsi-r-trunk')).toHaveText('Supervisor or router, then 216 down to 201');
         expect(errors).toEqual([]);
     });
@@ -610,8 +711,10 @@ test.describe('bus section isolation: the three jobs, played by the method', () 
     // The owner played the first draft and found the job 1 break first try,
     // by instinct, and said that "doesn't drive home the point since one may
     // not understand why picking that worked". So a first-try find on job 1
-    // or job 2 must say WHY, on screen, on a line of its own, naming the two
-    // rooms beside the break; a screen reader must hear it once, with the
+    // or job 2 must say WHY, on screen, on a line of its own, naming the
+    // rooms it argues from (job 1: the two rooms beside the break; job 2:
+    // the section, the room the trunk ends in, and the room at the break,
+    // the section's other edge); a screen reader must hear it once, with the
     // result; and it must stay up for as long as the finding does. At phone
     // width too, where the longer result sits under the plan and must not
     // move it or spill out of its box.
@@ -619,7 +722,8 @@ test.describe('bus section isolation: the three jobs, played by the method', () 
         { kind: 'layout', pick: 209, why: JOB1_WHY,
             names: ['every controller as far as 209 is online', 'every one from 210 to the end of the run is offline'] },
         { kind: 'no-layout', pick: 205, why: JOB2_WHY,
-            names: ['the offline rooms, 201 to 205, are one section', 'next to it: 205, next to 206.'] },
+            names: ['the offline rooms, 201 to 205, are one section', 'So the trunk ends inside that section, at 201,',
+                'the break is at the section\'s other edge, at 205.'] },
     ];
     for (const [width, height] of [[1280, 900], [375, 800]]) {
         for (const c of FIRST_TRY) {
@@ -812,8 +916,9 @@ test.describe('bus section isolation: the three jobs, played by the method', () 
                 tally.push(await playByMethod(page, B, job));
 
                 const said = await feedback(page).textContent();
-                // The two rooms of the finding, which the reason must name
-                // again (job 1: as far as / from; job 2: edge, next to).
+                // The two rooms of the finding, which job 1's reason must
+                // name again (as far as / from). Job 2's names where the
+                // trunk ends and the room at the break, one of the two.
                 const pair = /^Found it\. The break is between (\d+) and (\d+)\. /.exec(said);
                 const why = (await readPlan(page)).why;
                 if (kind === 'layout') {
@@ -824,17 +929,36 @@ test.describe('bus section isolation: the three jobs, played by the method', () 
                         .toEqual([pair[1], pair[2]].sort());
                 } else if (kind === 'no-layout') {
                     expect(said, `seed ${seed}`).toMatch(new RegExp('^Found it\\. The break is between \\d+ and \\d+\\. ' +
-                        'On this made-up floor the trunk runs in room order, so the offline rooms, \\d+ to \\d+, are one section\\. ' +
-                        'The break sits between an online room and an offline one, so it is at the one edge of the section that ' +
-                        'has an online room next to it: \\d+, next to \\d+\\. ' + (job.stops === 1
-                        ? 'Found in 1 stop, the fewest this job takes\\.$'
-                        : 'Found in 2 stops\\. Reading the pattern first gets it in 1\\.$')));
-                    const [, edge, next] = /: (\d+), next to (\d+)\.$/.exec(why);
-                    expect([edge, next].sort(), `seed ${seed}: the reason names the finding's two rooms`)
-                        .toEqual([pair[1], pair[2]].sort());
+                        'On this made-up floor the trunk runs in room order, so the offline rooms, \\d+ to \\d+, are one section, ' +
+                        'and a break cuts off every controller past it, out to the end of the trunk\\. ' +
+                        'So the trunk ends inside that section, at \\d+, and the break is at the section\'s other edge, at \\d+\\. ' +
+                        (job.stops === 1
+                            ? 'Found in 1 stop, the fewest this job takes\\.$'
+                            : 'Found in 2 stops\\. Reading the pattern first gets it in 1\\.$')));
+                    const [, end, last] = /So the trunk ends inside that section, at (\d+), and the break is at the section's other edge, at (\d+)\.$/.exec(why);
                     // The section named is what the Offline row shows.
                     const [, lo, hi] = /the offline rooms, (\d+) to (\d+), are one section/.exec(why);
-                    expect((await readPlan(page)).offline, `seed ${seed}`).toMatch(new RegExp(`^${lo} to ${hi} · MAC `));
+                    const now = await readPlan(page);
+                    expect(now.offline, `seed ${seed}`).toMatch(new RegExp(`^${lo} to ${hi} · MAC `));
+                    // Where the trunk ends: the edge of the section that is
+                    // room 201 or room 216, and the end of the trunk as the
+                    // page now draws it (solved, so the route is shown): the
+                    // stub that ends the trunk lies in it, and the Trunk row
+                    // runs out to it. That is chain index 15.
+                    expect([lo, hi], `seed ${seed}: the trunk ends at an edge of the section`).toContain(end);
+                    expect([lo, hi].filter((r) => r === '201' || r === '216'), `seed ${seed}: the edge at 201 or 216`)
+                        .toEqual([end]);
+                    expect(now.tailIn, `seed ${seed}: the drawn trunk ends in the room named`).toBe(Number(end));
+                    expect(now.trunk, `seed ${seed}`).toMatch(new RegExp(` to ${end}$`));
+                    expect(B.roomAt(job, 15), `seed ${seed}: chain index 15`).toBe(Number(end));
+                    // The room at the break: the section's other edge, and
+                    // one of the two rooms the finding names, the offline
+                    // one; the other room of the pair reads Online.
+                    expect(last, `seed ${seed}: the other edge`).toBe(end === lo ? hi : lo);
+                    expect([pair[1], pair[2]], `seed ${seed}: the break is at the room named`).toContain(last);
+                    const across = pair[1] === last ? pair[2] : pair[1];
+                    expect(now.rooms.find((r) => r.room === Number(across)).word, `seed ${seed}`).toBe('Online');
+                    expect(now.rooms.find((r) => r.room === Number(last)).word, `seed ${seed}`).toBe('Offline');
                 } else {
                     expect(said, `seed ${seed}`).toMatch(
                         /One controller left: \d+ is the troublemaker\. Found in 4 splits\. Splitting at the midpoint each time takes 4, wherever the troublemaker is\.$/);
@@ -951,15 +1075,18 @@ test.describe('bus section isolation: a wrong pick says what it found, truthfull
         await open(page);
         await selectJob(page, 'no-layout');
         // 201 to 205 are dark and the break is between 205 and 206. Each
-        // stop says why from the offline list alone: no route is drawn.
+        // stop says why from the offline list, the plan and what the stop
+        // itself shows: no route is drawn. 201 and 216 share a wall on the
+        // plan, and the two stops at them say the trunk does not join them.
         await room(page, 201).click();
         await expect(feedback(page)).toHaveText('201 is the end of the run: dead trunk toward 202, and nothing ' +
-            'past it. The trunk reaches 201 through the offline section, so the break is at the other edge ' +
-            'of the section, next to 205.');
-        // The why is one sentence on its own line, after the line that
-        // already said this is the end of the run.
-        await expect(page.locator('#bsi-feedback .bsi-why')).toHaveText('The trunk reaches 201 through the ' +
-            'offline section, so the break is at the other edge of the section, next to 205.');
+            'past it. On the plan 201 is next to 216, but the trunk does not join them. The trunk reaches ' +
+            '201 through the offline section, so the break is at the other edge of the section, next to 205.');
+        // The why is on its own line, after the line that already said this
+        // is the end of the run.
+        await expect(page.locator('#bsi-feedback .bsi-why')).toHaveText('On the plan 201 is next to 216, but ' +
+            'the trunk does not join them. The trunk reaches 201 through the offline section, so the break ' +
+            'is at the other edge of the section, next to 205.');
         // The result line has just named an end of the trunk. The Trunk
         // row beside it claims only that the route is not drawn — an
         // earlier draft said "route and ends not known" at this moment.
@@ -967,8 +1094,8 @@ test.describe('bus section isolation: a wrong pick says what it found, truthfull
         await room(page, 216).click();
         await expect(feedback(page)).toHaveText('216 is the first controller on the trunk: the supervisor ' +
             'or router on one side, live trunk to 215 on the other. The break is not here. The trunk comes ' +
-            'in at 216 and runs in room order. The first offline room it reaches is 205, so the break is ' +
-            'next to 205.');
+            'in at 216 and runs in room order. On the plan 216 is next to 201, but the trunk does not join ' +
+            'them. The first offline room it reaches is 205, so the break is next to 205.');
         await expect(page.locator('#bsi-r-trunk')).toHaveText('No layout: route not drawn');
         await expect(page.locator('#bsi-r-trunk')).not.toHaveText(/not known|ends/);
         await room(page, 210).click();
@@ -981,7 +1108,7 @@ test.describe('bus section isolation: a wrong pick says what it found, truthfull
             'either edge of it, 201 or 205, can.');
         // Four misses in, the route is still not drawn.
         await expect(page.locator('#bsi-plan')).toHaveClass(/is-routeless/);
-        await expect(page.locator('#bsi-head')).toBeHidden();
+        await expect(page.locator('#bsi-end')).toBeHidden();
         expect(readerPick(await readPlan(page)), 'only the other end is left to the method').toEqual([205]);
 
         await room(page, 205).click();
@@ -992,7 +1119,9 @@ test.describe('bus section isolation: a wrong pick says what it found, truthfull
         // "until you find the break" rather than "is not drawn".
         await expect(page.locator('#bsi-r-trunk')).toHaveText('Supervisor or router, then 216 down to 201');
         await expect(page.locator('[data-bsi-brief="no-layout"]')).toContainText(
-            'The route is not drawn until you find the break, and the call does not say which end');
+            'The route is not drawn until you find the break, and the call does not say which way the ' +
+            'trunk leaves the electrical room, into 201 or into 216. What you have is the floor plan and ' +
+            'the offline list: room numbers and MAC addresses.');
     });
 
     test('job 3: a split that cuts nothing off, a split that tells nothing new, and a repeat', async ({ page }) => {
@@ -1222,6 +1351,20 @@ test.describe('bus section isolation: reachable without a mouse or colour', () =
         await room(page, 208).click();
         const split = await page.locator('#bsi-plan .bsi-link.is-split').evaluate((el) =>
             getComputedStyle(el, '::after').borderTopWidth);
+        // What may still hold the fault is the "?" on a solid tile, and
+        // nothing drawn along a wall: a bar there would read as a stretch
+        // of trunk, which is a line along a wall too.
+        const suspects = await page.locator('#bsi-plan .bsi-room.is-suspect').evaluateAll((els) => els.map((b) => {
+            const badge = b.querySelector('.bsi-badge');
+            return {
+                bar: getComputedStyle(b).boxShadow,
+                before: getComputedStyle(b, '::before').content,
+                glyph: badge.textContent,
+                tile: getComputedStyle(badge).backgroundColor === getComputedStyle(badge).borderTopColor,
+            };
+        }));
+        expect(suspects).toHaveLength(8);
+        for (const s of suspects) expect(s).toEqual({ bar: 'none', before: 'none', glyph: '?', tile: true });
         await selectJob(page, 'layout');
         await room(page, 210).click();
         const brk = await page.locator('#bsi-plan .bsi-link.is-break').evaluate((el) =>
@@ -1269,9 +1412,9 @@ test.describe('bus section isolation: reachable without a mouse or colour', () =
         await expect(page.locator('#bsi-plan .bsi-link.is-break')).toHaveCount(1);
 
         await selectJob(page, 'no-layout');
-        await expect(page.locator('#bsi-head')).toBeHidden();
+        await expect(page.locator('#bsi-end')).toBeHidden();
         await room(page, 205).click();
-        await expect(page.locator('#bsi-head')).toBeVisible();
+        await expect(page.locator('#bsi-end')).toBeVisible();
 
         await selectJob(page, 'flaky');
         const B = loadEngine();
@@ -1295,104 +1438,295 @@ test.describe('bus section isolation: reachable without a mouse or colour', () =
 });
 
 // ══════════════════════════════════════════════════════════════════════
-test.describe('bus section isolation: the drawn trunk reads in order', () => {
+test.describe('bus section isolation: the floor plan', () => {
 
-    // Controllers must snake: each one beside or directly below the one
-    // before it, with the link between them drawn in the gap.
+    // Everything the plan draws, measured from its own corner (see
+    // installGeometry). Rooms in room order, links in room order (link i
+    // joins 201 + i and 202 + i), then the two ends of the trunk.
     async function geometry(page) {
         return page.evaluate(() => {
-            // Measured from the plan's own corner, rounded: a click scrolls
-            // the page and each job's call is a different length, so
-            // viewport coordinates would compare nothing.
+            const geo = window.__bsiGeo;
             const plan = document.getElementById('bsi-plan');
-            const origin = plan.getBoundingClientRect();
-            const px = (n) => Math.round(n * 100) / 100;
-            const box = (el) => {
-                const r = el.getBoundingClientRect();
-                const l = r.left - origin.left;
-                const t = r.top - origin.top;
-                return { l: px(l), t: px(t), r: px(l + r.width), b: px(t + r.height),
-                    cx: px(l + r.width / 2), cy: px(t + r.height / 2) };
-            };
+            const q = (sel) => plan.querySelector(sel);
+            const ends = (el) => geo.line(el).ends.map(geo.roomAt);
             return {
-                plan: box(plan),
-                rooms: Array.from(plan.querySelectorAll('.bsi-room')).map(box),
-                links: Array.from(plan.querySelectorAll('.bsi-link:not(.is-cap)')).map(box),
-                headLink: box(plan.querySelector('.bsi-link.is-cap:not(.is-tail)')),
-                tailLink: box(plan.querySelector('.bsi-link.is-tail')),
-                head: box(document.getElementById('bsi-head')),
-                end: box(document.getElementById('bsi-end')),
+                plan: geo.box(plan),
+                rooms: geo.rooms().map((r) => r.box),
+                links: Array.from(plan.querySelectorAll('.bsi-link:not(.is-cap)')).map((el) => ({
+                    line: geo.line(el), ends: ends(el) })),
+                headLink: { line: geo.line(q('.bsi-link.is-cap:not(.is-tail)')),
+                    ends: ends(q('.bsi-link.is-cap:not(.is-tail)')) },
+                tailLink: { line: geo.line(q('.bsi-link.is-tail')), ends: ends(q('.bsi-link.is-tail')) },
+                head: geo.box(document.getElementById('bsi-head')),
+                end: geo.box(document.getElementById('bsi-end')),
+                hall: geo.box(q('.bsi-space.is-hall')),
+                core: geo.box(q('.bsi-space.is-core')),
             };
         });
     }
 
-    function expectSnake(g, perRow) {
-        expect(g.rooms).toHaveLength(16);
-        expect(g.links).toHaveLength(15);
-        const near = (a, b) => Math.abs(a - b) < 1;
-        expect(new Set(g.rooms.map((r) => Math.round(r.t))).size, 'rows of controllers').toBe(16 / perRow);
+    const overlaps = (a, b) => Math.min(a.r, b.r) - Math.max(a.l, b.l) > 0.5 &&
+        Math.min(a.b, b.b) - Math.max(a.t, b.t) > 0.5;
+    const inBox = (p, r) => p[0] > r.l + 0.5 && p[0] < r.r - 0.5 && p[1] > r.t + 0.5 && p[1] < r.b - 0.5;
+
+    // What makes the two plan sentences of the no-layout job true of the
+    // page: consecutive rooms are neighbours on the plan and on the trunk;
+    // 201 and 216 are neighbours on the plan and NOT on the trunk; and that
+    // is the only pair of plan neighbours the trunk does not join.
+    function expectPlan(g, headEnd, where) {
+        const [first, last] = headEnd === 'low' ? [201, 216] : [216, 201];
+        const R = (n) => g.rooms[n - 201];
+        expect(g.rooms, where).toHaveLength(16);
+        expect(g.links, where).toHaveLength(15);
         for (let i = 0; i < 15; i++) {
-            const a = g.rooms[i];
-            const b = g.rooms[i + 1];
-            const link = g.links[i];
-            const sameRow = near(a.t, b.t);
-            const turn = (i + 1) % perRow === 0;
-            expect(sameRow, `room ${201 + i} to ${202 + i}`).toBe(!turn);
-            if (sameRow) {
-                // Neighbours: the gap between them is one link wide and the
-                // link fills it.
-                const gapL = Math.min(a.r, b.r);
-                const gapR = Math.max(a.l, b.l);
-                expect(gapR - gapL, `gap ${201 + i}-${202 + i}`).toBeLessThan(20);
-                expect(gapR - gapL).toBeGreaterThan(4);
-                expect(near(link.l, gapL) && near(link.r, gapR), `link ${201 + i}-${202 + i} spans the gap`).toBe(true);
-                expect(link.cy > a.t && link.cy < a.b).toBe(true);
-            } else {
-                // A turn: same column, next row down, link in the gap.
-                expect(near(a.l, b.l), `turn at ${201 + i}`).toBe(true);
-                expect(b.t).toBeGreaterThan(a.b);
-                expect(near(link.t, a.b) && near(link.b, b.t), `link ${201 + i}-${202 + i} spans the turn`).toBe(true);
-                expect(link.cx > a.l && link.cx < a.r).toBe(true);
+            const pair = `${201 + i}-${202 + i}`;
+            const wall = sharedWall(g.rooms[i], g.rooms[i + 1]);
+            expect(wall, `${where}: ${pair} share a wall`).not.toBeNull();
+            expect(wall.to - wall.from, `${where}: ${pair}, a real length of wall`).toBeGreaterThan(20);
+            // Its own link: one end of the drawn line in each room.
+            expect(g.links[i].ends.slice().sort(), `${where}: link ${i} joins ${pair}`)
+                .toEqual([201 + i, 202 + i]);
+        }
+        // 201 and 216: one wall between them, a long one...
+        const wall = sharedWall(R(201), R(216));
+        expect(wall, `${where}: 201 and 216 share a wall`).not.toBeNull();
+        expect(wall.to - wall.from, where).toBeGreaterThan(20);
+        // ...and nothing the trunk draws joins them. No line has an end in
+        // each, and no line so much as crosses into both.
+        const every = g.links.concat([g.headLink, g.tailLink]);
+        for (const [k, l] of every.entries()) {
+            expect(l.ends.slice().sort(), `${where}: line ${k} joins 201 and 216`).not.toEqual([201, 216]);
+            expect(overlaps(l.line, R(201)) && overlaps(l.line, R(216)), `${where}: line ${k} crosses both`)
+                .toBe(false);
+        }
+        // The one false neighbour: no other two rooms that are not
+        // consecutive share a wall.
+        const extra = [];
+        for (let a = 201; a <= 216; a++) {
+            for (let b = a + 2; b <= 216; b++) {
+                if (sharedWall(R(a), R(b)) && !(a === 201 && b === 216)) extra.push(`${a}|${b}`);
             }
         }
-        // Every row reads against the one above it.
-        for (let i = 0; i + 2 < 16; i += perRow) {
-            const first = g.rooms[i];
-            const second = g.rooms[i + 1];
-            expect(second.l > first.l, `row from ${201 + i}`).toBe((i / perRow) % 2 === 0);
-        }
+        expect(extra, `${where}: plan neighbours the trunk does not join`).toEqual([]);
+
+        // The drop from the supervisor or router: from inside its box into
+        // the first room on the trunk.
+        const [top, bottom] = g.headLink.line.ends;
+        expect(inBox(top, g.head), `${where}: the drop starts in the supervisor or router's box`).toBe(true);
+        expect(g.headLink.ends[1], `${where}: the drop lands in ${first}`).toBe(first);
+        expect(bottom[1]).toBeGreaterThan(top[1]);
+        // The box sits over both drops, so its place says nothing about
+        // which one is in use: over the middle of 201 and of 216.
+        expect(g.head.l < R(201).cx && g.head.r > R(216).cx, `${where}: the box spans both drops`).toBe(true);
+        // The stub that ends the trunk lies in the last room, and stops
+        // short of the 201 | 216 wall.
+        expect(g.tailLink.ends, `${where}: the stub lies in ${last}`).toEqual([last, last]);
+        const gap = Math.min(...g.tailLink.line.ends.map((p) => Math.abs(p[0] - wall.at)));
+        expect(gap, `${where}: the stub stops short of the wall`).toBeGreaterThan(6);
+        // The tag: in the corridor, clear of the core, all on the last
+        // room's side of the wall.
+        expect(g.end.l >= g.hall.l - 0.5 && g.end.r <= g.hall.r + 0.5 &&
+            g.end.t >= g.hall.t - 0.5 && g.end.b <= g.hall.b + 0.5, `${where}: the end tag is in the corridor`)
+            .toBe(true);
+        expect(overlaps(g.end, g.core), `${where}: the end tag is clear of the core`).toBe(false);
+        expect(last === 216 ? g.end.l >= wall.at - 0.5 : g.end.r <= wall.at + 0.5,
+            `${where}: the end tag is on ${last}'s side`).toBe(true);
     }
 
-    for (const [width, perRow] of [[1280, 8], [375, 4]]) {
-        test(`${width}px: a snake of ${perRow}, the supervisor or router at whichever end the job puts it`, async ({ page }) => {
-            await open(page, { width });
-            // Opening job 1: the supervisor or router on the low end.
-            let g = await geometry(page);
-            expectSnake(g, perRow);
-            const r201 = g.rooms[0];
-            const r216 = g.rooms[15];
-            expect(g.head.b).toBeLessThan(r201.t);
-            expect(g.headLink.cx > r201.l && g.headLink.cx < r201.r).toBe(true);
-            expect(Math.abs(g.headLink.b - r201.t)).toBeLessThan(1);
-            expect(Math.abs(g.headLink.t - g.head.b)).toBeLessThan(1);
-            expect(g.end.t).toBeGreaterThan(r216.b);
-            expect(g.tailLink.cx > r216.l && g.tailLink.cx < r216.r).toBe(true);
-            expect(Math.abs(g.tailLink.t - r216.b)).toBeLessThan(1);
-
-            // Job 2 solved: the supervisor or router on the HIGH end, so the
-            // two ends swap and the snake itself does not move.
+    for (const width of [1280, 768, 375, 320]) {
+        test(`${width}px: neighbours share a wall and a link, 201 and 216 share a wall and nothing else, both ends`, async ({ page }) => {
+            const { errors } = await open(page, { width });
+            // Job 1 opening: the supervisor or router feeds 201.
+            const low = await geometry(page);
+            expectPlan(low, 'low', `${width}px job 1`);
+            // Job 3 opening: also the 201 end, nothing found yet.
+            await selectJob(page, 'flaky');
+            const three = await geometry(page);
+            expectPlan(three, 'low', `${width}px job 3`);
+            // Job 2 open: route hidden, the ends parked at the 201 end.
             await selectJob(page, 'no-layout');
+            const parked = await geometry(page);
+            expectPlan(parked, 'low', `${width}px job 2, unsolved`);
+            // Job 2 solved: it feeds 216, so the drop, the stub and the tag
+            // move, and nothing else does.
             await room(page, 205).click();
-            await expect(page.locator('#bsi-head')).toBeVisible();
-            const h = await geometry(page);
-            expectSnake(h, perRow);
-            expect(h.rooms).toEqual(g.rooms);
-            expect(h.head.t).toBeGreaterThan(h.rooms[15].b);
-            expect(Math.abs(h.headLink.t - h.rooms[15].b)).toBeLessThan(1);
-            expect(h.end.b).toBeLessThan(h.rooms[0].t);
-            expect(Math.abs(h.tailLink.b - h.rooms[0].t)).toBeLessThan(1);
-            // The plan is the same height on every job.
-            expect(h.plan.b - h.plan.t).toBeCloseTo(g.plan.b - g.plan.t, 1);
+            await expect(page.locator('#bsi-end')).toBeVisible();
+            const high = await geometry(page);
+            expectPlan(high, 'high', `${width}px job 2, solved`);
+
+            for (const [name, g] of [['job 3', three], ['job 2 unsolved', parked], ['job 2 solved', high]]) {
+                expect(g.rooms, `${width}px ${name}: the rooms do not move`).toEqual(low.rooms);
+                expect(g.head, `${width}px ${name}: the supervisor or router's box does not move`).toEqual(low.head);
+                expect(g.plan.b - g.plan.t, `${width}px ${name}: the plan is the same height`)
+                    .toBeCloseTo(low.plan.b - low.plan.t, 1);
+                expect(g.hall, `${width}px ${name}`).toEqual(low.hall);
+            }
+            expect(errors).toEqual([]);
+        });
+    }
+
+    // While job 2 is unsolved, two deals that feed opposite ends must draw
+    // the same plan. They cannot be identical — their offline rooms differ —
+    // so every room's status (its class, its name, its word and its badge) is
+    // set aside, and the rest of the plan must match to the character: no
+    // class, attribute, inline style or position may say which way the trunk
+    // leaves the electrical room. The drop, the stub and the tag must also be
+    // exactly what job 1's opening (the 201 end) has, and hidden.
+    test('job 2, unsolved: nothing on the plan says which way the trunk leaves the electrical room', async ({ page }) => {
+        const { errors } = await open(page);
+        const B = loadEngine();
+        const ends = () => page.evaluate(() => {
+            const plan = document.getElementById('bsi-plan');
+            return ['.bsi-link.is-cap:not(.is-tail)', '.bsi-link.is-tail', '#bsi-end', '#bsi-head']
+                .map((sel) => plan.querySelector(sel).outerHTML);
+        });
+        const look = () => page.evaluate(() => {
+            const plan = document.getElementById('bsi-plan');
+            const copy = plan.cloneNode(true);
+            for (const el of copy.querySelectorAll('.bsi-room')) {
+                el.removeAttribute('class');
+                el.removeAttribute('aria-label');
+            }
+            for (const el of copy.querySelectorAll('.bsi-room-word')) el.textContent = '';
+            for (const el of copy.querySelectorAll('.bsi-badge')) {
+                el.removeAttribute('hidden');
+                el.textContent = '';
+            }
+            const geo = window.__bsiGeo;
+            const vis = (sel) => getComputedStyle(plan.querySelector(sel)).visibility;
+            return {
+                dom: copy.outerHTML,
+                boxes: Array.from(plan.children).filter((el) => !el.classList.contains('bsi-room'))
+                    .map((el) => geo.box(el)),
+                hidden: ['.bsi-link.is-cap:not(.is-tail)', '.bsi-link.is-tail', '#bsi-end'].map(vis),
+                links: Array.from(plan.querySelectorAll('.bsi-link')).map((el) => getComputedStyle(el).visibility),
+                head: vis('#bsi-head'),
+                routeless: plan.classList.contains('is-routeless'),
+            };
+        });
+
+        const fromJob1 = await ends();
+        await selectJob(page, 'no-layout');
+        let job = B.newJob('no-layout', B.OPENING['no-layout']);
+        expect(job.headEnd, 'the opening job feeds 216').toBe('high');
+        const high = await look();
+        expect(await ends(), 'parked exactly where job 1 has them').toEqual(fromJob1);
+        // A stop that finds nothing does not unpark anything.
+        await room(page, 210).click();
+        expect((await look()).dom).toBe(high.dom);
+
+        // A deal that feeds 201.
+        const seed = SEEDS.find((s) => B.nextJob('no-layout', s, job).headEnd === 'low');
+        expect(seed, 'a seed among SEEDS deals a job fed from 201').toBeDefined();
+        await dealSeed(page, seed);
+        job = B.nextJob('no-layout', seed, job);
+        expect(job.headEnd).toBe('low');
+        const low = await look();
+        expect(low.dom, 'the plan, statuses set aside, is the same for both ends').toBe(high.dom);
+        expect(low.boxes, 'and every space, link, box and tag is in the same place').toEqual(high.boxes);
+        expect(await ends()).toEqual(fromJob1);
+        for (const v of [high, low]) {
+            expect(v.routeless).toBe(true);
+            expect(v.hidden, 'the drop, the stub and the tag are hidden').toEqual(['hidden', 'hidden', 'hidden']);
+            expect(v.links.every((x) => x === 'hidden'), 'no link is visible').toBe(true);
+            expect(v.links).toHaveLength(17);
+            expect(v.head, 'the box itself stays drawn').toBe('visible');
+        }
+        // Anti-vacuity: the comparison reads what it should (the places of
+        // the rooms and links are in it), and it does see the ends move
+        // once a job fed from 216 is solved.
+        expect(high.dom).toContain('data-bsi-room="216"');
+        expect(high.dom).toContain('--bsi-cw: 6 / 8');
+        expect(high.dom.match(/class="bsi-link/g)).toHaveLength(17);
+        await dealSeed(page, B.OPENING['no-layout']);
+        job = B.nextJob('no-layout', B.OPENING['no-layout'], job);
+        expect(job.headEnd).toBe('high');
+        expect((await look()).dom).toBe(high.dom);
+        for (let guard = 0; guard < 2 && !job.solved; guard++) {
+            const pick = B.method(job)[0];
+            await room(page, pick).click();
+            B.pick(job, pick);
+        }
+        expect(job.solved).toBe(true);
+        expect(await ends(), 'solved and fed from 216: the ends are no longer parked').not.toEqual(fromJob1);
+        expect(errors).toEqual([]);
+    });
+
+    test('the spaces that are not rooms are aria-hidden, unfocusable and not picks', async ({ page }) => {
+        const { errors } = await open(page);
+        const spaces = page.locator('#bsi-plan .bsi-space');
+        await expect(spaces).toHaveCount(7);
+        const facts = await spaces.evaluateAll((els) => els.map((el) => {
+            el.focus();
+            return {
+                kind: el.className,
+                tag: el.tagName,
+                hidden: el.getAttribute('aria-hidden'),
+                tabindex: el.getAttribute('tabindex'),
+                role: el.getAttribute('role'),
+                focused: document.activeElement === el,
+                focusables: el.querySelectorAll('a, button, input, select, textarea, [tabindex]').length,
+                label: el.textContent,
+            };
+        }));
+        expect(facts.map((f) => f.kind)).toEqual(['bsi-space is-hall', 'bsi-space is-core', 'bsi-space is-stair',
+            'bsi-space is-elev', 'bsi-space is-wc', 'bsi-space is-stair', 'bsi-space is-elec']);
+        expect(facts.map((f) => f.label)).toEqual(['Corridor', '', 'Stair', 'Elev.', 'Restrooms', 'Stair', 'Elec.']);
+        for (const f of facts) {
+            expect([f.tag, f.hidden, f.tabindex, f.role, f.focused, f.focusables], f.kind)
+                .toEqual(['SPAN', 'true', null, null, false, 0]);
+        }
+        // The links are decoration to a screen reader too.
+        expect(await page.locator('#bsi-plan .bsi-link').evaluateAll((els) =>
+            els.every((el) => el.getAttribute('aria-hidden') === 'true'))).toBe(true);
+        // Out of the accessibility tree: the plan's group holds the box,
+        // the sixteen rooms and nothing a space says.
+        const tree = await page.getByRole('group', { name: 'Floor plan · pick a controller' }).ariaSnapshot();
+        for (const word of ['Corridor', 'Stair', 'Elev.', 'Restrooms', 'Elec.']) expect(tree).not.toContain(word);
+        expect(tree).toContain('Supervisor or router');
+        // Clicking a space is not a pick.
+        const before = await feedback(page).textContent();
+        await page.locator('#bsi-plan .bsi-space.is-elec').click({ position: { x: 6, y: 6 } });
+        await page.locator('#bsi-plan .bsi-space.is-hall').click({ position: { x: 4, y: 4 } });
+        await expect(count(page)).toHaveText('0');
+        await expect(feedback(page)).toHaveText(before);
+        expect(errors).toEqual([]);
+    });
+
+    // A break or a split is drawn ON the partition between the two rooms the
+    // link joins, at every width: not at the middle of the link's box, which
+    // on a link beside a corner room is off the wall. On a job 3 fed from
+    // 201 a split past room r marks the link between r and r + 1. With the
+    // troublemaker in 216 every one of those splits leaves it cut off, so
+    // the job stays open until the last of them, and fifteen picks put a
+    // mark on every link in turn. (The opening job's troublemaker is in 212:
+    // the split past 212 would solve it and stop the walk there.)
+    for (const width of [1280, 768, 375, 320]) {
+        test(`${width}px: every mark sits on the wall between the two rooms its link joins`, async ({ page }) => {
+            const { errors } = await open(page, { width });
+            await selectJob(page, 'flaky');
+            const B = loadEngine();
+            const seed = 24;
+            const job = B.nextJob('flaky', seed, B.newJob('flaky', B.OPENING.flaky));
+            expect([job.headEnd, B.roomAt(job, job.fault.index)], 'fed from 201, troublemaker in 216')
+                .toEqual(['low', 216]);
+            await dealSeed(page, seed);
+            for (let r = 201; r <= 215; r++) {
+                await room(page, r).click();
+                const said = B.pick(job, r);
+                expect(said.solved, `split past ${r}`).toBe(r === 215);
+                const m = await page.evaluate(() => {
+                    const geo = window.__bsiGeo;
+                    const el = document.querySelector('#bsi-plan .bsi-link.is-split');
+                    const links = Array.from(document.querySelectorAll('#bsi-plan .bsi-link:not(.is-cap)'));
+                    return { index: links.indexOf(el), at: geo.mark(el), rooms: geo.rooms().map((x) => x.box) };
+                });
+                expect(m.index, `${width}px split past ${r}`).toBe(r - 201);
+                const wall = sharedWall(m.rooms[r - 201], m.rooms[r - 200]);
+                expect(onWall(m.at, wall), `${width}px: the mark for ${r}-${r + 1} at ` +
+                    `${m.at.map((n) => n.toFixed(1))} is on their wall ${JSON.stringify(wall)}`).toBe(true);
+            }
+            expect(errors).toEqual([]);
         });
     }
 
@@ -1403,6 +1737,10 @@ test.describe('bus section isolation: the drawn trunk reads in order', () => {
             const g = document.getElementById('bsi-game').getBoundingClientRect();
             const shown = (el) => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
             const all = Array.from(document.querySelectorAll('#bsi-game *')).filter(shown);
+            const rect = (el) => el.getBoundingClientRect();
+            const inside = (a, b) => a.left >= b.left - 0.5 && a.right <= b.right + 0.5 &&
+                a.top >= b.top - 0.5 && a.bottom <= b.bottom + 0.5;
+            const head = document.getElementById('bsi-head');
             return {
                 scrollWidth: doc.scrollWidth,
                 clientWidth: doc.clientWidth,
@@ -1424,6 +1762,20 @@ test.describe('bus section isolation: the drawn trunk reads in order', () => {
                         return cr.right > r.right - 1.5 || cr.bottom > r.bottom - 1.5 || cr.left < r.left + 1.5;
                     });
                 }).map((b) => b.getAttribute('data-bsi-room')),
+                // Every label of a space inside its space; the supervisor or
+                // router's name inside its box; the end tag inside the
+                // corridor and clear of the core (hidden or not: it has the
+                // same place either way).
+                labels: Array.from(document.querySelectorAll('#bsi-plan .bsi-space-label'))
+                    .filter((el) => !inside(rect(el), rect(el.parentElement))).map((el) => el.textContent),
+                headFits: head.scrollWidth <= head.clientWidth && head.scrollHeight <= head.clientHeight,
+                endInHall: inside(rect(document.getElementById('bsi-end')),
+                    rect(document.querySelector('#bsi-plan .bsi-space.is-hall'))),
+                endClearOfCore: (() => {
+                    const a = rect(document.getElementById('bsi-end'));
+                    const b = rect(document.querySelector('#bsi-plan .bsi-space.is-core'));
+                    return a.top >= b.bottom - 0.5 || a.bottom <= b.top + 0.5;
+                })(),
                 // The status word of every controller is on screen.
                 words: Array.from(document.querySelectorAll('#bsi-plan .bsi-room-word')).filter(shown).length,
                 measured: all.length,
@@ -1438,6 +1790,9 @@ test.describe('bus section isolation: the drawn trunk reads in order', () => {
         expect(m.widget[1], where).toBeLessThanOrEqual(width);
         expect(m.outside, `${where}: outside the widget`).toEqual([]);
         expect(m.clipped, `${where}: controller text clipped`).toEqual([]);
+        expect(m.labels, `${where}: a space's label spills out of it`).toEqual([]);
+        expect(m.headFits, `${where}: the supervisor or router's name fits its box`).toBe(true);
+        expect([m.endInHall, m.endClearOfCore], `${where}: the end tag fits the corridor`).toEqual([true, true]);
     }
 
     test('375px: no sideways scroll and nothing clipped, in every job, before and after it is found', async ({ page }) => {
@@ -1457,24 +1812,33 @@ test.describe('bus section isolation: the drawn trunk reads in order', () => {
         expect(errors).toEqual([]);
     });
 
-    // OFFLINE is the widest word a controller carries, and the first draft
-    // of the page spilled it over the controller's border at 375px — and,
-    // once measured, at every width from 721px to about 820px too, where
-    // eight across was still in force. So the layout is walked across both
-    // breakpoints (900/901 for the snake, 480/481 and 359/360 for the
-    // phone rules), not checked at one width.
+    // OFFLINE is the widest word a controller carries, and the side rooms
+    // are the narrowest, so the layout is walked across every breakpoint
+    // (700/701 for the two plans, 480/481 and 359/360 for the phone rules),
+    // not checked at one width. At each width the plan is checked fed from
+    // 201 (jobs 1 and 3) and from 216 (job 2, solved on the first width and
+    // solved from then on), which puts the end tag on both sides of the
+    // 201 | 216 wall: at 320px it has only the corridor beside that wall.
     test('every width from 320px up: the plan fits, with the widest status word showing', async ({ page }) => {
         await open(page);
-        for (const width of [320, 359, 360, 375, 414, 480, 481, 600, 720, 768, 900, 901, 1024, 1280, 1920]) {
+        for (const width of [320, 359, 360, 375, 414, 480, 481, 600, 700, 701, 720, 768, 900, 901, 1024, 1280, 1920]) {
             await page.setViewportSize({ width, height: 900 });
-            for (const kind of ['layout', 'flaky']) {
+            for (const kind of ['layout', 'flaky', 'no-layout']) {
                 await selectJob(page, kind);
+                if (kind === 'no-layout' && width === 320) await room(page, 205).click();
+                await expect(page.locator('#bsi-plan')).not.toHaveClass(/is-routeless/);
                 await expectFits(page, width, `${kind} opening`);
             }
-            const perRow = await page.evaluate(() => new Set(Array.from(
-                document.querySelectorAll('#bsi-plan .bsi-room')).slice(0, 8)
-                .map((b) => Math.round(b.getBoundingClientRect().top))).size);
-            expect(perRow, `${width}px: rows taken by the first eight controllers`).toBe(width <= 900 ? 2 : 1);
+            // Which plan is in force: four rooms along the top at 700px and
+            // below, six above.
+            const top = await page.evaluate(() => {
+                const rooms = Array.from(document.querySelectorAll('#bsi-plan .bsi-room'));
+                const first = Math.min(...rooms.map((b) => b.getBoundingClientRect().top));
+                return rooms.filter((b) => Math.abs(b.getBoundingClientRect().top - first) < 1)
+                    .map((b) => Number(b.getAttribute('data-bsi-room')));
+            });
+            expect(top, `${width}px: the rooms along the top`)
+                .toEqual(width <= 700 ? [207, 208, 209, 210] : [206, 207, 208, 209, 210, 211]);
         }
     });
 
@@ -1578,6 +1942,7 @@ test.describe('bus section isolation: the ink is readable in both themes', () =>
             const seenWords = new Set();
             const seenMarks = new Set();
             const seenClasses = new Set();
+            const seenTexts = new Set();
             const failures = [];
             let measured = 0;
             let smallest = Infinity;
@@ -1590,6 +1955,7 @@ test.describe('bus section isolation: the ink is readable in both themes', () =>
                     smallest = Math.min(smallest, row.ratio);
                     seenClasses.add(row.what.split(' ')[0]);
                     const text = /"(.*)"$/.exec(row.what)[1];
+                    seenTexts.add(text);
                     if (['Online', 'Offline', 'Flaky'].includes(text)) seenWords.add(text);
                     if (['×', '?', '!'].includes(text)) seenMarks.add(text);
                     // One floor for everything: nothing here is claimed as
@@ -1627,9 +1993,15 @@ test.describe('bus section isolation: the ink is readable in both themes', () =>
             expect([...seenWords].sort()).toEqual(['Flaky', 'Offline', 'Online']);
             expect([...seenMarks].sort()).toEqual(['!', '?', '×']);
             for (const cls of ['bsi-room-no', 'bsi-room-mac', 'bsi-room-word', 'bsi-badge', 'bsi-job-btn',
-                'bsi-new', 'bsi-job-title', 'bsi-feedback', 'bsi-head', 'bsi-end', 'widget-readout-label',
-                'widget-readout-value']) {
+                'bsi-new', 'bsi-job-title', 'bsi-feedback', 'bsi-head', 'bsi-end', 'bsi-space-label',
+                'widget-readout-label', 'widget-readout-value']) {
                 expect([...seenClasses], 'the sweep should have measured .' + cls).toContain(cls);
+            }
+            // The plan's own words: every space's label, the box, the tag,
+            // and the key's item for the trunk line.
+            for (const text of ['Corridor', 'Stair', 'Elev.', 'Restrooms', 'Elec.', 'Supervisor or router',
+                'End of trunk', 'the trunk, where it is d']) {
+                expect([...seenTexts], 'the sweep should have measured "' + text + '"').toContain(text);
             }
             expect(smallest).toBeGreaterThanOrEqual(4.5);
         });
@@ -1836,9 +2208,12 @@ test.describe('bus section isolation: what the page keeps, and what it says', ()
             // The why on jobs 1 and 2, each kind of it.
             'so the break is farther along the route', 'so the break is back along the route',
             'where the dead section starts', 'Follow the drawn route from the supervisor or router',
-            'are one section', 'cannot say which way the supervisor or router is',
+            'are one section', 'So the trunk ends inside that section, at',
+            'cannot say which way the supervisor or router is',
             'is not next to that section', 'The first offline room it reaches',
-            'through the offline section, so the break is at the other edge of the section']) {
+            'through the offline section, so the break is at the other edge of the section',
+            'On the plan 201 is next to 216, but the trunk does not join them.',
+            'On the plan 216 is next to 201, but the trunk does not join them.']) {
             expect(all, 'the walk should have shown: ' + reached).toContain(reached);
         }
 
@@ -1887,9 +2262,13 @@ test.describe('bus section isolation: what the page keeps, and what it says', ()
             }
         });
         // The reasons themselves were in the list swept.
-        for (const part of ['so it had to be in the span between those two.', 'are one section.',
+        for (const part of ['so it had to be in the span between those two.',
+            'are one section, and a break cuts off every controller past it, out to the end of the trunk.',
+            'So the trunk ends inside that section, at', 'and the break is at the section\'s other edge, at',
             'A stop at either edge of it,', 'so the break is next to',
-            'through the offline section, so the break is at the other edge of the section, next to']) {
+            'through the offline section, so the break is at the other edge of the section, next to',
+            'On the plan 201 is next to 216, but the trunk does not join them.',
+            'On the plan 216 is next to 201, but the trunk does not join them.']) {
             expect(engine.said.some((text) => text.includes(part)), 'swept: ' + part).toBe(true);
         }
         // The same list, held to the one-split rule: nothing the engine says
@@ -1943,7 +2322,7 @@ test.describe('bus section isolation: what the page keeps, and what it says', ()
         // repeat, no count, no floor the reader has not met yet.
         expect(steps[2]).toBe('Whole trunk flaky? Break it at the midpoint and see whether the half nearer ' +
             'the supervisor or router becomes stable, since sometimes a device can be transmitting ' +
-            'constantly and take others down.');
+            'when it should not and take others down.');
         for (const step of steps) expect(step).not.toMatch(/\b(sixteen|four|halve[sd]?|each)\b/i);
 
         // The arithmetic lives in the Job 3 call, scoped to the made-up

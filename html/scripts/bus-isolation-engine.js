@@ -32,6 +32,18 @@
 // were handed out the same way: macOf(room) = room − 200, so MAC 1 is
 // room 201 and MAC 16 is room 216.
 //
+// THE PLAN the page draws: the sixteen rooms round the outside of a
+// corridor loop, with a core in the middle (stairs, elevator, restrooms
+// and the electrical room that holds the supervisor or router). The room
+// numbers walk the ring, so FIRST_ROOM and LAST_ROOM, 201 and 216, are
+// plan neighbours, wall to wall under the electrical room, and they are
+// also the two ENDS of the trunk, which never joins them. That one false
+// neighbour is what the no-layout job tests, and two of its sentences
+// name it (the end-of-run stop and the first-on-trunk stop, both of
+// which are always at 201 or 216 on that job). They are true only of a
+// plan that draws 201 and 216 side by side with no link between them;
+// tests/bus-section-isolation.spec.js pins that on the built page.
+//
 // Which END the supervisor or router sits on is part of each job:
 // headEnd 'low' puts it before room 201, 'high' puts it after room 216.
 // Positions along the trunk are CHAIN INDEXES, 0..15, counted from the
@@ -112,7 +124,13 @@
 //              or the lowest offline room. One of those two is always
 //              the end of the run and the other always finds the break,
 //              so it is two stops at most. Reading which edge of the
-//              dead group touches live rooms gets it in one.
+//              dead group is the end of the run gets it in one: a break
+//              cuts off everything out to the end of the trunk, so that
+//              edge is the one at 201 or 216, and the break is at the
+//              other. (Reading for the edge with a live room next to it
+//              works along the trunk only. On the plan both edges have
+//              one: the end of the run is 201 or 216, wall to wall with
+//              the other.) The find's reason argues it this way.
 //   flaky      BEST 4, METHOD_MAX 4 — splitting the suspects at their
 //              midpoint takes exactly ceil(log2(16)) = 4 splits wherever
 //              the talker is. Here BEST is the fewest splits any plan
@@ -383,6 +401,10 @@ const BusIsolation = (function () {
 
     function rangeText(r) { return r.from === r.to ? String(r.from) : r.from + ' to ' + r.to; }
 
+    // The other end of the room numbering: 216 for 201, 201 for 216. On
+    // the plan the page draws, the two are wall to wall.
+    function otherEnd(room) { return room === FIRST_ROOM ? LAST_ROOM : FIRST_ROOM; }
+
     function copyFound(found) {
         if (!found) return null;
         return found.type === 'break'
@@ -434,15 +456,30 @@ const BusIsolation = (function () {
     //              along it (away from the supervisor or router, or back
     //              toward it) and why; the find says why the break had to
     //              be in that one span.
-    //   no-layout  the offline list, and nothing else: no route, and no
-    //              word on which end the supervisor or router is on. The
-    //              reason argues from the offline rooms as ONE SECTION,
-    //              which they always are here because this made-up floor
-    //              runs its trunk in room order. The break is at the one
-    //              edge of the section that has an online room next to
-    //              it. The other edge is the end of the run. (The printed
-    //              word is "section", the lesson's own word, never
-    //              "block". offlineBlock() keeps its name: it is internal.)
+    //   no-layout  the offline list, the plan, and what the stop itself
+    //              shows: no route, and no word on which end the
+    //              supervisor or router is on. The reasons argue from the
+    //              offline rooms as ONE SECTION, which they always are
+    //              here because this made-up floor runs its trunk in room
+    //              order. A break cuts off every controller past it, out
+    //              to the end of the trunk, so the end of the run is one
+    //              edge of the section (always 201 or 216 here) and the
+    //              break is at the other edge. The find says exactly that
+    //              and uses no "next to": on the plan both edges have an
+    //              online room next to them, since the end of the run is
+    //              wall to wall with the other end of the numbering, the
+    //              first controller on the trunk, which is online. "The
+    //              edge with an online room next to it" was true only
+    //              along the trunk. Two reasons also argue from
+    //              what the stop shows: at the end of the run (dead trunk
+    //              one way, nothing past it) and at the first controller
+    //              on the trunk (the supervisor or router on one side).
+    //              Both of those stops are at 201 or 216, the pair the
+    //              plan draws wall to wall, so both reasons say that the
+    //              trunk does not join them: that is the misreading the
+    //              plan invites. (The printed word is "section", the
+    //              lesson's own word, never "block". offlineBlock() keeps
+    //              its name: it is internal.)
     //
     // A reason is a function of the fault, the job kind and the room
     // picked, never of the picks before it, so it holds in every pick
@@ -476,10 +513,19 @@ const BusIsolation = (function () {
                 'offline. On this floor a break cuts off everything past it on the trunk and ' +
                 'nothing before it, so it had to be in the span between those two.';
         }
+        // No "next to" here. On the plan BOTH edges of the section have an
+        // online room next to them (the end of the run is 201 or 216, wall
+        // to wall with the other end, which is online), so "the edge with
+        // an online room next to it" was true only along the trunk. The
+        // reason argues from where the trunk ENDS instead: everything out
+        // to the end of the trunk is cut off, so the end of the run, chain
+        // index LAST_INDEX, is one edge of the section, and the break is at
+        // the other, the offline room beside it.
+        const end = roomAt(job, LAST_INDEX);
         return 'On this made-up floor the trunk runs in room order, so the offline rooms, ' +
-            rangeText(offlineBlock(job)) + ', are one section. The break sits between an online ' +
-            'room and an offline one, so it is at the one edge of the section that has an online ' +
-            'room next to it: ' + dead + ', next to ' + live + '.';
+            rangeText(offlineBlock(job)) + ', are one section, and a break cuts off every ' +
+            'controller past it, out to the end of the trunk. So the trunk ends inside that ' +
+            'section, at ' + end + ', and the break is at the section\'s other edge, at ' + dead + '.';
     }
 
     // What a stop that did not find the break tells the player.
@@ -499,9 +545,18 @@ const BusIsolation = (function () {
         // The offline room beside the break: the section's edge that the
         // trunk reaches first.
         const edge = roomAt(job, job.fault.index);
+        // The first controller on the trunk and the end of the run are
+        // always 201 and 216 here, one each. The plan draws the two wall
+        // to wall (see THE PLAN in the header), so both reasons name the
+        // other one and say the trunk does not join them.
+        const besideOnPlan = function () {
+            return 'On the plan ' + room + ' is next to ' + otherEnd(room) +
+                ', but the trunk does not join them.';
+        };
         if (code === 'first-on-trunk') {
-            return 'The trunk comes in at ' + room + ' and runs in room order. The first offline ' +
-                'room it reaches is ' + edge + ', so the break is next to ' + edge + '.';
+            return 'The trunk comes in at ' + room + ' and runs in room order. ' + besideOnPlan() +
+                ' The first offline room it reaches is ' + edge + ', so the break is next to ' +
+                edge + '.';
         }
         if (code === 'live-both') {
             return 'The break sits between an online room and an offline one, so it is at an ' +
@@ -509,10 +564,12 @@ const BusIsolation = (function () {
                 ' is not next to that section.';
         }
         if (code === 'end-of-run') {
-            // One sentence: the line before it has already said this room
-            // is the end of the run, with dead trunk on its one side.
-            return 'The trunk reaches ' + room + ' through the offline section, so the break is ' +
-                'at the other edge of the section, next to ' + edge + '.';
+            // The line before it has already said this room is the end of
+            // the run, with dead trunk on its one side. So the reason opens
+            // on the plan neighbour that stop did NOT find trunk toward,
+            // then says where the break is.
+            return besideOnPlan() + ' The trunk reaches ' + room + ' through the offline section, ' +
+                'so the break is at the other edge of the section, next to ' + edge + '.';
         }
         return 'A stop inside the offline section cannot say which way ' + HEAD_NAME + ' is. ' +
             'A stop at either edge of it, ' + block.from + ' or ' + block.to + ', can.';

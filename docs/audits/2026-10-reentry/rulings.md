@@ -842,3 +842,74 @@ Dispositions (the assistant's, not his words):
   lesson's build and the reviews in this run up to that point had
   inherited the session's model.
 
+## 26. A floor plan for the dead-trunk game, and two wording answers *(2026-11-28, late morning)*
+
+Two messages from the owner since §25.
+
+**On agents and models** (about 03:00). He asked that agents not all
+run on the session's own model: "when you're spinning up agents for
+mechanical fixes with little to no judgement, they can be Opus or even
+Sonnet", and "make sure that rule carries across sessions if
+possible." His reason is about his own account and is not recorded
+here. Disposition (the assistant's): three tiers, written into
+`CLAUDE.md` §*Workflow* with this change. Mechanical work goes to
+Sonnet; builds, fix rounds, reviews and sweeps go to Opus; the
+session's own model is kept for a small, hard call. Only the first
+tier is his sentence; the other two are how the assistant applies it,
+and §25's "Opus by default" is narrowed to match. In his next message
+he said he was glad the rule was noted.
+
+**On the lesson** (about 11:40), after playing PR #677's rework. The
+parts that bear on the page, verbatim:
+
+> The bus game is better now, but now 2 feels a bit too easy after 1,
+> I think something that may make it more fun to look at, and make it a
+> bit harder, would be to make the boxes part of an actual floor plan
+> as opposed to just a grid.
+
+> Transmitting when it should not is exactly the way to say things,
+> constantly transmitting may not click if someone does not know MSTP
+> well. 2 is not a coin toss because one end is fully offline, so you
+> just click the same place as one since they're basically the same
+> without the wire marking.
+
+He added that this should answer everything outstanding, and that
+anything still open should go to him on the board. He did not say to
+launch the lesson; it stays hidden.
+
+Dispositions (the assistant's, not his words), all in PR #678:
+
+- **The game is drawn on a floor plan.** Sixteen rooms around a
+  corridor loop, with a core in the middle that holds the stairs, the
+  elevator, the restrooms and an electrical room, where the supervisor
+  or router is drawn. Three shapes were mocked up by separate agents
+  (this one, a double corridor, and two wings off a lobby) and the
+  assistant chose this one. He looked at the three while it was being
+  built and said: "I really like what you decided on, it's also a very
+  common real world layout". That is his view of the mockup; the built
+  game is still his to play. The page does not repeat his remark about
+  real buildings.
+- **What makes the second job "a bit harder" is one pair of rooms.**
+  The room numbers walk the ring, so 201 and 216 are neighbours on the
+  plan, and they are the two ends of the trunk. With no route drawn,
+  the offline rooms meet online rooms in two places on the plan and
+  only one of them is the break. That this is the right kind of
+  "harder" is the assistant's reading; the board asks him.
+- **Two of the second job's results gained a sentence** naming that
+  pair ("On the plan 201 is next to 216, but the trunk does not join
+  them."). The first and third jobs' sentences are unchanged, and so
+  are the rules of all three.
+- **All three jobs are drawn on the plan,** since it is one floor.
+- **"Transmitting constantly" is gone.** The third step now says
+  "transmitting when it should not", the phrase he confirmed.
+- **The second step says the choice is not a coin toss,** in his terms
+  joined to the logic of a single chain: one end of the trunk is fully
+  offline, so the break is at the other edge of the dead run. "The
+  other edge of the dead run" is the assistant's wording for "the
+  same place as one"; the board says so. A first draft added "the one
+  next to devices still online" and it was cut: on the game's plan
+  both edges of the dead rooms sit beside online rooms. This also
+  settles §25's open point about the second job's score line ("Reading
+  the pattern first gets it in 1"): reading which edge it is, is his
+  method, not a reading placed above it.
+- **Not launched.** What the launch owes is still codebase-issues #345.

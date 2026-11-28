@@ -16580,7 +16580,14 @@ Owner feedback after playing it, 2026-11-28 (verbatim in `rulings.md`
 why that pick worked; the second is good but could use a bit more
 depth; the third is great. The first two were reworked in PR #677:
 every result in those jobs now says why, and the third is unchanged.
-What he meant by depth for the second is asked on the board.
+
+Second round, 2026-11-28 (verbatim in `rulings.md` §26): the second
+job felt a bit too easy after the first, and he suggested drawing the
+boxes as an actual floor plan. PR #678 draws the floor as rooms around
+a core; 201 and 216 are neighbours on the plan and the two ends of the
+trunk, which is what the second job now turns on. The same change put
+his two wording answers into the steps. Whether the plan is hard
+enough, and looks right to him, is asked on the board.
 
 **The graduation pull request owes all of these** (no other lane pays
 them; none is done):
@@ -16614,7 +16621,8 @@ them; none is done):
 - `README.md` tour, the home page count pills, a minor version bump.
 - Decide whether the four section headings get anchor ids (the builder
   dropped them so that every id on the page is `bsi-*` or `main`).
-- Answers to the board's questions may change the copy first.
+- His answers of 2026-11-28 are in the copy (PR #678). His answer on
+  the floor plan may change the game again first.
 
 **Review leftovers** (advisories from the final blind reviews; none was
 a must-fix):
@@ -16662,6 +16670,12 @@ a must-fix):
   sweep compare the test's own floor model with itself, so they cannot
   fail.
 
-Open (waits on the owner's yes; his answer on the second job may
+- From the floor plan (PR #678): the result line is filled with
+  `replaceChildren`, the first use of that method on the site (it
+  needs a browser from 2020 or later, and there is no fallback); the
+  first job's reason on a find never names the room picked, so the
+  link from the pick to the reason rests on the job's brief.
+
+Open (waits on the owner's yes; his answer on the floor plan may
 change it first).
 
