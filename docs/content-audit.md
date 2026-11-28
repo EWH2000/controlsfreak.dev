@@ -3748,19 +3748,23 @@ brief; none made a merged sentence false. One needs the owner.
   - `cfp-trip-reads-as-fan-failure`'s keyed choice is now the longest of
     its four (138 characters against 127). A trim that stays inside the
     owner's words: *"A freeze stat can be in the safety circuit but not
-    on an input."* For the quiz run.
+    on an input."* For the quiz run. **Trimmed 2026-11-27 (PR #668):**
+    116 characters, between the other three.
   - The new sentence says the dampers *"fail closed"* (his words); the
     lesson's first layer and Commanding Actuators both say the
     *outdoor* dampers, and the drawing shows a return damper too.
     "The outdoor dampers" would say less than he did and agree with
-    both.
+    both. **Answered 2026-11-27 (rulings §23; PR #670):** the outdoor
+    and exhaust dampers fail closed, the return damper fails open.
   - The lesson now carries two routes to the same end state — "the
     sequence then closes the outdoor dampers" in the first layer, the
     loss of 24 V in *Reading the Trip* — without connecting them.
   - `start-stop-commands.html` calls an unpointed safety string *"the
     common case"*; the freeze lesson, one click away, says *"Sometimes"*
     for a freeze stat not on an input. If "the common case" is not the
-    owner's, it is a short question for him.
+    owner's, it is a short question for him. **Answered 2026-11-27
+    (rulings §23; PR #670):** he corrected it; both pages now carry his
+    frequencies.
   - His story says a call can be *"as simple as"* resetting the stat;
     the freeze lesson says to treat the trip as evidence before anyone
     resets it. The new related link is the only bridge; the callout
@@ -3781,6 +3785,28 @@ brief; none made a merged sentence false. One needs the owner.
   - PR #665 put an in-prose link from the freeze lesson to Commanding
     Actuators (`#direction-and-fail`); Commanding Actuators has no link
     back. Payer: the quiz run's content PR, one related-links entry.
+    **Paid 2026-11-27 (PR #668).**
   - The HTML comment above the Start/Stop callout says "in his words";
     the callout is his two sentences lightly recast. Same payer.
+    **Fixed 2026-11-27 (PR #668).**
+- **His evening answers (PR #670, two blind reviews; the first found
+  the Workbench's "extremely common in the field", fixed before
+  merge).** Left as built:
+  - Start/Stop Commands says *"it is more common for the controller not
+    to know the status of the duct smoke detector"*, his sentence nearly
+    word for word. Read in context the comparison is to the freeze
+    stat; read alone it can be taken as "more common than not".
+  - That page now names one device three ways: "duct smoke detector",
+    "duct detector", "duct-detector shutdown contact".
+  - The same paragraph's *"There are plenty of units that give an
+    operator no reason they shouldn't be running"* is unaltered. It
+    lists three causes and does not call an unpointed string usual, but
+    it sits three sentences after "Most often the freeze stat has an
+    input".
+  - The freeze lesson now mentions an exhaust damper once; its diagram
+    draws the return and outdoor dampers only, and other pages call the
+    same blade "relief".
+  - The freeze lesson's opener, *"One kind of trip may not say its own
+    name"*, is followed by the common cases before the no-input case it
+    is about.
 
