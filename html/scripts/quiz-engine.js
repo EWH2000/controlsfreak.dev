@@ -141,10 +141,10 @@
 //     it is not a measurement of it. A reader whose browser language
 //     differs from their own habit can still be read the other way on
 //     the ambiguous shape, the one rule the convention decides. For that
-//     case the reveal
-//     adds one line saying how the separator was read ("The comma in
-//     your entry was read as a thousands separator."), on every
-//     submitted ambiguous entry, graded right or wrong, never on a Skip.
+//     case the reveal adds one line saying how the separator was read
+//     ("The comma in your entry was read as a thousands separator."), on
+//     every submitted ambiguous entry, graded right or wrong, never on a
+//     Skip.
 //     Not a number. An entry with no reading keeps Submit disabled. The
 //     format hint ("Enter a number, like 1250 or 12.5.") and
 //     aria-invalid="true" appear only when (a) the normalised entry holds
@@ -182,11 +182,12 @@
 // - Focus moves programmatically to the action button after submit.
 // - The numeric box's format hint is one element per mount, inside
 //   .quiz-numeric under the box + unit row (so it hides with it),
-//   referenced by the input's aria-describedby and aria-live="polite". It is `hidden` and EMPTY until rule (a) or
-//   (b) above shows it: a description is computed even from a hidden
-//   node, so leaving the text in place would read the hint out on every
-//   numeric question while a sighted reader sees nothing — the two must
-//   hear and see the same thing.
+//   referenced by the input's aria-describedby and aria-live="polite".
+//   It is `hidden` and EMPTY until rule (a) or (b) above shows it: a
+//   description is computed even from a hidden node, so leaving the
+//   text in place would read the hint out on every numeric question
+//   while a sighted reader sees nothing — the two must hear and see the
+//   same thing.
 // ──────────────────────────────────────────────────────────────────────
 
 (function () {

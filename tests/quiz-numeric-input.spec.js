@@ -68,9 +68,9 @@ function numeric(id, answer, tolerance, extra) {
 }
 
 // Shapes the shipped banks carry: the 10k thermistor (10000 ± 300), the
-// BACnet/IP port (47808 exact, numeric keypad), the Boston mixed-air
-// temperature (61.6 ± 0.5), the 060 tonnage (5 ± 0.1 tons) and the coil
-// mass flow (44444 ± 250 lb/h).
+// BACnet/IP port (47808 exact), the Boston mixed-air temperature
+// (61.6 ± 0.5), the 060 tonnage (5 ± 0.1 tons) and the coil mass flow
+// (44444 ± 250 lb/h).
 const Q_10K   = numeric('qni-ten-k', 10000, 300, { unit: 'Ω' });
 const Q_616   = numeric('qni-sixty-one-six', 61.6, 0.5, { unit: '°F' });
 const Q_95    = numeric('qni-nine-five', 9.5, 0);
@@ -303,7 +303,7 @@ test.describe('quiz engine — numeric answer box', () => {
         ['+12', 12],
         ['-12', -12],
         ['-0', 0],                   // never -0 (checked separately below)
-        ['−5', -5],             // U+2212 MINUS SIGN reads as '-'
+        ['\u{2212}5', -5],           // U+2212 MINUS SIGN reads as '-'
         // One kind, once, not the ambiguous shape → a decimal mark,
         // digits on at least one side.
         ['12.5', 12.5],
@@ -342,9 +342,9 @@ test.describe('quiz engine — numeric answer box', () => {
         // Whitespace (including the no-break family) is removed, so it
         // works as grouping.
         ['10 000', 10000],
-        ['10 000', 10000],      // NO-BREAK SPACE
-        ['10 000', 10000],      // NARROW NO-BREAK SPACE (French grouping)
-        ['10 000', 10000],      // THIN SPACE
+        ['10\u{00A0}000', 10000],    // NO-BREAK SPACE
+        ['10\u{202F}000', 10000],    // NARROW NO-BREAK SPACE (French grouping)
+        ['10\u{2009}000', 10000],    // THIN SPACE
         ['  12.5  ', 12.5],
         ['1 000,5', 1000.5],
     ];
@@ -404,7 +404,7 @@ test.describe('quiz engine — numeric answer box', () => {
         ['44.444', ',', 44444, '.', 'group'],
         ['-10,000', '.', -10000, ',', 'group'],
         ['+10,000', ',', 10, ',', 'decimal'],
-        ['−10.000', '.', -10, '.', 'decimal'],
+        ['\u{2212}10.000', '.', -10, '.', 'decimal'],
         ['１０，０００', '.', 10000, ',', 'group'],   // full-width "10,000"
         ['1,000 ', ',', 1, ',', 'decimal'],                                   // trailing space removed first
     ];
@@ -549,7 +549,7 @@ test.describe('quiz engine — numeric answer box', () => {
         await expect(hint(page)).toBeHidden();
         await expect(hint(page)).toHaveText('');
         expect(await hint(page).evaluate((n) => n.parentElement.classList.contains('quiz-numeric')),
-            'the hint lives in the numeric row').toBe(true);
+            'the hint is a child of .quiz-numeric').toBe(true);
 
         await box(page).pressSequentially('12abc');
         await expect(box(page), 'what the reader typed is left alone').toHaveValue('12abc');
@@ -721,7 +721,8 @@ test.describe('quiz engine — numeric answer box', () => {
                 rem: parseFloat(getComputedStyle(document.documentElement).fontSize),
                 input: r(host.querySelector('.quiz-numeric-input')),
                 unit: r(host.querySelector('.quiz-numeric-unit')),
-                row: r(host.querySelector('.quiz-numeric')),
+                row: r(host.querySelector('.quiz-numeric-row')),
+                wrap: r(host.querySelector('.quiz-numeric')),
                 hint: hintEl.hidden ? null : r(hintEl),
             };
         }, HOST);
@@ -742,7 +743,7 @@ test.describe('quiz engine — numeric answer box', () => {
         const gap = shown.hint.top - shown.input.bottom;
         expect(Math.abs(gap - 0.4 * shown.rem), `box → hint gap ${gap}px ≈ 0.4rem`).toBeLessThanOrEqual(0.5);
         expect(Math.abs(shown.hint.left - shown.input.left), 'the hint starts under the box').toBeLessThanOrEqual(0.5);
-        expect(shown.hint.bottom, 'the hint is inside the row').toBeLessThanOrEqual(shown.row.bottom + 0.01);
+        expect(shown.hint.bottom, 'the hint is inside .quiz-numeric').toBeLessThanOrEqual(shown.wrap.bottom + 0.01);
 
         await box(page).fill('');
         await expect(hint(page)).toBeHidden();

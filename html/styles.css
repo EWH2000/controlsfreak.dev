@@ -3278,7 +3278,7 @@ p.chip-row-preamble {
     transition: color 0.18s, background 0.18s;
 }
 .quiz-restart-now:hover { color: var(--surface); background: var(--amber); }
-/* The dirty-notice row below sets display: flex, which would override the
+/* The dirty-notice row sets display: flex, which would override the
    UA-default `[hidden] { display: none }`. Same trap that .nav-card[hidden]
    solves above — re-assert hidden for the elements the engine toggles via
    the `hidden` attribute. .quiz-numeric is a plain block now (its flex row
