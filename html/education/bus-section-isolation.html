@@ -413,11 +413,11 @@ noindex: true
                 <a href="/education/bacnet-mstp.html">BACnet MS/TP</a> covers why a trunk fails — the token ring, the addressing, the two wires. This page covers finding the spot, with a made-up floor to work three jobs on.
             </p>
 
-            <!-- Owner's account, first person, lightly recast from his own
-                 words. Every clause traces to what he said; nothing is
-                 added. In particular this page never says WHY the meter
-                 misled him — he did not say, so neither does the site.
-                 Do not add a reason, a reading, or any detail of the job. -->
+            {# Owner's account, first person, lightly recast from his own
+               words. Every clause traces to what he said; nothing is
+               added. Do not add a reason, a reading, or any detail of
+               the job. (A Nunjucks comment, so it stays out of the built
+               page.) #}
             <div class="callout">
                 <p>
                     <strong>True story.</strong> I was going around all day. If I had just studied the floor plan and what was offline, and gone that route first, I could have found the break in the bus way faster. The bigger lesson was to not get bogged down with the likes of trying to use a DMM on a bus and theorizing based on just those numbers, and to focus instead on more apparent problems, such as all of the rooms in one area being out.
@@ -426,15 +426,15 @@ noindex: true
 
             <h2 class="subhead">The order of attack</h2>
 
-            <!-- The three steps are the owner's, in his order and his terms.
-                 The LAST sentence of the first two paragraphs is plain logic
-                 that holds on any single daisy chain — worded as what follows
-                 from the chain, never as field practice. The third step
-                 carries none: he gave ONE split, and what repeated splits add
-                 up to is a rule of the made-up floor, so that arithmetic
-                 lives in the Job 3 call and nowhere up here. Anything about
-                 how often, what usually, or what to check at the controller
-                 is not his and does not belong here. -->
+            {# The three steps are the owner's, in his order and his terms.
+               The LAST sentence of the first two paragraphs is plain logic
+               that holds on any single daisy chain — worded as what follows
+               from the chain, never as field practice. The third step
+               carries none: he gave ONE split, and what repeated splits add
+               up to is a rule of the made-up floor, so that arithmetic
+               lives in the Job 3 call and nowhere up here. Anything about
+               how often, what usually, or what to check at the controller
+               is not his and does not belong here. #}
             <p>
                 <strong>First, try to find a bus layout</strong>, and see whether an obvious spot shows on it. On a daisy chain a single break takes out every controller past it, so on a drawn route the dead section starts at the break.
             </p>
@@ -472,9 +472,9 @@ noindex: true
                     <button type="button" class="bsi-job-btn" data-bsi-job="flaky" aria-pressed="false">3 · Whole trunk flaky</button>
                 </div>
 
-                <!-- The three calls. Static markup; the script only toggles
-                     [hidden]. Each one says what a pick DOES on that job,
-                     which is a rule of the made-up floor, not field practice. -->
+                {# The three calls. Static markup; the script only toggles
+                   [hidden]. Each one says what a pick DOES on that job,
+                   which is a rule of the made-up floor, not field practice. #}
                 <div class="bsi-brief" data-bsi-brief="layout">
                     <h3 class="bsi-job-title">Job 1 · A dead section, and you have the bus layout</h3>
                     <p>
