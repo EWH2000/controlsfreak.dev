@@ -16067,35 +16067,40 @@ German, `10,000` → `10.000` and `61,6` → `61.6`. Playwright's `locale`
 option alone does not change that parser, so the correction above holds
 for a browser running in German, and an English browser had its own
 half of the defect: a decimal comma silently dropped. An entry that can
-be read two ways (one separator, exactly three digits after it) gets
-**one** reading, by the browser's own decimal mark, and the reveal says
-which. A first build graded such an entry right if *either* reading
-fit; a blind review ran it against the shipped banks and found it
-marking unit slips right (`5,000` on a 5-ton answer, `44.444` on a
-44,444 lb/h one), and it was reworked before any pull request. Left
-standing, by design: in a browser whose decimal mark is a comma, a
-period-habit reader who is off by exactly a thousand can be read as
-right; the reveal line is shown in every such case. Exponent entries
-(`1e4`) are no longer accepted. Closed.
+be read two ways (one to three digits with no leading zero, one
+separator, exactly three digits after it) gets **one** reading, by the
+browser's own decimal mark, and the reveal says which. A first build
+graded such an entry right if *either* reading fit; a blind review ran
+it against the shipped banks and found it marking unit slips right
+(`5,000` on a 5-ton answer, `44.444` on a 44,444 lb/h one), and it was
+reworked before any pull request. Closed.
 
-Left as built, each measured by running the merged parser
-(2026-11-27):
+Left standing, by design. A reader whose own habit is the opposite of
+the browser's decimal mark gets the other reading of a two-way entry,
+so a right answer can be marked wrong and an answer wrong by a factor
+of exactly a thousand can be marked right. Run through the merged
+parser: under a comma mark `5,000` → 5 and `44.444` → 44444; under a
+period mark `5.000` → 5 and `44,444` → 44444. Each is inside the
+tolerance of a shipped answer (5 ± 0.1; 44444 ± 250). The reveal line
+is shown whenever a two-way entry is submitted.
 
-- A zero-padded entry skips the two-way shape and is read as a decimal
-  under either mark: `05,000` → 5, `010,000` → 10. So `05,000` grades
-  right on a 5-ton answer. Nobody types a leading zero before a
-  thousands comma; the fix is to widen the two-way shape.
-- NFKC folds more than full-width forms: `10²` → 102, `⑩` → 10. No
-  shipped answer is reachable that way.
+Left as built (2026-11-27). The input → output pairs were measured by
+running the merged parser; the last item says what it is:
+
+- An entry outside the two-way shape is read as a decimal under either
+  mark, with no reveal line: `05,000` → 5, `010,000` → 10, `0,500` →
+  0.5, `1234,567` → 1234.567. So `05,000` grades right on a 5 ± 0.1
+  answer. The fix for the zero-padded case is to widen the two-way
+  shape.
+- NFKC folds more than full-width forms: `10²` → 102, `3²` → 32, `⑩` →
+  10. Two of those land on a shipped answer (32 ± 0; 10 ± 0). No
+  shipped question asks for an entry written that way.
 - `10k`, `34%` and `1e4` have no reading: Submit stays off and the hint
   shows. `1..5` has no reading and shows no hint until Enter is
   pressed; that second rule needs an Enter key, which not every phone
   keypad has.
 - Not checked with a real screen reader: whether the hint's polite live
   region is announced when it appears already filled.
-- Derived from the stylesheet change, not observed: a page left open
-  across the deploy runs the old script with the new stylesheet until
-  reload, and the unit label then sits under the box.
 
 ### 335. Several ten-question banks key every choice on "a", and the keyed choice is usually the longest — the engine does not shuffle choices *(noticed 2026-10-06, Batch B duct-static-control + vav-systems lanes; bank-wide sweep wanted)* *(ruled 2026-11-27 — shuffle in the engine)* *(addressed 2026-11-27 · PR #668 and #669, merged)*
 
@@ -16367,13 +16372,17 @@ wants a visible scroll cue or a smaller size below 480 px rather than
 *(2026-11-27: not taken in either quiz run. It is a stylesheet change
 with a look to judge, and each run carried its one shared-code change
 already — the shuffle, then the number box. Next: with the six-bank
-run, whose new snippets it also constrains.)*
+run, whose new snippets it also constrains, in one stylesheet change
+with #343. The owner is shown a before and after.)*
 
 ### 342. Leftovers from the first quiz run, collected *(noticed 2026-11-27, the blind reviews of PR #668, #669 and #670; each LOW, take opportunistically)*
 
 None blocked a merge. Listed so the next quiz run starts from them,
 beside the two entries that run already owns: the number box (#334) and
 the snippets that run off a phone screen (#341).
+
+*(2026-11-27, later: that run was the number-box run. It closed #334
+and took the two items marked below; #341 moved to the six-bank run.)*
 
 - **The choice-letter lint has known edges** (`tests/quiz-banks.spec.js`,
   `choiceLetterRefs()`). Each string below was run through the function
@@ -16420,7 +16429,7 @@ the snippets that run off a phone screen (#341).
 
 Open, LOW.
 
-### 343. Quiz paragraph and input rules lose to two broader selectors, so several of them have never applied *(noticed 2026-11-27, the number-box lane and its blind reviews; pre-existing, LOW)*
+### 343. Quiz paragraph and input rules lose to two broader selectors, so several of their declarations do not apply *(noticed 2026-11-27, the number-box lane and its blind reviews; pre-existing, LOW)*
 
 Every quiz mounts inside `.tool-card > .tool-body`. Two general rules
 out-rank the quiz block's single-class rules there, whatever the source
@@ -16447,7 +16456,8 @@ its new paragraph rule element-qualified (`p.quiz-numeric-hint`).
 utilities already are, and give the answer box a selector that wins —
 but that changes how every quiz page looks (smaller progress and status
 lines, a narrower box), so it wants the owner's eye on a before/after,
-not a silent merge. Two smaller items from the same lane: the engine's
+not a silent merge. Next: with #341, as one stylesheet change in the
+six-bank run. Two smaller items from the same lane: the engine's
 `el()` helper assigns any key outside its attribute list as a
 *property*, so a lowercase `inputmode` becomes an expando and a string
 `'false'` for `spellcheck` reads as true (the number box now sets those
@@ -16471,13 +16481,17 @@ not come with no `Accept` header, with `Accept: */*`, or with only an
 the injection started is not known.
 
 `html/privacy.html` says "There are no analytics" in its opening
-paragraph and "There is no analytics platform on this site" under *No
-tracking*. Both are false while the beacon is injected. `CLAUDE.md`'s
-"no tracking or analytics" convention rests on the same fact.
+paragraph (the words cross a line break in the source) and "There is
+no analytics platform on this site" under *No tracking*. Both are
+false while the beacon is injected. The home page and `README.md` both
+say "No login, no ads, no tracking", and `CLAUDE.md`'s "no tracking or
+analytics" convention rests on the same fact; whether this beacon
+counts as tracking is the owner's judgement.
 
 **Two ways to make the page true again,** and the choice is the
 owner's: switch the beacon off in the Cloudflare dashboard (Web
 Analytics → the site → Manage site → Advanced Options → "Disable
-automatic setup", by community reports; labels may differ), or keep it
-and reword the two sentences. On the board as a *Your turn* line. No
+automatic setup" → Update, by community reports; nobody here has seen
+his dashboard, so the path may not match), or keep it and reword the
+two sentences. On the board as a *Your turn* line. No
 page was changed. Open.

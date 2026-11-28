@@ -670,27 +670,32 @@ Calls the assistant made in the quiz run (each reversible):
 ## 24. The number-box run *(2026-11-27, night — no new word from the owner)*
 
 Run under §22's go-ahead for items 3 to 5. Calls the assistant made
-(each reversible, each on the board):
+(each reversible; the ones the owner would notice are on the board):
 
-- **One reading, by the browser's number convention.** An entry with
-  one separator and exactly three digits after it ("10,000", "44.444")
-  can mean two numbers. The engine reads it by the decimal mark the
-  browser's own language uses, and the reveal says which way it was
-  read (PR #672; codebase-issues #334 has the measurements).
+- **One reading, by the browser's number convention.** An entry of one
+  to three digits with no leading zero, one separator and exactly three
+  digits after it ("10,000", "44.444") can mean two numbers. The engine
+  reads it by the decimal mark the browser's own language uses, and the
+  reveal says which way it was read (PR #672; codebase-issues #334 has
+  the measurements).
 - **The first build was withdrawn before it reached a pull request.** It
   graded such an entry right if either reading was within tolerance. A
   blind review ran it against the shipped banks and found it marking
   unit slips right: "5,000" on a 5-ton answer, "44.444" on a 44,444 lb/h
-  one. The old engine graded both wrong.
-- **One case is left on purpose.** In a browser whose decimal mark is a
-  comma, a reader with period habits who is off by exactly a thousand
-  can be read as right. The reveal line is shown in every such case.
-  The alternative marks a comma-habit reader wrong for their own
-  format.
-- **Exponent entries ("1e4") are no longer accepted.** The old number
-  input took them; no shipped answer needs one.
+  one.
+- **One kind of slip is left on purpose.** A reader whose own number
+  habit is the opposite of their browser's gets the other reading of a
+  two-way entry: a right answer can be marked wrong, and an answer
+  wrong by a factor of exactly a thousand can be marked right. The
+  reveal line is shown whenever a two-way entry is submitted. The
+  alternative, always reading such an entry the English way, marks a
+  reader in a comma-decimal browser wrong for writing "5,000" to mean
+  five.
+- **Exponent entries ("1e4") have no reading.** No shipped answer needs
+  one: the numeric answers run from 0.9 to 47808.
 - **The phone-width snippets (#341) were not taken.** A stylesheet
-  change with a look to judge; it goes with the six-bank run.
+  change with a look to judge; it goes with the six-bank run, together
+  with the quiz style rules that do not apply (#343).
 - **Three small quiz leftovers rode in the same pull request** and its
   description names them: a test that pins the shuffle's re-draw inside
   one mount, and two stale comments (codebase-issues #342).
