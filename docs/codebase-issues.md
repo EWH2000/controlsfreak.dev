@@ -16502,9 +16502,8 @@ No page was changed.
 **Resolved 2026-11-27 (PR #674, v3.93.3): the owner chose to keep the
 analytics and reword the policy** (his words are in `rulings.md` §25).
 
-- *The inventory above was short.* Of shipped pages it named the privacy
-  page, the home page and `README.md`. The first blind review swept the
-  repository and found six more shipped sentences: "nothing tracked" in
+- *The inventory above was short.* The first blind review swept the
+  repository and found six sentences it had missed: "nothing tracked" in
   the Tools and Simulators landing intros, and "tracks nothing" in the
   intro of each of the four topic hubs. Every one is changed: the home
   hero and `README.md` now read "No login, no ads"; the two landing
@@ -16640,8 +16639,8 @@ a must-fix):
   re-announced by the live region.
 - In the third job a pick on the last controller counts as a split
   though it cuts nothing off (run: `counted: true`). The reader is
-  told at pick time that nothing is cut off; no on-screen text says
-  the pick still counts.
+  told at pick time that nothing is cut off. No sentence on the page
+  says the pick still counts; only the Splits readout goes up.
 - `tests/smoke.spec.js`'s lesson JSON-LD walk now skips a lesson with
   no canonical. A listed lesson that lost its canonical line would
   leave that walk quietly; the manifest-against-sitemap drift test

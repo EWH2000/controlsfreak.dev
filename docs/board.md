@@ -15,12 +15,12 @@
 - [x] Coil Freeze Protection quiz
 - [ ] Quizzes you can't game (the shuffle and the number box are done; six more banks to go)
 - [x] Freeze-season loose ends
-- [ ] Finding a break in a dead trunk (built and hidden; jobs 1 and 2 being reworked on your feedback; goes public on your yes)
+- [ ] Finding a break in a dead trunk (built and hidden; jobs 1 and 2 to be reworked on your feedback; goes public on your yes)
 
 ## Your turn
 
 - The dead-trunk lesson, "Bus Section Isolation" (your phrase): [on the hub preview](https://cfdev.home.arpa/education/bus-section-isolation.html), or [on the site](https://controlsfreak.dev/education/bus-section-isolation), where it is hidden. For job 1 I will make each result say why. For job 2, what would "a bit more depth" look like on a real call: (a) more said about what each stop tells you, (b) room numbers that only roughly follow the wire, so the first stop gets you close and you walk it in, (c) MAC addresses only, with no room numbers, or something else? I will build (a) meanwhile.
-- Two smaller ones on the same lesson, and neither holds anything up. With no layout, is "highest or lowest" a coin toss, or do you start at the end next to rooms still online? In the game that takes one stop, and a coin toss takes up to two. And are "transmitting constantly" (in the steps) and "transmitting when it should not" (in the game) fair ways to say "spamming TX"?
+- Two smaller ones on the same lesson, and neither holds anything up. With no layout, is "highest or lowest" a coin toss, or do you start at the end next to rooms still online? In the game that takes one stop, and a coin toss takes up to two. And are "transmitting constantly" (in the steps) and "transmitting when it should not" (where the page sets up the game) fair ways to say "spamming TX"?
 
 ## Shipped
 

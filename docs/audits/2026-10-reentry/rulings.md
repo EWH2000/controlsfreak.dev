@@ -734,8 +734,8 @@ searched. He was told so and asked to send it again, and told the rule
 the assistant was working by: Opus agents for mechanical fixes, the
 session's model for design and judgment work, and on mixed work Opus
 executes and the session's model verifies. The most recent instruction
-on record is §19.15 (2026-10-06), which says much the same and may be
-the message he meant.
+on record is §19.15 (2026-10-06), which covers the first two parts and
+may be the message he meant.
 
 Calls the assistant made on the privacy change (each reversible):
 
