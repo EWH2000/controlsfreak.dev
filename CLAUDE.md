@@ -1457,6 +1457,14 @@ under *Git conventions*). Stage specific file lists, not
   phantom — already paid during conflict resolution, bodies never
   amended — while real debt went unrecorded. Reconcile against the
   built site, never against the prose in a merged PR.
+- **Match an agent's model to the job** (owner rule, 2026-11-28; the
+  tiers are how it is applied). Agents for mechanical fixes with
+  little to no judgement "can be Opus or even Sonnet": an exact fix
+  list, renames, rewraps and quote checks go to Sonnet. Builds, fix
+  rounds, reviews and sweeps go to Opus, the default when unsure. The
+  session's own model is for a small, hard call. A Workflow `agent()`
+  call inherits the session's model unless `model:` is written, so
+  write it on every call.
 
 CI on every PR runs `npm test` (`.github/workflows/test.yml`);
 Cloudflare Workers Build deploys `_site/` ~60s after merge. A separate
