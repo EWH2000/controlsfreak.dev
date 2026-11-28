@@ -16649,10 +16649,18 @@ a must-fix):
   would still catch it.
 
 - From the rework (PR #677): the first job's reason on a find restates
-  the first step's sentence above the game, on purpose; the second
-  job's results say "block" where the steps say "one run"; on a phone
-  the longest result runs to about nine lines, which moves the key
-  down but not the plan.
+  the first step's sentence above the game, on purpose, and does not
+  say why a stop at that room sees the span (the job's brief does);
+  the second job's results say "section" where the steps say "one
+  run"; two of the second job's misses name the room beside the break,
+  where the first job's misses give only a direction; on a phone the
+  longest results run to several lines, which moves the key down but
+  not the plan.
+- `tests/bus-section-isolation.spec.js`'s plan-position helper waits
+  on every finite animation in the document, not only the card's. In
+  `tests/bus-isolation-engine.spec.js` a few assertions in the reason
+  sweep compare the test's own floor model with itself, so they cannot
+  fail.
 
 Open (waits on the owner's yes; his answer on the second job may
 change it first).
