@@ -697,6 +697,6 @@ Run under §22's go-ahead for items 3 to 5. Calls the assistant made
 - **Version 3.93.2, a patch.**
 
 Found on the way and left for him: Cloudflare is injecting its Web
-Analytics beacon into every served page, and the privacy page says
-there are no analytics (codebase-issues #344). The dashboard is his,
+Analytics beacon into served pages (three checked), and the privacy
+page says there are no analytics (codebase-issues #344). The dashboard is his,
 so it is a *Your turn* line and no page was changed.

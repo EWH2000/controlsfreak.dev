@@ -16430,17 +16430,16 @@ order:
   0.95rem; line-height: 1.8; color: var(--text)`) beats
   `.quiz-progress-text`, `.quiz-reveal-status`, `.quiz-reveal-right`
   and `.quiz-reveal-learn-more` (0,1,0 each) on every property both
-  declare. Measured by the lane in a browser on
-  `/practice/modbus-decoding.html`: the progress line renders at 15.2 px
-  in `--text` where its own rule asks for 0.72rem in `--text-dim`; the
-  reveal status renders 15.2 px where its rule asks for 0.78rem. The
-  status *colour* is right, because its state rules are 0,2,0.
+  declare. Measured by the lane in a browser: the progress line renders
+  at 15.2 px in `--text` where its own rule asks for 0.72rem in
+  `--text-dim`; the reveal status renders 15.2 px where its rule asks
+  for 0.78rem. The status *colour* is right, because its state rules
+  are 0,2,0.
 - **`input[type="number"], input[type="text"]`** (0,1,1) beats
   `.quiz-numeric-input` (0,1,0): its `width: 9rem`, background, padding,
-  font size and colour have never applied, so the answer box ships at
+  font size and colour do not apply, so the answer box ships at
   `width: 100%`. Measured by the lane: that width squeezes a two-word
-  unit onto two lines ("in." over "w.c.") at every viewport, 1280 px
-  included.
+  unit onto two lines ("in." over "w.c.").
 
 The number-box change left all of this as it was on purpose and wrote
 its new paragraph rule element-qualified (`p.quiz-numeric-hint`).
@@ -16462,11 +16461,14 @@ A browser load of production requested
 `https://static.cloudflareinsights.com/beacon.min.js/…`. Measured the
 same night with `curl` sending `Accept: text/html`: the served HTML of
 `/privacy`, `/tools/signal-scaling` and `/practice/modbus-decoding` each
-carries one `<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/…">`
-tag. The built `_site/` has none (`grep -rl cloudflareinsights _site`
-finds no file), so the tag is added by Cloudflare on the way out, not
-by this repository. A `curl` without an `Accept` header gets the page
-without it, which is how a plain fetch can miss it.
+carries one `<script type="module">` tag whose `src` is
+`https://static.cloudflareinsights.com/beacon.min.js/…`. The built
+`_site/` has none (`grep -rl cloudflareinsights _site` finds no file),
+so the tag is added by Cloudflare on the way out, not by this
+repository. On `/privacy` the tag came with `Accept: text/html` and did
+not come with no `Accept` header, with `Accept: */*`, or with only an
+`Accept-Language` header, which is how a plain fetch can miss it. When
+the injection started is not known.
 
 `html/privacy.html` says "There are no analytics" in its opening
 paragraph and "There is no analytics platform on this site" under *No
