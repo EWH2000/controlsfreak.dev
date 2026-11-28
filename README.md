@@ -2,8 +2,8 @@
 
 Open calculators, converters, and practical explainers for
 building-controls engineers — BACnet, Modbus, HVAC, and building
-automation work. No login, no ads, no tracking, just tools that
-are actually useful on a job site.
+automation work. No login, no ads, just tools that are actually
+useful on a job site.
 
 Live at [controlsfreak.dev](https://controlsfreak.dev).
 

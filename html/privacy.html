@@ -1,6 +1,6 @@
 ---
 title: Privacy — controlsfreak.dev
-description: What controlsfreak.dev does with your data — what the contact form collects, what Cloudflare processes to serve the page, and the rights you have.
+description: What controlsfreak.dev does with your data — what the contact form collects, what Cloudflare processes and counts as it serves pages, and your rights.
 canonical: https://controlsfreak.dev/privacy.html
 ---
 {% extends "layouts/page.njk" %}
@@ -22,16 +22,17 @@ canonical: https://controlsfreak.dev/privacy.html
         </div>
         <div class="tool-body">
 
-            <p class="tool-preamble">Last updated: 2026-06-10</p>
+            <p class="tool-preamble">Last updated: 2026-11-27</p>
 
             <p>
                 controlsfreak.dev is run by one person. There are no
-                analytics, no ads, no user accounts, and nothing on the
-                page that tries to identify you. The contact form is
-                the only place the site asks for any information. This
-                page covers what happens with that information, and
-                what the few third-party services involved in serving
-                the page can see.
+                ads and no user accounts, and the site's own code does
+                nothing to identify you. The contact form is the only
+                place the site asks for any information. This page
+                covers what happens with that information, what
+                Cloudflare Web Analytics counts about visits, and what
+                the few third-party services involved in serving the
+                page can see.
             </p>
 
             <section>
@@ -70,6 +71,33 @@ canonical: https://controlsfreak.dev/privacy.html
             </section>
 
             <section>
+                <h2 class="subhead">Cloudflare Web Analytics</h2>
+                <p>
+                    Cloudflare also adds its
+                    <a href="https://www.cloudflare.com/web-analytics/" rel="noopener">Web Analytics</a>
+                    script to the pages it serves. The script loads
+                    from <code>static.cloudflareinsights.com</code>
+                    and reports when a page has finished loading and
+                    when you leave it. From that, Cloudflare shows me
+                    counts of visits and page views, broken down by
+                    page, the site a visit came from, country,
+                    browser, operating system and type of device,
+                    along with how quickly pages loaded. Cloudflare
+                    lists everything it reports in its
+                    <a href="https://developers.cloudflare.com/web-analytics/data-metrics/" rel="noopener">documentation</a>.
+                    Cloudflare states that it collects these numbers
+                    without cookies or any other storage in your
+                    browser, and that it does not fingerprint
+                    individuals to produce them.
+                </p>
+                <p>
+                    That data is used for one purpose only: to let me
+                    see how much use this site gets and where the
+                    demand comes from.
+                </p>
+            </section>
+
+            <section>
                 <h2 class="subhead">Cloudflare Turnstile</h2>
                 <p>
                     The contact form uses
@@ -84,12 +112,13 @@ canonical: https://controlsfreak.dev/privacy.html
             </section>
 
             <section>
-                <h2 class="subhead">No tracking; what the site stores on your device</h2>
+                <h2 class="subhead">What the site stores on your device</h2>
                 <p>
-                    There is no analytics platform on this site, no
-                    advertising script, no fingerprinting, and no
-                    cookie set by the site itself. Nothing on the
-                    page tries to identify you across visits.
+                    There is no advertising script on this site and
+                    no cookie set by the site itself. The site's own
+                    code does no fingerprinting, and the only
+                    measurement script is Cloudflare Web Analytics,
+                    described above.
                 </p>
                 <p>
                     The site does keep a few small preference and
@@ -169,7 +198,8 @@ canonical: https://controlsfreak.dev/privacy.html
                 </p>
                 <p>
                     Request data that Cloudflare sees as part of
-                    delivering the page is handled under its own
+                    delivering the page, and the analytics data
+                    described above, are handled under its own
                     policy; if you want to exercise rights against
                     Cloudflare, you would need to contact them
                     directly. (Fonts are served from this site's own
