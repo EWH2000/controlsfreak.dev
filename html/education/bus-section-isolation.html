@@ -1,0 +1,845 @@
+---
+title: Bus Section Isolation — controlsfreak.dev
+description: Part of an MS/TP trunk is down. Where do you go first? Read what is offline against the floor plan, then find the fault on three made-up jobs.
+nav: education
+category: protocols
+eleventyExcludeFromCollections: true
+noindex: true
+---
+{% extends "layouts/page.njk" %}
+{% from "related-links.njk" import relatedLinks %}
+
+{% block head %}
+    <style>
+        /* Page-specific — the find-the-fault game (bsi-*). The .widget
+           shell and the .widget-readout-* labels come from styles.css;
+           everything below is this page's widget internals.
+
+           NO MOTION: nothing here transitions or animates, so
+           prefers-reduced-motion needs no branch. NO STORAGE: the game
+           keeps its state in memory only.
+
+           STATUS NEVER RIDES ON COLOUR ALONE. Each controller carries
+           its status as a WORD, a glyph SHAPE (filled dot / hollow ring
+           / diamond) and a border STYLE (solid / dashed / dotted); the
+           colour is the fourth cue, not the first. Marks on the trunk
+           differ by shape too (a cross for the break, a hollow square
+           for a split). */
+
+        /* Job selector — stateful buttons, aria-pressed drives the
+           visual (the aid-w-mode-btn / bp-w-mode-btn pattern). The
+           pressed one also grows a 2px underline, so the selection is
+           a shape and not only a hue. */
+        .bsi-jobs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .bsi-jobs .widget-readout-label { margin: 0 0.35rem 0 0; }
+        .bsi-job-btn,
+        .bsi-new {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 0;
+            padding: 0.32rem 0.7rem;
+            cursor: pointer;
+        }
+        .bsi-job-btn:hover,
+        .bsi-new:hover { color: var(--text-bright); border-color: var(--text-dim); }
+        .bsi-job-btn[aria-pressed="true"] {
+            color: var(--text-bright);
+            background: var(--surface);
+            border-color: var(--accent);
+            box-shadow: inset 0 -2px 0 var(--accent);
+        }
+        .bsi-new { color: var(--text-bright); border-color: var(--text-dim); }
+
+        /* Focus rings. styles.css keeps a consolidated FOCUS INDICATORS
+           block for shared classes; these are widget internals with no
+           shared class, so the ring lives here with them. Same 2px
+           accent ring; the offset is 2px, not the shared 3px, because
+           the plan packs controllers 8px apart at phone width. */
+        .bsi-job-btn:focus-visible,
+        .bsi-new:focus-visible,
+        .bsi-room:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        /* The call for the selected job. */
+        .bsi-job-title {
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-bright);
+            margin: 0 0 0.4rem;
+        }
+        .bsi-brief p { font-size: 0.86rem; line-height: 1.7; }
+
+        .bsi-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 0.75rem 1.5rem;
+            margin: 0.9rem 0;
+        }
+
+        /* What the reader has to go on, as words — the same facts the
+           plan draws, for anyone not reading the drawing. */
+        .bsi-report {
+            display: grid;
+            grid-template-columns: max-content minmax(0, 1fr);
+            gap: 0.15rem 0.9rem;
+            margin: 0 0 0.9rem;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            line-height: 1.5;
+        }
+        .bsi-report dt {
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .bsi-report dd { color: var(--text); font-variant-numeric: tabular-nums; }
+
+        /* ── The plan ──────────────────────────────────────────────
+           Sixteen controllers on a SNAKE: the first row reads left to
+           right, the next right to left, so the drawn trunk is one
+           unbroken line and still reads in room order. Columns
+           alternate controller / link, rows alternate controller /
+           link, with a row at each end for whatever sits at that end
+           of the trunk (the supervisor or router, or the end-of-trunk
+           tag). Both ends of the snake land in the first column, at
+           the top and at the bottom.
+
+           Every row is sized explicitly, so the plan is the same
+           height on every job and "New job" never moves underfoot.
+
+           The script writes each element's place for BOTH layouts as
+           custom properties (--bsi-c8 / --bsi-r8 for eight across,
+           --bsi-c4 / --bsi-r4 for four across); the media query below
+           picks the pair. No resize listener. */
+        .bsi-plan {
+            --bsi-gap: 0.75rem;
+            --bsi-end: 1.9rem;
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr) var(--bsi-gap)) minmax(0, 1fr);
+            grid-template-rows:
+                var(--bsi-end) var(--bsi-gap)
+                auto var(--bsi-gap) auto
+                var(--bsi-gap) var(--bsi-end);
+            margin: 0.35rem 0 0;
+        }
+        .bsi-room,
+        .bsi-link { grid-column: var(--bsi-c8); grid-row: var(--bsi-r8); }
+
+        .bsi-room {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.1rem;
+            min-width: 0;
+            min-height: 4.1rem;
+            padding: 0.35rem 0.4rem;
+            font-family: var(--mono);
+            text-align: left;
+            color: var(--text);
+            background: var(--bg);
+            /* Meaning-carrying geometry strokes use --text-dim, not
+               --border (the balancing-diagram convention). */
+            border: 1px solid var(--text-dim);
+            border-radius: 0;
+            cursor: pointer;
+        }
+        .bsi-room:hover { background: var(--surface); }
+        .bsi-room.is-offline { border-style: dashed; }
+        .bsi-room.is-flaky { border-style: dotted; }
+        .bsi-room.is-suspect { box-shadow: inset 0 -3px 0 var(--blue); }
+        .bsi-room.is-found,
+        .bsi-room.is-beside { box-shadow: inset 0 0 0 2px var(--accent); }
+
+        .bsi-room-no { font-size: 0.92rem; font-weight: 600; line-height: 1.2; color: var(--text-bright); }
+        .bsi-room-mac { font-size: 0.62rem; line-height: 1.3; color: var(--text-dim); }
+        .bsi-room-state {
+            display: flex;
+            align-items: center;
+            gap: 0.28rem;
+            margin-top: auto;
+        }
+        .bsi-room-word {
+            font-size: 0.62rem;
+            font-weight: 600;
+            line-height: 1.3;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+        }
+        .bsi-room.is-online .bsi-room-word { color: var(--accent-ink); }
+        .bsi-room.is-offline .bsi-room-word { color: var(--red-text); }
+        .bsi-room.is-flaky .bsi-room-word { color: var(--amber-ink); }
+
+        /* Status glyph — three shapes. */
+        .bsi-glyph { flex: none; width: 0.5rem; height: 0.5rem; }
+        .bsi-room.is-online .bsi-glyph { background: var(--accent); border-radius: 50%; }
+        .bsi-room.is-offline .bsi-glyph { border: 2px solid var(--red); border-radius: 50%; }
+        .bsi-room.is-flaky .bsi-glyph { background: var(--amber); transform: rotate(45deg); }
+
+        /* Corner mark on a controller: × ? or ! (see the key). */
+        .bsi-badge {
+            display: inline-grid;
+            place-items: center;
+            min-width: 1.05rem;
+            height: 1.05rem;
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            font-weight: 600;
+            line-height: 1;
+            color: var(--text-bright);
+            background: var(--surface-2);
+            border: 1px solid var(--text-dim);
+        }
+        .bsi-room .bsi-badge { position: absolute; top: 0.25rem; right: 0.25rem; }
+        .bsi-badge[hidden] { display: none; }
+
+        /* Trunk links. Each sits in a link track between two
+           controllers and draws a 2px line along it; which way the
+           line runs depends on the layout, hence the paired
+           attributes. */
+        .bsi-link { position: relative; }
+        .bsi-link::before { content: ""; position: absolute; background: var(--text-dim); }
+        .bsi-link[data-bsi-dir8="h"]::before { left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px; }
+        .bsi-link[data-bsi-dir8="v"]::before { top: 0; bottom: 0; left: 50%; width: 2px; margin-left: -1px; }
+
+        /* The two ends of the trunk: a link up or down from the first
+           column to the row that names what is there. */
+        .bsi-head,
+        .bsi-end {
+            grid-column: 1 / -1;
+            justify-self: start;
+            display: flex;
+            align-items: center;
+            font-family: var(--mono);
+            font-size: 0.66rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .bsi-head {
+            padding: 0 0.6rem;
+            color: var(--text-bright);
+            background: var(--surface);
+            border: 1px solid var(--text-dim);
+        }
+        .bsi-end { color: var(--text-dim); }
+        .bsi-head.at-top,
+        .bsi-end.at-top { grid-row: 1; }
+        .bsi-head.at-bottom,
+        .bsi-end.at-bottom { grid-row: -2; }
+        .bsi-link.is-cap { grid-column: 1; }
+        .bsi-link.is-cap.at-top { grid-row: 2; }
+        .bsi-link.is-cap.at-bottom { grid-row: -3; }
+        /* End of the trunk: the line stops at a short crossbar. */
+        .bsi-link.is-tail::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            width: 0.8rem;
+            height: 2px;
+            margin-left: -0.4rem;
+            background: var(--text-dim);
+        }
+        .bsi-link.is-tail.at-top::after { top: 0; }
+        .bsi-link.is-tail.at-bottom::after { bottom: 0; }
+
+        /* Marks on the trunk: a cross where it is broken, a hollow
+           square where the reader split it. Either one replaces the
+           line, so the mark is a different SHAPE and not just a
+           different colour. The key below the plan reuses them. */
+        .bsi-link.is-break::before,
+        .bsi-link.is-split::before { background: transparent; }
+        .bsi-link.is-break::after,
+        .bsi-link.is-split::after,
+        .bsi-key-mark {
+            content: "";
+            position: absolute;
+            z-index: 1;
+            left: 50%;
+            top: 50%;
+            width: 1rem;
+            height: 1rem;
+            margin: -0.5rem 0 0 -0.5rem;
+        }
+        .bsi-link.is-break::after,
+        .bsi-key-mark.is-break {
+            background:
+                linear-gradient(45deg, transparent 43%, var(--red) 43%, var(--red) 57%, transparent 57%),
+                linear-gradient(-45deg, transparent 43%, var(--red) 43%, var(--red) 57%, transparent 57%);
+        }
+        .bsi-link.is-split::after,
+        .bsi-key-mark.is-split {
+            width: 0.7rem;
+            height: 0.7rem;
+            margin: -0.35rem 0 0 -0.35rem;
+            background: var(--surface-3);
+            border: 2px solid var(--amber);
+        }
+
+        /* A job with no layout: the route and both ends stay undrawn
+           (hidden, not removed, so the plan keeps its height). */
+        .bsi-plan.is-routeless .bsi-link,
+        .bsi-plan.is-routeless .bsi-head,
+        .bsi-plan.is-routeless .bsi-end { visibility: hidden; }
+
+        /* The result line — the one live region on the page. Height
+           reserved for the common case so a new result does not shove
+           the key around. */
+        p.bsi-feedback {
+            min-height: 4.4rem;
+            margin: 0.9rem 0 0;
+            padding: 0.6rem 0.85rem;
+            font-size: 0.86rem;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--blue);
+        }
+        p.bsi-feedback.is-found { border-left-color: var(--accent); }
+
+        /* Key to the marks. */
+        ul.bsi-key {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem 1.1rem;
+            margin: 0.75rem 0 0;
+            list-style: none;
+            font-family: var(--sans);
+            font-size: 0.78rem;
+            line-height: 1.5;
+            color: var(--text-dim);
+        }
+        ul.bsi-key li { display: flex; align-items: center; gap: 0.4rem; }
+        .bsi-key-mark { position: static; flex: none; margin: 0; }
+        .bsi-key-mark.is-split { margin: 0 0.15rem; }
+
+        /* Four across at 900px and below — the width the house two-column
+           grids collapse at. Eight across needs roughly 70px a controller
+           to carry the word OFFLINE beside its glyph, and between there
+           and about 820px the card does not have that to give. */
+        @media (max-width: 900px) {
+            .bsi-plan {
+                --bsi-gap: 0.5rem;
+                grid-template-columns: repeat(3, minmax(0, 1fr) var(--bsi-gap)) minmax(0, 1fr);
+                grid-template-rows:
+                    var(--bsi-end) var(--bsi-gap)
+                    auto var(--bsi-gap) auto var(--bsi-gap) auto var(--bsi-gap) auto
+                    var(--bsi-gap) var(--bsi-end);
+            }
+            .bsi-room,
+            .bsi-link { grid-column: var(--bsi-c4); grid-row: var(--bsi-r4); }
+            .bsi-link[data-bsi-dir8]::before {
+                left: auto;
+                right: auto;
+                top: auto;
+                bottom: auto;
+                width: auto;
+                height: auto;
+                margin: 0;
+            }
+            .bsi-link[data-bsi-dir4="h"]::before { left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px; }
+            .bsi-link[data-bsi-dir4="v"]::before { top: 0; bottom: 0; left: 50%; width: 2px; margin-left: -1px; }
+        }
+        /* Phone width. The word OFFLINE is the widest thing a controller
+           carries, and four across in a 375px viewport left it spilling
+           over the controller's own border. So the plan takes room back
+           wherever it can: half the card's side padding (the negative
+           margins), tighter gaps, tighter controllers, no tracking on
+           the word. */
+        @media (max-width: 480px) {
+            #bsi-game {
+                margin-left: -0.75rem;
+                margin-right: -0.75rem;
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+            .bsi-plan { --bsi-gap: 0.4rem; }
+            .bsi-room { padding: 0.3rem 0.25rem; }
+            .bsi-room-word { letter-spacing: 0; }
+        }
+        /* Narrower than 360px there is not room for glyph and word side
+           by side. The glyph goes; the word and the border style still
+           carry the status without colour. */
+        @media (max-width: 359px) {
+            .bsi-glyph { display: none; }
+        }
+
+        /* Touch-target floor, page-local: these are widget internals
+           with no shared class, so they are floored here rather than in
+           the shared TOUCH-TARGET FLOOR block (the vfds source-select
+           precedent). The controllers already stand taller than 44px;
+           the rule pins that against a later restyle. */
+        @media (hover: none) {
+            .bsi-job-btn,
+            .bsi-new,
+            .bsi-room { min-height: 44px; }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<main id="main">
+
+    <div class="section-header">
+        <span class="section-label">Education · Bus Section Isolation</span>
+        <div class="section-line"></div>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-card-header">
+            <h1 class="tool-card-title">Bus Section Isolation <span class="tool-tag">BACnet</span></h1>
+        </div>
+        <div class="tool-body">
+
+            <p class="page-intro">
+                <strong>Part of an MS/TP trunk is down. Where do you go first?</strong> That is the only question on this page. The answer is an order of attack, and it starts with the pattern: what is offline, set against the floor plan, before anything else.
+                <a href="/education/bacnet-mstp.html">BACnet MS/TP</a> covers why a trunk fails — the token ring, the addressing, the two wires. This page covers finding the spot, with a made-up floor to work three jobs on.
+            </p>
+
+            <!-- Owner's account, first person, lightly recast from his own
+                 words. Every clause traces to what he said; nothing is
+                 added. In particular this page never says WHY the meter
+                 misled him — he did not say, so neither does the site.
+                 Do not add a reason, a reading, or any detail of the job. -->
+            <div class="callout">
+                <p>
+                    <strong>True story.</strong> I was going around all day. If I had just studied the floor plan and what was offline, and gone that route first, I could have found the break in the bus way faster. The bigger lesson was to not get bogged down with the likes of trying to use a DMM on a bus and theorizing based on just those numbers, and to focus instead on more apparent problems, such as all of the rooms in one area being out.
+                </p>
+            </div>
+
+            <h2 class="subhead">The order of attack</h2>
+
+            <!-- The three steps are the owner's, in his order and his terms.
+                 The LAST sentence of the first two paragraphs is plain logic
+                 that holds on any single daisy chain — worded as what follows
+                 from the chain, never as field practice. The third step
+                 carries none: he gave ONE split, and what repeated splits add
+                 up to is a rule of the made-up floor, so that arithmetic
+                 lives in the Job 3 call and nowhere up here. Anything about
+                 how often, what usually, or what to check at the controller
+                 is not his and does not belong here. -->
+            <p>
+                <strong>First, try to find a bus layout</strong>, and see whether an obvious spot shows on it. On a daisy chain a single break takes out every controller past it, so on a drawn route the dead section starts at the break.
+            </p>
+
+            <p>
+                <strong>No layout?</strong> Look at the MAC addresses of the offline devices or, better, their room numbers, and start at the highest or the lowest. Everything past a single break is dead, so the dead devices are one run along the chain and the break sits at an edge of it.
+            </p>
+
+            <p>
+                <strong>Whole trunk flaky?</strong> Break it at the midpoint and see whether the half nearer the supervisor or router becomes stable, since sometimes a device can be transmitting constantly and take others down.
+            </p>
+
+            <h2 class="subhead">What the made-up floor leaves out</h2>
+
+            <p>
+                The floor in the game below is made up, and it is simpler than a real one. It carries one fault per job, where a real trunk can carry more than one at once. Its break only cuts rooms off, where a real break also leaves the still-connected section without the terminator that sat at the far end. And its trunk runs in room-number order, with the MAC addresses handed out the same way: that order is a given of this made-up floor, and the job with no layout depends on it. Termination is in <a href="/education/bacnet-mstp.html#two-wires">the two wires</a>, and reading a symptom back to its layer is in <a href="/education/bacnet-mstp.html#symptom-layer">reading the symptom</a>, both in the MS/TP lesson.
+            </p>
+
+            <h2 class="subhead">Work the floor</h2>
+
+            <p>
+                One made-up floor: sixteen zone controllers in rooms 201 to 216, on one daisy-chained MS/TP trunk that starts at the supervisor or router. The trunk runs in room-number order, and the MAC addresses were handed out the same way, MAC&nbsp;1 in room 201 through MAC&nbsp;16 in room 216. Which end the supervisor or router sits on is part of each job. What you see is what the supervisor or router reports: each controller online, offline, or flaky (dropping in and out).
+            </p>
+
+            <p>
+                Every job has a single fault: a break in the trunk, or one controller transmitting when it should not (the troublemaker). Every move is the same gesture, picking a controller on the plan, and the score is how many stops or splits it took. <em>New job</em> deals a fresh fault of the same kind.
+            </p>
+
+            <div class="widget" id="bsi-game">
+
+                <div class="bsi-jobs" role="group" aria-labelledby="bsi-jobs-lbl">
+                    <span class="widget-readout-label" id="bsi-jobs-lbl">Job</span>
+                    <button type="button" class="bsi-job-btn" data-bsi-job="layout" aria-pressed="true">1 · Layout in hand</button>
+                    <button type="button" class="bsi-job-btn" data-bsi-job="no-layout" aria-pressed="false">2 · No layout</button>
+                    <button type="button" class="bsi-job-btn" data-bsi-job="flaky" aria-pressed="false">3 · Whole trunk flaky</button>
+                </div>
+
+                <!-- The three calls. Static markup; the script only toggles
+                     [hidden]. Each one says what a pick DOES on that job,
+                     which is a rule of the made-up floor, not field practice. -->
+                <div class="bsi-brief" data-bsi-brief="layout">
+                    <h3 class="bsi-job-title">Job 1 · A dead section, and you have the bus layout</h3>
+                    <p>
+                        A made-up call: a run of rooms has dropped offline, and there is a bus layout. The trunk route is drawn on the plan, starting at the supervisor or router. Pick the controller where you would stop first. A stop shows the trunk on both sides of that controller, as far as the next one each way — live (still tied to the supervisor or router), dead (cut off from it), or broken — and it finds the break if the break is on either side.
+                    </p>
+                </div>
+                <div class="bsi-brief" data-bsi-brief="no-layout" hidden>
+                    <h3 class="bsi-job-title">Job 2 · A dead section, no layout</h3>
+                    <p>
+                        A made-up call: a run of rooms is offline again, and nobody has a layout. The route is not drawn until you find the break, and the call does not say which end the supervisor or router is on. What you have is the offline list: room numbers and MAC addresses. Pick the controller where you would stop first. A stop works as before: it shows the trunk on both sides of that controller, and it finds the break if the break is on either side.
+                    </p>
+                </div>
+                <div class="bsi-brief" data-bsi-brief="flaky" hidden>
+                    <h3 class="bsi-job-title">Job 3 · The whole trunk is flaky</h3>
+                    <p>
+                        A made-up call: every controller on the trunk is dropping in and out. Picking a controller splits the trunk on its far side: that controller and everything nearer the supervisor or router are connected, and everything past it is cut off. Only one split is open at a time: a new pick rejoins the trunk and splits it at the new spot. The plan then shows whether the connected part is stable or flaky. Stable means the troublemaker is in the part cut off; flaky means it is in the connected part. Keep splitting until one controller is left that may hold the fault. On this made-up floor, where one controller is the whole cause, splitting what may still hold the fault at its midpoint halves it each time: sixteen controllers, four splits.
+                    </p>
+                </div>
+
+                <div class="bsi-bar">
+                    <div>
+                        <div class="widget-readout-label" id="bsi-count-lbl">Stops</div>
+                        <div class="widget-readout-value" id="bsi-count">0</div>
+                    </div>
+                    <button type="button" class="bsi-new" id="bsi-new">New job</button>
+                </div>
+
+                <div class="widget-readout-label" id="bsi-report-lbl">What you have to go on</div>
+                <dl class="bsi-report" id="bsi-report" aria-labelledby="bsi-report-lbl">
+                    <dt>Trunk</dt>
+                    <dd id="bsi-r-trunk"></dd>
+                    <dt>Online</dt>
+                    <dd id="bsi-r-online"></dd>
+                    <dt>Offline</dt>
+                    <dd id="bsi-r-offline"></dd>
+                    <dt>Flaky</dt>
+                    <dd id="bsi-r-flaky"></dd>
+                    <dt id="bsi-r-suspects-lbl">Suspects</dt>
+                    <dd id="bsi-r-suspects"></dd>
+                </dl>
+
+                <div class="widget-readout-label" id="bsi-plan-lbl">Floor plan · pick a controller</div>
+                <div class="bsi-plan" id="bsi-plan" role="group" aria-labelledby="bsi-plan-lbl">
+                    <span class="bsi-head at-top" id="bsi-head">Supervisor or router</span>
+                    <span class="bsi-end at-bottom" id="bsi-end">End of trunk</span>
+                </div>
+
+                <p class="bsi-feedback" id="bsi-feedback" role="status" aria-live="polite"></p>
+
+                <ul class="bsi-key" aria-label="Key to the marks on the plan">
+                    <li><span class="bsi-badge" aria-hidden="true">×</span> you stopped here; break on neither side</li>
+                    <li><span class="bsi-badge" aria-hidden="true">?</span> may still be the troublemaker</li>
+                    <li><span class="bsi-badge" aria-hidden="true">!</span> the troublemaker, found</li>
+                    <li><span class="bsi-key-mark is-break" aria-hidden="true"></span> the break, once found</li>
+                    <li><span class="bsi-key-mark is-split" aria-hidden="true"></span> where you split the trunk</li>
+                </ul>
+
+            </div>
+
+            <h2 class="subhead">What this page didn't cover</h2>
+
+            <p>
+                This page stops at finding the section. What to check once you are standing at the spot is a different question, and the three layers a fault could belong to — the token ring, the addressing, the two wires — are walked in <a href="/education/bacnet-mstp.html">BACnet MS/TP</a>. Meter work on the bus is left out on purpose: the question here is where to go first, and the answer is the pattern.
+            </p>
+
+        </div>
+    </div>
+
+    {{ relatedLinks({
+        hub: {href: '/bacnet/', label: 'The BACnet reference hub'},
+        lessons: [
+            {href: '/education/bacnet-mstp.html', label: 'BACnet MS/TP'},
+            {href: '/education/bacnet-networking.html', label: 'BACnet Networking'},
+            {href: '/education/bacnet-basics.html', label: 'BACnet Basics'},
+            {href: '/education/controller-wiring.html', label: 'Controller Wiring'}
+        ],
+        quizzes: [
+            {href: '/practice/bacnet-mstp.html', label: 'BACnet MS/TP'}
+        ]
+    }) }}
+
+    <a class="back-link" href="/education/">← Back to Education</a>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="/scripts/bus-isolation-engine.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // The find-the-fault game. EVERY RULE lives in
+        // /scripts/bus-isolation-engine.js — where the fault is, what
+        // each controller reports, what a stop or a split shows, when a
+        // job is solved, the score, and each sentence of feedback. This
+        // script only draws what BusIsolation.view() hands it and wires
+        // the clicks. It reads view() and nothing else off a job, which
+        // is what keeps the hidden end of the trunk out of the DOM on
+        // the no-layout job.
+        //
+        // No timers, no animation, no storage. State is three job
+        // objects in memory, one per kind, gone on reload.
+        const BI = window.BusIsolation;
+        const game = document.getElementById('bsi-game');
+        if (!BI || !game) return;
+
+        const plan = document.getElementById('bsi-plan');
+        const headBox = document.getElementById('bsi-head');
+        const endTag = document.getElementById('bsi-end');
+        const feedback = document.getElementById('bsi-feedback');
+        const countLbl = document.getElementById('bsi-count-lbl');
+        const count = document.getElementById('bsi-count');
+        const newBtn = document.getElementById('bsi-new');
+        const jobBtns = Array.from(game.querySelectorAll('[data-bsi-job]'));
+        const briefs = Array.from(game.querySelectorAll('[data-bsi-brief]'));
+        const report = {
+            trunk: document.getElementById('bsi-r-trunk'),
+            online: document.getElementById('bsi-r-online'),
+            offline: document.getElementById('bsi-r-offline'),
+            flaky: document.getElementById('bsi-r-flaky'),
+            suspectsLbl: document.getElementById('bsi-r-suspects-lbl'),
+            suspects: document.getElementById('bsi-r-suspects'),
+        };
+
+        const STATUS_WORD = { online: 'Online', offline: 'Offline', flaky: 'Flaky' };
+        const BADGE = { checked: '×', suspect: '?', found: '!' };
+
+        // ── The snake ───────────────────────────────────────────────
+        // Where room r (0 = the lowest room) sits when the plan is
+        // `cols` across: even rows read left to right, odd rows right
+        // to left, so consecutive rooms are always neighbours.
+        function cell(r, cols) {
+            const row = Math.floor(r / cols);
+            const pos = r % cols;
+            return { row: row, col: row % 2 === 0 ? pos : cols - 1 - pos };
+        }
+
+        // Write an element's grid place for both layouts. Controllers
+        // take the odd tracks; a link between room r and room r + 1
+        // takes the even track between them — across the row, or down
+        // to the next row at a turn of the snake.
+        function place(el, r, isLink) {
+            [8, 4].forEach(function (cols) {
+                const a = cell(r, cols);
+                let col = 2 * a.col + 1;
+                let row = 2 * a.row + 3;
+                if (isLink) {
+                    const b = cell(r + 1, cols);
+                    if (a.row === b.row) {
+                        col = 2 * Math.min(a.col, b.col) + 2;
+                        el.setAttribute('data-bsi-dir' + cols, 'h');
+                    } else {
+                        row += 1;
+                        el.setAttribute('data-bsi-dir' + cols, 'v');
+                    }
+                }
+                el.style.setProperty('--bsi-c' + cols, String(col));
+                el.style.setProperty('--bsi-r' + cols, String(row));
+            });
+        }
+
+        function make(tag, cls, text) {
+            const el = document.createElement(tag);
+            el.className = cls;
+            if (text !== undefined) el.textContent = text;
+            return el;
+        }
+
+        // Controllers first, in room order, so the tab order walks the
+        // trunk; then the links, which are decoration to a keyboard.
+        const rooms = [];
+        for (let r = 0; r < BI.ROOM_COUNT; r++) {
+            const room = BI.FIRST_ROOM + r;
+            const btn = make('button', 'bsi-room');
+            btn.type = 'button';
+            btn.setAttribute('data-bsi-room', String(room));
+            const word = make('span', 'bsi-room-word');
+            const state = make('span', 'bsi-room-state');
+            state.appendChild(make('span', 'bsi-glyph'));
+            state.appendChild(word);
+            const badge = make('span', 'bsi-badge');
+            btn.appendChild(make('span', 'bsi-room-no', String(room)));
+            btn.appendChild(make('span', 'bsi-room-mac', 'MAC ' + BI.macOf(room)));
+            btn.appendChild(state);
+            btn.appendChild(badge);
+            place(btn, r, false);
+            plan.appendChild(btn);
+            rooms.push({ btn: btn, word: word, badge: badge });
+        }
+
+        // roomLinks[r] joins room r and room r + 1.
+        const roomLinks = [];
+        for (let r = 0; r < BI.ROOM_COUNT - 1; r++) {
+            const link = make('span', 'bsi-link');
+            place(link, r, true);
+            plan.appendChild(link);
+            roomLinks.push(link);
+        }
+        // The two ends: the link to the supervisor or router, and the
+        // stub that ends the trunk. Both run vertically in column one.
+        const headLink = make('span', 'bsi-link is-cap at-top');
+        const tailLink = make('span', 'bsi-link is-cap is-tail at-bottom');
+        [headLink, tailLink].forEach(function (el) {
+            el.setAttribute('data-bsi-dir8', 'v');
+            el.setAttribute('data-bsi-dir4', 'v');
+            plan.appendChild(el);
+        });
+
+        // ── State ───────────────────────────────────────────────────
+        // Each kind opens on the same job for every reader
+        // (BusIsolation.OPENING); "New job" draws a seed from
+        // Math.random and the engine does the rest.
+        const jobs = {};
+        const said = {};
+        BI.KINDS.forEach(function (kind) {
+            jobs[kind] = BI.newJob(kind, BI.OPENING[kind]);
+            said[kind] = BI.view(jobs[kind]).prompt;
+        });
+        let current = BI.KINDS[0];
+
+        // ── Drawing ─────────────────────────────────────────────────
+        // The runs of rooms reporting one status, as words.
+        function runs(controllers, status) {
+            const parts = [];
+            let first = null;
+            let last = null;
+            const close = function () {
+                if (first === null) return;
+                parts.push(first.room === last.room
+                    ? first.room + ' · MAC ' + first.mac
+                    : first.room + ' to ' + last.room + ' · MAC ' + first.mac + ' to ' + last.mac);
+                first = null;
+            };
+            controllers.forEach(function (c) {
+                if (c.status !== status) { close(); return; }
+                if (first === null) first = c;
+                last = c;
+            });
+            close();
+            return parts.length ? parts.join(', ') : 'none';
+        }
+
+        function nameOf(c) {
+            let name = 'Room ' + c.room + ', MAC ' + c.mac + ', ' + c.status;
+            if (c.cutOff) name += ', cut off by your split';
+            if (c.checked) name += ', you stopped here and the break was on neither side';
+            if (c.suspect) name += ', may still be the troublemaker';
+            if (c.besideBreak) name += ', beside the break';
+            if (c.found) name += ', found: this is the troublemaker';
+            return name;
+        }
+
+        function setAt(el, atTop) {
+            el.classList.toggle('at-top', atTop);
+            el.classList.toggle('at-bottom', !atTop);
+        }
+
+        function render() {
+            const v = BI.view(jobs[current]);
+
+            jobBtns.forEach(function (btn) {
+                btn.setAttribute('aria-pressed', String(btn.getAttribute('data-bsi-job') === current));
+            });
+            briefs.forEach(function (el) {
+                el.hidden = el.getAttribute('data-bsi-brief') !== current;
+            });
+            game.setAttribute('data-bsi-kind', current);
+
+            countLbl.textContent = v.unit === 'stop' ? 'Stops' : 'Splits';
+            count.textContent = String(v.stops);
+
+            // The words.
+            if (v.routeShown) {
+                report.trunk.textContent = v.headEnd === 'low'
+                    ? 'Supervisor or router, then ' + BI.FIRST_ROOM + ' up to ' + BI.LAST_ROOM
+                    : 'Supervisor or router, then ' + BI.LAST_ROOM + ' down to ' + BI.FIRST_ROOM;
+            } else {
+                // Says only what holds until the job is solved. A stop at
+                // either end of the trunk names that end in the result
+                // line, so this row must not claim the ends are unknown.
+                report.trunk.textContent = 'No layout: route not drawn';
+            }
+            report.online.textContent = runs(v.controllers, 'online');
+            report.offline.textContent = runs(v.controllers, 'offline') +
+                (v.controllers.some(function (c) { return c.cutOff; }) ? ' (cut off by your split)' : '');
+            report.flaky.textContent = runs(v.controllers, 'flaky');
+            report.suspectsLbl.hidden = v.suspects === null;
+            report.suspects.hidden = v.suspects === null;
+            // Emptied, not just hidden: a hidden row still holding the last
+            // job's suspects is stale text waiting to be shown.
+            report.suspects.textContent = '';
+            if (v.suspects !== null) {
+                report.suspects.textContent = v.solved
+                    ? v.found.room + ' · MAC ' + BI.macOf(v.found.room) + ', the troublemaker'
+                    : (v.suspects.from === v.suspects.to
+                        ? String(v.suspects.from)
+                        : v.suspects.from + ' to ' + v.suspects.to) +
+                        ' (' + v.suspects.count + ' may still hold the fault)';
+            }
+
+            // The plan. While the route is hidden the two ends park at
+            // a fixed default, so nothing in the DOM says which end the
+            // supervisor or router is really on.
+            plan.classList.toggle('is-routeless', !v.routeShown);
+            const headAtTop = v.headEnd !== 'high';
+            setAt(headBox, headAtTop);
+            setAt(headLink, headAtTop);
+            setAt(endTag, !headAtTop);
+            setAt(tailLink, !headAtTop);
+
+            v.controllers.forEach(function (c, i) {
+                const ui = rooms[i];
+                ui.btn.className = 'bsi-room is-' + c.status +
+                    (c.suspect ? ' is-suspect' : '') +
+                    (c.found ? ' is-found' : '') +
+                    (c.besideBreak ? ' is-beside' : '');
+                ui.word.textContent = STATUS_WORD[c.status];
+                const mark = c.found ? BADGE.found
+                    : c.checked ? BADGE.checked
+                        : c.suspect ? BADGE.suspect : '';
+                ui.badge.textContent = mark;
+                ui.badge.hidden = mark === '';
+                ui.btn.setAttribute('aria-label', nameOf(c));
+            });
+
+            roomLinks.concat([headLink]).forEach(function (el) {
+                el.classList.remove('is-break', 'is-split');
+            });
+            v.links.forEach(function (link) {
+                if (link.state === 'whole') return;
+                const el = link.a === 'head'
+                    ? headLink
+                    : roomLinks[Math.min(link.a, link.b) - BI.FIRST_ROOM];
+                el.classList.add(link.state === 'break' ? 'is-break' : 'is-split');
+            });
+
+            feedback.textContent = said[current];
+            feedback.classList.toggle('is-found', v.solved);
+        }
+
+        // ── Events ──────────────────────────────────────────────────
+        plan.addEventListener('click', function (e) {
+            const btn = e.target.closest('.bsi-room');
+            if (!btn) return;
+            const result = BI.pick(jobs[current], Number(btn.getAttribute('data-bsi-room')));
+            said[current] = result.text;
+            render();
+        });
+
+        jobBtns.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                current = btn.getAttribute('data-bsi-job');
+                render();
+            });
+        });
+
+        newBtn.addEventListener('click', function () {
+            const seed = Math.floor(Math.random() * 4294967296);
+            jobs[current] = BI.nextJob(current, seed, jobs[current]);
+            said[current] = 'New job. ' + BI.view(jobs[current]).prompt;
+            render();
+        });
+
+        render();
+    })();
+</script>
+{% endblock %}

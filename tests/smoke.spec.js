@@ -659,7 +659,9 @@ test('education JSON-LD author / publisher references resolve within the page (#
             if (e.isDirectory()) { if (e.name !== '_includes' && e.name !== '_data') walk(p); continue; }
             if (!e.name.endsWith('.html')) continue;
             const fm = fs.readFileSync(p, 'utf8').match(/^---\n([\s\S]*?)\n---/);
-            if (fm && /^nav:\s*education\s*$/m.test(fm[1])) lessons.push('/' + path.relative(htmlDir, p));
+            // A hidden lesson (no canonical) publishes no JSON-LD at all,
+            // so there is nothing here for it to get wrong.
+            if (fm && /^nav:\s*education\s*$/m.test(fm[1]) && /^canonical:/m.test(fm[1])) lessons.push('/' + path.relative(htmlDir, p));
         }
     })(htmlDir);
     const pages = lessons.filter(u => u !== '/education/index.html');
