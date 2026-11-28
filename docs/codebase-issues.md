@@ -16066,14 +16066,14 @@ headless Chromium: under an English browser locale `61,6` → `616`,
 German, `10,000` → `10.000` and `61,6` → `61.6`. Playwright's `locale`
 option alone does not change that parser, so the correction above holds
 for a browser running in German, and Chromium under an English locale
-had its own half of the defect: a decimal comma silently dropped. An entry that can
-be read two ways (one to three digits with no leading zero, one
-separator, exactly three digits after it) gets **one** reading, by the
-browser's own decimal mark, and the reveal says which. A first build
-graded such an entry right if *either* reading fit; a blind review ran
-it against the shipped banks and found it marking unit slips right
-(`5,000` on a 5-ton answer, `44.444` on a 44,444 lb/h one), and it was
-reworked before any pull request. Closed.
+had its own half of the defect: a decimal comma silently dropped. An
+entry that can be read two ways (one to three digits with no leading
+zero, one separator, exactly three digits after it) gets **one**
+reading, by the browser's own decimal mark, and the reveal says which.
+A first build graded such an entry right if *either* reading fit; a
+blind review ran it against the shipped banks and found it marking unit
+slips right (`5,000` on a 5-ton answer, `44.444` on a 44,444 lb/h one),
+and it was reworked before any pull request. Closed.
 
 Left standing, by design. A reader whose own habit is the opposite of
 the browser's decimal mark gets the other reading of a two-way entry,
